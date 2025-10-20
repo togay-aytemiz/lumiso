@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Plus, LayoutGrid, List, Archive, ArrowUpDown, ArrowUp, ArrowDown, Settings, FileDown, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -85,6 +84,10 @@ interface Project {
   services?: Array<{
     id: string;
     name: string;
+  }>;
+  open_todos?: Array<{
+    id: string;
+    content: string;
   }>;
   assignees?: string[];
 }
@@ -409,21 +412,50 @@ const AllProjects = () => {
     navigate(`/leads/${leadId}`);
   };
 
-  const getProgressBadge = (completed: number, total: number) => {
-    if (total === 0) return <span className="text-muted-foreground text-xs">0/0</span>;
+  const renderProgressCell = useCallback((row: Project) => {
+    const total = row.todo_count || 0;
+    const completed = row.completed_todo_count || 0;
+    const pending = Math.max(0, total - completed);
+    const pendingTodos = (row.open_todos || []).filter(Boolean);
 
-    const percentage = (completed / total) * 100;
-    const isComplete = percentage === 100;
+    const textClass = total === 0
+      ? "text-muted-foreground"
+      : pending === 0
+      ? "text-green-600 font-medium"
+      : "text-foreground";
+
+    const label = `${completed}/${total}`;
+
+    if (pendingTodos.length === 0) {
+      return <span className={`text-sm ${textClass}`}>{label}</span>;
+    }
+
+    const toShow = pendingTodos.slice(0, 5);
+    const remaining = pendingTodos.length - toShow.length;
 
     return (
-      <Badge
-        variant={isComplete ? "default" : "secondary"}
-        className={`text-xs ${isComplete ? 'bg-green-600 text-white' : ''}`}
-      >
-        {completed}/{total}
-      </Badge>
+      <HoverCard openDelay={120} closeDelay={100}>
+        <HoverCardTrigger asChild>
+          <span className={`cursor-help text-sm ${textClass}`} aria-label={`${pending} pending`}>
+            {label}
+          </span>
+        </HoverCardTrigger>
+        <HoverCardContent
+          side="top"
+          align="start"
+          sideOffset={8}
+          className="max-w-xs space-y-1 p-3 text-xs leading-relaxed"
+        >
+          {toShow.map((todo) => (
+            <div key={todo.id} className="truncate">• {todo.content}</div>
+          ))}
+          {remaining > 0 && (
+            <div className="text-muted-foreground">+{remaining} more</div>
+          )}
+        </HoverCardContent>
+      </HoverCard>
     );
-  };
+  }, []);
 
   const formatServicesList = useCallback(
     (services: Array<{ id: string; name: string }> = []) =>
@@ -580,10 +612,8 @@ const AllProjects = () => {
       {
         id: "progress",
         label: tForms("projects.table_columns.progress"),
-        accessor: (row) =>
-          `${row.completed_todo_count ?? 0}/${row.todo_count ?? 0}`,
-        render: (row: Project) =>
-          getProgressBadge(row.completed_todo_count || 0, row.todo_count || 0),
+        accessor: (row) => `${row.completed_todo_count ?? 0}/${row.todo_count ?? 0}`,
+        render: (row: Project) => renderProgressCell(row),
       },
       {
         id: "services",
@@ -608,6 +638,7 @@ const AllProjects = () => {
       projectStatuses,
       projectStatusesLoading,
       renderServicesChips,
+      renderProgressCell,
       t,
       tForms,
     ]
@@ -944,7 +975,7 @@ const AllProjects = () => {
         // Get todo counts  
         projectIds.length > 0 ? supabase
           .from('todos')
-          .select('project_id, is_completed')
+          .select('id, project_id, is_completed, content')
           .in('project_id', projectIds) : Promise.resolve({ data: [] }),
           
         // Get services
@@ -1010,6 +1041,14 @@ const AllProjects = () => {
         return acc;
       }, {});
 
+      const pendingTodosMap = (todosData.data || []).reduce((acc, todo) => {
+        if (!todo.is_completed) {
+          if (!acc[todo.project_id]) acc[todo.project_id] = [] as Array<{ id: string; content: string }>;
+          acc[todo.project_id].push({ id: todo.id, content: todo.content });
+        }
+        return acc;
+      }, {} as Record<string, Array<{ id: string; content: string }>>);
+
       const projectServices = (servicesData.data || []).reduce((acc, ps) => {
         if (!acc[ps.project_id]) acc[ps.project_id] = [];
         if (ps.service) acc[ps.project_id].push(ps.service);
@@ -1057,7 +1096,8 @@ const AllProjects = () => {
         completed_todo_count: todoCounts[project.id]?.completed || 0,
         paid_amount: paymentTotals[project.id]?.paid || 0,
         remaining_amount: (Number(project.base_price || 0)) - (paymentTotals[project.id]?.paid || 0),
-        services: projectServices[project.id] || []
+        services: projectServices[project.id] || [],
+        open_todos: pendingTodosMap[project.id] || []
       })) as Project[]);
 
       setArchivedProjects(archived.map(project => ({
@@ -1072,7 +1112,8 @@ const AllProjects = () => {
         completed_todo_count: todoCounts[project.id]?.completed || 0,
         paid_amount: paymentTotals[project.id]?.paid || 0,
         remaining_amount: (Number(project.base_price || 0)) - (paymentTotals[project.id]?.paid || 0),
-        services: projectServices[project.id] || []
+        services: projectServices[project.id] || [],
+        open_todos: pendingTodosMap[project.id] || []
       })) as Project[]);
 
     } catch (error) {

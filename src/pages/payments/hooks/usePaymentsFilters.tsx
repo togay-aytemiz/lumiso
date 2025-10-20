@@ -364,8 +364,6 @@ export function usePaymentsFilters({
     ]
   );
 
-  const FILTER_CATEGORY_COUNT = 3;
-
   const filtersConfig: AdvancedDataTableFiltersConfig = useMemo(
     () => ({
       title: t("payments.filterPanel.title"),
@@ -373,7 +371,9 @@ export function usePaymentsFilters({
       content: filtersContent,
       activeCount: activeFilterCount,
       onReset: activeFilterCount ? handleResetFilters : undefined,
-      collapsedByDefault: FILTER_CATEGORY_COUNT > 4,
+      // Keep the filter rail closed by default; it will auto-open when
+      // there are active filters due to AdvancedDataTable logic.
+      collapsedByDefault: true,
     }),
     [activeFilterCount, filtersContent, handleResetFilters, t]
   );

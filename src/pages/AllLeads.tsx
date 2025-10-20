@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Filter, FileDown, Loader2 } from "lucide-react";
 import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
@@ -18,10 +17,8 @@ import {
   AlertCircle,
   XCircle,
 } from "lucide-react";
-import {
-  useLeadsWithCustomFields,
-  type LeadWithCustomFields,
-} from "@/hooks/useLeadsWithCustomFields";
+import { type LeadWithCustomFields } from "@/hooks/useLeadsWithCustomFields";
+import { useLeadsData } from "@/pages/leads/hooks/useLeadsData";
 import { useLeadTableColumns } from "@/hooks/useLeadTableColumns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -181,8 +178,18 @@ const AllLeadsNew = () => {
   const { t } = useTranslation('pages');
   const { t: tCommon } = useTranslation('common');
 
-  // Use new hooks
-  const { leads, loading: leadsLoading, refetch: refetchLeads } = useLeadsWithCustomFields();
+  // Server-side paginated leads (scalable like payments)
+  const [sortState, setSortState] = useState<AdvancedDataTableSortState>({
+    columnId: "updated_at",
+    direction: "desc",
+  });
+
+  const sortFieldForServer = useMemo(() => {
+    if (sortState.columnId === "name") return "name" as const;
+    if (sortState.columnId === "created_at") return "created_at" as const;
+    return "updated_at" as const;
+  }, [sortState.columnId]);
+
   const {
     advancedColumns,
     advancedDefaultPreferences,
@@ -205,12 +212,35 @@ const AllLeadsNew = () => {
     fieldDefinitions,
   });
 
-  const [sortState, setSortState] = useState<AdvancedDataTableSortState>({
-    columnId: "updated_at",
-    direction: "desc",
-  });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+
+  // Map selected status names to IDs for server-side filtering
+  const selectedStatusIds = useMemo(() => {
+    if (!filtersState.status.length) return undefined;
+    const byName = new Map(leadStatuses.map((s) => [s.name, s.id]));
+    return filtersState.status
+      .map((name) => byName.get(name))
+      .filter(Boolean) as string[];
+  }, [filtersState.status, leadStatuses]);
+
+  // Fetch server‑side paginated data based on filters and sort
+  const {
+    pageLeads,
+    metricsLeads,
+    totalCount,
+    initialLoading: leadsInitialLoading,
+    tableLoading: leadsTableLoading,
+    refetch: refetchLeads,
+    fetchLeadsData,
+  } = useLeadsData({
+    page,
+    pageSize,
+    sortField: sortFieldForServer,
+    sortDirection: sortState.direction as any,
+    statusIds: selectedStatusIds,
+    customFieldFilters: filtersState.customFields,
+  });
 
   const fieldDefinitionMap = useMemo(() => {
     const map = new Map<string, (typeof fieldDefinitions)[number]>();
@@ -301,7 +331,7 @@ const AllLeadsNew = () => {
     let closedCurrent = 0;
     let closedPrevious = 0;
 
-    leads.forEach((lead) => {
+    metricsLeads.forEach((lead) => {
       const createdMs = toMs(lead.created_at);
       if (createdMs != null) {
         if (createdMs >= startOfThisWeek) {
@@ -368,7 +398,7 @@ const AllLeadsNew = () => {
 
     return {
       totals: {
-        total: leads.length,
+        total: totalCount,
         newCurrent,
         newPrevious,
         delta: newCurrent - newPrevious,
@@ -389,7 +419,7 @@ const AllLeadsNew = () => {
         delta: closedCurrent - closedPrevious,
       },
     };
-  }, [leads]);
+  }, [metricsLeads, totalCount]);
 
   // Refetch data when page becomes visible (e.g., when navigating back from lead detail)
   useEffect(() => {
@@ -451,8 +481,8 @@ const AllLeadsNew = () => {
       description: t('leads.tutorial.addFirstLead.description'),
       content: null,
       mode: "floating",
-      canProceed: leads.length > 0,
-      requiresAction: leads.length === 0,
+      canProceed: totalCount > 0,
+      requiresAction: totalCount === 0,
       disabledTooltip: t('leads.tutorial.addFirstLead.disabledTooltip')
     },
     {
@@ -616,151 +646,8 @@ const AllLeadsNew = () => {
     [saveAdvancedColumnPreferences, t]
   );
 
-  const filteredLeads = useMemo(() => {
-    const hasStatusFilter = filtersState.status.length > 0;
-    const hasCustomFieldFilters = Object.values(filtersState.customFields).some(
-      (value) => !isCustomFilterValueEmpty(value)
-    );
-
-    if (!hasStatusFilter && !hasCustomFieldFilters) {
-      return leads;
-    }
-
-    return leads.filter((lead) => {
-      if (hasStatusFilter) {
-        const leadStatusName = lead.lead_statuses?.name || lead.status;
-        if (!leadStatusName || !filtersState.status.includes(leadStatusName)) {
-          return false;
-        }
-      }
-
-      for (const [fieldKey, filterValue] of Object.entries(
-        filtersState.customFields
-      )) {
-        const fieldDefinition = fieldDefinitionMap.get(fieldKey);
-        if (!fieldDefinition) {
-          continue;
-        }
-
-        const rawValue = lead.custom_fields?.[fieldKey] ?? null;
-
-        switch (filterValue.type) {
-          case "text": {
-            const query = normalizeFilterText(filterValue.value);
-            if (!query) {
-              continue;
-            }
-            const content = normalizeFilterText(
-              (rawValue ?? "").toString()
-            );
-            if (!content.includes(query)) {
-              return false;
-            }
-            break;
-          }
-          case "number": {
-            const min =
-              filterValue.min && filterValue.min.trim() !== ""
-                ? Number(filterValue.min)
-                : null;
-            const max =
-              filterValue.max && filterValue.max.trim() !== ""
-                ? Number(filterValue.max)
-                : null;
-
-            if (min == null && max == null) {
-              continue;
-            }
-
-            const numericValue =
-              rawValue != null && rawValue !== ""
-                ? Number(rawValue)
-                : null;
-
-            if (min != null) {
-              if (
-                numericValue == null ||
-                Number.isNaN(numericValue) ||
-                numericValue < min
-              ) {
-                return false;
-              }
-            }
-
-            if (max != null) {
-              if (
-                numericValue == null ||
-                Number.isNaN(numericValue) ||
-                numericValue > max
-              ) {
-                return false;
-              }
-            }
-            break;
-          }
-          case "date": {
-            const start = filterValue.start?.trim();
-            const end = filterValue.end?.trim();
-            if (!start && !end) {
-              continue;
-            }
-            const value = (rawValue ?? "").toString();
-            if (!value) {
-              return false;
-            }
-            if (start && value < start) {
-              return false;
-            }
-            if (end && value > end) {
-              return false;
-            }
-            break;
-          }
-          case "select": {
-            if (filterValue.values.length === 0) {
-              continue;
-            }
-            const selectedValues = filterValue.values;
-            const availableValues = splitCommaValues(
-              (rawValue ?? "").toString()
-            );
-            if (availableValues.length === 0) {
-              return false;
-            }
-            const hasMatch = availableValues.some((option) =>
-              selectedValues.includes(option)
-            );
-            if (!hasMatch) {
-              return false;
-            }
-            break;
-          }
-          case "checkbox": {
-            if (filterValue.value === "any") {
-              continue;
-            }
-            const boolValue = parseBooleanFilterValue(
-              (rawValue ?? "").toString()
-            );
-            if (filterValue.value === "checked") {
-              if (!boolValue) {
-                return false;
-              }
-            } else if (filterValue.value === "unchecked") {
-              if (boolValue) {
-                return false;
-              }
-            }
-            break;
-          }
-          default:
-            break;
-        }
-      }
-
-      return true;
-    });
-  }, [fieldDefinitionMap, filtersState, leads]);
+  // All custom-field filtering is applied server-side; no client fallback
+  const filteredLeads = useMemo(() => pageLeads, [pageLeads]);
 
   const sortedLeads = useMemo(() => {
     const { columnId, direction } = sortState;
@@ -804,27 +691,20 @@ const AllLeadsNew = () => {
     }
 
     return sorted;
-  }, [filteredLeads, sortAccessors, sortState]);
+  }, [metricsLeads, totalCount]);
 
   useEffect(() => {
-    const totalPages = Math.max(
-      1,
-      Math.ceil(sortedLeads.length / pageSize)
-    );
+    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
     if (page > totalPages) {
       setPage(totalPages);
     }
-  }, [page, pageSize, sortedLeads.length]);
+  }, [page, pageSize, totalCount]);
 
   useEffect(() => {
     setPage(1);
   }, [filtersState.status, filtersState.customFields]);
 
-  const paginatedLeads = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    return sortedLeads.slice(start, end);
-  }, [page, pageSize, sortedLeads]);
+  const paginatedLeads = sortedLeads; // already server-paginated
 
   const exportColumns = useMemo(() => {
     const preferences =
@@ -852,7 +732,7 @@ const AllLeadsNew = () => {
     () => ({
       page,
       pageSize,
-      totalCount: sortedLeads.length,
+      totalCount,
       onPageChange: handlePageChange,
       onPageSizeChange: handlePageSizeChange,
     }),
@@ -861,14 +741,14 @@ const AllLeadsNew = () => {
       handlePageSizeChange,
       page,
       pageSize,
-      sortedLeads.length,
+      totalCount,
     ]
   );
 
   const handleExportLeads = useCallback(async () => {
     if (exporting) return;
 
-    if (sortedLeads.length === 0) {
+    if (totalCount === 0) {
       toast({
         title: t("leads.export.noDataTitle"),
         description: t("leads.export.noDataDescription"),
@@ -879,7 +759,16 @@ const AllLeadsNew = () => {
     try {
       setExporting(true);
 
-      const rows = sortedLeads.map((lead) => {
+      // Fetch all filtered leads in chunks from the server to avoid loading everything at once
+      const CHUNK = 500;
+      const collected: LeadWithCustomFields[] = [];
+      for (let from = 0; from < totalCount; from += CHUNK) {
+        const to = Math.min(from + CHUNK - 1, totalCount - 1);
+        const { leads: chunk } = await fetchLeadsData({ from, to, includeCount: false });
+        collected.push(...chunk);
+      }
+
+      const rows = collected.map((lead) => {
         const row: Record<string, string | number> = {};
         exportColumns.forEach((column) => {
           const header =
@@ -935,7 +824,7 @@ const AllLeadsNew = () => {
         variant="outline"
         size="sm"
         onClick={handleExportLeads}
-        disabled={exporting || leadsLoading || sortedLeads.length === 0}
+        disabled={exporting || leadsTableLoading || sortedLeads.length === 0}
         className="flex items-center gap-2"
       >
         {exporting ? (
@@ -946,14 +835,13 @@ const AllLeadsNew = () => {
         <span>{t("leads.export.button")}</span>
       </Button>
     ),
-    [exporting, handleExportLeads, leadsLoading, sortedLeads.length, t]
+    [exporting, handleExportLeads, leadsTableLoading, sortedLeads.length, t]
   );
 
   const tableSummaryText = useMemo(() => {
     if (activeFilterCount === 0) return undefined;
-    if (sortedLeads.length === leads.length) return undefined;
-    return t("leads.tableSummaryFiltered", { visible: sortedLeads.length, total: leads.length });
-  }, [activeFilterCount, leads.length, sortedLeads.length, t]);
+    return t("leads.tableSummaryFiltered", { visible: sortedLeads.length, total: totalCount });
+  }, [activeFilterCount, sortedLeads.length, t, totalCount]);
 
   const filtersSummaryText = useMemo(() => {
     if (activeFilterCount === 0) {
@@ -1090,7 +978,7 @@ const AllLeadsNew = () => {
       
       <div className="space-y-6 p-4 sm:p-6">
         <section className="space-y-4">
-          {leadsLoading ? (
+          {(leadsInitialLoading || leadsTableLoading) ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               {Array.from({ length: 4 }).map((_, index) => (
                 <div
@@ -1226,7 +1114,7 @@ const AllLeadsNew = () => {
               columns={advancedColumns}
               rowKey={(lead) => lead.id}
               onRowClick={handleRowClick}
-              isLoading={leadsLoading}
+              isLoading={leadsTableLoading}
               loadingState={<TableLoadingSkeleton />}
               filters={filtersConfig}
               emptyState={emptyState}

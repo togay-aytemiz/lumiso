@@ -33,6 +33,7 @@ import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "react-i18next";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -66,6 +67,15 @@ export default function Calendar() {
     return window.innerWidth <= 768 ? "day" : "month";
   });
   const { t } = useTranslation("pages");
+
+  const viewModeOptions = useMemo(
+    () => [
+      { value: "day", label: t("calendar.viewModes.day") },
+      { value: "week", label: t("calendar.viewModes.week") },
+      { value: "month", label: t("calendar.viewModes.month") },
+    ],
+    [t],
+  );
 
   // Use optimized hooks for performance and interaction
   const { isMobile, isTablet, isDesktop, viewConfig, handleDayClick } =
@@ -427,32 +437,12 @@ export default function Calendar() {
             </div>
 
             {/* View mode toggle */}
-            <div className="flex items-center gap-1 bg-muted rounded-md p-1">
-              <Button
-                variant={viewMode === "day" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("day")}
-                className="text-xs"
-              >
-                {t("calendar.viewModes.day")}
-              </Button>
-              <Button
-                variant={viewMode === "week" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("week")}
-                className="text-xs"
-              >
-                {t("calendar.viewModes.week")}
-              </Button>
-              <Button
-                variant={viewMode === "month" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("month")}
-                className="text-xs"
-              >
-                {t("calendar.viewModes.month")}
-              </Button>
-            </div>
+            <SegmentedControl
+              size="md"
+              value={viewMode}
+              onValueChange={(value) => setViewMode(value as ViewMode)}
+              options={viewModeOptions}
+            />
           </div>
         </div>
 
@@ -460,32 +450,12 @@ export default function Calendar() {
         <div className="lg:hidden px-4 sm:px-6">
           <div className="flex items-center justify-between gap-4 pb-4">
             {/* View mode toggle for mobile */}
-            <div className="flex items-center gap-1 bg-muted rounded-md p-1">
-              <Button
-                variant={viewMode === "day" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("day")}
-                className="text-xs px-2"
-              >
-                {t("calendar.viewModes.day")}
-              </Button>
-              <Button
-                variant={viewMode === "week" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("week")}
-                className="text-xs px-2"
-              >
-                {t("calendar.viewModes.week")}
-              </Button>
-              <Button
-                variant={viewMode === "month" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("month")}
-                className="text-xs px-2"
-              >
-                {t("calendar.viewModes.month")}
-              </Button>
-            </div>
+            <SegmentedControl
+              size="md"
+              value={viewMode}
+              onValueChange={(value) => setViewMode(value as ViewMode)}
+              options={viewModeOptions}
+            />
 
             {/* Navigation for mobile */}
             <div className="flex items-center gap-2">

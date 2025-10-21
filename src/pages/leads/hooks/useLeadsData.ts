@@ -414,21 +414,40 @@ export function useLeadsData({
       // Lightweight metrics query for recent window (last 60 days) + count already fetched
       const since = new Date();
       since.setDate(since.getDate() - 60);
-      let metricsQuery = supabase
-        .from("leads")
-        .select(
-          `id, created_at, updated_at, status, lead_statuses ( id, name, color, is_system_final )`
-        )
-        .eq("organization_id", organizationId)
-        .gte("created_at", since.toISOString());
-      if (statusIds && statusIds.length) {
-        metricsQuery = metricsQuery.in("status_id", statusIds);
-      }
-      const tMetrics = startTimer('Leads.metrics.window60d');
-      const metricsResult = await metricsQuery;
-      if (metricsResult.error) throw metricsResult.error;
-      setMetricsLeads((metricsResult.data as any[]) ?? []);
-      tMetrics.end({ metrics: metricsResult.data?.length ?? 0 });
+      // Try prefetched metrics to render instantly
+      try {
+        if (typeof window !== 'undefined' && page === 1) {
+          const raw = localStorage.getItem(`prefetch:leads:metrics:${organizationId}`);
+          if (raw) {
+            const parsed = JSON.parse(raw) as { ts?: number; value?: { items?: any[]; ttl?: number } };
+            const ts = parsed?.ts ?? 0;
+            const ttl = parsed?.value?.ttl ?? 60_000;
+            if (Date.now() - ts < ttl && Array.isArray(parsed?.value?.items)) {
+              setMetricsLeads(parsed!.value!.items as any[]);
+            }
+          }
+        }
+      } catch {}
+
+      // Always fetch fresh metrics in background, update when arrives
+      (async () => {
+        let metricsQuery = supabase
+          .from("leads")
+          .select(
+            `id, created_at, updated_at, status, lead_statuses ( id, name, color, is_system_final )`
+          )
+          .eq("organization_id", organizationId)
+          .gte("created_at", since.toISOString());
+        if (statusIds && statusIds.length) {
+          metricsQuery = metricsQuery.in("status_id", statusIds);
+        }
+        const tMetrics = startTimer('Leads.metrics.window60d');
+        const metricsResult = await metricsQuery;
+        if (!metricsResult.error) {
+          setMetricsLeads((metricsResult.data as any[]) ?? []);
+        }
+        tMetrics.end({ metrics: metricsResult.data?.length ?? 0 });
+      })().catch(() => {});
     } finally {
       setTableLoading(false);
       if (first) {

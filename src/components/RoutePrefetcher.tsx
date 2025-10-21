@@ -72,10 +72,30 @@ export default function RoutePrefetcher() {
       }
     };
 
+    const doLeadsMetrics = async () => {
+      const k = `prefetch:leads:metrics:${orgId}`;
+      if (inFlightRef.current.has(k)) return;
+      inFlightRef.current.add(k);
+      try {
+        const since = new Date();
+        since.setDate(since.getDate() - 60);
+        const { data, error } = await supabase
+          .from('leads')
+          .select(`id, created_at, updated_at, status, lead_statuses ( id, name, color, is_system_final )`)
+          .eq('organization_id', orgId)
+          .gte('created_at', since.toISOString());
+        if (!error && Array.isArray(data)) {
+          setLS(k, { items: data, ttl: TTL_MS });
+        }
+      } catch {}
+      finally {
+        inFlightRef.current.delete(k);
+      }
+    };
+
     if (pathname.startsWith('/projects')) doProjects();
-    if (pathname.startsWith('/leads')) doLeads();
+    if (pathname.startsWith('/leads')) { doLeads(); doLeadsMetrics(); }
   }, [pathname, activeOrganizationId]);
 
   return null;
 }
-

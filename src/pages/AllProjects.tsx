@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Plus, LayoutGrid, List, Archive, Settings, FileDown, Loader2 } from "lucide-react";
+import { Plus, LayoutGrid, List, Archive, Settings, FileDown, Loader2, WifiOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
@@ -13,7 +14,7 @@ import ProjectKanbanBoard from "@/components/ProjectKanbanBoard";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
-import { formatDate } from "@/lib/utils";
+import { formatDate, isNetworkError } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -57,6 +58,9 @@ const AllProjects = () => {
   const [archivedPageSize, setArchivedPageSize] = useState(25);
   const [exporting, setExporting] = useState(false);
   const [boardLoading, setBoardLoading] = useState(false);
+  const [networkOffline, setNetworkOffline] = useState(
+    () => (typeof navigator !== 'undefined' ? !navigator.onLine : false)
+  );
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { completeCurrentStep } = useOnboarding();
@@ -169,6 +173,36 @@ const AllProjects = () => {
     typeOptions: listFilterOptions.types,
   });
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleOnline = () => setNetworkOffline(false);
+    const handleOffline = () => setNetworkOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const handleNetworkError = useCallback(
+    (error: unknown) => {
+      if (isNetworkError(error) || (typeof navigator !== 'undefined' && navigator.onLine === false)) {
+        setNetworkOffline(true);
+      }
+    },
+    []
+  );
+
+  const handleNetworkRecovery = useCallback(() => {
+    if (typeof navigator === 'undefined' || navigator.onLine) {
+      setNetworkOffline(false);
+    }
+  }, []);
+
   const {
     listProjects,
     archivedProjects,
@@ -187,6 +221,8 @@ const AllProjects = () => {
     sortDirection,
     listFilters: listFiltersState,
     archivedFilters: archivedFiltersState,
+    onNetworkError: handleNetworkError,
+    onNetworkRecovery: handleNetworkRecovery,
   });
 
   const {
@@ -787,22 +823,27 @@ const AllProjects = () => {
       }
       setBoardProjects(collected);
       t.end({ total: collected.length, chunks });
+      handleNetworkRecovery();
     } catch (error) {
       console.error('Failed to load board projects', error);
-      const now = Date.now();
-      if (now - lastBoardErrorAtRef.current > ERROR_TOAST_DEBOUNCE_MS) {
-        lastBoardErrorAtRef.current = now;
-        toast({
-          title: t('common:labels.error'),
-          description: t('pages:projects.failedToLoadProjects'),
-          variant: 'destructive',
-        });
+      handleNetworkError(error);
+      const offline = isNetworkError(error);
+      if (!offline) {
+        const now = Date.now();
+        if (now - lastBoardErrorAtRef.current > ERROR_TOAST_DEBOUNCE_MS) {
+          lastBoardErrorAtRef.current = now;
+          toast({
+            title: t('common:labels.error'),
+            description: t('pages:projects.failedToLoadProjects'),
+            variant: 'destructive',
+          });
+        }
       }
     } finally {
       setBoardLoading(false);
       boardLoadInFlightRef.current = false;
     }
-  }, [fetchProjectsData, t, toast]);
+  }, [fetchProjectsData, handleNetworkError, handleNetworkRecovery, t, toast]);
 
   useEffect(() => {
     if (viewMode === 'board') {
@@ -813,6 +854,12 @@ const AllProjects = () => {
   const refreshAll = useCallback(async () => {
     await Promise.all([refetchProjects(), loadBoardProjects()]);
   }, [loadBoardProjects, refetchProjects]);
+
+  const handleOfflineRetry = useCallback(() => {
+    refreshAll();
+  }, [refreshAll]);
+
+  const isRetrying = boardLoading || listLoading || archivedLoading;
 
   const handleProjectClick = useCallback((project: ProjectListItem) => {
     setQuickViewProject(project);
@@ -994,6 +1041,38 @@ const AllProjects = () => {
           </PageHeaderSearch>
         </PageHeader>
       </div>
+
+      {networkOffline && (
+        <div className="flex-shrink-0 px-4 sm:px-6">
+          <Alert className="mb-4 border-amber-500/50 bg-amber-50 text-amber-900 dark:border-amber-500/50 dark:bg-amber-500/10 dark:text-amber-50">
+            <WifiOff className="h-4 w-4 text-amber-600 dark:text-amber-200" />
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-1">
+                <AlertTitle className="text-amber-900 dark:text-amber-100">
+                  {t('projects.networkOfflineTitle')}
+                </AlertTitle>
+                <AlertDescription className="text-amber-800 dark:text-amber-100/80">
+                  {t('projects.networkOfflineDescription')}
+                  <div className="mt-2 text-sm text-amber-700 dark:text-amber-200/80">
+                    {t('projects.networkOfflineHint')}
+                  </div>
+                </AlertDescription>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleOfflineRetry}
+                disabled={isRetrying}
+                className="self-start sm:self-center"
+              >
+                {isRetrying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t('common:buttons.tryAgain')}
+              </Button>
+            </div>
+          </Alert>
+        </div>
+      )}
 
       {/* View Toggle - mobile friendly tabs */}
       <div className="flex-shrink-0 px-4 sm:px-6 pb-2">

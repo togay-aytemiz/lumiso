@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { startTimer, logInfo } from "@/lib/debug";
+import { isNetworkError } from "@/lib/utils";
 import type {
   ProjectsArchivedFiltersState,
   ProjectsListFiltersState,
@@ -21,6 +22,8 @@ interface UseProjectsDataOptions {
   sortDirection: ProjectSortDirection;
   listFilters: ProjectsListFiltersState;
   archivedFilters: ProjectsArchivedFiltersState;
+  onNetworkError?: (error: unknown) => void;
+  onNetworkRecovery?: () => void;
 }
 
 interface FetchRange {
@@ -160,6 +163,8 @@ export function useProjectsData({
   sortDirection,
   listFilters,
   archivedFilters,
+  onNetworkError,
+  onNetworkRecovery,
 }: UseProjectsDataOptions): UseProjectsDataResult {
   const [listProjects, setListProjects] = useState<ProjectListItem[]>([]);
   const [archivedProjects, setArchivedProjects] = useState<ProjectListItem[]>([]);
@@ -524,10 +529,14 @@ export function useProjectsData({
       setListProjects(projects);
       setListTotalCount(count);
       t.end({ rows: projects.length, total: count });
+      onNetworkRecovery?.();
     } catch (error) {
       // Swallow errors here to avoid unhandled promise rejections that spam the console.
       // Pages can decide how to surface errors (e.g., board view toast).
       console.error('useProjectsData.listLoad error', error);
+      if (isNetworkError(error)) {
+        onNetworkError?.(error);
+      }
       // Preserve previous data; do not clear UI abruptly.
     } finally {
       setListLoading(false);
@@ -536,7 +545,7 @@ export function useProjectsData({
         setInitialLoading(false);
       }
     }
-  }, [fetchProjectsData, listPage, listPageSize]);
+  }, [fetchProjectsData, listPage, listPageSize, onNetworkError, onNetworkRecovery]);
 
   const fetchArchived = useCallback(async () => {
     setArchivedLoading(true);
@@ -553,12 +562,16 @@ export function useProjectsData({
       setArchivedProjects(projects);
       setArchivedTotalCount(count);
       t.end({ rows: projects.length, total: count });
+      onNetworkRecovery?.();
     } catch (error) {
       console.error('useProjectsData.archivedLoad error', error);
+      if (isNetworkError(error)) {
+        onNetworkError?.(error);
+      }
     } finally {
       setArchivedLoading(false);
     }
-  }, [archivedPage, archivedPageSize, fetchProjectsData]);
+  }, [archivedPage, archivedPageSize, fetchProjectsData, onNetworkError, onNetworkRecovery]);
 
   useEffect(() => {
     fetchList();

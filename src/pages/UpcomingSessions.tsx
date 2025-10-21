@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar } from "lucide-react";
+import { Plus, Calendar, AlertTriangle, CalendarCheck2, CalendarClock } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -22,6 +22,8 @@ import {
   type AdvancedTableColumn,
   type AdvancedDataTableSortState,
 } from "@/components/data-table";
+import { KpiCard } from "@/components/ui/kpi-card";
+import { getKpiIconPreset, KPI_ACTION_BUTTON_CLASS } from "@/components/ui/kpi-presets";
 
 interface Session {
   id: string;
@@ -42,6 +44,7 @@ type DateFilterKey =
   | 'past'
   | 'today'
   | 'tomorrow'
+  | 'future'
   | 'thisweek'
   | 'nextweek'
   | 'thismonth'
@@ -52,6 +55,7 @@ const DATE_FILTER_KEYS: DateFilterKey[] = [
   'past',
   'today',
   'tomorrow',
+  'future',
   'thisweek',
   'nextweek',
   'thismonth',
@@ -68,7 +72,7 @@ interface DateFilterOption {
 
 const AllSessions = () => {
   const { t: tForms } = useFormsTranslation();
-  const { t } = useTranslation('pages');
+  const { t, i18n } = useTranslation('pages');
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("planned");
@@ -180,6 +184,11 @@ const AllSessions = () => {
         const startOfTomorrow = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate());
         const endOfTomorrow = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate() + 1);
         return { start: startOfTomorrow, end: endOfTomorrow };
+      case 'future':
+        return {
+          start: endOfToday,
+          end: new Date(today.getFullYear() + 10, 0, 1),
+        };
       case 'thisweek':
         return getWeekRange(today);
       case 'nextweek':
@@ -231,6 +240,8 @@ const AllSessions = () => {
         return t('sessions.filters.dateFilters.today');
       case 'tomorrow':
         return t('sessions.filters.dateFilters.tomorrow');
+      case 'future':
+        return t('sessions.filters.dateFilters.future');
       case 'thisweek':
         return t('sessions.filters.dateFilters.thisWeek');
       case 'nextweek':
@@ -261,6 +272,71 @@ const AllSessions = () => {
       ).filter((option): option is DateFilterOption => Boolean(option)),
     [dateFilterOptions]
   );
+
+  const sessionKpiMetrics = useMemo(() => {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+
+    const safeParseDate = (value?: string) => {
+      if (!value) return null;
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    let pastNeedsAction = 0;
+    let todayCount = 0;
+    let futureCount = 0;
+
+    sessions.forEach((session) => {
+      const sessionDate = safeParseDate(session.session_date);
+      if (!sessionDate) return;
+
+      if (sessionDate < startOfToday) {
+        if (session.status === "planned") {
+          pastNeedsAction += 1;
+        }
+        return;
+      }
+
+      if (sessionDate >= endOfToday) {
+        if (session.status !== "cancelled") {
+          futureCount += 1;
+        }
+        return;
+      }
+
+      if (session.status !== "cancelled") {
+        todayCount += 1;
+      }
+    });
+
+    return { pastNeedsAction, todayCount, futureCount };
+  }, [sessions]);
+
+  const { pastNeedsAction, todayCount, futureCount } = sessionKpiMetrics;
+
+  const numberFormatter = useMemo(
+    () => new Intl.NumberFormat(i18n.language),
+    [i18n.language]
+  );
+
+  const formatCount = useCallback(
+    (value: number) => numberFormatter.format(value),
+    [numberFormatter]
+  );
+
+  const buildInfoLabel = useCallback(
+    (metricKey: 'pastNeedsAction' | 'today' | 'future') =>
+      t('sessions.kpis.infoLabel', {
+        metric: t(`sessions.kpis.${metricKey}.title`),
+      }),
+    [t]
+  );
+
+  const pastPreset = useMemo(() => getKpiIconPreset('amber'), []);
+  const todayPreset = useMemo(() => getKpiIconPreset('indigo'), []);
+  const futurePreset = useMemo(() => getKpiIconPreset('sky'), []);
 
   const filteredAndSortedSessions = useMemo(() => {
     let filtered = sessions;
@@ -590,6 +666,87 @@ const AllSessions = () => {
       </PageHeader>
 
       <div className="p-4 sm:p-6 space-y-6">
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <KpiCard
+            className="h-full"
+            density="compact"
+            icon={AlertTriangle}
+            {...pastPreset}
+            title={t('sessions.kpis.pastNeedsAction.title')}
+            value={formatCount(pastNeedsAction)}
+            info={{
+              content: t('sessions.kpis.pastNeedsAction.tooltip'),
+              ariaLabel: buildInfoLabel('pastNeedsAction'),
+            }}
+            footer={
+              <Button
+                size="xs"
+                variant="outline"
+                className={KPI_ACTION_BUTTON_CLASS}
+                onClick={() => {
+                  setDateFilter('past');
+                  setStatusFilter('planned');
+                  setSortState({ columnId: 'session_date', direction: 'asc' });
+                }}
+              >
+                {t('sessions.kpis.pastNeedsAction.action')}
+              </Button>
+            }
+          />
+          <KpiCard
+            className="h-full"
+            density="compact"
+            icon={CalendarCheck2}
+            {...todayPreset}
+            title={t('sessions.kpis.today.title')}
+            value={formatCount(todayCount)}
+            info={{
+              content: t('sessions.kpis.today.tooltip'),
+              ariaLabel: buildInfoLabel('today'),
+            }}
+            footer={
+              <Button
+                size="xs"
+                variant="outline"
+                className={KPI_ACTION_BUTTON_CLASS}
+                onClick={() => {
+                  setDateFilter('today');
+                  setStatusFilter('all');
+                  setSortState({ columnId: 'session_date', direction: 'asc' });
+                }}
+              >
+                {t('sessions.kpis.today.action')}
+              </Button>
+            }
+          />
+          <KpiCard
+            className="h-full"
+            density="compact"
+            icon={CalendarClock}
+            {...futurePreset}
+            title={t('sessions.kpis.future.title')}
+            value={formatCount(futureCount)}
+            info={{
+              content: t('sessions.kpis.future.tooltip'),
+              ariaLabel: buildInfoLabel('future'),
+            }}
+            footer={
+              <Button
+                size="xs"
+                variant="outline"
+                className={KPI_ACTION_BUTTON_CLASS}
+                onClick={() => {
+                  setDateFilter('future');
+                  setStatusFilter('planned');
+                  setSortState({ columnId: 'session_date', direction: 'asc' });
+                }}
+              >
+                {t('sessions.kpis.future.action')}
+              </Button>
+            }
+          />
+        </section>
+
         <div className="md:hidden">
           <FilterBar
             quickFilters={quickDateFilters}

@@ -155,3 +155,26 @@ export const getWeekRange = (date: Date, locale?: string): { start: Date; end: D
     end: getEndOfWeek(date, locale)
   };
 };
+
+export const isNetworkError = (error: unknown): boolean => {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    return true;
+  }
+
+  if (!error) {
+    return false;
+  }
+
+  if (error instanceof TypeError && error.message === "Failed to fetch") {
+    return true;
+  }
+
+  const message =
+    typeof error === "string"
+      ? error
+      : typeof (error as { message?: unknown }).message === "string"
+        ? (error as { message: string }).message
+        : "";
+
+  return /Failed to fetch|NetworkError|request failed|load failed|net::ERR/i.test(message);
+};

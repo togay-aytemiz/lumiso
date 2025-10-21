@@ -533,6 +533,9 @@
     "errorDeletingProject": "Proje silinirken hata",
     "projectDeletedSuccess": "Proje başarıyla silindi",
     "failedToLoadProjects": "Projeler yüklenemedi",
+    "networkOfflineTitle": "Çevrimdışısınız",
+    "networkOfflineDescription": "Projeler verisine ulaşamadık. Çevrim içi olana kadar son sonuçları göstermeye devam edeceğiz.",
+    "networkOfflineHint": "Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.",
     "project_name": "Proje Adı",
     "client": "Kişi",
     "project_type": "Proje Türü",
@@ -726,10 +729,29 @@
         "past": "Geçmiş",
         "today": "Bugün",
         "tomorrow": "Yarın",
+        "future": "Gelecek",
         "thisWeek": "Bu Hafta",
         "nextWeek": "Gelecek Hafta",
         "thisMonth": "Bu Ay",
         "nextMonth": "Gelecek Ay"
+      }
+    },
+    "kpis": {
+      "infoLabel": "{{metric}} metriği hakkında bilgi alın",
+      "pastNeedsAction": {
+        "title": "Aksiyon bekleyen geçmiş seanslar",
+        "tooltip": "Bugünden önce planlanmış ve hâlâ Planlandı durumunda olan seansların sayısıdır.",
+        "action": "Geçmişi incele"
+      },
+      "today": {
+        "title": "Bugünkü seanslar",
+        "tooltip": "Bugün gerçekleşecek ve iptal edilmemiş seansların sayısıdır.",
+        "action": "Bugünü göster"
+      },
+      "future": {
+        "title": "Gelecek seanslar",
+        "tooltip": "Bugünden sonraki tarihler için planlanmış ve iptal edilmemiş seansların sayısıdır.",
+        "action": "Geleceği göster"
       }
     },
     "table": {

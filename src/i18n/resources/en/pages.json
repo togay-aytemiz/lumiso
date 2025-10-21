@@ -533,6 +533,9 @@
     "errorDeletingProject": "Error deleting project",
     "projectDeletedSuccess": "Project deleted successfully",
     "failedToLoadProjects": "Failed to load projects",
+    "networkOfflineTitle": "You're offline",
+    "networkOfflineDescription": "We couldn't reach your projects data. We'll keep showing the last results until you're back online.",
+    "networkOfflineHint": "Check your internet connection and try again.",
     "project_name": "Project Name",
     "client": "Client",
     "project_type": "Project Type",
@@ -726,10 +729,29 @@
         "past": "Past",
         "today": "Today",
         "tomorrow": "Tomorrow",
+        "future": "Future",
         "thisWeek": "This Week",
         "nextWeek": "Next Week",
         "thisMonth": "This Month",
         "nextMonth": "Next Month"
+      }
+    },
+    "kpis": {
+      "infoLabel": "Learn how we calculate {{metric}}",
+      "pastNeedsAction": {
+        "title": "Past sessions needing action",
+        "tooltip": "Counts sessions scheduled before today that are still marked as Planned.",
+        "action": "Review past sessions"
+      },
+      "today": {
+        "title": "Today's sessions",
+        "tooltip": "Counts sessions taking place today that have not been cancelled.",
+        "action": "View today"
+      },
+      "future": {
+        "title": "Future sessions",
+        "tooltip": "Counts sessions scheduled after today that are not cancelled.",
+        "action": "View upcoming"
       }
     },
     "table": {

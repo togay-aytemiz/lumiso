@@ -6,11 +6,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { formatLongDate, formatTime } from "@/lib/utils";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ActivityForm } from "@/components/shared/ActivityForm";
 import { ActivityTimeline } from "@/components/shared/ActivityTimeline";
 import { useFormsTranslation } from '@/hooks/useTypedTranslation';
+import { SegmentedControl } from "@/components/ui/segmented-control";
 interface LeadActivity {
   id: string;
   type: string;
@@ -52,6 +52,7 @@ export function LeadActivitySection({
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [selectedSegment, setSelectedSegment] = useState<"activity" | "history">("activity");
   
   useEffect(() => {
     fetchData();
@@ -331,22 +332,25 @@ export function LeadActivitySection({
         </CardContent>
       </Card>;
   }
-  return <Tabs defaultValue="activity" className="w-full">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">
-              {t('activitiesHistory.title')}
-            </h3>
-            <TabsList className="inline-flex h-8 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
-              <TabsTrigger value="activity">{t('activitiesHistory.activity')}</TabsTrigger>
-              <TabsTrigger value="history">{t('activitiesHistory.history')}</TabsTrigger>
-            </TabsList>
-          </div>
-        </CardHeader>
-        <CardContent>
-          
-          <TabsContent value="activity" className="space-y-6">
+  return <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">
+            {t('activitiesHistory.title')}
+          </h3>
+          <SegmentedControl
+            size="sm"
+            value={selectedSegment}
+            onValueChange={value => setSelectedSegment(value as typeof selectedSegment)}
+            options={[
+              { value: "activity", label: t('activitiesHistory.activity') },
+              { value: "history", label: t('activitiesHistory.history') }
+            ]}
+          />
+        </div>
+      </CardHeader>
+      <CardContent>
+        {selectedSegment === "activity" ? <div className="space-y-6">
             <ActivityForm onSubmit={handleSaveActivity} loading={saving} placeholder={t('activitiesHistory.enterNote')} />
 
             <div className="space-y-4">
@@ -364,9 +368,7 @@ export function LeadActivitySection({
                   {t('activitiesHistory.noActivitiesYet')}
                 </div>}
             </div>
-          </TabsContent>
-          
-          <TabsContent value="history" className="space-y-4">
+          </div> : <div className="space-y-4">
             {auditLogs.length > 0 ? <div className="space-y-1">
                 {auditLogs.map(log => <div key={log.id} className="flex justify-between items-start p-2 text-sm hover:bg-muted/30 rounded">
                     <p className="text-foreground break-words flex-1">
@@ -379,8 +381,7 @@ export function LeadActivitySection({
               </div> : <div className="text-sm text-muted-foreground text-center py-8">
                 {t('activitiesHistory.noHistoryAvailable')}
               </div>}
-           </TabsContent>
-        </CardContent>
-      </Card>
-    </Tabs>;
+          </div>}
+      </CardContent>
+    </Card>;
 }

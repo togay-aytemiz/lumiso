@@ -13,7 +13,7 @@ import NewSessionDialog from "@/components/NewSessionDialog";
 import { formatTime, formatLongDate, getWeekRange, cn } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
-import SessionStatusBadge from "@/components/SessionStatusBadge";
+// Render project stage inline; no need to import ProjectStatusBadge here
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { FilterBar } from "@/components/FilterBar";
 import SessionSheetView from "@/components/SessionSheetView";
@@ -35,6 +35,8 @@ interface Session {
   created_at: string;
   project_id?: string | null;
   project_name?: string;
+  project_status_id?: string | null;
+  project_status?: { id: string; name: string; color: string } | null;
   lead_name?: string;
   lead_status?: string;
 }
@@ -55,11 +57,11 @@ const DATE_FILTER_KEYS: DateFilterKey[] = [
   'past',
   'today',
   'tomorrow',
-  'future',
   'thisweek',
   'nextweek',
   'thismonth',
   'nextmonth',
+  'future',
 ];
 
 const QUICK_DATE_FILTER_KEYS: DateFilterKey[] = ['all', 'today', 'tomorrow'];
@@ -91,64 +93,72 @@ const AllSessions = () => {
   const fetchSessions = useCallback(async () => {
     setLoading(true);
     try {
-      // Get sessions with proper validation using inner joins
+      // Determine active organization first so we can scope queries properly
+      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
+      const activeOrganizationId = await getUserOrganizationId();
+
+      // Get sessions with proper validation using inner joins, scoped to org
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('sessions')
         .select(`
           *,
           leads!inner(id, name, status),
-          projects(id, name, status_id)
+          projects(
+            id, name, status_id,
+            project_status:project_statuses!projects_status_id_fkey(id, name, color)
+          )
         `)
+        .eq('organization_id', activeOrganizationId as any)
         .order('session_date', { ascending: false })
         .order('session_time', { ascending: false });
 
       if (sessionsError) throw sessionsError;
 
-      // Filter out sessions with invalid references or archived projects
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
       let filteredSessions = sessionsData || [];
-      
-      if (userId) {
-        // Get user's active organization using the utility
-        const { getUserOrganizationId } = await import('@/lib/organizationUtils');
-        const activeOrganizationId = await getUserOrganizationId();
 
-        if (!activeOrganizationId) {
-          return sessionsData || [];
-        }
-
-        // Get archived status for filtering
+      // Filter out archived projects from results (based on org's Archived status)
+      if (activeOrganizationId) {
         const { data: archivedStatus } = await supabase
           .from('project_statuses')
           .select('id, name')
           .eq('organization_id', activeOrganizationId)
           .ilike('name', 'archived')
           .maybeSingle();
-          
-        filteredSessions = filteredSessions.filter(session => {
+
+        filteredSessions = filteredSessions.filter((session) => {
           // Must have valid lead (inner join ensures this)
-          if (!session.leads) return false;
-          
+          if (!(session as any).leads) return false;
+
           // If session has a project, check if it's archived
-          if (session.project_id && session.projects) {
-            if (archivedStatus?.id && session.projects.status_id === archivedStatus.id) {
+          const proj = Array.isArray((session as any).projects)
+            ? (session as any).projects[0]
+            : (session as any).projects;
+          if (session.project_id && proj) {
+            if (archivedStatus?.id && proj.status_id === archivedStatus.id) {
               return false;
             }
           }
-          
+
           return true;
         });
       }
 
       // Process sessions with enhanced data validation
       if (filteredSessions.length > 0) {
-        const sessionsWithInfo = filteredSessions.map(session => ({
-          ...session,
-          lead_name: session.leads?.name || 'Unknown Lead',
-          lead_status: session.leads?.status || 'unknown',
-          project_name: session.projects?.name || undefined
-        }));
+        const sessionsWithInfo = filteredSessions.map((session: any) => {
+          const proj = Array.isArray(session.projects) ? session.projects[0] : session.projects;
+          const statusObj = proj?.project_status
+            ? (Array.isArray(proj.project_status) ? proj.project_status[0] : proj.project_status)
+            : null;
+          return {
+            ...session,
+            lead_name: session.leads?.name || 'Unknown Lead',
+            lead_status: session.leads?.status || 'unknown',
+            project_name: proj?.name || undefined,
+            project_status_id: statusObj?.id ?? proj?.status_id ?? null,
+            project_status: statusObj ?? null,
+          } as Session;
+        });
         setSessions(sessionsWithInfo);
       } else {
         setSessions([]);
@@ -361,6 +371,11 @@ const AllSessions = () => {
 
     const compare = (a: Session, b: Session) => {
       switch (sortColumn) {
+        case "project_stage": {
+          const aName = (a.project_status?.name || "").toLowerCase();
+          const bName = (b.project_status?.name || "").toLowerCase();
+          return aName.localeCompare(bName);
+        }
         case "lead_name": {
           const aName = (a.lead_name || "").toLowerCase();
           const bName = (b.lead_name || "").toLowerCase();
@@ -485,6 +500,33 @@ const AllSessions = () => {
 
   const columns = useMemo<AdvancedTableColumn<Session>[]>(
     () => [
+      // 1) Kişi adı (Client Name)
+      {
+        id: 'lead_name',
+        label: t('sessions.table.clientName'),
+        accessorKey: 'lead_name',
+        sortable: true,
+        minWidth: '180px',
+        cellClassName: 'whitespace-nowrap font-medium',
+      },
+      // 2) Tarih (Date)
+      {
+        id: 'session_date',
+        label: t('sessions.table.date'),
+        sortable: true,
+        sortId: 'session_date',
+        minWidth: '150px',
+        render: (session) => <span className="whitespace-nowrap">{formatLongDate(session.session_date)}</span>,
+      },
+      // 3) Saat (Time)
+      {
+        id: 'session_time',
+        label: t('sessions.table.time'),
+        sortable: true,
+        minWidth: '120px',
+        render: (session) => <span className="whitespace-nowrap">{formatTime(session.session_time)}</span>,
+      },
+      // 4) Proje (Project)
       {
         id: 'project',
         label: t('sessions.table.project'),
@@ -502,45 +544,35 @@ const AllSessions = () => {
             <span className="text-muted-foreground">—</span>
           ),
       },
+      // 5) Project Stage (Durum)
       {
-        id: 'lead_name',
-        label: t('sessions.table.clientName'),
-        accessorKey: 'lead_name',
-        sortable: true,
-        minWidth: '180px',
-        cellClassName: 'whitespace-nowrap font-medium',
-      },
-      {
-        id: 'session_date',
-        label: t('sessions.table.date'),
-        sortable: true,
-        sortId: 'session_date',
-        minWidth: '150px',
-        render: (session) => <span className="whitespace-nowrap">{formatLongDate(session.session_date)}</span>,
-      },
-      {
-        id: 'session_time',
-        label: t('sessions.table.time'),
-        sortable: true,
-        minWidth: '120px',
-        render: (session) => <span className="whitespace-nowrap">{formatTime(session.session_time)}</span>,
-      },
-      {
-        id: 'status',
+        id: 'project_stage',
         label: t('sessions.table.status'),
         sortable: true,
-        minWidth: '140px',
-        render: (session) => (
-          <SessionStatusBadge
-            sessionId={session.id}
-            currentStatus={session.status}
-            editable
-            size="sm"
-            onStatusChange={fetchSessions}
-          />
-        ),
+        sortId: 'project_stage',
+        minWidth: '160px',
+        render: (session) => {
+          if (!session.project_id) return <span className="text-muted-foreground">—</span>;
+          const ps = session.project_status;
+          if (!ps) return <span className="text-muted-foreground">—</span>;
+          const color = ps.color || '#A0AEC0';
+          return (
+            <div
+              className="inline-flex items-center gap-2 rounded-full font-medium px-2 py-1"
+              style={{
+                backgroundColor: `${color}15`,
+                color,
+                border: `1px solid ${color}60`,
+              }}
+            >
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+              <span className="text-xs uppercase tracking-wide font-semibold">{ps.name}</span>
+            </div>
+          );
+        },
         cellClassName: 'whitespace-nowrap',
       },
+      // 6) Notes
       {
         id: 'notes',
         label: t('sessions.table.notes'),

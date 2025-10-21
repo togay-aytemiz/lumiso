@@ -98,12 +98,14 @@ const ProjectKanbanBoard = ({
   const { settings: kanbanSettings } = useKanbanSettings();
 
   useEffect(() => {
-    if (projectStatuses && projectStatuses.length > 0) {
-      setStatuses(projectStatuses.filter(s => s.name?.toLowerCase?.() !== PROJECT_STATUS.ARCHIVED));
-      setLoading(false);
-    } else {
+    // Only self-fetch if no statuses were provided at all
+    if (typeof projectStatuses === 'undefined') {
       fetchStatuses();
+      return;
     }
+    // When provided (even empty initially), use them and avoid duplicate fetches
+    setStatuses((projectStatuses || []).filter(s => s.name?.toLowerCase?.() !== PROJECT_STATUS.ARCHIVED));
+    setLoading(false);
   }, [projectStatuses]);
 
   const fetchStatuses = async () => {
@@ -111,7 +113,9 @@ const ProjectKanbanBoard = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: organizationId } = await supabase.rpc("get_user_active_organization_id");
+      // Use shared org util instead of RPC to avoid flaky errors
+      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
+      const organizationId = await getUserOrganizationId();
       if (!organizationId) return;
 
       const { data, error } = await supabase
@@ -124,6 +128,7 @@ const ProjectKanbanBoard = ({
       setStatuses(((data || []) as ProjectStatusSummary[]).filter(s => s.name?.toLowerCase?.() !== PROJECT_STATUS.ARCHIVED));
     } catch (error) {
       console.error("Error fetching project statuses:", error);
+      // Avoid noisy toasts when board is not visible
       toast.error(t('forms:projects.toasts.statuses_load_failed'));
     } finally {
       setLoading(false);

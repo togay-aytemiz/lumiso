@@ -157,15 +157,15 @@ export const getWeekRange = (date: Date, locale?: string): { start: Date; end: D
 };
 
 export const isNetworkError = (error: unknown): boolean => {
+  // If the browser explicitly reports we're offline, trust it
   if (typeof navigator !== "undefined" && navigator.onLine === false) {
     return true;
   }
 
-  if (!error) {
-    return false;
-  }
+  if (!error) return false;
 
-  if (error instanceof TypeError && error.message === "Failed to fetch") {
+  // True network-level failures from fetch
+  if (error instanceof TypeError && /Failed to fetch/i.test(error.message)) {
     return true;
   }
 
@@ -176,5 +176,7 @@ export const isNetworkError = (error: unknown): boolean => {
         ? (error as { message: string }).message
         : "";
 
-  return /Failed to fetch|NetworkError|request failed|load failed|net::ERR/i.test(message);
+  // Be conservative: only match clear network signatures
+  // Avoid generic phrases like "request failed" to prevent false offline states
+  return /Failed to fetch|NetworkError( when attempting to fetch resource)?|net::ERR/i.test(message);
 };

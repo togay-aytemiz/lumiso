@@ -1,6 +1,6 @@
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
 // Hook for fetching organization-specific data with automatic cache invalidation
 export function useOrganizationData<T>(
@@ -145,6 +145,7 @@ export function useProjectStatuses() {
     },
     enabled: !!activeOrganizationId,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    placeholderData: keepPreviousData,
   });
 }
 

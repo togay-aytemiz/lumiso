@@ -44,7 +44,16 @@ import { useConnectivity } from "@/contexts/ConnectivityContext";
 
 const AllProjects = () => {
   const [boardProjects, setBoardProjects] = useState<ProjectListItem[]>([]);
-  const [viewMode, setViewMode] = useState<'board' | 'list' | 'archived'>('board');
+  // Default to list to avoid initial board mount flicker
+  const [viewMode, setViewMode] = useState<'board' | 'list' | 'archived'>(() => {
+    if (typeof window !== 'undefined') {
+      const urlView = new URLSearchParams(window.location.search).get('view');
+      if (urlView === 'board' || urlView === 'list' || urlView === 'archived') return urlView;
+      const stored = localStorage.getItem('projects:viewMode');
+      if (stored === 'board' || stored === 'list' || stored === 'archived') return stored as any;
+    }
+    return 'list';
+  });
   const [viewingProject, setViewingProject] = useState<ProjectListItem | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [quickViewProject, setQuickViewProject] = useState<ProjectListItem | null>(null);
@@ -784,27 +793,63 @@ const AllProjects = () => {
       boardLoadInFlightRef.current = true;
       setBoardLoading(true);
       const t = startTimer('Projects.boardLoad');
-      const INITIAL_CHUNK = 200;
-      const { projects, count } = await fetchProjectsData('active', {
+      const INITIAL_CHUNK = 200; // render first chunk quickly
+
+      // First request gets initial data and total count
+      const { projects: first, count } = await fetchProjectsData('active', {
         from: 0,
         to: INITIAL_CHUNK - 1,
         includeCount: true,
       });
-      const collected = [...projects];
-      let chunks = 1;
-      for (let from = collected.length; from < count; from += INITIAL_CHUNK) {
-        const to = Math.min(from + INITIAL_CHUNK - 1, count - 1);
-        const { projects: chunk } = await fetchProjectsData('active', {
-          from,
-          to,
-          includeCount: false,
-        });
-        collected.push(...chunk);
-        chunks += 1;
-      }
-      setBoardProjects(collected);
-      t.end({ total: collected.length, chunks });
+
+      // Render immediately for perceived speed
+      setBoardProjects(first);
+      setBoardLoading(false);
       handleNetworkRecovery();
+
+      // If there are more rows, fetch the remaining ranges in background with limited concurrency
+      if (count > first.length) {
+        const ranges: Array<{ from: number; to: number }> = [];
+        for (let from = first.length; from < count; from += INITIAL_CHUNK) {
+          const to = Math.min(from + INITIAL_CHUNK - 1, count - 1);
+          ranges.push({ from, to });
+        }
+
+        let fetched = first.length;
+        let idx = 0;
+        const CONCURRENCY = 4;
+
+        const runOne = async (): Promise<void> => {
+          const current = ranges[idx++];
+          if (!current) return;
+          try {
+            const { projects: chunk } = await fetchProjectsData('active', {
+              from: current.from,
+              to: current.to,
+              includeCount: false,
+            });
+            if (chunk && chunk.length) {
+              // Progressive append without blocking UI
+              setBoardProjects((prev) => [...prev, ...chunk]);
+              fetched += chunk.length;
+            }
+          } finally {
+            if (idx < ranges.length) {
+              await runOne();
+            }
+          }
+        };
+
+        await Promise.all(
+          new Array(Math.min(CONCURRENCY, ranges.length))
+            .fill(0)
+            .map(() => runOne())
+        );
+
+        t.end({ total: fetched, chunks: Math.ceil(count / INITIAL_CHUNK) });
+      } else {
+        t.end({ total: first.length, chunks: 1 });
+      }
     } catch (error) {
       console.error('Failed to load board projects', error);
       handleNetworkError(error);
@@ -859,6 +904,12 @@ const AllProjects = () => {
   const handleViewChange = useCallback(
     (view: 'board' | 'list' | 'archived') => {
       setViewMode(view);
+      try { localStorage.setItem('projects:viewMode', view); } catch {}
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('view', view);
+        window.history.replaceState({}, '', url.toString());
+      } catch {}
 
       if (view === 'board') {
         loadBoardProjects();

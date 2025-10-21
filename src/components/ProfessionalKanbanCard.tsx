@@ -35,11 +35,11 @@ interface ProfessionalKanbanCardProps {
   onClick: () => void;
 }
 
-export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
+export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = React.memo(function ProfessionalKanbanCard({
   project,
   kanbanSettings,
   onClick,
-}) => {
+}: ProfessionalKanbanCardProps) {
   const { t } = useFormsTranslation();
 
   return (
@@ -132,4 +132,4 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
       </CardContent>
     </Card>
   );
-};
+});

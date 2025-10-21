@@ -453,7 +453,7 @@ export class ProjectService extends BaseEntityService {
       .select(`
         *,
         lead:leads(id, name, status, email, phone),
-        project_status:project_statuses(id, name, color),
+        project_status:project_statuses!projects_status_id_fkey(id, name, color),
         project_type:project_types(id, name)
       `)
       .eq('id', id)

@@ -14,10 +14,9 @@ interface ConnectivityContextValue {
 const ConnectivityContext = createContext<ConnectivityContextValue | undefined>(undefined);
 
 export const ConnectivityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isOffline, setIsOffline] = useState<boolean>(() => {
-    if (typeof navigator === 'undefined') return false;
-    return !navigator.onLine;
-  });
+  // Default to online; rely on real network errors or offline events to flip state.
+  // navigator.onLine can be unreliable on some platforms at startup.
+  const [isOffline, setIsOffline] = useState<boolean>(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const retryCallbacksRef = useRef<Map<string, RetryFn>>(new Map());
 
@@ -97,4 +96,3 @@ export const useConnectivity = (): ConnectivityContextValue => {
   if (!ctx) throw new Error('useConnectivity must be used within a ConnectivityProvider');
   return ctx;
 };
-

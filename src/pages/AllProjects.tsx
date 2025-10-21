@@ -833,6 +833,9 @@ const AllProjects = () => {
               setBoardProjects((prev) => [...prev, ...chunk]);
               fetched += chunk.length;
             }
+          } catch (err) {
+            // Do not bubble up chunk errors; avoid triggering global offline banner
+            console.error('Background board chunk fetch failed', err);
           } finally {
             if (idx < ranges.length) {
               await runOne();
@@ -1142,7 +1145,7 @@ const AllProjects = () => {
             onProjectsChange={refreshAll}
             onProjectUpdate={handleProjectUpdate}
             onQuickView={handleQuickView}
-            isLoading={boardLoading}
+            isLoading={boardLoading || statusesLoading}
           />
         ) : (
           <div className="h-full overflow-y-auto p-4 sm:p-6">

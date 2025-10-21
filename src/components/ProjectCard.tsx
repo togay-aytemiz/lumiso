@@ -121,8 +121,20 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
                 {project.description}
               </p>
             )}
+            {/* Mobile-only: status chip on the left with chevron on the right */}
+            <div className="flex items-center justify-between md:hidden pt-1">
+              <ProjectStatusBadge
+                projectId={project.id}
+                currentStatusId={project.status_id}
+                editable={false}
+                size="sm"
+                className="text-xs"
+              />
+              <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-300 group-hover:translate-x-1" />
+            </div>
           </div>
-          <div className="flex flex-col items-end gap-3 text-sm">
+          {/* Desktop-only: keep status chip and chevron on the right */}
+          <div className="hidden md:flex flex-col items-end gap-3 text-sm">
             <ProjectStatusBadge
               projectId={project.id}
               currentStatusId={project.status_id}

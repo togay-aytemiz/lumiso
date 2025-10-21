@@ -9,10 +9,28 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 export function useLeadFieldDefinitions() {
-  const [fieldDefinitions, setFieldDefinitions] = useState<
-    LeadFieldDefinition[]
-  >([]);
-  const [loading, setLoading] = useState(true);
+  // Try bootstrapping from localStorage if pre-seeded by OrganizationProvider
+  const bootstrapFromStorage = () => {
+    if (typeof window === 'undefined') return null as LeadFieldDefinition[] | null;
+    try {
+      // We don't know org here; allow any org cache as a fast-start hint.
+      // Prefer the most recently written by scanning keys.
+      const keys = Object.keys(localStorage).filter(k => k.startsWith('lead_field_definitions:'));
+      if (!keys.length) return null;
+      // Choose the longest key as a naive proxy for latest (keys are similar; ordering by recency is not exposed)
+      const key = keys.sort().slice(-1)[0];
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as LeadFieldDefinition[];
+      return Array.isArray(parsed) ? parsed : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const seeded = bootstrapFromStorage();
+  const [fieldDefinitions, setFieldDefinitions] = useState<LeadFieldDefinition[]>(seeded ?? []);
+  const [loading, setLoading] = useState(!seeded);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 

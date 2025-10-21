@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Organization {
   id: string;
@@ -35,6 +36,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
   const [activeOrganization, setActiveOrganization] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const fetchActiveOrganization = async () => {
     try {
@@ -154,6 +156,164 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Prefetch common organization-scoped data to speed up first paint across pages
+  const prefetchOrgData = useCallback(async (orgId: string) => {
+    const tasks: Array<Promise<unknown>> = [];
+
+    // Project types
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: ['project_types', orgId],
+        queryFn: async () => {
+          const { data, error } = await supabase
+            .from('project_types')
+            .select('*')
+            .eq('organization_id', orgId)
+            .order('sort_order');
+          if (error) throw error;
+          return data || [];
+        },
+        staleTime: 5 * 60 * 1000,
+      })
+    );
+
+    // Project statuses
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: ['project_statuses', orgId],
+        queryFn: async () => {
+          const { data, error } = await supabase
+            .from('project_statuses')
+            .select('*')
+            .eq('organization_id', orgId)
+            .order('sort_order');
+          if (error) throw error;
+          return data || [];
+        },
+        staleTime: 5 * 60 * 1000,
+      })
+    );
+
+    // Services
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: ['services', orgId],
+        queryFn: async () => {
+          const { data, error } = await supabase
+            .from('services')
+            .select('*')
+            .eq('organization_id', orgId)
+            .order('name');
+          if (error) throw error;
+          return data || [];
+        },
+        staleTime: 5 * 60 * 1000,
+      })
+    );
+
+    // Session statuses
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: ['session_statuses', orgId],
+        queryFn: async () => {
+          const { data, error } = await supabase
+            .from('session_statuses')
+            .select('*')
+            .eq('organization_id', orgId)
+            .order('sort_order');
+          if (error) throw error;
+          return data || [];
+        },
+        staleTime: 5 * 60 * 1000,
+      })
+    );
+
+    // Lead statuses (used widely in leads and dialogs)
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: ['lead_statuses', orgId],
+        queryFn: async () => {
+          const { data, error } = await supabase
+            .from('lead_statuses')
+            .select('*')
+            .eq('organization_id', orgId)
+            .order('sort_order');
+          if (error) throw error;
+          return data || [];
+        },
+        staleTime: 5 * 60 * 1000,
+      })
+    );
+
+    // Organization settings
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: ['organization_settings', orgId],
+        queryFn: async () => {
+          // Ensure exists then fetch
+          await supabase.rpc('ensure_organization_settings', { org_id: orgId });
+          const { data, error } = await supabase
+            .from('organization_settings')
+            .select('*')
+            .eq('organization_id', orgId)
+            .single();
+          if (error) throw error;
+          return data;
+        },
+        staleTime: 5 * 60 * 1000,
+      })
+    );
+
+    // Packages (used by settings, dialogs)
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: ['packages', orgId],
+        queryFn: async () => {
+          const { data: user } = await supabase.auth.getUser();
+          if (!user.user) return [] as any[];
+          await supabase.rpc('ensure_default_packages_for_org', {
+            user_uuid: user.user.id,
+            org_id: orgId,
+          });
+          const { data, error } = await supabase
+            .from('packages')
+            .select('*')
+            .eq('organization_id', orgId)
+            .order('created_at', { ascending: false });
+          if (error) throw error;
+          return data || [];
+        },
+        staleTime: 5 * 60 * 1000,
+      })
+    );
+
+    // Lead field definitions — not on React Query, seed localStorage for fast bootstrap
+    tasks.push((async () => {
+      try {
+        await supabase.rpc('ensure_default_lead_field_definitions', { org_id: orgId, user_uuid: (await supabase.auth.getUser()).data.user?.id });
+      } catch {}
+      try {
+        const { data, error } = await supabase
+          .from('lead_field_definitions')
+          .select('*')
+          .eq('organization_id', orgId)
+          .order('sort_order', { ascending: true });
+        if (!error && data && typeof window !== 'undefined') {
+          try { localStorage.setItem(`lead_field_definitions:${orgId}`, JSON.stringify(data)); } catch {}
+        }
+      } catch {}
+    })());
+
+    await Promise.allSettled(tasks);
+  }, [queryClient]);
+
+  // Trigger prefetch whenever org becomes available
+  useEffect(() => {
+    if (activeOrganizationId) {
+      prefetchOrgData(activeOrganizationId);
+    }
+  }, [activeOrganizationId, prefetchOrgData]);
 
   return (
     <OrganizationContext.Provider

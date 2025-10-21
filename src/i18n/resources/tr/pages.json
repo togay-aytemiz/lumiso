@@ -783,6 +783,24 @@
     "emptyState": {
       "title": "Hatırlatma bulunamadı",
       "description": "Seçili filtre için hatırlatma yok"
+    },
+    "stats": {
+      "overdue": "Gecikmiş",
+      "today": "Bugün",
+      "upcoming": "Yaklaşan",
+      "completed": "Tamamlandı",
+      "tomorrowBadge": "Yarın: {{count}}"
+    },
+    "statsDescriptions": {
+      "overdue": "Hemen ilgilenmeniz gerekenler",
+      "today": "Bugün planlananlar",
+      "upcoming": "Yarın: {{tomorrow}} • Daha sonra: {{later}}",
+      "completed": "Tamamladıklarınız"
+    },
+    "timeline": {
+      "openLead": "Kişiyi aç",
+      "completedTitle": "Tamamlanan hatırlatmalar",
+      "completedDescription": "Tamamladığınız öğeler hızlı erişim için burada saklanır."
     }
   },
   "settings": {

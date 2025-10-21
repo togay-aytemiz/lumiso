@@ -783,6 +783,24 @@
     "emptyState": {
       "title": "No reminders found",
       "description": "You don't have any reminders for the selected filter"
+    },
+    "stats": {
+      "overdue": "Overdue",
+      "today": "Due today",
+      "upcoming": "Upcoming",
+      "completed": "Completed",
+      "tomorrowBadge": "Tomorrow: {{count}}"
+    },
+    "statsDescriptions": {
+      "overdue": "Needs your attention",
+      "today": "Scheduled for today",
+      "upcoming": "Tomorrow: {{tomorrow}} • Later: {{later}}",
+      "completed": "Marked as done"
+    },
+    "timeline": {
+      "openLead": "Open lead",
+      "completedTitle": "Completed reminders",
+      "completedDescription": "Items you've marked as done stay here for quick reference."
     }
   },
   "settings": {

@@ -503,8 +503,12 @@
     "reminderBadge": "Reminder",
     "overdue": "Overdue",
     "today": "Today",
+    "tomorrow": "Tomorrow",
     "completed": "Completed",
-    "lead": "Lead"
+    "lead": "Lead",
+    "markComplete": "Mark as done",
+    "markIncomplete": "Mark as not done",
+    "noTime": "No time set"
   },
   "sessions_form": {
     "title": "Sessions",

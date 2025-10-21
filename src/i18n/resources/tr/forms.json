@@ -691,8 +691,12 @@
     "reminderBadge": "Hatırlatıcı",
     "overdue": "Gecikmiş",
     "today": "Bugün",
+    "tomorrow": "Yarın",
     "completed": "Tamamlandı",
-    "lead": "Kişi"
+    "lead": "Kişi",
+    "markComplete": "Tamamlandı olarak işaretle",
+    "markIncomplete": "Tamamlanmadı olarak işaretle",
+    "noTime": "Saat belirlenmemiş"
   },
   "viewProject": {
     "errorLoadingSessions": "Seanslar yüklenirken hata",

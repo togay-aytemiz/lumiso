@@ -812,7 +812,13 @@
     "errorFetchingData": "Error fetching data"
   },
   "filterBar": {
-    "showCompleted": "Show Completed"
+    "showCompleted": "Show Completed",
+    "filters": "Filters",
+    "clear_all": "Clear All",
+    "apply": "Apply",
+    "date_range": "Date Range",
+    "status": "Status",
+    "options": "Options"
   },
   "viewProject": {
     "errorLoadingSessions": "Error loading sessions",

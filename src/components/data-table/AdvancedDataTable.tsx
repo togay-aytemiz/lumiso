@@ -324,6 +324,14 @@ export function AdvancedDataTable<T>({
   const filterTriggerLabel = filters?.triggerLabel ?? filterPanelTitle;
   const showHeaderSearch = Boolean(onSearchChange);
 
+  // Determine if a summary row will be visible on mobile to tweak spacing
+  const mobileSummaryPresent = useMemo(() => {
+    const hasChips = Boolean(summary?.chips && summary.chips.length > 0);
+    const hasText = Boolean(summary?.text);
+    // Only consider mobile here; desktop spacing remains unchanged
+    return isMobile && (hasChips || hasText);
+  }, [isMobile, summary?.chips, summary?.text]);
+
   const renderSearchInput = () => (
     <div className="relative w-full h-9 sm:max-w-sm md:max-w-md lg:max-w-lg">
       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -506,7 +514,10 @@ export function AdvancedDataTable<T>({
         </Sheet>
       )}
 
-      <CardContent className="px-4 md:px-6 pt-0 pb-0 -mt-1.5 sm:-mt-2">
+      <CardContent className={cn(
+        "px-4 md:px-6 pt-0 pb-0",
+        mobileSummaryPresent ? "mt-2" : "-mt-1.5 sm:-mt-2"
+      )}>
         {isLoading ? (
           loadingState || <TableLoadingSkeleton />
         ) : (

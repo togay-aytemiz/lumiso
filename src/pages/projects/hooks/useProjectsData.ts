@@ -524,6 +524,11 @@ export function useProjectsData({
       setListProjects(projects);
       setListTotalCount(count);
       t.end({ rows: projects.length, total: count });
+    } catch (error) {
+      // Swallow errors here to avoid unhandled promise rejections that spam the console.
+      // Pages can decide how to surface errors (e.g., board view toast).
+      console.error('useProjectsData.listLoad error', error);
+      // Preserve previous data; do not clear UI abruptly.
     } finally {
       setListLoading(false);
       if (first) {
@@ -548,6 +553,8 @@ export function useProjectsData({
       setArchivedProjects(projects);
       setArchivedTotalCount(count);
       t.end({ rows: projects.length, total: count });
+    } catch (error) {
+      console.error('useProjectsData.archivedLoad error', error);
     } finally {
       setArchivedLoading(false);
     }

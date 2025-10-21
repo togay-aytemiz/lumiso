@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 import NewSessionDialog from "@/components/NewSessionDialog";
 import { formatTime, formatLongDate, getWeekRange } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
@@ -81,6 +82,7 @@ const AllSessions = () => {
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const fetchSessions = useCallback(async () => {
     setLoading(true);
@@ -595,7 +597,7 @@ const AllSessions = () => {
           isLoading={loading}
           emptyState={emptyState}
           toolbar={toolbarContent}
-          summary={tableSummary}
+          summary={isMobile ? tableSummary : undefined}
         />
 
         <ViewProjectDialog

@@ -756,8 +756,15 @@ const AllProjects = () => {
     [archivedLoading, archivedProjects.length, exporting, handleExportProjects, t]
   );
 
+  // Prevent overlapping loads and debounce error toasts
+  const boardLoadInFlightRef = useRef(false);
+  const lastBoardErrorAtRef = useRef(0);
+  const ERROR_TOAST_DEBOUNCE_MS = 8000;
+
   const loadBoardProjects = useCallback(async () => {
     try {
+      if (boardLoadInFlightRef.current) return;
+      boardLoadInFlightRef.current = true;
       setBoardLoading(true);
       const t = startTimer('Projects.boardLoad');
       const INITIAL_CHUNK = 200;
@@ -782,13 +789,18 @@ const AllProjects = () => {
       t.end({ total: collected.length, chunks });
     } catch (error) {
       console.error('Failed to load board projects', error);
-      toast({
-        title: t('common:labels.error'),
-        description: t('pages:projects.failedToLoadProjects'),
-        variant: 'destructive',
-      });
+      const now = Date.now();
+      if (now - lastBoardErrorAtRef.current > ERROR_TOAST_DEBOUNCE_MS) {
+        lastBoardErrorAtRef.current = now;
+        toast({
+          title: t('common:labels.error'),
+          description: t('pages:projects.failedToLoadProjects'),
+          variant: 'destructive',
+        });
+      }
     } finally {
       setBoardLoading(false);
+      boardLoadInFlightRef.current = false;
     }
   }, [fetchProjectsData, t, toast]);
 

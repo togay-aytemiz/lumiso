@@ -618,7 +618,13 @@
     "errorFetchingData": "Veri getirme hatası"
   },
   "filterBar": {
-    "showCompleted": "Tamamlananları Göster"
+    "showCompleted": "Tamamlananları Göster",
+    "filters": "Filtreler",
+    "clear_all": "Tümünü Temizle",
+    "apply": "Uygula",
+    "date_range": "Tarih Aralığı",
+    "status": "Durum",
+    "options": "Seçenekler"
   },
   "projects": {
     "welcomeTutorialTitle": "Proje Yönetim Merkezinize Hoş Geldiniz",

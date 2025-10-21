@@ -61,7 +61,8 @@ export function FilterBar({
   const { t: tForms } = useFormsTranslation();
   const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const { t } = useTranslation();
+  // Use forms namespace for FilterBar-specific strings
+  const { t } = useTranslation('forms');
   
   // Use translation as default if no label provided
   const completedLabel = showCompletedLabel || tForms('filterBar.showCompleted');
@@ -103,7 +104,7 @@ export function FilterBar({
       {/* Status Filter */}
       {statusOptions && onStatusChange && (
         <div className="space-y-3">
-          <Label className="text-sm font-medium">{t("forms.filter_bar.status")}</Label>
+          <Label className="text-sm font-medium">{t("filterBar.status")}</Label>
           <Select value={activeStatus} onValueChange={onStatusChange}>
             <SelectTrigger>
               <SelectValue />
@@ -122,7 +123,7 @@ export function FilterBar({
       {/* Date Filters */}
       {allDateFilters && onDateFilterChange && (
         <div className="space-y-3">
-          <Label className="text-sm font-medium">{t("forms.filter_bar.date_range")}</Label>
+          <Label className="text-sm font-medium">{t("filterBar.date_range")}</Label>
           <div className="grid grid-cols-2 gap-2">
             {allDateFilters.map((option) => (
               <Button
@@ -147,7 +148,7 @@ export function FilterBar({
       {/* Show Completed Toggle */}
       {onShowCompletedChange && (
         <div className="space-y-3">
-          <Label className="text-sm font-medium">{t("forms.filter_bar.options")}</Label>
+          <Label className="text-sm font-medium">{t("filterBar.options")}</Label>
           <div className="flex items-center justify-between">
             <Label htmlFor="show-completed" className="text-sm">
               {completedLabel}
@@ -196,7 +197,7 @@ export function FilterBar({
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" className="relative flex-shrink-0">
                   <Filter className="h-4 w-4" />
-                  <span className="ml-1">{t("forms.filter_bar.filters")}</span>
+                  <span className="ml-1">{t("filterBar.filters")}</span>
                   {activeFilterCount > 0 && (
                     <Badge 
                       variant="destructive" 
@@ -209,17 +210,17 @@ export function FilterBar({
               </SheetTrigger>
               <SheetContent side="bottom" className="max-h-[80vh]">
                 <SheetHeader>
-                  <SheetTitle>{t("forms.filter_bar.filters")}</SheetTitle>
+                  <SheetTitle>{t("filterBar.filters")}</SheetTitle>
                 </SheetHeader>
                 <div className="py-6">
                   <FilterContent />
                 </div>
                 <SheetFooter className="gap-2">
                   <Button variant="ghost" onClick={handleClearFilters} className="flex-1">
-                    {t("forms.filter_bar.clear_all")}
+                    {t("filterBar.clear_all")}
                   </Button>
                   <Button onClick={handleApplyFilters} className="flex-1">
-                    {t("forms.filter_bar.apply")}
+                    {t("filterBar.apply")}
                   </Button>
                 </SheetFooter>
               </SheetContent>

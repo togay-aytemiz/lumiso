@@ -123,11 +123,6 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
             )}
           </div>
           <div className="flex flex-col items-end gap-3 text-sm">
-            <div className="hidden md:flex items-center gap-2 text-muted-foreground">
-              <span>{t('projectCard.created')} {createdDate}</span>
-              {isUpdated && <span className="text-muted-foreground/70">•</span>}
-              {isUpdated && <span>{t('projectCard.updated')} {updatedDate}</span>}
-            </div>
             <ProjectStatusBadge
               projectId={project.id}
               currentStatusId={project.status_id}
@@ -229,10 +224,7 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
           </div>
         </div>
 
-        <div className="flex items-center justify-between text-xs text-muted-foreground md:hidden">
-          <span>{t('projectCard.created')} {createdDate}</span>
-          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-300 group-hover:translate-x-1" />
-        </div>
+        
       </CardContent>
     </Card>
   );

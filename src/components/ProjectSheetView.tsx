@@ -409,7 +409,7 @@ export function ProjectSheetView({
 
   if (!project) return null;
 
-  const clientName = lead?.name || leadName;
+  // Client name no longer displayed as a header chip
 
   const statusBadges = (
     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground/80 sm:text-[0.8rem]">
@@ -428,18 +428,12 @@ export function ProjectSheetView({
           {projectType.name.toUpperCase()}
         </Badge>
       )}
-
-      {clientName && (
-        <span className="inline-flex items-center rounded-full border border-border/50 bg-background/80 px-3 py-1 text-[0.65rem] font-medium text-muted-foreground shadow-sm">
-          {clientName}
-        </span>
-      )}
     </div>
   );
 
   const actionButtons = (
     <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-      {mode === 'sheet' && onViewFullDetails && (
+      {mode === 'sheet' && onViewFullDetails && !isMobile && (
         <Button
           variant="outline"
           size="sm"
@@ -489,17 +483,16 @@ export function ProjectSheetView({
         variant="ghost"
         size="sm"
         onClick={() => onOpenChange(false)}
-        className="w-full justify-center text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:w-auto sm:px-3"
+        className="hidden sm:inline-flex justify-center text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:w-auto sm:px-3"
       >
-        <span className="hidden sm:inline">{tForms('project_sheet.close')}</span>
-        <X className="h-4 w-4 sm:hidden" />
+        <span>{tForms('project_sheet.close')}</span>
       </Button>
     </div>
   );
 
   // Header content - refreshed layout for sheet header
   const headerContent = (
-    <div className="w-full rounded-2xl border border-border/60 bg-muted/20 p-4 shadow-sm backdrop-blur-sm sm:p-6">
+    <div className="w-full rounded-2xl border border-border/60 bg-background p-4 shadow-sm sm:p-6">
       <div className="flex flex-col gap-4 sm:gap-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex-1 min-w-0 space-y-4">
@@ -698,7 +691,17 @@ export function ProjectSheetView({
             side={isMobile ? "bottom" : "right"}
             className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-y-auto' : isMobile ? 'h-[100vh] max-w-none w-full' : 'sm:max-w-5xl h-[100vh] overflow-y-auto'} overscroll-contain pr-2 pt-8 sm:pt-6`}
           >
-            <div className="max-w-full overflow-x-hidden">
+            <div className="max-w-full overflow-x-hidden relative">
+              {/* Mobile-only top-right close button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onOpenChange(false)}
+                className="sm:hidden absolute top-2 right-2 h-8 w-8 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                aria-label={tForms('project_sheet.close')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
               <SheetHeader className="pb-4">
                 {headerContent}
               </SheetHeader>

@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+// Import namespace form to avoid ESM/CJS interop edge cases that can surface as
+// "Component is not a function" inside DragDropContext's ErrorBoundary.
+import * as DnD from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
@@ -255,7 +257,7 @@ const ProjectKanbanBoard = ({
   };
 
   const renderProjectCard = (project: ProjectListItem, index: number) => (
-    <Draggable key={project.id} draggableId={project.id} index={index}>
+    <DnD.Draggable key={project.id} draggableId={project.id} index={index}>
       {(provided) => (
         <div
           ref={provided.innerRef}
@@ -270,7 +272,7 @@ const ProjectKanbanBoard = ({
           />
         </div>
       )}
-    </Draggable>
+    </DnD.Draggable>
   );
 
   const renderColumn = (status: ProjectStatusSummary | null, columnProjects: ProjectListItem[]) => {
@@ -310,7 +312,7 @@ const ProjectKanbanBoard = ({
         </div>
 
         <div className="flex-1 px-4 pb-4 min-h-0">
-          <Droppable droppableId={statusId}>
+          <DnD.Droppable droppableId={statusId}>
             {(provided, snapshot) => (
               <div
                 ref={provided.innerRef}
@@ -358,7 +360,7 @@ const ProjectKanbanBoard = ({
                 </div>
               </div>
             )}
-          </Droppable>
+          </DnD.Droppable>
         </div>
       </div>
     );
@@ -373,12 +375,12 @@ const ProjectKanbanBoard = ({
         style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "thin", touchAction: "pan-x pan-y" }}
       >
         <div className="p-4 sm:p-6 h-full">
-          <DragDropContext onDragEnd={handleDragEnd}>
+          <DnD.DragDropContext onDragEnd={handleDragEnd}>
             <div className="flex gap-2 sm:gap-3 pb-4 h-full" style={{ width: "max-content", minWidth: "100%" }}>
               {statuses.map(status => renderColumn(status, getProjectsByStatus(status.id)))}
               {getProjectsWithoutStatus().length > 0 && renderColumn(null, getProjectsWithoutStatus())}
             </div>
-          </DragDropContext>
+          </DnD.DragDropContext>
         </div>
       </div>
 

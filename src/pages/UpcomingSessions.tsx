@@ -1,24 +1,26 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus, Calendar } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import NewSessionDialog from "@/components/NewSessionDialog";
-import { formatDate, formatTime, formatLongDate, getWeekRange } from "@/lib/utils";
+import { formatTime, formatLongDate, getWeekRange } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
-import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
+import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import SessionStatusBadge from "@/components/SessionStatusBadge";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { FilterBar } from "@/components/FilterBar";
-import { ListLoadingSkeleton } from "@/components/ui/loading-presets";
 import SessionSheetView from "@/components/SessionSheetView";
+import {
+  AdvancedDataTable,
+  type AdvancedTableColumn,
+  type AdvancedDataTableSortState,
+} from "@/components/data-table";
 
 interface Session {
   id: string;
@@ -34,8 +36,34 @@ interface Session {
   lead_status?: string;
 }
 
-type SortField = 'session_date' | 'session_time' | 'status' | 'lead_name' | 'created_at';
-type SortDirection = 'asc' | 'desc';
+type DateFilterKey =
+  | 'all'
+  | 'past'
+  | 'today'
+  | 'tomorrow'
+  | 'thisweek'
+  | 'nextweek'
+  | 'thismonth'
+  | 'nextmonth';
+
+const DATE_FILTER_KEYS: DateFilterKey[] = [
+  'all',
+  'past',
+  'today',
+  'tomorrow',
+  'thisweek',
+  'nextweek',
+  'thismonth',
+  'nextmonth',
+];
+
+const QUICK_DATE_FILTER_KEYS: DateFilterKey[] = ['all', 'today', 'tomorrow'];
+
+interface DateFilterOption {
+  key: DateFilterKey;
+  label: string;
+  count: number;
+}
 
 const AllSessions = () => {
   const { t: tForms } = useFormsTranslation();
@@ -43,20 +71,19 @@ const AllSessions = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("planned");
-  const [dateFilter, setDateFilter] = useState<string>("all");
-  const [sortField, setSortField] = useState<SortField>("session_date");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [dateFilter, setDateFilter] = useState<DateFilterKey>("all");
+  const [sortState, setSortState] = useState<AdvancedDataTableSortState>({
+    columnId: "session_date",
+    direction: "asc",
+  });
   const navigate = useNavigate();
   const [viewingProject, setViewingProject] = useState<any>(null);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
 
-  useEffect(() => {
-    fetchSessions();
-  }, []);
-
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
+    setLoading(true);
     try {
       // Get sessions with proper validation using inner joins
       const { data: sessionsData, error: sessionsError } = await supabase
@@ -129,9 +156,13 @@ const AllSessions = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const getDateRangeForFilter = (filter: string) => {
+  useEffect(() => {
+    fetchSessions();
+  }, [fetchSessions]);
+
+  const getDateRangeForFilter = (filter: DateFilterKey) => {
     const today = new Date();
     const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
@@ -166,9 +197,9 @@ const AllSessions = () => {
     }
   };
 
-  const getSessionCountForDateFilter = (filter: string) => {
+  const getSessionCountForDateFilter = (filter: DateFilterKey) => {
     let filtered = sessions;
-    
+
     // Apply status filter first
     if (statusFilter !== "all") {
       filtered = filtered.filter(session => session.status === statusFilter);
@@ -188,81 +219,105 @@ const AllSessions = () => {
     }).length;
   };
 
+  const getDateFilterLabel = useCallback((filter: DateFilterKey) => {
+    switch (filter) {
+      case 'all':
+        return t('sessions.filters.dateFilters.all');
+      case 'past':
+        return t('sessions.filters.dateFilters.past');
+      case 'today':
+        return t('sessions.filters.dateFilters.today');
+      case 'tomorrow':
+        return t('sessions.filters.dateFilters.tomorrow');
+      case 'thisweek':
+        return t('sessions.filters.dateFilters.thisWeek');
+      case 'nextweek':
+        return t('sessions.filters.dateFilters.nextWeek');
+      case 'thismonth':
+        return t('sessions.filters.dateFilters.thisMonth');
+      case 'nextmonth':
+        return t('sessions.filters.dateFilters.nextMonth');
+      default:
+        return '';
+    }
+  }, [t]);
+
+  const dateFilterOptions = useMemo<DateFilterOption[]>(
+    () =>
+      DATE_FILTER_KEYS.map((key) => ({
+        key,
+        label: getDateFilterLabel(key),
+        count: getSessionCountForDateFilter(key),
+      })),
+    [getDateFilterLabel, sessions, statusFilter]
+  );
+
+  const quickDateFilters = useMemo<DateFilterOption[]>(
+    () =>
+      QUICK_DATE_FILTER_KEYS.map((key) =>
+        dateFilterOptions.find((option) => option.key === key)
+      ).filter((option): option is DateFilterOption => Boolean(option)),
+    [dateFilterOptions]
+  );
+
   const filteredAndSortedSessions = useMemo(() => {
     let filtered = sessions;
-    
-    // Apply status filter
+
     if (statusFilter !== "all") {
-      filtered = filtered.filter(session => session.status === statusFilter);
+      filtered = filtered.filter((session) => session.status === statusFilter);
     }
 
-    // Apply date filter
     if (dateFilter !== "all") {
       const dateRange = getDateRangeForFilter(dateFilter);
       if (dateRange) {
-        filtered = filtered.filter(session => {
+        filtered = filtered.filter((session) => {
           const sessionDate = new Date(session.session_date);
           return sessionDate >= dateRange.start && sessionDate < dateRange.end;
         });
       }
     }
 
-    // Apply sorting
-    filtered.sort((a, b) => {
-      // For date sorting, always add secondary sort by time
-      if (sortField === 'session_date') {
-        const aDate = a.session_date ? new Date(a.session_date).getTime() : 0;
-        const bDate = b.session_date ? new Date(b.session_date).getTime() : 0;
-        
-        // First compare dates
-        if (aDate !== bDate) {
-          return sortDirection === 'asc' ? aDate - bDate : bDate - aDate;
+    const sorted = [...filtered];
+    const sortColumn = (sortState.columnId as string) ?? "session_date";
+    const directionMultiplier = sortState.direction === "desc" ? -1 : 1;
+
+    const compare = (a: Session, b: Session) => {
+      switch (sortColumn) {
+        case "lead_name": {
+          const aName = (a.lead_name || "").toLowerCase();
+          const bName = (b.lead_name || "").toLowerCase();
+          return aName.localeCompare(bName);
         }
-        
-        // If dates are equal, sort by time (always ascending for better UX)
-        const aTime = a.session_time || '';
-        const bTime = b.session_time || '';
-        return aTime.localeCompare(bTime);
+        case "session_time": {
+          const aTime = a.session_time || "";
+          const bTime = b.session_time || "";
+          return aTime.localeCompare(bTime);
+        }
+        case "status": {
+          const aStatus = (a.status || "").toLowerCase();
+          const bStatus = (b.status || "").toLowerCase();
+          return aStatus.localeCompare(bStatus);
+        }
+        case "session_date":
+        default: {
+          const aDate = a.session_date ? new Date(a.session_date).getTime() : 0;
+          const bDate = b.session_date ? new Date(b.session_date).getTime() : 0;
+
+          if (aDate !== bDate) {
+            return aDate - bDate;
+          }
+
+          const aTime = a.session_time || "";
+          const bTime = b.session_time || "";
+          return aTime.localeCompare(bTime);
+        }
       }
-      
-      // For other fields, use regular sorting
-      let aValue: any = a[sortField];
-      let bValue: any = b[sortField];
+    };
 
-      // Handle date values
-      if (sortField === 'created_at') {
-        aValue = aValue ? new Date(aValue).getTime() : 0;
-        bValue = bValue ? new Date(bValue).getTime() : 0;
-      }
+    sorted.sort((a, b) => compare(a, b) * directionMultiplier);
 
-      // Handle time values
-      if (sortField === 'session_time') {
-        aValue = aValue ? aValue : '';
-        bValue = bValue ? bValue : '';
-      }
-
-      // Handle string values
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
-      }
-
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return filtered;
-  }, [sessions, statusFilter, dateFilter, sortField, sortDirection]);
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
+    return sorted;
+  }, [sessions, statusFilter, dateFilter, sortState]);
 
   const handleRowClick = (session: Session) => {
     setSelectedSessionId(session.id);
@@ -283,7 +338,7 @@ const AllSessions = () => {
     navigate(`/projects/${projectId}`);
   };
 
-  const handleProjectClick = async (e: React.MouseEvent, session: Session) => {
+  const handleProjectClick = useCallback(async (e: React.MouseEvent, session: Session) => {
     e.stopPropagation();
     if (!session.project_id) return;
     try {
@@ -293,35 +348,202 @@ const AllSessions = () => {
         .eq('id', session.project_id)
         .single();
       if (error) throw error;
-      
-      // Fetch lead data separately
+
       const { data: leadData, error: leadError } = await supabase
         .from('leads')
         .select('name')
         .eq('id', data.lead_id)
         .single();
       if (leadError) throw leadError;
-      
+
       setViewingProject({ ...data, leads: leadData });
       setShowProjectDialog(true);
     } catch (err: any) {
       toast({ title: 'Unable to open project', description: err.message, variant: 'destructive' });
     }
-  };
+  }, []);
 
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
-    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
-  };
+  const statusOptions = useMemo(
+    () => [
+      { value: "all", label: t('sessions.filters.allStatuses') },
+      { value: "planned", label: "Planned" },
+      { value: "completed", label: "Completed" },
+      { value: "in_post_processing", label: "Editing" },
+      { value: "delivered", label: "Delivered" },
+      { value: "cancelled", label: "Cancelled" },
+    ],
+    [t]
+  );
 
-  const statusOptions = [
-    { value: "all", label: t('sessions.filters.allStatuses') },
-    { value: "planned", label: "Planned" },
-    { value: "completed", label: "Completed" },
-    { value: "in_post_processing", label: "Editing" },
-    { value: "delivered", label: "Delivered" },
-    { value: "cancelled", label: "Cancelled" }
-  ];
+  const statusOptionsForFilter = useMemo(
+    () => statusOptions.map((option) => ({ key: option.value, label: option.label })),
+    [statusOptions]
+  );
+
+  const summaryChips = useMemo(
+    () => {
+      const chips: { id: string; label: string }[] = [];
+      if (statusFilter !== "all") {
+        const statusLabel = statusOptions.find((option) => option.value === statusFilter)?.label;
+        if (statusLabel) {
+          chips.push({ id: 'status', label: `${t('sessions.table.status')}: ${statusLabel}` });
+        }
+      }
+      if (dateFilter !== "all") {
+        const dateLabel = dateFilterOptions.find((option) => option.key === dateFilter)?.label;
+        if (dateLabel) {
+          chips.push({ id: 'date', label: `${t('sessions.table.date')}: ${dateLabel}` });
+        }
+      }
+      return chips;
+    },
+    [statusFilter, statusOptions, t, dateFilter, dateFilterOptions]
+  );
+
+  const tableSummary = useMemo(
+    () => (summaryChips.length > 0 ? { chips: summaryChips } : undefined),
+    [summaryChips]
+  );
+
+  const columns = useMemo<AdvancedTableColumn<Session>[]>(
+    () => [
+      {
+        id: 'project',
+        label: t('sessions.table.project'),
+        minWidth: '160px',
+        render: (session) =>
+          session.project_id ? (
+            <Button
+              variant="link"
+              className="p-0 h-auto font-normal text-foreground hover:text-foreground hover:underline"
+              onClick={(e) => handleProjectClick(e, session)}
+            >
+              {session.project_name || 'Project'}
+            </Button>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
+      },
+      {
+        id: 'lead_name',
+        label: t('sessions.table.clientName'),
+        accessorKey: 'lead_name',
+        sortable: true,
+        minWidth: '180px',
+        cellClassName: 'whitespace-nowrap font-medium',
+      },
+      {
+        id: 'session_date',
+        label: t('sessions.table.date'),
+        sortable: true,
+        sortId: 'session_date',
+        minWidth: '150px',
+        render: (session) => <span className="whitespace-nowrap">{formatLongDate(session.session_date)}</span>,
+      },
+      {
+        id: 'session_time',
+        label: t('sessions.table.time'),
+        sortable: true,
+        minWidth: '120px',
+        render: (session) => <span className="whitespace-nowrap">{formatTime(session.session_time)}</span>,
+      },
+      {
+        id: 'status',
+        label: t('sessions.table.status'),
+        sortable: true,
+        minWidth: '140px',
+        render: (session) => (
+          <SessionStatusBadge
+            sessionId={session.id}
+            currentStatus={session.status}
+            editable
+            size="sm"
+            onStatusChange={fetchSessions}
+          />
+        ),
+        cellClassName: 'whitespace-nowrap',
+      },
+      {
+        id: 'notes',
+        label: t('sessions.table.notes'),
+        minWidth: '200px',
+        render: (session) =>
+          session.notes ? (
+            <span
+              className="block max-w-xs truncate text-muted-foreground"
+              title={session.notes}
+            >
+              {session.notes}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
+      },
+    ],
+    [fetchSessions, handleProjectClick, t]
+  );
+
+  const handleTableSortChange = useCallback(
+    (next: AdvancedDataTableSortState) => {
+      if (!next.columnId) {
+        setSortState({ columnId: 'session_date', direction: 'asc' });
+        return;
+      }
+      setSortState(next);
+    },
+    []
+  );
+
+  const emptyState = (
+    <div className="text-center py-12 text-muted-foreground">
+      <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+      <h3 className="text-lg font-medium mb-2">{tForms('sessions.noSessionsFound')}</h3>
+      <p>
+        {statusFilter === "all"
+          ? tForms('sessions.noSessionsYet')
+          : tForms('sessions.noSessionsWithStatus', { status: statusFilter })}
+      </p>
+      <p className="text-sm mt-2">{tForms('sessions.clickToSchedule')}</p>
+    </div>
+  );
+
+  const toolbarContent = (
+    <div className="hidden md:flex w-full flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-1 flex-wrap gap-2">
+        {dateFilterOptions.map((option) => (
+          <Button
+            key={option.key}
+            variant={dateFilter === option.key ? "default" : "outline"}
+            size="sm"
+            className="h-8 rounded-full px-3"
+            onClick={() => setDateFilter(option.key)}
+          >
+            <span>{option.label}</span>
+            <Badge variant="secondary" className="ml-2 h-5 min-w-[2rem] px-2 text-xs">
+              {option.count}
+            </Badge>
+          </Button>
+        ))}
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground whitespace-nowrap">
+          {t('sessions.filters.statusLabel')}
+        </span>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {statusOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -335,7 +557,7 @@ const AllSessions = () => {
               <GlobalSearch />
             </div>
             <NewSessionDialog onSessionScheduled={fetchSessions}>
-              <Button 
+              <Button
                 size="sm"
                 className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
               >
@@ -348,238 +570,51 @@ const AllSessions = () => {
       </PageHeader>
 
       <div className="p-4 sm:p-6 space-y-6">
-        {loading ? (
-          <ListLoadingSkeleton />
-        ) : (
-          <>
-            {/* Mobile Filter Bar (≤767px only) */}
-            <div className="md:hidden">
-              {(() => {
-                const quickFilters = [
-                  { key: "all", label: t('sessions.filters.dateFilters.all'), count: getSessionCountForDateFilter("all") },
-                  { key: "today", label: t('sessions.filters.dateFilters.today'), count: getSessionCountForDateFilter("today") },
-                  { key: "tomorrow", label: t('sessions.filters.dateFilters.tomorrow'), count: getSessionCountForDateFilter("tomorrow") }
-                ];
+        <div className="md:hidden">
+          <FilterBar
+            quickFilters={quickDateFilters}
+            activeQuickFilter={dateFilter}
+            onQuickFilterChange={(value) => setDateFilter(value as DateFilterKey)}
+            allDateFilters={dateFilterOptions}
+            activeDateFilter={dateFilter}
+            onDateFilterChange={(value) => setDateFilter(value as DateFilterKey)}
+            statusOptions={statusOptionsForFilter}
+            activeStatus={statusFilter}
+            onStatusChange={setStatusFilter}
+            isSticky
+          />
+        </div>
 
-                const allDateFilters = [
-                  { key: "all", label: t('sessions.filters.dateFilters.all'), count: getSessionCountForDateFilter("all") },
-                  { key: "past", label: t('sessions.filters.dateFilters.past'), count: getSessionCountForDateFilter("past") },
-                  { key: "today", label: t('sessions.filters.dateFilters.today'), count: getSessionCountForDateFilter("today") },
-                  { key: "tomorrow", label: t('sessions.filters.dateFilters.tomorrow'), count: getSessionCountForDateFilter("tomorrow") },
-                  { key: "thisweek", label: t('sessions.filters.dateFilters.thisWeek'), count: getSessionCountForDateFilter("thisweek") },
-                  { key: "nextweek", label: t('sessions.filters.dateFilters.nextWeek'), count: getSessionCountForDateFilter("nextweek") },
-                  { key: "thismonth", label: t('sessions.filters.dateFilters.thisMonth'), count: getSessionCountForDateFilter("thismonth") },
-                  { key: "nextmonth", label: t('sessions.filters.dateFilters.nextMonth'), count: getSessionCountForDateFilter("nextmonth") }
-                ];
+        <AdvancedDataTable
+          data={filteredAndSortedSessions}
+          columns={columns}
+          rowKey={(session) => session.id}
+          onRowClick={handleRowClick}
+          sortState={sortState}
+          onSortChange={handleTableSortChange}
+          isLoading={loading}
+          emptyState={emptyState}
+          toolbar={toolbarContent}
+          summary={tableSummary}
+        />
 
-                const statusOptionsForFilter = statusOptions.map(option => ({
-                  key: option.value,
-                  label: option.label
-                }));
+        <ViewProjectDialog
+          project={viewingProject}
+          open={showProjectDialog}
+          onOpenChange={setShowProjectDialog}
+          onProjectUpdated={fetchSessions}
+          leadName={viewingProject?.leads?.name || ''}
+        />
 
-                return (
-                  <FilterBar
-                    quickFilters={quickFilters}
-                    activeQuickFilter={dateFilter}
-                    onQuickFilterChange={setDateFilter}
-                    allDateFilters={allDateFilters}
-                    activeDateFilter={dateFilter}
-                    onDateFilterChange={setDateFilter}
-                    statusOptions={statusOptionsForFilter}
-                    activeStatus={statusFilter}
-                    onStatusChange={setStatusFilter}
-                    isSticky={true}
-                  />
-                );
-              })()}
-            </div>
-
-            {/* Main Content */}
-            <Card className="min-w-0">
-              <CardHeader>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  {/* Desktop Status Filter (≥768px only) */}
-                  <div className="hidden md:flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">{t('sessions.filters.statusLabel')}</span>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-full sm:w-48 min-w-0">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statusOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                {/* Desktop Date Filters (≥768px only) */}
-                <div className="p-6 pb-0">
-                  <div className="hidden md:block mb-6">
-                    <div className="flex flex-wrap gap-2">
-                      {["all", "past", "today", "tomorrow", "thisweek", "nextweek", "thismonth", "nextmonth"].map((filter) => (
-                        <Button
-                          key={filter}
-                          variant={dateFilter === filter ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setDateFilter(filter)}
-                        >
-                          {filter === "all" ? t('sessions.filters.dateFilters.all') :
-                           filter === "past" ? t('sessions.filters.dateFilters.past') :
-                           filter === "today" ? t('sessions.filters.dateFilters.today') :
-                           filter === "tomorrow" ? t('sessions.filters.dateFilters.tomorrow') :
-                           filter === "thisweek" ? t('sessions.filters.dateFilters.thisWeek') :
-                           filter === "nextweek" ? t('sessions.filters.dateFilters.nextWeek') :
-                           filter === "thismonth" ? t('sessions.filters.dateFilters.thisMonth') :
-                           t('sessions.filters.dateFilters.nextMonth')} ({getSessionCountForDateFilter(filter)})
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {filteredAndSortedSessions.length > 0 ? (
-                    <div className="w-full overflow-x-auto overflow-y-hidden" style={{ maxWidth: '100vw' }}>
-                      <div className="min-w-max">
-                        <Table style={{ minWidth: '700px' }}>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="whitespace-nowrap">{t('sessions.table.project')}</TableHead>
-                              <TableHead 
-                                className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                                onClick={() => handleSort('lead_name')}
-                              >
-                                <div className="flex items-center gap-2">
-                                  {t('sessions.table.clientName')}
-                                  {getSortIcon('lead_name')}
-                                </div>
-                              </TableHead>
-                              <TableHead 
-                                className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                                onClick={() => handleSort('session_date')}
-                              >
-                                <div className="flex items-center gap-2">
-                                  {t('sessions.table.date')}
-                                  {getSortIcon('session_date')}
-                                </div>
-                              </TableHead>
-                              <TableHead 
-                                className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                                onClick={() => handleSort('session_time')}
-                              >
-                                <div className="flex items-center gap-2">
-                                  {t('sessions.table.time')}
-                                  {getSortIcon('session_time')}
-                                </div>
-                              </TableHead>
-                              <TableHead 
-                                className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                                onClick={() => handleSort('status')}
-                              >
-                                <div className="flex items-center gap-2">
-                                  {t('sessions.table.status')}
-                                  {getSortIcon('status')}
-                                </div>
-                              </TableHead>
-                              <TableHead className="whitespace-nowrap">{t('sessions.table.notes')}</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {filteredAndSortedSessions.map((session) => (
-                              <TableRow 
-                                key={session.id}
-                                className="cursor-pointer hover:bg-muted/50"
-                                onClick={() => handleRowClick(session)}
-                              >
-                                <TableCell className="whitespace-nowrap">
-                                  {session.project_id ? (
-                                    <Button
-                                      variant="link"
-                                      className="p-0 h-auto font-normal text-foreground hover:text-foreground hover:underline"
-                                      onClick={(e) => handleProjectClick(e, session)}
-                                      aria-label="View project details"
-                                    >
-                                      {session.project_name || 'Project'}
-                                    </Button>
-                                  ) : (
-                                    <span className="text-muted-foreground">-</span>
-                                  )}
-                                </TableCell>
-                                <TableCell className="font-medium whitespace-nowrap">
-                                  {session.lead_name}
-                                </TableCell>
-                                <TableCell className="whitespace-nowrap">
-                                  {formatLongDate(session.session_date)}
-                                </TableCell>
-                                <TableCell className="whitespace-nowrap">
-                                  {formatTime(session.session_time)}
-                                </TableCell>
-                                <TableCell className="whitespace-nowrap">
-                                  <SessionStatusBadge
-                                    sessionId={session.id}
-                                    currentStatus={session.status}
-                                    editable
-                                    size="sm"
-                                    onStatusChange={fetchSessions}
-                                  />
-                                </TableCell>
-                                <TableCell className="max-w-xs truncate whitespace-nowrap">
-                                  {session.notes ? (
-                                    <div 
-                                      className="truncate hover:whitespace-normal hover:overflow-visible hover:text-wrap cursor-help"
-                                      title={session.notes}
-                                    >
-                                      {session.notes}
-                                    </div>
-                                  ) : (
-                                    '-'
-                                  )}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <h3 className="text-lg font-medium mb-2">{tForms('sessions.noSessionsFound')}</h3>
-                      <p>
-                        {statusFilter === "all" 
-                          ? tForms('sessions.noSessionsYet')
-                          : tForms('sessions.noSessionsWithStatus', { status: statusFilter })
-                        }
-                      </p>
-                      <p className="text-sm mt-2">{tForms('sessions.clickToSchedule')}</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <ViewProjectDialog
-              project={viewingProject}
-              open={showProjectDialog}
-              onOpenChange={setShowProjectDialog}
-              onProjectUpdated={fetchSessions}
-              leadName={viewingProject?.leads?.name || ''}
-            />
-
-            {selectedSessionId && (
-              <SessionSheetView
-                sessionId={selectedSessionId}
-                isOpen={isSessionSheetOpen}
-                onOpenChange={setIsSessionSheetOpen}
-                onViewFullDetails={handleViewFullSessionDetails}
-                onNavigateToLead={handleNavigateToLead}
-                onNavigateToProject={handleNavigateToProject}
-              />
-            )}
-          </>
+        {selectedSessionId && (
+          <SessionSheetView
+            sessionId={selectedSessionId}
+            isOpen={isSessionSheetOpen}
+            onOpenChange={setIsSessionSheetOpen}
+            onViewFullDetails={handleViewFullSessionDetails}
+            onNavigateToLead={handleNavigateToLead}
+            onNavigateToProject={handleNavigateToProject}
+          />
         )}
       </div>
     </div>

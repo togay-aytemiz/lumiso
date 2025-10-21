@@ -41,6 +41,7 @@ import {
 import type { ProjectListItem, ProjectStatusSummary } from "@/pages/projects/types";
 import { startTimer } from "@/lib/debug";
 import { useConnectivity } from "@/contexts/ConnectivityContext";
+import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 
 const AllProjects = () => {
   const [boardProjects, setBoardProjects] = useState<ProjectListItem[]>([]);
@@ -214,6 +215,9 @@ const AllProjects = () => {
     onNetworkError: handleNetworkError,
     onNetworkRecovery: handleNetworkRecovery,
   });
+
+  // Throttle refresh on window focus/visibility changes
+  useThrottledRefetchOnFocus(refetchProjects, 30_000);
 
   const {
     listDefaultPreferences,

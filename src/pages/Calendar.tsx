@@ -32,6 +32,7 @@ import { useCalendarPerformanceMonitor } from "@/hooks/useCalendarPerformanceMon
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "react-i18next";
+import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -141,6 +142,9 @@ export default function Calendar() {
     queryClient.invalidateQueries({ queryKey: ["optimized-activities"] });
     queryClient.invalidateQueries({ queryKey: ["calendar-reference-data"] });
   };
+
+  // Throttle refresh on window focus/visibility to avoid request bursts
+  useThrottledRefetchOnFocus(refreshCalendar, 30_000);
 
   const [showSessions, setShowSessions] = useState<boolean>(
     () => localStorage.getItem("calendar:showSessions") !== "false"

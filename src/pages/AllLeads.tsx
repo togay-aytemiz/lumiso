@@ -37,6 +37,7 @@ import { formatDate, getStartOfWeek } from "@/lib/utils";
 import { format } from "date-fns";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { getKpiIconPreset } from "@/components/ui/kpi-presets";
+import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 
 type LeadStatusOption = {
   id: string;
@@ -421,26 +422,8 @@ const AllLeadsNew = () => {
     };
   }, [metricsLeads, totalCount]);
 
-  // Refetch data when page becomes visible (e.g., when navigating back from lead detail)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        refetchLeads();
-      }
-    };
-
-    const handleFocus = () => {
-      refetchLeads();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [refetchLeads]);
+  // Throttle refresh on focus/visibility to avoid request storms
+  useThrottledRefetchOnFocus(refetchLeads, 30_000);
 
   const leadsTutorialSteps: TutorialStep[] = [
     {

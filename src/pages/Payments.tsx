@@ -62,6 +62,7 @@ import { PaymentsDateControls } from "@/pages/payments/components/PaymentsDateCo
 import { PaymentsTrendChart } from "@/pages/payments/components/PaymentsTrendChart";
 import { PaymentsMetricsSummary } from "@/pages/payments/components/PaymentsMetricsSummary";
 import { PaymentsTableSection } from "@/pages/payments/components/PaymentsTableSection";
+import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 
 const Payments = () => {
   const { t } = useTranslation("pages");
@@ -200,6 +201,9 @@ const Payments = () => {
     activeDateRange,
     onError: handleDataError,
   });
+
+  // Throttle data refresh on window focus / visibility changes
+  useThrottledRefetchOnFocus(fetchPayments, 30_000);
 
   useEffect(() => {
     const computedTotalPages = Math.max(1, Math.ceil(totalCount / pageSize));

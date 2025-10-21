@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -177,6 +178,9 @@ const AllSessions = () => {
   useEffect(() => {
     fetchSessions();
   }, [fetchSessions]);
+
+  // Refresh on focus/visibility with throttle to avoid request storms
+  useThrottledRefetchOnFocus(fetchSessions, 30_000);
 
   const getDateRangeForFilter = (filter: DateFilterKey) => {
     const today = new Date();

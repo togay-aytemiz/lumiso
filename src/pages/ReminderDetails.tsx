@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import { Button } from "@/components/ui/button";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { getKpiIconPreset } from "@/components/ui/kpi-presets";
@@ -311,6 +312,9 @@ const ReminderDetails = () => {
   useEffect(() => {
     void fetchReminders();
   }, []);
+
+  // Throttled refresh on focus/visibility
+  useThrottledRefetchOnFocus(() => { void fetchReminders(); }, 30_000);
 
   const fetchReminders = useCallback(async () => {
     setLoading(true);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { getWeekRange, getUserLocale, formatLongDate, formatTime, formatDate } from "@/lib/utils";
 import { DashboardLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useDashboardTranslation } from "@/hooks/useTypedTranslation";
+import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 
 interface Lead {
   id: string;
@@ -66,11 +67,7 @@ const CrmDashboard = () => {
   const navigate = useNavigate();
   const { t } = useDashboardTranslation();
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       // Fetch leads
       const { data: leadsData, error: leadsError } = await supabase
@@ -134,14 +131,23 @@ const CrmDashboard = () => {
       setActivities(activitiesData || []);
     } catch (error: any) {
       toast({
-        title: t('errors.errorFetchingData'),
+        title: "Error",
         description: error.message,
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Throttle refresh on window focus / visibility changes
+  useThrottledRefetchOnFocus(fetchData, 30_000);
+
+  
 
   const handleSignOut = async () => {
     const { signOutSafely } = await import('@/utils/authUtils');

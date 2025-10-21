@@ -25,7 +25,9 @@ try {
   let cachedUser: any = null;
   let cachedAt = 0;
   let inflight: Promise<any> | null = null;
-  const TTL = 5_000; // 5 seconds
+  // Increase cache TTL to reduce auth.getUser network calls,
+  // which were contributing to ~12 auth requests/min.
+  const TTL = 60_000; // 60 seconds
 
   // Keep cache in sync with auth events
   const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {

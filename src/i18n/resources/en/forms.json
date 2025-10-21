@@ -897,10 +897,18 @@
     "type_required": "Please select a project type."
   },
   "projectCard": {
+    "openProject": "Open project {{name}}",
+    "progress": "Progress",
+    "noTasksYet": "No tasks yet",
+    "budget": "Budget",
+    "paidInFull": "Paid in full",
+    "noBudgetInfo": "No budget information yet",
+    "timeline": "Timeline",
+    "notUpdatedYet": "Not updated yet",
     "created": "Created",
     "updated": "Updated",
     "remaining": "remaining",
-    "todosCompleted": "task completed"
+    "todosCompleted": "tasks completed"
   },
   "activitiesHistory": {
     "title": "Activities & History",

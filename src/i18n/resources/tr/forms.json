@@ -819,6 +819,14 @@
     "finalPrice": "Nihai Fiyat:"
   },
   "projectCard": {
+    "openProject": "Projeyi aç: {{name}}",
+    "progress": "İlerleme",
+    "noTasksYet": "Henüz görev yok",
+    "budget": "Bütçe",
+    "paidInFull": "Tamamı ödendi",
+    "noBudgetInfo": "Henüz bütçe bilgisi yok",
+    "timeline": "Zaman çizelgesi",
+    "notUpdatedYet": "Henüz güncellenmedi",
     "created": "Oluşturuldu",
     "updated": "Güncellendi",
     "remaining": "kalan",

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { ChevronRight, CheckCircle2 } from "lucide-react";
@@ -65,110 +64,174 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
     }).format(amount);
   };
 
+  const handleCardClick = () => {
+    if (onQuickView) {
+      onQuickView(project);
+      return;
+    }
+    onView(project);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleCardClick();
+    }
+  };
+
+  const hasProgress = !loading && progress.total > 0;
+  const hasPayments = !paymentsLoading && paymentSummary.totalProject > 0;
+
+  const formatProjectDate = (value?: string | null) => {
+    if (!value) return "-";
+    try {
+      return format(new Date(value), "dd MMM yyyy");
+    } catch {
+      return "-";
+    }
+  };
+
+  const createdDate = formatProjectDate(project.created_at);
+  const updatedDate = formatProjectDate(project.updated_at);
+  const isUpdated = project.updated_at && project.updated_at !== project.created_at;
+
   return (
-    <Card className="w-full hover:shadow-md transition-shadow cursor-pointer">
-      <CardContent className="p-4 md:p-6">
-        <div 
-          className="flex flex-col md:flex-row md:items-center md:justify-between md:gap-6 gap-4"
-          onClick={() => onQuickView ? onQuickView(project) : onView(project)}
-        >
-          <div className="flex-1 min-w-0 space-y-3">
-            {/* Title and Archived Badge */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <h3 className="font-bold text-lg truncate">{project.name}</h3>
-                {isArchived && <Badge variant="secondary" className="text-[10px] flex-shrink-0">{t('project.archived')}</Badge>}
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <div className="md:hidden">
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </div>
-              </div>
+    <Card
+      role="button"
+      tabIndex={0}
+      aria-label={t("projectCard.openProject", { name: project.name })}
+      onClick={handleCardClick}
+      onKeyDown={handleKeyDown}
+      className="group relative w-full cursor-pointer overflow-hidden border border-border/60 bg-card/95 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
+    >
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/60 via-primary to-primary/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <CardContent className="relative flex flex-col gap-6 p-5 md:p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-2 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="truncate text-lg font-semibold text-foreground md:text-xl">{project.name}</h3>
+              {isArchived && (
+                <Badge variant="secondary" className="text-[11px] uppercase tracking-wide">
+                  {t('project.archived')}
+                </Badge>
+              )}
             </div>
-
-            {/* Description */}
             {project.description && (
-              <p className="text-muted-foreground text-sm break-words">{project.description}</p>
+              <p className="text-sm text-muted-foreground line-clamp-3">
+                {project.description}
+              </p>
             )}
-            
-            {/* Progress Summary Text */}
-            {!loading && progress.total > 0 && (
-    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-      <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
-      <span>
-        {progress.completed}/{progress.total} {t("projectCard.todosCompleted")}
-      </span>
-    </div>
-  )}
+          </div>
+          <div className="flex flex-col items-end gap-3 text-sm">
+            <div className="hidden md:flex items-center gap-2 text-muted-foreground">
+              <span>{t('projectCard.created')} {createdDate}</span>
+              {isUpdated && <span className="text-muted-foreground/70">•</span>}
+              {isUpdated && <span>{t('projectCard.updated')} {updatedDate}</span>}
+            </div>
+            <ProjectStatusBadge
+              projectId={project.id}
+              currentStatusId={project.status_id}
+              editable={false}
+              size="sm"
+              className="text-xs"
+            />
+            <ChevronRight className="hidden text-muted-foreground transition-transform duration-300 md:block md:h-5 md:w-5 md:group-hover:translate-x-1" />
+          </div>
+        </div>
 
-            {/* Progress Bar */}
-            {!loading && progress.total > 0 && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <ProgressBar
-                        value={progress.percentage}
-                        total={progress.total}
-                        completed={progress.completed}
-                        className="w-full"
-                        showLabel={false}
-                      />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      {t('project.progressTooltip', { completed: progress.completed, remaining: progress.total - progress.completed })}
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-            
-            {/* Status and Dates */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs text-muted-foreground">
-              <div className="flex items-center gap-3 flex-wrap">
-                {!isArchived && (
-                  <ProjectStatusBadge 
-                    projectId={project.id}
-                    currentStatusId={project.status_id}
-                    editable={false}
-                    size="sm"
-                    className="text-xs"
-                  />
-                )}
-                <span className="whitespace-nowrap">{t('projectCard.created')} {format(new Date(project.created_at), "M/d/yy")}</span>
-                {project.updated_at !== project.created_at && (
-                  <span className="whitespace-nowrap">{t('projectCard.updated')} {format(new Date(project.updated_at), "M/d/yy")}</span>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-lg border border-dashed border-border/70 bg-muted/10 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t('projectCard.progress')}
+                </p>
+                {hasProgress ? (
+                  <p className="text-sm font-medium text-foreground">
+                    {progress.completed}/{progress.total} {t('projectCard.todosCompleted')}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{t('projectCard.noTasksYet')}</p>
                 )}
               </div>
+              <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
             </div>
+            {hasProgress && (
+              <div className="mt-4">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <ProgressBar
+                          value={progress.percentage}
+                          total={progress.total}
+                          completed={progress.completed}
+                          className="w-full"
+                          showLabel={false}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        {t('project.progressTooltip', { completed: progress.completed, remaining: progress.total - progress.completed })}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            )}
+          </div>
 
-            {/* Budget/Payment Information */}
-            {!paymentsLoading && paymentSummary.totalProject > 0 && (
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="text-green-600 font-medium">
+          <div className="rounded-lg border border-dashed border-border/70 bg-muted/10 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t('projectCard.budget')}
+            </p>
+            {hasPayments ? (
+              <div className="mt-3 space-y-1 text-sm">
+                <div className="flex items-center gap-2 text-foreground">
+                  <span className="font-semibold text-emerald-600">
                     {formatCurrency(paymentSummary.totalPaid)}
                   </span>
                   <span className="text-muted-foreground">/</span>
-                  <span className="text-muted-foreground">
+                  <span className="font-medium text-muted-foreground">
                     {formatCurrency(paymentSummary.totalProject)}
                   </span>
                 </div>
-                {paymentSummary.remaining > 0 && (
-                  <span className="text-orange-600">
-                    ({formatCurrency(paymentSummary.remaining)} {t('projectCard.remaining')})
-                  </span>
+                {paymentSummary.remaining > 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    {formatCurrency(paymentSummary.remaining)} {t('projectCard.remaining')}
+                  </p>
+                ) : (
+                  <p className="text-xs text-emerald-600">{t('projectCard.paidInFull')}</p>
                 )}
               </div>
+            ) : (
+              <p className="mt-3 text-sm text-muted-foreground">{t('projectCard.noBudgetInfo')}</p>
             )}
           </div>
 
-          {/* Desktop Chevron */}
-          <div className="hidden md:flex items-center flex-shrink-0">
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          <div className="rounded-lg border border-dashed border-border/70 bg-muted/10 p-4 sm:col-span-2 lg:col-span-1">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t('projectCard.timeline')}
+            </p>
+            <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+              <p>
+                <span className="font-medium text-foreground">{t('projectCard.created')}</span> {createdDate}
+              </p>
+              {isUpdated ? (
+                <p>
+                  <span className="font-medium text-foreground">{t('projectCard.updated')}</span> {updatedDate}
+                </p>
+              ) : (
+                <p className="italic text-muted-foreground/80">{t('projectCard.notUpdatedYet')}</p>
+              )}
+            </div>
           </div>
+        </div>
+
+        <div className="flex items-center justify-between text-xs text-muted-foreground md:hidden">
+          <span>{t('projectCard.created')} {createdDate}</span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-300 group-hover:translate-x-1" />
         </div>
       </CardContent>
     </Card>

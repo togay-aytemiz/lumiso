@@ -5,10 +5,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Filter, X } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Filter } from 'lucide-react';
 import { useTranslation } from "react-i18next";
 import { useFormsTranslation } from '@/hooks/useTypedTranslation';
+import { cn } from '@/lib/utils';
 
 interface FilterOption {
   key: string;
@@ -59,10 +59,18 @@ export function FilterBar({
   className = ""
 }: FilterBarProps) {
   const { t: tForms } = useFormsTranslation();
-  const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   // Use forms namespace for FilterBar-specific strings
   const { t } = useTranslation('forms');
+
+  const pillButtonBaseClasses =
+    'rounded-full border border-border/60 bg-background text-sm font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-0';
+  const pillButtonActiveClasses =
+    'bg-primary/10 text-primary border-primary/40 shadow-sm hover:bg-primary/15';
+  const pillBadgeBaseClasses =
+    'h-5 min-w-[1.75rem] rounded-full border border-border/50 bg-muted/40 px-2 text-xs font-medium text-muted-foreground transition-colors';
+  const pillBadgeActiveClasses =
+    'border-primary/30 bg-primary/15 text-primary';
   
   // Use translation as default if no label provided
   const completedLabel = showCompletedLabel || tForms('filterBar.showCompleted');
@@ -128,14 +136,25 @@ export function FilterBar({
             {allDateFilters.map((option) => (
               <Button
                 key={option.key}
-                variant={activeDateFilter === option.key ? "default" : "outline"}
+                variant="outline"
                 size="sm"
                 onClick={() => onDateFilterChange(option.key)}
-                className="justify-start h-9"
+                className={cn(
+                  'h-9 justify-start',
+                  pillButtonBaseClasses,
+                  activeDateFilter === option.key && pillButtonActiveClasses
+                )}
               >
                 {option.label}
                 {option.count !== undefined && (
-                  <Badge variant="secondary" className="ml-auto text-xs">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'ml-auto',
+                      pillBadgeBaseClasses,
+                      activeDateFilter === option.key && pillBadgeActiveClasses
+                    )}
+                  >
                     {option.count}
                   </Badge>
                 )}
@@ -175,22 +194,36 @@ export function FilterBar({
           {/* Quick filters + Filters button */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              {quickFilters.slice(0, 3).map((filter) => (
-                <Button
-                  key={filter.key}
-                  variant={activeQuickFilter === filter.key ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onQuickFilterChange(filter.key)}
-                  className="whitespace-nowrap flex-shrink-0 hidden md:inline-flex"
-                >
-                  {filter.label}
-                  {filter.count !== undefined && (
-                    <Badge variant="secondary" className="ml-1 text-xs">
-                      {filter.count}
-                    </Badge>
-                  )}
-                </Button>
-              ))}
+              {quickFilters.slice(0, 3).map((filter) => {
+                const isActive = activeQuickFilter === filter.key;
+                return (
+                  <Button
+                    key={filter.key}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onQuickFilterChange(filter.key)}
+                    className={cn(
+                      'whitespace-nowrap flex-shrink-0 hidden md:inline-flex',
+                      pillButtonBaseClasses,
+                      isActive && pillButtonActiveClasses
+                    )}
+                  >
+                    {filter.label}
+                    {filter.count !== undefined && (
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          'ml-1',
+                          pillBadgeBaseClasses,
+                          isActive && pillBadgeActiveClasses
+                        )}
+                      >
+                        {filter.count}
+                      </Badge>
+                    )}
+                  </Button>
+                );
+              })}
             </div>
             
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>

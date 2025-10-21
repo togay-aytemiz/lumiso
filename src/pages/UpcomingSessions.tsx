@@ -10,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import NewSessionDialog from "@/components/NewSessionDialog";
-import { formatTime, formatLongDate, getWeekRange } from "@/lib/utils";
+import { formatTime, formatLongDate, getWeekRange, cn } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import SessionStatusBadge from "@/components/SessionStatusBadge";
@@ -509,19 +509,37 @@ const AllSessions = () => {
     </div>
   );
 
+  const filterPillBaseClasses =
+    "h-8 rounded-full px-3 border border-border/60 bg-background text-sm font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-0";
+  const filterPillActiveClasses =
+    "bg-primary/10 text-primary border-primary/40 shadow-sm hover:bg-primary/15";
+  const filterPillBadgeBaseClasses =
+    "ml-2 h-5 min-w-[2rem] rounded-full border border-border/50 bg-muted/40 px-2 text-xs font-medium text-muted-foreground transition-colors";
+  const filterPillBadgeActiveClasses =
+    "border-primary/30 bg-primary/15 text-primary";
+
   const toolbarContent = (
     <div className="hidden md:flex w-full flex-wrap items-center justify-between gap-3">
       <div className="flex flex-1 flex-wrap gap-2">
         {dateFilterOptions.map((option) => (
           <Button
             key={option.key}
-            variant={dateFilter === option.key ? "default" : "outline"}
+            variant="outline"
             size="sm"
-            className="h-8 rounded-full px-3"
+            className={cn(
+              filterPillBaseClasses,
+              dateFilter === option.key && filterPillActiveClasses
+            )}
             onClick={() => setDateFilter(option.key)}
           >
             <span>{option.label}</span>
-            <Badge variant="secondary" className="ml-2 h-5 min-w-[2rem] px-2 text-xs">
+            <Badge
+              variant="outline"
+              className={cn(
+                filterPillBadgeBaseClasses,
+                dateFilter === option.key && filterPillBadgeActiveClasses
+              )}
+            >
               {option.count}
             </Badge>
           </Button>

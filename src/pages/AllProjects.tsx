@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Plus, LayoutGrid, List, Archive, Settings, FileDown, Loader2, WifiOff } from "lucide-react";
+import { Plus, LayoutGrid, List, Archive, Settings, FileDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
@@ -41,6 +40,7 @@ import {
 } from "@/pages/projects/hooks/useProjectsData";
 import type { ProjectListItem, ProjectStatusSummary } from "@/pages/projects/types";
 import { startTimer } from "@/lib/debug";
+import { useConnectivity } from "@/contexts/ConnectivityContext";
 
 const AllProjects = () => {
   const [boardProjects, setBoardProjects] = useState<ProjectListItem[]>([]);
@@ -58,9 +58,7 @@ const AllProjects = () => {
   const [archivedPageSize, setArchivedPageSize] = useState(25);
   const [exporting, setExporting] = useState(false);
   const [boardLoading, setBoardLoading] = useState(false);
-  const [networkOffline, setNetworkOffline] = useState(
-    () => (typeof navigator !== 'undefined' ? !navigator.onLine : false)
-  );
+  const { reportNetworkError, reportRecovery, registerRetry } = useConnectivity();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { completeCurrentStep } = useOnboarding();
@@ -173,35 +171,18 @@ const AllProjects = () => {
     typeOptions: listFilterOptions.types,
   });
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const handleOnline = () => setNetworkOffline(false);
-    const handleOffline = () => setNetworkOffline(true);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
   const handleNetworkError = useCallback(
     (error: unknown) => {
       if (isNetworkError(error) || (typeof navigator !== 'undefined' && navigator.onLine === false)) {
-        setNetworkOffline(true);
+        reportNetworkError(error);
       }
     },
-    []
+    [reportNetworkError]
   );
 
   const handleNetworkRecovery = useCallback(() => {
-    if (typeof navigator === 'undefined' || navigator.onLine) {
-      setNetworkOffline(false);
-    }
-  }, []);
+    reportRecovery();
+  }, [reportRecovery]);
 
   const {
     listProjects,
@@ -855,11 +836,13 @@ const AllProjects = () => {
     await Promise.all([refetchProjects(), loadBoardProjects()]);
   }, [loadBoardProjects, refetchProjects]);
 
-  const handleOfflineRetry = useCallback(() => {
-    refreshAll();
-  }, [refreshAll]);
-
-  const isRetrying = boardLoading || listLoading || archivedLoading;
+  // Register this page's retry with the global connectivity system
+  useEffect(() => {
+    const unregister = registerRetry('projects:refreshAll', async () => {
+      await refreshAll();
+    });
+    return unregister;
+  }, [registerRetry, refreshAll]);
 
   const handleProjectClick = useCallback((project: ProjectListItem) => {
     setQuickViewProject(project);
@@ -1042,37 +1025,7 @@ const AllProjects = () => {
         </PageHeader>
       </div>
 
-      {networkOffline && (
-        <div className="flex-shrink-0 px-4 sm:px-6">
-          <Alert className="mb-4 border-amber-500/50 bg-amber-50 text-amber-900 dark:border-amber-500/50 dark:bg-amber-500/10 dark:text-amber-50">
-            <WifiOff className="h-4 w-4 text-amber-600 dark:text-amber-200" />
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-1">
-                <AlertTitle className="text-amber-900 dark:text-amber-100">
-                  {t('projects.networkOfflineTitle')}
-                </AlertTitle>
-                <AlertDescription className="text-amber-800 dark:text-amber-100/80">
-                  {t('projects.networkOfflineDescription')}
-                  <div className="mt-2 text-sm text-amber-700 dark:text-amber-200/80">
-                    {t('projects.networkOfflineHint')}
-                  </div>
-                </AlertDescription>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleOfflineRetry}
-                disabled={isRetrying}
-                className="self-start sm:self-center"
-              >
-                {isRetrying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {t('common:buttons.tryAgain')}
-              </Button>
-            </div>
-          </Alert>
-        </div>
-      )}
+      {/* Global offline banner lives in Layout */}
 
       {/* View Toggle - mobile friendly tabs */}
       <div className="flex-shrink-0 px-4 sm:px-6 pb-2">

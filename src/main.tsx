@@ -13,6 +13,7 @@ import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { PerformanceMonitor } from "@/components/PerformanceMonitor";
 import { PortalResetProvider } from "@/contexts/PortalResetContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { ConnectivityProvider } from "@/contexts/ConnectivityContext";
  
  const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,23 +28,25 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
-    <PortalResetProvider>
-      <AuthProvider>
-        <OrganizationProvider>
-          <LanguageProvider>
-            <ProfileProvider>
-              <SettingsProvider>
-                <OnboardingProvider>
-                  <PerformanceMonitor />
-                  <App />
-                  <SonnerToaster />
-                  <ShadToaster />
-                </OnboardingProvider>
-              </SettingsProvider>
-            </ProfileProvider>
-          </LanguageProvider>
-        </OrganizationProvider>
-      </AuthProvider>
-    </PortalResetProvider>
+    <ConnectivityProvider>
+      <PortalResetProvider>
+        <AuthProvider>
+          <OrganizationProvider>
+            <LanguageProvider>
+              <ProfileProvider>
+                <SettingsProvider>
+                  <OnboardingProvider>
+                    <PerformanceMonitor />
+                    <App />
+                    <SonnerToaster />
+                    <ShadToaster />
+                  </OnboardingProvider>
+                </SettingsProvider>
+              </ProfileProvider>
+            </LanguageProvider>
+          </OrganizationProvider>
+        </AuthProvider>
+      </PortalResetProvider>
+    </ConnectivityProvider>
   </QueryClientProvider>
 );

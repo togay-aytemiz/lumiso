@@ -6,6 +6,7 @@ import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
 import { useLayoutEffect, useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import OfflineBanner from "@/components/OfflineBanner";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -52,6 +53,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-start p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
             <SidebarTrigger />
           </div>
+          {/* Global connectivity banner */}
+          <OfflineBanner />
           
           <div className="flex-1 pb-24 md:pb-0 min-w-0">
             {children}

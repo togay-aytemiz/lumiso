@@ -178,5 +178,10 @@
     "call": "Call {{value}}"
   },
   "showMore": "Show more",
-  "showLess": "Show less"
+  "showLess": "Show less",
+  "network": {
+    "offlineTitle": "You're offline",
+    "offlineDescription": "We couldn't reach your data. We'll keep showing the last results until you're back online.",
+    "offlineHint": "Check your internet connection and try again."
+  }
 }

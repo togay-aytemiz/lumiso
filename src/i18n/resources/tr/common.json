@@ -178,5 +178,10 @@
     "call": "{{value}} numarasını ara"
   },
   "showMore": "Daha fazla",
-  "showLess": "Daha az"
+  "showLess": "Daha az",
+  "network": {
+    "offlineTitle": "Çevrimdışısınız",
+    "offlineDescription": "Verilerinize ulaşılamadı. Çevrimiçi olana kadar son sonuçları göstermeye devam edeceğiz.",
+    "offlineHint": "Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin."
+  }
 }

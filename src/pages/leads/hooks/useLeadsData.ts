@@ -207,6 +207,73 @@ export function useLeadsData({
       statusIdsCount: statusIds?.length ?? 0,
       customFieldFilterKeys: Object.keys(customFieldFilters || {}).length,
     });
+    // Fast path: serve first page from prefetch cache when filters are default
+    try {
+      const isDefault =
+        page === 1 &&
+        size === 25 &&
+        (!statusIds || statusIds.length === 0) &&
+        (!customFieldFilters || Object.keys(customFieldFilters).length === 0) &&
+        sortField === 'updated_at' &&
+        sortDirection === 'desc';
+      if (isDefault && typeof window !== 'undefined') {
+        const raw = localStorage.getItem(`prefetch:leads:first:${organizationId}`);
+        if (raw) {
+          const parsed = JSON.parse(raw) as { ts?: number; value?: { items?: any[]; total?: number; ttl?: number } };
+          const ts = parsed?.ts ?? 0;
+          const ttl = parsed?.value?.ttl ?? 60_000;
+          if (Date.now() - ts < ttl) {
+            const rows = (parsed?.value?.items ?? []) as any[];
+            const total = parsed?.value?.total ?? (rows.length ? rows.length : 0);
+            let leads: LeadWithCustomFields[] = rows.map((r) => ({
+              id: r.id,
+              name: r.name,
+              email: r.email,
+              phone: r.phone,
+              status: r.status,
+              status_id: r.status_id,
+              updated_at: r.updated_at,
+              created_at: r.created_at,
+              assignees: [],
+              custom_fields: {},
+              lead_statuses: r.lead_statuses,
+            }));
+            if (leads.length) {
+              const leadIds = leads.map((l) => l.id);
+              try {
+                const { data: cfTyped, error: cfTypedErr } = await supabase
+                  .from('lead_field_values_typed')
+                  .select('lead_id, field_key, value')
+                  .eq('organization_id', organizationId)
+                  .in('lead_id', leadIds);
+                let cfRows: any[] | null = null;
+                if (!cfTypedErr) {
+                  cfRows = cfTyped as any[];
+                } else {
+                  const { data: cfRaw, error: cfRawErr } = await supabase
+                    .from('lead_field_values')
+                    .select('lead_id, field_key, value, leads!inner(organization_id)')
+                    .eq('leads.organization_id', organizationId)
+                    .in('lead_id', leadIds);
+                  if (!cfRawErr) cfRows = cfRaw as any[];
+                }
+                if (cfRows && cfRows.length) {
+                  const byLead: Record<string, Record<string, string | null>> = {};
+                  for (const r of cfRows) {
+                    const lid = r.lead_id;
+                    if (!byLead[lid]) byLead[lid] = {};
+                    byLead[lid][r.field_key] = r.value;
+                  }
+                  leads = leads.map((l) => ({ ...l, custom_fields: byLead[l.id] || {} }));
+                }
+              } catch {}
+            }
+            t.end({ leads: leads.length, total, source: 'prefetch' });
+            return { leads, count: includeCount ? total : leads.length };
+          }
+        }
+      }
+    } catch {}
     try {
       const tRpc = startTimer('Leads.rpc.leads_filter_page');
       const { data, error } = await supabase.rpc('leads_filter_page', {

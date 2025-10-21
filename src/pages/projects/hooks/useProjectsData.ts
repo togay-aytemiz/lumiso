@@ -318,6 +318,32 @@ export function useProjectsData({
         sortDirection,
       });
 
+      // Fast path: serve from prefetch cache if conditions match the default list view
+      try {
+        const isDefaultList =
+          scope === 'active' &&
+          page === 1 &&
+          pageSize === (DEFAULT_PAGE_SIZE || 25) &&
+          (!filtersPayload || Object.keys(filtersPayload).length === 0) &&
+          sortField === 'created_at' &&
+          sortDirection === 'desc';
+        if (isDefaultList && typeof window !== 'undefined') {
+          const raw = localStorage.getItem(`prefetch:projects:first:${organizationId}:active`);
+          if (raw) {
+            const parsed = JSON.parse(raw) as { ts?: number; value?: { items?: any[]; total?: number; ttl?: number } };
+            const ts = parsed?.ts ?? 0;
+            const ttl = parsed?.value?.ttl ?? 60_000;
+            if (Date.now() - ts < ttl) {
+              const rows = (parsed?.value?.items ?? []) as any[];
+              const total = parsed?.value?.total ?? (rows.length ? rows.length : 0);
+              const projects = rows.map(mapRowToProject);
+              t.end({ rows: projects.length, total, source: 'prefetch' });
+              return { projects, count: range.includeCount ? total : projects.length };
+            }
+          }
+        }
+      } catch {}
+
       const fetchViaRpc = async () => {
         const tRpc = startTimer('Projects.rpc.projects_filter_page');
         const { data, error } = await supabase.rpc("projects_filter_page", {

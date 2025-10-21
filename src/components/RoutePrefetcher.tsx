@@ -1,0 +1,81 @@
+import { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useOrganization } from '@/contexts/OrganizationContext';
+
+// Lightweight route-aware prefetcher for first pages of common lists
+// Stores results in localStorage for hooks to bootstrap from.
+const TTL_MS = 60 * 1000; // 1 minute
+
+function setLS(key: string, value: unknown) {
+  if (typeof window === 'undefined') return;
+  try {
+    const payload = { ts: Date.now(), value };
+    localStorage.setItem(key, JSON.stringify(payload));
+  } catch {}
+}
+
+export default function RoutePrefetcher() {
+  const { pathname } = useLocation();
+  const { activeOrganizationId } = useOrganization();
+  const inFlightRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const orgId = activeOrganizationId;
+    if (!orgId) return;
+
+    const doProjects = async () => {
+      const k = `prefetch:projects:first:${orgId}:active`;
+      if (inFlightRef.current.has(k)) return;
+      inFlightRef.current.add(k);
+      try {
+        const { data, error } = await supabase.rpc('projects_filter_page', {
+          org: orgId,
+          p_page: 1,
+          p_size: 25,
+          p_sort_field: 'created_at',
+          p_sort_dir: 'desc',
+          p_scope: 'active',
+          p_filters: {},
+        });
+        if (!error && Array.isArray(data)) {
+          const total = data.length ? Number((data as any[])[0].total_count ?? 0) : 0;
+          setLS(k, { items: data, total, ttl: TTL_MS });
+        }
+      } catch {}
+      finally {
+        inFlightRef.current.delete(k);
+      }
+    };
+
+    const doLeads = async () => {
+      const k = `prefetch:leads:first:${orgId}`;
+      if (inFlightRef.current.has(k)) return;
+      inFlightRef.current.add(k);
+      try {
+        const { data, error } = await supabase.rpc('leads_filter_page', {
+          org: orgId,
+          p_page: 1,
+          p_size: 25,
+          p_sort_field: 'updated_at',
+          p_sort_dir: 'desc',
+          p_status_ids: null,
+          p_filters: {},
+        });
+        if (!error && Array.isArray(data)) {
+          const total = data.length ? Number((data as any[])[0].total_count ?? 0) : 0;
+          setLS(k, { items: data, total, ttl: TTL_MS });
+        }
+      } catch {}
+      finally {
+        inFlightRef.current.delete(k);
+      }
+    };
+
+    if (pathname.startsWith('/projects')) doProjects();
+    if (pathname.startsWith('/leads')) doLeads();
+  }, [pathname, activeOrganizationId]);
+
+  return null;
+}
+

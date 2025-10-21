@@ -7,6 +7,7 @@ import { useLayoutEffect, useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import OfflineBanner from "@/components/OfflineBanner";
+import RoutePrefetcher from "@/components/RoutePrefetcher";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -55,6 +56,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
           {/* Global connectivity banner */}
           <OfflineBanner />
+          {/* Route-aware prefetch for list first pages */}
+          <RoutePrefetcher />
           
           <div className="flex-1 pb-24 md:pb-0 min-w-0">
             {children}

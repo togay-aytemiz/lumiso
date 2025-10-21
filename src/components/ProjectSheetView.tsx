@@ -409,190 +409,166 @@ export function ProjectSheetView({
 
   if (!project) return null;
 
-  // Header content - same as original modal
+  const clientName = lead?.name || leadName;
+
+  const statusBadges = (
+    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground/80 sm:text-[0.8rem]">
+      <ProjectStatusBadge
+        projectId={project.id}
+        currentStatusId={localStatusId || undefined}
+        onStatusChange={() => {
+          onProjectUpdated();
+        }}
+        editable={!isArchived}
+        className="text-xs sm:text-sm"
+      />
+
+      {projectType && (
+        <Badge className="rounded-full border border-border/60 bg-muted/40 px-3 py-1 text-[0.65rem] font-semibold tracking-wide uppercase text-muted-foreground">
+          {projectType.name.toUpperCase()}
+        </Badge>
+      )}
+
+      {clientName && (
+        <span className="inline-flex items-center rounded-full border border-border/50 bg-background/80 px-3 py-1 text-[0.65rem] font-medium text-muted-foreground shadow-sm">
+          {clientName}
+        </span>
+      )}
+    </div>
+  );
+
+  const actionButtons = (
+    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+      {mode === 'sheet' && onViewFullDetails && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onViewFullDetails}
+          className="w-full justify-center gap-2 text-sm font-medium hover:bg-accent sm:w-auto sm:px-4"
+        >
+          <ExternalLink className="h-4 w-4" />
+          <span className="text-sm">{tForms('project_sheet.full_details')}</span>
+        </Button>
+      )}
+
+      {!isEditing && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-center gap-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:w-auto sm:px-3"
+            >
+              <span>{tForms('project_sheet.more')}</span>
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
+            <DropdownMenuItem role="menuitem" onSelect={() => setIsEditing(true)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              <span>{tForms('project_sheet.edit_project')}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem role="menuitem" onSelect={handleArchiveAction}>
+              {isArchived ? (
+                <>
+                  <ArchiveRestore className="mr-2 h-4 w-4" />
+                  <span>{tForms('project_sheet.restore_project')}</span>
+                </>
+              ) : (
+                <>
+                  <Archive className="mr-2 h-4 w-4" />
+                  <span>{tForms('project_sheet.archive_project')}</span>
+                </>
+              )}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onOpenChange(false)}
+        className="w-full justify-center text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:w-auto sm:px-3"
+      >
+        <span className="hidden sm:inline">{tForms('project_sheet.close')}</span>
+        <X className="h-4 w-4 sm:hidden" />
+      </Button>
+    </div>
+  );
+
+  // Header content - refreshed layout for sheet header
   const headerContent = (
-    <div className="flex items-center justify-between gap-2">
-      <div className="flex-1 min-w-0 space-y-3">
-        {isEditing ? (
-          <div className="space-y-3 text-2xl font-bold text-left">
-            <Input 
-              value={editName} 
-              onChange={e => setEditName(e.target.value)} 
-              placeholder={tForms('labels.project_name')} 
-              className="text-2xl font-bold border rounded-md px-3 py-2" 
-            />
-            <Textarea 
-              value={editDescription} 
-              onChange={e => setEditDescription(e.target.value)} 
-              placeholder={tForms('labels.project_description')} 
-              className="text-base border rounded-md px-3 py-2 resize-none" 
-              rows={2} 
-            />
-            <SimpleProjectTypeSelect 
-              value={editProjectTypeId} 
-              onValueChange={setEditProjectTypeId} 
-              disabled={isSaving} 
-              required 
-            />
-            <div className="flex gap-2">
-              <Button 
-                size="sm" 
-                onClick={handleSaveProject} 
-                disabled={isSaving || !editName.trim() || !editProjectTypeId}
-              >
-                <Save className="h-4 w-4 mr-1" />
-                {isSaving ? tForms('common:actions.saving') : tForms('common:buttons.save')}
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => {
-                  setIsEditing(false);
-                  setEditName(project?.name || "");
-                  setEditDescription(project?.description || "");
-                  setEditProjectTypeId(project?.project_type_id || "");
-                }} 
-                disabled={isSaving}
-              >
-                <X className="h-4 w-4 mr-1" />
-                {tForms('common:buttons.cancel')}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="space-y-2">
-              <div className="space-y-2">
-                {/* Desktop: Name + Badges on same line */}
-                <div className="hidden md:flex items-center gap-3 flex-wrap">
-                  <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
-                    {project?.name}
-                  </h1>
-                  
-                  {/* Project Status and Type Badges next to name - Desktop only */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <ProjectStatusBadge 
-                      projectId={project.id} 
-                      currentStatusId={localStatusId || undefined} 
-                      onStatusChange={() => {
-                        onProjectUpdated();
-                      }} 
-                      editable={!isArchived} 
-                      className="text-sm" 
-                    />
-                    
-                    {projectType && (
-                      <Badge variant="outline" className="text-xs">
-                        {projectType.name.toUpperCase()}
-                      </Badge>
-                    )}
-                  </div>
+    <div className="w-full rounded-2xl border border-border/60 bg-muted/20 p-4 shadow-sm backdrop-blur-sm sm:p-6">
+      <div className="flex flex-col gap-4 sm:gap-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex-1 min-w-0 space-y-4">
+            {isEditing ? (
+              <div className="space-y-3">
+                <Input
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  placeholder={tForms('labels.project_name')}
+                  className="text-lg font-semibold"
+                />
+                <Textarea
+                  value={editDescription}
+                  onChange={e => setEditDescription(e.target.value)}
+                  placeholder={tForms('labels.project_description')}
+                  className="min-h-[88px] resize-none text-sm"
+                />
+                <SimpleProjectTypeSelect
+                  value={editProjectTypeId}
+                  onValueChange={setEditProjectTypeId}
+                  disabled={isSaving}
+                  required
+                />
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-start">
+                  <Button
+                    size="sm"
+                    onClick={handleSaveProject}
+                    disabled={isSaving || !editName.trim() || !editProjectTypeId}
+                    className="sm:w-auto"
+                  >
+                    <Save className="mr-2 h-4 w-4" />
+                    {isSaving ? tForms('common:actions.saving') : tForms('common:buttons.save')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setIsEditing(false);
+                      setEditName(project?.name || "");
+                      setEditDescription(project?.description || "");
+                      setEditProjectTypeId(project?.project_type_id || "");
+                    }}
+                    disabled={isSaving}
+                    className="sm:w-auto"
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    {tForms('common:buttons.cancel')}
+                  </Button>
                 </div>
-                
-                {/* Mobile: Name only */}
-                <div className="md:hidden">
-                  <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
-                    {project?.name}
-                  </h1>
-                </div>
-                
-                {/* Project Description - All screens */}
-                {project?.description && (
-                  <p className="text-muted-foreground text-sm font-normal text-left">
-                    {project.description}
-                  </p>
-                )}
               </div>
-              
-              {/* Mobile Layout: Badges then Assignees */}
-              <div className="md:hidden space-y-4 mt-6">
-                {/* Stage and Type badges for mobile */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <ProjectStatusBadge 
-                    projectId={project.id} 
-                    currentStatusId={localStatusId || undefined} 
-                    onStatusChange={() => {
-                      onProjectUpdated();
-                    }} 
-                    editable={!isArchived} 
-                    className="text-sm" 
-                  />
-                  
-                  {projectType && (
-                    <Badge variant="outline" className="text-xs">
-                      {projectType.name.toUpperCase()}
-                    </Badge>
+            ) : (
+              <div className="space-y-3 text-left">
+                <div className="space-y-2">
+                  <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
+                    {project?.name}
+                  </h1>
+                  {project?.description && (
+                    <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+                      {project.description}
+                    </p>
                   )}
                 </div>
-                
-                {/* Assignees List for mobile */}
-                {/* Assignees removed - single user organization */}
+                {statusBadges}
               </div>
-            </div>
+            )}
           </div>
-        )}
-      </div>
-      
-      <div className="flex items-center gap-1 shrink-0 self-start">
-        {/* Desktop Assignees - moved here to be left of buttons */}
-        {/* Assignees removed - single user organization */}
-        
-        {mode === 'sheet' && onViewFullDetails && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onViewFullDetails}
-            className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
-          >
-            <ExternalLink className="h-4 w-4" />
-            <span className="text-sm hidden md:inline">{tForms('project_sheet.full_details')}</span>
-          </Button>
-        )}
-        
-        {!isEditing && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-            className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
-              >
-                <span className="text-sm hidden md:inline">{tForms('project_sheet.more')}</span>
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
-              <DropdownMenuItem role="menuitem" onSelect={() => setIsEditing(true)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                <span>{tForms('project_sheet.edit_project')}</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem role="menuitem" onSelect={handleArchiveAction}>
-                {isArchived ? (
-                  <>
-                    <ArchiveRestore className="mr-2 h-4 w-4" />
-                    <span>{tForms('project_sheet.restore_project')}</span>
-                  </>
-                ) : (
-                  <>
-                    <Archive className="mr-2 h-4 w-4" />
-                    <span>{tForms('project_sheet.archive_project')}</span>
-                  </>
-                )}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-        
-        
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => onOpenChange(false)} 
-          className="text-muted-foreground hover:bg-accent hover:text-accent-foreground text-sm h-8 px-2 md:h-10 md:px-3"
-        >
-          <span className="hidden md:inline">{tForms('project_sheet.close')}</span>
-          <X className="h-4 w-4 md:hidden" />
-        </Button>
+
+          <div className="sm:min-w-[220px]">{actionButtons}</div>
+        </div>
       </div>
     </div>
   );

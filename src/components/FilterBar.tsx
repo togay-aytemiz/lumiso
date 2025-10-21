@@ -36,6 +36,10 @@ interface FilterBarProps {
   showCompleted?: boolean;
   onShowCompletedChange?: (show: boolean) => void;
   showCompletedLabel?: string;
+  // Hide overdue toggle (for reminders)
+  hideOverdue?: boolean;
+  onHideOverdueChange?: (hide: boolean) => void;
+  hideOverdueLabel?: string;
   
   // Sticky behavior
   isSticky?: boolean;
@@ -55,6 +59,9 @@ export function FilterBar({
   showCompleted,
   onShowCompletedChange,
   showCompletedLabel,
+  hideOverdue,
+  onHideOverdueChange,
+  hideOverdueLabel,
   isSticky = true,
   className = ""
 }: FilterBarProps) {
@@ -74,6 +81,7 @@ export function FilterBar({
   
   // Use translation as default if no label provided
   const completedLabel = showCompletedLabel || tForms('filterBar.showCompleted');
+  const hideOverdueText = hideOverdueLabel || tForms('filterBar.hideOverdue', { defaultValue: 'Hide overdue' });
   
   // Calculate active filter count for badge
   const getActiveFilterCount = () => {
@@ -87,6 +95,8 @@ export function FilterBar({
     
     // Count show completed if enabled
     if (showCompleted) count++;
+    // Count hide overdue if enabled
+    if (hideOverdue) count++;
     
     return count;
   };
@@ -164,20 +174,34 @@ export function FilterBar({
         </div>
       )}
 
-      {/* Show Completed Toggle */}
-      {onShowCompletedChange && (
+      {/* Show Completed / Hide Overdue Toggles */}
+      {(onShowCompletedChange || onHideOverdueChange) && (
         <div className="space-y-3">
           <Label className="text-sm font-medium">{t("filterBar.options")}</Label>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="show-completed" className="text-sm">
-              {completedLabel}
-            </Label>
-            <Switch
-              id="show-completed"
-              checked={showCompleted || false}
-              onCheckedChange={onShowCompletedChange}
-            />
-          </div>
+          {onShowCompletedChange && (
+            <div className="flex items-center justify-between">
+              <Label htmlFor="show-completed" className="text-sm">
+                {completedLabel}
+              </Label>
+              <Switch
+                id="show-completed"
+                checked={showCompleted || false}
+                onCheckedChange={onShowCompletedChange}
+              />
+            </div>
+          )}
+          {onHideOverdueChange && (
+            <div className="flex items-center justify-between">
+              <Label htmlFor="hide-overdue" className="text-sm">
+                {hideOverdueText}
+              </Label>
+              <Switch
+                id="hide-overdue"
+                checked={hideOverdue || false}
+                onCheckedChange={onHideOverdueChange}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

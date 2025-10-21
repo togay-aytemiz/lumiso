@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import type { ComponentType, ReactNode, SVGProps } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { Button } from "@/components/ui/button";
+import { KpiCard } from "@/components/ui/kpi-card";
+import { getKpiIconPreset } from "@/components/ui/kpi-presets";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
@@ -12,6 +13,7 @@ import { FilterBar } from "@/components/FilterBar";
 import { ListLoadingSkeleton } from "@/components/ui/loading-presets";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import {
   Accordion,
   AccordionContent,
@@ -29,7 +31,7 @@ import {
   SunMedium,
   UserCircle
 } from "lucide-react";
-import { cn, formatGroupDate, formatTime, formatDateTime, getWeekRange } from "@/lib/utils";
+import { cn, formatGroupDate, formatTime, getWeekRange } from "@/lib/utils";
 
 interface Activity {
   id: string;
@@ -38,6 +40,7 @@ interface Activity {
   reminder_time: string | null;
   type: string;
   lead_id: string;
+  project_id?: string | null;
   created_at: string;
   updated_at: string;
   completed?: boolean;
@@ -51,20 +54,14 @@ interface Lead {
 
 type FilterType = "all" | "overdue" | "today" | "tomorrow" | "thisWeek" | "nextWeek" | "thisMonth";
 
-interface ReminderSummaryCardProps {
-  icon: ComponentType<SVGProps<SVGSVGElement>>;
-  accentClassName: string;
-  title: string;
-  value: number;
-  description: string;
-  meta?: ReactNode;
-}
+
 
 interface ReminderTimelineLabels {
   lead: string;
   markComplete: string;
   markIncomplete: string;
   openLead: string;
+  openProject: string;
   noTime: string;
   overdue: string;
   today: string;
@@ -77,10 +74,12 @@ interface ReminderTimelineItemProps {
   leadName: string;
   onToggleCompletion: (activityId: string, completed: boolean) => void;
   onNavigate: () => void;
+  onNavigateProject?: () => void;
   isOverdue: boolean;
   isToday: boolean;
   isTomorrow: boolean;
   labels: ReminderTimelineLabels;
+  hasProject?: boolean;
 }
 
 const filterPillBaseClasses =
@@ -92,33 +91,7 @@ const filterPillBadgeBaseClasses =
 const filterPillBadgeActiveClasses =
   "border-primary/30 bg-primary/15 text-primary";
 
-const ReminderSummaryCard = ({
-  icon: Icon,
-  accentClassName,
-  title,
-  value,
-  description,
-  meta
-}: ReminderSummaryCardProps) => (
-  <div className="rounded-2xl border border-border/60 bg-card/70 p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
-    <div className="flex items-start justify-between gap-4">
-      <div>
-        <p className="text-sm font-medium text-muted-foreground">{title}</p>
-        <p className="mt-3 text-3xl font-semibold tracking-tight text-foreground">{value}</p>
-      </div>
-      <span
-        className={cn(
-          "inline-flex h-11 w-11 items-center justify-center rounded-full border-2",
-          accentClassName
-        )}
-      >
-        <Icon className="h-5 w-5" aria-hidden="true" />
-      </span>
-    </div>
-    <p className="mt-4 text-sm text-muted-foreground">{description}</p>
-    {meta && <div className="mt-3 text-xs text-muted-foreground">{meta}</div>}
-  </div>
-);
+// Legacy summary card removed in favor of shared <KpiCard /> component used across the app
 
 const parseTimeValue = (time?: string | null, direction: "asc" | "desc" = "asc") => {
   if (!time) {
@@ -170,6 +143,7 @@ const ReminderTimelineItem = ({
   leadName,
   onToggleCompletion,
   onNavigate,
+  onNavigateProject,
   isOverdue,
   isToday,
   isTomorrow,
@@ -257,9 +231,6 @@ const ReminderTimelineItem = ({
                     {activity.reminder_time ? formatTime(activity.reminder_time) : labels.noTime}
                   </span>
                 </div>
-                <span className="text-xs uppercase tracking-wide text-muted-foreground/80" title={formatDateTime(activity.reminder_date, activity.reminder_time ?? undefined)}>
-                  {formatDateTime(activity.reminder_date, activity.reminder_time ?? undefined)}
-                </span>
               </div>
             </div>
           </div>
@@ -286,22 +257,40 @@ const ReminderTimelineItem = ({
                 </>
               )}
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex items-center gap-2 text-primary"
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                onNavigate();
-              }}
-            >
-              {labels.openLead}
-              <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-            </Button>
+            <div className="flex flex-wrap items-center gap-2 justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-2 text-primary"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onNavigate();
+                }}
+              >
+                {labels.openLead}
+                <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+              </Button>
+              {typeof onNavigateProject === 'function' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-2 text-primary"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onNavigateProject?.();
+                  }}
+                >
+                  {labels.openProject}
+                  <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
     </div>
   );
 };
@@ -314,7 +303,10 @@ const ReminderDetails = () => {
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("today");
   const [showCompleted, setShowCompleted] = useState(false);
+  const [hideOverdue, setHideOverdue] = useState(false);
   const navigate = useNavigate();
+  const [viewingProject, setViewingProject] = useState<any>(null);
+  const [showProjectDialog, setShowProjectDialog] = useState(false);
 
   useEffect(() => {
     void fetchReminders();
@@ -483,6 +475,24 @@ const ReminderDetails = () => {
     };
   }, [activities, isOverdue, isToday, isTomorrow]);
 
+  // Upcoming breakdown for CTA buttons and main figure
+  const upcomingBreakdown = useMemo(() => {
+    const active = activities.filter((a) => !a.completed);
+    const tomorrow = active.filter((a) => isTomorrow(a.reminder_date)).length;
+    const thisWeek = active.filter(
+      (a) => isThisWeek(a.reminder_date) && !isToday(a.reminder_date) && !isTomorrow(a.reminder_date)
+    ).length;
+    const nextWeek = active.filter((a) => isNextWeek(a.reminder_date)).length;
+    const total = tomorrow + thisWeek + nextWeek;
+    return { tomorrow, thisWeek, nextWeek, total };
+  }, [activities, isThisWeek, isNextWeek, isToday, isTomorrow]);
+
+  // Completion details
+  const completedToday = useMemo(
+    () => activities.filter((a) => a.completed && isToday(a.reminder_date)).length,
+    [activities, isToday]
+  );
+
   const { activeActivities, completedActivities } = useMemo(() => {
     const active = activities.filter((activity) => !activity.completed);
     const completed = activities.filter((activity) => activity.completed);
@@ -497,24 +507,31 @@ const ReminderDetails = () => {
         break;
       case "overdue":
         filteredActive = active.filter((activity) => isOverdue(activity.reminder_date));
+        filteredCompleted = completed.filter((activity) => isOverdue(activity.reminder_date));
         break;
       case "today":
         filteredActive = active.filter((activity) => isToday(activity.reminder_date));
+        filteredCompleted = completed.filter((activity) => isToday(activity.reminder_date));
         break;
       case "tomorrow":
         filteredActive = active.filter((activity) => isTomorrow(activity.reminder_date));
+        filteredCompleted = completed.filter((activity) => isTomorrow(activity.reminder_date));
         break;
       case "thisWeek":
         filteredActive = active.filter((activity) => isThisWeek(activity.reminder_date));
+        filteredCompleted = completed.filter((activity) => isThisWeek(activity.reminder_date));
         break;
       case "nextWeek":
         filteredActive = active.filter((activity) => isNextWeek(activity.reminder_date));
+        filteredCompleted = completed.filter((activity) => isNextWeek(activity.reminder_date));
         break;
       case "thisMonth":
         filteredActive = active.filter((activity) => isThisMonth(activity.reminder_date));
+        filteredCompleted = completed.filter((activity) => isThisMonth(activity.reminder_date));
         break;
       default:
         filteredActive = active;
+        filteredCompleted = completed;
         break;
     }
 
@@ -526,7 +543,11 @@ const ReminderDetails = () => {
       finalActive = [...overdueActivities, ...nonOverdue];
     }
 
-    const visibleCompleted = showCompleted || selectedFilter === "all" ? filteredCompleted : [];
+    if (hideOverdue) {
+      finalActive = finalActive.filter((activity) => !isOverdue(activity.reminder_date));
+    }
+
+    const visibleCompleted = (showCompleted || selectedFilter === "all") ? filteredCompleted : [];
 
     return {
       activeActivities: finalActive,
@@ -536,6 +557,7 @@ const ReminderDetails = () => {
     activities,
     selectedFilter,
     showCompleted,
+    hideOverdue,
     isOverdue,
     isToday,
     isTomorrow,
@@ -560,6 +582,7 @@ const ReminderDetails = () => {
       markComplete: tForms("reminders.markComplete"),
       markIncomplete: tForms("reminders.markIncomplete"),
       openLead: t("reminders.timeline.openLead"),
+      openProject: t("reminders.timeline.openProject"),
       noTime: tForms("reminders.noTime"),
       overdue: tForms("reminders.overdue"),
       today: tForms("reminders.today"),
@@ -569,50 +592,11 @@ const ReminderDetails = () => {
     [t, tForms]
   );
 
-  const summaryCards = useMemo(
-    () => {
-      const upcomingLater = Math.max(stats.upcoming - stats.tomorrow, 0);
-
-      return [
-        {
-          key: "overdue",
-          icon: BellRing,
-          accent: "border-destructive/30 bg-destructive/10 text-destructive",
-          title: t("reminders.stats.overdue"),
-          value: stats.overdue,
-          description: t("reminders.statsDescriptions.overdue")
-        },
-        {
-          key: "today",
-          icon: SunMedium,
-          accent: "border-primary/40 bg-primary/10 text-primary",
-          title: t("reminders.stats.today"),
-          value: stats.today,
-          description: t("reminders.statsDescriptions.today")
-        },
-        {
-          key: "upcoming",
-          icon: CalendarRange,
-          accent: "border-amber-300/60 bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200",
-          title: t("reminders.stats.upcoming"),
-          value: stats.upcoming,
-          description: t("reminders.statsDescriptions.upcoming", {
-            tomorrow: stats.tomorrow,
-            later: upcomingLater
-          })
-        },
-        {
-          key: "completed",
-          icon: CheckCircle2,
-          accent: "border-emerald-300/60 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200",
-          title: t("reminders.stats.completed"),
-          value: stats.completed,
-          description: t("reminders.statsDescriptions.completed")
-        }
-      ];
-    },
-    [stats, t]
-  );
+  // Icon presets to match shared KPI card design
+  const overdueIconPreset = useMemo(() => getKpiIconPreset('red'), []);
+  const todayIconPreset = useMemo(() => getKpiIconPreset('yellow'), []);
+  const upcomingIconPreset = useMemo(() => getKpiIconPreset('sky'), []);
+  const completedIconPreset = useMemo(() => getKpiIconPreset('emerald'), []);
 
   const toggleCompletion = async (activityId: string, completed: boolean) => {
     try {
@@ -646,6 +630,35 @@ const ReminderDetails = () => {
     navigate(`/leads/${leadId}`);
   };
 
+  const handleProjectClick = useCallback(async (projectId?: string | null) => {
+    if (!projectId) return;
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name, description, lead_id, user_id, created_at, updated_at, status_id, previous_status_id, project_type_id')
+        .eq('id', projectId)
+        .single();
+      if (error) throw error;
+
+      const { data: leadData, error: leadError } = await supabase
+        .from('leads')
+        .select('id, name, status')
+        .eq('id', data.lead_id)
+        .single();
+      if (leadError) throw leadError;
+
+      setViewingProject(data);
+      setShowProjectDialog(true);
+      // Ensure leads map has the project's lead name for the dialog
+      setLeads((prev) => {
+        const exists = prev.some((l) => l.id === data.lead_id);
+        return exists ? prev : [...prev, { id: data.lead_id, name: leadData?.name || 'Unknown Lead', status: leadData?.status || '' }];
+      });
+    } catch (err: any) {
+      toast({ title: 'Unable to open project', description: err.message, variant: 'destructive' });
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <PageHeader title={t("reminders.title")} subtitle={t("reminders.description")}> 
@@ -664,21 +677,58 @@ const ReminderDetails = () => {
         ) : (
           <>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {summaryCards.map((card) => (
-                <ReminderSummaryCard
-                  key={card.key}
-                  icon={card.icon}
-                  accentClassName={card.accent}
-                  title={card.title}
-                  value={card.value}
-                  description={card.description}
-                  meta={card.key === "upcoming" && stats.tomorrow > 0 ? (
-                    <Badge variant="outline" className="rounded-full border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
-                      {t("reminders.stats.tomorrowBadge", { count: stats.tomorrow })}
-                    </Badge>
-                  ) : undefined}
-                />
-              ))}
+              <KpiCard
+                className="h-full"
+                density="compact"
+                icon={BellRing}
+                {...overdueIconPreset}
+                title={t('reminders.stats.overdue')}
+                value={stats.overdue}
+                info={{
+                  content: t('reminders.statsDescriptions.overdue'),
+                  ariaLabel: t('reminders.stats.overdue'),
+                }}
+              />
+
+              <KpiCard
+                className="h-full"
+                density="compact"
+                icon={SunMedium}
+                {...todayIconPreset}
+                iconForeground="text-white"
+                title={t('reminders.stats.today')}
+                value={stats.today}
+                info={{
+                  content: t('reminders.statsDescriptions.today'),
+                  ariaLabel: t('reminders.stats.today'),
+                }}
+              />
+
+              <KpiCard
+                className="h-full"
+                density="compact"
+                icon={CalendarRange}
+                {...upcomingIconPreset}
+                title={t('reminders.stats.upcoming')}
+                value={upcomingBreakdown.total}
+                info={{
+                  content: t('reminders.statsDescriptions.upcoming', { tomorrow: upcomingBreakdown.tomorrow, later: upcomingBreakdown.thisWeek + upcomingBreakdown.nextWeek }),
+                  ariaLabel: t('reminders.stats.upcoming'),
+                }}
+              />
+
+              <KpiCard
+                className="h-full"
+                density="compact"
+                icon={CheckCircle2}
+                {...completedIconPreset}
+                title={t('reminders.stats.completed')}
+                value={stats.completed}
+                info={{
+                  content: t('reminders.kpis.completedInfo', { today: completedToday, allTime: stats.completed }),
+                  ariaLabel: t('reminders.stats.completed')
+                }}
+              />
             </div>
 
             <div className="md:hidden">
@@ -692,6 +742,9 @@ const ReminderDetails = () => {
                 showCompleted={showCompleted}
                 onShowCompletedChange={setShowCompleted}
                 showCompletedLabel={t("reminders.showCompleted")}
+                hideOverdue={hideOverdue}
+                onHideOverdueChange={setHideOverdue}
+                hideOverdueLabel={t('reminders.hideOverdue')}
                 isSticky
               />
             </div>
@@ -723,11 +776,15 @@ const ReminderDetails = () => {
                     </Button>
                   ))}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4">
                   <span className="flex items-center gap-2 text-sm text-muted-foreground">
                     {t("reminders.showCompleted")}
                   </span>
                   <Switch checked={showCompleted} onCheckedChange={setShowCompleted} />
+                  <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                    {t('reminders.hideOverdue')}
+                  </span>
+                  <Switch checked={hideOverdue} onCheckedChange={setHideOverdue} />
                 </div>
               </div>
             </div>
@@ -778,10 +835,12 @@ const ReminderDetails = () => {
                             leadName={getLeadName(activity.lead_id)}
                             onToggleCompletion={toggleCompletion}
                             onNavigate={() => handleReminderClick(activity.lead_id)}
+                            onNavigateProject={activity.project_id ? () => handleProjectClick(activity.project_id) : undefined}
                             isOverdue={isOverdue(activity.reminder_date)}
                             isToday={isToday(activity.reminder_date)}
                             isTomorrow={isTomorrow(activity.reminder_date)}
                             labels={labels}
+                            hasProject={!!activity.project_id}
                           />
                         ))}
                       </div>
@@ -817,10 +876,12 @@ const ReminderDetails = () => {
                                   leadName={getLeadName(activity.lead_id)}
                                   onToggleCompletion={toggleCompletion}
                                   onNavigate={() => handleReminderClick(activity.lead_id)}
+                                  onNavigateProject={activity.project_id ? () => handleProjectClick(activity.project_id) : undefined}
                                   isOverdue={isOverdue(activity.reminder_date)}
                                   isToday={isToday(activity.reminder_date)}
                                   isTomorrow={isTomorrow(activity.reminder_date)}
                                   labels={labels}
+                                  hasProject={!!activity.project_id}
                                 />
                               ))}
                             </div>
@@ -835,6 +896,15 @@ const ReminderDetails = () => {
           </>
         )}
       </div>
+      {viewingProject && (
+        <ViewProjectDialog
+          project={viewingProject}
+          open={showProjectDialog}
+          onOpenChange={setShowProjectDialog}
+          onProjectUpdated={fetchReminders}
+          leadName={getLeadName(viewingProject?.lead_id || '')}
+        />
+      )}
     </div>
   );
 };

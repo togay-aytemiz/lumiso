@@ -770,6 +770,7 @@
   "reminders": {
     "title": "Hatırlatmalar",
     "description": "Etkinliklerinizi ve hatırlatmalarınızı yönetin",
+    "hideOverdue": "Gecikmişleri gizle",
     "filters": {
       "all": "Tümü",
       "overdue": "Gecikmiş",
@@ -797,8 +798,16 @@
       "upcoming": "Yarın: {{tomorrow}} • Daha sonra: {{later}}",
       "completed": "Tamamladıklarınız"
     },
+    "kpis": {
+      "viewOverdue": "Gecikmişleri Gör",
+      "viewToday": "Bugünü Gör",
+      "completedToday": "Bugün",
+      "allTime": "Tüm zamanlar",
+      "completedInfo": "Bugün: {{today}} • Tüm zamanlar: {{allTime}}"
+    },
     "timeline": {
       "openLead": "Kişiyi aç",
+      "openProject": "Projeyi aç",
       "completedTitle": "Tamamlanan hatırlatmalar",
       "completedDescription": "Tamamladığınız öğeler hızlı erişim için burada saklanır."
     }

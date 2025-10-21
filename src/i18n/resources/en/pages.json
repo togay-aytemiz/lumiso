@@ -770,6 +770,7 @@
   "reminders": {
     "title": "Reminders",
     "description": "Manage your activities and reminders",
+    "hideOverdue": "Hide overdue",
     "filters": {
       "all": "All",
       "overdue": "Overdue",
@@ -797,8 +798,16 @@
       "upcoming": "Tomorrow: {{tomorrow}} • Later: {{later}}",
       "completed": "Marked as done"
     },
+    "kpis": {
+      "viewOverdue": "View Overdue",
+      "viewToday": "View Today",
+      "completedToday": "Today",
+      "allTime": "All time",
+      "completedInfo": "Today: {{today}} • All time: {{allTime}}"
+    },
     "timeline": {
       "openLead": "Open lead",
+      "openProject": "Open project",
       "completedTitle": "Completed reminders",
       "completedDescription": "Items you've marked as done stay here for quick reference."
     }

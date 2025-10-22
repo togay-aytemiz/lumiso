@@ -400,7 +400,7 @@ export function AdvancedDataTable<T>({
                         onClick={handleToggleFilters}
                         className={cn(
                           "flex items-center gap-2",
-                          "flex-1 basis-1/2 justify-center sm:flex-none sm:justify-start"
+                          "basis-1/2 grow-0 justify-center sm:flex-none sm:justify-start"
                         )}
                       >
                         <Filter className="h-4 w-4" />
@@ -432,7 +432,7 @@ export function AdvancedDataTable<T>({
                         defaultPreferences={defaultPreferences}
                         preferences={columnPreferences}
                         onChange={handleColumnPreferencesChange}
-                        className="flex-1 basis-1/2 justify-center sm:flex-none sm:justify-start"
+                        className="basis-1/2 grow-0 justify-center sm:flex-none sm:justify-start"
                       />
                     )}
                   </div>

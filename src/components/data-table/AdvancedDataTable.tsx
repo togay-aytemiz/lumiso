@@ -323,6 +323,10 @@ export function AdvancedDataTable<T>({
   const filterPanelTitle = filters?.title ?? t("table.filters");
   const filterTriggerLabel = filters?.triggerLabel ?? filterPanelTitle;
   const showHeaderSearch = Boolean(onSearchChange);
+  const shareFilterAndColumnButtons = Boolean(filters) && showColumnManager;
+  const headerControlButtonClass = shareFilterAndColumnButtons
+    ? "basis-[calc(50%-0.25rem)] grow-0 justify-center sm:flex-none sm:justify-start"
+    : "w-full grow-0 justify-center sm:w-auto sm:flex-none sm:justify-start";
 
   // Determine if a summary row will be visible on mobile to tweak spacing
   const mobileSummaryPresent = useMemo(() => {
@@ -400,7 +404,7 @@ export function AdvancedDataTable<T>({
                         onClick={handleToggleFilters}
                         className={cn(
                           "flex items-center gap-2",
-                          "basis-1/2 grow-0 justify-center sm:flex-none sm:justify-start"
+                          headerControlButtonClass
                         )}
                       >
                         <Filter className="h-4 w-4" />
@@ -432,7 +436,7 @@ export function AdvancedDataTable<T>({
                         defaultPreferences={defaultPreferences}
                         preferences={columnPreferences}
                         onChange={handleColumnPreferencesChange}
-                        className="basis-1/2 grow-0 justify-center sm:flex-none sm:justify-start"
+                        className={headerControlButtonClass}
                       />
                     )}
                   </div>

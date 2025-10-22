@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -96,6 +96,8 @@ export function UnifiedClientDetails({
     loading: valuesLoading,
     refetch: refetchFieldValues,
   } = useLeadFieldValues(lead.id);
+  const [localLead, setLocalLead] = useState(lead);
+  const pendingCoreUpdatesRef = useRef<Record<string, string | null>>({});
   // Permissions removed for single photographer mode - always allow
   const [editOpen, setEditOpen] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -112,6 +114,40 @@ export function UnifiedClientDetails({
 
   const loading = fieldsLoading || valuesLoading;
 
+  useEffect(() => {
+    setLocalLead((prev) => {
+      if (!prev || lead.id !== prev.id) {
+        pendingCoreUpdatesRef.current = {};
+        return lead;
+      }
+
+      const coreKeys: Array<keyof Lead> = ["name", "email", "phone", "notes"];
+      const updatedFields: Partial<Lead> = {};
+      let shouldUpdate = false;
+
+      for (const key of coreKeys) {
+        const parentValue = (lead[key] ?? null) as string | null;
+        const prevValue = (prev[key] ?? null) as string | null;
+        const pendingValue = pendingCoreUpdatesRef.current[key as string];
+
+        if (pendingValue !== undefined && pendingValue !== parentValue) {
+          continue;
+        }
+
+        if (pendingValue !== undefined && pendingValue === parentValue) {
+          delete pendingCoreUpdatesRef.current[key as string];
+        }
+
+        if (parentValue !== prevValue) {
+          updatedFields[key] = parentValue;
+          shouldUpdate = true;
+        }
+      }
+
+      return shouldUpdate ? { ...prev, ...updatedFields } : prev;
+    });
+  }, [lead]);
+
   // Combine core fields with custom fields
   const allFields: Array<{
     key: string;
@@ -123,25 +159,25 @@ export function UnifiedClientDetails({
     {
       key: "name",
       label: tForms("clientDetails.fullName"),
-      value: lead.name,
+      value: localLead.name,
       type: "core",
     },
     {
       key: "email",
       label: tForms("clientDetails.email"),
-      value: lead.email,
+      value: localLead.email ?? null,
       type: "core",
     },
     {
       key: "phone",
       label: tForms("clientDetails.phone"),
-      value: lead.phone,
+      value: localLead.phone ?? null,
       type: "core",
     },
     {
       key: "notes",
       label: tForms("clientDetails.notes"),
-      value: lead.notes,
+      value: localLead.notes ?? null,
       type: "core",
     },
     ...fieldDefinitions
@@ -176,12 +212,13 @@ export function UnifiedClientDetails({
     isCustom: boolean
   ) => {
     const trimmedValue = value.trim();
+    const normalizedValue = trimmedValue === "" ? null : trimmedValue;
 
     // Validate custom fields before saving
     if (isCustom) {
       const fieldDef = fieldDefinitions.find((f) => f.field_key === fieldKey);
       if (fieldDef) {
-        const validation = validateFieldValue(trimmedValue || null, fieldDef);
+        const validation = validateFieldValue(normalizedValue, fieldDef);
         if (!validation.isValid) {
           toast({
             title: "Validation Error",
@@ -193,11 +230,16 @@ export function UnifiedClientDetails({
         }
       }
 
-      console.log(`Saving custom field "${fieldKey}":`, trimmedValue || null);
-      await updateCustomField(fieldKey, trimmedValue || null);
+      console.log(`Saving custom field "${fieldKey}":`, normalizedValue);
+      await updateCustomField(fieldKey, normalizedValue);
     } else {
-      console.log(`Saving core field "${fieldKey}":`, trimmedValue || null);
-      await updateCoreField(fieldKey, trimmedValue || null);
+      console.log(`Saving core field "${fieldKey}":`, normalizedValue);
+      await updateCoreField(fieldKey, normalizedValue);
+      setLocalLead((prev) => ({
+        ...prev,
+        [fieldKey]: normalizedValue,
+      }));
+      pendingCoreUpdatesRef.current[fieldKey] = normalizedValue;
     }
 
     setEditingField(null);

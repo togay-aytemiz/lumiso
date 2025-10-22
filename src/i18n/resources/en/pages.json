@@ -199,6 +199,13 @@
         "updatedFallback": "Recently updated",
         "hint": "Convert this lead into a project to get started."
       },
+      "payments": {
+        "label": "Payments",
+        "primary": "{{paid}} collected",
+        "primaryZero": "No payments recorded",
+        "secondary": "{{remaining}} remaining of {{total}} total",
+        "secondaryZero": "Track budgets and invoices once projects are created."
+      },
       "sessions": {
         "label": "Sessions",
         "count": "{{count}} sessions",
@@ -218,8 +225,11 @@
         "sources": {
           "lead": "Lead details updated",
           "project": "Project changes",
-          "session": "Session updates"
-        }
+          "session": "Session updates",
+          "note": "Lead notes and reminders"
+        },
+        "info": "Activity reflects the most recent changes across lead details, projects, sessions, and notes.",
+        "infoLabel": "How activity tracking works"
       }
     },
     "messages": {

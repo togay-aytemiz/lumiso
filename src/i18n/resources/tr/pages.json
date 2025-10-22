@@ -199,6 +199,13 @@
         "updatedFallback": "Yakın zamanda güncellendi",
         "hint": "Başlamak için bu adayı bir projeye dönüştürün."
       },
+      "payments": {
+        "label": "Ödemeler",
+        "primary": "{{paid}} tahsil edildi",
+        "primaryZero": "Henüz ödeme kaydı yok",
+        "secondary": "Toplam {{total}} tutarın {{remaining}} kadarı kaldı",
+        "secondaryZero": "Projelerinizi oluşturduğunuzda bütçe ve ödemeleri burada takip edebilirsiniz."
+      },
       "sessions": {
         "label": "Seanslar",
         "count": "{{count}} seans",
@@ -218,8 +225,11 @@
         "sources": {
           "lead": "Aday detayları güncellendi",
           "project": "Proje değişiklikleri",
-          "session": "Seans güncellemeleri"
-        }
+          "session": "Seans güncellemeleri",
+          "note": "Notlar ve hatırlatmalar"
+        },
+        "info": "Aktivite, kişi detayları, projeler, seanslar ve notlardaki en güncel değişiklikleri yansıtır.",
+        "infoLabel": "Aktivite takibi nasıl çalışır"
       }
     },
     "messages": {

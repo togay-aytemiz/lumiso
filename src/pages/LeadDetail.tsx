@@ -9,8 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Calendar, CheckCircle, FolderPlus, User, Activity, CheckSquare, CreditCard, HelpCircle } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Calendar, CheckCircle, FolderPlus, User, Activity, CheckSquare, CreditCard } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -36,7 +35,7 @@ import { useMessagesTranslation, useFormsTranslation, useCommonTranslation } fro
 import { useSessionActions } from "@/hooks/useSessionActions";
 import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { EntityHeader, type EntitySummaryItem } from "@/components/EntityHeader";
 interface Lead {
   id: string;
   name: string;
@@ -79,18 +78,6 @@ interface AggregatedPaymentSummary {
   total: number;
   remaining: number;
   currency: string;
-}
-
-interface SummaryItem {
-  key: string;
-  icon: LucideIcon;
-  label: string;
-  primary: string;
-  secondary: string;
-  info?: {
-    content: string;
-    ariaLabel?: string;
-  };
 }
 
 // Helpers: validation and phone normalization (TR defaults)
@@ -625,54 +612,6 @@ const LeadDetail = () => {
     return JSON.stringify(formData) !== JSON.stringify(initialFormData);
   }, [formData, initialFormData]);
 
-  const initials = useMemo(() => {
-    const fullName = lead?.name?.trim();
-    if (!fullName) {
-      return "LD";
-    }
-
-    const connectorWords = new Set([
-      "and",
-      "ve",
-      "ile",
-      "with",
-      "und",
-      "the",
-      "of",
-      "for",
-      "da",
-      "de",
-      "del",
-      "della",
-      "van",
-      "von",
-      "bin",
-      "al",
-      "el"
-    ]);
-
-    const tokens = fullName.match(/\p{L}+/gu) ?? [];
-    const meaningfulTokens = tokens.filter(token => !connectorWords.has(token.toLowerCase()));
-    const candidates = meaningfulTokens.length > 0 ? meaningfulTokens : tokens;
-
-    if (candidates.length === 0) {
-      return "LD";
-    }
-
-    if (candidates.length === 1) {
-      const chars = Array.from(candidates[0]);
-      return chars.slice(0, 2).join("").toUpperCase();
-    }
-
-    const firstChars = Array.from(candidates[0]);
-    const lastChars = Array.from(candidates[candidates.length - 1]);
-    const firstInitial = firstChars[0]?.toUpperCase() ?? "";
-    const lastInitial = lastChars[0]?.toUpperCase() ?? "";
-
-    const combined = `${firstInitial}${lastInitial}`.trim();
-    return combined.length > 0 ? combined : "LD";
-  }, [lead?.name]);
-
   const formatRelativeTime = (dateString?: string | null) => {
     if (!dateString) return null;
     const date = new Date(dateString);
@@ -701,7 +640,56 @@ const LeadDetail = () => {
     }
   }, [aggregatedPayments.currency]);
 
-  const plannedSession = useMemo(() => sessions.find(session => session.status === "planned"), [sessions]);
+  const getSessionDateTime = useCallback((session: Session): Date | null => {
+    if (!session.session_date) return null;
+    const timePart = (session.session_time ?? "").trim();
+    const candidate = timePart
+      ? new Date(`${session.session_date}T${timePart}`)
+      : new Date(session.session_date);
+
+    if (!Number.isNaN(candidate.getTime())) {
+      return candidate;
+    }
+
+    const fallback = new Date(session.session_date);
+    return Number.isNaN(fallback.getTime()) ? null : fallback;
+  }, []);
+
+  const {
+    upcomingPlannedSession,
+    upcomingPlannedDate,
+    overduePlannedSession,
+    overduePlannedDate
+  } = useMemo(() => {
+    const now = Date.now();
+    let upcoming: { session: Session; date: Date } | null = null;
+    let overdue: { session: Session; date: Date } | null = null;
+
+    sessions.forEach(session => {
+      if (session.status !== "planned") return;
+      const sessionDate = getSessionDateTime(session);
+      if (!sessionDate) return;
+      const ts = sessionDate.getTime();
+
+      if (ts >= now) {
+        if (!upcoming || ts < upcoming.date.getTime()) {
+          upcoming = { session, date: sessionDate };
+        }
+      } else {
+        if (!overdue || ts > overdue.date.getTime()) {
+          overdue = { session, date: sessionDate };
+        }
+      }
+    });
+
+    return {
+      upcomingPlannedSession: upcoming?.session ?? null,
+      upcomingPlannedDate: upcoming?.date ?? null,
+      overduePlannedSession: overdue?.session ?? null,
+      overduePlannedDate: overdue?.date ?? null
+    };
+  }, [sessions, getSessionDateTime]);
+
   const recentSession = useMemo(() => (sessions.length > 0 ? sessions[0] : null), [sessions]);
   const latestSessionUpdate = useMemo(() => {
     return sessions.reduce<string | null>((latest, session) => {
@@ -1116,9 +1104,14 @@ const LeadDetail = () => {
     ? tPages("leadDetail.header.sessions.count", { count: sessionsCount })
     : tPages("leadDetail.header.sessions.none");
   let sessionsSecondary = tPages("leadDetail.header.sessions.hint");
-  if (sessionsCount && plannedSession) {
-    const plannedDisplay = formatDateTime(plannedSession.session_date, plannedSession.session_time || undefined);
+  if (sessionsCount && upcomingPlannedSession && upcomingPlannedDate) {
+    const plannedDisplay = formatDateTime(
+      upcomingPlannedSession.session_date,
+      upcomingPlannedSession.session_time || undefined
+    );
     sessionsSecondary = tPages("leadDetail.header.sessions.next", { date: plannedDisplay });
+  } else if (sessionsCount && overduePlannedSession && overduePlannedDate) {
+    sessionsSecondary = tPages("leadDetail.header.sessions.overdueSummary");
   } else if (sessionsCount && recentSession) {
     const recentDisplay = formatDate(recentSession.session_date);
     sessionsSecondary = tPages("leadDetail.header.sessions.last", { date: recentDisplay });
@@ -1128,16 +1121,22 @@ const LeadDetail = () => {
     ? tPages("leadDetail.header.payments.primary", { paid: formatCurrency(aggregatedPayments.totalPaid) })
     : tPages("leadDetail.header.payments.primaryZero");
   const paymentsSecondary = aggregatedPayments.total > 0
-    ? tPages("leadDetail.header.payments.secondary", {
-        remaining: formatCurrency(aggregatedPayments.remaining),
-        total: formatCurrency(aggregatedPayments.total)
-      })
+    ? aggregatedPayments.remaining > 0
+      ? tPages("leadDetail.header.payments.secondary", {
+          remaining: formatCurrency(aggregatedPayments.remaining),
+          total: formatCurrency(aggregatedPayments.total)
+        })
+      : tPages("leadDetail.header.payments.paidInFull")
     : tPages("leadDetail.header.payments.secondaryZero");
 
-  const headerSubtext: string | null = null;
-  const headerHasSubtext = Boolean(headerSubtext);
+  const summaryItems: EntitySummaryItem[] = useMemo(() => {
+    const paymentsSecondaryClass = aggregatedPayments.total > 0 && aggregatedPayments.remaining <= 0
+      ? "text-emerald-600"
+      : undefined;
+    const sessionsSecondaryClass = sessionsCount > 0 && !upcomingPlannedSession && overduePlannedSession
+      ? "text-amber-600"
+      : undefined;
 
-  const summaryItems: SummaryItem[] = useMemo(() => {
     return [
       {
         key: "projects",
@@ -1151,14 +1150,16 @@ const LeadDetail = () => {
         icon: CreditCard,
         label: tPages("leadDetail.header.payments.label"),
         primary: paymentsPrimary,
-        secondary: paymentsSecondary
+        secondary: paymentsSecondary,
+        secondaryClassName: paymentsSecondaryClass
       },
       {
         key: "sessions",
         icon: Calendar,
         label: tPages("leadDetail.header.sessions.label"),
         primary: sessionsPrimary,
-        secondary: sessionsSecondary
+        secondary: sessionsSecondary,
+        secondaryClassName: sessionsSecondaryClass
       },
       {
         key: "activity",
@@ -1180,102 +1181,63 @@ const LeadDetail = () => {
     return null;
   }
   return <div className="p-4 md:p-8 max-w-full overflow-x-hidden">
-      <div className="mb-6 space-y-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className={`flex min-w-0 ${headerHasSubtext ? "items-start" : "items-center"} gap-3`}>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleBack}
-              className="h-10 w-10 rounded-full border border-border text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="sr-only">{tPages("leadDetail.header.back")}</span>
-            </Button>
-            <div className={`flex min-w-0 gap-3 ${headerHasSubtext ? "items-start" : "items-center"}`}>
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 via-primary/40 to-primary/70 text-base font-semibold uppercase text-primary-foreground ring-1 ring-primary/30">
-                {initials}
-              </div>
-              <div className={`min-w-0 ${headerHasSubtext ? "space-y-1" : ""}`}>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="truncate text-xl font-semibold leading-tight text-foreground sm:text-2xl">
-                    {lead.name || tPages("leadDetail.defaultTitle")}
-                  </h1>
-                  <LeadStatusBadge
-                    leadId={lead.id}
-                    currentStatusId={lead.status_id}
-                    currentStatus={lead.status}
-                    onStatusChange={() => {
-                      fetchLead();
-                      setActivityRefreshKey(prev => prev + 1);
-                    }}
-                    editable={true}
-                    statuses={leadStatuses}
-                  />
-                </div>
-                {headerSubtext && (
-                  <p className="text-sm text-muted-foreground">
-                    {headerSubtext}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {true && <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip={tPages("leadDetail.tooltips.sessionAlreadyPlanned")} />}
+      <EntityHeader
+        className="mb-6"
+        name={lead.name || ""}
+        title={lead.name || tPages("leadDetail.defaultTitle")}
+        onBack={handleBack}
+        backLabel={tPages("leadDetail.header.back")}
+        statusBadge={
+          <LeadStatusBadge
+            leadId={lead.id}
+            currentStatusId={lead.status_id}
+            currentStatus={lead.status}
+            onStatusChange={() => {
+              fetchLead();
+              setActivityRefreshKey(prev => prev + 1);
+            }}
+            editable={true}
+            statuses={leadStatuses}
+          />
+        }
+        summaryItems={summaryItems}
+        fallbackInitials="LD"
+        actions={
+          <>
+            <ScheduleSessionDialog
+              leadId={lead.id}
+              leadName={lead.name}
+              onSessionScheduled={handleSessionScheduled}
+              disabled={sessions.some(s => s.status === "planned")}
+              disabledTooltip={tPages("leadDetail.tooltips.sessionAlreadyPlanned")}
+            />
 
-            {!settingsLoading && userSettings.show_quick_status_buttons && completedStatus && formData.status !== completedStatus.name && <Button onClick={handleMarkAsCompleted} disabled={isUpdating} className="h-10 bg-green-600 text-white hover:bg-green-700" size="sm">
-                <CheckCircle className="mr-2 h-4 w-4" />
-                {isUpdating ? "Updating..." : completedStatus.name}
-              </Button>}
+            {!settingsLoading &&
+              userSettings.show_quick_status_buttons &&
+              completedStatus &&
+              formData.status !== completedStatus.name && (
+                <Button
+                  onClick={handleMarkAsCompleted}
+                  disabled={isUpdating}
+                  className="h-10 bg-green-600 text-white hover:bg-green-700"
+                  size="sm"
+                >
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  {isUpdating ? "Updating..." : completedStatus.name}
+                </Button>
+              )}
 
-            {!settingsLoading && userSettings.show_quick_status_buttons && lostStatus && formData.status !== lostStatus.name && <Button onClick={handleMarkAsLost} disabled={isUpdating} variant="destructive" size="sm" className="h-10">
-                {isUpdating ? "Updating..." : lostStatus.name}
-              </Button>}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          {summaryItems.map(item => {
-            const Icon = item.icon;
-            return (
-              <div key={item.key} className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/40 px-3 py-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-background/80 ring-1 ring-border/60">
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="min-w-0">
-                  <p className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {item.label}
-                    {item.info && (
-                      <TooltipProvider delayDuration={150}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-                            >
-                              <HelpCircle className="h-3 w-3" aria-hidden="true" />
-                              <span className="sr-only">{item.info.ariaLabel || item.label}</span>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">
-                            <span className="block max-w-[220px] text-xs leading-relaxed text-muted-foreground">
-                              {item.info.content}
-                            </span>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
-                  </p>
-                  <p className="text-sm font-semibold text-foreground">{item.primary}</p>
-                  <p className="text-xs text-muted-foreground">{item.secondary}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
+            {!settingsLoading &&
+              userSettings.show_quick_status_buttons &&
+              lostStatus &&
+              formData.status !== lostStatus.name && (
+                <Button onClick={handleMarkAsLost} disabled={isUpdating} variant="destructive" size="sm" className="h-10">
+                  {isUpdating ? "Updating..." : lostStatus.name}
+                </Button>
+              )}
+          </>
+        }
+      />
       {/* Enhanced Sessions Section */}
       <EnhancedSessionsSection
         sessions={sessions as any}

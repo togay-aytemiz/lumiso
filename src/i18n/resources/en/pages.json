@@ -204,7 +204,8 @@
         "primary": "{{paid}} collected",
         "primaryZero": "No payments recorded",
         "secondary": "{{remaining}} remaining of {{total}} total",
-        "secondaryZero": "Track budgets and invoices once projects are created."
+        "secondaryZero": "Track budgets and invoices once projects are created.",
+        "paidInFull": "Paid in full"
       },
       "sessions": {
         "label": "Sessions",
@@ -213,8 +214,10 @@
         "count_other": "{{count}} sessions",
         "none": "No sessions yet",
         "next": "Next on {{date}}",
-        "last": "Last on {{date}}",
-        "hint": "Schedule a session to keep things moving."
+      "last": "Last on {{date}}",
+      "hint": "Schedule a session to keep things moving.",
+        "overdue": "Overdue since {{date}}",
+        "overdueSummary": "All remaining sessions are overdue"
       },
       "activity": {
         "label": "Activity",

@@ -204,7 +204,8 @@
         "primary": "{{paid}} tahsil edildi",
         "primaryZero": "Henüz ödeme kaydı yok",
         "secondary": "Toplam {{total}} tutarın {{remaining}} kadarı kaldı",
-        "secondaryZero": "Projelerinizi oluşturduğunuzda bütçe ve ödemeleri burada takip edebilirsiniz."
+        "secondaryZero": "Projelerinizi oluşturduğunuzda bütçe ve ödemeleri burada takip edebilirsiniz.",
+        "paidInFull": "Tamamı ödendi"
       },
       "sessions": {
         "label": "Seanslar",
@@ -213,8 +214,10 @@
         "count_other": "{{count}} seans",
         "none": "Henüz seans yok",
         "next": "Sıradaki {{date}}",
-        "last": "Son seans {{date}}",
-        "hint": "İlerlemeniz için bir seans planlayın."
+      "last": "Son seans {{date}}",
+      "hint": "İlerlemeniz için bir seans planlayın.",
+        "overdue": "Gecikmiş: {{date}}",
+        "overdueSummary": "Planlı tüm seanslar gecikmiş durumda"
       },
       "activity": {
         "label": "Aktivite",

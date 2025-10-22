@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, Clock, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatTime, cn, getUserLocale, formatLongDate } from "@/lib/utils";
@@ -7,12 +6,7 @@ import { SessionStatusBadge } from "@/components/SessionStatusBadge";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { getDisplaySessionName } from "@/lib/sessionUtils";
 import { useFormsTranslation } from '@/hooks/useTypedTranslation';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TruncatedTextWithTooltip } from "@/components/TruncatedTextWithTooltip";
 
 type SessionStatus = "planned" | "completed" | "cancelled" | "no_show" | "rescheduled" | "in_post_processing" | "delivered";
 
@@ -45,8 +39,6 @@ const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerPr
   const { settings: orgSettings } = useOrganizationSettings();
   const userLocale = getUserLocale();
   const { t } = useFormsTranslation();
-  const noteRef = useRef<HTMLDivElement | null>(null);
-  const [isNoteTruncated, setIsNoteTruncated] = useState(false);
 
   const formatSessionTime = (timeString: string): string => {
     return formatTime(timeString, userLocale, orgSettings?.time_format || undefined);
@@ -103,49 +95,6 @@ const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerPr
   const timeIndicator = getTimeIndicator(session);
   const isOverdue = isOverdueSession(session.session_date, session.status);
 
-  useEffect(() => {
-    if (!session.notes) {
-      setIsNoteTruncated(false);
-      return;
-    }
-
-    if (typeof window === "undefined") {
-      setIsNoteTruncated(false);
-      return;
-    }
-
-    const el = noteRef.current;
-    if (!el) {
-      setIsNoteTruncated(false);
-      return;
-    }
-
-    const checkTruncation = () => {
-      const truncated = el.scrollHeight > el.clientHeight + 1;
-      setIsNoteTruncated(truncated);
-    };
-
-    // Initial measurement after paint
-    const frame = window.requestAnimationFrame(checkTruncation);
-
-    let observer: ResizeObserver | null = null;
-    if ("ResizeObserver" in window) {
-      observer = new window.ResizeObserver(checkTruncation);
-      observer.observe(el);
-    } else {
-      window.addEventListener("resize", checkTruncation);
-    }
-
-    return () => {
-      window.cancelAnimationFrame(frame);
-      if (observer) {
-        observer.disconnect();
-      } else {
-        window.removeEventListener("resize", checkTruncation);
-      }
-    };
-  }, [session.notes]);
-
   return (
     <div
       className={cn(
@@ -194,30 +143,14 @@ const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerPr
           )}
           
           {session.notes && (
-            <TooltipProvider delayDuration={150}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
-                    ref={noteRef}
-                    className={cn(
-                      "text-xs text-gray-600 line-clamp-2",
-                      isNoteTruncated && "cursor-help"
-                    )}
-                  >
-                    {session.notes}
-                  </div>
-                </TooltipTrigger>
-                {isNoteTruncated && (
-                  <TooltipContent
-                    side="bottom"
-                    align="start"
-                    className="max-w-xs whitespace-pre-wrap break-words"
-                  >
-                    {session.notes}
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
+            <TruncatedTextWithTooltip
+              text={session.notes}
+              lines={2}
+              className="text-xs text-gray-600"
+              as="div"
+              tooltipSide="bottom"
+              tooltipAlign="start"
+            />
           )}
         </div>
 

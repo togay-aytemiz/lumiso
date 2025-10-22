@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Calendar, FolderOpen, FileText, MapPin } from "lucide-react";
 import type { EntitySummaryItem } from "@/components/EntityHeader";
 import { formatLongDate, formatTime } from "@/lib/utils";
+import { TruncatedTextWithTooltip } from "@/components/TruncatedTextWithTooltip";
 
 interface SessionSummaryProjectInfo {
   id: string;
@@ -71,7 +72,15 @@ export function buildSessionSummaryItems({
       key: "notes",
       icon: FileText,
       label: labels.notes,
-      primary: <span className="line-clamp-2 break-words">{session.notes}</span>,
+      primary: (
+        <TruncatedTextWithTooltip
+          text={session.notes}
+          lines={2}
+          as="span"
+          tooltipSide="bottom"
+          tooltipAlign="start"
+        />
+      ),
       secondary: null,
     });
   }

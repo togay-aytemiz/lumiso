@@ -1,16 +1,13 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Plus } from "lucide-react";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
-import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
-import { NavigationGuardDialog } from "./NavigationGuardDialog";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 
 interface AddLeadStatusDialogProps {
   open: boolean;
@@ -193,23 +190,19 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
 
       <div className="space-y-3">
         <Label>{t('lead_status.lifecycle.label')}</Label>
-        <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
-          {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
-            <button
-              key={lifecycle}
-              type="button"
-              onClick={() => setFormData(prev => ({ ...prev, lifecycle }))}
-              className={cn(
-                "px-3 py-2 text-sm font-medium rounded-md transition-all capitalize",
-                formData.lifecycle === lifecycle
-                  ? "bg-background shadow-sm text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-              )}
-            >
-              {t(`lead_status.lifecycle.${lifecycle}`)}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          size="md"
+          value={formData.lifecycle}
+          onValueChange={(value) =>
+            setFormData(prev => ({ ...prev, lifecycle: value as typeof prev.lifecycle }))
+          }
+          options={[
+            { value: "active", label: t('lead_status.lifecycle.active') },
+            { value: "completed", label: t('lead_status.lifecycle.completed') },
+            { value: "cancelled", label: t('lead_status.lifecycle.cancelled') },
+          ]}
+          className="mt-2 w-full justify-between"
+        />
         <div className="space-y-1 text-sm text-muted-foreground">
           <p>{t('lead_status.lifecycle.help.title')}</p>
           <ul className="space-y-1 ml-4">
@@ -251,6 +244,7 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
   }, [status, open]);
 
   const handleSubmit = async () => {
+    if (!status) return;
     if (!formData.name.trim()) {
       toast({
         title: t('errors.title', { defaultValue: 'Error' }),
@@ -295,13 +289,13 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
     }
   };
 
-  if (!status) return null;
-
-  const isDirty = Boolean(
+  const isDirty = status ? Boolean(
     formData.name !== status.name ||
     formData.color !== status.color ||
     formData.lifecycle !== (status.lifecycle || "active")
-  );
+  ) : false;
+
+  if (!status) return null;
 
   const handleDirtyClose = () => {
     if (window.confirm(t('lead_status.confirm.discard_changes'))) {
@@ -355,7 +349,7 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
     }
   };
 
-  const isSystemRequired = status.is_system_required;
+  const isSystemRequired = Boolean(status.is_system_required);
 
   const footerActions = [
     // Only show delete for non-system-required statuses  
@@ -435,23 +429,19 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
         {!isSystemRequired && (
           <div className="space-y-3">
             <Label>{t('lead_status.lifecycle.label')}</Label>
-            <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
-              {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
-                <button
-                  key={lifecycle}
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, lifecycle }))}
-                  className={cn(
-                    "px-3 py-2 text-sm font-medium rounded-md transition-all capitalize",
-                    formData.lifecycle === lifecycle
-                      ? "bg-background shadow-sm text-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                  )}
-                >
-                  {t(`lead_status.lifecycle.${lifecycle}`)}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              size="md"
+              value={formData.lifecycle}
+              onValueChange={(value) =>
+                setFormData(prev => ({ ...prev, lifecycle: value as typeof prev.lifecycle }))
+              }
+              options={[
+                { value: "active", label: t('lead_status.lifecycle.active') },
+                { value: "completed", label: t('lead_status.lifecycle.completed') },
+                { value: "cancelled", label: t('lead_status.lifecycle.cancelled') },
+              ]}
+              className="mt-2 w-full justify-between"
+            />
             <div className="space-y-1 text-sm text-muted-foreground">
               <p>{t('lead_status.lifecycle.help.title')}</p>
               <ul className="space-y-1 ml-4">

@@ -1,15 +1,13 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./NavigationGuardDialog";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 
 interface AddProjectStageDialogProps {
   open: boolean;
@@ -45,6 +43,7 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
   }, [formData.name]);
 
   const handleSubmit = async () => {
+    if (!stage) return;
     if (!formData.name.trim()) {
       toast({
         title: t('errors.title', { defaultValue: 'Error' }),
@@ -195,23 +194,19 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
 
         <div className="space-y-3">
           <Label>{t('project_stage.lifecycle.label')}</Label>
-          <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
-            {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
-              <button
-                key={lifecycle}
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, lifecycle }))}
-                className={cn(
-                  "px-3 py-2 text-sm font-medium rounded-md transition-all capitalize",
-                  formData.lifecycle === lifecycle
-                    ? "bg-background shadow-sm text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                )}
-              >
-                {t(`project_stage.lifecycle.${lifecycle}`)}
-              </button>
-            ))}
-          </div>
+        <SegmentedControl
+          size="md"
+          value={formData.lifecycle}
+          onValueChange={(value) =>
+            setFormData(prev => ({ ...prev, lifecycle: value as typeof prev.lifecycle }))
+          }
+          options={[
+            { value: "active", label: t('project_stage.lifecycle.active') },
+            { value: "completed", label: t('project_stage.lifecycle.completed') },
+            { value: "cancelled", label: t('project_stage.lifecycle.cancelled') },
+          ]}
+          className="mt-2 w-full justify-between"
+        />
           <div className="space-y-1 text-sm text-muted-foreground">
             <p>{t('project_stage.lifecycle.help.title')}</p>
             <ul className="space-y-1 ml-4">
@@ -352,14 +347,12 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
     }
   };
 
-  if (!stage) return null;
-
-  const isSystemRequired = stage.is_system_required;
-  const isDirty = Boolean(
+  const isSystemRequired = Boolean(stage?.is_system_required);
+  const isDirty = stage ? Boolean(
     formData.name !== stage.name ||
     formData.color !== stage.color ||
     formData.lifecycle !== (stage.lifecycle || "active")
-  );
+  ) : false;
 
   const navigation = useModalNavigation({
     isDirty,
@@ -370,6 +363,8 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
       await handleSubmit();
     }
   });
+
+  if (!stage) return null;
 
   const handleDirtyClose = () => {
     const canClose = navigation.handleModalClose();
@@ -456,23 +451,19 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
         {!isSystemRequired && (
           <div className="space-y-3">
             <Label>{t('project_stage.lifecycle.label')}</Label>
-            <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
-              {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
-                <button
-                  key={lifecycle}
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, lifecycle }))}
-                  className={cn(
-                    "px-3 py-2 text-sm font-medium rounded-md transition-all capitalize",
-                    formData.lifecycle === lifecycle
-                      ? "bg-background shadow-sm text-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                  )}
-                >
-                  {t(`project_stage.lifecycle.${lifecycle}`)}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              size="md"
+              value={formData.lifecycle}
+              onValueChange={(value) =>
+                setFormData(prev => ({ ...prev, lifecycle: value as typeof prev.lifecycle }))
+              }
+              options={[
+                { value: "active", label: t('project_stage.lifecycle.active') },
+                { value: "completed", label: t('project_stage.lifecycle.completed') },
+                { value: "cancelled", label: t('project_stage.lifecycle.cancelled') },
+              ]}
+              className="mt-2 w-full justify-between"
+            />
             <div className="space-y-1 text-sm text-muted-foreground">
               <p>{t('project_stage.lifecycle.help.title')}</p>
               <ul className="space-y-1 ml-4">

@@ -27,6 +27,7 @@ import { useTranslation } from "react-i18next";
 import { EntityHeader } from "@/components/EntityHeader";
 import { buildProjectSummaryItems } from "@/lib/projects/buildProjectSummaryItems";
 import { useProjectHeaderSummary } from "@/hooks/useProjectHeaderSummary";
+import { useProjectSessionsSummary } from "@/hooks/useProjectSessionsSummary";
 
 interface Project {
   id: string;
@@ -103,6 +104,7 @@ export function ProjectSheetView({
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const { summary: headerSummary } = useProjectHeaderSummary(project?.id || null, summaryRefreshToken);
+  const { summary: sessionsSummary } = useProjectSessionsSummary(project?.id ?? "", summaryRefreshToken);
 
   const fetchProjectSessions = async () => {
     if (!project) return;
@@ -422,9 +424,9 @@ export function ProjectSheetView({
       payments: headerSummary.payments,
       todos: headerSummary.todos,
       services: headerSummary.services,
-      sessions
+      sessionsSummary
     }),
-    [headerSummary, sessions, tPages]
+    [headerSummary, sessionsSummary, tPages]
   );
 
   if (!project) return null;

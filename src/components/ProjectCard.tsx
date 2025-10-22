@@ -78,6 +78,14 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
       return null;
     }
   };
+  const getDateKey = (value: string | null) => (value ? value.slice(0, 10) : null);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowKey = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(
+    tomorrow.getDate()
+  ).padStart(2, '0')}`;
 
   const sessionCountLabel = sessionsSummary.total > 0 ? t('projectCard.sessionsCount', { count: sessionsSummary.total }) : null;
   const rawActiveLabel = sessionsSummary.activeCount > 0 ? t('projectCard.sessionsActive', { count: sessionsSummary.activeCount }) : null;
@@ -90,16 +98,22 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
   const todayTime = formatSessionTime(sessionsSummary.todayNext);
   const todayMessage = sessionsSummary.todayCount > 0
     ? todayTime
-      ? t('projectCard.sessionsTodayWithTime', { count: sessionsSummary.todayCount, time: todayTime })
+      ? sessionsSummary.todayCount > 1
+        ? t('projectCard.sessionsTodayWithTime', { count: sessionsSummary.todayCount, time: todayTime })
+        : t('projectCard.sessionsTodaySingleWithTime', { time: todayTime })
       : t('projectCard.sessionsToday', { count: sessionsSummary.todayCount })
     : null;
 
   const upcomingDate = formatSessionDate(sessionsSummary.nextUpcoming);
   const upcomingTime = formatSessionTime(sessionsSummary.nextUpcoming);
+  const upcomingDateKey = getDateKey(sessionsSummary.nextUpcoming?.session_date ?? null);
+  const upcomingIsTomorrow = upcomingDateKey !== null && upcomingDateKey === tomorrowKey;
   const upcomingMessage = sessionsSummary.nextUpcoming && upcomingDate
-    ? upcomingTime
-      ? t('projectCard.sessionsUpcomingWithTime', { date: upcomingDate, time: upcomingTime })
-      : t('projectCard.sessionsUpcoming', { date: upcomingDate })
+    ? upcomingIsTomorrow && upcomingTime
+      ? t('projectCard.sessionsUpcomingTomorrowWithTime', { time: upcomingTime })
+      : upcomingTime
+        ? t('projectCard.sessionsUpcomingWithTime', { date: upcomingDate, time: upcomingTime })
+        : t('projectCard.sessionsUpcoming', { date: upcomingDate })
     : null;
 
   const lastCompletedDate = formatSessionDate(sessionsSummary.latestCompleted);
@@ -268,7 +282,7 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
                       )}
 
                       {upcomingMessage && (
-                        <div className="flex items-center gap-2 rounded-md border border-amber-100 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                        <div className="flex items-center gap-2 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
                           <CalendarCheck className="h-4 w-4" />
                           <span>{upcomingMessage}</span>
                         </div>

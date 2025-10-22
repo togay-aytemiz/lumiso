@@ -216,6 +216,18 @@
         "next": "Next on {{date}}",
         "last": "Last on {{date}}",
         "hint": "Schedule a session to keep things moving.",
+        "chips": {
+          "overdue_one": "{{count}} overdue",
+          "overdue_other": "{{count}} overdue",
+          "todaySingle": "Today {{time}}",
+          "todayMultiple_one": "Today {{count}} session, first {{time}}",
+          "todayMultiple_other": "Today {{count}} sessions, first {{time}}",
+          "todayMultipleNoTime_one": "Today {{count}} session",
+          "todayMultipleNoTime_other": "Today {{count}} sessions",
+          "tomorrow": "Tomorrow {{time}}",
+          "upcomingWithTime": "{{date}} {{time}}",
+          "upcoming": "{{date}}"
+        },
         "today": "Today at {{time}}",
         "todayAllDay": "Today",
         "overdue": "Overdue since {{date}}",
@@ -400,9 +412,17 @@
         "count_other": "{{count}} sessions",
         "none": "No sessions",
         "hint": "Schedule the next session",
-        "next": "Next session {{date}}",
-        "last": "Last session {{date}}",
-        "overdueSummary": "All planned sessions are overdue"
+        "chips": {
+          "overdue_one": "{{count}} overdue",
+          "overdue_other": "{{count}} overdue",
+          "todaySingle": "Today {{time}}",
+          "todayMultiple": "Today {{count}} sessions, first {{time}}",
+          "todayMultipleNoTime_one": "Today {{count}} session",
+          "todayMultipleNoTime_other": "Today {{count}} sessions",
+          "tomorrow": "Tomorrow {{time}}",
+          "upcomingWithTime": "{{date}} {{time}}",
+          "upcoming": "{{date}}"
+        }
       },
       "todos": {
         "label": "Todos",

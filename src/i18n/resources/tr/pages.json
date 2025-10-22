@@ -216,6 +216,18 @@
         "next": "Sıradaki {{date}}",
         "last": "Son seans {{date}}",
         "hint": "İlerlemeniz için bir seans planlayın.",
+        "chips": {
+          "overdue_one": "{{count}} gecikmiş",
+          "overdue_other": "{{count}} gecikmiş",
+          "todaySingle": "Bugün {{time}}",
+          "todayMultiple_one": "Bugün {{count}} seans, ilki {{time}}",
+          "todayMultiple_other": "Bugün {{count}} seans, ilki {{time}}",
+          "todayMultipleNoTime_one": "Bugün {{count}} seans",
+          "todayMultipleNoTime_other": "Bugün {{count}} seans",
+          "tomorrow": "Yarın {{time}}",
+          "upcomingWithTime": "{{date}} {{time}}",
+          "upcoming": "{{date}}"
+        },
         "today": "Bugün {{time}}",
         "todayAllDay": "Bugün",
         "overdue": "Gecikmiş: {{date}}",
@@ -400,9 +412,17 @@
         "count_other": "{{count}} seans",
         "none": "Seans yok",
         "hint": "Sonraki seansı planlayın",
-        "next": "Sonraki seans {{date}}",
-        "last": "Son seans {{date}}",
-        "overdueSummary": "Planlanan tüm seanslar gecikti"
+        "chips": {
+          "overdue_one": "{{count}} gecikmiş",
+          "overdue_other": "{{count}} gecikmiş",
+          "todaySingle": "Bugün {{time}}",
+          "todayMultiple": "Bugün {{count}} seans, ilki {{time}}",
+          "todayMultipleNoTime_one": "Bugün {{count}} seans",
+          "todayMultipleNoTime_other": "Bugün {{count}} seans",
+          "tomorrow": "Yarın {{time}}",
+          "upcomingWithTime": "{{date}} {{time}}",
+          "upcoming": "{{date}}"
+        }
       },
       "todos": {
         "label": "Görevler",

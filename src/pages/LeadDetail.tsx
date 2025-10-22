@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, type ReactNode } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ import { ProjectsSection } from "@/components/ProjectsSection";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 // AssigneesList removed - single user organization
-import { formatDate, formatDateTime, formatTime, getDateFnsLocale } from "@/lib/utils";
+import { formatDate, formatTime, getDateFnsLocale } from "@/lib/utils";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import EnhancedSessionsSection from "@/components/EnhancedSessionsSection";
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
@@ -79,6 +79,25 @@ interface AggregatedPaymentSummary {
   remaining: number;
   currency: string;
 }
+
+const ACTIVE_SESSION_STATUSES = new Set(["planned", "upcoming", "confirmed", "scheduled"]);
+const getDateKey = (value?: string | null) => (value ? value.slice(0, 10) : null);
+const safeFormatDate = (value?: string | null) => {
+  if (!value) return null;
+  try {
+    return formatDate(value);
+  } catch {
+    return null;
+  }
+};
+const safeFormatTime = (value?: string | null) => {
+  if (!value) return null;
+  try {
+    return formatTime(value);
+  } catch {
+    return null;
+  }
+};
 
 // Helpers: validation and phone normalization (TR defaults)
 const isValidEmail = (email?: string | null) => !!email && /[^\s@]+@[^\s@]+\.[^\s@]+/.test(email);
@@ -661,11 +680,8 @@ const LeadDetail = () => {
 
   const {
     todayPlannedSession,
-    todayPlannedDate,
+    todayPlannedCount,
     upcomingPlannedSession,
-    upcomingPlannedDate,
-    overduePlannedSession,
-    overduePlannedDate,
     overduePlannedCount
   } = useMemo(() => {
     const now = new Date();
@@ -673,23 +689,22 @@ const LeadDetail = () => {
     const nowTime = now.getTime();
     let today: { session: Session; date: Date } | null = null;
     let upcoming: { session: Session; date: Date } | null = null;
-    let overdue: { session: Session; date: Date } | null = null;
+    let todayCount = 0;
     let overdueCount = 0;
 
     sessions.forEach(session => {
-      if (session.status !== "planned") return;
+      const normalizedStatus = (session.status || "").toLowerCase();
+      if (!ACTIVE_SESSION_STATUSES.has(normalizedStatus)) return;
       const sessionDate = getSessionDateTime(session);
       if (!sessionDate) return;
 
       if (sessionDate.getTime() < nowTime) {
         overdueCount += 1;
-        if (!overdue || sessionDate > overdue.date) {
-          overdue = { session, date: sessionDate };
-        }
         return;
       }
 
       if (sessionDate <= endOfToday) {
+        todayCount += 1;
         if (!today || sessionDate < today.date) {
           today = { session, date: sessionDate };
         }
@@ -703,16 +718,12 @@ const LeadDetail = () => {
 
     return {
       todayPlannedSession: today?.session ?? null,
-      todayPlannedDate: today?.date ?? null,
+      todayPlannedCount: todayCount,
       upcomingPlannedSession: upcoming?.session ?? null,
-      upcomingPlannedDate: upcoming?.date ?? null,
-      overduePlannedSession: overdue?.session ?? null,
-      overduePlannedDate: overdue?.date ?? null,
       overduePlannedCount: overdueCount
     };
   }, [sessions, getSessionDateTime]);
 
-  const recentSession = useMemo(() => (sessions.length > 0 ? sessions[0] : null), [sessions]);
   const latestSessionUpdate = useMemo(() => {
     return sessions.reduce<string | null>((latest, session) => {
       const candidate = session.updated_at || session.created_at || null;
@@ -1125,45 +1136,94 @@ const LeadDetail = () => {
   const sessionsPrimary = sessionsCount
     ? tPages("leadDetail.header.sessions.count", { count: sessionsCount })
     : tPages("leadDetail.header.sessions.none");
-  let sessionsSecondary = tPages("leadDetail.header.sessions.hint");
-  if (sessionsCount) {
-    const summaryParts: string[] = [];
+  const sessionsSecondary = useMemo<ReactNode>(() => {
+    if (sessionsCount === 0) {
+      return tPages("leadDetail.header.sessions.hint");
+    }
 
-    if (todayPlannedSession && todayPlannedDate) {
-      if (todayPlannedSession.session_time) {
-        const timeDisplay = formatTime(todayPlannedSession.session_time);
-        summaryParts.push(tPages("leadDetail.header.sessions.today", { time: timeDisplay }));
-      } else {
-        summaryParts.push(tPages("leadDetail.header.sessions.todayAllDay"));
+    const chips: ReactNode[] = [];
+
+    if (overduePlannedCount > 0) {
+      chips.push(
+        <span
+          key="overdue"
+          className="inline-flex items-center rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-[11px] font-semibold text-orange-700"
+        >
+          {tPages("leadDetail.header.sessions.chips.overdue", { count: overduePlannedCount })}
+        </span>
+      );
+    }
+
+    if (todayPlannedCount > 0) {
+      const todayTime = safeFormatTime(todayPlannedSession?.session_time);
+      const label = todayTime
+        ? todayPlannedCount > 1
+          ? tPages("leadDetail.header.sessions.chips.todayMultiple", { count: todayPlannedCount, time: todayTime })
+          : tPages("leadDetail.header.sessions.chips.todaySingle", { time: todayTime })
+        : tPages("leadDetail.header.sessions.chips.todayMultipleNoTime", { count: todayPlannedCount });
+
+      chips.push(
+        <span
+          key="today"
+          className="inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700"
+        >
+          {label}
+        </span>
+      );
+    }
+
+    if (upcomingPlannedSession?.session_date) {
+      const upcomingDateLabel = safeFormatDate(upcomingPlannedSession.session_date);
+      const upcomingTime = safeFormatTime(upcomingPlannedSession.session_time);
+
+      if (upcomingDateLabel) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowKey = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(
+          tomorrow.getDate()
+        ).padStart(2, "0")}`;
+        const upcomingDateKey = getDateKey(upcomingPlannedSession.session_date);
+
+        const label = upcomingDateKey && upcomingDateKey === tomorrowKey && upcomingTime
+          ? tPages("leadDetail.header.sessions.chips.tomorrow", { time: upcomingTime })
+          : upcomingTime
+            ? tPages("leadDetail.header.sessions.chips.upcomingWithTime", {
+                date: upcomingDateLabel,
+                time: upcomingTime
+              })
+            : tPages("leadDetail.header.sessions.chips.upcoming", { date: upcomingDateLabel });
+
+        chips.push(
+          <span
+            key="upcoming"
+            className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700"
+          >
+            {label}
+          </span>
+        );
       }
-    } else if (upcomingPlannedSession && upcomingPlannedDate) {
-      const plannedDisplay = formatDateTime(
-        upcomingPlannedSession.session_date,
-        upcomingPlannedSession.session_time || undefined
-      );
-      summaryParts.push(tPages("leadDetail.header.sessions.next", { date: plannedDisplay }));
-    } else if (overduePlannedSession && overduePlannedDate) {
-      const overdueDisplay = formatDateTime(
-        overduePlannedSession.session_date,
-        overduePlannedSession.session_time || undefined
-      );
-      summaryParts.push(tPages("leadDetail.header.sessions.overdue", { date: overdueDisplay }));
-    } else if (recentSession) {
-      const recentDisplay = formatDate(recentSession.session_date);
-      summaryParts.push(tPages("leadDetail.header.sessions.last", { date: recentDisplay }));
     }
 
-    const hasTodayOrUpcoming = Boolean(todayPlannedSession || upcomingPlannedSession);
-    if (overduePlannedCount > 0 && hasTodayOrUpcoming) {
-      summaryParts.push(
-        tPages("leadDetail.header.sessions.overdueCount", { count: overduePlannedCount })
-      );
+    if (chips.length === 0) {
+      return tPages("leadDetail.header.sessions.hint");
     }
 
-    if (summaryParts.length > 0) {
-      sessionsSecondary = summaryParts.join(" • ");
-    }
-  }
+    return (
+      <div className="flex flex-wrap items-center gap-1.5">
+        {chips}
+      </div>
+    );
+  }, [
+    sessionsCount,
+    overduePlannedCount,
+    todayPlannedCount,
+    todayPlannedSession?.session_time,
+    upcomingPlannedSession?.session_date,
+    upcomingPlannedSession?.session_time,
+    tPages
+  ]);
 
   const paymentsPrimary = aggregatedPayments.total > 0 || aggregatedPayments.totalPaid > 0
     ? tPages("leadDetail.header.payments.primary", { paid: formatCurrency(aggregatedPayments.totalPaid) })
@@ -1181,9 +1241,10 @@ const LeadDetail = () => {
     const paymentsSecondaryClass = aggregatedPayments.total > 0 && aggregatedPayments.remaining <= 0
       ? "text-emerald-600"
       : undefined;
-    const sessionsSecondaryClass = sessionsCount > 0 && overduePlannedCount > 0
-      ? "text-amber-600"
-      : undefined;
+    const sessionsSecondaryClass =
+      typeof sessionsSecondary === "string" || typeof sessionsSecondary === "number"
+        ? "text-muted-foreground"
+        : undefined;
 
     return [
       {
@@ -1228,8 +1289,6 @@ const LeadDetail = () => {
     paymentsSecondary,
     sessionsPrimary,
     sessionsSecondary,
-    sessionsCount,
-    overduePlannedCount,
     activitySummary,
     tPages
   ]);

@@ -192,9 +192,15 @@ export function EntityHeader({
                     )}
                   </p>
                   <p className="text-sm font-semibold text-foreground">{item.primary}</p>
-                  <p className={cn("text-xs text-muted-foreground", item.secondaryClassName)}>
+                  <div
+                    className={cn(
+                      "text-xs",
+                      typeof item.secondary === "string" || typeof item.secondary === "number" ? "text-muted-foreground" : "",
+                      item.secondaryClassName
+                    )}
+                  >
                     {item.secondary}
-                  </p>
+                  </div>
                 </div>
               </div>
             );

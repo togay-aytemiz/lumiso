@@ -1,79 +1,137 @@
 import { Calendar, CheckSquare, CreditCard, ListChecks } from "lucide-react";
 import type { TFunction } from "i18next";
+import type { ReactNode } from "react";
 import type { EntitySummaryItem } from "@/components/EntityHeader";
 import type {
   ProjectHeaderPaymentSummary,
   ProjectHeaderServicesSummary,
   ProjectHeaderTodoSummary
 } from "@/hooks/useProjectHeaderSummary";
-import type { SessionWithStatus } from "@/lib/sessionSorting";
-import { formatDate, formatDateTime } from "@/lib/utils";
-
-interface SessionSnapshot {
-  count: number;
-  upcomingPlannedSession: SessionWithStatus | null;
-  upcomingPlannedDate: Date | null;
-  overduePlannedSession: SessionWithStatus | null;
-  overduePlannedDate: Date | null;
-  recentSession: SessionWithStatus | null;
-}
+import type { ProjectSessionsSummary } from "@/hooks/useProjectSessionsSummary";
+import { formatDate, formatTime } from "@/lib/utils";
 
 interface BuildProjectSummaryItemsParams {
   t: TFunction<"pages">;
   payments: ProjectHeaderPaymentSummary;
   todos: ProjectHeaderTodoSummary;
   services: ProjectHeaderServicesSummary;
-  sessions: SessionWithStatus[];
+  sessionsSummary: ProjectSessionsSummary;
 }
 
 const DEFAULT_LOCALE = "tr-TR";
 
-function parseSessionDateTime(session: SessionWithStatus): Date | null {
-  if (!session.session_date) return null;
+const getDateKey = (value: string | null) => (value ? value.slice(0, 10) : null);
 
-  const timePart = (session.session_time ?? "").trim();
-  const dateTime = timePart
-    ? new Date(`${session.session_date}T${timePart}`)
-    : new Date(session.session_date);
+const formatSessionDate = (session: ProjectSessionsSummary["overdueNext"]) => {
+  if (!session?.session_date) return null;
+  try {
+    return formatDate(session.session_date);
+  } catch {
+    return null;
+  }
+};
 
-  if (!Number.isNaN(dateTime.getTime())) {
-    return dateTime;
+const formatSessionTime = (session: ProjectSessionsSummary["overdueNext"]) => {
+  if (!session?.session_time) return null;
+  try {
+    return formatTime(session.session_time);
+  } catch {
+    return null;
+  }
+};
+
+function buildSessionChips(
+  t: TFunction<"pages">,
+  summary: ProjectSessionsSummary
+): ReactNode {
+  const chips: ReactNode[] = [];
+
+  if (!summary) {
+    return chips;
   }
 
-  const fallback = new Date(session.session_date);
-  return Number.isNaN(fallback.getTime()) ? null : fallback;
-}
+  if (summary.overdueCount > 0) {
+    chips.push(
+      <span
+        key="overdue"
+        className="inline-flex items-center rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-[11px] font-semibold text-orange-700"
+      >
+        {t("projectDetail.header.sessions.chips.overdue", { count: summary.overdueCount })}
+      </span>
+    );
+  }
 
-function computeSessionSnapshot(sessions: SessionWithStatus[]): SessionSnapshot {
-  const now = Date.now();
-  let upcoming: { session: SessionWithStatus; date: Date } | null = null;
-  let overdue: { session: SessionWithStatus; date: Date } | null = null;
-
-  sessions.forEach(session => {
-    if (session.status !== "planned") return;
-    const sessionDate = parseSessionDateTime(session);
-    if (!sessionDate) return;
-    const timestamp = sessionDate.getTime();
-
-    if (timestamp >= now) {
-      if (!upcoming || timestamp < upcoming.date.getTime()) {
-        upcoming = { session, date: sessionDate };
-      }
-    } else if (!overdue || timestamp > overdue.date.getTime()) {
-      overdue = { session, date: sessionDate };
+  const todayTime = formatSessionTime(summary.todayNext);
+  if (summary.todayCount > 0) {
+    let label: string;
+    if (todayTime) {
+      label = summary.todayCount > 1
+        ? t("projectDetail.header.sessions.chips.todayMultiple", {
+            count: summary.todayCount,
+            time: todayTime
+          })
+        : t("projectDetail.header.sessions.chips.todaySingle", { time: todayTime });
+    } else {
+      label = t("projectDetail.header.sessions.chips.todayMultipleNoTime", {
+        count: summary.todayCount
+      });
     }
-  });
 
-  const recentSession = sessions.length > 0 ? sessions[0] : null;
+    chips.push(
+      <span
+        key="today"
+        className="inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700"
+      >
+        {label}
+      </span>
+    );
+  }
 
-  return {
-    count: sessions.length,
-    upcomingPlannedSession: upcoming?.session ?? null,
-    upcomingPlannedDate: upcoming?.date ?? null,
-    overduePlannedSession: overdue?.session ?? null,
-    overduePlannedDate: overdue?.date ?? null,
-    recentSession
-  };
+  const upcomingDate = formatSessionDate(summary.nextUpcoming);
+  const upcomingTime = formatSessionTime(summary.nextUpcoming);
+  if (summary.nextUpcoming && upcomingDate) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowKey = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(
+      tomorrow.getDate()
+    ).padStart(2, "0")}`;
+
+    const upcomingDateKey = getDateKey(summary.nextUpcoming.session_date);
+    const upcomingIsTomorrow = upcomingDateKey !== null && upcomingDateKey === tomorrowKey;
+
+    let label: string;
+    if (upcomingIsTomorrow && upcomingTime) {
+      label = t("projectDetail.header.sessions.chips.tomorrow", { time: upcomingTime });
+    } else if (upcomingTime) {
+      label = t("projectDetail.header.sessions.chips.upcomingWithTime", {
+        date: upcomingDate,
+        time: upcomingTime
+      });
+    } else {
+      label = t("projectDetail.header.sessions.chips.upcoming", { date: upcomingDate });
+    }
+
+    chips.push(
+      <span
+        key="upcoming"
+        className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700"
+      >
+        {label}
+      </span>
+    );
+  }
+
+  if (chips.length === 0) {
+    return t("projectDetail.header.sessions.hint");
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {chips}
+    </div>
+  );
 }
 
 function formatCurrency(amount: number, currency: string) {
@@ -94,7 +152,7 @@ export function buildProjectSummaryItems({
   payments,
   todos,
   services,
-  sessions
+  sessionsSummary
 }: BuildProjectSummaryItemsParams): EntitySummaryItem[] {
   const paymentPrimary = payments.total > 0 || payments.totalPaid > 0
     ? t("projectDetail.header.payments.primary", { paid: formatCurrency(payments.totalPaid, payments.currency) })
@@ -111,27 +169,12 @@ export function buildProjectSummaryItems({
 
   const paymentSecondaryClass = payments.total > 0 && payments.remaining <= 0 ? "text-emerald-600" : undefined;
 
-  const snapshot = computeSessionSnapshot(sessions);
-  let sessionsSecondaryClass: string | undefined;
-  let sessionsSecondary = t("projectDetail.header.sessions.hint");
-
-  if (snapshot.count && snapshot.upcomingPlannedSession && snapshot.upcomingPlannedDate) {
-    const plannedDisplay = formatDateTime(
-      snapshot.upcomingPlannedSession.session_date,
-      snapshot.upcomingPlannedSession.session_time || undefined
-    );
-    sessionsSecondary = t("projectDetail.header.sessions.next", { date: plannedDisplay });
-  } else if (snapshot.count && snapshot.overduePlannedSession && snapshot.overduePlannedDate) {
-    sessionsSecondary = t("projectDetail.header.sessions.overdueSummary");
-    sessionsSecondaryClass = "text-amber-600";
-  } else if (snapshot.count && snapshot.recentSession) {
-    const recentDisplay = formatDate(snapshot.recentSession.session_date);
-    sessionsSecondary = t("projectDetail.header.sessions.last", { date: recentDisplay });
-  }
-
-  const sessionsPrimary = snapshot.count
-    ? t("projectDetail.header.sessions.count", { count: snapshot.count })
+  const sessionsPrimary = sessionsSummary.total > 0
+    ? t("projectDetail.header.sessions.count", { count: sessionsSummary.total })
     : t("projectDetail.header.sessions.none");
+
+  const sessionsSecondary = buildSessionChips(t, sessionsSummary);
+  const sessionsSecondaryClass = typeof sessionsSecondary === "string" ? "text-muted-foreground" : undefined;
 
   const progressPercentage = todos.total > 0 ? Math.round((todos.completed / todos.total) * 100) : 0;
 

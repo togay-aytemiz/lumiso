@@ -25,6 +25,7 @@ import { useTranslation } from "react-i18next";
 import { EntityHeader } from "@/components/EntityHeader";
 import { buildProjectSummaryItems } from "@/lib/projects/buildProjectSummaryItems";
 import { useProjectHeaderSummary } from "@/hooks/useProjectHeaderSummary";
+import { useProjectSessionsSummary } from "@/hooks/useProjectSessionsSummary";
 
 interface Project {
   id: string;
@@ -85,6 +86,7 @@ export default function ProjectDetail() {
   const [summaryRefreshToken, setSummaryRefreshToken] = useState(0);
 
   const { summary: headerSummary } = useProjectHeaderSummary(project?.id, summaryRefreshToken);
+  const { summary: sessionsSummary } = useProjectSessionsSummary(project?.id ?? "", summaryRefreshToken);
 
   const fetchProject = async (): Promise<Project | null> => {
     if (!id) return null;
@@ -408,9 +410,9 @@ export default function ProjectDetail() {
       payments: headerSummary.payments,
       todos: headerSummary.todos,
       services: headerSummary.services,
-      sessions
+      sessionsSummary
     }),
-    [headerSummary, sessions, tPages]
+    [headerSummary, sessionsSummary, tPages]
   );
 
   if (loading || !project) {

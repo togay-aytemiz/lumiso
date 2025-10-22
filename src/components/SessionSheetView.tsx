@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ExternalLink, Edit, X, AlertTriangle, Calendar as CalendarIcon } from 'lucide-react';
+import { ExternalLink, AlertTriangle, Calendar as CalendarIcon, ChevronDown, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import SessionStatusBadge from '@/components/SessionStatusBadge';
@@ -186,27 +187,43 @@ export default function SessionSheetView({
         variant="outline"
         size="sm"
         onClick={onViewFullDetails}
-        className="gap-2 text-sm font-medium"
+        className="w-full justify-center gap-2 text-sm font-medium hover:bg-accent sm:w-auto sm:px-4"
       >
         <ExternalLink className="h-4 w-4" />
-        <span>{tForms('sessionSheet.fullDetails')}</span>
+        <span className="text-sm">{tForms('sessionSheet.fullDetails')}</span>
       </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleEdit}
-        className="gap-2 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <Edit className="h-4 w-4" />
-        <span>{tForms('sessionSheet.edit')}</span>
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-center gap-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:w-auto sm:px-3"
+          >
+            <span>{tForms('sessionSheet.more')}</span>
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
+          <DropdownMenuItem role="menuitem" onSelect={handleEdit}>
+            <Pencil className="mr-2 h-4 w-4" />
+            <span>{tForms('sessionSheet.edit')}</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            role="menuitem"
+            onSelect={() => setIsDeleteDialogOpen(true)}
+            className="hover:text-destructive focus:text-destructive"
+          >
+            <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+            <span className="text-destructive">{tForms('sessionSheet.deleteSession')}</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <Button
         variant="ghost"
         size="sm"
         onClick={() => onOpenChange(false)}
-        className="gap-2 text-sm text-muted-foreground hover:text-foreground"
+        className="hidden justify-center text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:inline-flex sm:w-auto sm:px-3"
       >
-        <X className="h-4 w-4" />
         <span>{tForms('sessionSheet.close')}</span>
       </Button>
     </>
@@ -246,8 +263,8 @@ export default function SessionSheetView({
                   summaryItems={summaryItems}
                   banner={overdueBanner}
                   actions={headerActions}
-                  avatarClassName="bg-gradient-to-br from-amber-200 via-amber-300 to-orange-400 text-orange-900 ring-1 ring-orange-300"
-                  avatarContent={<CalendarIcon className="h-5 w-5" aria-hidden="true" />}
+                  avatarClassName="bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500 text-white ring-0"
+                  avatarContent={<CalendarIcon className="h-5 w-5 text-white" aria-hidden="true" />}
                   fallbackInitials="SE"
                 />
 

@@ -670,48 +670,57 @@ const LeadDetail = () => {
   }, []);
 
   const {
-    todayPlannedSession,
-    todayPlannedCount,
-    upcomingPlannedSession,
-    overduePlannedCount
+    todayCount,
+    todayNext,
+    nextUpcoming,
+    overdueCount
   } = useMemo(() => {
-    const now = new Date();
-    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-    const nowTime = now.getTime();
-    let today: { session: Session; date: Date } | null = null;
-    let upcoming: { session: Session; date: Date } | null = null;
-    let todayCount = 0;
-    let overdueCount = 0;
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+    const todayKey = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, "0")}-${String(
+      todayDate.getDate()
+    ).padStart(2, "0")}`;
+
+    const activeSessions: Array<{ session: Session; date: Date }> = [];
 
     sessions.forEach(session => {
       const normalizedStatus = (session.status || "").toLowerCase();
       if (!ACTIVE_SESSION_STATUSES.has(normalizedStatus)) return;
       const sessionDate = getSessionDateTime(session);
       if (!sessionDate) return;
-
-      if (sessionDate.getTime() < nowTime) {
-        overdueCount += 1;
-        return;
-      }
-
-      if (sessionDate <= endOfToday) {
-        todayCount += 1;
-        if (!today || sessionDate < today.date) {
-          today = { session, date: sessionDate };
-        }
-        return;
-      }
-
-      if (!upcoming || sessionDate < upcoming.date) {
-        upcoming = { session, date: sessionDate };
-      }
+      activeSessions.push({ session, date: sessionDate });
     });
 
+    const sortedActive = activeSessions.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    const todays: Session[] = [];
+    let upcomingSession: Session | null = null;
+    let overdue = 0;
+
+    for (const entry of sortedActive) {
+      const sessionKey = getDateKey(entry.session.session_date);
+      if (!sessionKey) continue;
+
+      if (sessionKey < todayKey) {
+        overdue += 1;
+        continue;
+      }
+
+      if (sessionKey === todayKey) {
+        todays.push(entry.session);
+        continue;
+      }
+
+      if (!upcomingSession) {
+        upcomingSession = entry.session;
+      }
+    }
+
     return {
-      todayPlannedSession: today?.session ?? null,
-      todayPlannedCount: todayCount,
-      upcomingPlannedSession: upcoming?.session ?? null,
-      overduePlannedCount: overdueCount
+      todayCount: todays.length,
+      todayNext: todays[0] ?? null,
+      nextUpcoming: upcomingSession,
+      overdueCount: overdue
     };
   }, [sessions, getSessionDateTime]);
 
@@ -1116,24 +1125,24 @@ const LeadDetail = () => {
 
     const chips: ReactNode[] = [];
 
-    if (overduePlannedCount > 0) {
+    if (overdueCount > 0) {
       chips.push(
         <span
           key="overdue"
           className="inline-flex items-center rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-[11px] font-semibold text-orange-700"
         >
-          {tPages("leadDetail.header.sessions.chips.overdue", { count: overduePlannedCount })}
+          {tPages("leadDetail.header.sessions.chips.overdue", { count: overdueCount })}
         </span>
       );
     }
 
-    if (todayPlannedCount > 0) {
-      const todayTime = safeFormatTime(todayPlannedSession?.session_time);
+    if (todayCount > 0) {
+      const todayTime = safeFormatTime(todayNext?.session_time);
       const label = todayTime
-        ? todayPlannedCount > 1
-          ? tPages("leadDetail.header.sessions.chips.todayMultiple", { count: todayPlannedCount, time: todayTime })
+        ? todayCount > 1
+          ? tPages("leadDetail.header.sessions.chips.todayMultiple", { count: todayCount, time: todayTime })
           : tPages("leadDetail.header.sessions.chips.todaySingle", { time: todayTime })
-        : tPages("leadDetail.header.sessions.chips.todayMultipleNoTime", { count: todayPlannedCount });
+        : tPages("leadDetail.header.sessions.chips.todayMultipleNoTime", { count: todayCount });
 
       chips.push(
         <span
@@ -1145,9 +1154,9 @@ const LeadDetail = () => {
       );
     }
 
-    if (upcomingPlannedSession?.session_date) {
-      const upcomingDateLabel = safeFormatDate(upcomingPlannedSession.session_date);
-      const upcomingTime = safeFormatTime(upcomingPlannedSession.session_time);
+    if (nextUpcoming?.session_date) {
+      const upcomingDateLabel = safeFormatDate(nextUpcoming.session_date);
+      const upcomingTime = safeFormatTime(nextUpcoming.session_time);
 
       if (upcomingDateLabel) {
         const today = new Date();
@@ -1157,7 +1166,7 @@ const LeadDetail = () => {
         const tomorrowKey = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(
           tomorrow.getDate()
         ).padStart(2, "0")}`;
-        const upcomingDateKey = getDateKey(upcomingPlannedSession.session_date);
+        const upcomingDateKey = getDateKey(nextUpcoming.session_date);
 
         const label = upcomingDateKey && upcomingDateKey === tomorrowKey && upcomingTime
           ? tPages("leadDetail.header.sessions.chips.tomorrow", { time: upcomingTime })
@@ -1190,11 +1199,11 @@ const LeadDetail = () => {
     );
   }, [
     sessionsCount,
-    overduePlannedCount,
-    todayPlannedCount,
-    todayPlannedSession?.session_time,
-    upcomingPlannedSession?.session_date,
-    upcomingPlannedSession?.session_time,
+    overdueCount,
+    todayCount,
+    todayNext?.session_time,
+    nextUpcoming?.session_date,
+    nextUpcoming?.session_time,
     tPages
   ]);
 

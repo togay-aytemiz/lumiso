@@ -220,10 +220,8 @@
           "overdue_one": "{{count}} gecikmiş",
           "overdue_other": "{{count}} gecikmiş",
           "todaySingle": "Bugün {{time}}",
-          "todayMultiple_one": "Bugün {{count}} seans, ilki {{time}}",
-          "todayMultiple_other": "Bugün {{count}} seans, ilki {{time}}",
-          "todayMultipleNoTime_one": "Bugün {{count}} seans",
-          "todayMultipleNoTime_other": "Bugün {{count}} seans",
+          "todayMultiple": "Bugün {{count}} seans, ilki {{time}}",
+          "todayMultipleNoTime": "Bugün {{count}} seans",
           "tomorrow": "Yarın {{time}}",
           "upcomingWithTime": "{{date}} {{time}}",
           "upcoming": "{{date}}"
@@ -393,6 +391,16 @@
       "delete": "Projeyi Sil",
       "cancel": "İptal",
       "deleting": "Siliniyor..."
+    },
+    "archiveConfirm": {
+      "title": "Projeyi arşivle?",
+      "description": "Arşivlemeden önce lütfen aşağıdakileri gözden geçirin:",
+      "outstanding": "Bu proje için {{amount}} tutarında tahsil edilmemiş bakiye var. Bu bakiye kişi detayları sayfasında görünmeye devam edecek.",
+      "plannedSessions_one": "{{count}} planlanmış seans bulunuyor.",
+      "plannedSessions_other": "{{count}} planlanmış seans bulunuyor.",
+      "confirm": "Projeyi arşivle",
+      "confirmLoading": "Arşivleniyor...",
+      "cancel": "Projeyi aktif tut"
     },
     "header": {
       "back": "Projeler listesine dön",

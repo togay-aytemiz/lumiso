@@ -240,53 +240,54 @@ const LeadDetail = () => {
         const {
           data,
           error
-        } = await supabase.from("projects").select("id, updated_at, base_price").eq("lead_id", lead.id).eq("organization_id", organizationId);
-        if (error) throw error;
-
-        const projects = (data || []) as Array<{ id: string; updated_at: string | null; base_price: number | null }>;
-        const projectIds = projects.map(project => project.id);
-
-        const servicesByProject = new Map<string, number>();
-        const paidByProject = new Map<string, number>();
-
-        if (projectIds.length > 0) {
-          const {
-            data: servicesData,
-            error: servicesError
-          } = await supabase.from('project_services').select(`
-              project_id,
+        } = await supabase
+          .from("projects")
+          .select(`
+            id,
+            updated_at,
+            base_price,
+            status_id,
+            project_services (
               services (
                 selling_price,
                 price
               )
-            `).in('project_id', projectIds);
-          if (servicesError) throw servicesError;
+            )
+          `)
+          .eq("lead_id", lead.id)
+          .eq("organization_id", organizationId);
+        if (error) throw error;
 
-          (servicesData || []).forEach((entry: any) => {
-            if (!entry?.project_id) return;
-            const service = entry.services as { selling_price?: number | null; price?: number | null } | null;
-            const priceValue = Number(service?.selling_price ?? service?.price ?? 0);
-            if (!Number.isFinite(priceValue)) return;
-            servicesByProject.set(entry.project_id, (servicesByProject.get(entry.project_id) ?? 0) + priceValue);
-          });
+        const projects = (data || []) as Array<{
+          id: string;
+          updated_at: string | null;
+          base_price: number | null;
+          status_id: string | null;
+          project_services?: Array<{ services?: { selling_price?: number | null; price?: number | null } | null }> | null;
+        }>;
 
+        let archivedStatusId: string | null = null;
+        try {
           const {
-            data: paymentsData,
-            error: paymentsError
-          } = await supabase.from('payments').select('project_id, amount, status').in('project_id', projectIds);
-          if (paymentsError) throw paymentsError;
-
-          (paymentsData || []).forEach((payment: any) => {
-            if (!payment?.project_id) return;
-            const amount = Number(payment.amount) || 0;
-            if (!Number.isFinite(amount)) return;
-            if (payment.status === 'paid') {
-              paidByProject.set(payment.project_id, (paidByProject.get(payment.project_id) ?? 0) + amount);
-            }
-          });
+            data: archivedStatusData,
+            error: archivedStatusError
+          } = await supabase
+            .from('project_statuses')
+            .select('id')
+            .eq('organization_id', organizationId)
+            .ilike('name', 'archived')
+            .limit(1);
+          if (archivedStatusError) throw archivedStatusError;
+          archivedStatusId = archivedStatusData?.[0]?.id ?? null;
+        } catch (statusError) {
+          console.error("Error fetching archived project status:", statusError);
         }
 
-        const latestUpdate = projects.reduce<string | null>((latest, project) => {
+        const visibleProjects = archivedStatusId
+          ? projects.filter(project => project.status_id !== archivedStatusId)
+          : projects;
+
+        const latestUpdate = visibleProjects.reduce<string | null>((latest, project) => {
           if (!project.updated_at) return latest;
           if (!latest) return project.updated_at;
           return new Date(project.updated_at).getTime() > new Date(latest).getTime() ? project.updated_at : latest;
@@ -294,19 +295,44 @@ const LeadDetail = () => {
 
         let totalBooked = 0;
         let totalPaid = 0;
+        const projectIds = projects.map(project => project.id);
+
         projects.forEach(project => {
           const basePrice = Number(project.base_price) || 0;
-          const servicesTotal = servicesByProject.get(project.id) ?? 0;
+          const servicesTotal = (project.project_services || []).reduce((sum, entry) => {
+            const service = entry?.services;
+            if (!service) return sum;
+            const priceValue = Number(service.selling_price ?? service.price ?? 0);
+            return Number.isFinite(priceValue) ? sum + priceValue : sum;
+          }, 0);
           const projectTotal = basePrice + servicesTotal;
           totalBooked += projectTotal;
-          totalPaid += paidByProject.get(project.id) ?? 0;
         });
+
+        if (projectIds.length > 0) {
+          const {
+            data: paymentsData,
+            error: paymentsError
+          } = await supabase
+            .from('payments')
+            .select('project_id, amount, status')
+            .in('project_id', projectIds);
+          if (paymentsError) throw paymentsError;
+
+          (paymentsData || []).forEach((payment: any) => {
+            const status = (payment?.status || '').toString().trim().toLowerCase();
+            if (status !== 'paid') return;
+            const amount = Number(payment?.amount) || 0;
+            if (!Number.isFinite(amount)) return;
+            totalPaid += amount;
+          });
+        }
 
         const remaining = Math.max(0, totalBooked - totalPaid);
 
-        setHasProjects(projects.length > 0);
+        setHasProjects(visibleProjects.length > 0);
         setProjectSummary({
-          count: projects.length,
+          count: visibleProjects.length,
           latestUpdate
         });
         setAggregatedPayments({

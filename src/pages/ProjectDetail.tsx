@@ -84,9 +84,33 @@ export default function ProjectDetail() {
   const [localStatusId, setLocalStatusId] = useState<string | null | undefined>(null);
   const [servicesVersion, setServicesVersion] = useState(0);
   const [summaryRefreshToken, setSummaryRefreshToken] = useState(0);
+  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
+  const [archiveConfirmState, setArchiveConfirmState] = useState({
+    hasOutstanding: false,
+    outstandingAmount: 0,
+    plannedCount: 0
+  });
+  const [archiveLoading, setArchiveLoading] = useState(false);
 
   const { summary: headerSummary } = useProjectHeaderSummary(project?.id, summaryRefreshToken);
   const { summary: sessionsSummary } = useProjectSessionsSummary(project?.id ?? "", summaryRefreshToken);
+
+  const plannedSessionsCount = useMemo(() => {
+    return sessions.filter(session => (session.status || "").toLowerCase() === "planned").length;
+  }, [sessions]);
+
+  const formatArchiveAmount = (amount: number) => {
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: headerSummary.payments.currency || "TRY",
+        maximumFractionDigits: 0,
+        minimumFractionDigits: 0
+      }).format(amount);
+    } catch {
+      return `${Math.round(amount)} ${headerSummary.payments.currency || "TRY"}`;
+    }
+  };
 
   const fetchProject = async (): Promise<Project | null> => {
     if (!id) return null;
@@ -367,27 +391,56 @@ export default function ProjectDetail() {
     }
   };
 
-  const handleArchiveAction = async () => {
+  const executeArchiveToggle = async () => {
     if (!project) return;
-    
+
+    setArchiveLoading(true);
     try {
       const result = await onArchiveToggle(project);
       setIsArchived(result.isArchived);
-      
+
       toast({
         title: "Success",
         description: result.isArchived ? "Project archived successfully." : "Project restored successfully."
       });
-      
+
       const updatedProject = await fetchProject();
       await checkArchiveStatus(updatedProject);
+      setArchiveConfirmOpen(false);
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive"
       });
+    } finally {
+      setArchiveLoading(false);
     }
+  };
+
+  const handleArchiveAction = () => {
+    if (!project) return;
+
+    if (isArchived) {
+      executeArchiveToggle();
+      return;
+    }
+
+    const outstandingAmount = headerSummary.payments.remaining || 0;
+    const hasOutstanding = outstandingAmount > 0;
+    const plannedCount = plannedSessionsCount;
+
+    if (!hasOutstanding && plannedCount === 0) {
+      executeArchiveToggle();
+      return;
+    }
+
+    setArchiveConfirmState({
+      hasOutstanding,
+      outstandingAmount,
+      plannedCount
+    });
+    setArchiveConfirmOpen(true);
   };
 
   const handleAssigneesUpdate = async () => {
@@ -666,6 +719,46 @@ export default function ProjectDetail() {
           } 
         />
       </div>
+
+      <AlertDialog
+        open={archiveConfirmOpen}
+        onOpenChange={open => {
+          if (!archiveLoading) {
+            setArchiveConfirmOpen(open);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tPages('projectDetail.archiveConfirm.title')}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <p>{tPages('projectDetail.archiveConfirm.description')}</p>
+                {archiveConfirmState.hasOutstanding && (
+                  <p>{tPages('projectDetail.archiveConfirm.outstanding', {
+                    amount: formatArchiveAmount(archiveConfirmState.outstandingAmount)
+                  })}</p>
+                )}
+                {archiveConfirmState.plannedCount > 0 && (
+                  <p>{tPages('projectDetail.archiveConfirm.plannedSessions', {
+                    count: archiveConfirmState.plannedCount
+                  })}</p>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={archiveLoading}>
+              {tPages('projectDetail.archiveConfirm.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={executeArchiveToggle} disabled={archiveLoading}>
+              {archiveLoading
+                ? tPages('projectDetail.archiveConfirm.confirmLoading')
+                : tPages('projectDetail.archiveConfirm.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

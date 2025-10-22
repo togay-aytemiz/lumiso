@@ -220,10 +220,8 @@
           "overdue_one": "{{count}} overdue",
           "overdue_other": "{{count}} overdue",
           "todaySingle": "Today {{time}}",
-          "todayMultiple_one": "Today {{count}} session, first {{time}}",
-          "todayMultiple_other": "Today {{count}} sessions, first {{time}}",
-          "todayMultipleNoTime_one": "Today {{count}} session",
-          "todayMultipleNoTime_other": "Today {{count}} sessions",
+          "todayMultiple": "Today {{count}} sessions, first {{time}}",
+          "todayMultipleNoTime": "Today {{count}} sessions",
           "tomorrow": "Tomorrow {{time}}",
           "upcomingWithTime": "{{date}} {{time}}",
           "upcoming": "{{date}}"
@@ -393,6 +391,16 @@
       "delete": "Delete Project",
       "cancel": "Cancel",
       "deleting": "Deleting..."
+    },
+    "archiveConfirm": {
+      "title": "Archive project?",
+      "description": "Before archiving, please review the following:",
+      "outstanding": "This project still has {{amount}} outstanding. This balance will remain visible on the client details page.",
+      "plannedSessions_one": "{{count}} planned session is still scheduled.",
+      "plannedSessions_other": "{{count}} planned sessions are still scheduled.",
+      "confirm": "Archive project",
+      "confirmLoading": "Archiving...",
+      "cancel": "Keep project active"
     },
     "header": {
       "back": "Back to projects",

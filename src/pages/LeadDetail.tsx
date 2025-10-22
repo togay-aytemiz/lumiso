@@ -626,16 +626,51 @@ const LeadDetail = () => {
   }, [formData, initialFormData]);
 
   const initials = useMemo(() => {
-    if (!lead?.name) {
+    const fullName = lead?.name?.trim();
+    if (!fullName) {
       return "LD";
     }
-    const parts = lead.name.trim().split(/\s+/);
-    if (parts.length === 1) {
-      return parts[0].slice(0, 2).toUpperCase();
+
+    const connectorWords = new Set([
+      "and",
+      "ve",
+      "ile",
+      "with",
+      "und",
+      "the",
+      "of",
+      "for",
+      "da",
+      "de",
+      "del",
+      "della",
+      "van",
+      "von",
+      "bin",
+      "al",
+      "el"
+    ]);
+
+    const tokens = fullName.match(/\p{L}+/gu) ?? [];
+    const meaningfulTokens = tokens.filter(token => !connectorWords.has(token.toLowerCase()));
+    const candidates = meaningfulTokens.length > 0 ? meaningfulTokens : tokens;
+
+    if (candidates.length === 0) {
+      return "LD";
     }
-    const first = parts[0]?.[0] ?? "";
-    const last = parts[parts.length - 1]?.[0] ?? "";
-    return `${first}${last}`.toUpperCase();
+
+    if (candidates.length === 1) {
+      const chars = Array.from(candidates[0]);
+      return chars.slice(0, 2).join("").toUpperCase();
+    }
+
+    const firstChars = Array.from(candidates[0]);
+    const lastChars = Array.from(candidates[candidates.length - 1]);
+    const firstInitial = firstChars[0]?.toUpperCase() ?? "";
+    const lastInitial = lastChars[0]?.toUpperCase() ?? "";
+
+    const combined = `${firstInitial}${lastInitial}`.trim();
+    return combined.length > 0 ? combined : "LD";
   }, [lead?.name]);
 
   const formatRelativeTime = (dateString?: string | null) => {

@@ -15,17 +15,14 @@ import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
-import SessionSheetView from "@/components/SessionSheetView";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { LeadActivitySection } from "@/components/LeadActivitySection";
-import CompactSessionBanner from "@/components/project-details/Summary/CompactSessionBanner";
 import { ProjectsSection } from "@/components/ProjectsSection";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 // AssigneesList removed - single user organization
 import { formatDate, formatTime, getDateFnsLocale } from "@/lib/utils";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
-import EnhancedSessionsSection from "@/components/EnhancedSessionsSection";
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
 // Permissions removed for single photographer mode
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
@@ -148,8 +145,6 @@ const LeadDetail = () => {
   const [deleting, setDeleting] = useState(false);
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
-  const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
   const [activityRefreshKey, setActivityRefreshKey] = useState(0);
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
 
@@ -158,10 +153,6 @@ const LeadDetail = () => {
     settings: userSettings,
     loading: settingsLoading
   } = useOrganizationQuickSettings();
-  const currentLocationPath = useMemo(
-    () => `${location.pathname}${location.search}${location.hash}`,
-    [location.hash, location.pathname, location.search]
-  );
   const {
     markAsCompleted,
     markAsLost,
@@ -1008,24 +999,6 @@ const LeadDetail = () => {
     fetchSessions();
   };
 
-  const handleSessionClick = (sessionId: string) => {
-    setSelectedSessionId(sessionId);
-    setIsSessionSheetOpen(true);
-  };
-
-  const handleViewFullSessionDetails = () => {
-    if (selectedSessionId) {
-      navigate(`/sessions/${selectedSessionId}`, { state: { from: currentLocationPath } });
-    }
-  };
-
-  const handleNavigateToLead = (leadId: string) => {
-    navigate(`/leads/${leadId}`);
-  };
-
-  const handleNavigateToProject = (projectId: string) => {
-    navigate(`/projects/${projectId}`);
-  };
   const handleProjectUpdated = () => {
     // Refresh sessions and activities when project changes (archive/restore should affect visibility)
     fetchSessions();
@@ -1356,13 +1329,6 @@ const LeadDetail = () => {
           </>
         }
       />
-      {/* Enhanced Sessions Section */}
-      <EnhancedSessionsSection
-        sessions={sessions as any}
-        loading={loading}
-        onSessionClick={handleSessionClick}
-      />
-
       {/* Two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8 max-w-full">
         {/* Left column - Lead Details (33%) */}
@@ -1480,23 +1446,6 @@ const LeadDetail = () => {
         </AlertDialogContent>
       </AlertDialog>
       
-      {/* Session Sheet View */}
-      <SessionSheetView
-        sessionId={selectedSessionId || ''}
-        isOpen={isSessionSheetOpen}
-        onOpenChange={(open) => {
-          setIsSessionSheetOpen(open);
-          // Refresh sessions when sheet closes
-          if (!open) {
-            fetchSessions();
-          }
-        }}
-        onViewFullDetails={handleViewFullSessionDetails}
-        onNavigateToLead={handleNavigateToLead}
-        onNavigateToProject={handleNavigateToProject}
-        onSessionUpdated={fetchSessions}
-      />
-
       <OnboardingTutorial
         key={`tutorial-${currentTutorialStep}`} 
         steps={isSchedulingTutorial ? schedulingTutorialSteps : leadDetailsTutorialSteps} 

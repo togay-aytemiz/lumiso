@@ -506,7 +506,7 @@ export default function ProjectDetail() {
           onBack={() => navigate(-1)}
           backLabel={tPages("projectDetail.header.back")}
           subtext={headerSubtext}
-          summaryItems={summaryItems}
+          summaryItems={isEditing ? undefined : summaryItems}
           avatarClassName="bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-600 text-white ring-1 ring-blue-400/60"
           avatarContent={<FolderKanban className="h-5 w-5" />}
           actions={headerActions}

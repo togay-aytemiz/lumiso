@@ -417,6 +417,7 @@
         "primary_other": "{{count}} hizmet seçildi",
         "none": "Seçili hizmet yok",
         "secondary": "Seçili hizmetler toplamı {{total}}",
+        "viewList": "Seçili hizmetleri görüntüle",
         "hint": "Projeyi şekillendirmek için hizmet ekleyin",
         "infoTitle": "Seçili hizmetler",
         "infoLabel": "Seçili hizmetler ({{count}})"

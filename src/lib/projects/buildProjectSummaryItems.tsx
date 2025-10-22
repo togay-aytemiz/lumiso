@@ -148,7 +148,7 @@ export function buildProjectSummaryItems({
     : t("projectDetail.header.services.none");
 
   const servicesSecondary = services.total > 0
-    ? t("projectDetail.header.services.secondary", { total: formatCurrency(services.totalValue, payments.currency) })
+    ? t("projectDetail.header.services.viewList")
     : t("projectDetail.header.services.hint");
 
   const servicesInfo = services.total > 0

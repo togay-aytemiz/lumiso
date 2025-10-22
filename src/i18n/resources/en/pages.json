@@ -417,6 +417,7 @@
         "primary_other": "{{count}} services selected",
         "none": "No services selected",
         "secondary": "Selected services total {{total}}",
+        "viewList": "View selected services",
         "hint": "Add services to scope the project",
         "infoTitle": "Selected services",
         "infoLabel": "Selected services ({{count}})"

@@ -90,6 +90,7 @@ interface EntityHeaderProps {
   fallbackInitials?: string;
   avatarClassName?: string;
   avatarContent?: ReactNode;
+  banner?: ReactNode;
 }
 
 export function EntityHeader({
@@ -104,7 +105,8 @@ export function EntityHeader({
   className,
   fallbackInitials = "??",
   avatarClassName,
-  avatarContent
+  avatarContent,
+  banner
 }: EntityHeaderProps) {
   const displayInitials = useMemo(
     () => buildInitials(name, fallbackInitials),
@@ -150,6 +152,8 @@ export function EntityHeader({
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
+
+      {banner && <div>{banner}</div>}
 
       {summaryItems.length > 0 && (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">

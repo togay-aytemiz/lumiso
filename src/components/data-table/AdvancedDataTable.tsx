@@ -324,9 +324,8 @@ export function AdvancedDataTable<T>({
   const filterTriggerLabel = filters?.triggerLabel ?? filterPanelTitle;
   const showHeaderSearch = Boolean(onSearchChange);
   const shareFilterAndColumnButtons = Boolean(filters) && showColumnManager;
-  const headerControlButtonClass = shareFilterAndColumnButtons
-    ? "basis-[calc(50%-0.25rem)] grow-0 justify-center sm:flex-none sm:justify-start"
-    : "w-full grow-0 justify-center sm:w-auto sm:flex-none sm:justify-start";
+  const headerControlButtonClass =
+    "w-full grow-0 justify-center sm:w-auto sm:flex-none sm:justify-start";
 
   // Determine if a summary row will be visible on mobile to tweak spacing
   const mobileSummaryPresent = useMemo(() => {
@@ -365,6 +364,42 @@ export function AdvancedDataTable<T>({
     </div>
   );
 
+  const filterTriggerButton = filters ? (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={handleToggleFilters}
+      className={cn("flex items-center gap-2", headerControlButtonClass)}
+    >
+      <Filter className="h-4 w-4" />
+      <span className="whitespace-nowrap">{filterTriggerLabel}</span>
+      <Badge variant="secondary" className="ml-1">
+        {activeFilterCount}
+      </Badge>
+    </Button>
+  ) : null;
+
+  const columnManagerButton = showColumnManager ? (
+    <ColumnSettingsButton
+      columns={columns.map<ColumnSettingsMeta>((column) => ({
+        id: column.id,
+        label:
+          typeof column.label === "string" ? column.label : String(column.label),
+        description:
+          typeof column.description === "string" ? column.description : undefined,
+        hideable: column.hideable !== false,
+      }))}
+      defaultPreferences={defaultPreferences}
+      preferences={columnPreferences}
+      onChange={handleColumnPreferencesChange}
+      className={headerControlButtonClass}
+    />
+  ) : null;
+
+  const shouldRenderSharedLayout =
+    shareFilterAndColumnButtons && Boolean(filterTriggerButton && columnManagerButton);
+
   return (
     <Card
       className={cn(
@@ -396,48 +431,21 @@ export function AdvancedDataTable<T>({
                 {showHeaderSearch && <div className="w-full sm:w-auto">{renderSearchInput()}</div>}
                 {(filters || actions || showColumnManager) && (
                   <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
-                    {filters && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleToggleFilters}
-                        className={cn(
-                          "flex items-center gap-2",
-                          headerControlButtonClass
-                        )}
-                      >
-                        <Filter className="h-4 w-4" />
-                        <span className="whitespace-nowrap">{filterTriggerLabel}</span>
-                        <Badge variant="secondary" className="ml-1">
-                          {activeFilterCount}
-                        </Badge>
-                      </Button>
+                    {shouldRenderSharedLayout ? (
+                      <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-nowrap">
+                        {filterTriggerButton}
+                        {columnManagerButton}
+                      </div>
+                    ) : (
+                      <>
+                        {filterTriggerButton}
+                        {columnManagerButton}
+                      </>
                     )}
                     {actions && (
                       <div className="flex w-full basis-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
                         {actions}
                       </div>
-                    )}
-                    {showColumnManager && (
-                      <ColumnSettingsButton
-                        columns={columns.map<ColumnSettingsMeta>((column) => ({
-                          id: column.id,
-                          label:
-                            typeof column.label === "string"
-                              ? column.label
-                              : String(column.label),
-                          description:
-                            typeof column.description === "string"
-                              ? column.description
-                              : undefined,
-                          hideable: column.hideable !== false,
-                        }))}
-                        defaultPreferences={defaultPreferences}
-                        preferences={columnPreferences}
-                        onChange={handleColumnPreferencesChange}
-                        className={headerControlButtonClass}
-                      />
                     )}
                   </div>
                 )}

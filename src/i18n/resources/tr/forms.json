@@ -1002,6 +1002,8 @@
     "services_tab": "Hizmetler",
     "sessions_tab": "Seanslar",
     "activities_tab": "Etkinlikler",
+    "archived_banner_title": "Bu proje arşivlendi",
+    "archived_banner_description": "Çoğu işlem devre dışı. Arşivlendiği sürece seanslar ve hatırlatmalar takvimlerden, Seanslar sayfasından ve etkinlik listelerinden gizlenir. Düzenleme ve görünürlüğü yeniden etkinleştirmek için Daha Fazla → Geri Yükle'yi kullanın.",
     "archived_banner": "Bu proje arşivlendi. Çoğu işlem devre dışı. Arşivlenmiş durumda, seansları ve hatırlatmaları takvimlerden, Seanslar sayfasından ve etkinlik listelerinden gizlenir. Düzenleme ve görünürlüğü yeniden etkinleştirmek için Daha Fazla → Geri Yükle'yi kullanın.",
     "full_details": "Tam Detaylar",
     "more": "Daha Fazla",

@@ -1044,6 +1044,8 @@
     "services_tab": "Services",
     "sessions_tab": "Sessions",
     "activities_tab": "Activities",
+    "archived_banner_title": "This project is archived",
+    "archived_banner_description": "Most actions are disabled. While archived, sessions and reminders are hidden from calendars, the Sessions page, and activity lists. Use More → Restore to enable editing and visibility again.",
     "archived_banner": "This project is archived. Most actions are disabled. While archived, sessions and reminders are hidden from calendars, the Sessions page, and activity lists. Use More → Restore to enable editing and visibility again."
   },
   "projectDetails": {

@@ -457,6 +457,20 @@ export function ProjectSheetView({
 
   const headerSubtext = !isEditing && project.description ? project.description : undefined;
 
+  const archivedBanner = isArchived
+    ? (
+        <div className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm leading-relaxed text-sky-800 dark:border-sky-400/30 dark:bg-sky-500/10 dark:text-sky-100">
+          <Archive className="mt-0.5 h-4 w-4 text-sky-500 dark:text-sky-300" aria-hidden="true" />
+          <div className="space-y-1">
+            <p className="font-semibold text-sky-900 dark:text-sky-50">
+              {tForms("project_sheet.archived_banner_title")}
+            </p>
+            <p>{tForms("project_sheet.archived_banner_description")}</p>
+          </div>
+        </div>
+      )
+    : undefined;
+
   const headerActions = isEditing ? (
     <>
       <Button
@@ -546,6 +560,7 @@ export function ProjectSheetView({
         name={project.name || ""}
         title={headerTitle}
         subtext={headerSubtext}
+        banner={archivedBanner}
         summaryItems={isEditing ? undefined : summaryItems}
         avatarClassName="bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-600 text-white ring-1 ring-blue-400/60"
         avatarContent={<FolderKanban className="h-5 w-5" />}
@@ -583,12 +598,6 @@ export function ProjectSheetView({
   // Main content sections - exactly the same as original modal
   const mainContent = (
     <>
-      {isArchived && (
-        <div className="mb-3 rounded-md border border-border bg-muted/40 text-muted-foreground text-sm px-3 py-2">
-          {tForms('project_sheet.archived_banner')}
-        </div>
-      )}
-
       <div className={isArchived ? 'opacity-60 pointer-events-none select-none' : ''}>
         <ProjectDetailsLayout 
           header={<></>} 

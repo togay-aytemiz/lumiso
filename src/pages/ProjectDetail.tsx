@@ -86,8 +86,8 @@ export default function ProjectDetail() {
 
   const { summary: headerSummary } = useProjectHeaderSummary(project?.id, summaryRefreshToken);
 
-  const fetchProject = async () => {
-    if (!id) return;
+  const fetchProject = async (): Promise<Project | null> => {
+    if (!id) return null;
     
     try {
       const { data, error } = await supabase
@@ -101,6 +101,7 @@ export default function ProjectDetail() {
       setEditName(data.name);
       setEditDescription(data.description || "");
       setEditProjectTypeId(data.project_type_id || "");
+      return data;
     } catch (error: any) {
       console.error('Error fetching project:', error);
       toast({
@@ -109,6 +110,7 @@ export default function ProjectDetail() {
         variant: "destructive"
       });
       navigate('/projects');
+      return null;
     }
   };
 
@@ -169,27 +171,32 @@ export default function ProjectDetail() {
     }
   };
 
-  const checkArchiveStatus = async () => {
-    if (!project?.id) {
+  const checkArchiveStatus = async (targetProject?: Project | null) => {
+    const source = targetProject ?? project;
+    if (!source?.id) {
       setIsArchived(false);
       setLocalStatusId(null);
       return;
     }
 
     try {
-      const { data: statusData } = await supabase
-        .from('project_statuses')
-        .select('id, name')
-        .eq('id', project.status_id!)
-        .maybeSingle();
+      let archived = false;
+      if (source.status_id) {
+        const { data: statusData } = await supabase
+          .from('project_statuses')
+          .select('id, name')
+          .eq('id', source.status_id)
+          .maybeSingle();
 
-      const archived = Boolean(statusData?.name && statusData.name.toLowerCase() === 'archived');
+        archived = Boolean(statusData?.name && statusData.name.toLowerCase() === 'archived');
+      }
+
       setIsArchived(archived);
 
       const { data: projRow } = await supabase
         .from('projects')
         .select('status_id, previous_status_id')
-        .eq('id', project.id)
+        .eq('id', source.id)
         .single();
 
       if (archived) {
@@ -198,8 +205,8 @@ export default function ProjectDetail() {
         setLocalStatusId(projRow?.status_id || null);
       }
     } catch {
-      setIsArchived(false);
-      setLocalStatusId(project?.status_id || null);
+      setIsArchived(prev => prev);
+      setLocalStatusId(source?.status_id || null);
     }
   };
 
@@ -370,8 +377,8 @@ export default function ProjectDetail() {
         description: result.isArchived ? "Project archived successfully." : "Project restored successfully."
       });
       
-      await fetchProject();
-      checkArchiveStatus();
+      const updatedProject = await fetchProject();
+      await checkArchiveStatus(updatedProject);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -381,13 +388,14 @@ export default function ProjectDetail() {
     }
   };
 
-  const handleAssigneesUpdate = () => {
-    fetchProject();
+  const handleAssigneesUpdate = async () => {
+    const updatedProject = await fetchProject();
+    await checkArchiveStatus(updatedProject);
   };
 
-  const handleStatusChange = () => {
-    fetchProject();
-    checkArchiveStatus();
+  const handleStatusChange = async () => {
+    const updatedProject = await fetchProject();
+    await checkArchiveStatus(updatedProject);
   };
 
   const triggerSummaryRefresh = () => {
@@ -438,6 +446,20 @@ export default function ProjectDetail() {
   );
 
   const headerSubtext = !isEditing && project.description ? project.description : undefined;
+
+  const archivedBanner = isArchived
+    ? (
+        <div className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm leading-relaxed text-sky-800 dark:border-sky-400/30 dark:bg-sky-500/10 dark:text-sky-100">
+          <Archive className="mt-0.5 h-4 w-4 text-sky-500 dark:text-sky-300" aria-hidden="true" />
+          <div className="space-y-1">
+            <p className="font-semibold text-sky-900 dark:text-sky-50">
+              {t("project_sheet.archived_banner_title")}
+            </p>
+            <p>{t("project_sheet.archived_banner_description")}</p>
+          </div>
+        </div>
+      )
+    : undefined;
 
   const headerActions = isEditing ? (
     <>
@@ -506,6 +528,7 @@ export default function ProjectDetail() {
           onBack={() => navigate(-1)}
           backLabel={tPages("projectDetail.header.back")}
           subtext={headerSubtext}
+          banner={archivedBanner}
           summaryItems={isEditing ? undefined : summaryItems}
           avatarClassName="bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-600 text-white ring-1 ring-blue-400/60"
           avatarContent={<FolderKanban className="h-5 w-5" />}
@@ -540,13 +563,6 @@ export default function ProjectDetail() {
           </div>
         )}
       </div>
-
-      {/* Archive Warning */}
-      {isArchived && (
-        <div className="mb-6 rounded-lg border border-border bg-muted/40 text-muted-foreground text-sm px-4 py-3">
-          {t('project_sheet.archived_banner')}
-        </div>
-      )}
 
       {/* Main Content - same layout but optimized for full page */}
       <div className={isArchived ? 'opacity-60 pointer-events-none select-none' : ''}>

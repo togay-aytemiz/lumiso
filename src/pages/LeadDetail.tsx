@@ -665,8 +665,8 @@ const LeadDetail = () => {
     overduePlannedCount
   } = useMemo(() => {
     const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const nowTime = now.getTime();
     let today: { session: Session; date: Date } | null = null;
     let upcoming: { session: Session; date: Date } | null = null;
     let overdue: { session: Session; date: Date } | null = null;
@@ -677,7 +677,7 @@ const LeadDetail = () => {
       const sessionDate = getSessionDateTime(session);
       if (!sessionDate) return;
 
-      if (sessionDate < startOfToday) {
+      if (sessionDate.getTime() < nowTime) {
         overdueCount += 1;
         if (!overdue || sessionDate > overdue.date) {
           overdue = { session, date: sessionDate };

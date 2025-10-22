@@ -6,7 +6,6 @@ import {
   AdvancedDataTable,
   type AdvancedTableColumn,
   type AdvancedDataTableSortState,
-  TableSearchInput,
 } from "@/components/data-table";
 import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useWorkflows } from "@/hooks/useWorkflows";
@@ -138,11 +137,6 @@ export default function Workflows() {
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
-    setPage(1);
-  }, []);
-
-  const handleSearchClear = useCallback(() => {
-    setSearchQuery("");
     setPage(1);
   }, []);
 
@@ -294,22 +288,6 @@ export default function Workflows() {
       },
     ],
     [dateLocale, getTriggerLabel, t]
-  );
-
-  const tableToolbar = useMemo(
-    () => (
-      <div className="w-full sm:max-w-xs lg:max-w-sm">
-        <TableSearchInput
-          value={searchQuery}
-          onChange={handleSearchChange}
-          onClear={handleSearchClear}
-          placeholder={t("workflows.search")}
-          clearAriaLabel={t("workflows.clearSearch", { defaultValue: "Clear search" })}
-          loading={loading}
-        />
-      </div>
-    ),
-    [handleSearchChange, handleSearchClear, loading, searchQuery, t]
   );
 
   const headerActions = useMemo(
@@ -478,8 +456,12 @@ export default function Workflows() {
           rowKey={(workflow) => workflow.id}
           isLoading={loading}
           zebra
-          toolbar={tableToolbar}
           actions={headerActions}
+          searchValue={searchQuery}
+          onSearchChange={handleSearchChange}
+          searchPlaceholder={t("workflows.search")}
+          searchLoading={loading}
+          searchDelay={0}
           columnCustomization={{ storageKey: "workflows.table.columns" }}
           sortState={sortState}
           onSortChange={handleTableSortChange}

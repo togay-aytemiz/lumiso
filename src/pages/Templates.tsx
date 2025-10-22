@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   AdvancedDataTable,
   type AdvancedTableColumn,
-  TableSearchInput,
 } from "@/components/data-table";
 import { TableLoadingSkeleton } from "@/components/ui/loading-presets";
 import { Plus, Edit, Trash2, Copy, MessageSquare } from "lucide-react";
@@ -210,22 +209,6 @@ const OptimizedTemplatesContent = React.memo(() => {
     }
   }, [page, pageSize, totalCount]);
 
-  const tableToolbar = useMemo(
-    () => (
-      <div className="w-full sm:max-w-xs lg:max-w-sm">
-        <TableSearchInput
-          value={searchTerm}
-          onChange={setSearchTerm}
-          onClear={() => setSearchTerm("")}
-          placeholder={t("templates.search")}
-          clearAriaLabel={t("templates.clearSearch", { defaultValue: "Clear search" })}
-          loading={loading}
-        />
-      </div>
-    ),
-    [loading, searchTerm, setSearchTerm, t]
-  );
-
   const headerActions = useMemo(
     () => (
       <Button onClick={() => navigate('/template-builder')} className="flex items-center gap-2 whitespace-nowrap">
@@ -311,8 +294,12 @@ const OptimizedTemplatesContent = React.memo(() => {
           rowKey={(template) => template.id}
           isLoading={loading}
           loadingState={<TableLoadingSkeleton />}
-          toolbar={tableToolbar}
           actions={headerActions}
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder={t("templates.search")}
+          searchLoading={loading}
+          searchDelay={0}
           columnCustomization={{ storageKey: "templates.table.columns" }}
           emptyState={emptyState}
           onRowClick={handleRowClick}

@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, Calendar, AlertTriangle, CalendarCheck2, CalendarClock } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import NewSessionDialog from "@/components/NewSessionDialog";
 import { formatTime, formatLongDate, getWeekRange, cn } from "@/lib/utils";
@@ -85,6 +85,7 @@ const AllSessions = () => {
     direction: "asc",
   });
   const navigate = useNavigate();
+  const location = useLocation();
   const [viewingProject, setViewingProject] = useState<any>(null);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
@@ -423,7 +424,8 @@ const AllSessions = () => {
 
   const handleViewFullSessionDetails = () => {
     if (selectedSessionId) {
-      navigate(`/sessions/${selectedSessionId}`);
+      const currentPath = `${location.pathname}${location.search}${location.hash}`;
+      navigate(`/sessions/${selectedSessionId}`, { state: { from: currentPath } });
     }
   };
 

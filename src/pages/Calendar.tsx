@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ProjectSheetView } from "@/components/ProjectSheetView";
 import { formatDate, formatTime, getUserLocale } from "@/lib/utils";
 import { isToday } from "date-fns";
@@ -68,6 +68,7 @@ export default function Calendar() {
   });
   const { t } = useTranslation("pages");
 
+  const location = useLocation();
   const viewModeOptions = useMemo(
     () => [
       { value: "day", label: t("calendar.viewModes.day") },
@@ -569,7 +570,8 @@ export default function Calendar() {
               isOpen={sessionSheetOpen}
               onOpenChange={setSessionSheetOpen}
               onViewFullDetails={() => {
-                navigate(`/sessions/${selectedSessionId}`);
+                const currentPath = `${location.pathname}${location.search}${location.hash}`;
+                navigate(`/sessions/${selectedSessionId}`, { state: { from: currentPath } });
                 setSessionSheetOpen(false);
               }}
               onNavigateToLead={(leadId) => navigate(`/leads/${leadId}`)}

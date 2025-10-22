@@ -139,6 +139,10 @@ const LeadDetail = () => {
     settings: userSettings,
     loading: settingsLoading
   } = useOrganizationQuickSettings();
+  const currentLocationPath = useMemo(
+    () => `${location.pathname}${location.search}${location.hash}`,
+    [location.hash, location.pathname, location.search]
+  );
   const {
     markAsCompleted,
     markAsLost,
@@ -1000,7 +1004,7 @@ const LeadDetail = () => {
 
   const handleViewFullSessionDetails = () => {
     if (selectedSessionId) {
-      navigate(`/sessions/${selectedSessionId}`);
+      navigate(`/sessions/${selectedSessionId}`, { state: { from: currentLocationPath } });
     }
   };
 

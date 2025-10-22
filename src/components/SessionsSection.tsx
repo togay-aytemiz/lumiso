@@ -6,7 +6,7 @@ import DeadSimpleSessionBanner from "./DeadSimpleSessionBanner";
 import EditSessionDialog from "./EditSessionDialog";
 import SessionSheetView from "./SessionSheetView";
 import { NewSessionDialogForProject } from "./NewSessionDialogForProject";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { sortSessionsByLifecycle, SessionWithStatus } from "@/lib/sessionSorting";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 interface Session extends SessionWithStatus {
@@ -38,6 +38,7 @@ export function SessionsSection({
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useFormsTranslation();
   const handleSessionUpdated = () => {
     onSessionUpdated();
@@ -63,7 +64,8 @@ export function SessionsSection({
 
   const handleViewFullSessionDetails = () => {
     if (selectedSessionId) {
-      navigate(`/sessions/${selectedSessionId}`);
+      const currentPath = `${location.pathname}${location.search}${location.hash}`;
+      navigate(`/sessions/${selectedSessionId}`, { state: { from: currentPath } });
     }
   };
 

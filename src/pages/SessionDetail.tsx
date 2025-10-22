@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Edit, AlertTriangle, Calendar as CalendarIcon } from 'lucide-react';
@@ -59,6 +59,7 @@ interface SessionData {
 export default function SessionDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation<{ from?: string }>();
   const { toast } = useToast();
   const { deleteSession } = useSessionActions();
   const { t: tMessages } = useMessagesTranslation();
@@ -128,12 +129,33 @@ export default function SessionDetail() {
     setIsEditDialogOpen(true);
   };
 
+  const backTarget = location.state?.from;
+  const getFallbackRoute = useCallback(() => {
+    if (backTarget) {
+      return backTarget;
+    }
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      return -1;
+    }
+    return '/sessions';
+  }, [backTarget]);
+
+  const handleBack = useCallback(() => {
+    const fallback = getFallbackRoute();
+    if (typeof fallback === 'number') {
+      navigate(fallback);
+    } else {
+      navigate(fallback);
+    }
+  }, [getFallbackRoute, navigate]);
+
   const handleDelete = async () => {
     if (!session) return;
 
     const success = await deleteSession(session.id);
     if (success) {
-      navigate('/sessions');
+      const fallback = backTarget ?? '/sessions';
+      navigate(fallback);
     }
   };
 
@@ -302,13 +324,13 @@ export default function SessionDetail() {
           <EntityHeader
             name={sessionNameDisplay}
             title={headerTitle}
-            onBack={() => navigate('/sessions')}
-            backLabel={tForms('sessions.returnToSessions')}
+            onBack={handleBack}
+            backLabel={tCommon('buttons.back')}
             summaryItems={summaryItems}
             banner={overdueBanner}
             actions={headerActions}
-            avatarClassName="bg-gradient-to-br from-amber-200 via-amber-300 to-orange-400 text-orange-900 ring-1 ring-orange-300"
-            avatarContent={<CalendarIcon className="h-5 w-5" aria-hidden="true" />}
+            avatarClassName="bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500 text-white ring-0"
+            avatarContent={<CalendarIcon className="h-5 w-5 text-white" aria-hidden="true" />}
             fallbackInitials="SE"
           />
         )}

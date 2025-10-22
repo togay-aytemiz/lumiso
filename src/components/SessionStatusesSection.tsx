@@ -362,14 +362,6 @@ const SessionStatusesSection = () => {
       description={t('session_stages.description')}
       action={{ label: t('session_stages.add_stage'), onClick: handleAdd, icon: <Plus className="h-4 w-4" /> }}
     >
-      {/* Mobile CTA */}
-      <div className="mb-4 md:hidden">
-        <Button onClick={handleAdd} className="w-full">
-          <Plus className="h-4 w-4 mr-2" />
-          {t('session_stages.add_stage')}
-        </Button>
-      </div>
-
       <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
         <p className="text-sm text-muted-foreground leading-relaxed">{t('session_stages.drag_instructions')}</p>
       </div>

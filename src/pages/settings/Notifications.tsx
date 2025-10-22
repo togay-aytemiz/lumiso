@@ -250,7 +250,7 @@ export default function Notifications() {
         >
           <div className="space-y-6">
             {/* Master Toggle */}
-            <div className="flex items-center justify-between p-4 border-2 border-primary/20 rounded-lg bg-primary/5">
+            <div className="flex flex-col gap-4 rounded-lg border-2 border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex-1">
                 <Label htmlFor="global-notifications" className="text-base font-medium flex items-center gap-2">
                   {settings.globalEnabled ? <Power className="h-4 w-4" /> : <PowerOff className="h-4 w-4" />}
@@ -265,11 +265,12 @@ export default function Notifications() {
                 checked={settings.globalEnabled}
                 onCheckedChange={handleToggleAllNotifications}
                 disabled={autoSaveStates.globalEnabled === 'saving'}
+                className="self-end sm:self-auto"
               />
             </div>
 
             {/* Scheduled Time Setting */}
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex-1">
                 <Label htmlFor="scheduled-time" className="text-base font-medium flex items-center gap-2">
                   <Clock className="h-4 w-4" />
@@ -284,7 +285,7 @@ export default function Notifications() {
                 onValueChange={(value) => handleAutoSave('scheduledTime', value)}
                 disabled={autoSaveStates.scheduledTime === 'saving'}
               >
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-full sm:w-32">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="max-h-60">
@@ -308,7 +309,7 @@ export default function Notifications() {
           <div className="space-y-6">
 
             {/* Daily Summary */}
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex-1">
                 <Label htmlFor="daily-summary" className="text-base font-medium">
                   {t('settings.notifications.scheduled.dailySummary')}
@@ -317,7 +318,7 @@ export default function Notifications() {
                   {t('settings.notifications.scheduled.dailySummaryHelp')}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -355,6 +356,7 @@ export default function Notifications() {
                   checked={settings.dailySummaryEnabled}
                   onCheckedChange={(checked) => handleAutoSave('dailySummaryEnabled', checked)}
                   disabled={autoSaveStates.dailySummaryEnabled === 'saving'}
+                  className="self-end sm:self-auto"
                 />
               </div>
             </div>
@@ -372,7 +374,7 @@ export default function Notifications() {
 
 
             {/* Project Milestone */}
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex-1">
                 <Label htmlFor="project-milestone" className="text-base font-medium">
                   {t('settings.notifications.immediate.projectMilestone')}
@@ -381,7 +383,7 @@ export default function Notifications() {
                   {t('settings.notifications.immediate.projectMilestoneHelp')}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -403,6 +405,7 @@ export default function Notifications() {
                   checked={settings.projectMilestoneEnabled}
                   onCheckedChange={(checked) => handleAutoSave('projectMilestoneEnabled', checked)}
                   disabled={autoSaveStates.projectMilestoneEnabled === 'saving'}
+                  className="self-end sm:self-auto"
                 />
               </div>
             </div>

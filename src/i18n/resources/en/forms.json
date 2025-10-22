@@ -1280,7 +1280,10 @@
       "title": "Reset password",
       "button": "Save new password",
       "instructions": "Create a new password to regain access to your workspace.",
-      "back_to_sign_in": "Back to sign in"
+      "back_to_sign_in": "Back to sign in",
+      "request_title": "Password recovery",
+      "request_instructions": "Enter your email address and we'll send you a link to reset your password.",
+      "request_button": "Send reset link"
     }
   }
 }

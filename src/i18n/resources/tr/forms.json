@@ -1280,7 +1280,10 @@
       "title": "Şifreyi sıfırla",
       "button": "Yeni şifreyi kaydet",
       "instructions": "Çalışma alanınıza yeniden erişmek için yeni bir şifre belirleyin.",
-      "back_to_sign_in": "Giriş sayfasına dön"
+      "back_to_sign_in": "Giriş sayfasına dön",
+      "request_title": "Şifre kurtarma",
+      "request_instructions": "E-posta adresinizi girin, şifrenizi sıfırlamanız için size bir bağlantı gönderelim.",
+      "request_button": "Sıfırlama bağlantısı gönder"
     }
   }
 }

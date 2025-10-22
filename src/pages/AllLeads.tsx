@@ -808,7 +808,7 @@ const AllLeadsNew = () => {
         size="sm"
         onClick={handleExportLeads}
         disabled={exporting || leadsTableLoading || sortedLeads.length === 0}
-        className="flex items-center gap-2"
+        className="hidden sm:inline-flex"
       >
         {exporting ? (
           <Loader2 className="h-4 w-4 animate-spin" />

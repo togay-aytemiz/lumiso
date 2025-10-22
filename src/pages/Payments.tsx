@@ -639,7 +639,7 @@ const Payments = () => {
         size="sm"
         onClick={handleExport}
         disabled={!hasAnyResults || tableLoading || exporting}
-        className="flex items-center gap-2"
+        className="hidden sm:inline-flex"
       >
         {exporting ? (
           <Loader2 className="h-4 w-4 animate-spin" />

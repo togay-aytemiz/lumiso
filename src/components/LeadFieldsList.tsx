@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { LeadFieldDefinition, FIELD_TYPE_CONFIG } from "@/types/leadFields";
 import { useTranslation } from "react-i18next";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface LeadFieldsListProps {
   fields: LeadFieldDefinition[];
@@ -48,6 +50,7 @@ export function LeadFieldsList({
     null
   );
   const { t } = useTranslation("forms");
+  const isMobile = useIsMobile();
 
   const handleDragEnd = async (result: any) => {
     if (!result.destination) return;
@@ -92,119 +95,241 @@ export function LeadFieldsList({
     );
   }
 
-  return (
-    <>
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="fields">
-          {(provided) => (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12"></TableHead>
-                  <TableHead>{t("lead_fields.table.field_name")}</TableHead>
-                  <TableHead>{t("lead_fields.table.type")}</TableHead>
-                  <TableHead>{t("lead_fields.table.required")}</TableHead>
-                  <TableHead>
-                    {t("lead_fields.table.visible_in_form")}
-                  </TableHead>
-                  <TableHead>{t("lead_fields.table.status")}</TableHead>
-                  <TableHead className="w-24">
-                    {t("lead_fields.table.actions")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody {...provided.droppableProps} ref={provided.innerRef}>
-                {fields.map((field, index) => (
-                  <Draggable
-                    key={field.id}
-                    draggableId={field.id}
-                    index={index}
-                    isDragDisabled={field.is_system}
-                  >
-                    {(provided, snapshot) => (
-                      <TableRow
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={snapshot.isDragging ? "bg-muted/50" : ""}
-                      >
-                        <TableCell>
-                          <div
-                            {...provided.dragHandleProps}
-                            className={`flex items-center justify-center ${
-                              field.is_system
-                                ? "opacity-30 cursor-not-allowed"
-                                : "cursor-grab"
-                            }`}
-                          >
-                            <GripVertical className="h-4 w-4" />
+  const mobileContent = (
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <Droppable droppableId="fields-mobile">
+        {(provided) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            className="space-y-3"
+          >
+            {fields.map((field, index) => (
+              <Draggable
+                key={field.id}
+                draggableId={field.id}
+                index={index}
+                isDragDisabled={field.is_system}
+              >
+                {(provided, snapshot) => {
+                  const dragHandleProps: Record<string, unknown> = !field.is_system
+                    ? (provided.dragHandleProps ?? {})
+                    : {};
+                  return (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      className={cn(
+                        "rounded-lg border border-border/60 bg-card p-4 shadow-sm transition-shadow",
+                        snapshot.isDragging && "shadow-lg ring-2 ring-primary/30"
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 space-y-2">
+                          <p className="text-base font-semibold leading-tight text-foreground break-words">
+                            {field.label}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+                            <span>{getFieldTypeLabel(field.field_type)}</span>
+                            <Badge variant="secondary">
+                              {field.is_system
+                                ? t("lead_fields.table.system_value")
+                                : t("lead_fields.table.custom_value")}
+                            </Badge>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="font-medium">{field.label}</span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {getFieldTypeLabel(field.field_type)}
+                        </div>
+                        <button
+                          type="button"
+                          className={cn(
+                            "rounded-md p-2 text-muted-foreground/70 transition-colors",
+                            field.is_system
+                              ? "cursor-not-allowed opacity-30"
+                              : "cursor-grab active:cursor-grabbing hover:text-foreground"
+                          )}
+                          aria-label="Reorder field"
+                          disabled={field.is_system}
+                          {...dragHandleProps}
+                        >
+                          <GripVertical className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-1 gap-2 text-sm text-muted-foreground">
+                        <div>
+                          <span className="font-medium text-foreground">
+                            {t("lead_fields.table.required")}:
+                          </span>{" "}
+                          {field.is_required
+                            ? t("lead_fields.table.required_value")
+                            : t("lead_fields.table.optional_value")}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium text-foreground">
+                            {t("lead_fields.table.visible_in_form")}:
                           </span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {field.is_required
-                              ? t("lead_fields.table.required_value")
-                              : t("lead_fields.table.optional_value")}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
+                          <span className="inline-flex items-center gap-1">
                             {field.is_visible_in_form ? (
-                              <Eye className="h-4 w-4 text-muted-foreground" />
+                              <Eye className="h-4 w-4" />
                             ) : (
-                              <EyeOff className="h-4 w-4 text-muted-foreground" />
+                              <EyeOff className="h-4 w-4" />
                             )}
-                            <span className="text-sm text-muted-foreground">
-                              {field.is_visible_in_form
-                                ? t("lead_fields.table.visible_value")
-                                : t("lead_fields.table.hidden_value")}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {field.is_system
-                              ? t("lead_fields.table.system_value")
-                              : t("lead_fields.table.custom_value")}
+                            {field.is_visible_in_form
+                              ? t("lead_fields.table.visible_value")
+                              : t("lead_fields.table.hidden_value")}
                           </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onEdit(field)}
+                        >
+                          <Edit className="h-4 w-4" />
+                          <span className="sr-only">Edit</span>
+                        </Button>
+                        {!field.is_system && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => setDeleteField(field)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Delete</span>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }}
+              </Draggable>
+            ))}
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
+    </DragDropContext>
+  );
+
+  const desktopContent = (
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <Droppable droppableId="fields">
+        {(provided) => (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12"></TableHead>
+                <TableHead>{t("lead_fields.table.field_name")}</TableHead>
+                <TableHead>{t("lead_fields.table.type")}</TableHead>
+                <TableHead>{t("lead_fields.table.required")}</TableHead>
+                <TableHead>
+                  {t("lead_fields.table.visible_in_form")}
+                </TableHead>
+                <TableHead>{t("lead_fields.table.status")}</TableHead>
+                <TableHead className="w-24">
+                  {t("lead_fields.table.actions")}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody {...provided.droppableProps} ref={provided.innerRef}>
+              {fields.map((field, index) => (
+                <Draggable
+                  key={field.id}
+                  draggableId={field.id}
+                  index={index}
+                  isDragDisabled={field.is_system}
+                >
+                  {(provided, snapshot) => (
+                    <TableRow
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      className={snapshot.isDragging ? "bg-muted/50" : ""}
+                    >
+                      <TableCell>
+                        <div
+                          {...provided.dragHandleProps}
+                          className={`flex items-center justify-center ${
+                            field.is_system
+                              ? "opacity-30 cursor-not-allowed"
+                              : "cursor-grab"
+                          }`}
+                        >
+                          <GripVertical className="h-4 w-4" />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-medium">{field.label}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {getFieldTypeLabel(field.field_type)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {field.is_required
+                            ? t("lead_fields.table.required_value")
+                            : t("lead_fields.table.optional_value")}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {field.is_visible_in_form ? (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <span className="text-sm text-muted-foreground">
+                            {field.is_visible_in_form
+                              ? t("lead_fields.table.visible_value")
+                              : t("lead_fields.table.hidden_value")}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {field.is_system
+                            ? t("lead_fields.table.system_value")
+                            : t("lead_fields.table.custom_value")}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onEdit(field)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          {!field.is_system && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => onEdit(field)}
+                              onClick={() => setDeleteField(field)}
                             >
-                              <Edit className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4" />
                             </Button>
-                            {!field.is_system && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setDeleteField(field)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </TableBody>
-            </Table>
-          )}
-        </Droppable>
-      </DragDropContext>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </TableBody>
+          </Table>
+        )}
+      </Droppable>
+    </DragDropContext>
+  );
+
+  return (
+    <>
+      {isMobile ? mobileContent : desktopContent}
 
       <AlertDialog
         open={!!deleteField}

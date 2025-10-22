@@ -752,7 +752,7 @@ const AllProjects = () => {
         size="sm"
         onClick={() => handleExportProjects('list')}
         disabled={exporting || listLoading || listProjects.length === 0}
-        className="flex items-center gap-2"
+        className="hidden sm:inline-flex"
       >
         {exporting ? (
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -773,7 +773,7 @@ const AllProjects = () => {
         size="sm"
         onClick={() => handleExportProjects('archived')}
         disabled={exporting || archivedLoading || archivedProjects.length === 0}
-        className="flex items-center gap-2"
+        className="hidden sm:inline-flex"
       >
         {exporting ? (
           <Loader2 className="h-4 w-4 animate-spin" />

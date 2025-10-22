@@ -445,16 +445,6 @@ const ProjectStatusesSection = () => {
         icon: <Plus className="h-4 w-4" />
       } : undefined}
     >
-      {/* Mobile CTA */}
-      {canManageProjectStatuses && (
-        <div className="mb-4 md:hidden">
-          <Button onClick={handleAdd} className="w-full">
-            <Plus className="h-4 w-4 mr-2" />
-            {t('project_stages.add_stage')}
-          </Button>
-        </div>
-      )}
-
       <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
         <p className="text-sm text-muted-foreground leading-relaxed">
           {t('project_stages.drag_instructions')}

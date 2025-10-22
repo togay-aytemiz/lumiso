@@ -38,16 +38,14 @@ export function CategorySettingsSection({
 
   return (
     <Card className={cn("", className)} data-walkthrough={dataWalkthrough}>
-      <CardHeader className="pb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-xl">{title}</CardTitle>
-              {/* Dirty indicator */}
-              {isDirty && (
-                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-              )}
-            </div>
+      <CardHeader className="space-y-4 pb-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <CardTitle className="text-xl">{title}</CardTitle>
+            {/* Dirty indicator */}
+            {isDirty && (
+              <div className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
+            )}
           </div>
           
           {action && (
@@ -55,7 +53,7 @@ export function CategorySettingsSection({
               variant="outline" 
               size="sm"
               onClick={action.onClick}
-              className="flex items-center gap-2"
+              className="flex w-full items-center justify-center gap-2 sm:w-auto sm:justify-center"
             >
               {action.icon && <action.icon className="h-4 w-4" />}
               {action.label}

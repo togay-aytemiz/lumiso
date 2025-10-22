@@ -369,7 +369,7 @@ export function AdvancedDataTable<T>({
       )}
     >
       {(title || description || actions || toolbar || showColumnManager || filters || onSearchChange) && (
-        <CardHeader className="space-y-0.5 px-4 pt-2.5 pb-0 sm:px-6 sm:pt-3">
+        <CardHeader className="space-y-0.5 px-4 pt-2.5 pb-2 sm:px-6 sm:pt-3 sm:pb-3">
           {/* Title + controls */}
           <div className="flex flex-col gap-1.5 lg:flex-row lg:items-center lg:justify-between">
             {(title || description) && (
@@ -391,14 +391,17 @@ export function AdvancedDataTable<T>({
               <div className="flex w-full sm:w-auto flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-end sm:flex-shrink-0">
                 {showHeaderSearch && <div className="w-full sm:w-auto">{renderSearchInput()}</div>}
                 {(filters || actions || showColumnManager) && (
-                  <div className="flex flex-wrap items-center justify-end gap-2">
+                  <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
                     {filters && (
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
                         onClick={handleToggleFilters}
-                        className="flex items-center gap-2"
+                        className={cn(
+                          "flex items-center gap-2",
+                          "flex-1 basis-1/2 justify-center sm:flex-none sm:justify-start"
+                        )}
                       >
                         <Filter className="h-4 w-4" />
                         <span className="whitespace-nowrap">{filterTriggerLabel}</span>
@@ -407,7 +410,11 @@ export function AdvancedDataTable<T>({
                         </Badge>
                       </Button>
                     )}
-                    {actions}
+                    {actions && (
+                      <div className="flex w-full basis-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                        {actions}
+                      </div>
+                    )}
                     {showColumnManager && (
                       <ColumnSettingsButton
                         columns={columns.map<ColumnSettingsMeta>((column) => ({
@@ -425,6 +432,7 @@ export function AdvancedDataTable<T>({
                         defaultPreferences={defaultPreferences}
                         preferences={columnPreferences}
                         onChange={handleColumnPreferencesChange}
+                        className="flex-1 basis-1/2 justify-center sm:flex-none sm:justify-start"
                       />
                     )}
                   </div>
@@ -485,11 +493,11 @@ export function AdvancedDataTable<T>({
 
       {filters && isMobile && (
         <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-          <SheetContent side="right" className="w-full sm:max-w-md">
+          <SheetContent side="right" className="flex w-full flex-col overflow-hidden sm:max-w-md">
             <SheetHeader>
               <SheetTitle>{filterPanelTitle}</SheetTitle>
             </SheetHeader>
-            <div className="mt-6 space-y-6">
+            <div className="mt-6 flex-1 space-y-6 overflow-y-auto pr-1">
               {hasActiveFilters && (
                 <p className="text-sm text-muted-foreground">
                   {t("table.activeFilters", { count: activeFilterCount })}
@@ -497,7 +505,7 @@ export function AdvancedDataTable<T>({
               )}
               <div className="space-y-4">{filters.content}</div>
             </div>
-            <SheetFooter className="mt-8">
+            <SheetFooter className="mt-8 shrink-0">
               <div className="flex w-full flex-col gap-2">
                 {filters.onReset && (
                   <Button type="button" variant="outline" onClick={filters.onReset}>
@@ -515,8 +523,8 @@ export function AdvancedDataTable<T>({
       )}
 
       <CardContent className={cn(
-        "px-4 md:px-6 pt-0 pb-0",
-        mobileSummaryPresent ? "mt-2" : "-mt-1.5 sm:-mt-2"
+        "px-4 md:px-6 pt-2 pb-0",
+        mobileSummaryPresent ? "mt-0" : "mt-2 sm:mt-1"
       )}>
         {isLoading ? (
           loadingState || <TableLoadingSkeleton />

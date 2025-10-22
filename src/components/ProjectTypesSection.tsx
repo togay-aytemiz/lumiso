@@ -331,13 +331,6 @@ const ProjectTypesSection = () => {
           icon: <Plus className="h-4 w-4" />
         }}
       >
-        {/* Mobile CTA */}
-        <div className="mb-4 md:hidden">
-          <Button onClick={handleAdd} className="w-full">
-            <Plus className="h-4 w-4 mr-2" />
-            {t('project_types.add_type')}
-          </Button>
-        </div>
         <div className="flex flex-wrap gap-3 p-2">
           {types.map((type) => (
             <div

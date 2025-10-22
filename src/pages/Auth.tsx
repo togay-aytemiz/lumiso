@@ -17,6 +17,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isPasswordResetMode, setIsPasswordResetMode] = useState(false);
+  const [isPasswordResetRequestMode, setIsPasswordResetRequestMode] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [resettingPassword, setResettingPassword] = useState(false);
@@ -161,7 +162,9 @@ const Auth = () => {
     }
   };
 
-  const handlePasswordResetRequest = async () => {
+  const handlePasswordResetRequest = async (event?: React.FormEvent) => {
+    event?.preventDefault();
+
     if (!email) {
       toast.error(tMsg('auth.reset_email_missing'));
       return;
@@ -221,6 +224,7 @@ const Auth = () => {
     const searchParams = new URLSearchParams(window.location.search);
     if (hashParams.get("type") === "recovery" || searchParams.get("type") === "recovery") {
       setIsSignUp(false);
+      setIsPasswordResetRequestMode(false);
       setIsPasswordResetMode(true);
       setShowPassword(false);
     }
@@ -228,21 +232,35 @@ const Auth = () => {
 
   const authLabel = isPasswordResetMode
     ? tForm('auth.password_reset.title')
+    : isPasswordResetRequestMode
+    ? tForm('auth.password_reset.request_title')
     : isSignUp
     ? tForm('auth.sign_up.title')
     : tForm('auth.sign_in.title');
 
   const welcomeText = isPasswordResetMode
     ? tPages('auth.welcome.recovery', 'Reset your password 🔐')
+    : isPasswordResetRequestMode
+    ? tPages('auth.welcome.recoveryRequest', 'Reset your password 🔐')
     : isSignUp
     ? tPages('auth.welcome.signUp', "Let's get started 🚀")
     : tPages('auth.welcome.signIn', 'Welcome back 👋🏻');
 
   const copyText = isPasswordResetMode
     ? tPages('auth.copy.recovery', 'Set a new password to regain access to your workspace.')
+    : isPasswordResetRequestMode
+    ? tPages('auth.copy.recoveryRequest', "We'll email you a secure link so you can choose a new password.")
     : isSignUp
     ? tPages('auth.copy.signUp', 'Create your Lumiso account to unlock collaborative workflows and beautiful client experiences.')
     : tPages('auth.copy.signIn', 'Sign in with your credentials to pick up exactly where your team left off.');
+
+  const viewKey = isPasswordResetMode
+    ? 'reset-update'
+    : isPasswordResetRequestMode
+    ? 'reset-request'
+    : isSignUp
+    ? 'signup'
+    : 'signin';
 
   return (
     <div className="flex min-h-screen w-full bg-white">
@@ -257,7 +275,7 @@ const Auth = () => {
 
           {/* Centered form area */}
           <div className="flex flex-1 items-center pt-24 sm:pt-16 lg:pt-0">
-            <div key={isPasswordResetMode ? 'reset' : isSignUp ? 'signup' : 'signin'} className="relative mx-auto w-full max-w-md fade-in-up">
+            <div key={viewKey} className="relative mx-auto w-full max-w-md fade-in-up">
               <div className="mb-8 space-y-3">
                 <div className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary">
                   {authLabel}
@@ -345,6 +363,31 @@ const Auth = () => {
                     {updatingPassword ? `${tMsg('info.loading')}...` : tForm('auth.password_reset.button')}
                   </Button>
                 </form>
+              ) : isPasswordResetRequestMode ? (
+                <form onSubmit={handlePasswordResetRequest} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email" className="text-sm font-medium text-slate-600">
+                      {tForm('labels.email')}
+                    </Label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder={tForm('placeholders.enter_email')}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      disabled={resettingPassword}
+                      className="h-12 rounded-xl border-slate-200 bg-slate-50/60 px-4 text-base shadow-inner transition focus:border-primary/60 focus:bg-white focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="group flex h-12 w-full items-center justify-center rounded-xl bg-primary text-base font-semibold text-white shadow-lg shadow-primary/20 transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                    disabled={resettingPassword}
+                  >
+                    {resettingPassword ? `${tMsg('info.loading')}...` : tForm('auth.password_reset.request_button', 'Send reset link')}
+                  </Button>
+                </form>
               ) : (
                 <>
                   <form onSubmit={handleSubmit} className="space-y-6">
@@ -394,11 +437,16 @@ const Auth = () => {
                           <Button
                             type="button"
                             variant="link"
-                            onClick={handlePasswordResetRequest}
-                            disabled={loading || resettingPassword}
+                            onClick={() => {
+                              setIsSignUp(false);
+                              setIsPasswordResetMode(false);
+                              setIsPasswordResetRequestMode(true);
+                              setShowPassword(false);
+                            }}
+                            disabled={loading}
                             className="px-0 text-sm font-semibold text-primary hover:text-primary/80"
                           >
-                            {resettingPassword ? tForm('auth.sign_in.sending_link') : tForm('auth.sign_in.forgot_password')}
+                            {tForm('auth.sign_in.forgot_password')}
                           </Button>
                         </div>
                       )}
@@ -482,17 +530,19 @@ const Auth = () => {
                   </div>
                 </>
               )}
-              {isPasswordResetMode && (
+              {(isPasswordResetMode || isPasswordResetRequestMode) && (
                 <div className="mt-8 flex flex-wrap items-center gap-x-2 text-sm text-slate-500">
                   <Button
                     variant="link"
                     onClick={() => {
+                      setIsPasswordResetRequestMode(false);
                       setIsPasswordResetMode(false);
                       setNewPassword("");
                       setConfirmPassword("");
                       setShowPassword(false);
+                      setIsSignUp(false);
                     }}
-                    disabled={updatingPassword}
+                    disabled={updatingPassword || resettingPassword}
                     className="px-0 text-sm font-semibold text-primary hover:text-primary/80"
                   >
                     {tForm('auth.password_reset.back_to_sign_in')}

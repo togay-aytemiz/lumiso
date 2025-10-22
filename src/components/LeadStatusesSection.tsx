@@ -253,7 +253,7 @@ const LeadStatusesSection = () => {
       >
         {/* Settings Toggle Section */}
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="quick-status-buttons" className="text-base">
                 {t('lead_statuses.show_quick_buttons')}
@@ -267,6 +267,7 @@ const LeadStatusesSection = () => {
               checked={showQuickButtons}
               onCheckedChange={(checked) => updateSetting('show_quick_status_buttons', checked)}
               disabled={saving || settingsLoading}
+              className="self-end sm:self-auto"
             />
           </div>
 
@@ -279,7 +280,7 @@ const LeadStatusesSection = () => {
                 {systemStatuses.map((status) => (
                   <div
                     key={status.id}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:opacity-80 transition-all"
+                    className="inline-flex min-w-0 max-w-full flex-wrap items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-all hover:opacity-80 cursor-pointer"
                     style={{ 
                       backgroundColor: status.color + '20',
                       color: status.color,
@@ -288,14 +289,14 @@ const LeadStatusesSection = () => {
                     onClick={() => handleEdit(status)}
                   >
                     <div 
-                      className="w-2 h-2 rounded-full flex-shrink-0" 
+                      className="h-2 w-2 flex-shrink-0 rounded-full" 
                       style={{ backgroundColor: status.color }}
                     />
-                    <span className="uppercase tracking-wide font-semibold">
+                    <span className="text-left text-sm font-semibold uppercase tracking-wide break-words">
                       {status.name}
                     </span>
                     {status.lifecycle && status.lifecycle !== 'active' && (
-                      <span className="text-xs opacity-60 font-normal capitalize">
+                      <span className="text-left text-xs font-normal capitalize opacity-60 break-words">
                         · {t(`lead_status.lifecycle.${status.lifecycle}`)}
                       </span>
                     )}
@@ -307,9 +308,9 @@ const LeadStatusesSection = () => {
 
           {/* Custom Statuses Section */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h4 className="text-sm font-medium">{t('lead_statuses.custom_statuses')}</h4>
-              <Button onClick={handleAdd} size="sm" className="gap-2">
+              <Button onClick={handleAdd} size="sm" className="flex w-full items-center justify-center gap-2 sm:w-auto">
                 <Plus className="h-4 w-4" />
                 {t('lead_statuses.add_status')}
               </Button>
@@ -339,7 +340,7 @@ const LeadStatusesSection = () => {
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             className={cn(
-                              "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all select-none",
+                              "inline-flex min-w-0 max-w-full flex-wrap items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all select-none",
                               snapshot.isDragging ? "opacity-80 shadow-xl scale-105 z-50" : "hover:opacity-80 cursor-pointer",
                               !snapshot.isDragging && "hover:scale-[1.02]"
                             )}
@@ -362,7 +363,7 @@ const LeadStatusesSection = () => {
                               style={{ backgroundColor: status.color }}
                             />
                             <span 
-                              className="uppercase tracking-wide font-semibold cursor-pointer"
+                              className="break-words text-left text-sm font-semibold uppercase tracking-wide cursor-pointer"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleEdit(status);
@@ -371,7 +372,7 @@ const LeadStatusesSection = () => {
                               {status.name}
                             </span>
                             {status.lifecycle && status.lifecycle !== 'active' && (
-                              <span className="text-xs opacity-60 font-normal capitalize">
+                              <span className="break-words text-left text-xs font-normal capitalize opacity-60">
                                 · {status.lifecycle}
                               </span>
                             )}

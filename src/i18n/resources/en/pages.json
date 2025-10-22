@@ -4,12 +4,14 @@
     "welcome": {
       "signIn": "Welcome back 👋🏻",
       "signUp": "Let's get started 🚀",
-      "recovery": "Reset your password 🔐"
+      "recovery": "Reset your password 🔐",
+      "recoveryRequest": "Reset your password 🔐"
     },
     "copy": {
       "signIn": "Sign in with your credentials to pick up exactly where your team left off.",
       "signUp": "Create your Lumiso account to unlock collaborative workflows and beautiful client experiences.",
-      "recovery": "Create a new password to get back into your account."
+      "recovery": "Create a new password to get back into your account.",
+      "recoveryRequest": "Enter your email address and we'll send you a reset link."
     },
     "featurePreview": {
       "title": "Feature preview",

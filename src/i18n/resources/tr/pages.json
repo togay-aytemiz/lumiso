@@ -4,12 +4,14 @@
     "welcome": {
       "signIn": "Hoşgeldiniz 👋🏻",
       "signUp": "Başlayalım 🚀",
-      "recovery": "Şifrenizi sıfırlayın 🔐"
+      "recovery": "Şifrenizi sıfırlayın 🔐",
+      "recoveryRequest": "Şifrenizi sıfırlayın 🔐"
     },
     "copy": {
       "signIn": "Ekip olarak kaldığınız yerden devam etmek için giriş yapın.",
       "signUp": "İşbirlikçi iş akışlarını ve kusursuz müşteri deneyimlerini açmak için Lumiso hesabınızı oluşturun.",
-      "recovery": "Hesabınıza yeniden erişmek için yeni bir şifre oluşturun."
+      "recovery": "Hesabınıza yeniden erişmek için yeni bir şifre oluşturun.",
+      "recoveryRequest": "E-posta adresinizi girin, şifre sıfırlama bağlantısını hemen gönderelim."
     },
     "featurePreview": {
       "title": "Özellik önizlemesi",

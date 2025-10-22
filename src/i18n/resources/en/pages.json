@@ -187,6 +187,41 @@
       "scheduleSession": "Schedule a session to continue",
       "sessionAlreadyPlanned": "A planned session already exists."
     },
+    "header": {
+      "back": "Back",
+      "projects": {
+        "label": "Projects",
+        "count": "{{count}} projects",
+        "count_one": "1 project",
+        "count_other": "{{count}} projects",
+        "none": "No projects yet",
+        "updated": "Updated {{time}}",
+        "updatedFallback": "Recently updated",
+        "hint": "Convert this lead into a project to get started."
+      },
+      "sessions": {
+        "label": "Sessions",
+        "count": "{{count}} sessions",
+        "count_one": "1 session",
+        "count_other": "{{count}} sessions",
+        "none": "No sessions yet",
+        "next": "Next on {{date}}",
+        "last": "Last on {{date}}",
+        "hint": "Schedule a session to keep things moving."
+      },
+      "activity": {
+        "label": "Activity",
+        "none": "No activity recorded yet",
+        "hint": "Updates will appear here as you work on this lead.",
+        "last": "Last activity {{time}}",
+        "lastFallback": "Recent activity",
+        "sources": {
+          "lead": "Lead details updated",
+          "project": "Project changes",
+          "session": "Session updates"
+        }
+      }
+    },
     "messages": {
       "projectsShortcut": "You can access all your projects anytime from the Projects page in the sidebar!",
       "sessionAdded": "Your session has been added to your calendar and you can find it in the Calendar page!"

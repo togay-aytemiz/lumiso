@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Save, Calendar, Clock, FileText, CheckCircle, FolderPlus, User, Activity, CheckSquare } from "lucide-react";
+import { ArrowLeft, Calendar, CheckCircle, FolderPlus, User, Activity, CheckSquare, CreditCard, HelpCircle } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -23,7 +24,7 @@ import { ProjectsSection } from "@/components/ProjectsSection";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 // AssigneesList removed - single user organization
-import { formatDate, cn } from "@/lib/utils";
+import { formatDate, formatDateTime, getDateFnsLocale } from "@/lib/utils";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import EnhancedSessionsSection from "@/components/EnhancedSessionsSection";
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
@@ -34,6 +35,8 @@ import { DetailPageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useMessagesTranslation, useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
 import { useSessionActions } from "@/hooks/useSessionActions";
 import { useTranslation } from "react-i18next";
+import { formatDistanceToNow } from "date-fns";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 interface Lead {
   id: string;
   name: string;
@@ -43,6 +46,7 @@ interface Lead {
   status: string;
   status_id?: string;
   created_at: string;
+  updated_at?: string | null;
   assignees?: string[];
   user_id: string;
 }
@@ -55,11 +59,37 @@ interface Session {
   project_id?: string;
   lead_id: string;
   project_name?: string;
+  created_at?: string | null;
+  updated_at?: string | null;
   projects?: {
     name: string;
     project_types?: {
       name: string;
     };
+  };
+}
+
+interface ProjectSummary {
+  count: number;
+  latestUpdate: string | null;
+}
+
+interface AggregatedPaymentSummary {
+  totalPaid: number;
+  total: number;
+  remaining: number;
+  currency: string;
+}
+
+interface SummaryItem {
+  key: string;
+  icon: LucideIcon;
+  label: string;
+  primary: string;
+  secondary: string;
+  info?: {
+    content: string;
+    ariaLabel?: string;
   };
 }
 
@@ -153,37 +183,180 @@ const LeadDetail = () => {
   const [hasViewedProject, setHasViewedProject] = useState(false);
   const [isSchedulingTutorial, setIsSchedulingTutorial] = useState(false);
   const [hasScheduledSession, setHasScheduledSession] = useState(false);
+  const [projectSummary, setProjectSummary] = useState<ProjectSummary>({
+    count: 0,
+    latestUpdate: null
+  });
+  const [aggregatedPayments, setAggregatedPayments] = useState<AggregatedPaymentSummary>({
+    totalPaid: 0,
+    total: 0,
+    remaining: 0,
+    currency: "TRY"
+  });
+  const [latestLeadActivity, setLatestLeadActivity] = useState<string | null>(null);
 
-  // Check if projects exist for this lead
+  // Check if projects exist for this lead and capture summary details
   useEffect(() => {
-    const checkProjects = async () => {
-      if (!lead?.id) return;
+    const fetchProjectSummary = async () => {
+      const resetSummaries = () => {
+        setHasProjects(false);
+        setProjectSummary({
+          count: 0,
+          latestUpdate: null
+        });
+        setAggregatedPayments({
+          totalPaid: 0,
+          total: 0,
+          remaining: 0,
+          currency: "TRY"
+        });
+      };
+
+      if (!lead?.id) {
+        resetSummaries();
+        return;
+      }
+
       try {
         const {
           data: {
             user
           }
         } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user) {
+          resetSummaries();
+          return;
+        }
 
-        // Get user's active organization ID
         const {
           data: organizationId
         } = await supabase.rpc('get_user_active_organization_id');
-        if (!organizationId) return;
+        if (!organizationId) {
+          resetSummaries();
+          return;
+        }
+
         const {
           data,
           error
-        } = await supabase.from("projects").select("id").eq("lead_id", lead.id).eq("organization_id", organizationId);
+        } = await supabase.from("projects").select("id, updated_at, base_price").eq("lead_id", lead.id).eq("organization_id", organizationId);
         if (error) throw error;
-        const projectsExist = (data || []).length > 0;
-        setHasProjects(projectsExist);
+
+        const projects = (data || []) as Array<{ id: string; updated_at: string | null; base_price: number | null }>;
+        const projectIds = projects.map(project => project.id);
+
+        const servicesByProject = new Map<string, number>();
+        const paidByProject = new Map<string, number>();
+
+        if (projectIds.length > 0) {
+          const {
+            data: servicesData,
+            error: servicesError
+          } = await supabase.from('project_services').select(`
+              project_id,
+              services (
+                selling_price,
+                price
+              )
+            `).in('project_id', projectIds);
+          if (servicesError) throw servicesError;
+
+          (servicesData || []).forEach((entry: any) => {
+            if (!entry?.project_id) return;
+            const service = entry.services as { selling_price?: number | null; price?: number | null } | null;
+            const priceValue = Number(service?.selling_price ?? service?.price ?? 0);
+            if (!Number.isFinite(priceValue)) return;
+            servicesByProject.set(entry.project_id, (servicesByProject.get(entry.project_id) ?? 0) + priceValue);
+          });
+
+          const {
+            data: paymentsData,
+            error: paymentsError
+          } = await supabase.from('payments').select('project_id, amount, status').in('project_id', projectIds);
+          if (paymentsError) throw paymentsError;
+
+          (paymentsData || []).forEach((payment: any) => {
+            if (!payment?.project_id) return;
+            const amount = Number(payment.amount) || 0;
+            if (!Number.isFinite(amount)) return;
+            if (payment.status === 'paid') {
+              paidByProject.set(payment.project_id, (paidByProject.get(payment.project_id) ?? 0) + amount);
+            }
+          });
+        }
+
+        const latestUpdate = projects.reduce<string | null>((latest, project) => {
+          if (!project.updated_at) return latest;
+          if (!latest) return project.updated_at;
+          return new Date(project.updated_at).getTime() > new Date(latest).getTime() ? project.updated_at : latest;
+        }, null);
+
+        let totalBooked = 0;
+        let totalPaid = 0;
+        projects.forEach(project => {
+          const basePrice = Number(project.base_price) || 0;
+          const servicesTotal = servicesByProject.get(project.id) ?? 0;
+          const projectTotal = basePrice + servicesTotal;
+          totalBooked += projectTotal;
+          totalPaid += paidByProject.get(project.id) ?? 0;
+        });
+
+        const remaining = Math.max(0, totalBooked - totalPaid);
+
+        setHasProjects(projects.length > 0);
+        setProjectSummary({
+          count: projects.length,
+          latestUpdate
+        });
+        setAggregatedPayments({
+          totalPaid,
+          total: totalBooked,
+          remaining,
+          currency: "TRY"
+        });
       } catch (error) {
         console.error("Error checking projects:", error);
+        setAggregatedPayments({
+          totalPaid: 0,
+          total: 0,
+          remaining: 0,
+          currency: "TRY"
+        });
       }
     };
-    checkProjects();
+
+    fetchProjectSummary();
   }, [lead?.id, activityRefreshKey]); // Re-check when activity refreshes (which happens after project creation)
+
+  useEffect(() => {
+    const fetchLatestActivity = async () => {
+      if (!lead?.id) {
+        setLatestLeadActivity(null);
+        return;
+      }
+
+      try {
+        const {
+          data,
+          error
+        } = await supabase.from('activities').select('updated_at, created_at').eq('lead_id', lead.id).order('updated_at', {
+          ascending: false
+        }).order('created_at', {
+          ascending: false
+        }).limit(1);
+        if (error) throw error;
+
+        const latest = data && data.length > 0 ? data[0] : null;
+        const timestamp = latest?.updated_at || latest?.created_at || null;
+        setLatestLeadActivity(timestamp || null);
+      } catch (error) {
+        console.error('Error fetching latest activity timestamp:', error);
+        setLatestLeadActivity(null);
+      }
+    };
+
+    fetchLatestActivity();
+  }, [lead?.id, activityRefreshKey]);
 
   // Dynamically update tutorial steps based on hasProjects
   const leadDetailsTutorialSteps: TutorialStep[] = useMemo(() => {
@@ -451,6 +624,58 @@ const LeadDetail = () => {
   const hasChanges = useMemo(() => {
     return JSON.stringify(formData) !== JSON.stringify(initialFormData);
   }, [formData, initialFormData]);
+
+  const initials = useMemo(() => {
+    if (!lead?.name) {
+      return "LD";
+    }
+    const parts = lead.name.trim().split(/\s+/);
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    const first = parts[0]?.[0] ?? "";
+    const last = parts[parts.length - 1]?.[0] ?? "";
+    return `${first}${last}`.toUpperCase();
+  }, [lead?.name]);
+
+  const formatRelativeTime = (dateString?: string | null) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return null;
+    try {
+      return formatDistanceToNow(date, {
+        addSuffix: true,
+        locale: getDateFnsLocale()
+      });
+    } catch (error) {
+      console.error("Error formatting relative time:", error);
+      return null;
+    }
+  };
+
+  const formatCurrency = useCallback((amount: number) => {
+    try {
+      return new Intl.NumberFormat("tr-TR", {
+        style: "currency",
+        currency: aggregatedPayments.currency || "TRY",
+        minimumFractionDigits: 0
+      }).format(amount);
+    } catch (error) {
+      console.error("Error formatting currency:", error);
+      return `${Number.isFinite(amount) ? Math.round(amount) : 0} ${aggregatedPayments.currency || "TRY"}`;
+    }
+  }, [aggregatedPayments.currency]);
+
+  const plannedSession = useMemo(() => sessions.find(session => session.status === "planned"), [sessions]);
+  const recentSession = useMemo(() => (sessions.length > 0 ? sessions[0] : null), [sessions]);
+  const latestSessionUpdate = useMemo(() => {
+    return sessions.reduce<string | null>((latest, session) => {
+      const candidate = session.updated_at || session.created_at || null;
+      if (!candidate) return latest;
+      if (!latest) return candidate;
+      return new Date(candidate).getTime() > new Date(latest).getTime() ? candidate : latest;
+    }, null);
+  }, [sessions]);
   useEffect(() => {
     if (id) {
       fetchLead();
@@ -797,6 +1022,122 @@ const LeadDetail = () => {
     value: status.name,
     label: status.name
   }));
+
+  const activitySummary = useMemo(() => {
+    const timeline: Array<{ type: "lead" | "project" | "session" | "note"; timestamp: string }> = [];
+
+    if (lead?.updated_at) {
+      timeline.push({ type: "lead", timestamp: lead.updated_at });
+    }
+
+    if (projectSummary.latestUpdate) {
+      timeline.push({ type: "project", timestamp: projectSummary.latestUpdate });
+    }
+
+    if (latestSessionUpdate) {
+      timeline.push({ type: "session", timestamp: latestSessionUpdate });
+    }
+
+    if (latestLeadActivity) {
+      timeline.push({ type: "note", timestamp: latestLeadActivity });
+    }
+
+    if (timeline.length === 0) {
+      return {
+        primary: tPages("leadDetail.header.activity.none"),
+        secondary: tPages("leadDetail.header.activity.hint")
+      };
+    }
+
+    const latest = timeline.reduce((currentLatest, entry) => {
+      if (!currentLatest) return entry;
+      return new Date(entry.timestamp).getTime() > new Date(currentLatest.timestamp).getTime() ? entry : currentLatest;
+    });
+
+    const relative = formatRelativeTime(latest.timestamp);
+    const primary = relative
+      ? tPages("leadDetail.header.activity.last", { time: relative })
+      : tPages("leadDetail.header.activity.lastFallback");
+    const secondary = tPages(`leadDetail.header.activity.sources.${latest.type}`);
+
+    return {
+      primary,
+      secondary
+    };
+  }, [lead?.updated_at, projectSummary.latestUpdate, latestSessionUpdate, latestLeadActivity, tPages]);
+
+  const projectUpdateRelative = formatRelativeTime(projectSummary.latestUpdate);
+  const projectPrimary = projectSummary.count
+    ? tPages("leadDetail.header.projects.count", { count: projectSummary.count })
+    : tPages("leadDetail.header.projects.none");
+  const projectSecondary = projectSummary.count
+    ? projectUpdateRelative
+      ? tPages("leadDetail.header.projects.updated", { time: projectUpdateRelative })
+      : tPages("leadDetail.header.projects.updatedFallback")
+    : tPages("leadDetail.header.projects.hint");
+
+  const sessionsCount = sessions.length;
+  const sessionsPrimary = sessionsCount
+    ? tPages("leadDetail.header.sessions.count", { count: sessionsCount })
+    : tPages("leadDetail.header.sessions.none");
+  let sessionsSecondary = tPages("leadDetail.header.sessions.hint");
+  if (sessionsCount && plannedSession) {
+    const plannedDisplay = formatDateTime(plannedSession.session_date, plannedSession.session_time || undefined);
+    sessionsSecondary = tPages("leadDetail.header.sessions.next", { date: plannedDisplay });
+  } else if (sessionsCount && recentSession) {
+    const recentDisplay = formatDate(recentSession.session_date);
+    sessionsSecondary = tPages("leadDetail.header.sessions.last", { date: recentDisplay });
+  }
+
+  const paymentsPrimary = aggregatedPayments.total > 0 || aggregatedPayments.totalPaid > 0
+    ? tPages("leadDetail.header.payments.primary", { paid: formatCurrency(aggregatedPayments.totalPaid) })
+    : tPages("leadDetail.header.payments.primaryZero");
+  const paymentsSecondary = aggregatedPayments.total > 0
+    ? tPages("leadDetail.header.payments.secondary", {
+        remaining: formatCurrency(aggregatedPayments.remaining),
+        total: formatCurrency(aggregatedPayments.total)
+      })
+    : tPages("leadDetail.header.payments.secondaryZero");
+
+  const headerSubtext: string | null = null;
+  const headerHasSubtext = Boolean(headerSubtext);
+
+  const summaryItems: SummaryItem[] = useMemo(() => {
+    return [
+      {
+        key: "projects",
+        icon: FolderPlus,
+        label: tPages("leadDetail.header.projects.label"),
+        primary: projectPrimary,
+        secondary: projectSecondary
+      },
+      {
+        key: "payments",
+        icon: CreditCard,
+        label: tPages("leadDetail.header.payments.label"),
+        primary: paymentsPrimary,
+        secondary: paymentsSecondary
+      },
+      {
+        key: "sessions",
+        icon: Calendar,
+        label: tPages("leadDetail.header.sessions.label"),
+        primary: sessionsPrimary,
+        secondary: sessionsSecondary
+      },
+      {
+        key: "activity",
+        icon: Activity,
+        label: tPages("leadDetail.header.activity.label"),
+        primary: activitySummary.primary,
+        secondary: activitySummary.secondary,
+        info: {
+          content: tPages("leadDetail.header.activity.info"),
+          ariaLabel: tPages("leadDetail.header.activity.infoLabel")
+        }
+      }
+    ];
+  }, [projectPrimary, projectSecondary, paymentsPrimary, paymentsSecondary, sessionsPrimary, sessionsSecondary, activitySummary, tPages]);
   if (loading) {
     return <DetailPageLoadingSkeleton />;
   }
@@ -804,75 +1145,99 @@ const LeadDetail = () => {
     return null;
   }
   return <div className="p-4 md:p-8 max-w-full overflow-x-hidden">
-      <div className="mb-6">
-        {/* Mobile/Tablet Layout */}
-        <div className="flex flex-col gap-4 lg:hidden">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-              <h1 className="text-xl sm:text-2xl font-bold truncate min-w-0">{lead.name || 'Lead Details'}</h1>
-              <div className="flex-shrink-0">
-                <LeadStatusBadge leadId={lead.id} currentStatusId={lead.status_id} currentStatus={lead.status} onStatusChange={() => {
-                fetchLead();
-                setActivityRefreshKey(prev => prev + 1);
-              }} editable={true} statuses={leadStatuses} />
+      <div className="mb-6 space-y-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className={`flex min-w-0 ${headerHasSubtext ? "items-start" : "items-center"} gap-3`}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleBack}
+              className="h-10 w-10 rounded-full border border-border text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="sr-only">{tPages("leadDetail.header.back")}</span>
+            </Button>
+            <div className={`flex min-w-0 gap-3 ${headerHasSubtext ? "items-start" : "items-center"}`}>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 via-primary/40 to-primary/70 text-base font-semibold uppercase text-primary-foreground ring-1 ring-primary/30">
+                {initials}
+              </div>
+              <div className={`min-w-0 ${headerHasSubtext ? "space-y-1" : ""}`}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="truncate text-xl font-semibold leading-tight text-foreground sm:text-2xl">
+                    {lead.name || tPages("leadDetail.defaultTitle")}
+                  </h1>
+                  <LeadStatusBadge
+                    leadId={lead.id}
+                    currentStatusId={lead.status_id}
+                    currentStatus={lead.status}
+                    onStatusChange={() => {
+                      fetchLead();
+                      setActivityRefreshKey(prev => prev + 1);
+                    }}
+                    editable={true}
+                    statuses={leadStatuses}
+                  />
+                </div>
+                {headerSubtext && (
+                  <p className="text-sm text-muted-foreground">
+                    {headerSubtext}
+                  </p>
+                )}
               </div>
             </div>
-            
-            {/* Assignees removed - single user organization */}
-            <div className="mt-3">
-            </div>
           </div>
-          
-          <div className="flex-shrink-0">
-            {/* Header Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              {/* Always allow session creation in single photographer mode */}
-              {true && <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip={tPages("leadDetail.tooltips.sessionAlreadyPlanned")} />}
+          <div className="flex flex-wrap items-center gap-2">
+            {true && <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip={tPages("leadDetail.tooltips.sessionAlreadyPlanned")} />}
 
-              {!settingsLoading && userSettings.show_quick_status_buttons && completedStatus && formData.status !== completedStatus.name && <Button onClick={handleMarkAsCompleted} disabled={isUpdating} className="bg-green-600 hover:bg-green-700 text-white h-10 w-full sm:w-auto" size="sm">
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  {isUpdating ? "Updating..." : completedStatus.name}
-                </Button>}
+            {!settingsLoading && userSettings.show_quick_status_buttons && completedStatus && formData.status !== completedStatus.name && <Button onClick={handleMarkAsCompleted} disabled={isUpdating} className="h-10 bg-green-600 text-white hover:bg-green-700" size="sm">
+                <CheckCircle className="mr-2 h-4 w-4" />
+                {isUpdating ? "Updating..." : completedStatus.name}
+              </Button>}
 
-              {!settingsLoading && userSettings.show_quick_status_buttons && lostStatus && formData.status !== lostStatus.name && <Button onClick={handleMarkAsLost} disabled={isUpdating} variant="destructive" size="sm" className="h-10 w-full sm:w-auto">
-                  {isUpdating ? "Updating..." : lostStatus.name}
-                </Button>}
-            </div>
+            {!settingsLoading && userSettings.show_quick_status_buttons && lostStatus && formData.status !== lostStatus.name && <Button onClick={handleMarkAsLost} disabled={isUpdating} variant="destructive" size="sm" className="h-10">
+                {isUpdating ? "Updating..." : lostStatus.name}
+              </Button>}
           </div>
         </div>
 
-        {/* Desktop Layout */}
-        <div className="hidden lg:flex lg:items-center lg:justify-between lg:gap-6">
-          <div className="min-w-0 flex items-center gap-4">
-            <h1 className="text-2xl font-bold truncate min-w-0">{lead.name || tPages("leadDetail.defaultTitle")}</h1>
-            <div className="flex-shrink-0">
-              <LeadStatusBadge leadId={lead.id} currentStatusId={lead.status_id} currentStatus={lead.status} onStatusChange={() => {
-              fetchLead();
-              setActivityRefreshKey(prev => prev + 1);
-            }} editable={true} statuses={leadStatuses} />
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4 flex-shrink-0">
-            {/* Assignees removed - single user organization */}
-            <div className="min-w-0 transition-all duration-300 ease-out transform">
-            </div>
-            
-            {/* Header Action Buttons - Desktop: stays in place */}
-            <div className="flex items-center gap-3 flex-shrink-0">
-              {/* Always allow session creation in single photographer mode */}
-              {true && <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip={tPages("leadDetail.tooltips.sessionAlreadyPlanned")} />}
-
-              {!settingsLoading && userSettings.show_quick_status_buttons && completedStatus && formData.status !== completedStatus.name && <Button onClick={handleMarkAsCompleted} disabled={isUpdating} className="bg-green-600 hover:bg-green-700 text-white h-10" size="sm">
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  {isUpdating ? "Updating..." : completedStatus.name}
-                </Button>}
-
-              {!settingsLoading && userSettings.show_quick_status_buttons && lostStatus && formData.status !== lostStatus.name && <Button onClick={handleMarkAsLost} disabled={isUpdating} variant="destructive" size="sm" className="h-10">
-                  {isUpdating ? "Updating..." : lostStatus.name}
-                </Button>}
-            </div>
-          </div>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          {summaryItems.map(item => {
+            const Icon = item.icon;
+            return (
+              <div key={item.key} className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/40 px-3 py-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-background/80 ring-1 ring-border/60">
+                  <Icon className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="min-w-0">
+                  <p className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {item.label}
+                    {item.info && (
+                      <TooltipProvider delayDuration={150}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                            >
+                              <HelpCircle className="h-3 w-3" aria-hidden="true" />
+                              <span className="sr-only">{item.info.ariaLabel || item.label}</span>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <span className="block max-w-[220px] text-xs leading-relaxed text-muted-foreground">
+                              {item.info.content}
+                            </span>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </p>
+                  <p className="text-sm font-semibold text-foreground">{item.primary}</p>
+                  <p className="text-xs text-muted-foreground">{item.secondary}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

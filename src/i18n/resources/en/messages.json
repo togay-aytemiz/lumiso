@@ -58,6 +58,13 @@
     "email_confirmation": "Please check your email to confirm your account",
     "account_created": "Account created successfully! Welcome aboard!",
     "signed_in": "Welcome back! You've been signed in successfully",
-    "auth_error": "An error occurred during authentication"
+    "auth_error": "An error occurred during authentication",
+    "reset_email_sent": "Password reset link sent! Please check your inbox.",
+    "reset_email_error": "We couldn't send the reset email. Please try again.",
+    "reset_email_missing": "Enter your email address to receive a reset link.",
+    "password_too_short": "Password must be at least 8 characters long.",
+    "password_mismatch": "Passwords do not match.",
+    "password_updated": "Your password has been updated successfully.",
+    "password_update_error": "We couldn't update your password. Please try again."
   }
 }

@@ -58,6 +58,13 @@
     "email_confirmation": "Hesabınızı onaylamak için lütfen e-postanızı kontrol edin",
     "account_created": "Hesap başarıyla oluşturuldu! Hoş geldiniz!",
     "signed_in": "Tekrar hoş geldiniz! Başarıyla giriş yaptınız",
-    "auth_error": "Kimlik doğrulama sırasında bir hata oluştu"
+    "auth_error": "Kimlik doğrulama sırasında bir hata oluştu",
+    "reset_email_sent": "Şifre sıfırlama bağlantısı gönderildi! Lütfen e-postanızı kontrol edin.",
+    "reset_email_error": "Sıfırlama e-postasını gönderemedik. Lütfen tekrar deneyin.",
+    "reset_email_missing": "Sıfırlama bağlantısı almak için e-posta adresinizi girin.",
+    "password_too_short": "Şifre en az 8 karakter olmalıdır.",
+    "password_mismatch": "Şifreler eşleşmiyor.",
+    "password_updated": "Şifreniz başarıyla güncellendi.",
+    "password_update_error": "Şifrenizi güncelleyemedik. Lütfen tekrar deneyin."
   }
 }

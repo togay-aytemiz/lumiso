@@ -3,11 +3,13 @@
     "platformHighlights": "Öne çıkan özellikler",
     "welcome": {
       "signIn": "Hoşgeldiniz 👋🏻",
-      "signUp": "Başlayalım 🚀"
+      "signUp": "Başlayalım 🚀",
+      "recovery": "Şifrenizi sıfırlayın 🔐"
     },
     "copy": {
       "signIn": "Ekip olarak kaldığınız yerden devam etmek için giriş yapın.",
-      "signUp": "İşbirlikçi iş akışlarını ve kusursuz müşteri deneyimlerini açmak için Lumiso hesabınızı oluşturun."
+      "signUp": "İşbirlikçi iş akışlarını ve kusursuz müşteri deneyimlerini açmak için Lumiso hesabınızı oluşturun.",
+      "recovery": "Hesabınıza yeniden erişmek için yeni bir şifre oluşturun."
     },
     "featurePreview": {
       "title": "Özellik önizlemesi",

@@ -153,6 +153,7 @@
     "enterClientName": "Enter client name",
     "enter_email": "Enter email",
     "enter_password": "Enter password",
+    "confirm_password": "Confirm password",
     "name": "Enter name",
     "email": "Enter email",
     "phone": "Enter phone",
@@ -968,7 +969,8 @@
     "status": "Status",
     "notes": "Notes",
     "description": "Description",
-    "password": "Password"
+    "password": "Password",
+    "confirm_password": "Confirm password"
   },
   "activityLogs": {
     "lead_created": "Lead created",
@@ -1264,6 +1266,8 @@
       "title": "Sign in",
       "subtitle": "Access your account",
       "button": "Sign in",
+      "forgot_password": "Forgot your password?",
+      "sending_link": "Sending link...",
       "link": "Don't have an account?"
     },
     "sign_up": {
@@ -1271,6 +1275,12 @@
       "subtitle": "Create a new account",
       "button": "Sign up",
       "link": "Already have an account?"
+    },
+    "password_reset": {
+      "title": "Reset password",
+      "button": "Save new password",
+      "instructions": "Create a new password to regain access to your workspace.",
+      "back_to_sign_in": "Back to sign in"
     }
   }
 }

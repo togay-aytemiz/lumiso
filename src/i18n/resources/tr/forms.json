@@ -143,6 +143,7 @@
     "enter_email": "E-posta adresini yaz",
     "enter_location": "Konum girin",
     "enter_password": "Şifreni yaz",
+    "confirm_password": "Şifreyi doğrulayın",
     "loadingClients": "Kişiler yükleniyor...",
     "noActiveClients": "Aktif kişi bulunamadı",
     "noClientsMatch": "Aramanızla eşleşen kişi bulunamadı",
@@ -886,6 +887,7 @@
   "labels": {
     "email": "E-posta",
     "password": "Şifre",
+    "confirm_password": "Şifreyi doğrula",
     "description": "Açıklama",
     "name": "Ad",
     "notes": "Notlar",
@@ -1264,6 +1266,8 @@
       "title": "Giriş yap",
       "subtitle": "Hesabına eriş",
       "button": "Giriş yap",
+      "forgot_password": "Şifrenizi mi unuttunuz?",
+      "sending_link": "Bağlantı gönderiliyor...",
       "link": "Hesabın yok mu"
     },
     "sign_up": {
@@ -1271,6 +1275,12 @@
       "subtitle": "Yeni hesap oluştur",
       "button": "Kayıt ol",
       "link": "Zaten hesabın var mı"
+    },
+    "password_reset": {
+      "title": "Şifreyi sıfırla",
+      "button": "Yeni şifreyi kaydet",
+      "instructions": "Çalışma alanınıza yeniden erişmek için yeni bir şifre belirleyin.",
+      "back_to_sign_in": "Giriş sayfasına dön"
     }
   }
 }

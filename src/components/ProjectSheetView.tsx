@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore, ExternalLink, FolderKanban } from "lucide-react";
+import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore, ExternalLink, FolderOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectActivitySection } from "./ProjectActivitySection";
 import { ProjectTodoListEnhanced } from "./ProjectTodoListEnhanced";
@@ -562,8 +562,8 @@ export function ProjectSheetView({
         subtext={headerSubtext}
         banner={archivedBanner}
         summaryItems={isEditing ? undefined : summaryItems}
-        avatarClassName="bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-600 text-white ring-1 ring-blue-400/60"
-        avatarContent={<FolderKanban className="h-5 w-5" />}
+        avatarClassName="bg-gradient-to-br from-indigo-300 via-indigo-400 to-indigo-600 text-white ring-0"
+        avatarContent={<FolderOpen className="h-5 w-5" />}
         actions={headerActions}
         fallbackInitials="PR"
       />

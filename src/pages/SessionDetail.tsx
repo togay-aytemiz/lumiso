@@ -341,6 +341,8 @@ export default function SessionDetail() {
           header={<></>}
           left={leftContent}
           sections={sections}
+          overviewNavId="session-detail-overview"
+          overviewLabel={tForms('project_sheet.overview_tab')}
           rightFooter={dangerZone}
         />
       </div>

@@ -700,6 +700,8 @@ export default function ProjectDetail() {
               content: <ProjectTodoListEnhanced projectId={project!.id} onTodosUpdated={triggerSummaryRefresh} />
             }
           ]}
+          overviewNavId="project-detail-overview"
+          overviewLabel={t('project_sheet.overview_tab')}
           rightFooter={
             <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
               <div className="space-y-3">

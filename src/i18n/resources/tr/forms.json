@@ -1027,7 +1027,7 @@
     "payments_tab": "Ödemeler",
     "services_tab": "Hizmetler",
     "sessions_tab": "Seanslar",
-    "activities_tab": "Etkinlikler",
+    "activities_tab": "Activiteler",
     "archived_banner_title": "Bu proje arşivlendi",
     "archived_banner_description": "Çoğu işlem devre dışı. Arşivlendiği sürece seanslar ve hatırlatmalar takvimlerden, Seanslar sayfasından ve etkinlik listelerinden gizlenir. Düzenleme ve görünürlüğü yeniden etkinleştirmek için Daha Fazla → Geri Yükle'yi kullanın.",
     "archived_banner": "Bu proje arşivlendi. Çoğu işlem devre dışı. Arşivlenmiş durumda, seansları ve hatırlatmaları takvimlerden, Seanslar sayfasından ve etkinlik listelerinden gizlenir. Düzenleme ve görünürlüğü yeniden etkinleştirmek için Daha Fazla → Geri Yükle'yi kullanın.",
@@ -1036,6 +1036,7 @@
     "edit_project": "Projeyi Düzenle",
     "archive_project": "Projeyi Arşivle",
     "restore_project": "Projeyi Geri Yükle",
+    "overview_tab": "Overview",
     "close": "Kapat"
   },
   "projectDetails": {

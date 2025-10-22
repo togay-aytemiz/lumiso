@@ -20,6 +20,7 @@ import { LeadActivitySection } from "@/components/LeadActivitySection";
 import { ProjectsSection } from "@/components/ProjectsSection";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
+import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 // AssigneesList removed - single user organization
 import { formatDate, formatTime, getDateFnsLocale } from "@/lib/utils";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
@@ -1364,46 +1365,70 @@ const LeadDetail = () => {
           </>
         }
       />
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8 max-w-full">
-        {/* Left column - Lead Details (33%) */}
-        <div className="lg:col-span-1 space-y-6 min-w-0">
-          <UnifiedClientDetails 
-            lead={lead}
-            createdAt={lead.created_at}
-            showQuickActions={true}
-            onLeadUpdated={() => {
-              fetchLead();
-              setActivityRefreshKey(prev => prev + 1);
-            }}
-          />
-        </div>
-
-        {/* Right column - Projects and Activity Section (67%) */}
-        <div className="lg:col-span-2 space-y-6 min-w-0">
-          <ProjectsSection leadId={lead.id} leadName={lead.name} onProjectUpdated={handleProjectUpdated} onActivityUpdated={handleActivityUpdated} onProjectClicked={handleProjectClicked} />
-            <LeadActivitySection
-              leadId={lead.id}
-              leadName={lead.name}
-              onActivityUpdated={() => {
+      <ProjectDetailsLayout
+        header={null}
+        left={
+          <div className="space-y-6">
+            <UnifiedClientDetails
+              lead={lead}
+              createdAt={lead.created_at}
+              showQuickActions={true}
+              onLeadUpdated={() => {
                 fetchLead();
                 setActivityRefreshKey(prev => prev + 1);
               }}
             />
-
-          {/* Always allow delete in single photographer mode */}
-          {true && <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full text-center">
-              <div className="space-y-3">
-                <Button variant="outline" onClick={() => setShowDeleteDialog(true)} className="w-full max-w-xs border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
-                  {tForms('leadDangerZone.deleteLead')}
-                </Button>
-                <p className="text-xs text-muted-foreground break-words">
-                  {tForms('leadDangerZone.deleteWarning')}
-                </p>
-              </div>
-            </div>}
-        </div>
-      </div>
+          </div>
+        }
+        sections={[
+          {
+            id: "lead-projects",
+            title: tPages("leadDetail.header.projects.label"),
+            content: (
+              <ProjectsSection
+                leadId={lead.id}
+                leadName={lead.name}
+                onProjectUpdated={handleProjectUpdated}
+                onActivityUpdated={handleActivityUpdated}
+                onProjectClicked={handleProjectClicked}
+              />
+            )
+          },
+          {
+            id: "lead-activity",
+            title: tPages("leadDetail.header.activity.label"),
+            content: (
+              <LeadActivitySection
+                leadId={lead.id}
+                leadName={lead.name}
+                onActivityUpdated={() => {
+                  fetchLead();
+                  setActivityRefreshKey(prev => prev + 1);
+                }}
+              />
+            )
+          }
+        ]}
+        overviewNavId="lead-detail-overview"
+        overviewLabel={tForms("project_sheet.overview_tab")}
+        stickyTopOffset={24}
+        rightFooter={
+          <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full text-center">
+            <div className="space-y-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteDialog(true)}
+                className="w-full max-w-xs border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              >
+                {tForms("leadDangerZone.deleteLead")}
+              </Button>
+              <p className="text-xs text-muted-foreground break-words">
+                {tForms("leadDangerZone.deleteWarning")}
+              </p>
+            </div>
+          </div>
+        }
+      />
 
       {/* Edit Session Dialog */}
       {editingSessionId && (() => {

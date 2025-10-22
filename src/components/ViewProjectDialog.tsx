@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -264,6 +264,7 @@ export function ViewProjectDialog({
   const [servicesVersion, setServicesVersion] = useState(0);
   const [isArchived, setIsArchived] = useState(false);
   const [localStatusId, setLocalStatusId] = useState<string | null | undefined>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const {
     toast
   } = useToast();
@@ -289,6 +290,16 @@ export function ViewProjectDialog({
       setLoading(false);
     }
   };
+
+  const sectionId = {
+    payments: "project-dialog-payments",
+    services: "project-dialog-services",
+    sessions: "project-dialog-sessions",
+    activities: "project-dialog-activities",
+    todos: "project-dialog-todos"
+  } as const;
+
+  const dialogNavOffset = 24;
   const fetchProjectType = async () => {
     if (!project?.project_type_id) return;
     try {
@@ -563,7 +574,10 @@ export function ViewProjectDialog({
   if (!project) return null;
   return <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-y-auto' : 'sm:max-w-5xl max-h-[85vh] overflow-y-auto'} overscroll-contain pr-2 [&>button]:hidden pt-8 sm:pt-6`}>
+        <DialogContent
+          ref={scrollContainerRef}
+          className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-y-auto' : 'sm:max-w-5xl max-h-[85vh] overflow-y-auto'} overscroll-contain pr-2 [&>button]:hidden pt-8 sm:pt-6`}
+        >
           <div className="max-w-full overflow-x-hidden">
           <DialogHeader className="pb-4">
             <div className="flex items-center justify-between gap-2">
@@ -699,14 +713,14 @@ export function ViewProjectDialog({
                      }} 
                    />}
                  </div>} sections={[{
-               id: 'payments',
+               id: sectionId.payments,
                title: tForms('projectDetails.sections.payments'),
                content: <ProjectPaymentsSection projectId={project!.id} onPaymentsUpdated={() => {
                  onProjectUpdated();
                  onActivityUpdated?.();
                }} refreshToken={servicesVersion} />
              }, {
-               id: 'services',
+               id: sectionId.services,
                title: tForms('projectDetails.sections.services'),
                content: <ProjectServicesSection projectId={project!.id} onServicesUpdated={() => {
                  setServicesVersion(v => v + 1);
@@ -714,23 +728,29 @@ export function ViewProjectDialog({
                  onActivityUpdated?.();
                }} />
              }, {
-               id: 'sessions',
+               id: sectionId.sessions,
                title: tForms('projectDetails.sections.sessions'),
                content: <SessionsSection sessions={sessions} loading={loading} leadId={project!.lead_id} projectId={project!.id} leadName={leadName} projectName={project!.name} onSessionUpdated={() => {
                  handleSessionUpdated();
                  onActivityUpdated?.();
                }} onDeleteSession={handleDeleteSession} />
              }, {
-               id: 'activities',
+               id: sectionId.activities,
                title: tForms('projectDetails.sections.activities'),
                content: <ProjectActivitySection projectId={project!.id} leadId={project!.lead_id} leadName={leadName} projectName={project!.name} onActivityUpdated={() => {
                  onActivityUpdated?.();
                }} />
              }, {
-               id: 'todos',
+               id: sectionId.todos,
                title: tForms('projectDetails.sections.todos'),
                content: <ProjectTodoListEnhanced projectId={project!.id} />
-             }]} rightFooter={<div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
+             }]} overviewNavId="project-dialog-overview" overviewLabel={tForms('project_sheet.overview_tab')} stickyTopOffset={dialogNavOffset} onOverviewScroll={() => {
+               if (scrollContainerRef.current) {
+                 scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
+               } else {
+                 window.scrollTo({ top: 0, behavior: "smooth" });
+               }
+             }} rightFooter={<div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
                    <div className="space-y-3">
                      <Button variant="outline" onClick={() => setShowDeleteDialog(true)} className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
                        {tForms('projectDetails.header.delete')}

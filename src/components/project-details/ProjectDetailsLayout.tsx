@@ -1,34 +1,49 @@
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
-
-const BASE_NAV_BUTTON_CLASSES = [
-  "flex-shrink-0",
-  "whitespace-nowrap",
-  "rounded-full",
-  "border",
-  "px-3",
-  "py-1.5",
-  "text-sm",
-  "font-medium",
-  "transition-colors",
-  "focus-visible:outline-none",
-  "focus-visible:ring-2",
-  "focus-visible:ring-offset-2",
-  "focus-visible:ring-primary"
-].join(" ");
+import StickySectionNav, { StickySectionNavItem } from "./StickySectionNav";
+const DEFAULT_OVERVIEW_ID = "project-overview";
+const DEFAULT_OVERVIEW_LABEL = "Overview";
 
 interface ProjectDetailsLayoutProps {
   header: ReactNode;
   left: ReactNode;
   sections: { id: string; title: string; content: ReactNode }[];
   rightFooter?: ReactNode;
+  stickyTopOffset?: number;
+  showOverviewNav?: boolean;
+  overviewNavId?: string;
+  overviewLabel?: string;
+  onOverviewScroll?: () => void;
+  navAlign?: "start" | "center" | "end";
+  navAriaLabel?: string;
 }
 
-export default function ProjectDetailsLayout({ header, left, sections, rightFooter }: ProjectDetailsLayoutProps) {
-  const [activeId, setActiveId] = useState<string>(sections[0]?.id || "");
+export default function ProjectDetailsLayout({
+  header,
+  left,
+  sections,
+  rightFooter,
+  stickyTopOffset = 0,
+  showOverviewNav = true,
+  overviewNavId = DEFAULT_OVERVIEW_ID,
+  overviewLabel = DEFAULT_OVERVIEW_LABEL,
+  onOverviewScroll,
+  navAlign = "end",
+  navAriaLabel = "Section navigation"
+}: ProjectDetailsLayoutProps) {
+  const [activeId, setActiveId] = useState<string>(
+    showOverviewNav ? overviewNavId : sections[0]?.id || ""
+  );
   const observer = useRef<IntersectionObserver | null>(null);
+  const sectionIds = useMemo(() => sections.map((section) => section.id), [sections]);
+  const observedIds = useMemo(
+    () => (showOverviewNav ? [overviewNavId, ...sectionIds] : sectionIds),
+    [sectionIds, showOverviewNav, overviewNavId]
+  );
 
   useEffect(() => {
-    const headings = sections.map((s) => document.getElementById(s.id));
+    const headings = observedIds
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => Boolean(el));
     observer.current?.disconnect();
     observer.current = new IntersectionObserver(
       (entries) => {
@@ -39,69 +54,70 @@ export default function ProjectDetailsLayout({ header, left, sections, rightFoot
       },
       { rootMargin: "-100px 0px -60% 0px", threshold: [0, 0.5, 1] }
     );
-    headings.forEach((el) => el && observer.current?.observe(el));
+    headings.forEach((el) => observer.current?.observe(el));
     return () => observer.current?.disconnect();
-  }, [sections]);
+  }, [observedIds]);
 
   useEffect(() => {
-    if (sections.length === 0) {
+    if (observedIds.length === 0) {
       setActiveId("");
       return;
     }
 
     setActiveId((prev) => {
-      if (prev && sections.some((section) => section.id === prev)) {
+      if (prev && observedIds.includes(prev)) {
         return prev;
       }
-      return sections[0].id;
+      return observedIds[0];
     });
-  }, [sections]);
+  }, [observedIds]);
 
-  const navItems = useMemo(
-    () => sections.map((section) => ({ id: section.id, title: section.title })),
-    [sections]
-  );
+  const navItems = useMemo<StickySectionNavItem[]>(() => {
+    const sectionNav = sections.map((section) => ({ id: section.id, title: section.title }));
+    return showOverviewNav
+      ? [{ id: overviewNavId, title: overviewLabel }, ...sectionNav]
+      : sectionNav;
+  }, [sections, showOverviewNav, overviewNavId, overviewLabel]);
 
   const handleNavClick = (id: string) => {
     setActiveId(id);
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    if (showOverviewNav && id === overviewNavId) {
+      if (onOverviewScroll) {
+        onOverviewScroll();
+        return;
+      }
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    const target = document.getElementById(id);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
   return (
     <div className="w-full min-h-screen">
+      {showOverviewNav ? (
+        <div
+          id={overviewNavId}
+          aria-hidden="true"
+          className="pointer-events-none h-1 w-full opacity-0"
+        />
+      ) : null}
       {/* Header */}
-      <header className="mb-4">{header}</header>
+      {header ? <header className="mb-4">{header}</header> : null}
 
-      {navItems.length > 0 && (
-        <div className="sticky top-0 z-30 -mx-2 mb-6 border-b border-border/40 bg-background/95 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/75">
-          <nav
-            className="flex items-center gap-2 overflow-x-auto"
-            aria-label="Project sections navigation"
-          >
-            {navItems.map((item) => {
-              const isActive = activeId === item.id;
-              const buttonClasses = [
-                BASE_NAV_BUTTON_CLASSES,
-                isActive
-                  ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                  : "border-transparent bg-muted/70 text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-              ].join(" ");
-
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={buttonClasses}
-                  onClick={() => handleNavClick(item.id)}
-                  aria-current={isActive ? "page" : undefined}
-                >
-                  {item.title}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-      )}
+      <StickySectionNav
+        items={navItems}
+        activeId={activeId}
+        onSelect={handleNavClick}
+        stickyTopOffset={stickyTopOffset}
+        align={navAlign}
+        ariaLabel={navAriaLabel}
+      />
 
       <div className="grid grid-cols-12 gap-4 md:gap-6 w-full max-w-full overflow-hidden">
         {/* Left summary column */}

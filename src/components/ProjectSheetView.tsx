@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFormsTranslation, useMessagesTranslation } from "@/hooks/useTypedTranslation";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -112,6 +112,7 @@ export function ProjectSheetView({
   const isMobile = useIsMobile();
   const { summary: headerSummary } = useProjectHeaderSummary(project?.id || null, summaryRefreshToken);
   const { summary: sessionsSummary } = useProjectSessionsSummary(project?.id ?? "", summaryRefreshToken);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const plannedSessionsCount = useMemo(() => {
     return sessions.filter(session => (session.status || "").toLowerCase() === "planned").length;
@@ -693,6 +694,15 @@ export function ProjectSheetView({
     </div>
   );
 
+  const sheetNavOffset = isMobile ? 32 : 24;
+  const sectionId = {
+    payments: "project-sheet-payments",
+    services: "project-sheet-services",
+    sessions: "project-sheet-sessions",
+    activities: "project-sheet-activities",
+    todos: "project-sheet-todos"
+  } as const;
+
   // Main content sections - exactly the same as original modal
   const mainContent = (
     <>
@@ -715,7 +725,7 @@ export function ProjectSheetView({
           } 
           sections={[
             {
-              id: 'payments',
+              id: sectionId.payments,
               title: tForms('project_sheet.payments_tab'),
               content: (
                 <ProjectPaymentsSection
@@ -730,7 +740,7 @@ export function ProjectSheetView({
               )
             },
             {
-              id: 'services',
+              id: sectionId.services,
               title: tForms('project_sheet.services_tab'),
               content: (
                 <ProjectServicesSection 
@@ -745,7 +755,7 @@ export function ProjectSheetView({
               )
             },
             {
-              id: 'sessions',
+              id: sectionId.sessions,
               title: tForms('project_sheet.sessions_tab'),
               content: (
                 <SessionsSection 
@@ -764,7 +774,7 @@ export function ProjectSheetView({
               )
             }, 
             {
-              id: 'activities',
+              id: sectionId.activities,
               title: tForms('project_sheet.activities_tab'),
               content: (
                 <ProjectActivitySection 
@@ -779,11 +789,21 @@ export function ProjectSheetView({
               )
             }, 
             {
-              id: 'todos',
+              id: sectionId.todos,
               title: tForms('project_sheet.todos_tab'),
               content: <ProjectTodoListEnhanced projectId={project!.id} onTodosUpdated={triggerSummaryRefresh} />
             }
-          ]} 
+          ]}
+          overviewNavId="project-sheet-overview"
+          overviewLabel={tForms('project_sheet.overview_tab')}
+          stickyTopOffset={sheetNavOffset}
+          onOverviewScroll={() => {
+            if (scrollContainerRef.current) {
+              scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
+            } else {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          }}
           rightFooter={
             <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
               <div className="space-y-3">
@@ -812,6 +832,7 @@ export function ProjectSheetView({
         {archiveConfirmDialog}
         <Sheet open={open} onOpenChange={handleDialogOpenChange}>
           <SheetContent
+            ref={scrollContainerRef}
             side={isMobile ? "bottom" : "right"}
             className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-y-auto' : isMobile ? 'h-[100vh] max-w-none w-full' : 'sm:max-w-6xl lg:max-w-7xl h-[100vh] overflow-y-auto'} overscroll-contain pr-2 sm:pr-6 pt-8 sm:pt-6`}
           >
@@ -864,7 +885,10 @@ export function ProjectSheetView({
     <>
       {archiveConfirmDialog}
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className="max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-y-auto overscroll-contain pr-2 [&>button]:hidden pt-8 sm:pt-6">
+        <DialogContent
+          ref={scrollContainerRef}
+          className="max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-y-auto overscroll-contain pr-2 [&>button]:hidden pt-8 sm:pt-6"
+        >
           <div className="max-w-full overflow-x-hidden">
             <DialogHeader className="pb-4">
               <DialogTitle asChild>

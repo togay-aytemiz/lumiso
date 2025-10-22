@@ -2,12 +2,13 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import { ChevronRight, CheckCircle2 } from "lucide-react";
-import { format } from "date-fns";
+import { AlertTriangle, CalendarCheck, CalendarClock, CalendarDays, CheckCircle2, ChevronRight, CreditCard } from "lucide-react";
 import { useProjectProgress } from "@/hooks/useProjectProgress";
 import { useProjectPayments } from "@/hooks/useProjectPayments";
+import { useProjectSessionsSummary, type ProjectSessionsSummary } from "@/hooks/useProjectSessionsSummary";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { formatDate, formatTime } from "@/lib/utils";
 
 
 
@@ -32,6 +33,7 @@ interface ProjectCardProps {
 export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: ProjectCardProps) {
   const { progress, loading } = useProjectProgress(project.id, refreshTrigger);
   const { paymentSummary, loading: paymentsLoading } = useProjectPayments(project.id, refreshTrigger);
+  const { summary: sessionsSummary, loading: sessionsLoading } = useProjectSessionsSummary(project.id, refreshTrigger);
   const { t } = useFormsTranslation();
 
   const formatCurrency = (amount: number) => {
@@ -59,19 +61,51 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
 
   const hasProgress = !loading && progress.total > 0;
   const hasPayments = !paymentsLoading && paymentSummary.totalProject > 0;
-
-  const formatProjectDate = (value?: string | null) => {
-    if (!value) return "-";
+  const formatSessionDate = (session: ProjectSessionsSummary['overdueNext']) => {
+    if (!session?.session_date) return null;
     try {
-      return format(new Date(value), "dd MMM yyyy");
+      return formatDate(session.session_date);
     } catch {
-      return "-";
+      return null;
     }
   };
 
-  const createdDate = formatProjectDate(project.created_at);
-  const updatedDate = formatProjectDate(project.updated_at);
-  const isUpdated = project.updated_at && project.updated_at !== project.created_at;
+  const formatSessionTime = (session: ProjectSessionsSummary['overdueNext']) => {
+    if (!session?.session_time) return null;
+    try {
+      return formatTime(session.session_time);
+    } catch {
+      return null;
+    }
+  };
+
+  const sessionCountLabel = sessionsSummary.total > 0 ? t('projectCard.sessionsCount', { count: sessionsSummary.total }) : null;
+  const rawActiveLabel = sessionsSummary.activeCount > 0 ? t('projectCard.sessionsActive', { count: sessionsSummary.activeCount }) : null;
+  const completedLabel = sessionsSummary.completedCount > 0 ? t('projectCard.sessionsCompleted', { count: sessionsSummary.completedCount }) : null;
+  const cancelledLabel = sessionsSummary.cancelledCount > 0 ? t('projectCard.sessionsCancelled', { count: sessionsSummary.cancelledCount }) : null;
+  const overdueLabel = sessionsSummary.overdueCount > 0 ? t('projectCard.sessionsOverdue', { count: sessionsSummary.overdueCount }) : null;
+  const allSessionsActive = sessionsSummary.total > 0 && sessionsSummary.activeCount === sessionsSummary.total;
+  const activeDisplayLabel = allSessionsActive ? t('projectCard.sessionsAllActive') : rawActiveLabel;
+
+  const todayTime = formatSessionTime(sessionsSummary.todayNext);
+  const todayMessage = sessionsSummary.todayCount > 0
+    ? todayTime
+      ? t('projectCard.sessionsTodayWithTime', { count: sessionsSummary.todayCount, time: todayTime })
+      : t('projectCard.sessionsToday', { count: sessionsSummary.todayCount })
+    : null;
+
+  const upcomingDate = formatSessionDate(sessionsSummary.nextUpcoming);
+  const upcomingTime = formatSessionTime(sessionsSummary.nextUpcoming);
+  const upcomingMessage = sessionsSummary.nextUpcoming && upcomingDate
+    ? upcomingTime
+      ? t('projectCard.sessionsUpcomingWithTime', { date: upcomingDate, time: upcomingTime })
+      : t('projectCard.sessionsUpcoming', { date: upcomingDate })
+    : null;
+
+  const lastCompletedDate = formatSessionDate(sessionsSummary.latestCompleted);
+  const lastCompletedMessage = lastCompletedDate
+    ? t('projectCard.sessionsCompletedRecently', { date: lastCompletedDate })
+    : null;
 
   return (
     <Card
@@ -80,7 +114,7 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
       aria-label={t("projectCard.openProject", { name: project.name })}
       onClick={handleCardClick}
       onKeyDown={handleKeyDown}
-      className="group relative w-full cursor-pointer overflow-hidden border border-border/60 bg-card/95 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
+      className="group relative w-full cursor-pointer overflow-hidden border border-border bg-card/95 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl"
     >
       <span className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/60 via-primary to-primary/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       <CardContent className="relative flex flex-col gap-6 p-5 md:p-6">
@@ -163,48 +197,94 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
           </div>
 
           <div className="rounded-lg border border-dashed border-border/70 bg-muted/10 p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t('projectCard.budget')}
-            </p>
-            {hasPayments ? (
-              <div className="mt-3 space-y-1 text-sm">
-                <div className="flex items-center gap-2 text-foreground">
-                  <span className="font-semibold text-emerald-600">
-                    {formatCurrency(paymentSummary.totalPaid)}
-                  </span>
-                  <span className="text-muted-foreground">/</span>
-                  <span className="font-medium text-muted-foreground">
-                    {formatCurrency(paymentSummary.totalProject)}
-                  </span>
-                </div>
-                {paymentSummary.remaining > 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    {formatCurrency(paymentSummary.remaining)} {t('projectCard.remaining')}
-                  </p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t('projectCard.budget')}
+                </p>
+                {hasPayments ? (
+                  <div className="space-y-1 text-sm">
+                    <div className="flex items-center gap-2 text-foreground">
+                      <span className="font-semibold text-emerald-600">
+                        {formatCurrency(paymentSummary.totalPaid)}
+                      </span>
+                      <span className="text-muted-foreground">/</span>
+                      <span className="font-medium text-muted-foreground">
+                        {formatCurrency(paymentSummary.totalProject)}
+                      </span>
+                    </div>
+                    {paymentSummary.remaining > 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        {formatCurrency(paymentSummary.remaining)} {t('projectCard.remaining')}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-emerald-600">{t('projectCard.paidInFull')}</p>
+                    )}
+                  </div>
                 ) : (
-                  <p className="text-xs text-emerald-600">{t('projectCard.paidInFull')}</p>
+                  <p className="text-sm text-muted-foreground">{t('projectCard.noBudgetInfo')}</p>
                 )}
               </div>
-            ) : (
-              <p className="mt-3 text-sm text-muted-foreground">{t('projectCard.noBudgetInfo')}</p>
-            )}
+              <CreditCard className="h-5 w-5 text-muted-foreground" />
+            </div>
           </div>
 
           <div className="rounded-lg border border-dashed border-border/70 bg-muted/10 p-4 sm:col-span-2 lg:col-span-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t('projectCard.timeline')}
-            </p>
-            <div className="mt-3 space-y-1 text-sm text-muted-foreground">
-              <p>
-                <span className="font-medium text-foreground">{t('projectCard.created')}</span> {createdDate}
-              </p>
-              {isUpdated ? (
-                <p>
-                  <span className="font-medium text-foreground">{t('projectCard.updated')}</span> {updatedDate}
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t('projectCard.sessions')}
                 </p>
-              ) : (
-                <p className="italic text-muted-foreground/80">{t('projectCard.notUpdatedYet')}</p>
-              )}
+                {sessionsLoading ? (
+                  <p className="text-sm text-muted-foreground animate-pulse">{t('projectCard.sessionsLoading')}</p>
+                ) : sessionsSummary.total === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t('projectCard.sessionsNone')}</p>
+                ) : (
+                  <div className="space-y-4 text-sm">
+                    <div className="space-y-1">
+                      {sessionCountLabel && <p className="text-base font-semibold text-foreground">{sessionCountLabel}</p>}
+                      {(activeDisplayLabel || completedLabel || cancelledLabel) && (
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                          {activeDisplayLabel && <span>{activeDisplayLabel}</span>}
+                          {completedLabel && <span>• {completedLabel}</span>}
+                          {cancelledLabel && <span>• {cancelledLabel}</span>}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      {overdueLabel && (
+                        <div className="flex items-center gap-2 rounded-md border border-orange-100 bg-orange-50 px-3 py-2 text-sm text-orange-700">
+                          <AlertTriangle className="h-4 w-4" />
+                          <span>{overdueLabel}</span>
+                        </div>
+                      )}
+
+                      {todayMessage && (
+                        <div className="flex items-center gap-2 rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                          <CalendarClock className="h-4 w-4" />
+                          <span>{todayMessage}</span>
+                        </div>
+                      )}
+
+                      {upcomingMessage && (
+                        <div className="flex items-center gap-2 rounded-md border border-amber-100 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                          <CalendarCheck className="h-4 w-4" />
+                          <span>{upcomingMessage}</span>
+                        </div>
+                      )}
+
+                      {lastCompletedMessage && (
+                        <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                          <span>{lastCompletedMessage}</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <CalendarDays className="h-5 w-5 text-muted-foreground" />
             </div>
           </div>
         </div>

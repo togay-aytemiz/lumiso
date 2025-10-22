@@ -507,7 +507,7 @@ export default function ProjectDetail() {
           backLabel={tPages("projectDetail.header.back")}
           subtext={headerSubtext}
           summaryItems={summaryItems}
-          avatarClassName="bg-gradient-to-br from-indigo-500 via-blue-500 to-purple-500 text-white ring-1 ring-indigo-400/60"
+          avatarClassName="bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-600 text-white ring-1 ring-blue-400/60"
           avatarContent={<FolderKanban className="h-5 w-5" />}
           actions={headerActions}
           fallbackInitials="PR"

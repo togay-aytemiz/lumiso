@@ -116,7 +116,7 @@ export function EntityHeader({
   return (
     <div className={cn("space-y-4", className)}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className={cn("flex min-w-0 gap-3", hasSubtext ? "items-start" : "items-center")}>
+        <div className="flex min-w-0 items-center gap-3">
           {onBack && (
             <Button
               variant="ghost"
@@ -128,7 +128,7 @@ export function EntityHeader({
               <span className="sr-only">{backLabel}</span>
             </Button>
           )}
-          <div className={cn("flex min-w-0 gap-3", hasSubtext ? "items-start" : "items-center")}>
+          <div className="flex min-w-0 items-center gap-3">
             <div
               className={cn(
                 "flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 via-primary/40 to-primary/70 text-base font-semibold uppercase text-primary-foreground ring-1 ring-primary/30",

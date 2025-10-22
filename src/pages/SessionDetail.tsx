@@ -1,11 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Edit, ExternalLink, Calendar, User, FolderOpen, FileText, AlertTriangle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Edit, AlertTriangle, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +15,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import SessionStatusBadge from '@/components/SessionStatusBadge';
-import { formatLongDate, formatTime } from '@/lib/utils';
 import { isOverdueSession } from '@/lib/dateUtils';
 import EditSessionDialog from '@/components/EditSessionDialog';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -26,8 +23,10 @@ import ProjectDetailsLayout from '@/components/project-details/ProjectDetailsLay
 import { UnifiedClientDetails } from '@/components/UnifiedClientDetails';
 import SessionGallery from '@/components/SessionGallery';
 import { getDisplaySessionName } from '@/lib/sessionUtils';
-import { useMessagesTranslation, useCommonTranslation } from '@/hooks/useTypedTranslation';
+import { useMessagesTranslation, useCommonTranslation, useFormsTranslation } from '@/hooks/useTypedTranslation';
 import { useTranslation } from 'react-i18next';
+import { EntityHeader } from '@/components/EntityHeader';
+import { buildSessionSummaryItems } from '@/lib/sessions/buildSessionSummaryItems';
 
 interface SessionData {
   id: string;
@@ -64,6 +63,7 @@ export default function SessionDetail() {
   const { deleteSession } = useSessionActions();
   const { t: tMessages } = useMessagesTranslation();
   const { t: tCommon } = useCommonTranslation();
+  const { t: tForms } = useFormsTranslation();
   const { t: tPages } = useTranslation("pages");
   
   const [session, setSession] = useState<SessionData | null>(null);
@@ -130,7 +130,7 @@ export default function SessionDetail() {
 
   const handleDelete = async () => {
     if (!session) return;
-    
+
     const success = await deleteSession(session.id);
     if (success) {
       navigate('/sessions');
@@ -146,17 +146,37 @@ export default function SessionDetail() {
     fetchSession();
   };
 
-  const handleLeadClick = () => {
+  const handleLeadClick = useCallback(() => {
     if (session?.lead_id) {
       navigate(`/leads/${session.lead_id}`);
     }
-  };
+  }, [navigate, session?.lead_id]);
 
-  const handleProjectClick = () => {
+  const handleProjectClick = useCallback(() => {
     if (session?.project_id) {
       navigate(`/projects/${session.project_id}`);
     }
-  };
+  }, [navigate, session?.project_id]);
+
+  const sessionTypeLabel = session?.projects?.project_types?.name || tForms('sessionBanner.session');
+  const sessionNameDisplay = session ? getDisplaySessionName(session) : '';
+
+  const summaryItems = useMemo(
+    () =>
+      session
+        ? buildSessionSummaryItems({
+            session,
+            labels: {
+              dateTime: tPages('sessionDetail.labels.dateTime'),
+              project: tPages('sessionDetail.labels.project'),
+              notes: tPages('sessionDetail.labels.notes'),
+              location: tPages('sessionDetail.labels.location'),
+            },
+            onProjectClick: session.project_id ? handleProjectClick : undefined,
+          })
+        : [],
+    [session, tPages, handleProjectClick]
+  );
 
   if (loading) {
     return (
@@ -193,97 +213,6 @@ export default function SessionDetail() {
     );
   }
 
-  const header = (
-    <div className="border-b bg-background">
-      <div className="max-w-full mx-auto px-6 py-6">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex-1 min-w-0 space-y-3">
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <div className="space-y-2">
-                  {/* Desktop: Name + Badges on same line */}
-                  <div className="hidden md:flex items-center gap-3 flex-wrap">
-                    <ArrowLeft 
-                      className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
-                      strokeWidth={2.5}
-                      onClick={() => navigate('/sessions')}
-                    />
-                     <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
-                       {getDisplaySessionName(session)}
-                     </h1>
-                    
-                    {/* Session Status and Project Type Badges next to name - Desktop only */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <SessionStatusBadge
-                        sessionId={session.id}
-                        currentStatus={session.status as any}
-                        editable={true}
-                        onStatusChange={handleStatusChange}
-                        className="text-sm"
-                      />
-                      
-                      {session.projects?.project_types && (
-                        <Badge variant="outline" className="text-xs">
-                          {session.projects.project_types.name.toUpperCase()}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Mobile: Name only */}
-                  <div className="md:hidden">
-                    <div className="flex items-center gap-3">
-                      <ArrowLeft 
-                        className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
-                        strokeWidth={2.5}
-                        onClick={() => navigate('/sessions')}
-                      />
-                       <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
-                         {getDisplaySessionName(session)}
-                       </h1>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Mobile Layout: Badges */}
-                <div className="md:hidden space-y-4 mt-6">
-                  {/* Stage and Type badges for mobile */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <SessionStatusBadge
-                      sessionId={session.id}
-                      currentStatus={session.status as any}
-                      editable={true}
-                      onStatusChange={handleStatusChange}
-                      className="text-sm"
-                    />
-                    
-                    {session.projects?.project_types && (
-                      <Badge variant="outline" className="text-xs">
-                        {session.projects.project_types.name.toUpperCase()}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-1 shrink-0 self-start">
-            <Button 
-              variant="outline" 
-              size="lg"
-              onClick={handleEdit}
-              className="gap-2"
-            >
-              <Edit className="h-4 w-4" />
-              <span>Edit Session</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   const leftContent = session.leads && (
     <UnifiedClientDetails
       lead={{
@@ -296,79 +225,8 @@ export default function SessionDetail() {
       title={tPages("sessionDetail.cards.clientDetails")}
       showQuickActions={true}
       showClickableNames={true}
+      onNavigateToLead={handleLeadClick}
     />
-  );
-
-  const sessionDetailsCard = (
-    <Card>
-      <CardContent className="p-6">
-        <h3 className="text-lg font-semibold mb-4">{tPages("sessionDetail.cards.sessionDetails")}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">{tPages("sessionDetail.labels.dateTime")}</label>
-              <p className="text-sm">
-                {formatLongDate(session.session_date)} {tPages("sessionDetail.labels.at")} {formatTime(session.session_time)}
-              </p>
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">{tPages("sessionDetail.labels.client")}</label>
-              <p className="text-sm">
-                <button
-                  onClick={handleLeadClick}
-                  className="text-primary hover:underline"
-                >
-                  {session.leads?.name || tPages("sessionDetail.unknownClient")}
-                </button>
-              </p>
-            </div>
-
-            {session.projects && (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">{tPages("sessionDetail.labels.project")}</label>
-                <p className="text-sm">
-                  <button
-                    onClick={handleProjectClick}
-                    className="text-primary hover:underline"
-                  >
-                    {session.projects.name}
-                  </button>
-                </p>
-              </div>
-            )}
-
-            {session.projects?.project_types && (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">{tPages("sessionDetail.labels.projectType")}</label>
-                <p className="text-sm">{session.projects.project_types.name}</p>
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">{tPages("sessionDetail.labels.status")}</label>
-              <div className="mt-1">
-                <SessionStatusBadge
-                  sessionId={session.id}
-                  currentStatus={session.status as any}
-                  editable={true}
-                  onStatusChange={handleStatusChange}
-                />
-              </div>
-            </div>
-
-            {session.notes && (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">{tPages("sessionDetail.labels.notes")}</label>
-                <p className="text-sm">{session.notes}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   );
 
   const sections = [
@@ -398,103 +256,65 @@ export default function SessionDetail() {
     </div>
   );
 
-  const isOverdue = isOverdueSession(session.session_date, session.status);
+  const isOverdue = session ? isOverdueSession(session.session_date, session.status) : false;
+
+  const overdueBanner = isOverdue
+    ? (
+        <div className="flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm leading-relaxed text-orange-800">
+          <AlertTriangle className="mt-0.5 h-4 w-4 text-orange-600" aria-hidden="true" />
+          <div className="space-y-1">
+            <p className="font-semibold text-orange-900">{tPages('sessionDetail.overdue.title')}</p>
+            <p>{tPages('sessionDetail.overdue.description')}</p>
+          </div>
+        </div>
+      )
+    : undefined;
+
+  const headerActions = session ? (
+    <Button variant="outline" size="sm" onClick={handleEdit} className="gap-2 text-sm font-medium">
+      <Edit className="h-4 w-4" />
+      <span>{tForms('sessions.editSession')}</span>
+    </Button>
+  ) : undefined;
+
+  const headerTitle = session ? (
+    <span className="flex flex-col">
+      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {sessionTypeLabel}
+      </span>
+      <span className="flex items-center gap-2 text-foreground">
+        <span className="truncate">{sessionNameDisplay}</span>
+        <SessionStatusBadge
+          sessionId={session.id}
+          currentStatus={session.status as any}
+          editable={true}
+          onStatusChange={handleStatusChange}
+          className="text-xs sm:text-sm"
+        />
+      </span>
+    </span>
+  ) : undefined;
 
   return (
     <div className="min-h-screen bg-background">
-      {header}
-      
-      {/* Overdue Warning Bar */}
-      {isOverdue && (
-        <div className="bg-orange-50 border-b border-orange-200 px-6 py-3">
-          <div className="flex items-center gap-3 text-orange-800">
-            <AlertTriangle className="h-5 w-5 text-orange-600" />
-            <div>
-              <p className="font-medium">{tPages("sessionDetail.overdue.title")}</p>
-              <p className="text-sm text-orange-700">{tPages("sessionDetail.overdue.description")}</p>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Session Summary Details - Above Grid */}
-      <div className="max-w-full mx-auto px-6 py-4">
-        <div className="bg-muted/30 rounded-lg p-4 mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6 text-sm">
-            <div className="flex-shrink-0">
-              <div className="flex items-center gap-2 mb-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <label className="font-medium text-muted-foreground">{tPages("sessionDetail.labels.dateTime")}</label>
-              </div>
-              <p>{formatLongDate(session.session_date)} {tPages("sessionDetail.labels.at")} {formatTime(session.session_time)}</p>
-            </div>
+      <div className="mx-auto max-w-full px-6 py-6">
+        {session && (
+          <EntityHeader
+            name={sessionNameDisplay}
+            title={headerTitle}
+            onBack={() => navigate('/sessions')}
+            backLabel={tForms('sessions.returnToSessions')}
+            summaryItems={summaryItems}
+            banner={overdueBanner}
+            actions={headerActions}
+            avatarClassName="bg-gradient-to-br from-amber-200 via-amber-300 to-orange-400 text-orange-900 ring-1 ring-orange-300"
+            avatarContent={<CalendarIcon className="h-5 w-5" aria-hidden="true" />}
+            fallbackInitials="SE"
+          />
+        )}
+      </div>
 
-            {session.projects && (
-              <>
-                <div className="hidden sm:block w-px h-12 bg-border"></div>
-                <div className="flex-shrink-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                    <label className="font-medium text-muted-foreground">{tPages("sessionDetail.labels.project")}</label>
-                  </div>
-                  <button
-                    onClick={handleProjectClick}
-                    className="text-primary hover:underline"
-                  >
-                    {session.projects.name}
-                  </button>
-                </div>
-              </>
-            )}
-
-            {(session.notes || session.location) && (
-              <>
-                <div className="hidden sm:block w-px h-12 bg-border"></div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
-                    {session.notes && (
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <label className="font-medium text-muted-foreground">{tPages("sessionDetail.labels.notes")}</label>
-                        </div>
-                        <div className="relative group">
-                          <p className="line-clamp-2 cursor-help">{session.notes}</p>
-                          <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-50 bg-popover border border-border rounded-md shadow-md p-3 max-w-md whitespace-pre-wrap text-sm">
-                            {session.notes}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {session.notes && session.location && (
-                      <div className="hidden sm:block w-px h-12 bg-border"></div>
-                    )}
-                    
-                    {session.location && (
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          <label className="font-medium text-muted-foreground">{tPages("sessionDetail.labels.location")}</label>
-                        </div>
-                        <div className="relative group">
-                          <p className="line-clamp-2 cursor-help">{session.location}</p>
-                          <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-50 bg-popover border border-border rounded-md shadow-md p-3 max-w-md whitespace-pre-wrap text-sm">
-                            {session.location}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
+      <div className="mx-auto max-w-full px-6 pb-6">
         <ProjectDetailsLayout
           header={<></>}
           left={leftContent}

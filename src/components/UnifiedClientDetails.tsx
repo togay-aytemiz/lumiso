@@ -42,6 +42,7 @@ interface UnifiedClientDetailsProps {
   className?: string;
   showClickableNames?: boolean;
   createdAt?: string | null; // creation date
+  onNavigateToLead?: (leadId: string) => void;
 }
 
 // Helper functions for validation and phone normalization
@@ -85,6 +86,7 @@ export function UnifiedClientDetails({
   className,
   showClickableNames = false,
   createdAt,
+  onNavigateToLead,
 }: UnifiedClientDetailsProps) {
   const { toast } = useToast();
   const { fieldDefinitions, loading: fieldsLoading } =
@@ -364,7 +366,13 @@ export function UnifiedClientDetails({
                     >
                       {field.key === "name" && showClickableNames ? (
                         <button
-                          onClick={() => navigate(`/leads/${lead.id}`)}
+                          onClick={() => {
+                            if (onNavigateToLead) {
+                              onNavigateToLead(lead.id);
+                            } else {
+                              navigate(`/leads/${lead.id}`);
+                            }
+                          }}
                           className="text-accent hover:underline font-medium break-words text-left"
                         >
                           {field.value || " - "}

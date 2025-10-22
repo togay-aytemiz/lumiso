@@ -1,15 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Edit, X, AlertTriangle, Calendar, FolderOpen, FileText } from 'lucide-react';
+import { ExternalLink, Edit, X, AlertTriangle, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import SessionStatusBadge from '@/components/SessionStatusBadge';
-import { formatLongDate, formatTime } from '@/lib/utils';
 import { isOverdueSession } from '@/lib/dateUtils';
 import EditSessionDialog from '@/components/EditSessionDialog';
 import { useSessionActions } from '@/hooks/useSessionActions';
@@ -17,6 +13,8 @@ import { UnifiedClientDetails } from '@/components/UnifiedClientDetails';
 import SessionGallery from '@/components/SessionGallery';
 import { getDisplaySessionName } from '@/lib/sessionUtils';
 import { useFormsTranslation, useMessagesTranslation } from '@/hooks/useTypedTranslation';
+import { EntityHeader } from '@/components/EntityHeader';
+import { buildSessionSummaryItems } from '@/lib/sessions/buildSessionSummaryItems';
 interface SessionData {
   id: string;
   session_name?: string | null;
@@ -68,7 +66,6 @@ export default function SessionSheetView({
   const {
     deleteSession
   } = useSessionActions();
-  const navigate = useNavigate();
   const {
     t: tForms
   } = useFormsTranslation();
@@ -140,22 +137,98 @@ export default function SessionSheetView({
     fetchSession();
     onSessionUpdated?.(); // Notify parent components
   };
-  const handleLeadClick = () => {
+  const handleLeadClick = useCallback(() => {
     if (session?.lead_id && onNavigateToLead) {
       onNavigateToLead(session.lead_id);
       onOpenChange(false);
     }
-  };
-  const handleProjectClick = () => {
+  }, [onNavigateToLead, onOpenChange, session?.lead_id]);
+  const handleProjectClick = useCallback(() => {
     if (session?.project_id && onNavigateToProject) {
       onNavigateToProject(session.project_id);
       onOpenChange(false);
     }
-  };
-  const handleSessionClick = () => {
-    navigate(`/sessions/${sessionId}`);
-    onOpenChange(false);
-  };
+  }, [onNavigateToProject, onOpenChange, session?.project_id]);
+  const sessionTypeLabel = session?.projects?.project_types?.name || tForms('sessionBanner.session');
+  const sessionNameDisplay = session ? getDisplaySessionName(session) : '';
+
+  const summaryItems = useMemo(
+    () =>
+      session
+        ? buildSessionSummaryItems({
+            session,
+            labels: {
+              dateTime: tForms('sessionSheet.dateTime'),
+              project: tForms('sessionSheet.project'),
+              notes: tForms('sessionSheet.notes'),
+              location: tForms('sessionSheet.location'),
+            },
+            onProjectClick: session.project_id ? handleProjectClick : undefined,
+          })
+        : [],
+    [session, tForms, handleProjectClick]
+  );
+
+  const overdueBanner =
+    session && isOverdueSession(session.session_date, session.status) ? (
+      <div className="flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm leading-relaxed text-orange-800">
+        <AlertTriangle className="mt-0.5 h-4 w-4 text-orange-600" aria-hidden="true" />
+        <div className="space-y-1">
+          <p className="font-semibold text-orange-900">{tForms('sessionSheet.overdueWarning')}</p>
+          <p>{tForms('sessionSheet.overdueDescription')}</p>
+        </div>
+      </div>
+    ) : undefined;
+
+  const headerActions = session ? (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onViewFullDetails}
+        className="gap-2 text-sm font-medium"
+      >
+        <ExternalLink className="h-4 w-4" />
+        <span>{tForms('sessionSheet.fullDetails')}</span>
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleEdit}
+        className="gap-2 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <Edit className="h-4 w-4" />
+        <span>{tForms('sessionSheet.edit')}</span>
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onOpenChange(false)}
+        className="gap-2 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <X className="h-4 w-4" />
+        <span>{tForms('sessionSheet.close')}</span>
+      </Button>
+    </>
+  ) : undefined;
+
+  const headerTitle = session ? (
+    <span className="flex flex-col">
+      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {sessionTypeLabel}
+      </span>
+      <span className="flex items-center gap-2 text-foreground">
+        <span className="truncate">{sessionNameDisplay}</span>
+        <SessionStatusBadge
+          sessionId={session.id}
+          currentStatus={session.status as any}
+          editable={true}
+          onStatusChange={handleStatusChange}
+          className="text-xs sm:text-sm"
+        />
+      </span>
+    </span>
+  ) : undefined;
   return <>
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
         <SheetContent className="w-full sm:max-w-5xl h-[100vh] overflow-y-auto overscroll-contain pr-2 pt-8 sm:pt-6">
@@ -166,185 +239,71 @@ export default function SessionSheetView({
                 <div className="h-32 bg-muted rounded"></div>
               </div>
             </div> : session ? <>
-              <SheetHeader className="pb-4">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex-1 min-w-0 space-y-3">
-                    <div className="space-y-3">
-                      <div className="space-y-2">
-                        <div className="space-y-2">
-                          {/* Desktop: Name + Badges on same line */}
-                          <div className="hidden md:flex items-center gap-3 flex-wrap">
-                             <SheetTitle className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
-                               {getDisplaySessionName(session)}
-                             </SheetTitle>
-                            
-                            {/* Session Status and Project Type Badges next to name - Desktop only */}
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <SessionStatusBadge sessionId={session.id} currentStatus={session.status as any} editable={true} onStatusChange={handleStatusChange} className="text-sm" />
-                              
-                              {session.projects?.project_types && <Badge variant="outline" className="text-xs">
-                                  {session.projects.project_types.name.toUpperCase()}
-                                </Badge>}
-                            </div>
-                          </div>
-                          
-                          {/* Mobile: Name only */}
-                          <div className="md:hidden">
-                             <SheetTitle className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
-                               {getDisplaySessionName(session)}
-                             </SheetTitle>
-                          </div>
-                        </div>
-                        
-                        {/* Mobile Layout: Badges then Session Details */}
-                        <div className="md:hidden space-y-4 mt-6">
-                          {/* Stage and Type badges for mobile */}
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <SessionStatusBadge sessionId={session.id} currentStatus={session.status as any} editable={true} onStatusChange={handleStatusChange} className="text-sm" />
-                            
-                            {session.projects?.project_types && <Badge variant="outline" className="text-xs">
-                                {session.projects.project_types.name.toUpperCase()}
-                              </Badge>}
-                          </div>
-                        </div>
-                      </div>
+              <div className="space-y-6 pb-6">
+                <EntityHeader
+                  name={sessionNameDisplay}
+                  title={headerTitle}
+                  summaryItems={summaryItems}
+                  banner={overdueBanner}
+                  actions={headerActions}
+                  avatarClassName="bg-gradient-to-br from-amber-200 via-amber-300 to-orange-400 text-orange-900 ring-1 ring-orange-300"
+                  avatarContent={<CalendarIcon className="h-5 w-5" aria-hidden="true" />}
+                  fallbackInitials="SE"
+                />
+
+                {/* Main Content Grid */}
+                <div className="grid grid-cols-12 gap-4 md:gap-6 w-full max-w-full overflow-hidden">
+                  {/* Left summary column */}
+                  <aside className="col-span-12 lg:col-span-4 min-w-0">
+                    <div className="h-fit space-y-4 w-full max-w-full">
+                      {session.leads && (
+                        <UnifiedClientDetails
+                          lead={{
+                            id: session.leads.id,
+                            name: session.leads.name,
+                            email: session.leads.email,
+                            phone: session.leads.phone,
+                            notes: session.leads.notes,
+                          }}
+                          title={tForms('sessionSheet.clientDetails')}
+                          showQuickActions={true}
+                          showClickableNames={true}
+                          onNavigateToLead={handleLeadClick}
+                        />
+                      )}
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-1 shrink-0 self-start">
-                      <Button variant="ghost" size="sm" onClick={onViewFullDetails} className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3">
-                      <ExternalLink className="h-4 w-4" />
-                      <span className="text-sm hidden md:inline">{tForms('sessionSheet.fullDetails')}</span>
-                    </Button>
-                    
-                    <Button variant="ghost" size="sm" onClick={handleEdit} className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3">
-                      <Edit className="h-4 w-4" />
-                      <span className="text-sm hidden md:inline">{tForms('sessionSheet.edit')}</span>
-                    </Button>
-                    
-                    <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-muted-foreground hover:bg-accent hover:text-accent-foreground text-sm h-8 px-2 md:h-10 md:px-3">
-                      <span className="hidden md:inline">{tForms('sessionSheet.close')}</span>
-                      <X className="h-4 w-4 md:hidden" />
-                    </Button>
-                  </div>
+                  </aside>
+
+                  {/* Right detail column */}
+                  <main className="col-span-12 lg:col-span-8 min-w-0">
+                    <div className="space-y-6 md:space-y-8 w-full max-w-full">
+                      <section className="scroll-mt-[88px] w-full max-w-full overflow-hidden">
+                        <div className="w-full max-w-full">
+                          <SessionGallery sessionId={session.id} />
+                        </div>
+                      </section>
+
+                      {/* Danger Zone */}
+                      <section className="scroll-mt-[88px] w-full max-w-full overflow-hidden">
+                        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-6">
+                          <div className="space-y-4">
+                            <Button
+                              variant="outline"
+                              onClick={() => setIsDeleteDialogOpen(true)}
+                              className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                              size="lg"
+                            >
+                              {tForms('sessionSheet.deleteSession')}
+                            </Button>
+                            <p className="text-sm text-muted-foreground text-center">
+                              {tForms('sessionSheet.deleteWarning')}
+                            </p>
+                          </div>
+                        </div>
+                      </section>
+                    </div>
+                  </main>
                 </div>
-              </SheetHeader>
-
-              {/* Overdue Warning Bar */}
-              {session && isOverdueSession(session.session_date, session.status) && <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-6">
-                  <div className="flex items-center gap-3 text-orange-800">
-                    <AlertTriangle className="h-5 w-5 text-orange-600" />
-                    <div>
-                      <p className="font-medium">{tForms('sessionSheet.overdueWarning')}</p>
-                      <p className="text-sm text-orange-700">{tForms('sessionSheet.overdueDescription')}</p>
-                    </div>
-                  </div>
-                </div>}
-
-              {/* Session Summary Details - Above Grid */}
-              <div className="mb-6 bg-muted/30 rounded-lg p-4">
-                <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6 text-sm">
-                  <div className="flex-shrink-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <label className="font-medium text-muted-foreground">{tForms('sessionSheet.dateTime')}</label>
-                    </div>
-                    <p>{formatLongDate(session.session_date)} at {formatTime(session.session_time)}</p>
-                  </div>
-
-                  {session.projects && <>
-                      <div className="hidden sm:block w-px h-12 bg-border"></div>
-                      <div className="flex-shrink-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                          <label className="font-medium text-muted-foreground">{tForms('sessionSheet.project')}</label>
-                        </div>
-                        <button onClick={handleProjectClick} className="text-primary hover:underline">
-                          {session.projects.name}
-                        </button>
-                      </div>
-                    </>}
-
-                  {(session.notes || session.location) && <>
-                      <div className="hidden sm:block w-px h-12 bg-border"></div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
-                          {session.notes && <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-2">
-                                <FileText className="h-4 w-4 text-muted-foreground" />
-                                <label className="font-medium text-muted-foreground">{tForms('sessionSheet.notes')}</label>
-                              </div>
-                              <div className="relative group">
-                                <p className="line-clamp-2 cursor-help">{session.notes}</p>
-                                <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-50 bg-popover border border-border rounded-md shadow-md p-3 max-w-md whitespace-pre-wrap text-sm">
-                                  {session.notes}
-                                </div>
-                              </div>
-                            </div>}
-                          
-                          {session.notes && session.location && <div className="hidden sm:block w-px h-12 bg-border"></div>}
-                          
-                          {session.location && <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-2">
-                                <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                <label className="font-medium text-muted-foreground">{tForms('sessionSheet.location')}</label>
-                              </div>
-                              <div className="relative group">
-                                <p className="line-clamp-2 cursor-help">{session.location}</p>
-                                <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-50 bg-popover border border-border rounded-md shadow-md p-3 max-w-md whitespace-pre-wrap text-sm">
-                                  {session.location}
-                                </div>
-                              </div>
-                            </div>}
-                        </div>
-                      </div>
-                    </>}
-                </div>
-              </div>
-
-              {/* Main Content Grid */}
-              <div className="grid grid-cols-12 gap-4 md:gap-6 w-full max-w-full overflow-hidden">
-                {/* Left summary column */}
-                <aside className="col-span-12 lg:col-span-4 min-w-0">
-                  <div className="h-fit space-y-4 w-full max-w-full">
-                    {session.leads && <UnifiedClientDetails lead={{
-                  id: session.leads.id,
-                  name: session.leads.name,
-                  email: session.leads.email,
-                  phone: session.leads.phone,
-                  notes: session.leads.notes
-                }} title={tForms('sessionSheet.clientDetails')} showQuickActions={true} showClickableNames={true} />}
-                  </div>
-                </aside>
-
-                {/* Right detail column */}
-                <main className="col-span-12 lg:col-span-8 min-w-0">
-                  <div className="space-y-6 md:space-y-8 w-full max-w-full">
-                    <section className="scroll-mt-[88px] w-full max-w-full overflow-hidden">
-                      <div className="w-full max-w-full">
-                        <SessionGallery sessionId={session.id} />
-                      </div>
-                    </section>
-
-                    {/* Danger Zone */}
-                    <section className="scroll-mt-[88px] w-full max-w-full overflow-hidden">
-                      <div className="border border-destructive/20 bg-destructive/5 rounded-lg p-6">
-                        <div className="space-y-4">
-                          
-                          <Button variant="outline" onClick={() => setIsDeleteDialogOpen(true)} className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground" size="lg">
-                            {tForms('sessionSheet.deleteSession')}
-                          </Button>
-                          <p className="text-sm text-muted-foreground text-center">
-                            {tForms('sessionSheet.deleteWarning')}
-                          </p>
-                        </div>
-                      </div>
-                    </section>
-                  </div>
-                </main>
               </div>
             </> : <div className="p-6 text-center">
               <h3 className="text-lg font-semibold mb-2">{tForms('sessions.sessionNotFound')}</h3>

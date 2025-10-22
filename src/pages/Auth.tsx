@@ -167,7 +167,7 @@ const Auth = () => {
           </div>
 
           {/* Centered form area */}
-          <div className="flex flex-1 items-center">
+          <div className="flex flex-1 items-center pt-24 sm:pt-16 lg:pt-0">
             <div key={isSignUp ? 'signup' : 'signin'} className="relative mx-auto w-full max-w-md fade-in-up">
               <div className="mb-8 space-y-3">
                 <div className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary">

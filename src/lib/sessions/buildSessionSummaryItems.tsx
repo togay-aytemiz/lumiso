@@ -90,7 +90,15 @@ export function buildSessionSummaryItems({
       key: "location",
       icon: MapPin,
       label: labels.location,
-      primary: <span className="line-clamp-2 break-words">{session.location}</span>,
+      primary: (
+        <TruncatedTextWithTooltip
+          text={session.location}
+          lines={2}
+          as="span"
+          tooltipSide="bottom"
+          tooltipAlign="start"
+        />
+      ),
       secondary: null,
     });
   }

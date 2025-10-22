@@ -1,12 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore, ArrowLeft } from "lucide-react";
+import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore, FolderKanban } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectActivitySection } from "@/components/ProjectActivitySection";
 import { ProjectTodoListEnhanced } from "@/components/ProjectTodoListEnhanced";
@@ -22,6 +21,10 @@ import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { SessionWithStatus } from "@/lib/sessionSorting";
 import { onArchiveToggle } from "@/components/ViewProjectDialog";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { useTranslation } from "react-i18next";
+import { EntityHeader } from "@/components/EntityHeader";
+import { buildProjectSummaryItems } from "@/lib/projects/buildProjectSummaryItems";
+import { useProjectHeaderSummary } from "@/hooks/useProjectHeaderSummary";
 
 interface Project {
   id: string;
@@ -61,6 +64,7 @@ export default function ProjectDetail() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useFormsTranslation();
+  const { t: tPages } = useTranslation("pages");
 
   const [project, setProject] = useState<Project | null>(null);
   const [lead, setLead] = useState<Lead | null>(null);
@@ -78,6 +82,9 @@ export default function ProjectDetail() {
   const [isArchived, setIsArchived] = useState(false);
   const [localStatusId, setLocalStatusId] = useState<string | null | undefined>(null);
   const [servicesVersion, setServicesVersion] = useState(0);
+  const [summaryRefreshToken, setSummaryRefreshToken] = useState(0);
+
+  const { summary: headerSummary } = useProjectHeaderSummary(project?.id, summaryRefreshToken);
 
   const fetchProject = async () => {
     if (!id) return;
@@ -383,6 +390,21 @@ export default function ProjectDetail() {
     checkArchiveStatus();
   };
 
+  const triggerSummaryRefresh = () => {
+    setSummaryRefreshToken(prev => prev + 1);
+  };
+
+  const summaryItems = useMemo(
+    () => buildProjectSummaryItems({
+      t: tPages,
+      payments: headerSummary.payments,
+      todos: headerSummary.todos,
+      services: headerSummary.services,
+      sessions
+    }),
+    [headerSummary, sessions, tPages]
+  );
+
   if (loading || !project) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -391,149 +413,132 @@ export default function ProjectDetail() {
     );
   }
 
+  const projectTypeLabel = projectType?.name || tPages("projectDetail.header.defaultType");
+  const projectNameDisplay = project?.name || tPages("projectDetail.placeholders.name");
+  const statusBadgeNode = (
+    <ProjectStatusBadge
+      projectId={project.id}
+      currentStatusId={localStatusId || undefined}
+      onStatusChange={handleStatusChange}
+      editable={!isArchived}
+      className="text-xs sm:text-sm"
+    />
+  );
+
+  const headerTitle = (
+    <span className="flex flex-col">
+      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {projectTypeLabel}
+      </span>
+      <span className="flex items-center gap-2 text-foreground">
+        <span className="truncate">{projectNameDisplay}</span>
+        {statusBadgeNode}
+      </span>
+    </span>
+  );
+
+  const headerSubtext = !isEditing && project.description ? project.description : undefined;
+
+  const headerActions = isEditing ? (
+    <>
+      <Button
+        onClick={handleSaveProject}
+        disabled={isSaving || !editName.trim() || !editProjectTypeId}
+        size="sm"
+        className="gap-2"
+      >
+        <Save className="h-4 w-4" />
+        {isSaving ? t('common:actions.saving') : t('common:buttons.save')}
+      </Button>
+      <Button
+        variant="outline"
+        onClick={() => {
+          setIsEditing(false);
+          setEditName(project.name || "");
+          setEditDescription(project.description || "");
+          setEditProjectTypeId(project.project_type_id || "");
+        }}
+        disabled={isSaving}
+        size="sm"
+        className="gap-2"
+      >
+        <X className="h-4 w-4" />
+        {tPages("projectDetail.actions.cancel")}
+      </Button>
+    </>
+  ) : (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2">
+          <span>{t("project_sheet.more")}</span>
+          <ChevronDown className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" side="bottom">
+        <DropdownMenuItem onSelect={() => setIsEditing(true)}>
+          <Pencil className="mr-2 h-4 w-4" />
+          <span>{t("project_sheet.edit_project")}</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={handleArchiveAction}>
+          {isArchived ? (
+            <>
+              <ArchiveRestore className="mr-2 h-4 w-4" />
+              <span>{t("project_sheet.restore_project")}</span>
+            </>
+          ) : (
+            <>
+              <Archive className="mr-2 h-4 w-4" />
+              <span>{t("project_sheet.archive_project")}</span>
+            </>
+          )}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
     <div className="w-full min-h-screen p-6">
-      {/* Header - same as modal but optimized for page */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex-1 min-w-0 space-y-4">
-            {isEditing ? (
-                <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <ArrowLeft 
-                    className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
-                    strokeWidth={2.5}
-                    onClick={() => window.history.back()}
-                  />
-                  <Input 
-                    value={editName} 
-                    onChange={e => setEditName(e.target.value)} 
-                    placeholder="Project name" 
-                    className="text-3xl font-bold border rounded-md px-4 py-3 h-auto flex-1" 
-                  />
-                </div>
-                <Textarea 
-                  value={editDescription} 
-                  onChange={e => setEditDescription(e.target.value)} 
-                  placeholder="Project description (optional)" 
-                  className="text-lg border rounded-md px-4 py-3 resize-none" 
-                  rows={3} 
+      <div className="mb-6">
+        <EntityHeader
+          className="mb-4"
+          name={project.name || ""}
+          title={headerTitle}
+          onBack={() => navigate(-1)}
+          backLabel={tPages("projectDetail.header.back")}
+          subtext={headerSubtext}
+          summaryItems={summaryItems}
+          avatarClassName="bg-gradient-to-br from-indigo-500 via-blue-500 to-purple-500 text-white ring-1 ring-indigo-400/60"
+          avatarContent={<FolderKanban className="h-5 w-5" />}
+          actions={headerActions}
+          fallbackInitials="PR"
+        />
+        {isEditing && (
+          <div className="rounded-xl border border-border/60 bg-background p-4 shadow-sm sm:p-6">
+            <div className="grid gap-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+              <div className="space-y-3">
+                <Input
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  placeholder={tPages("projectDetail.placeholders.name")}
                 />
-                  <SimpleProjectTypeSelect 
-                    value={editProjectTypeId} 
-                    onValueChange={setEditProjectTypeId} 
-                    disabled={isSaving} 
-                    required 
-                  />
-                <div className="flex gap-3">
-                  <Button 
-                    onClick={handleSaveProject} 
-                    disabled={isSaving || !editName.trim() || !editProjectTypeId}
-                    size="lg"
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    {isSaving ? "Saving..." : "Save"}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setIsEditing(false);
-                      setEditName(project?.name || "");
-                      setEditDescription(project?.description || "");
-                      setEditProjectTypeId(project?.project_type_id || "");
-                    }} 
-                    disabled={isSaving}
-                    size="lg"
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
-                </div>
+                <Textarea
+                  value={editDescription}
+                  onChange={e => setEditDescription(e.target.value)}
+                  placeholder={tPages("projectDetail.placeholders.description")}
+                  className="min-h-[120px] resize-none"
+                />
               </div>
-            ) : (
-                <div className="space-y-4">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <ArrowLeft 
-                    className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
-                    strokeWidth={2.5}
-                    onClick={() => window.history.back()}
-                  />
-                  <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words">
-                    {project?.name}
-                  </h1>
-                  
-                  {/* Project Status and Type Badges */}
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <ProjectStatusBadge 
-                      projectId={project.id} 
-                      currentStatusId={localStatusId || undefined} 
-                      onStatusChange={handleStatusChange} 
-                      editable={!isArchived} 
-                      className="text-sm" 
-                    />
-                    
-                    {projectType && (
-                      <Badge variant="outline" className="text-sm px-3 py-1">
-                        {projectType.name.toUpperCase()}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Project Description */}
-                {project?.description && (
-                  <p className="text-muted-foreground text-lg">
-                    {project.description}
-                  </p>
-                )}
-                
-                {/* Mobile Assignees removed - single user organization */}
-                <div className="pt-4 md:hidden">
-                </div>
+              <div className="space-y-3">
+                <SimpleProjectTypeSelect
+                  value={editProjectTypeId}
+                  onValueChange={setEditProjectTypeId}
+                  disabled={isSaving}
+                  required
+                />
               </div>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-2 shrink-0 self-start">
-            {/* Desktop Assignees removed - single user organization */}
-            <div className="hidden md:flex items-center mr-4">
             </div>
-            
-            {!isEditing && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="lg"
-                    className="gap-2"
-                  >
-                    <span>{t('project_sheet.more')}</span>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" side="bottom">
-                  <DropdownMenuItem onSelect={() => setIsEditing(true)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    <span>{t('project_sheet.edit_project')}</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={handleArchiveAction}>
-                    {isArchived ? (
-                      <>
-                        <ArchiveRestore className="mr-2 h-4 w-4" />
-                        <span>{t('project_sheet.restore_project')}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Archive className="mr-2 h-4 w-4" />
-                        <span>{t('project_sheet.archive_project')}</span>
-                      </>
-                    )}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
           </div>
-        </div>
+        )}
       </div>
 
       {/* Archive Warning */}
@@ -565,27 +570,28 @@ export default function ProjectDetail() {
               id: 'payments',
               title: t('project_sheet.payments_tab'),
               content: (
-                <ProjectPaymentsSection 
-                  projectId={project!.id} 
+                <ProjectPaymentsSection
+                  projectId={project!.id}
                   onPaymentsUpdated={() => {
-                    // Refresh project data if needed
-                  }} 
-                  refreshToken={servicesVersion} 
+                    triggerSummaryRefresh();
+                  }}
+                  refreshToken={servicesVersion}
                 />
               )
-            }, 
+            },
             {
               id: 'services',
               title: t('project_sheet.services_tab'),
               content: (
-                <ProjectServicesSection 
-                  projectId={project!.id} 
+                <ProjectServicesSection
+                  projectId={project!.id}
                   onServicesUpdated={() => {
                     setServicesVersion(v => v + 1);
-                  }} 
+                    triggerSummaryRefresh();
+                  }}
                 />
               )
-            }, 
+            },
             {
               id: 'sessions',
               title: t('project_sheet.sessions_tab'),
@@ -620,9 +626,9 @@ export default function ProjectDetail() {
             {
               id: 'todos',
               title: t('project_sheet.todos_tab'),
-              content: <ProjectTodoListEnhanced projectId={project!.id} />
+              content: <ProjectTodoListEnhanced projectId={project!.id} onTodosUpdated={triggerSummaryRefresh} />
             }
-          ]} 
+          ]}
           rightFooter={
             <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
               <div className="space-y-3">

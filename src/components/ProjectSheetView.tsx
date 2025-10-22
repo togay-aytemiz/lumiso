@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFormsTranslation, useMessagesTranslation } from "@/hooks/useTypedTranslation";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -7,9 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore, ExternalLink } from "lucide-react";
-import { format } from "date-fns";
+import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore, ExternalLink, FolderKanban } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectActivitySection } from "./ProjectActivitySection";
 import { ProjectTodoListEnhanced } from "./ProjectTodoListEnhanced";
@@ -25,6 +23,10 @@ import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { SessionWithStatus } from "@/lib/sessionSorting";
 import { onArchiveToggle } from "@/components/ViewProjectDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTranslation } from "react-i18next";
+import { EntityHeader } from "@/components/EntityHeader";
+import { buildProjectSummaryItems } from "@/lib/projects/buildProjectSummaryItems";
+import { useProjectHeaderSummary } from "@/hooks/useProjectHeaderSummary";
 
 interface Project {
   id: string;
@@ -77,6 +79,7 @@ export function ProjectSheetView({
 }: ProjectSheetViewProps) {
   const { t: tForms } = useFormsTranslation();
   const { t: tMessages } = useMessagesTranslation();
+  const { t: tPages } = useTranslation("pages");
   const [sessions, setSessions] = useState<Session[]>([]);
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(false);
@@ -96,8 +99,10 @@ export function ProjectSheetView({
   const [servicesVersion, setServicesVersion] = useState(0);
   const [isArchived, setIsArchived] = useState(false);
   const [localStatusId, setLocalStatusId] = useState<string | null | undefined>(null);
+  const [summaryRefreshToken, setSummaryRefreshToken] = useState(0);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { summary: headerSummary } = useProjectHeaderSummary(project?.id || null, summaryRefreshToken);
 
   const fetchProjectSessions = async () => {
     if (!project) return;
@@ -395,7 +400,7 @@ export function ProjectSheetView({
         .select('status_id, previous_status_id')
         .eq('id', project.id)
         .single();
-      
+
       setLocalStatusId(res.isArchived ? projRow?.previous_status_id || null : projRow?.status_id || null);
       onProjectUpdated();
     } catch (e: any) {
@@ -407,32 +412,80 @@ export function ProjectSheetView({
     }
   };
 
-  if (!project) return null;
+  const triggerSummaryRefresh = () => {
+    setSummaryRefreshToken(prev => prev + 1);
+  };
 
-  // Client name no longer displayed as a header chip
-
-  const statusBadges = (
-    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground/80 sm:text-[0.8rem]">
-      <ProjectStatusBadge
-        projectId={project.id}
-        currentStatusId={localStatusId || undefined}
-        onStatusChange={() => {
-          onProjectUpdated();
-        }}
-        editable={!isArchived}
-        className="text-xs sm:text-sm"
-      />
-
-      {projectType && (
-        <Badge className="rounded-full border border-border/60 bg-muted/40 px-3 py-1 text-[0.65rem] font-semibold tracking-wide uppercase text-muted-foreground">
-          {projectType.name.toUpperCase()}
-        </Badge>
-      )}
-    </div>
+  const summaryItems = useMemo(
+    () => buildProjectSummaryItems({
+      t: tPages,
+      payments: headerSummary.payments,
+      todos: headerSummary.todos,
+      services: headerSummary.services,
+      sessions
+    }),
+    [headerSummary, sessions, tPages]
   );
 
-  const actionButtons = (
-    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+  if (!project) return null;
+
+  const projectTypeLabel = projectType?.name || tPages('projectDetail.header.defaultType');
+  const projectNameDisplay = project?.name || tPages('projectDetail.placeholders.name');
+  const statusBadgeNode = (
+    <ProjectStatusBadge
+      projectId={project.id}
+      currentStatusId={localStatusId || undefined}
+      onStatusChange={() => {
+        onProjectUpdated();
+      }}
+      editable={!isArchived}
+      className="text-xs sm:text-sm"
+    />
+  );
+
+  const headerTitle = (
+    <span className="flex flex-col">
+      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {projectTypeLabel}
+      </span>
+      <span className="flex items-center gap-2 text-foreground">
+        <span className="truncate">{projectNameDisplay}</span>
+        {statusBadgeNode}
+      </span>
+    </span>
+  );
+
+  const headerSubtext = !isEditing && project.description ? project.description : undefined;
+
+  const headerActions = isEditing ? (
+    <>
+      <Button
+        size="sm"
+        onClick={handleSaveProject}
+        disabled={isSaving || !editName.trim() || !editProjectTypeId}
+        className="gap-2"
+      >
+        <Save className="h-4 w-4" />
+        {isSaving ? tForms('common:actions.saving') : tForms('common:buttons.save')}
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => {
+          setIsEditing(false);
+          setEditName(project?.name || "");
+          setEditDescription(project?.description || "");
+          setEditProjectTypeId(project?.project_type_id || "");
+        }}
+        disabled={isSaving}
+        className="gap-2"
+      >
+        <X className="h-4 w-4" />
+        {tForms('common:buttons.cancel')}
+      </Button>
+    </>
+  ) : (
+    <>
       {mode === 'sheet' && onViewFullDetails && !isMobile && (
         <Button
           variant="outline"
@@ -444,41 +497,37 @@ export function ProjectSheetView({
           <span className="text-sm">{tForms('project_sheet.full_details')}</span>
         </Button>
       )}
-
-      {!isEditing && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-center gap-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:w-auto sm:px-3"
-            >
-              <span>{tForms('project_sheet.more')}</span>
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
-            <DropdownMenuItem role="menuitem" onSelect={() => setIsEditing(true)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              <span>{tForms('project_sheet.edit_project')}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem role="menuitem" onSelect={handleArchiveAction}>
-              {isArchived ? (
-                <>
-                  <ArchiveRestore className="mr-2 h-4 w-4" />
-                  <span>{tForms('project_sheet.restore_project')}</span>
-                </>
-              ) : (
-                <>
-                  <Archive className="mr-2 h-4 w-4" />
-                  <span>{tForms('project_sheet.archive_project')}</span>
-                </>
-              )}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
-
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-center gap-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:w-auto sm:px-3"
+          >
+            <span>{tForms('project_sheet.more')}</span>
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
+          <DropdownMenuItem role="menuitem" onSelect={() => setIsEditing(true)}>
+            <Pencil className="mr-2 h-4 w-4" />
+            <span>{tForms('project_sheet.edit_project')}</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem role="menuitem" onSelect={handleArchiveAction}>
+            {isArchived ? (
+              <>
+                <ArchiveRestore className="mr-2 h-4 w-4" />
+                <span>{tForms('project_sheet.restore_project')}</span>
+              </>
+            ) : (
+              <>
+                <Archive className="mr-2 h-4 w-4" />
+                <span>{tForms('project_sheet.archive_project')}</span>
+              </>
+            )}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <Button
         variant="ghost"
         size="sm"
@@ -487,82 +536,46 @@ export function ProjectSheetView({
       >
         <span>{tForms('project_sheet.close')}</span>
       </Button>
-    </div>
+    </>
   );
 
-  // Header content - refreshed layout for sheet header
   const headerContent = (
     <div className="w-full rounded-2xl border border-border/60 bg-background p-4 shadow-sm sm:p-6">
-      <div className="flex flex-col gap-4 sm:gap-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex-1 min-w-0 space-y-4">
-            {isEditing ? (
-              <div className="space-y-3">
-                <Input
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  placeholder={tForms('labels.project_name')}
-                  className="text-lg font-semibold"
-                />
-                <Textarea
-                  value={editDescription}
-                  onChange={e => setEditDescription(e.target.value)}
-                  placeholder={tForms('labels.project_description')}
-                  className="min-h-[88px] resize-none text-sm"
-                />
-                <SimpleProjectTypeSelect
-                  value={editProjectTypeId}
-                  onValueChange={setEditProjectTypeId}
-                  disabled={isSaving}
-                  required
-                />
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-start">
-                  <Button
-                    size="sm"
-                    onClick={handleSaveProject}
-                    disabled={isSaving || !editName.trim() || !editProjectTypeId}
-                    className="sm:w-auto"
-                  >
-                    <Save className="mr-2 h-4 w-4" />
-                    {isSaving ? tForms('common:actions.saving') : tForms('common:buttons.save')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setIsEditing(false);
-                      setEditName(project?.name || "");
-                      setEditDescription(project?.description || "");
-                      setEditProjectTypeId(project?.project_type_id || "");
-                    }}
-                    disabled={isSaving}
-                    className="sm:w-auto"
-                  >
-                    <X className="mr-2 h-4 w-4" />
-                    {tForms('common:buttons.cancel')}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3 text-left">
-                <div className="space-y-2">
-                  <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
-                    {project?.name}
-                  </h1>
-                  {project?.description && (
-                    <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
-                      {project.description}
-                    </p>
-                  )}
-                </div>
-                {statusBadges}
-              </div>
-            )}
+      <EntityHeader
+        name={project.name || ""}
+        title={headerTitle}
+        subtext={headerSubtext}
+        summaryItems={summaryItems}
+        avatarClassName="bg-gradient-to-br from-indigo-500 via-blue-500 to-purple-500 text-white ring-1 ring-indigo-400/60"
+        avatarContent={<FolderKanban className="h-5 w-5" />}
+        actions={headerActions}
+        fallbackInitials="PR"
+      />
+      {isEditing && (
+        <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <div className="space-y-3">
+            <Input
+              value={editName}
+              onChange={e => setEditName(e.target.value)}
+              placeholder={tForms('labels.project_name')}
+            />
+            <Textarea
+              value={editDescription}
+              onChange={e => setEditDescription(e.target.value)}
+              placeholder={tForms('labels.project_description')}
+              className="min-h-[100px] resize-none"
+            />
           </div>
-
-          <div className="sm:min-w-[220px]">{actionButtons}</div>
+          <div className="space-y-3">
+            <SimpleProjectTypeSelect
+              value={editProjectTypeId}
+              onValueChange={setEditProjectTypeId}
+              disabled={isSaving}
+              required
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 
@@ -597,30 +610,32 @@ export function ProjectSheetView({
               id: 'payments',
               title: tForms('project_sheet.payments_tab'),
               content: (
-                <ProjectPaymentsSection 
-                  projectId={project!.id} 
+                <ProjectPaymentsSection
+                  projectId={project!.id}
                   onPaymentsUpdated={() => {
                     onProjectUpdated();
                     onActivityUpdated?.();
-                  }} 
-                  refreshToken={servicesVersion} 
+                    triggerSummaryRefresh();
+                  }}
+                  refreshToken={servicesVersion}
                 />
               )
-            }, 
+            },
             {
               id: 'services',
               title: tForms('project_sheet.services_tab'),
               content: (
                 <ProjectServicesSection 
-                  projectId={project!.id} 
+                  projectId={project!.id}
                   onServicesUpdated={() => {
                     setServicesVersion(v => v + 1);
                     onProjectUpdated();
                     onActivityUpdated?.();
-                  }} 
+                    triggerSummaryRefresh();
+                  }}
                 />
               )
-            }, 
+            },
             {
               id: 'sessions',
               title: tForms('project_sheet.sessions_tab'),
@@ -658,7 +673,7 @@ export function ProjectSheetView({
             {
               id: 'todos',
               title: tForms('project_sheet.todos_tab'),
-              content: <ProjectTodoListEnhanced projectId={project!.id} />
+              content: <ProjectTodoListEnhanced projectId={project!.id} onTodosUpdated={triggerSummaryRefresh} />
             }
           ]} 
           rightFooter={

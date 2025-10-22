@@ -89,6 +89,7 @@ interface EntityHeaderProps {
   className?: string;
   fallbackInitials?: string;
   avatarClassName?: string;
+  avatarContent?: ReactNode;
 }
 
 export function EntityHeader({
@@ -102,13 +103,15 @@ export function EntityHeader({
   actions,
   className,
   fallbackInitials = "??",
-  avatarClassName
+  avatarClassName,
+  avatarContent
 }: EntityHeaderProps) {
   const displayInitials = useMemo(
     () => buildInitials(name, fallbackInitials),
     [name, fallbackInitials]
   );
   const hasSubtext = Boolean(subtext);
+  const avatarDisplay = avatarContent ?? displayInitials;
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -132,7 +135,7 @@ export function EntityHeader({
                 avatarClassName
               )}
             >
-              {displayInitials}
+              {avatarDisplay}
             </div>
             <div className={cn("min-w-0", hasSubtext ? "space-y-1" : "")}>
               <div className="flex flex-wrap items-center gap-2">

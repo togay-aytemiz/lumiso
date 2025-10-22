@@ -18,10 +18,12 @@ interface Todo {
 
 interface ProjectTodoListEnhancedProps {
   projectId: string;
+  onTodosUpdated?: () => void;
 }
 
 export function ProjectTodoListEnhanced({
-  projectId
+  projectId,
+  onTodosUpdated
 }: ProjectTodoListEnhancedProps) {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +50,7 @@ export function ProjectTodoListEnhanced({
       });
       if (error) throw error;
       setTodos(data || []);
+      onTodosUpdated?.();
     } catch (error: any) {
       console.error('Error fetching todos:', error);
       toast({
@@ -71,6 +74,7 @@ export function ProjectTodoListEnhanced({
         ...todo,
         is_completed: !isCompleted
       } : todo));
+      onTodosUpdated?.();
       toast({
          title: tCommon('success'),
          description: `${tForms('todos.todo')} ${!isCompleted ? tForms('todos.completed') : tForms('todos.reopened')}.`
@@ -104,6 +108,7 @@ export function ProjectTodoListEnhanced({
       if (error) throw error;
       setTodos([data, ...todos]);
       setNewTodoContent("");
+      onTodosUpdated?.();
       toast({
          title: tCommon('success'),
          description: tForms('todos.todo_added')
@@ -133,6 +138,7 @@ export function ProjectTodoListEnhanced({
       } : todo));
       setEditingId(null);
       setEditContent("");
+      onTodosUpdated?.();
       toast({
          title: tCommon('success'),
          description: tForms('todos.todo_updated')
@@ -160,6 +166,7 @@ export function ProjectTodoListEnhanced({
       } = await supabase.from('todos').delete().eq('id', todoId);
       if (error) throw error;
       setTodos(todos.filter(todo => todo.id !== todoId));
+      onTodosUpdated?.();
       toast({
          title: tCommon('success'),
          description: tForms('todos.todo_deleted')

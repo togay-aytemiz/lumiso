@@ -382,6 +382,46 @@
       "cancel": "İptal",
       "deleting": "Siliniyor..."
     },
+    "header": {
+      "back": "Projeler listesine dön",
+      "defaultType": "Proje",
+      "noDescription": "Proje açıklaması ekleyin",
+      "payments": {
+        "label": "Ödemeler",
+        "primary": "{{paid}} ödendi",
+        "primaryZero": "Henüz ödeme yok",
+        "secondary": "Toplam {{total}} tutarın {{remaining}} kısmı kaldı",
+        "secondaryZero": "Ödemeleri takip etmek için paket fiyatı girin",
+        "paidInFull": "Tamamı ödendi"
+      },
+      "sessions": {
+        "label": "Seanslar",
+        "count_one": "1 seans",
+        "count_other": "{{count}} seans",
+        "none": "Seans yok",
+        "hint": "Sonraki seansı planlayın",
+        "next": "Sonraki seans {{date}}",
+        "last": "Son seans {{date}}",
+        "overdueSummary": "Planlanan tüm seanslar gecikti"
+      },
+      "todos": {
+        "label": "Görevler",
+        "primary": "{{total}} görevden {{completed}} tamamlandı",
+        "none": "Henüz görev yok",
+        "secondary": "%{{progress}} ilerleme",
+        "hint": "İlerlemeyi takip etmek için görev oluşturun"
+      },
+      "services": {
+        "label": "Hizmetler",
+        "primary_one": "1 hizmet seçildi",
+        "primary_other": "{{count}} hizmet seçildi",
+        "none": "Seçili hizmet yok",
+        "secondary": "Seçili hizmetler toplamı {{total}}",
+        "hint": "Projeyi şekillendirmek için hizmet ekleyin",
+        "infoTitle": "Seçili hizmetler",
+        "infoLabel": "Seçili hizmetler ({{count}})"
+      }
+    },
     "badges": {
       "noStatus": "Durum Yok"
     },

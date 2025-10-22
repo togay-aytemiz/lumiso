@@ -382,6 +382,46 @@
       "cancel": "Cancel",
       "deleting": "Deleting..."
     },
+    "header": {
+      "back": "Back to projects",
+      "defaultType": "Project",
+      "noDescription": "Add a project description",
+      "payments": {
+        "label": "Payments",
+        "primary": "Paid {{paid}}",
+        "primaryZero": "No payments yet",
+        "secondary": "{{remaining}} remaining of {{total}}",
+        "secondaryZero": "Set a base price to track payments",
+        "paidInFull": "Paid in full"
+      },
+      "sessions": {
+        "label": "Sessions",
+        "count_one": "1 session",
+        "count_other": "{{count}} sessions",
+        "none": "No sessions",
+        "hint": "Schedule the next session",
+        "next": "Next session {{date}}",
+        "last": "Last session {{date}}",
+        "overdueSummary": "All planned sessions are overdue"
+      },
+      "todos": {
+        "label": "Todos",
+        "primary": "{{completed}} of {{total}} completed",
+        "none": "No todos yet",
+        "secondary": "{{progress}}% progress",
+        "hint": "Create tasks to track progress"
+      },
+      "services": {
+        "label": "Services",
+        "primary_one": "1 service selected",
+        "primary_other": "{{count}} services selected",
+        "none": "No services selected",
+        "secondary": "Selected services total {{total}}",
+        "hint": "Add services to scope the project",
+        "infoTitle": "Selected services",
+        "infoLabel": "Selected services ({{count}})"
+      }
+    },
     "badges": {
       "noStatus": "No Status"
     },

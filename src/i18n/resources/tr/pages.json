@@ -214,10 +214,15 @@
         "count_other": "{{count}} seans",
         "none": "Henüz seans yok",
         "next": "Sıradaki {{date}}",
-      "last": "Son seans {{date}}",
-      "hint": "İlerlemeniz için bir seans planlayın.",
+        "last": "Son seans {{date}}",
+        "hint": "İlerlemeniz için bir seans planlayın.",
+        "today": "Bugün {{time}}",
+        "todayAllDay": "Bugün",
         "overdue": "Gecikmiş: {{date}}",
-        "overdueSummary": "Planlı tüm seanslar gecikmiş durumda"
+        "overdueSummary": "Planlı tüm seanslar gecikmiş durumda",
+        "overdueCount": "{{count}} gecikmiş seans",
+        "overdueCount_one": "1 gecikmiş seans",
+        "overdueCount_other": "{{count}} gecikmiş seans"
       },
       "activity": {
         "label": "Aktivite",

@@ -26,6 +26,8 @@ const CONNECTOR_WORDS = new Set([
   "el"
 ]);
 
+const MAX_INITIALS = 3;
+
 const buildInitials = (name: string, fallback: string) => {
   const trimmed = name.trim();
   if (!trimmed) {
@@ -40,17 +42,25 @@ const buildInitials = (name: string, fallback: string) => {
     return fallback;
   }
 
-  if (candidates.length === 1) {
-    const chars = Array.from(candidates[0]);
-    const pair = chars.slice(0, 2).join("").toUpperCase();
-    return pair || fallback;
+  const initials: string[] = [];
+  for (const token of candidates) {
+    const chars = Array.from(token);
+    const initial = chars[0]?.toUpperCase();
+    if (initial) {
+      initials.push(initial);
+    }
+    if (initials.length >= MAX_INITIALS) {
+      break;
+    }
   }
 
-  const firstChars = Array.from(candidates[0]);
-  const lastChars = Array.from(candidates[candidates.length - 1]);
-  const firstInitial = firstChars[0]?.toUpperCase() ?? "";
-  const lastInitial = lastChars[0]?.toUpperCase() ?? "";
-  const combined = `${firstInitial}${lastInitial}`.trim();
+  if (initials.length === 0) {
+    const fallbackToken = candidates[0];
+    const fallbackChars = Array.from(fallbackToken).slice(0, MAX_INITIALS).join("").toUpperCase();
+    return fallbackChars || fallback;
+  }
+
+  const combined = initials.join("");
   return combined || fallback;
 };
 

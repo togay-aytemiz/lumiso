@@ -23,7 +23,7 @@ import { ProjectsSection } from "@/components/ProjectsSection";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 // AssigneesList removed - single user organization
-import { formatDate, formatDateTime, getDateFnsLocale } from "@/lib/utils";
+import { formatDate, formatDateTime, formatTime, getDateFnsLocale } from "@/lib/utils";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import EnhancedSessionsSection from "@/components/EnhancedSessionsSection";
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
@@ -656,37 +656,55 @@ const LeadDetail = () => {
   }, []);
 
   const {
+    todayPlannedSession,
+    todayPlannedDate,
     upcomingPlannedSession,
     upcomingPlannedDate,
     overduePlannedSession,
-    overduePlannedDate
+    overduePlannedDate,
+    overduePlannedCount
   } = useMemo(() => {
-    const now = Date.now();
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    let today: { session: Session; date: Date } | null = null;
     let upcoming: { session: Session; date: Date } | null = null;
     let overdue: { session: Session; date: Date } | null = null;
+    let overdueCount = 0;
 
     sessions.forEach(session => {
       if (session.status !== "planned") return;
       const sessionDate = getSessionDateTime(session);
       if (!sessionDate) return;
-      const ts = sessionDate.getTime();
 
-      if (ts >= now) {
-        if (!upcoming || ts < upcoming.date.getTime()) {
-          upcoming = { session, date: sessionDate };
-        }
-      } else {
-        if (!overdue || ts > overdue.date.getTime()) {
+      if (sessionDate < startOfToday) {
+        overdueCount += 1;
+        if (!overdue || sessionDate > overdue.date) {
           overdue = { session, date: sessionDate };
         }
+        return;
+      }
+
+      if (sessionDate <= endOfToday) {
+        if (!today || sessionDate < today.date) {
+          today = { session, date: sessionDate };
+        }
+        return;
+      }
+
+      if (!upcoming || sessionDate < upcoming.date) {
+        upcoming = { session, date: sessionDate };
       }
     });
 
     return {
+      todayPlannedSession: today?.session ?? null,
+      todayPlannedDate: today?.date ?? null,
       upcomingPlannedSession: upcoming?.session ?? null,
       upcomingPlannedDate: upcoming?.date ?? null,
       overduePlannedSession: overdue?.session ?? null,
-      overduePlannedDate: overdue?.date ?? null
+      overduePlannedDate: overdue?.date ?? null,
+      overduePlannedCount: overdueCount
     };
   }, [sessions, getSessionDateTime]);
 
@@ -1104,17 +1122,43 @@ const LeadDetail = () => {
     ? tPages("leadDetail.header.sessions.count", { count: sessionsCount })
     : tPages("leadDetail.header.sessions.none");
   let sessionsSecondary = tPages("leadDetail.header.sessions.hint");
-  if (sessionsCount && upcomingPlannedSession && upcomingPlannedDate) {
-    const plannedDisplay = formatDateTime(
-      upcomingPlannedSession.session_date,
-      upcomingPlannedSession.session_time || undefined
-    );
-    sessionsSecondary = tPages("leadDetail.header.sessions.next", { date: plannedDisplay });
-  } else if (sessionsCount && overduePlannedSession && overduePlannedDate) {
-    sessionsSecondary = tPages("leadDetail.header.sessions.overdueSummary");
-  } else if (sessionsCount && recentSession) {
-    const recentDisplay = formatDate(recentSession.session_date);
-    sessionsSecondary = tPages("leadDetail.header.sessions.last", { date: recentDisplay });
+  if (sessionsCount) {
+    const summaryParts: string[] = [];
+
+    if (todayPlannedSession && todayPlannedDate) {
+      if (todayPlannedSession.session_time) {
+        const timeDisplay = formatTime(todayPlannedSession.session_time);
+        summaryParts.push(tPages("leadDetail.header.sessions.today", { time: timeDisplay }));
+      } else {
+        summaryParts.push(tPages("leadDetail.header.sessions.todayAllDay"));
+      }
+    } else if (upcomingPlannedSession && upcomingPlannedDate) {
+      const plannedDisplay = formatDateTime(
+        upcomingPlannedSession.session_date,
+        upcomingPlannedSession.session_time || undefined
+      );
+      summaryParts.push(tPages("leadDetail.header.sessions.next", { date: plannedDisplay }));
+    } else if (overduePlannedSession && overduePlannedDate) {
+      const overdueDisplay = formatDateTime(
+        overduePlannedSession.session_date,
+        overduePlannedSession.session_time || undefined
+      );
+      summaryParts.push(tPages("leadDetail.header.sessions.overdue", { date: overdueDisplay }));
+    } else if (recentSession) {
+      const recentDisplay = formatDate(recentSession.session_date);
+      summaryParts.push(tPages("leadDetail.header.sessions.last", { date: recentDisplay }));
+    }
+
+    const hasTodayOrUpcoming = Boolean(todayPlannedSession || upcomingPlannedSession);
+    if (overduePlannedCount > 0 && hasTodayOrUpcoming) {
+      summaryParts.push(
+        tPages("leadDetail.header.sessions.overdueCount", { count: overduePlannedCount })
+      );
+    }
+
+    if (summaryParts.length > 0) {
+      sessionsSecondary = summaryParts.join(" • ");
+    }
   }
 
   const paymentsPrimary = aggregatedPayments.total > 0 || aggregatedPayments.totalPaid > 0
@@ -1133,7 +1177,7 @@ const LeadDetail = () => {
     const paymentsSecondaryClass = aggregatedPayments.total > 0 && aggregatedPayments.remaining <= 0
       ? "text-emerald-600"
       : undefined;
-    const sessionsSecondaryClass = sessionsCount > 0 && !upcomingPlannedSession && overduePlannedSession
+    const sessionsSecondaryClass = sessionsCount > 0 && overduePlannedCount > 0
       ? "text-amber-600"
       : undefined;
 
@@ -1173,7 +1217,18 @@ const LeadDetail = () => {
         }
       }
     ];
-  }, [projectPrimary, projectSecondary, paymentsPrimary, paymentsSecondary, sessionsPrimary, sessionsSecondary, activitySummary, tPages]);
+  }, [
+    projectPrimary,
+    projectSecondary,
+    paymentsPrimary,
+    paymentsSecondary,
+    sessionsPrimary,
+    sessionsSecondary,
+    sessionsCount,
+    overduePlannedCount,
+    activitySummary,
+    tPages
+  ]);
   if (loading) {
     return <DetailPageLoadingSkeleton />;
   }

@@ -214,10 +214,15 @@
         "count_other": "{{count}} sessions",
         "none": "No sessions yet",
         "next": "Next on {{date}}",
-      "last": "Last on {{date}}",
-      "hint": "Schedule a session to keep things moving.",
+        "last": "Last on {{date}}",
+        "hint": "Schedule a session to keep things moving.",
+        "today": "Today at {{time}}",
+        "todayAllDay": "Today",
         "overdue": "Overdue since {{date}}",
-        "overdueSummary": "All remaining sessions are overdue"
+        "overdueSummary": "All remaining sessions are overdue",
+        "overdueCount": "{{count}} overdue sessions",
+        "overdueCount_one": "1 overdue session",
+        "overdueCount_other": "{{count}} overdue sessions"
       },
       "activity": {
         "label": "Activity",

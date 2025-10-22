@@ -287,9 +287,19 @@ All colors MUST be HSL.
   }
   
   /* Make touch targets larger for mobile */
-  button, select, input[type="button"], input[type="submit"] {
-    min-height: 44px;
+  button,
+  select,
+  input[type="button"],
+  input[type="submit"] {
     touch-action: manipulation;
+  }
+
+  /* Preserve compact size for custom toggles/controls while keeping other buttons accessible */
+  button:not(:where([role="switch"], [role="radio"], [role="checkbox"])),
+  select,
+  input[type="button"],
+  input[type="submit"] {
+    min-height: 44px;
   }
   
   /* Prevent zoom on input focus */

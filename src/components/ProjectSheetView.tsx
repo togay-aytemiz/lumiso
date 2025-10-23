@@ -694,7 +694,7 @@ export function ProjectSheetView({
     </div>
   );
 
-  const sheetNavOffset = isMobile ? 32 : 24;
+  const sheetNavOffset = isMobile ? 32 : 0;
   const sectionId = {
     payments: "project-sheet-payments",
     services: "project-sheet-services",

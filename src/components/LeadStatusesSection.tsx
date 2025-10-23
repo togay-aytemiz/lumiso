@@ -72,7 +72,11 @@ const LeadStatusesSection = () => {
   
   // Use cached data
   const { data: statuses = [], isLoading } = useLeadStatuses();
-  const { data: organizationSettings, isLoading: settingsLoading } = useOrganizationSettings();
+  const {
+    settings: organizationSettings,
+    loading: settingsLoading,
+    updateSettings: updateOrganizationSettings,
+  } = useOrganizationSettings();
 
   // Check for lifecycle completeness and show warnings
   useEffect(() => {
@@ -98,30 +102,21 @@ const LeadStatusesSection = () => {
     },
   });
 
-  const updateSetting = async (key: string, value: boolean) => {
+  const updatePreference = async (key: string, value: boolean) => {
     setSaving(true);
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error('User not authenticated');
-
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) throw new Error('No organization found');
-
-      const { error } = await supabase
-        .from('organization_settings')
-        .update({ [key]: value })
-        .eq('organization_id', organizationId);
-
-      if (error) throw error;
-
-      // Invalidate cache to refresh data
-      queryClient.invalidateQueries({ queryKey: ['organization_settings', activeOrganizationId] });
-
-      toast.success(t('lead_statuses.preferences_updated'));
+      const result = await updateOrganizationSettings({ [key]: value });
+      if (result.success) {
+        toast.success(t('lead_statuses.preferences_updated'));
+      }
     } catch (error: any) {
       console.error('Error updating setting:', error);
-      toast.error("Failed to update preferences");
-    } finally{
+      if (error?.message) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to update preferences");
+      }
+    } finally {
       setSaving(false);
     }
   };
@@ -265,7 +260,7 @@ const LeadStatusesSection = () => {
             <Switch
               id="quick-status-buttons"
               checked={showQuickButtons}
-              onCheckedChange={(checked) => updateSetting('show_quick_status_buttons', checked)}
+              onCheckedChange={(checked) => updatePreference('show_quick_status_buttons', checked)}
               disabled={saving || settingsLoading}
               className="self-end sm:self-auto"
             />

@@ -1,9 +1,6 @@
 import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
 import { cn } from "@/lib/utils";
-import { useOrganization } from "@/contexts/OrganizationContext";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { SocialChannel, useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { SocialChannel, useOrganizationSettings, OrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useTranslation } from 'react-i18next';
 
 interface EmailPreviewProps {
@@ -16,23 +13,7 @@ interface EmailPreviewProps {
 
 export function EmailPreview({ blocks, mockData, device, emailSubject, preheader }: EmailPreviewProps) {
   const { t } = useTranslation('pages');
-  const { activeOrganization } = useOrganization();
-  const [organizationSettings, setOrganizationSettings] = useState<any>(null);
-
-  useEffect(() => {
-    const fetchOrganizationSettings = async () => {
-      if (activeOrganization?.id) {
-        const { data } = await supabase
-          .from("organization_settings")
-          .select("photography_business_name, logo_url, primary_brand_color, phone, email, social_channels")
-          .eq("organization_id", activeOrganization.id)
-          .single();
-        setOrganizationSettings(data);
-      }
-    };
-
-    fetchOrganizationSettings();
-  }, [activeOrganization?.id]);
+  const { settings: organizationSettings } = useOrganizationSettings();
 
   const replacePlaceholders = (text: string) => {
     return text.replace(/\{(\w+)(?:\|([^}]*))?\}/g, (match, key, fallback) => {
@@ -70,13 +51,26 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
             case "session-details":
               return <SessionDetailsPreview key={block.id} data={block.data as SessionDetailsBlockData} mockData={mockData} />;
             case "cta":
-              return <CTABlockPreview key={block.id} data={block.data as CTABlockData} replacePlaceholders={replacePlaceholders} />;
+              return (
+                <CTABlockPreview
+                  key={block.id}
+                  data={block.data as CTABlockData}
+                  replacePlaceholders={replacePlaceholders}
+                  organizationSettings={organizationSettings}
+                />
+              );
             case "image":
               return <ImageBlockPreview key={block.id} data={block.data as ImageBlockData} replacePlaceholders={replacePlaceholders} />;
             case "divider":
               return <DividerBlockPreview key={block.id} data={block.data} />;
             case "social-links":
-              return <SocialLinksBlockPreview key={block.id} data={block.data} />;
+              return (
+                <SocialLinksBlockPreview
+                  key={block.id}
+                  data={block.data}
+                  organizationSettings={organizationSettings}
+                />
+              );
             case "header":
               return <HeaderBlockPreview key={block.id} data={block.data} replacePlaceholders={replacePlaceholders} organizationSettings={organizationSettings} />;
             case "raw-html":
@@ -195,41 +189,29 @@ function SessionDetailsPreview({ data, mockData }: { data: SessionDetailsBlockDa
   );
 }
 
-function CTABlockPreview({ data, replacePlaceholders }: { data: CTABlockData; replacePlaceholders: (text: string) => string }) {
-  const { activeOrganization } = useOrganization();
-  const [organizationSettings, setOrganizationSettings] = useState<any>(null);
-
-  useEffect(() => {
-    const fetchOrganizationSettings = async () => {
-      if (activeOrganization?.id) {
-        const { data: settings } = await supabase
-          .from("organization_settings")
-          .select("primary_brand_color")
-          .eq("organization_id", activeOrganization.id)
-          .single();
-        setOrganizationSettings(settings);
-      }
-    };
-
-    fetchOrganizationSettings();
-  }, [activeOrganization?.id]);
+function CTABlockPreview({
+  data,
+  replacePlaceholders,
+  organizationSettings,
+}: {
+  data: CTABlockData;
+  replacePlaceholders: (text: string) => string;
+  organizationSettings?: OrganizationSettings | null;
+}) {
+  const brandColor = organizationSettings?.primary_brand_color || "#1EB29F";
 
   const getButtonStyles = () => {
-    const brandColor = organizationSettings?.primary_brand_color || "#1EB29F";
-    
     switch (data.variant) {
       case "secondary":
-        return `bg-gray-100 text-gray-800 px-6 py-3 rounded-md font-medium inline-block no-underline border border-gray-300`;
+        return "bg-gray-100 text-gray-800 px-6 py-3 rounded-md font-medium inline-block no-underline border border-gray-300";
       case "text":
-        return `font-medium underline inline-block no-underline`;
+        return "font-medium underline inline-block no-underline";
       default:
-        return `text-white px-6 py-3 rounded-md font-medium inline-block no-underline`;
+        return "text-white px-6 py-3 rounded-md font-medium inline-block no-underline";
     }
   };
 
   const getButtonStyle = () => {
-    const brandColor = organizationSettings?.primary_brand_color || "#1EB29F";
-    
     switch (data.variant) {
       case "text":
         return { color: brandColor };
@@ -281,7 +263,15 @@ function ImageBlockPreview({ data, replacePlaceholders }: { data: ImageBlockData
   );
 }
 
-function FooterBlockPreview({ data, mockData, organizationSettings }: { data: FooterBlockData; mockData: Record<string, string>; organizationSettings: any }) {
+function FooterBlockPreview({
+  data,
+  mockData,
+  organizationSettings,
+}: {
+  data: FooterBlockData;
+  mockData: Record<string, string>;
+  organizationSettings?: OrganizationSettings | null;
+}) {
   const businessName = organizationSettings?.photography_business_name || mockData.business_name || 'Your Business';
   const businessPhone = organizationSettings?.phone || mockData.business_phone || '+1 (555) 123-4567';
   const businessEmail = organizationSettings?.email || mockData.business_email || `hello@${businessName.toLowerCase().replace(/\s+/g, '')}.com`;
@@ -364,11 +354,15 @@ function DividerBlockPreview({ data }: { data: any }) {
   }
 }
 
-function SocialLinksBlockPreview({ data }: { data: any }) {
-  const { settings } = useOrganizationSettings();
-
-  const socialChannelsArray = settings?.socialChannels 
-    ? Object.entries(settings.socialChannels)
+function SocialLinksBlockPreview({
+  data,
+  organizationSettings,
+}: {
+  data: any;
+  organizationSettings?: OrganizationSettings | null;
+}) {
+  const socialChannelsArray = organizationSettings?.socialChannels
+    ? Object.entries(organizationSettings.socialChannels)
         .sort(([, a], [, b]) => ((a as SocialChannel).order || 0) - ((b as SocialChannel).order || 0))
         .filter(([key, channel]) => {
           const socialChannel = channel as SocialChannel;
@@ -403,26 +397,18 @@ function SocialLinksBlockPreview({ data }: { data: any }) {
   );
 }
 
-function HeaderBlockPreview({ data, replacePlaceholders, organizationSettings }: { data: any; replacePlaceholders: (text: string) => string; organizationSettings?: any }) {
-  const { activeOrganization } = useOrganization();
-  const [orgSettings, setOrgSettings] = useState<any>(organizationSettings);
-
-  useEffect(() => {
-    if (!orgSettings && activeOrganization?.id) {
-      const fetchSettings = async () => {
-        const { data } = await supabase
-          .from("organization_settings")
-          .select("photography_business_name, logo_url")
-          .eq("organization_id", activeOrganization.id)
-          .single();
-        setOrgSettings(data);
-      };
-      fetchSettings();
-    }
-  }, [activeOrganization?.id, orgSettings]);
-
-  const businessName = orgSettings?.photography_business_name || 'Your Business';
-  const logoUrl = orgSettings?.logo_url;
+function HeaderBlockPreview({
+  data,
+  replacePlaceholders,
+  organizationSettings,
+}: {
+  data: any;
+  replacePlaceholders: (text: string) => string;
+  organizationSettings?: OrganizationSettings | null;
+}) {
+  const businessName =
+    organizationSettings?.photography_business_name || "Your Business";
+  const logoUrl = organizationSettings?.logo_url;
   const alignment = data.logoAlignment || "center";
   const hasBackground = data.backgroundColor && data.backgroundColor !== "#ffffff";
 

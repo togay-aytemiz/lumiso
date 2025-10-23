@@ -2,6 +2,11 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { detectBrowserTimezone } from '@/lib/dateFormatUtils';
+import {
+  fetchOrganizationSettingsWithCache,
+  ORGANIZATION_SETTINGS_CACHE_TTL,
+} from '@/lib/organizationSettingsCache';
 
 interface Organization {
   id: string;
@@ -246,22 +251,18 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
       })
     );
 
-    // Organization settings
+    // Organization settings (cache aware)
     tasks.push(
       queryClient.prefetchQuery({
         queryKey: ['organization_settings', orgId],
         queryFn: async () => {
-          // Ensure exists then fetch
-          await supabase.rpc('ensure_organization_settings', { org_id: orgId });
-          const { data, error } = await supabase
-            .from('organization_settings')
-            .select('*')
-            .eq('organization_id', orgId)
-            .single();
-          if (error) throw error;
-          return data;
+          const detectedTimezone =
+            typeof window !== 'undefined' ? detectBrowserTimezone() : undefined;
+          return fetchOrganizationSettingsWithCache(orgId, {
+            detectedTimezone,
+          });
         },
-        staleTime: 5 * 60 * 1000,
+        staleTime: ORGANIZATION_SETTINGS_CACHE_TTL,
       })
     );
 

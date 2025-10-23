@@ -171,29 +171,4 @@ export function useSessionStatuses() {
   });
 }
 
-export function useOrganizationSettings() {
-  const { activeOrganizationId } = useOrganization();
-
-  return useQuery({
-    queryKey: ['organization_settings', activeOrganizationId],
-    queryFn: async () => {
-      if (!activeOrganizationId) return null;
-      
-      // Ensure settings exist
-      await supabase.rpc('ensure_organization_settings', { 
-        org_id: activeOrganizationId 
-      });
-      
-      const { data, error } = await supabase
-        .from('organization_settings')
-        .select('*')
-        .eq('organization_id', activeOrganizationId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!activeOrganizationId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-}
+export { useOrganizationSettings } from "./useOrganizationSettings";

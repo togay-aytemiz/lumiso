@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFormsTranslation, useMessagesTranslation } from "@/hooks/useTypedTranslation";
-import { Sheet, SheetContent, SheetHeader } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -707,7 +707,7 @@ export function ProjectSheetView({
   const mainContent = (
     <>
       <div className={isArchived ? 'opacity-60 pointer-events-none select-none' : ''}>
-        <ProjectDetailsLayout 
+        <ProjectDetailsLayout
           header={<></>} 
           left={
             <div className="space-y-4">
@@ -832,25 +832,31 @@ export function ProjectSheetView({
         {archiveConfirmDialog}
         <Sheet open={open} onOpenChange={handleDialogOpenChange}>
           <SheetContent
-            ref={scrollContainerRef}
             side={isMobile ? "bottom" : "right"}
-            className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-y-auto' : isMobile ? 'h-[100vh] max-w-none w-full' : 'sm:max-w-6xl lg:max-w-7xl h-[100vh] overflow-y-auto'} overscroll-contain pr-2 sm:pr-6 pt-8 sm:pt-6`}
+            className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none' : isMobile ? 'h-[100vh] max-w-none w-full' : 'sm:max-w-6xl lg:max-w-7xl h-[100vh]'} overflow-hidden p-0`}
           >
-            <div className="max-w-full overflow-x-hidden relative">
-              {/* Mobile-only top-right close button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onOpenChange(false)}
-                className="sm:hidden absolute top-2 right-2 h-8 w-8 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                aria-label={tForms('project_sheet.close')}
+            <div className="flex h-full flex-col bg-muted/40">
+              <div
+                ref={scrollContainerRef}
+                className="flex-1 overflow-y-auto overscroll-contain bg-background"
               >
-                <X className="h-4 w-4" />
-              </Button>
-              <SheetHeader className="pb-4">
-                {headerContent}
-              </SheetHeader>
-              {mainContent}
+                <div className="relative mx-auto max-w-full px-4 pb-12 pt-8 sm:px-6">
+                  {/* Mobile-only top-right close button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onOpenChange(false)}
+                    className="sm:hidden absolute right-4 top-4 h-9 w-9 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    aria-label={tForms('project_sheet.close')}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                  <div className="space-y-6 md:space-y-8">
+                    <div>{headerContent}</div>
+                    {mainContent}
+                  </div>
+                </div>
+              </div>
             </div>
           </SheetContent>
         </Sheet>
@@ -886,16 +892,24 @@ export function ProjectSheetView({
       {archiveConfirmDialog}
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
         <DialogContent
-          ref={scrollContainerRef}
-          className="max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-y-auto overscroll-contain pr-2 [&>button]:hidden pt-8 sm:pt-6"
+          className="max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-hidden p-0 overscroll-contain [&>button]:hidden"
         >
-          <div className="max-w-full overflow-x-hidden">
-            <DialogHeader className="pb-4">
-              <DialogTitle asChild>
-                <div>{headerContent}</div>
-              </DialogTitle>
-            </DialogHeader>
-            {mainContent}
+          <div className="flex h-full flex-col bg-muted/40">
+            <div
+              ref={scrollContainerRef}
+              className="flex-1 overflow-y-auto overscroll-contain bg-background"
+            >
+              <div className="mx-auto max-w-full px-4 pb-12 pt-8 sm:px-6">
+                <div className="space-y-6 md:space-y-8">
+                  <DialogHeader className="pb-0">
+                    <DialogTitle asChild>
+                      <div>{headerContent}</div>
+                    </DialogTitle>
+                  </DialogHeader>
+                  {mainContent}
+                </div>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

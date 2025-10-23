@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ColumnPreference } from "@/components/data-table";
 
@@ -21,6 +21,7 @@ export function useProjectsColumnPreferences(): ProjectsColumnPreferencesResult 
   const [archivedDefaultPreferences, setArchivedDefaultPreferences] =
     useState<NullablePrefs>();
   const [loading, setLoading] = useState(true);
+  const lastSavedRef = useRef<Record<string, string | null>>({});
 
   useEffect(() => {
     let mounted = true;
@@ -49,9 +50,15 @@ export function useProjectsColumnPreferences(): ProjectsColumnPreferencesResult 
         for (const row of data) {
           if (row.table_name === PROJECTS_LIST_TABLE && row.column_config) {
             setListDefaultPreferences(row.column_config as ColumnPreference[]);
+            lastSavedRef.current[PROJECTS_LIST_TABLE] = JSON.stringify(
+              row.column_config
+            );
           }
           if (row.table_name === PROJECTS_ARCHIVED_TABLE && row.column_config) {
             setArchivedDefaultPreferences(row.column_config as ColumnPreference[]);
+            lastSavedRef.current[PROJECTS_ARCHIVED_TABLE] = JSON.stringify(
+              row.column_config
+            );
           }
         }
       } catch (err) {
@@ -69,6 +76,10 @@ export function useProjectsColumnPreferences(): ProjectsColumnPreferencesResult 
   const savePreferences = useCallback(
     async (table: string, prefs: ColumnPreference[]) => {
       try {
+        const serialized = JSON.stringify(prefs);
+        if (lastSavedRef.current[table] === serialized) {
+          return;
+        }
         const { data: user } = await supabase.auth.getUser();
         const userId = user.user?.id;
         if (!userId) return;
@@ -83,6 +94,7 @@ export function useProjectsColumnPreferences(): ProjectsColumnPreferencesResult 
             },
             { onConflict: "user_id,table_name" }
           );
+        lastSavedRef.current[table] = serialized;
 
         if (table === PROJECTS_LIST_TABLE) {
           setListDefaultPreferences(prefs);

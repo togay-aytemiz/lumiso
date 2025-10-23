@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ColumnPreference } from "@/components/data-table";
 
@@ -15,6 +15,7 @@ interface UsePaymentsColumnPreferencesResult {
 export function usePaymentsColumnPreferences(): UsePaymentsColumnPreferencesResult {
   const [defaultPreferences, setDefaultPreferences] = useState<ColumnPreference[]>();
   const [loading, setLoading] = useState(true);
+  const lastSavedRef = useRef<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -35,6 +36,7 @@ export function usePaymentsColumnPreferences(): UsePaymentsColumnPreferencesResu
         if (error) throw error;
         if (mounted && data?.column_config) {
           setDefaultPreferences(data.column_config as ColumnPreference[]);
+          lastSavedRef.current = JSON.stringify(data.column_config);
         }
       } catch (err) {
         console.warn("Failed to load payments column preferences", err);
@@ -47,6 +49,10 @@ export function usePaymentsColumnPreferences(): UsePaymentsColumnPreferencesResu
 
   const savePreferences = useCallback(async (prefs: ColumnPreference[]) => {
     try {
+      const serialized = JSON.stringify(prefs);
+      if (lastSavedRef.current === serialized) {
+        return;
+      }
       const { data: user } = await supabase.auth.getUser();
       const userId = user.user?.id;
       if (!userId) return;
@@ -60,6 +66,7 @@ export function usePaymentsColumnPreferences(): UsePaymentsColumnPreferencesResu
           },
           { onConflict: "user_id,table_name" }
         );
+      lastSavedRef.current = serialized;
     } catch (err) {
       console.warn("Failed to save payments column preferences", err);
     }
@@ -67,4 +74,3 @@ export function usePaymentsColumnPreferences(): UsePaymentsColumnPreferencesResu
 
   return { defaultPreferences, savePreferences, loading };
 }
-

@@ -106,6 +106,21 @@ const Payments = () => {
     []
   );
 
+  const currencyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat("tr-TR", {
+        style: "currency",
+        currency: "TRY",
+        minimumFractionDigits: 0,
+      }),
+    []
+  );
+
+  const formatCurrency = useCallback(
+    (amount: number) => currencyFormatter.format(amount),
+    [currencyFormatter]
+  );
+
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
@@ -238,11 +253,18 @@ const Payments = () => {
     [handleProjectSheetOpenChange]
   );
 
+  const handleNavigateToLead = useCallback(
+    (leadId: string) => {
+      navigate(`/leads/${leadId}`);
+    },
+    [navigate]
+  );
+
   // Columns are needed for export mapping; define before handleExport
   const tableColumns = usePaymentsTableColumns({
     onProjectSelect: handleProjectOpen,
-    onNavigateToLead: (leadId) => navigate(`/leads/${leadId}`),
-    formatAmount: (value) => formatCurrency(value),
+    onNavigateToLead: handleNavigateToLead,
+    formatAmount: formatCurrency,
   });
 
   const handleExport = useCallback(async () => {
@@ -608,14 +630,6 @@ const Payments = () => {
       collectionRate,
     };
   }, [metricsPayments]);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('tr-TR', {
-      style: 'currency',
-      currency: 'TRY',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
 
   const formatPercent = (value: number) => {
     return new Intl.NumberFormat("tr-TR", {

@@ -237,14 +237,14 @@ const AllProjects = () => {
   useEffect(() => { setArchivedPage(1); }, [archivedFiltersState]);
 
   // Helpers moved above first usage to avoid TDZ errors
-  const handleQuickView = (project: ProjectListItem) => {
+  const handleQuickView = useCallback((project: ProjectListItem) => {
     setQuickViewProject(project);
     setShowQuickView(true);
-  };
+  }, []);
 
-  const handleLeadClick = (leadId: string) => {
+  const handleLeadClick = useCallback((leadId: string) => {
     navigate(`/leads/${leadId}`);
-  };
+  }, [navigate]);
 
   const renderProgressCell = useCallback((row: ProjectListItem) => {
     const total = row.todo_count || 0;

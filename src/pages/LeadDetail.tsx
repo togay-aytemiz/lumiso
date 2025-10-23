@@ -1307,173 +1307,181 @@ const LeadDetail = () => {
   if (!lead) {
     return null;
   }
-  return <div className="p-4 md:p-8 max-w-full overflow-x-hidden">
-      <EntityHeader
-        className="mb-6"
-        name={lead.name || ""}
-        title={lead.name || tPages("leadDetail.defaultTitle")}
-        onBack={handleBack}
-        backLabel={tPages("leadDetail.header.back")}
-        statusBadge={
-          <LeadStatusBadge
-            leadId={lead.id}
-            currentStatusId={lead.status_id}
-            currentStatus={lead.status}
-            onStatusChange={() => {
-              fetchLead();
-              setActivityRefreshKey(prev => prev + 1);
-            }}
-            editable={true}
-            statuses={leadStatuses}
-          />
-        }
-        summaryItems={summaryItems}
-        fallbackInitials="LD"
-        actions={
-          <>
-            <ScheduleSessionDialog
-              leadId={lead.id}
-              leadName={lead.name}
-              onSessionScheduled={handleSessionScheduled}
-              disabled={sessions.some(s => s.status === "planned")}
-              disabledTooltip={tPages("leadDetail.tooltips.sessionAlreadyPlanned")}
-            />
-
-            {!settingsLoading &&
-              userSettings.show_quick_status_buttons &&
-              completedStatus &&
-              formData.status !== completedStatus.name && (
-                <Button
-                  onClick={handleMarkAsCompleted}
-                  disabled={isUpdating}
-                  className="h-10 bg-green-600 text-white hover:bg-green-700"
-                  size="sm"
-                >
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  {isUpdating ? "Updating..." : completedStatus.name}
-                </Button>
-              )}
-
-            {!settingsLoading &&
-              userSettings.show_quick_status_buttons &&
-              lostStatus &&
-              formData.status !== lostStatus.name && (
-                <Button onClick={handleMarkAsLost} disabled={isUpdating} variant="destructive" size="sm" className="h-10">
-                  {isUpdating ? "Updating..." : lostStatus.name}
-                </Button>
-              )}
-          </>
-        }
-      />
-      <ProjectDetailsLayout
-        header={null}
-        left={
-          <div className="space-y-6">
-            <UnifiedClientDetails
-              lead={lead}
-              createdAt={lead.created_at}
-              showQuickActions={true}
-              onLeadUpdated={() => {
-                fetchLead();
-                setActivityRefreshKey(prev => prev + 1);
-              }}
-            />
-          </div>
-        }
-        sections={[
-          {
-            id: "lead-projects",
-            title: tPages("leadDetail.header.projects.label"),
-            content: (
-              <ProjectsSection
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-full px-4 py-4 md:px-8 md:py-8">
+        <div className="space-y-6 md:space-y-8">
+          <EntityHeader
+            className="mb-0"
+            name={lead.name || ""}
+            title={lead.name || tPages("leadDetail.defaultTitle")}
+            onBack={handleBack}
+            backLabel={tPages("leadDetail.header.back")}
+            statusBadge={
+              <LeadStatusBadge
                 leadId={lead.id}
-                leadName={lead.name}
-                onProjectUpdated={handleProjectUpdated}
-                onActivityUpdated={handleActivityUpdated}
-                onProjectClicked={handleProjectClicked}
-              />
-            )
-          },
-          {
-            id: "lead-activity",
-            title: tPages("leadDetail.header.activity.label"),
-            content: (
-              <LeadActivitySection
-                leadId={lead.id}
-                leadName={lead.name}
-                onActivityUpdated={() => {
+                currentStatusId={lead.status_id}
+                currentStatus={lead.status}
+                onStatusChange={() => {
                   fetchLead();
                   setActivityRefreshKey(prev => prev + 1);
                 }}
+                editable={true}
+                statuses={leadStatuses}
               />
-            )
-          }
-        ]}
-        overviewNavId="lead-detail-overview"
-        overviewLabel={tForms("project_sheet.overview_tab")}
-        stickyTopOffset={24}
-        rightFooter={
-          <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full text-center">
-            <div className="space-y-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowDeleteDialog(true)}
-                className="w-full max-w-xs border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-              >
-                {tForms("leadDangerZone.deleteLead")}
-              </Button>
-              <p className="text-xs text-muted-foreground break-words">
-                {tForms("leadDangerZone.deleteWarning")}
-              </p>
-            </div>
-          </div>
-        }
-      />
+            }
+            summaryItems={summaryItems}
+            fallbackInitials="LD"
+            actions={
+              <>
+                <ScheduleSessionDialog
+                  leadId={lead.id}
+                  leadName={lead.name}
+                  onSessionScheduled={handleSessionScheduled}
+                  disabled={sessions.some(s => s.status === "planned")}
+                  disabledTooltip={tPages("leadDetail.tooltips.sessionAlreadyPlanned")}
+                />
+
+                {!settingsLoading &&
+                  userSettings.show_quick_status_buttons &&
+                  completedStatus &&
+                  formData.status !== completedStatus.name && (
+                    <Button
+                      onClick={handleMarkAsCompleted}
+                      disabled={isUpdating}
+                      className="h-10 bg-green-600 text-white hover:bg-green-700"
+                      size="sm"
+                    >
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      {isUpdating ? "Updating..." : completedStatus.name}
+                    </Button>
+                  )}
+
+                {!settingsLoading &&
+                  userSettings.show_quick_status_buttons &&
+                  lostStatus &&
+                  formData.status !== lostStatus.name && (
+                    <Button onClick={handleMarkAsLost} disabled={isUpdating} variant="destructive" size="sm" className="h-10">
+                      {isUpdating ? "Updating..." : lostStatus.name}
+                    </Button>
+                  )}
+              </>
+            }
+          />
+
+          <ProjectDetailsLayout
+            header={null}
+            left={
+              <div className="space-y-6">
+                <UnifiedClientDetails
+                  lead={lead}
+                  createdAt={lead.created_at}
+                  showQuickActions={true}
+                  onLeadUpdated={() => {
+                    fetchLead();
+                    setActivityRefreshKey(prev => prev + 1);
+                  }}
+                />
+              </div>
+            }
+            sections={[
+              {
+                id: "lead-projects",
+                title: tPages("leadDetail.header.projects.label"),
+                content: (
+                  <ProjectsSection
+                    leadId={lead.id}
+                    leadName={lead.name}
+                    onProjectUpdated={handleProjectUpdated}
+                    onActivityUpdated={handleActivityUpdated}
+                    onProjectClicked={handleProjectClicked}
+                  />
+                )
+              },
+              {
+                id: "lead-activity",
+                title: tPages("leadDetail.header.activity.label"),
+                content: (
+                  <LeadActivitySection
+                    leadId={lead.id}
+                    leadName={lead.name}
+                    onActivityUpdated={() => {
+                      fetchLead();
+                      setActivityRefreshKey(prev => prev + 1);
+                    }}
+                  />
+                )
+              }
+            ]}
+            overviewNavId="lead-detail-overview"
+            overviewLabel={tForms("project_sheet.overview_tab")}
+            rightFooter={
+              <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full text-center">
+                <div className="space-y-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="w-full max-w-xs border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  >
+                    {tForms("leadDangerZone.deleteLead")}
+                  </Button>
+                  <p className="text-xs text-muted-foreground break-words">
+                    {tForms("leadDangerZone.deleteWarning")}
+                  </p>
+                </div>
+              </div>
+            }
+          />
+        </div>
+      </div>
 
       {/* Edit Session Dialog */}
       {editingSessionId && (() => {
         const session = sessions.find(s => s.id === editingSessionId);
         return session ? (
-          <EditSessionDialog 
-            sessionId={session.id} 
-            leadId={lead.id} 
-            currentDate={session.session_date} 
-            currentTime={session.session_time} 
-            currentNotes={session.notes} 
-            currentProjectId={session.project_id} 
+          <EditSessionDialog
+            sessionId={session.id}
+            leadId={lead.id}
+            currentDate={session.session_date}
+            currentTime={session.session_time}
+            currentNotes={session.notes}
+            currentProjectId={session.project_id}
             currentSessionName={(session as any).session_name}
-            leadName={lead.name} 
-            open={!!editingSessionId} 
+            leadName={lead.name}
+            open={!!editingSessionId}
             onOpenChange={open => {
               if (!open) {
                 setEditingSessionId(null);
               }
-            }} 
+            }}
             onSessionUpdated={() => {
               handleSessionUpdated();
               setEditingSessionId(null);
-            }} 
+            }}
           />
         ) : null;
       })()}
 
       {/* Delete Session Dialog */}
-      <AlertDialog open={!!deletingSessionId} onOpenChange={open => !open && setDeletingSessionId(null)}>
+      <AlertDialog open={!!deletingSessionId} onOpenChange={(open) => !open && setDeletingSessionId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Session?</AlertDialogTitle>
             <AlertDialogDescription>
-              {tMessages('confirm.deleteSession')} {tMessages('confirm.cannotUndo')}
+              {tMessages("confirm.deleteSession")} {tMessages("confirm.cannotUndo")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-            if (deletingSessionId) {
-              handleDeleteSession(deletingSessionId);
-              setDeletingSessionId(null);
-            }
-          }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={() => {
+                if (deletingSessionId) {
+                  handleDeleteSession(deletingSessionId);
+                  setDeletingSessionId(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete Session
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1481,21 +1489,33 @@ const LeadDetail = () => {
       </AlertDialog>
 
       {/* Delete Lead Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={open => {
-      setShowDeleteDialog(open);
-      if (!open) setConfirmDeleteText('');
-    }}>
+      <AlertDialog
+        open={showDeleteDialog}
+        onOpenChange={(open) => {
+          setShowDeleteDialog(open);
+          if (!open) setConfirmDeleteText("");
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{tForms('deleteLeadDialog.title')}</AlertDialogTitle>
+            <AlertDialogTitle>{tForms("deleteLeadDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {tForms('deleteLeadDialog.description', { name: lead.name })}
+              {tForms("deleteLeadDialog.description", { name: lead.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">
-            <Label htmlFor="confirm-delete" className="sr-only">Confirmation</Label>
-            <Input id="confirm-delete" placeholder={tForms('deleteLeadDialog.placeholder', { name: lead.name })} value={confirmDeleteText} onChange={e => setConfirmDeleteText(e.target.value)} />
-            <p className="text-xs text-muted-foreground mt-2">{tForms('deleteLeadDialog.cannotUndo')}</p>
+            <Label htmlFor="confirm-delete" className="sr-only">
+              Confirmation
+            </Label>
+            <Input
+              id="confirm-delete"
+              placeholder={tForms("deleteLeadDialog.placeholder", { name: lead.name })}
+              value={confirmDeleteText}
+              onChange={(e) => setConfirmDeleteText(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              {tForms("deleteLeadDialog.cannotUndo")}
+            </p>
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>{tCommon('buttons.cancel')}</AlertDialogCancel>
@@ -1507,13 +1527,14 @@ const LeadDetail = () => {
       </AlertDialog>
       
       <OnboardingTutorial
-        key={`tutorial-${currentTutorialStep}`} 
-        steps={isSchedulingTutorial ? schedulingTutorialSteps : leadDetailsTutorialSteps} 
-        isVisible={showTutorial} 
-        onComplete={handleTutorialComplete} 
-        onExit={handleTutorialExit} 
-        initialStepIndex={currentTutorialStep} 
+        key={`tutorial-${currentTutorialStep}`}
+        steps={isSchedulingTutorial ? schedulingTutorialSteps : leadDetailsTutorialSteps}
+        isVisible={showTutorial}
+        onComplete={handleTutorialComplete}
+        onExit={handleTutorialExit}
+        initialStepIndex={currentTutorialStep}
       />
-    </div>;
+    </div>
+  );
 };
 export default LeadDetail;

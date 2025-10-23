@@ -2,23 +2,25 @@ import { useState, useEffect, useMemo, useRef, useCallback, type ReactNode } fro
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 import { Calendar, CheckCircle, FolderPlus, User, Activity, CheckSquare, CreditCard } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
-import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { LeadActivitySection } from "@/components/LeadActivitySection";
 import { ProjectsSection } from "@/components/ProjectsSection";
-import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 // AssigneesList removed - single user organization
@@ -34,51 +36,8 @@ import { useSessionActions } from "@/hooks/useSessionActions";
 import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
 import { EntityHeader, type EntitySummaryItem } from "@/components/EntityHeader";
-interface Lead {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  notes: string;
-  status: string;
-  status_id?: string;
-  created_at: string;
-  updated_at?: string | null;
-  assignees?: string[];
-  user_id: string;
-}
-interface Session {
-  id: string;
-  session_date: string;
-  session_time: string;
-  notes: string;
-  status: string;
-  project_id?: string;
-  lead_id: string;
-  project_name?: string;
-  created_at?: string | null;
-  updated_at?: string | null;
-  projects?: {
-    name: string;
-    project_types?: {
-      name: string;
-    };
-  };
-}
+import { useLeadDetailData } from "@/hooks/useLeadDetailData";
 
-interface ProjectSummary {
-  count: number;
-  latestUpdate: string | null;
-}
-
-interface AggregatedPaymentSummary {
-  totalPaid: number;
-  total: number;
-  remaining: number;
-  currency: string;
-}
-
-const ACTIVE_SESSION_STATUSES = new Set(["planned", "upcoming", "confirmed", "scheduled"]);
 const getDateKey = (value?: string | null) => (value ? value.slice(0, 10) : null);
 const safeFormatDate = (value?: string | null) => {
   if (!value) return null;
@@ -96,37 +55,6 @@ const safeFormatTime = (value?: string | null) => {
     return null;
   }
 };
-
-// Helpers: validation and phone normalization (TR defaults)
-const isValidEmail = (email?: string | null) => !!email && /[^\s@]+@[^\s@]+\.[^\s@]+/.test(email);
-function normalizeTRPhone(phone?: string | null): null | {
-  e164: string;
-  e164NoPlus: string;
-} {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, "");
-  let e164 = "";
-  if (phone.trim().startsWith("+")) {
-    // already has plus, ensure it is +90XXXXXXXXXX
-    if (digits.startsWith("90") && digits.length === 12) {
-      e164 = "+" + digits;
-    } else {
-      return null;
-    }
-  } else if (digits.startsWith("90") && digits.length === 12) {
-    e164 = "+" + digits;
-  } else if (digits.startsWith("0") && digits.length === 11) {
-    e164 = "+90" + digits.slice(1);
-  } else if (digits.length === 10) {
-    e164 = "+90" + digits;
-  } else {
-    return null;
-  }
-  return {
-    e164,
-    e164NoPlus: e164.slice(1)
-  };
-}
 const LeadDetail = () => {
   const {
     id
@@ -139,15 +67,65 @@ const LeadDetail = () => {
   const { t: tForms } = useFormsTranslation();
   const { t: tCommon } = useCommonTranslation();
   const { t: tPages } = useTranslation("pages");
-  const [lead, setLead] = useState<Lead | null>(null);
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const {
+    lead,
+    leadQuery,
+    sessions,
+    sessionsQuery,
+    projectSummary,
+    aggregatedPayments,
+    summaryQuery,
+    latestLeadActivity,
+    latestActivityQuery,
+    leadStatuses,
+    sessionMetrics,
+    latestSessionUpdate,
+    hasProjects,
+    isLoading: detailLoading,
+    refetchAll
+  } = useLeadDetailData(id);
+  const handledMissingLeadRef = useRef(false);
+
+  useEffect(() => {
+    if (!id) {
+      navigate("/leads");
+    }
+  }, [id, navigate]);
+
+  useEffect(() => {
+    if (!id || detailLoading || handledMissingLeadRef.current) {
+      return;
+    }
+
+    if (leadQuery.isError) {
+      handledMissingLeadRef.current = true;
+      const message =
+        leadQuery.error && leadQuery.error instanceof Error
+          ? leadQuery.error.message
+          : tPages("leadDetail.toast.fetchLeadDescription");
+
+      toast({
+        title: tPages("leadDetail.toast.fetchLeadTitle"),
+        description: message,
+        variant: "destructive"
+      });
+      navigate("/leads");
+      return;
+    }
+
+    if (leadQuery.isSuccess && !lead) {
+      handledMissingLeadRef.current = true;
+      toast({
+        title: tPages("leadDetail.toast.leadNotFoundTitle"),
+        description: tPages("leadDetail.toast.leadNotFoundDescription"),
+        variant: "destructive"
+      });
+      navigate("/leads");
+    }
+  }, [id, detailLoading, leadQuery.isError, leadQuery.error, leadQuery.isSuccess, lead, navigate, tPages]);
   const [deleting, setDeleting] = useState(false);
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
-  const [activityRefreshKey, setActivityRefreshKey] = useState(0);
-  const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
 
   // User settings and status actions
   const {
@@ -161,18 +139,11 @@ const LeadDetail = () => {
   } = useLeadStatusActions({
     leadId: lead?.id || '',
     onStatusChange: () => {
-      fetchLead();
-      setActivityRefreshKey(prev => prev + 1);
+      refetchAll();
     }
   });
 
   const { deleteSession } = useSessionActions();
-  // Permissions removed for single photographer mode - always allow
-  // const {
-  //   hasPermission,
-  //   canEditLead
-  // } = usePermissions();
-  const [userCanEdit, setUserCanEdit] = useState(true); // Always allow editing in single photographer mode
 
   const {
     currentStep,
@@ -181,210 +152,15 @@ const LeadDetail = () => {
   } = useOnboarding();
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
-  const [hasProjects, setHasProjects] = useState(false);
   const [hasViewedProject, setHasViewedProject] = useState(false);
   const [isSchedulingTutorial, setIsSchedulingTutorial] = useState(false);
   const [hasScheduledSession, setHasScheduledSession] = useState(false);
-  const [projectSummary, setProjectSummary] = useState<ProjectSummary>({
-    count: 0,
-    latestUpdate: null
-  });
-  const [aggregatedPayments, setAggregatedPayments] = useState<AggregatedPaymentSummary>({
-    totalPaid: 0,
-    total: 0,
-    remaining: 0,
-    currency: "TRY"
-  });
-  const [latestLeadActivity, setLatestLeadActivity] = useState<string | null>(null);
-
-  // Check if projects exist for this lead and capture summary details
-  useEffect(() => {
-    const fetchProjectSummary = async () => {
-      const resetSummaries = () => {
-        setHasProjects(false);
-        setProjectSummary({
-          count: 0,
-          latestUpdate: null
-        });
-        setAggregatedPayments({
-          totalPaid: 0,
-          total: 0,
-          remaining: 0,
-          currency: "TRY"
-        });
-      };
-
-      if (!lead?.id) {
-        resetSummaries();
-        return;
-      }
-
-      try {
-        const {
-          data: {
-            user
-          }
-        } = await supabase.auth.getUser();
-        if (!user) {
-          resetSummaries();
-          return;
-        }
-
-        const {
-          data: organizationId
-        } = await supabase.rpc('get_user_active_organization_id');
-        if (!organizationId) {
-          resetSummaries();
-          return;
-        }
-
-        const {
-          data,
-          error
-        } = await supabase
-          .from("projects")
-          .select(`
-            id,
-            updated_at,
-            base_price,
-            status_id,
-            project_services (
-              services (
-                selling_price,
-                price
-              )
-            )
-          `)
-          .eq("lead_id", lead.id)
-          .eq("organization_id", organizationId);
-        if (error) throw error;
-
-        const projects = (data || []) as Array<{
-          id: string;
-          updated_at: string | null;
-          base_price: number | null;
-          status_id: string | null;
-          project_services?: Array<{ services?: { selling_price?: number | null; price?: number | null } | null }> | null;
-        }>;
-
-        let archivedStatusId: string | null = null;
-        try {
-          const {
-            data: archivedStatusData,
-            error: archivedStatusError
-          } = await supabase
-            .from('project_statuses')
-            .select('id')
-            .eq('organization_id', organizationId)
-            .ilike('name', 'archived')
-            .limit(1);
-          if (archivedStatusError) throw archivedStatusError;
-          archivedStatusId = archivedStatusData?.[0]?.id ?? null;
-        } catch (statusError) {
-          console.error("Error fetching archived project status:", statusError);
-        }
-
-        const visibleProjects = archivedStatusId
-          ? projects.filter(project => project.status_id !== archivedStatusId)
-          : projects;
-
-        const latestUpdate = visibleProjects.reduce<string | null>((latest, project) => {
-          if (!project.updated_at) return latest;
-          if (!latest) return project.updated_at;
-          return new Date(project.updated_at).getTime() > new Date(latest).getTime() ? project.updated_at : latest;
-        }, null);
-
-        let totalBooked = 0;
-        let totalPaid = 0;
-        const projectIds = projects.map(project => project.id);
-
-        projects.forEach(project => {
-          const basePrice = Number(project.base_price) || 0;
-          const servicesTotal = (project.project_services || []).reduce((sum, entry) => {
-            const service = entry?.services;
-            if (!service) return sum;
-            const priceValue = Number(service.selling_price ?? service.price ?? 0);
-            return Number.isFinite(priceValue) ? sum + priceValue : sum;
-          }, 0);
-          const projectTotal = basePrice + servicesTotal;
-          totalBooked += projectTotal;
-        });
-
-        if (projectIds.length > 0) {
-          const {
-            data: paymentsData,
-            error: paymentsError
-          } = await supabase
-            .from('payments')
-            .select('project_id, amount, status')
-            .in('project_id', projectIds);
-          if (paymentsError) throw paymentsError;
-
-          (paymentsData || []).forEach((payment: any) => {
-            const status = (payment?.status || '').toString().trim().toLowerCase();
-            if (status !== 'paid') return;
-            const amount = Number(payment?.amount) || 0;
-            if (!Number.isFinite(amount)) return;
-            totalPaid += amount;
-          });
-        }
-
-        const remaining = Math.max(0, totalBooked - totalPaid);
-
-        setHasProjects(visibleProjects.length > 0);
-        setProjectSummary({
-          count: visibleProjects.length,
-          latestUpdate
-        });
-        setAggregatedPayments({
-          totalPaid,
-          total: totalBooked,
-          remaining,
-          currency: "TRY"
-        });
-      } catch (error) {
-        console.error("Error checking projects:", error);
-        setAggregatedPayments({
-          totalPaid: 0,
-          total: 0,
-          remaining: 0,
-          currency: "TRY"
-        });
-      }
-    };
-
-    fetchProjectSummary();
-  }, [lead?.id, activityRefreshKey]); // Re-check when activity refreshes (which happens after project creation)
-
-  useEffect(() => {
-    const fetchLatestActivity = async () => {
-      if (!lead?.id) {
-        setLatestLeadActivity(null);
-        return;
-      }
-
-      try {
-        const {
-          data,
-          error
-        } = await supabase.from('activities').select('updated_at, created_at').eq('lead_id', lead.id).order('updated_at', {
-          ascending: false
-        }).order('created_at', {
-          ascending: false
-        }).limit(1);
-        if (error) throw error;
-
-        const latest = data && data.length > 0 ? data[0] : null;
-        const timestamp = latest?.updated_at || latest?.created_at || null;
-        setLatestLeadActivity(timestamp || null);
-      } catch (error) {
-        console.error('Error fetching latest activity timestamp:', error);
-        setLatestLeadActivity(null);
-      }
-    };
-
-    fetchLatestActivity();
-  }, [lead?.id, activityRefreshKey]);
+  const {
+    todayCount,
+    todayNext,
+    nextUpcoming,
+    overdueCount
+  } = sessionMetrics;
 
   // Dynamically update tutorial steps based on hasProjects
   const leadDetailsTutorialSteps: TutorialStep[] = useMemo(() => {
@@ -596,33 +372,21 @@ const LeadDetail = () => {
 
   const handleSessionScheduled = () => {
     setHasScheduledSession(true);
-    setActivityRefreshKey(prev => prev + 1); // Refresh activities to show new session
-    fetchSessions();
+    void refetchAll();
   };
+
+  useEffect(() => {
+    if (!hasScheduledSession && sessions.length > 0) {
+      setHasScheduledSession(true);
+    }
+  }, [hasScheduledSession, sessions.length]);
 
   // Debug tutorial step changes
   useEffect(() => {
     // Development only debug logging would go here if needed
   }, [currentTutorialStep, showTutorial]);
 
-  // Check edit permissions when lead data loads
-  useEffect(() => {
-    const checkEditPermissions = async () => {
-      if (lead) {
-        // Always allow editing in single photographer mode
-        // const canEdit = await canEditLead(lead.user_id, lead.assignees);
-        setUserCanEdit(true);
-      }
-    };
-    checkEditPermissions();
-  }, [lead]); // Removed canEditLead dependency
-
   // UI state for Lead Information card
-  const [editOpen, setEditOpen] = useState(false);
-  const [showAddProjectDialog, setShowAddProjectDialog] = useState(false);
-  const [notesExpanded, setNotesExpanded] = useState(false);
-  const notesRef = useRef<HTMLDivElement>(null);
-  const [isNotesTruncatable, setIsNotesTruncatable] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [confirmDeleteText, setConfirmDeleteText] = useState("");
 
@@ -630,28 +394,6 @@ const LeadDetail = () => {
   const completedStatus = leadStatuses.find(s => s.is_system_final && (s.name.toLowerCase().includes('completed') || s.name.toLowerCase().includes('delivered'))) || leadStatuses.find(s => s.name === 'Completed');
   const lostStatus = leadStatuses.find(s => s.is_system_final && (s.name.toLowerCase().includes('lost') || s.name.toLowerCase().includes('not interested'))) || leadStatuses.find(s => s.name === 'Lost');
 
-  // Form state
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    notes: "",
-    status: "new" as string
-  });
-
-  // Track initial form data to detect changes
-  const [initialFormData, setInitialFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    notes: "",
-    status: "new" as string
-  });
-
-  // Check if form has changes
-  const hasChanges = useMemo(() => {
-    return JSON.stringify(formData) !== JSON.stringify(initialFormData);
-  }, [formData, initialFormData]);
 
   const formatRelativeTime = (dateString?: string | null) => {
     if (!dateString) return null;
@@ -681,275 +423,6 @@ const LeadDetail = () => {
     }
   }, [aggregatedPayments.currency]);
 
-  const getSessionDateTime = useCallback((session: Session): Date | null => {
-    if (!session.session_date) return null;
-    const timePart = (session.session_time ?? "").trim();
-    const candidate = timePart
-      ? new Date(`${session.session_date}T${timePart}`)
-      : new Date(session.session_date);
-
-    if (!Number.isNaN(candidate.getTime())) {
-      return candidate;
-    }
-
-    const fallback = new Date(session.session_date);
-    return Number.isNaN(fallback.getTime()) ? null : fallback;
-  }, []);
-
-  const {
-    todayCount,
-    todayNext,
-    nextUpcoming,
-    overdueCount
-  } = useMemo(() => {
-    const todayDate = new Date();
-    todayDate.setHours(0, 0, 0, 0);
-    const todayKey = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, "0")}-${String(
-      todayDate.getDate()
-    ).padStart(2, "0")}`;
-
-    const activeSessions: Array<{ session: Session; date: Date }> = [];
-
-    sessions.forEach(session => {
-      const normalizedStatus = (session.status || "").toLowerCase();
-      if (!ACTIVE_SESSION_STATUSES.has(normalizedStatus)) return;
-      const sessionDate = getSessionDateTime(session);
-      if (!sessionDate) return;
-      activeSessions.push({ session, date: sessionDate });
-    });
-
-    const sortedActive = activeSessions.sort((a, b) => a.date.getTime() - b.date.getTime());
-
-    const todays: Session[] = [];
-    let upcomingSession: Session | null = null;
-    let overdue = 0;
-
-    for (const entry of sortedActive) {
-      const sessionKey = getDateKey(entry.session.session_date);
-      if (!sessionKey) continue;
-
-      if (sessionKey < todayKey) {
-        overdue += 1;
-        continue;
-      }
-
-      if (sessionKey === todayKey) {
-        todays.push(entry.session);
-        continue;
-      }
-
-      if (!upcomingSession) {
-        upcomingSession = entry.session;
-      }
-    }
-
-    return {
-      todayCount: todays.length,
-      todayNext: todays[0] ?? null,
-      nextUpcoming: upcomingSession,
-      overdueCount: overdue
-    };
-  }, [sessions, getSessionDateTime]);
-
-  const latestSessionUpdate = useMemo(() => {
-    return sessions.reduce<string | null>((latest, session) => {
-      const candidate = session.updated_at || session.created_at || null;
-      if (!candidate) return latest;
-      if (!latest) return candidate;
-      return new Date(candidate).getTime() > new Date(latest).getTime() ? candidate : latest;
-    }, null);
-  }, [sessions]);
-  useEffect(() => {
-    if (id) {
-      fetchLead();
-      fetchSessions();
-      fetchLeadStatuses();
-    } else {
-      // If no id parameter, redirect to leads page
-      navigate('/leads');
-    }
-  }, [id, navigate]);
-  const fetchLead = async () => {
-    try {
-      const {
-        data,
-        error
-      } = await supabase.from('leads').select(`
-          *,
-          lead_statuses(id, name, color, is_system_final)
-        `).eq('id', id).maybeSingle();
-      if (error) throw error;
-      if (!data) {
-        toast({
-          title: tPages("leadDetail.toast.leadNotFoundTitle"),
-          description: tPages("leadDetail.toast.leadNotFoundDescription"),
-          variant: "destructive"
-        });
-        navigate("/leads");
-        return;
-      }
-      setLead(data);
-      const newFormData = {
-        name: data.name || "",
-        email: data.email || "",
-        phone: data.phone || "",
-        notes: data.notes || "",
-        status: data.status || "new"
-      };
-      setFormData(newFormData);
-      setInitialFormData(newFormData);
-    } catch (error: any) {
-      toast({
-        title: tPages("leadDetail.toast.fetchLeadTitle"),
-        description: error.message || tPages("leadDetail.toast.fetchLeadDescription"),
-        variant: "destructive"
-      });
-      navigate("/leads");
-    } finally {
-      setLoading(false);
-    }
-  };
-  const fetchSessions = async () => {
-    if (!id) return;
-    try {
-      // Get all sessions for this lead with project information
-      const {
-        data,
-        error
-      } = await supabase.from('sessions').select(`
-          *,
-          projects:project_id (
-            name,
-            project_types (
-              name
-            )
-          )
-        `).eq('lead_id', id).order('created_at', {
-        ascending: false
-      });
-      if (error) throw error;
-
-      // Determine archived projects for this lead
-      const {
-        data: userData
-      } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
-      let filteredSessions = data || [];
-      if (userId) {
-        // Get user's active organization
-        const {
-          data: organizationId
-        } = await supabase.rpc('get_user_active_organization_id');
-        let archivedStatus = null;
-        if (organizationId) {
-          try {
-            const statusQuery = await supabase.from('project_statuses').select('id').eq('organization_id', organizationId).ilike('name', 'archived').limit(1);
-            archivedStatus = statusQuery.data?.[0] || null;
-          } catch (err) {
-            console.error('Error fetching archived status:', err);
-          }
-        }
-        if (archivedStatus?.id) {
-          const {
-            data: archivedProjects
-          } = await supabase.from('projects').select('id').eq('lead_id', id).eq('status_id', archivedStatus.id);
-          const archivedIds = new Set((archivedProjects || []).map(p => p.id));
-          filteredSessions = filteredSessions.filter(s => !s.project_id || !archivedIds.has(s.project_id));
-        }
-      }
-
-      // Process sessions to include project name
-      const processedSessions = (filteredSessions || []).map(session => ({
-        ...session,
-        project_name: session.projects?.name || undefined
-      }));
-
-      // Sort sessions: planned first, then others by session_date descending
-      const sortedSessions = processedSessions.sort((a, b) => {
-        if (a.status === 'planned' && b.status !== 'planned') return -1;
-        if (b.status === 'planned' && a.status !== 'planned') return 1;
-        if (a.status !== 'planned' && b.status !== 'planned') {
-          return new Date(b.session_date).getTime() - new Date(a.session_date).getTime();
-        }
-        return 0;
-      });
-      setSessions(sortedSessions);
-    } catch (error: any) {
-      console.error('Error fetching sessions:', error);
-    }
-  };
-  const fetchLeadStatuses = async () => {
-    try {
-      const {
-        data,
-        error
-      } = await supabase.from('lead_statuses').select('*').order('sort_order', {
-        ascending: true
-      });
-      if (error) throw error;
-      setLeadStatuses(data || []);
-    } catch (error: any) {
-      console.error('Error fetching lead statuses:', error);
-    }
-  };
-
-  // Detect if notes content is truncatable to 2 lines
-  useEffect(() => {
-    if (!notesRef.current || !lead?.notes) {
-      setIsNotesTruncatable(false);
-      return;
-    }
-    const el = notesRef.current;
-    requestAnimationFrame(() => {
-      if (!el) return;
-      setIsNotesTruncatable(el.scrollHeight > el.clientHeight + 1);
-    });
-  }, [lead?.notes, notesExpanded]);
-  const handleSave = async () => {
-    if (!lead || !formData.name.trim()) {
-      toast({
-        title: "Validation error",
-        description: "Name is required.",
-        variant: "destructive"
-      });
-      return;
-    }
-    setSaving(true);
-    try {
-      // Find the status ID for the selected status
-      const selectedStatus = leadStatuses.find(s => s.name === formData.status);
-      const {
-        error
-      } = await supabase.from('leads').update({
-        name: formData.name.trim(),
-        email: formData.email.trim() || null,
-        phone: formData.phone.trim() || null,
-        notes: formData.notes.trim() || null,
-        status: formData.status,
-        status_id: selectedStatus?.id || null
-      }).eq('id', lead.id);
-      if (error) throw error;
-      toast({
-        title: "Success",
-        description: "Lead updated successfully."
-      });
-
-      // Refresh lead data
-      await fetchLead();
-      await fetchSessions();
-
-      // Refresh activity timeline to show lead changes
-      setActivityRefreshKey(prev => prev + 1);
-    } catch (error: any) {
-      toast({
-        title: "Error updating lead",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
   const handleDelete = async () => {
     if (!lead) return;
     setDeleting(true);
@@ -1028,17 +501,20 @@ const LeadDetail = () => {
   const handleDeleteSession = async (sessionId: string) => {
     const success = await deleteSession(sessionId);
     if (success) {
-      fetchSessions();
+      void sessionsQuery.refetch();
+      void latestActivityQuery.refetch();
     }
   };
   const handleSessionUpdated = () => {
-    fetchSessions();
+    void sessionsQuery.refetch();
+    void latestActivityQuery.refetch();
   };
 
   const handleProjectUpdated = () => {
     // Refresh sessions and activities when project changes (archive/restore should affect visibility)
-    fetchSessions();
-    setActivityRefreshKey(prev => prev + 1);
+    void sessionsQuery.refetch();
+    void summaryQuery.refetch();
+    void latestActivityQuery.refetch();
 
     // If tutorial is active and we're on the project creation step (Step 5 = index 1), advance to project exploration step
     if (showTutorial && currentTutorialStep === 1) {
@@ -1050,7 +526,7 @@ const LeadDetail = () => {
   };
   const handleActivityUpdated = () => {
     // Force activity section to refresh when activities are updated in project modal
-    setActivityRefreshKey(prev => prev + 1);
+    void latestActivityQuery.refetch();
   };
   const handleBack = () => {
     const from = location.state?.from;
@@ -1077,17 +553,6 @@ const LeadDetail = () => {
     if (!lead || !lostStatus) return;
     markAsLost(lead.status, lostStatus.name);
   };
-  const handleInputChange = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-  const statusOptions = leadStatuses.map(status => ({
-    value: status.name,
-    label: status.name
-  }));
-
   const activitySummary = useMemo(() => {
     const timeline: Array<{ type: "lead" | "project" | "session" | "note"; timestamp: string }> = [];
 
@@ -1301,7 +766,7 @@ const LeadDetail = () => {
     activitySummary,
     tPages
   ]);
-  if (loading) {
+  if (detailLoading) {
     return <DetailPageLoadingSkeleton />;
   }
   if (!lead) {
@@ -1323,8 +788,7 @@ const LeadDetail = () => {
                 currentStatusId={lead.status_id}
                 currentStatus={lead.status}
                 onStatusChange={() => {
-                  fetchLead();
-                  setActivityRefreshKey(prev => prev + 1);
+                  void refetchAll();
                 }}
                 editable={true}
                 statuses={leadStatuses}
@@ -1338,14 +802,14 @@ const LeadDetail = () => {
                   leadId={lead.id}
                   leadName={lead.name}
                   onSessionScheduled={handleSessionScheduled}
-                  disabled={sessions.some(s => s.status === "planned")}
+                  disabled={sessions.some(s => (s.status || "").toLowerCase() === "planned")}
                   disabledTooltip={tPages("leadDetail.tooltips.sessionAlreadyPlanned")}
                 />
 
                 {!settingsLoading &&
                   userSettings.show_quick_status_buttons &&
                   completedStatus &&
-                  formData.status !== completedStatus.name && (
+                  lead.status !== completedStatus.name && (
                     <Button
                       onClick={handleMarkAsCompleted}
                       disabled={isUpdating}
@@ -1360,7 +824,7 @@ const LeadDetail = () => {
                 {!settingsLoading &&
                   userSettings.show_quick_status_buttons &&
                   lostStatus &&
-                  formData.status !== lostStatus.name && (
+                  lead.status !== lostStatus.name && (
                     <Button onClick={handleMarkAsLost} disabled={isUpdating} variant="destructive" size="sm" className="h-10">
                       {isUpdating ? "Updating..." : lostStatus.name}
                     </Button>
@@ -1378,8 +842,7 @@ const LeadDetail = () => {
                   createdAt={lead.created_at}
                   showQuickActions={true}
                   onLeadUpdated={() => {
-                    fetchLead();
-                    setActivityRefreshKey(prev => prev + 1);
+                    void refetchAll();
                   }}
                 />
               </div>
@@ -1406,8 +869,7 @@ const LeadDetail = () => {
                     leadId={lead.id}
                     leadName={lead.name}
                     onActivityUpdated={() => {
-                      fetchLead();
-                      setActivityRefreshKey(prev => prev + 1);
+                      void latestActivityQuery.refetch();
                     }}
                   />
                 )
@@ -1446,7 +908,7 @@ const LeadDetail = () => {
             currentTime={session.session_time}
             currentNotes={session.notes}
             currentProjectId={session.project_id}
-            currentSessionName={(session as any).session_name}
+            currentSessionName={session.session_name ?? undefined}
             leadName={lead.name}
             open={!!editingSessionId}
             onOpenChange={open => {

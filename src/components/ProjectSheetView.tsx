@@ -791,7 +791,16 @@ export function ProjectSheetView({
             {
               id: sectionId.todos,
               title: tForms('project_sheet.todos_tab'),
-              content: <ProjectTodoListEnhanced projectId={project!.id} onTodosUpdated={triggerSummaryRefresh} />
+              content: (
+                <ProjectTodoListEnhanced
+                  projectId={project!.id}
+                  onTodosUpdated={() => {
+                    triggerSummaryRefresh();
+                    onProjectUpdated();
+                    onActivityUpdated?.();
+                  }}
+                />
+              )
             }
           ]}
           overviewNavId="project-sheet-overview"

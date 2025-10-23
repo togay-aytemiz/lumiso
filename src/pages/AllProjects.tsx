@@ -652,7 +652,7 @@ const AllProjects = () => {
           .map((entry) => entry.col);
 
         const scope = mode === 'list' ? 'active' : 'archived';
-        const CHUNK = 500;
+        const CHUNK = 1000;
         const collected: ProjectListItem[] = [];
         for (let from = 0; from < total; from += CHUNK) {
           const to = Math.min(from + CHUNK - 1, total - 1);
@@ -798,6 +798,7 @@ const AllProjects = () => {
       setBoardLoading(true);
       const t = startTimer('Projects.boardLoad');
       const INITIAL_CHUNK = 200; // render first chunk quickly
+      const BACKFILL_CHUNK = 600; // fewer background requests while still streaming results
 
       // First request gets initial data and total count
       const { projects: first, count } = await fetchProjectsData('active', {
@@ -814,14 +815,14 @@ const AllProjects = () => {
       // If there are more rows, fetch the remaining ranges in background with limited concurrency
       if (count > first.length) {
         const ranges: Array<{ from: number; to: number }> = [];
-        for (let from = first.length; from < count; from += INITIAL_CHUNK) {
-          const to = Math.min(from + INITIAL_CHUNK - 1, count - 1);
+        for (let from = first.length; from < count; from += BACKFILL_CHUNK) {
+          const to = Math.min(from + BACKFILL_CHUNK - 1, count - 1);
           ranges.push({ from, to });
         }
 
         let fetched = first.length;
         let idx = 0;
-        const CONCURRENCY = 4;
+        const CONCURRENCY = 2;
 
         const runOne = async (): Promise<void> => {
           const current = ranges[idx++];

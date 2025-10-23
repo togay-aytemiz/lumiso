@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -20,6 +20,20 @@ export default function RoutePrefetcher() {
   const { activeOrganizationId } = useOrganization();
   const inFlightRef = useRef<Set<string>>(new Set());
 
+  const hasFreshCache = useCallback((key: string) => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return false;
+      const parsed = JSON.parse(raw) as { ts?: number; value?: { ttl?: number } };
+      const ts = parsed?.ts ?? 0;
+      const ttl = parsed?.value?.ttl ?? TTL_MS;
+      return ts > 0 && Date.now() - ts < ttl;
+    } catch {
+      return false;
+    }
+  }, []);
+
   useEffect(() => {
     const orgId = activeOrganizationId;
     if (!orgId) return;
@@ -27,6 +41,8 @@ export default function RoutePrefetcher() {
     const doProjects = async () => {
       const k = `prefetch:projects:first:${orgId}:active`;
       if (inFlightRef.current.has(k)) return;
+      // Skip network prefetch if cached value is still fresh
+      if (hasFreshCache(k)) return;
       inFlightRef.current.add(k);
       try {
         const { data, error } = await supabase.rpc('projects_filter_page', {
@@ -95,7 +111,7 @@ export default function RoutePrefetcher() {
 
     if (pathname.startsWith('/projects')) doProjects();
     if (pathname.startsWith('/leads')) { doLeads(); doLeadsMetrics(); }
-  }, [pathname, activeOrganizationId]);
+  }, [pathname, activeOrganizationId, hasFreshCache]);
 
   return null;
 }

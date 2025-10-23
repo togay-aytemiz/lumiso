@@ -80,11 +80,16 @@ export function useProjectsColumnPreferences(): ProjectsColumnPreferencesResult 
         if (lastSavedRef.current[table] === serialized) {
           return;
         }
+        const previous = lastSavedRef.current[table] ?? null;
+        lastSavedRef.current[table] = serialized;
         const { data: user } = await supabase.auth.getUser();
         const userId = user.user?.id;
-        if (!userId) return;
+        if (!userId) {
+          lastSavedRef.current[table] = previous;
+          return;
+        }
 
-        await supabase
+        const { error } = await supabase
           .from("user_column_preferences")
           .upsert(
             {
@@ -94,7 +99,10 @@ export function useProjectsColumnPreferences(): ProjectsColumnPreferencesResult 
             },
             { onConflict: "user_id,table_name" }
           );
-        lastSavedRef.current[table] = serialized;
+        if (error) {
+          lastSavedRef.current[table] = previous;
+          throw error;
+        }
 
         if (table === PROJECTS_LIST_TABLE) {
           setListDefaultPreferences(prefs);

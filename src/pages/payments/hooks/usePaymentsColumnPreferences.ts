@@ -53,10 +53,15 @@ export function usePaymentsColumnPreferences(): UsePaymentsColumnPreferencesResu
       if (lastSavedRef.current === serialized) {
         return;
       }
+      const previous = lastSavedRef.current;
+      lastSavedRef.current = serialized;
       const { data: user } = await supabase.auth.getUser();
       const userId = user.user?.id;
-      if (!userId) return;
-      await supabase
+      if (!userId) {
+        lastSavedRef.current = previous;
+        return;
+      }
+      const { error } = await supabase
         .from("user_column_preferences")
         .upsert(
           {
@@ -66,7 +71,10 @@ export function usePaymentsColumnPreferences(): UsePaymentsColumnPreferencesResu
           },
           { onConflict: "user_id,table_name" }
         );
-      lastSavedRef.current = serialized;
+      if (error) {
+        lastSavedRef.current = previous;
+        throw error;
+      }
     } catch (err) {
       console.warn("Failed to save payments column preferences", err);
     }

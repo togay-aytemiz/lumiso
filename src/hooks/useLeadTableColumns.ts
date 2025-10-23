@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadFieldDefinition } from "@/types/leadFields";
 import { Column } from "@/hooks/useDataTable";
@@ -108,6 +108,7 @@ export function useLeadTableColumns(options: LeadTableColumnsOptions = {}) {
   );
   const [loading, setLoading] = useState(true);
   const { leadStatuses, leadStatusesLoading } = options;
+  const lastSavedPreferencesRef = useRef<string | null>(null);
 
   // Fetch field definitions and user preferences
   useEffect(() => {
@@ -150,6 +151,11 @@ export function useLeadTableColumns(options: LeadTableColumnsOptions = {}) {
 
         if (prefs?.column_config) {
           const rawPrefs = prefs.column_config as unknown as ColumnConfig[];
+          try {
+            lastSavedPreferencesRef.current = JSON.stringify(rawPrefs);
+          } catch {
+            lastSavedPreferencesRef.current = null;
+          }
 
           // Build allowed keys: system columns + custom fields that don't collide
           const customFieldKeys = ((fields || []) as LeadFieldDefinition[])
@@ -211,24 +217,38 @@ export function useLeadTableColumns(options: LeadTableColumnsOptions = {}) {
               (fields || []) as LeadFieldDefinition[]
             );
             setColumnPreferences(defaultPrefs);
+            try {
+              lastSavedPreferencesRef.current = JSON.stringify(defaultPrefs);
+            } catch {
+              lastSavedPreferencesRef.current = null;
+            }
           } else {
+            const serializedSanitized = JSON.stringify(sanitized);
             setColumnPreferences(sanitized);
             // Persist back if changed so old users stop seeing removed columns
             const changed =
               sanitized.length !== rawPrefs.length ||
               sanitized.some((p, i) => p.key !== rawPrefs[i]?.key);
-            if (changed) {
+            if (changed && lastSavedPreferencesRef.current !== serializedSanitized) {
               try {
                 const { data: authUser } = await supabase.auth.getUser();
                 if (authUser.user?.id) {
-                  await supabase.from("user_column_preferences").upsert(
-                    {
-                      user_id: authUser.user.id,
-                      table_name: "leads",
-                      column_config: sanitized,
-                    },
-                    { onConflict: "user_id,table_name" }
-                  );
+                  const previousSaved = lastSavedPreferencesRef.current;
+                  lastSavedPreferencesRef.current = serializedSanitized;
+                  const { error } = await supabase
+                    .from("user_column_preferences")
+                    .upsert(
+                      {
+                        user_id: authUser.user.id,
+                        table_name: "leads",
+                        column_config: sanitized,
+                      },
+                      { onConflict: "user_id,table_name" }
+                    );
+                  if (error) {
+                    lastSavedPreferencesRef.current = previousSaved;
+                    throw error;
+                  }
                 }
               } catch (e) {
                 console.error("Error persisting sanitized preferences:", e);
@@ -241,6 +261,11 @@ export function useLeadTableColumns(options: LeadTableColumnsOptions = {}) {
             (fields || []) as LeadFieldDefinition[]
           );
           setColumnPreferences(defaultPrefs);
+          try {
+            lastSavedPreferencesRef.current = JSON.stringify(defaultPrefs);
+          } catch {
+            lastSavedPreferencesRef.current = null;
+          }
         }
       } catch (error) {
         console.error("Error fetching table column data:", error);
@@ -693,8 +718,25 @@ export function useLeadTableColumns(options: LeadTableColumnsOptions = {}) {
         return true;
       });
 
+      const serialized = JSON.stringify(deduplicatedPreferences);
+      const currentSerialized = JSON.stringify(columnPreferences);
+
+      if (lastSavedPreferencesRef.current === serialized) {
+        if (currentSerialized !== serialized) {
+          setColumnPreferences(deduplicatedPreferences);
+        }
+        return;
+      }
+
+      if (currentSerialized !== serialized) {
+        setColumnPreferences(deduplicatedPreferences);
+      }
+
       const { data: user } = await supabase.auth.getUser();
       if (!user.user?.id) throw new Error("User not authenticated");
+
+      const previousSaved = lastSavedPreferencesRef.current;
+      lastSavedPreferencesRef.current = serialized;
 
       const { error } = await supabase.from("user_column_preferences").upsert(
         {
@@ -709,10 +751,9 @@ export function useLeadTableColumns(options: LeadTableColumnsOptions = {}) {
 
       if (error) {
         console.error("Supabase error:", error);
+        lastSavedPreferencesRef.current = previousSaved;
         throw error;
       }
-
-      setColumnPreferences(deduplicatedPreferences);
     } catch (error) {
       console.error("Error saving column preferences:", error);
       throw error;

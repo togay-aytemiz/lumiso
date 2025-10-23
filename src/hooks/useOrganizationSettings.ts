@@ -1,12 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { detectBrowserTimezone } from '@/lib/dateFormatUtils';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 export interface SocialChannel {
   name: string;
   url: string;
-  platform: 'website' | 'facebook' | 'instagram' | 'twitter' | 'linkedin' | 'youtube' | 'tiktok' | 'custom';
+  platform:
+    | 'website'
+    | 'facebook'
+    | 'instagram'
+    | 'twitter'
+    | 'linkedin'
+    | 'youtube'
+    | 'tiktok'
+    | 'custom';
   customPlatformName?: string;
   enabled: boolean;
   icon?: string;
@@ -24,245 +34,265 @@ export interface OrganizationSettings {
   date_format?: string | null;
   time_format?: string | null;
   timezone?: string | null;
-  social_channels?: Record<string, SocialChannel>;
+  social_channels?: Record<string, SocialChannel> | null;
   socialChannels?: Record<string, SocialChannel>;
   created_at?: string;
   updated_at?: string;
 }
 
+type OrganizationSettingsRow = OrganizationSettings & {
+  social_channels?: Record<string, SocialChannel> | null;
+};
+
+const fetchOrganizationSettings = async (
+  organizationId: string
+): Promise<OrganizationSettingsRow | null> => {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError) throw authError;
+  if (!user) throw new Error('User not authenticated');
+
+  const { data: existingSettings, error: fetchError } = await supabase
+    .from('organization_settings')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .maybeSingle();
+
+  if (fetchError) throw fetchError;
+  if (existingSettings) {
+    return existingSettings as OrganizationSettingsRow;
+  }
+
+  const detectedTimezone = detectBrowserTimezone();
+  await supabase.rpc('ensure_organization_settings', {
+    org_id: organizationId,
+    detected_timezone: detectedTimezone,
+  });
+
+  if (user.email) {
+    await supabase
+      .from('organization_settings')
+      .update({ email: user.email })
+      .eq('organization_id', organizationId);
+  }
+
+  const { data: ensuredSettings, error: ensuredError } = await supabase
+    .from('organization_settings')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .maybeSingle();
+
+  if (ensuredError) throw ensuredError;
+  if (ensuredSettings) {
+    return ensuredSettings as OrganizationSettingsRow;
+  }
+
+  const { data: userSettings } = await supabase
+    .from('user_settings')
+    .select('photography_business_name, logo_url, primary_brand_color, date_format')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (userSettings) {
+    return {
+      organization_id: organizationId,
+      social_channels: {},
+      ...userSettings,
+    } as OrganizationSettingsRow;
+  }
+
+  return null;
+};
+
 export const useOrganizationSettings = () => {
-  const [settings, setSettings] = useState<OrganizationSettings | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { activeOrganizationId } = useOrganization();
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Fetch organization settings
-  const fetchSettings = async () => {
-    try {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['organization_settings', activeOrganizationId],
+    queryFn: () => fetchOrganizationSettings(activeOrganizationId!),
+    enabled: !!activeOrganizationId,
+    staleTime: 5 * 60 * 1000,
+  });
 
-      // Get user's active organization ID using utility function
-      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) {
-        setSettings(null);
-        return;
-      }
+  const settings = useMemo<OrganizationSettings | null>(() => {
+    if (!data) return null;
+    return {
+      ...data,
+      socialChannels:
+        (data.social_channels as Record<string, SocialChannel> | null) || {},
+    };
+  }, [data]);
 
-      // Check if organization settings already exist
-      const { data: existingSettings } = await supabase
-        .from('organization_settings')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .maybeSingle();
-
-      if (!existingSettings) {
-        // First time setup - create settings with user's email as business email
-        const detectedTimezone = detectBrowserTimezone();
-        await supabase.rpc('ensure_organization_settings', { 
-          org_id: organizationId,
-          detected_timezone: detectedTimezone
-        });
-
-        // Update the newly created settings with user's email
-        await supabase
-          .from('organization_settings')
-          .update({ email: user.email })
-          .eq('organization_id', organizationId);
-      }
-
-      // Get organization settings (after ensuring they exist)
-      const { data: orgSettings, error } = await supabase
-        .from('organization_settings')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      // If no org settings found, try to get from user_settings as fallback
-      if (!orgSettings) {
-        const { data: userSettings } = await supabase
-          .from('user_settings')
-          .select('photography_business_name, logo_url, primary_brand_color, date_format')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (userSettings) {
-          // Create minimal settings from user data
-          setSettings({
-            photography_business_name: userSettings.photography_business_name,
-            logo_url: userSettings.logo_url,
-            primary_brand_color: userSettings.primary_brand_color,
-            date_format: userSettings.date_format,
-            socialChannels: {}
-          });
-          return;
+  const updateSettings = useCallback(
+    async (updates: Partial<OrganizationSettings>) => {
+      try {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
+        if (authError) throw authError;
+        if (!user) throw new Error('User not authenticated');
+        if (!activeOrganizationId) {
+          throw new Error('No active organization found');
         }
-      }
 
-      // Ensure social_channels field exists with fallback
-      const settingsWithDefaults = {
-        ...orgSettings,
-        socialChannels: (orgSettings.social_channels as any) || {}
-      };
+        const { socialChannels, ...otherUpdates } = updates;
+        const dbUpdates: Record<string, unknown> = { ...otherUpdates };
 
-      setSettings(settingsWithDefaults as unknown as OrganizationSettings);
-    } catch (error) {
-      console.error('Error fetching organization settings:', error);
-      setSettings(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Update organization settings
-  const updateSettings = async (updates: Partial<OrganizationSettings>) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      // Get user's active organization ID using utility function
-      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) {
-        throw new Error('No active organization found');
-      }
-
-      // Convert social_channels to proper format for database and separate from other updates
-      const { socialChannels, ...otherUpdates } = updates;
-      const dbUpdates = { ...otherUpdates } as any;
-      
-      if (socialChannels) {
-        dbUpdates.social_channels = socialChannels;
-      }
-
-      let result;
-      if (settings?.id) {
-        // Update existing settings
-        result = await supabase
-          .from('organization_settings')
-          .update(dbUpdates)
-          .eq('id', settings.id)
-          .select()
-          .single();
-      } else {
-        // Create new settings
-        result = await supabase
-          .from('organization_settings')
-          .insert({
-            organization_id: organizationId,
-            ...dbUpdates
-          })
-          .select()
-          .single();
-      }
-
-      if (result.error) throw result.error;
-
-      // Ensure social_channels field exists with fallback for returned data
-      const settingsWithDefaults = {
-        ...result.data,
-        socialChannels: (result.data.social_channels as any) || {}
-      };
-
-      setSettings(settingsWithDefaults as unknown as OrganizationSettings);
-      return { success: true, data: settingsWithDefaults as unknown as OrganizationSettings };
-    } catch (error: any) {
-      console.error('Error updating organization settings:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update settings",
-        variant: "destructive",
-      });
-      return { success: false, error };
-    }
-  };
-
-  // Upload logo
-  const uploadLogo = async (file: File) => {
-    try {
-      setUploading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      // Get user's active organization ID using utility function
-      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) {
-        throw new Error('No active organization found');
-      }
-
-      // Delete existing logo if it exists
-      if (settings?.logo_url) {
-        const urlParts = settings.logo_url.split('/');
-        const oldPath = urlParts.slice(-2).join('/'); // Get organizationId/filename format
-        if (oldPath && oldPath.includes(organizationId)) {
-          await supabase.storage.from('business-assets').remove([oldPath]);
+        if (socialChannels) {
+          dbUpdates.social_channels = socialChannels;
         }
-      }
 
-      // Upload new logo with organization folder structure
-      const fileExt = file.name.split('.').pop();
-      const fileName = `logo-${Date.now()}.${fileExt}`;
-      const filePath = `${organizationId}/${fileName}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('business-assets')
-        .upload(filePath, file);
+        let result;
+        if (settings?.id) {
+          result = await supabase
+            .from('organization_settings')
+            .update(dbUpdates)
+            .eq('id', settings.id)
+            .select('*')
+            .single();
+        } else {
+          result = await supabase
+            .from('organization_settings')
+            .upsert(
+              {
+                organization_id: activeOrganizationId,
+                ...dbUpdates,
+              },
+              { onConflict: 'organization_id' }
+            )
+            .select('*')
+            .single();
+        }
 
-      if (uploadError) throw uploadError;
+        if (result.error) throw result.error;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('business-assets')
-        .getPublicUrl(filePath);
+        queryClient.setQueryData(
+          ['organization_settings', activeOrganizationId],
+          result.data
+        );
 
-      // Update settings with new logo URL
-      const updateResult = await updateSettings({ logo_url: publicUrl });
-      
-      if (updateResult.success) {
+        return { success: true, data: result.data as OrganizationSettings };
+      } catch (error: any) {
+        console.error('Error updating organization settings:', error);
         toast({
-          title: "Success",
-          description: "Logo uploaded successfully",
+          title: 'Error',
+          description: error.message || 'Failed to update settings',
+          variant: 'destructive',
         });
+        return { success: false, error };
+      }
+    },
+    [activeOrganizationId, queryClient, settings?.id, toast]
+  );
+
+  const uploadLogo = useCallback(
+    async (file: File) => {
+      if (!activeOrganizationId) {
+        const error = new Error('No active organization found');
+        return { success: false, error };
       }
 
-      return updateResult;
-    } catch (error: any) {
-      console.error('Error uploading logo:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to upload logo",
-        variant: "destructive",
-      });
+      try {
+        setUploading(true);
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
+        if (authError) throw authError;
+        if (!user) throw new Error('User not authenticated');
+
+        if (!file.type.startsWith('image/')) {
+          throw new Error('File must be an image');
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+          throw new Error('File size must be less than 2MB');
+        }
+
+        if (settings?.logo_url) {
+          const urlParts = settings.logo_url.split('/');
+          const oldPath = urlParts.slice(-2).join('/');
+          if (oldPath) {
+            try {
+              await supabase.storage
+                .from('business-assets')
+                .remove([oldPath]);
+            } catch (removeError) {
+              console.warn(
+                'Failed to remove old logo before uploading new one:',
+                removeError
+              );
+            }
+          }
+        }
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `logo-${Date.now()}.${fileExt}`;
+        const filePath = `${activeOrganizationId}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('business-assets')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage
+          .from('business-assets')
+          .getPublicUrl(filePath);
+
+        const updateResult = await updateSettings({ logo_url: publicUrl });
+
+        if (updateResult.success) {
+          toast({
+            title: 'Success',
+            description: 'Logo uploaded successfully',
+          });
+        }
+
+        return updateResult;
+      } catch (error: any) {
+        console.error('Error uploading logo:', error);
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to upload logo',
+          variant: 'destructive',
+        });
+        return { success: false, error };
+      } finally {
+        setUploading(false);
+      }
+    },
+    [activeOrganizationId, settings?.logo_url, toast, updateSettings]
+  );
+
+  const deleteLogo = useCallback(async () => {
+    if (!settings?.logo_url) return { success: true };
+    if (!activeOrganizationId) {
+      const error = new Error('No active organization found');
       return { success: false, error };
-    } finally {
-      setUploading(false);
     }
-  };
 
-  // Delete logo
-  const deleteLogo = async () => {
     try {
-      if (!settings?.logo_url) return { success: true };
-
-      // Delete from storage
       const urlParts = settings.logo_url.split('/');
-      const oldPath = urlParts.slice(-2).join('/'); // Get organizationId/filename format
+      const oldPath = urlParts.slice(-2).join('/');
       if (oldPath) {
         await supabase.storage.from('business-assets').remove([oldPath]);
       }
 
-      // Clear the logo URL in settings
       const result = await updateSettings({ logo_url: null });
-      
+
       if (result.success) {
         toast({
-          title: "Success",
-          description: "Logo removed successfully",
+          title: 'Success',
+          description: 'Logo removed successfully',
         });
       }
 
@@ -270,25 +300,21 @@ export const useOrganizationSettings = () => {
     } catch (error: any) {
       console.error('Error deleting logo:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete logo",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to delete logo',
+        variant: 'destructive',
       });
       return { success: false, error };
     }
-  };
-
-  useEffect(() => {
-    fetchSettings();
-  }, []);
+  }, [activeOrganizationId, settings?.logo_url, toast, updateSettings]);
 
   return {
     settings,
-    loading,
+    loading: isLoading,
     uploading,
     updateSettings,
     uploadLogo,
     deleteLogo,
-    refreshSettings: fetchSettings
+    refreshSettings: refetch,
   };
 };

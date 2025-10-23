@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { ReactNode, useMemo } from "react";
 import StickySectionNav, { StickySectionNavItem } from "./StickySectionNav";
 const DEFAULT_OVERVIEW_ID = "project-overview";
 const DEFAULT_OVERVIEW_LABEL = "Overview";
@@ -30,73 +30,36 @@ export default function ProjectDetailsLayout({
   navAlign = "end",
   navAriaLabel = "Section navigation"
 }: ProjectDetailsLayoutProps) {
-  const [activeId, setActiveId] = useState<string>(
-    showOverviewNav ? overviewNavId : sections[0]?.id || ""
-  );
-  const observer = useRef<IntersectionObserver | null>(null);
-  const sectionIds = useMemo(() => sections.map((section) => section.id), [sections]);
-  const observedIds = useMemo(
-    () => (showOverviewNav ? [overviewNavId, ...sectionIds] : sectionIds),
-    [sectionIds, showOverviewNav, overviewNavId]
-  );
+  const navItems = useMemo<StickySectionNavItem[]>(() => {
+    const sectionNav = sections.map((section) => ({
+      id: section.id,
+      title: section.title
+    }));
 
-  useEffect(() => {
-    const headings = observedIds
-      .map((id) => document.getElementById(id))
-      .filter((el): el is HTMLElement => Boolean(el));
-    observer.current?.disconnect();
-    observer.current = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        if (visible[0]) setActiveId(visible[0].target.id);
-      },
-      { rootMargin: "-100px 0px -60% 0px", threshold: [0, 0.5, 1] }
-    );
-    headings.forEach((el) => observer.current?.observe(el));
-    return () => observer.current?.disconnect();
-  }, [observedIds]);
-
-  useEffect(() => {
-    if (observedIds.length === 0) {
-      setActiveId("");
-      return;
+    if (!showOverviewNav) {
+      return sectionNav;
     }
 
-    setActiveId((prev) => {
-      if (prev && observedIds.includes(prev)) {
-        return prev;
-      }
-      return observedIds[0];
-    });
-  }, [observedIds]);
-
-  const navItems = useMemo<StickySectionNavItem[]>(() => {
-    const sectionNav = sections.map((section) => ({ id: section.id, title: section.title }));
-    return showOverviewNav
-      ? [{ id: overviewNavId, title: overviewLabel }, ...sectionNav]
-      : sectionNav;
-  }, [sections, showOverviewNav, overviewNavId, overviewLabel]);
-
-  const handleNavClick = (id: string) => {
-    setActiveId(id);
-
-    if (showOverviewNav && id === overviewNavId) {
+    const handleOverviewSelect = () => {
       if (onOverviewScroll) {
         onOverviewScroll();
         return;
       }
 
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    };
 
-    const target = document.getElementById(id);
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
+    return [
+      {
+        id: overviewNavId,
+        title: overviewLabel,
+        onSelect: handleOverviewSelect
+      },
+      ...sectionNav
+    ];
+  }, [sections, showOverviewNav, overviewNavId, overviewLabel, onOverviewScroll]);
 
   return (
     <div className="w-full min-h-screen">
@@ -112,11 +75,10 @@ export default function ProjectDetailsLayout({
 
       <StickySectionNav
         items={navItems}
-        activeId={activeId}
-        onSelect={handleNavClick}
         stickyTopOffset={stickyTopOffset}
         align={navAlign}
         ariaLabel={navAriaLabel}
+        fallbackActiveId={showOverviewNav ? overviewNavId : sections[0]?.id}
       />
 
       <div className="grid grid-cols-12 gap-4 md:gap-6 w-full max-w-full overflow-hidden">

@@ -486,17 +486,278 @@ const SidebarGroupContent = React.forwardRef<
 ))
 SidebarGroupContent.displayName = "SidebarGroupContent"
 
+type SidebarMenuHighlightMode = "active" | "hover"
+
+interface SidebarMenuHighlightContextValue {
+  setActive: (node: HTMLElement | null) => void
+  unsetActive: (node: HTMLElement | null) => void
+  setHover: (node: HTMLElement | null) => void
+  clearHover: (node: HTMLElement | null) => void
+  unregister: (node: HTMLElement | null) => void
+}
+
+const SidebarMenuHighlightContext =
+  React.createContext<SidebarMenuHighlightContextValue | null>(null)
+
 const SidebarMenu = React.forwardRef<
   HTMLUListElement,
   React.ComponentProps<"ul">
->(({ className, ...props }, ref) => (
-  <ul
-    ref={ref}
-    data-sidebar="menu"
-    className={cn("flex w-full min-w-0 flex-col gap-1", className)}
-    {...props}
-  />
-))
+>(({ className, children, ...props }, ref) => {
+  const menuRef = React.useRef<HTMLUListElement | null>(null)
+  const activeNodeRef = React.useRef<HTMLElement | null>(null)
+  const hoverNodeRef = React.useRef<HTMLElement | null>(null)
+  const rafRef = React.useRef<number | null>(null)
+  const [indicator, setIndicator] = React.useState<{
+    x: number
+    y: number
+    width: number
+    height: number
+    borderRadius: string
+    opacity: number
+    mode: SidebarMenuHighlightMode
+  }>({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    borderRadius: "0px",
+    opacity: 0,
+    mode: "active",
+  })
+
+  const applyIndicator = React.useCallback(
+    (node: HTMLElement, mode: SidebarMenuHighlightMode) => {
+      if (!menuRef.current) return
+
+      const menuRect = menuRef.current.getBoundingClientRect()
+      const nodeRect = node.getBoundingClientRect()
+      const styles = window.getComputedStyle(node)
+
+      setIndicator({
+        x: nodeRect.left - menuRect.left + menuRef.current.scrollLeft,
+        y: nodeRect.top - menuRect.top + menuRef.current.scrollTop,
+        width: nodeRect.width,
+        height: nodeRect.height,
+        borderRadius: styles.borderRadius,
+        opacity: mode === "hover" ? 0.92 : 1,
+        mode,
+      })
+    },
+    []
+  )
+
+  const scheduleIndicator = React.useCallback(
+    (node: HTMLElement, mode: SidebarMenuHighlightMode) => {
+      if (!menuRef.current) return
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+      }
+      rafRef.current = window.requestAnimationFrame(() => {
+        applyIndicator(node, mode)
+      })
+    },
+    [applyIndicator]
+  )
+
+  const resetIndicator = React.useCallback(() => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+    setIndicator((prev) => ({
+      ...prev,
+      opacity: 0,
+    }))
+  }, [])
+
+  const setActive = React.useCallback(
+    (node: HTMLElement | null) => {
+      activeNodeRef.current = node
+      if (!node) {
+        if (!hoverNodeRef.current) {
+          resetIndicator()
+        }
+        return
+      }
+      if (hoverNodeRef.current && hoverNodeRef.current !== node) {
+        return
+      }
+      scheduleIndicator(node, "active")
+    },
+    [resetIndicator, scheduleIndicator]
+  )
+
+  const unsetActive = React.useCallback(
+    (node: HTMLElement | null) => {
+      if (!node) return
+      if (activeNodeRef.current !== node) return
+      activeNodeRef.current = null
+      if (hoverNodeRef.current) {
+        scheduleIndicator(
+          hoverNodeRef.current,
+          hoverNodeRef.current === node ? "active" : "hover"
+        )
+      } else {
+        resetIndicator()
+      }
+    },
+    [resetIndicator, scheduleIndicator]
+  )
+
+  const setHover = React.useCallback(
+    (node: HTMLElement | null) => {
+      hoverNodeRef.current = node
+      if (!node) {
+        if (activeNodeRef.current) {
+          scheduleIndicator(activeNodeRef.current, "active")
+        } else {
+          resetIndicator()
+        }
+        return
+      }
+      const mode =
+        activeNodeRef.current && activeNodeRef.current === node
+          ? "active"
+          : "hover"
+      scheduleIndicator(node, mode)
+    },
+    [resetIndicator, scheduleIndicator]
+  )
+
+  const clearHover = React.useCallback(
+    (node: HTMLElement | null) => {
+      if (!node) return
+      if (hoverNodeRef.current !== node) return
+      hoverNodeRef.current = null
+      if (activeNodeRef.current) {
+        scheduleIndicator(activeNodeRef.current, "active")
+      } else {
+        resetIndicator()
+      }
+    },
+    [resetIndicator, scheduleIndicator]
+  )
+
+  const unregister = React.useCallback(
+    (node: HTMLElement | null) => {
+      if (!node) return
+      if (hoverNodeRef.current === node) {
+        hoverNodeRef.current = null
+      }
+      if (activeNodeRef.current === node) {
+        activeNodeRef.current = null
+        if (hoverNodeRef.current) {
+          scheduleIndicator(
+            hoverNodeRef.current,
+            hoverNodeRef.current === node ? "active" : "hover"
+          )
+        } else {
+          resetIndicator()
+        }
+      }
+    },
+    [resetIndicator, scheduleIndicator]
+  )
+
+  React.useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+      }
+    }
+  }, [])
+
+  React.useLayoutEffect(() => {
+    if (typeof window === "undefined") return
+
+    const handleResize = () => {
+      const target = hoverNodeRef.current ?? activeNodeRef.current
+      if (target && menuRef.current) {
+        scheduleIndicator(
+          target,
+          target === activeNodeRef.current ? "active" : "hover"
+        )
+      }
+    }
+
+    window.addEventListener("resize", handleResize)
+    return () => {
+      window.removeEventListener("resize", handleResize)
+    }
+  }, [scheduleIndicator])
+
+  React.useLayoutEffect(() => {
+    const menu = menuRef.current
+    if (!menu || typeof ResizeObserver === "undefined") return
+
+    const observer = new ResizeObserver(() => {
+      const target = hoverNodeRef.current ?? activeNodeRef.current
+      if (target) {
+        scheduleIndicator(
+          target,
+          target === activeNodeRef.current ? "active" : "hover"
+        )
+      }
+    })
+
+    observer.observe(menu)
+    return () => {
+      observer.disconnect()
+    }
+  }, [scheduleIndicator])
+
+  const setMenuRef = React.useCallback(
+    (node: HTMLUListElement | null) => {
+      menuRef.current = node
+      if (typeof ref === "function") {
+        ref(node)
+      } else if (ref) {
+        ;(ref as React.MutableRefObject<HTMLUListElement | null>).current = node
+      }
+    },
+    [ref]
+  )
+
+  const contextValue = React.useMemo<SidebarMenuHighlightContextValue>(
+    () => ({
+      setActive,
+      unsetActive,
+      setHover,
+      clearHover,
+      unregister,
+    }),
+    [clearHover, setActive, setHover, unregister, unsetActive]
+  )
+
+  return (
+    <SidebarMenuHighlightContext.Provider value={contextValue}>
+      <ul
+        ref={setMenuRef}
+        data-sidebar="menu"
+        className={cn(
+          "relative flex w-full min-w-0 flex-col gap-1",
+          className
+        )}
+        {...props}
+      >
+        <li
+          aria-hidden="true"
+          data-sidebar="menu-highlight"
+          className="pointer-events-none absolute left-0 top-0 z-0 list-none border border-[hsl(var(--accent-200))] bg-[linear-gradient(135deg,_hsl(var(--accent-50)),_hsl(var(--accent-200)))] shadow-[0_18px_30px_-20px_hsl(var(--accent-400)_/_0.8)] transition-[opacity,transform,width,height] duration-300 ease-out will-change-transform data-[mode=hover]:shadow-[0_14px_24px_-18px_hsl(var(--accent-300)_/_0.7)]"
+          data-mode={indicator.mode}
+          style={{
+            transform: `translate3d(${indicator.x}px, ${indicator.y}px, 0)`,
+            width: indicator.width ? `${indicator.width}px` : 0,
+            height: indicator.height ? `${indicator.height}px` : 0,
+            borderRadius: indicator.borderRadius,
+            opacity: indicator.opacity,
+          }}
+        />
+        {children}
+      </ul>
+    </SidebarMenuHighlightContext.Provider>
+  )
+})
 SidebarMenu.displayName = "SidebarMenu"
 
 const SidebarMenuItem = React.forwardRef<
@@ -506,20 +767,20 @@ const SidebarMenuItem = React.forwardRef<
   <li
     ref={ref}
     data-sidebar="menu-item"
-    className={cn("group/menu-item relative", className)}
+    className={cn("group/menu-item relative z-10", className)}
     {...props}
   />
 ))
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button relative isolate flex w-full items-center gap-2 overflow-hidden rounded-xl px-3 py-2 text-left text-sm outline-none ring-sidebar-ring transition-all duration-300 ease-out hover:-translate-y-[1px] hover:bg-[hsl(var(--accent-50)_/_0.75)] hover:text-[hsl(var(--accent-800))] focus-visible:ring-2 focus-visible:ring-offset-0 focus-visible:ring-[hsl(var(--accent-300))] active:bg-[hsl(var(--accent-100))] active:text-[hsl(var(--accent-900))] disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-9 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:border data-[active=true]:border-[hsl(var(--accent-200))] data-[active=true]:bg-[linear-gradient(135deg,_hsl(var(--accent-50)),_hsl(var(--accent-200)))] data-[active=true]:font-semibold data-[active=true]:text-[hsl(var(--accent-900))] data-[active=true]:shadow-[0_18px_30px_-20px_hsl(var(--accent-400)_/_0.8)] data-[state=open]:hover:bg-[hsl(var(--accent-50)_/_0.75)] data-[state=open]:hover:text-[hsl(var(--accent-800))] group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+  "peer/menu-button relative z-[1] isolate flex w-full items-center gap-2 overflow-hidden rounded-xl px-3 py-2 text-left text-sm font-medium text-sidebar-foreground/85 outline-none ring-sidebar-ring transition-all duration-300 ease-out hover:translate-x-[4px] hover:text-sidebar-accent-foreground focus-visible:translate-x-[4px] focus-visible:ring-2 focus-visible:ring-offset-0 focus-visible:ring-[hsl(var(--accent-300))] active:translate-x-[2px] disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-9 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-semibold data-[active=true]:text-[hsl(var(--accent-900))] data-[state=open]:text-[hsl(var(--accent-900))] group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:transition-colors",
   {
     variants: {
       variant: {
-        default: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        default: "",
         outline:
-          "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
+          "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))] data-[active=true]:shadow-[0_0_0_1px_hsl(var(--accent-300))]",
       },
       size: {
         default: "h-8 text-sm",
@@ -550,19 +811,113 @@ const SidebarMenuButton = React.forwardRef<
       size = "default",
       tooltip,
       className,
+      onMouseEnter,
+      onMouseLeave,
+      onFocus,
+      onBlur,
       ...props
     },
     ref
   ) => {
     const Comp = asChild ? Slot : "button"
     const { isMobile, state } = useSidebar()
+    const highlight = React.useContext(SidebarMenuHighlightContext)
+    const localRef =
+      React.useRef<HTMLButtonElement | HTMLAnchorElement | null>(null)
+    const lastAssignedRef = React.useRef<HTMLElement | null>(null)
+
+    const setRefs = React.useCallback(
+      (node: HTMLElement | null) => {
+        localRef.current = node as HTMLButtonElement | HTMLAnchorElement | null
+        if (node) {
+          lastAssignedRef.current = node
+        }
+
+        if (typeof ref === "function") {
+          ref(node as HTMLButtonElement | null)
+        } else if (ref) {
+          ;(ref as React.MutableRefObject<HTMLButtonElement | null>).current =
+            node as HTMLButtonElement | null
+        }
+      },
+      [ref]
+    )
+
+    React.useLayoutEffect(() => {
+      if (!highlight) return
+      const node = localRef.current as unknown as HTMLElement | null
+      if (!node) return
+
+      if (isActive) {
+        highlight.setActive(node)
+        return () => {
+          highlight.unsetActive(node)
+        }
+      }
+
+      highlight.unsetActive(node)
+    }, [highlight, isActive])
+
+    React.useEffect(() => {
+      if (!highlight) return
+      const node = lastAssignedRef.current
+      if (!node) return
+
+      return () => {
+        highlight.unregister(node)
+      }
+    }, [highlight])
+
+    const handleMouseEnter = React.useCallback(
+      (event: React.MouseEvent<HTMLElement>) => {
+        onMouseEnter?.(event as React.MouseEvent<HTMLButtonElement>)
+        if (highlight && localRef.current) {
+          highlight.setHover(localRef.current as unknown as HTMLElement)
+        }
+      },
+      [highlight, onMouseEnter]
+    )
+
+    const handleMouseLeave = React.useCallback(
+      (event: React.MouseEvent<HTMLElement>) => {
+        onMouseLeave?.(event as React.MouseEvent<HTMLButtonElement>)
+        if (highlight && localRef.current) {
+          highlight.clearHover(localRef.current as unknown as HTMLElement)
+        }
+      },
+      [highlight, onMouseLeave]
+    )
+
+    const handleFocus = React.useCallback(
+      (event: React.FocusEvent<HTMLElement>) => {
+        onFocus?.(event as React.FocusEvent<HTMLButtonElement>)
+        if (highlight && localRef.current) {
+          highlight.setHover(localRef.current as unknown as HTMLElement)
+        }
+      },
+      [highlight, onFocus]
+    )
+
+    const handleBlur = React.useCallback(
+      (event: React.FocusEvent<HTMLElement>) => {
+        onBlur?.(event as React.FocusEvent<HTMLButtonElement>)
+        if (highlight && localRef.current) {
+          highlight.clearHover(localRef.current as unknown as HTMLElement)
+        }
+      },
+      [highlight, onBlur]
+    )
 
     const button = (
       <Comp
-        ref={ref}
+        ref={setRefs}
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
         {...props}
       />

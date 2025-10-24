@@ -33,12 +33,12 @@ export function SidebarNavItem({
   badge
 }: SidebarNavItemProps) {
   const content = (
-    <div 
-      className={`flex items-center gap-3 w-full ${isLocked ? 'opacity-50' : ''}`}
+    <div
+      className={`flex items-center gap-2.5 w-full text-sm font-medium tracking-tight ${isLocked ? 'opacity-50' : ''}`}
       onClick={isLocked ? onLockedClick : undefined}
     >
-      <Icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-sidebar-primary group-data-[active=true]/item:text-[hsl(var(--sidebar-active-icon))] transition-colors" />
-      <span className="font-medium text-sm">{title}</span>
+      <Icon className="h-4 w-4 text-sidebar-foreground/80 group-hover/item:text-sidebar-primary group-data-[active=true]/item:text-[hsl(var(--sidebar-active-icon))] transition-colors" />
+      <span className="text-sidebar-foreground/90">{title}</span>
       {badge && <div className="ml-auto">{badge}</div>}
       {isLocked && <Lock className="h-3 w-3 ml-auto text-muted-foreground" />}
     </div>
@@ -48,7 +48,7 @@ export function SidebarNavItem({
     <Tooltip>
       <TooltipTrigger asChild>
         <SidebarMenuButton
-          className={`group/item w-full h-10 px-3 py-2 text-left transition-all duration-200 rounded-lg cursor-not-allowed ${className}`}
+          className={`group/item w-full h-9 px-2.5 py-2 text-left transition-all duration-200 rounded-md cursor-not-allowed ${className}`}
         >
           {content}
         </SidebarMenuButton>
@@ -61,9 +61,9 @@ export function SidebarNavItem({
     <SidebarMenuButton
       asChild
       isActive={isActive}
-      className={`group/item w-full h-10 px-3 py-2 text-left transition-all duration-200 rounded-lg hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-active data-[active=true]:text-sidebar-active-foreground data-[active=true]:font-medium ${className}`}
+      className={`group/item w-full h-9 px-2.5 py-2 text-left transition-all duration-200 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-active data-[active=true]:text-sidebar-active-foreground data-[active=true]:shadow-sm data-[active=true]:border data-[active=true]:border-sidebar-border ${className}`}
     >
-      <NavLink to={url} className="flex items-center gap-3 w-full">
+      <NavLink to={url} className="flex items-center gap-2.5 w-full">
         {content}
       </NavLink>
     </SidebarMenuButton>
@@ -71,7 +71,7 @@ export function SidebarNavItem({
     <SidebarMenuButton
       onClick={onClick}
       isActive={isActive}
-      className={`group/item w-full h-10 px-3 py-2 text-left transition-all duration-200 rounded-lg hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-active data-[active=true]:text-sidebar-active-foreground data-[active=true]:font-medium ${className}`}
+      className={`group/item w-full h-9 px-2.5 py-2 text-left transition-all duration-200 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-active data-[active=true]:text-sidebar-active-foreground data-[active=true]:shadow-sm data-[active=true]:border data-[active=true]:border-sidebar-border ${className}`}
     >
       {content}
     </SidebarMenuButton>
@@ -81,7 +81,7 @@ export function SidebarNavItem({
     <SidebarMenuItem>
       {buttonContent}
       {children && (
-        <div className="ml-6 mt-1 space-y-1">
+        <div className="ml-6 mt-1 space-y-0.5">
           {children}
         </div>
       )}

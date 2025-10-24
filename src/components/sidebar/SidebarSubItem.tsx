@@ -26,12 +26,12 @@ export function SidebarSubItem({
   onClick
 }: SidebarSubItemProps) {
   const content = (
-    <div 
-      className={`flex items-center gap-3 w-full ${isLocked ? 'opacity-50' : ''}`}
+    <div
+      className={`flex items-center gap-2.5 w-full text-sm ${isLocked ? 'opacity-50' : ''}`}
       onClick={isLocked ? onLockedClick : undefined}
     >
-      <Icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-sidebar-primary group-data-[active=true]/item:text-[hsl(var(--sidebar-active-icon))] transition-colors" />
-      <span className="font-medium text-sm">{title}</span>
+      <Icon className="h-4 w-4 text-sidebar-foreground/75 group-hover/item:text-sidebar-primary group-data-[active=true]/item:text-[hsl(var(--sidebar-active-icon))] transition-colors" />
+      <span className="text-sidebar-foreground/80">{title}</span>
       {isLocked && <Lock className="h-3 w-3 ml-auto text-muted-foreground" />}
     </div>
   );
@@ -42,7 +42,7 @@ export function SidebarSubItem({
         <Tooltip>
           <TooltipTrigger asChild>
             <SidebarMenuButton
-              className="group/item w-full h-9 px-3 py-2 text-left transition-all duration-200 rounded-lg cursor-not-allowed"
+              className="group/item w-full h-8 px-2.5 py-2 text-left transition-all duration-200 rounded-md cursor-not-allowed"
             >
               {content}
             </SidebarMenuButton>
@@ -55,9 +55,9 @@ export function SidebarSubItem({
         <SidebarMenuButton
           asChild
           isActive={isActive}
-          className="group/item w-full h-9 px-3 py-2 text-left transition-all duration-200 rounded-lg hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-active data-[active=true]:text-sidebar-active-foreground data-[active=true]:font-medium"
+          className="group/item w-full h-8 px-2.5 py-2 text-left transition-all duration-200 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-active data-[active=true]:text-sidebar-active-foreground data-[active=true]:shadow-sm data-[active=true]:border data-[active=true]:border-sidebar-border"
         >
-          <NavLink to={url} className="flex items-center gap-3 w-full" onClick={onClick}>
+          <NavLink to={url} className="flex items-center gap-2.5 w-full" onClick={onClick}>
             {content}
           </NavLink>
         </SidebarMenuButton>

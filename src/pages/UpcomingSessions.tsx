@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
@@ -10,7 +10,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Plus, Calendar, AlertTriangle, CalendarCheck2, CalendarClock, FileDown, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
 import NewSessionDialog from "@/components/NewSessionDialog";
 import { formatTime, formatLongDate, getWeekRange, cn } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
@@ -94,7 +93,6 @@ const AllSessions = () => {
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
-  const isMobile = useIsMobile();
   const [exporting, setExporting] = useState(false);
 
   const fetchSessions = useCallback(async () => {
@@ -512,23 +510,43 @@ const AllSessions = () => {
 
   const activeFiltersCount = (dateFilter !== 'all' ? 1 : 0) + statusFilters.length;
 
-  const summaryChips = useMemo(
-    () => {
-      const chips: { id: string; label: string }[] = [];
-      if (statusFilters.length > 0) {
-        const joinedStatuses = selectedStatusLabels.join(', ');
-        chips.push({ id: 'status', label: `${t('sessions.table.status')}: ${joinedStatuses}` });
+  const summaryChips = useMemo(() => {
+    const chips: { id: string; label: ReactNode }[] = [];
+
+    if (statusFilters.length > 0) {
+      const joinedStatuses = selectedStatusLabels.join(", ");
+      chips.push({
+        id: "status",
+        label: (
+          <span>
+            <span className="mr-1 text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+              {t("sessions.filters.statusSectionTitle")}:
+            </span>
+            {joinedStatuses}
+          </span>
+        ),
+      });
+    }
+
+    if (dateFilter !== "all") {
+      const dateLabel = dateFilterOptions.find((option) => option.key === dateFilter)?.label;
+      if (dateLabel) {
+        chips.push({
+          id: `date-${dateFilter}`,
+          label: (
+            <span>
+              <span className="mr-1 text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+                {t("sessions.filters.timeSectionTitle")}:
+              </span>
+              {dateLabel}
+            </span>
+          ),
+        });
       }
-      if (dateFilter !== 'all') {
-        const dateLabel = dateFilterOptions.find((option) => option.key === dateFilter)?.label;
-        if (dateLabel) {
-          chips.push({ id: 'date', label: `${t('sessions.table.date')}: ${dateLabel}` });
-        }
-      }
-      return chips;
-    },
-    [statusFilters, selectedStatusLabels, t, dateFilter, dateFilterOptions]
-  );
+    }
+
+    return chips;
+  }, [dateFilter, dateFilterOptions, selectedStatusLabels, statusFilters, t]);
 
   const tableSummary = useMemo(
     () => (summaryChips.length > 0 ? { chips: summaryChips } : undefined),
@@ -664,36 +682,6 @@ const AllSessions = () => {
     "ml-2 h-5 min-w-[2rem] rounded-full border border-border/50 bg-muted/40 px-2 text-xs font-medium text-muted-foreground transition-colors";
   const filterPillBadgeActiveClasses =
     "border-primary/30 bg-primary/15 text-primary";
-
-  const toolbarContent = (
-    <div className="hidden md:flex w-full flex-wrap items-center gap-3">
-      <div className="flex flex-1 flex-wrap gap-2">
-        {dateFilterOptions.map((option) => (
-          <Button
-            key={option.key}
-            variant="outline"
-            size="sm"
-            className={cn(
-              filterPillBaseClasses,
-              dateFilter === option.key && filterPillActiveClasses
-            )}
-            onClick={() => setDateFilter(option.key)}
-          >
-            <span>{option.label}</span>
-            <Badge
-              variant="outline"
-              className={cn(
-                filterPillBadgeBaseClasses,
-                dateFilter === option.key && filterPillBadgeActiveClasses
-              )}
-            >
-              {option.count}
-            </Badge>
-          </Button>
-        ))}
-      </div>
-    </div>
-  );
 
   const filtersConfig = useMemo<AdvancedDataTableFiltersConfig>(() => ({
     title: t('sessions.filters.title'),
@@ -1019,10 +1007,9 @@ const AllSessions = () => {
           onSortChange={handleTableSortChange}
           isLoading={loading}
           emptyState={emptyState}
-          toolbar={toolbarContent}
           filters={filtersConfig}
           actions={exportActions}
-          summary={isMobile ? tableSummary : undefined}
+          summary={tableSummary}
         />
 
         <ViewProjectDialog

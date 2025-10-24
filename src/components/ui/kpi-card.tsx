@@ -413,7 +413,7 @@ export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
                     )}
                   </span>
                 </HeadingTag>
-                <div className="flex flex-wrap items-baseline gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className={valueClassName}>
                     {value}
                   </span>

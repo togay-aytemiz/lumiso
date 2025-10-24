@@ -891,18 +891,27 @@
       "infoLabel": "{{metric}} metriği hakkında bilgi alın",
       "pastNeedsAction": {
         "title": "Aksiyon bekleyen geçmiş seanslar",
-        "tooltip": "Bugünden önce planlanmış ve hâlâ Planlandı durumunda olan seansların sayısıdır.",
+        "tooltip": "Bugünden önce planlanmış olup hâlâ Planlandı ya da ilk Aktif yaşam döngüsünde kalan seansları sayar.",
         "action": "Geçmişi incele"
       },
-      "today": {
-        "title": "Bugünkü seanslar",
-        "tooltip": "Bugün gerçekleşecek ve iptal edilmemiş seansların sayısıdır.",
-        "action": "Bugünü göster"
+      "schedule": {
+        "title": "Bugün ve yaklaşan seanslar",
+        "tooltip": "Bugünkü iptal edilmemiş seansları gelecekteki rezervasyonlarla birleştirerek sıradaki işleri tek kartta gösterir.",
+        "breakdown": "Bugün: {{today}} • Yaklaşan: {{upcoming}}",
+        "breakdownAria": "{{today}} seans bugün, {{upcoming}} seans yaklaşan",
+        "action": "Yaklaşanları göster"
       },
-      "future": {
-        "title": "Gelecek seanslar",
-        "tooltip": "Bugünden sonraki tarihler için planlanmış ve iptal edilmemiş seansların sayısıdır.",
-        "action": "Geleceği göster"
+      "inProgress": {
+        "title": "Devam eden seanslar",
+        "tooltip": "Planlanan saatinden bağımsız olarak Aktif yaşam döngüsündeki seansları sayar.",
+        "action": "Devam edenleri göster"
+      },
+      "completed": {
+        "title": "Tamamlanan seanslar",
+        "tooltip": "Tamamlandı yaşam döngüsüne eşlenen seansları sayar. Haftalık çip tarihi bu haftaya denk gelen teslimleri gösterir.",
+        "action": "Tamamlananları göster",
+        "weeklySummary": "Bu hafta {{count}} tamamlandı",
+        "weeklySummaryAria": "Bu hafta {{count}} seans tamamlandı"
       }
     },
     "segments": {
@@ -977,7 +986,13 @@
       "date": "Tarih",
       "time": "Saat",
       "status": "Durum",
-      "notes": "Notlar"
+      "notes": "Notlar",
+      "dateChip": {
+        "today": "Bugün",
+        "todayWithTime": "Bugün {{time}}",
+        "tomorrow": "Yarın",
+        "tomorrowWithTime": "Yarın {{time}}"
+      }
     },
     "emptyState": {
       "title": "Seans bulunamadı",

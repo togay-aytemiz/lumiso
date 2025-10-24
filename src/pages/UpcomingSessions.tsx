@@ -4,7 +4,17 @@ import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar, AlertTriangle, CalendarCheck2, CalendarClock, FileDown, Info, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Calendar,
+  AlertTriangle,
+  CalendarCheck2,
+  CheckCircle2,
+  FileDown,
+  Info,
+  Loader2,
+  Timer,
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate, useLocation } from "react-router-dom";
 import NewSessionDialog from "@/components/NewSessionDialog";
@@ -26,6 +36,7 @@ import { format } from "date-fns";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useSessionStatuses } from "@/hooks/useOrganizationData";
+import { Badge } from "@/components/ui/badge";
 
 interface Session {
   id: string;
@@ -322,14 +333,29 @@ const AllSessions = () => {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const startOfWeek = new Date(startOfToday);
+    const dayOfWeek = startOfWeek.getDay();
+    const daysSinceMonday = (dayOfWeek + 6) % 7;
+    startOfWeek.setDate(startOfWeek.getDate() - daysSinceMonday);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 7);
 
     let pastNeedsAction = 0;
     let todayCount = 0;
-    let futureCount = 0;
+    let upcomingCount = 0;
+    let inProgressCount = 0;
+    let completedCount = 0;
+    let completedThisWeek = 0;
 
     computedSessions.forEach((session) => {
       const sessionDate = session.session_date ? new Date(session.session_date) : null;
       if (!sessionDate || Number.isNaN(sessionDate.getTime())) {
+        if (session.segment === 'in_progress') {
+          inProgressCount += 1;
+        }
+        if (session.statusLifecycle === 'completed') {
+          completedCount += 1;
+        }
         return;
       }
 
@@ -341,20 +367,55 @@ const AllSessions = () => {
         if (session.statusLifecycle !== 'cancelled') {
           todayCount += 1;
         }
+        if (session.segment === 'in_progress') {
+          inProgressCount += 1;
+        }
+        if (session.statusLifecycle === 'completed') {
+          completedCount += 1;
+          if (sessionDate >= startOfWeek && sessionDate < endOfWeek) {
+            completedThisWeek += 1;
+          }
+        }
         return;
       }
 
       if (sessionDate >= endOfToday) {
         if (session.statusLifecycle !== 'cancelled') {
-          futureCount += 1;
+          upcomingCount += 1;
+        }
+      }
+
+      if (session.segment === 'in_progress') {
+        inProgressCount += 1;
+      }
+
+      if (session.statusLifecycle === 'completed') {
+        completedCount += 1;
+        if (sessionDate >= startOfWeek && sessionDate < endOfWeek) {
+          completedThisWeek += 1;
         }
       }
     });
 
-    return { pastNeedsAction, todayCount, futureCount };
+    return {
+      pastNeedsAction,
+      todayCount,
+      upcomingCount,
+      inProgressCount,
+      completedCount,
+      completedThisWeek,
+    };
   }, [computedSessions]);
 
-  const { pastNeedsAction, todayCount, futureCount } = sessionKpiMetrics;
+  const {
+    pastNeedsAction,
+    todayCount,
+    upcomingCount,
+    inProgressCount,
+    completedCount,
+    completedThisWeek,
+  } = sessionKpiMetrics;
+  const todayAndUpcomingTotal = todayCount + upcomingCount;
 
   const numberFormatter = useMemo(
     () => new Intl.NumberFormat(i18n.language),
@@ -367,7 +428,7 @@ const AllSessions = () => {
   );
 
   const buildInfoLabel = useCallback(
-    (metricKey: 'pastNeedsAction' | 'today' | 'future') =>
+    (metricKey: 'pastNeedsAction' | 'schedule' | 'inProgress' | 'completed') =>
       t('sessions.kpis.infoLabel', {
         metric: t(`sessions.kpis.${metricKey}.title`),
       }),
@@ -375,8 +436,9 @@ const AllSessions = () => {
   );
 
   const pastPreset = useMemo(() => getKpiIconPreset('amber'), []);
-  const todayPreset = useMemo(() => getKpiIconPreset('indigo'), []);
-  const futurePreset = useMemo(() => getKpiIconPreset('sky'), []);
+  const schedulePreset = useMemo(() => getKpiIconPreset('indigo'), []);
+  const inProgressPreset = useMemo(() => getKpiIconPreset('sky'), []);
+  const completedPreset = useMemo(() => getKpiIconPreset('emerald'), []);
 
   const filteredAndSortedSessions = useMemo(() => {
     let filtered: SessionWithComputed[];
@@ -655,7 +717,50 @@ const AllSessions = () => {
         sortable: true,
         sortId: 'session_date',
         minWidth: '150px',
-        render: (session) => <span className="whitespace-nowrap">{formatLongDate(session.session_date)}</span>,
+        render: (session) => {
+          const sessionDate = session.session_date ? new Date(session.session_date) : null;
+
+          if (!sessionDate || Number.isNaN(sessionDate.getTime())) {
+            return <span className="text-muted-foreground">—</span>;
+          }
+
+          const now = new Date();
+          const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const endOfToday = new Date(startOfToday);
+          endOfToday.setDate(endOfToday.getDate() + 1);
+
+          const startOfTomorrow = new Date(endOfToday);
+          const endOfTomorrow = new Date(startOfTomorrow);
+          endOfTomorrow.setDate(endOfTomorrow.getDate() + 1);
+
+          const sessionTimeLabel = session.session_time ? formatTime(session.session_time) : undefined;
+
+          if (sessionDate >= startOfToday && sessionDate < endOfToday) {
+            const label = sessionTimeLabel
+              ? t('sessions.table.dateChip.todayWithTime', { time: sessionTimeLabel })
+              : t('sessions.table.dateChip.today');
+
+            return (
+              <Badge className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                {label}
+              </Badge>
+            );
+          }
+
+          if (sessionDate >= startOfTomorrow && sessionDate < endOfTomorrow) {
+            const label = sessionTimeLabel
+              ? t('sessions.table.dateChip.tomorrowWithTime', { time: sessionTimeLabel })
+              : t('sessions.table.dateChip.tomorrow');
+
+            return (
+              <Badge className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                {label}
+              </Badge>
+            );
+          }
+
+          return <span className="whitespace-nowrap">{formatLongDate(session.session_date)}</span>;
+        },
       },
       // 3) Saat (Time)
       {
@@ -880,7 +985,7 @@ const AllSessions = () => {
       </PageHeader>
 
       <div className="p-4 sm:p-6 space-y-6">
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <KpiCard
             className="h-full"
             density="compact"
@@ -892,68 +997,122 @@ const AllSessions = () => {
               content: t('sessions.kpis.pastNeedsAction.tooltip'),
               ariaLabel: buildInfoLabel('pastNeedsAction'),
             }}
-          footer={
-            <Button
-              size="xs"
-              variant="outline"
-              className={KPI_ACTION_BUTTON_CLASS}
-              onClick={() => {
+            footer={
+              <Button
+                size="xs"
+                variant="outline"
+                className={KPI_ACTION_BUTTON_CLASS}
+                onClick={() => {
                   setActiveSegment('pending');
                   setSortState({ columnId: 'session_date', direction: 'asc' });
                 }}
-            >
-              {t('sessions.kpis.pastNeedsAction.action')}
-            </Button>
+              >
+                {t('sessions.kpis.pastNeedsAction.action')}
+              </Button>
             }
           />
           <KpiCard
             className="h-full"
             density="compact"
             icon={CalendarCheck2}
-            {...todayPreset}
-            title={t('sessions.kpis.today.title')}
-            value={formatCount(todayCount)}
-            info={{
-              content: t('sessions.kpis.today.tooltip'),
-              ariaLabel: buildInfoLabel('today'),
+            {...schedulePreset}
+            title={t('sessions.kpis.schedule.title')}
+            value={formatCount(todayAndUpcomingTotal)}
+            trend={{
+              label: t('sessions.kpis.schedule.breakdown', {
+                today: formatCount(todayCount),
+                upcoming: formatCount(upcomingCount),
+              }),
+              tone: 'neutral',
+              icon: (
+                <span
+                  className="h-1.5 w-1.5 rounded-full bg-indigo-500"
+                  aria-hidden="true"
+                />
+              ),
+              ariaLabel: t('sessions.kpis.schedule.breakdownAria', {
+                today: formatCount(todayCount),
+                upcoming: formatCount(upcomingCount),
+              }),
             }}
-          footer={
-            <Button
-              size="xs"
-              variant="outline"
-              className={KPI_ACTION_BUTTON_CLASS}
-              onClick={() => {
-                  setActiveSegment('all');
+            info={{
+              content: t('sessions.kpis.schedule.tooltip'),
+              ariaLabel: buildInfoLabel('schedule'),
+            }}
+            footer={
+              <Button
+                size="xs"
+                variant="outline"
+                className={KPI_ACTION_BUTTON_CLASS}
+                onClick={() => {
+                  setActiveSegment('upcoming');
                   setSortState({ columnId: 'session_date', direction: 'asc' });
                 }}
-            >
-              {t('sessions.kpis.today.action')}
-            </Button>
+              >
+                {t('sessions.kpis.schedule.action')}
+              </Button>
             }
           />
           <KpiCard
             className="h-full"
             density="compact"
-            icon={CalendarClock}
-            {...futurePreset}
-            title={t('sessions.kpis.future.title')}
-            value={formatCount(futureCount)}
+            icon={Timer}
+            {...inProgressPreset}
+            title={t('sessions.kpis.inProgress.title')}
+            value={formatCount(inProgressCount)}
             info={{
-              content: t('sessions.kpis.future.tooltip'),
-              ariaLabel: buildInfoLabel('future'),
+              content: t('sessions.kpis.inProgress.tooltip'),
+              ariaLabel: buildInfoLabel('inProgress'),
             }}
-          footer={
-            <Button
-              size="xs"
-              variant="outline"
-              className={KPI_ACTION_BUTTON_CLASS}
-              onClick={() => {
-                  setActiveSegment('upcoming');
+            footer={
+              <Button
+                size="xs"
+                variant="outline"
+                className={KPI_ACTION_BUTTON_CLASS}
+                onClick={() => {
+                  setActiveSegment('in_progress');
                   setSortState({ columnId: 'session_date', direction: 'asc' });
                 }}
-            >
-              {t('sessions.kpis.future.action')}
-            </Button>
+              >
+                {t('sessions.kpis.inProgress.action')}
+              </Button>
+            }
+          />
+          <KpiCard
+            className="h-full"
+            density="compact"
+            icon={CheckCircle2}
+            {...completedPreset}
+            title={t('sessions.kpis.completed.title')}
+            value={formatCount(completedCount)}
+            trend={{
+              label: t('sessions.kpis.completed.weeklySummary', {
+                count: formatCount(completedThisWeek),
+              }),
+              tone: 'neutral',
+              icon: (
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
+              ),
+              ariaLabel: t('sessions.kpis.completed.weeklySummaryAria', {
+                count: formatCount(completedThisWeek),
+              }),
+            }}
+            info={{
+              content: t('sessions.kpis.completed.tooltip'),
+              ariaLabel: buildInfoLabel('completed'),
+            }}
+            footer={
+              <Button
+                size="xs"
+                variant="outline"
+                className={KPI_ACTION_BUTTON_CLASS}
+                onClick={() => {
+                  setActiveSegment('past');
+                  setSortState({ columnId: 'session_date', direction: 'desc' });
+                }}
+              >
+                {t('sessions.kpis.completed.action')}
+              </Button>
             }
           />
         </section>

@@ -891,18 +891,27 @@
       "infoLabel": "Learn how we calculate {{metric}}",
       "pastNeedsAction": {
         "title": "Past sessions needing action",
-        "tooltip": "Counts sessions scheduled before today that are still marked as Planned.",
+        "tooltip": "Counts sessions scheduled before today that remain in a Planned or initial Active lifecycle so you can follow up.",
         "action": "Review past sessions"
       },
-      "today": {
-        "title": "Today's sessions",
-        "tooltip": "Counts sessions taking place today that have not been cancelled.",
-        "action": "View today"
-      },
-      "future": {
-        "title": "Future sessions",
-        "tooltip": "Counts sessions scheduled after today that are not cancelled.",
+      "schedule": {
+        "title": "Today & upcoming sessions",
+        "tooltip": "Combines today's non-cancelled sessions with future bookings so you can see everything happening next.",
+        "breakdown": "Today: {{today}} • Upcoming: {{upcoming}}",
+        "breakdownAria": "{{today}} sessions today, {{upcoming}} upcoming",
         "action": "View upcoming"
+      },
+      "inProgress": {
+        "title": "Sessions in progress",
+        "tooltip": "Counts sessions currently mapped to an Active lifecycle, even if no schedule time is stored.",
+        "action": "View in progress"
+      },
+      "completed": {
+        "title": "Completed sessions",
+        "tooltip": "Counts sessions mapped to the Completed lifecycle. The weekly chip tracks sessions whose date falls this week.",
+        "action": "View completed",
+        "weeklySummary": "{{count}} completed this week",
+        "weeklySummaryAria": "{{count}} sessions completed this week"
       }
     },
     "segments": {
@@ -977,7 +986,13 @@
       "date": "Date",
       "time": "Time",
       "status": "Status",
-      "notes": "Notes"
+      "notes": "Notes",
+      "dateChip": {
+        "today": "Today",
+        "todayWithTime": "Today {{time}}",
+        "tomorrow": "Tomorrow",
+        "tomorrowWithTime": "Tomorrow {{time}}"
+      }
     },
     "emptyState": {
       "title": "No sessions found",

@@ -905,6 +905,14 @@
         "action": "Geleceği göster"
       }
     },
+    "segments": {
+      "all": "Tüm aktif",
+      "upcoming": "Yaklaşan",
+      "inProgress": "Devam eden",
+      "pending": "Beklemede",
+      "past": "Tamamlanan",
+      "cancelled": "İptal edilen"
+    },
     "table": {
       "project": "Proje",
       "clientName": "Kişi Adı",

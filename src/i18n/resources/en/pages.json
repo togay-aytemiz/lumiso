@@ -905,6 +905,14 @@
         "action": "View upcoming"
       }
     },
+    "segments": {
+      "all": "All active",
+      "upcoming": "Upcoming",
+      "inProgress": "In progress",
+      "pending": "Pending",
+      "past": "Completed",
+      "cancelled": "Cancelled"
+    },
     "table": {
       "project": "Project",
       "clientName": "Client Name",

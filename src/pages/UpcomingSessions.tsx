@@ -1,33 +1,30 @@
-import { useState, useEffect, useMemo, useCallback, type ReactNode } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Plus, Calendar, AlertTriangle, CalendarCheck2, CalendarClock, FileDown, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate, useLocation } from "react-router-dom";
 import NewSessionDialog from "@/components/NewSessionDialog";
-import { formatTime, formatLongDate, getWeekRange, cn } from "@/lib/utils";
+import { formatTime, formatLongDate } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 // Render project stage inline; no need to import ProjectStatusBadge here
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
-import { FilterBar } from "@/components/FilterBar";
 import SessionSheetView from "@/components/SessionSheetView";
 import {
   AdvancedDataTable,
   type AdvancedTableColumn,
   type AdvancedDataTableSortState,
-  type AdvancedDataTableFiltersConfig,
 } from "@/components/data-table";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { getKpiIconPreset, KPI_ACTION_BUTTON_CLASS } from "@/components/ui/kpi-presets";
 import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
 import { format } from "date-fns";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { useSessionStatuses } from "@/hooks/useOrganizationData";
 
 interface Session {
   id: string;
@@ -45,48 +42,113 @@ interface Session {
   lead_status?: string;
 }
 
-type DateFilterKey =
-  | 'all'
-  | 'past'
-  | 'today'
-  | 'tomorrow'
-  | 'future'
-  | 'thisweek'
-  | 'nextweek'
-  | 'thismonth'
-  | 'nextmonth';
+type SessionLifecycle = 'active' | 'completed' | 'cancelled' | 'planned' | 'unknown';
 
-const DATE_FILTER_KEYS: DateFilterKey[] = [
-  'all',
-  'past',
-  'today',
-  'tomorrow',
-  'thisweek',
-  'nextweek',
-  'thismonth',
-  'nextmonth',
-  'future',
-];
+type SessionSegment = 'all' | 'upcoming' | 'in_progress' | 'pending' | 'past' | 'cancelled';
 
-const QUICK_DATE_FILTER_KEYS: DateFilterKey[] = ['all', 'today', 'tomorrow'];
-
-interface DateFilterOption {
-  key: DateFilterKey;
-  label: string;
-  count: number;
+interface SessionStatusRecord {
+  id: string;
+  name: string;
+  color: string;
+  lifecycle: string | null;
+  is_system_initial: boolean;
 }
+
+interface SessionWithComputed extends Session {
+  statusId: string | null;
+  statusDisplayName: string;
+  statusColor: string;
+  statusLifecycle: SessionLifecycle;
+  statusIsInitial: boolean;
+  segment: Exclude<SessionSegment, 'all'>;
+}
+
+const normalizeStatusName = (value?: string | null) =>
+  (value ?? '').trim().toLowerCase();
+
+const normalizeLifecycle = (value?: string | null): SessionLifecycle => {
+  const normalized = normalizeStatusName(value);
+  if (normalized === "active" || normalized === "completed" || normalized === "cancelled" || normalized === "planned") {
+    return normalized as SessionLifecycle;
+  }
+  return "unknown";
+};
+
+const getFallbackLifecycle = (status: string): SessionLifecycle => {
+  const normalized = normalizeStatusName(status);
+
+  if (["completed", "delivered", "in_post_processing"].includes(normalized)) {
+    return "completed";
+  }
+
+  if (["cancelled", "no_show", "archived"].includes(normalized)) {
+    return "cancelled";
+  }
+
+  if (normalized === "planned" || normalized === "scheduled") {
+    return "planned";
+  }
+
+  return "active";
+};
+
+const getFallbackColor = (lifecycle: SessionLifecycle, isInitial: boolean) => {
+  if (lifecycle === "completed") return "#22c55e"; // green
+  if (lifecycle === "cancelled") return "#ef4444"; // red
+  if (lifecycle === "planned" || isInitial) return "#A0AEC0"; // muted gray
+  return "#2563eb"; // blue for active/in-progress
+};
+
+const determineSegment = (
+  lifecycle: SessionLifecycle,
+  isInitial: boolean,
+  sessionDate: Date | null,
+  startOfToday: Date,
+  endOfToday: Date,
+): Exclude<SessionSegment, 'all'> => {
+  if (lifecycle === "cancelled") return "cancelled";
+  if (lifecycle === "completed") return "past";
+
+  const effectiveLifecycle = lifecycle === "planned" ? "planned" : lifecycle;
+  const hasDate = sessionDate && !Number.isNaN(sessionDate.getTime());
+
+  if (!hasDate) {
+    return isInitial ? "upcoming" : "in_progress";
+  }
+
+  if (effectiveLifecycle === "planned" || (effectiveLifecycle === "active" && isInitial)) {
+    if (sessionDate! < startOfToday) {
+      return "pending";
+    }
+    return "upcoming";
+  }
+
+  if (effectiveLifecycle === "active") {
+    return "in_progress";
+  }
+
+  if (sessionDate! < startOfToday) {
+    return "pending";
+  }
+
+  if (sessionDate! >= endOfToday) {
+    return "upcoming";
+  }
+
+  return isInitial ? "upcoming" : "in_progress";
+};
 
 const AllSessions = () => {
   const { t: tForms } = useFormsTranslation();
   const { t, i18n } = useTranslation('pages');
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilters, setStatusFilters] = useState<string[]>([]);
-  const [dateFilter, setDateFilter] = useState<DateFilterKey>("all");
+  const [activeSegment, setActiveSegment] = useState<SessionSegment>('all');
   const [sortState, setSortState] = useState<AdvancedDataTableSortState>({
     columnId: "session_date",
     direction: "asc",
   });
+  const { data: sessionStatusData = [] } = useSessionStatuses();
   const navigate = useNavigate();
   const location = useLocation();
   const [viewingProject, setViewingProject] = useState<any>(null);
@@ -186,151 +248,110 @@ const AllSessions = () => {
   // Refresh on focus/visibility with throttle to avoid request storms
   useThrottledRefetchOnFocus(fetchSessions, 30_000);
 
-  const getDateRangeForFilter = (filter: DateFilterKey) => {
-    const today = new Date();
-    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-    
-    switch (filter) {
-      case 'past':
-        return { start: new Date(0), end: startOfToday };
-      case 'today':
-        return { start: startOfToday, end: endOfToday };
-      case 'tomorrow':
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
-        const startOfTomorrow = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate());
-        const endOfTomorrow = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate() + 1);
-        return { start: startOfTomorrow, end: endOfTomorrow };
-      case 'future':
-        return {
-          start: endOfToday,
-          end: new Date(today.getFullYear() + 10, 0, 1),
-        };
-      case 'thisweek':
-        return getWeekRange(today);
-      case 'nextweek':
-        const nextWeekDate = new Date(today);
-        nextWeekDate.setDate(today.getDate() + 7);
-        return getWeekRange(nextWeekDate);
-      case 'thismonth':
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-        return { start: startOfMonth, end: endOfMonth };
-      case 'nextmonth':
-        const nextMonthStart = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-        const nextMonthEnd = new Date(today.getFullYear(), today.getMonth() + 2, 1);
-        return { start: nextMonthStart, end: nextMonthEnd };
-      default:
-        return null;
-    }
-  };
+  const sessionStatuses = useMemo<SessionStatusRecord[]>(() => {
+    return (sessionStatusData ?? []).map((status: any) => ({
+      id: status.id,
+      name: status.name,
+      color: status.color,
+      lifecycle: status.lifecycle,
+      is_system_initial: Boolean(status.is_system_initial),
+    }));
+  }, [sessionStatusData]);
 
-  const getSessionCountForDateFilter = (filter: DateFilterKey) => {
-    let filtered = sessions;
+  const statusLookup = useMemo(() => {
+    const map = new Map<string, SessionStatusRecord>();
+    sessionStatuses.forEach((status) => {
+      map.set(normalizeStatusName(status.name), status);
+    });
+    return map;
+  }, [sessionStatuses]);
 
-    // Apply status filters first
-    if (statusFilters.length > 0) {
-      filtered = filtered.filter((session) => statusFilters.includes(session.status));
-    }
+  const computedSessions = useMemo<SessionWithComputed[]>(() => {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
 
-    // Then apply date filter
-    if (filter === "all") {
-      return filtered.length;
-    }
+    return sessions.map((session) => {
+      const normalizedStatus = normalizeStatusName(session.status);
+      const statusRecord = normalizedStatus ? statusLookup.get(normalizedStatus) ?? null : null;
+      const lifecycleFromRecord = statusRecord ? normalizeLifecycle(statusRecord.lifecycle) : "unknown";
+      let lifecycle = lifecycleFromRecord !== "unknown" ? lifecycleFromRecord : getFallbackLifecycle(session.status);
+      const isInitial = statusRecord ? Boolean(statusRecord.is_system_initial) : lifecycle === "planned" || normalizedStatus === "planned";
+      if (lifecycle === "unknown") {
+        lifecycle = isInitial ? "planned" : "active";
+      }
+      const sessionDate = session.session_date ? new Date(session.session_date) : null;
+      const hasValidDate = sessionDate && !Number.isNaN(sessionDate.getTime()) ? sessionDate : null;
+      const segment = determineSegment(lifecycle, isInitial, hasValidDate, startOfToday, endOfToday);
+      const color = statusRecord?.color ?? getFallbackColor(lifecycle, isInitial);
+      const displayName = statusRecord?.name ?? session.status;
 
-    const dateRange = getDateRangeForFilter(filter);
-    if (!dateRange) return 0;
+      return {
+        ...session,
+        statusId: statusRecord?.id ?? null,
+        statusDisplayName: displayName,
+        statusColor: color,
+        statusLifecycle: lifecycle,
+        statusIsInitial: isInitial,
+        segment,
+      } as SessionWithComputed;
+    });
+  }, [sessions, statusLookup]);
 
-    return filtered.filter(session => {
-      const sessionDate = new Date(session.session_date);
-      return sessionDate >= dateRange.start && sessionDate < dateRange.end;
-    }).length;
-  };
+  const segmentCounts = useMemo(() => {
+    const counts: Record<SessionSegment, number> = {
+      all: 0,
+      upcoming: 0,
+      in_progress: 0,
+      pending: 0,
+      past: 0,
+      cancelled: 0,
+    };
 
-  const getDateFilterLabel = useCallback((filter: DateFilterKey) => {
-    switch (filter) {
-      case 'all':
-        return t('sessions.filters.dateFilters.all');
-      case 'past':
-        return t('sessions.filters.dateFilters.past');
-      case 'today':
-        return t('sessions.filters.dateFilters.today');
-      case 'tomorrow':
-        return t('sessions.filters.dateFilters.tomorrow');
-      case 'future':
-        return t('sessions.filters.dateFilters.future');
-      case 'thisweek':
-        return t('sessions.filters.dateFilters.thisWeek');
-      case 'nextweek':
-        return t('sessions.filters.dateFilters.nextWeek');
-      case 'thismonth':
-        return t('sessions.filters.dateFilters.thisMonth');
-      case 'nextmonth':
-        return t('sessions.filters.dateFilters.nextMonth');
-      default:
-        return '';
-    }
-  }, [t]);
+    computedSessions.forEach((session) => {
+      counts[session.segment] += 1;
+    });
 
-  const dateFilterOptions = useMemo<DateFilterOption[]>(
-    () =>
-      DATE_FILTER_KEYS.map((key) => ({
-        key,
-        label: getDateFilterLabel(key),
-        count: getSessionCountForDateFilter(key),
-      })),
-    [getDateFilterLabel, sessions, statusFilters]
-  );
+    counts.all = counts.upcoming + counts.in_progress + counts.pending;
 
-  const quickDateFilters = useMemo<DateFilterOption[]>(
-    () =>
-      QUICK_DATE_FILTER_KEYS.map((key) =>
-        dateFilterOptions.find((option) => option.key === key)
-      ).filter((option): option is DateFilterOption => Boolean(option)),
-    [dateFilterOptions]
-  );
+    return counts;
+  }, [computedSessions]);
 
   const sessionKpiMetrics = useMemo(() => {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
 
-    const safeParseDate = (value?: string) => {
-      if (!value) return null;
-      const parsed = new Date(value);
-      return Number.isNaN(parsed.getTime()) ? null : parsed;
-    };
-
     let pastNeedsAction = 0;
     let todayCount = 0;
     let futureCount = 0;
 
-    sessions.forEach((session) => {
-      const sessionDate = safeParseDate(session.session_date);
-      if (!sessionDate) return;
+    computedSessions.forEach((session) => {
+      const sessionDate = session.session_date ? new Date(session.session_date) : null;
+      if (!sessionDate || Number.isNaN(sessionDate.getTime())) {
+        return;
+      }
 
-      if (sessionDate < startOfToday) {
-        if (session.status === "planned") {
-          pastNeedsAction += 1;
+      if (session.segment === 'pending') {
+        pastNeedsAction += 1;
+      }
+
+      if (sessionDate >= startOfToday && sessionDate < endOfToday) {
+        if (session.statusLifecycle !== 'cancelled') {
+          todayCount += 1;
         }
         return;
       }
 
       if (sessionDate >= endOfToday) {
-        if (session.status !== "cancelled") {
+        if (session.statusLifecycle !== 'cancelled') {
           futureCount += 1;
         }
-        return;
-      }
-
-      if (session.status !== "cancelled") {
-        todayCount += 1;
       }
     });
 
     return { pastNeedsAction, todayCount, futureCount };
-  }, [sessions]);
+  }, [computedSessions]);
 
   const { pastNeedsAction, todayCount, futureCount } = sessionKpiMetrics;
 
@@ -357,49 +378,57 @@ const AllSessions = () => {
   const futurePreset = useMemo(() => getKpiIconPreset('sky'), []);
 
   const filteredAndSortedSessions = useMemo(() => {
-    let filtered = sessions;
+    let filtered: SessionWithComputed[];
 
-    if (statusFilters.length > 0) {
-      filtered = filtered.filter((session) => statusFilters.includes(session.status));
-    }
-
-    if (dateFilter !== "all") {
-      const dateRange = getDateRangeForFilter(dateFilter);
-      if (dateRange) {
-        filtered = filtered.filter((session) => {
-          const sessionDate = new Date(session.session_date);
-          return sessionDate >= dateRange.start && sessionDate < dateRange.end;
-        });
-      }
+    switch (activeSegment) {
+      case 'upcoming':
+        filtered = computedSessions.filter((session) => session.segment === 'upcoming');
+        break;
+      case 'in_progress':
+        filtered = computedSessions.filter((session) => session.segment === 'in_progress');
+        break;
+      case 'pending':
+        filtered = computedSessions.filter((session) => session.segment === 'pending');
+        break;
+      case 'past':
+        filtered = computedSessions.filter((session) => session.segment === 'past');
+        break;
+      case 'cancelled':
+        filtered = computedSessions.filter((session) => session.segment === 'cancelled');
+        break;
+      case 'all':
+      default:
+        filtered = computedSessions.filter(
+          (session) =>
+            session.segment === 'upcoming' ||
+            session.segment === 'in_progress' ||
+            session.segment === 'pending'
+        );
+        break;
     }
 
     const sorted = [...filtered];
-    const sortColumn = (sortState.columnId as string) ?? "session_date";
-    const directionMultiplier = sortState.direction === "desc" ? -1 : 1;
+    const sortColumn = (sortState.columnId as string) ?? 'session_date';
+    const directionMultiplier = sortState.direction === 'desc' ? -1 : 1;
 
-    const compare = (a: Session, b: Session) => {
+    const compare = (a: SessionWithComputed, b: SessionWithComputed) => {
       switch (sortColumn) {
-        case "project_stage": {
-          const aName = (a.project_status?.name || "").toLowerCase();
-          const bName = (b.project_status?.name || "").toLowerCase();
+        case 'lead_name': {
+          const aName = (a.lead_name || '').toLowerCase();
+          const bName = (b.lead_name || '').toLowerCase();
           return aName.localeCompare(bName);
         }
-        case "lead_name": {
-          const aName = (a.lead_name || "").toLowerCase();
-          const bName = (b.lead_name || "").toLowerCase();
-          return aName.localeCompare(bName);
-        }
-        case "session_time": {
-          const aTime = a.session_time || "";
-          const bTime = b.session_time || "";
+        case 'session_time': {
+          const aTime = a.session_time || '';
+          const bTime = b.session_time || '';
           return aTime.localeCompare(bTime);
         }
-        case "status": {
-          const aStatus = (a.status || "").toLowerCase();
-          const bStatus = (b.status || "").toLowerCase();
+        case 'status': {
+          const aStatus = normalizeStatusName(a.statusDisplayName);
+          const bStatus = normalizeStatusName(b.statusDisplayName);
           return aStatus.localeCompare(bStatus);
         }
-        case "session_date":
+        case 'session_date':
         default: {
           const aDate = a.session_date ? new Date(a.session_date).getTime() : 0;
           const bDate = b.session_date ? new Date(b.session_date).getTime() : 0;
@@ -408,8 +437,8 @@ const AllSessions = () => {
             return aDate - bDate;
           }
 
-          const aTime = a.session_time || "";
-          const bTime = b.session_time || "";
+          const aTime = a.session_time || '';
+          const bTime = b.session_time || '';
           return aTime.localeCompare(bTime);
         }
       }
@@ -418,9 +447,9 @@ const AllSessions = () => {
     sorted.sort((a, b) => compare(a, b) * directionMultiplier);
 
     return sorted;
-  }, [sessions, statusFilters, dateFilter, sortState]);
+  }, [activeSegment, computedSessions, sortState]);
 
-  const handleRowClick = (session: Session) => {
+  const handleRowClick = (session: SessionWithComputed) => {
     setSelectedSessionId(session.id);
     setIsSessionSheetOpen(true);
   };
@@ -440,7 +469,7 @@ const AllSessions = () => {
     navigate(`/projects/${projectId}`);
   };
 
-  const handleProjectClick = useCallback(async (e: React.MouseEvent, session: Session) => {
+  const handleProjectClick = useCallback(async (e: React.MouseEvent, session: SessionWithComputed) => {
     e.stopPropagation();
     if (!session.project_id) return;
     try {
@@ -465,95 +494,49 @@ const AllSessions = () => {
     }
   }, []);
 
-  const statusOptions = useMemo(
+  const renderSegmentLabel = useCallback(
+    (label: string, count: number) => (
+      <span className="flex items-center gap-2">
+        <span>{label}</span>
+        <span className="inline-flex min-w-[2rem] justify-center rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+          {formatCount(count)}
+        </span>
+      </span>
+    ),
+    [formatCount]
+  );
+
+  const segmentOptions = useMemo(
     () => [
-      { value: "planned", label: t('sessions.statuses.planned') },
-      { value: "completed", label: t('sessions.statuses.completed') },
-      { value: "in_post_processing", label: t('sessions.statuses.in_post_processing') },
-      { value: "delivered", label: t('sessions.statuses.delivered') },
-      { value: "cancelled", label: t('sessions.statuses.cancelled') },
+      {
+        value: 'all',
+        label: renderSegmentLabel(t('sessions.segments.all'), segmentCounts.all),
+      },
+      {
+        value: 'upcoming',
+        label: renderSegmentLabel(t('sessions.segments.upcoming'), segmentCounts.upcoming),
+      },
+      {
+        value: 'in_progress',
+        label: renderSegmentLabel(t('sessions.segments.inProgress'), segmentCounts.in_progress),
+      },
+      {
+        value: 'pending',
+        label: renderSegmentLabel(t('sessions.segments.pending'), segmentCounts.pending),
+      },
+      {
+        value: 'past',
+        label: renderSegmentLabel(t('sessions.segments.past'), segmentCounts.past),
+      },
+      {
+        value: 'cancelled',
+        label: renderSegmentLabel(t('sessions.segments.cancelled'), segmentCounts.cancelled),
+      },
     ],
-    [t]
+    [renderSegmentLabel, segmentCounts, t]
   );
 
-  const statusLabelMap = useMemo(() => {
-    const map = new Map<string, string>();
-    statusOptions.forEach((option) => {
-      map.set(option.value, option.label);
-    });
-    return map;
-  }, [statusOptions]);
-
-  const selectedStatusLabels = useMemo(
-    () => statusFilters.map((value) => statusLabelMap.get(value) ?? value),
-    [statusFilters, statusLabelMap]
-  );
-
-  const handleStatusToggle = useCallback((value: string, checked: boolean) => {
-    setStatusFilters((prev) => {
-      if (checked) {
-        if (prev.includes(value)) return prev;
-        return [...prev, value];
-      }
-      return prev.filter((item) => item !== value);
-    });
-  }, []);
-
-  const clearStatusFilters = useCallback(() => {
-    setStatusFilters([]);
-  }, []);
-
-  const handleResetFilters = useCallback(() => {
-    setStatusFilters([]);
-    setDateFilter('all');
-  }, []);
-
-  const activeFiltersCount = (dateFilter !== 'all' ? 1 : 0) + statusFilters.length;
-
-  const summaryChips = useMemo(() => {
-    const chips: { id: string; label: ReactNode }[] = [];
-
-    if (statusFilters.length > 0) {
-      const joinedStatuses = selectedStatusLabels.join(", ");
-      chips.push({
-        id: "status",
-        label: (
-          <span>
-            <span className="mr-1 text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-              {t("sessions.filters.statusSectionTitle")}:
-            </span>
-            {joinedStatuses}
-          </span>
-        ),
-      });
-    }
-
-    if (dateFilter !== "all") {
-      const dateLabel = dateFilterOptions.find((option) => option.key === dateFilter)?.label;
-      if (dateLabel) {
-        chips.push({
-          id: `date-${dateFilter}`,
-          label: (
-            <span>
-              <span className="mr-1 text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-                {t("sessions.filters.timeSectionTitle")}:
-              </span>
-              {dateLabel}
-            </span>
-          ),
-        });
-      }
-    }
-
-    return chips;
-  }, [dateFilter, dateFilterOptions, selectedStatusLabels, statusFilters, t]);
-
-  const tableSummary = useMemo(
-    () => (summaryChips.length > 0 ? { chips: summaryChips } : undefined),
-    [summaryChips]
-  );
-
-  const columns = useMemo<AdvancedTableColumn<Session>[]>(
+  const columns = useMemo<AdvancedTableColumn<SessionWithComputed>[]>(
     () => [
       // 1) Kişi adı (Client Name)
       {
@@ -581,7 +564,35 @@ const AllSessions = () => {
         minWidth: '120px',
         render: (session) => <span className="whitespace-nowrap">{formatTime(session.session_time)}</span>,
       },
-      // 4) Proje (Project)
+      // 4) Session Status
+      {
+        id: 'status',
+        label: t('sessions.table.status'),
+        sortable: true,
+        minWidth: '180px',
+        cellClassName: 'whitespace-nowrap',
+        render: (session) => {
+          const label = session.statusDisplayName || session.status || '';
+          if (!label) {
+            return <span className="text-muted-foreground">—</span>;
+          }
+          const color = session.statusColor || '#A0AEC0';
+          return (
+            <div
+              className="inline-flex items-center gap-2 rounded-full border px-2 py-1"
+              style={{
+                backgroundColor: `${color}15`,
+                color,
+                borderColor: `${color}40`,
+              }}
+            >
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+              <span className="text-xs font-semibold uppercase tracking-wide">{label}</span>
+            </div>
+          );
+        },
+      },
+      // 5) Proje (Project)
       {
         id: 'project',
         label: t('sessions.table.project'),
@@ -598,34 +609,6 @@ const AllSessions = () => {
           ) : (
             <span className="text-muted-foreground">—</span>
           ),
-      },
-      // 5) Project Stage (Durum)
-      {
-        id: 'project_stage',
-        label: t('sessions.table.status'),
-        sortable: true,
-        sortId: 'project_stage',
-        minWidth: '160px',
-        render: (session) => {
-          if (!session.project_id) return <span className="text-muted-foreground">—</span>;
-          const ps = session.project_status;
-          if (!ps) return <span className="text-muted-foreground">—</span>;
-          const color = ps.color || '#A0AEC0';
-          return (
-            <div
-              className="inline-flex items-center gap-2 rounded-full font-medium px-2 py-1"
-              style={{
-                backgroundColor: `${color}15`,
-                color,
-                border: `1px solid ${color}60`,
-              }}
-            >
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-              <span className="text-xs uppercase tracking-wide font-semibold">{ps.name}</span>
-            </div>
-          );
-        },
-        cellClassName: 'whitespace-nowrap',
       },
       // 6) Notes
       {
@@ -645,7 +628,7 @@ const AllSessions = () => {
           ),
       },
     ],
-    [fetchSessions, handleProjectClick, t]
+    [handleProjectClick, t]
   );
 
   const handleTableSortChange = useCallback(
@@ -663,136 +646,10 @@ const AllSessions = () => {
     <div className="text-center py-12 text-muted-foreground">
       <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
       <h3 className="text-lg font-medium mb-2">{tForms('sessions.noSessionsFound')}</h3>
-      <p>
-        {statusFilters.length === 0
-          ? tForms('sessions.noSessionsYet')
-          : tForms('sessions.noSessionsWithStatus', {
-              status: selectedStatusLabels.join(', '),
-            })}
-      </p>
+      <p>{tForms('sessions.noSessionsYet')}</p>
       <p className="text-sm mt-2">{tForms('sessions.clickToSchedule')}</p>
     </div>
   );
-
-  const filterPillBaseClasses =
-    "h-8 rounded-full px-3 border border-border/60 bg-background text-sm font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-0";
-  const filterPillActiveClasses =
-    "bg-primary/10 text-primary border-primary/40 shadow-sm hover:bg-primary/15";
-  const filterPillBadgeBaseClasses =
-    "ml-2 h-5 min-w-[2rem] rounded-full border border-border/50 bg-muted/40 px-2 text-xs font-medium text-muted-foreground transition-colors";
-  const filterPillBadgeActiveClasses =
-    "border-primary/30 bg-primary/15 text-primary";
-
-  const filtersConfig = useMemo<AdvancedDataTableFiltersConfig>(() => ({
-    title: t('sessions.filters.title'),
-    triggerLabel: t('sessions.filters.triggerLabel'),
-    content: (
-      <Accordion type="multiple" defaultValue={['time', 'status']} className="space-y-4">
-        <AccordionItem value="time" className="border-b border-border/60">
-          <AccordionTrigger className="text-sm font-semibold text-foreground">
-            {t('sessions.filters.timeSectionTitle')}
-          </AccordionTrigger>
-          <AccordionContent className="pt-2">
-            <div className="grid grid-cols-1 gap-2">
-              {dateFilterOptions.map((option) => (
-                <Button
-                  key={option.key}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    'h-9 justify-start',
-                    filterPillBaseClasses,
-                    dateFilter === option.key && filterPillActiveClasses
-                  )}
-                  onClick={() => setDateFilter(option.key)}
-                >
-                  {option.label}
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      'ml-auto',
-                      filterPillBadgeBaseClasses,
-                      dateFilter === option.key && filterPillBadgeActiveClasses
-                    )}
-                  >
-                    {option.count}
-                  </Badge>
-                </Button>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="status" className="border-b border-border/60">
-          <AccordionTrigger className="text-sm font-semibold text-foreground">
-            {t('sessions.filters.statusSectionTitle')}
-          </AccordionTrigger>
-          <AccordionContent className="pt-2">
-            <div className="flex items-center justify-between gap-2 pb-3">
-              <span className="text-xs text-muted-foreground">
-                {statusFilters.length > 0
-                  ? t('sessions.filters.selectedStatusCount', { count: statusFilters.length })
-                  : t('sessions.filters.noStatusesSelected')}
-              </span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 rounded-full px-2 text-xs text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                onClick={clearStatusFilters}
-                disabled={statusFilters.length === 0}
-              >
-                {t('sessions.filters.clear')}
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {statusOptions.map((option) => (
-                <label key={option.value} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={statusFilters.includes(option.value)}
-                    onCheckedChange={(checked) =>
-                      handleStatusToggle(option.value, Boolean(checked))
-                    }
-                  />
-                  <span>{option.label}</span>
-                </label>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-    ),
-    footer: (
-      <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full sm:flex-1"
-          onClick={handleResetFilters}
-          disabled={activeFiltersCount === 0}
-        >
-          {t('sessions.filters.reset')}
-        </Button>
-      </div>
-    ),
-    activeCount: activeFiltersCount,
-    onReset: activeFiltersCount > 0 ? handleResetFilters : undefined,
-    collapsedByDefault: false,
-  }), [
-    activeFiltersCount,
-    clearStatusFilters,
-    dateFilter,
-    dateFilterOptions,
-    filterPillActiveClasses,
-    filterPillBadgeActiveClasses,
-    filterPillBadgeBaseClasses,
-    filterPillBaseClasses,
-    handleResetFilters,
-    handleStatusToggle,
-    statusFilters,
-    statusOptions,
-    t,
-  ]);
 
   const handleExportSessions = useCallback(async () => {
     if (exporting) return;
@@ -808,7 +665,9 @@ const AllSessions = () => {
     try {
       setExporting(true);
 
-      const rows = filteredAndSortedSessions.map((session) => ({
+      const rows = filteredAndSortedSessions.map((session) => {
+        const statusLabel = session.statusDisplayName || session.status || '';
+        return {
         [t('sessions.table.clientName')]: session.lead_name ?? '',
         [t('sessions.table.date')]: session.session_date
           ? formatLongDate(session.session_date)
@@ -817,9 +676,10 @@ const AllSessions = () => {
           ? formatTime(session.session_time)
           : '',
         [t('sessions.table.project')]: session.project_name ?? '',
-        [t('sessions.table.status')]: statusLabelMap.get(session.status) ?? session.status,
+        [t('sessions.table.status')]: statusLabel,
         [t('sessions.table.notes')]: session.notes ?? '',
-      }));
+        };
+      });
 
       const worksheet = XLSXUtils.json_to_sheet(rows);
       const workbook = XLSXUtils.book_new();
@@ -848,7 +708,6 @@ const AllSessions = () => {
   }, [
     exporting,
     filteredAndSortedSessions,
-    statusLabelMap,
     t,
     toast,
   ]);
@@ -916,19 +775,18 @@ const AllSessions = () => {
               content: t('sessions.kpis.pastNeedsAction.tooltip'),
               ariaLabel: buildInfoLabel('pastNeedsAction'),
             }}
-            footer={
-              <Button
-                size="xs"
-                variant="outline"
-                className={KPI_ACTION_BUTTON_CLASS}
-                onClick={() => {
-                  setDateFilter('past');
-                  setStatusFilters(['planned']);
+          footer={
+            <Button
+              size="xs"
+              variant="outline"
+              className={KPI_ACTION_BUTTON_CLASS}
+              onClick={() => {
+                  setActiveSegment('pending');
                   setSortState({ columnId: 'session_date', direction: 'asc' });
                 }}
-              >
-                {t('sessions.kpis.pastNeedsAction.action')}
-              </Button>
+            >
+              {t('sessions.kpis.pastNeedsAction.action')}
+            </Button>
             }
           />
           <KpiCard
@@ -942,19 +800,18 @@ const AllSessions = () => {
               content: t('sessions.kpis.today.tooltip'),
               ariaLabel: buildInfoLabel('today'),
             }}
-            footer={
-              <Button
-                size="xs"
-                variant="outline"
-                className={KPI_ACTION_BUTTON_CLASS}
-                onClick={() => {
-                  setDateFilter('today');
-                  setStatusFilters([]);
+          footer={
+            <Button
+              size="xs"
+              variant="outline"
+              className={KPI_ACTION_BUTTON_CLASS}
+              onClick={() => {
+                  setActiveSegment('all');
                   setSortState({ columnId: 'session_date', direction: 'asc' });
                 }}
-              >
-                {t('sessions.kpis.today.action')}
-              </Button>
+            >
+              {t('sessions.kpis.today.action')}
+            </Button>
             }
           />
           <KpiCard
@@ -968,32 +825,28 @@ const AllSessions = () => {
               content: t('sessions.kpis.future.tooltip'),
               ariaLabel: buildInfoLabel('future'),
             }}
-            footer={
-              <Button
-                size="xs"
-                variant="outline"
-                className={KPI_ACTION_BUTTON_CLASS}
-                onClick={() => {
-                  setDateFilter('future');
-                  setStatusFilters(['planned']);
+          footer={
+            <Button
+              size="xs"
+              variant="outline"
+              className={KPI_ACTION_BUTTON_CLASS}
+              onClick={() => {
+                  setActiveSegment('upcoming');
                   setSortState({ columnId: 'session_date', direction: 'asc' });
                 }}
-              >
-                {t('sessions.kpis.future.action')}
-              </Button>
+            >
+              {t('sessions.kpis.future.action')}
+            </Button>
             }
           />
         </section>
 
-        <div className="md:hidden">
-          <FilterBar
-            quickFilters={quickDateFilters}
-            activeQuickFilter={dateFilter}
-            onQuickFilterChange={(value) => setDateFilter(value as DateFilterKey)}
-            allDateFilters={dateFilterOptions}
-            activeDateFilter={dateFilter}
-            onDateFilterChange={(value) => setDateFilter(value as DateFilterKey)}
-            isSticky
+        <div className="overflow-x-auto">
+          <SegmentedControl
+            value={activeSegment}
+            onValueChange={(value) => setActiveSegment(value as SessionSegment)}
+            options={segmentOptions}
+            className="w-full"
           />
         </div>
 
@@ -1007,9 +860,7 @@ const AllSessions = () => {
           onSortChange={handleTableSortChange}
           isLoading={loading}
           emptyState={emptyState}
-          filters={filtersConfig}
           actions={exportActions}
-          summary={tableSummary}
         />
 
         <ViewProjectDialog

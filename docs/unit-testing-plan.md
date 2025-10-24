@@ -18,8 +18,8 @@
 - Finish repo-altering work with a single-line commit summary.
 
 ## Testing Infrastructure To-Dos
-- [ ] Add `"test": "jest"` (or equivalent) to `package.json` scripts so running tests is one command.
-- [ ] Wire `setupTests.ts` into Jest (`setupFilesAfterEnv`) and ensure `tsconfig` includes test files.
+- [x] Add `"test": "jest"` (or equivalent) to `package.json` scripts so running tests is one command.
+- [x] Wire `setupTests.ts` into Jest (`setupFilesAfterEnv`) and ensure `tsconfig` includes test files.
 - [ ] Configure CI to run `npm run test` on pull requests (reuse existing workflow if available).
 - [ ] Document how to use `src/utils/testUtils.tsx` for provider-wrapped renders.
 - [ ] Decide on the folder convention (`*.test.ts` beside file vs. `__tests__` directories) and stick to it.
@@ -156,6 +156,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-09-14 | Codex | Created initial testing strategy, inventory, and workflow checklist | Plan ready for review; no tests added yet | Populate owners/priorities once first test task begins |
 | 2025-09-14 (later) | Codex | Expanded inventory to cover contexts, services, UI, and Supabase automation | Added multi-section target tables with priorities and notes | Review priorities with Tayte and assign owners in next iteration |
 | 2025-09-14 (late) | Codex | Documented test harness choices and deepened inventory for hooks, UI primitives, and edge functions | Added harness guidance plus ~20 new targets spanning high-risk areas | Circle back to assign owners + integrate harness setup into tooling work |
+| 2025-09-14 (night) | Codex | Wired Jest command and ESM-friendly config, added mocks | `npm run test` now passes (no tests yet) using SWC + jsdom | Next: add CI step and Deno harness |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

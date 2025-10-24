@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type SegmentedSize = "sm" | "md";
 
@@ -9,6 +10,7 @@ export interface SegmentedOption {
   label: React.ReactNode;
   ariaLabel?: string;
   disabled?: boolean;
+  tooltip?: React.ReactNode;
 }
 
 export interface SegmentedControlProps
@@ -82,58 +84,75 @@ export const SegmentedControl = React.forwardRef<
   }, [updateIndicator]);
 
   return (
-    <div
-      ref={mergedRef}
-      role="group"
-      className={cn(
-        "relative inline-flex items-center rounded-full bg-muted/80 shadow-inner",
-        sizeStyle.container,
-        className,
-      )}
-      {...rest}
-    >
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute rounded-full border border-border/40 bg-white shadow-sm transition-all duration-200 ease-out dark:border-slate-700 dark:bg-slate-900"
-        style={{
-          width: indicatorStyle.width || 0,
-          left: indicatorStyle.left,
-          opacity: indicatorStyle.width ? 1 : 0,
-          top: indicatorInset,
-          bottom: indicatorInset,
-        }}
-      />
-      {options.map((option) => {
-        const isActive = option.value === value;
+    <TooltipProvider delayDuration={150}>
+      <div
+        ref={mergedRef}
+        role="group"
+        className={cn(
+          "relative inline-flex items-center rounded-full bg-muted/80 shadow-inner",
+          sizeStyle.container,
+          className,
+        )}
+        {...rest}
+      >
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute rounded-full border border-border/40 bg-white shadow-sm transition-all duration-200 ease-out dark:border-slate-700 dark:bg-slate-900"
+          style={{
+            width: indicatorStyle.width || 0,
+            left: indicatorStyle.left,
+            opacity: indicatorStyle.width ? 1 : 0,
+            top: indicatorInset,
+            bottom: indicatorInset,
+          }}
+        />
+        {options.map((option) => {
+          const isActive = option.value === value;
+          const button = (
+            <button
+              ref={(node) => {
+                buttonRefs.current[option.value] = node;
+              }}
+              type="button"
+              disabled={option.disabled}
+              aria-pressed={isActive}
+              aria-label={option.ariaLabel}
+              onClick={() => {
+                if (option.disabled) return;
+                onValueChange(option.value);
+              }}
+              className={cn(
+                "relative z-10 inline-flex items-center gap-1.5 rounded-full font-medium leading-none transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                sizeStyle.item,
+                option.disabled && "pointer-events-none opacity-50",
+                isActive
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {option.label}
+            </button>
+          );
 
-        return (
-          <button
-            key={option.value}
-            ref={(node) => {
-              buttonRefs.current[option.value] = node;
-            }}
-            type="button"
-            disabled={option.disabled}
-            aria-pressed={isActive}
-            aria-label={option.ariaLabel}
-            onClick={() => {
-              if (option.disabled) return;
-              onValueChange(option.value);
-            }}
-            className={cn(
-              "relative z-10 rounded-full font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-              sizeStyle.item,
-              option.disabled && "pointer-events-none opacity-50",
-              isActive
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {option.label}
-          </button>
-        );
-      })}
-    </div>
+          if (option.tooltip) {
+            return (
+              <Tooltip key={option.value}>
+                <TooltipTrigger asChild>{button}</TooltipTrigger>
+                <TooltipContent className="max-w-xs text-sm leading-snug">
+                  {option.tooltip}
+                </TooltipContent>
+              </Tooltip>
+            );
+          }
+
+          return (
+            <React.Fragment key={option.value}>
+              {button}
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </TooltipProvider>
   );
 });
 

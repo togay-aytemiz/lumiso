@@ -913,6 +913,64 @@
       "past": "Tamamlanan",
       "cancelled": "İptal edilen"
     },
+    "segmentDetails": {
+      "trigger": "Nasıl hesaplanıyor?",
+      "lifecycleNotice": "Yaşam döngüsü eşleştirmesi seans durum ayarlarınızdan otomatik alınır.",
+      "all": {
+        "tooltip": "Yaklaşan, Devam Eden ve Bekleyen seansların tamamını tek görünümde birleştirir.",
+        "summary": "Toplam {{total}} açık seans.",
+        "bullets": [
+          "Yaklaşan, Devam Eden ve Beklemede segmentlerindeki seansları tek listede toplar.",
+          "Planlanan veya Aktif yaşam döngüsüne bağlı (Tamamlanan ya da İptal olmayan) statüler sayılır.",
+          "Yaşam döngüsü eşleştirmesi seans durum ayarlarınızla senkron kalır."
+        ]
+      },
+      "upcoming": {
+        "tooltip": "Planlanan yaşam döngüsünde (veya ilk aktif durumda) olup tarihi bugün ya da sonrası olan seanslar.",
+        "summary": "{{total}} seansın tarihi bugün ya da sonrası.",
+        "bullets": [
+          "Yaşam döngüsü Planlanan veya ilk Aktif statüde.",
+          "Tarihi geçmiş planlanan seanslar otomatik olarak Beklemede segmentine taşınır.",
+          "Yaşam döngüsü değerleri seans durum yapılandırmanızdan alınır."
+        ]
+      },
+      "in_progress": {
+        "tooltip": "Yaşam döngüsü Aktif olan ve artık yürümekte olan seanslar.",
+        "summary": "{{total}} seans şu anda Aktif yaşam döngüsünde.",
+        "bullets": [
+          "Planlanan aşamasını geçmiş Aktif yaşam döngüsündeki statüler.",
+          "Çekim devam ederken kullanılan durumları vurgular.",
+          "Yaşam döngüsü değerleri seans durum yapılandırmanızdan alınır."
+        ]
+      },
+      "pending": {
+        "tooltip": "Tarihi geçmiş olmasına rağmen Planlanan veya ilk aktif yaşam döngüsünde kalan seanslar.",
+        "summary": "{{total}} seansın tarihi geçti ancak hâlâ planlanmış.",
+        "bullets": [
+          "Seans tarihi bugünden önce.",
+          "Yaşam döngüsü Planlanan veya ilk Aktif statüde kalmış.",
+          "Takip ederek bir sonraki yaşam döngüsüne geçirmenize yardım eder."
+        ]
+      },
+      "past": {
+        "tooltip": "Yaşam döngüsü Tamamlandı olarak işaretlenmiş seanslar.",
+        "summary": "{{total}} seans Tamamlandı olarak işaretlenmiş.",
+        "bullets": [
+          "Yaşam döngüsü Tamamlandı olarak ayarlanmış.",
+          "Tarihinden bağımsız olarak tamamlanan veya teslim edilen seansları kapsar.",
+          "Yaşam döngüsü değerleri seans durum yapılandırmanızdan alınır."
+        ]
+      },
+      "cancelled": {
+        "tooltip": "Yaşam döngüsü İptal olarak işaretlenen seanslar.",
+        "summary": "{{total}} seans İptal edildi olarak işaretlenmiş.",
+        "bullets": [
+          "Yaşam döngüsü İptal olarak ayarlanmış.",
+          "No-show, müşteri iptali veya arşivlenmiş seansları içerir.",
+          "Yaşam döngüsü değerleri seans durum yapılandırmanızdan alınır."
+        ]
+      }
+    },
     "table": {
       "project": "Proje",
       "clientName": "Kişi Adı",

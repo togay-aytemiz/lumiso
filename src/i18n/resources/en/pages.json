@@ -913,6 +913,64 @@
       "past": "Completed",
       "cancelled": "Cancelled"
     },
+    "segmentDetails": {
+      "trigger": "How is this calculated?",
+      "lifecycleNotice": "Lifecycle mapping follows your session status configuration.",
+      "all": {
+        "tooltip": "Combines Upcoming, In progress, and Pending so you can monitor every open session.",
+        "summary": "Tracking {{total}} open sessions.",
+        "bullets": [
+          "Groups Upcoming, In progress, and Pending sessions together.",
+          "Counts statuses mapped to Planned or Active lifecycles (not Completed or Cancelled).",
+          "Lifecycle mapping stays synced with your session status settings."
+        ]
+      },
+      "upcoming": {
+        "tooltip": "Sessions scheduled for today or later while still in a Planned lifecycle (or initial Active status).",
+        "summary": "{{total}} sessions scheduled for today or later.",
+        "bullets": [
+          "Lifecycle is Planned or an initial Active state.",
+          "Date is today or in the future; overdue planned sessions move to Pending.",
+          "Lifecycle mapping uses the statuses you configure."
+        ]
+      },
+      "in_progress": {
+        "tooltip": "Sessions whose lifecycle is Active and already underway.",
+        "summary": "{{total}} sessions currently in an Active lifecycle.",
+        "bullets": [
+          "Lifecycle is Active and no longer in the initial Planned phase.",
+          "Ideal for shoots or appointments that are underway.",
+          "Lifecycle mapping uses the statuses you configure."
+        ]
+      },
+      "pending": {
+        "tooltip": "Sessions with a past date that are still in a Planned or initial Active lifecycle.",
+        "summary": "{{total}} sessions are overdue but still planned.",
+        "bullets": [
+          "Session date is before today.",
+          "Lifecycle remains Planned or in its initial Active state.",
+          "Use this view to follow up and advance the lifecycle."
+        ]
+      },
+      "past": {
+        "tooltip": "Sessions marked with a lifecycle of Completed.",
+        "summary": "{{total}} sessions marked as Completed.",
+        "bullets": [
+          "Lifecycle is set to Completed.",
+          "Covers delivered or closed-out sessions regardless of date.",
+          "Lifecycle mapping uses the statuses you configure."
+        ]
+      },
+      "cancelled": {
+        "tooltip": "Sessions mapped to a lifecycle of Cancelled.",
+        "summary": "{{total}} sessions marked as Cancelled.",
+        "bullets": [
+          "Lifecycle is set to Cancelled.",
+          "Includes no-shows, client cancellations, and archived sessions.",
+          "Lifecycle mapping uses the statuses you configure."
+        ]
+      }
+    },
     "table": {
       "project": "Project",
       "clientName": "Client Name",

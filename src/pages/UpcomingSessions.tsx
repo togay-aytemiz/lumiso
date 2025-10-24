@@ -4,7 +4,7 @@ import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar, AlertTriangle, CalendarCheck2, CalendarClock, FileDown, Loader2 } from "lucide-react";
+import { Plus, Calendar, AlertTriangle, CalendarCheck2, CalendarClock, FileDown, Info, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate, useLocation } from "react-router-dom";
 import NewSessionDialog from "@/components/NewSessionDialog";
@@ -24,6 +24,7 @@ import { getKpiIconPreset, KPI_ACTION_BUTTON_CLASS } from "@/components/ui/kpi-p
 import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
 import { format } from "date-fns";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useSessionStatuses } from "@/hooks/useOrganizationData";
 
 interface Session {
@@ -496,9 +497,9 @@ const AllSessions = () => {
 
   const renderSegmentLabel = useCallback(
     (label: string, count: number) => (
-      <span className="flex items-center gap-2">
-        <span>{label}</span>
-        <span className="inline-flex min-w-[2rem] justify-center rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+      <span className="inline-flex items-center gap-1.5">
+        <span className="font-medium leading-tight">{label}</span>
+        <span className="inline-flex min-w-[1.75rem] justify-center rounded-full border border-border/60 bg-background px-1.5 py-0.5 text-[11px] font-semibold leading-none text-current shadow-sm transition-colors">
           {formatCount(count)}
         </span>
       </span>
@@ -506,34 +507,134 @@ const AllSessions = () => {
     [formatCount]
   );
 
+  const segmentTooltips = useMemo<Record<SessionSegment, string>>(
+    () => ({
+      all: t('sessions.segmentDetails.all.tooltip'),
+      upcoming: t('sessions.segmentDetails.upcoming.tooltip'),
+      in_progress: t('sessions.segmentDetails.in_progress.tooltip'),
+      pending: t('sessions.segmentDetails.pending.tooltip'),
+      past: t('sessions.segmentDetails.past.tooltip'),
+      cancelled: t('sessions.segmentDetails.cancelled.tooltip'),
+    }),
+    [t]
+  );
+
+  const segmentSummaries = useMemo<Record<SessionSegment, string>>(
+    () => ({
+      all: t('sessions.segmentDetails.all.summary', {
+        total: formatCount(segmentCounts.all),
+      }),
+      upcoming: t('sessions.segmentDetails.upcoming.summary', {
+        total: formatCount(segmentCounts.upcoming),
+      }),
+      in_progress: t('sessions.segmentDetails.in_progress.summary', {
+        total: formatCount(segmentCounts.in_progress),
+      }),
+      pending: t('sessions.segmentDetails.pending.summary', {
+        total: formatCount(segmentCounts.pending),
+      }),
+      past: t('sessions.segmentDetails.past.summary', {
+        total: formatCount(segmentCounts.past),
+      }),
+      cancelled: t('sessions.segmentDetails.cancelled.summary', {
+        total: formatCount(segmentCounts.cancelled),
+      }),
+    }),
+    [formatCount, segmentCounts, t]
+  );
+
+  const segmentBullets = useMemo<Record<SessionSegment, string[]>>(
+    () => ({
+      all: (t('sessions.segmentDetails.all.bullets', { returnObjects: true }) as string[]) ?? [],
+      upcoming: (t('sessions.segmentDetails.upcoming.bullets', { returnObjects: true }) as string[]) ?? [],
+      in_progress: (t('sessions.segmentDetails.in_progress.bullets', { returnObjects: true }) as string[]) ?? [],
+      pending: (t('sessions.segmentDetails.pending.bullets', { returnObjects: true }) as string[]) ?? [],
+      past: (t('sessions.segmentDetails.past.bullets', { returnObjects: true }) as string[]) ?? [],
+      cancelled: (t('sessions.segmentDetails.cancelled.bullets', { returnObjects: true }) as string[]) ?? [],
+    }),
+    [t]
+  );
+
+  const activeSegmentSummary = segmentSummaries[activeSegment];
+  const activeSegmentBullets = segmentBullets[activeSegment] ?? [];
+
   const segmentOptions = useMemo(
     () => [
       {
         value: 'all',
         label: renderSegmentLabel(t('sessions.segments.all'), segmentCounts.all),
+        ariaLabel: segmentSummaries.all,
+        tooltip: segmentTooltips.all,
       },
       {
         value: 'upcoming',
         label: renderSegmentLabel(t('sessions.segments.upcoming'), segmentCounts.upcoming),
+        ariaLabel: segmentSummaries.upcoming,
+        tooltip: segmentTooltips.upcoming,
       },
       {
         value: 'in_progress',
         label: renderSegmentLabel(t('sessions.segments.inProgress'), segmentCounts.in_progress),
+        ariaLabel: segmentSummaries.in_progress,
+        tooltip: segmentTooltips.in_progress,
       },
       {
         value: 'pending',
         label: renderSegmentLabel(t('sessions.segments.pending'), segmentCounts.pending),
+        ariaLabel: segmentSummaries.pending,
+        tooltip: segmentTooltips.pending,
       },
       {
         value: 'past',
         label: renderSegmentLabel(t('sessions.segments.past'), segmentCounts.past),
+        ariaLabel: segmentSummaries.past,
+        tooltip: segmentTooltips.past,
       },
       {
         value: 'cancelled',
         label: renderSegmentLabel(t('sessions.segments.cancelled'), segmentCounts.cancelled),
+        ariaLabel: segmentSummaries.cancelled,
+        tooltip: segmentTooltips.cancelled,
       },
     ],
-    [renderSegmentLabel, segmentCounts, t]
+    [renderSegmentLabel, segmentCounts, segmentSummaries, segmentTooltips, t]
+  );
+
+  const segmentInsightLabel = t('sessions.segmentDetails.trigger');
+  const segmentLifecycleNotice = t('sessions.segmentDetails.lifecycleNotice');
+
+  const segmentInsight = useMemo(
+    () => (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <Info className="h-4 w-4" />
+            <span>{segmentInsightLabel}</span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-80 space-y-3">
+          {activeSegmentSummary ? (
+            <p className="text-sm font-semibold leading-tight text-foreground">
+              {activeSegmentSummary}
+            </p>
+          ) : null}
+          {activeSegmentBullets.length > 0 && (
+            <ul className="list-disc space-y-1 pl-4 text-sm text-muted-foreground">
+              {activeSegmentBullets.map((bullet, index) => (
+                <li key={`${activeSegment}-bullet-${index}`}>{bullet}</li>
+              ))}
+            </ul>
+          )}
+          <p className="text-xs text-muted-foreground/80">
+            {segmentLifecycleNotice}
+          </p>
+        </PopoverContent>
+      </Popover>
+    ),
+    [activeSegment, activeSegmentBullets, activeSegmentSummary, segmentInsightLabel, segmentLifecycleNotice]
   );
 
   const columns = useMemo<AdvancedTableColumn<SessionWithComputed>[]>(
@@ -712,7 +813,7 @@ const AllSessions = () => {
     toast,
   ]);
 
-  const exportActions = useMemo(
+  const exportButton = useMemo(
     () => (
       <Button
         type="button"
@@ -736,6 +837,22 @@ const AllSessions = () => {
       handleExportSessions,
       t,
     ]
+  );
+
+  const tableActions = useMemo(
+    () => (
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        <div className="max-w-full overflow-x-auto">
+          <SegmentedControl
+            value={activeSegment}
+            onValueChange={(value) => setActiveSegment(value as SessionSegment)}
+            options={segmentOptions}
+          />
+        </div>
+        {exportButton}
+      </div>
+    ),
+    [activeSegment, exportButton, segmentOptions]
   );
 
   return (
@@ -841,17 +958,9 @@ const AllSessions = () => {
           />
         </section>
 
-        <div className="overflow-x-auto">
-          <SegmentedControl
-            value={activeSegment}
-            onValueChange={(value) => setActiveSegment(value as SessionSegment)}
-            options={segmentOptions}
-            className="w-full"
-          />
-        </div>
-
         <AdvancedDataTable
           title={t('sessions.tableTitle')}
+          description={segmentInsight}
           data={filteredAndSortedSessions}
           columns={columns}
           rowKey={(session) => session.id}
@@ -860,7 +969,7 @@ const AllSessions = () => {
           onSortChange={handleTableSortChange}
           isLoading={loading}
           emptyState={emptyState}
-          actions={exportActions}
+          actions={tableActions}
         />
 
         <ViewProjectDialog

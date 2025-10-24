@@ -202,6 +202,8 @@ const AllProjects = () => {
     archivedLoading,
     refetch: refetchProjects,
     fetchProjectsData,
+    getCachedProjects,
+    getCacheStatus,
   } = useProjectsData({
     listPage,
     listPageSize,
@@ -745,104 +747,160 @@ const AllProjects = () => {
   const boardLoadInFlightRef = useRef(false);
   const lastBoardErrorAtRef = useRef(0);
   const ERROR_TOAST_DEBOUNCE_MS = 8000;
+  const boardStateRef = useRef<{ nextFrom: number; total: number | null }>({ nextFrom: 0, total: null });
+  const BOARD_PAGE_SIZE = 200;
+  const [boardHasMore, setBoardHasMore] = useState(false);
+  const [boardLoadingMore, setBoardLoadingMore] = useState(false);
 
-  const loadBoardProjects = useCallback(async () => {
-    try {
+  const loadBoardProjects = useCallback(
+    async ({ reset = false, force = false }: { reset?: boolean; force?: boolean } = {}) => {
       if (boardLoadInFlightRef.current) return;
       boardLoadInFlightRef.current = true;
-      setBoardLoading(true);
-      const t = startTimer('Projects.boardLoad');
-      const INITIAL_CHUNK = 200; // render first chunk quickly
-      const BACKFILL_CHUNK = 600; // fewer background requests while still streaming results
 
-      // First request gets initial data and total count
-      const { projects: first, count } = await fetchProjectsData('active', {
-        from: 0,
-        to: INITIAL_CHUNK - 1,
-        includeCount: true,
+      if (reset) {
+        boardStateRef.current = { nextFrom: 0, total: null };
+        setBoardProjects([]);
+        setBoardHasMore(false);
+      }
+
+      const initialStatus = getCacheStatus('active');
+      const isInitialLoad = reset || boardStateRef.current.nextFrom === 0;
+      const shouldShowSpinner = isInitialLoad && (force || initialStatus.cached === 0);
+
+      if (!force && isInitialLoad && initialStatus.hasFull && initialStatus.total > 0) {
+        const cachedProjects = getCachedProjects('active');
+        setBoardProjects(cachedProjects);
+        setBoardHasMore(false);
+        setBoardLoading(false);
+        setBoardLoadingMore(false);
+        handleNetworkRecovery();
+        boardStateRef.current = {
+          nextFrom: cachedProjects.length,
+          total: initialStatus.total ?? cachedProjects.length,
+        };
+        boardLoadInFlightRef.current = false;
+        return;
+      }
+
+      if (!force && !isInitialLoad && boardStateRef.current.total !== null && boardStateRef.current.nextFrom >= boardStateRef.current.total) {
+        setBoardHasMore(false);
+        boardLoadInFlightRef.current = false;
+        return;
+      }
+
+      if (shouldShowSpinner) {
+        setBoardLoading(true);
+      } else if (!isInitialLoad) {
+        setBoardLoadingMore(true);
+      }
+
+      if (isInitialLoad && initialStatus.cached > 0) {
+        setBoardProjects(getCachedProjects('active'));
+      }
+
+      const from = boardStateRef.current.nextFrom;
+      const to = from + BOARD_PAGE_SIZE - 1;
+      const includeCount = isInitialLoad || boardStateRef.current.total === null;
+
+      const timer = startTimer('Projects.boardLoad', {
+        from,
+        to,
+        includeCount,
+        force: force ? 'network' : 'auto',
       });
 
-      // Render immediately for perceived speed
-      setBoardProjects(first);
-      setBoardLoading(false);
-      handleNetworkRecovery();
+      try {
+        const { projects, count, source } = await fetchProjectsData('active', {
+          from,
+          to,
+          includeCount,
+          forceNetwork: force,
+        });
+        const received = projects.length;
+        const totalCount = includeCount ? count : boardStateRef.current.total ?? count ?? null;
+        const resolvedTotal = typeof totalCount === 'number' ? totalCount : boardStateRef.current.total;
+        const nextFrom =
+          received === 0 && typeof resolvedTotal === 'number'
+            ? resolvedTotal
+            : from + received;
 
-      // If there are more rows, fetch the remaining ranges in background with limited concurrency
-      if (count > first.length) {
-        const ranges: Array<{ from: number; to: number }> = [];
-        for (let from = first.length; from < count; from += BACKFILL_CHUNK) {
-          const to = Math.min(from + BACKFILL_CHUNK - 1, count - 1);
-          ranges.push({ from, to });
-        }
-
-        let fetched = first.length;
-        let idx = 0;
-        const CONCURRENCY = 2;
-
-        const runOne = async (): Promise<void> => {
-          const current = ranges[idx++];
-          if (!current) return;
-          try {
-            const { projects: chunk } = await fetchProjectsData('active', {
-              from: current.from,
-              to: current.to,
-              includeCount: false,
-            });
-            if (chunk && chunk.length) {
-              // Progressive append without blocking UI
-              setBoardProjects((prev) => [...prev, ...chunk]);
-              fetched += chunk.length;
-            }
-          } catch (err) {
-            // Do not bubble up chunk errors; avoid triggering global offline banner
-            console.error('Background board chunk fetch failed', err);
-          } finally {
-            if (idx < ranges.length) {
-              await runOne();
-            }
-          }
+        boardStateRef.current = {
+          nextFrom,
+          total: typeof resolvedTotal === 'number' ? resolvedTotal : boardStateRef.current.total,
         };
 
-        await Promise.all(
-          new Array(Math.min(CONCURRENCY, ranges.length))
-            .fill(0)
-            .map(() => runOne())
-        );
+        setBoardProjects((prev) => (isInitialLoad ? projects : [...prev, ...projects]));
 
-        t.end({ total: fetched, chunks: Math.ceil(count / INITIAL_CHUNK) });
-      } else {
-        t.end({ total: first.length, chunks: 1 });
-      }
-    } catch (error) {
-      console.error('Failed to load board projects', error);
-      handleNetworkError(error);
-      const offline = isNetworkError(error);
-      if (!offline) {
-        const now = Date.now();
-        if (now - lastBoardErrorAtRef.current > ERROR_TOAST_DEBOUNCE_MS) {
-          lastBoardErrorAtRef.current = now;
-          toast({
-            title: t('common:labels.error'),
-            description: t('pages:projects.failedToLoadProjects'),
-            variant: 'destructive',
-          });
+        const hasMore =
+          typeof boardStateRef.current.total === 'number'
+            ? nextFrom < boardStateRef.current.total
+            : received === BOARD_PAGE_SIZE;
+        setBoardHasMore(hasMore);
+
+        handleNetworkRecovery();
+        timer.end({
+          rows: received,
+          total: typeof boardStateRef.current.total === 'number' ? boardStateRef.current.total : nextFrom,
+          source,
+        });
+      } catch (error) {
+        timer.end({ error: (error as Error)?.message ?? String(error) });
+        console.error('Failed to load board projects', error);
+        handleNetworkError(error);
+        const offline = isNetworkError(error);
+        if (!offline) {
+          const now = Date.now();
+          if (now - lastBoardErrorAtRef.current > ERROR_TOAST_DEBOUNCE_MS) {
+            lastBoardErrorAtRef.current = now;
+            toast({
+              title: t('common:labels.error'),
+              description: t('pages:projects.failedToLoadProjects'),
+              variant: 'destructive',
+            });
+          }
         }
+      } finally {
+        setBoardLoading(false);
+        setBoardLoadingMore(false);
+        boardLoadInFlightRef.current = false;
       }
-    } finally {
-      setBoardLoading(false);
-      boardLoadInFlightRef.current = false;
-    }
-  }, [fetchProjectsData, handleNetworkError, handleNetworkRecovery, t, toast]);
+    },
+    [ERROR_TOAST_DEBOUNCE_MS, BOARD_PAGE_SIZE, fetchProjectsData, getCacheStatus, getCachedProjects, handleNetworkError, handleNetworkRecovery, t, toast]
+  );
+
+  const boardFilterSignature = useMemo(
+    () =>
+      JSON.stringify({
+        list: listFiltersState,
+        archived: archivedFiltersState,
+        sortField,
+        sortDirection,
+      }),
+    [archivedFiltersState, listFiltersState, sortDirection, sortField]
+  );
 
   useEffect(() => {
-    if (viewMode === 'board') {
-      loadBoardProjects();
+    boardStateRef.current = { nextFrom: 0, total: null };
+    setBoardProjects([]);
+    setBoardHasMore(false);
+    setBoardLoading(false);
+    setBoardLoadingMore(false);
+  }, [boardFilterSignature]);
+
+  useEffect(() => {
+    if (viewMode === 'board' && boardStateRef.current.nextFrom === 0) {
+      loadBoardProjects({ reset: true });
     }
   }, [loadBoardProjects, viewMode]);
 
   const refreshAll = useCallback(async () => {
-    await Promise.all([refetchProjects(), loadBoardProjects()]);
+    await Promise.all([refetchProjects(), loadBoardProjects({ reset: true, force: true })]);
   }, [loadBoardProjects, refetchProjects]);
+
+  const loadMoreBoard = useCallback(() => {
+    if (!boardHasMore) return;
+    loadBoardProjects();
+  }, [boardHasMore, loadBoardProjects]);
 
   // Register this page's retry with the global connectivity system
   useEffect(() => {
@@ -874,17 +932,13 @@ const AllProjects = () => {
         window.history.replaceState({}, '', url.toString());
       } catch {}
 
-      if (view === 'board') {
-        loadBoardProjects();
-      }
-
       if (view === 'list') {
         setHasClickedListView(true);
       } else if (view === 'archived') {
         setHasClickedArchivedView(true);
       }
     },
-    [loadBoardProjects]
+    []
   );
 
   const handleProjectUpdate = useCallback((updatedProject: ProjectListItem) => {
@@ -1106,6 +1160,9 @@ const AllProjects = () => {
             onProjectUpdate={handleProjectUpdate}
             onQuickView={handleQuickView}
             isLoading={boardLoading || statusesLoading}
+            hasMore={boardHasMore}
+            onLoadMore={boardHasMore ? loadMoreBoard : undefined}
+            isLoadingMore={boardLoadingMore}
           />
         ) : (
           <div className="h-full overflow-y-auto p-4 sm:p-6">

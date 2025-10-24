@@ -31,6 +31,7 @@ interface FetchRange {
   to: number;
   includeCount?: boolean;
   filters?: Record<string, unknown>;
+  forceNetwork?: boolean;
 }
 
 interface UseProjectsDataResult {
@@ -45,8 +46,43 @@ interface UseProjectsDataResult {
   fetchProjectsData: (
     scope: ProjectsScope,
     range: FetchRange
-  ) => Promise<{ projects: ProjectListItem[]; count: number }>;
+  ) => Promise<{ projects: ProjectListItem[]; count: number; source: FetchSource }>;
+  getCachedProjects: (scope: ProjectsScope) => ProjectListItem[];
+  getCacheStatus: (scope: ProjectsScope) => CacheStatus;
 }
+
+type FetchSource = "cache" | "prefetch" | "network" | "fallback";
+
+type ProjectsCacheEntry = {
+  key: string | null;
+  items: Map<number, ProjectListItem>;
+  total: number | null;
+  lastFetched: number;
+};
+
+type ProjectsCache = Record<ProjectsScope, ProjectsCacheEntry>;
+
+const createCacheEntry = (): ProjectsCacheEntry => ({
+  key: null,
+  items: new Map<number, ProjectListItem>(),
+  total: null,
+  lastFetched: 0,
+});
+
+type InternalFetchResult = {
+  projects: ProjectListItem[];
+  total: number;
+  source: FetchSource;
+};
+
+type CacheStatus = {
+  total: number;
+  cached: number;
+  contiguous: number;
+  hasFull: boolean;
+  key: string | null;
+  lastFetched: number;
+};
 
 const DEFAULT_PAGE_SIZE = 25;
 
@@ -154,6 +190,91 @@ const sortProjects = (
   return sorted;
 };
 
+const normalizeForCacheKey = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return [...value].map(normalizeForCacheKey).sort((a, b) => {
+      const aStr = JSON.stringify(a);
+      const bStr = JSON.stringify(b);
+      if (aStr < bStr) return -1;
+      if (aStr > bStr) return 1;
+      return 0;
+    });
+  }
+  if (value && typeof value === "object") {
+    return Object.keys(value as Record<string, unknown>)
+      .sort()
+      .reduce<Record<string, unknown>>((acc, key) => {
+        acc[key] = normalizeForCacheKey((value as Record<string, unknown>)[key]);
+        return acc;
+      }, {});
+  }
+  return value;
+};
+
+const buildCacheKey = (
+  scope: ProjectsScope,
+  sortField: ProjectSortField,
+  sortDirection: ProjectSortDirection,
+  filters: Record<string, unknown> | undefined
+) => {
+  return JSON.stringify({
+    scope,
+    sortField,
+    sortDirection,
+    filters: normalizeForCacheKey(filters ?? {}),
+  });
+};
+
+const hasCachedRange = (entry: ProjectsCacheEntry, range: FetchRange) => {
+  if (!entry.key) return false;
+  for (let index = range.from; index <= range.to; index += 1) {
+    if (!entry.items.has(index)) {
+      return false;
+    }
+  }
+  if (range.includeCount && entry.total === null) {
+    return false;
+  }
+  return true;
+};
+
+const getProjectsFromCache = (entry: ProjectsCacheEntry, range: FetchRange) => {
+  const projects: ProjectListItem[] = [];
+  for (let index = range.from; index <= range.to; index += 1) {
+    const project = entry.items.get(index);
+    if (project) {
+      projects.push(project);
+    }
+  }
+  return projects;
+};
+
+const storeInCache = (
+  entry: ProjectsCacheEntry,
+  cacheKey: string,
+  range: FetchRange,
+  projects: ProjectListItem[],
+  count: number,
+  updateTotal: boolean
+) => {
+  entry.key = cacheKey;
+  projects.forEach((project, offset) => {
+    entry.items.set(range.from + offset, project);
+  });
+  if (updateTotal) {
+    entry.total = count;
+    const total = Number.isFinite(count) ? Number(count) : null;
+    if (total !== null) {
+      for (const index of Array.from(entry.items.keys())) {
+        if (index >= total) {
+          entry.items.delete(index);
+        }
+      }
+    }
+  }
+  entry.lastFetched = Date.now();
+};
+
 export function useProjectsData({
   listPage,
   listPageSize,
@@ -174,6 +295,34 @@ export function useProjectsData({
   const [listLoading, setListLoading] = useState(false);
   const [archivedLoading, setArchivedLoading] = useState(false);
   const firstLoadRef = useRef(true);
+  const cacheRef = useRef<ProjectsCache>({
+    active: createCacheEntry(),
+    archived: createCacheEntry(),
+  });
+
+  const getCacheStatus = useCallback((scope: ProjectsScope): CacheStatus => {
+    const entry = cacheRef.current[scope];
+    const total = entry.total ?? entry.items.size;
+    let contiguous = 0;
+    while (entry.items.has(contiguous)) {
+      contiguous += 1;
+    }
+    return {
+      total,
+      cached: entry.items.size,
+      contiguous,
+      hasFull: entry.total !== null && entry.items.size >= entry.total && entry.total !== 0,
+      key: entry.key,
+      lastFetched: entry.lastFetched,
+    };
+  }, []);
+
+  const getCachedProjects = useCallback((scope: ProjectsScope) => {
+    const entry = cacheRef.current[scope];
+    return Array.from(entry.items.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([, project]) => project);
+  }, []);
 
   const listFilterPayload = useMemo(() => {
     const payload: Record<string, unknown> = {};
@@ -307,49 +456,83 @@ export function useProjectsData({
         throw new Error("No active organization found");
       }
 
-      const pageSize = Math.max(range.to - range.from + 1, 1);
-      const page = Math.floor(range.from / pageSize) + 1;
+      const requestedLength = Math.max(range.to - range.from + 1, 1);
+      const page = Math.floor(range.from / requestedLength) + 1;
       const filtersPayload = range.filters ?? (scope === "archived" ? archivedFilterPayload : listFilterPayload);
-      const t = startTimer('Projects.fetchPage', {
+      const cacheKey = buildCacheKey(scope, sortField, sortDirection, filtersPayload);
+      const cacheEntry = cacheRef.current[scope];
+
+      if (cacheEntry.key !== cacheKey) {
+        cacheEntry.key = cacheKey;
+        cacheEntry.items.clear();
+        cacheEntry.total = null;
+        cacheEntry.lastFetched = 0;
+      }
+
+      const timer = startTimer("Projects.fetchPage", {
         scope,
         page,
-        pageSize,
+        pageSize: requestedLength,
         sortField,
         sortDirection,
+        force: range.forceNetwork ? "network" : "auto",
       });
 
-      // Fast path: serve from prefetch cache if conditions match the default list view
-      try {
-        const isDefaultList =
-          scope === 'active' &&
-          page === 1 &&
-          pageSize === (DEFAULT_PAGE_SIZE || 25) &&
-          (!filtersPayload || Object.keys(filtersPayload).length === 0) &&
-          sortField === 'created_at' &&
-          sortDirection === 'desc';
-        if (isDefaultList && typeof window !== 'undefined') {
-          const raw = localStorage.getItem(`prefetch:projects:first:${organizationId}:active`);
-          if (raw) {
-            const parsed = JSON.parse(raw) as { ts?: number; value?: { items?: any[]; total?: number; ttl?: number } };
-            const ts = parsed?.ts ?? 0;
-            const ttl = parsed?.value?.ttl ?? 60_000;
-            if (Date.now() - ts < ttl) {
-              const rows = (parsed?.value?.items ?? []) as any[];
-              const total = parsed?.value?.total ?? (rows.length ? rows.length : 0);
-              const projects = rows.map(mapRowToProject);
-              t.end({ rows: projects.length, total, source: 'prefetch' });
-              return { projects, count: range.includeCount ? total : projects.length };
+      const finalize = (result: { projects: ProjectListItem[]; count: number; source: FetchSource }) => {
+        timer.end({ rows: result.projects.length, total: result.count, source: result.source });
+        return result;
+      };
+
+      if (!range.forceNetwork && hasCachedRange(cacheEntry, range)) {
+        const projects = getProjectsFromCache(cacheEntry, range);
+        const count = range.includeCount ? cacheEntry.total ?? projects.length : projects.length;
+        cacheEntry.lastFetched = Date.now();
+        return finalize({ projects, count, source: "cache" });
+      }
+
+      if (!range.forceNetwork) {
+        try {
+          const isDefaultList =
+            scope === "active" &&
+            page === 1 &&
+            requestedLength === (DEFAULT_PAGE_SIZE || 25) &&
+            (!filtersPayload || Object.keys(filtersPayload).length === 0) &&
+            sortField === "created_at" &&
+            sortDirection === "desc";
+          if (isDefaultList && typeof window !== "undefined") {
+            const raw = localStorage.getItem(`prefetch:projects:first:${organizationId}:active`);
+            if (raw) {
+              const parsed = JSON.parse(raw) as {
+                ts?: number;
+                value?: { items?: any[]; total?: number; ttl?: number };
+              };
+              const ts = parsed?.ts ?? 0;
+              const ttl = parsed?.value?.ttl ?? 60_000;
+              if (Date.now() - ts < ttl) {
+                const rows = (parsed?.value?.items ?? []) as any[];
+                const total = rows.length ? Number(parsed?.value?.total ?? rows.length) : 0;
+                const projects = rows.map(mapRowToProject);
+                storeInCache(cacheEntry, cacheKey, range, projects, total, true);
+                cacheEntry.lastFetched = Date.now();
+                return finalize({
+                  projects,
+                  count: range.includeCount ? total : projects.length,
+                  source: "prefetch",
+                });
+              }
             }
           }
+        } catch {
+          // Ignore localStorage or JSON errors and fall back to network fetch.
         }
-      } catch {}
+      }
 
-      const fetchViaRpc = async () => {
-        const tRpc = startTimer('Projects.rpc.projects_filter_page');
+      const fetchViaRpc = async (): Promise<InternalFetchResult> => {
+        const tRpc = startTimer("Projects.rpc.projects_filter_page");
         const { data, error } = await supabase.rpc("projects_filter_page", {
           org: organizationId,
           p_page: page,
-          p_size: pageSize,
+          p_size: requestedLength,
           p_sort_field: sortField,
           p_sort_dir: sortDirection,
           p_scope: scope,
@@ -360,14 +543,13 @@ export function useProjectsData({
           throw error;
         }
         const rows = (data as any[]) ?? [];
-        const total = rows.length ? Number(rows[0].total_count ?? 0) : 0;
+        const total = rows.length ? Number(rows[0].total_count ?? rows.length) : 0;
         const projects = rows.map(mapRowToProject);
         tRpc.end({ rows: rows.length, total });
-        t.end({ rows: projects.length, total });
-        return { projects, count: range.includeCount ? total : projects.length };
+        return { projects, total, source: "network" };
       };
 
-      const fetchViaFallback = async () => {
+      const fetchViaFallback = async (): Promise<InternalFetchResult> => {
         const { data: projectsData, error: projectsError } = await supabase
           .from("projects")
           .select("*")
@@ -379,45 +561,32 @@ export function useProjectsData({
         const projectIds = (projectsData ?? []).map((project) => project.id);
         const leadIds = (projectsData ?? []).map((project) => project.lead_id).filter(Boolean);
 
-        const [sessionsData, todosData, servicesData, paymentsData, leadsData, projectStatusesData, projectTypesData] = await Promise.all([
+        const [
+          sessionsData,
+          todosData,
+          servicesData,
+          paymentsData,
+          leadsData,
+          projectStatusesData,
+          projectTypesData,
+        ] = await Promise.all([
           projectIds.length
-            ? supabase
-                .from("sessions")
-                .select("project_id, status")
-                .in("project_id", projectIds)
+            ? supabase.from("sessions").select("project_id, status").in("project_id", projectIds)
             : Promise.resolve({ data: [] }),
           projectIds.length
-            ? supabase
-                .from("todos")
-                .select("id, project_id, is_completed, content")
-                .in("project_id", projectIds)
+            ? supabase.from("todos").select("id, project_id, is_completed, content").in("project_id", projectIds)
             : Promise.resolve({ data: [] }),
           projectIds.length
-            ? supabase
-                .from("project_services")
-                .select(`project_id, service:services(id, name)`)
-                .in("project_id", projectIds)
+            ? supabase.from("project_services").select(`project_id, service:services(id, name)`).in("project_id", projectIds)
             : Promise.resolve({ data: [] }),
           projectIds.length
-            ? supabase
-                .from("payments")
-                .select("project_id, amount, status")
-                .in("project_id", projectIds)
+            ? supabase.from("payments").select("project_id, amount, status").in("project_id", projectIds)
             : Promise.resolve({ data: [] }),
           leadIds.length
-            ? supabase
-                .from("leads")
-                .select("id, name, status, email, phone")
-                .in("id", leadIds)
+            ? supabase.from("leads").select("id, name, status, email, phone").in("id", leadIds)
             : Promise.resolve({ data: [] }),
-          supabase
-            .from("project_statuses")
-            .select("id, name, color, sort_order")
-            .eq("organization_id", organizationId),
-          supabase
-            .from("project_types")
-            .select("id, name")
-            .eq("organization_id", organizationId),
+          supabase.from("project_statuses").select("id, name, color, sort_order").eq("organization_id", organizationId),
+          supabase.from("project_types").select("id, name").eq("organization_id", organizationId),
         ]);
 
         if (sessionsData.error) throw sessionsData.error;
@@ -496,35 +665,48 @@ export function useProjectsData({
         const partitioned = enriched.reduce<{
           active: ProjectListItem[];
           archived: ProjectListItem[];
-        }>((acc, project) => {
-          if (project.status_id && project.status_id === archivedStatusId) {
-            acc.archived.push(project);
-          } else {
-            acc.active.push(project);
-          }
-          return acc;
-        }, { active: [], archived: [] });
+        }>(
+          (acc, project) => {
+            if (project.status_id && project.status_id === archivedStatusId) {
+              acc.archived.push(project);
+            } else {
+              acc.active.push(project);
+            }
+            return acc;
+          },
+          { active: [], archived: [] }
+        );
 
         const pool = scope === "archived" ? partitioned.archived : partitioned.active;
-        const filtered = scope === "archived"
-          ? pool.filter(applyArchivedFilters)
-          : pool.filter(applyListFilters);
+        const filtered = scope === "archived" ? pool.filter(applyArchivedFilters) : pool.filter(applyListFilters);
 
         const sorted = sortProjects(filtered, sortField, sortDirection);
         const total = sorted.length;
         const slice = sorted.slice(range.from, range.to + 1);
-        return { projects: slice, count: range.includeCount ? total : slice.length };
+        return { projects: slice, total, source: "fallback" };
       };
 
       try {
-        return await fetchViaRpc();
+        const result = await fetchViaRpc();
+        const updateTotal = range.includeCount === true || cacheEntry.total === null;
+        storeInCache(cacheEntry, cacheKey, range, result.projects, result.total, updateTotal);
+        return finalize({
+          projects: result.projects,
+          count: range.includeCount ? result.total : result.projects.length,
+          source: result.source,
+        });
       } catch (error) {
         logInfo("Projects.rpc.fallback", { reason: (error as any)?.message || String(error) });
-        const tFb = startTimer('Projects.fallback.query');
-        const res = await fetchViaFallback();
-        tFb.end({ rows: res.projects.length, count: res.count });
-        t.end({ rows: res.projects.length, total: res.count });
-        return res;
+        const fallbackTimer = startTimer("Projects.fallback.query");
+        const fallbackResult = await fetchViaFallback();
+        fallbackTimer.end({ rows: fallbackResult.projects.length, total: fallbackResult.total });
+        const updateTotal = range.includeCount === true || cacheEntry.total === null;
+        storeInCache(cacheEntry, cacheKey, range, fallbackResult.projects, fallbackResult.total, updateTotal);
+        return finalize({
+          projects: fallbackResult.projects,
+          count: range.includeCount ? fallbackResult.total : fallbackResult.projects.length,
+          source: fallbackResult.source,
+        });
       }
     },
     [
@@ -538,7 +720,7 @@ export function useProjectsData({
     ]
   );
 
-  const fetchList = useCallback(async () => {
+  const fetchList = useCallback(async (force = false) => {
     const first = firstLoadRef.current;
     try {
       if (first) setInitialLoading(true);
@@ -551,6 +733,7 @@ export function useProjectsData({
         from,
         to,
         includeCount: true,
+        forceNetwork: force,
       });
       setListProjects(projects);
       setListTotalCount(count);
@@ -573,7 +756,7 @@ export function useProjectsData({
     }
   }, [fetchProjectsData, listPage, listPageSize, onNetworkError, onNetworkRecovery]);
 
-  const fetchArchived = useCallback(async () => {
+  const fetchArchived = useCallback(async (force = false) => {
     setArchivedLoading(true);
     try {
       const pageSize = archivedPageSize || DEFAULT_PAGE_SIZE;
@@ -584,6 +767,7 @@ export function useProjectsData({
         from,
         to,
         includeCount: true,
+        forceNetwork: force,
       });
       setArchivedProjects(projects);
       setArchivedTotalCount(count);
@@ -608,7 +792,7 @@ export function useProjectsData({
   }, [fetchArchived]);
 
   const refetch = useCallback(async () => {
-    await Promise.all([fetchList(), fetchArchived()]);
+    await Promise.all([fetchList(true), fetchArchived(true)]);
   }, [fetchArchived, fetchList]);
 
   return {
@@ -621,5 +805,7 @@ export function useProjectsData({
     archivedLoading,
     refetch,
     fetchProjectsData,
+    getCachedProjects,
+    getCacheStatus,
   };
 }

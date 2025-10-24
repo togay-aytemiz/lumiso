@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import * as DnD from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
@@ -25,6 +25,9 @@ interface ProjectKanbanBoardProps {
   onProjectUpdate?: (project: ProjectListItem) => void;
   onQuickView?: (project: ProjectListItem) => void;
   isLoading?: boolean;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
 }
 
 const GAP = 1000;
@@ -85,7 +88,10 @@ const ProjectKanbanBoard = ({
   onProjectsChange,
   onProjectUpdate,
   onQuickView,
-  isLoading
+  isLoading,
+  onLoadMore,
+  hasMore = false,
+  isLoadingMore = false,
 }: ProjectKanbanBoardProps) => {
   const { t } = useTranslation('forms');
   const toast = useI18nToast();
@@ -368,6 +374,9 @@ const ProjectKanbanBoard = ({
 
   if (loading || isLoading) return <KanbanLoadingSkeleton />;
 
+  const showLoadMore = Boolean(hasMore && onLoadMore);
+  const loadMoreLabel = t('common:buttons.load_more', { defaultValue: 'Load more' });
+
   return (
     <>
       <div
@@ -402,6 +411,19 @@ const ProjectKanbanBoard = ({
         onActivityUpdated={() => {}}
         leadName={viewingProject?.lead?.name || ""}
       />
+      {showLoadMore ? (
+        <div className="px-4 pb-6 flex justify-center">
+          <Button
+            variant="outline"
+            onClick={onLoadMore}
+            disabled={isLoadingMore}
+            className="gap-2"
+          >
+            {isLoadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
+            {loadMoreLabel}
+          </Button>
+        </div>
+      ) : null}
     </>
   );
 };

@@ -4,6 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { getBadgeStyleProperties } from "@/lib/statusBadgeStyles";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -237,23 +238,22 @@ export function LeadStatusBadge({
   // Handle case where no status is assigned yet
   if (!currentStatusData && statuses.length > 0 && editable) {
     const defaultColor = "#A0AEC0";
+    const { tokens, style: styleProps } = getBadgeStyleProperties(defaultColor);
     
     return (
       <div className="relative" ref={dropdownRef}>
         <Button
-          variant="ghost"
+          variant="chip"
           className={cn(
-            "inline-flex items-center gap-2 h-auto rounded-full font-medium hover:opacity-80 transition-opacity",
-            "border cursor-pointer",
+            "inline-flex items-center gap-2 h-auto rounded-full font-medium transition-all",
+            "border cursor-pointer shadow-sm hover:shadow-md",
+            "hover:!bg-[var(--badge-hover-bg)] hover:!text-[var(--badge-color)] active:!bg-[var(--badge-active-bg)]",
+            "focus-visible:ring-[var(--badge-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-background",
             padding,
-            isUpdating && "cursor-not-allowed opacity-50",
+            isUpdating && "cursor-not-allowed opacity-60",
             className
           )}
-          style={{ 
-            backgroundColor: defaultColor + '15',
-            color: defaultColor,
-            borderColor: defaultColor + '60'
-          }}
+          style={styleProps}
           disabled={isUpdating}
           onClick={(e) => {
             e.preventDefault();
@@ -263,7 +263,7 @@ export function LeadStatusBadge({
         >
           <div 
             className={cn("rounded-full border-2", dotSize)}
-            style={{ borderColor: defaultColor }}
+            style={{ borderColor: tokens.color }}
           />
           <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{tForms('status.selectStatus')}</span>
           <ChevronDown className={cn("ml-1 transition-transform", isSmall ? "w-3 h-3" : "w-4 h-4", dropdownOpen && "rotate-180")} />
@@ -279,7 +279,11 @@ export function LeadStatusBadge({
                 <Button
                   key={status.id}
                   variant="ghost"
-                  className="w-full justify-start h-auto py-2 px-3 font-medium hover:bg-muted rounded-md"
+                  className={cn(
+                    "w-full justify-start h-auto py-2 px-3 font-medium rounded-md transition-colors",
+                    "text-foreground hover:bg-muted hover:!text-foreground",
+                    "focus-visible:ring-1 focus-visible:ring-muted-foreground/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  )}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -312,19 +316,17 @@ export function LeadStatusBadge({
     );
   }
 
+  const { tokens: activeTokens, style: activeStyle } = getBadgeStyleProperties(currentStatusData.color);
+
   if (!editable) {
     return (
       <div 
-        className={cn("inline-flex items-center gap-2 rounded-full font-medium", padding, className)}
-        style={{ 
-          backgroundColor: currentStatusData.color + '15',
-          color: currentStatusData.color,
-          border: `1px solid ${currentStatusData.color}60`
-        }}
+        className={cn("inline-flex items-center gap-2 rounded-full font-medium border", padding, className)}
+        style={activeStyle}
       >
         <div 
           className={cn("rounded-full", dotSize)}
-          style={{ backgroundColor: currentStatusData.color }}
+          style={{ backgroundColor: activeTokens.color }}
         />
         <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{currentStatusData.name}</span>
       </div>
@@ -335,19 +337,17 @@ export function LeadStatusBadge({
   return (
     <div className="relative" ref={dropdownRef}>
       <Button
-        variant="ghost"
+        variant="chip"
         className={cn(
-          "inline-flex items-center gap-2 h-auto rounded-full font-medium hover:opacity-80 transition-opacity",
-          "border cursor-pointer",
+          "inline-flex items-center gap-2 h-auto rounded-full font-medium transition-all",
+          "border cursor-pointer shadow-sm hover:shadow-md",
+          "hover:!bg-[var(--badge-hover-bg)] hover:!text-[var(--badge-color)] active:!bg-[var(--badge-active-bg)]",
+          "focus-visible:ring-[var(--badge-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           padding,
-          isUpdating && "cursor-not-allowed opacity-50",
+          isUpdating && "cursor-not-allowed opacity-60",
           className
         )}
-        style={{ 
-          backgroundColor: currentStatusData.color + '15',
-          color: currentStatusData.color,
-          borderColor: currentStatusData.color + '60'
-        }}
+        style={activeStyle}
         disabled={isUpdating}
         onClick={(e) => {
           e.preventDefault();
@@ -357,7 +357,7 @@ export function LeadStatusBadge({
       >
         <div 
           className={cn("rounded-full", dotSize)}
-          style={{ backgroundColor: currentStatusData.color }}
+          style={{ backgroundColor: activeTokens.color }}
         />
         <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{currentStatusData.name}</span>
         <ChevronDown className={cn("ml-1 transition-transform", isSmall ? "w-3 h-3" : "w-4 h-4", dropdownOpen && "rotate-180")} />
@@ -374,7 +374,9 @@ export function LeadStatusBadge({
                 key={status.id}
                 variant="ghost"
                 className={cn(
-                  "w-full justify-start h-auto py-2 px-3 font-medium hover:bg-muted rounded-md",
+                  "w-full justify-start h-auto py-2 px-3 font-medium rounded-md transition-colors",
+                  "text-foreground hover:bg-muted hover:!text-foreground",
+                  "focus-visible:ring-1 focus-visible:ring-muted-foreground/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   currentStatusData.name === status.name && "bg-muted"
                 )}
                 onClick={(e) => {

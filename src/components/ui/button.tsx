@@ -20,6 +20,8 @@ const buttonVariants = cva(
         link: "text-accent underline-offset-4 hover:underline",
         cta: "bg-accent text-accent-foreground hover:bg-accent/90 h-11 px-6 rounded-md border border-input shadow-sm transition-colors",
         dangerOutline: "border border-destructive text-destructive hover:bg-destructive/10",
+        chip:
+          "bg-transparent text-current hover:bg-transparent hover:text-current shadow-none",
       },
       size: {
         default: "h-10 px-4 py-2",

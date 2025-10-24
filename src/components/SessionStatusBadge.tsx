@@ -4,6 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { getBadgeStyleProperties } from "@/lib/statusBadgeStyles";
 import { useSessionActions } from "@/hooks/useSessionActions";
 import { useFormsTranslation, useMessagesTranslation } from "@/hooks/useTypedTranslation";
 
@@ -149,14 +150,15 @@ export function SessionStatusBadge({
 
   const displayName = enumToDisplay[currentStatus];
   const color = current?.color || fallbackColorByEnum[currentStatus];
+  const { tokens: activeTokens, style: activeStyle } = getBadgeStyleProperties(color);
 
   if (!editable) {
     return (
       <div
         className={cn("inline-flex items-center gap-2 rounded-full font-medium border", padding, className)}
-        style={{ backgroundColor: color + '15', color, borderColor: color + '60' }}
+        style={activeStyle}
       >
-        <div className={cn("rounded-full", dotSize)} style={{ backgroundColor: color }} />
+        <div className={cn("rounded-full", dotSize)} style={{ backgroundColor: activeTokens.color }} />
         <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{displayName}</span>
       </div>
     );
@@ -165,15 +167,17 @@ export function SessionStatusBadge({
   return (
     <div className="relative" ref={dropdownRef} onClick={(e) => { e.stopPropagation(); }}>
       <Button
-        variant="ghost"
+        variant="chip"
         className={cn(
-          "inline-flex items-center gap-2 h-auto rounded-full font-medium hover:opacity-80 transition-opacity",
-          "border cursor-pointer",
+          "inline-flex items-center gap-2 h-auto rounded-full font-medium transition-all",
+          "border cursor-pointer shadow-sm hover:shadow-md",
+          "hover:!bg-[var(--badge-hover-bg)] hover:!text-[var(--badge-color)] active:!bg-[var(--badge-active-bg)]",
+          "focus-visible:ring-[var(--badge-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           padding,
-          isUpdating && "cursor-not-allowed opacity-50",
+          isUpdating && "cursor-not-allowed opacity-60",
           className
         )}
-        style={{ backgroundColor: color + '15', color, borderColor: color + '60' }}
+        style={activeStyle}
         disabled={isUpdating}
         onClick={(e) => {
           e.preventDefault();
@@ -183,7 +187,7 @@ export function SessionStatusBadge({
         aria-haspopup="menu"
         aria-expanded={dropdownOpen}
       >
-        <div className={cn("rounded-full", dotSize)} style={{ backgroundColor: color }} />
+        <div className={cn("rounded-full", dotSize)} style={{ backgroundColor: activeTokens.color }} />
         <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{displayName}</span>
         <ChevronDown className={cn("ml-1 transition-transform", isSmall ? "w-3 h-3" : "w-4 h-4", dropdownOpen && "rotate-180")} />
       </Button>
@@ -198,7 +202,9 @@ export function SessionStatusBadge({
                   key={status.id}
                   variant="ghost"
                   className={cn(
-                    "w-full justify-start h-auto py-2 px-3 font-medium hover:bg-muted rounded-md",
+                    "w-full justify-start h-auto py-2 px-3 font-medium rounded-md transition-colors",
+                    "text-foreground hover:bg-muted hover:!text-foreground",
+                    "focus-visible:ring-1 focus-visible:ring-muted-foreground/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                     current?.id === status.id && "bg-muted"
                   )}
                   onClick={(e) => {

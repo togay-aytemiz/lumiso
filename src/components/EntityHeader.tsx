@@ -115,6 +115,8 @@ export function EntityHeader({
   const hasSubtext = Boolean(subtext);
   const avatarDisplay = avatarContent ?? displayInitials;
 
+  const isTitleString = typeof title === "string";
+
   return (
     <div className={cn("space-y-4", className)}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -141,7 +143,12 @@ export function EntityHeader({
             </div>
             <div className={cn("min-w-0", hasSubtext ? "space-y-1" : "")}>
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="truncate text-xl font-semibold leading-tight text-foreground sm:text-2xl">
+                <h1
+                  className={cn(
+                    "text-xl font-semibold leading-tight text-foreground sm:text-2xl",
+                    isTitleString && "truncate"
+                  )}
+                >
                   {title}
                 </h1>
                 {statusBadge}

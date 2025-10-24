@@ -4,9 +4,10 @@ import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, AlertTriangle, CalendarCheck2, CalendarClock } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Plus, Calendar, AlertTriangle, CalendarCheck2, CalendarClock, FileDown, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -22,9 +23,12 @@ import {
   AdvancedDataTable,
   type AdvancedTableColumn,
   type AdvancedDataTableSortState,
+  type AdvancedDataTableFiltersConfig,
 } from "@/components/data-table";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { getKpiIconPreset, KPI_ACTION_BUTTON_CLASS } from "@/components/ui/kpi-presets";
+import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
+import { format } from "date-fns";
 
 interface Session {
   id: string;
@@ -78,7 +82,7 @@ const AllSessions = () => {
   const { t, i18n } = useTranslation('pages');
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<string>("planned");
+  const [statusFilters, setStatusFilters] = useState<string[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilterKey>("all");
   const [sortState, setSortState] = useState<AdvancedDataTableSortState>({
     columnId: "session_date",
@@ -91,6 +95,7 @@ const AllSessions = () => {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
   const isMobile = useIsMobile();
+  const [exporting, setExporting] = useState(false);
 
   const fetchSessions = useCallback(async () => {
     setLoading(true);
@@ -226,9 +231,9 @@ const AllSessions = () => {
   const getSessionCountForDateFilter = (filter: DateFilterKey) => {
     let filtered = sessions;
 
-    // Apply status filter first
-    if (statusFilter !== "all") {
-      filtered = filtered.filter(session => session.status === statusFilter);
+    // Apply status filters first
+    if (statusFilters.length > 0) {
+      filtered = filtered.filter((session) => statusFilters.includes(session.status));
     }
 
     // Then apply date filter
@@ -277,7 +282,7 @@ const AllSessions = () => {
         label: getDateFilterLabel(key),
         count: getSessionCountForDateFilter(key),
       })),
-    [getDateFilterLabel, sessions, statusFilter]
+    [getDateFilterLabel, sessions, statusFilters]
   );
 
   const quickDateFilters = useMemo<DateFilterOption[]>(
@@ -356,8 +361,8 @@ const AllSessions = () => {
   const filteredAndSortedSessions = useMemo(() => {
     let filtered = sessions;
 
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((session) => session.status === statusFilter);
+    if (statusFilters.length > 0) {
+      filtered = filtered.filter((session) => statusFilters.includes(session.status));
     }
 
     if (dateFilter !== "all") {
@@ -415,7 +420,7 @@ const AllSessions = () => {
     sorted.sort((a, b) => compare(a, b) * directionMultiplier);
 
     return sorted;
-  }, [sessions, statusFilter, dateFilter, sortState]);
+  }, [sessions, statusFilters, dateFilter, sortState]);
 
   const handleRowClick = (session: Session) => {
     setSelectedSessionId(session.id);
@@ -464,31 +469,57 @@ const AllSessions = () => {
 
   const statusOptions = useMemo(
     () => [
-      { value: "all", label: t('sessions.filters.allStatuses') },
-      { value: "planned", label: "Planned" },
-      { value: "completed", label: "Completed" },
-      { value: "in_post_processing", label: "Editing" },
-      { value: "delivered", label: "Delivered" },
-      { value: "cancelled", label: "Cancelled" },
+      { value: "planned", label: t('sessions.statuses.planned') },
+      { value: "completed", label: t('sessions.statuses.completed') },
+      { value: "in_post_processing", label: t('sessions.statuses.in_post_processing') },
+      { value: "delivered", label: t('sessions.statuses.delivered') },
+      { value: "cancelled", label: t('sessions.statuses.cancelled') },
     ],
     [t]
   );
 
-  const statusOptionsForFilter = useMemo(
-    () => statusOptions.map((option) => ({ key: option.value, label: option.label })),
-    [statusOptions]
+  const statusLabelMap = useMemo(() => {
+    const map = new Map<string, string>();
+    statusOptions.forEach((option) => {
+      map.set(option.value, option.label);
+    });
+    return map;
+  }, [statusOptions]);
+
+  const selectedStatusLabels = useMemo(
+    () => statusFilters.map((value) => statusLabelMap.get(value) ?? value),
+    [statusFilters, statusLabelMap]
   );
+
+  const handleStatusToggle = useCallback((value: string, checked: boolean) => {
+    setStatusFilters((prev) => {
+      if (checked) {
+        if (prev.includes(value)) return prev;
+        return [...prev, value];
+      }
+      return prev.filter((item) => item !== value);
+    });
+  }, []);
+
+  const clearStatusFilters = useCallback(() => {
+    setStatusFilters([]);
+  }, []);
+
+  const handleResetFilters = useCallback(() => {
+    setStatusFilters([]);
+    setDateFilter('all');
+  }, []);
+
+  const activeFiltersCount = (dateFilter !== 'all' ? 1 : 0) + statusFilters.length;
 
   const summaryChips = useMemo(
     () => {
       const chips: { id: string; label: string }[] = [];
-      if (statusFilter !== "all") {
-        const statusLabel = statusOptions.find((option) => option.value === statusFilter)?.label;
-        if (statusLabel) {
-          chips.push({ id: 'status', label: `${t('sessions.table.status')}: ${statusLabel}` });
-        }
+      if (statusFilters.length > 0) {
+        const joinedStatuses = selectedStatusLabels.join(', ');
+        chips.push({ id: 'status', label: `${t('sessions.table.status')}: ${joinedStatuses}` });
       }
-      if (dateFilter !== "all") {
+      if (dateFilter !== 'all') {
         const dateLabel = dateFilterOptions.find((option) => option.key === dateFilter)?.label;
         if (dateLabel) {
           chips.push({ id: 'date', label: `${t('sessions.table.date')}: ${dateLabel}` });
@@ -496,7 +527,7 @@ const AllSessions = () => {
       }
       return chips;
     },
-    [statusFilter, statusOptions, t, dateFilter, dateFilterOptions]
+    [statusFilters, selectedStatusLabels, t, dateFilter, dateFilterOptions]
   );
 
   const tableSummary = useMemo(
@@ -615,9 +646,11 @@ const AllSessions = () => {
       <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
       <h3 className="text-lg font-medium mb-2">{tForms('sessions.noSessionsFound')}</h3>
       <p>
-        {statusFilter === "all"
+        {statusFilters.length === 0
           ? tForms('sessions.noSessionsYet')
-          : tForms('sessions.noSessionsWithStatus', { status: statusFilter })}
+          : tForms('sessions.noSessionsWithStatus', {
+              status: selectedStatusLabels.join(', '),
+            })}
       </p>
       <p className="text-sm mt-2">{tForms('sessions.clickToSchedule')}</p>
     </div>
@@ -633,7 +666,7 @@ const AllSessions = () => {
     "border-primary/30 bg-primary/15 text-primary";
 
   const toolbarContent = (
-    <div className="hidden md:flex w-full flex-wrap items-center justify-between gap-3">
+    <div className="hidden md:flex w-full flex-wrap items-center gap-3">
       <div className="flex flex-1 flex-wrap gap-2">
         {dateFilterOptions.map((option) => (
           <Button
@@ -659,24 +692,203 @@ const AllSessions = () => {
           </Button>
         ))}
       </div>
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground whitespace-nowrap">
-          {t('sessions.filters.statusLabel')}
-        </span>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {statusOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
     </div>
+  );
+
+  const filtersConfig = useMemo<AdvancedDataTableFiltersConfig>(() => ({
+    title: t('sessions.filters.title'),
+    triggerLabel: t('sessions.filters.triggerLabel'),
+    content: (
+      <Accordion type="multiple" defaultValue={['time', 'status']} className="space-y-4">
+        <AccordionItem value="time" className="border-b border-border/60">
+          <AccordionTrigger className="text-sm font-semibold text-foreground">
+            {t('sessions.filters.timeSectionTitle')}
+          </AccordionTrigger>
+          <AccordionContent className="pt-2">
+            <div className="grid grid-cols-1 gap-2">
+              {dateFilterOptions.map((option) => (
+                <Button
+                  key={option.key}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    'h-9 justify-start',
+                    filterPillBaseClasses,
+                    dateFilter === option.key && filterPillActiveClasses
+                  )}
+                  onClick={() => setDateFilter(option.key)}
+                >
+                  {option.label}
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'ml-auto',
+                      filterPillBadgeBaseClasses,
+                      dateFilter === option.key && filterPillBadgeActiveClasses
+                    )}
+                  >
+                    {option.count}
+                  </Badge>
+                </Button>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="status" className="border-b border-border/60">
+          <AccordionTrigger className="text-sm font-semibold text-foreground">
+            {t('sessions.filters.statusSectionTitle')}
+          </AccordionTrigger>
+          <AccordionContent className="pt-2">
+            <div className="flex items-center justify-between gap-2 pb-3">
+              <span className="text-xs text-muted-foreground">
+                {statusFilters.length > 0
+                  ? t('sessions.filters.selectedStatusCount', { count: statusFilters.length })
+                  : t('sessions.filters.noStatusesSelected')}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 rounded-full px-2 text-xs text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                onClick={clearStatusFilters}
+                disabled={statusFilters.length === 0}
+              >
+                {t('sessions.filters.clear')}
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {statusOptions.map((option) => (
+                <label key={option.value} className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={statusFilters.includes(option.value)}
+                    onCheckedChange={(checked) =>
+                      handleStatusToggle(option.value, Boolean(checked))
+                    }
+                  />
+                  <span>{option.label}</span>
+                </label>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    ),
+    footer: (
+      <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full sm:flex-1"
+          onClick={handleResetFilters}
+          disabled={activeFiltersCount === 0}
+        >
+          {t('sessions.filters.reset')}
+        </Button>
+      </div>
+    ),
+    activeCount: activeFiltersCount,
+    onReset: activeFiltersCount > 0 ? handleResetFilters : undefined,
+    collapsedByDefault: false,
+  }), [
+    activeFiltersCount,
+    clearStatusFilters,
+    dateFilter,
+    dateFilterOptions,
+    filterPillActiveClasses,
+    filterPillBadgeActiveClasses,
+    filterPillBadgeBaseClasses,
+    filterPillBaseClasses,
+    handleResetFilters,
+    handleStatusToggle,
+    statusFilters,
+    statusOptions,
+    t,
+  ]);
+
+  const handleExportSessions = useCallback(async () => {
+    if (exporting) return;
+
+    if (filteredAndSortedSessions.length === 0) {
+      toast({
+        title: t('sessions.export.noDataTitle'),
+        description: t('sessions.export.noDataDescription'),
+      });
+      return;
+    }
+
+    try {
+      setExporting(true);
+
+      const rows = filteredAndSortedSessions.map((session) => ({
+        [t('sessions.table.clientName')]: session.lead_name ?? '',
+        [t('sessions.table.date')]: session.session_date
+          ? formatLongDate(session.session_date)
+          : '',
+        [t('sessions.table.time')]: session.session_time
+          ? formatTime(session.session_time)
+          : '',
+        [t('sessions.table.project')]: session.project_name ?? '',
+        [t('sessions.table.status')]: statusLabelMap.get(session.status) ?? session.status,
+        [t('sessions.table.notes')]: session.notes ?? '',
+      }));
+
+      const worksheet = XLSXUtils.json_to_sheet(rows);
+      const workbook = XLSXUtils.book_new();
+      XLSXUtils.book_append_sheet(workbook, worksheet, 'Sessions');
+
+      const timestamp = format(new Date(), 'yyyy-MM-dd_HHmm');
+      writeFileXLSX(workbook, `sessions-${timestamp}.xlsx`);
+
+      toast({
+        title: t('sessions.export.successTitle'),
+        description: t('sessions.export.successDescription'),
+      });
+    } catch (error) {
+      console.error('Error exporting sessions', error);
+      toast({
+        title: t('sessions.export.errorTitle'),
+        description:
+          error instanceof Error
+            ? error.message
+            : t('sessions.export.errorDescription'),
+        variant: 'destructive',
+      });
+    } finally {
+      setExporting(false);
+    }
+  }, [
+    exporting,
+    filteredAndSortedSessions,
+    statusLabelMap,
+    t,
+    toast,
+  ]);
+
+  const exportActions = useMemo(
+    () => (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={handleExportSessions}
+        disabled={exporting || filteredAndSortedSessions.length === 0}
+        className="hidden sm:inline-flex"
+      >
+        {exporting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <FileDown className="h-4 w-4" />
+        )}
+        <span>{t('sessions.export.button')}</span>
+      </Button>
+    ),
+    [
+      exporting,
+      filteredAndSortedSessions.length,
+      handleExportSessions,
+      t,
+    ]
   );
 
   return (
@@ -723,7 +935,7 @@ const AllSessions = () => {
                 className={KPI_ACTION_BUTTON_CLASS}
                 onClick={() => {
                   setDateFilter('past');
-                  setStatusFilter('planned');
+                  setStatusFilters(['planned']);
                   setSortState({ columnId: 'session_date', direction: 'asc' });
                 }}
               >
@@ -749,7 +961,7 @@ const AllSessions = () => {
                 className={KPI_ACTION_BUTTON_CLASS}
                 onClick={() => {
                   setDateFilter('today');
-                  setStatusFilter('all');
+                  setStatusFilters([]);
                   setSortState({ columnId: 'session_date', direction: 'asc' });
                 }}
               >
@@ -775,7 +987,7 @@ const AllSessions = () => {
                 className={KPI_ACTION_BUTTON_CLASS}
                 onClick={() => {
                   setDateFilter('future');
-                  setStatusFilter('planned');
+                  setStatusFilters(['planned']);
                   setSortState({ columnId: 'session_date', direction: 'asc' });
                 }}
               >
@@ -793,14 +1005,12 @@ const AllSessions = () => {
             allDateFilters={dateFilterOptions}
             activeDateFilter={dateFilter}
             onDateFilterChange={(value) => setDateFilter(value as DateFilterKey)}
-            statusOptions={statusOptionsForFilter}
-            activeStatus={statusFilter}
-            onStatusChange={setStatusFilter}
             isSticky
           />
         </div>
 
         <AdvancedDataTable
+          title={t('sessions.tableTitle')}
           data={filteredAndSortedSessions}
           columns={columns}
           rowKey={(session) => session.id}
@@ -810,6 +1020,8 @@ const AllSessions = () => {
           isLoading={loading}
           emptyState={emptyState}
           toolbar={toolbarContent}
+          filters={filtersConfig}
+          actions={exportActions}
           summary={isMobile ? tableSummary : undefined}
         />
 

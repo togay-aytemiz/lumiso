@@ -1,11 +1,12 @@
 import { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { Lock, LucideIcon } from "lucide-react";
-import { 
-  SidebarMenuItem, 
-  SidebarMenuButton 
+import {
+  SidebarMenuItem,
+  SidebarMenuButton
 } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface SidebarNavItemProps {
   title: string;
@@ -34,11 +35,16 @@ export function SidebarNavItem({
 }: SidebarNavItemProps) {
   const content = (
     <div
-      className={`flex items-center gap-2.5 w-full text-sm font-medium tracking-tight ${isLocked ? 'opacity-50' : ''}`}
+      className={cn(
+        "flex items-center gap-2.5 w-full text-sm font-medium tracking-tight transition-colors",
+        isLocked && "opacity-50"
+      )}
       onClick={isLocked ? onLockedClick : undefined}
     >
-      <Icon className="h-4 w-4 text-sidebar-foreground/80 group-hover/item:text-sidebar-primary group-data-[active=true]/item:text-[hsl(var(--sidebar-active-icon))] transition-colors" />
-      <span className="text-sidebar-foreground/90">{title}</span>
+      <Icon className="h-4 w-4 text-sidebar-foreground/80 transition-colors group-hover/item:text-[hsl(var(--accent-600))] group-data-[active=true]/item:text-[hsl(var(--accent-600))]" />
+      <span className="text-sidebar-foreground/90 transition-colors group-hover/item:text-[hsl(var(--accent-800))] group-data-[active=true]/item:text-[hsl(var(--accent-900))]">
+        {title}
+      </span>
       {badge && <div className="ml-auto">{badge}</div>}
       {isLocked && <Lock className="h-3 w-3 ml-auto text-muted-foreground" />}
     </div>
@@ -48,7 +54,11 @@ export function SidebarNavItem({
     <Tooltip>
       <TooltipTrigger asChild>
         <SidebarMenuButton
-          className={`group/item w-full h-9 px-2.5 py-2 text-left transition-all duration-200 rounded-md cursor-not-allowed ${className}`}
+          className={cn(
+            "group/item w-full h-9 cursor-not-allowed rounded-xl",
+            "bg-[linear-gradient(135deg,_hsl(var(--accent-50)),_hsl(var(--accent-100)))] text-[hsl(var(--accent-800))]",
+            className
+          )}
         >
           {content}
         </SidebarMenuButton>
@@ -61,7 +71,12 @@ export function SidebarNavItem({
     <SidebarMenuButton
       asChild
       isActive={isActive}
-      className={`group/item w-full h-9 px-2.5 py-2 text-left transition-all duration-200 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-active data-[active=true]:text-sidebar-active-foreground data-[active=true]:shadow-sm data-[active=true]:border data-[active=true]:border-sidebar-border ${className}`}
+      className={cn(
+        "group/item w-full h-9",
+        "data-[active=true]:shadow-[0_26px_45px_-32px_hsl(var(--accent-400)_/_0.95)]",
+        "data-[active=true]:before:absolute data-[active=true]:before:inset-[2px] data-[active=true]:before:-z-10 data-[active=true]:before:rounded-[calc(var(--radius)-0.375rem)] data-[active=true]:before:bg-[radial-gradient(circle_at_top,_hsl(var(--accent-100)),_transparent_65%)] data-[active=true]:before:content-['']",
+        className
+      )}
     >
       <NavLink to={url} className="flex items-center gap-2.5 w-full">
         {content}
@@ -71,7 +86,12 @@ export function SidebarNavItem({
     <SidebarMenuButton
       onClick={onClick}
       isActive={isActive}
-      className={`group/item w-full h-9 px-2.5 py-2 text-left transition-all duration-200 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-active data-[active=true]:text-sidebar-active-foreground data-[active=true]:shadow-sm data-[active=true]:border data-[active=true]:border-sidebar-border ${className}`}
+      className={cn(
+        "group/item w-full h-9",
+        "data-[active=true]:shadow-[0_26px_45px_-32px_hsl(var(--accent-400)_/_0.95)]",
+        "data-[active=true]:before:absolute data-[active=true]:before:inset-[2px] data-[active=true]:before:-z-10 data-[active=true]:before:rounded-[calc(var(--radius)-0.375rem)] data-[active=true]:before:bg-[radial-gradient(circle_at_top,_hsl(var(--accent-100)),_transparent_65%)] data-[active=true]:before:content-['']",
+        className
+      )}
     >
       {content}
     </SidebarMenuButton>

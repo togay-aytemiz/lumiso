@@ -847,8 +847,17 @@
     "title": "Seanslar",
     "description": "Fotoğraf seanslarınızı ve randevularınızı yönetin",
     "addButton": "Seans Ekle",
+    "tableTitle": "Seans Programı",
     "filters": {
       "statusLabel": "Duruma göre filtrele:",
+      "title": "Seansları filtrele",
+      "triggerLabel": "Filtreler",
+      "timeSectionTitle": "Zaman",
+      "statusSectionTitle": "Durum",
+      "selectedStatusCount": "{{count}} durum seçildi",
+      "noStatusesSelected": "Tüm durumlar",
+      "clear": "Temizle",
+      "reset": "Filtreleri sıfırla",
       "allStatuses": "Tüm Durumlar",
       "dateFilters": {
         "all": "Tümü",
@@ -861,6 +870,22 @@
         "thisMonth": "Bu Ay",
         "nextMonth": "Gelecek Ay"
       }
+    },
+    "statuses": {
+      "planned": "Planlandı",
+      "completed": "Tamamlandı",
+      "in_post_processing": "Düzenlemede",
+      "delivered": "Teslim edildi",
+      "cancelled": "İptal edildi"
+    },
+    "export": {
+      "button": "Excel'e aktar",
+      "successTitle": "Dışa aktarma hazır",
+      "successDescription": "Filtrelenmiş seanslar indirildi.",
+      "errorTitle": "Dışa aktarma başarısız",
+      "errorDescription": "Excel dosyasını oluşturamadık. Lütfen tekrar deneyin.",
+      "noDataTitle": "Dışa aktarılacak veri yok",
+      "noDataDescription": "En az bir seansı içerecek şekilde filtrelerinizi ayarlayın."
     },
     "kpis": {
       "infoLabel": "{{metric}} metriği hakkında bilgi alın",

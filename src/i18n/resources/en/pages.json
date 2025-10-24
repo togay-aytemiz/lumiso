@@ -847,8 +847,17 @@
     "title": "Sessions",
     "description": "Manage your photo sessions and appointments",
     "addButton": "Add Session",
+    "tableTitle": "Session Schedule",
     "filters": {
       "statusLabel": "Filter by status:",
+      "title": "Filter sessions",
+      "triggerLabel": "Filters",
+      "timeSectionTitle": "Time",
+      "statusSectionTitle": "Status",
+      "selectedStatusCount": "{{count}} statuses selected",
+      "noStatusesSelected": "All statuses",
+      "clear": "Clear",
+      "reset": "Reset filters",
       "allStatuses": "All Statuses",
       "dateFilters": {
         "all": "All",
@@ -861,6 +870,22 @@
         "thisMonth": "This Month",
         "nextMonth": "Next Month"
       }
+    },
+    "statuses": {
+      "planned": "Planned",
+      "completed": "Completed",
+      "in_post_processing": "Editing",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled"
+    },
+    "export": {
+      "button": "Export to Excel",
+      "successTitle": "Export ready",
+      "successDescription": "Your filtered sessions have been downloaded.",
+      "errorTitle": "Export failed",
+      "errorDescription": "We couldn't generate the Excel file. Please try again.",
+      "noDataTitle": "Nothing to export",
+      "noDataDescription": "Adjust your filters to include at least one session."
     },
     "kpis": {
       "infoLabel": "Learn how we calculate {{metric}}",

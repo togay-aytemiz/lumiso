@@ -31,6 +31,18 @@ All colors MUST be HSL.
     --accent: 172 71% 41%;          /* Teal/Mint brand #1EB29F */
     --accent-foreground: 0 0% 100%;  /* white */
 
+    /* Accent tonal scale */
+    --accent-50: 172 62% 96%;
+    --accent-100: 172 64% 90%;
+    --accent-200: 172 63% 82%;
+    --accent-300: 172 62% 74%;
+    --accent-400: 172 61% 64%;
+    --accent-500: 172 71% 41%;
+    --accent-600: 172 68% 34%;
+    --accent-700: 172 66% 28%;
+    --accent-800: 172 64% 22%;
+    --accent-900: 172 62% 18%;
+
     --destructive: 0 84% 59%;        /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
 
@@ -69,12 +81,12 @@ All colors MUST be HSL.
     --sidebar-foreground: 215 22% 32%; /* deeper neutral for text */
     --sidebar-primary: 172 71% 41%; /* #1EB29F - accent color */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 20% 88%; /* richer hover slate */
-    --sidebar-accent-foreground: 215 22% 28%; /* darker hover text */
-    --sidebar-active: 215 24% 82%; /* grounded active background */
-    --sidebar-active-foreground: 215 30% 20%; /* bold active label */
-    --sidebar-active-icon: 172 71% 37%; /* muted brand for icons */
-    --sidebar-border: 215 22% 84%; /* subtle divider */
+    --sidebar-accent: 172 62% 94%; /* airy hover tone */
+    --sidebar-accent-foreground: 172 66% 24%; /* grounded hover text */
+    --sidebar-active: var(--accent-100); /* accent surface */
+    --sidebar-active-foreground: var(--accent-800); /* deep accent ink */
+    --sidebar-active-icon: var(--accent-500); /* signature icon */
+    --sidebar-border: 172 35% 82%; /* subtle accent border */
     --sidebar-ring: 172 71% 41%;
 
     /* Lead Status Colors */
@@ -141,6 +153,18 @@ All colors MUST be HSL.
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
 
+    /* Accent tonal scale (dark) */
+    --accent-50: 172 55% 20%;
+    --accent-100: 172 58% 24%;
+    --accent-200: 172 60% 30%;
+    --accent-300: 172 64% 36%;
+    --accent-400: 172 67% 42%;
+    --accent-500: 172 71% 41%;
+    --accent-600: 172 73% 48%;
+    --accent-700: 172 75% 56%;
+    --accent-800: 172 77% 64%;
+    --accent-900: 172 80% 72%;
+
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
@@ -152,12 +176,12 @@ All colors MUST be HSL.
     --sidebar-foreground: 215 16% 78%;
     --sidebar-primary: 172 71% 41%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 24% 16%; /* defined hover slate */
-    --sidebar-accent-foreground: 210 40% 96%;
-    --sidebar-active: 172 55% 24%; /* moody active teal */
-    --sidebar-active-foreground: 210 40% 96%;
-    --sidebar-active-icon: 172 65% 55%;
-    --sidebar-border: 222 24% 16%;
+    --sidebar-accent: 172 55% 20%; /* elevated hover tone */
+    --sidebar-accent-foreground: 172 90% 82%;
+    --sidebar-active: var(--accent-300); /* luminous active base */
+    --sidebar-active-foreground: var(--accent-900);
+    --sidebar-active-icon: var(--accent-700);
+    --sidebar-border: 222 24% 18%;
     --sidebar-ring: 172 71% 41%;
 
     --link: 217.2 91.2% 59.8%;

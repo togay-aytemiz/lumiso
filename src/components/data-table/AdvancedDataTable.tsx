@@ -26,17 +26,11 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { DataTableContainer } from "@/components/ui/data-table-container";
-import {
-  ColumnSettingsButton,
-  ColumnPreference,
-  ColumnSettingsMeta,
-} from "./ColumnSettingsButton";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, Filter, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TableLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useTranslation } from "react-i18next";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { initializePreferences, useColumnPreferences } from "./useColumnPreferences";
 import { useAdvancedTableSearch } from "./useAdvancedTableSearch";
 import { AdvancedDataTablePaginationFooter } from "./AdvancedDataTablePagination";
 
@@ -85,12 +79,6 @@ export interface AdvancedDataTableHeaderSummary {
   chips?: HeaderSummaryChip[];
 }
 
-export interface ColumnCustomizationOptions {
-  storageKey?: string;
-  onChange?: (preferences: ColumnPreference[]) => void;
-  defaultState?: ColumnPreference[];
-}
-
 export interface AdvancedDataTableFiltersConfig {
   content: ReactNode;
   title?: ReactNode;
@@ -121,7 +109,6 @@ export interface AdvancedDataTableProps<T> {
   sortState?: AdvancedDataTableSortState;
   onSortChange?: (next: AdvancedDataTableSortState) => void;
   pagination?: AdvancedDataTablePagination;
-  columnCustomization?: ColumnCustomizationOptions;
   searchPlaceholder?: string;
   searchValue?: string;
   defaultSearchValue?: string;
@@ -167,7 +154,6 @@ export function AdvancedDataTable<T>({
   sortState,
   onSortChange,
   pagination,
-  columnCustomization,
   searchPlaceholder,
   searchValue,
   defaultSearchValue,
@@ -180,11 +166,6 @@ export function AdvancedDataTable<T>({
   const { t } = useTranslation("common");
   const isMobile = useIsMobile();
 
-  const defaultPreferences = useMemo(
-    () => initializePreferences(columns, columnCustomization?.defaultState),
-    [columns, columnCustomization?.defaultState]
-  );
-
   const [internalSort, setInternalSort] = useState<AdvancedDataTableSortState>(
     {
       columnId: sortState?.columnId ?? null,
@@ -193,12 +174,6 @@ export function AdvancedDataTable<T>({
   );
 
   const resolvedSort = sortState ?? internalSort;
-
-  const {
-    columnPreferences,
-    setColumnPreferences,
-    visibleColumns,
-  } = useColumnPreferences(columns, columnCustomization);
 
   const [desktopFiltersOpen, setDesktopFiltersOpen] = useState(() =>
     filters ? !filters.collapsedByDefault : false
@@ -243,10 +218,6 @@ export function AdvancedDataTable<T>({
       setDesktopFiltersOpen(nextOpen);
     }
   }, [collapsedByDefault, activeFiltersCount, hasFiltersConfig, desktopFiltersOpen]);
-
-  const handleColumnPreferencesChange = (next: ColumnPreference[]) => {
-    setColumnPreferences(next);
-  };
 
   const handleSort = (column: AdvancedTableColumn<T>) => {
     if (!column.sortable) return;
@@ -303,10 +274,6 @@ export function AdvancedDataTable<T>({
     return direct == null || direct === "" ? "—" : (direct as ReactNode);
   };
 
-  const showColumnManager =
-    columnCustomization !== undefined &&
-    columns.some((column) => column.hideable !== false);
-
   const handleToggleFilters = () => {
     if (!filters) return;
     userToggledDesktopFiltersRef.current = true;
@@ -323,9 +290,6 @@ export function AdvancedDataTable<T>({
   const filterPanelTitle = filters?.title ?? t("table.filters");
   const filterTriggerLabel = filters?.triggerLabel ?? filterPanelTitle;
   const showHeaderSearch = Boolean(onSearchChange);
-  const shareFilterAndColumnButtons = Boolean(filters) && showColumnManager;
-  const headerControlButtonClass =
-    "w-full grow-0 justify-center sm:w-auto sm:flex-none sm:justify-start";
 
   // Determine if a summary row will be visible on mobile to tweak spacing
   const mobileSummaryPresent = useMemo(() => {
@@ -370,7 +334,10 @@ export function AdvancedDataTable<T>({
       variant="outline"
       size="sm"
       onClick={handleToggleFilters}
-      className={cn("flex items-center gap-2", headerControlButtonClass)}
+      className={cn(
+        "flex items-center gap-2",
+        "w-full grow-0 justify-center sm:w-auto sm:flex-none sm:justify-start"
+      )}
     >
       <Filter className="h-4 w-4" />
       <span className="whitespace-nowrap">{filterTriggerLabel}</span>
@@ -380,26 +347,6 @@ export function AdvancedDataTable<T>({
     </Button>
   ) : null;
 
-  const columnManagerButton = showColumnManager ? (
-    <ColumnSettingsButton
-      columns={columns.map<ColumnSettingsMeta>((column) => ({
-        id: column.id,
-        label:
-          typeof column.label === "string" ? column.label : String(column.label),
-        description:
-          typeof column.description === "string" ? column.description : undefined,
-        hideable: column.hideable !== false,
-      }))}
-      defaultPreferences={defaultPreferences}
-      preferences={columnPreferences}
-      onChange={handleColumnPreferencesChange}
-      className={headerControlButtonClass}
-    />
-  ) : null;
-
-  const shouldRenderSharedLayout =
-    shareFilterAndColumnButtons && Boolean(filterTriggerButton && columnManagerButton);
-
   return (
     <Card
       className={cn(
@@ -407,7 +354,7 @@ export function AdvancedDataTable<T>({
         className
       )}
     >
-      {(title || description || actions || toolbar || showColumnManager || filters || onSearchChange) && (
+      {(title || description || actions || toolbar || filters || onSearchChange) && (
         <CardHeader className="space-y-0.5 px-4 pt-2.5 pb-2 sm:px-6 sm:pt-3 sm:pb-3">
           {/* Title + controls */}
           <div className="flex flex-col gap-1.5 lg:flex-row lg:items-center lg:justify-between">
@@ -426,22 +373,12 @@ export function AdvancedDataTable<T>({
               </div>
             )}
 
-            {(showHeaderSearch || filters || actions || showColumnManager) && (
+            {(showHeaderSearch || filters || actions) && (
               <div className="flex w-full sm:w-auto flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-end sm:flex-shrink-0">
                 {showHeaderSearch && <div className="w-full sm:w-auto">{renderSearchInput()}</div>}
-                {(filters || actions || showColumnManager) && (
+                {(filters || actions) && (
                   <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
-                    {shouldRenderSharedLayout ? (
-                      <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-nowrap">
-                        {filterTriggerButton}
-                        {columnManagerButton}
-                      </div>
-                    ) : (
-                      <>
-                        {filterTriggerButton}
-                        {columnManagerButton}
-                      </>
-                    )}
+                    {filterTriggerButton}
                     {actions && (
                       <div className="flex w-full basis-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
                         {actions}
@@ -605,7 +542,7 @@ export function AdvancedDataTable<T>({
                   <Table className="min-w-full border-separate border-spacing-0 text-sm">
                     <TableHeader>
                       <TableRow className="relative border-b border-border/60 bg-muted/20 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-border/80">
-                        {visibleColumns.map((column) => (
+                        {columns.map((column) => (
                           <TableHead
                             key={column.id}
                             className={cn(
@@ -656,7 +593,7 @@ export function AdvancedDataTable<T>({
                               )}
                               onClick={() => onRowClick?.(row)}
                             >
-                              {visibleColumns.map((column) => (
+                              {columns.map((column) => (
                                 <TableCell
                                   key={`${column.id}-${rowKey(row)}`}
                                   className={cn(
@@ -685,7 +622,7 @@ export function AdvancedDataTable<T>({
                       ) : (
                         <TableRow>
                           <TableCell
-                            colSpan={visibleColumns.length + (rowActions ? 1 : 0)}
+                            colSpan={columns.length + (rowActions ? 1 : 0)}
                             className="py-10 text-center text-sm text-muted-foreground"
                           >
                             {emptyState || t("table.noDataAvailable")}

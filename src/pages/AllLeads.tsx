@@ -28,10 +28,8 @@ import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
 import {
   AdvancedDataTable,
   type AdvancedDataTableSortState,
-  type ColumnPreference,
 } from "@/components/data-table";
 import { useLeadsFilters, type CustomFieldFilterValue } from "@/pages/leads/hooks/useLeadsFilters";
-import { LEAD_TABLE_COLUMN_STORAGE_KEY } from "@/hooks/useLeadTableColumns";
 import type { LeadFieldDefinition } from "@/types/leadFields";
 import { formatDate, getStartOfWeek } from "@/lib/utils";
 import { format } from "date-fns";
@@ -193,12 +191,9 @@ const AllLeadsNew = () => {
 
   const {
     advancedColumns,
-    advancedDefaultPreferences,
-    advancedColumnPreferences,
     fieldDefinitions,
     sortAccessors,
     loading: columnsLoading,
-    saveAdvancedColumnPreferences,
   } = useLeadTableColumns({
     leadStatuses,
     leadStatusesLoading,
@@ -610,25 +605,6 @@ const AllLeadsNew = () => {
     setPage(1);
   }, []);
 
-  const handleColumnPreferencesChange = useCallback(
-    async (next: ColumnPreference[]) => {
-      try {
-        await saveAdvancedColumnPreferences(next);
-      } catch (error) {
-        console.error("Error saving column preferences:", error);
-        toast({
-          title: t("common.toast.error"),
-          description: t(
-            "leads.messages.columnPreferencesError",
-            "Failed to save column preferences. Please try again."
-          ),
-          variant: "destructive",
-        });
-      }
-    },
-    [saveAdvancedColumnPreferences, t]
-  );
-
   // All custom-field filtering is applied server-side; no client fallback
   const filteredLeads = useMemo(() => pageLeads, [pageLeads]);
 
@@ -689,27 +665,7 @@ const AllLeadsNew = () => {
 
   const paginatedLeads = sortedLeads; // already server-paginated
 
-  const exportColumns = useMemo(() => {
-    const preferences =
-      (advancedColumnPreferences && advancedColumnPreferences.length > 0
-        ? advancedColumnPreferences
-        : advancedDefaultPreferences) ?? [];
-
-    const prefMap = new Map(preferences.map((pref) => [pref.id, pref]));
-
-    const ordered = advancedColumns
-      .map((column, index) => {
-        const pref = prefMap.get(column.id);
-        const visible = column.hideable === false ? true : pref?.visible ?? true;
-        const order = pref?.order ?? index;
-        return { column, visible, order };
-      })
-      .filter((entry) => entry.visible)
-      .sort((a, b) => a.order - b.order)
-      .map((entry) => entry.column);
-
-    return ordered.length > 0 ? ordered : advancedColumns;
-  }, [advancedColumnPreferences, advancedColumns, advancedDefaultPreferences]);
+  const exportColumns = useMemo(() => advancedColumns, [advancedColumns]);
 
   const pagination = useMemo(
     () => ({
@@ -798,7 +754,7 @@ const AllLeadsNew = () => {
     } finally {
       setExporting(false);
     }
-  }, [exportColumns, exporting, sortedLeads, t, tCommon]);
+  }, [advancedColumns, exporting, fetchLeadsData, t, tCommon, totalCount]);
 
   const exportActions = useMemo(
     () => (
@@ -1105,11 +1061,6 @@ const AllLeadsNew = () => {
               onSortChange={handleSortChange}
               actions={exportActions}
               pagination={pagination}
-              columnCustomization={{
-                storageKey: LEAD_TABLE_COLUMN_STORAGE_KEY,
-                defaultState: advancedDefaultPreferences,
-                onChange: handleColumnPreferencesChange,
-              }}
               summary={leadsHeaderSummary}
             />
           )}

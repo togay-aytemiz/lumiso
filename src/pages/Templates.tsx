@@ -300,7 +300,6 @@ const OptimizedTemplatesContent = React.memo(() => {
           searchPlaceholder={t("templates.search")}
           searchLoading={loading}
           searchDelay={0}
-          columnCustomization={{ storageKey: "templates.table.columns" }}
           emptyState={emptyState}
           onRowClick={handleRowClick}
           rowActions={renderRowActions}

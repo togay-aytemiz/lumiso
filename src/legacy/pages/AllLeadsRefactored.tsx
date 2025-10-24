@@ -9,7 +9,6 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import { LeadService, LeadWithCustomFields } from "@/services/LeadService";
 import { useEntityData } from "@/hooks/useEntityData";
 import { useLeadTableColumns } from "@/hooks/useLeadTableColumns";
-import { LeadTableColumnManager } from "@/components/LeadTableColumnManager";
 import { Calendar, MessageSquare, Users, FileText, Filter } from "lucide-react";
 import { LEAD_STATUS } from "@/constants/entityConstants";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,13 +60,9 @@ const AllLeadsRefactored = () => {
     };
   }, [refetchLeads]);
 
-  const { 
-    columns, 
-    columnPreferences, 
-    availableColumns, 
-    loading: columnsLoading, 
-    saveColumnPreferences, 
-    resetToDefault 
+  const {
+    columns,
+    loading: columnsLoading,
   } = useLeadTableColumns({
     leadStatuses,
     leadStatusesLoading,
@@ -313,14 +308,6 @@ const AllLeadsRefactored = () => {
         }
       ]}
       onClearFilters={statusFilter !== "all" ? clearFilters : undefined}
-      actions={
-        <LeadTableColumnManager
-          columnPreferences={columnPreferences}
-          availableColumns={availableColumns}
-          onSave={saveColumnPreferences}
-          onReset={resetToDefault}
-        />
-      }
     />
   );
 

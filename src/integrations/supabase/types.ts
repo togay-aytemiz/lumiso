@@ -1593,33 +1593,6 @@ export type Database = {
           },
         ]
       }
-      user_column_preferences: {
-        Row: {
-          column_config: Json
-          created_at: string
-          id: string
-          table_name: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          column_config?: Json
-          created_at?: string
-          id?: string
-          table_name: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          column_config?: Json
-          created_at?: string
-          id?: string
-          table_name?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       user_language_preferences: {
         Row: {
           created_at: string

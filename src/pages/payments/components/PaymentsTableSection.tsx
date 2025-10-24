@@ -8,7 +8,6 @@ import type {
 import type { Payment } from "../types";
 import type { ReactNode } from "react";
 import { TableLoadingSkeleton } from "@/components/ui/loading-presets";
-import { usePaymentsColumnPreferences } from "@/pages/payments/hooks/usePaymentsColumnPreferences";
 
 interface PaymentsTableSectionProps {
   title: ReactNode;
@@ -51,7 +50,6 @@ export function PaymentsTableSection({
   searchLoading,
   searchMinChars,
 }: PaymentsTableSectionProps) {
-  const { defaultPreferences, savePreferences } = usePaymentsColumnPreferences();
   return (
     <AdvancedDataTable
       title={title}
@@ -65,11 +63,6 @@ export function PaymentsTableSection({
       toolbar={toolbar}
       summary={summary}
       actions={actions}
-      columnCustomization={{
-        storageKey: "payments.table.columns",
-        defaultState: defaultPreferences,
-        onChange: savePreferences,
-      }}
       sortState={sortState}
       onSortChange={onSortChange}
       pagination={pagination}

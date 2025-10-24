@@ -31,7 +31,6 @@ import {
   type ProjectsListFiltersState,
   type ProjectsArchivedFiltersState,
 } from "@/pages/projects/hooks/useProjectsFilters";
-import { useProjectsColumnPreferences } from "@/pages/projects/hooks/useProjectsColumnPreferences";
 import { useProjectTypes, useProjectStatuses, useServices } from "@/hooks/useOrganizationData";
 import {
   useProjectsData,
@@ -218,13 +217,6 @@ const AllProjects = () => {
 
   // Throttle refresh on window focus/visibility changes
   useThrottledRefetchOnFocus(refetchProjects, 30_000);
-
-  const {
-    listDefaultPreferences,
-    archivedDefaultPreferences,
-    saveListPreferences,
-    saveArchivedPreferences,
-  } = useProjectsColumnPreferences();
 
   // Derived labels no longer used; header summary now handled by AdvancedDataTable
 
@@ -612,44 +604,9 @@ const AllProjects = () => {
       try {
         setExporting(true);
 
-        type ColumnPreference = { id: string; visible: boolean; order: number };
-        const storageKey =
-          mode === 'list' ? 'projects.table.columns' : 'projects.archived.table.columns';
-        const fallbackPrefs =
-          mode === 'list' ? listDefaultPreferences : archivedDefaultPreferences;
-
-        let prefs: ColumnPreference[] | null = null;
-        if (typeof window !== 'undefined') {
-          try {
-            const raw = storageKey ? window.localStorage.getItem(storageKey) : null;
-            if (raw) {
-              const parsed = JSON.parse(raw) as ColumnPreference[];
-              if (Array.isArray(parsed) && parsed.length) {
-                prefs = parsed;
-              }
-            }
-          } catch {
-            // ignore parsing/storage errors
-          }
-        }
-
-        if (!prefs || prefs.length === 0) {
-          prefs = fallbackPrefs ?? null;
-        }
-
         const columnsForMode = mode === 'list' ? listTableColumns : archivedTableColumns;
 
-        const visibleOrderedColumns = columnsForMode
-          .map((col, idx) => {
-            const pref = prefs?.find((p) => p.id === col.id);
-            const hideable = col.hideable !== false;
-            const visible = hideable ? pref?.visible ?? true : true;
-            const order = pref?.order ?? idx;
-            return { col, visible, order };
-          })
-          .filter((entry) => entry.visible)
-          .sort((a, b) => a.order - b.order)
-          .map((entry) => entry.col);
+        const visibleOrderedColumns = [...columnsForMode];
 
         const scope = mode === 'list' ? 'active' : 'archived';
         const CHUNK = 1000;
@@ -728,14 +685,12 @@ const AllProjects = () => {
       }
     },
     [
-      archivedDefaultPreferences,
       archivedTableColumns,
       archivedTotalCount,
       exporting,
       fetchProjectsData,
       formatCurrency,
       formatServicesList,
-      listDefaultPreferences,
       listTableColumns,
       listTotalCount,
       t,
@@ -1165,11 +1120,6 @@ const AllProjects = () => {
                 onSortChange={handleTableSortChange}
                 isLoading={listLoading}
                 filters={listFiltersConfig}
-                columnCustomization={{
-                  storageKey: 'projects.table.columns',
-                  defaultState: listDefaultPreferences,
-                  onChange: saveListPreferences,
-                }}
                 actions={listExportActions}
                 summary={listHeaderSummary}
                 pagination={{
@@ -1196,11 +1146,6 @@ const AllProjects = () => {
                 sortState={sortState}
                 onSortChange={handleTableSortChange}
                 isLoading={archivedLoading}
-                columnCustomization={{
-                  storageKey: 'projects.archived.table.columns',
-                  defaultState: archivedDefaultPreferences,
-                  onChange: saveArchivedPreferences,
-                }}
                 filters={archivedFiltersConfig}
                 actions={archivedExportActions}
                 summary={archivedHeaderSummary}

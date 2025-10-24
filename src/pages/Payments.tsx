@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DateRangePicker } from "@/components/DateRangePicker";
@@ -296,45 +295,7 @@ const Payments = () => {
         return;
       }
 
-      // Build export columns based on current column preferences/order
-      type ColumnPreference = { id: string; visible: boolean; order: number };
-      let prefs: ColumnPreference[] | null = null;
-      if (typeof window !== "undefined") {
-        try {
-          const raw = window.localStorage.getItem("payments.table.columns");
-          if (raw) prefs = JSON.parse(raw) as ColumnPreference[];
-        } catch {}
-      }
-      // Fallback to DB-stored preferences if local is missing
-      if (!prefs) {
-        try {
-          const { data: user } = await supabase.auth.getUser();
-          const userId = user.user?.id;
-          if (userId) {
-            const { data } = await supabase
-              .from("user_column_preferences")
-              .select("column_config")
-              .eq("user_id", userId)
-              .eq("table_name", "payments")
-              .maybeSingle();
-            if (data?.column_config) {
-              prefs = data.column_config as ColumnPreference[];
-            }
-          }
-        } catch {}
-      }
-
-      const visibleOrderedColumns = [...tableColumns]
-        .map((col, idx) => {
-          const pref = prefs?.find((p) => p.id === col.id);
-          const hideable = col.hideable !== false; // non-hideable must always be visible
-          const visible = hideable ? pref?.visible ?? true : true;
-          const order = pref?.order ?? idx;
-          return { col, visible, order };
-        })
-        .filter((entry) => entry.visible)
-        .sort((a, b) => a.order - b.order)
-        .map((entry) => entry.col);
+      const visibleOrderedColumns = [...tableColumns];
 
       const valueForColumn = (payment: Payment, columnId: string) => {
         switch (columnId) {

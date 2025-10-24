@@ -462,7 +462,6 @@ export default function Workflows() {
           searchPlaceholder={t("workflows.search")}
           searchLoading={loading}
           searchDelay={0}
-          columnCustomization={{ storageKey: "workflows.table.columns" }}
           sortState={sortState}
           onSortChange={handleTableSortChange}
           pagination={{

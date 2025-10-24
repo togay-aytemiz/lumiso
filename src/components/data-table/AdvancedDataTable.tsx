@@ -26,7 +26,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { DataTableContainer } from "@/components/ui/data-table-container";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, Filter, Search, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, Filter, Loader2, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TableLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useTranslation } from "react-i18next";
@@ -117,6 +117,10 @@ export interface AdvancedDataTableProps<T> {
   searchMinChars?: number;
   searchLoading?: boolean;
   className?: string;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  loadMoreOffset?: number;
 }
 
 function getNestedValue(
@@ -162,9 +166,14 @@ export function AdvancedDataTable<T>({
   searchMinChars = 0,
   searchLoading = false,
   className,
+  onLoadMore,
+  hasMore,
+  isLoadingMore,
+  loadMoreOffset,
 }: AdvancedDataTableProps<T>) {
   const { t } = useTranslation("common");
   const isMobile = useIsMobile();
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const [internalSort, setInternalSort] = useState<AdvancedDataTableSortState>(
     {
@@ -346,6 +355,31 @@ export function AdvancedDataTable<T>({
       </Badge>
     </Button>
   ) : null;
+
+  const loadMoreOffsetPx = loadMoreOffset ?? 320;
+  const canLazyLoad = Boolean(onLoadMore) && (hasMore ?? true);
+
+  useEffect(() => {
+    if (!canLazyLoad) return;
+    const target = loadMoreRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry?.isIntersecting) return;
+        if (isLoading || isLoadingMore) return;
+        onLoadMore?.();
+      },
+      {
+        root: null,
+        rootMargin: `${loadMoreOffsetPx}px`,
+      }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [canLazyLoad, isLoading, isLoadingMore, loadMoreOffsetPx, onLoadMore]);
 
   return (
     <Card
@@ -630,12 +664,21 @@ export function AdvancedDataTable<T>({
                         </TableRow>
                       )}
                     </TableBody>
-                  </Table>
-                </DataTableContainer>
-              </div>
+                </Table>
+                {canLazyLoad && (
+                  <div ref={loadMoreRef} className="flex items-center justify-center py-4">
+                    {isLoadingMore ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    ) : (
+                      <span className="sr-only">Load more</span>
+                    )}
+                  </div>
+                )}
+              </DataTableContainer>
             </div>
           </div>
-        )}
+        </div>
+      )}
       </CardContent>
 
       {pagination && paginationInfo && (

@@ -17,6 +17,7 @@ import { formatDate, isNetworkError } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { KanbanSettingsSheet } from "@/components/KanbanSettingsSheet";
 import { useTranslation } from 'react-i18next';
 import { useDashboardTranslation, useFormsTranslation } from '@/hooks/useTypedTranslation';
@@ -62,12 +63,13 @@ const AllProjects = () => {
   const [sortDirection, setSortDirection] = useState<ProjectSortDirection>('desc');
   const [sortState, setSortState] = useState<AdvancedDataTableSortState>({ columnId: 'created_at', direction: 'desc' });
   const [listPage, setListPage] = useState(1);
-  const [listPageSize, setListPageSize] = useState(25);
+  const listPageSize = 25;
   const [archivedPage, setArchivedPage] = useState(1);
-  const [archivedPageSize, setArchivedPageSize] = useState(25);
+  const archivedPageSize = 25;
   const [exporting, setExporting] = useState(false);
   const [boardLoading, setBoardLoading] = useState(false);
   const { reportNetworkError, reportRecovery, registerRetry } = useConnectivity();
+  const { activeOrganizationId } = useOrganization();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { completeCurrentStep } = useOnboarding();
@@ -218,7 +220,16 @@ const AllProjects = () => {
   });
 
   // Throttle refresh on window focus/visibility changes
-  useThrottledRefetchOnFocus(refetchProjects, 30_000);
+  const refreshProjectsData = useCallback(async () => {
+    if (typeof window !== "undefined" && activeOrganizationId) {
+      window.localStorage.removeItem(`prefetch:projects:first:${activeOrganizationId}:active`);
+    }
+    setListPage(1);
+    setArchivedPage(1);
+    await refetchProjects();
+  }, [activeOrganizationId, refetchProjects]);
+
+  useThrottledRefetchOnFocus(refreshProjectsData, 30_000);
 
   // Derived labels no longer used; header summary now handled by AdvancedDataTable
 
@@ -576,6 +587,28 @@ const AllProjects = () => {
   const paginatedListRows = listProjects;
   const paginatedArchivedRows = archivedProjects;
 
+  const listHasMore = paginatedListRows.length < listTotalCount;
+  const archivedHasMore = paginatedArchivedRows.length < archivedTotalCount;
+
+  const listIsLoadingMore = listLoading && listPage > 1;
+  const archivedIsLoadingMore = archivedLoading && archivedPage > 1;
+
+  const handleListLoadMore = useCallback(() => {
+    if (listLoading || !listHasMore) return;
+    const batchSize = listPageSize || 25;
+    const totalPages = listTotalCount > 0 ? Math.ceil(listTotalCount / batchSize) : 0;
+    if (totalPages && listPage >= totalPages) return;
+    setListPage((prev) => prev + 1);
+  }, [listHasMore, listLoading, listPage, listPageSize, listTotalCount]);
+
+  const handleArchivedLoadMore = useCallback(() => {
+    if (archivedLoading || !archivedHasMore) return;
+    const batchSize = archivedPageSize || 25;
+    const totalPages = archivedTotalCount > 0 ? Math.ceil(archivedTotalCount / batchSize) : 0;
+    if (totalPages && archivedPage >= totalPages) return;
+    setArchivedPage((prev) => prev + 1);
+  }, [archivedHasMore, archivedLoading, archivedPage, archivedPageSize, archivedTotalCount]);
+
   listHeaderSummary = useMemo(() => {
     const text = listActiveCount > 0
       ? t('leads.tableSummaryFiltered', { visible: listProjects.length, total: listTotalCount })
@@ -894,8 +927,11 @@ const AllProjects = () => {
   }, [loadBoardProjects, viewMode]);
 
   const refreshAll = useCallback(async () => {
-    await Promise.all([refetchProjects(), loadBoardProjects({ reset: true, force: true })]);
-  }, [loadBoardProjects, refetchProjects]);
+    await Promise.all([
+      refreshProjectsData(),
+      loadBoardProjects({ reset: true, force: true }),
+    ]);
+  }, [loadBoardProjects, refreshProjectsData]);
 
   const loadMoreBoard = useCallback(() => {
     if (!boardHasMore) return;
@@ -1175,21 +1211,13 @@ const AllProjects = () => {
                 onRowClick={handleProjectClick}
                 sortState={sortState}
                 onSortChange={handleTableSortChange}
-                isLoading={listLoading}
+                isLoading={listLoading && listPage === 1 && paginatedListRows.length === 0}
                 filters={listFiltersConfig}
                 actions={listExportActions}
                 summary={listHeaderSummary}
-                pagination={{
-                  page: listPage,
-                  pageSize: listPageSize,
-                  totalCount: listTotalCount,
-                  onPageChange: setListPage,
-                  onPageSizeChange: (size) => {
-                    setListPageSize(size);
-                    setListPage(1);
-                  },
-                  pageSizeOptions: [10, 25, 50, 100],
-                }}
+                onLoadMore={listHasMore ? handleListLoadMore : undefined}
+                hasMore={listHasMore}
+                isLoadingMore={listIsLoadingMore}
               />
             )}
 
@@ -1202,21 +1230,13 @@ const AllProjects = () => {
                 onRowClick={handleProjectClick}
                 sortState={sortState}
                 onSortChange={handleTableSortChange}
-                isLoading={archivedLoading}
+                isLoading={archivedLoading && archivedPage === 1 && paginatedArchivedRows.length === 0}
                 filters={archivedFiltersConfig}
                 actions={archivedExportActions}
                 summary={archivedHeaderSummary}
-                pagination={{
-                  page: archivedPage,
-                  pageSize: archivedPageSize,
-                  totalCount: archivedTotalCount,
-                  onPageChange: setArchivedPage,
-                  onPageSizeChange: (size) => {
-                    setArchivedPageSize(size);
-                    setArchivedPage(1);
-                  },
-                  pageSizeOptions: [10, 25, 50, 100],
-                }}
+                onLoadMore={archivedHasMore ? handleArchivedLoadMore : undefined}
+                hasMore={archivedHasMore}
+                isLoadingMore={archivedIsLoadingMore}
               />
             )}
           </div>

@@ -65,8 +65,8 @@ import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 
 const Payments = () => {
   const { t } = useTranslation("pages");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(PAGE_SIZE);
+const [page, setPage] = useState(1);
+const pageSize = PAGE_SIZE;
   const [exporting, setExporting] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<DateFilterType>('allTime');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
@@ -217,7 +217,12 @@ const Payments = () => {
   });
 
   // Throttle data refresh on window focus / visibility changes
-  useThrottledRefetchOnFocus(fetchPayments, 30_000);
+  const refreshPayments = useCallback(async () => {
+    setPage(1);
+    await fetchPayments();
+  }, [fetchPayments]);
+
+  useThrottledRefetchOnFocus(refreshPayments, 30_000);
 
   useEffect(() => {
     const computedTotalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -606,6 +611,16 @@ const Payments = () => {
   const hasSearchTerm = filtersState.search.trim().length >= SEARCH_MIN_CHARS;
   const hasAnyResults = totalCount > 0 || paginatedPayments.length > 0;
 
+  const hasMorePayments = paginatedPayments.length < totalCount;
+  const isLoadingMorePayments = tableLoading && page > 1;
+
+  const handleLoadMorePayments = useCallback(() => {
+    if (tableLoading || !hasMorePayments) return;
+    const totalPages = totalCount > 0 ? Math.ceil(totalCount / pageSize) : 0;
+    if (totalPages && page >= totalPages) return;
+    setPage((prev) => prev + 1);
+  }, [hasMorePayments, page, pageSize, tableLoading, totalCount]);
+
   const exportActions = useMemo(
     () => (
       <Button
@@ -742,11 +757,6 @@ const Payments = () => {
     []
   );
 
-  const handlePageSizeChange = useCallback((size: number) => {
-    setPageSize(size);
-    setPage(1);
-  }, []);
-
   return (
     <div className="min-h-screen overflow-x-hidden">
       <PageHeader
@@ -810,16 +820,12 @@ const Payments = () => {
         searchPlaceholder={t("payments.searchPlaceholder")}
         searchLoading={tableLoading}
         searchMinChars={SEARCH_MIN_CHARS}
-        pagination={{
-          page,
-          pageSize,
-          totalCount,
-          onPageChange: setPage,
-          onPageSizeChange: handlePageSizeChange,
-        }}
         emptyState={<div className="text-muted-foreground">{emptyStateMessage}</div>}
         onRowClick={handleProjectOpen}
-        isLoading={tableLoading}
+        isLoading={tableLoading && page === 1 && paginatedPayments.length === 0}
+        onLoadMore={hasMorePayments ? handleLoadMorePayments : undefined}
+        hasMore={hasMorePayments}
+        isLoadingMore={isLoadingMorePayments}
       />
 
       {/* Project Details Dialog */}
@@ -827,7 +833,7 @@ const Payments = () => {
         project={selectedProject}
         open={projectSheetOpen}
         onOpenChange={handleProjectSheetOpenChange}
-        onProjectUpdated={fetchPayments}
+        onProjectUpdated={refreshPayments}
         leadName={selectedProject?.leads?.name ?? ""}
         mode="sheet"
         onViewFullDetails={handleViewFullDetails}

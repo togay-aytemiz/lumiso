@@ -1,6 +1,5 @@
 import { AdvancedDataTable } from "@/components/data-table";
 import type {
-  AdvancedDataTablePagination,
   AdvancedDataTableSortState,
   AdvancedTableColumn,
   AdvancedDataTableFiltersConfig,
@@ -19,7 +18,6 @@ interface PaymentsTableSectionProps {
   summary?: { text?: ReactNode; chips?: { id: string | number; label: ReactNode }[] };
   sortState: AdvancedDataTableSortState;
   onSortChange: (next: AdvancedDataTableSortState) => void;
-  pagination: AdvancedDataTablePagination;
   emptyState: ReactNode;
   onRowClick?: (row: Payment) => void;
   isLoading: boolean;
@@ -28,6 +26,9 @@ interface PaymentsTableSectionProps {
   searchPlaceholder?: string;
   searchLoading?: boolean;
   searchMinChars?: number;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
 }
 
 export function PaymentsTableSection({
@@ -39,7 +40,6 @@ export function PaymentsTableSection({
   summary,
   sortState,
   onSortChange,
-  pagination,
   emptyState,
   onRowClick,
   isLoading,
@@ -49,6 +49,9 @@ export function PaymentsTableSection({
   searchPlaceholder,
   searchLoading,
   searchMinChars,
+  onLoadMore,
+  hasMore,
+  isLoadingMore,
 }: PaymentsTableSectionProps) {
   return (
     <AdvancedDataTable
@@ -65,7 +68,6 @@ export function PaymentsTableSection({
       actions={actions}
       sortState={sortState}
       onSortChange={onSortChange}
-      pagination={pagination}
       emptyState={emptyState}
       onRowClick={onRowClick}
       searchValue={searchValue}
@@ -73,6 +75,9 @@ export function PaymentsTableSection({
       searchPlaceholder={searchPlaceholder}
       searchLoading={searchLoading}
       searchMinChars={searchMinChars}
+      onLoadMore={onLoadMore}
+      hasMore={hasMore}
+      isLoadingMore={isLoadingMore}
     />
   );
 }

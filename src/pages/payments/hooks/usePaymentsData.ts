@@ -192,6 +192,7 @@ export function usePaymentsData({
   const [initialLoading, setInitialLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(false);
   const initialLoadRef = useRef(true);
+  const lastFetchedPageRef = useRef(0);
 
   const createSearchContext = useCallback(
     async (globalSearchTerm: string): Promise<SearchContext> => {
@@ -493,8 +494,30 @@ export function usePaymentsData({
     ]
   );
 
+  const mergePayments = useCallback((prev: Payment[], next: Payment[]) => {
+    if (prev.length === 0) return next;
+    if (next.length === 0) return prev;
+    const map = new Map(prev.map((payment) => [payment.id, payment]));
+    const merged = [...prev];
+    for (const payment of next) {
+      const existing = map.get(payment.id);
+      if (existing) {
+        const index = merged.findIndex((row) => row.id === payment.id);
+        if (index !== -1) {
+          merged[index] = payment;
+        }
+      } else {
+        merged.push(payment);
+        map.set(payment.id, payment);
+      }
+    }
+    return merged;
+  }, []);
+
   const fetchPayments = useCallback(async () => {
     const isInitialLoad = initialLoadRef.current;
+    let fetchedPayments: Payment[] = [];
+    let fetchedCount = 0;
     try {
       if (isInitialLoad) {
         setInitialLoading(true);
@@ -510,9 +533,18 @@ export function usePaymentsData({
         includeCount: true,
       });
 
-      setPaginatedPayments(payments);
+      fetchedPayments = payments;
+      fetchedCount = count;
+      setPaginatedPayments((prev) => {
+        const shouldAppend = page > lastFetchedPageRef.current;
+        if (!shouldAppend) {
+          return payments;
+        }
+        return mergePayments(prev, payments);
+      });
       setTotalCount(count);
       setMetricsPayments(metricsData ?? []);
+      lastFetchedPageRef.current = page;
     } catch (error) {
       onError(buildError(error));
     } finally {
@@ -522,7 +554,7 @@ export function usePaymentsData({
         initialLoadRef.current = false;
       }
     }
-  }, [fetchPaymentsData, onError, page, pageSize]);
+  }, [fetchPaymentsData, mergePayments, onError, page, pageSize]);
 
   useEffect(() => {
     fetchPayments();

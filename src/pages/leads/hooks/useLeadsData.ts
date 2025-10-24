@@ -43,6 +43,7 @@ export function useLeadsData({
   const [initialLoading, setInitialLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(false);
   const firstLoadRef = useRef(true);
+  const lastFetchedPageRef = useRef(0);
 
   // Intersect lead IDs that satisfy all custom-field filters
   const resolveLeadIdsForCustomFilters = useCallback(async (organizationId: string) => {
@@ -397,8 +398,30 @@ export function useLeadsData({
     }
   }, [customFieldFilters, resolveLeadIdsForCustomFilters, sortDirection, sortField, statusIds]);
 
+  const mergeLeads = useCallback((prev: LeadWithCustomFields[], next: LeadWithCustomFields[]) => {
+    if (prev.length === 0) return next;
+    if (next.length === 0) return prev;
+    const map = new Map(prev.map((lead) => [lead.id, lead]));
+    const merged = [...prev];
+    for (const lead of next) {
+      const existing = map.get(lead.id);
+      if (existing) {
+        const index = merged.findIndex((row) => row.id === lead.id);
+        if (index !== -1) {
+          merged[index] = lead;
+        }
+      } else {
+        merged.push(lead);
+        map.set(lead.id, lead);
+      }
+    }
+    return merged;
+  }, []);
+
   const fetchLeads = useCallback(async () => {
     const first = firstLoadRef.current;
+    let fetchedLeads: LeadWithCustomFields[] = [];
+    let fetchedCount = 0;
     try {
       if (first) setInitialLoading(true);
       setTableLoading(true);
@@ -408,8 +431,17 @@ export function useLeadsData({
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
       const { leads, count } = await fetchLeadsData({ from, to, includeCount: true });
-      setPageLeads(leads);
+      fetchedLeads = leads;
+      fetchedCount = count;
+      setPageLeads((prev) => {
+        const shouldAppend = page > lastFetchedPageRef.current;
+        if (!shouldAppend) {
+          return leads;
+        }
+        return mergeLeads(prev, leads);
+      });
       setTotalCount(count);
+      lastFetchedPageRef.current = page;
 
       // Lightweight metrics query for recent window (last 60 days) + count already fetched
       const since = new Date();
@@ -454,9 +486,9 @@ export function useLeadsData({
         setInitialLoading(false);
         firstLoadRef.current = false;
       }
-      t.end({ totalCount, leads: pageLeads.length });
+      t.end({ totalCount: fetchedCount, leads: fetchedLeads.length });
     }
-  }, [fetchLeadsData, page, pageSize, statusIds]);
+  }, [fetchLeadsData, mergeLeads, page, pageSize, statusIds]);
 
   useEffect(() => {
     fetchLeads();

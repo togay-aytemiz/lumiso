@@ -31,7 +31,7 @@ export default function Workflows() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "paused">("all");
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const pageSize = 25;
   const [sortState, setSortState] = useState<AdvancedDataTableSortState>({
     columnId: "name",
     direction: "asc",
@@ -112,13 +112,15 @@ export default function Workflows() {
   const totalCount = sortedWorkflows.length;
 
   const paginatedWorkflows = useMemo(
-    () =>
-      sortedWorkflows.slice(
-        (page - 1) * pageSize,
-        Math.min(sortedWorkflows.length, page * pageSize)
-      ),
+    () => sortedWorkflows.slice(0, page * pageSize),
     [page, pageSize, sortedWorkflows]
   );
+
+  const hasMoreWorkflows = paginatedWorkflows.length < totalCount;
+  const handleLoadMoreWorkflows = useCallback(() => {
+    if (!hasMoreWorkflows) return;
+    setPage((prev) => prev + 1);
+  }, [hasMoreWorkflows]);
 
   useEffect(() => {
     setPage(1);
@@ -464,13 +466,8 @@ export default function Workflows() {
           searchDelay={0}
           sortState={sortState}
           onSortChange={handleTableSortChange}
-          pagination={{
-            page,
-            pageSize,
-            totalCount,
-            onPageChange: setPage,
-            onPageSizeChange: setPageSize,
-          }}
+          onLoadMore={hasMoreWorkflows ? handleLoadMoreWorkflows : undefined}
+          hasMore={hasMoreWorkflows}
           emptyState={
             workflows.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-12 text-center">

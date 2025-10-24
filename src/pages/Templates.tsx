@@ -38,7 +38,7 @@ const OptimizedTemplatesContent = React.memo(() => {
   }>({ open: false, template: null });
   const [deleting, setDeleting] = useState(false);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const pageSize = 25;
 
   const handleDeleteTemplate = React.useCallback((template: any) => {
     setDeleteDialog({ open: true, template });
@@ -190,13 +190,15 @@ const OptimizedTemplatesContent = React.memo(() => {
   const totalCount = filteredTemplates.length;
 
   const paginatedTemplates = useMemo(
-    () =>
-      filteredTemplates.slice(
-        (page - 1) * pageSize,
-        Math.min(filteredTemplates.length, page * pageSize)
-      ),
+    () => filteredTemplates.slice(0, page * pageSize),
     [filteredTemplates, page, pageSize]
   );
+
+  const hasMoreTemplates = paginatedTemplates.length < totalCount;
+  const handleLoadMoreTemplates = useCallback(() => {
+    if (!hasMoreTemplates) return;
+    setPage((prev) => prev + 1);
+  }, [hasMoreTemplates]);
 
   React.useEffect(() => {
     setPage(1);
@@ -303,13 +305,8 @@ const OptimizedTemplatesContent = React.memo(() => {
           emptyState={emptyState}
           onRowClick={handleRowClick}
           rowActions={renderRowActions}
-            pagination={{
-              page,
-              pageSize,
-              totalCount,
-              onPageChange: setPage,
-              onPageSizeChange: setPageSize,
-            }}
+          onLoadMore={hasMoreTemplates ? handleLoadMoreTemplates : undefined}
+          hasMore={hasMoreTemplates}
         />
       </div>
 

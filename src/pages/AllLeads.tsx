@@ -36,6 +36,7 @@ import { format } from "date-fns";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { getKpiIconPreset } from "@/components/ui/kpi-presets";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 type LeadStatusOption = {
   id: string;
@@ -176,6 +177,7 @@ const AllLeadsNew = () => {
   const { currentStep, completeCurrentStep } = useOnboarding();
   const { t } = useTranslation('pages');
   const { t: tCommon } = useTranslation('common');
+  const { activeOrganizationId } = useOrganization();
 
   // Server-side paginated leads (scalable like payments)
   const [sortState, setSortState] = useState<AdvancedDataTableSortState>({
@@ -209,7 +211,7 @@ const AllLeadsNew = () => {
   });
 
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const pageSize = 25;
 
   // Map selected status names to IDs for server-side filtering
   const selectedStatusIds = useMemo(() => {
@@ -418,7 +420,16 @@ const AllLeadsNew = () => {
   }, [metricsLeads, totalCount]);
 
   // Throttle refresh on focus/visibility to avoid request storms
-  useThrottledRefetchOnFocus(refetchLeads, 30_000);
+  const refreshLeads = useCallback(async () => {
+    if (typeof window !== "undefined" && activeOrganizationId) {
+      window.localStorage.removeItem(`prefetch:leads:first:${activeOrganizationId}`);
+      window.localStorage.removeItem(`prefetch:leads:metrics:${activeOrganizationId}`);
+    }
+    setPage(1);
+    await refetchLeads();
+  }, [activeOrganizationId, refetchLeads]);
+
+  useThrottledRefetchOnFocus(refreshLeads, 30_000);
 
   const leadsTutorialSteps: TutorialStep[] = [
     {
@@ -596,15 +607,6 @@ const AllLeadsNew = () => {
     []
   );
 
-  const handlePageChange = useCallback((nextPage: number) => {
-    setPage(nextPage);
-  }, []);
-
-  const handlePageSizeChange = useCallback((nextSize: number) => {
-    setPageSize(nextSize);
-    setPage(1);
-  }, []);
-
   // All custom-field filtering is applied server-side; no client fallback
   const filteredLeads = useMemo(() => pageLeads, [pageLeads]);
 
@@ -650,7 +652,7 @@ const AllLeadsNew = () => {
     }
 
     return sorted;
-  }, [metricsLeads, totalCount]);
+  }, [filteredLeads, sortAccessors, sortState.columnId, sortState.direction]);
 
   useEffect(() => {
     const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -665,24 +667,17 @@ const AllLeadsNew = () => {
 
   const paginatedLeads = sortedLeads; // already server-paginated
 
-  const exportColumns = useMemo(() => advancedColumns, [advancedColumns]);
+  const hasMoreLeads = paginatedLeads.length < totalCount;
+  const isLoadingMoreLeads = leadsTableLoading && page > 1;
 
-  const pagination = useMemo(
-    () => ({
-      page,
-      pageSize,
-      totalCount,
-      onPageChange: handlePageChange,
-      onPageSizeChange: handlePageSizeChange,
-    }),
-    [
-      handlePageChange,
-      handlePageSizeChange,
-      page,
-      pageSize,
-      totalCount,
-    ]
-  );
+  const handleLoadMoreLeads = useCallback(() => {
+    if (leadsTableLoading || !hasMoreLeads) return;
+    const totalPages = totalCount > 0 ? Math.ceil(totalCount / pageSize) : 0;
+    if (totalPages && page >= totalPages) return;
+    setPage((prev) => prev + 1);
+  }, [hasMoreLeads, leadsTableLoading, page, pageSize, totalCount]);
+
+  const exportColumns = useMemo(() => advancedColumns, [advancedColumns]);
 
   const handleExportLeads = useCallback(async () => {
     if (exporting) return;
@@ -1047,28 +1042,30 @@ const AllLeadsNew = () => {
           {columnsLoading ? (
             <TableLoadingSkeleton />
           ) : (
-            <AdvancedDataTable
+          <AdvancedDataTable
               title={t('leads.tableTitle')}
               data={paginatedLeads}
               columns={advancedColumns}
               rowKey={(lead) => lead.id}
               onRowClick={handleRowClick}
-              isLoading={leadsTableLoading}
+              isLoading={leadsTableLoading && page === 1 && paginatedLeads.length === 0}
               loadingState={<TableLoadingSkeleton />}
               filters={filtersConfig}
               emptyState={emptyState}
               sortState={sortState}
               onSortChange={handleSortChange}
               actions={exportActions}
-              pagination={pagination}
               summary={leadsHeaderSummary}
+              onLoadMore={hasMoreLeads ? handleLoadMoreLeads : undefined}
+              hasMore={hasMoreLeads}
+              isLoadingMore={isLoadingMoreLeads}
             />
           )}
         </section>
       </div>
       
       <EnhancedAddLeadDialog 
-        onSuccess={refetchLeads} 
+        onSuccess={refreshLeads} 
         open={addLeadDialogOpen}
         onOpenChange={handleAddLeadDialogChange}
         onClose={() => handleAddLeadDialogChange(false)}

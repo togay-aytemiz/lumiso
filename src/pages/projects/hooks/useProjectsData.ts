@@ -299,6 +299,8 @@ export function useProjectsData({
     active: createCacheEntry(),
     archived: createCacheEntry(),
   });
+  const listLastFetchedPageRef = useRef(0);
+  const archivedLastFetchedPageRef = useRef(0);
 
   const getCacheStatus = useCallback((scope: ProjectsScope): CacheStatus => {
     const entry = cacheRef.current[scope];
@@ -720,6 +722,26 @@ export function useProjectsData({
     ]
   );
 
+  const mergeProjects = useCallback((prev: ProjectListItem[], next: ProjectListItem[]) => {
+    if (prev.length === 0) return next;
+    if (next.length === 0) return prev;
+    const map = new Map(prev.map((project) => [project.id, project]));
+    const merged = [...prev];
+    for (const project of next) {
+      const existing = map.get(project.id);
+      if (existing) {
+        const index = merged.findIndex((row) => row.id === project.id);
+        if (index !== -1) {
+          merged[index] = project;
+        }
+      } else {
+        merged.push(project);
+        map.set(project.id, project);
+      }
+    }
+    return merged;
+  }, []);
+
   const fetchList = useCallback(async (force = false) => {
     const first = firstLoadRef.current;
     try {
@@ -735,8 +757,15 @@ export function useProjectsData({
         includeCount: true,
         forceNetwork: force,
       });
-      setListProjects(projects);
+      const shouldAppend = !force && listPage > listLastFetchedPageRef.current;
+      setListProjects((prev) => {
+        if (!shouldAppend) {
+          return projects;
+        }
+        return mergeProjects(prev, projects);
+      });
       setListTotalCount(count);
+      listLastFetchedPageRef.current = listPage;
       t.end({ rows: projects.length, total: count });
       onNetworkRecovery?.();
     } catch (error) {
@@ -754,7 +783,7 @@ export function useProjectsData({
         setInitialLoading(false);
       }
     }
-  }, [fetchProjectsData, listPage, listPageSize, onNetworkError, onNetworkRecovery]);
+  }, [fetchProjectsData, listPage, listPageSize, mergeProjects, onNetworkError, onNetworkRecovery]);
 
   const fetchArchived = useCallback(async (force = false) => {
     setArchivedLoading(true);
@@ -769,8 +798,15 @@ export function useProjectsData({
         includeCount: true,
         forceNetwork: force,
       });
-      setArchivedProjects(projects);
+      const shouldAppend = !force && archivedPage > archivedLastFetchedPageRef.current;
+      setArchivedProjects((prev) => {
+        if (!shouldAppend) {
+          return projects;
+        }
+        return mergeProjects(prev, projects);
+      });
       setArchivedTotalCount(count);
+      archivedLastFetchedPageRef.current = archivedPage;
       t.end({ rows: projects.length, total: count });
       onNetworkRecovery?.();
     } catch (error) {
@@ -781,7 +817,7 @@ export function useProjectsData({
     } finally {
       setArchivedLoading(false);
     }
-  }, [archivedPage, archivedPageSize, fetchProjectsData, onNetworkError, onNetworkRecovery]);
+  }, [archivedPage, archivedPageSize, fetchProjectsData, mergeProjects, onNetworkError, onNetworkRecovery]);
 
   useEffect(() => {
     fetchList();
@@ -792,8 +828,38 @@ export function useProjectsData({
   }, [fetchArchived]);
 
   const refetch = useCallback(async () => {
-    await Promise.all([fetchList(true), fetchArchived(true)]);
-  }, [fetchArchived, fetchList]);
+    const activePageSize = listPageSize || DEFAULT_PAGE_SIZE;
+    const archivedPageSizeFinal = archivedPageSize || DEFAULT_PAGE_SIZE;
+    setListLoading(true);
+    setArchivedLoading(true);
+    try {
+      const [active, archivedResult] = await Promise.all([
+        fetchProjectsData("active", {
+          from: 0,
+          to: activePageSize - 1,
+          includeCount: true,
+          forceNetwork: true,
+        }),
+        fetchProjectsData("archived", {
+          from: 0,
+          to: archivedPageSizeFinal - 1,
+          includeCount: true,
+          forceNetwork: true,
+        }),
+      ]);
+
+      setListProjects(active.projects);
+      setListTotalCount(active.count);
+      listLastFetchedPageRef.current = 1;
+
+      setArchivedProjects(archivedResult.projects);
+      setArchivedTotalCount(archivedResult.count);
+      archivedLastFetchedPageRef.current = 1;
+    } finally {
+      setListLoading(false);
+      setArchivedLoading(false);
+    }
+  }, [archivedPageSize, fetchProjectsData, listPageSize]);
 
   return {
     listProjects,

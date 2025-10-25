@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, KeyboardEvent as ReactKeyboardEvent } from "react";
 import { format, eachDayOfInterval, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isToday } from "date-fns";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { formatTime, formatDate, getUserLocale, getDateFnsLocale } from "@/lib/utils";
@@ -74,6 +74,17 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
     return format(day, "EEE", { locale: dateFnsLocale });
   });
 
+  const handleDayKeyDown = (
+    event: ReactKeyboardEvent<HTMLDivElement>,
+    day: Date
+  ) => {
+    if (!onDayClick) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onDayClick(day);
+    }
+  };
+
   return (
     <div 
       className="bg-card rounded-xl border border-border shadow-sm"
@@ -100,13 +111,16 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
           const isDayToday = isToday(day);
           
           return (
-            <button
+            <div
               key={index}
+              role="button"
+              tabIndex={0}
               onClick={() => {
                 if (onDayClick) {
                   onDayClick(day);
                 }
               }}
+              onKeyDown={(event) => handleDayKeyDown(event, day)}
               className={`
                 min-h-16 md:min-h-24 p-1 md:p-2 bg-card hover:bg-accent/50 transition-colors relative
                 ${!isCurrentMonth ? "text-muted-foreground" : ""}
@@ -285,7 +299,7 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
                   );
                 })()}
               </div>
-            </button>
+            </div>
           );
         })}
       </div>

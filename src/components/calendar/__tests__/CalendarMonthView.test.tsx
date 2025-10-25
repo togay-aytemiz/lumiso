@@ -167,7 +167,7 @@ describe("CalendarMonthView", () => {
 
     expect(maySixteenthCell).toBeTruthy();
     if (maySixteenthCell) {
-      fireEvent.click(maySixteenthCell.closest("button")!);
+      fireEvent.click(maySixteenthCell);
     }
 
     expect(onDayClick).toHaveBeenCalled();

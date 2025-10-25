@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 36 | 43 | 84% |
+| UI Components & Pages | 37 | 43 | 86% |
 | UI Primitives & Shared Components | 13 | 13 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **100** | **107** | **93%** |
+| **Overall** | **101** | **107** | **94%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -118,7 +118,7 @@
 | All projects workspace | `src/pages/AllProjects.tsx` | Board/list/archived view switching, tutorial gating, exports, Supabase-backed list pagination | High | Done | Covered by `src/pages/__tests__/AllProjects.test.tsx` validating view mode persistence, Kanban/list dataset sync, and CSV export error toasts. |
 | Analytics dashboard page | `src/pages/Analytics.tsx` | Session metric toggles, Supabase aggregation fallbacks, chart data transforms | Medium | Done | Covered by `src/pages/__tests__/Analytics.test.tsx` exercising scheduled/created toggles, empty datasets, and failure toast handling. |
 | Workflows management page | `src/pages/Workflows.tsx` | Filtering, KPI summaries, pagination, toggle actions | High | Done | Covered by `src/pages/__tests__/Workflows.test.tsx` validating KPI summaries, segmented filters, pagination load-more, status toggles, edit wiring, and delete confirmation. |
-| Session detail page | `src/pages/SessionDetail.tsx` | Supabase fetch path, edit/delete flows, navigation fallback | High | Not started | Validate skeleton-to-content transition, delete success redirect, and error toast on fetch failure. |
+| Session detail page | `src/pages/SessionDetail.tsx` | Supabase fetch path, edit/delete flows, navigation fallback | High | Done | Covered by `src/pages/__tests__/SessionDetail.test.tsx` validating skeleton transition, delete fallback navigation, and load error toast. |
 | Calendar page | `src/pages/Calendar.tsx` | Range filters, session grouping, performance panels | High | Done | Covered by `src/pages/__tests__/Calendar.test.tsx` validating skeleton loading, segmented view switching, and session sheet launch. |
 | Upcoming sessions page | `src/pages/UpcomingSessions.tsx` | Filters, session sorting, empty state messaging | Medium | Done | Covered by `src/pages/__tests__/UpcomingSessions.test.tsx` confirming KPI metrics, segment filters, and session sheet navigation. |
 | Templates workspace | `src/pages/Templates.tsx` | Block editor integration, preview data toggles | Medium | Not started | Mock template utils + i18n to confirm fallback content. |
@@ -261,6 +261,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-31 (later still) | Codex | Added Calendar and Upcoming Sessions page coverage | `src/pages/__tests__/Calendar.test.tsx` and `src/pages/__tests__/UpcomingSessions.test.tsx` lock view toggles, KPI metrics, segment filtering, and session sheet navigation | Next: Tackle AllProjects workspace sorting/export flows |
 | 2025-11-01 | Codex | Added AllProjects workspace coverage | `src/pages/__tests__/AllProjects.test.tsx` verifies list defaults, archived toggle, quick view, and spreadsheet export success path | Next: Extend tests to cover board pagination and archived export error handling |
 | 2025-11-02 | Codex | Added workflow delete dialog coverage | `src/components/__tests__/WorkflowDeleteDialog.test.tsx` locks translation usage, cancel/confirm callbacks, close handling, and disabled deletion state | Revisit if dialog gains secondary actions or additional messaging |
+| 2025-11-03 | Codex | Added session detail page coverage | `src/pages/__tests__/SessionDetail.test.tsx` exercises skeleton-to-content transition, load failure toast, and delete redirect fallback | Next: Target Templates workspace coverage |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

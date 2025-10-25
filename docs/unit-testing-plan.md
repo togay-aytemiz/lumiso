@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 37 | 43 | 86% |
+| UI Components & Pages | 38 | 43 | 88% |
 | UI Primitives & Shared Components | 13 | 13 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **101** | **107** | **94%** |
+| **Overall** | **102** | **107** | **95%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -121,7 +121,7 @@
 | Session detail page | `src/pages/SessionDetail.tsx` | Supabase fetch path, edit/delete flows, navigation fallback | High | Done | Covered by `src/pages/__tests__/SessionDetail.test.tsx` validating skeleton transition, delete fallback navigation, and load error toast. |
 | Calendar page | `src/pages/Calendar.tsx` | Range filters, session grouping, performance panels | High | Done | Covered by `src/pages/__tests__/Calendar.test.tsx` validating skeleton loading, segmented view switching, and session sheet launch. |
 | Upcoming sessions page | `src/pages/UpcomingSessions.tsx` | Filters, session sorting, empty state messaging | Medium | Done | Covered by `src/pages/__tests__/UpcomingSessions.test.tsx` confirming KPI metrics, segment filters, and session sheet navigation. |
-| Templates workspace | `src/pages/Templates.tsx` | Block editor integration, preview data toggles | Medium | Not started | Mock template utils + i18n to confirm fallback content. |
+| Templates workspace | `src/pages/Templates.tsx` | Block editor integration, preview data toggles | Medium | Done | Covered by `src/pages/__tests__/Templates.test.tsx` exercising preview fallbacks, search empty states, row actions, and navigation flows. |
 | Session types settings | `src/components/SessionTypesSection.tsx` | CRUD workflows, default selection, empty states | High | Done | Covered by `src/components/__tests__/SessionTypesSection.test.tsx` (empty state, default toggle, activation toggle, deletion). |
 | Session form fields | `src/components/SessionFormFields.tsx` | Validation messaging, timezone-aware inputs, reminders toggles | Medium | Done | Covered by `src/components/__tests__/SessionFormFields.test.tsx` (project selector + field callbacks). |
 | Session status badge | `src/components/SessionStatusBadge.tsx` | Lifecycle color mapping, accessible labels | Low | Done | Covered by `src/components/__tests__/SessionStatusBadge.test.tsx` (loading badge + editable dropdown updates). |
@@ -262,6 +262,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-11-01 | Codex | Added AllProjects workspace coverage | `src/pages/__tests__/AllProjects.test.tsx` verifies list defaults, archived toggle, quick view, and spreadsheet export success path | Next: Extend tests to cover board pagination and archived export error handling |
 | 2025-11-02 | Codex | Added workflow delete dialog coverage | `src/components/__tests__/WorkflowDeleteDialog.test.tsx` locks translation usage, cancel/confirm callbacks, close handling, and disabled deletion state | Revisit if dialog gains secondary actions or additional messaging |
 | 2025-11-03 | Codex | Added session detail page coverage | `src/pages/__tests__/SessionDetail.test.tsx` exercises skeleton-to-content transition, load failure toast, and delete redirect fallback | Next: Target Templates workspace coverage |
+| 2025-11-03 (later) | Codex | Added Templates workspace coverage | `src/pages/__tests__/Templates.test.tsx` locks preview translation fallback, search empty states, duplication/deletion flows, and navigation callbacks | Next: Cover Project sheet view snapshot translations |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

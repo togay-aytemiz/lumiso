@@ -95,8 +95,8 @@ const OptimizedTemplatesContent = React.memo(() => {
       return plainText.length > 60 ? `${plainText.substring(0, 60)}...` : plainText;
     }
     
-    return 'No preview available';
-  }, []);
+    return t("templates.preview.noPreview", { defaultValue: "No preview available" });
+  }, [t]);
 
   const columns = useMemo<AdvancedTableColumn<Template>[]>(
     () => [

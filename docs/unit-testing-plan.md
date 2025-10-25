@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 9 | 27 | 33% |
+| UI Components & Pages | 10 | 27 | 37% |
 | UI Primitives & Shared Components | 1 | 8 | 13% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **52** | **86** | **60%** |
+| **Overall** | **53** | **86** | **62%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -101,7 +101,7 @@
 ### UI Components & Pages
 | Area | File(s) | What to Cover | Priority | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
-| Enhanced lead creation | `src/components/EnhancedAddLeadDialog.tsx` | Dynamic schema init, default status lookup, save pipeline | High | Not started | Mock field definitions + Supabase inserts; assert dirty guard. |
+| Enhanced lead creation | `src/components/EnhancedAddLeadDialog.tsx` | Dynamic schema init, default status lookup, save pipeline | High | Done | Covered by `src/components/__tests__/EnhancedAddLeadDialog.test.tsx` verifying default status creation, value persistence, and navigation guard. |
 | Enhanced lead edit | `src/components/EnhancedEditLeadDialog.tsx` | Prefill logic, change detection, update mutation flow | High | Not started | Cover validation errors + success toast. |
 | Enhanced project dialog | `src/components/EnhancedProjectDialog.tsx` | Cross-entity linking, lead selection, Supabase upserts | High | Not started | Validate state reset on close/open cycles. |
 | Session scheduling dialog | `src/components/ScheduleSessionDialog.tsx` | Prefill data, reminder scheduling hooks, status updates | High | Done | Covered via `src/components/__tests__/ScheduleSessionDialog.test.tsx` & `SessionSchedulingSheet.test.tsx`. |

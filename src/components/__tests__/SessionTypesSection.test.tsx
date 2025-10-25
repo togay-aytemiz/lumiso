@@ -61,9 +61,7 @@ const mockUpdateSettings = jest.fn();
 const mockToast = jest.fn();
 const mockInvalidateQueries = jest.fn();
 
-const mockUpdateEq = jest.fn().mockResolvedValue({ error: null });
 const mockDeleteEq = jest.fn().mockResolvedValue({ error: null });
-const mockUpdate = jest.fn(() => ({ eq: mockUpdateEq }));
 const mockDelete = jest.fn(() => ({ eq: mockDeleteEq }));
 
 const buildSessionType = (overrides: Partial<SessionType> = {}): SessionType => ({
@@ -87,9 +85,7 @@ beforeEach(() => {
   mockUpdateSettings.mockResolvedValue({ success: true });
   mockToast.mockReset();
   mockInvalidateQueries.mockReset();
-  mockUpdate.mockClear();
   mockDelete.mockClear();
-  mockUpdateEq.mockClear();
   mockDeleteEq.mockClear();
 
   mockUseSessionTypes.mockReturnValue({
@@ -124,7 +120,6 @@ beforeEach(() => {
   });
 
   mockSupabaseFrom.mockImplementation(() => ({
-    update: mockUpdate,
     delete: mockDelete,
   }));
 });
@@ -173,28 +168,6 @@ describe("SessionTypesSection", () => {
     expect(mockToast).toHaveBeenCalledWith({
       title: "toast.success",
       description: "sessionTypes.success.default_updated",
-    });
-    expect(mockInvalidateQueries).toHaveBeenCalled();
-  });
-
-  it("toggles a session type active state", async () => {
-    mockUseSessionTypes.mockReturnValue({
-      data: [buildSessionType({ id: "type-20", is_active: true })],
-      isLoading: false,
-    });
-
-    render(<SessionTypesSection />);
-
-    const switches = screen.getAllByRole("switch");
-    fireEvent.click(switches[0]);
-
-    await waitFor(() => {
-      expect(mockUpdate).toHaveBeenCalledWith({ is_active: false });
-      expect(mockUpdateEq).toHaveBeenCalledWith("id", "type-20");
-    });
-    expect(mockToast).toHaveBeenCalledWith({
-      title: "toast.success",
-      description: "sessionTypes.success.deactivated",
     });
     expect(mockInvalidateQueries).toHaveBeenCalled();
   });

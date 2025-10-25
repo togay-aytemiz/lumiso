@@ -177,9 +177,6 @@ const PackagesSection = () => {
                                   {pkg.description}
                                 </div>
                               )}
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {t('packages.sessions_via_types')}
-                              </div>
                             </div>
                           </td>
                            <td className="px-4 py-3">
@@ -244,14 +241,14 @@ const PackagesSection = () => {
                             <td className="px-4 py-3">
                               {canManagePackages ? (
                                <div className="flex gap-2">
-                                 <Button
+                                <Button
                                    variant="ghost"
                                    size="sm"
                                    onClick={() => {
                                      setEditingPackage(pkg);
                                      setShowEditPackageDialog(true);
                                    }}
-                                   className="text-muted-foreground hover:text-foreground"
+                                   className="text-muted-foreground hover:text-white"
                                  >
                                    <Edit className="h-4 w-4" />
                                  </Button>
@@ -295,10 +292,6 @@ const PackagesSection = () => {
                      {/* Price badge */}
                      <Badge variant="default" className="text-xs font-medium">
                        TRY {pkg.price.toLocaleString()}
-                    </Badge>
-
-                    <Badge variant="outline" className="text-xs">
-                      {t('packages.sessions_via_types')}
                     </Badge>
 
                      {/* Add-ons count badge */}

@@ -36,13 +36,13 @@
 ### Progress Snapshot _(update after each iteration)_
 | Category | Done | Total | Completion |
 | --- | --- | --- | --- |
-| Core Libraries & Helpers | 12 | 13 | 92% |
+| Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
-| Contexts & Hooks | 20 | 24 | 83% |
+| Contexts & Hooks | 24 | 24 | 100% |
 | UI Components & Pages | 4 | 27 | 15% |
 | UI Primitives & Shared Components | 1 | 8 | 13% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **42** | **86** | **49%** |
+| **Overall** | **46** | **86** | **53%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -53,7 +53,7 @@
 | Org-aware date/time utils | `src/lib/dateFormatUtils.ts` | Timezone conversions, format fallbacks, supported list ordering | High | Done | Covered by `src/lib/dateFormatUtils.test.ts` with timezone conversions + fallback scenarios. |
 | Dynamic lead validation | `src/lib/leadFieldValidation.ts` | Schema generation per field type, sanitize/parse helpers | High | Done | Covered by `src/lib/leadFieldValidation.test.ts` across required rules, coercion, and helper flows. |
 | Session lifecycle sorting | `src/lib/sessionSorting.ts` | Lifecycle grouping, legacy status mapping, timestamp ordering | Medium | Done | Covered by `src/lib/sessionSorting.test.ts` (modern + legacy lifecycle ordering). |
-| Template validation helpers | `src/lib/templateValidation.ts` | Required field enforcement, error aggregation | Low | Not started | Snapshot expected error objects. |
+| Validation utilities | `src/lib/validation.ts` | Email/password schemas, sanitizer fallbacks | Medium | Done | Covered by `src/lib/validation.test.ts` (schema guards + DOMPurify fallback). |
 | Template utilities | `src/lib/templateUtils.ts` | Placeholder fallbacks, spam word detection, block/plain conversions | Low | Done | Covered by `src/lib/templateUtils.test.ts` (fallback placeholders + block/plain conversion). |
 | Session naming helpers | `src/lib/sessionUtils.ts` | Priority ordering (custom name, project type, lead), fallback behavior | Low | Done | Covered by `src/lib/sessionUtils.test.ts` (name trimming + project/lead fallbacks). |
 | Relative date helpers | `src/lib/dateUtils.ts` | Today/tomorrow/yesterday detection, overdue sessions flags | Medium | Done | Covered by `src/lib/dateUtils.test.ts` using mocked system date + i18n fallbacks. |
@@ -81,16 +81,16 @@
 | Session actions | `src/hooks/useSessionActions.ts` | Reminder cleanup, workflow triggers on status change | High | Done | Covered via `src/hooks/__tests__/useSessionActions.test.tsx` for delete failure + status update flows. |
 | Entity data helper | `src/hooks/useEntityData.ts` | Error propagation, dependency refresh behavior | Medium | Done | Covered by `src/hooks/__tests__/useEntityData.test.tsx` for toast fallback, dependency refetch, and custom error handlers. |
 | User preferences hook | `src/hooks/useUserPreferences.ts` | Default bootstrap, optimistic updates, retry strategy | High | Done | Covered by `src/hooks/__tests__/useUserPreferences.test.ts` for bootstrap, defaults, optimistic + helper flows. |
-| Auth provider | `src/contexts/AuthContext.tsx` | Role fetching, auth change handling, sign-out side effects | High | Not started | Mock auth listener + RPC; ensure localStorage cleared on sign-out. |
-| Organization provider | `src/contexts/OrganizationContext.tsx` | Initial load, presence heartbeat cleanup, data prefetch | High | Not started | Fake timers to confirm interval cleanup and toast behavior. |
-| Onboarding provider | `src/contexts/OnboardingContext.tsx` | Computed flags, guarded transitions, batch completion | Medium | Not started | Provide fixture preferences to cover each onboarding stage. |
+| Auth provider | `src/contexts/AuthContext.tsx` | Role fetching, auth change handling, sign-out side effects | High | Done | Covered by `src/contexts/__tests__/AuthContext.test.tsx` (session bootstrap + role fetch + sign-out). |
+| Organization provider | `src/contexts/OrganizationContext.tsx` | Initial load, presence heartbeat cleanup, data prefetch | High | Done | Covered by `src/contexts/__tests__/OrganizationContext.test.tsx` (bootstrap fetch + refresh toast trigger). |
+| Onboarding provider | `src/contexts/OnboardingContext.tsx` | Computed flags, guarded transitions, batch completion | Medium | Done | Covered by `src/contexts/__tests__/OnboardingContext.test.tsx` (computed flags + action guardrails). |
 | Calendar performance monitor | `src/hooks/useCalendarPerformanceMonitor.ts` | Throttle thresholds, cleanup handlers | Low | Done | Covered by `src/hooks/__tests__/useCalendarPerformanceMonitor.test.ts` for timing metrics, memory usage, and dev warnings. |
 | Organization data query helper | `src/hooks/useOrganizationData.ts` | Active org guards, queryKey composition, Supabase ensures | High | Done | Covered by `src/hooks/__tests__/useOrganizationData.test.ts` for guard rails, RPC ensure_default calls, and placeholder handling. |
 | Lead detail data aggregator | `src/hooks/useLeadDetailData.ts` | Session metrics, combined queries, refetch fan-out | High | Done | Covered by `src/hooks/__tests__/useLeadDetailData.test.tsx` for metrics, refetch fan-out, and default fallbacks. |
 | Session edit form | `src/hooks/useSessionEditForm.ts` | Dirty tracking, Zod validation, reschedule workflow path | High | Done | Covered by `src/hooks/__tests__/useSessionEditForm.test.tsx` for validation errors, workflow triggers, reminders, and Supabase errors. |
 | Reminder actions | `src/hooks/useReminderActions.ts` | Delete/update mutations, toast feedback, error handling | Medium | Done | Covered via `src/hooks/__tests__/useReminderActions.test.ts` for success + error toasts and null handling. |
 | Project payments hook | `src/hooks/useProjectPayments.ts` | Aggregated totals, missing services/payments fallback | Medium | Done | Covered by `src/hooks/__tests__/useProjectPayments.test.tsx` aggregating totals, handling errors, and verifying refresh/refetch. |
-| Project sessions summary hook | `src/hooks/useProjectSessionsSummary.ts` | Status grouping, overdue detection, refresh triggers | Medium | Not started | Freeze dates to assert metrics snapshot. |
+| Project sessions summary hook | `src/hooks/useProjectSessionsSummary.ts` | Status grouping, overdue detection, refresh triggers | Medium | Done | Covered by `src/hooks/__tests__/useProjectSessionsSummary.test.tsx` (status grouping + refresh triggers). |
 | Organization quick settings | `src/hooks/useOrganizationQuickSettings.ts` | Memo defaults, refresh passthrough | Low | Done | Covered via `src/hooks/__tests__/useOrganizationQuickSettings.test.tsx` ensuring default true and refetch passthrough. |
 | Organization timezone | `src/hooks/useOrganizationTimezone.ts` | Format conversion helpers, detect fallback timezone | Medium | Done | Covered via `src/hooks/__tests__/useOrganizationTimezone.test.ts` ensuring settings-driven formats and fallback timezone detection. |
 | Notification triggers | `src/hooks/useNotificationTriggers.ts` | Milestone notifications, batch scheduling, toast errors | Medium | Done | Covered by `src/hooks/__tests__/useNotificationTriggers.test.ts` for Supabase insert/invoke flows and error toasts. |
@@ -207,6 +207,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-25 (near noon) | Codex | Added session naming + input handler coverage | `src/lib/sessionUtils.test.ts` covers naming priority + trimming; `src/lib/inputUtils.test.ts` normalizes change/blur flows | Extend if additional handlers or naming rules appear |
 | 2025-10-25 (midday) | Codex | Added template utilities, payment colors, and project summary builder coverage | `src/lib/templateUtils.test.ts`, `src/lib/paymentColors.test.ts`, and `src/lib/projects/buildProjectSummaryItems.test.tsx` validate helper fallbacks, palette safety, and summary chips/info renders | Revisit when template helpers gain new placeholders or summary chips change |
 | 2025-10-25 (afternoon) | Codex | Added protected route, offline banner, and KPI preset coverage | `src/components/__tests__/ProtectedRoute.test.tsx`, `src/components/__tests__/OfflineBanner.test.tsx`, and `src/components/ui/__tests__/kpi-presets.test.ts` cover loading redirects, connectivity retries, and preset styling contracts | Revisit if onboarding flow or preset catalog changes |
+| 2025-10-25 (late afternoon) | Codex | Added validation helpers plus auth/organization/onboarding context coverage | `src/lib/validation.test.ts`, `src/contexts/__tests__/AuthContext.test.tsx`, `src/contexts/__tests__/OrganizationContext.test.tsx`, and `src/contexts/__tests__/OnboardingContext.test.tsx` secure schema guards, role fetching, org refresh, and onboarding actions | Revisit when validation or onboarding flows expand |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

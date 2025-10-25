@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@/utils/testUtils";
+import { fireEvent, render, screen } from "@/utils/testUtils";
 import { CalendarMonthView } from "../CalendarMonthView";
 
 jest.mock("react-i18next", () => ({
@@ -9,8 +9,8 @@ jest.mock("react-i18next", () => ({
 }));
 
 jest.mock("@/components/ui/tooltip", () => ({
-  Tooltip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  TooltipTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   TooltipContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
@@ -97,15 +97,17 @@ describe("CalendarMonthView", () => {
     );
 
     const sessionButton = screen
-      .getByText(/formatted-09:00 Alice/i)
-      .closest("button");
+      .getAllByText(/formatted-09:00 Alice/i)
+      .map((node) => node.closest("button"))
+      .find(Boolean);
     expect(sessionButton).toBeTruthy();
     fireEvent.click(sessionButton!);
     expect(onSessionClick).toHaveBeenCalledWith(expect.objectContaining({ id: "session-1" }));
 
     const activityButton = screen
-      .getByText(/formatted-10:00 Bob/i)
-      .closest("button");
+      .getAllByText(/formatted-10:00 Bob/i)
+      .map((node) => node.closest("button"))
+      .find(Boolean);
     expect(activityButton).toBeTruthy();
     fireEvent.click(activityButton!);
     expect(onActivityClick).toHaveBeenCalledWith(expect.objectContaining({ id: "activity-1" }));
@@ -159,11 +161,9 @@ describe("CalendarMonthView", () => {
       />
     );
 
-    const maySixteenthCell = screen.getAllByText("16").find((node) => {
-      const button = node.closest("button");
-      if (!button) return false;
-      return within(button).queryByText(/formatted-11:00 Alice/i) !== null;
-    });
+    const maySixteenthCell = screen
+      .getAllByRole("button")
+      .find((button) => button.textContent?.includes("16") && button.className?.includes("min-h-"));
 
     expect(maySixteenthCell).toBeTruthy();
     if (maySixteenthCell) {

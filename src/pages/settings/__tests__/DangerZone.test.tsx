@@ -31,7 +31,7 @@ jest.mock("@/components/ui/alert-dialog", () => ({
     <h2>{children}</h2>
   ),
   AlertDialogDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
+    <div>{children}</div>
   ),
   AlertDialogFooter: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -64,6 +64,18 @@ jest.mock("@/components/ui/alert-dialog", () => ({
   ),
 }));
 
+jest.mock("@/components/settings/SettingsPageWrapper", () => ({
+  __esModule: true,
+  default: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="settings-page-wrapper">{children}</div>
+  ),
+}));
+
+jest.mock("@/components/settings/SettingsHeader", () => ({
+  __esModule: true,
+  default: () => <div data-testid="settings-header" />, 
+}));
+
 const mockUseToast = useToast as jest.Mock;
 
 describe("DangerZone settings page", () => {
@@ -75,31 +87,24 @@ describe("DangerZone settings page", () => {
     jest.useRealTimers();
   });
 
-  it("shows a destructive toast when confirming without a password", async () => {
+  it("keeps delete action disabled without a password", () => {
     const toastSpy = jest.fn();
     mockUseToast.mockReturnValue({ toast: toastSpy });
 
     render(<DangerZone />);
 
-    const confirmButton = screen.getAllByRole("button", {
+    const [triggerButton, confirmButton] = screen.getAllByRole("button", {
       name: "settings.dangerZone.deleteData.button",
-    })[1];
-
-    await act(async () => {
-      fireEvent.click(confirmButton);
     });
 
-    expect(toastSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: "settings.dangerZone.deleteData.passwordRequired",
-        description: "settings.dangerZone.deleteData.passwordRequiredDesc",
-        variant: "destructive",
-      })
-    );
+    fireEvent.click(triggerButton);
+
+    expect(confirmButton).toBeDisabled();
+    expect(toastSpy).not.toHaveBeenCalled();
   });
 
   it("deletes successfully when a password is provided", async () => {
-    jest.useFakeTimers();
+    jest.useFakeTimers({ doNotFake: ["performance"] });
     const toastSpy = jest.fn();
     mockUseToast.mockReturnValue({ toast: toastSpy });
 
@@ -110,9 +115,11 @@ describe("DangerZone settings page", () => {
     );
     fireEvent.change(passwordInput, { target: { value: "super-secret" } });
 
-    const confirmButton = screen.getAllByRole("button", {
+    const [triggerButton, confirmButton] = screen.getAllByRole("button", {
       name: "settings.dangerZone.deleteData.button",
-    })[1];
+    });
+
+    fireEvent.click(triggerButton);
 
     await act(async () => {
       fireEvent.click(confirmButton);

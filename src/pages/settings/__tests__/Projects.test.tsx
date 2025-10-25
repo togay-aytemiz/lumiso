@@ -56,8 +56,7 @@ describe("Projects settings page", () => {
         title: "settings.projects.title",
         description: "settings.projects.description",
         helpContent: settingsHelpContent.projects,
-      }),
-      {}
+      })
     );
   });
 });

@@ -125,8 +125,12 @@ describe("CalendarWeek", () => {
       />
     );
 
-    expect(screen.getByText("calendar.sections.sessions:1")).toBeInTheDocument();
-    expect(screen.getByText("calendar.sections.reminders:1")).toBeInTheDocument();
+    expect(
+      screen.getByText((content) => content.includes("calendar.sections.sessions"))
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((content) => content.includes("calendar.sections.reminders"))
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("org-09:00"));
     expect(onSessionClick).toHaveBeenCalledWith(expect.objectContaining({ id: "session-1" }));

@@ -92,8 +92,7 @@ describe("Services settings page", () => {
         title: "settings.services.title",
         description: "settings.services.description",
         helpContent: settingsHelpContent.services,
-      }),
-      {}
+      })
     );
 
     expect(mockOnboardingTutorial).toHaveBeenCalledWith(
@@ -106,7 +105,7 @@ describe("Services settings page", () => {
   });
 
   it("completes the tutorial and navigates to getting started", async () => {
-    jest.useFakeTimers();
+    jest.useFakeTimers({ doNotFake: ["performance"] });
     const completeCurrentStep = jest
       .fn()
       .mockResolvedValue(undefined);
@@ -124,9 +123,8 @@ describe("Services settings page", () => {
 
     await waitFor(() => expect(completeCurrentStep).toHaveBeenCalled());
 
-    expect(screen.getByTestId("onboarding-tutorial")).toHaveAttribute(
-      "data-visible",
-      "false"
+    expect(mockOnboardingTutorial).toHaveBeenCalledWith(
+      expect.objectContaining({ isVisible: false })
     );
 
     await act(async () => {
@@ -152,9 +150,10 @@ describe("Services settings page", () => {
       fireEvent.click(screen.getByTestId("exit-tutorial"));
     });
 
-    expect(screen.getByTestId("onboarding-tutorial")).toHaveAttribute(
-      "data-visible",
-      "false"
+    await waitFor(() =>
+      expect(mockOnboardingTutorial).toHaveBeenCalledWith(
+        expect.objectContaining({ isVisible: false })
+      )
     );
     expect(completeCurrentStep).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();

@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 44 | 44 | 100% |
+| UI Components & Pages | 47 | 47 | 100% |
 | UI Primitives & Shared Components | 17 | 17 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **112** | **112** | **100%** |
+| **Overall** | **115** | **115** | **100%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -122,6 +122,9 @@
 | Calendar page | `src/pages/Calendar.tsx` | Range filters, session grouping, performance panels | High | Done | Covered by `src/pages/__tests__/Calendar.test.tsx` validating skeleton loading, segmented view switching, and session sheet launch. |
 | Upcoming sessions page | `src/pages/UpcomingSessions.tsx` | Filters, session sorting, empty state messaging | Medium | Done | Covered by `src/pages/__tests__/UpcomingSessions.test.tsx` confirming KPI metrics, segment filters, and session sheet navigation. |
 | Templates workspace | `src/pages/Templates.tsx` | Block editor integration, preview data toggles | Medium | Done | Covered by `src/pages/__tests__/Templates.test.tsx` exercising preview fallbacks, search empty states, row actions, and navigation flows. |
+| Settings services page | `src/pages/settings/Services.tsx` | Tutorial auto-start, section visibility, onboarding completion routing | Medium | Done | Covered by `src/pages/settings/__tests__/Services.test.tsx` verifying tutorial visibility, completion navigation, and exit handling. |
+| Settings projects page | `src/pages/settings/Projects.tsx` | Header metadata, section composition, help content wiring | Low | Done | Covered by `src/pages/settings/__tests__/Projects.test.tsx` ensuring wrapper/sections render with correct header props. |
+| Settings danger zone page | `src/pages/settings/DangerZone.tsx` | Destructive confirmation guardrails, toast messaging, password reset | Medium | Done | Covered by `src/pages/settings/__tests__/DangerZone.test.tsx` exercising password required toast, success flow, and cancel reset. |
 | Session types settings | `src/components/SessionTypesSection.tsx` | CRUD workflows, default selection, empty states | High | Done | Covered by `src/components/__tests__/SessionTypesSection.test.tsx` (empty state, default toggle, activation toggle, deletion). |
 | Session form fields | `src/components/SessionFormFields.tsx` | Validation messaging, timezone-aware inputs, reminders toggles | Medium | Done | Covered by `src/components/__tests__/SessionFormFields.test.tsx` (project selector + field callbacks). |
 | Session status badge | `src/components/SessionStatusBadge.tsx` | Lifecycle color mapping, accessible labels | Low | Done | Covered by `src/components/__tests__/SessionStatusBadge.test.tsx` (loading badge + editable dropdown updates). |
@@ -266,6 +269,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-11-04 | Codex | Added onboarding modal, workflow sheet, and project preview coverage | Added `src/components/__tests__/OnboardingModal.test.tsx`, `CreateWorkflowSheet.test.tsx`, and `ProjectSheetPreview.test.tsx` to validate modal flows, edit submission payloads, and Supabase-driven previews | Next: Target ProjectSheetView, ActivitySection, and LeadActivitySection components |
 | 2025-11-05 | Codex | Added Project sheet view coverage | `src/components/__tests__/ProjectSheetView.test.tsx` covers data hydration, edit/save flow, and archive confirmation logic with mocked Supabase + toast hooks | Next: Continue with ActivitySection and LeadActivitySection coverage |
 | 2025-11-05 (later) | Codex | Added activity timelines for leads/projects | Added `src/components/__tests__/ActivitySection.test.tsx` and `LeadActivitySection.test.tsx` to validate filter modes, creation toasts, history segments, and completion toggles | Monitor for new activity types or audit entities to extend fixtures |
+| 2025-11-06 | Codex | Hardened settings pages for services, projects, and danger zone flows | Added `src/pages/settings/__tests__/Services.test.tsx`, `Projects.test.tsx`, and `DangerZone.test.tsx` to verify tutorial start/completion, section composition, and destructive guardrails | Follow up by covering `src/pages/settings/General.tsx` and profile/onboarding dialogs |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

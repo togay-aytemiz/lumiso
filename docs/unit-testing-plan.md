@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 23 | 30 | 77% |
-| UI Primitives & Shared Components | 3 | 8 | 38% |
+| UI Components & Pages | 26 | 30 | 87% |
+| UI Primitives & Shared Components | 4 | 8 | 50% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **68** | **89** | **76%** |
+| **Overall** | **71** | **89** | **80%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -105,7 +105,7 @@
 | Enhanced lead edit | `src/components/EnhancedEditLeadDialog.tsx` | Prefill logic, change detection, update mutation flow | High | Done | Covered by `src/components/__tests__/EnhancedEditLeadDialog.test.tsx` for prefill, validation, and Supabase updates. |
 | Enhanced project dialog | `src/components/EnhancedProjectDialog.tsx` | Cross-entity linking, lead selection, Supabase upserts | High | Done | Covered by `src/components/__tests__/EnhancedProjectDialog.test.tsx` ensuring data fetch, custom setup, and close/reopen resets. |
 | Session scheduling dialog | `src/components/ScheduleSessionDialog.tsx` | Prefill data, reminder scheduling hooks, status updates | High | Done | Covered via `src/components/__tests__/ScheduleSessionDialog.test.tsx` & `SessionSchedulingSheet.test.tsx`. |
-| Session scheduling sheet | `src/components/SessionSchedulingSheet.tsx` | Mobile sheet state, timezone-aware slots, submission flow | Medium | Not started | Simulate slot selection + validation toasts. |
+| Session scheduling sheet | `src/components/SessionSchedulingSheet.tsx` | Mobile sheet state, timezone-aware slots, submission flow | Medium | Done | Covered by `src/components/__tests__/SessionSchedulingSheet.test.tsx` validating slot selection, summary updates, and guarded closing. |
 | Project Kanban board | `src/components/ProjectKanbanBoard.tsx` | Drag/drop ordering, status filtering, performance memoization | Medium | Not started | Use DnD testing helpers; ensure optimistic UI reverts on error. |
 | Workflow health dashboard | `src/components/WorkflowHealthDashboard.tsx` | Status aggregations, error states, filter interactions | Medium | Done | Covered by `src/components/__tests__/WorkflowHealthDashboard.test.tsx` for loading skeleton, empty state, critical metrics, and action buttons. |
 | Global search | `src/components/GlobalSearch.tsx` | Debounced queries, status preload, keyboard navigation | High | Not started | Mock Supabase search results + user input events. |
@@ -121,9 +121,9 @@
 | Session form fields | `src/components/SessionFormFields.tsx` | Validation messaging, timezone-aware inputs, reminders toggles | Medium | Done | Covered by `src/components/__tests__/SessionFormFields.test.tsx` (project selector + field callbacks). |
 | Session status badge | `src/components/SessionStatusBadge.tsx` | Lifecycle color mapping, accessible labels | Low | Done | Covered by `src/components/__tests__/SessionStatusBadge.test.tsx` (loading badge + editable dropdown updates). |
 | Project payments section | `src/components/ProjectPaymentsSection.tsx` | Summary cards, refresh triggers, empty states | Medium | Done | Covered by `src/components/__tests__/ProjectPaymentsSection.test.tsx` for metrics, refresh callback, and empty state. |
-| Sessions section surface | `src/components/SessionsSection.tsx` | Tab filtering, sorting integration, quick actions | Medium | Not started | Stub hooks to return sample data + assert CTA availability. |
+| Sessions section surface | `src/components/SessionsSection.tsx` | Tab filtering, sorting integration, quick actions | Medium | Done | Covered by `src/components/__tests__/SessionsSection.test.tsx` for skeleton state, empty CTA wiring, and banner/sheet interactions. |
 | Enhanced sessions section | `src/components/EnhancedSessionsSection.tsx` | Multi-column layout, performance instrumentation | Medium | Done | Covered by `src/components/__tests__/EnhancedSessionsSection.test.tsx` verifying lifecycle sorting, count badge, and click wiring. |
-| Unified client details | `src/components/UnifiedClientDetails.tsx` | Conditional rendering of contact info, copy buttons | Low | Not started | Verify fallback text when data missing. |
+| Unified client details | `src/components/UnifiedClientDetails.tsx` | Conditional rendering of contact info, copy buttons | Low | Done | Covered by `src/components/__tests__/UnifiedClientDetails.test.tsx` validating quick actions, custom field display, navigation hooks, and validation toasts. |
 | Project sheet view | `src/components/ProjectSheetView.tsx` | Printable layout, localization of labels, totals | Medium | Not started | Snapshot layout with English/Turkish translations. |
 | Onboarding modal | `src/components/OnboardingModal.tsx` | Step transitions, skip behavior, analytics events | Medium | Not started | Mock context + ensure stage transitions call hooks. |
 | Dead simple session banner | `src/components/DeadSimpleSessionBanner.tsx` | Feature flag handling, CTA availability, close persistence | Low | Done | Covered by `src/components/__tests__/DeadSimpleSessionBanner.test.tsx` checking relative badges, project labels, and click handling. |
@@ -143,7 +143,7 @@
 | KPI presets | `src/components/ui/kpi-presets.ts` | Metric formatting, threshold coloring | Low | Done | Covered by `src/components/ui/__tests__/kpi-presets.test.ts` (base classes + overrides). |
 | Loading presets | `src/components/ui/loading-presets.tsx` | Skeleton variants, accessibility roles | Low | Done | Covered by `src/components/ui/__tests__/loading-presets.test.tsx` validating wrapper classes and variant props. |
 | Long press confirmation button | `src/components/ui/long-press-button.tsx` | Hold lifecycle, countdown feedback, completion reset | Medium | Done | Covered by `src/components/ui/__tests__/long-press-button.test.tsx` asserting hold/confirm interactions and post-confirm reset. |
-| Toast hook | `src/components/ui/use-toast.ts` | Queue handling, duplicate suppression, dismissal timers | Medium | Not started | Use fake timers to verify auto-dismiss + manual close. |
+| Toast hook | `src/components/ui/use-toast.ts` | Queue handling, duplicate suppression, dismissal timers | Medium | Done | Covered by `src/components/ui/__tests__/use-toast.test.ts` using fake timers for queue limits, updates, and dismiss removal. |
 | Toast renderer | `src/components/ui/toaster.tsx` | Mount/unmount behavior, focus management | Medium | Not started | Ensure toasts remain accessible via keyboard navigation. |
 ### Supabase Edge Functions & Automation
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -225,6 +225,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-26 (late evening) | Codex | Added ReminderCard, MobileStickyNav, and TimezoneSelector coverage | `src/components/__tests__/ReminderCard.test.tsx`, `src/components/__tests__/MobileStickyNav.test.tsx`, `src/components/__tests__/TimezoneSelector.test.tsx` harden reminder badges/toggles, bookings navigation, and timezone auto-detect flows | Keep chipping away at remaining UI component gaps |
 | 2025-10-26 (nightfall) | Codex | Added FilterBar + guided mode button coverage | `src/components/__tests__/FilterBar.test.tsx`, `src/components/__tests__/RestartGuidedModeButton.test.tsx`, and `src/components/__tests__/ExitGuidanceModeButton.test.tsx` verify sheet interactions, onboarding resets, navigation locks, and toast flows | Next: Target DeadSimpleSessionBanner and WorkflowHealthDashboard components |
 | 2025-10-26 (late night++) | Codex | Added DeadSimpleSessionBanner, WorkflowHealthDashboard, and GuidedStepProgress coverage | `src/components/__tests__/DeadSimpleSessionBanner.test.tsx`, `src/components/__tests__/WorkflowHealthDashboard.test.tsx`, and `src/components/__tests__/GuidedStepProgress.test.tsx` capture relative date badges, health states, and animated progress behavior | Next: Circle back to SessionsSection and SessionSchedulingSheet components |
+| 2025-10-27 | Codex | Hardened UnifiedClientDetails and toast hook coverage | Added `src/components/__tests__/UnifiedClientDetails.test.tsx` and `src/components/ui/__tests__/use-toast.test.ts` while reconciling sheet/section status rows | Next: Target `GlobalSearch` debounced query flows |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

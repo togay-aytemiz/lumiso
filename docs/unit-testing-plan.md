@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 27 | 27 | 100% |
-| UI Components & Pages | 71 | 73 | 97% |
+| UI Components & Pages | 75 | 77 | 97% |
 | UI Primitives & Shared Components | 18 | 18 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **143** | **145** | **99%** |
+| **Overall** | **147** | **149** | **99%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -102,6 +102,8 @@
 ### UI Components & Pages
 | Area | File(s) | What to Cover | Priority | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
+| Add lead dialog | `src/components/AddLeadDialog.tsx` | Required fields guard, sanitized payload, status filtering, navigation guard | High | Done | Covered by `src/components/__tests__/AddLeadDialog.test.tsx` validating disabled submit, trimmed payload insert, filtered statuses, and dirty-close handling. |
+| Edit lead dialog | `src/components/EditLeadDialog.tsx` | Prefill defaults, status lookup, validation disabling, guard reset | High | Done | Covered by `src/components/__tests__/EditLeadDialog.test.tsx` ensuring prefill, blank-name disablement, Supabase update payload, and guard callbacks. |
 | Enhanced lead creation | `src/components/EnhancedAddLeadDialog.tsx` | Dynamic schema init, default status lookup, save pipeline | High | Done | Covered by `src/components/__tests__/EnhancedAddLeadDialog.test.tsx` verifying default status creation, value persistence, and navigation guard. |
 | Enhanced lead edit | `src/components/EnhancedEditLeadDialog.tsx` | Prefill logic, change detection, update mutation flow | High | Done | Covered by `src/components/__tests__/EnhancedEditLeadDialog.test.tsx` for prefill, validation, and Supabase updates. |
 | Enhanced project dialog | `src/components/EnhancedProjectDialog.tsx` | Cross-entity linking, lead selection, Supabase upserts | High | Done | Covered by `src/components/__tests__/EnhancedProjectDialog.test.tsx` ensuring data fetch, custom setup, and close/reopen resets. |
@@ -109,6 +111,8 @@
 | Session scheduling sheet | `src/components/SessionSchedulingSheet.tsx` | Mobile sheet state, timezone-aware slots, submission flow | Medium | Done | Covered by `src/components/__tests__/SessionSchedulingSheet.test.tsx` validating slot selection, summary updates, and guarded closing. |
 | Project Kanban board | `src/components/ProjectKanbanBoard.tsx` | Drag/drop ordering, status filtering, performance memoization | Medium | Done | Covered by `src/components/__tests__/ProjectKanbanBoard.test.tsx` for multi-status rendering, no-status fallback, quick view wiring, and pagination actions. |
 | Workflow health dashboard | `src/components/WorkflowHealthDashboard.tsx` | Status aggregations, error states, filter interactions | Medium | Done | Covered by `src/components/__tests__/WorkflowHealthDashboard.test.tsx` for loading skeleton, empty state, critical metrics, and action buttons. |
+| Add payment dialog | `src/components/AddPaymentDialog.tsx` | Required field gating, insert payload shaping, due status propagation | High | Done | Covered by `src/components/__tests__/AddPaymentDialog.test.tsx` asserting disabled submit, insert/reset flow, due status toggles, and guard reset callbacks. |
+| Edit payment dialog | `src/components/EditPaymentDialog.tsx` | Prefill hydration, manual/base payment branching, status guardrails | High | Done | Covered by `src/components/__tests__/EditPaymentDialog.test.tsx` verifying prefills, manual/base mutation payloads, due status handling, and dirty-close guard. |
 | Global search | `src/components/GlobalSearch.tsx` | Debounced queries, status preload, keyboard navigation | High | Done | Covered by `src/components/__tests__/GlobalSearch.test.tsx` (debounce guard, preloaded statuses, keyboard selection). |
 | Protected route guard | `src/components/ProtectedRoute.tsx` | Auth gating, redirect logic, loading fallback | Medium | Done | Covered by `src/components/__tests__/ProtectedRoute.test.tsx` (loading/redirect + onboarding guard). |
 | Route prefetcher | `src/components/RoutePrefetcher.tsx` | Prefetch orchestration, duplicate avoidance | Medium | Done | Covered by `src/components/__tests__/RoutePrefetcher.test.tsx` (cache guard + Supabase prefetch). |
@@ -299,6 +303,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-11-12 | Codex | Added Payments workspace page + component coverage | Added `src/pages/__tests__/Payments.test.tsx` alongside component specs for date controls, trend chart, metrics summary, and table section to verify filter resets, export flows, formatter output, and chart/empty states | Next: extend coverage to ReminderDetails page and remaining settings screens |
 | 2025-11-13 | Codex | Added calendar component coverage | Added `src/components/calendar/__tests__/CalendarDay.test.tsx`, `CalendarDayView.test.tsx`, `CalendarMonthView.test.tsx`, `CalendarWeek.test.tsx`, `CalendarSkeleton.test.tsx`, and `CalendarErrorBoundary.test.tsx` to cover mobile/day/month/week interactions, skeleton scaffolds, and error recovery flows | Next: Explore coverage for calendar virtualization performance metrics and touch gesture edge cases |
 | 2025-11-14 | Codex | Added reminder details page coverage | Added `src/pages/__tests__/ReminderDetails.test.tsx` to validate reminder stats, fetch error toasts, completion toggles, navigation, and project dialog fetches | Keep an eye on future reminder reschedule flows or provider refactors |
+| 2025-11-15 | Codex | Added legacy payment & lead dialog coverage | Added `src/components/__tests__/AddPaymentDialog.test.tsx`, `EditPaymentDialog.test.tsx`, `AddLeadDialog.test.tsx`, and `EditLeadDialog.test.tsx`; refreshed progress snapshot totals | Monitor dialog flows if currency/localization options expand or navigation guard messaging changes |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

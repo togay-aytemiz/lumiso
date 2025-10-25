@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 20 | 30 | 67% |
+| UI Components & Pages | 23 | 30 | 77% |
 | UI Primitives & Shared Components | 3 | 8 | 38% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **65** | **89** | **73%** |
+| **Overall** | **68** | **89** | **76%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -107,7 +107,7 @@
 | Session scheduling dialog | `src/components/ScheduleSessionDialog.tsx` | Prefill data, reminder scheduling hooks, status updates | High | Done | Covered via `src/components/__tests__/ScheduleSessionDialog.test.tsx` & `SessionSchedulingSheet.test.tsx`. |
 | Session scheduling sheet | `src/components/SessionSchedulingSheet.tsx` | Mobile sheet state, timezone-aware slots, submission flow | Medium | Not started | Simulate slot selection + validation toasts. |
 | Project Kanban board | `src/components/ProjectKanbanBoard.tsx` | Drag/drop ordering, status filtering, performance memoization | Medium | Not started | Use DnD testing helpers; ensure optimistic UI reverts on error. |
-| Workflow health dashboard | `src/components/WorkflowHealthDashboard.tsx` | Status aggregations, error states, filter interactions | Medium | Not started | Snapshot metrics for empty vs populated data. |
+| Workflow health dashboard | `src/components/WorkflowHealthDashboard.tsx` | Status aggregations, error states, filter interactions | Medium | Done | Covered by `src/components/__tests__/WorkflowHealthDashboard.test.tsx` for loading skeleton, empty state, critical metrics, and action buttons. |
 | Global search | `src/components/GlobalSearch.tsx` | Debounced queries, status preload, keyboard navigation | High | Not started | Mock Supabase search results + user input events. |
 | Protected route guard | `src/components/ProtectedRoute.tsx` | Auth gating, redirect logic, loading fallback | Medium | Done | Covered by `src/components/__tests__/ProtectedRoute.test.tsx` (loading/redirect + onboarding guard). |
 | Route prefetcher | `src/components/RoutePrefetcher.tsx` | Prefetch orchestration, duplicate avoidance | Medium | Done | Covered by `src/components/__tests__/RoutePrefetcher.test.tsx` (cache guard + Supabase prefetch). |
@@ -126,7 +126,8 @@
 | Unified client details | `src/components/UnifiedClientDetails.tsx` | Conditional rendering of contact info, copy buttons | Low | Not started | Verify fallback text when data missing. |
 | Project sheet view | `src/components/ProjectSheetView.tsx` | Printable layout, localization of labels, totals | Medium | Not started | Snapshot layout with English/Turkish translations. |
 | Onboarding modal | `src/components/OnboardingModal.tsx` | Step transitions, skip behavior, analytics events | Medium | Not started | Mock context + ensure stage transitions call hooks. |
-| Dead simple session banner | `src/components/DeadSimpleSessionBanner.tsx` | Feature flag handling, CTA availability, close persistence | Low | Not started | Confirm banner hides once dismissed per user. |
+| Dead simple session banner | `src/components/DeadSimpleSessionBanner.tsx` | Feature flag handling, CTA availability, close persistence | Low | Done | Covered by `src/components/__tests__/DeadSimpleSessionBanner.test.tsx` checking relative badges, project labels, and click handling. |
+| Guided step progress indicator | `src/components/GuidedStepProgress.tsx` | Animation pacing, percentage calculations, copy fallback | Low | Done | Covered by `src/components/__tests__/GuidedStepProgress.test.tsx` verifying animated timer progression and non-animated target display. |
 | Reminder filter bar | `src/components/FilterBar.tsx` | Quick filter pills, sheet actions, toggle callbacks | Medium | Done | Covered by `src/components/__tests__/FilterBar.test.tsx` validating pill clicks, sheet clearing, dropdown selection, and toggle handlers. |
 | Restart guided mode button | `src/components/RestartGuidedModeButton.tsx` | Auth gating, onboarding reset, toast and navigation flows | Low | Done | Covered by `src/components/__tests__/RestartGuidedModeButton.test.tsx` ensuring owner guard, success toast, and error handling. |
 | Exit guidance mode button | `src/components/ExitGuidanceModeButton.tsx` | Navigation lock guard, onboarding completion, toast errors | Low | Done | Covered by `src/components/__tests__/ExitGuidanceModeButton.test.tsx` for lock checks, success toast, and failure surfacing. |
@@ -223,6 +224,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-26 (evening) | Codex | Added long press confirmation button coverage | `src/components/ui/__tests__/long-press-button.test.tsx` validates hold lifecycle, countdown messaging, and completion reset | Follow up by tackling toast hook/toaster queue scenarios |
 | 2025-10-26 (late evening) | Codex | Added ReminderCard, MobileStickyNav, and TimezoneSelector coverage | `src/components/__tests__/ReminderCard.test.tsx`, `src/components/__tests__/MobileStickyNav.test.tsx`, `src/components/__tests__/TimezoneSelector.test.tsx` harden reminder badges/toggles, bookings navigation, and timezone auto-detect flows | Keep chipping away at remaining UI component gaps |
 | 2025-10-26 (nightfall) | Codex | Added FilterBar + guided mode button coverage | `src/components/__tests__/FilterBar.test.tsx`, `src/components/__tests__/RestartGuidedModeButton.test.tsx`, and `src/components/__tests__/ExitGuidanceModeButton.test.tsx` verify sheet interactions, onboarding resets, navigation locks, and toast flows | Next: Target DeadSimpleSessionBanner and WorkflowHealthDashboard components |
+| 2025-10-26 (late night++) | Codex | Added DeadSimpleSessionBanner, WorkflowHealthDashboard, and GuidedStepProgress coverage | `src/components/__tests__/DeadSimpleSessionBanner.test.tsx`, `src/components/__tests__/WorkflowHealthDashboard.test.tsx`, and `src/components/__tests__/GuidedStepProgress.test.tsx` capture relative date badges, health states, and animated progress behavior | Next: Circle back to SessionsSection and SessionSchedulingSheet components |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

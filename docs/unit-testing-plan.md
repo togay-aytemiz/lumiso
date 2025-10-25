@@ -38,11 +38,11 @@
 | --- | --- | --- | --- |
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
-| Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 49 | 49 | 100% |
+| Contexts & Hooks | 24 | 27 | 89% |
+| UI Components & Pages | 49 | 70 | 70% |
 | UI Primitives & Shared Components | 17 | 17 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **117** | **117** | **100%** |
+| **Overall** | **117** | **141** | **83%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -81,6 +81,7 @@
 | Session actions | `src/hooks/useSessionActions.ts` | Reminder cleanup, workflow triggers on status change | High | Done | Covered via `src/hooks/__tests__/useSessionActions.test.tsx` for delete failure + status update flows. |
 | Entity data helper | `src/hooks/useEntityData.ts` | Error propagation, dependency refresh behavior | Medium | Done | Covered by `src/hooks/__tests__/useEntityData.test.tsx` for toast fallback, dependency refetch, and custom error handlers. |
 | User preferences hook | `src/hooks/useUserPreferences.ts` | Default bootstrap, optimistic updates, retry strategy | High | Done | Covered by `src/hooks/__tests__/useUserPreferences.test.ts` for bootstrap, defaults, optimistic + helper flows. |
+| Payments workspace hooks | `src/pages/payments/hooks/usePaymentsData.ts`, `usePaymentsFilters.tsx`, `usePaymentsTableColumns.tsx` | Data fetching fallbacks, filter persistence, column memoization | High | Not started | No tests under `src/pages/payments/`; cover Supabase RPC wiring, pagination, and filter sync behavior. |
 | Auth provider | `src/contexts/AuthContext.tsx` | Role fetching, auth change handling, sign-out side effects | High | Done | Covered by `src/contexts/__tests__/AuthContext.test.tsx` (session bootstrap + role fetch + sign-out). |
 | Organization provider | `src/contexts/OrganizationContext.tsx` | Initial load, presence heartbeat cleanup, data prefetch | High | Done | Covered by `src/contexts/__tests__/OrganizationContext.test.tsx` (bootstrap fetch + refresh toast trigger). |
 | Onboarding provider | `src/contexts/OnboardingContext.tsx` | Computed flags, guarded transitions, batch completion | Medium | Done | Covered by `src/contexts/__tests__/OnboardingContext.test.tsx` (computed flags + action guardrails). |
@@ -148,6 +149,16 @@
 | Exit guidance mode button | `src/components/ExitGuidanceModeButton.tsx` | Navigation lock guard, onboarding completion, toast errors | Low | Done | Covered by `src/components/__tests__/ExitGuidanceModeButton.test.tsx` for lock checks, success toast, and failure surfacing. |
 | App sidebar | `src/components/AppSidebar.tsx` | Active route highlighting, role-based menu items | High | Done | Covered by `src/components/__tests__/AppSidebar.test.tsx` for active route styling + admin/support visibility. |
 | User menu | `src/components/UserMenu.tsx` | Avatar fallbacks, settings/sign-out navigation, onboarding callbacks | Medium | Done | Covered by `src/components/__tests__/UserMenu.test.tsx` validating initials rendering, profile link, and sign-out flow. |
+| Sample data modal | `src/components/SampleDataModal.tsx` | Template preview data, apply/reset callbacks, modal dismissal | Medium | Not started | Currently only mocked by `OnboardingModal` tests; add direct coverage for CTA wiring and analytics events. |
+| Getting started onboarding page | `src/pages/GettingStarted.tsx` | Checklist progress, sample data modal toggles, onboarding completion routing | High | Not started | No `src/pages/__tests__/GettingStarted.test.tsx`; verify first-run flows and guardrails. |
+| Marketing landing page | `src/pages/Index.tsx` | Auth-based redirects, CTA links, feature highlights | Medium | Not started | Missing coverage for public landing route; add tests for navigation + feature cards. |
+| Not found route | `src/pages/NotFound.tsx` | Support links, navigation back to dashboard, localization | Low | Not started | Provide regression test for 404 experience; no existing spec. |
+| Payments dashboard page | `src/pages/Payments.tsx` | Metrics cards, filters, pagination, workspace toggles | High | Not started | Payments workspace has zero Jest coverage; cover interactions with payments hooks/components. |
+| Reminder details page | `src/pages/ReminderDetails.tsx` | Reminder fetch, status updates, reschedule/cancel flows | High | Not started | Lacks tests for Supabase-driven reminder lifecycle; add success/error scenarios. |
+| Template builder page | `src/pages/TemplateBuilder.tsx` | Editor state management, autosave/publish, preview toggles | High | Not started | No page-level tests; cover memoized content and dirty-state handling. |
+| Admin console screens | `src/pages/admin/Users.tsx`, `Localization.tsx`, `System.tsx` | Table interactions, role actions, localization sync | High | Not started | Admin area has no tests even though plan marked complete; add specs per screen. |
+| Settings management pages | `src/pages/settings/General.tsx`, `Billing.tsx`, `Contracts.tsx`, `Notifications.tsx`, `Leads.tsx`, `Profile.tsx`, `Account_old.tsx` | Section visibility, save flows, permission guards | Medium | Not started | Only Services/Projects/DangerZone have tests; build coverage for remaining settings pages. |
+| Payments workspace components | `src/pages/payments/components/PaymentsTableSection.tsx`, `PaymentsMetricsSummary.tsx`, `PaymentsDateControls.tsx`, `PaymentsTrendChart.tsx` | Table rendering, metrics aggregation, chart interactions, date filtering | High | Not started | No Jest specs exist; add component-focused tests alongside page coverage. |
 
 ### UI Primitives & Shared Components
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -173,7 +184,7 @@
 | Area | File(s) | What to Cover | Priority | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
 | Workflow executor | `supabase/functions/workflow-executor/index.ts` | Trigger filtering, duplicate prevention, action switch | High | Done | Covered by `supabase/functions/tests/workflow-executor.test.ts` for action dispatch, reminder scheduling, and duplicate guards. |
-| Session reminder processor | `supabase/functions/process-session-reminders/index.ts` | Due reminder selection, workflow invocation, failure handling | High | Not started | Simulate mixed reminder payloads, ensure status updates idempotent. |
+| Session reminder processor | `supabase/functions/process-session-reminders/index.ts` | Due reminder selection, workflow invocation, failure handling | High | Done | Covered by `supabase/functions/tests/process-session-reminders.test.ts` simulating mixed payloads and idempotent updates. |
 | Reminder notifications sender | `supabase/functions/send-reminder-notifications/index.ts` | Email templating branches, batch mode, auth flows | High | Done | Covered via `supabase/functions/tests/send-reminder-notifications.test.ts` for assignment + milestone paths with mocked Resend/Supabase. |
 | Notification queue processor | `supabase/functions/notification-processor/index.ts` | Queue polling, retry logic, failure escalation | Medium | Done | Covered by `supabase/functions/tests/notification-processor.test.ts` exercising settings gating, retry RPCs, and email dispatch wiring. |
 | Daily scheduling cron | `supabase/functions/schedule-daily-notifications/index.ts` | Window calculations, dedupe of scheduled jobs | Medium | Done | Covered by `supabase/functions/tests/schedule-daily-notifications.test.ts` with fixed clock + insert/dedupe paths. |
@@ -271,6 +282,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-11-05 | Codex | Added Project sheet view coverage | `src/components/__tests__/ProjectSheetView.test.tsx` covers data hydration, edit/save flow, and archive confirmation logic with mocked Supabase + toast hooks | Next: Continue with ActivitySection and LeadActivitySection coverage |
 | 2025-11-05 (later) | Codex | Added activity timelines for leads/projects | Added `src/components/__tests__/ActivitySection.test.tsx` and `LeadActivitySection.test.tsx` to validate filter modes, creation toasts, history segments, and completion toggles | Monitor for new activity types or audit entities to extend fixtures |
 | 2025-11-06 | Codex | Hardened settings pages for services, projects, and danger zone flows | Added `src/pages/settings/__tests__/Services.test.tsx`, `Projects.test.tsx`, and `DangerZone.test.tsx` to verify tutorial start/completion, section composition, and destructive guardrails | Follow up by covering `src/pages/settings/General.tsx` and profile/onboarding dialogs |
+| 2025-11-08 | Codex | Audited coverage against current repo state | Updated progress snapshot and backlog rows for onboarding, payments, admin, and remaining settings screens/components with no tests | Assign owners for new high-priority gaps |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

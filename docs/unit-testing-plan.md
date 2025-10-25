@@ -40,9 +40,9 @@
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
 | UI Components & Pages | 14 | 27 | 52% |
-| UI Primitives & Shared Components | 1 | 8 | 13% |
+| UI Primitives & Shared Components | 2 | 8 | 25% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **57** | **86** | **66%** |
+| **Overall** | **58** | **86** | **67%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -137,7 +137,7 @@
 | Data table container | `src/components/ui/data-table-container.tsx` | Responsive layout, toolbar slots, sticky headers | Medium | Not started | Snapshot narrow vs wide viewports. |
 | Date/time picker | `src/components/ui/date-time-picker.tsx` | Timezone defaults, validation boundaries | Medium | Not started | Mock date to ensure min/max enforcement. |
 | KPI presets | `src/components/ui/kpi-presets.ts` | Metric formatting, threshold coloring | Low | Done | Covered by `src/components/ui/__tests__/kpi-presets.test.ts` (base classes + overrides). |
-| Loading presets | `src/components/ui/loading-presets.tsx` | Skeleton variants, accessibility roles | Low | Not started | Snapshot skeleton markup for regression protection. |
+| Loading presets | `src/components/ui/loading-presets.tsx` | Skeleton variants, accessibility roles | Low | Done | Covered by `src/components/ui/__tests__/loading-presets.test.tsx` validating wrapper classes and variant props. |
 | Toast hook | `src/components/ui/use-toast.ts` | Queue handling, duplicate suppression, dismissal timers | Medium | Not started | Use fake timers to verify auto-dismiss + manual close. |
 | Toast renderer | `src/components/ui/toaster.tsx` | Mount/unmount behavior, focus management | Medium | Not started | Ensure toasts remain accessible via keyboard navigation. |
 ### Supabase Edge Functions & Automation
@@ -215,6 +215,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-26 (late night+) | Codex | Added Enhanced lead edit dialog coverage | `src/components/__tests__/EnhancedEditLeadDialog.test.tsx` exercises prefill, dirty-state detection, validation errors, and Supabase update success toasts | Revisit when dynamic field schema or toast messaging changes |
 | 2025-10-26 (early dawn) | Codex | Added EnhancedProjectDialog coverage | `src/components/__tests__/EnhancedProjectDialog.test.tsx` loads defaults and verifies cancel-driven reset flows | Monitor if project dialog gains new pricing or lead workflows |
 | 2025-10-26 (morning++) | Codex | Added App sidebar navigation coverage | `src/components/__tests__/AppSidebar.test.tsx` ensures active-route highlighting and admin/support menu gating | Revisit onboarding lock behaviour when navigation restrictions change |
+| 2025-10-26 (afternoon) | Codex | Added loading preset skeleton coverage | `src/components/ui/__tests__/loading-presets.test.tsx` verifies wrapper styling, variant props, and compact/grid fallbacks | Next: Cover toast hook + toaster once queue logic stabilizes |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

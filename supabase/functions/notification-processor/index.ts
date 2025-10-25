@@ -10,7 +10,25 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+let createSupabaseClient = createClient;
+const defaultResendClient = new Resend(Deno.env.get("RESEND_API_KEY"));
+let resendClient: any = defaultResendClient;
+
+export function setSupabaseClientFactoryForTests(factory: typeof createClient) {
+  createSupabaseClient = factory;
+}
+
+export function resetSupabaseClientFactoryForTests() {
+  createSupabaseClient = createClient;
+}
+
+export function setResendClientForTests(client: any) {
+  resendClient = client;
+}
+
+export function resetResendClientForTests() {
+  resendClient = defaultResendClient;
+}
 
 interface ProcessorRequest {
   action: 'process-pending' | 'process-scheduled' | 'trigger-immediate' | 'schedule-notification' | 'retry-failed';
@@ -23,14 +41,14 @@ interface ProcessorRequest {
   force?: boolean;
 }
 
-const handler = async (req: Request): Promise<Response> => {
+export const handler = async (req: Request): Promise<Response> => {
   console.log('Unified notification processor started');
 
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const adminSupabase = createClient(
+  const adminSupabase = createSupabaseClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
@@ -93,7 +111,7 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 // Process all pending immediate notifications
-async function processPendingNotifications(supabase: any, organizationId?: string, force = false) {
+export async function processPendingNotifications(supabase: any, organizationId?: string, force = false) {
   console.log('Processing pending immediate notifications...');
 
   let query = supabase
@@ -142,7 +160,7 @@ async function processPendingNotifications(supabase: any, organizationId?: strin
 }
 
 // Process scheduled notifications that are due
-async function processScheduledNotifications(supabase: any, organizationId?: string, force = false) {
+export async function processScheduledNotifications(supabase: any, organizationId?: string, force = false) {
   console.log('Processing scheduled notifications...');
 
   const now = new Date();
@@ -191,7 +209,7 @@ async function processScheduledNotifications(supabase: any, organizationId?: str
 }
 
 // Process a specific notification
-async function processSpecificNotification(supabase: any, notificationId: string, notificationData?: any) {
+export async function processSpecificNotification(supabase: any, notificationId: string, notificationData?: any) {
   // Mark as processing
   await updateNotificationStatus(supabase, notificationId, 'processing');
 
@@ -243,7 +261,7 @@ async function processSpecificNotification(supabase: any, notificationId: string
 }
 
 // Process daily summary notification
-async function processDailySummary(supabase: any, notification: any) {
+export async function processDailySummary(supabase: any, notification: any) {
   console.log(`Processing daily summary for user ${notification.user_id}`);
 
   // Get user data
@@ -359,7 +377,7 @@ async function processDailySummary(supabase: any, notification: any) {
     ? t('dailySummary.subject.defaultWithData')
     : t('dailySummary.subject.defaultEmpty');
 
-  const emailResponse = await resend.emails.send({
+  const emailResponse = await resendClient.emails.send({
     from: `Lumiso <daily-summary@lumiso.app>`,
     to: [userData.user.email!],
     subject,
@@ -375,7 +393,7 @@ async function processDailySummary(supabase: any, notification: any) {
 }
 
 // Process project milestone notification
-async function processProjectMilestone(supabase: any, notification: any) {
+export async function processProjectMilestone(supabase: any, notification: any) {
   const metadata = notification.metadata || {};
   const { project_id, old_status, new_status, changed_by_user_id } = metadata;
 
@@ -406,7 +424,7 @@ async function processProjectMilestone(supabase: any, notification: any) {
 
 
 // Process workflow message notification
-async function processWorkflowMessage(supabase: any, notification: any) {
+export async function processWorkflowMessage(supabase: any, notification: any) {
   const metadata = notification.metadata || {};
   const { template_id, entity_data } = metadata;
 
@@ -474,7 +492,7 @@ async function processWorkflowMessage(supabase: any, notification: any) {
   });
 
   // Send email using Resend
-  const emailResponse = await resend.emails.send({
+  const emailResponse = await resendClient.emails.send({
     from: `${orgSettings?.photography_business_name || 'Lumiso'} <hello@updates.lumiso.app>`,
     to: [variables.customer_email],
     subject: subject,
@@ -490,7 +508,7 @@ async function processWorkflowMessage(supabase: any, notification: any) {
 }
 
 // Schedule future notifications (e.g., daily summaries for tomorrow)
-async function scheduleNotifications(supabase: any, organizationId?: string) {
+export async function scheduleNotifications(supabase: any, organizationId?: string) {
   console.log('Scheduling future notifications...');
 
   // Fetch active organization members
@@ -664,7 +682,7 @@ async function scheduleNotifications(supabase: any, organizationId?: string) {
 }
 
 // Retry failed notifications with exponential backoff
-async function retryFailedNotifications(supabase: any, organizationId?: string) {
+export async function retryFailedNotifications(supabase: any, organizationId?: string) {
   console.log('Retrying failed notifications...');
 
   // Use the database function to retry failed notifications
@@ -682,7 +700,7 @@ async function retryFailedNotifications(supabase: any, organizationId?: string) 
 }
 
 // Helper function to update notification status
-async function updateNotificationStatus(
+export async function updateNotificationStatus(
   supabase: any, 
   notificationId: string, 
   status: string, 
@@ -722,7 +740,7 @@ async function updateNotificationStatus(
 }
 
 // Check if notifications are enabled for user/organization
-async function checkNotificationEnabled(supabase: any, userId: string, organizationId: string, notificationType: string): Promise<boolean> {
+export async function checkNotificationEnabled(supabase: any, userId: string, organizationId: string, notificationType: string): Promise<boolean> {
   try {
     // Check user settings first
     const { data: userSettings } = await supabase

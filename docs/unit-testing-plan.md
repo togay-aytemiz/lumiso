@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 47 | 47 | 100% |
+| UI Components & Pages | 48 | 48 | 100% |
 | UI Primitives & Shared Components | 17 | 17 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **115** | **115** | **100%** |
+| **Overall** | **116** | **116** | **100%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -112,6 +112,7 @@
 | Protected route guard | `src/components/ProtectedRoute.tsx` | Auth gating, redirect logic, loading fallback | Medium | Done | Covered by `src/components/__tests__/ProtectedRoute.test.tsx` (loading/redirect + onboarding guard). |
 | Route prefetcher | `src/components/RoutePrefetcher.tsx` | Prefetch orchestration, duplicate avoidance | Medium | Done | Covered by `src/components/__tests__/RoutePrefetcher.test.tsx` (cache guard + Supabase prefetch). |
 | Offline banner | `src/components/OfflineBanner.tsx` | Connectivity context integration, retry actions | Low | Done | Covered by `src/components/__tests__/OfflineBanner.test.tsx` (online skip + retry + spinner state). |
+| Auth page | `src/pages/Auth.tsx` | Sign-in/sign-up flows, password recovery, onboarding carousel toggles | High | Done | Covered by `src/pages/__tests__/Auth.test.tsx` for sign-in, sign-up, reset request, and recovery update flows. |
 | Lead detail page | `src/pages/LeadDetail.tsx` | Data loading, tab switching, error fallbacks | High | Done | Covered by `src/pages/__tests__/LeadDetail.test.tsx` for skeleton fallback, summary wiring, status actions, and fetch error toasts. |
 | Project detail page | `src/pages/ProjectDetail.tsx` | Combined queries, session/payment sections, modals | High | Done | Covered by `src/pages/__tests__/ProjectDetail.test.tsx` for happy path rendering + missing project redirect toast. |
 | All leads workspace | `src/pages/AllLeads.tsx` | Server-driven table pagination/sorting, filter chip derivation, KPI metric calculations, onboarding tutorial triggers | High | Done | Covered by `src/pages/__tests__/AllLeads.test.tsx` verifying filter mapping, export disable/re-enable flow, and tutorial completion navigation. |

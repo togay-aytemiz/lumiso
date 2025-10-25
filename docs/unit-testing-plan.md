@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 28 | 30 | 93% |
-| UI Primitives & Shared Components | 8 | 8 | 100% |
+| UI Components & Pages | 29 | 30 | 97% |
+| UI Primitives & Shared Components | 9 | 13 | 69% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **77** | **89** | **87%** |
+| **Overall** | **80** | **94** | **85%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -106,7 +106,7 @@
 | Enhanced project dialog | `src/components/EnhancedProjectDialog.tsx` | Cross-entity linking, lead selection, Supabase upserts | High | Done | Covered by `src/components/__tests__/EnhancedProjectDialog.test.tsx` ensuring data fetch, custom setup, and close/reopen resets. |
 | Session scheduling dialog | `src/components/ScheduleSessionDialog.tsx` | Prefill data, reminder scheduling hooks, status updates | High | Done | Covered via `src/components/__tests__/ScheduleSessionDialog.test.tsx` & `SessionSchedulingSheet.test.tsx`. |
 | Session scheduling sheet | `src/components/SessionSchedulingSheet.tsx` | Mobile sheet state, timezone-aware slots, submission flow | Medium | Done | Covered by `src/components/__tests__/SessionSchedulingSheet.test.tsx` validating slot selection, summary updates, and guarded closing. |
-| Project Kanban board | `src/components/ProjectKanbanBoard.tsx` | Drag/drop ordering, status filtering, performance memoization | Medium | Not started | Use DnD testing helpers; ensure optimistic UI reverts on error. |
+| Project Kanban board | `src/components/ProjectKanbanBoard.tsx` | Drag/drop ordering, status filtering, performance memoization | Medium | Done | Covered by `src/components/__tests__/ProjectKanbanBoard.test.tsx` for multi-status rendering, no-status fallback, quick view wiring, and pagination actions. |
 | Workflow health dashboard | `src/components/WorkflowHealthDashboard.tsx` | Status aggregations, error states, filter interactions | Medium | Done | Covered by `src/components/__tests__/WorkflowHealthDashboard.test.tsx` for loading skeleton, empty state, critical metrics, and action buttons. |
 | Global search | `src/components/GlobalSearch.tsx` | Debounced queries, status preload, keyboard navigation | High | Not started | Mock Supabase search results + user input events. |
 | Protected route guard | `src/components/ProtectedRoute.tsx` | Auth gating, redirect logic, loading fallback | Medium | Done | Covered by `src/components/__tests__/ProtectedRoute.test.tsx` (loading/redirect + onboarding guard). |
@@ -138,7 +138,7 @@
 ### UI Primitives & Shared Components
 | Area | File(s) | What to Cover | Priority | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
-| Sheet modal wrapper | `src/components/ui/app-sheet-modal.tsx` | Mobile vs desktop render paths, aria attributes | Medium | Not started | Verify focus trap + escape behavior. |
+| Sheet modal wrapper | `src/components/ui/app-sheet-modal.tsx` | Mobile vs desktop render paths, aria attributes | Medium | Done | Covered by `src/components/ui/__tests__/app-sheet-modal.test.tsx` asserting desktop vs mobile variants, dirty close behavior, and footer action callbacks. |
 | Data table core | `src/components/ui/data-table.tsx` | Column sorting, selection state, virtualization slots | High | Not started | Use Testing Library + fake data to confirm interactions. |
 | Data table container | `src/components/ui/data-table-container.tsx` | Responsive layout, toolbar slots, sticky headers | Medium | Not started | Snapshot narrow vs wide viewports. |
 | Date/time picker | `src/components/ui/date-time-picker.tsx` | Timezone defaults, validation boundaries | Medium | Not started | Mock date to ensure min/max enforcement. |

@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 4 | 27 | 15% |
+| UI Components & Pages | 7 | 27 | 26% |
 | UI Primitives & Shared Components | 1 | 8 | 13% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **46** | **86** | **53%** |
+| **Overall** | **50** | **86** | **58%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -110,7 +110,7 @@
 | Workflow health dashboard | `src/components/WorkflowHealthDashboard.tsx` | Status aggregations, error states, filter interactions | Medium | Not started | Snapshot metrics for empty vs populated data. |
 | Global search | `src/components/GlobalSearch.tsx` | Debounced queries, status preload, keyboard navigation | High | Not started | Mock Supabase search results + user input events. |
 | Protected route guard | `src/components/ProtectedRoute.tsx` | Auth gating, redirect logic, loading fallback | Medium | Done | Covered by `src/components/__tests__/ProtectedRoute.test.tsx` (loading/redirect + onboarding guard). |
-| Route prefetcher | `src/components/RoutePrefetcher.tsx` | Prefetch orchestration, duplicate avoidance | Medium | Not started | Spy on query client to ensure only unique prefetches fire. |
+| Route prefetcher | `src/components/RoutePrefetcher.tsx` | Prefetch orchestration, duplicate avoidance | Medium | Done | Covered by `src/components/__tests__/RoutePrefetcher.test.tsx` (cache guard + Supabase prefetch). |
 | Offline banner | `src/components/OfflineBanner.tsx` | Connectivity context integration, retry actions | Low | Done | Covered by `src/components/__tests__/OfflineBanner.test.tsx` (online skip + retry + spinner state). |
 | Lead detail page | `src/pages/LeadDetail.tsx` | Data loading, tab switching, error fallbacks | High | Not started | Mock services + ensure skeleton vs content transitions. |
 | Project detail page | `src/pages/ProjectDetail.tsx` | Combined queries, session/payment sections, modals | High | Not started | Assert page handles missing project gracefully. |
@@ -118,8 +118,8 @@
 | Upcoming sessions page | `src/pages/UpcomingSessions.tsx` | Filters, session sorting, empty state messaging | Medium | Not started | Ensure sessions from multiple statuses render correctly. |
 | Templates workspace | `src/pages/Templates.tsx` | Block editor integration, preview data toggles | Medium | Not started | Mock template utils + i18n to confirm fallback content. |
 | Session types settings | `src/components/SessionTypesSection.tsx` | CRUD workflows, default selection, empty states | High | Done | Covered by `src/components/__tests__/SessionTypesSection.test.tsx` (empty state, default toggle, activation toggle, deletion). |
-| Session form fields | `src/components/SessionFormFields.tsx` | Validation messaging, timezone-aware inputs, reminders toggles | Medium | Not started | Use Testing Library form interactions to assert field errors. |
-| Session status badge | `src/components/SessionStatusBadge.tsx` | Lifecycle color mapping, accessible labels | Low | Not started | Snapshot statuses to catch inadvertent color swaps. |
+| Session form fields | `src/components/SessionFormFields.tsx` | Validation messaging, timezone-aware inputs, reminders toggles | Medium | Done | Covered by `src/components/__tests__/SessionFormFields.test.tsx` (project selector + field callbacks). |
+| Session status badge | `src/components/SessionStatusBadge.tsx` | Lifecycle color mapping, accessible labels | Low | Done | Covered by `src/components/__tests__/SessionStatusBadge.test.tsx` (loading badge + editable dropdown updates). |
 | Project payments section | `src/components/ProjectPaymentsSection.tsx` | Summary cards, refresh triggers, empty states | Medium | Not started | Mock `useProjectPayments` to emit various totals. |
 | Sessions section surface | `src/components/SessionsSection.tsx` | Tab filtering, sorting integration, quick actions | Medium | Not started | Stub hooks to return sample data + assert CTA availability. |
 | Enhanced sessions section | `src/components/EnhancedSessionsSection.tsx` | Multi-column layout, performance instrumentation | Medium | Not started | Ensure virtualization thresholds + analytics logging. |
@@ -207,7 +207,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-25 (near noon) | Codex | Added session naming + input handler coverage | `src/lib/sessionUtils.test.ts` covers naming priority + trimming; `src/lib/inputUtils.test.ts` normalizes change/blur flows | Extend if additional handlers or naming rules appear |
 | 2025-10-25 (midday) | Codex | Added template utilities, payment colors, and project summary builder coverage | `src/lib/templateUtils.test.ts`, `src/lib/paymentColors.test.ts`, and `src/lib/projects/buildProjectSummaryItems.test.tsx` validate helper fallbacks, palette safety, and summary chips/info renders | Revisit when template helpers gain new placeholders or summary chips change |
 | 2025-10-25 (afternoon) | Codex | Added protected route, offline banner, and KPI preset coverage | `src/components/__tests__/ProtectedRoute.test.tsx`, `src/components/__tests__/OfflineBanner.test.tsx`, and `src/components/ui/__tests__/kpi-presets.test.ts` cover loading redirects, connectivity retries, and preset styling contracts | Revisit if onboarding flow or preset catalog changes |
-| 2025-10-25 (late afternoon) | Codex | Added validation helpers plus auth/organization/onboarding context coverage | `src/lib/validation.test.ts`, `src/contexts/__tests__/AuthContext.test.tsx`, `src/contexts/__tests__/OrganizationContext.test.tsx`, and `src/contexts/__tests__/OnboardingContext.test.tsx` secure schema guards, role fetching, org refresh, and onboarding actions | Revisit when validation or onboarding flows expand |
+| 2025-10-25 (late afternoon) | Codex | Added validation helpers, context coverage, and UI prefetch/status fields | `src/lib/validation.test.ts`, `src/contexts/__tests__/AuthContext.test.tsx`, `src/contexts/__tests__/OrganizationContext.test.tsx`, `src/contexts/__tests__/OnboardingContext.test.tsx`, plus `src/components/__tests__/RoutePrefetcher.test.tsx`, `src/components/__tests__/SessionStatusBadge.test.tsx`, and `src/components/__tests__/SessionFormFields.test.tsx` harden schema guards, auth/org onboarding flows, and booking UI surfaces | Revisit when validation, onboarding, or session UI flows expand |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

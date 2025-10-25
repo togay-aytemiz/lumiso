@@ -36,13 +36,13 @@
 ### Progress Snapshot _(update after each iteration)_
 | Category | Done | Total | Completion |
 | --- | --- | --- | --- |
-| Core Libraries & Helpers | 5 | 13 | 38% |
+| Core Libraries & Helpers | 12 | 13 | 92% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 20 | 24 | 83% |
 | UI Components & Pages | 2 | 27 | 7% |
 | UI Primitives & Shared Components | 0 | 8 | 0% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **32** | **86** | **37%** |
+| **Overall** | **39** | **86** | **45%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -52,14 +52,14 @@
 | Organization settings cache | `src/lib/organizationSettingsCache.ts` | Memory vs localStorage sync, TTL expiry, inflight dedupe | Medium | Done | Covered via `src/lib/__tests__/organizationSettingsCache.test.ts`. |
 | Org-aware date/time utils | `src/lib/dateFormatUtils.ts` | Timezone conversions, format fallbacks, supported list ordering | High | Done | Covered by `src/lib/dateFormatUtils.test.ts` with timezone conversions + fallback scenarios. |
 | Dynamic lead validation | `src/lib/leadFieldValidation.ts` | Schema generation per field type, sanitize/parse helpers | High | Done | Covered by `src/lib/leadFieldValidation.test.ts` across required rules, coercion, and helper flows. |
-| Session lifecycle sorting | `src/lib/sessionSorting.ts` | Lifecycle grouping, legacy status mapping, timestamp ordering | Medium | Not started | Provide sample session arrays for deterministic snapshots. |
+| Session lifecycle sorting | `src/lib/sessionSorting.ts` | Lifecycle grouping, legacy status mapping, timestamp ordering | Medium | Done | Covered by `src/lib/sessionSorting.test.ts` (modern + legacy lifecycle ordering). |
 | Template validation helpers | `src/lib/templateValidation.ts` | Required field enforcement, error aggregation | Low | Not started | Snapshot expected error objects. |
-| Template utilities | `src/lib/templateUtils.ts` | Placeholder fallbacks, spam word detection, block/plain conversions | Low | Not started | Mock `templateBlockUtils` import to validate legacy fallback path. |
-| Session naming helpers | `src/lib/sessionUtils.ts` | Priority ordering (custom name, project type, lead), fallback behavior | Low | Not started | Table-driven tests for combinations of name/project/lead data. |
-| Relative date helpers | `src/lib/dateUtils.ts` | Today/tomorrow/yesterday detection, overdue sessions flags | Medium | Not started | Freeze time to assert relative string outputs in EN/TR. |
-| Input normalization utilities | `src/lib/inputUtils.ts` | Trimming handlers, blur normalization, event typing | Low | Not started | Simulate change/blur events to confirm whitespace handling. |
-| Payment color mapping | `src/lib/paymentColors.ts` | Consistent status color lookups, fallback color selection | Low | Not started | Verify palette stays in sync with design tokens. |
-| Project summary builder | `src/lib/projects/buildProjectSummaryItems.tsx` | Aggregate KPI rows, empty state handling | Medium | Not started | Mock project datasets to snapshot summary cards. |
+| Template utilities | `src/lib/templateUtils.ts` | Placeholder fallbacks, spam word detection, block/plain conversions | Low | Done | Covered by `src/lib/templateUtils.test.ts` (fallback placeholders + block/plain conversion). |
+| Session naming helpers | `src/lib/sessionUtils.ts` | Priority ordering (custom name, project type, lead), fallback behavior | Low | Done | Covered by `src/lib/sessionUtils.test.ts` (name trimming + project/lead fallbacks). |
+| Relative date helpers | `src/lib/dateUtils.ts` | Today/tomorrow/yesterday detection, overdue sessions flags | Medium | Done | Covered by `src/lib/dateUtils.test.ts` using mocked system date + i18n fallbacks. |
+| Input normalization utilities | `src/lib/inputUtils.ts` | Trimming handlers, blur normalization, event typing | Low | Done | Covered by `src/lib/inputUtils.test.ts` (change + blur handlers normalize spacing). |
+| Payment color mapping | `src/lib/paymentColors.ts` | Consistent status color lookups, fallback color selection | Low | Done | Covered by `src/lib/paymentColors.test.ts` for palette integrity + class conventions. |
+| Project summary builder | `src/lib/projects/buildProjectSummaryItems.tsx` | Aggregate KPI rows, empty state handling | Medium | Done | Covered by `src/lib/projects/buildProjectSummaryItems.test.tsx` with zero-data + rich summary cases. |
 
 ### Services & Data Access
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -202,6 +202,10 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-25 (sunrise) | Codex | Added template validation hook coverage | `src/hooks/__tests__/useTemplateValidation.test.ts` checks required fields, placeholder usage, and published template safeguards | Extend if validation rules expand |
 | 2025-10-25 (after midnight) | Codex | Added project sessions summary hook coverage | `src/hooks/__tests__/useProjectSessionsSummary.test.tsx` groups statuses, detects overdue/today/upcoming, and handles refresh triggers | Extend when summary introduces new status categories |
 | 2025-10-25 (morning) | Codex | Added Session Types settings coverage | `src/components/__tests__/SessionTypesSection.test.tsx` ensures empty state, default assignment, activation toggle, and deletion flows | Revisit when session type UI adds drag/reorder or bulk actions |
+| 2025-10-25 (late morning) | Codex | Added session lifecycle sorting coverage | `src/lib/sessionSorting.test.ts` exercises lifecycle prioritization, legacy fallbacks, and time-based ordering | Extend when additional lifecycle states are introduced |
+| 2025-10-25 (mid-morning) | Codex | Added relative date helper coverage | `src/lib/dateUtils.test.ts` validates today/tomorrow/yesterday copy, overdue detection, and display classes | Revisit if relative copy or status strings change |
+| 2025-10-25 (near noon) | Codex | Added session naming + input handler coverage | `src/lib/sessionUtils.test.ts` covers naming priority + trimming; `src/lib/inputUtils.test.ts` normalizes change/blur flows | Extend if additional handlers or naming rules appear |
+| 2025-10-25 (midday) | Codex | Added template utilities, payment colors, and project summary builder coverage | `src/lib/templateUtils.test.ts`, `src/lib/paymentColors.test.ts`, and `src/lib/projects/buildProjectSummaryItems.test.tsx` validate helper fallbacks, palette safety, and summary chips/info renders | Revisit when template helpers gain new placeholders or summary chips change |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

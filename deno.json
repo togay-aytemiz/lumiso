@@ -5,7 +5,7 @@
   "imports": {
     "std/": "https://deno.land/std@0.224.0/"
   },
-  "nodeModulesDir": "auto",
+  "nodeModulesDir": true,
   "compilerOptions": {
     "types": ["npm:@types/node"]
   }

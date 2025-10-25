@@ -41,8 +41,8 @@
 | Contexts & Hooks | 24 | 24 | 100% |
 | UI Components & Pages | 30 | 30 | 100% |
 | UI Primitives & Shared Components | 13 | 13 | 100% |
-| Supabase Edge Functions & Automation | 2 | 9 | 22% |
-| **Overall** | **87** | **94** | **93%** |
+| Supabase Edge Functions & Automation | 3 | 9 | 33% |
+| **Overall** | **88** | **94** | **94%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -240,6 +240,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-28 | Codex | Added Session banner, User menu, and UI primitive coverage | Added tests for `src/components/SessionBanner.tsx`, `src/components/UserMenu.tsx`, and new UI primitives (`segmented-control`, `page-header`, `pagination`, `card`) to lock in action handling and accessibility | Next: Focus on GlobalSearch keyboard interactions and Supabase function harnesses |
 | 2025-10-28 (later still) | Codex | Completed remaining UI primitive gaps | Added `src/components/ui/__tests__/progress-bar.test.tsx`, `progress.test.tsx`, `switch.test.tsx`, and `toast.test.tsx` to cover progress transforms, toggle data-state transitions, and toast viewport/variant styling | Next: Begin data-table primitive harness and toast renderer coverage |
 | 2025-10-29 | Codex | Added Supabase automation coverage | Added Deno tests for `get-users-email`, `schedule-daily-notifications`, and shared email localization helpers to verify validation, scheduling, and i18n fallbacks | Continue expanding coverage across remaining notification + workflow functions |
+| 2025-10-29 (later) | Codex | Added session reminder processor coverage | Added Deno tests for `process-session-reminders` covering fetch failures, invalid session data guards, workflow trigger errors, and cleanup RPC execution | Next: target `send-reminder-notifications` and `workflow-executor` orchestration paths |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

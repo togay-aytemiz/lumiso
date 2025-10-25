@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 12 | 13 | 92% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 20 | 24 | 83% |
-| UI Components & Pages | 2 | 27 | 7% |
-| UI Primitives & Shared Components | 0 | 8 | 0% |
+| UI Components & Pages | 4 | 27 | 15% |
+| UI Primitives & Shared Components | 1 | 8 | 13% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **39** | **86** | **45%** |
+| **Overall** | **42** | **86** | **49%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -109,9 +109,9 @@
 | Project Kanban board | `src/components/ProjectKanbanBoard.tsx` | Drag/drop ordering, status filtering, performance memoization | Medium | Not started | Use DnD testing helpers; ensure optimistic UI reverts on error. |
 | Workflow health dashboard | `src/components/WorkflowHealthDashboard.tsx` | Status aggregations, error states, filter interactions | Medium | Not started | Snapshot metrics for empty vs populated data. |
 | Global search | `src/components/GlobalSearch.tsx` | Debounced queries, status preload, keyboard navigation | High | Not started | Mock Supabase search results + user input events. |
-| Protected route guard | `src/components/ProtectedRoute.tsx` | Auth gating, redirect logic, loading fallback | Medium | Not started | Verify redirect when user lacks session/role. |
+| Protected route guard | `src/components/ProtectedRoute.tsx` | Auth gating, redirect logic, loading fallback | Medium | Done | Covered by `src/components/__tests__/ProtectedRoute.test.tsx` (loading/redirect + onboarding guard). |
 | Route prefetcher | `src/components/RoutePrefetcher.tsx` | Prefetch orchestration, duplicate avoidance | Medium | Not started | Spy on query client to ensure only unique prefetches fire. |
-| Offline banner | `src/components/OfflineBanner.tsx` | Connectivity context integration, retry actions | Low | Not started | Mock context toggles to ensure banner visibility flips. |
+| Offline banner | `src/components/OfflineBanner.tsx` | Connectivity context integration, retry actions | Low | Done | Covered by `src/components/__tests__/OfflineBanner.test.tsx` (online skip + retry + spinner state). |
 | Lead detail page | `src/pages/LeadDetail.tsx` | Data loading, tab switching, error fallbacks | High | Not started | Mock services + ensure skeleton vs content transitions. |
 | Project detail page | `src/pages/ProjectDetail.tsx` | Combined queries, session/payment sections, modals | High | Not started | Assert page handles missing project gracefully. |
 | Calendar page | `src/pages/Calendar.tsx` | Range filters, session grouping, performance panels | High | Not started | Use fake timers to cover performance overlay toggles. |
@@ -136,7 +136,7 @@
 | Data table core | `src/components/ui/data-table.tsx` | Column sorting, selection state, virtualization slots | High | Not started | Use Testing Library + fake data to confirm interactions. |
 | Data table container | `src/components/ui/data-table-container.tsx` | Responsive layout, toolbar slots, sticky headers | Medium | Not started | Snapshot narrow vs wide viewports. |
 | Date/time picker | `src/components/ui/date-time-picker.tsx` | Timezone defaults, validation boundaries | Medium | Not started | Mock date to ensure min/max enforcement. |
-| KPI presets | `src/components/ui/kpi-presets.ts` | Metric formatting, threshold coloring | Low | Not started | Provide sample metric arrays, compare to expected config. |
+| KPI presets | `src/components/ui/kpi-presets.ts` | Metric formatting, threshold coloring | Low | Done | Covered by `src/components/ui/__tests__/kpi-presets.test.ts` (base classes + overrides). |
 | Loading presets | `src/components/ui/loading-presets.tsx` | Skeleton variants, accessibility roles | Low | Not started | Snapshot skeleton markup for regression protection. |
 | Toast hook | `src/components/ui/use-toast.ts` | Queue handling, duplicate suppression, dismissal timers | Medium | Not started | Use fake timers to verify auto-dismiss + manual close. |
 | Toast renderer | `src/components/ui/toaster.tsx` | Mount/unmount behavior, focus management | Medium | Not started | Ensure toasts remain accessible via keyboard navigation. |
@@ -206,6 +206,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-25 (mid-morning) | Codex | Added relative date helper coverage | `src/lib/dateUtils.test.ts` validates today/tomorrow/yesterday copy, overdue detection, and display classes | Revisit if relative copy or status strings change |
 | 2025-10-25 (near noon) | Codex | Added session naming + input handler coverage | `src/lib/sessionUtils.test.ts` covers naming priority + trimming; `src/lib/inputUtils.test.ts` normalizes change/blur flows | Extend if additional handlers or naming rules appear |
 | 2025-10-25 (midday) | Codex | Added template utilities, payment colors, and project summary builder coverage | `src/lib/templateUtils.test.ts`, `src/lib/paymentColors.test.ts`, and `src/lib/projects/buildProjectSummaryItems.test.tsx` validate helper fallbacks, palette safety, and summary chips/info renders | Revisit when template helpers gain new placeholders or summary chips change |
+| 2025-10-25 (afternoon) | Codex | Added protected route, offline banner, and KPI preset coverage | `src/components/__tests__/ProtectedRoute.test.tsx`, `src/components/__tests__/OfflineBanner.test.tsx`, and `src/components/ui/__tests__/kpi-presets.test.ts` cover loading redirects, connectivity retries, and preset styling contracts | Revisit if onboarding flow or preset catalog changes |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

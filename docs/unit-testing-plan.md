@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 27 | 27 | 100% |
-| UI Components & Pages | 53 | 70 | 76% |
-| UI Primitives & Shared Components | 17 | 17 | 100% |
+| UI Components & Pages | 56 | 73 | 77% |
+| UI Primitives & Shared Components | 18 | 18 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **124** | **141** | **88%** |
+| **Overall** | **128** | **145** | **88%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -112,6 +112,9 @@
 | Global search | `src/components/GlobalSearch.tsx` | Debounced queries, status preload, keyboard navigation | High | Done | Covered by `src/components/__tests__/GlobalSearch.test.tsx` (debounce guard, preloaded statuses, keyboard selection). |
 | Protected route guard | `src/components/ProtectedRoute.tsx` | Auth gating, redirect logic, loading fallback | Medium | Done | Covered by `src/components/__tests__/ProtectedRoute.test.tsx` (loading/redirect + onboarding guard). |
 | Route prefetcher | `src/components/RoutePrefetcher.tsx` | Prefetch orchestration, duplicate avoidance | Medium | Done | Covered by `src/components/__tests__/RoutePrefetcher.test.tsx` (cache guard + Supabase prefetch). |
+| Error boundary | `src/components/ErrorBoundary.tsx` | Fallback rendering, copy-to-clipboard, custom fallback overrides | Medium | Done | Covered by `src/components/__tests__/ErrorBoundary.test.tsx` validating default UI, copy handling, and custom fallback support. |
+| Language switcher | `src/components/LanguageSwitcher.tsx` | Loading states, change handler promises, compact trigger variant | Low | Done | Covered by `src/components/__tests__/LanguageSwitcher.test.tsx` for loading disablement, async change flow, and compact badge display. |
+| Performance monitor instrumentation | `src/components/PerformanceMonitor.tsx` | Development-only gating, render-count warnings, metrics exposure | Low | Done | Covered by `src/components/__tests__/PerformanceMonitor.test.tsx` ensuring non-dev null rendering, warning threshold, and metrics helpers. |
 | Offline banner | `src/components/OfflineBanner.tsx` | Connectivity context integration, retry actions | Low | Done | Covered by `src/components/__tests__/OfflineBanner.test.tsx` (online skip + retry + spinner state). |
 | Auth page | `src/pages/Auth.tsx` | Sign-in/sign-up flows, password recovery, onboarding carousel toggles | High | Done | Covered by `src/pages/__tests__/Auth.test.tsx` for sign-in, sign-up, reset request, recovery update flows, and recovery entry guard. |
 | Lead detail page | `src/pages/LeadDetail.tsx` | Data loading, tab switching, error fallbacks | High | Done | Covered by `src/pages/__tests__/LeadDetail.test.tsx` for skeleton fallback, summary wiring, status actions, and fetch error toasts. |
@@ -180,6 +183,7 @@
 | Progress primitive wrapper | `src/components/ui/progress.tsx` | Value-to-transform mapping, default fallback state | Low | Done | Covered by `src/components/ui/__tests__/progress.test.tsx` ensuring default translate and value-driven offsets. |
 | Switch toggle | `src/components/ui/switch.tsx` | Data-state transitions, controlled toggles, accessibility attributes | Low | Done | Covered by `src/components/ui/__tests__/switch.test.tsx` asserting unchecked/checked transitions and controlled updates. |
 | Toast primitives | `src/components/ui/toast.tsx` | Viewport mounting, variant styling, close/action wiring | Medium | Done | Covered by `src/components/ui/__tests__/toast.test.tsx` confirming viewport class merge, destructive styling, and close attributes. |
+| Truncated text tooltip wrapper | `src/components/TruncatedTextWithTooltip.tsx` | Overflow detection, tooltip reveal, delay overrides | Low | Done | Covered by `src/components/__tests__/TruncatedTextWithTooltip.test.tsx` for empty text guard, non-truncated hover, and truncated tooltip display. |
 ### Supabase Edge Functions & Automation
 | Area | File(s) | What to Cover | Priority | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
@@ -285,6 +289,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-11-08 | Codex | Audited coverage against current repo state | Updated progress snapshot and backlog rows for onboarding, payments, admin, and remaining settings screens/components with no tests | Assign owners for new high-priority gaps |
 | 2025-11-09 | Codex | Added payments workspace hook coverage | `src/pages/payments/hooks/__tests__/usePaymentsData.test.ts`, `usePaymentsFilters.test.tsx`, and `usePaymentsTableColumns.test.tsx` lock Supabase pagination/search filters, draft thresholds, and column callbacks | Track future payments analytics or virtualization enhancements |
 | 2025-11-10 | Codex | Added onboarding landing coverage for remaining pages | Added `src/components/__tests__/SampleDataModal.test.tsx`, `src/pages/__tests__/GettingStarted.test.tsx`, `Index.test.tsx`, and `NotFound.test.tsx` to exercise modal flows, guided redirects, marketing CTA, and 404 logging | Next: extend coverage to Payments page, ReminderDetails page, and settings context usage |
+| 2025-11-11 | Codex | Added guard, language, and instrumentation component coverage | Added `src/components/__tests__/ErrorBoundary.test.tsx`, `LanguageSwitcher.test.tsx`, `PerformanceMonitor.test.tsx`, and `TruncatedTextWithTooltip.test.tsx` to lock fallback UI, language toggles, dev-only warnings, and truncation tooltips | Revisit when onboarding metrics expand or tooltip delays change |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

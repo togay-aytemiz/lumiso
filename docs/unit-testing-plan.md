@@ -38,11 +38,11 @@
 | --- | --- | --- | --- |
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
-| Contexts & Hooks | 24 | 24 | 100% |
+| Contexts & Hooks | 23 | 24 | 96% |
 | UI Components & Pages | 8 | 27 | 30% |
 | UI Primitives & Shared Components | 1 | 8 | 13% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **51** | **86** | **59%** |
+| **Overall** | **50** | **86** | **58%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -209,6 +209,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-25 (afternoon) | Codex | Added protected route, offline banner, and KPI preset coverage | `src/components/__tests__/ProtectedRoute.test.tsx`, `src/components/__tests__/OfflineBanner.test.tsx`, and `src/components/ui/__tests__/kpi-presets.test.ts` cover loading redirects, connectivity retries, and preset styling contracts | Revisit if onboarding flow or preset catalog changes |
 | 2025-10-25 (late afternoon) | Codex | Added validation helpers, context coverage, and UI prefetch/status fields | `src/lib/validation.test.ts`, `src/contexts/__tests__/AuthContext.test.tsx`, `src/contexts/__tests__/OrganizationContext.test.tsx`, `src/contexts/__tests__/OnboardingContext.test.tsx`, plus `src/components/__tests__/RoutePrefetcher.test.tsx`, `src/components/__tests__/SessionStatusBadge.test.tsx`, and `src/components/__tests__/SessionFormFields.test.tsx` harden schema guards, auth/org onboarding flows, and booking UI surfaces | Revisit when validation, onboarding, or session UI flows expand |
 | 2025-10-26 | Codex | Added ProjectPaymentsSection coverage | `src/components/__tests__/ProjectPaymentsSection.test.tsx` verifies summary cards, empty state, and refresh callback | Continue tackling SessionsSection and EnhancedSessionsSection components |
+| 2025-10-26 (later) | Codex | Reconciled Contexts/Hooks snapshot with remaining gaps | Updated progress table to show TemplateBuilder hook still pending | Add tests for `useTemplateBuilder` hook |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

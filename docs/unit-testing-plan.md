@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 34 | 43 | 79% |
+| UI Components & Pages | 35 | 43 | 81% |
 | UI Primitives & Shared Components | 13 | 13 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **98** | **107** | **92%** |
+| **Overall** | **99** | **107** | **93%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -116,7 +116,7 @@
 | Project detail page | `src/pages/ProjectDetail.tsx` | Combined queries, session/payment sections, modals | High | Done | Covered by `src/pages/__tests__/ProjectDetail.test.tsx` for happy path rendering + missing project redirect toast. |
 | All leads workspace | `src/pages/AllLeads.tsx` | Server-driven table pagination/sorting, filter chip derivation, KPI metric calculations, onboarding tutorial triggers | High | Done | Covered by `src/pages/__tests__/AllLeads.test.tsx` verifying filter mapping, export disable/re-enable flow, and tutorial completion navigation. |
 | All projects workspace | `src/pages/AllProjects.tsx` | Board/list/archived view switching, tutorial gating, exports, Supabase-backed list pagination | High | Done | Covered by `src/pages/__tests__/AllProjects.test.tsx` validating view mode persistence, Kanban/list dataset sync, and CSV export error toasts. |
-| Analytics dashboard page | `src/pages/Analytics.tsx` | Session metric toggles, Supabase aggregation fallbacks, chart data transforms | Medium | Not started | Stub analytics queries to confirm scheduled vs created toggles, empty states, and failure toasts. |
+| Analytics dashboard page | `src/pages/Analytics.tsx` | Session metric toggles, Supabase aggregation fallbacks, chart data transforms | Medium | Done | Covered by `src/pages/__tests__/Analytics.test.tsx` exercising scheduled/created toggles, empty datasets, and failure toast handling. |
 | Workflows management page | `src/pages/Workflows.tsx` | Filtering, KPI summaries, pagination, toggle actions | High | Not started | Mock `useWorkflows` to assert status filters, load-more pagination, KPI card counts, and toggle/CRUD dialog wiring. |
 | Session detail page | `src/pages/SessionDetail.tsx` | Supabase fetch path, edit/delete flows, navigation fallback | High | Not started | Validate skeleton-to-content transition, delete success redirect, and error toast on fetch failure. |
 | Calendar page | `src/pages/Calendar.tsx` | Range filters, session grouping, performance panels | High | Done | Covered by `src/pages/__tests__/Calendar.test.tsx` validating skeleton loading, segmented view switching, and session sheet launch. |

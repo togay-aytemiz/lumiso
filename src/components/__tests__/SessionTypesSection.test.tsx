@@ -171,7 +171,7 @@ describe("SessionTypesSection", () => {
       expect(mockUpdateSettings).toHaveBeenCalledWith({ default_session_type_id: "type-10" });
     });
     expect(mockToast).toHaveBeenCalledWith({
-      title: "success.success",
+      title: "toast.success",
       description: "sessionTypes.success.default_updated",
     });
     expect(mockInvalidateQueries).toHaveBeenCalled();
@@ -193,7 +193,7 @@ describe("SessionTypesSection", () => {
       expect(mockUpdateEq).toHaveBeenCalledWith("id", "type-20");
     });
     expect(mockToast).toHaveBeenCalledWith({
-      title: "success.success",
+      title: "toast.success",
       description: "sessionTypes.success.deactivated",
     });
     expect(mockInvalidateQueries).toHaveBeenCalled();
@@ -217,7 +217,7 @@ describe("SessionTypesSection", () => {
       expect(mockDeleteEq).toHaveBeenCalledWith("id", "type-30");
     });
     expect(mockToast).toHaveBeenCalledWith({
-      title: "success.success",
+      title: "toast.success",
       description: "sessionTypes.success.deleted",
     });
     expect(mockInvalidateQueries).toHaveBeenCalled();

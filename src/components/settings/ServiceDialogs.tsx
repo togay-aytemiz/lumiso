@@ -83,7 +83,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast({
-        title: t('common.errors.error'),
+        title: t('common.toast.error'),
         description: t('service.errors.name_required'),
         variant: "destructive"
       });
@@ -118,7 +118,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
       if (error) throw error;
 
       toast({
-        title: t('common.success.success'),
+        title: t('common.toast.success'),
         description: t('service.success.added')
       });
 
@@ -135,7 +135,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
       onServiceAdded();
     } catch (error: any) {
       toast({
-        title: t('common.errors.error'),
+        title: t('common.toast.error'),
         description: error.message,
         variant: "destructive"
       });
@@ -431,7 +431,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast({
-        title: t('common.errors.error'),
+        title: t('common.toast.error'),
         description: t('service.errors.name_required'),
         variant: "destructive"
       });
@@ -456,7 +456,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       if (error) throw error;
 
       toast({
-        title: t('common.success.success'),
+        title: t('common.toast.success'),
         description: t('service.success.updated')
       });
 
@@ -464,7 +464,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       onServiceUpdated();
     } catch (error: any) {
       toast({
-        title: t('common.errors.error'),
+        title: t('common.toast.error'),
         description: error.message,
         variant: "destructive"
       });

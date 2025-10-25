@@ -38,11 +38,11 @@
 | --- | --- | --- | --- |
 | Core Libraries & Helpers | 5 | 13 | 38% |
 | Services & Data Access | 5 | 5 | 100% |
-| Contexts & Hooks | 15 | 24 | 63% |
+| Contexts & Hooks | 18 | 24 | 75% |
 | UI Components & Pages | 2 | 27 | 7% |
 | UI Primitives & Shared Components | 0 | 8 | 0% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **27** | **86** | **31%** |
+| **Overall** | **30** | **86** | **35%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -92,9 +92,9 @@
 | Project payments hook | `src/hooks/useProjectPayments.ts` | Aggregated totals, missing services/payments fallback | Medium | Done | Covered by `src/hooks/__tests__/useProjectPayments.test.tsx` aggregating totals, handling errors, and verifying refresh/refetch. |
 | Project sessions summary hook | `src/hooks/useProjectSessionsSummary.ts` | Status grouping, overdue detection, refresh triggers | Medium | Not started | Freeze dates to assert metrics snapshot. |
 | Organization quick settings | `src/hooks/useOrganizationQuickSettings.ts` | Memo defaults, refresh passthrough | Low | Done | Covered via `src/hooks/__tests__/useOrganizationQuickSettings.test.tsx` ensuring default true and refetch passthrough. |
-| Organization timezone | `src/hooks/useOrganizationTimezone.ts` | Format conversion helpers, detect fallback timezone | Medium | Not started | Mock settings to cover 12/24 hour + timezone edge cases. |
-| Notification triggers | `src/hooks/useNotificationTriggers.ts` | Milestone notifications, batch scheduling, toast errors | Medium | Not started | Spy on Supabase functions.invoke to capture payloads. |
-| Settings section manager | `src/hooks/useSettingsSection.ts` | Auto-save throttling, dirty tracking, toast toggles | Medium | Not started | Use fake timers to validate throttled saves + cleanup. |
+| Organization timezone | `src/hooks/useOrganizationTimezone.ts` | Format conversion helpers, detect fallback timezone | Medium | Done | Covered via `src/hooks/__tests__/useOrganizationTimezone.test.ts` ensuring settings-driven formats and fallback timezone detection. |
+| Notification triggers | `src/hooks/useNotificationTriggers.ts` | Milestone notifications, batch scheduling, toast errors | Medium | Done | Covered by `src/hooks/__tests__/useNotificationTriggers.test.ts` for Supabase insert/invoke flows and error toasts. |
+| Settings section manager | `src/hooks/useSettingsSection.ts` | Auto-save throttling, dirty tracking, toast toggles | Medium | Done | Covered via `src/hooks/__tests__/useSettingsSection.test.ts` for manual saves, auto-save throttle, and toast/error handling. |
 | Template builder hook | `src/hooks/useTemplateBuilder.ts` | Load/save pipelines, placeholder extraction, publish flow | High | Not started | Mock Supabase responses + ensure blocks conversions happen. |
 | Template validation hook | `src/hooks/useTemplateValidation.ts` | Warning/error matrix, published template requirements | Medium | Not started | Table-driven tests for inputs covering each branch. |
 
@@ -195,6 +195,9 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-25 (past midnight) | Codex | Added project payments hook coverage | `src/hooks/__tests__/useProjectPayments.test.tsx` aggregates totals, handles Supabase errors, and verifies refresh/refetch | Extend when payments logic adds currencies or statuses |
 | 2025-10-25 (just after) | Codex | Added base entity service coverage | `src/services/__tests__/BaseEntityService.test.ts` validates org lookup failure handling and authenticated user guard | Revisit if service gains caching layers |
 | 2025-10-25 (very late) | Codex | Added organization quick settings coverage | `src/hooks/__tests__/useOrganizationQuickSettings.test.tsx` ensures default fallback and refresh passthrough | Extend if quick settings grow beyond boolean toggles |
+| 2025-10-25 (night owl) | Codex | Added organization timezone hook coverage | `src/hooks/__tests__/useOrganizationTimezone.test.ts` confirms settings-driven formats and browser fallback | Revisit when timezone settings grow more nuanced |
+| 2025-10-25 (early morning) | Codex | Added notification triggers hook coverage | `src/hooks/__tests__/useNotificationTriggers.test.ts` validates milestone creation, scheduling, processing, and retry flows with error toasts | Extend when new trigger actions are added |
+| 2025-10-25 (pre-dawn) | Codex | Added settings section manager coverage | `src/hooks/__tests__/useSettingsSection.test.ts` covers dirty tracking, manual and auto-save flows, and toast behaviors | Revisit if additional throttling options are introduced |
 | 2025-10-25 (after midnight) | Codex | Added project sessions summary hook coverage | `src/hooks/__tests__/useProjectSessionsSummary.test.tsx` groups statuses, detects overdue/today/upcoming, and handles refresh triggers | Extend when summary introduces new status categories |
 | 2025-10-25 (morning) | Codex | Added Session Types settings coverage | `src/components/__tests__/SessionTypesSection.test.tsx` ensures empty state, default assignment, activation toggle, and deletion flows | Revisit when session type UI adds drag/reorder or bulk actions |
 

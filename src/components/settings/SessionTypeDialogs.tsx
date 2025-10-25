@@ -163,7 +163,7 @@ export function AddSessionTypeDialog({
       const createdSessionType = data as SessionType;
 
       toast({
-        title: t("common.success.success"),
+        title: t("common.toast.success"),
         description: t("sessionTypes.success.added", { ns: "forms" }),
       });
 
@@ -175,7 +175,7 @@ export function AddSessionTypeDialog({
     } catch (error: any) {
       console.error("Error creating session type:", error);
       toast({
-        title: t("common.errors.error"),
+        title: t("common.toast.error"),
         description: error.message || t("sessionTypes.errors.add_failed", { ns: "forms" }),
         variant: "destructive",
       });
@@ -429,7 +429,7 @@ export function EditSessionTypeDialog({
         } as SessionType);
 
       toast({
-        title: t("common.success.success"),
+        title: t("common.toast.success"),
         description: t("sessionTypes.success.updated", { ns: "forms" }),
       });
 
@@ -442,7 +442,7 @@ export function EditSessionTypeDialog({
     } catch (error: any) {
       console.error("Error updating session type:", error);
       toast({
-        title: t("common.errors.error"),
+        title: t("common.toast.error"),
         description: error.message || t("sessionTypes.errors.update_failed", { ns: "forms" }),
         variant: "destructive",
       });

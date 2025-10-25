@@ -395,7 +395,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       if (error) throw error;
 
       toast({
-        title: t('common.success.success'),
+        title: t('common.toast.success'),
         description: t('package.success.added'),
       });
 
@@ -403,7 +403,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
     } catch (error) {
       console.error('Error creating package:', error);
       toast({
-        title: t('common.errors.error'),
+        title: t('common.toast.error'),
         description: t('package.errors.add_failed'),
         variant: "destructive",
       });
@@ -709,7 +709,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       if (error) throw error;
 
       toast({
-        title: t('package.success.updated'),
+        title: t('common.toast.success'),
         description: t('package.success.updated'),
       });
 
@@ -717,7 +717,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
     } catch (error) {
       console.error('Error updating package:', error);
       toast({
-        title: t('common.errors.error'),
+        title: t('common.toast.error'),
         description: t('package.errors.update_failed'),
         variant: "destructive",
       });

@@ -89,7 +89,7 @@ const SessionTypesSection = () => {
       const result = await updateSettings({ default_session_type_id: sessionType.id });
       if (result.success) {
         toast({
-          title: tCommon("success.success"),
+          title: tCommon("toast.success"),
           description: tForms("sessionTypes.success.default_updated"),
         });
         invalidateSessionTypeQueries();
@@ -97,7 +97,7 @@ const SessionTypesSection = () => {
     } catch (error: any) {
       console.error("Failed to set default session type:", error);
       toast({
-        title: tCommon("errors.error"),
+        title: tCommon("toast.error"),
         description: error.message || tForms("sessionTypes.errors.default_failed"),
         variant: "destructive",
       });
@@ -112,7 +112,7 @@ const SessionTypesSection = () => {
       const result = await updateSettings({ default_session_type_id: null });
       if (result.success) {
         toast({
-          title: tCommon("success.success"),
+          title: tCommon("toast.success"),
           description: tForms("sessionTypes.success.default_cleared"),
         });
         invalidateSessionTypeQueries();
@@ -120,7 +120,7 @@ const SessionTypesSection = () => {
     } catch (error: any) {
       console.error("Failed to clear default session type:", error);
       toast({
-        title: tCommon("errors.error"),
+        title: tCommon("toast.error"),
         description: error.message || tForms("sessionTypes.errors.default_failed"),
         variant: "destructive",
       });
@@ -149,7 +149,7 @@ const SessionTypesSection = () => {
       if (error) throw error;
 
       toast({
-        title: tCommon("success.success"),
+        title: tCommon("toast.success"),
         description: nextActive
           ? tForms("sessionTypes.success.activated")
           : tForms("sessionTypes.success.deactivated"),
@@ -159,7 +159,7 @@ const SessionTypesSection = () => {
     } catch (error: any) {
       console.error("Failed to toggle session type:", error);
       toast({
-        title: tCommon("errors.error"),
+        title: tCommon("toast.error"),
         description: error.message || tForms("sessionTypes.errors.toggle_failed"),
         variant: "destructive",
       });
@@ -181,7 +181,7 @@ const SessionTypesSection = () => {
       if (error) throw error;
 
       toast({
-        title: tCommon("success.success"),
+        title: tCommon("toast.success"),
         description: tForms("sessionTypes.success.deleted"),
       });
 
@@ -189,7 +189,7 @@ const SessionTypesSection = () => {
     } catch (error: any) {
       console.error("Failed to delete session type:", error);
       toast({
-        title: tCommon("errors.error"),
+        title: tCommon("toast.error"),
         description: error.message || tForms("sessionTypes.errors.delete_failed"),
         variant: "destructive",
       });

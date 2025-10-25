@@ -38,11 +38,11 @@
 | --- | --- | --- | --- |
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
-| Contexts & Hooks | 23 | 24 | 96% |
+| Contexts & Hooks | 24 | 24 | 100% |
 | UI Components & Pages | 8 | 27 | 30% |
 | UI Primitives & Shared Components | 1 | 8 | 13% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **50** | **86** | **58%** |
+| **Overall** | **51** | **86** | **59%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -95,7 +95,7 @@
 | Organization timezone | `src/hooks/useOrganizationTimezone.ts` | Format conversion helpers, detect fallback timezone | Medium | Done | Covered via `src/hooks/__tests__/useOrganizationTimezone.test.ts` ensuring settings-driven formats and fallback timezone detection. |
 | Notification triggers | `src/hooks/useNotificationTriggers.ts` | Milestone notifications, batch scheduling, toast errors | Medium | Done | Covered by `src/hooks/__tests__/useNotificationTriggers.test.ts` for Supabase insert/invoke flows and error toasts. |
 | Settings section manager | `src/hooks/useSettingsSection.ts` | Auto-save throttling, dirty tracking, toast toggles | Medium | Done | Covered via `src/hooks/__tests__/useSettingsSection.test.ts` for manual saves, auto-save throttle, and toast/error handling. |
-| Template builder hook | `src/hooks/useTemplateBuilder.ts` | Load/save pipelines, placeholder extraction, publish flow | High | Not started | Mock Supabase responses + ensure blocks conversions happen. |
+| Template builder hook | `src/hooks/useTemplateBuilder.ts` | Load/save pipelines, placeholder extraction, publish flow | High | Done | Covered by `src/hooks/__tests__/useTemplateBuilder.test.tsx` for load transforms, block conversions, and publish toast. |
 | Template validation hook | `src/hooks/useTemplateValidation.ts` | Warning/error matrix, published template requirements | Medium | Done | Covered by `src/hooks/__tests__/useTemplateValidation.test.ts` for missing template, name/content validation, placeholders, and published requirements. |
 
 ### UI Components & Pages

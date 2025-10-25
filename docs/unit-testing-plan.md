@@ -38,11 +38,11 @@
 | --- | --- | --- | --- |
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
-| Contexts & Hooks | 24 | 27 | 89% |
+| Contexts & Hooks | 27 | 27 | 100% |
 | UI Components & Pages | 49 | 70 | 70% |
 | UI Primitives & Shared Components | 17 | 17 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **117** | **141** | **83%** |
+| **Overall** | **120** | **141** | **85%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -81,7 +81,7 @@
 | Session actions | `src/hooks/useSessionActions.ts` | Reminder cleanup, workflow triggers on status change | High | Done | Covered via `src/hooks/__tests__/useSessionActions.test.tsx` for delete failure + status update flows. |
 | Entity data helper | `src/hooks/useEntityData.ts` | Error propagation, dependency refresh behavior | Medium | Done | Covered by `src/hooks/__tests__/useEntityData.test.tsx` for toast fallback, dependency refetch, and custom error handlers. |
 | User preferences hook | `src/hooks/useUserPreferences.ts` | Default bootstrap, optimistic updates, retry strategy | High | Done | Covered by `src/hooks/__tests__/useUserPreferences.test.ts` for bootstrap, defaults, optimistic + helper flows. |
-| Payments workspace hooks | `src/pages/payments/hooks/usePaymentsData.ts`, `usePaymentsFilters.tsx`, `usePaymentsTableColumns.tsx` | Data fetching fallbacks, filter persistence, column memoization | High | Not started | No tests under `src/pages/payments/`; cover Supabase RPC wiring, pagination, and filter sync behavior. |
+| Payments workspace hooks | `src/pages/payments/hooks/usePaymentsData.ts`, `usePaymentsFilters.tsx`, `usePaymentsTableColumns.tsx` | Data fetching fallbacks, filter persistence, column memoization | High | Done | Covered by `src/pages/payments/hooks/__tests__/usePaymentsData.test.ts`, `usePaymentsFilters.test.tsx`, and `usePaymentsTableColumns.test.tsx` validating Supabase query composition, search/amount filter thresholds, and interactive column renderers. |
 | Auth provider | `src/contexts/AuthContext.tsx` | Role fetching, auth change handling, sign-out side effects | High | Done | Covered by `src/contexts/__tests__/AuthContext.test.tsx` (session bootstrap + role fetch + sign-out). |
 | Organization provider | `src/contexts/OrganizationContext.tsx` | Initial load, presence heartbeat cleanup, data prefetch | High | Done | Covered by `src/contexts/__tests__/OrganizationContext.test.tsx` (bootstrap fetch + refresh toast trigger). |
 | Onboarding provider | `src/contexts/OnboardingContext.tsx` | Computed flags, guarded transitions, batch completion | Medium | Done | Covered by `src/contexts/__tests__/OnboardingContext.test.tsx` (computed flags + action guardrails). |
@@ -283,6 +283,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-11-05 (later) | Codex | Added activity timelines for leads/projects | Added `src/components/__tests__/ActivitySection.test.tsx` and `LeadActivitySection.test.tsx` to validate filter modes, creation toasts, history segments, and completion toggles | Monitor for new activity types or audit entities to extend fixtures |
 | 2025-11-06 | Codex | Hardened settings pages for services, projects, and danger zone flows | Added `src/pages/settings/__tests__/Services.test.tsx`, `Projects.test.tsx`, and `DangerZone.test.tsx` to verify tutorial start/completion, section composition, and destructive guardrails | Follow up by covering `src/pages/settings/General.tsx` and profile/onboarding dialogs |
 | 2025-11-08 | Codex | Audited coverage against current repo state | Updated progress snapshot and backlog rows for onboarding, payments, admin, and remaining settings screens/components with no tests | Assign owners for new high-priority gaps |
+| 2025-11-09 | Codex | Added payments workspace hook coverage | `src/pages/payments/hooks/__tests__/usePaymentsData.test.ts`, `usePaymentsFilters.test.tsx`, and `usePaymentsTableColumns.test.tsx` lock Supabase pagination/search filters, draft thresholds, and column callbacks | Track future payments analytics or virtualization enhancements |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 29 | 43 | 67% |
+| UI Components & Pages | 31 | 43 | 72% |
 | UI Primitives & Shared Components | 13 | 13 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **93** | **107** | **87%** |
+| **Overall** | **95** | **107** | **89%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -119,8 +119,8 @@
 | Analytics dashboard page | `src/pages/Analytics.tsx` | Session metric toggles, Supabase aggregation fallbacks, chart data transforms | Medium | Not started | Stub analytics queries to confirm scheduled vs created toggles, empty states, and failure toasts. |
 | Workflows management page | `src/pages/Workflows.tsx` | Filtering, KPI summaries, pagination, toggle actions | High | Not started | Mock `useWorkflows` to assert status filters, load-more pagination, KPI card counts, and toggle/CRUD dialog wiring. |
 | Session detail page | `src/pages/SessionDetail.tsx` | Supabase fetch path, edit/delete flows, navigation fallback | High | Not started | Validate skeleton-to-content transition, delete success redirect, and error toast on fetch failure. |
-| Calendar page | `src/pages/Calendar.tsx` | Range filters, session grouping, performance panels | High | Not started | Use fake timers to cover performance overlay toggles. |
-| Upcoming sessions page | `src/pages/UpcomingSessions.tsx` | Filters, session sorting, empty state messaging | Medium | Not started | Ensure sessions from multiple statuses render correctly. |
+| Calendar page | `src/pages/Calendar.tsx` | Range filters, session grouping, performance panels | High | Done | Covered by `src/pages/__tests__/Calendar.test.tsx` validating skeleton loading, segmented view switching, and session sheet launch. |
+| Upcoming sessions page | `src/pages/UpcomingSessions.tsx` | Filters, session sorting, empty state messaging | Medium | Done | Covered by `src/pages/__tests__/UpcomingSessions.test.tsx` confirming KPI metrics, segment filters, and session sheet navigation. |
 | Templates workspace | `src/pages/Templates.tsx` | Block editor integration, preview data toggles | Medium | Not started | Mock template utils + i18n to confirm fallback content. |
 | Session types settings | `src/components/SessionTypesSection.tsx` | CRUD workflows, default selection, empty states | High | Done | Covered by `src/components/__tests__/SessionTypesSection.test.tsx` (empty state, default toggle, activation toggle, deletion). |
 | Session form fields | `src/components/SessionFormFields.tsx` | Validation messaging, timezone-aware inputs, reminders toggles | Medium | Done | Covered by `src/components/__tests__/SessionFormFields.test.tsx` (project selector + field callbacks). |
@@ -258,6 +258,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-30 (final wrap) | Codex | Added test callback harness coverage | `supabase/functions/tests/test-callback.test.ts` covers OPTIONS CORS headers, metadata echo, and error surfacing | No follow-up; keep function as diagnostic surface |
 | 2025-10-30 (night wrap++) | Codex | Added lead detail page coverage | `src/pages/__tests__/LeadDetail.test.tsx` locks loading skeleton, summary wiring, quick status buttons, and fetch error toasts | Next: tackle ProjectDetail page data orchestration |
 | 2025-10-31 | Codex | Added Project detail page coverage | `src/pages/__tests__/ProjectDetail.test.tsx` exercises successful fetch composition and missing-project redirect toast | Next: Cover Calendar and UpcomingSessions pages |
+| 2025-10-31 (later still) | Codex | Added Calendar and Upcoming Sessions page coverage | `src/pages/__tests__/Calendar.test.tsx` and `src/pages/__tests__/UpcomingSessions.test.tsx` lock view toggles, KPI metrics, segment filtering, and session sheet navigation | Next: Tackle AllProjects workspace sorting/export flows |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

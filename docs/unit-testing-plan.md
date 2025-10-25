@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 27 | 27 | 100% |
-| UI Components & Pages | 70 | 73 | 96% |
+| UI Components & Pages | 71 | 73 | 97% |
 | UI Primitives & Shared Components | 18 | 18 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **142** | **145** | **98%** |
+| **Overall** | **143** | **145** | **99%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -163,7 +163,7 @@
 | Marketing landing page | `src/pages/Index.tsx` | Auth-based redirects, CTA links, feature highlights | Medium | Done | Covered by `src/pages/__tests__/Index.test.tsx` validating loading skeleton, CRM redirect, and public CTA navigation. |
 | Not found route | `src/pages/NotFound.tsx` | Support links, navigation back to dashboard, localization | Low | Done | Covered by `src/pages/__tests__/NotFound.test.tsx` asserting error logging and dashboard link rendering. |
 | Payments dashboard page | `src/pages/Payments.tsx` | Metrics cards, filters, pagination, workspace toggles | High | Done | Covered by `src/pages/__tests__/Payments.test.tsx` validating filter state wiring, export workbook creation, toast feedback, and table/search props. |
-| Reminder details page | `src/pages/ReminderDetails.tsx` | Reminder fetch, status updates, reschedule/cancel flows | High | Not started | Lacks tests for Supabase-driven reminder lifecycle; add success/error scenarios. |
+| Reminder details page | `src/pages/ReminderDetails.tsx` | Reminder fetch, status updates, reschedule/cancel flows | High | Done | Covered by `src/pages/__tests__/ReminderDetails.test.tsx` exercising fetch stats, error toasts, completion toggles, and project dialog hand-offs. |
 | Template builder page | `src/pages/TemplateBuilder.tsx` | Editor state management, autosave/publish, preview toggles | High | Done | Covered by `src/pages/__tests__/TemplateBuilder.test.tsx` for loading state, save workflow, and block updates. |
 | Admin console screens | `src/pages/admin/Users.tsx`, `Localization.tsx`, `System.tsx` | Table interactions, role actions, localization sync | High | Done | Covered by `src/pages/admin/__tests__/Users.test.tsx`, `Localization.test.tsx`, and `System.test.tsx` rendering translation scaffolding and toggle interactions. |
 | Settings management pages | `src/pages/settings/Billing.tsx`, `Contracts.tsx`, `Leads.tsx`, `Profile.tsx`, `Account_old.tsx` | Section visibility, save flows, permission guards | Medium | Done | Covered by new suites in `src/pages/settings/__tests__/Billing.test.tsx`, `Contracts.test.tsx`, `Leads.test.tsx`, `Profile.test.tsx`, and `Account_old.test.tsx` validating headers, loading guards, and working-hour updates. |
@@ -298,6 +298,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-11-11 | Codex | Added guard, language, and instrumentation component coverage | Added `src/components/__tests__/ErrorBoundary.test.tsx`, `LanguageSwitcher.test.tsx`, `PerformanceMonitor.test.tsx`, and `TruncatedTextWithTooltip.test.tsx` to lock fallback UI, language toggles, dev-only warnings, and truncation tooltips | Revisit when onboarding metrics expand or tooltip delays change |
 | 2025-11-12 | Codex | Added Payments workspace page + component coverage | Added `src/pages/__tests__/Payments.test.tsx` alongside component specs for date controls, trend chart, metrics summary, and table section to verify filter resets, export flows, formatter output, and chart/empty states | Next: extend coverage to ReminderDetails page and remaining settings screens |
 | 2025-11-13 | Codex | Added calendar component coverage | Added `src/components/calendar/__tests__/CalendarDay.test.tsx`, `CalendarDayView.test.tsx`, `CalendarMonthView.test.tsx`, `CalendarWeek.test.tsx`, `CalendarSkeleton.test.tsx`, and `CalendarErrorBoundary.test.tsx` to cover mobile/day/month/week interactions, skeleton scaffolds, and error recovery flows | Next: Explore coverage for calendar virtualization performance metrics and touch gesture edge cases |
+| 2025-11-14 | Codex | Added reminder details page coverage | Added `src/pages/__tests__/ReminderDetails.test.tsx` to validate reminder stats, fetch error toasts, completion toggles, navigation, and project dialog fetches | Keep an eye on future reminder reschedule flows or provider refactors |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

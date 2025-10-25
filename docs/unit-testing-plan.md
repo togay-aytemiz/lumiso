@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 13 | 27 | 48% |
+| UI Components & Pages | 14 | 27 | 52% |
 | UI Primitives & Shared Components | 1 | 8 | 13% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **56** | **86** | **65%** |
+| **Overall** | **57** | **86** | **66%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -127,7 +127,7 @@
 | Project sheet view | `src/components/ProjectSheetView.tsx` | Printable layout, localization of labels, totals | Medium | Not started | Snapshot layout with English/Turkish translations. |
 | Onboarding modal | `src/components/OnboardingModal.tsx` | Step transitions, skip behavior, analytics events | Medium | Not started | Mock context + ensure stage transitions call hooks. |
 | Dead simple session banner | `src/components/DeadSimpleSessionBanner.tsx` | Feature flag handling, CTA availability, close persistence | Low | Not started | Confirm banner hides once dismissed per user. |
-| App sidebar | `src/components/AppSidebar.tsx` | Active route highlighting, role-based menu items | High | Not started | Mock router + auth roles to confirm navigation gating. |
+| App sidebar | `src/components/AppSidebar.tsx` | Active route highlighting, role-based menu items | High | Done | Covered by `src/components/__tests__/AppSidebar.test.tsx` for active route styling + admin/support visibility. |
 
 ### UI Primitives & Shared Components
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -214,6 +214,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-26 (night) | Codex | Added EnhancedSessionsSection coverage | `src/components/__tests__/EnhancedSessionsSection.test.tsx` verifies lifecycle sorting order, count badge rendering, and banner click wiring | Next: Monitor virtualization thresholds or analytics hooks if they land |
 | 2025-10-26 (late night+) | Codex | Added Enhanced lead edit dialog coverage | `src/components/__tests__/EnhancedEditLeadDialog.test.tsx` exercises prefill, dirty-state detection, validation errors, and Supabase update success toasts | Revisit when dynamic field schema or toast messaging changes |
 | 2025-10-26 (early dawn) | Codex | Added EnhancedProjectDialog coverage | `src/components/__tests__/EnhancedProjectDialog.test.tsx` loads defaults and verifies cancel-driven reset flows | Monitor if project dialog gains new pricing or lead workflows |
+| 2025-10-26 (morning++) | Codex | Added App sidebar navigation coverage | `src/components/__tests__/AppSidebar.test.tsx` ensures active-route highlighting and admin/support menu gating | Revisit onboarding lock behaviour when navigation restrictions change |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

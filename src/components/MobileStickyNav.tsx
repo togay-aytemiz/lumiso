@@ -71,6 +71,7 @@ export function MobileStickyNav() {
             <NavLink
               key={item.title}
               to={item.url}
+              aria-label={item.title}
               className={`h-12 flex items-center justify-center transition-colors ${
                 active
                   ? "bg-primary-foreground/20 text-primary-foreground"
@@ -85,6 +86,7 @@ export function MobileStickyNav() {
         {/* Projects */}
         <NavLink
           to="/projects"
+          aria-label="Projects"
           className={`h-12 flex items-center justify-center transition-colors ${
             isActive("/projects")
               ? "bg-primary-foreground/20 text-primary-foreground"
@@ -98,6 +100,8 @@ export function MobileStickyNav() {
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setBookingsExpanded(!bookingsExpanded)}
+            aria-label="Bookings menu"
+            aria-expanded={bookingsExpanded}
             className={`h-12 w-full flex items-center justify-center transition-colors ${
               isBookingsActive
                 ? "bg-primary-foreground/20 text-primary-foreground"
@@ -139,6 +143,7 @@ export function MobileStickyNav() {
             <NavLink
               key={item.title}
               to={item.url}
+              aria-label={item.title}
               className={`h-12 flex items-center justify-center transition-colors ${
                 active
                   ? "bg-primary-foreground/20 text-primary-foreground"
@@ -154,6 +159,7 @@ export function MobileStickyNav() {
         <div className="mt-auto">
           <NavLink
             to="/settings"
+            aria-label="Settings"
             className={`h-12 flex items-center justify-center transition-colors ${
               isActive("/settings")
                 ? "bg-primary-foreground/20 text-primary-foreground"

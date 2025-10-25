@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 14 | 27 | 52% |
+| UI Components & Pages | 17 | 27 | 63% |
 | UI Primitives & Shared Components | 3 | 8 | 38% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **59** | **86** | **69%** |
+| **Overall** | **62** | **86** | **72%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -218,6 +218,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-26 (morning++) | Codex | Added App sidebar navigation coverage | `src/components/__tests__/AppSidebar.test.tsx` ensures active-route highlighting and admin/support menu gating | Revisit onboarding lock behaviour when navigation restrictions change |
 | 2025-10-26 (afternoon) | Codex | Added loading preset skeleton coverage | `src/components/ui/__tests__/loading-presets.test.tsx` verifies wrapper styling, variant props, and compact/grid fallbacks | Next: Cover toast hook + toaster once queue logic stabilizes |
 | 2025-10-26 (evening) | Codex | Added long press confirmation button coverage | `src/components/ui/__tests__/long-press-button.test.tsx` validates hold lifecycle, countdown messaging, and completion reset | Follow up by tackling toast hook/toaster queue scenarios |
+| 2025-10-26 (late evening) | Codex | Added ReminderCard, MobileStickyNav, and TimezoneSelector coverage | `src/components/__tests__/ReminderCard.test.tsx`, `src/components/__tests__/MobileStickyNav.test.tsx`, `src/components/__tests__/TimezoneSelector.test.tsx` harden reminder badges/toggles, bookings navigation, and timezone auto-detect flows | Keep chipping away at remaining UI component gaps |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

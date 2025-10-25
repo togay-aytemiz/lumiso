@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 32 | 43 | 74% |
+| UI Components & Pages | 33 | 43 | 77% |
 | UI Primitives & Shared Components | 13 | 13 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **96** | **107** | **90%** |
+| **Overall** | **97** | **107** | **91%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -135,7 +135,7 @@
 | Activity timeline section | `src/components/ActivitySection.tsx` | Activity CRUD, reminder scheduling, filter tabs | High | Not started | Stub Supabase helpers to ensure create/edit validation, filter chips, and audit log rendering with skeleton states. |
 | Lead activity section | `src/components/LeadActivitySection.tsx` | Segmented activity/history views, cross-entity fetches, audit timeline | Medium | Not started | Mock Supabase responses to assert segment toggles, merged histories, and toast errors. |
 | Workflow creation sheet | `src/components/CreateWorkflowSheet.tsx` | Form dirty-state guard, channel toggles, template selection, create/update branching | High | Not started | Mock `useTemplates` to cover edit autopopulation, validation gating, submission callbacks, and navigation guard prompts. |
-| Workflow delete dialog | `src/components/WorkflowDeleteDialog.tsx` | Confirmation copy, destructive action wiring, disabled state | Medium | Not started | Assert translation usage, cancel vs confirm callbacks, and disabled button state while deleting. |
+| Workflow delete dialog | `src/components/WorkflowDeleteDialog.tsx` | Confirmation copy, destructive action wiring, disabled state | Medium | Done | Covered by `src/components/__tests__/WorkflowDeleteDialog.test.tsx` verifying translation text, cancel/confirm callbacks, close handling, and disabled deletion state. |
 | Project sheet preview | `src/components/ProjectSheetPreview.tsx` | Modal lifecycle, related data fetches, navigation callbacks | Medium | Not started | Verify Supabase fetch chaining, archive badge detection, and CTA handlers closing modal. |
 | Dead simple session banner | `src/components/DeadSimpleSessionBanner.tsx` | Feature flag handling, CTA availability, close persistence | Low | Done | Covered by `src/components/__tests__/DeadSimpleSessionBanner.test.tsx` checking relative badges, project labels, and click handling. |
 | Guided step progress indicator | `src/components/GuidedStepProgress.tsx` | Animation pacing, percentage calculations, copy fallback | Low | Done | Covered by `src/components/__tests__/GuidedStepProgress.test.tsx` verifying animated timer progression and non-animated target display. |
@@ -260,6 +260,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-31 | Codex | Added Project detail page coverage | `src/pages/__tests__/ProjectDetail.test.tsx` exercises successful fetch composition and missing-project redirect toast | Next: Cover Calendar and UpcomingSessions pages |
 | 2025-10-31 (later still) | Codex | Added Calendar and Upcoming Sessions page coverage | `src/pages/__tests__/Calendar.test.tsx` and `src/pages/__tests__/UpcomingSessions.test.tsx` lock view toggles, KPI metrics, segment filtering, and session sheet navigation | Next: Tackle AllProjects workspace sorting/export flows |
 | 2025-11-01 | Codex | Added AllProjects workspace coverage | `src/pages/__tests__/AllProjects.test.tsx` verifies list defaults, archived toggle, quick view, and spreadsheet export success path | Next: Extend tests to cover board pagination and archived export error handling |
+| 2025-11-02 | Codex | Added workflow delete dialog coverage | `src/components/__tests__/WorkflowDeleteDialog.test.tsx` locks translation usage, cancel/confirm callbacks, close handling, and disabled deletion state | Revisit if dialog gains secondary actions or additional messaging |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

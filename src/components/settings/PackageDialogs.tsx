@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { X, Check } from "lucide-react";
@@ -22,7 +21,6 @@ interface Package {
   name: string;
   description?: string;
   price: number;
-  duration: string;
   applicable_types: string[];
   default_add_ons: string[];
   is_active: boolean;
@@ -264,21 +262,10 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
 export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPackageDialogProps) {
   const { t } = useTranslation(['forms', 'common']);
   
-  const staticDurationOptionsAdd = [
-    { value: "30m", label: t('package.duration_options.30m') },
-    { value: "1h", label: t('package.duration_options.1h') },
-    { value: "2h", label: t('package.duration_options.2h') },
-    { value: "3h", label: t('package.duration_options.3h') },
-    { value: "half_day", label: t('package.duration_options.half_day') },
-    { value: "full_day", label: t('package.duration_options.full_day') },
-    { value: "custom", label: t('package.duration_options.custom') },
-  ];
   const [packageData, setPackageData] = useState({
     name: "",
     description: "",
     price: "",
-    duration: "",
-    customDuration: "",
     applicable_types: [] as string[],
     default_add_ons: [] as string[],
     is_active: true
@@ -341,8 +328,6 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       name: "",
       description: "",
       price: "",
-      duration: "",
-      customDuration: "",
       applicable_types: [],
       default_add_ons: [],
       is_active: true
@@ -354,7 +339,6 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
     packageData.name.trim() ||
     packageData.description.trim() ||
     packageData.price.trim() ||
-    packageData.duration ||
     packageData.applicable_types.length > 0 ||
     packageData.default_add_ons.length > 0
   );
@@ -376,14 +360,6 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       newErrors.price = t('common.errors.price_required');
     }
 
-    if (!packageData.duration) {
-      newErrors.duration = t('common.errors.duration_required');
-    }
-
-    if (packageData.duration === "Custom" && !packageData.customDuration.trim()) {
-      newErrors.customDuration = t('common.errors.custom_duration_required');
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -395,8 +371,6 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
-
-      const finalDuration = packageData.duration === "Custom" ? packageData.customDuration : packageData.duration;
 
       // Get user's active organization
       const organizationId = await getUserOrganizationId();
@@ -412,7 +386,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
           name: packageData.name.trim(),
           description: packageData.description.trim() || null,
           price: Number(packageData.price),
-          duration: finalDuration,
+          duration: null,
           applicable_types: packageData.applicable_types,
           default_add_ons: packageData.default_add_ons,
           is_active: packageData.is_active
@@ -430,7 +404,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       console.error('Error creating package:', error);
       toast({
         title: t('common.errors.error'),
-        description: t('package.errors.name_required'),
+        description: t('package.errors.add_failed'),
         variant: "destructive",
       });
     } finally {
@@ -522,37 +496,9 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
         </div>
 
         {/* Duration */}
-        <div className="space-y-2">
-          <Label htmlFor="duration">{t('package.duration')} *</Label>
-          <p className="text-xs text-muted-foreground">{t('package.duration_help')}</p>
-          <Select value={packageData.duration} onValueChange={(value) => setPackageData(prev => ({ ...prev, duration: value }))}>
-            <SelectTrigger>
-              <SelectValue placeholder={t('package.select_duration')} />
-            </SelectTrigger>
-            <SelectContent>
-              {staticDurationOptionsAdd.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.duration && <p className="text-sm text-destructive">{errors.duration}</p>}
+        <div className="rounded-md border border-dashed bg-muted/10 p-3 text-xs text-muted-foreground">
+          {t('package.session_type_hint')}
         </div>
-
-        {/* Custom Duration */}
-        {packageData.duration === "custom" && (
-          <div className="space-y-2">
-            <Label htmlFor="customDuration">{t('package.custom_duration')} *</Label>
-            <Input
-              id="customDuration"
-              value={packageData.customDuration}
-              onChange={(e) => setPackageData(prev => ({ ...prev, customDuration: e.target.value }))}
-              placeholder={t('package.custom_duration_placeholder')}
-            />
-            {errors.customDuration && <p className="text-sm text-destructive">{errors.customDuration}</p>}
-          </div>
-        )}
 
         {/* Default Add-ons */}
         <div className="space-y-2">
@@ -646,22 +592,10 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
 
 export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageUpdated }: EditPackageDialogProps) {
   const { t } = useTranslation(['forms', 'common']);
-  
-  const staticDurationOptionsEdit = [
-    { value: "30m", label: t('package.duration_options.30m') },
-    { value: "1h", label: t('package.duration_options.1h') },
-    { value: "2h", label: t('package.duration_options.2h') },
-    { value: "3h", label: t('package.duration_options.3h') },
-    { value: "half_day", label: t('package.duration_options.half_day') },
-    { value: "full_day", label: t('package.duration_options.full_day') },
-    { value: "custom", label: t('package.duration_options.custom') },
-  ];
   const [packageData, setPackageData] = useState({
     name: "",
     description: "",
     price: "",
-    duration: "",
-    customDuration: "",
     applicable_types: [] as string[],
     default_add_ons: [] as string[],
     is_active: true
@@ -723,45 +657,12 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
     },
   });
 
-  // Fetch existing duration options from packages
-  const { data: durationOptions = [] } = useQuery({
-    queryKey: ['existing_durations'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-
-      // Get user's organization ID
-      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
-      const organizationId = await getUserOrganizationId();
-
-      if (!organizationId) {
-        return [];
-      }
-
-      const { data, error } = await supabase
-        .from('packages')
-        .select('duration')
-        .eq('organization_id', organizationId)
-        .not('duration', 'is', null);
-      
-      if (error) throw error;
-      
-      // Get unique durations and map to options format
-      const uniqueDurations = [...new Set(data?.map(p => p.duration) || [])];
-      return uniqueDurations
-        .map(duration => ({ value: duration, label: duration }))
-        .sort((a, b) => a.label.localeCompare(b.label));
-    },
-  });
-
   useEffect(() => {
     if (pkg && open) {
       setPackageData({
         name: pkg.name,
         description: pkg.description || "",
         price: pkg.price.toString(),
-        duration: pkg.duration,
-        customDuration: pkg.duration === "Custom" ? pkg.duration : "",
         applicable_types: [...pkg.applicable_types],
         default_add_ons: [...pkg.default_add_ons],
         is_active: pkg.is_active
@@ -781,14 +682,6 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       newErrors.price = t('common.errors.price_required');
     }
 
-    if (!packageData.duration) {
-      newErrors.duration = t('common.errors.duration_required');
-    }
-
-    if (packageData.duration === "Custom" && !packageData.customDuration.trim()) {
-      newErrors.customDuration = t('common.errors.custom_duration_required');
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -800,15 +693,13 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       setLoading(true);
       if (!pkg) return;
 
-      const finalDuration = packageData.duration === "Custom" ? packageData.customDuration : packageData.duration;
-
       const { error } = await supabase
         .from('packages')
         .update({
           name: packageData.name.trim(),
           description: packageData.description.trim() || null,
           price: Number(packageData.price),
-          duration: finalDuration,
+          duration: null,
           applicable_types: packageData.applicable_types,
           default_add_ons: packageData.default_add_ons,
           is_active: packageData.is_active
@@ -826,7 +717,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
     } catch (error) {
       console.error('Error updating package:', error);
       toast({
-        title: t('common.buttons.error'),
+        title: t('common.errors.error'),
         description: t('package.errors.update_failed'),
         variant: "destructive",
       });
@@ -849,7 +740,6 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       packageData.name !== pkg.name ||
       packageData.description !== (pkg.description || "") ||
       packageData.price !== pkg.price.toString() ||
-      packageData.duration !== pkg.duration ||
       JSON.stringify(packageData.applicable_types.sort()) !== JSON.stringify(pkg.applicable_types.sort()) ||
       JSON.stringify(packageData.default_add_ons.sort()) !== JSON.stringify(pkg.default_add_ons.sort()) ||
       packageData.is_active !== pkg.is_active
@@ -931,38 +821,9 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
           {errors.price && <p className="text-sm text-destructive">{errors.price}</p>}
         </div>
 
-        {/* Duration */}
-        <div className="space-y-2">
-          <Label htmlFor="duration">{t('package.duration')} *</Label>
-          <p className="text-xs text-muted-foreground">{t('package.duration_help')}</p>
-          <Select value={packageData.duration} onValueChange={(value) => setPackageData(prev => ({ ...prev, duration: value }))}>
-            <SelectTrigger>
-              <SelectValue placeholder={t('package.select_duration')} />
-            </SelectTrigger>
-            <SelectContent>
-              {durationOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.duration && <p className="text-sm text-destructive">{errors.duration}</p>}
+        <div className="rounded-md border border-dashed bg-muted/10 p-3 text-xs text-muted-foreground">
+          {t('package.session_type_hint')}
         </div>
-
-        {/* Custom Duration */}
-        {packageData.duration === "custom" && (
-          <div className="space-y-2">
-            <Label htmlFor="customDuration">{t('package.custom_duration')} *</Label>
-            <Input
-              id="customDuration"
-              value={packageData.customDuration}
-              onChange={(e) => setPackageData(prev => ({ ...prev, customDuration: e.target.value }))}
-              placeholder={t('package.custom_duration_placeholder')}
-            />
-            {errors.customDuration && <p className="text-sm text-destructive">{errors.customDuration}</p>}
-          </div>
-        )}
 
         {/* Default Add-ons */}
         <div className="space-y-2">

@@ -126,6 +126,37 @@ export function usePackages() {
   });
 }
 
+export function useSessionTypes() {
+  const { activeOrganizationId } = useOrganization();
+
+  return useQuery({
+    queryKey: ['session_types', activeOrganizationId],
+    queryFn: async () => {
+      if (!activeOrganizationId) return [];
+
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return [];
+
+      await supabase.rpc('ensure_default_session_types_for_org', {
+        user_uuid: user.user.id,
+        org_id: activeOrganizationId,
+      });
+
+      const { data, error } = await supabase
+        .from('session_types')
+        .select('*')
+        .eq('organization_id', activeOrganizationId)
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!activeOrganizationId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
 export function useProjectStatuses() {
   const { activeOrganizationId } = useOrganization();
 

@@ -20,7 +20,6 @@ interface Package {
   name: string;
   description?: string;
   price: number;
-  duration: string;
   applicable_types: string[];
   default_add_ons: string[];
   is_active: boolean;
@@ -82,24 +81,6 @@ const PackagesSection = () => {
     setEditingPackage(null);
     // Invalidate cache to refresh data
     queryClient.invalidateQueries({ queryKey: ['packages', activeOrganizationId] });
-  };
-
-  const formatDuration = (duration: string) => {
-    switch (duration) {
-      case "30m": return "30 minutes";
-      case "1h": return "1 hour";
-      case "1 hour": return "1 hour";
-      case "2h": return "2 hours";
-      case "2 hours": return "2 hours";
-      case "3h": return "3 hours";
-      case "3 hours": return "3 hours";
-      case "6 hours": return "6 hours";
-      case "Half-day": return "Half day";
-      case "Full-day": return "Full day";
-      case "Full day": return "Full day";
-      case "multi-session": return "Multi-session";
-      default: return duration;
-    }
   };
 
   if (isLoading) {
@@ -179,7 +160,6 @@ const PackagesSection = () => {
                       <tr className="border-b bg-muted/50">
                         <th className="px-4 py-3 text-left text-sm font-medium">{t('packages.package_name')}</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">{t('packages.price')}</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">{t('packages.duration')}</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">{t('packages.applicable_types')}</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">{t('packages.default_addons')}</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">{t('packages.visibility')}</th>
@@ -197,14 +177,14 @@ const PackagesSection = () => {
                                   {pkg.description}
                                 </div>
                               )}
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {t('packages.sessions_via_types')}
+                              </div>
                             </div>
                           </td>
                            <td className="px-4 py-3">
                              <span className="font-medium">TRY {pkg.price.toLocaleString()}</span>
                            </td>
-                          <td className="px-4 py-3">
-                            <span className="text-sm">{formatDuration(pkg.duration)}</span>
-                          </td>
                              <td className="px-4 py-3">
                               <div className="flex flex-wrap gap-1">
                                 {pkg.applicable_types.length === 0 ? (
@@ -317,9 +297,8 @@ const PackagesSection = () => {
                        TRY {pkg.price.toLocaleString()}
                     </Badge>
 
-                    {/* Duration badge */}
-                    <Badge variant="secondary" className="text-xs">
-                      {formatDuration(pkg.duration)}
+                    <Badge variant="outline" className="text-xs">
+                      {t('packages.sessions_via_types')}
                     </Badge>
 
                      {/* Add-ons count badge */}

@@ -162,7 +162,7 @@
   },
   "packages": {
     "title": "Paketler",
-    "description": "Fotoğrafçılık işletmeniz için hizmet paketleri oluşturun ve yönetin",
+    "description": "Fotoğrafçılık işletmeniz için hizmet paketleri oluşturun ve yönetin.",
     "package_deleted": "Paket Silindi",
     "package_deleted_desc": "\"{{name}}\" paketi başarıyla silindi",
     "error_deleting": "Paket silinirken hata oluştu",
@@ -172,7 +172,6 @@
     "create_first": "Başlamak için ilk paketinizi oluşturun",
     "package_name": "Paket Adı",
     "price": "Fiyat",
-    "duration": "Süre",
     "applicable_types": "Uygulanabilir Türler",
     "default_addons": "Varsayılan Eklentiler",
     "visibility": "Görünürlük",
@@ -187,10 +186,12 @@
     "inactive": "Pasif",
     "view_only": "Sadece Görüntüle",
     "no_addons": "Eklenti yok",
+    "sessions_via_types": "Seanslar Seans Türleri bölümünden yönetilir",
     "delete_package": "Paketi Sil",
     "delete_confirm": "\"{{name}}\" paketini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
     "add_services": "Hizmet Ekle",
-    "no_addons_selected": "Ek hizmet seçilmedi"
+    "no_addons_selected": "Ek hizmet seçilmedi",
+    "sessions_via_types": "Seanslar Seans Türleri bölümünden yönetilir"
   },
   "package": {
     "add_title": "Paket Ekle",
@@ -203,11 +204,6 @@
     "price": "Fiyat (TL)",
     "price_placeholder": "0",
     "price_help": "Kişiye gösterilen fiyat. Proje başına değiştirebilirsiniz.",
-    "duration": "Süre",
-    "duration_help": "Müsaitlik planlaması ve takvim rezervasyonu için kullanılır.",
-    "select_duration": "Süre seçin",
-    "custom_duration": "Özel Süre",
-    "custom_duration_placeholder": "örn., 2-3 gün",
     "applicable_types": "Uygulanabilir Türler",
     "applicable_types_help_1": "Bu paketin hangi",
     "applicable_types_help_2": "için geçerli olduğunu seçin (hiçbiri = tüm türler)",
@@ -227,8 +223,10 @@
     "is_active": "Aktif",
     "visibility": "Görünürlük",
     "visibility_help": "Aktif paketler kişilere görünür",
+    "session_type_hint": "Seans sürelerini yukarıdaki Seans Türleri bölümünden yönetebilirsiniz.",
     "errors": {
       "name_required": "Paket adı gereklidir",
+      "add_failed": "Paket eklenemedi",
       "update_failed": "Paket güncellenemedi",
       "delete_failed": "Paket silinemedi"
     },
@@ -257,15 +255,6 @@
     "delete_package": "Paketi Sil",
     "delete_success": "Paket başarıyla silindi",
     "description_label": "Açıklama",
-    "duration_options": {
-      "30m": "30 dakika",
-      "1h": "1 saat",
-      "2h": "2 saat",
-      "3h": "3 saat",
-      "custom": "Özel",
-      "full_day": "Tam gün",
-      "half_day": "Yarım gün"
-    },
     "edit_package": "Paketi Düzenle",
     "no_packages": "Paket bulunamadı",
     "no_project_types_exist": "Henüz proje türü mevcut değil.",
@@ -799,7 +788,6 @@
     "noPackagesAvailable": "Bu proje türü için paket mevcut değil.",
     "createPackagesSuggestion": "Önceden tanımlanmış hizmet paketleri ve fiyatlandırma sunmak için paketler oluşturun.",
     "createPackage": "Paket Oluştur",
-    "duration": "Süre:",
     "description": "Açıklama:",
     "includes": "İçerir:",
     "services": "hizmet",
@@ -815,6 +803,7 @@
     "addServices": "Hizmet Ekle",
     "projectSummary": "Proje Özeti",
     "basePackage": "Temel Paket:",
+    "sessionsManagedByTypes": "Seanslar Seans Türleri üzerinden yönetilir.",
     "addOns": "Eklentiler:",
     "items": "öğe",
     "servicesTotal": "Hizmetler Toplamı:",
@@ -1278,6 +1267,91 @@
     "DD/MM/YYYY": "GG/AA/YYYY (örn., 31/12/2024)",
     "MM/DD/YYYY": "AA/GG/YYYY (örn., 12/31/2024)",
     "YYYY-MM-DD": "YYYY-AA-GG (örn., 2024-12-31)"
+  },
+  "sessionTypes": {
+    "title": "Seans Türleri",
+    "description": "Fotoğrafçılık hizmetleriniz için yeniden kullanılabilir seans süreleri tanımlayın.",
+    "add_session_type": "Seans Türü Ekle",
+    "add_first_session_type": "İlk seans türünüzü oluşturun",
+    "no_session_types": "Henüz seans türü tanımlanmadı.",
+    "set_default": "Varsayılan yap",
+    "default_badge": "Varsayılan",
+    "table": {
+      "name": "Seans Türü",
+      "duration": "Süre",
+      "category": "Kategori",
+      "category_none": "Kategori belirtilmedi",
+      "status": "Durum",
+      "default": "Varsayılan",
+      "default_active": "Varsayılan seans türü",
+      "default_inactive": "Ayarlı değil",
+      "actions": "İşlemler"
+    },
+    "actions": {
+      "edit": "Seans türünü düzenle",
+      "delete": "Seans türünü sil"
+    },
+    "success": {
+      "added": "Seans türü eklendi.",
+      "updated": "Seans türü güncellendi.",
+      "deleted": "Seans türü silindi.",
+      "default_updated": "Varsayılan seans türü güncellendi.",
+      "default_cleared": "Varsayılan seans türü kaldırıldı.",
+      "activated": "Seans türü aktifleştirildi.",
+      "deactivated": "Seans türü pasifleştirildi."
+    },
+    "errors": {
+      "add_failed": "Seans türü eklenemedi.",
+      "update_failed": "Seans türü güncellenemedi.",
+      "delete_failed": "Seans türü silinemedi.",
+      "default_failed": "Varsayılan seans türü güncellenemedi.",
+      "toggle_failed": "Seans türü durumu güncellenemedi.",
+      "cannot_deactivate_default_title": "Varsayılan pasifleştirilemez",
+      "cannot_deactivate_default_desc": "Bu seans türünü pasifleştirmeden önce başka bir türü varsayılan yapın."
+    },
+    "delete_title": "Seans türünü sil",
+    "delete_description": "\"{{name}}\" seans türünü silmek istediğinizden emin misiniz? Mevcut seanslar bilgilerini korur.",
+    "units": {
+      "hour": "saat",
+      "hours": "saat",
+      "minute": "dakika",
+      "minutes": "dakika"
+    }
+  },
+  "sessionType": {
+    "add_title": "Seans Türü Ekle",
+    "edit_title": "Seans Türünü Düzenle",
+    "name_label": "Ad",
+    "name_placeholder": "örn. İmza Seansı",
+    "category_label": "Kategori (opsiyonel)",
+    "category_placeholder": "örn. Portre, Düğün",
+    "duration_label": "Süre",
+    "duration_placeholder": "Bir süre seçin",
+    "custom_duration_placeholder": "Dakika girin (örn. 75)",
+    "description_label": "Açıklama (opsiyonel)",
+    "description_placeholder": "Bu seans türünün kapsamını açıklayın.",
+    "active_label": "Aktif",
+    "active_hint": "Pasif seans türleri geçmişte kalır ancak seçilemez.",
+    "default_label": "Varsayılan yap",
+    "default_hint": "Yeni seanslar varsayılan olarak bu türle oluşturulur.",
+    "durationOptions": {
+      "30m": "30 dakika",
+      "45m": "45 dakika",
+      "60m": "1 saat",
+      "90m": "1 saat 30 dakika",
+      "120m": "2 saat",
+      "180m": "3 saat",
+      "240m": "4 saat",
+      "480m": "8 saat",
+      "custom": "Özel süre"
+    },
+    "errors": {
+      "name_required": "Seans türü adı gerekli.",
+      "duration_required": "Geçerli bir süre seçin veya girin."
+    },
+    "unsaved_changes": {
+      "description": "Değişiklikleri iptal etmek istiyor musunuz?"
+    }
   },
   "password_tips": {
     "title": "Daha güçlü bir şifre için",

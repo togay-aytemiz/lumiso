@@ -162,13 +162,12 @@
   },
   "packages": {
     "title": "Packages",
-    "description": "Pre-configured service bundles with set pricing and duration",
+    "description": "Pre-configured service bundles with set pricing.",
     "add_package": "Add Package",
     "create_first": "Create First Package",
     "no_packages": "No packages configured yet.",
     "package_name": "Package Name",
     "price": "Price",
-    "duration": "Duration",
     "applicable_types": "Applicable Types",
     "default_addons": "Default Add-ons",
     "visibility": "Visibility",
@@ -190,7 +189,8 @@
     "package_deleted_desc": "{{name}} has been removed",
     "error_deleting": "Failed to delete package",
     "delete_package": "Delete Package",
-    "delete_confirm": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone."
+    "delete_confirm": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+    "sessions_via_types": "Sessions managed in Session Types"
   },
   "package": {
     "title": "Packages",
@@ -203,7 +203,6 @@
     "name": "Package Name",
     "description_label": "Description",
     "price": "Price (TRY)",
-    "duration": "Duration",
     "applicable_types": "Applicable Types",
     "default_addons": "Default Add-ons",
     "default_add_ons": "Default Add-ons",
@@ -221,15 +220,6 @@
     "buttons": {
       "adding": "Adding..."
     },
-    "duration_options": {
-      "30m": "30 minutes",
-      "1h": "1 hour",
-      "2h": "2 hours",
-      "3h": "3 hours",
-      "half_day": "Half day",
-      "full_day": "Full day",
-      "custom": "Custom"
-    },
     "no_services_yet": "No services yet. Create services to use as add-ons.",
     "create_service": "Create a Service",
     "no_addons_selected": "No add-ons selected",
@@ -239,9 +229,6 @@
     "no_project_types_exist": "No project types exist yet.",
     "create_project_types_link": "Create Project Types",
     "price_help": "Client-facing price. You can override per project.",
-    "duration_help": "Used for scheduling availability and calendar blocking.",
-    "select_duration": "Select duration",
-    "custom_duration": "Custom Duration",
     "add_ons_help_1": "These are services from your",
     "services_section": "Services section",
     "add_ons_help_2": "that can be customized while creating a project",
@@ -253,9 +240,10 @@
     "name_placeholder": "e.g., Wedding Standard",
     "description_placeholder": "Package description",
     "price_placeholder": "0",
-    "custom_duration_placeholder": "e.g., 2-3 days",
+    "session_type_hint": "Session durations are managed from the Session Types section above.",
     "errors": {
       "name_required": "Package name is required",
+      "add_failed": "Failed to create package",
       "update_failed": "Failed to update package",
       "delete_failed": "Failed to delete package"
     },
@@ -667,7 +655,6 @@
     "noPackagesAvailable": "No packages available for this project type.",
     "createPackagesSuggestion": "Create packages to offer predefined service bundles and pricing.",
     "createPackage": "Create Package",
-    "duration": "Duration:",
     "includes": "Includes:",
     "services": "services",
     "noPackageSelected": "No package selected. You can add custom pricing and services.",
@@ -681,6 +668,7 @@
     "addServices": "Add Services",
     "projectSummary": "Project Summary",
     "basePackage": "Base Package:",
+    "sessionsManagedByTypes": "Sessions are managed from Session Types.",
     "addOns": "Add-ons:",
     "items": "items",
     "servicesTotal": "Services Total:",
@@ -1278,6 +1266,91 @@
     "DD/MM/YYYY": "DD/MM/YYYY (e.g., 31/12/2024)",
     "MM/DD/YYYY": "MM/DD/YYYY (e.g., 12/31/2024)",
     "YYYY-MM-DD": "YYYY-MM-DD (e.g., 2024-12-31)"
+  },
+  "sessionTypes": {
+    "title": "Session Types",
+    "description": "Define reusable session durations for your photography offerings.",
+    "add_session_type": "Add Session Type",
+    "add_first_session_type": "Create your first session type",
+    "no_session_types": "No session types configured yet.",
+    "set_default": "Set as default",
+    "default_badge": "Default",
+    "table": {
+      "name": "Session Type",
+      "duration": "Duration",
+      "category": "Category",
+      "category_none": "Uncategorized",
+      "status": "Status",
+      "default": "Default",
+      "default_active": "Default session type",
+      "default_inactive": "Not set",
+      "actions": "Actions"
+    },
+    "actions": {
+      "edit": "Edit session type",
+      "delete": "Delete session type"
+    },
+    "success": {
+      "added": "Session type added.",
+      "updated": "Session type updated.",
+      "deleted": "Session type deleted.",
+      "default_updated": "Default session type updated.",
+      "default_cleared": "Default session type removed.",
+      "activated": "Session type activated.",
+      "deactivated": "Session type deactivated."
+    },
+    "errors": {
+      "add_failed": "Failed to add session type.",
+      "update_failed": "Failed to update session type.",
+      "delete_failed": "Failed to delete session type.",
+      "default_failed": "Failed to update default session type.",
+      "toggle_failed": "Failed to update session type status.",
+      "cannot_deactivate_default_title": "Cannot deactivate default",
+      "cannot_deactivate_default_desc": "Set another session type as default before deactivating this one."
+    },
+    "delete_title": "Delete session type",
+    "delete_description": "Are you sure you want to delete \"{{name}}\"? Existing sessions will keep their information.",
+    "units": {
+      "hour": "hour",
+      "hours": "hours",
+      "minute": "minute",
+      "minutes": "minutes"
+    }
+  },
+  "sessionType": {
+    "add_title": "Add Session Type",
+    "edit_title": "Edit Session Type",
+    "name_label": "Name",
+    "name_placeholder": "e.g., Signature Session",
+    "category_label": "Category (optional)",
+    "category_placeholder": "e.g., Portrait, Wedding",
+    "duration_label": "Duration",
+    "duration_placeholder": "Select a duration",
+    "custom_duration_placeholder": "Enter minutes (e.g., 75)",
+    "description_label": "Description (optional)",
+    "description_placeholder": "Describe what this session type covers.",
+    "active_label": "Active",
+    "active_hint": "Inactive session types stay in your history but cannot be selected.",
+    "default_label": "Set as default",
+    "default_hint": "New sessions default to this type unless changed.",
+    "durationOptions": {
+      "30m": "30 minutes",
+      "45m": "45 minutes",
+      "60m": "1 hour",
+      "90m": "1 hour 30 minutes",
+      "120m": "2 hours",
+      "180m": "3 hours",
+      "240m": "4 hours",
+      "480m": "8 hours",
+      "custom": "Custom duration"
+    },
+    "errors": {
+      "name_required": "Session type name is required.",
+      "duration_required": "Select or enter a valid duration."
+    },
+    "unsaved_changes": {
+      "description": "Discard your changes?"
+    }
   },
   "password_tips": {
     "title": "For a stronger password",

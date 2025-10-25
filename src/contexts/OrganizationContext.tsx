@@ -289,6 +289,30 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
       })
     );
 
+    // Session types
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: ['session_types', orgId],
+        queryFn: async () => {
+          const { data: user } = await supabase.auth.getUser();
+          if (!user.user) return [] as any[];
+          await supabase.rpc('ensure_default_session_types_for_org', {
+            user_uuid: user.user.id,
+            org_id: orgId,
+          });
+          const { data, error } = await supabase
+            .from('session_types')
+            .select('*')
+            .eq('organization_id', orgId)
+            .order('sort_order', { ascending: true })
+            .order('name', { ascending: true });
+          if (error) throw error;
+          return data || [];
+        },
+        staleTime: 5 * 60 * 1000,
+      })
+    );
+
     // Lead field definitions — not on React Query, seed localStorage for fast bootstrap
     tasks.push((async () => {
       try {

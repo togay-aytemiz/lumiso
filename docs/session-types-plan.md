@@ -22,6 +22,12 @@
 - Reworking scheduling UX beyond selecting a session type + start/end time.
 - Changing project/package pricing logic.
 
+## Operational Notes (Codex Rules Snapshot)
+- Changing Supabase edge functions requires post-merge deploy: `npx supabase login`, `npx supabase link --project-ref rifdykpdubrowzbylffe`.
+- Respect i18n guidelines—no hardcoded copy; update EN/TR locales with UI changes.
+- All repo-altering tasks finish with a single-line commit summary (per `.codex/rules.md`).
+- Deliver production-quality solutions with automated tests where feasible and document any manual verification.
+
 ## High-Level Phases
 1. **Data Model Foundations**  
    Create database structures and migrations for session types and default selections. Include backfill strategy and feature parity safeguards.
@@ -59,9 +65,9 @@ Each phase can be delivered incrementally; this document will track completed st
 1. Create `session_types` table and add column to `sessions`.  
 2. Add column to `organization_settings`.  
 3. Seed default session types for existing orgs:  
-   - Use `packages.duration` + package names as hints.  
-   - If multiple packages share duration, dedupe to a single type (e.g., map `"3h"` → “3 Hour Session”).  
-   - Record mapping in temp table/log to review conflicts (document residual manual steps).  
+   - Use `public.parse_session_duration_minutes` to convert package duration strings (supports option keys like `1h`, legacy text like `2 hours`, and maps `multi-session` to **90 minutes**).  
+   - Generate session types per package (prefixed with package name + duration) only when an org has zero types to avoid overriding manual setups.  
+   - Call `ensure_default_session_types_for_org` for every organization to backfill missing types and enforce a default selection.  
 4. Populate `sessions.session_type_id` when `packages.duration` or notes clearly match. Fallback to `NULL` when ambiguous.  
 5. Set default session type when an org ends up with exactly one active type post-seed.  
 6. Begin ignoring `packages.duration` writes while keeping column as nullable for rollback safety.  
@@ -144,3 +150,40 @@ Each phase can be delivered incrementally; this document will track completed st
 - This document will be updated after each implementation pass with a change log, status table, and next steps.  
 - Consider adding a lightweight checklist for each phase once work begins.
 
+## Status
+| Phase | Status | Notes |
+| --- | --- | --- |
+| Data Model Foundations | In progress | Schema + backfill migrations (`20250914120000_session_types_schema.sql`, `20250914122000_session_types_backfill.sql`, `20250914123000_session_types_assign_sessions.sql`) in place. |
+| Backend & Supabase Layer | In progress | RPC (`ensure_default_session_types_for_org`) and hook scaffolding started. |
+| Frontend Settings & CRUD | In progress | Settings UI for session types and default selection delivered. |
+| Product Integration & Cleanup | In progress | Package duration removed; booking flow updates pending. |
+
+## Upcoming Tasks
+- (Postponed) Integrate session type selection/defaults into booking & session creation flows — awaiting updated product direction.
+- Add automated tests (Supabase function unit coverage + React Query hook smoke) before rollout.
+
+## Iteration Log
+- **2025-09-14** — Implemented Phase 1 schema migration and updated generated types. Added unique lower-name index, owner-only RLS, and default session-type FK.  
+  - **Review**: Verified migration + type updates manually; ensured relationships align with single-owner model.  
+  - **Testing**: No automated tests run (SQL + type update only). Manual review of diff completed.  
+  - **Next**: Draft backfill scripts/plan and expand backend RPCs (`ensure_default_session_types_for_org`, settings default updates).
+- **2025-09-14 (later)** — Added `ensure_default_session_types_for_org` seeding function and documented Codex operational rules. Seeds default “Signature Session” (90 min) and “Mini Session” (30 min); auto-populates organization default when unset.  
+  - **Review**: Checked SQL for idempotency (guard on existing rows) and default assignment logic.  
+  - **Testing**: Pending—will validate via Supabase migration dry-run before release; no automated tests added yet.  
+  - **Next**: Wire new RPC into backend hooks and plan backfill migration for existing orgs/sessions.
+- **2025-09-14 (evening)** — Added parsing/backfill migration `20250914122000_session_types_backfill.sql` and new React hook `useSessionTypes`. Legacy package durations are mapped to minutes (e.g., `half_day` → 240, `multi-session` → 90) before inserting org-scoped session types; defaults enforced via RPC loop.  
+  - **Review**: Manually reviewed parsing heuristics and ensured `ON CONFLICT` avoids duplicate names.  
+  - **Testing**: Not yet executed; will include Supabase migration dry-run and hook smoke test in upcoming validation pass.  
+  - **Next**: Expose session types in settings UI, backfill session references, and begin removing package duration dependencies.
+- **2025-09-14 (night)** — Assigned existing sessions to organization defaults via migration `20250914123000_session_types_assign_sessions.sql`. We run `ensure_default_session_types_for_org` per org, then populate `sessions.session_type_id` with the default (or first active type) when unset.  
+  - **Review**: Confirmed migration no-ops if defaults already exist; avoids touching sessions where multiple active types exist but no default.  
+  - **Testing**: Pending Supabase dry-run; manual logic check complete.  
+  - **Next**: Implement settings UI and default selector, then remove package duration reliance.
+- **2025-09-15** — Delivered settings management UI (list, CRUD dialogs, default selector) and translations; wired `useSessionTypes` into settings page. Added safeguards for deactivating defaults and extended toasts.  
+  - **Review**: Manually exercised add/edit/delete/default flows in code review; confirmed translation coverage for EN/TR.  
+  - **Testing**: UI not yet exercised end-to-end; plan to run manual smoke after frontend integration tests are available.  
+  - **Next**: Finalize package duration removal and revisit session booking flow once new direction is defined.
+- **2025-09-15 (afternoon)** — Removed package duration inputs/validation and pointed users to Session Types. Updated package dialogs, settings tables, and project dialogs; translations refreshed (EN/TR).  
+  - **Review**: Verified Supabase inserts/updates now persist `NULL` duration and double-checked all UI surfaces render without duration fields.  
+  - **Testing**: Pending manual smoke through Settings → Packages and project creation flow.  
+  - **Next**: Validate DB migrations in staging and resume booking-flow work once product requirements settle.

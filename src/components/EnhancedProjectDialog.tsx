@@ -35,7 +35,6 @@ interface Package {
   name: string;
   description?: string;
   price: number;
-  duration: string;
   applicable_types: string[];
   default_add_ons: string[];
   is_active: boolean;
@@ -945,7 +944,10 @@ export function EnhancedProjectDialog({
                                       <p className="text-xs text-muted-foreground mt-1">{pkg.description}</p>
                                     )}
                                     <p className="text-xs text-muted-foreground">
-                                      {pkg.duration} • {pkg.default_add_ons.length} {tForms("projectDialog.services")}
+                                      {pkg.default_add_ons.length} {tForms("projectDialog.services")}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {tForms("projectDialog.sessionsManagedByTypes")}
                                     </p>
                                   </div>
                                 </div>
@@ -959,9 +961,6 @@ export function EnhancedProjectDialog({
                 </div>
                 {selectedPackage && (
                   <div className="text-sm text-muted-foreground space-y-1">
-                    <p>
-                      <strong>{tForms("projectDialog.duration")}</strong> {selectedPackage.duration}
-                    </p>
                     {selectedPackage.description && (
                       <p>
                         <strong>{tForms("projectDialog.description")}</strong> {selectedPackage.description}
@@ -1160,8 +1159,8 @@ export function EnhancedProjectDialog({
                     <p>
                       <strong>{tForms("projectDialog.basePackage")}</strong> {selectedPackage.name}
                     </p>
-                    <p>
-                      <strong>{tForms("projectDialog.duration")}</strong> {selectedPackage.duration}
+                    <p className="text-muted-foreground">
+                      {tForms("projectDialog.sessionsManagedByTypes")}
                     </p>
                   </div>
                 )}

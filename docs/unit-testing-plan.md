@@ -20,26 +20,38 @@
 ## Testing Infrastructure To-Dos
 - [x] Add `"test": "jest"` (or equivalent) to `package.json` scripts so running tests is one command.
 - [x] Wire `setupTests.ts` into Jest (`setupFilesAfterEnv`) and ensure `tsconfig` includes test files.
-- [ ] Configure CI to run `npm run test` on pull requests (reuse existing workflow if available).
+- [x] Configure CI to run `npm run test` on pull requests (reuse existing workflow if available).
 - [ ] Document how to use `src/utils/testUtils.tsx` for provider-wrapped renders.
 - [ ] Decide on the folder convention (`*.test.ts` beside file vs. `__tests__` directories) and stick to it.
-- [ ] Configure Deno-based test runner for `supabase/functions/**` (`deno test --allow-env --allow-net` with local mocks).
+- [x] Configure Deno-based test runner for `supabase/functions/**` (`deno test --allow-env --allow-net` with local mocks).
 
 ### Test Harness Decisions
 - Use **Jest 30 (Node + jsdom environment)** for everything under `src/**`, pairing it with Testing Library and our custom provider wrapper. Keep tests colocated with the code they cover.
 - Use **Deno’s built-in test runner** for Supabase edge functions under `supabase/functions/**`. Author deterministic tests that stub the Supabase admin client and external services (Resend, fetch) via dependency injection or mock factories.
 - When in doubt about where logic lives, prefer moving business rules into plain TypeScript modules so they are testable with Jest, leaving Deno functions as thin orchestrators.
+- Commands: `npm test` for Jest, `npm run test:deno` (alias for `deno task test`) for Supabase functions. Ensure Deno 1.x is installed locally (e.g., `brew install deno` or via `deno.land` installer).
 
 ## Test Target Inventory
+
+### Progress Snapshot _(update after each iteration)_
+| Category | Done | Total | Completion |
+| --- | --- | --- | --- |
+| Core Libraries & Helpers | 5 | 13 | 38% |
+| Services & Data Access | 5 | 5 | 100% |
+| Contexts & Hooks | 15 | 24 | 63% |
+| UI Components & Pages | 2 | 27 | 7% |
+| UI Primitives & Shared Components | 0 | 8 | 0% |
+| Supabase Edge Functions & Automation | 0 | 9 | 0% |
+| **Overall** | **27** | **86** | **31%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
-| Locale/date formatting helpers | `src/lib/utils.ts` | Locale-aware formatting, 24h/12h detection, week range math | High | Not started | Mock `navigator.language` to cover EN/TR paths. |
-| Organization ID caching | `src/lib/organizationUtils.ts` | Cache hit/miss, Supabase auth fallback, error resilience | High | Not started | Stub Supabase auth + RPC calls; verify cache expiry resets. |
-| Organization settings cache | `src/lib/organizationSettingsCache.ts` | Memory vs localStorage sync, TTL expiry, inflight dedupe | Medium | Not started | Simulate `window` storage; ensure stale entries purge. |
-| Org-aware date/time utils | `src/lib/dateFormatUtils.ts` | Timezone conversions, format fallbacks, supported list ordering | High | Not started | Use fake timers + timezone mocks to hit edge cases. |
-| Dynamic lead validation | `src/lib/leadFieldValidation.ts` | Schema generation per field type, sanitize/parse helpers | High | Not started | Cover required vs optional fields and number/date coercion. |
+| Locale/date formatting helpers | `src/lib/utils.ts` | Locale-aware formatting, 24h/12h detection, week range math | High | Done | Covered by `src/lib/utils.test.ts` (EN vs TR paths + week math). |
+| Organization ID caching | `src/lib/organizationUtils.ts` | Cache hit/miss, Supabase auth fallback, error resilience | High | Done | Covered via `src/lib/organizationUtils.test.ts` with cache + creation paths. |
+| Organization settings cache | `src/lib/organizationSettingsCache.ts` | Memory vs localStorage sync, TTL expiry, inflight dedupe | Medium | Done | Covered via `src/lib/__tests__/organizationSettingsCache.test.ts`. |
+| Org-aware date/time utils | `src/lib/dateFormatUtils.ts` | Timezone conversions, format fallbacks, supported list ordering | High | Done | Covered by `src/lib/dateFormatUtils.test.ts` with timezone conversions + fallback scenarios. |
+| Dynamic lead validation | `src/lib/leadFieldValidation.ts` | Schema generation per field type, sanitize/parse helpers | High | Done | Covered by `src/lib/leadFieldValidation.test.ts` across required rules, coercion, and helper flows. |
 | Session lifecycle sorting | `src/lib/sessionSorting.ts` | Lifecycle grouping, legacy status mapping, timestamp ordering | Medium | Not started | Provide sample session arrays for deterministic snapshots. |
 | Template validation helpers | `src/lib/templateValidation.ts` | Required field enforcement, error aggregation | Low | Not started | Snapshot expected error objects. |
 | Template utilities | `src/lib/templateUtils.ts` | Placeholder fallbacks, spam word detection, block/plain conversions | Low | Not started | Mock `templateBlockUtils` import to validate legacy fallback path. |
@@ -52,34 +64,34 @@
 ### Services & Data Access
 | Area | File(s) | What to Cover | Priority | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
-| Project data service | `src/services/ProjectService.ts` | Aggregated fetches, archived filtering, payment totals | High | Not started | Mock Supabase responses per query; assert merged shape. |
-| Session data service | `src/services/SessionService.ts` | Filtering, archived project exclusion, lead enrichment | High | Not started | Cover lifecycle filtering + timeline ordering. |
-| Lead data service | `src/services/LeadService.ts` | Search/filter combinations, pagination guards, Supabase fallbacks | High | Not started | Validate edge cases when no organization or lead. |
-| Lead detail aggregator | `src/services/LeadDetailService.ts` | Parallel fetch composition, null safety when relations missing | Medium | Not started | Simulate partial responses to ensure graceful degradation. |
-| Base entity service foundation | `src/services/BaseEntityService.ts` | Shared `getOrganizationId`, error handling, caching | Medium | Not started | Verify behavior when auth user missing or Supabase errors. |
+| Project data service | `src/services/ProjectService.ts` | Aggregated fetches, archived filtering, payment totals | High | Done | Covered via `src/services/__tests__/ProjectService.test.ts` (aggregation + filtering). |
+| Session data service | `src/services/SessionService.ts` | Filtering, archived project exclusion, lead enrichment | High | Done | Covered via `src/services/__tests__/SessionService.test.ts` (archived filter + sort/filter logic). |
+| Lead data service | `src/services/LeadService.ts` | Search/filter combinations, pagination guards, Supabase fallbacks | High | Done | Covered via `src/services/__tests__/LeadService.test.ts` (custom field merge + filter/sort). |
+| Lead detail aggregator | `src/services/LeadDetailService.ts` | Parallel fetch composition, null safety when relations missing | Medium | Done | Covered via `src/services/__tests__/LeadDetailService.test.ts` for archived filtering, payment math, and activity fallbacks. |
+| Base entity service foundation | `src/services/BaseEntityService.ts` | Shared `getOrganizationId`, error handling, caching | Medium | Done | Covered by `src/services/__tests__/BaseEntityService.test.ts` for org lookup failure handling and authenticated user guard. |
 
 ### Contexts & Hooks
 | Area | File(s) | What to Cover | Priority | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
-| Organization settings hook | `src/hooks/useOrganizationSettings.ts` | React Query caching, update path success/error toasts | High | Not started | Use Testing Library render hooks; assert cache writes. |
-| Session form workflow | `src/hooks/useSessionForm.ts` | Validation guardrails, Supabase insert payload, workflow trigger recovery | High | Not started | Mock `supabase`, `triggerSessionScheduled`, and reminder hook. |
-| Session reminder scheduling | `src/hooks/useSessionReminderScheduling.ts` | RPC invoke, graceful error handling, reschedule flow | Medium | Not started | Spy on toast + Supabase chained calls. |
-| Workflow trigger wrapper | `src/hooks/useWorkflowTriggers.ts` | Input validation (UUID), invoke payload, toast on failure | Medium | Not started | Ensure “no workflows found” branch skips toast. |
-| Lead status actions | `src/hooks/useLeadStatusActions.tsx` | Auth guard, optimistic flags, destructive toast action | Medium | Not started | Verify toast action surfaces undo handler when provided. |
-| Session actions | `src/hooks/useSessionActions.ts` | Reminder cleanup, workflow triggers on status change | High | Not started | Cover delete + update flows with Supabase error branches. |
-| Entity data helper | `src/hooks/useEntityData.ts` | Error propagation, dependency refresh behavior | Medium | Not started | Mock `toast` and confirm custom error callbacks short-circuit. |
-| User preferences hook | `src/hooks/useUserPreferences.ts` | Default bootstrap, optimistic updates, retry strategy | High | Not started | Use mocked React Query to assert cache mutations. |
+| Organization settings hook | `src/hooks/useOrganizationSettings.ts` | React Query caching, update path success/error toasts | High | Done | Covered by `src/hooks/__tests__/useOrganizationSettings.test.tsx` (cache + update/upsert + error toast). |
+| Session form workflow | `src/hooks/useSessionForm.ts` | Validation guardrails, Supabase insert payload, workflow trigger recovery | High | Done | Covered by `src/hooks/__tests__/useSessionForm.test.tsx` validating validation, success path, trigger failure, auth error. |
+| Session reminder scheduling | `src/hooks/useSessionReminderScheduling.ts` | RPC invoke, graceful error handling, reschedule flow | Medium | Done | Covered via `src/hooks/__tests__/useSessionReminderScheduling.test.tsx` (RPC fail warns, cancel/reschedule). |
+| Workflow trigger wrapper | `src/hooks/useWorkflowTriggers.ts` | Input validation (UUID), invoke payload, toast on failure | Medium | Done | Covered by `src/hooks/__tests__/useWorkflowTriggers.test.ts` for validation, toast guard, and payload shaping. |
+| Lead status actions | `src/hooks/useLeadStatusActions.tsx` | Auth guard, optimistic flags, destructive toast action | Medium | Done | Covered by `src/hooks/__tests__/useLeadStatusActions.test.tsx` for auth guard, undo toast action, and error handling. |
+| Session actions | `src/hooks/useSessionActions.ts` | Reminder cleanup, workflow triggers on status change | High | Done | Covered via `src/hooks/__tests__/useSessionActions.test.tsx` for delete failure + status update flows. |
+| Entity data helper | `src/hooks/useEntityData.ts` | Error propagation, dependency refresh behavior | Medium | Done | Covered by `src/hooks/__tests__/useEntityData.test.tsx` for toast fallback, dependency refetch, and custom error handlers. |
+| User preferences hook | `src/hooks/useUserPreferences.ts` | Default bootstrap, optimistic updates, retry strategy | High | Done | Covered by `src/hooks/__tests__/useUserPreferences.test.ts` for bootstrap, defaults, optimistic + helper flows. |
 | Auth provider | `src/contexts/AuthContext.tsx` | Role fetching, auth change handling, sign-out side effects | High | Not started | Mock auth listener + RPC; ensure localStorage cleared on sign-out. |
 | Organization provider | `src/contexts/OrganizationContext.tsx` | Initial load, presence heartbeat cleanup, data prefetch | High | Not started | Fake timers to confirm interval cleanup and toast behavior. |
 | Onboarding provider | `src/contexts/OnboardingContext.tsx` | Computed flags, guarded transitions, batch completion | Medium | Not started | Provide fixture preferences to cover each onboarding stage. |
 | Calendar performance monitor | `src/hooks/useCalendarPerformanceMonitor.ts` | Throttle thresholds, cleanup handlers | Low | Not started | Use fake timers to simulate long renders. |
-| Organization data query helper | `src/hooks/useOrganizationData.ts` | Active org guards, queryKey composition, Supabase ensures | High | Not started | Mock failing org lookups to ensure descriptive errors. |
-| Lead detail data aggregator | `src/hooks/useLeadDetailData.ts` | Session metrics, combined queries, refetch fan-out | High | Not started | Provide fixture services to verify metrics math. |
-| Session edit form | `src/hooks/useSessionEditForm.ts` | Dirty tracking, Zod validation, reschedule workflow path | High | Not started | Mock sanitize helpers + Supabase update/reschedule calls. |
-| Reminder actions | `src/hooks/useReminderActions.ts` | Delete/update mutations, toast feedback, error handling | Medium | Not started | Stub Supabase `.delete()`/`.update()` to throw vs succeed. |
-| Project payments hook | `src/hooks/useProjectPayments.ts` | Aggregated totals, missing services/payments fallback | Medium | Not started | Mock chained Supabase queries returning null arrays. |
+| Organization data query helper | `src/hooks/useOrganizationData.ts` | Active org guards, queryKey composition, Supabase ensures | High | Done | Covered by `src/hooks/__tests__/useOrganizationData.test.ts` for guard rails, RPC ensure_default calls, and placeholder handling. |
+| Lead detail data aggregator | `src/hooks/useLeadDetailData.ts` | Session metrics, combined queries, refetch fan-out | High | Done | Covered by `src/hooks/__tests__/useLeadDetailData.test.tsx` for metrics, refetch fan-out, and default fallbacks. |
+| Session edit form | `src/hooks/useSessionEditForm.ts` | Dirty tracking, Zod validation, reschedule workflow path | High | Done | Covered by `src/hooks/__tests__/useSessionEditForm.test.tsx` for validation errors, workflow triggers, reminders, and Supabase errors. |
+| Reminder actions | `src/hooks/useReminderActions.ts` | Delete/update mutations, toast feedback, error handling | Medium | Done | Covered via `src/hooks/__tests__/useReminderActions.test.ts` for success + error toasts and null handling. |
+| Project payments hook | `src/hooks/useProjectPayments.ts` | Aggregated totals, missing services/payments fallback | Medium | Done | Covered by `src/hooks/__tests__/useProjectPayments.test.tsx` aggregating totals, handling errors, and verifying refresh/refetch. |
 | Project sessions summary hook | `src/hooks/useProjectSessionsSummary.ts` | Status grouping, overdue detection, refresh triggers | Medium | Not started | Freeze dates to assert metrics snapshot. |
-| Organization quick settings | `src/hooks/useOrganizationQuickSettings.ts` | Memo defaults, refresh passthrough | Low | Not started | Ensure fallback true when setting undefined. |
+| Organization quick settings | `src/hooks/useOrganizationQuickSettings.ts` | Memo defaults, refresh passthrough | Low | Done | Covered via `src/hooks/__tests__/useOrganizationQuickSettings.test.tsx` ensuring default true and refetch passthrough. |
 | Organization timezone | `src/hooks/useOrganizationTimezone.ts` | Format conversion helpers, detect fallback timezone | Medium | Not started | Mock settings to cover 12/24 hour + timezone edge cases. |
 | Notification triggers | `src/hooks/useNotificationTriggers.ts` | Milestone notifications, batch scheduling, toast errors | Medium | Not started | Spy on Supabase functions.invoke to capture payloads. |
 | Settings section manager | `src/hooks/useSettingsSection.ts` | Auto-save throttling, dirty tracking, toast toggles | Medium | Not started | Use fake timers to validate throttled saves + cleanup. |
@@ -92,7 +104,7 @@
 | Enhanced lead creation | `src/components/EnhancedAddLeadDialog.tsx` | Dynamic schema init, default status lookup, save pipeline | High | Not started | Mock field definitions + Supabase inserts; assert dirty guard. |
 | Enhanced lead edit | `src/components/EnhancedEditLeadDialog.tsx` | Prefill logic, change detection, update mutation flow | High | Not started | Cover validation errors + success toast. |
 | Enhanced project dialog | `src/components/EnhancedProjectDialog.tsx` | Cross-entity linking, lead selection, Supabase upserts | High | Not started | Validate state reset on close/open cycles. |
-| Session scheduling dialog | `src/components/ScheduleSessionDialog.tsx` | Prefill data, reminder scheduling hooks, status updates | High | Not started | Mock `useSessionForm` integration path. |
+| Session scheduling dialog | `src/components/ScheduleSessionDialog.tsx` | Prefill data, reminder scheduling hooks, status updates | High | Done | Covered via `src/components/__tests__/ScheduleSessionDialog.test.tsx` & `SessionSchedulingSheet.test.tsx`. |
 | Session scheduling sheet | `src/components/SessionSchedulingSheet.tsx` | Mobile sheet state, timezone-aware slots, submission flow | Medium | Not started | Simulate slot selection + validation toasts. |
 | Project Kanban board | `src/components/ProjectKanbanBoard.tsx` | Drag/drop ordering, status filtering, performance memoization | Medium | Not started | Use DnD testing helpers; ensure optimistic UI reverts on error. |
 | Workflow health dashboard | `src/components/WorkflowHealthDashboard.tsx` | Status aggregations, error states, filter interactions | Medium | Not started | Snapshot metrics for empty vs populated data. |
@@ -105,7 +117,7 @@
 | Calendar page | `src/pages/Calendar.tsx` | Range filters, session grouping, performance panels | High | Not started | Use fake timers to cover performance overlay toggles. |
 | Upcoming sessions page | `src/pages/UpcomingSessions.tsx` | Filters, session sorting, empty state messaging | Medium | Not started | Ensure sessions from multiple statuses render correctly. |
 | Templates workspace | `src/pages/Templates.tsx` | Block editor integration, preview data toggles | Medium | Not started | Mock template utils + i18n to confirm fallback content. |
-| Session types settings | `src/components/SessionTypesSection.tsx` | CRUD workflows, default selection, empty states | High | Not started | Mock Supabase mutations + ensure optimistic UI rollback. |
+| Session types settings | `src/components/SessionTypesSection.tsx` | CRUD workflows, default selection, empty states | High | Done | Covered by `src/components/__tests__/SessionTypesSection.test.tsx` (empty state, default toggle, activation toggle, deletion). |
 | Session form fields | `src/components/SessionFormFields.tsx` | Validation messaging, timezone-aware inputs, reminders toggles | Medium | Not started | Use Testing Library form interactions to assert field errors. |
 | Session status badge | `src/components/SessionStatusBadge.tsx` | Lifecycle color mapping, accessible labels | Low | Not started | Snapshot statuses to catch inadvertent color swaps. |
 | Project payments section | `src/components/ProjectPaymentsSection.tsx` | Summary cards, refresh triggers, empty states | Medium | Not started | Mock `useProjectPayments` to emit various totals. |
@@ -156,13 +168,42 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-09-14 | Codex | Created initial testing strategy, inventory, and workflow checklist | Plan ready for review; no tests added yet | Populate owners/priorities once first test task begins |
 | 2025-09-14 (later) | Codex | Expanded inventory to cover contexts, services, UI, and Supabase automation | Added multi-section target tables with priorities and notes | Review priorities with Tayte and assign owners in next iteration |
 | 2025-09-14 (late) | Codex | Documented test harness choices and deepened inventory for hooks, UI primitives, and edge functions | Added harness guidance plus ~20 new targets spanning high-risk areas | Circle back to assign owners + integrate harness setup into tooling work |
-| 2025-09-14 (night) | Codex | Wired Jest command and ESM-friendly config, added mocks | `npm run test` now passes (no tests yet) using SWC + jsdom | Next: add CI step and Deno harness |
+| 2025-09-14 (night) | Codex | Wired Jest command and ESM-friendly config, added mocks | `npm run test` now passes (no tests yet) using SWC + jsdom | Document custom render helper + finalize test file convention |
+| 2025-09-14 (late night) | Codex | Added GitHub Actions Jest workflow and Deno smoke harness | CI runs `npm test`; `deno task test` exercises functions scaffold | Start implementing High-priority unit tests |
+| 2025-09-15 | Codex | Added Jest coverage for locale/time helpers | `src/lib/utils.test.ts` validates 12/24h formatting + week boundaries | Next: cover org caching utilities |
+| 2025-09-15 (later) | Codex | Added tests for organization ID caching helper | `src/lib/organizationUtils.test.ts` covers cache reuse + org creation errors | Move on to organization settings hook |
+| 2025-09-15 (even later) | Codex | Added React Query hook coverage for organization settings | `src/hooks/__tests__/useOrganizationSettings.test.tsx` asserts cache hydration, update/upsert, and error toasts | Next: tackle session form workflow |
+| 2025-09-15 (late night) | Codex | Added session form workflow tests | `src/hooks/__tests__/useSessionForm.test.tsx` covers validation, Supabase payloads, trigger failure recovery | Next: move to reminder scheduling hook |
+| 2025-09-15 (night) | Codex | Added session reminder scheduling tests | `src/hooks/__tests__/useSessionReminderScheduling.test.tsx` covers RPC success/fail, cancel + reschedule flows | Next: target service layer (ProjectService) |
+| 2025-09-16 | Codex | Added aggregation coverage for ProjectService | `src/services/__tests__/ProjectService.test.ts` validates active/archived merge + filtering | Next: continue through remaining service targets |
+| 2025-09-16 (later) | Codex | Added SessionService tests | `src/services/__tests__/SessionService.test.ts` checks archived filtering + filters/sorting | Next: move on to LeadService |
+| 2025-09-16 (night) | Codex | Added LeadService tests | `src/services/__tests__/LeadService.test.ts` covers custom-field merge + filter/sort | Next: shift focus to components/UI |
+| 2025-09-16 (late night) | Codex | Added Schedule Session dialog tests | `src/components/__tests__/ScheduleSessionDialog.test.tsx` + sheet coverage for open/dirty flow | Next: continue UI inventory |
+| 2025-09-17 | Codex | Added SessionActions hook tests | `src/hooks/__tests__/useSessionActions.test.tsx` covers delete failure + status workflows | Next: tackle remaining utility modules |
+| 2025-09-17 (later) | Codex | Added organization settings cache tests | `src/lib/__tests__/organizationSettingsCache.test.ts` verifies TTL/localStorage + inflight dedupe | Next: move to date utilities |
+| 2025-10-25 | Codex | Added timezone utility coverage | `src/lib/dateFormatUtils.test.ts` exercises formatting fallbacks, timezone conversions, and detection helpers | Revisit if new formats/timezones are introduced |
+| 2025-10-25 (later) | Codex | Added dynamic lead validation coverage | `src/lib/leadFieldValidation.test.ts` covers schema generation, sanitization, parsing, and validation helpers | Monitor if new field types or validation rules are introduced |
+| 2025-10-25 (even later) | Codex | Added organization data helper coverage | `src/hooks/__tests__/useOrganizationData.test.ts` verifies org guards, ensure_* RPC calls, and placeholder handling | Re-run if new org-scoped queries land |
+| 2025-10-25 (late) | Codex | Added workflow trigger wrapper coverage | `src/hooks/__tests__/useWorkflowTriggers.test.ts` checks validation, RPC errors, toast suppression, and wrapper payloads | Extend if new trigger types are introduced |
+| 2025-10-25 (night) | Codex | Added user preferences hook coverage | `src/hooks/__tests__/useUserPreferences.test.ts` exercises bootstrap defaults, optimistic updates, error rollback, and cache helpers | Revisit when new preference fields are persisted |
+| 2025-10-25 (late night) | Codex | Added lead status actions coverage | `src/hooks/__tests__/useLeadStatusActions.test.tsx` validates status updates, undo flow, auth guard, and destructive toasts | Extend when new status workflows land |
+| 2025-10-25 (even later) | Codex | Added entity data helper coverage | `src/hooks/__tests__/useEntityData.test.tsx` covers toast fallback, dependency-triggered refetch, and custom error handler behavior | Revisit if hook gains additional options |
+| 2025-10-25 (night late) | Codex | Added lead detail aggregator coverage | `src/hooks/__tests__/useLeadDetailData.test.tsx` validates metrics computation, combined queries, and refetch fan-out | Extend if summary payload shape changes |
+| 2025-10-25 (almost midnight) | Codex | Added session edit form coverage | `src/hooks/__tests__/useSessionEditForm.test.tsx` checks dirty tracking, validation errors, workflow trigger + reminder paths | Revisit when edit form adds new fields |
+| 2025-10-25 (midnight) | Codex | Added lead detail service coverage | `src/services/__tests__/LeadDetailService.test.ts` covers fetch helpers, archived filtering, payment aggregation, and activity fallbacks | Extend when service gains additional data sources |
+| 2025-10-25 (late night) | Codex | Added reminder actions coverage | `src/hooks/__tests__/useReminderActions.test.ts` verifies delete/update success toasts, null handling, and error paths | Extend if reminder actions gain additional mutations |
+| 2025-10-25 (past midnight) | Codex | Added project payments hook coverage | `src/hooks/__tests__/useProjectPayments.test.tsx` aggregates totals, handles Supabase errors, and verifies refresh/refetch | Extend when payments logic adds currencies or statuses |
+| 2025-10-25 (just after) | Codex | Added base entity service coverage | `src/services/__tests__/BaseEntityService.test.ts` validates org lookup failure handling and authenticated user guard | Revisit if service gains caching layers |
+| 2025-10-25 (very late) | Codex | Added organization quick settings coverage | `src/hooks/__tests__/useOrganizationQuickSettings.test.tsx` ensures default fallback and refresh passthrough | Extend if quick settings grow beyond boolean toggles |
+| 2025-10-25 (after midnight) | Codex | Added project sessions summary hook coverage | `src/hooks/__tests__/useProjectSessionsSummary.test.tsx` groups statuses, detects overdue/today/upcoming, and handles refresh triggers | Extend when summary introduces new status categories |
+| 2025-10-25 (morning) | Codex | Added Session Types settings coverage | `src/components/__tests__/SessionTypesSection.test.tsx` ensures empty state, default assignment, activation toggle, and deletion flows | Revisit when session type UI adds drag/reorder or bulk actions |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.
 - When removing or refactoring tests, adjust both the inventory row and the Iteration Log so historical context remains.
 - If a new high-risk area appears (e.g., new Supabase RPC, major hook), add it to the inventory before merging its feature.
 - Keep the tone approachable (this doc doubles as an onboarding quickstart); if jargon slips in, add a short translation.
+- Update the **Progress Snapshot** table after every iteration to reflect the latest done/total ratios.
 
 ## Helpful References
 - `src/setupTests.ts`: global mocks for Supabase, React Router, and performance APIs.

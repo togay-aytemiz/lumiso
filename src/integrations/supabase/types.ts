@@ -601,6 +601,7 @@ export type Database = {
         Row: {
           created_at: string
           date_format: string | null
+          default_session_type_id: string | null
           email: string | null
           id: string
           kanban_show_client_name: boolean | null
@@ -626,6 +627,7 @@ export type Database = {
         Insert: {
           created_at?: string
           date_format?: string | null
+          default_session_type_id?: string | null
           email?: string | null
           id?: string
           kanban_show_client_name?: boolean | null
@@ -651,6 +653,7 @@ export type Database = {
         Update: {
           created_at?: string
           date_format?: string | null
+          default_session_type_id?: string | null
           email?: string | null
           id?: string
           kanban_show_client_name?: boolean | null
@@ -672,6 +675,48 @@ export type Database = {
           time_format?: string | null
           timezone?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      session_types: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          sort_order: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes: number
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -708,7 +753,6 @@ export type Database = {
           created_at: string
           default_add_ons: string[] | null
           description: string | null
-          duration: string | null
           id: string
           is_active: boolean
           name: string
@@ -722,7 +766,6 @@ export type Database = {
           created_at?: string
           default_add_ons?: string[] | null
           description?: string | null
-          duration?: string | null
           id?: string
           is_active?: boolean
           name: string
@@ -736,7 +779,6 @@ export type Database = {
           created_at?: string
           default_add_ons?: string[] | null
           description?: string | null
-          duration?: string | null
           id?: string
           is_active?: boolean
           name?: string
@@ -1242,6 +1284,7 @@ export type Database = {
           project_id: string | null
           session_date: string
           session_name: string | null
+          session_type_id: string | null
           session_time: string
           status: string
           updated_at: string
@@ -1257,6 +1300,7 @@ export type Database = {
           project_id?: string | null
           session_date: string
           session_name?: string | null
+          session_type_id?: string | null
           session_time: string
           status?: string
           updated_at?: string
@@ -1272,6 +1316,7 @@ export type Database = {
           project_id?: string | null
           session_date?: string
           session_name?: string | null
+          session_type_id?: string | null
           session_time?: string
           status?: string
           updated_at?: string
@@ -1290,6 +1335,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_session_type_id_fkey"
+            columns: ["session_type_id"]
+            isOneToOne: false
+            referencedRelation: "session_types"
             referencedColumns: ["id"]
           },
         ]
@@ -1991,6 +2043,10 @@ export type Database = {
       }
       ensure_default_session_statuses: {
         Args: { user_uuid: string }
+        Returns: undefined
+      }
+      ensure_default_session_types_for_org: {
+        Args: { org_id: string; user_uuid: string }
         Returns: undefined
       }
       ensure_lead_status_field: {

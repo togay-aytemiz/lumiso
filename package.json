@@ -9,6 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "test": "jest --runInBand --passWithNoTests",
+    "test:deno": "deno task test",
     "preview": "vite preview"
   },
   "dependencies": {

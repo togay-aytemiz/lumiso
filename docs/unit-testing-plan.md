@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 27 | 27 | 100% |
-| UI Components & Pages | 75 | 77 | 97% |
+| UI Components & Pages | 77 | 77 | 100% |
 | UI Primitives & Shared Components | 18 | 18 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **147** | **149** | **99%** |
+| **Overall** | **149** | **149** | **100%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -145,6 +145,8 @@
 | Session status badge | `src/components/SessionStatusBadge.tsx` | Lifecycle color mapping, accessible labels | Low | Done | Covered by `src/components/__tests__/SessionStatusBadge.test.tsx` (loading badge + editable dropdown updates). |
 | Session banner | `src/components/SessionBanner.tsx` | Planned vs post-session messaging, action availability, translation keys | Medium | Done | Covered by `src/components/__tests__/SessionBanner.test.tsx` validating planned details, edit gating, and delete callbacks. |
 | Project payments section | `src/components/ProjectPaymentsSection.tsx` | Summary cards, refresh triggers, empty states | Medium | Done | Covered by `src/components/__tests__/ProjectPaymentsSection.test.tsx` for metrics, refresh callback, and empty state. |
+| Project services section | `src/components/ProjectServicesSection.tsx` | Supabase fetch, edit mode interactions, save + toast feedback | Medium | Done | Covered by `src/components/__tests__/ProjectServicesSection.test.tsx` validating data hydration, picker wiring, and save success toasts. |
+| Project activity section | `src/components/ProjectActivitySection.tsx` | Activity load, validation guardrails, reminder saves, completion toggles | Medium | Done | Covered by `src/components/__tests__/ProjectActivitySection.test.tsx` asserting fetch rendering, destructive validation toasts, save flow, and completion updates. |
 | Sessions section surface | `src/components/SessionsSection.tsx` | Tab filtering, sorting integration, quick actions | Medium | Done | Covered by `src/components/__tests__/SessionsSection.test.tsx` for skeleton state, empty CTA wiring, and banner/sheet interactions. |
 | Enhanced sessions section | `src/components/EnhancedSessionsSection.tsx` | Multi-column layout, performance instrumentation | Medium | Done | Covered by `src/components/__tests__/EnhancedSessionsSection.test.tsx` verifying lifecycle sorting, count badge, and click wiring. |
 | Unified client details | `src/components/UnifiedClientDetails.tsx` | Conditional rendering of contact info, copy buttons | Low | Done | Covered by `src/components/__tests__/UnifiedClientDetails.test.tsx` validating quick actions, custom field display, navigation hooks, and validation toasts. |
@@ -304,6 +306,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-11-13 | Codex | Added calendar component coverage | Added `src/components/calendar/__tests__/CalendarDay.test.tsx`, `CalendarDayView.test.tsx`, `CalendarMonthView.test.tsx`, `CalendarWeek.test.tsx`, `CalendarSkeleton.test.tsx`, and `CalendarErrorBoundary.test.tsx` to cover mobile/day/month/week interactions, skeleton scaffolds, and error recovery flows | Next: Explore coverage for calendar virtualization performance metrics and touch gesture edge cases |
 | 2025-11-14 | Codex | Added reminder details page coverage | Added `src/pages/__tests__/ReminderDetails.test.tsx` to validate reminder stats, fetch error toasts, completion toggles, navigation, and project dialog fetches | Keep an eye on future reminder reschedule flows or provider refactors |
 | 2025-11-15 | Codex | Added legacy payment & lead dialog coverage | Added `src/components/__tests__/AddPaymentDialog.test.tsx`, `EditPaymentDialog.test.tsx`, `AddLeadDialog.test.tsx`, and `EditLeadDialog.test.tsx`; refreshed progress snapshot totals | Monitor dialog flows if currency/localization options expand or navigation guard messaging changes |
+| 2025-11-16 | Codex | Added project services and activity coverage | Added `src/components/__tests__/ProjectServicesSection.test.tsx` and `ProjectActivitySection.test.tsx` to validate services edit/save flows, validation toasts, reminders, and completion updates | Watch for future service pricing changes or activity form enhancements |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

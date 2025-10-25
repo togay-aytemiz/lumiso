@@ -1,12 +1,12 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-const corsHeaders = {
+export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const handler = async (req: Request): Promise<Response> => {
+export const handler = async (req: Request): Promise<Response> => {
   console.log('Session reminders processor started');
 
   if (req.method === 'OPTIONS') {
@@ -43,7 +43,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-async function processScheduledReminders(supabase: any) {
+export async function processScheduledReminders(supabase: any) {
   console.log('Processing scheduled session reminders');
 
   // Get reminders that are due to be sent (exact timing, no early processing buffer)

@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 41 | 44 | 93% |
+| UI Components & Pages | 42 | 44 | 95% |
 | UI Primitives & Shared Components | 17 | 17 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **109** | **112** | **97%** |
+| **Overall** | **110** | **112** | **98%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -130,7 +130,7 @@
 | Sessions section surface | `src/components/SessionsSection.tsx` | Tab filtering, sorting integration, quick actions | Medium | Done | Covered by `src/components/__tests__/SessionsSection.test.tsx` for skeleton state, empty CTA wiring, and banner/sheet interactions. |
 | Enhanced sessions section | `src/components/EnhancedSessionsSection.tsx` | Multi-column layout, performance instrumentation | Medium | Done | Covered by `src/components/__tests__/EnhancedSessionsSection.test.tsx` verifying lifecycle sorting, count badge, and click wiring. |
 | Unified client details | `src/components/UnifiedClientDetails.tsx` | Conditional rendering of contact info, copy buttons | Low | Done | Covered by `src/components/__tests__/UnifiedClientDetails.test.tsx` validating quick actions, custom field display, navigation hooks, and validation toasts. |
-| Project sheet view | `src/components/ProjectSheetView.tsx` | Printable layout, localization of labels, totals | Medium | Not started | Snapshot layout with English/Turkish translations. |
+| Project sheet view | `src/components/ProjectSheetView.tsx` | Printable layout, localization of labels, totals | Medium | Done | Covered by `src/components/__tests__/ProjectSheetView.test.tsx` validating supabase fetch stubs, edit/save flow, and archive confirmation handling. |
 | Onboarding modal | `src/components/OnboardingModal.tsx` | Step transitions, skip behavior, analytics events | Medium | Done | Covered by `src/components/__tests__/OnboardingModal.test.tsx` validating guided setup launch, navigation, and sample data modal toggle. |
 | Activity timeline section | `src/components/ActivitySection.tsx` | Activity CRUD, reminder scheduling, filter tabs | High | Not started | Stub Supabase helpers to ensure create/edit validation, filter chips, and audit log rendering with skeleton states. |
 | Lead activity section | `src/components/LeadActivitySection.tsx` | Segmented activity/history views, cross-entity fetches, audit timeline | Medium | Not started | Mock Supabase responses to assert segment toggles, merged histories, and toast errors. |
@@ -264,6 +264,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-11-03 | Codex | Added session detail page coverage | `src/pages/__tests__/SessionDetail.test.tsx` exercises skeleton-to-content transition, load failure toast, and delete redirect fallback | Next: Target Templates workspace coverage |
 | 2025-11-03 (later) | Codex | Added Templates workspace coverage | `src/pages/__tests__/Templates.test.tsx` locks preview translation fallback, search empty states, duplication/deletion flows, and navigation callbacks | Next: Cover Project sheet view snapshot translations |
 | 2025-11-04 | Codex | Added onboarding modal, workflow sheet, and project preview coverage | Added `src/components/__tests__/OnboardingModal.test.tsx`, `CreateWorkflowSheet.test.tsx`, and `ProjectSheetPreview.test.tsx` to validate modal flows, edit submission payloads, and Supabase-driven previews | Next: Target ProjectSheetView, ActivitySection, and LeadActivitySection components |
+| 2025-11-05 | Codex | Added Project sheet view coverage | `src/components/__tests__/ProjectSheetView.test.tsx` covers data hydration, edit/save flow, and archive confirmation logic with mocked Supabase + toast hooks | Next: Continue with ActivitySection and LeadActivitySection coverage |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

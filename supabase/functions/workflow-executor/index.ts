@@ -68,68 +68,88 @@ interface WorkflowTriggerRequest {
   workflow_execution_id?: string;
 }
 
-const handler = async (req: Request): Promise<Response> => {
-  console.log('Workflow executor started');
+type TriggerWorkflowsFn = typeof triggerWorkflows;
+type ExecuteWorkflowStepsFn = typeof executeWorkflowSteps;
+type ExecuteWorkflowStepsWithTimeoutFn = typeof executeWorkflowStepsWithTimeout;
 
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+export interface WorkflowExecutorDeps {
+  createClient: typeof createClient;
+  triggerWorkflowsImpl?: TriggerWorkflowsFn;
+  executeWorkflowStepsImpl?: ExecuteWorkflowStepsFn;
+  executeStepsWithTimeoutImpl?: ExecuteWorkflowStepsWithTimeoutFn;
+}
 
-  const adminSupabase = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-  );
+export function createWorkflowExecutor({
+  createClient: createClientFn,
+  triggerWorkflowsImpl = triggerWorkflows,
+  executeWorkflowStepsImpl = executeWorkflowSteps,
+  executeStepsWithTimeoutImpl = executeWorkflowStepsWithTimeout
+}: WorkflowExecutorDeps) {
+  const handler = async (req: Request): Promise<Response> => {
+    console.log('Workflow executor started');
 
-  try {
-    const { action, trigger_type, trigger_entity_type, trigger_entity_id, trigger_data, organization_id, workflow_execution_id }: WorkflowTriggerRequest = await req.json();
-    console.log(`Processing workflow action: ${action} for trigger: ${trigger_type}`);
-
-    let result;
-
-    switch (action) {
-      case 'trigger':
-        result = await triggerWorkflows(adminSupabase, {
-          trigger_type,
-          trigger_entity_type,
-          trigger_entity_id,
-          trigger_data,
-          organization_id
-        });
-        break;
-      
-      case 'execute':
-        if (!workflow_execution_id) {
-          throw new Error('workflow_execution_id required for execute action');
-        }
-        result = await executeWorkflowSteps(adminSupabase, workflow_execution_id);
-        break;
-      
-      default:
-        throw new Error(`Unknown action: ${action}`);
+    if (req.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
     }
 
-    return new Response(JSON.stringify({
-      success: true,
-      action,
-      result,
-      processed_at: new Date().toISOString()
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    const adminSupabase = createClientFn(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
-  } catch (error: any) {
-    console.error('Error in workflow executor:', error);
-    return new Response(JSON.stringify({
-      error: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString()
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-};
+    try {
+      const { action, trigger_type, trigger_entity_type, trigger_entity_id, trigger_data, organization_id, workflow_execution_id }: WorkflowTriggerRequest = await req.json();
+      console.log(`Processing workflow action: ${action} for trigger: ${trigger_type}`);
+
+      let result;
+
+      switch (action) {
+        case 'trigger':
+          result = await triggerWorkflowsImpl(adminSupabase, {
+            trigger_type,
+            trigger_entity_type,
+            trigger_entity_id,
+            trigger_data,
+            organization_id
+          }, executeStepsWithTimeoutImpl);
+          break;
+
+        case 'execute':
+          if (!workflow_execution_id) {
+            throw new Error('workflow_execution_id required for execute action');
+          }
+          result = await executeWorkflowStepsImpl(adminSupabase, workflow_execution_id);
+          break;
+
+        default:
+          throw new Error(`Unknown action: ${action}`);
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        action,
+        result,
+        processed_at: new Date().toISOString()
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+
+    } catch (error: any) {
+      console.error('Error in workflow executor:', error);
+      return new Response(JSON.stringify({
+        error: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString()
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  };
+
+  return handler;
+}
 
 // Find and trigger matching workflows with enhanced duplicate prevention
 async function triggerWorkflows(supabase: any, triggerData: {
@@ -138,7 +158,7 @@ async function triggerWorkflows(supabase: any, triggerData: {
   trigger_entity_id: string;
   trigger_data: any;
   organization_id: string;
-}) {
+}, executeStepsRunner: ExecuteWorkflowStepsWithTimeoutFn = executeWorkflowStepsWithTimeout) {
   const { trigger_type, trigger_entity_type, trigger_entity_id, trigger_data, organization_id } = triggerData;
   
   console.log(`Looking for workflows with trigger: ${trigger_type} in org: ${organization_id}`);
@@ -278,7 +298,7 @@ async function triggerWorkflows(supabase: any, triggerData: {
       console.log(`Created execution ${execution.id} for workflow ${workflow.id}`);
 
       // Execute workflow steps asynchronously with timeout monitoring
-      executeWorkflowStepsWithTimeout(supabase, execution.id).catch(error => {
+      executeStepsRunner(supabase, execution.id).catch(error => {
         console.error(`Error executing workflow ${workflow.id}:`, error);
       });
 
@@ -1044,4 +1064,17 @@ async function updateExecutionStatus(supabase: any, executionId: string, status:
     .eq('id', executionId);
 }
 
+const handler = createWorkflowExecutor({ createClient });
+
 serve(handler);
+
+export {
+  createWorkflowExecutor,
+  evaluateTriggerConditions,
+  executeWorkflowSteps,
+  executeWorkflowStepsWithTimeout,
+  formatDate,
+  formatTime,
+  triggerWorkflows,
+  updateExecutionStatus
+};

@@ -41,8 +41,8 @@
 | Contexts & Hooks | 24 | 24 | 100% |
 | UI Components & Pages | 30 | 30 | 100% |
 | UI Primitives & Shared Components | 13 | 13 | 100% |
-| Supabase Edge Functions & Automation | 4 | 9 | 44% |
-| **Overall** | **89** | **94** | **95%** |
+| Supabase Edge Functions & Automation | 6 | 9 | 67% |
+| **Overall** | **91** | **94** | **97%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -158,13 +158,13 @@
 ### Supabase Edge Functions & Automation
 | Area | File(s) | What to Cover | Priority | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
-| Workflow executor | `supabase/functions/workflow-executor/index.ts` | Trigger filtering, duplicate prevention, action switch | High | Not started | Use Deno test harness; stub Supabase admin client responses. |
+| Workflow executor | `supabase/functions/workflow-executor/index.ts` | Trigger filtering, duplicate prevention, action switch | High | Done | Covered by `supabase/functions/tests/workflow-executor.test.ts` for action dispatch, reminder scheduling, and duplicate guards. |
 | Session reminder processor | `supabase/functions/process-session-reminders/index.ts` | Due reminder selection, workflow invocation, failure handling | High | Not started | Simulate mixed reminder payloads, ensure status updates idempotent. |
 | Reminder notifications sender | `supabase/functions/send-reminder-notifications/index.ts` | Email templating branches, batch mode, auth flows | High | Done | Covered via `supabase/functions/tests/send-reminder-notifications.test.ts` for assignment + milestone paths with mocked Resend/Supabase. |
 | Notification queue processor | `supabase/functions/notification-processor/index.ts` | Queue polling, retry logic, failure escalation | Medium | Not started | Validate exponential backoff + dead-letter handling. |
 | Daily scheduling cron | `supabase/functions/schedule-daily-notifications/index.ts` | Window calculations, dedupe of scheduled jobs | Medium | Done | Covered by `supabase/functions/tests/schedule-daily-notifications.test.ts` with fixed clock + insert/dedupe paths. |
 | Simplified daily scheduler | `supabase/functions/simple-daily-notifications/index.ts` | Lightweight cron fallback, idempotent inserts | Low | Not started | Ensure it exits early when main scheduler already ran. |
-| Template email sender | `supabase/functions/send-template-email/index.ts` | Template lookup, localization, Resend payload | High | Not started | Stub template data + ensure placeholders resolve. |
+| Template email sender | `supabase/functions/send-template-email/index.ts` | Template lookup, localization, Resend payload | High | Done | Validated via `supabase/functions/tests/send-template-email.test.ts` for placeholder fallbacks and block ordering. |
 | User email lookup | `supabase/functions/get-users-email/index.ts` | Auth enforcement, filtering, pagination | Medium | Done | Covered by `supabase/functions/tests/get-users-email.test.ts` for happy path, validation, and failure skips. |
 | Email localization helpers | `supabase/functions/_shared/email-i18n.ts` | Language normalization, fallback to EN, list helpers | Low | Done | Validated via `supabase/functions/tests/email-i18n.test.ts` for default, Turkish, and fallback behaviors. |
 | Test callback harness | `supabase/functions/test-callback/index.ts` | Echo behavior, validation of payload schema | Low | Not started | Keep as sanity check for function invocation plumbing. |
@@ -242,6 +242,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-29 | Codex | Added Supabase automation coverage | Added Deno tests for `get-users-email`, `schedule-daily-notifications`, and shared email localization helpers to verify validation, scheduling, and i18n fallbacks | Continue expanding coverage across remaining notification + workflow functions |
 | 2025-10-29 (later) | Codex | Added session reminder processor coverage | Added Deno tests for `process-session-reminders` covering fetch failures, invalid session data guards, workflow trigger errors, and cleanup RPC execution | Next: target `send-reminder-notifications` and `workflow-executor` orchestration paths |
 | 2025-10-29 (night) | Codex | Added reminder notification coverage | Added `supabase/functions/tests/send-reminder-notifications.test.ts` to cover assignment opt-out/success and milestone fan-out flows with injected Resend client | Next: Expand `workflow-executor` orchestration tests |
+| 2025-10-30 | Codex | Added workflow executor + template email coverage | `supabase/functions/tests/workflow-executor.test.ts` validates trigger filtering, duplicate prevention, and action dispatch; `supabase/functions/tests/send-template-email.test.ts` locks placeholder fallbacks and block ordering | Next: Cover notification processor queue handling and simple daily scheduler paths |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

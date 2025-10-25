@@ -34,7 +34,7 @@ interface SendEmailRequest {
   workflow_execution_id?: string;
 }
 
-function replacePlaceholders(text: string, data: Record<string, string>): string {
+export function replacePlaceholders(text: string, data: Record<string, string>): string {
   return text.replace(/\{(\w+)(?:\|([^}]*))?\}/g, (match, key, fallback) => {
     const value = data[key];
     
@@ -59,9 +59,9 @@ function replacePlaceholders(text: string, data: Record<string, string>): string
   });
 }
 
-function generateHTMLContent(
-  blocks: TemplateBlock[], 
-  mockData: Record<string, string>, 
+export function generateHTMLContent(
+  blocks: TemplateBlock[],
+  mockData: Record<string, string>,
   subject: string,
   preheader?: string,
   organizationSettings?: any,

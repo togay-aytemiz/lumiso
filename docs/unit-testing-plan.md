@@ -38,11 +38,11 @@
 | --- | --- | --- | --- |
 | Core Libraries & Helpers | 5 | 13 | 38% |
 | Services & Data Access | 5 | 5 | 100% |
-| Contexts & Hooks | 18 | 24 | 75% |
+| Contexts & Hooks | 20 | 24 | 83% |
 | UI Components & Pages | 2 | 27 | 7% |
 | UI Primitives & Shared Components | 0 | 8 | 0% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **30** | **86** | **35%** |
+| **Overall** | **32** | **86** | **37%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -84,7 +84,7 @@
 | Auth provider | `src/contexts/AuthContext.tsx` | Role fetching, auth change handling, sign-out side effects | High | Not started | Mock auth listener + RPC; ensure localStorage cleared on sign-out. |
 | Organization provider | `src/contexts/OrganizationContext.tsx` | Initial load, presence heartbeat cleanup, data prefetch | High | Not started | Fake timers to confirm interval cleanup and toast behavior. |
 | Onboarding provider | `src/contexts/OnboardingContext.tsx` | Computed flags, guarded transitions, batch completion | Medium | Not started | Provide fixture preferences to cover each onboarding stage. |
-| Calendar performance monitor | `src/hooks/useCalendarPerformanceMonitor.ts` | Throttle thresholds, cleanup handlers | Low | Not started | Use fake timers to simulate long renders. |
+| Calendar performance monitor | `src/hooks/useCalendarPerformanceMonitor.ts` | Throttle thresholds, cleanup handlers | Low | Done | Covered by `src/hooks/__tests__/useCalendarPerformanceMonitor.test.ts` for timing metrics, memory usage, and dev warnings. |
 | Organization data query helper | `src/hooks/useOrganizationData.ts` | Active org guards, queryKey composition, Supabase ensures | High | Done | Covered by `src/hooks/__tests__/useOrganizationData.test.ts` for guard rails, RPC ensure_default calls, and placeholder handling. |
 | Lead detail data aggregator | `src/hooks/useLeadDetailData.ts` | Session metrics, combined queries, refetch fan-out | High | Done | Covered by `src/hooks/__tests__/useLeadDetailData.test.tsx` for metrics, refetch fan-out, and default fallbacks. |
 | Session edit form | `src/hooks/useSessionEditForm.ts` | Dirty tracking, Zod validation, reschedule workflow path | High | Done | Covered by `src/hooks/__tests__/useSessionEditForm.test.tsx` for validation errors, workflow triggers, reminders, and Supabase errors. |
@@ -96,7 +96,7 @@
 | Notification triggers | `src/hooks/useNotificationTriggers.ts` | Milestone notifications, batch scheduling, toast errors | Medium | Done | Covered by `src/hooks/__tests__/useNotificationTriggers.test.ts` for Supabase insert/invoke flows and error toasts. |
 | Settings section manager | `src/hooks/useSettingsSection.ts` | Auto-save throttling, dirty tracking, toast toggles | Medium | Done | Covered via `src/hooks/__tests__/useSettingsSection.test.ts` for manual saves, auto-save throttle, and toast/error handling. |
 | Template builder hook | `src/hooks/useTemplateBuilder.ts` | Load/save pipelines, placeholder extraction, publish flow | High | Not started | Mock Supabase responses + ensure blocks conversions happen. |
-| Template validation hook | `src/hooks/useTemplateValidation.ts` | Warning/error matrix, published template requirements | Medium | Not started | Table-driven tests for inputs covering each branch. |
+| Template validation hook | `src/hooks/useTemplateValidation.ts` | Warning/error matrix, published template requirements | Medium | Done | Covered by `src/hooks/__tests__/useTemplateValidation.test.ts` for missing template, name/content validation, placeholders, and published requirements. |
 
 ### UI Components & Pages
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -198,6 +198,8 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-25 (night owl) | Codex | Added organization timezone hook coverage | `src/hooks/__tests__/useOrganizationTimezone.test.ts` confirms settings-driven formats and browser fallback | Revisit when timezone settings grow more nuanced |
 | 2025-10-25 (early morning) | Codex | Added notification triggers hook coverage | `src/hooks/__tests__/useNotificationTriggers.test.ts` validates milestone creation, scheduling, processing, and retry flows with error toasts | Extend when new trigger actions are added |
 | 2025-10-25 (pre-dawn) | Codex | Added settings section manager coverage | `src/hooks/__tests__/useSettingsSection.test.ts` covers dirty tracking, manual and auto-save flows, and toast behaviors | Revisit if additional throttling options are introduced |
+| 2025-10-25 (early morning++) | Codex | Added template validation hook + calendar monitor coverage | `src/hooks/__tests__/useTemplateValidation.test.ts` and `src/hooks/__tests__/useCalendarPerformanceMonitor.test.ts` ensure validation warnings and performance monitoring warnings | Extend when validation or monitoring logic expands |
+| 2025-10-25 (sunrise) | Codex | Added template validation hook coverage | `src/hooks/__tests__/useTemplateValidation.test.ts` checks required fields, placeholder usage, and published template safeguards | Extend if validation rules expand |
 | 2025-10-25 (after midnight) | Codex | Added project sessions summary hook coverage | `src/hooks/__tests__/useProjectSessionsSummary.test.tsx` groups statuses, detects overdue/today/upcoming, and handles refresh triggers | Extend when summary introduces new status categories |
 | 2025-10-25 (morning) | Codex | Added Session Types settings coverage | `src/components/__tests__/SessionTypesSection.test.tsx` ensures empty state, default assignment, activation toggle, and deletion flows | Revisit when session type UI adds drag/reorder or bulk actions |
 

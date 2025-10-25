@@ -35,3 +35,4 @@ bun.lockb
 # System files
 Thumbs.db
 .codex/
+deno.lock

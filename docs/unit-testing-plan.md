@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 27 | 27 | 100% |
-| UI Components & Pages | 56 | 73 | 77% |
+| UI Components & Pages | 61 | 73 | 84% |
 | UI Primitives & Shared Components | 18 | 18 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **128** | **145** | **88%** |
+| **Overall** | **133** | **145** | **92%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -156,12 +156,12 @@
 | Getting started onboarding page | `src/pages/GettingStarted.tsx` | Checklist progress, sample data modal toggles, onboarding completion routing | High | Done | Covered by `src/pages/__tests__/GettingStarted.test.tsx` exercising redirects, guided progress, modal toggles, and completion flow. |
 | Marketing landing page | `src/pages/Index.tsx` | Auth-based redirects, CTA links, feature highlights | Medium | Done | Covered by `src/pages/__tests__/Index.test.tsx` validating loading skeleton, CRM redirect, and public CTA navigation. |
 | Not found route | `src/pages/NotFound.tsx` | Support links, navigation back to dashboard, localization | Low | Done | Covered by `src/pages/__tests__/NotFound.test.tsx` asserting error logging and dashboard link rendering. |
-| Payments dashboard page | `src/pages/Payments.tsx` | Metrics cards, filters, pagination, workspace toggles | High | Not started | Payments workspace has zero Jest coverage; cover interactions with payments hooks/components. |
+| Payments dashboard page | `src/pages/Payments.tsx` | Metrics cards, filters, pagination, workspace toggles | High | Done | Covered by `src/pages/__tests__/Payments.test.tsx` validating filter state wiring, export workbook creation, toast feedback, and table/search props. |
 | Reminder details page | `src/pages/ReminderDetails.tsx` | Reminder fetch, status updates, reschedule/cancel flows | High | Not started | Lacks tests for Supabase-driven reminder lifecycle; add success/error scenarios. |
 | Template builder page | `src/pages/TemplateBuilder.tsx` | Editor state management, autosave/publish, preview toggles | High | Not started | No page-level tests; cover memoized content and dirty-state handling. |
 | Admin console screens | `src/pages/admin/Users.tsx`, `Localization.tsx`, `System.tsx` | Table interactions, role actions, localization sync | High | Not started | Admin area has no tests even though plan marked complete; add specs per screen. |
 | Settings management pages | `src/pages/settings/General.tsx`, `Billing.tsx`, `Contracts.tsx`, `Notifications.tsx`, `Leads.tsx`, `Profile.tsx`, `Account_old.tsx` | Section visibility, save flows, permission guards | Medium | Not started | Only Services/Projects/DangerZone have tests; build coverage for remaining settings pages. |
-| Payments workspace components | `src/pages/payments/components/PaymentsTableSection.tsx`, `PaymentsMetricsSummary.tsx`, `PaymentsDateControls.tsx`, `PaymentsTrendChart.tsx` | Table rendering, metrics aggregation, chart interactions, date filtering | High | Not started | No Jest specs exist; add component-focused tests alongside page coverage. |
+| Payments workspace components | `src/pages/payments/components/PaymentsTableSection.tsx`, `PaymentsMetricsSummary.tsx`, `PaymentsDateControls.tsx`, `PaymentsTrendChart.tsx` | Table rendering, metrics aggregation, chart interactions, date filtering | High | Done | Covered by new specs in `src/pages/payments/components/__tests__/PaymentsTableSection.test.tsx`, `PaymentsMetricsSummary.test.tsx`, `PaymentsDateControls.test.tsx`, and `PaymentsTrendChart.test.tsx` asserting prop passthroughs, formatter usage, option handlers, and empty-state rendering. |
 
 ### UI Primitives & Shared Components
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -290,6 +290,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-11-09 | Codex | Added payments workspace hook coverage | `src/pages/payments/hooks/__tests__/usePaymentsData.test.ts`, `usePaymentsFilters.test.tsx`, and `usePaymentsTableColumns.test.tsx` lock Supabase pagination/search filters, draft thresholds, and column callbacks | Track future payments analytics or virtualization enhancements |
 | 2025-11-10 | Codex | Added onboarding landing coverage for remaining pages | Added `src/components/__tests__/SampleDataModal.test.tsx`, `src/pages/__tests__/GettingStarted.test.tsx`, `Index.test.tsx`, and `NotFound.test.tsx` to exercise modal flows, guided redirects, marketing CTA, and 404 logging | Next: extend coverage to Payments page, ReminderDetails page, and settings context usage |
 | 2025-11-11 | Codex | Added guard, language, and instrumentation component coverage | Added `src/components/__tests__/ErrorBoundary.test.tsx`, `LanguageSwitcher.test.tsx`, `PerformanceMonitor.test.tsx`, and `TruncatedTextWithTooltip.test.tsx` to lock fallback UI, language toggles, dev-only warnings, and truncation tooltips | Revisit when onboarding metrics expand or tooltip delays change |
+| 2025-11-12 | Codex | Added Payments workspace page + component coverage | Added `src/pages/__tests__/Payments.test.tsx` alongside component specs for date controls, trend chart, metrics summary, and table section to verify filter resets, export flows, formatter output, and chart/empty states | Next: extend coverage to ReminderDetails page and remaining settings screens |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

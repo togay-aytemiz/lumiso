@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Plus, LayoutGrid, List, Archive, Settings, FileDown } from "lucide-react";
+import { Plus, LayoutGrid, List, Archive, Settings, FileDown, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";

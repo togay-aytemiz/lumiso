@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 31 | 43 | 72% |
+| UI Components & Pages | 32 | 43 | 74% |
 | UI Primitives & Shared Components | 13 | 13 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **95** | **107** | **89%** |
+| **Overall** | **96** | **107** | **90%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -259,6 +259,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-30 (night wrap++) | Codex | Added lead detail page coverage | `src/pages/__tests__/LeadDetail.test.tsx` locks loading skeleton, summary wiring, quick status buttons, and fetch error toasts | Next: tackle ProjectDetail page data orchestration |
 | 2025-10-31 | Codex | Added Project detail page coverage | `src/pages/__tests__/ProjectDetail.test.tsx` exercises successful fetch composition and missing-project redirect toast | Next: Cover Calendar and UpcomingSessions pages |
 | 2025-10-31 (later still) | Codex | Added Calendar and Upcoming Sessions page coverage | `src/pages/__tests__/Calendar.test.tsx` and `src/pages/__tests__/UpcomingSessions.test.tsx` lock view toggles, KPI metrics, segment filtering, and session sheet navigation | Next: Tackle AllProjects workspace sorting/export flows |
+| 2025-11-01 | Codex | Added AllProjects workspace coverage | `src/pages/__tests__/AllProjects.test.tsx` verifies list defaults, archived toggle, quick view, and spreadsheet export success path | Next: Extend tests to cover board pagination and archived export error handling |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

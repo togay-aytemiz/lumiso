@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 42 | 44 | 95% |
+| UI Components & Pages | 44 | 44 | 100% |
 | UI Primitives & Shared Components | 17 | 17 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **110** | **112** | **98%** |
+| **Overall** | **112** | **112** | **100%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -132,8 +132,8 @@
 | Unified client details | `src/components/UnifiedClientDetails.tsx` | Conditional rendering of contact info, copy buttons | Low | Done | Covered by `src/components/__tests__/UnifiedClientDetails.test.tsx` validating quick actions, custom field display, navigation hooks, and validation toasts. |
 | Project sheet view | `src/components/ProjectSheetView.tsx` | Printable layout, localization of labels, totals | Medium | Done | Covered by `src/components/__tests__/ProjectSheetView.test.tsx` validating supabase fetch stubs, edit/save flow, and archive confirmation handling. |
 | Onboarding modal | `src/components/OnboardingModal.tsx` | Step transitions, skip behavior, analytics events | Medium | Done | Covered by `src/components/__tests__/OnboardingModal.test.tsx` validating guided setup launch, navigation, and sample data modal toggle. |
-| Activity timeline section | `src/components/ActivitySection.tsx` | Activity CRUD, reminder scheduling, filter tabs | High | Not started | Stub Supabase helpers to ensure create/edit validation, filter chips, and audit log rendering with skeleton states. |
-| Lead activity section | `src/components/LeadActivitySection.tsx` | Segmented activity/history views, cross-entity fetches, audit timeline | Medium | Not started | Mock Supabase responses to assert segment toggles, merged histories, and toast errors. |
+| Activity timeline section | `src/components/ActivitySection.tsx` | Activity CRUD, reminder scheduling, filter tabs | High | Done | Covered by `src/components/__tests__/ActivitySection.test.tsx` verifying filter pills, Supabase-driven creation flow, and toast feedback. |
+| Lead activity section | `src/components/LeadActivitySection.tsx` | Segmented activity/history views, cross-entity fetches, audit timeline | Medium | Done | Covered by `src/components/__tests__/LeadActivitySection.test.tsx` exercising segment toggles, activity creation, and completion toasts with mocked Supabase chains. |
 | Workflow creation sheet | `src/components/CreateWorkflowSheet.tsx` | Form dirty-state guard, channel toggles, template selection, create/update branching | High | Done | Covered by `src/components/__tests__/CreateWorkflowSheet.test.tsx` for edit prefill, update submission payloads, and empty-template messaging. |
 | Workflow delete dialog | `src/components/WorkflowDeleteDialog.tsx` | Confirmation copy, destructive action wiring, disabled state | Medium | Done | Covered by `src/components/__tests__/WorkflowDeleteDialog.test.tsx` verifying translation text, cancel/confirm callbacks, close handling, and disabled deletion state. |
 | Project sheet preview | `src/components/ProjectSheetPreview.tsx` | Modal lifecycle, related data fetches, navigation callbacks | Medium | Done | Covered by `src/components/__tests__/ProjectSheetPreview.test.tsx` ensuring Supabase fetch stubs hydrate metrics, navigation closes modal, and status change triggers updates. |
@@ -265,6 +265,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-11-03 (later) | Codex | Added Templates workspace coverage | `src/pages/__tests__/Templates.test.tsx` locks preview translation fallback, search empty states, duplication/deletion flows, and navigation callbacks | Next: Cover Project sheet view snapshot translations |
 | 2025-11-04 | Codex | Added onboarding modal, workflow sheet, and project preview coverage | Added `src/components/__tests__/OnboardingModal.test.tsx`, `CreateWorkflowSheet.test.tsx`, and `ProjectSheetPreview.test.tsx` to validate modal flows, edit submission payloads, and Supabase-driven previews | Next: Target ProjectSheetView, ActivitySection, and LeadActivitySection components |
 | 2025-11-05 | Codex | Added Project sheet view coverage | `src/components/__tests__/ProjectSheetView.test.tsx` covers data hydration, edit/save flow, and archive confirmation logic with mocked Supabase + toast hooks | Next: Continue with ActivitySection and LeadActivitySection coverage |
+| 2025-11-05 (later) | Codex | Added activity timelines for leads/projects | Added `src/components/__tests__/ActivitySection.test.tsx` and `LeadActivitySection.test.tsx` to validate filter modes, creation toasts, history segments, and completion toggles | Monitor for new activity types or audit entities to extend fixtures |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

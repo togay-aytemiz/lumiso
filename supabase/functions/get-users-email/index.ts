@@ -10,7 +10,29 @@ interface GetUsersEmailRequest {
   userIds: string[];
 }
 
-const handler = async (req: Request): Promise<Response> => {
+interface SupabaseAdminLike {
+  auth: {
+    admin: {
+      getUserById(userId: string): Promise<{ data: { user: { id: string; email: string } } | null; error: Error | null }>;
+    };
+  };
+}
+
+interface HandlerDependencies {
+  createClient?: () => SupabaseAdminLike;
+}
+
+function createSupabaseAdminClient(): SupabaseAdminLike {
+  return createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  ) as unknown as SupabaseAdminLike;
+}
+
+export const handler = async (
+  req: Request,
+  deps: HandlerDependencies = {},
+): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -21,22 +43,18 @@ const handler = async (req: Request): Promise<Response> => {
     if (!userIds || !Array.isArray(userIds)) {
       return new Response(
         JSON.stringify({ error: "userIds array is required" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } },
       );
     }
 
-    // Create admin client with service role key
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const supabaseAdmin = (deps.createClient ?? createSupabaseAdminClient)();
 
-    // Get user emails using admin client
-    const users = [];
+    const users: { id: string; email: string | null }[] = [];
+
     for (const userId of userIds) {
       try {
         const { data: user, error } = await supabaseAdmin.auth.admin.getUserById(userId);
-        if (user && !error) {
+        if (user && !error && user.user?.email) {
           users.push({
             id: user.user.id,
             email: user.user.email,
@@ -51,20 +69,23 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ users }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders }
-      }
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      },
     );
-
   } catch (error: any) {
     console.error("Error in get-users-email function:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders }
-      }
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      },
     );
   }
 };
 
-serve(handler);
+if (import.meta.main) {
+  serve((req: Request) => handler(req));
+}
+
+export { corsHeaders };

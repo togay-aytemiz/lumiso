@@ -41,8 +41,8 @@
 | Contexts & Hooks | 24 | 24 | 100% |
 | UI Components & Pages | 30 | 30 | 100% |
 | UI Primitives & Shared Components | 13 | 13 | 100% |
-| Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **85** | **94** | **90%** |
+| Supabase Edge Functions & Automation | 2 | 9 | 22% |
+| **Overall** | **87** | **94** | **93%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -162,10 +162,11 @@
 | Session reminder processor | `supabase/functions/process-session-reminders/index.ts` | Due reminder selection, workflow invocation, failure handling | High | Not started | Simulate mixed reminder payloads, ensure status updates idempotent. |
 | Reminder notifications sender | `supabase/functions/send-reminder-notifications/index.ts` | Email templating branches, batch mode, auth flows | High | Not started | Mock Resend + Supabase admin; cover each `type` branch. |
 | Notification queue processor | `supabase/functions/notification-processor/index.ts` | Queue polling, retry logic, failure escalation | Medium | Not started | Validate exponential backoff + dead-letter handling. |
-| Daily scheduling cron | `supabase/functions/schedule-daily-notifications/index.ts` | Window calculations, dedupe of scheduled jobs | Medium | Not started | Provide fake clock to cover weekend/holiday scenarios. |
+| Daily scheduling cron | `supabase/functions/schedule-daily-notifications/index.ts` | Window calculations, dedupe of scheduled jobs | Medium | Done | Covered by `supabase/functions/tests/schedule-daily-notifications.test.ts` with fixed clock + insert/dedupe paths. |
 | Simplified daily scheduler | `supabase/functions/simple-daily-notifications/index.ts` | Lightweight cron fallback, idempotent inserts | Low | Not started | Ensure it exits early when main scheduler already ran. |
 | Template email sender | `supabase/functions/send-template-email/index.ts` | Template lookup, localization, Resend payload | High | Not started | Stub template data + ensure placeholders resolve. |
-| User email lookup | `supabase/functions/get-users-email/index.ts` | Auth enforcement, filtering, pagination | Medium | Not started | Mock Supabase admin client returning varying roles. |
+| User email lookup | `supabase/functions/get-users-email/index.ts` | Auth enforcement, filtering, pagination | Medium | Done | Covered by `supabase/functions/tests/get-users-email.test.ts` for happy path, validation, and failure skips. |
+| Email localization helpers | `supabase/functions/_shared/email-i18n.ts` | Language normalization, fallback to EN, list helpers | Low | Done | Validated via `supabase/functions/tests/email-i18n.test.ts` for default, Turkish, and fallback behaviors. |
 | Test callback harness | `supabase/functions/test-callback/index.ts` | Echo behavior, validation of payload schema | Low | Not started | Keep as sanity check for function invocation plumbing. |
 
 _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`. Update the relevant table after every iteration that touches a listed area; add new rows when new risk surfaces.
@@ -238,6 +239,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-27 | Codex | Hardened UnifiedClientDetails and toast hook coverage | Added `src/components/__tests__/UnifiedClientDetails.test.tsx` and `src/components/ui/__tests__/use-toast.test.ts` while reconciling sheet/section status rows | Next: Target `GlobalSearch` debounced query flows |
 | 2025-10-28 | Codex | Added Session banner, User menu, and UI primitive coverage | Added tests for `src/components/SessionBanner.tsx`, `src/components/UserMenu.tsx`, and new UI primitives (`segmented-control`, `page-header`, `pagination`, `card`) to lock in action handling and accessibility | Next: Focus on GlobalSearch keyboard interactions and Supabase function harnesses |
 | 2025-10-28 (later still) | Codex | Completed remaining UI primitive gaps | Added `src/components/ui/__tests__/progress-bar.test.tsx`, `progress.test.tsx`, `switch.test.tsx`, and `toast.test.tsx` to cover progress transforms, toggle data-state transitions, and toast viewport/variant styling | Next: Begin data-table primitive harness and toast renderer coverage |
+| 2025-10-29 | Codex | Added Supabase automation coverage | Added Deno tests for `get-users-email`, `schedule-daily-notifications`, and shared email localization helpers to verify validation, scheduling, and i18n fallbacks | Continue expanding coverage across remaining notification + workflow functions |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

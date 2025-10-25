@@ -6,27 +6,46 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
-  // Handle CORS preflight requests
+interface SupabaseClientLike {
+  from(table: string): any;
+  functions: {
+    invoke(name: string, options: { body: Record<string, unknown> }): Promise<{ data?: unknown; error?: Error | null }>;
+  };
+}
+
+interface HandlerDependencies {
+  createClient?: () => SupabaseClientLike;
+  getNow?: () => Date;
+}
+
+function createSupabaseClient(): SupabaseClientLike {
+  return createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+  ) as unknown as SupabaseClientLike;
+}
+
+export const handler = async (
+  req: Request,
+  deps: HandlerDependencies = {},
+): Promise<Response> => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   console.log('Daily notification scheduler started');
 
-  try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+  const createClientFn = deps.createClient ?? createSupabaseClient;
+  const getNow = deps.getNow ?? (() => new Date());
 
-    // Get current time in format HH:MM
-    const now = new Date();
+  try {
+    const supabase = createClientFn();
+
+    const now = getNow();
     const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    
+
     console.log(`Current time: ${currentTime}`);
 
-    // Find users that should receive daily summaries at this time
     const { data: userSettings, error: userError } = await supabase
       .from('user_settings')
       .select(`
@@ -47,18 +66,17 @@ serve(async (req) => {
     console.log(`Found ${userSettings?.length || 0} user settings to process`);
 
     if (!userSettings || userSettings.length === 0) {
-      return new Response(JSON.stringify({ 
-        success: true, 
+      return new Response(JSON.stringify({
+        success: true,
         message: `No users scheduled for ${currentTime}`,
-        processed: 0 
+        processed: 0,
       }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 
-    // Get organization details for each user's active org
-    const orgIds = [...new Set(userSettings.map(u => u.active_organization_id))];
+    const orgIds = [...new Set(userSettings.map((u) => u.active_organization_id))];
     const { data: orgs, error: orgDetailsError } = await supabase
       .from('organizations')
       .select('id, owner_id, name')
@@ -71,18 +89,17 @@ serve(async (req) => {
 
     console.log(`Found ${orgs?.length || 0} organizations to process`);
 
-    // Create daily summary notifications for each user
-    const today = new Date().toISOString().split('T')[0];
-    const notifications = [];
+    const today = now.toISOString().split('T')[0];
+    const scheduledFor = now.toISOString();
+    const notifications: Array<Record<string, unknown>> = [];
 
     for (const userSetting of userSettings) {
-      const org = orgs?.find(o => o.id === userSetting.active_organization_id);
+      const org = orgs?.find((o) => o.id === userSetting.active_organization_id);
       if (!org) {
         console.log(`Organization ${userSetting.active_organization_id} not found`);
         continue;
       }
 
-      // Check if notification already exists for today
       const { data: existingNotification } = await supabase
         .from('notifications')
         .select('id')
@@ -98,21 +115,18 @@ serve(async (req) => {
         continue;
       }
 
-      // Create daily summary notification
-      const notification = {
+      notifications.push({
         organization_id: org.id,
         user_id: userSetting.user_id,
         notification_type: 'daily-summary',
         delivery_method: 'scheduled',
-        scheduled_for: new Date().toISOString(),
+        scheduled_for: scheduledFor,
         metadata: {
           date: today,
-          organization_name: org.name
+          organization_name: org.name,
         },
-        status: 'pending'
-      };
-
-      notifications.push(notification);
+        status: 'pending',
+      });
     }
 
     if (notifications.length > 0) {
@@ -127,10 +141,9 @@ serve(async (req) => {
 
       console.log(`Created ${notifications.length} daily summary notifications`);
 
-      // Trigger the notification processor to process these
       try {
         const { error: processorError } = await supabase.functions.invoke('notification-processor', {
-          body: { action: 'process-pending' }
+          body: { action: 'process-pending' },
         });
 
         if (processorError) {
@@ -143,23 +156,28 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ 
-      success: true, 
+    return new Response(JSON.stringify({
+      success: true,
       processed: notifications.length,
-      users: userSettings.map(u => u.user_id)
+      users: userSettings.map((u) => u.user_id),
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
-
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in schedule-daily-notifications:', error);
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       error: error.message,
-      success: false 
+      success: false,
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   }
-});
+};
+
+if (import.meta.main) {
+  serve((req: Request) => handler(req));
+}
+
+export { corsHeaders };

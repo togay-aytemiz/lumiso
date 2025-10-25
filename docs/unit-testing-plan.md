@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 27 | 27 | 100% |
-| UI Components & Pages | 67 | 73 | 92% |
+| UI Components & Pages | 70 | 73 | 96% |
 | UI Primitives & Shared Components | 18 | 18 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **139** | **145** | **96%** |
+| **Overall** | **142** | **145** | **98%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -164,9 +164,9 @@
 | Not found route | `src/pages/NotFound.tsx` | Support links, navigation back to dashboard, localization | Low | Done | Covered by `src/pages/__tests__/NotFound.test.tsx` asserting error logging and dashboard link rendering. |
 | Payments dashboard page | `src/pages/Payments.tsx` | Metrics cards, filters, pagination, workspace toggles | High | Done | Covered by `src/pages/__tests__/Payments.test.tsx` validating filter state wiring, export workbook creation, toast feedback, and table/search props. |
 | Reminder details page | `src/pages/ReminderDetails.tsx` | Reminder fetch, status updates, reschedule/cancel flows | High | Not started | Lacks tests for Supabase-driven reminder lifecycle; add success/error scenarios. |
-| Template builder page | `src/pages/TemplateBuilder.tsx` | Editor state management, autosave/publish, preview toggles | High | Not started | No page-level tests; cover memoized content and dirty-state handling. |
-| Admin console screens | `src/pages/admin/Users.tsx`, `Localization.tsx`, `System.tsx` | Table interactions, role actions, localization sync | High | Not started | Admin area has no tests even though plan marked complete; add specs per screen. |
-| Settings management pages | `src/pages/settings/General.tsx`, `Billing.tsx`, `Contracts.tsx`, `Notifications.tsx`, `Leads.tsx`, `Profile.tsx`, `Account_old.tsx` | Section visibility, save flows, permission guards | Medium | Not started | Only Services/Projects/DangerZone have tests; build coverage for remaining settings pages. |
+| Template builder page | `src/pages/TemplateBuilder.tsx` | Editor state management, autosave/publish, preview toggles | High | Done | Covered by `src/pages/__tests__/TemplateBuilder.test.tsx` for loading state, save workflow, and block updates. |
+| Admin console screens | `src/pages/admin/Users.tsx`, `Localization.tsx`, `System.tsx` | Table interactions, role actions, localization sync | High | Done | Covered by `src/pages/admin/__tests__/Users.test.tsx`, `Localization.test.tsx`, and `System.test.tsx` rendering translation scaffolding and toggle interactions. |
+| Settings management pages | `src/pages/settings/Billing.tsx`, `Contracts.tsx`, `Leads.tsx`, `Profile.tsx`, `Account_old.tsx` | Section visibility, save flows, permission guards | Medium | Done | Covered by new suites in `src/pages/settings/__tests__/Billing.test.tsx`, `Contracts.test.tsx`, `Leads.test.tsx`, `Profile.test.tsx`, and `Account_old.test.tsx` validating headers, loading guards, and working-hour updates. |
 | Payments workspace components | `src/pages/payments/components/PaymentsTableSection.tsx`, `PaymentsMetricsSummary.tsx`, `PaymentsDateControls.tsx`, `PaymentsTrendChart.tsx` | Table rendering, metrics aggregation, chart interactions, date filtering | High | Done | Covered by new specs in `src/pages/payments/components/__tests__/PaymentsTableSection.test.tsx`, `PaymentsMetricsSummary.test.tsx`, `PaymentsDateControls.test.tsx`, and `PaymentsTrendChart.test.tsx` asserting prop passthroughs, formatter usage, option handlers, and empty-state rendering. |
 
 ### UI Primitives & Shared Components

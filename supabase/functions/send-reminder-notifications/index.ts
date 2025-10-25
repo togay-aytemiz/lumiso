@@ -19,7 +19,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+type ResendClient = {
+  emails: {
+    send: (payload: Record<string, unknown>) => Promise<{ data?: { id?: string }; error?: { message: string } | null }>;
+  };
+};
+
+let resend: ResendClient = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+export function setResendClient(client: ResendClient) {
+  resend = client;
+}
+
+export function getResendClient(): ResendClient {
+  return resend;
+}
 
 interface ReminderRequest {
   type: string;
@@ -42,7 +56,7 @@ interface ReminderRequest {
   assigner_id?: string;
 }
 
-const handler = async (req: Request): Promise<Response> => {
+export const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -738,7 +752,7 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 // Handler for assignment notifications (lead or project assignments)
-async function handleAssignmentNotification(requestData: any, adminSupabase: any): Promise<Response> {
+export async function handleAssignmentNotification(requestData: any, adminSupabase: any): Promise<Response> {
   console.log('Handling assignment notification:', requestData);
   
   try {
@@ -1070,7 +1084,7 @@ async function handleAssignmentNotification(requestData: any, adminSupabase: any
 }
 
 // Handler for project milestone notifications
-async function handleProjectMilestoneNotification(requestData: ReminderRequest, adminSupabase: any): Promise<Response> {
+export async function handleProjectMilestoneNotification(requestData: ReminderRequest, adminSupabase: any): Promise<Response> {
   console.log('Handling project milestone notification:', requestData);
   
   try {

@@ -6,7 +6,25 @@ import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summ
 import { formatDate } from './_templates/enhanced-email-base.ts';
 import { createEmailLocalization } from '../_shared/email-i18n.ts';
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+let createSupabaseClient = createClient;
+const defaultResendClient = new Resend(Deno.env.get("RESEND_API_KEY"));
+let resendClient: any = defaultResendClient;
+
+export function setSupabaseClientFactoryForTests(factory: typeof createClient) {
+  createSupabaseClient = factory;
+}
+
+export function resetSupabaseClientFactoryForTests() {
+  createSupabaseClient = createClient;
+}
+
+export function setResendClientForTests(client: any) {
+  resendClient = client;
+}
+
+export function resetResendClientForTests() {
+  resendClient = defaultResendClient;
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,14 +36,14 @@ interface ProcessorRequest {
   user_id?: string;
 }
 
-const handler = async (req: Request): Promise<Response> => {
+export const handler = async (req: Request): Promise<Response> => {
   console.log('Simple daily notification processor started');
   
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseAdmin = createClient(
+  const supabaseAdmin = createSupabaseClient(
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
   );
@@ -413,7 +431,7 @@ const handler = async (req: Request): Promise<Response> => {
         // Send email using Resend with EXACT same sender and subject as test system
         console.log(`Sending daily summary to ${user.email}`);
         
-        const emailResult = await resend.emails.send({
+        const emailResult = await resendClient.emails.send({
           from: 'Lumiso <hello@updates.lumiso.app>', // Same sender as test system
           to: [user.email],
           subject: emailSubject, // Same subject format as test system

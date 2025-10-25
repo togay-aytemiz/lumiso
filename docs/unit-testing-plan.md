@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 28 | 33 | 85% |
+| UI Components & Pages | 28 | 43 | 65% |
 | UI Primitives & Shared Components | 13 | 13 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **92** | **97** | **95%** |
+| **Overall** | **92** | **107** | **86%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -114,6 +114,11 @@
 | Offline banner | `src/components/OfflineBanner.tsx` | Connectivity context integration, retry actions | Low | Done | Covered by `src/components/__tests__/OfflineBanner.test.tsx` (online skip + retry + spinner state). |
 | Lead detail page | `src/pages/LeadDetail.tsx` | Data loading, tab switching, error fallbacks | High | Done | Covered by `src/pages/__tests__/LeadDetail.test.tsx` for skeleton fallback, summary wiring, status actions, and fetch error toasts. |
 | Project detail page | `src/pages/ProjectDetail.tsx` | Combined queries, session/payment sections, modals | High | Done | Covered by `src/pages/__tests__/ProjectDetail.test.tsx` for happy path rendering + missing project redirect toast. |
+| All leads workspace | `src/pages/AllLeads.tsx` | Server-driven table pagination/sorting, filter chip derivation, KPI metric calculations, onboarding tutorial triggers | High | Not started | Mock Supabase hooks to validate filter state syncing, export spinner toggles, and tutorial navigation resets. |
+| All projects workspace | `src/pages/AllProjects.tsx` | Board/list/archived view switching, tutorial gating, exports, Supabase-backed list pagination | High | Not started | Cover view mode persistence, Kanban/list dataset sync, and CSV export error toasts. |
+| Analytics dashboard page | `src/pages/Analytics.tsx` | Session metric toggles, Supabase aggregation fallbacks, chart data transforms | Medium | Not started | Stub analytics queries to confirm scheduled vs created toggles, empty states, and failure toasts. |
+| Workflows management page | `src/pages/Workflows.tsx` | Filtering, KPI summaries, pagination, toggle actions | High | Not started | Mock `useWorkflows` to assert status filters, load-more pagination, KPI card counts, and toggle/CRUD dialog wiring. |
+| Session detail page | `src/pages/SessionDetail.tsx` | Supabase fetch path, edit/delete flows, navigation fallback | High | Not started | Validate skeleton-to-content transition, delete success redirect, and error toast on fetch failure. |
 | Calendar page | `src/pages/Calendar.tsx` | Range filters, session grouping, performance panels | High | Not started | Use fake timers to cover performance overlay toggles. |
 | Upcoming sessions page | `src/pages/UpcomingSessions.tsx` | Filters, session sorting, empty state messaging | Medium | Not started | Ensure sessions from multiple statuses render correctly. |
 | Templates workspace | `src/pages/Templates.tsx` | Block editor integration, preview data toggles | Medium | Not started | Mock template utils + i18n to confirm fallback content. |
@@ -127,6 +132,11 @@
 | Unified client details | `src/components/UnifiedClientDetails.tsx` | Conditional rendering of contact info, copy buttons | Low | Done | Covered by `src/components/__tests__/UnifiedClientDetails.test.tsx` validating quick actions, custom field display, navigation hooks, and validation toasts. |
 | Project sheet view | `src/components/ProjectSheetView.tsx` | Printable layout, localization of labels, totals | Medium | Not started | Snapshot layout with English/Turkish translations. |
 | Onboarding modal | `src/components/OnboardingModal.tsx` | Step transitions, skip behavior, analytics events | Medium | Not started | Mock context + ensure stage transitions call hooks. |
+| Activity timeline section | `src/components/ActivitySection.tsx` | Activity CRUD, reminder scheduling, filter tabs | High | Not started | Stub Supabase helpers to ensure create/edit validation, filter chips, and audit log rendering with skeleton states. |
+| Lead activity section | `src/components/LeadActivitySection.tsx` | Segmented activity/history views, cross-entity fetches, audit timeline | Medium | Not started | Mock Supabase responses to assert segment toggles, merged histories, and toast errors. |
+| Workflow creation sheet | `src/components/CreateWorkflowSheet.tsx` | Form dirty-state guard, channel toggles, template selection, create/update branching | High | Not started | Mock `useTemplates` to cover edit autopopulation, validation gating, submission callbacks, and navigation guard prompts. |
+| Workflow delete dialog | `src/components/WorkflowDeleteDialog.tsx` | Confirmation copy, destructive action wiring, disabled state | Medium | Not started | Assert translation usage, cancel vs confirm callbacks, and disabled button state while deleting. |
+| Project sheet preview | `src/components/ProjectSheetPreview.tsx` | Modal lifecycle, related data fetches, navigation callbacks | Medium | Not started | Verify Supabase fetch chaining, archive badge detection, and CTA handlers closing modal. |
 | Dead simple session banner | `src/components/DeadSimpleSessionBanner.tsx` | Feature flag handling, CTA availability, close persistence | Low | Done | Covered by `src/components/__tests__/DeadSimpleSessionBanner.test.tsx` checking relative badges, project labels, and click handling. |
 | Guided step progress indicator | `src/components/GuidedStepProgress.tsx` | Animation pacing, percentage calculations, copy fallback | Low | Done | Covered by `src/components/__tests__/GuidedStepProgress.test.tsx` verifying animated timer progression and non-animated target display. |
 | Reminder filter bar | `src/components/FilterBar.tsx` | Quick filter pills, sheet actions, toggle callbacks | Medium | Done | Covered by `src/components/__tests__/FilterBar.test.tsx` validating pill clicks, sheet clearing, dropdown selection, and toggle handlers. |

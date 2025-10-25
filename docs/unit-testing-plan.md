@@ -40,9 +40,9 @@
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
 | UI Components & Pages | 41 | 44 | 93% |
-| UI Primitives & Shared Components | 13 | 13 | 100% |
+| UI Primitives & Shared Components | 17 | 17 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **105** | **108** | **97%** |
+| **Overall** | **109** | **112** | **97%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -149,14 +149,14 @@
 | Area | File(s) | What to Cover | Priority | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
 | Sheet modal wrapper | `src/components/ui/app-sheet-modal.tsx` | Mobile vs desktop render paths, aria attributes | Medium | Done | Covered by `src/components/ui/__tests__/app-sheet-modal.test.tsx` asserting desktop vs mobile variants, dirty close behavior, and footer action callbacks. |
-| Data table core | `src/components/ui/data-table.tsx` | Column sorting, selection state, virtualization slots | High | Not started | Use Testing Library + fake data to confirm interactions. |
-| Data table container | `src/components/ui/data-table-container.tsx` | Responsive layout, toolbar slots, sticky headers | Medium | Not started | Snapshot narrow vs wide viewports. |
-| Date/time picker | `src/components/ui/date-time-picker.tsx` | Timezone defaults, validation boundaries | Medium | Not started | Mock date to ensure min/max enforcement. |
+| Data table core | `src/components/ui/data-table.tsx` | Column sorting, selection state, virtualization slots | High | Done | Covered by `src/components/ui/__tests__/data-table.test.tsx` validating pagination, sorting toggles, empty state, and row clicks. |
+| Data table container | `src/components/ui/data-table-container.tsx` | Responsive layout, toolbar slots, sticky headers | Medium | Done | Covered by `src/components/ui/__tests__/data-table-container.test.tsx` asserting base wrapper classes and inner width guards. |
+| Date/time picker | `src/components/ui/date-time-picker.tsx` | Timezone defaults, validation boundaries | Medium | Done | Covered by `src/components/ui/__tests__/date-time-picker.test.tsx` for formatted labels, date selection, time adjustments, and clearing. |
 | KPI presets | `src/components/ui/kpi-presets.ts` | Metric formatting, threshold coloring | Low | Done | Covered by `src/components/ui/__tests__/kpi-presets.test.ts` (base classes + overrides). |
 | Loading presets | `src/components/ui/loading-presets.tsx` | Skeleton variants, accessibility roles | Low | Done | Covered by `src/components/ui/__tests__/loading-presets.test.tsx` validating wrapper classes and variant props. |
 | Long press confirmation button | `src/components/ui/long-press-button.tsx` | Hold lifecycle, countdown feedback, completion reset | Medium | Done | Covered by `src/components/ui/__tests__/long-press-button.test.tsx` asserting hold/confirm interactions and post-confirm reset. |
 | Toast hook | `src/components/ui/use-toast.ts` | Queue handling, duplicate suppression, dismissal timers | Medium | Done | Covered by `src/components/ui/__tests__/use-toast.test.ts` using fake timers for queue limits, updates, and dismiss removal. |
-| Toast renderer | `src/components/ui/toaster.tsx` | Mount/unmount behavior, focus management | Medium | Not started | Ensure toasts remain accessible via keyboard navigation. |
+| Toast renderer | `src/components/ui/toaster.tsx` | Mount/unmount behavior, focus management | Medium | Done | Covered by `src/components/ui/__tests__/toaster.test.tsx` ensuring toast rendering and viewport accessibility. |
 | Segmented control | `src/components/ui/segmented-control.tsx` | Value switching, disabled tooltips, indicator alignment | Medium | Done | Covered by `src/components/ui/__tests__/segmented-control.test.tsx` validating selection state, disabled guard, and tooltip content. |
 | Page header layout | `src/components/ui/page-header.tsx` | Sticky wrapper, responsive slots, action grouping | Low | Done | Covered by `src/components/ui/__tests__/page-header.test.tsx` confirming sticky classes and slot layout wrappers. |
 | Pagination primitives | `src/components/ui/pagination.tsx` | i18n labels, aria-current handling, ellipsis semantics | Low | Done | Covered by `src/components/ui/__tests__/pagination.test.tsx` checking navigation labeling, active link, and ellipsis sr-only text. |

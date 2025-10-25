@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 27 | 27 | 100% |
-| UI Components & Pages | 49 | 70 | 70% |
+| UI Components & Pages | 53 | 70 | 76% |
 | UI Primitives & Shared Components | 17 | 17 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **120** | **141** | **85%** |
+| **Overall** | **124** | **141** | **88%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -149,10 +149,10 @@
 | Exit guidance mode button | `src/components/ExitGuidanceModeButton.tsx` | Navigation lock guard, onboarding completion, toast errors | Low | Done | Covered by `src/components/__tests__/ExitGuidanceModeButton.test.tsx` for lock checks, success toast, and failure surfacing. |
 | App sidebar | `src/components/AppSidebar.tsx` | Active route highlighting, role-based menu items | High | Done | Covered by `src/components/__tests__/AppSidebar.test.tsx` for active route styling + admin/support visibility. |
 | User menu | `src/components/UserMenu.tsx` | Avatar fallbacks, settings/sign-out navigation, onboarding callbacks | Medium | Done | Covered by `src/components/__tests__/UserMenu.test.tsx` validating initials rendering, profile link, and sign-out flow. |
-| Sample data modal | `src/components/SampleDataModal.tsx` | Template preview data, apply/reset callbacks, modal dismissal | Medium | Not started | Currently only mocked by `OnboardingModal` tests; add direct coverage for CTA wiring and analytics events. |
-| Getting started onboarding page | `src/pages/GettingStarted.tsx` | Checklist progress, sample data modal toggles, onboarding completion routing | High | Not started | No `src/pages/__tests__/GettingStarted.test.tsx`; verify first-run flows and guardrails. |
-| Marketing landing page | `src/pages/Index.tsx` | Auth-based redirects, CTA links, feature highlights | Medium | Not started | Missing coverage for public landing route; add tests for navigation + feature cards. |
-| Not found route | `src/pages/NotFound.tsx` | Support links, navigation back to dashboard, localization | Low | Not started | Provide regression test for 404 experience; no existing spec. |
+| Sample data modal | `src/components/SampleDataModal.tsx` | Template preview data, apply/reset callbacks, modal dismissal | Medium | Done | Covered by `src/components/__tests__/SampleDataModal.test.tsx` for skip success/error paths and guided setup continuation. |
+| Getting started onboarding page | `src/pages/GettingStarted.tsx` | Checklist progress, sample data modal toggles, onboarding completion routing | High | Done | Covered by `src/pages/__tests__/GettingStarted.test.tsx` exercising redirects, guided progress, modal toggles, and completion flow. |
+| Marketing landing page | `src/pages/Index.tsx` | Auth-based redirects, CTA links, feature highlights | Medium | Done | Covered by `src/pages/__tests__/Index.test.tsx` validating loading skeleton, CRM redirect, and public CTA navigation. |
+| Not found route | `src/pages/NotFound.tsx` | Support links, navigation back to dashboard, localization | Low | Done | Covered by `src/pages/__tests__/NotFound.test.tsx` asserting error logging and dashboard link rendering. |
 | Payments dashboard page | `src/pages/Payments.tsx` | Metrics cards, filters, pagination, workspace toggles | High | Not started | Payments workspace has zero Jest coverage; cover interactions with payments hooks/components. |
 | Reminder details page | `src/pages/ReminderDetails.tsx` | Reminder fetch, status updates, reschedule/cancel flows | High | Not started | Lacks tests for Supabase-driven reminder lifecycle; add success/error scenarios. |
 | Template builder page | `src/pages/TemplateBuilder.tsx` | Editor state management, autosave/publish, preview toggles | High | Not started | No page-level tests; cover memoized content and dirty-state handling. |
@@ -284,6 +284,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-11-06 | Codex | Hardened settings pages for services, projects, and danger zone flows | Added `src/pages/settings/__tests__/Services.test.tsx`, `Projects.test.tsx`, and `DangerZone.test.tsx` to verify tutorial start/completion, section composition, and destructive guardrails | Follow up by covering `src/pages/settings/General.tsx` and profile/onboarding dialogs |
 | 2025-11-08 | Codex | Audited coverage against current repo state | Updated progress snapshot and backlog rows for onboarding, payments, admin, and remaining settings screens/components with no tests | Assign owners for new high-priority gaps |
 | 2025-11-09 | Codex | Added payments workspace hook coverage | `src/pages/payments/hooks/__tests__/usePaymentsData.test.ts`, `usePaymentsFilters.test.tsx`, and `usePaymentsTableColumns.test.tsx` lock Supabase pagination/search filters, draft thresholds, and column callbacks | Track future payments analytics or virtualization enhancements |
+| 2025-11-10 | Codex | Added onboarding landing coverage for remaining pages | Added `src/components/__tests__/SampleDataModal.test.tsx`, `src/pages/__tests__/GettingStarted.test.tsx`, `Index.test.tsx`, and `NotFound.test.tsx` to exercise modal flows, guided redirects, marketing CTA, and 404 logging | Next: extend coverage to Payments page, ReminderDetails page, and settings context usage |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

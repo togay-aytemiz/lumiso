@@ -96,6 +96,7 @@ beforeEach(() => {
 afterEach(() => {
   jest.useRealTimers();
   window.location.hash = "";
+  window.history.replaceState(null, "", "/");
 });
 
 describe("Auth page", () => {
@@ -327,5 +328,18 @@ describe("Auth page", () => {
     expect(toastMock.error).toHaveBeenCalledWith("auth.password_mismatch");
 
     expect(getAuthMock().updateUser).not.toHaveBeenCalled();
+  });
+
+  it("shows the password reset flow when returning from the recovery email", async () => {
+    window.history.replaceState(null, "", "/auth?type=recovery");
+
+    render(<Auth />);
+
+    expect(await screen.findByLabelText("labels.password")).toBeInTheDocument();
+    expect(screen.getByLabelText("labels.confirm_password")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "auth.sign_in.button" })).not.toBeInTheDocument();
+
+    expect(getAuthMock().signInWithPassword).not.toHaveBeenCalled();
+    expect(navigateMock).not.toHaveBeenCalled();
   });
 });

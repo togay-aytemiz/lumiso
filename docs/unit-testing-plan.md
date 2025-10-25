@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 27 | 27 | 100% |
-| UI Components & Pages | 61 | 73 | 84% |
+| UI Components & Pages | 67 | 73 | 92% |
 | UI Primitives & Shared Components | 18 | 18 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **133** | **145** | **92%** |
+| **Overall** | **139** | **145** | **96%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -125,6 +125,12 @@
 | Workflows management page | `src/pages/Workflows.tsx` | Filtering, KPI summaries, pagination, toggle actions | High | Done | Covered by `src/pages/__tests__/Workflows.test.tsx` validating KPI summaries, segmented filters, pagination load-more, status toggles, edit wiring, and delete confirmation. |
 | Session detail page | `src/pages/SessionDetail.tsx` | Supabase fetch path, edit/delete flows, navigation fallback | High | Done | Covered by `src/pages/__tests__/SessionDetail.test.tsx` validating skeleton transition, delete fallback navigation, and load error toast. |
 | Calendar page | `src/pages/Calendar.tsx` | Range filters, session grouping, performance panels | High | Done | Covered by `src/pages/__tests__/Calendar.test.tsx` validating skeleton loading, segmented view switching, and session sheet launch. |
+| Calendar day grid cell | `src/components/calendar/CalendarDay.tsx` | Sorting, combined overflow counts, mobile day tap handling | Medium | Done | Covered by `src/components/calendar/__tests__/CalendarDay.test.tsx` ensuring formatted content, overflow messaging, and mobile callbacks. |
+| Calendar focused day view | `src/components/calendar/CalendarDayView.tsx` | Section counts, empty state messaging, touch gestures | Medium | Done | Covered by `src/components/calendar/__tests__/CalendarDayView.test.tsx` validating click handlers, empty fallback, and touch wiring. |
+| Calendar month view | `src/components/calendar/CalendarMonthView.tsx` | Multi-day aggregation, overflow tooltips, day navigation | Medium | Done | Covered by `src/components/calendar/__tests__/CalendarMonthView.test.tsx` confirming combined events, overflow indicators, and day click callback. |
+| Calendar week view | `src/components/calendar/CalendarWeek.tsx` | Time slot bucketing, mobile summary panels, timezone loading skeleton | High | Done | Covered by `src/components/calendar/__tests__/CalendarWeek.test.tsx` exercising loading skeleton, mobile rendering, and desktop grid callbacks. |
+| Calendar loading skeletons | `src/components/calendar/CalendarSkeleton.tsx` | Header counts, grid sizing, placeholder distribution | Low | Done | Covered by `src/components/calendar/__tests__/CalendarSkeleton.test.tsx` counting header cells, grid entries, and placeholder blocks. |
+| Calendar error boundary | `src/components/calendar/CalendarErrorBoundary.tsx` | Fallback UI, retry/reset behaviors, prop-based errors | Medium | Done | Covered by `src/components/calendar/__tests__/CalendarErrorBoundary.test.tsx` verifying thrown-error handling, retry wiring, and prop-controlled recovery. |
 | Upcoming sessions page | `src/pages/UpcomingSessions.tsx` | Filters, session sorting, empty state messaging | Medium | Done | Covered by `src/pages/__tests__/UpcomingSessions.test.tsx` confirming KPI metrics, segment filters, and session sheet navigation. |
 | Templates workspace | `src/pages/Templates.tsx` | Block editor integration, preview data toggles | Medium | Done | Covered by `src/pages/__tests__/Templates.test.tsx` exercising preview fallbacks, search empty states, row actions, and navigation flows. |
 | Settings services page | `src/pages/settings/Services.tsx` | Tutorial auto-start, section visibility, onboarding completion routing | Medium | Done | Covered by `src/pages/settings/__tests__/Services.test.tsx` verifying tutorial visibility, completion navigation, and exit handling. |
@@ -291,6 +297,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-11-10 | Codex | Added onboarding landing coverage for remaining pages | Added `src/components/__tests__/SampleDataModal.test.tsx`, `src/pages/__tests__/GettingStarted.test.tsx`, `Index.test.tsx`, and `NotFound.test.tsx` to exercise modal flows, guided redirects, marketing CTA, and 404 logging | Next: extend coverage to Payments page, ReminderDetails page, and settings context usage |
 | 2025-11-11 | Codex | Added guard, language, and instrumentation component coverage | Added `src/components/__tests__/ErrorBoundary.test.tsx`, `LanguageSwitcher.test.tsx`, `PerformanceMonitor.test.tsx`, and `TruncatedTextWithTooltip.test.tsx` to lock fallback UI, language toggles, dev-only warnings, and truncation tooltips | Revisit when onboarding metrics expand or tooltip delays change |
 | 2025-11-12 | Codex | Added Payments workspace page + component coverage | Added `src/pages/__tests__/Payments.test.tsx` alongside component specs for date controls, trend chart, metrics summary, and table section to verify filter resets, export flows, formatter output, and chart/empty states | Next: extend coverage to ReminderDetails page and remaining settings screens |
+| 2025-11-13 | Codex | Added calendar component coverage | Added `src/components/calendar/__tests__/CalendarDay.test.tsx`, `CalendarDayView.test.tsx`, `CalendarMonthView.test.tsx`, `CalendarWeek.test.tsx`, `CalendarSkeleton.test.tsx`, and `CalendarErrorBoundary.test.tsx` to cover mobile/day/month/week interactions, skeleton scaffolds, and error recovery flows | Next: Explore coverage for calendar virtualization performance metrics and touch gesture edge cases |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

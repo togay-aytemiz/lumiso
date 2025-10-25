@@ -117,7 +117,13 @@ const toggleInArray = (values: string[], value: string, checked: boolean) => {
 const sanitizeSelections = (selections: string[], options: Option[]) => {
   if (selections.length === 0) return selections;
   const allowed = new Set(options.map((option) => option.id));
-  return selections.filter((selection) => allowed.has(selection));
+  let changed = false;
+  const filtered = selections.filter((selection) => {
+    const keep = allowed.has(selection);
+    if (!keep) changed = true;
+    return keep;
+  });
+  return changed ? filtered : selections;
 };
 
 export function useProjectsListFilters({
@@ -132,12 +138,26 @@ export function useProjectsListFilters({
   const [state, setState] = useState<ProjectsListFiltersState>(initialState);
 
   useEffect(() => {
-    setState((prev) => ({
-      ...prev,
-      types: sanitizeSelections(prev.types, typeOptions),
-      stages: sanitizeSelections(prev.stages, stageOptions),
-      services: sanitizeSelections(prev.services, serviceOptions),
-    }));
+    setState((prev) => {
+      const nextTypes = sanitizeSelections(prev.types, typeOptions);
+      const nextStages = sanitizeSelections(prev.stages, stageOptions);
+      const nextServices = sanitizeSelections(prev.services, serviceOptions);
+
+      if (
+        nextTypes === prev.types &&
+        nextStages === prev.stages &&
+        nextServices === prev.services
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        types: nextTypes,
+        stages: nextStages,
+        services: nextServices,
+      };
+    });
   }, [serviceOptions, stageOptions, typeOptions]);
 
   useEffect(() => {
@@ -455,10 +475,16 @@ export function useProjectsArchivedFilters({
   const [state, setState] = useState<ProjectsArchivedFiltersState>(initialState);
 
   useEffect(() => {
-    setState((prev) => ({
-      ...prev,
-      types: sanitizeSelections(prev.types, typeOptions),
-    }));
+    setState((prev) => {
+      const nextTypes = sanitizeSelections(prev.types, typeOptions);
+      if (nextTypes === prev.types) {
+        return prev;
+      }
+      return {
+        ...prev,
+        types: nextTypes,
+      };
+    });
   }, [typeOptions]);
 
   useEffect(() => {

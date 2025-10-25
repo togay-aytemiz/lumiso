@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 38 | 43 | 88% |
+| UI Components & Pages | 41 | 44 | 93% |
 | UI Primitives & Shared Components | 13 | 13 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **102** | **107** | **95%** |
+| **Overall** | **105** | **108** | **97%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -131,12 +131,12 @@
 | Enhanced sessions section | `src/components/EnhancedSessionsSection.tsx` | Multi-column layout, performance instrumentation | Medium | Done | Covered by `src/components/__tests__/EnhancedSessionsSection.test.tsx` verifying lifecycle sorting, count badge, and click wiring. |
 | Unified client details | `src/components/UnifiedClientDetails.tsx` | Conditional rendering of contact info, copy buttons | Low | Done | Covered by `src/components/__tests__/UnifiedClientDetails.test.tsx` validating quick actions, custom field display, navigation hooks, and validation toasts. |
 | Project sheet view | `src/components/ProjectSheetView.tsx` | Printable layout, localization of labels, totals | Medium | Not started | Snapshot layout with English/Turkish translations. |
-| Onboarding modal | `src/components/OnboardingModal.tsx` | Step transitions, skip behavior, analytics events | Medium | Not started | Mock context + ensure stage transitions call hooks. |
+| Onboarding modal | `src/components/OnboardingModal.tsx` | Step transitions, skip behavior, analytics events | Medium | Done | Covered by `src/components/__tests__/OnboardingModal.test.tsx` validating guided setup launch, navigation, and sample data modal toggle. |
 | Activity timeline section | `src/components/ActivitySection.tsx` | Activity CRUD, reminder scheduling, filter tabs | High | Not started | Stub Supabase helpers to ensure create/edit validation, filter chips, and audit log rendering with skeleton states. |
 | Lead activity section | `src/components/LeadActivitySection.tsx` | Segmented activity/history views, cross-entity fetches, audit timeline | Medium | Not started | Mock Supabase responses to assert segment toggles, merged histories, and toast errors. |
-| Workflow creation sheet | `src/components/CreateWorkflowSheet.tsx` | Form dirty-state guard, channel toggles, template selection, create/update branching | High | Not started | Mock `useTemplates` to cover edit autopopulation, validation gating, submission callbacks, and navigation guard prompts. |
+| Workflow creation sheet | `src/components/CreateWorkflowSheet.tsx` | Form dirty-state guard, channel toggles, template selection, create/update branching | High | Done | Covered by `src/components/__tests__/CreateWorkflowSheet.test.tsx` for edit prefill, update submission payloads, and empty-template messaging. |
 | Workflow delete dialog | `src/components/WorkflowDeleteDialog.tsx` | Confirmation copy, destructive action wiring, disabled state | Medium | Done | Covered by `src/components/__tests__/WorkflowDeleteDialog.test.tsx` verifying translation text, cancel/confirm callbacks, close handling, and disabled deletion state. |
-| Project sheet preview | `src/components/ProjectSheetPreview.tsx` | Modal lifecycle, related data fetches, navigation callbacks | Medium | Not started | Verify Supabase fetch chaining, archive badge detection, and CTA handlers closing modal. |
+| Project sheet preview | `src/components/ProjectSheetPreview.tsx` | Modal lifecycle, related data fetches, navigation callbacks | Medium | Done | Covered by `src/components/__tests__/ProjectSheetPreview.test.tsx` ensuring Supabase fetch stubs hydrate metrics, navigation closes modal, and status change triggers updates. |
 | Dead simple session banner | `src/components/DeadSimpleSessionBanner.tsx` | Feature flag handling, CTA availability, close persistence | Low | Done | Covered by `src/components/__tests__/DeadSimpleSessionBanner.test.tsx` checking relative badges, project labels, and click handling. |
 | Guided step progress indicator | `src/components/GuidedStepProgress.tsx` | Animation pacing, percentage calculations, copy fallback | Low | Done | Covered by `src/components/__tests__/GuidedStepProgress.test.tsx` verifying animated timer progression and non-animated target display. |
 | Reminder filter bar | `src/components/FilterBar.tsx` | Quick filter pills, sheet actions, toggle callbacks | Medium | Done | Covered by `src/components/__tests__/FilterBar.test.tsx` validating pill clicks, sheet clearing, dropdown selection, and toggle handlers. |
@@ -263,6 +263,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-11-02 | Codex | Added workflow delete dialog coverage | `src/components/__tests__/WorkflowDeleteDialog.test.tsx` locks translation usage, cancel/confirm callbacks, close handling, and disabled deletion state | Revisit if dialog gains secondary actions or additional messaging |
 | 2025-11-03 | Codex | Added session detail page coverage | `src/pages/__tests__/SessionDetail.test.tsx` exercises skeleton-to-content transition, load failure toast, and delete redirect fallback | Next: Target Templates workspace coverage |
 | 2025-11-03 (later) | Codex | Added Templates workspace coverage | `src/pages/__tests__/Templates.test.tsx` locks preview translation fallback, search empty states, duplication/deletion flows, and navigation callbacks | Next: Cover Project sheet view snapshot translations |
+| 2025-11-04 | Codex | Added onboarding modal, workflow sheet, and project preview coverage | Added `src/components/__tests__/OnboardingModal.test.tsx`, `CreateWorkflowSheet.test.tsx`, and `ProjectSheetPreview.test.tsx` to validate modal flows, edit submission payloads, and Supabase-driven previews | Next: Target ProjectSheetView, ActivitySection, and LeadActivitySection components |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

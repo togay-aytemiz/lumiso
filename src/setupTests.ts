@@ -51,3 +51,30 @@ global.IntersectionObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
 }));
+
+// Mock matchMedia for components relying on it (e.g., ThemeProvider)
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
+
+if (!window.HTMLElement.prototype.hasPointerCapture) {
+  window.HTMLElement.prototype.hasPointerCapture = () => false;
+}
+
+if (!window.HTMLElement.prototype.setPointerCapture) {
+  window.HTMLElement.prototype.setPointerCapture = () => {};
+}
+
+if (!window.HTMLElement.prototype.releasePointerCapture) {
+  window.HTMLElement.prototype.releasePointerCapture = () => {};
+}

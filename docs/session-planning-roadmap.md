@@ -55,6 +55,13 @@
 
 Skipped steps remain accessible from breadcrumbs; analytics record auto-skips for insight.
 
+## Lo-Fi Prototype Plan
+- Deliver a true low-fidelity prototype (clickable Figma frame or coded Storybook sandbox) before high-fidelity design begins.
+- Start with the `/sessions` entry point: reuse existing “Schedule Session” button and launch a bare-bones overlay that stacks the steps vertically with neutral styling.
+- Provide alternate entry views (lead, project, calendar) as variant tabs within the prototype so we can validate prefill behavior early.
+- Capture usability feedback on layout, step transitions, and opt-out toggles using the lo-fi prototype before investing in polished visuals.
+- Once hi-fi designs are signed off, port the refined wizard shell into other surfaces by pointing existing entry actions at the shared component.
+
 ## Decisions Log
 | Topic | Decision | Rationale | Owner | Date |
 | --- | --- | --- | --- | --- |

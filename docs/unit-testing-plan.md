@@ -41,8 +41,8 @@
 | Contexts & Hooks | 24 | 24 | 100% |
 | UI Components & Pages | 30 | 30 | 100% |
 | UI Primitives & Shared Components | 13 | 13 | 100% |
-| Supabase Edge Functions & Automation | 8 | 9 | 89% |
-| **Overall** | **93** | **94** | **99%** |
+| Supabase Edge Functions & Automation | 9 | 9 | 100% |
+| **Overall** | **94** | **94** | **100%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -167,7 +167,7 @@
 | Template email sender | `supabase/functions/send-template-email/index.ts` | Template lookup, localization, Resend payload | High | Done | Validated via `supabase/functions/tests/send-template-email.test.ts` for placeholder fallbacks and block ordering. |
 | User email lookup | `supabase/functions/get-users-email/index.ts` | Auth enforcement, filtering, pagination | Medium | Done | Covered by `supabase/functions/tests/get-users-email.test.ts` for happy path, validation, and failure skips. |
 | Email localization helpers | `supabase/functions/_shared/email-i18n.ts` | Language normalization, fallback to EN, list helpers | Low | Done | Validated via `supabase/functions/tests/email-i18n.test.ts` for default, Turkish, and fallback behaviors. |
-| Test callback harness | `supabase/functions/test-callback/index.ts` | Echo behavior, validation of payload schema | Low | Not started | Keep as sanity check for function invocation plumbing. |
+| Test callback harness | `supabase/functions/test-callback/index.ts` | Echo behavior, validation of payload schema | Low | Done | Covered by `supabase/functions/tests/test-callback.test.ts` for CORS, metadata rendering, and error handling. |
 
 _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`. Update the relevant table after every iteration that touches a listed area; add new rows when new risk surfaces.
 
@@ -245,6 +245,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-30 | Codex | Added workflow executor + template email coverage | `supabase/functions/tests/workflow-executor.test.ts` validates trigger filtering, duplicate prevention, and action dispatch; `supabase/functions/tests/send-template-email.test.ts` locks placeholder fallbacks and block ordering | Next: Cover notification processor queue handling and simple daily scheduler paths |
 | 2025-10-30 (late night+++) | Codex | Added notification processor guard coverage | `supabase/functions/tests/notification-processor.test.ts` locks settings gating, retry RPC success/error, milestone forwarding, and workflow email templating | Follow up by simulating batch processing + resend failure branches |
 | 2025-10-30 (night wrap) | Codex | Added simple daily scheduler handler coverage | `supabase/functions/tests/simple-daily-notifications.test.ts` verifies empty-queue exit and bubbled fetch errors via injected supabase factory | Consider adding fixture-driven tests for timezone-aligned processing |
+| 2025-10-30 (final wrap) | Codex | Added test callback harness coverage | `supabase/functions/tests/test-callback.test.ts` covers OPTIONS CORS headers, metadata echo, and error surfacing | No follow-up; keep function as diagnostic surface |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

@@ -19,14 +19,31 @@ export interface EmailTemplateData {
   localization?: EmailLocalization;
 }
 
+export interface SessionLead {
+  id?: string;
+  name: string;
+  email?: string;
+  phone?: string;
+}
+
+export interface SessionProjectType {
+  name: string;
+}
+
+export interface SessionProject {
+  id?: string;
+  name: string;
+  project_types?: SessionProjectType | SessionProjectType[];
+}
+
 export interface Session {
   id: string;
   session_date: string;
-  session_time?: string;
-  notes?: string;
-  location?: string;
-  leads?: { name: string };
-  projects?: { name: string; project_types?: { name: string } };
+  session_time?: string | null;
+  notes?: string | null;
+  location?: string | null;
+  leads?: SessionLead | SessionLead[] | null;
+  projects?: SessionProject | SessionProject[] | null;
 }
 
 export interface Todo {
@@ -40,11 +57,11 @@ export interface Activity {
   id: string;
   content: string;
   reminder_date: string;
-  reminder_time?: string;
-  lead_id?: string;
-  project_id?: string;
-  leads?: { name: string };
-  projects?: { name: string };
+  reminder_time?: string | null;
+  lead_id?: string | null;
+  project_id?: string | null;
+  leads?: { name: string } | null;
+  projects?: { name: string } | null;
 }
 
 export interface Lead {

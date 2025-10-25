@@ -1,5 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import {
+  ensureError,
+  getErrorMessage,
+} from "../_shared/error-utils.ts";
 
 // Date and time formatting functions
 function formatDate(dateString: string, format: string = 'DD/MM/YYYY'): string {
@@ -135,11 +139,12 @@ export function createWorkflowExecutor({
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
 
-    } catch (error: any) {
-      console.error('Error in workflow executor:', error);
+    } catch (error: unknown) {
+      const resolvedError = ensureError(error);
+      console.error('Error in workflow executor:', resolvedError);
       return new Response(JSON.stringify({
-        error: error.message,
-        stack: error.stack,
+        error: resolvedError.message,
+        stack: resolvedError.stack,
         timestamp: new Date().toISOString()
       }), {
         status: 500,
@@ -251,16 +256,31 @@ async function triggerWorkflows(supabase: any, triggerData: {
         console.error('Error checking for duplicates:', duplicateCheckError);
       } else if (recentExecutions && recentExecutions.length > 0) {
         // Check if any recent execution has the same trigger data
-        const isDuplicate = recentExecutions.some(exec => {
-          const execTriggerData = exec.execution_log?.[0]?.trigger_data;
-          if (!execTriggerData && !trigger_data) return true;
-          if (!execTriggerData || !trigger_data) return false;
-          
+        const recentExecutionRecords = (recentExecutions as Array<{
+          execution_log?: Array<{
+            trigger_data?: {
+              status_change?: unknown;
+              date_change?: unknown;
+              reminder_type?: unknown;
+            };
+          }>;
+        }>);
+        const triggerDataRecord = trigger_data as {
+          status_change?: unknown;
+          date_change?: unknown;
+          reminder_type?: unknown;
+        } | undefined;
+
+        const isDuplicate = recentExecutionRecords.some((execution) => {
+          const execTriggerData = execution.execution_log?.[0]?.trigger_data;
+          if (!execTriggerData && !triggerDataRecord) return true;
+          if (!execTriggerData || !triggerDataRecord) return false;
+
           // Compare relevant trigger data fields
           return (
-            execTriggerData.status_change === trigger_data.status_change &&
-            execTriggerData.date_change === trigger_data.date_change &&
-            execTriggerData.reminder_type === trigger_data.reminder_type
+            execTriggerData.status_change === triggerDataRecord.status_change &&
+            execTriggerData.date_change === triggerDataRecord.date_change &&
+            execTriggerData.reminder_type === triggerDataRecord.reminder_type
           );
         });
         
@@ -325,10 +345,11 @@ async function executeWorkflowStepsWithTimeout(supabase: any, executionId: strin
       executeWorkflowSteps(supabase, executionId),
       timeoutPromise
     ]);
-  } catch (error) {
-    console.error(`Workflow execution ${executionId} failed or timed out:`, error);
-    await updateExecutionStatus(supabase, executionId, 'failed', error.message);
-    throw error;
+  } catch (error: unknown) {
+    const resolvedError = ensureError(error);
+    console.error(`Workflow execution ${executionId} failed or timed out:`, resolvedError);
+    await updateExecutionStatus(supabase, executionId, 'failed', resolvedError.message);
+    throw resolvedError;
   }
 }
 
@@ -446,8 +467,9 @@ async function executeWorkflowSteps(supabase: any, executionId: string) {
           .update({ execution_log: currentLog })
           .eq('id', executionId);
 
-      } catch (stepError) {
-        console.error(`Error executing step ${step.id}:`, stepError);
+      } catch (stepError: unknown) {
+        const resolvedStepError = ensureError(stepError);
+        console.error(`Error executing step ${step.id}:`, resolvedStepError);
         failedSteps++;
         
         // Log step error with more detail
@@ -458,8 +480,8 @@ async function executeWorkflowSteps(supabase: any, executionId: string) {
           step_id: step.id,
           step_order: step.step_order,
           action_type: step.action_type,
-          error: stepError.message,
-          error_stack: stepError.stack,
+          error: resolvedStepError.message,
+          error_stack: resolvedStepError.stack,
           details: `Failed to execute ${step.action_type} step`
         });
 
@@ -486,16 +508,22 @@ async function executeWorkflowSteps(supabase: any, executionId: string) {
       success_rate: steps.length > 0 ? (executedSteps / steps.length) * 100 : 0
     };
 
-  } catch (error) {
-    console.error(`Critical error executing workflow ${executionId}:`, error);
-    await updateExecutionStatus(supabase, executionId, 'failed', `Critical failure: ${error.message}`);
-    throw error;
+  } catch (error: unknown) {
+    const resolvedError = ensureError(error);
+    console.error(`Critical error executing workflow ${executionId}:`, resolvedError);
+    await updateExecutionStatus(
+      supabase,
+      executionId,
+      'failed',
+      `Critical failure: ${resolvedError.message}`,
+    );
+    throw resolvedError;
   }
 }
 
 // Execute individual workflow step with retry logic
 async function executeWorkflowStepWithRetry(supabase: any, executionId: string, step: any, execution: any, maxRetries: number = 2) {
-  let lastError;
+  let lastError: Error | undefined;
   
   for (let retry = 0; retry <= maxRetries; retry++) {
     try {
@@ -513,23 +541,28 @@ async function executeWorkflowStepWithRetry(supabase: any, executionId: string, 
       
       return; // Success
       
-    } catch (error) {
-      lastError = error;
-      console.error(`Step ${step.id} failed on attempt ${retry + 1}:`, error.message);
+    } catch (error: unknown) {
+      const resolvedError = ensureError(error);
+      lastError = resolvedError;
+      console.error(`Step ${step.id} failed on attempt ${retry + 1}:`, resolvedError.message);
       
       // Don't retry certain types of errors (validation, authentication, etc.)
-      if (error.message.includes('authentication') || 
-          error.message.includes('permission') ||
-          error.message.includes('validation') ||
-          error.message.includes('not found')) {
+      const errorMessage = resolvedError.message;
+      if (
+        errorMessage.includes('authentication') ||
+        errorMessage.includes('permission') ||
+        errorMessage.includes('validation') ||
+        errorMessage.includes('not found')
+      ) {
         console.log(`Step ${step.id} failed with non-retryable error, not retrying`);
-        throw error;
+        throw resolvedError;
       }
     }
   }
   
   // All retries exhausted
-  throw new Error(`Step failed after ${maxRetries + 1} attempts. Last error: ${lastError.message}`);
+  const finalErrorMessage = lastError ? lastError.message : 'Unknown error';
+  throw new Error(`Step failed after ${maxRetries + 1} attempts. Last error: ${finalErrorMessage}`);
 }
 
 // Execute individual workflow step
@@ -779,7 +812,7 @@ async function executeCreateReminderStep(supabase: any, step: any, execution: an
     });
 
   if (error) {
-    throw new Error(`Failed to create reminder: ${error.message}`);
+    throw new Error(`Failed to create reminder: ${getErrorMessage(error)}`);
   }
 
   console.log(`Created workflow reminder for ${reminderDate.toISOString()}`);
@@ -805,7 +838,7 @@ async function executeUpdateStatusStep(supabase: any, step: any, execution: any)
     .eq('id', execution.trigger_entity_id);
 
   if (error) {
-    throw new Error(`Failed to update status: ${error.message}`);
+    throw new Error(`Failed to update status: ${getErrorMessage(error)}`);
   }
 
   console.log(`Updated ${execution.trigger_entity_type} status to ${new_status_id}`);
@@ -813,7 +846,7 @@ async function executeUpdateStatusStep(supabase: any, step: any, execution: any)
 
 // Get entity data for template variables
 async function getEntityData(supabase: any, entityType: string, entityId: string, triggerData?: any) {
-  let entityData = {};
+  let entityData: any = {};
   
   if (entityType === 'session') {
     // If we have session data from trigger (e.g., from reminder processing), use it first for consistency
@@ -1069,12 +1102,11 @@ const handler = createWorkflowExecutor({ createClient });
 serve(handler);
 
 export {
-  createWorkflowExecutor,
   evaluateTriggerConditions,
   executeWorkflowSteps,
   executeWorkflowStepsWithTimeout,
   formatDate,
   formatTime,
   triggerWorkflows,
-  updateExecutionStatus
+  updateExecutionStatus,
 };

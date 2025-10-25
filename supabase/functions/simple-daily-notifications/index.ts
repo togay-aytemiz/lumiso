@@ -1,24 +1,31 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
-import { Resend } from "npm:resend@2.0.0";
 import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
 import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summary-empty.ts';
 import { formatDate } from './_templates/enhanced-email-base.ts';
 import { createEmailLocalization } from '../_shared/email-i18n.ts';
+import {
+  getErrorMessage,
+  getErrorStack,
+} from '../_shared/error-utils.ts';
+import {
+  createResendClient,
+  type ResendClient,
+} from '../_shared/resend-utils.ts';
 
-let createSupabaseClient = createClient;
-const defaultResendClient = new Resend(Deno.env.get("RESEND_API_KEY"));
-let resendClient: any = defaultResendClient;
+let createSupabaseClient: (...args: unknown[]) => any = createClient as unknown as (...args: unknown[]) => any;
+const defaultResendClient: ResendClient = createResendClient(Deno.env.get("RESEND_API_KEY"));
+let resendClient: ResendClient = defaultResendClient;
 
-export function setSupabaseClientFactoryForTests(factory: typeof createClient) {
+export function setSupabaseClientFactoryForTests(factory: (...args: unknown[]) => any) {
   createSupabaseClient = factory;
 }
 
 export function resetSupabaseClientFactoryForTests() {
-  createSupabaseClient = createClient;
+  createSupabaseClient = createClient as unknown as (...args: unknown[]) => any;
 }
 
-export function setResendClientForTests(client: any) {
+export function setResendClientForTests(client: ResendClient) {
   resendClient = client;
 }
 
@@ -349,7 +356,7 @@ export const handler = async (req: Request): Promise<Response> => {
         };
 
         // Transform sessions data
-        const sessions = (todaySessions || []).map(session => ({
+        const sessions = (todaySessions || []).map((session: any) => ({
           id: session.id,
           session_date: session.session_date,
           session_time: session.session_time,
@@ -360,7 +367,7 @@ export const handler = async (req: Request): Promise<Response> => {
         }));
 
         // Transform past sessions that need action
-        const pastSessionsNeedingAction = (pastSessions || []).map(session => ({
+        const pastSessionsNeedingAction = (pastSessions || []).map((session: any) => ({
           id: session.id,
           session_date: session.session_date,
           session_time: session.session_time,
@@ -371,7 +378,7 @@ export const handler = async (req: Request): Promise<Response> => {
         }));
 
         // Transform today's activities separately from overdue
-        const todayReminders = (todayActivitiesWithNames || []).map(activity => ({
+        const todayReminders = (todayActivitiesWithNames || []).map((activity: any) => ({
           id: activity.id,
           content: activity.content,
           reminder_date: activity.reminder_date,
@@ -385,7 +392,7 @@ export const handler = async (req: Request): Promise<Response> => {
         // Transform overdue data (only overdue activities, not today's)
         const overdueItems = {
           leads: [], // No overdue leads for now, focus on activities
-          activities: (overdueActivities || []).map(activity => ({
+          activities: (overdueActivities || []).map((activity: any) => ({
             id: activity.id,
             content: activity.content,
             reminder_date: activity.reminder_date,
@@ -480,13 +487,13 @@ export const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in simple daily notification processor:', error);
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message,
-        details: error
+        error: getErrorMessage(error),
+        details: getErrorStack(error)
       }),
       { 
         status: 500,

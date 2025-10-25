@@ -4,6 +4,7 @@ import {
   handleAssignmentNotification,
   handleProjectMilestoneNotification,
   setResendClient,
+  type ResendClient,
 } from "../send-reminder-notifications/index.ts";
 
 type SelectResult = { data: unknown; error?: Error | null };
@@ -59,7 +60,7 @@ function createSupabaseStub(options: StubOptions = {}) {
 
   class UpdateQuery {
     private filters: Array<{ field: string; value: unknown }> = [];
-    private order?: { field: string; options?: Record<string, unknown> };
+    private orderClause?: { field: string; options?: Record<string, unknown> };
 
     constructor(private readonly table: string, private readonly values: Record<string, unknown>) {}
 
@@ -69,12 +70,12 @@ function createSupabaseStub(options: StubOptions = {}) {
     }
 
     order(field: string, options?: Record<string, unknown>) {
-      this.order = { field, options };
+      this.orderClause = { field, options };
       return this;
     }
 
     limit() {
-      updateCalls.push({ table: this.table, values: this.values, filters: [...this.filters], order: this.order });
+      updateCalls.push({ table: this.table, values: this.values, filters: [...this.filters], order: this.orderClause });
       return Promise.resolve({ data: null, error: null });
     }
 
@@ -106,9 +107,9 @@ function createSupabaseStub(options: StubOptions = {}) {
 function withMockedResend(testFn: () => Promise<void>) {
   return async () => {
     const original = getResendClient();
-    const mock = {
+    const mock: ResendClient = {
       emails: {
-        send: async (_payload: Record<string, unknown>) => ({ data: { id: "test-email" }, error: null }),
+        send: async (..._args) => ({ data: { id: "test-email" }, error: null }),
       },
     };
 
@@ -257,4 +258,3 @@ Deno.test("sends milestone notifications to assigned users", withMockedResend(as
   const lastUpdate = supabase.updateCalls[supabase.updateCalls.length - 1];
   assertEquals(lastUpdate.values.status, "sent");
 }));
-

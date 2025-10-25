@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
+import { getErrorMessage } from "../_shared/error-utils.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,7 +43,7 @@ export const handler = async (
     const supabase = createClientFn();
 
     const now = getNow();
-    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const currentTime = `${now.getUTCHours().toString().padStart(2, '0')}:${now.getUTCMinutes().toString().padStart(2, '0')}`;
 
     console.log(`Current time: ${currentTime}`);
 
@@ -76,7 +77,13 @@ export const handler = async (
       });
     }
 
-    const orgIds = [...new Set(userSettings.map((u) => u.active_organization_id))];
+    const userSettingsList = (userSettings ?? []) as Array<{
+      user_id: string;
+      active_organization_id: string;
+      notification_scheduled_time: string;
+    }>;
+
+    const orgIds = [...new Set(userSettingsList.map((u) => u.active_organization_id))];
     const { data: orgs, error: orgDetailsError } = await supabase
       .from('organizations')
       .select('id, owner_id, name')
@@ -93,8 +100,10 @@ export const handler = async (
     const scheduledFor = now.toISOString();
     const notifications: Array<Record<string, unknown>> = [];
 
-    for (const userSetting of userSettings) {
-      const org = orgs?.find((o) => o.id === userSetting.active_organization_id);
+    const orgsList = (orgs ?? []) as Array<{ id: string; owner_id: string; name: string }>;
+
+    for (const userSetting of userSettingsList) {
+      const org = orgsList.find((o) => o.id === userSetting.active_organization_id);
       if (!org) {
         console.log(`Organization ${userSetting.active_organization_id} not found`);
         continue;
@@ -159,15 +168,15 @@ export const handler = async (
     return new Response(JSON.stringify({
       success: true,
       processed: notifications.length,
-      users: userSettings.map((u) => u.user_id),
+      users: userSettingsList.map((u) => u.user_id),
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in schedule-daily-notifications:', error);
     return new Response(JSON.stringify({
-      error: error.message,
+      error: getErrorMessage(error),
       success: false,
     }), {
       status: 500,

@@ -2,7 +2,7 @@ type EmailLanguage = 'en' | 'tr';
 
 type EmailTranslationNode =
   | string
-  | string[]
+  | EmailTranslationNode[]
   | { [key: string]: EmailTranslationNode };
 
 interface EmailLocalization {
@@ -506,9 +506,15 @@ export function createEmailLocalization(language?: string): EmailLocalization {
     }
 
     if (Array.isArray(value)) {
-      return value
-        .map((item) => formatTemplate(item, variables))
-        .join(', ');
+      const stringItems = value.filter(
+        (item): item is string => typeof item === 'string',
+      );
+      if (stringItems.length > 0) {
+        return stringItems
+          .map((item) => formatTemplate(item, variables))
+          .join(', ');
+      }
+      return key;
     }
 
     return key;
@@ -526,14 +532,30 @@ export function createEmailLocalization(language?: string): EmailLocalization {
     }
 
     if (Array.isArray(value)) {
-      return value.map((item) => formatTemplate(item, variables));
+      const formatted = value
+        .map((item) => {
+          if (typeof item === 'string') {
+            return formatTemplate(item, variables);
+          }
+
+          if (typeof item === 'object' && item !== null) {
+            const title = (item as { title?: unknown }).title;
+            if (typeof title === 'string') {
+              return formatTemplate(title, variables);
+            }
+          }
+
+          return undefined;
+        })
+        .filter((item): item is string => typeof item === 'string');
+
+      return formatted;
     }
 
     if (typeof value === 'object' && value !== null) {
-      // When the node is an object with { title, description }
-      return Object.values(value).map((item) =>
-        typeof item === 'string' ? formatTemplate(item, variables) : '',
-      );
+      return Object.values(value)
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => formatTemplate(item, variables));
     }
 
     return [];

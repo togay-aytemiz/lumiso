@@ -1,9 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { Resend } from "npm:resend@2.0.0";
 import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
 import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summary-empty.ts';
-import { formatDate } from './_templates/enhanced-email-base.ts';
+import { formatDate, type Session } from './_templates/enhanced-email-base.ts';
 import { 
   generateImmediateNotificationEmail, 
   generateSubject,
@@ -13,19 +12,50 @@ import {
   type ImmediateNotificationEmailData
 } from './_templates/immediate-notifications.ts';
 import { createEmailLocalization } from '../_shared/email-i18n.ts';
+import { getErrorMessage } from '../_shared/error-utils.ts';
+import {
+  createResendClient,
+  type ResendClient,
+} from '../_shared/resend-utils.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type ResendClient = {
-  emails: {
-    send: (payload: Record<string, unknown>) => Promise<{ data?: { id?: string }; error?: { message: string } | null }>;
-  };
-};
+function normalizeFirst<T>(value: T | T[] | null | undefined): T | undefined {
+  if (Array.isArray(value)) {
+    return value.length > 0 ? value[0] : undefined;
+  }
+  return value ?? undefined;
+}
 
-let resend: ResendClient = new Resend(Deno.env.get("RESEND_API_KEY"));
+function normalizeSessionProject(
+  project: Session['projects'],
+): Session['projects'] | undefined {
+  const resolvedProject = normalizeFirst(project);
+  if (!resolvedProject) {
+    return undefined;
+  }
+
+  const normalizedProjectTypes = normalizeFirst(resolvedProject.project_types);
+
+  return {
+    ...resolvedProject,
+    project_types: normalizedProjectTypes,
+  };
+}
+
+function normalizeSessionLead(
+  lead: Session['leads'],
+): Session['leads'] | undefined {
+  return normalizeFirst(lead);
+}
+
+const defaultResendClient = createResendClient(Deno.env.get("RESEND_API_KEY"));
+let resend: ResendClient = defaultResendClient;
+
+export type { ResendClient } from '../_shared/resend-utils.ts';
 
 export function setResendClient(client: ResendClient) {
   resend = client;
@@ -613,26 +643,36 @@ export const handler = async (req: Request): Promise<Response> => {
     };
 
     // Transform sessions data
-    const sessions = (todaySessions || []).map(session => ({
-      id: session.id,
-      session_date: session.session_date,
-      session_time: session.session_time,
-      notes: session.notes,
-      location: session.location,
-      leads: session.leads,
-      projects: session.projects
-    }));
+    const sessions = (todaySessions || []).map((session) => {
+      const lead = normalizeSessionLead(session.leads);
+      const project = normalizeSessionProject(session.projects);
+
+      return {
+        id: session.id,
+        session_date: session.session_date,
+        session_time: session.session_time,
+        notes: session.notes,
+        location: session.location,
+        leads: lead,
+        projects: project,
+      };
+    });
 
     // Transform past sessions that need action
-    const pastSessionsNeedingAction = (pastSessions || []).map(session => ({
-      id: session.id,
-      session_date: session.session_date,
-      session_time: session.session_time,
-      notes: session.notes,
-      location: session.location,
-      leads: session.leads,
-      projects: session.projects
-    }));
+    const pastSessionsNeedingAction = (pastSessions || []).map((session) => {
+      const lead = normalizeSessionLead(session.leads);
+      const project = normalizeSessionProject(session.projects);
+
+      return {
+        id: session.id,
+        session_date: session.session_date,
+        session_time: session.session_time,
+        notes: session.notes,
+        location: session.location,
+        leads: lead,
+        projects: project,
+      };
+    });
 
     // Transform todos data
     const todos = (pendingTodos || []).map(todo => ({
@@ -737,10 +777,10 @@ export const handler = async (req: Request): Promise<Response> => {
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error:', error);
     return new Response(JSON.stringify({
-      error: error.message,
+      error: getErrorMessage(error),
       successful: 0,
       failed: 1,
       total: 1
@@ -1047,7 +1087,7 @@ export async function handleAssignmentNotification(requestData: any, adminSupaba
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in assignment notification:', error);
     
     // Log error in notifications table if possible
@@ -1057,7 +1097,7 @@ export async function handleAssignmentNotification(requestData: any, adminSupaba
           .from('notifications')
           .update({ 
             status: 'failed', 
-            error_message: error.message,
+            error_message: getErrorMessage(error),
             updated_at: new Date().toISOString(),
             retry_count: 1
           })
@@ -1072,7 +1112,7 @@ export async function handleAssignmentNotification(requestData: any, adminSupaba
     }
 
     return new Response(JSON.stringify({
-      error: error.message,
+      error: getErrorMessage(error),
       successful: 0,
       failed: 1,
       total: 1
@@ -1328,7 +1368,7 @@ export async function handleProjectMilestoneNotification(requestData: ReminderRe
 
         successful++;
 
-      } catch (error) {
+      } catch (error: unknown) {
         console.error(`Error sending milestone notification to ${assigneeId}:`, error);
         
         // Log error in notifications table
@@ -1337,7 +1377,7 @@ export async function handleProjectMilestoneNotification(requestData: ReminderRe
             .from('notifications')
             .update({ 
               status: 'failed', 
-              error_message: error.message,
+              error_message: getErrorMessage(error),
               updated_at: new Date().toISOString(),
               retry_count: 1
             })
@@ -1368,11 +1408,11 @@ export async function handleProjectMilestoneNotification(requestData: ReminderRe
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in project milestone notification:', error);
     
     return new Response(JSON.stringify({
-      error: error.message,
+      error: getErrorMessage(error),
       successful: 0,
       failed: 1,
       total: 1

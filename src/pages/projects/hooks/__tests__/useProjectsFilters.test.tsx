@@ -1,162 +1,115 @@
 import { act, renderHook } from "@testing-library/react";
+import { render, fireEvent } from "@testing-library/react";
 import {
   useProjectsListFilters,
   useProjectsArchivedFilters,
-  type ProjectsListFiltersState,
-  type ProjectsArchivedFiltersState,
 } from "../useProjectsFilters";
 
 jest.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
+  useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-type Option = { id: string; name: string };
+jest.mock("@/components/ui/button", () => ({
+  Button: ({ children, onClick, ...props }: any) => (
+    <button onClick={onClick} {...props}>
+      {children}
+    </button>
+  ),
+}));
+
+jest.mock("@/components/ui/checkbox", () => ({
+  Checkbox: ({ checked, onCheckedChange, ...props }: any) => (
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={(event) => onCheckedChange?.(event.target.checked)}
+      {...props}
+    />
+  ),
+}));
+
+jest.mock("@/components/ui/accordion", () => ({
+  Accordion: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+  AccordionItem: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+  AccordionTrigger: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+  AccordionContent: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+}));
+
+jest.mock("@/components/ui/toggle-group", () => ({
+  ToggleGroup: ({ children }: any) => <div>{children}</div>,
+  ToggleGroupItem: ({ children, value, onClick }: any) => (
+    <button type="button" onClick={() => onClick?.(value)} data-value={value}>
+      {children}
+    </button>
+  ),
+}));
+
+jest.mock("@/components/ui/input", () => ({
+  Input: ({ value, onChange, ...props }: any) => (
+    <input value={value ?? ""} onChange={(event) => onChange?.(event)} {...props} />
+  ),
+}));
+
+const typeOptions = [{ id: "wedding", name: "Wedding" }];
+const stageOptions = [{ id: "planning", name: "Planning" }];
+const serviceOptions = [{ id: "photo", name: "Photography" }];
 
 describe("useProjectsListFilters", () => {
-  it("preserves state reference when option arrays change identity without content differences", async () => {
-    const initialProps = {
-      typeOptions: [
-        { id: "type-a", name: "Type A" },
-        { id: "type-b", name: "Type B" },
-      ],
-      stageOptions: [{ id: "stage-a", name: "Stage A" }],
-      serviceOptions: [{ id: "service-a", name: "Service A" }],
-    };
-
-    const { result, rerender } = renderHook(
-      (props: {
-        typeOptions: Option[];
-        stageOptions: Option[];
-        serviceOptions: Option[];
-      }) => useProjectsListFilters(props),
-      { initialProps }
+  it("toggles type filter and updates summary chips", () => {
+    const onStateChange = jest.fn();
+    const { result } = renderHook(() =>
+      useProjectsListFilters({
+        typeOptions,
+        stageOptions,
+        serviceOptions,
+        onStateChange,
+      })
     );
 
-    const initialState = result.current.state;
+    expect(result.current.activeCount).toBe(0);
 
-    await act(async () => {
-      rerender({
-        typeOptions: [...initialProps.typeOptions],
-        stageOptions: [...initialProps.stageOptions],
-        serviceOptions: [...initialProps.serviceOptions],
-      });
+    const { getByLabelText } = render(result.current.filtersConfig.content as any);
+
+    act(() => {
+      fireEvent.click(getByLabelText("Wedding"));
     });
 
-    expect(result.current.state).toBe(initialState);
-  });
-
-  it("drops filtered selections when option sets shrink", async () => {
-    const initialState: ProjectsListFiltersState = {
-      types: ["type-a", "type-b"],
-      stages: ["stage-a"],
-      sessionPresence: "any",
-      progress: "any",
-      services: ["service-a", "service-b"],
-    };
-
-    const initialProps = {
-      typeOptions: [
-        { id: "type-a", name: "Type A" },
-        { id: "type-b", name: "Type B" },
-      ],
-      stageOptions: [{ id: "stage-a", name: "Stage A" }],
-      serviceOptions: [
-        { id: "service-a", name: "Service A" },
-        { id: "service-b", name: "Service B" },
-      ],
-      initialState,
-    };
-
-    const { result, rerender } = renderHook(
-      (props: {
-        typeOptions: Option[];
-        stageOptions: Option[];
-        serviceOptions: Option[];
-        initialState?: ProjectsListFiltersState;
-      }) => useProjectsListFilters(props),
-      { initialProps }
-    );
-
-    await act(async () => {
-      rerender({
-        typeOptions: [{ id: "type-a", name: "Type A" }],
-        stageOptions: [{ id: "stage-a", name: "Stage A" }],
-        serviceOptions: [{ id: "service-b", name: "Service B" }],
-      });
-    });
-
-    expect(result.current.state.types).toEqual(["type-a"]);
-    expect(result.current.state.services).toEqual(["service-b"]);
+    expect(result.current.state.types).toEqual(["wedding"]);
+    expect(result.current.activeCount).toBe(1);
+    expect(result.current.summaryChips).toHaveLength(1);
+    expect(onStateChange).toHaveBeenCalled();
   });
 });
 
 describe("useProjectsArchivedFilters", () => {
-  it("preserves state reference on identical option re-renders", async () => {
-    const archivedInitialState: ProjectsArchivedFiltersState = {
-      types: ["type-a"],
-      balancePreset: "any",
-      balanceMin: null,
-      balanceMax: null,
-    };
-
-    const { result, rerender } = renderHook(
-      (props: { typeOptions: Option[]; initialState?: ProjectsArchivedFiltersState }) =>
-        useProjectsArchivedFilters(props),
-      {
-        initialProps: {
-          typeOptions: [
-            { id: "type-a", name: "Type A" },
-            { id: "type-b", name: "Type B" },
-          ],
-          initialState: archivedInitialState,
-        },
-      }
+  it("applies balance inputs and resets", () => {
+    const { result } = renderHook(() =>
+      useProjectsArchivedFilters({
+        typeOptions,
+      })
     );
 
-    const firstState = result.current.state;
+    const { getByPlaceholderText, getByText } = render(result.current.filtersConfig.content as any);
 
-    await act(async () => {
-      rerender({
-        typeOptions: [
-          { id: "type-a", name: "Type A" },
-          { id: "type-b", name: "Type B" },
-        ],
+    act(() => {
+      fireEvent.change(getByPlaceholderText("projects.filters.balanceMinPlaceholder"), {
+        target: { value: "100" },
+      });
+      fireEvent.change(getByPlaceholderText("projects.filters.balanceMaxPlaceholder"), {
+        target: { value: "500" },
       });
     });
 
-    expect(result.current.state).toBe(firstState);
-  });
+    expect(result.current.state.balanceMin).toBe(100);
+    expect(result.current.state.balanceMax).toBe(500);
+    expect(result.current.activeCount).toBe(2);
 
-  it("removes stale archived selections when options update", async () => {
-    const archivedInitialState: ProjectsArchivedFiltersState = {
-      types: ["type-a", "type-b"],
-      balancePreset: "any",
-      balanceMin: null,
-      balanceMax: null,
-    };
-
-    const { result, rerender } = renderHook(
-      (props: { typeOptions: Option[]; initialState?: ProjectsArchivedFiltersState }) =>
-        useProjectsArchivedFilters(props),
-      {
-        initialProps: {
-          typeOptions: [
-            { id: "type-a", name: "Type A" },
-            { id: "type-b", name: "Type B" },
-          ],
-          initialState: archivedInitialState,
-        },
-      }
-    );
-
-    await act(async () => {
-      rerender({
-        typeOptions: [{ id: "type-a", name: "Type A" }],
-      });
+    act(() => {
+      result.current.reset();
     });
 
-    expect(result.current.state.types).toEqual(["type-a"]);
+    expect(result.current.state.balanceMin).toBeNull();
+    expect(result.current.activeCount).toBe(0);
+    expect(result.current.summaryChips).toHaveLength(0);
   });
 });

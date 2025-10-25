@@ -1,8 +1,15 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.53.0';
-import { Resend } from "npm:resend@2.0.0";
+import {
+  getErrorMessage,
+  getErrorStack,
+} from '../_shared/error-utils.ts';
+import {
+  createResendClient,
+  type ResendClient,
+} from '../_shared/resend-utils.ts';
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const resend: ResendClient = createResendClient(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -782,8 +789,10 @@ const handler = async (req: Request): Promise<Response> => {
     // Use default subject if empty
     const finalSubject = subject?.trim() || 'Test Email from Template Builder';
 
-    const htmlContent = generateHTMLContent(blocks, mockData, finalSubject, preheader, organizationSettings, false);
-    const textContent = generatePlainText(blocks, mockData);
+    const safeMockData = mockData ?? {};
+
+    const htmlContent = generateHTMLContent(blocks, safeMockData, finalSubject, preheader, organizationSettings, false);
+    const textContent = generatePlainText(blocks, safeMockData);
 
     // Get business name for sender and use business email as reply-to
     const businessName = organizationSettings?.photography_business_name || 'Lumiso';
@@ -796,7 +805,7 @@ const handler = async (req: Request): Promise<Response> => {
       from: `${businessName} <hello@updates.lumiso.app>`,
       reply_to: replyToEmail,
       to: [to],
-      subject: replacePlaceholders(finalSubject, mockData),
+      subject: replacePlaceholders(finalSubject, safeMockData),
       html: htmlContent,
       text: textContent,
       headers: {
@@ -841,12 +850,12 @@ const handler = async (req: Request): Promise<Response> => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in send-template-email function:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        details: error.stack 
+        error: getErrorMessage(error),
+        details: getErrorStack(error)
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -1030,12 +1039,12 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in handleWorkflowEmail:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        details: error.stack,
+        error: getErrorMessage(error),
+        details: getErrorStack(error),
         context: 'handleWorkflowEmail'
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

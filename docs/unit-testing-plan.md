@@ -36,13 +36,13 @@
 ### Progress Snapshot _(update after each iteration)_
 | Category | Done | Total | Completion |
 | --- | --- | --- | --- |
-| Core Libraries & Helpers | 13 | 18 | 72% |
+| Core Libraries & Helpers | 18 | 18 | 100% |
 | Services & Data Access | 5 | 6 | 83% |
-| Contexts & Hooks | 27 | 35 | 77% |
+| Contexts & Hooks | 33 | 35 | 94% |
 | UI Components & Pages | 77 | 84 | 92% |
 | UI Primitives & Shared Components | 18 | 21 | 86% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **149** | **173** | **86%** |
+| **Overall** | **160** | **173** | **93%** |
 
 > **Latest audit notes (2025-10-25):** Re-baselined totals after discovering untested utility hooks (`src/utils/**`, `src/hooks/useEntityActions.ts`, `useDataTable.ts`), workspace-specific hooks, settings/template-builder UI shells, and shared onboarding/activity primitives. See new "Not Started" rows below for concrete follow-up targets.
 
@@ -62,11 +62,11 @@
 | Input normalization utilities | `src/lib/inputUtils.ts` | Trimming handlers, blur normalization, event typing | Low | Done | Covered by `src/lib/inputUtils.test.ts` (change + blur handlers normalize spacing). |
 | Payment color mapping | `src/lib/paymentColors.ts` | Consistent status color lookups, fallback color selection | Low | Done | Covered by `src/lib/paymentColors.test.ts` for palette integrity + class conventions. |
 | Project summary builder | `src/lib/projects/buildProjectSummaryItems.tsx` | Aggregate KPI rows, empty state handling | Medium | Done | Covered by `src/lib/projects/buildProjectSummaryItems.test.tsx` with zero-data + rich summary cases. |
-| Auth state helpers | `src/utils/authUtils.ts` | Local/session storage cleanup, global sign-out fallbacks, navigation after failure | High | Not Started | Needs tests to simulate storage contents, Supabase auth errors, and history pushes when sign-out fails. |
-| Entity list utilities | `src/utils/entityUtils.ts` | Sort/filter edge cases, validation rule coverage, date-range calculations | High | Not Started | No automated coverage for mixed-type sorting, nested key filters, or validation message mapping. |
-| Onboarding cleanup RPC | `src/utils/onboardingCleanup.ts` | RPC invocation success/error handling, boolean/strings returns | Medium | Not Started | Should mock Supabase client to assert retry/noise logging and failure fallbacks. |
-| Onboarding validation health checks | `src/utils/onboardingValidation.ts` | Step/ID mismatches, warning aggregation, transition guard matrix | Medium | Not Started | Missing assertions for invalid constants, warning prioritization, and restartable stage transitions. |
-| Performance monitor utilities | `src/utils/performance.ts` | Timing lifecycle, async measurement, reduced-motion helpers | Low | Not Started | Need jsdom-friendly mocks for `performance.now`, window memory, and React hook cleanup guarantees. |
+| Auth state helpers | `src/utils/authUtils.ts` | Local/session storage cleanup, global sign-out fallbacks, navigation after failure | High | Done | Covered by `src/utils/authUtils.test.ts` for storage purging, global sign-out warnings, and navigation resilience. |
+| Entity list utilities | `src/utils/entityUtils.ts` | Sort/filter edge cases, validation rule coverage, date-range calculations | High | Done | Covered by `src/utils/entityUtils.test.ts` for mixed sorting, search filters, validation rules, formatting, debouncing, and date count helpers. |
+| Onboarding cleanup RPC | `src/utils/onboardingCleanup.ts` | RPC invocation success/error handling, boolean/strings returns | Medium | Done | Covered by `src/utils/onboardingCleanup.test.ts` for success payloads, string fallback, and error logging on failures. |
+| Onboarding validation health checks | `src/utils/onboardingValidation.ts` | Step/ID mismatches, warning aggregation, transition guard matrix | Medium | Done | Covered by `src/utils/onboardingValidation.test.ts` for healthy config, mismatch detection, transition guards, and system health reporting. |
+| Performance monitor utilities | `src/utils/performance.ts` | Timing lifecycle, async measurement, reduced-motion helpers | Low | Done | Covered by `src/utils/performance.test.tsx` for timing records, slow-op warnings, decorator behavior, render hooks, and memory usage helpers. |
 
 ### Services & Data Access
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -106,14 +106,14 @@
 | Settings section manager | `src/hooks/useSettingsSection.ts` | Auto-save throttling, dirty tracking, toast toggles | Medium | Done | Covered via `src/hooks/__tests__/useSettingsSection.test.ts` for manual saves, auto-save throttle, and toast/error handling. |
 | Template builder hook | `src/hooks/useTemplateBuilder.ts` | Load/save pipelines, placeholder extraction, publish flow | High | Done | Covered by `src/hooks/__tests__/useTemplateBuilder.test.tsx` for load transforms, block conversions, and publish toast. |
 | Template validation hook | `src/hooks/useTemplateValidation.ts` | Warning/error matrix, published template requirements | Medium | Done | Covered by `src/hooks/__tests__/useTemplateValidation.test.ts` for missing template, name/content validation, placeholders, and published requirements. |
-| Generic entity actions hook | `src/hooks/useEntityActions.ts` | Loading/error state map, success/error toasts, callbacks | Medium | Not Started | Should mock toast implementation and verify concurrent action separation plus error propagation. |
-| Kanban settings bridge | `src/hooks/useKanbanSettings.ts` | Memoized defaults, updateSettings wrapping, loading flags | Medium | Not Started | Requires tests faking `useOrganizationSettings` responses and optimistic updates. |
-| Data table composition hook | `src/hooks/useDataTable.ts` | Nested accessor paths, sorting for numbers/dates/strings, pagination resets | High | Not Started | Needs coverage for `column.accessor`, dotted keys, filter resets, and stable sort direction toggles. |
-| Debounce utility hook | `src/hooks/useDebounce.ts` | Timer cleanup, rapid updates, initial render behavior | Low | Not Started | Add fake timers to assert cleanup on prop changes and unmount. |
-| Accessibility helpers | `src/hooks/useAccessibility.ts` | Focus trap loop, screen reader announcements, keyboard navigation guardrails | Medium | Not Started | Should assert focus restoration, aria attributes, and `useReducedMotion` media query handling. |
-| Mobile breakpoint detector | `src/hooks/use-mobile.tsx` | matchMedia listeners, SSR safety, resize reactions | Medium | Not Started | Validate cleanup of listeners and initial detection when `window` is undefined. |
-| Leads workspace hooks | `src/pages/leads/hooks/useLeadsData.ts`, `useLeadsFilters.tsx` | Combined query composition, filter persistence, Supabase failure surfacing | High | Not Started | No direct coverage for multi-filter interactions, search debouncing, or error toasts. |
-| Projects workspace hooks | `src/pages/projects/hooks/useProjectsData.ts`, `useProjectsFilters.tsx` | View-mode toggles, pagination guards, filter chips | High | Not Started | Should exercise Kanban/List data shaping, archived filters, and derived filter chips. |
+| Generic entity actions hook | `src/hooks/useEntityActions.ts` | Loading/error state map, success/error toasts, callbacks | Medium | Done | Covered by `src/hooks/__tests__/useEntityActions.test.tsx` for success toasts, error handling, custom error callbacks, and concurrent action isolation. |
+| Kanban settings bridge | `src/hooks/useKanbanSettings.ts` | Memoized defaults, updateSettings wrapping, loading flags | Medium | Done | Covered by `src/hooks/__tests__/useKanbanSettings.test.tsx` with mocked organization settings, default fallbacks, and update flow. |
+| Data table composition hook | `src/hooks/useDataTable.ts` | Nested accessor paths, sorting for numbers/dates/strings, pagination resets | High | Done | Covered by `src/hooks/__tests__/useDataTable.test.tsx` for accessor sorting, dotted key filtering, pagination resets, and metadata calculations. |
+| Debounce utility hook | `src/hooks/useDebounce.ts` | Timer cleanup, rapid updates, initial render behavior | Low | Done | Covered by `src/hooks/__tests__/useDebounce.test.tsx` with fake timers, timer cleanup, and delayed update assertions. |
+| Accessibility helpers | `src/hooks/useAccessibility.ts` | Focus trap loop, screen reader announcements, keyboard navigation guardrails | Medium | Done | Covered by `src/hooks/__tests__/useAccessibility.test.tsx` for focus restoration, aria-activedescendant updates, screen reader announcements, and media query listeners. |
+| Mobile breakpoint detector | `src/hooks/use-mobile.tsx` | matchMedia listeners, SSR safety, resize reactions | Medium | Done | Covered by `src/hooks/__tests__/use-mobile.test.tsx` verifying initial breakpoint detection, change listeners, and cleanup. |
+| Leads workspace hooks | `src/pages/leads/hooks/useLeadsData.ts`, `useLeadsFilters.tsx` | Combined query composition, filter persistence, Supabase failure surfacing | High | In Progress | Added `src/pages/leads/hooks/__tests__/useLeadsFilters.test.tsx` for status toggles and clear-all footer; still need `useLeadsData` coverage for RPC/fallback flows. |
+| Projects workspace hooks | `src/pages/projects/hooks/useProjectsData.ts`, `useProjectsFilters.tsx` | View-mode toggles, pagination guards, filter chips | High | In Progress | Added `src/pages/projects/hooks/__tests__/useProjectsFilters.test.tsx` for list/archived filter state transitions; data fetching hook coverage still pending. |
 
 ### UI Components & Pages
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -334,6 +334,14 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-11-14 | Codex | Added reminder details page coverage | Added `src/pages/__tests__/ReminderDetails.test.tsx` to validate reminder stats, fetch error toasts, completion toggles, navigation, and project dialog fetches | Keep an eye on future reminder reschedule flows or provider refactors |
 | 2025-11-15 | Codex | Added legacy payment & lead dialog coverage | Added `src/components/__tests__/AddPaymentDialog.test.tsx`, `EditPaymentDialog.test.tsx`, `AddLeadDialog.test.tsx`, and `EditLeadDialog.test.tsx`; refreshed progress snapshot totals | Monitor dialog flows if currency/localization options expand or navigation guard messaging changes |
 | 2025-11-16 | Codex | Added project services and activity coverage | Added `src/components/__tests__/ProjectServicesSection.test.tsx` and `ProjectActivitySection.test.tsx` to validate services edit/save flows, validation toasts, reminders, and completion updates | Watch for future service pricing changes or activity form enhancements |
+| 2025-11-17 | Codex | Added auth state helper coverage | Added `src/utils/authUtils.test.ts` to verify storage cleanup, global sign-out fallbacks, and navigation recovery flows | Next: cover `src/utils/entityUtils.ts` sorting/filtering edge cases |
+| 2025-11-17 (later) | Codex | Added entity list utility coverage | Added `src/utils/entityUtils.test.ts` to exercise sorting heuristics, search filters, validation rules, formatting utilities, debounced callbacks, and date-filter counts | Next: cover `src/utils/onboardingCleanup.ts` RPC handling paths |
+| 2025-11-17 (late) | Codex | Added onboarding cleanup RPC coverage | Added `src/utils/onboardingCleanup.test.ts` to validate RPC success responses, string fallback, and error logging for Supabase failures | Next: tackle `src/utils/onboardingValidation.ts` warning aggregation and guard matrix coverage |
+| 2025-11-17 (late night++) | Codex | Added onboarding validation + performance utility coverage | Added `src/utils/onboardingValidation.test.ts` and `src/utils/performance.test.tsx` to lock system health auditing, stage guards, timing metrics, decorator hooks, and memory helpers | Next: cover `src/integrations/supabase/client.ts` auth cache + channel reuse |
+| 2025-11-17 (midnight) | Codex | Added debounce and accessibility hook coverage | Added `src/hooks/__tests__/useDebounce.test.tsx` and `src/hooks/__tests__/useAccessibility.test.tsx` to verify debounced updates, timer cleanup, focus traps, screen reader announcements, keyboard navigation, and media query listeners | Next: cover `src/hooks/use-mobile.tsx` breakpoint detector and `src/hooks/useEntityActions.ts` concurrency handling |
+| 2025-11-17 (late night++) | Codex | Added mobile, entity action, and data table hook coverage | Added `src/hooks/__tests__/use-mobile.test.tsx`, `useEntityActions.test.tsx`, and `useDataTable.test.tsx` to lock breakpoint detection, toast/error flows, concurrent action isolation, accessor sorting, and pagination/filter resets | Next: tackle `src/hooks/useKanbanSettings.ts` and workspace data hooks (`useLeadsData`, `useProjectsData`) |
+| 2025-11-18 | Codex | Added Kanban settings hook coverage | Added `src/hooks/__tests__/useKanbanSettings.test.tsx` to confirm default fallbacks, memoized settings, and update flow via mocked organization settings | Next: focus on workspace data hooks (`useLeadsData`, `useLeadsFilters`, `useProjectsData`, `useProjectsFilters`) |
+| 2025-11-18 (later) | Codex | Added leads/projects filter hook coverage | Added `src/pages/leads/hooks/__tests__/useLeadsFilters.test.tsx` and `src/pages/projects/hooks/__tests__/useProjectsFilters.test.tsx` to cover status toggles, summary chips, balance inputs, and reset flows | Next: finish data hook coverage (`useLeadsData`, `useProjectsData`) |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

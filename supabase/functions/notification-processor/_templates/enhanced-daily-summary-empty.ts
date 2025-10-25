@@ -55,10 +55,16 @@ export function generateEmptyDailySummaryEmail(
   const headerTitle = t('dailySummary.empty.headerTitle');
   const headerSubtitle = t('dailySummary.empty.headerSubtitle', { date: today });
   const tipsTitle = t('dailySummary.empty.tipsTitle');
-  const tips =
-    (localization.raw('dailySummary.empty.tips') as Array<
-      { title: string; description: string }
-    >) || [];
+  const rawTips = localization.raw('dailySummary.empty.tips');
+  const tips = Array.isArray(rawTips)
+    ? rawTips.filter(
+        (tip): tip is { title: string; description: string } =>
+          typeof tip === 'object' &&
+          tip !== null &&
+          typeof (tip as { title?: unknown }).title === 'string' &&
+          typeof (tip as { description?: unknown }).description === 'string',
+      )
+    : [];
   const overdueMessage =
     totalOverdue === 1
       ? t('dailySummary.empty.messages.overdueOne')

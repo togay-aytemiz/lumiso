@@ -156,9 +156,23 @@ export function generateModernDailySummaryEmail(
     `;
 
     upcomingSessions.forEach(session => {
-      const sessionTime = formatDateTime(session.session_date, session.session_time, templateData);
-      const sessionName = session.projects?.project_types?.name 
-        ? `${session.projects.project_types.name} Session`
+      const sessionLead = Array.isArray(session.leads)
+        ? session.leads[0]
+        : session.leads;
+      const sessionProject = Array.isArray(session.projects)
+        ? session.projects[0]
+        : session.projects;
+      const projectTypeNode = sessionProject?.project_types;
+      const resolvedProjectType = Array.isArray(projectTypeNode)
+        ? projectTypeNode[0]
+        : projectTypeNode;
+      const sessionTime = formatDateTime(
+        session.session_date,
+        session.session_time ?? null,
+        templateData,
+      );
+      const sessionName = resolvedProjectType?.name
+        ? `${resolvedProjectType.name} Session`
         : (session.notes || defaultSessionName);
       
       content += `
@@ -204,21 +218,21 @@ export function generateModernDailySummaryEmail(
               margin-bottom: 10px;
               line-height: 1.5;
             ">⏰ ${sessionTime}</div>
-            ${session.leads ? `
+            ${sessionLead ? `
               <div style="
                 color: #475569;
                 font-size: 14px;
                 margin-bottom: 10px;
                 line-height: 1.5;
-              ">👤 ${clientLabel}: <strong style="color: #0f172a;">${session.leads.name}</strong></div>
+              ">👤 ${clientLabel}: <strong style="color: #0f172a;">${sessionLead.name}</strong></div>
             ` : ''}
-            ${session.projects ? `
+            ${sessionProject ? `
               <div style="
                 color: #475569;
                 font-size: 14px;
                 margin-bottom: 10px;
                 line-height: 1.5;
-              ">📋 ${projectLabel}: <strong style="color: #0f172a;">${session.projects.name}</strong></div>
+              ">📋 ${projectLabel}: <strong style="color: #0f172a;">${sessionProject.name}</strong></div>
             ` : ''}
             ${session.location ? `
               <div style="

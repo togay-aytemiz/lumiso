@@ -197,7 +197,13 @@ Deno.test("successfully triggers workflows for valid reminders", async () => {
 
   assertEquals(result, { processed: 1, triggered: 1, failed: 0 });
   assertEquals(supabase.invokeCalls.length, 1);
-  const payload = supabase.invokeCalls[0].payload as { body: Record<string, unknown> };
+  const payload = supabase.invokeCalls[0].payload as {
+    body: {
+      action?: string;
+      trigger_type?: string;
+      trigger_data?: { reminder_type?: string };
+    };
+  };
   assertEquals(payload.body.action, "trigger");
   assertEquals(payload.body.trigger_type, "session_reminder");
   assertEquals(payload.body.trigger_data?.reminder_type, reminder.reminder_type);

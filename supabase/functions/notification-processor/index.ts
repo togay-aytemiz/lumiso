@@ -1,9 +1,16 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { Resend } from "npm:resend@2.0.0";
 import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
 import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summary-empty.ts';
 import { createEmailLocalization } from '../_shared/email-i18n.ts';
+import {
+  getErrorMessage,
+  getErrorStack,
+} from '../_shared/error-utils.ts';
+import {
+  createResendClient,
+  type ResendClient,
+} from '../_shared/resend-utils.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,8 +18,8 @@ const corsHeaders = {
 };
 
 let createSupabaseClient = createClient;
-const defaultResendClient = new Resend(Deno.env.get("RESEND_API_KEY"));
-let resendClient: any = defaultResendClient;
+const defaultResendClient: ResendClient = createResendClient(Deno.env.get("RESEND_API_KEY"));
+let resendClient: ResendClient = defaultResendClient;
 
 export function setSupabaseClientFactoryForTests(factory: typeof createClient) {
   createSupabaseClient = factory;
@@ -22,7 +29,7 @@ export function resetSupabaseClientFactoryForTests() {
   createSupabaseClient = createClient;
 }
 
-export function setResendClientForTests(client: any) {
+export function setResendClientForTests(client: ResendClient) {
   resendClient = client;
 }
 
@@ -97,11 +104,11 @@ export const handler = async (req: Request): Promise<Response> => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in notification processor:', error);
     return new Response(JSON.stringify({
-      error: error.message,
-      stack: error.stack,
+      error: getErrorMessage(error),
+      stack: getErrorStack(error),
       timestamp: new Date().toISOString()
     }), {
       status: 500,
@@ -134,7 +141,7 @@ export async function processPendingNotifications(supabase: any, organizationId?
   const { data: notifications, error } = await query.limit(50); // Process in batches
 
   if (error) {
-    throw new Error(`Error fetching pending notifications: ${error.message}`);
+    throw new Error(`Error fetching pending notifications: ${getErrorMessage(error)}`);
   }
 
   console.log(`Found ${notifications?.length || 0} pending immediate notifications`);
@@ -144,12 +151,13 @@ export async function processPendingNotifications(supabase: any, organizationId?
     try {
       const result = await processSpecificNotification(supabase, notification.id, notification);
       results.push({ id: notification.id, success: true, result });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Error processing notification ${notification.id}:`, error);
-      results.push({ id: notification.id, success: false, error: error.message });
+      const errorMessage = getErrorMessage(error);
+      results.push({ id: notification.id, success: false, error: errorMessage });
       
       // Update notification status to failed
-      await updateNotificationStatus(supabase, notification.id, 'failed', error.message);
+      await updateNotificationStatus(supabase, notification.id, 'failed', errorMessage);
     }
   }
 
@@ -183,7 +191,7 @@ export async function processScheduledNotifications(supabase: any, organizationI
   const { data: notifications, error } = await query.limit(100);
 
   if (error) {
-    throw new Error(`Error fetching scheduled notifications: ${error.message}`);
+    throw new Error(`Error fetching scheduled notifications: ${getErrorMessage(error)}`);
   }
 
   console.log(`Found ${notifications?.length || 0} scheduled notifications to process`);
@@ -193,12 +201,19 @@ export async function processScheduledNotifications(supabase: any, organizationI
     try {
       const result = await processSpecificNotification(supabase, notification.id, notification);
       results.push({ id: notification.id, success: true, result });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Error processing scheduled notification ${notification.id}:`, error);
-      results.push({ id: notification.id, success: false, error: error.message });
+      const errorMessage = getErrorMessage(error);
+      results.push({ id: notification.id, success: false, error: errorMessage });
       
       // Update notification status to failed with retry logic
-      await updateNotificationStatus(supabase, notification.id, 'failed', error.message, notification.retry_count + 1);
+      await updateNotificationStatus(
+        supabase,
+        notification.id,
+        'failed',
+        errorMessage,
+        notification.retry_count + 1,
+      );
     }
   }
 
@@ -416,7 +431,7 @@ export async function processProjectMilestone(supabase: any, notification: any) 
   });
 
   if (error) {
-    throw new Error(`Failed to process milestone: ${error.message}`);
+    throw new Error(`Failed to process milestone: ${getErrorMessage(error)}`);
   }
 
   return data;
@@ -549,8 +564,26 @@ export async function scheduleNotifications(supabase: any, organizationId?: stri
     throw new Error(`Error fetching user settings: ${userSettingsError.message}`);
   }
 
+  type UserNotificationPreference = {
+    user_id: string;
+    notification_global_enabled: boolean | null;
+    notification_daily_summary_enabled: boolean | null;
+    notification_scheduled_time: string | null;
+  };
+
+  const userSettingsRows: UserNotificationPreference[] = (userSettings || []).map(
+    (setting: any) => ({
+      user_id: String(setting.user_id),
+      notification_global_enabled:
+        setting.notification_global_enabled ?? null,
+      notification_daily_summary_enabled:
+        setting.notification_daily_summary_enabled ?? null,
+      notification_scheduled_time: setting.notification_scheduled_time ?? null,
+    }),
+  );
+
   const userSettingsMap = new Map(
-    (userSettings || []).map((setting: any) => [setting.user_id, setting])
+    userSettingsRows.map((setting) => [setting.user_id, setting]),
   );
 
   // Fetch organization-level notification settings
@@ -563,8 +596,29 @@ export async function scheduleNotifications(supabase: any, organizationId?: stri
     throw new Error(`Error fetching organization settings: ${orgSettingsError.message}`);
   }
 
+  type OrganizationNotificationPreference = {
+    organization_id: string;
+    notification_global_enabled: boolean | null;
+    notification_daily_summary_enabled: boolean | null;
+    timezone: string | null;
+  };
+
+  const organizationSettingsRows: OrganizationNotificationPreference[] = (
+    organizationSettings || []
+  ).map((setting: any) => ({
+    organization_id: String(setting.organization_id),
+    notification_global_enabled:
+      setting.notification_global_enabled ?? null,
+    notification_daily_summary_enabled:
+      setting.notification_daily_summary_enabled ?? null,
+    timezone: setting.timezone ?? null,
+  }));
+
   const organizationSettingsMap = new Map(
-    (organizationSettings || []).map((setting: any) => [setting.organization_id, setting])
+    organizationSettingsRows.map((setting) => [
+      setting.organization_id,
+      setting,
+    ]),
   );
 
   const now = new Date();
@@ -670,7 +724,7 @@ export async function scheduleNotifications(supabase: any, organizationId?: stri
       .insert(scheduledNotifications);
 
     if (insertError) {
-      throw new Error(`Error scheduling notifications: ${insertError.message}`);
+      throw new Error(`Error scheduling notifications: ${getErrorMessage(insertError)}`);
     }
   }
 
@@ -689,7 +743,7 @@ export async function retryFailedNotifications(supabase: any, organizationId?: s
   const { data, error } = await supabase.rpc('retry_failed_notifications');
 
   if (error) {
-    throw new Error(`Error retrying notifications: ${error.message}`);
+    throw new Error(`Error retrying notifications: ${getErrorMessage(error)}`);
   }
 
   console.log(`Retried ${data || 0} failed notifications`);

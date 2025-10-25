@@ -1,5 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import {
+  getErrorMessage,
+  getErrorStack,
+} from "../_shared/error-utils.ts";
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,11 +34,11 @@ export const handler = async (req: Request): Promise<Response> => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error processing session reminders:', error);
     return new Response(JSON.stringify({
-      error: error.message,
-      stack: error.stack,
+      error: getErrorMessage(error),
+      stack: getErrorStack(error),
       timestamp: new Date().toISOString()
     }), {
       status: 500,
@@ -179,6 +183,7 @@ export async function processScheduledReminders(supabase: any) {
       });
 
       if (triggerError) {
+        const triggerErrorMessage = getErrorMessage(triggerError);
         console.error(`Error triggering workflow for reminder ${reminder.id}:`, triggerError);
         
         // Mark reminder as failed and record error
@@ -186,7 +191,7 @@ export async function processScheduledReminders(supabase: any) {
           .from('scheduled_session_reminders')
           .update({ 
             status: 'failed',
-            error_message: triggerError.message,
+            error_message: triggerErrorMessage,
             processed_at: new Date().toISOString()
           })
           .eq('id', reminder.id);
@@ -208,7 +213,7 @@ export async function processScheduledReminders(supabase: any) {
           .from('scheduled_session_reminders')
           .update({ 
             status: 'failed',
-            error_message: error.message,
+            error_message: getErrorMessage(error),
             processed_at: new Date().toISOString()
           })
           .eq('id', reminder.id);

@@ -36,13 +36,15 @@
 ### Progress Snapshot _(update after each iteration)_
 | Category | Done | Total | Completion |
 | --- | --- | --- | --- |
-| Core Libraries & Helpers | 13 | 13 | 100% |
-| Services & Data Access | 5 | 5 | 100% |
-| Contexts & Hooks | 27 | 27 | 100% |
-| UI Components & Pages | 77 | 77 | 100% |
-| UI Primitives & Shared Components | 18 | 18 | 100% |
+| Core Libraries & Helpers | 13 | 18 | 72% |
+| Services & Data Access | 5 | 6 | 83% |
+| Contexts & Hooks | 27 | 35 | 77% |
+| UI Components & Pages | 77 | 84 | 92% |
+| UI Primitives & Shared Components | 18 | 21 | 86% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **149** | **149** | **100%** |
+| **Overall** | **149** | **173** | **86%** |
+
+> **Latest audit notes (2025-10-25):** Re-baselined totals after discovering untested utility hooks (`src/utils/**`, `src/hooks/useEntityActions.ts`, `useDataTable.ts`), workspace-specific hooks, settings/template-builder UI shells, and shared onboarding/activity primitives. See new "Not Started" rows below for concrete follow-up targets.
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -60,6 +62,11 @@
 | Input normalization utilities | `src/lib/inputUtils.ts` | Trimming handlers, blur normalization, event typing | Low | Done | Covered by `src/lib/inputUtils.test.ts` (change + blur handlers normalize spacing). |
 | Payment color mapping | `src/lib/paymentColors.ts` | Consistent status color lookups, fallback color selection | Low | Done | Covered by `src/lib/paymentColors.test.ts` for palette integrity + class conventions. |
 | Project summary builder | `src/lib/projects/buildProjectSummaryItems.tsx` | Aggregate KPI rows, empty state handling | Medium | Done | Covered by `src/lib/projects/buildProjectSummaryItems.test.tsx` with zero-data + rich summary cases. |
+| Auth state helpers | `src/utils/authUtils.ts` | Local/session storage cleanup, global sign-out fallbacks, navigation after failure | High | Not Started | Needs tests to simulate storage contents, Supabase auth errors, and history pushes when sign-out fails. |
+| Entity list utilities | `src/utils/entityUtils.ts` | Sort/filter edge cases, validation rule coverage, date-range calculations | High | Not Started | No automated coverage for mixed-type sorting, nested key filters, or validation message mapping. |
+| Onboarding cleanup RPC | `src/utils/onboardingCleanup.ts` | RPC invocation success/error handling, boolean/strings returns | Medium | Not Started | Should mock Supabase client to assert retry/noise logging and failure fallbacks. |
+| Onboarding validation health checks | `src/utils/onboardingValidation.ts` | Step/ID mismatches, warning aggregation, transition guard matrix | Medium | Not Started | Missing assertions for invalid constants, warning prioritization, and restartable stage transitions. |
+| Performance monitor utilities | `src/utils/performance.ts` | Timing lifecycle, async measurement, reduced-motion helpers | Low | Not Started | Need jsdom-friendly mocks for `performance.now`, window memory, and React hook cleanup guarantees. |
 
 ### Services & Data Access
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -69,6 +76,7 @@
 | Lead data service | `src/services/LeadService.ts` | Search/filter combinations, pagination guards, Supabase fallbacks | High | Done | Covered via `src/services/__tests__/LeadService.test.ts` (custom field merge + filter/sort). |
 | Lead detail aggregator | `src/services/LeadDetailService.ts` | Parallel fetch composition, null safety when relations missing | Medium | Done | Covered via `src/services/__tests__/LeadDetailService.test.ts` for archived filtering, payment math, and activity fallbacks. |
 | Base entity service foundation | `src/services/BaseEntityService.ts` | Shared `getOrganizationId`, error handling, caching | Medium | Done | Covered by `src/services/__tests__/BaseEntityService.test.ts` for org lookup failure handling and authenticated user guard. |
+| Supabase client wrapper | `src/integrations/supabase/client.ts` | Auth-aware client initialization, edge-function channel reuse, error surfacing | High | Not Started | Needs isolated tests around `createClient`, session expiry refresh, and SSR safety guards. |
 
 ### Contexts & Hooks
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -98,6 +106,14 @@
 | Settings section manager | `src/hooks/useSettingsSection.ts` | Auto-save throttling, dirty tracking, toast toggles | Medium | Done | Covered via `src/hooks/__tests__/useSettingsSection.test.ts` for manual saves, auto-save throttle, and toast/error handling. |
 | Template builder hook | `src/hooks/useTemplateBuilder.ts` | Load/save pipelines, placeholder extraction, publish flow | High | Done | Covered by `src/hooks/__tests__/useTemplateBuilder.test.tsx` for load transforms, block conversions, and publish toast. |
 | Template validation hook | `src/hooks/useTemplateValidation.ts` | Warning/error matrix, published template requirements | Medium | Done | Covered by `src/hooks/__tests__/useTemplateValidation.test.ts` for missing template, name/content validation, placeholders, and published requirements. |
+| Generic entity actions hook | `src/hooks/useEntityActions.ts` | Loading/error state map, success/error toasts, callbacks | Medium | Not Started | Should mock toast implementation and verify concurrent action separation plus error propagation. |
+| Kanban settings bridge | `src/hooks/useKanbanSettings.ts` | Memoized defaults, updateSettings wrapping, loading flags | Medium | Not Started | Requires tests faking `useOrganizationSettings` responses and optimistic updates. |
+| Data table composition hook | `src/hooks/useDataTable.ts` | Nested accessor paths, sorting for numbers/dates/strings, pagination resets | High | Not Started | Needs coverage for `column.accessor`, dotted keys, filter resets, and stable sort direction toggles. |
+| Debounce utility hook | `src/hooks/useDebounce.ts` | Timer cleanup, rapid updates, initial render behavior | Low | Not Started | Add fake timers to assert cleanup on prop changes and unmount. |
+| Accessibility helpers | `src/hooks/useAccessibility.ts` | Focus trap loop, screen reader announcements, keyboard navigation guardrails | Medium | Not Started | Should assert focus restoration, aria attributes, and `useReducedMotion` media query handling. |
+| Mobile breakpoint detector | `src/hooks/use-mobile.tsx` | matchMedia listeners, SSR safety, resize reactions | Medium | Not Started | Validate cleanup of listeners and initial detection when `window` is undefined. |
+| Leads workspace hooks | `src/pages/leads/hooks/useLeadsData.ts`, `useLeadsFilters.tsx` | Combined query composition, filter persistence, Supabase failure surfacing | High | Not Started | No direct coverage for multi-filter interactions, search debouncing, or error toasts. |
+| Projects workspace hooks | `src/pages/projects/hooks/useProjectsData.ts`, `useProjectsFilters.tsx` | View-mode toggles, pagination guards, filter chips | High | Not Started | Should exercise Kanban/List data shaping, archived filters, and derived filter chips. |
 
 ### UI Components & Pages
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -174,6 +190,13 @@
 | Admin console screens | `src/pages/admin/Users.tsx`, `Localization.tsx`, `System.tsx` | Table interactions, role actions, localization sync | High | Done | Covered by `src/pages/admin/__tests__/Users.test.tsx`, `Localization.test.tsx`, and `System.test.tsx` rendering translation scaffolding and toggle interactions. |
 | Settings management pages | `src/pages/settings/Billing.tsx`, `Contracts.tsx`, `Leads.tsx`, `Profile.tsx`, `Account_old.tsx` | Section visibility, save flows, permission guards | Medium | Done | Covered by new suites in `src/pages/settings/__tests__/Billing.test.tsx`, `Contracts.test.tsx`, `Leads.test.tsx`, `Profile.test.tsx`, and `Account_old.test.tsx` validating headers, loading guards, and working-hour updates. |
 | Payments workspace components | `src/pages/payments/components/PaymentsTableSection.tsx`, `PaymentsMetricsSummary.tsx`, `PaymentsDateControls.tsx`, `PaymentsTrendChart.tsx` | Table rendering, metrics aggregation, chart interactions, date filtering | High | Done | Covered by new specs in `src/pages/payments/components/__tests__/PaymentsTableSection.test.tsx`, `PaymentsMetricsSummary.test.tsx`, `PaymentsDateControls.test.tsx`, and `PaymentsTrendChart.test.tsx` asserting prop passthroughs, formatter usage, option handlers, and empty-state rendering. |
+| Mobile navigation surfaces | `src/components/mobile/BottomSheetMenu.tsx`, `src/components/mobile/MobileBottomNav.tsx` | Quick action menus, responsive nav toggles, event callbacks | Medium | Not Started | Need render tests to assert bottom sheet triggers, navigation callback wiring, and mobile breakpoint behavior. |
+| Help & support entry points | `src/components/modals/HelpModal.tsx`, `src/components/support/HelpOptionCard.tsx` | Support CTA tracking, modal toggles, analytics events | Medium | Not Started | Currently only mocked in sidebar specs—add coverage for CTA clicks, close handlers, and analytics dispatch. |
+| Settings shell components | `src/components/settings/SettingsPageWrapper.tsx`, `SettingsLayout.tsx`, `SettingsStickyFooter.tsx`, `SettingsHelpButton.tsx` | Layout composition, responsive breakpoints, exit guards | High | Not Started | Missing tests for keyboard focus trap, sticky footer buttons, and help button callbacks across breakpoints. |
+| Settings dialog suites | `src/components/settings/SessionTypeDialogs.tsx`, `SessionStatusDialogs.tsx`, `ProjectTypeDialogs.tsx`, `PackageDialogs.tsx`, `ServiceDialogs.tsx`, `NavigationGuardDialog.tsx` | CRUD flows, confirmation guardrails, optimistic updates | High | Not Started | Dialogs are mocked in page specs; need mutation success/error cases and destructive confirmation flows. |
+| Sticky section navigation | `src/components/navigation/StickySectionNav.tsx` | Active section detection, scroll spy callbacks | Medium | Not Started | No tests for IntersectionObserver wiring, keyboard navigation, or manual section overrides. |
+| Template builder editing surfaces | `src/components/template-builder/OptimizedTemplateEditor.tsx`, `BlockEditor.tsx`, `OptimizedTemplatePreview.tsx`, `CompactStorageIndicator.tsx`, `StorageQuotaDisplay.tsx`, `VariablePicker.tsx` | Block interactions, storage warnings, personalization tokens | High | Not Started | Page-level suite mocks these modules; add coverage for drag/drop, quota thresholds, and token insertion callbacks. |
+| Template builder modals & sheets | `src/components/template-builder/AddBlockSheet.tsx`, `ImageLibrarySheet.tsx`, `TemplateNameDialog.tsx`, `DeleteTemplateDialog.tsx`, `InlinePreheaderEditor.tsx`, `InlineSubjectEditor.tsx`, `PlainTextPreview.tsx`, `TemplatePreview.tsx`, `previews/SMSPreview.tsx`, `previews/EmailPreview.tsx`, `previews/WhatsAppPreview.tsx` | Modal lifecycle, preview rendering, file uploads | High | Not Started | Need tests for upload callbacks, preview toggles, inline validation, and multi-channel rendering. |
 
 ### UI Primitives & Shared Components
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -196,6 +219,10 @@
 | Switch toggle | `src/components/ui/switch.tsx` | Data-state transitions, controlled toggles, accessibility attributes | Low | Done | Covered by `src/components/ui/__tests__/switch.test.tsx` asserting unchecked/checked transitions and controlled updates. |
 | Toast primitives | `src/components/ui/toast.tsx` | Viewport mounting, variant styling, close/action wiring | Medium | Done | Covered by `src/components/ui/__tests__/toast.test.tsx` confirming viewport class merge, destructive styling, and close attributes. |
 | Truncated text tooltip wrapper | `src/components/TruncatedTextWithTooltip.tsx` | Overflow detection, tooltip reveal, delay overrides | Low | Done | Covered by `src/components/__tests__/TruncatedTextWithTooltip.test.tsx` for empty text guard, non-truncated hover, and truncated tooltip display. |
+| Shared activity timeline primitives | `src/components/shared/ActivityTimeline.tsx`, `ActivityTimelineItem.tsx`, `ActivityForm.tsx` | Entry rendering, completion toggles, validation | High | Not Started | Page suites mock these shared pieces—need direct tests for activity creation callbacks, reminder scheduling, and validation messaging. |
+| Onboarding tutorial surfaces | `src/components/shared/BaseOnboardingModal.tsx`, `OnboardingTutorial.tsx`, `TutorialFloatingCard.tsx`, `TutorialExitGuardDialog.tsx` | Step progression, exit guards, analytics events | Medium | Not Started | No coverage for guided tour flows, escape/close guards, or telemetry dispatch. |
+| Advanced data table primitives | `src/components/data-table/AdvancedDataTable.tsx`, `AdvancedDataTablePagination.tsx`, `TableSearchInput.tsx`, `useAdvancedTableSearch.ts`, `useDraftFilters.ts` | Column config wiring, virtualization, draft filter sync | High | Not Started | Need stories-level tests to exercise pagination buttons, search debounce, and draft filter persistence. |
+
 ### Supabase Edge Functions & Automation
 | Area | File(s) | What to Cover | Priority | Status | Notes |
 | --- | --- | --- | --- | --- | --- |

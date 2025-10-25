@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 10 | 27 | 37% |
+| UI Components & Pages | 11 | 27 | 41% |
 | UI Primitives & Shared Components | 1 | 8 | 13% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **53** | **86** | **62%** |
+| **Overall** | **54** | **86** | **63%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -122,7 +122,7 @@
 | Session status badge | `src/components/SessionStatusBadge.tsx` | Lifecycle color mapping, accessible labels | Low | Done | Covered by `src/components/__tests__/SessionStatusBadge.test.tsx` (loading badge + editable dropdown updates). |
 | Project payments section | `src/components/ProjectPaymentsSection.tsx` | Summary cards, refresh triggers, empty states | Medium | Done | Covered by `src/components/__tests__/ProjectPaymentsSection.test.tsx` for metrics, refresh callback, and empty state. |
 | Sessions section surface | `src/components/SessionsSection.tsx` | Tab filtering, sorting integration, quick actions | Medium | Not started | Stub hooks to return sample data + assert CTA availability. |
-| Enhanced sessions section | `src/components/EnhancedSessionsSection.tsx` | Multi-column layout, performance instrumentation | Medium | Not started | Ensure virtualization thresholds + analytics logging. |
+| Enhanced sessions section | `src/components/EnhancedSessionsSection.tsx` | Multi-column layout, performance instrumentation | Medium | Done | Covered by `src/components/__tests__/EnhancedSessionsSection.test.tsx` verifying lifecycle sorting, count badge, and click wiring. |
 | Unified client details | `src/components/UnifiedClientDetails.tsx` | Conditional rendering of contact info, copy buttons | Low | Not started | Verify fallback text when data missing. |
 | Project sheet view | `src/components/ProjectSheetView.tsx` | Printable layout, localization of labels, totals | Medium | Not started | Snapshot layout with English/Turkish translations. |
 | Onboarding modal | `src/components/OnboardingModal.tsx` | Step transitions, skip behavior, analytics events | Medium | Not started | Mock context + ensure stage transitions call hooks. |
@@ -211,6 +211,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-26 | Codex | Added ProjectPaymentsSection coverage | `src/components/__tests__/ProjectPaymentsSection.test.tsx` verifies summary cards, empty state, and refresh callback | Continue tackling SessionsSection and EnhancedSessionsSection components |
 | 2025-10-26 (later) | Codex | Reconciled Contexts/Hooks snapshot with remaining gaps | Updated progress table to show TemplateBuilder hook still pending | Add tests for `useTemplateBuilder` hook |
 | 2025-10-26 (even later) | Codex | Added SessionsSection coverage | `src/components/__tests__/SessionsSection.test.tsx` ensures loading skeleton, empty state messaging, and sheet interactions | Next: Extend coverage to EnhancedSessionsSection flows |
+| 2025-10-26 (night) | Codex | Added EnhancedSessionsSection coverage | `src/components/__tests__/EnhancedSessionsSection.test.tsx` verifies lifecycle sorting order, count badge rendering, and banner click wiring | Next: Monitor virtualization thresholds or analytics hooks if they land |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

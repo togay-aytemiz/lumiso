@@ -107,10 +107,14 @@ const ReminderCard = ({
               </div>
               
               {/* Completion toggle - top right, 32px tap area */}
-              <button onClick={e => {
-              e.stopPropagation();
-              onToggleCompletion(activity.id, !activity.completed);
-            }} className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5 transition-all duration-200 shrink-0">
+              <button
+                data-testid="toggle-completion"
+                onClick={e => {
+                  e.stopPropagation();
+                  onToggleCompletion(activity.id, !activity.completed);
+                }}
+                className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5 transition-all duration-200 shrink-0"
+              >
                 {activity.completed ? <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> : <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />}
               </button>
             </div>
@@ -177,10 +181,14 @@ const ReminderCard = ({
             </div>
 
             {/* Completion Toggle */}
-            <button onClick={e => {
-            e.stopPropagation();
-            onToggleCompletion(activity.id, !activity.completed);
-          }} className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5 transition-all duration-200 flex-shrink-0">
+            <button
+              data-testid="toggle-completion"
+              onClick={e => {
+                e.stopPropagation();
+                onToggleCompletion(activity.id, !activity.completed);
+              }}
+              className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5 transition-all duration-200 flex-shrink-0"
+            >
               {activity.completed ? <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> : <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />}
             </button>
           </div>

@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 12 | 27 | 44% |
+| UI Components & Pages | 13 | 27 | 48% |
 | UI Primitives & Shared Components | 1 | 8 | 13% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **55** | **86** | **64%** |
+| **Overall** | **56** | **86** | **65%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -103,7 +103,7 @@
 | --- | --- | --- | --- | --- | --- |
 | Enhanced lead creation | `src/components/EnhancedAddLeadDialog.tsx` | Dynamic schema init, default status lookup, save pipeline | High | Done | Covered by `src/components/__tests__/EnhancedAddLeadDialog.test.tsx` verifying default status creation, value persistence, and navigation guard. |
 | Enhanced lead edit | `src/components/EnhancedEditLeadDialog.tsx` | Prefill logic, change detection, update mutation flow | High | Done | Covered by `src/components/__tests__/EnhancedEditLeadDialog.test.tsx` for prefill, validation, and Supabase updates. |
-| Enhanced project dialog | `src/components/EnhancedProjectDialog.tsx` | Cross-entity linking, lead selection, Supabase upserts | High | Not started | Validate state reset on close/open cycles. |
+| Enhanced project dialog | `src/components/EnhancedProjectDialog.tsx` | Cross-entity linking, lead selection, Supabase upserts | High | Done | Covered by `src/components/__tests__/EnhancedProjectDialog.test.tsx` ensuring data fetch, custom setup, and close/reopen resets. |
 | Session scheduling dialog | `src/components/ScheduleSessionDialog.tsx` | Prefill data, reminder scheduling hooks, status updates | High | Done | Covered via `src/components/__tests__/ScheduleSessionDialog.test.tsx` & `SessionSchedulingSheet.test.tsx`. |
 | Session scheduling sheet | `src/components/SessionSchedulingSheet.tsx` | Mobile sheet state, timezone-aware slots, submission flow | Medium | Not started | Simulate slot selection + validation toasts. |
 | Project Kanban board | `src/components/ProjectKanbanBoard.tsx` | Drag/drop ordering, status filtering, performance memoization | Medium | Not started | Use DnD testing helpers; ensure optimistic UI reverts on error. |
@@ -213,6 +213,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-26 (even later) | Codex | Added SessionsSection coverage | `src/components/__tests__/SessionsSection.test.tsx` ensures loading skeleton, empty state messaging, and sheet interactions | Next: Extend coverage to EnhancedSessionsSection flows |
 | 2025-10-26 (night) | Codex | Added EnhancedSessionsSection coverage | `src/components/__tests__/EnhancedSessionsSection.test.tsx` verifies lifecycle sorting order, count badge rendering, and banner click wiring | Next: Monitor virtualization thresholds or analytics hooks if they land |
 | 2025-10-26 (late night+) | Codex | Added Enhanced lead edit dialog coverage | `src/components/__tests__/EnhancedEditLeadDialog.test.tsx` exercises prefill, dirty-state detection, validation errors, and Supabase update success toasts | Revisit when dynamic field schema or toast messaging changes |
+| 2025-10-26 (early dawn) | Codex | Added EnhancedProjectDialog coverage | `src/components/__tests__/EnhancedProjectDialog.test.tsx` loads defaults and verifies cancel-driven reset flows | Monitor if project dialog gains new pricing or lead workflows |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 27 | 33 | 82% |
+| UI Components & Pages | 28 | 33 | 85% |
 | UI Primitives & Shared Components | 13 | 13 | 100% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **91** | **97** | **94%** |
+| **Overall** | **92** | **97** | **95%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -113,7 +113,7 @@
 | Route prefetcher | `src/components/RoutePrefetcher.tsx` | Prefetch orchestration, duplicate avoidance | Medium | Done | Covered by `src/components/__tests__/RoutePrefetcher.test.tsx` (cache guard + Supabase prefetch). |
 | Offline banner | `src/components/OfflineBanner.tsx` | Connectivity context integration, retry actions | Low | Done | Covered by `src/components/__tests__/OfflineBanner.test.tsx` (online skip + retry + spinner state). |
 | Lead detail page | `src/pages/LeadDetail.tsx` | Data loading, tab switching, error fallbacks | High | Done | Covered by `src/pages/__tests__/LeadDetail.test.tsx` for skeleton fallback, summary wiring, status actions, and fetch error toasts. |
-| Project detail page | `src/pages/ProjectDetail.tsx` | Combined queries, session/payment sections, modals | High | Not started | Assert page handles missing project gracefully. |
+| Project detail page | `src/pages/ProjectDetail.tsx` | Combined queries, session/payment sections, modals | High | Done | Covered by `src/pages/__tests__/ProjectDetail.test.tsx` for happy path rendering + missing project redirect toast. |
 | Calendar page | `src/pages/Calendar.tsx` | Range filters, session grouping, performance panels | High | Not started | Use fake timers to cover performance overlay toggles. |
 | Upcoming sessions page | `src/pages/UpcomingSessions.tsx` | Filters, session sorting, empty state messaging | Medium | Not started | Ensure sessions from multiple statuses render correctly. |
 | Templates workspace | `src/pages/Templates.tsx` | Block editor integration, preview data toggles | Medium | Not started | Mock template utils + i18n to confirm fallback content. |
@@ -247,6 +247,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-30 (night wrap) | Codex | Added simple daily scheduler handler coverage | `supabase/functions/tests/simple-daily-notifications.test.ts` verifies empty-queue exit and bubbled fetch errors via injected supabase factory | Consider adding fixture-driven tests for timezone-aligned processing |
 | 2025-10-30 (final wrap) | Codex | Added test callback harness coverage | `supabase/functions/tests/test-callback.test.ts` covers OPTIONS CORS headers, metadata echo, and error surfacing | No follow-up; keep function as diagnostic surface |
 | 2025-10-30 (night wrap++) | Codex | Added lead detail page coverage | `src/pages/__tests__/LeadDetail.test.tsx` locks loading skeleton, summary wiring, quick status buttons, and fetch error toasts | Next: tackle ProjectDetail page data orchestration |
+| 2025-10-31 | Codex | Added Project detail page coverage | `src/pages/__tests__/ProjectDetail.test.tsx` exercises successful fetch composition and missing-project redirect toast | Next: Cover Calendar and UpcomingSessions pages |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

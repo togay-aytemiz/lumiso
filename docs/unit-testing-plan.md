@@ -39,10 +39,10 @@
 | Core Libraries & Helpers | 13 | 13 | 100% |
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
-| UI Components & Pages | 29 | 30 | 97% |
+| UI Components & Pages | 30 | 30 | 100% |
 | UI Primitives & Shared Components | 9 | 13 | 69% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **80** | **94** | **85%** |
+| **Overall** | **81** | **94** | **86%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -108,7 +108,7 @@
 | Session scheduling sheet | `src/components/SessionSchedulingSheet.tsx` | Mobile sheet state, timezone-aware slots, submission flow | Medium | Done | Covered by `src/components/__tests__/SessionSchedulingSheet.test.tsx` validating slot selection, summary updates, and guarded closing. |
 | Project Kanban board | `src/components/ProjectKanbanBoard.tsx` | Drag/drop ordering, status filtering, performance memoization | Medium | Done | Covered by `src/components/__tests__/ProjectKanbanBoard.test.tsx` for multi-status rendering, no-status fallback, quick view wiring, and pagination actions. |
 | Workflow health dashboard | `src/components/WorkflowHealthDashboard.tsx` | Status aggregations, error states, filter interactions | Medium | Done | Covered by `src/components/__tests__/WorkflowHealthDashboard.test.tsx` for loading skeleton, empty state, critical metrics, and action buttons. |
-| Global search | `src/components/GlobalSearch.tsx` | Debounced queries, status preload, keyboard navigation | High | Not started | Mock Supabase search results + user input events. |
+| Global search | `src/components/GlobalSearch.tsx` | Debounced queries, status preload, keyboard navigation | High | Done | Covered by `src/components/__tests__/GlobalSearch.test.tsx` (debounce guard, preloaded statuses, keyboard selection). |
 | Protected route guard | `src/components/ProtectedRoute.tsx` | Auth gating, redirect logic, loading fallback | Medium | Done | Covered by `src/components/__tests__/ProtectedRoute.test.tsx` (loading/redirect + onboarding guard). |
 | Route prefetcher | `src/components/RoutePrefetcher.tsx` | Prefetch orchestration, duplicate avoidance | Medium | Done | Covered by `src/components/__tests__/RoutePrefetcher.test.tsx` (cache guard + Supabase prefetch). |
 | Offline banner | `src/components/OfflineBanner.tsx` | Connectivity context integration, retry actions | Low | Done | Covered by `src/components/__tests__/OfflineBanner.test.tsx` (online skip + retry + spinner state). |

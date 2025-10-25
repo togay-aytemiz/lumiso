@@ -40,9 +40,9 @@
 | Services & Data Access | 5 | 5 | 100% |
 | Contexts & Hooks | 24 | 24 | 100% |
 | UI Components & Pages | 30 | 30 | 100% |
-| UI Primitives & Shared Components | 9 | 13 | 69% |
+| UI Primitives & Shared Components | 13 | 13 | 100% |
 | Supabase Edge Functions & Automation | 0 | 9 | 0% |
-| **Overall** | **81** | **94** | **86%** |
+| **Overall** | **85** | **94** | **90%** |
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -151,6 +151,10 @@
 | Page header layout | `src/components/ui/page-header.tsx` | Sticky wrapper, responsive slots, action grouping | Low | Done | Covered by `src/components/ui/__tests__/page-header.test.tsx` confirming sticky classes and slot layout wrappers. |
 | Pagination primitives | `src/components/ui/pagination.tsx` | i18n labels, aria-current handling, ellipsis semantics | Low | Done | Covered by `src/components/ui/__tests__/pagination.test.tsx` checking navigation labeling, active link, and ellipsis sr-only text. |
 | Card primitives | `src/components/ui/card.tsx` | Section wrappers, class forwarding, text slots | Low | Done | Covered by `src/components/ui/__tests__/card.test.tsx` asserting class merging and content rendering across sections. |
+| Progress display bar | `src/components/ui/progress-bar.tsx` | Completion labeling, success state styling, size variants | Low | Done | Covered by `src/components/ui/__tests__/progress-bar.test.tsx` validating label toggles, success coloring, and width calculations. |
+| Progress primitive wrapper | `src/components/ui/progress.tsx` | Value-to-transform mapping, default fallback state | Low | Done | Covered by `src/components/ui/__tests__/progress.test.tsx` ensuring default translate and value-driven offsets. |
+| Switch toggle | `src/components/ui/switch.tsx` | Data-state transitions, controlled toggles, accessibility attributes | Low | Done | Covered by `src/components/ui/__tests__/switch.test.tsx` asserting unchecked/checked transitions and controlled updates. |
+| Toast primitives | `src/components/ui/toast.tsx` | Viewport mounting, variant styling, close/action wiring | Medium | Done | Covered by `src/components/ui/__tests__/toast.test.tsx` confirming viewport class merge, destructive styling, and close attributes. |
 ### Supabase Edge Functions & Automation
 | Area | File(s) | What to Cover | Priority | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
@@ -233,6 +237,7 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-10-26 (late night++) | Codex | Added DeadSimpleSessionBanner, WorkflowHealthDashboard, and GuidedStepProgress coverage | `src/components/__tests__/DeadSimpleSessionBanner.test.tsx`, `src/components/__tests__/WorkflowHealthDashboard.test.tsx`, and `src/components/__tests__/GuidedStepProgress.test.tsx` capture relative date badges, health states, and animated progress behavior | Next: Circle back to SessionsSection and SessionSchedulingSheet components |
 | 2025-10-27 | Codex | Hardened UnifiedClientDetails and toast hook coverage | Added `src/components/__tests__/UnifiedClientDetails.test.tsx` and `src/components/ui/__tests__/use-toast.test.ts` while reconciling sheet/section status rows | Next: Target `GlobalSearch` debounced query flows |
 | 2025-10-28 | Codex | Added Session banner, User menu, and UI primitive coverage | Added tests for `src/components/SessionBanner.tsx`, `src/components/UserMenu.tsx`, and new UI primitives (`segmented-control`, `page-header`, `pagination`, `card`) to lock in action handling and accessibility | Next: Focus on GlobalSearch keyboard interactions and Supabase function harnesses |
+| 2025-10-28 (later still) | Codex | Completed remaining UI primitive gaps | Added `src/components/ui/__tests__/progress-bar.test.tsx`, `progress.test.tsx`, `switch.test.tsx`, and `toast.test.tsx` to cover progress transforms, toggle data-state transitions, and toast viewport/variant styling | Next: Begin data-table primitive harness and toast renderer coverage |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

@@ -104,8 +104,7 @@ export async function processScheduledReminders(supabase: any) {
   for (const reminder of dueReminders) {
     try {
       console.log(`Processing reminder ${reminder.id} for session ${reminder.session_id}, type: ${reminder.reminder_type}`);
-      console.log(`Session data: ${reminder.sessions.session_date} ${reminder.sessions.session_time}, Lead: ${reminder.sessions.leads.name}`);
-
+      
       // Verify session data before processing
       if (!reminder.sessions || !reminder.sessions.leads) {
         console.error(`Invalid session or lead data for reminder ${reminder.id}`);
@@ -121,6 +120,10 @@ export async function processScheduledReminders(supabase: any) {
         processed++;
         continue;
       }
+
+      console.log(
+        `Session data: ${reminder.sessions.session_date} ${reminder.sessions.session_time}, Lead: ${reminder.sessions.leads.name}`,
+      );
 
       // Mark reminder as being processed first to prevent duplicate processing
       const { error: updateError } = await supabase

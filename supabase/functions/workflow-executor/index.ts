@@ -178,9 +178,10 @@ async function triggerWorkflows(supabase: any, triggerData: {
     .eq('is_active', true);
 
   // CRITICAL FIX: If trigger_data has workflow_id, only execute that specific workflow
-  if (trigger_data?.workflow_id) {
-    console.log(`Executing specific workflow: ${trigger_data.workflow_id}`);
-    workflowQuery = workflowQuery.eq('id', trigger_data.workflow_id);
+  const targetedWorkflowId = trigger_data?.workflow_id as string | undefined;
+  if (targetedWorkflowId) {
+    console.log(`Executing specific workflow: ${targetedWorkflowId}`);
+    workflowQuery = workflowQuery.eq('id', targetedWorkflowId);
   }
 
   const { data: workflows, error: workflowsError } = await workflowQuery;
@@ -219,6 +220,7 @@ async function triggerWorkflows(supabase: any, triggerData: {
 
   const executions = [];
   const duplicateFingerprints = new Set();
+  const forceTriggerExecution = Boolean(targetedWorkflowId);
 
   // Create workflow executions for matching workflows
   for (const workflow of workflows) {
@@ -235,11 +237,13 @@ async function triggerWorkflows(supabase: any, triggerData: {
       // Create fingerprint for duplicate detection
       const fingerprint = `${workflow.id}_${trigger_entity_type}_${trigger_entity_id}_${JSON.stringify(trigger_data?.status_change || '')}_${JSON.stringify(trigger_data?.date_change || '')}_${JSON.stringify(trigger_data?.reminder_type || '')}`;
       
-      if (duplicateFingerprints.has(fingerprint)) {
-        console.log(`Skipping workflow ${workflow.id}: Duplicate execution detected in this batch`);
-        continue;
+      if (!forceTriggerExecution) {
+        if (duplicateFingerprints.has(fingerprint)) {
+          console.log(`Skipping workflow ${workflow.id}: Duplicate execution detected in this batch`);
+          continue;
+        }
+        duplicateFingerprints.add(fingerprint);
       }
-      duplicateFingerprints.add(fingerprint);
 
       // Enhanced duplicate check: Check for recent executions (within last 60 seconds for same trigger data)
       const recentCutoff = new Date(Date.now() - 60000).toISOString();
@@ -254,7 +258,7 @@ async function triggerWorkflows(supabase: any, triggerData: {
 
       if (duplicateCheckError) {
         console.error('Error checking for duplicates:', duplicateCheckError);
-      } else if (recentExecutions && recentExecutions.length > 0) {
+      } else if (!forceTriggerExecution && recentExecutions && recentExecutions.length > 0) {
         // Check if any recent execution has the same trigger data
         const recentExecutionRecords = (recentExecutions as Array<{
           execution_log?: Array<{

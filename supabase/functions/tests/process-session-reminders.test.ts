@@ -165,7 +165,8 @@ Deno.test("returns zero counts when no reminders are due", async () => {
 });
 
 Deno.test("marks reminders with missing session data as failed", async () => {
-  const reminder = buildReminder({ sessions: null as unknown as Reminder["sessions"] });
+  const reminder = buildReminder();
+  (reminder as unknown as { sessions: Reminder["sessions"] | null }).sessions = null;
   const supabase = createSupabaseStub({ dueReminders: [reminder] });
 
   const result = await processScheduledReminders(supabase as unknown as any);
@@ -173,6 +174,7 @@ Deno.test("marks reminders with missing session data as failed", async () => {
   assertEquals(result, { processed: 1, triggered: 0, failed: 1 });
   assertEquals(supabase.updateCalls.length, 1);
   assertEquals(supabase.updateCalls[0].values.status, "failed");
+  assertEquals(supabase.updateCalls[0].values.error_message, "Invalid session or lead data");
 });
 
 Deno.test("records failures when workflow trigger errors occur", async () => {

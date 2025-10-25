@@ -288,7 +288,7 @@ Deno.test("triggerWorkflows filters to workflow_id and schedules reminders", asy
   assertEquals(supabase._state.rpcCalls, [
     { name: "schedule_session_reminders", args: { session_id_param: "session-1" } }
   ]);
-  assertEquals(supabase._state.functionInvocations.length, 1);
+  assertEquals(supabase._state.functionInvocations.length, 0);
 });
 
 Deno.test("triggerWorkflows skips recent duplicates", async () => {

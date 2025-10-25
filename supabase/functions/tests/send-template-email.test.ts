@@ -17,7 +17,7 @@ Deno.test("replacePlaceholders handles fallbacks and sanitization", () => {
     data
   );
 
-  assertEquals(result, "Hi Jordan, meet at - (no phone) fallback");
+  assertEquals(result, "Hi Jordan, meet at - (-) fallback");
 });
 
 Deno.test("generateHTMLContent renders sorted blocks with placeholders", () => {

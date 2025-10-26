@@ -1,0 +1,230 @@
+import React from "react";
+import { render, screen, fireEvent, waitFor } from "@/utils/testUtils";
+import { OptimizedTemplateEditor } from "../OptimizedTemplateEditor";
+import { InlineSubjectEditor } from "../InlineSubjectEditor";
+import { InlinePreheaderEditor } from "../InlinePreheaderEditor";
+
+jest.mock("react-i18next", () => ({
+  useTranslation: jest.fn(() => ({
+    t: (key: string) => key,
+  })),
+}));
+
+jest.mock("../BlockEditor", () => ({
+  BlockEditor: ({
+    block,
+    onUpdate,
+    onRemove,
+    onMoveDown,
+    onMoveUp,
+  }: any) => (
+    <div data-testid={`editor-${block.id}`}>
+      <button
+        data-testid="editor-update"
+        onClick={() => onUpdate({ ...block.data, updated: true })}
+      >
+        update
+      </button>
+      <button data-testid="editor-remove" onClick={onRemove}>
+        remove
+      </button>
+      <button data-testid="editor-move-down" onClick={onMoveDown}>
+        move-down
+      </button>
+      <button data-testid="editor-move-up" onClick={onMoveUp}>
+        move-up
+      </button>
+    </div>
+  ),
+}));
+
+jest.mock("../AddBlockSheet", () => ({
+  AddBlockSheet: ({ open, onAddBlock }: any) =>
+    open ? (
+      <button
+        data-testid="mock-add-block"
+        onClick={() => onAddBlock("image")}
+      >
+        add-image
+      </button>
+    ) : null,
+}));
+
+jest.mock("../EmojiPicker", () => ({
+  EmojiPicker: ({ onEmojiSelect }: any) => (
+    <button
+      type="button"
+      data-testid="emoji-picker"
+      onClick={() => onEmojiSelect("😀")}
+    >
+      emoji
+    </button>
+  ),
+}));
+
+jest.mock("../VariablePicker", () => ({
+  VariablePicker: ({ onVariableSelect, trigger }: any) =>
+    trigger
+      ? React.cloneElement(trigger, {
+          onClick: () => onVariableSelect("{variable}"),
+        })
+      : (
+        <button
+          type="button"
+          data-testid="variable-picker"
+          onClick={() => onVariableSelect("{variable}")}
+        >
+          variable
+        </button>
+      ),
+}));
+
+describe("OptimizedTemplateEditor", () => {
+  const baseBlocks = [
+    {
+      id: "block-1",
+      type: "text" as const,
+      data: { content: "Hi", formatting: {} },
+      visible: true,
+      order: 0,
+    },
+    {
+      id: "block-2",
+      type: "cta" as const,
+      data: { text: "Book", variant: "primary" },
+      visible: true,
+      order: 1,
+    },
+  ];
+
+  it("updates block content when the editor emits changes", async () => {
+    const onBlocksChange = jest.fn();
+
+    render(
+      <OptimizedTemplateEditor blocks={baseBlocks} onBlocksChange={onBlocksChange} />
+    );
+
+    fireEvent.click(
+      screen.getByText("templateBuilder.blockTitles.text")
+    );
+
+    expect(screen.getByTestId("editor-block-1")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("editor-update"));
+
+    await waitFor(() => expect(onBlocksChange).toHaveBeenCalled());
+    const updatedBlocks = onBlocksChange.mock.calls[0][0];
+    expect(updatedBlocks[0].data.updated).toBe(true);
+  });
+
+  it("reorders blocks when move controls are triggered", async () => {
+    const onBlocksChange = jest.fn();
+
+    render(
+      <OptimizedTemplateEditor blocks={baseBlocks} onBlocksChange={onBlocksChange} />
+    );
+
+    fireEvent.click(
+      screen.getByText("templateBuilder.blockTitles.text")
+    );
+    fireEvent.click(screen.getByTestId("editor-move-down"));
+
+    await waitFor(() => expect(onBlocksChange).toHaveBeenCalled());
+    const reordered = onBlocksChange.mock.calls[0][0];
+    expect(reordered.map((block: any) => block.id)).toEqual([
+      "block-2",
+      "block-1",
+    ]);
+  });
+
+  it("adds a new block through the add block sheet", async () => {
+    const onBlocksChange = jest.fn();
+
+    render(
+      <OptimizedTemplateEditor blocks={baseBlocks} onBlocksChange={onBlocksChange} />
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "templateBuilder.editor.addBlock",
+      })
+    );
+
+    fireEvent.click(screen.getByTestId("mock-add-block"));
+
+    await waitFor(() => expect(onBlocksChange).toHaveBeenCalled());
+    const newBlocks = onBlocksChange.mock.calls[0][0];
+    expect(newBlocks).toHaveLength(3);
+    expect(newBlocks[2].type).toBe("image");
+    expect(newBlocks[2].visible).toBe(true);
+  });
+});
+
+describe("InlineSubjectEditor", () => {
+  it("auto-saves edits on blur and highlights warnings", async () => {
+    const onSave = jest.fn().mockResolvedValue(undefined);
+    const onCancel = jest.fn();
+
+    render(
+      <InlineSubjectEditor value="Welcome" onSave={onSave} onCancel={onCancel} />
+    );
+
+    const input = screen.getByRole("textbox");
+    const longText =
+      "This is a FREE limited time offer that contains enough characters to clearly exceed the recommended subject length for any campaign.";
+
+    fireEvent.change(input, { target: { value: longText } });
+    fireEvent.blur(input);
+
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith(
+        "This is a FREE limited time offer that contains enough characters to clearly exceed the recommended subject length for any campaign."
+      )
+    );
+
+    expect(
+      screen.getByText(/characters \(too long\)/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Spam words:/i)).toBeInTheDocument();
+    expect(screen.getByText("free")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("emoji-picker"));
+    expect((input as HTMLInputElement).value).toContain("😀");
+
+    fireEvent.click(screen.getByRole("button", { name: "{…}" }));
+    expect((input as HTMLInputElement).value).toContain("{variable}");
+
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(onCancel).toHaveBeenCalled();
+  });
+});
+
+describe("InlinePreheaderEditor", () => {
+  it("saves updated preheader text and supports variable insertion", async () => {
+    const onSave = jest.fn().mockResolvedValue(undefined);
+    const onCancel = jest.fn();
+
+    render(
+      <InlinePreheaderEditor
+        value="Initial preheader"
+        onSave={onSave}
+        onCancel={onCancel}
+      />
+    );
+
+    const input = screen.getByRole("textbox");
+    fireEvent.change(input, { target: { value: "Updated content" } });
+
+    fireEvent.click(screen.getByRole("button", { name: "{…}" }));
+    expect(input).toHaveValue("Updated content{variable}");
+
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith("Updated content{variable}")
+    );
+
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(onCancel).toHaveBeenCalled();
+  });
+});

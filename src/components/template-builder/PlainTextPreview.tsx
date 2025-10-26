@@ -32,6 +32,7 @@ export function PlainTextPreview({ blocks, mockData }: PlainTextPreviewProps) {
             size="sm"
             onClick={copyToClipboard}
             className="h-7 px-2"
+            aria-label="Copy plain text preview"
           >
             <Copy className="h-3 w-3" />
           </Button>

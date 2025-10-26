@@ -159,5 +159,11 @@
     "unsavedDescription": "Bir seans taslağı üzerinde çalışıyorsunuz. Düzenlemeye devam edin veya taslağı silin.",
     "stay": "Düzenlemeye devam et",
     "discard": "Taslağı sil"
+  },
+  "draft": {
+    "resumeTitle": "Kaydedilmiş taslağı devam ettirilsin mi?",
+    "resumeDescription": "Bu bağlam için bir seans taslağı bulduk. Kaldığınız yerden devam edin veya yeni bir taslakla başlayın.",
+    "resume": "Taslağa devam et",
+    "discard": "Taslağı sil"
   }
 }

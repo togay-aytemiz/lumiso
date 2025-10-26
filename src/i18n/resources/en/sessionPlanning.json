@@ -159,5 +159,11 @@
     "unsavedDescription": "You have a session draft in progress. Keep editing or discard your changes.",
     "stay": "Keep editing",
     "discard": "Discard draft"
+  },
+  "draft": {
+    "resumeTitle": "Resume saved draft?",
+    "resumeDescription": "We found a saved session draft for this context. Pick up where you left off or start fresh.",
+    "resume": "Resume draft",
+    "discard": "Discard draft"
   }
 }

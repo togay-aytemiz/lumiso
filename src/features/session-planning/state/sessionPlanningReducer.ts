@@ -189,6 +189,16 @@ export const sessionPlanningReducer = (
     case "RESET": {
       return createInitialSessionPlanningState(action.payload);
     }
+    case "APPLY_STATE": {
+      return {
+        ...action.payload,
+        meta: {
+          ...action.payload.meta,
+          isDirty: false,
+          isSavingDraft: false
+        }
+      };
+    }
     default:
       return state;
   }

@@ -78,4 +78,11 @@ export type SessionPlanningAction =
   | { type: "MARK_DIRTY"; payload: boolean }
   | { type: "MARK_SAVING"; payload: boolean }
   | { type: "MARK_SAVED"; payload?: string }
-  | { type: "RESET"; payload?: SessionPlanningEntryContext };
+  | { type: "RESET"; payload?: SessionPlanningEntryContext }
+  | { type: "APPLY_STATE"; payload: SessionPlanningState };
+
+export interface SessionPlanningDraft {
+  state: SessionPlanningState;
+  updatedAt: string;
+  version: number;
+}

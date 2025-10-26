@@ -6,7 +6,8 @@ import {
   SessionPlanningNotifications,
   SessionPlanningProject,
   SessionPlanningSchedule,
-  SessionPlanningStepId
+  SessionPlanningStepId,
+  SessionPlanningState
 } from "../types";
 
 export const useSessionPlanningActions = () => {
@@ -96,6 +97,13 @@ export const useSessionPlanningActions = () => {
     [dispatch]
   );
 
+  const applyState = useCallback(
+    (nextState: SessionPlanningState) => {
+      dispatch({ type: "APPLY_STATE", payload: nextState });
+    },
+    [dispatch]
+  );
+
   return {
     loadEntryContext,
     setCurrentStep,
@@ -108,7 +116,7 @@ export const useSessionPlanningActions = () => {
     markDirty,
     markSaving,
     markSaved,
-    reset
+    reset,
+    applyState
   };
 };
-

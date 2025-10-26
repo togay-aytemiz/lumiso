@@ -126,7 +126,13 @@
     "error": "Error",
     "success": "Success",
     "warning": "Warning",
-    "info": "Information"
+    "info": "Information",
+    "settingsSavedTitle": "Settings saved",
+    "settingsSavedDescription": "Your changes have been saved successfully.",
+    "settingsDiscardedTitle": "Changes discarded",
+    "settingsDiscardedDescription": "Your unsaved changes have been discarded.",
+    "settingsSaveErrorDescription": "Failed to save settings. Please try again.",
+    "settingsSavedCategory": "Saved {{category}} settings"
   },
   "legal": {
     "all_rights_reserved": "All rights reserved."

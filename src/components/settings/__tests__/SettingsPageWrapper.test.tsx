@@ -15,6 +15,28 @@ jest.mock("react-router-dom", () => ({
   useLocation: () => ({ pathname: "/settings/general" }),
 }));
 
+jest.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: Record<string, unknown>) => {
+      const translations: Record<string, string> = {
+        "toast.settingsSavedTitle": "Settings saved",
+        "toast.settingsSavedDescription": "Your changes have been saved successfully.",
+        "toast.error": "Error",
+        "toast.settingsSaveErrorDescription": "Failed to save settings. Please try again.",
+        "toast.settingsDiscardedTitle": "Changes discarded",
+        "toast.settingsDiscardedDescription": "Your unsaved changes have been discarded.",
+      };
+
+      if (key === "toast.settingsSavedCategory") {
+        const category = options?.category as string | undefined;
+        return category ? `Saved ${category} settings` : "Saved settings";
+      }
+
+      return translations[key] ?? key;
+    },
+  }),
+}));
+
 jest.mock("@/contexts/SettingsContext", () => ({
   useSettingsContext: () => ({
     hasCategoryChanges: hasCategoryChangesMock,

@@ -126,7 +126,13 @@
     "error": "Hata",
     "success": "Başarılı",
     "warning": "Uyarı",
-    "info": "Bilgi"
+    "info": "Bilgi",
+    "settingsSavedTitle": "Ayarlar kaydedildi",
+    "settingsSavedDescription": "Değişiklikleriniz başarıyla kaydedildi.",
+    "settingsDiscardedTitle": "Değişikliklerden vazgeçildi",
+    "settingsDiscardedDescription": "Kaydedilmemiş değişiklikleriniz silindi.",
+    "settingsSaveErrorDescription": "Ayarlar kaydedilemedi. Lütfen tekrar deneyin.",
+    "settingsSavedCategory": "{{category}} ayarları kaydedildi"
   },
   "legal": {
     "all_rights_reserved": "Tüm hakları saklıdır."

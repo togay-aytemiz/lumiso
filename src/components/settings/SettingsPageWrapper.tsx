@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { useSettingsContext } from "@/contexts/SettingsContext";
 import { SettingsStickyFooter } from "./SettingsStickyFooter";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface SettingsPageWrapperProps {
   children: ReactNode;
@@ -12,6 +13,7 @@ export default function SettingsPageWrapper({ children }: SettingsPageWrapperPro
   const location = useLocation();
   const { hasCategoryChanges, saveCategoryChanges, cancelCategoryChanges } = useSettingsContext();
   const { toast } = useToast();
+  const { t } = useTranslation('common');
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   
@@ -24,15 +26,15 @@ export default function SettingsPageWrapper({ children }: SettingsPageWrapperPro
       await saveCategoryChanges(categoryPath);
       setShowSuccess(true);
       toast({
-        title: "Settings saved",
-        description: "Your changes have been saved successfully.",
+        title: t('toast.settingsSavedTitle'),
+        description: t('toast.settingsSavedDescription'),
       });
       setTimeout(() => setShowSuccess(false), 2000);
     } catch (error) {
       console.error('Failed to save category changes:', error);
       toast({
-        title: "Error",
-        description: "Failed to save settings. Please try again.",
+        title: t('toast.error'),
+        description: t('toast.settingsSaveErrorDescription'),
         variant: "destructive",
       });
     } finally {
@@ -43,8 +45,8 @@ export default function SettingsPageWrapper({ children }: SettingsPageWrapperPro
   const handleCancel = () => {
     cancelCategoryChanges(categoryPath);
     toast({
-      title: "Changes discarded",
-      description: "Your unsaved changes have been discarded.",
+      title: t('toast.settingsDiscardedTitle'),
+      description: t('toast.settingsDiscardedDescription'),
     });
   };
 

@@ -43,6 +43,7 @@ export default function SettingsLayout() {
   const { hasCategoryChanges, cancelCategoryChanges, saveCategoryChanges } = useSettingsContext();
   const { shouldLockNavigation } = useOnboarding();
   const { t } = useTranslation('navigation');
+  const { t: tCommon } = useTranslation('common');
   const { toast } = useToast();
   const currentPath = location.pathname;
   const hasChanges = hasCategoryChanges(currentPath);
@@ -59,15 +60,15 @@ export default function SettingsLayout() {
     onDiscard: () => {
       cancelCategoryChanges(currentPath);
       toast({
-        title: "Changes discarded",
-        description: "Your unsaved changes have been discarded.",
+        title: tCommon('toast.settingsDiscardedTitle'),
+        description: tCommon('toast.settingsDiscardedDescription'),
       });
     },
     onSaveAndExit: async () => {
       await saveCategoryChanges(currentPath);
       toast({
-        title: "Settings saved",
-        description: "Your changes have been saved successfully.",
+        title: tCommon('toast.settingsSavedTitle'),
+        description: tCommon('toast.settingsSavedDescription'),
       });
     }
   });

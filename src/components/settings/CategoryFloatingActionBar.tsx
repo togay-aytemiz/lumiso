@@ -5,6 +5,7 @@ import { Loader2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSettingsContext } from "@/contexts/SettingsContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export function CategoryFloatingActionBar() {
   const location = useLocation();
@@ -13,6 +14,7 @@ export function CategoryFloatingActionBar() {
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation('common');
 
   const hasChanges = hasCategoryChanges(categoryPath);
   const dirtySections = getCategoryDirtySections(categoryPath);
@@ -27,9 +29,11 @@ export function CategoryFloatingActionBar() {
       setShowSuccess(true);
       // Get category name from path
       const categoryName = categoryPath.split('/').pop()?.replace('-', ' ') || 'settings';
-      
+      const formattedCategoryName = categoryName.replace(/\b\w/g, (char) => char.toUpperCase());
+
       toast({
-        title: `Saved ${categoryName} settings`,
+        title: t('toast.settingsSavedTitle'),
+        description: t('toast.settingsSavedCategory', { category: formattedCategoryName }),
         duration: 3000,
       });
 
@@ -38,8 +42,8 @@ export function CategoryFloatingActionBar() {
       }, 1000);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to save settings. Please try again.",
+        title: t('toast.error'),
+        description: t('toast.settingsSaveErrorDescription'),
         variant: "destructive",
         duration: 5000,
       });

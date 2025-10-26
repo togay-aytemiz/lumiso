@@ -102,9 +102,9 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 - [ ] Define analytics event schema and naming conventions.
 
 ### Phase 1 — Infrastructure & Shared Utilities
-- [ ] Build wizard state manager (React context + reducer) with autosave persistence. *(Reducer/provider shipped; autosave service and draft syncing outstanding.)*
-- [ ] Create step shell components (header, actions, progress indicator, breadcrumb). *(Lo-fi shell active; hi-fi styling still required.)*
-- [ ] Implement context resolver hooking into existing routing (lead/project/dashboard/calendar). *(Entry hook consumes local props; server-driven prefill yet to wire.)*
+- [ ] Build wizard state manager (React context + reducer) with autosave persistence. *(Reducer/provider shipped; autosave/draft resume landed 2025-02-18; add telemetry/conflict analytics.)*
+- [ ] Create step shell components (header, actions, progress indicator, breadcrumb). *(Hi-fi shell with sticky footer shipped 2025-02-18; awaiting final design polish.)*
+- [ ] Implement context resolver hooking into existing routing (lead/project/dashboard/calendar). *(Entry hook uses local props; Supabase-backed resolver still pending.)*
 - [x] Extend i18n bundles (EN/TR) with core wizard copy placeholders.
 
 ### Phase 2 — Core Steps
@@ -124,7 +124,7 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 - [x] Summary review card with edit links. *(Drawer + inline highlight bar live in wizard.)*
 - [ ] Notification preview widget + opt-out toggles integrated with workflow service.
 - [ ] Final confirmation mutation wiring + success state. *(Session mutation wired; success UX still needs final design sign-off.)*
-- [ ] Draft cleanup and telemetry instrumentation.
+- [ ] Draft cleanup and telemetry instrumentation. *(Autosave shipped; add analytics and cleanup jobs.)*
 
 ### Phase 5 — Hardening & Rollout
 - [ ] Automated tests (unit, component, integration) per Testing Strategy section.

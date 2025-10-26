@@ -43,7 +43,10 @@
       "notesLabel": "Lead notları",
       "notesPlaceholder": "Bu lead ile ilgili ek notlar.",
       "fetchErrorTitle": "Lead'ler yüklenemedi",
-      "createErrorTitle": "Lead oluşturulamadı"
+      "createErrorTitle": "Lead oluşturulamadı",
+      "searchPlaceholder": "Lead ara...",
+      "createButton": "Yeni lead oluştur",
+      "emptyState": "Henüz lead yok. Oluşturup başlayın."
     },
     "project": {
       "navigationLabel": "Proje",
@@ -63,7 +66,10 @@
       "nameLabel": "Proje adı",
       "namePlaceholder": "Yaz düğünü",
       "descriptionLabel": "Proje notları",
-      "descriptionPlaceholder": "Proje için isteğe bağlı notlar."
+      "descriptionPlaceholder": "Proje için isteğe bağlı notlar.",
+      "searchPlaceholder": "Proje ara...",
+      "createButton": "Yeni proje oluştur",
+      "emptyState": "Bu lead için proje bulunmuyor."
     },
     "sessionType": {
       "navigationLabel": "Seans türü",

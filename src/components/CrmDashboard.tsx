@@ -528,7 +528,7 @@ const CrmDashboard = () => {
       </main>
       
       <EnhancedAddLeadDialog 
-        onSuccess={fetchData} 
+        onSuccess={() => fetchData()} 
         open={addLeadDialogOpen}
         onOpenChange={setAddLeadDialogOpen}
         onClose={() => setAddLeadDialogOpen(false)}

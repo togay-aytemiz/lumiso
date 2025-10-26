@@ -24,7 +24,7 @@ interface EnhancedAddLeadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (lead: { id: string; name: string; email?: string | null; phone?: string | null }) => void;
 }
 
 export function EnhancedAddLeadDialog({ 
@@ -171,7 +171,12 @@ export function EnhancedAddLeadDialog({
 
       toast.success(t('leadDialog.successCreated'));
 
-      onSuccess?.();
+      onSuccess?.({
+        id: newLead.id,
+        name: newLead.name,
+        email: newLead.email,
+        phone: newLead.phone,
+      });
       onClose();
     } catch (error) {
       console.error('Failed to create lead:', error);

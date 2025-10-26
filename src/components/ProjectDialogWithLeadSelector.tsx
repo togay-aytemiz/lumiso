@@ -24,17 +24,19 @@ interface Lead {
 interface ProjectDialogWithLeadSelectorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onProjectCreated: () => void;
+  onProjectCreated: (project: { id: string; name: string }) => void;
+  defaultLeadId?: string;
 }
 
 export function ProjectDialogWithLeadSelector({ 
   open, 
   onOpenChange, 
-  onProjectCreated 
+  onProjectCreated,
+  defaultLeadId
 }: ProjectDialogWithLeadSelectorProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [selectedLeadId, setSelectedLeadId] = useState<string>("");
+  const [selectedLeadId, setSelectedLeadId] = useState<string>(defaultLeadId || "");
   const [projectTypeId, setProjectTypeId] = useState("");
   const [basePrice, setBasePrice] = useState("");
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -47,8 +49,11 @@ export function ProjectDialogWithLeadSelector({
   useEffect(() => {
     if (open) {
       fetchLeads();
+      if (defaultLeadId) {
+        setSelectedLeadId(defaultLeadId);
+      }
     }
-  }, [open]);
+  }, [open, defaultLeadId]);
 
   const fetchLeads = async () => {
     setLoadingLeads(true);
@@ -74,7 +79,7 @@ export function ProjectDialogWithLeadSelector({
   const resetForm = () => {
     setName("");
     setDescription("");
-    setSelectedLeadId("");
+    setSelectedLeadId(defaultLeadId || "");
     setProjectTypeId("");
     setBasePrice("");
   };
@@ -182,7 +187,7 @@ export function ProjectDialogWithLeadSelector({
 
       resetForm();
       onOpenChange(false);
-      onProjectCreated();
+      onProjectCreated({ id: newProject.id, name: name.trim() });
     } catch (error: any) {
       toast({
         title: tCommon('labels.error'),
@@ -215,25 +220,34 @@ export function ProjectDialogWithLeadSelector({
           <div className="-mx-2">
             <ScrollArea className="max-h-[60vh]">
               <div className="px-2 space-y-4 pt-2 pb-2">
-                <div className="space-y-2">
-                  <Label htmlFor="lead-select">{tForms('projectDialog.selectClient')}</Label>
-                  {loadingLeads ? (
-                    <CompactLoadingSkeleton />
-                  ) : (
-                    <Select value={selectedLeadId} onValueChange={setSelectedLeadId} disabled={isSaving}>
-                      <SelectTrigger id="lead-select">
-                        <SelectValue placeholder={tForms('placeholders.select_client_placeholder')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {leads.map((lead) => (
-                          <SelectItem key={lead.id} value={lead.id}>
-                            {getLeadDisplayText(lead)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
+                {!defaultLeadId ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="lead-select">{tForms('projectDialog.selectClient')}</Label>
+                    {loadingLeads ? (
+                      <CompactLoadingSkeleton />
+                    ) : (
+                      <Select value={selectedLeadId} onValueChange={setSelectedLeadId} disabled={isSaving}>
+                        <SelectTrigger id="lead-select">
+                          <SelectValue placeholder={tForms('placeholders.select_client_placeholder')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {leads.map((lead) => (
+                            <SelectItem key={lead.id} value={lead.id}>
+                              {getLeadDisplayText(lead)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label>{tForms('projectDialog.client')}</Label>
+                    <div className="rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-sm">
+                      {leads.find((lead) => lead.id === selectedLeadId)?.name || tForms('projectDialog.selectClient')}
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="project-name">{tForms('projectDialog.projectName')}</Label>

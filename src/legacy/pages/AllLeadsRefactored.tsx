@@ -328,7 +328,7 @@ const AllLeadsRefactored = () => {
       />
       
       <EnhancedAddLeadDialog 
-        onSuccess={refetchLeads} 
+        onSuccess={() => refetchLeads()} 
         open={addLeadDialogOpen}
         onOpenChange={setAddLeadDialogOpen}
         onClose={() => setAddLeadDialogOpen(false)}

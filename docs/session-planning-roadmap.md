@@ -108,10 +108,10 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 - [x] Extend i18n bundles (EN/TR) with core wizard copy placeholders.
 
 ### Phase 2 — Core Steps
-- [ ] Lead selection/creation step with search + inline create modal.
-- [ ] Project selection/creation step with optional skip and validation.
+- [x] Lead selection/creation step with search + inline create modal. *(Shared lead sheet + searchable picker shipped 2025-02-17.)*
+- [x] Project selection/creation step with optional skip and validation. *(Reuses project sheet with lead prefill 2025-02-17.)*
 - [ ] Session type selector with default, description tooltip, and accessibility focus handling.
-- [ ] Session details step enabling optional custom name.
+- [ ] Session details step enabling optional custom name. *(Step removed from MVP scope; revisit if customization demand resurfaces.)*
 
 ### Phase 3 — Location & Schedule
 - [ ] Address book component with list, quick add, and last-used default.
@@ -121,9 +121,9 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 - [ ] Notes step with markdown sanitization.
 
 ### Phase 4 — Summary & Confirmation
-- [ ] Summary review card with edit links.
+- [x] Summary review card with edit links. *(Drawer + inline highlight bar live in wizard.)*
 - [ ] Notification preview widget + opt-out toggles integrated with workflow service.
-- [ ] Final confirmation mutation wiring + success state.
+- [ ] Final confirmation mutation wiring + success state. *(Session mutation wired; success UX still needs final design sign-off.)*
 - [ ] Draft cleanup and telemetry instrumentation.
 
 ### Phase 5 — Hardening & Rollout

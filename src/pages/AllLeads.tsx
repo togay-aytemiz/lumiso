@@ -1065,7 +1065,7 @@ const AllLeadsNew = () => {
       </div>
       
       <EnhancedAddLeadDialog 
-        onSuccess={refreshLeads} 
+        onSuccess={() => refreshLeads()} 
         open={addLeadDialogOpen}
         onOpenChange={handleAddLeadDialogChange}
         onClose={() => handleAddLeadDialogChange(false)}

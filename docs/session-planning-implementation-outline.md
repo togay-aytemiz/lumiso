@@ -72,17 +72,20 @@
 
 ## Open Questions / Follow-Ups
 - Confirm data model updates (draft table, notification preference schema).
-- Decide whether lead/project creation happens inline or via existing modals in V1.
 - Clarify requirements for calendar conflict detection (needs backend support?).
 - Determine minimal viable notification preview scope for pilot.
+- Define telemetry payloads for the new lead/project sheet launches (so we can measure adoption).
 
-## Initial Implementation Backlog (Lo-Fi Prototype)
-- [x] Add `sessionPlanning` i18n namespace and wire wizard copy to EN/TR translations.
-- [x] Scaffold `features/session-planning` module with wizard shell, reducer, and context provider (autosave engine pending).
-- [x] Build entry-point resolver hook handling lead/project/schedule prefill scenarios (current scope: local props).
-- [x] Implement stepper navigation with placeholder content for each wizard step (hi-fi polish still required).
-- [x] Port existing session create flow into a shared service callable from wizard confirm action (legacy dialog orchestration still pending).
 - [ ] Add Storybook (or temporary route) harness to demo the lo-fi wizard with mocked data.
+
+## Current Focus
+- Autosave/draft conflict handling and telemetry instrumentation.
+- Lead/project context resolver sharing across entry points.
+
+### Recently Landed (Feb 17)
+- ✅ Lead picker wired to shared lead creation sheet + searchable command UI.
+- ✅ Project picker reuses project creation sheet with lead prefill and search.
+- ✅ Drawer summary + bottom-sticky actions replaced the dual-column layout.
 
 ## Design & UI Follow-Up
 - Transition the wizard shell and steps from lo-fi placeholders to production-ready UI adhering to Lumiso design system tokens. *(Initial pass shipped: dual-column layout with persistent summary sidebar and updated step cards.)*

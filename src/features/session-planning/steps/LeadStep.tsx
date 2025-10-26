@@ -1,16 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
 import { useSessionPlanningActions } from "../hooks/useSessionPlanningActions";
 import { useSessionPlanningContext } from "../hooks/useSessionPlanningContext";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/components/ui/use-toast";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
-import { cn } from "@/lib/utils";
+import { ChevronDown, UserPlus } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 interface LeadOption {
   id: string;
@@ -26,9 +27,9 @@ export const LeadStep = () => {
   const { toast } = useToast();
   const [leadOptions, setLeadOptions] = useState<LeadOption[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const leadPlaceholder = state.lead.name || t("steps.lead.namePlaceholder");
-  const mode = state.lead.mode ?? "existing";
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [createLeadOpen, setCreateLeadOpen] = useState(false);
 
   useEffect(() => {
     const fetchLeads = async () => {
@@ -65,40 +66,42 @@ export const LeadStep = () => {
     fetchLeads();
   }, [toast, t]);
 
-  useEffect(() => {
-    if (!loading && leadOptions.length === 0 && mode === "existing") {
-      handleModeChange("new");
-    }
-  }, [loading, leadOptions.length, mode]);
-
   const selectedLeadOption = useMemo(() => {
     if (!state.lead.id) return undefined;
-    return leadOptions.find((option) => option.id === state.lead.id);
+    return leadOptions.find((lead) => lead.id === state.lead.id);
   }, [leadOptions, state.lead.id]);
 
-  const handleModeChange = (value: "existing" | "new") => {
+  const filteredLeads = useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    return leadOptions.filter((lead) => lead.name.toLowerCase().includes(term));
+  }, [leadOptions, searchTerm]);
+
+  const handleAssignLead = (lead: LeadOption) => {
     updateLead({
-      ...state.lead,
-      mode: value,
-      id: value === "existing" ? state.lead.id : undefined,
-      name: value === "existing" ? selectedLeadOption?.name : "",
-      email: value === "existing" ? selectedLeadOption?.email : "",
-      phone: value === "existing" ? selectedLeadOption?.phone : "",
-      notes: ""
+      id: lead.id,
+      name: lead.name,
+      email: lead.email,
+      phone: lead.phone,
+      notes: "",
+      mode: "existing"
     });
+    setDropdownOpen(false);
+    setSearchTerm("");
   };
 
-  const handleExistingLeadChange = (leadId: string) => {
-    const option = leadOptions.find((lead) => lead.id === leadId);
-    updateLead({
-      ...state.lead,
-      mode: "existing",
-      id: leadId,
-      name: option?.name ?? "",
-      email: option?.email ?? "",
-      phone: option?.phone ?? "",
-      notes: ""
+  const handleLeadCreated = (lead: { id: string; name: string; email?: string | null; phone?: string | null }) => {
+    setCreateLeadOpen(false);
+    const normalized: LeadOption = {
+      id: lead.id,
+      name: lead.name,
+      email: lead.email || undefined,
+      phone: lead.phone || undefined
+    };
+    setLeadOptions((prev) => {
+      const without = prev.filter((item) => item.id !== lead.id);
+      return [...without, normalized].sort((a, b) => a.name.localeCompare(b.name));
     });
+    handleAssignLead(normalized);
   };
 
   return (
@@ -108,152 +111,126 @@ export const LeadStep = () => {
         <p className="text-sm text-muted-foreground">{t("steps.lead.description")}</p>
       </div>
 
-      <RadioGroup
-        value={mode}
-        onValueChange={(value) => handleModeChange(value as "existing" | "new")}
-        className="grid grid-cols-1 gap-2 sm:grid-cols-2"
-      >
-        <ModeCard
-          value="existing"
-          label={t("steps.lead.useExisting")}
-          description={t("steps.lead.useExistingDescription")}
-          disabled={leadOptions.length === 0}
+      <div className="space-y-3">
+        <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {t("steps.lead.selectExisting")}
+        </Label>
+        <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full justify-between text-left h-auto min-h-[42px]"
+              disabled={loading || leadOptions.length === 0}
+            >
+              {selectedLeadOption ? (
+                <LeadSummaryPreview lead={selectedLeadOption} />
+              ) : loading ? (
+                t("steps.lead.loading")
+              ) : (
+                t("steps.lead.selectPlaceholder")
+              )}
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="p-0 w-[360px]" align="start">
+            <Command>
+              <CommandInput
+                placeholder={t("steps.lead.searchPlaceholder")}
+                value={searchTerm}
+                onValueChange={setSearchTerm}
+              />
+              <CommandList>
+                <CommandEmpty>{t("steps.lead.noLeads")}</CommandEmpty>
+                <CommandGroup>
+                  {filteredLeads.map((lead) => (
+                    <CommandItem
+                      key={lead.id}
+                      value={lead.id}
+                      onSelect={() => handleAssignLead(lead)}
+                      className="flex items-center gap-3"
+                    >
+                      <LeadSummaryPreview lead={lead} />
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+
+        <Button
+          variant="outline"
+          className="gap-2"
+          onClick={() => setCreateLeadOpen(true)}
+        >
+          <UserPlus className="h-4 w-4" />
+          {t("steps.lead.createButton")}
+        </Button>
+
+        {leadOptions.length === 0 && !loading && (
+          <p className="text-xs text-muted-foreground">{t("steps.lead.emptyState")}</p>
+        )}
+      </div>
+
+      {state.lead.name && (
+        <SelectedLeadCard
+          name={state.lead.name}
+          email={state.lead.email}
+          phone={state.lead.phone}
         />
-        <ModeCard value="new" label={t("steps.lead.createNew")} description={t("steps.lead.createNewDescription")} />
-      </RadioGroup>
-
-      {mode === "existing" ? (
-        <div className="space-y-4">
-          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("steps.lead.selectExisting")}
-          </Label>
-          <Select
-            value={state.lead.id ?? ""}
-            onValueChange={handleExistingLeadChange}
-            disabled={loading || leadOptions.length === 0}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={loading ? t("steps.lead.loading") : t("steps.lead.selectPlaceholder")} />
-            </SelectTrigger>
-            <SelectContent>
-              {leadOptions.map((lead) => (
-                <SelectItem key={lead.id} value={lead.id}>
-                  <div className="flex flex-col">
-                    <span className="font-medium">{lead.name}</span>
-                    {(lead.email || lead.phone) && (
-                      <span className="text-xs text-muted-foreground">
-                        {[lead.email, lead.phone].filter(Boolean).join(" • ")}
-                      </span>
-                    )}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {leadOptions.length === 0 && !loading ? (
-            <p className="text-xs text-muted-foreground">{t("steps.lead.noLeads")}</p>
-          ) : null}
-        </div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-lg border border-border/70 bg-muted/40 p-4 shadow-sm md:col-span-2">
-            <Label htmlFor="lead-name" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("steps.lead.nameLabel")}
-            </Label>
-            <Input
-              id="lead-name"
-              placeholder={leadPlaceholder}
-              value={state.lead.name ?? ""}
-              className="mt-2"
-              onChange={(event) =>
-                updateLead({
-                  ...state.lead,
-                  name: event.target.value
-                })
-              }
-            />
-          </div>
-
-          <div className="rounded-lg border border-border/70 bg-muted/40 p-4 shadow-sm">
-            <Label htmlFor="lead-email" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("steps.lead.emailLabel")}
-            </Label>
-            <Input
-              id="lead-email"
-              type="email"
-              placeholder={t("steps.lead.emailPlaceholder")}
-              value={state.lead.email ?? ""}
-              className="mt-2"
-              onChange={(event) =>
-                updateLead({
-                  ...state.lead,
-                  email: event.target.value
-                })
-              }
-            />
-          </div>
-
-          <div className="rounded-lg border border-border/70 bg-muted/40 p-4 shadow-sm">
-            <Label htmlFor="lead-phone" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("steps.lead.phoneLabel")}
-            </Label>
-            <Input
-              id="lead-phone"
-              placeholder={t("steps.lead.phonePlaceholder")}
-              value={state.lead.phone ?? ""}
-              className="mt-2"
-              onChange={(event) =>
-                updateLead({
-                  ...state.lead,
-                  phone: event.target.value
-                })
-              }
-            />
-          </div>
-
-          <div className="rounded-lg border border-border/70 bg-muted/40 p-4 shadow-sm md:col-span-2">
-            <Label htmlFor="lead-notes" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("steps.lead.notesLabel")}
-            </Label>
-            <Textarea
-              id="lead-notes"
-              rows={3}
-              placeholder={t("steps.lead.notesPlaceholder")}
-              value={state.lead.notes ?? ""}
-              className="mt-2"
-              onChange={(event) =>
-                updateLead({
-                  ...state.lead,
-                  notes: event.target.value
-                })
-              }
-            />
-          </div>
-        </div>
       )}
+
+      <EnhancedAddLeadDialog
+        open={createLeadOpen}
+        onOpenChange={setCreateLeadOpen}
+        onClose={() => setCreateLeadOpen(false)}
+        onSuccess={handleLeadCreated}
+      />
     </div>
   );
 };
 
-interface ModeCardProps {
-  value: "existing" | "new";
-  label: string;
-  description: string;
-  disabled?: boolean;
-}
-
-const ModeCard = ({ value, label, description, disabled }: ModeCardProps) => (
-  <label
-    htmlFor={`lead-mode-${value}`}
-    className={cn(
-      "flex cursor-pointer flex-col gap-1 rounded-lg border border-border/70 bg-muted/30 p-4 shadow-sm transition hover:border-primary/60",
-      disabled && "pointer-events-none opacity-50"
-    )}
-  >
-    <div className="flex items-center justify-between">
-      <span className="font-semibold text-sm text-foreground">{label}</span>
-      <RadioGroupItem id={`lead-mode-${value}`} value={value} disabled={disabled} />
+const LeadSummaryPreview = ({ lead }: { lead: LeadOption }) => {
+  const initials = computeInitials(lead.name || "?");
+  return (
+    <div className="flex w-full items-center gap-3">
+      <Avatar className="h-7 w-7 border">
+        <AvatarFallback className="text-xs font-semibold uppercase">{initials}</AvatarFallback>
+      </Avatar>
+      <div className="flex flex-col">
+        <span className="text-sm font-medium text-foreground">{lead.name}</span>
+        {(lead.email || lead.phone) && (
+          <span className="text-xs text-muted-foreground">{[lead.email, lead.phone].filter(Boolean).join(" • ")}</span>
+        )}
+      </div>
     </div>
-    <p className="text-xs text-muted-foreground">{description}</p>
-  </label>
-);
+  );
+};
+
+const SelectedLeadCard = ({ name, email, phone }: { name: string; email?: string | null; phone?: string | null }) => {
+  const initials = computeInitials(name);
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/20 px-4 py-3">
+      <Avatar className="h-9 w-9 border">
+        <AvatarFallback className="text-sm font-semibold uppercase">{initials}</AvatarFallback>
+      </Avatar>
+      <div className="space-y-1">
+        <p className="text-sm font-semibold text-foreground">{name}</p>
+        {(email || phone) && (
+          <p className="text-xs text-muted-foreground">{[email, phone].filter(Boolean).join(" • ")}</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const computeInitials = (name: string) => {
+  const trimmed = name.trim();
+  if (!trimmed) return "?";
+  const tokens = trimmed.split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return "?";
+  if (tokens.length === 1) {
+    return tokens[0].slice(0, 2).toUpperCase();
+  }
+  return `${tokens[0][0]}${tokens[1][0]}`.toUpperCase();
+};

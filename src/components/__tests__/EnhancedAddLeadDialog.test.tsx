@@ -300,7 +300,7 @@ describe("EnhancedAddLeadDialog", () => {
     });
 
     expect(toastMock.success).toHaveBeenCalledWith("leadDialog.successCreated");
-    expect(onSuccess).toHaveBeenCalled();
+    expect(onSuccess).toHaveBeenCalledWith(expect.objectContaining({ id: "lead-123" }));
     expect(onClose).toHaveBeenCalled();
   });
 

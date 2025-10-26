@@ -68,7 +68,7 @@ export const SessionPlanningWizard = ({ onCancel, onComplete, isCompleting }: Se
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex flex-col gap-3 pb-4">
+      <div className="flex flex-col gap-3 pb-4 px-4">
         <StepNavigation currentIndex={currentIndex} onSelectStep={goToStep} translate={t} />
         <SummaryHighlights
           onReview={() => {
@@ -83,37 +83,41 @@ export const SessionPlanningWizard = ({ onCancel, onComplete, isCompleting }: Se
         <SummaryMiniCards />
       </div>
       <Separator />
-      <div className="flex-1 overflow-y-auto py-6">
+      <div className="flex-1 overflow-y-auto py-6 px-4 pb-32">
         <div className="mx-auto w-full max-w-3xl space-y-6">
           <CurrentStepComponent />
         </div>
       </div>
-      <Separator />
-      <div className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between">
-        <Button variant="ghost" onClick={onCancel} className="lg:px-6">
-          {t("wizard.cancel")}
-        </Button>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-          <Button
-            variant="outline"
-            onClick={() => goToStep(Math.max(0, currentIndex - 1))}
-            disabled={isFirstStep}
-            className="sm:px-6"
-          >
-            {t("wizard.back")}
-          </Button>
-          {!isLastStep ? (
-            <Button
-              onClick={() => goToStep(Math.min(SESSION_PLANNING_STEPS.length - 1, currentIndex + 1))}
-              className="sm:px-8"
-            >
-              {t("wizard.next")}
+      <div className="sticky bottom-0 left-0 right-0 z-10">
+        <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+          <Separator />
+          <div className="flex flex-col gap-3 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+            <Button variant="ghost" onClick={onCancel} className="lg:px-6">
+              {t("wizard.cancel")}
             </Button>
-          ) : (
-            <Button onClick={onComplete} disabled={isCompleting} aria-busy={isCompleting} className="sm:px-8">
-              {isCompleting ? t("wizard.confirming") : t("wizard.confirm")}
-            </Button>
-          )}
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+              <Button
+                variant="outline"
+                onClick={() => goToStep(Math.max(0, currentIndex - 1))}
+                disabled={isFirstStep}
+                className="sm:px-6"
+              >
+                {t("wizard.back")}
+              </Button>
+              {!isLastStep ? (
+                <Button
+                  onClick={() => goToStep(Math.min(SESSION_PLANNING_STEPS.length - 1, currentIndex + 1))}
+                  className="sm:px-8"
+                >
+                  {t("wizard.next")}
+                </Button>
+              ) : (
+                <Button onClick={onComplete} disabled={isCompleting} aria-busy={isCompleting} className="sm:px-8">
+                  {isCompleting ? t("wizard.confirming") : t("wizard.confirm")}
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

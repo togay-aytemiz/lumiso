@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useSessionPlanningActions } from "../hooks/useSessionPlanningActions";
 import { useSessionPlanningContext } from "../hooks/useSessionPlanningContext";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/components/ui/use-toast";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
-import { cn } from "@/lib/utils";
+import { ChevronDown, FolderPlus } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { ProjectDialogWithLeadSelector } from "@/components/ProjectDialogWithLeadSelector";
 
 interface ProjectOption {
   id: string;
@@ -24,13 +24,26 @@ export const ProjectStep = () => {
   const { toast } = useToast();
   const [projectOptions, setProjectOptions] = useState<ProjectOption[]>([]);
   const [loading, setLoading] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [projectSheetOpen, setProjectSheetOpen] = useState(false);
 
-  const mode = state.project.mode ?? "existing";
-  const leadIdForProjects = state.lead.mode === "existing" ? state.lead.id : undefined;
+  const leadId = state.lead.id;
+
+  useEffect(() => {
+    if (!leadId && state.project.id) {
+      updateProject({
+        id: undefined,
+        name: "",
+        description: "",
+        mode: "existing"
+      });
+    }
+  }, [leadId, state.project.id, updateProject]);
 
   useEffect(() => {
     const fetchProjects = async () => {
-      if (!leadIdForProjects) {
+      if (!leadId) {
         setProjectOptions([]);
         return;
       }
@@ -45,7 +58,7 @@ export const ProjectStep = () => {
         const { data, error } = await supabase
           .from("projects")
           .select("id, name")
-          .eq("lead_id", leadIdForProjects)
+          .eq("lead_id", leadId)
           .eq("organization_id", organizationId)
           .order("name", { ascending: true });
 
@@ -65,38 +78,37 @@ export const ProjectStep = () => {
     };
 
     fetchProjects();
-  }, [leadIdForProjects, toast, t]);
-
-  useEffect(() => {
-    if (!leadIdForProjects && mode === "existing" && state.lead.mode === "new") {
-      handleModeChange("new");
-    }
-  }, [leadIdForProjects, mode, state.lead.mode]);
+  }, [leadId, toast, t]);
 
   const selectedProjectOption = useMemo(() => {
     if (!state.project.id) return undefined;
-    return projectOptions.find((option) => option.id === state.project.id);
+    return projectOptions.find((project) => project.id === state.project.id);
   }, [projectOptions, state.project.id]);
 
-  const handleModeChange = (value: "existing" | "new") => {
+  const filteredProjects = useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    return projectOptions.filter((project) => project.name.toLowerCase().includes(term));
+  }, [projectOptions, searchTerm]);
+
+  const handleSelectProject = (project: ProjectOption) => {
     updateProject({
-      ...state.project,
-      mode: value,
-      id: value === "existing" ? state.project.id : undefined,
-      name: value === "existing" ? selectedProjectOption?.name : "",
-      description: ""
+      id: project.id,
+      name: project.name,
+      description: state.project.description,
+      mode: "existing"
     });
+    setDropdownOpen(false);
+    setSearchTerm("");
   };
 
-  const handleExistingProjectChange = (projectId: string) => {
-    const option = projectOptions.find((project) => project.id === projectId);
-    updateProject({
-      ...state.project,
-      mode: "existing",
-      id: projectId,
-      name: option?.name ?? "",
-      description: ""
+  const handleProjectCreated = (project: { id: string; name: string }) => {
+    setProjectSheetOpen(false);
+    const option = { id: project.id, name: project.name };
+    setProjectOptions((prev) => {
+      const without = prev.filter((item) => item.id !== project.id);
+      return [...without, option].sort((a, b) => a.name.localeCompare(b.name));
     });
+    handleSelectProject(option);
   };
 
   return (
@@ -106,120 +118,82 @@ export const ProjectStep = () => {
         <p className="text-sm text-muted-foreground">{t("steps.project.description")}</p>
       </div>
 
-      <RadioGroup
-        value={mode}
-        onValueChange={(value) => handleModeChange(value as "existing" | "new")}
-        className="grid grid-cols-1 gap-2 sm:grid-cols-2"
-      >
-        <ModeCard
-          value="existing"
-          label={t("steps.project.useExisting")}
-          description={t("steps.project.useExistingDescription")}
-          disabled={!leadIdForProjects}
-        />
-        <ModeCard
-          value="new"
-          label={t("steps.project.createNew")}
-          description={t("steps.project.createNewDescription")}
-        />
-      </RadioGroup>
-
-      {mode === "existing" ? (
-        <div className="space-y-4">
-          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("steps.project.selectExisting")}
-          </Label>
-          <Select
-            value={state.project.id ?? ""}
-            onValueChange={handleExistingProjectChange}
-            disabled={!leadIdForProjects || loading || projectOptions.length === 0}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue
-                placeholder={
-                  !leadIdForProjects
-                    ? t("steps.project.selectLeadFirst")
-                    : loading
-                      ? t("steps.project.loading")
-                      : t("steps.project.selectPlaceholder")
-                }
+      <div className="space-y-3">
+        <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {t("steps.project.selectExisting")}
+        </Label>
+        <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full justify-between text-left h-auto min-h-[42px]"
+              disabled={!leadId || loading || projectOptions.length === 0}
+            >
+              {selectedProjectOption ? (
+                <span className="text-sm font-medium text-foreground">{selectedProjectOption.name}</span>
+              ) : !leadId ? (
+                t("steps.project.selectLeadFirst")
+              ) : loading ? (
+                t("steps.project.loading")
+              ) : (
+                t("steps.project.selectPlaceholder")
+              )}
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="p-0 w-[360px]" align="start">
+            <Command>
+              <CommandInput
+                placeholder={t("steps.project.searchPlaceholder")}
+                value={searchTerm}
+                onValueChange={setSearchTerm}
               />
-            </SelectTrigger>
-            <SelectContent>
-              {projectOptions.map((project) => (
-                <SelectItem key={project.id} value={project.id}>
-                  {project.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {projectOptions.length === 0 && leadIdForProjects && !loading ? (
-            <p className="text-xs text-muted-foreground">{t("steps.project.noProjects")}</p>
-          ) : null}
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          <div className="rounded-lg border border-border/70 bg-muted/40 p-4 shadow-sm">
-            <Label htmlFor="project-name" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("steps.project.nameLabel")}
-            </Label>
-            <Input
-              id="project-name"
-              placeholder={t("steps.project.namePlaceholder")}
-              value={state.project.name ?? ""}
-              className="mt-2"
-              onChange={(event) =>
-                updateProject({
-                  ...state.project,
-                  name: event.target.value
-                })
-              }
-            />
-          </div>
+              <CommandList>
+                <CommandEmpty>{t("steps.project.noProjects")}</CommandEmpty>
+                <CommandGroup>
+                  {filteredProjects.map((project) => (
+                    <CommandItem
+                      key={project.id}
+                      value={project.id}
+                      onSelect={() => handleSelectProject(project)}
+                      className="flex items-center gap-3"
+                    >
+                      <span className="text-sm font-medium text-foreground">{project.name}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
 
-          <div className="rounded-lg border border-border/70 bg-muted/40 p-4 shadow-sm">
-            <Label htmlFor="project-description" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("steps.project.descriptionLabel")}
-            </Label>
-            <Textarea
-              id="project-description"
-              rows={3}
-              placeholder={t("steps.project.descriptionPlaceholder")}
-              value={state.project.description ?? ""}
-              className="mt-2"
-              onChange={(event) =>
-                updateProject({
-                  ...state.project,
-                  description: event.target.value
-                })
-              }
-            />
-          </div>
+        <Button
+          variant="outline"
+          className="gap-2"
+          onClick={() => setProjectSheetOpen(true)}
+          disabled={!leadId}
+        >
+          <FolderPlus className="h-4 w-4" />
+          {t("steps.project.createButton")}
+        </Button>
+
+        {leadId && projectOptions.length === 0 && !loading && (
+          <p className="text-xs text-muted-foreground">{t("steps.project.emptyState")}</p>
+        )}
+      </div>
+
+      {selectedProjectOption && (
+        <div className="rounded-lg border border-border/70 bg-muted/20 px-4 py-3">
+          <p className="text-sm font-semibold text-foreground">{selectedProjectOption.name}</p>
         </div>
       )}
+
+      <ProjectDialogWithLeadSelector
+        open={projectSheetOpen}
+        onOpenChange={setProjectSheetOpen}
+        onProjectCreated={handleProjectCreated}
+        defaultLeadId={leadId}
+      />
     </div>
   );
 };
-
-interface ModeCardProps {
-  value: "existing" | "new";
-  label: string;
-  description: string;
-  disabled?: boolean;
-}
-
-const ModeCard = ({ value, label, description, disabled }: ModeCardProps) => (
-  <label
-    htmlFor={`project-mode-${value}`}
-    className={cn(
-      "flex cursor-pointer flex-col gap-1 rounded-lg border border-border/70 bg-muted/30 p-4 shadow-sm transition hover:border-primary/60",
-      disabled && "pointer-events-none opacity-50"
-    )}
-  >
-    <div className="flex items-center justify-between">
-      <span className="font-semibold text-sm text-foreground">{label}</span>
-      <RadioGroupItem id={`project-mode-${value}`} value={value} disabled={disabled} />
-    </div>
-    <p className="text-xs text-muted-foreground">{description}</p>
-  </label>
-);

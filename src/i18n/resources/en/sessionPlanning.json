@@ -43,7 +43,10 @@
       "notesLabel": "Lead notes",
       "notesPlaceholder": "Additional context for this lead.",
       "fetchErrorTitle": "Unable to load leads",
-      "createErrorTitle": "Unable to create lead"
+      "createErrorTitle": "Unable to create lead",
+      "searchPlaceholder": "Search leads...",
+      "createButton": "Create new lead",
+      "emptyState": "No leads available yet. Create one to get started."
     },
     "project": {
       "navigationLabel": "Project",
@@ -63,7 +66,10 @@
       "nameLabel": "Project name",
       "namePlaceholder": "Summer Wedding",
       "descriptionLabel": "Project notes",
-      "descriptionPlaceholder": "Optional notes for the project."
+      "descriptionPlaceholder": "Optional notes for the project.",
+      "searchPlaceholder": "Search projects...",
+      "createButton": "Create new project",
+      "emptyState": "No projects found for this lead."
     },
     "sessionType": {
       "navigationLabel": "Session type",

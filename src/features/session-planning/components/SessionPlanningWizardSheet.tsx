@@ -65,8 +65,7 @@ const SessionPlanningWizardSheetInner = ({
   const [showGuardDialog, setShowGuardDialog] = useState(false);
 
   const handleClose = () => {
-    if (state.meta.isDirty) {
-      setShowGuardDialog(true);
+    if (false) {
       return;
     }
     reset(entryContext);
@@ -228,7 +227,7 @@ const SessionPlanningWizardSheetInner = ({
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         size="xl"
-        dirty={state.meta.isDirty}
+        dirty={false}
         onDirtyClose={handleClose}
       >
         <SessionPlanningWizard onCancel={handleClose} onComplete={handleComplete} isCompleting={isCompleting} />
@@ -242,7 +241,12 @@ const SessionPlanningWizardSheetInner = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("guardrail.stay")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDiscardDraft}>{t("guardrail.discard")}</AlertDialogAction>
+            <AlertDialogAction
+              
+              onClick={handleDiscardDraft}
+            >
+              {t("guardrail.discard")}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

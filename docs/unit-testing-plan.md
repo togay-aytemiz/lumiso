@@ -39,14 +39,14 @@
 | Core Libraries & Helpers | 18 | 18 | 100% |
 | Services & Data Access | 5 | 6 | 83% |
 | Contexts & Hooks | 34 | 35 | 97% |
-| UI Components & Pages | 87 | 89 | 98% |
+| UI Components & Pages | 88 | 89 | 99% |
 | UI Primitives & Shared Components | 22 | 23 | 96% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **175** | **183** | **96%** |
+| **Overall** | **176** | **183** | **96%** |
 
 > **Latest audit notes (2025-10-25):** Re-baselined totals after discovering untested utility hooks (`src/utils/**`, `src/hooks/useEntityActions.ts`, `useDataTable.ts`), workspace-specific hooks, settings/template-builder UI shells, and shared onboarding/activity primitives. See new "Not Started" rows below for concrete follow-up targets.
 > **Follow-up (2025-11-18):** Supabase client wrapper tests remain outstanding—revisit `src/integrations/supabase/client.ts` once we settle the Jest ESM mocking strategy.
-> **Follow-up (2025-11-22):** Added direct specs for `SessionStatusDialogs` and `ProjectTypeDialogs`, plus `useMilestoneNotifications`; still need to cover `ServiceDialogs`/`PackageDialogs` and newly logged `LeadStatusDialogs` + `ProjectStageDialogs` gaps.
+> **Follow-up (2025-11-22):** Added direct specs for `SessionStatusDialogs`, `ProjectTypeDialogs`, `ServiceDialogs`, `PackageDialogs`, plus `useMilestoneNotifications`; newly logged `LeadStatusDialogs` + `ProjectStageDialogs` gaps remain.
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -195,7 +195,7 @@
 | Mobile navigation surfaces | `src/components/mobile/BottomSheetMenu.tsx`, `src/components/mobile/MobileBottomNav.tsx` | Quick action menus, responsive nav toggles, event callbacks | Medium | Done | Covered by `src/components/mobile/__tests__/BottomSheetMenu.test.tsx` and `MobileBottomNav.test.tsx` (sheet toggles, navigation wiring, sign-out handling, and user menu callbacks). |
 | Help & support entry points | `src/components/modals/HelpModal.tsx`, `src/components/support/HelpOptionCard.tsx` | Support CTA tracking, modal toggles, analytics events | Medium | Done | Covered by `src/components/modals/__tests__/HelpModal.test.tsx` and `src/components/support/__tests__/HelpOptionCard.test.tsx` for translation wiring, CTA callbacks, close handling, and analytics/logging placeholders. |
 | Settings shell components | `src/components/settings/SettingsPageWrapper.tsx`, `SettingsLayout.tsx`, `SettingsStickyFooter.tsx`, `SettingsHelpButton.tsx` | Layout composition, responsive breakpoints, exit guards | High | Done | Covered by `src/components/settings/__tests__/SettingsPageWrapper.test.tsx`, `SettingsLayout.test.tsx`, `SettingsStickyFooter.test.tsx`, and `SettingsHelpButton.test.tsx` for save/cancel toasts, onboarding locks, responsive rendering, and help sheet actions (2025-11-22 refresh adds i18n-mocked toast assertions). |
-| Settings dialog suites | `src/components/settings/SessionTypeDialogs.tsx`, `SessionStatusDialogs.tsx`, `ProjectTypeDialogs.tsx`, `PackageDialogs.tsx`, `ServiceDialogs.tsx`, `NavigationGuardDialog.tsx` | CRUD flows, confirmation guardrails, optimistic updates | High | In Progress | Added focused specs in `src/components/settings/__tests__/SessionStatusDialogs.test.tsx` and `ProjectTypeDialogs.test.tsx` covering success/validation/deletion paths; still need parity tests for `ServiceDialogs` + `PackageDialogs`. |
+| Settings dialog suites | `src/components/settings/SessionTypeDialogs.tsx`, `SessionStatusDialogs.tsx`, `ProjectTypeDialogs.tsx`, `PackageDialogs.tsx`, `ServiceDialogs.tsx`, `NavigationGuardDialog.tsx` | CRUD flows, confirmation guardrails, optimistic updates | High | Done | Dialog suites now covered by `src/components/settings/__tests__/SessionStatusDialogs.test.tsx`, `ProjectTypeDialogs.test.tsx`, `ServiceDialogs.test.tsx`, and `PackageDialogs.test.tsx`, exercising happy paths, validation disables, and destructive/update flows across add/edit variants. |
 | Lead & project stage dialogs | `src/components/settings/LeadStatusDialogs.tsx`, `ProjectStageDialogs.tsx` | Stage transitions, default protection, undo toasts | Medium | Not Started | Newly spotted gap—no dedicated suites to verify optimistic updates, stage gating, or destructive confirmation flows. |
 | Sticky section navigation | `src/components/navigation/StickySectionNav.tsx` | Active section detection, scroll spy callbacks | Medium | Done | Exercised by `src/components/navigation/__tests__/StickySectionNav.test.tsx` to validate fallback selection, custom callbacks, scroll-to-section behavior, and observer-driven active updates. |
 | Template builder editing surfaces | `src/components/template-builder/OptimizedTemplateEditor.tsx`, `BlockEditor.tsx`, `OptimizedTemplatePreview.tsx`, `CompactStorageIndicator.tsx`, `StorageQuotaDisplay.tsx`, `VariablePicker.tsx` | Block interactions, storage warnings, personalization tokens | High | Not Started | Page-level suite mocks these modules; add coverage for drag/drop, quota thresholds, and token insertion callbacks. |

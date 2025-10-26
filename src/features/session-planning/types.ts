@@ -2,7 +2,6 @@ export type SessionPlanningStepId =
   | "lead"
   | "project"
   | "sessionType"
-  | "details"
   | "location"
   | "schedule"
   | "notes"
@@ -11,11 +10,17 @@ export type SessionPlanningStepId =
 export interface SessionPlanningLead {
   id?: string;
   name?: string;
+  email?: string;
+  phone?: string;
+  notes?: string;
+  mode: "existing" | "new";
 }
 
 export interface SessionPlanningProject {
   id?: string;
   name?: string;
+  description?: string;
+  mode: "existing" | "new";
 }
 
 export interface SessionPlanningSchedule {

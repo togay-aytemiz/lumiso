@@ -117,6 +117,7 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 - [ ] Address book component with list, quick add, and last-used default.
 - [ ] Inline address form with validation (postal code formatting, URL scheme detection).
 - [ ] Schedule picker with timezone handling, conflict detection, and quick actions.
+  * Calendar + working-hours time slots restored in wizard lo-fi build; remaining work: conflict detection & quick actions.
 - [ ] Notes step with markdown sanitization.
 
 ### Phase 4 — Summary & Confirmation

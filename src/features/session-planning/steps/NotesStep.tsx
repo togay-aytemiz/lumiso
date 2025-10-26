@@ -10,14 +10,20 @@ export const NotesStep = () => {
   const { t } = useTranslation("sessionPlanning");
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">{t("steps.notes.description")}</p>
-
+    <div className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="session-notes">{t("steps.notes.notesLabel")}</Label>
+        <h2 className="text-xl font-semibold tracking-tight">{t("steps.notes.navigationLabel")}</h2>
+        <p className="text-sm text-muted-foreground">{t("steps.notes.description")}</p>
+      </div>
+
+      <div className="rounded-lg border border-border/70 bg-muted/40 p-4 shadow-sm">
+        <Label htmlFor="session-notes" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {t("steps.notes.notesLabel")}
+        </Label>
         <Textarea
           id="session-notes"
-          rows={5}
+          rows={6}
+          className="mt-2"
           value={state.notes ?? ""}
           placeholder={t("steps.notes.notesPlaceholder")}
           onChange={(event) =>

@@ -1,51 +1,73 @@
 {
   "wizard": {
-    "title": "Oturum planla",
+    "title": "Seans planla",
     "cancel": "İptal",
     "back": "Geri",
     "next": "İleri",
-    "confirm": "Oturumu onayla",
+    "confirm": "Seansı onayla",
     "confirming": "Onaylanıyor...",
-    "discardPrompt": "Oturum taslağı silinsin mi?"
+    "discardPrompt": "Seans taslağı silinsin mi?"
   },
   "toast": {
-    "draftCapturedTitle": "Oturum taslağı kaydedildi",
+    "draftCapturedTitle": "Seans taslağı kaydedildi",
     "draftCapturedDescription": "Lo-fi sihirbazı tamamlandı. Yayına almadan önce arka uç kaydını bağlayın.",
-    "sessionCreatedTitle": "Oturum planlandı",
+    "sessionCreatedTitle": "Seans planlandı",
     "sessionCreatedDescription": "Hatırlatıcılar ve otomasyonlar yürütülüyor.",
-    "sessionCreationFailedTitle": "Oturum planlanamadı",
+    "sessionCreationFailedTitle": "Seans planlanamadı",
     "sessionCreationFailedDescription": "Lütfen formu kontrol edip tekrar deneyin.",
-    "sessionWorkflowWarningTitle": "Oturum planlandı",
+    "sessionWorkflowWarningTitle": "Seans planlandı",
     "sessionWorkflowWarningDescription": "Bildirimlerde gecikme olabilir. Otomasyon ayarlarını kontrol edin."
   },
   "validation": {
-    "missingLead": "Onaylamadan önce bir lead seçin.",
-    "missingSchedule": "Oturum tarihi ve saatini birlikte seçin."
+    "missingLead": "Onaylamadan önce lead seçin veya yeni lead oluşturun.",
+    "missingSchedule": "Seans tarihi ve saatini birlikte seçin."
   },
   "steps": {
     "lead": {
       "navigationLabel": "Lead",
-      "description": "Bu lo-fi adım lead seçimini simüle eder. Hi-fi sürümde arama listesi ve satır içi oluşturma sunulacak.",
+      "description": "Mevcut bir lead seçin veya yeni bir kişi ekleyin.",
       "nameLabel": "Lead adı",
       "namePlaceholder": "Lead ara veya oluştur",
-      "idLabel": "Lead kimliği (isteğe bağlı)",
-      "idPlaceholder": "abc-123",
-      "loadDemo": "Demo lead yükle",
-      "demoName": "Demo Lead"
+      "useExisting": "Mevcut lead'i kullan",
+      "useExistingDescription": "Çalışma alanınızdaki lead'leri arayın.",
+      "createNew": "Yeni lead oluştur",
+      "createNewDescription": "Planlamadan önce iletişim bilgilerini kaydedin.",
+      "selectExisting": "Lead seçin",
+      "selectPlaceholder": "Lead seçin",
+      "loading": "Lead'ler yükleniyor...",
+      "noLeads": "Henüz lead bulunmuyor.",
+      "emailLabel": "E-posta",
+      "emailPlaceholder": "musteri@ornek.com",
+      "phoneLabel": "Telefon",
+      "phonePlaceholder": "+90 555 000 0000",
+      "notesLabel": "Lead notları",
+      "notesPlaceholder": "Bu lead ile ilgili ek notlar.",
+      "fetchErrorTitle": "Lead'ler yüklenemedi",
+      "createErrorTitle": "Lead oluşturulamadı"
     },
     "project": {
       "navigationLabel": "Proje",
-      "description": "Oturumu mevcut bir projeye bağlayın veya yalnızca lead planı olarak bırakın.",
+      "description": "Seansı mevcut bir projeye bağlayın veya yeni bir proje oluşturun.",
+      "useExisting": "Mevcut projeyi kullan",
+      "useExistingDescription": "Seçilen lead'e bağlı projelerden seçim yapın.",
+      "createNew": "Yeni proje oluştur",
+      "createNewDescription": "Bu lead için yeni bir proje başlatın.",
+      "selectExisting": "Proje seçin",
+      "selectPlaceholder": "Proje seçin",
+      "selectLeadFirst": "Proje seçmeden önce lead seçin.",
+      "loading": "Projeler yükleniyor...",
+      "noProjects": "Bu lead için proje bulunmuyor.",
+      "fetchErrorTitle": "Projeler yüklenemedi",
+      "createErrorTitle": "Proje oluşturulamadı",
+      "missingName": "Proje adı girin",
       "nameLabel": "Proje adı",
-      "namePlaceholder": "Gün batımı portreleri",
-      "idLabel": "Proje kimliği (isteğe bağlı)",
-      "idPlaceholder": "proj-xyz",
-      "loadDemo": "Demo proje yükle",
-      "demoName": "Düğün hazırlığı"
+      "namePlaceholder": "Yaz düğünü",
+      "descriptionLabel": "Proje notları",
+      "descriptionPlaceholder": "Proje için isteğe bağlı notlar."
     },
     "sessionType": {
-      "navigationLabel": "Oturum türü",
-      "description": "Oturum türünü seçin. Nihai deneyim organizasyonun yapılandırılmış oturum türlerini kullanacak.",
+      "navigationLabel": "Seans türü",
+      "description": "Seans türünü seçin. Nihai deneyim organizasyonun yapılandırılmış seans türlerini kullanacak.",
       "options": {
         "consultation": "Danışmanlık",
         "portrait": "Portre çekimi",
@@ -57,22 +79,22 @@
     },
     "details": {
       "navigationLabel": "Detaylar",
-      "description": "Otomatik üretilen oturum adını düzenleyin ve ekip için kısa bir özet ekleyin.",
-      "nameLabel": "Oturum adı",
+      "description": "Otomatik üretilen seans adını düzenleyin ve ekip için kısa bir özet ekleyin.",
+      "nameLabel": "Seans adı",
       "namePlaceholder": "Örn. Nişan provası",
       "notesLabel": "Dahili özet (lo-fi)",
       "notesPlaceholder": "Çekim hedeflerini veya beklentilerini not edin."
     },
     "location": {
       "navigationLabel": "Konum",
-      "description": "Oturumun nerede gerçekleşeceğini yazın. Sonraki sürümlerde adres defteri ve toplantı linkleri bağlanacak.",
+      "description": "Seansın nerede gerçekleşeceğini yazın. Sonraki sürümlerde adres defteri ve toplantı linkleri bağlanacak.",
       "addressLabel": "Adres veya mekan",
       "addressPlaceholder": "Örnek Mah. 123, İstanbul",
       "meetingUrlLabel": "Toplantı URL'si (lo-fi)",
       "meetingUrlPlaceholder": "https://"
     },
     "schedule": {
-      "navigationLabel": "Tarih",
+      "navigationLabel": "Tarih ve saat",
       "description": "Bir tarih ve başlangıç saati seçin. Gelecek sürümlerde çakışma kontrolü ve hızlı kaydırmalar eklenecek.",
       "dateLabel": "Tarih",
       "timeLabel": "Başlangıç saati",
@@ -91,11 +113,12 @@
     }
   },
   "summary": {
-    "untitled": "Adsız oturum",
+    "untitled": "Adsız seans",
     "labels": {
       "lead": "Lead",
       "project": "Proje",
-      "schedule": "Takvim",
+      "sessionType": "Seans türü",
+      "schedule": "Program",
       "location": "Konum",
       "notes": "Notlar"
     },
@@ -115,5 +138,20 @@
       "on": "Açık",
       "off": "Kapalı"
     }
+  },
+  "summaryPanel": {
+    "title": "Seans özeti",
+    "subtitle": "Seçimlerinizi hızlıca gözden geçirin. Düzenle bağlantılarıyla istediğiniz adıma dönün.",
+    "status": {
+      "draft": "Taslak"
+    },
+    "notificationsHelper": "Hatırlatıcılar ve özet e-postalarıyla müşterilerinizi haberdar tutun.",
+    "reviewButton": "Seçimleri gözden geçir"
+  },
+  "guardrail": {
+    "unsavedTitle": "Kaydetmeden çıkılsın mı?",
+    "unsavedDescription": "Bir seans taslağı üzerinde çalışıyorsunuz. Düzenlemeye devam edin veya taslağı silin.",
+    "stay": "Düzenlemeye devam et",
+    "discard": "Taslağı sil"
   }
 }

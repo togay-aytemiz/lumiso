@@ -18,7 +18,7 @@ interface AppSheetModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   children: ReactNode;
-  size?: 'content' | 'default' | 'lg' | 'wide';
+  size?: 'content' | 'default' | 'lg' | 'wide' | 'xl';
   footerActions?: FooterAction[];
   dirty?: boolean;
   onDirtyClose?: () => void;
@@ -44,7 +44,7 @@ export function AppSheetModal({
     onOpenChange(open);
   };
 
-  const handleOutsideInteraction = (e?: Event) => {    
+  const handleOutsideInteraction = () => {
     if (dirty && onDirtyClose) {
       onDirtyClose();
     } else {
@@ -56,11 +56,8 @@ export function AppSheetModal({
   
   const sheetContentClass = cn(
     "flex flex-col",
-    // Desktop: Right side sheet, full height
-    !isMobile && "sm:max-w-xl w-full",
-    // Mobile: Bottom sheet with rounded top corners, content height
+    !isMobile && "sm:max-w-6xl w-full",
     isMobile && "max-h-[85vh] rounded-t-xl",
-    // Size variants
     size === 'content' && !isMobile && "sm:max-w-md",
     size === 'lg' && !isMobile && "sm:max-w-2xl",
     size === 'wide' && !isMobile && "sm:max-w-4xl"
@@ -71,40 +68,8 @@ export function AppSheetModal({
       <SheetContent 
         side={sideVariant} 
         className={cn(sheetContentClass, "[&>button]:hidden")}
-        onPointerDownOutside={e => {
-          try {
-            // Prevent immediate closure on mobile touch events
-            const target = e.target as HTMLElement;
-            if (target && target.closest('[data-radix-popper-content-wrapper]')) {
-              e.preventDefault();
-              return;
-            }
-            
-            // Add small delay to prevent race conditions during initialization
-            setTimeout(() => handleOutsideInteraction(e), 50);
-          } catch (err) {
-            console.error('Mobile pointer interaction error:', err);
-            // Fallback: just prevent the interaction
-            e.preventDefault();
-          }
-        }}
-        onInteractOutside={e => {
-          try {
-            // Allow interactions with popover content
-            const target = e.target as HTMLElement;
-            if (target && (
-              target.closest('[data-radix-popper-content-wrapper]') ||
-              target.closest('[data-radix-select-content]') ||
-              target.closest('[data-radix-popover-content]')
-            )) {
-              e.preventDefault();
-              return;
-            }
-            handleOutsideInteraction(e);
-          } catch (err) {
-            console.error('Mobile interaction error:', err);
-          }
-        }}
+        onPointerDownOutside={handleOutsideInteraction}
+        onInteractOutside={handleOutsideInteraction}
       >
         <SheetHeader className="border-b pb-4">
           <div className="flex items-center justify-between">

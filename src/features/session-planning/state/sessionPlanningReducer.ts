@@ -12,11 +12,13 @@ export const createInitialSessionPlanningState = (
 ): SessionPlanningState => ({
   lead: {
     id: entryContext.leadId,
-    name: entryContext.leadName
+    name: entryContext.leadName,
+    mode: entryContext.leadId ? "existing" : "existing"
   },
   project: {
     id: entryContext.projectId,
-    name: entryContext.projectName
+    name: entryContext.projectName,
+    mode: entryContext.projectId ? "existing" : "existing"
   },
   sessionTypeId: undefined,
   sessionTypeLabel: undefined,
@@ -201,7 +203,6 @@ export const SESSION_PLANNING_STEPS: SessionPlanningStepConfig[] = [
   { id: "lead", labelKey: "steps.lead.navigationLabel" },
   { id: "project", labelKey: "steps.project.navigationLabel" },
   { id: "sessionType", labelKey: "steps.sessionType.navigationLabel" },
-  { id: "details", labelKey: "steps.details.navigationLabel" },
   { id: "location", labelKey: "steps.location.navigationLabel" },
   { id: "schedule", labelKey: "steps.schedule.navigationLabel" },
   { id: "notes", labelKey: "steps.notes.navigationLabel" },

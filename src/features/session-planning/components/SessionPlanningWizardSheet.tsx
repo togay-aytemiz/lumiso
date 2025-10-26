@@ -9,8 +9,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { SessionPlanningEntryContext } from "../types";
 import { useTranslation } from "react-i18next";
 import { createSession } from "../api/sessionCreation";
+import { createLead, createProject } from "../api/leadProjectCreation";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface SessionPlanningWizardSheetProps {
   leadId?: string;
@@ -60,24 +62,53 @@ const SessionPlanningWizardSheetInner = ({
   const { t } = useTranslation("sessionPlanning");
   const { triggerSessionScheduled } = useWorkflowTriggers();
   const { scheduleSessionReminders } = useSessionReminderScheduling();
+  const [showGuardDialog, setShowGuardDialog] = useState(false);
 
   const handleClose = () => {
-    if (state.meta.isDirty && typeof window !== "undefined") {
-      const shouldDiscard = window.confirm(t("wizard.discardPrompt"));
-      if (!shouldDiscard) {
-        return;
-      }
+    if (state.meta.isDirty) {
+      setShowGuardDialog(true);
+      return;
     }
     reset(entryContext);
     onOpenChange(false);
   };
 
+  const handleDiscardDraft = () => {
+    setShowGuardDialog(false);
+    reset(entryContext);
+    onOpenChange(false);
+  };
+
   const handleComplete = async () => {
-    const leadId = state.lead.id || entryContext.leadId;
-    const leadName = state.lead.name || entryContext.leadName || "";
+    let leadId = state.lead.mode === "existing" ? state.lead.id || entryContext.leadId : undefined;
+    let leadName = state.lead.name || entryContext.leadName || "";
     const sessionDate = state.schedule.date || entryContext.defaultDate || "";
     const sessionTime = state.schedule.time || entryContext.defaultTime || "";
-    const projectId = state.project.id || entryContext.projectId || undefined;
+    let projectId = state.project.mode === "existing" ? state.project.id || entryContext.projectId : undefined;
+
+    if (state.lead.mode === "new") {
+      if (!state.lead.name?.trim()) {
+        toast({ title: t("validation.missingLead"), variant: "destructive" });
+        return;
+      }
+      try {
+        const newLead = await createLead({
+          name: state.lead.name,
+          email: state.lead.email,
+          phone: state.lead.phone,
+          notes: state.lead.notes
+        });
+        leadId = newLead.id;
+        leadName = newLead.name;
+      } catch (error: any) {
+        toast({
+          title: t("steps.lead.createErrorTitle"),
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
+    }
 
     if (!leadId) {
       toast({
@@ -85,6 +116,31 @@ const SessionPlanningWizardSheetInner = ({
         variant: "destructive"
       });
       return;
+    }
+
+    if (state.project.mode === "new") {
+      if (!state.project.name?.trim()) {
+        toast({
+          title: t("steps.project.missingName"),
+          variant: "destructive"
+        });
+        return;
+      }
+      try {
+        const newProject = await createProject({
+          leadId,
+          name: state.project.name,
+          description: state.project.description
+        });
+        projectId = newProject.id;
+      } catch (error: any) {
+        toast({
+          title: t("steps.project.createErrorTitle"),
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     if (!sessionDate || !sessionTime) {
@@ -166,15 +222,30 @@ const SessionPlanningWizardSheetInner = ({
   };
 
   return (
-    <AppSheetModal
-      title={t("wizard.title")}
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
-      size="wide"
-      dirty={state.meta.isDirty}
-      onDirtyClose={handleClose}
-    >
-      <SessionPlanningWizard onCancel={handleClose} onComplete={handleComplete} isCompleting={isCompleting} />
-    </AppSheetModal>
+    <>
+      <AppSheetModal
+        title={t("wizard.title")}
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        size="xl"
+        dirty={state.meta.isDirty}
+        onDirtyClose={handleClose}
+      >
+        <SessionPlanningWizard onCancel={handleClose} onComplete={handleComplete} isCompleting={isCompleting} />
+      </AppSheetModal>
+
+      <AlertDialog open={showGuardDialog} onOpenChange={setShowGuardDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("guardrail.unsavedTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("guardrail.unsavedDescription")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("guardrail.stay")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDiscardDraft}>{t("guardrail.discard")}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };

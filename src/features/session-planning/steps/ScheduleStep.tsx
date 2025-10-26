@@ -1,80 +1,75 @@
+import { useState, useMemo, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CalendarTimePicker } from "@/components/CalendarTimePicker";
 import { useSessionPlanningActions } from "../hooks/useSessionPlanningActions";
 import { useSessionPlanningContext } from "../hooks/useSessionPlanningContext";
 import { useTranslation } from "react-i18next";
-
-const TIMEZONE_OPTIONS = [
-  "UTC",
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "Europe/London",
-  "Europe/Istanbul"
-] as const;
+import { format, parseISO } from "date-fns";
 
 export const ScheduleStep = () => {
   const { state } = useSessionPlanningContext();
   const { updateSchedule } = useSessionPlanningActions();
   const { t } = useTranslation("sessionPlanning");
 
+  const initialDate = useMemo(() => {
+    if (!state.schedule.date) return undefined;
+    try {
+      return parseISO(state.schedule.date);
+    } catch (error) {
+      console.error("Unable to parse schedule date", error);
+      return undefined;
+    }
+  }, [state.schedule.date]);
+
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(initialDate);
+
+  useEffect(() => {
+    if (!state.schedule.date) {
+      setSelectedDate(undefined);
+      return;
+    }
+    try {
+      const parsed = parseISO(state.schedule.date);
+      if (!Number.isNaN(parsed.getTime())) {
+        setSelectedDate(parsed);
+      }
+    } catch (error) {
+      console.error("Schedule step parse error", error);
+    }
+  }, [state.schedule.date]);
+
+  const handleDateChange = (date: Date | undefined) => {
+    setSelectedDate(date);
+    updateSchedule({
+      date: date ? format(date, "yyyy-MM-dd") : "",
+      time: date ? state.schedule.time : ""
+    });
+  };
+
+  const handleDateStringChange = (dateString: string) => {
+    updateSchedule({ date: dateString });
+  };
+
+  const handleTimeChange = (time: string) => {
+    updateSchedule({ time });
+  };
+
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">{t("steps.schedule.description")}</p>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="session-date">{t("steps.schedule.dateLabel")}</Label>
-          <Input
-            id="session-date"
-            type="date"
-            value={state.schedule.date ?? ""}
-            onChange={(event) =>
-              updateSchedule({
-                date: event.target.value
-              })
-            }
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="session-time">{t("steps.schedule.timeLabel")}</Label>
-          <Input
-            id="session-time"
-            type="time"
-            value={state.schedule.time ?? ""}
-            onChange={(event) =>
-              updateSchedule({
-                time: event.target.value
-              })
-            }
-          />
-        </div>
-      </div>
-
+    <div className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="session-timezone">{t("steps.schedule.timezoneLabel")}</Label>
-        <Select
-          value={state.schedule.timezone ?? "UTC"}
-          onValueChange={(value) =>
-            updateSchedule({
-              timezone: value
-            })
-          }
-        >
-          <SelectTrigger id="session-timezone" aria-label={t("steps.schedule.timezoneLabel")}>
-            <SelectValue placeholder={t("steps.schedule.timezonePlaceholder")} />
-          </SelectTrigger>
-          <SelectContent>
-            {TIMEZONE_OPTIONS.map((timezone) => (
-              <SelectItem key={timezone} value={timezone}>
-                {timezone}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <h2 className="text-xl font-semibold tracking-tight">{t("steps.schedule.navigationLabel")}</h2>
+        <p className="text-sm text-muted-foreground">{t("steps.schedule.description")}</p>
       </div>
+
+      <CalendarTimePicker
+        selectedDate={selectedDate}
+        selectedTime={state.schedule.time ?? ""}
+        onDateChange={handleDateChange}
+        onTimeChange={handleTimeChange}
+        onDateStringChange={handleDateStringChange}
+      />
+
     </div>
   );
 };

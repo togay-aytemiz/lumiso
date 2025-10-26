@@ -104,6 +104,13 @@ Cross-cutting components:
 - Sync EN/TR translations for new copy; provide glossary for repeated terms (e.g., “Section”, “Digest”).
 - Document microcopy tone: declarative, concise, professional (avoid exclamation unless destructive).
 
+### 6. Empty State Illustrations
+- Audit every settings empty state (including placeholders, zero-result lists, and onboarding cards) to inventory where visuals are missing or low-fidelity.
+- Partner with the brand/illustration team to source a cohesive illustration set that reflects Lumiso’s tone; document whether we standardize on static SVGs, animated Lottie, or both.
+- Deliver assets in light/dark variants and multiple sizes, stored under `src/assets/settings/empty-states`, with alt text guidance baked into component props.
+- Extend `SettingsPlaceholderSection` to accept illustration options, caption slots, and CTA placements so empty states feel intentional and professional.
+- Define usage rules (when to show, how copy pairs with art, fallback when assets fail to load) to keep the experience polished across future pages.
+
 ## Implementation Roadmap
 
 ### Phase 0 — Audit & Design Foundations
@@ -146,17 +153,17 @@ Cross-cutting components:
 - [ ] Align release messaging and changelog.
 
 ## Page-by-Page Checklist
-| Page | Section(s) | UI Refresh | Interaction Model | Data Strategy | Status |
-| --- | --- | --- | --- | --- | --- |
-| Profile | Profile Info / Working Hours | [ ] | Define save vs. auto-save, tutorial overlay | Cache profile + working hours, manual refresh | Not Started |
-| General | Branding / Social / Regional | [ ] | Explicit save w/ footer + inline upload | Cached, refetch on demand | Not Started |
-| Notifications | Master / Scheduled / Immediate | [ ] | Auto-save toggles + manual test triggers | Batch updates, debounce Supabase writes | Not Started |
-| Leads | Statuses / Fields | [ ] | Drag reorder + dialog pattern | Normalize queries, reduce background polling | Not Started |
-| Projects | Statuses / Types / Session Statuses | [ ] | Drag reorder + inline defaults | Shared hook for status entities | Not Started |
-| Services | Session Types / Packages / Services | [ ] | Multi-step onboarding alignment | Consolidate queries, lazy-load heavy dialogs | Not Started |
-| Contracts | Placeholder | [ ] | N/A (display card) | Static copy | Not Started |
-| Billing | Placeholder | [ ] | N/A (display card) | Static copy | Not Started |
-| Danger Zone | Delete org | [ ] | Double confirm + password field | No auto-refetch | Not Started |
+| Page | Section(s) | UI Refresh | Interaction Model | Data Strategy | Status | Product Team Questions |
+| --- | --- | --- | --- | --- | --- | --- |
+| Profile | Profile Info / Working Hours | [ ] | Define save vs. auto-save, tutorial overlay | Cache profile + working hours, manual refresh | Not Started | Should organization admins be allowed to change staff working hours directly, or must owners confirm adjustments? |
+| General | Branding / Social / Regional | [ ] | Explicit save w/ footer + inline upload | Cached, refetch on demand | Not Started | Do we enforce brand color/logo constraints aligned with marketing guidelines or permit unrestricted customization? |
+| Notifications | Master / Scheduled / Immediate | [ ] | Auto-save toggles + manual test triggers | Batch updates, debounce Supabase writes | Not Started | Which notification channels (email, SMS, push) need to be represented at launch and what delivery windows are promised? |
+| Leads | Statuses / Fields | [ ] | Drag reorder + dialog pattern | Normalize queries, reduce background polling | Not Started | What default pipeline stages must every workspace retain, and can teams delete core stages? |
+| Projects | Statuses / Types / Session Statuses | [ ] | Drag reorder + inline defaults | Shared hook for status entities | Not Started | Do project status/type templates need to stay synced across teams or can users diverge freely? |
+| Services | Session Types / Packages / Services | [ ] | Multi-step onboarding alignment | Consolidate queries, lazy-load heavy dialogs | Not Started | Are packages expected to support multi-currency pricing in this release or remain single-currency? |
+| Contracts | Placeholder | [ ] | N/A (display card) | Static copy | Not Started | Should the placeholder point to upcoming in-product templates or route to external contract resources until builder ships? |
+| Billing | Placeholder | [ ] | N/A (display card) | Static copy | Not Started | Do we expose plan/usage details here now, or defer to finance portal messaging until billing revamp? |
+| Danger Zone | Delete org | [ ] | Double confirm + password field | No auto-refetch | Not Started | Does org deletion require a grace period or approval workflow beyond the password confirmation flow? |
 
 > Update the table as work lands (check items, add Notes column if needed).
 

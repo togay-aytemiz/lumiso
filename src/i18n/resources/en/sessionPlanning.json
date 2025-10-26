@@ -19,29 +19,51 @@
     "sessionWorkflowWarningDescription": "Notifications may be delayed. Check automation settings."
   },
   "validation": {
-    "missingLead": "Select a lead before confirming.",
+    "missingLead": "Select or create a lead before confirming.",
     "missingSchedule": "Select both a session date and time."
   },
   "steps": {
     "lead": {
       "navigationLabel": "Lead",
-      "description": "This lo-fi step simulates selecting a lead. The hi-fi version will surface a searchable list with inline creation.",
+      "description": "Select an existing lead or create someone new to attach to this session.",
       "nameLabel": "Lead name",
       "namePlaceholder": "Search or create a lead",
-      "idLabel": "Lead ID (optional)",
-      "idPlaceholder": "abc-123",
-      "loadDemo": "Load demo lead",
-      "demoName": "Demo Lead"
+      "useExisting": "Use existing lead",
+      "useExistingDescription": "Search for existing leads in your workspace.",
+      "createNew": "Create new lead",
+      "createNewDescription": "Capture contact details before scheduling.",
+      "selectExisting": "Select a lead",
+      "selectPlaceholder": "Choose a lead",
+      "loading": "Loading leads...",
+      "noLeads": "No leads found yet.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "client@example.com",
+      "phoneLabel": "Phone",
+      "phonePlaceholder": "+90 555 000 0000",
+      "notesLabel": "Lead notes",
+      "notesPlaceholder": "Additional context for this lead.",
+      "fetchErrorTitle": "Unable to load leads",
+      "createErrorTitle": "Unable to create lead"
     },
     "project": {
       "navigationLabel": "Project",
-      "description": "Link the session to an existing project or leave blank for a lead-only plan.",
+      "description": "Link the session to an existing project or spin up a new one.",
+      "useExisting": "Use existing project",
+      "useExistingDescription": "Pick from projects assigned to the selected lead.",
+      "createNew": "Create new project",
+      "createNewDescription": "Start a fresh project for this lead.",
+      "selectExisting": "Select a project",
+      "selectPlaceholder": "Choose a project",
+      "selectLeadFirst": "Select a lead before choosing a project.",
+      "loading": "Loading projects...",
+      "noProjects": "No projects found for this lead.",
+      "fetchErrorTitle": "Unable to load projects",
+      "createErrorTitle": "Unable to create project",
+      "missingName": "Enter a project name",
       "nameLabel": "Project name",
-      "namePlaceholder": "Sunset Portraits",
-      "idLabel": "Project ID (optional)",
-      "idPlaceholder": "proj-xyz",
-      "loadDemo": "Load demo project",
-      "demoName": "Wedding Prep"
+      "namePlaceholder": "Summer Wedding",
+      "descriptionLabel": "Project notes",
+      "descriptionPlaceholder": "Optional notes for the project."
     },
     "sessionType": {
       "navigationLabel": "Session type",
@@ -52,7 +74,7 @@
         "wedding": "Wedding",
         "other": "Other"
       },
-      "optionDescription": "Demo copy — real labels will come from session settings.",
+      "optionDescription": "Demo copy \u2014 real labels will come from session settings.",
       "clear": "Clear selection"
     },
     "details": {
@@ -72,7 +94,7 @@
       "meetingUrlPlaceholder": "https://"
     },
     "schedule": {
-      "navigationLabel": "Schedule",
+      "navigationLabel": "Date & time",
       "description": "Pick a date and start time. Later revisions will include conflict detection, quick offsets, and calendar previews.",
       "dateLabel": "Date",
       "timeLabel": "Start time",
@@ -95,6 +117,7 @@
     "labels": {
       "lead": "Lead",
       "project": "Project",
+      "sessionType": "Session type",
       "schedule": "Schedule",
       "location": "Location",
       "notes": "Notes"
@@ -105,7 +128,7 @@
       "notScheduled": "Not scheduled",
       "dateTbd": "Date TBD",
       "timeTbd": "Time TBD",
-      "empty": "—"
+      "empty": "\u2014"
     },
     "notifications": {
       "reminders": "Reminders",
@@ -115,5 +138,20 @@
       "on": "On",
       "off": "Off"
     }
+  },
+  "summaryPanel": {
+    "title": "Session overview",
+    "subtitle": "Review selections at a glance. Update any step using the edit links.",
+    "status": {
+      "draft": "In progress"
+    },
+    "notificationsHelper": "Keep clients informed with reminders and summary emails.",
+    "reviewButton": "Review selections"
+  },
+  "guardrail": {
+    "unsavedTitle": "Leave without saving?",
+    "unsavedDescription": "You have a session draft in progress. Keep editing or discard your changes.",
+    "stay": "Keep editing",
+    "discard": "Discard draft"
   }
 }

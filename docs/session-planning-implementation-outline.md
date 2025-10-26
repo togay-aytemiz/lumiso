@@ -85,6 +85,6 @@
 - [ ] Add Storybook (or temporary route) harness to demo the lo-fi wizard with mocked data.
 
 ## Design & UI Follow-Up
-- Transition the wizard shell and steps from lo-fi placeholders to production-ready UI adhering to Lumiso design system tokens.
+- Transition the wizard shell and steps from lo-fi placeholders to production-ready UI adhering to Lumiso design system tokens. *(Initial pass shipped: dual-column layout with persistent summary sidebar and updated step cards.)*
 - Partner with design to lock hi-fi mocks (states, breakpoints, motion) before final styling pass.
 - Introduce reusable UI primitives (step cards, summary tiles, address book list) so future teams can compose consistent flows.

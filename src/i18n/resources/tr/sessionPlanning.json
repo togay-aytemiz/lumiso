@@ -10,7 +10,17 @@
   },
   "toast": {
     "draftCapturedTitle": "Oturum taslağı kaydedildi",
-    "draftCapturedDescription": "Lo-fi sihirbazı tamamlandı. Yayına almadan önce arka uç kaydını bağlayın."
+    "draftCapturedDescription": "Lo-fi sihirbazı tamamlandı. Yayına almadan önce arka uç kaydını bağlayın.",
+    "sessionCreatedTitle": "Oturum planlandı",
+    "sessionCreatedDescription": "Hatırlatıcılar ve otomasyonlar yürütülüyor.",
+    "sessionCreationFailedTitle": "Oturum planlanamadı",
+    "sessionCreationFailedDescription": "Lütfen formu kontrol edip tekrar deneyin.",
+    "sessionWorkflowWarningTitle": "Oturum planlandı",
+    "sessionWorkflowWarningDescription": "Bildirimlerde gecikme olabilir. Otomasyon ayarlarını kontrol edin."
+  },
+  "validation": {
+    "missingLead": "Onaylamadan önce bir lead seçin.",
+    "missingSchedule": "Oturum tarihi ve saatini birlikte seçin."
   },
   "steps": {
     "lead": {

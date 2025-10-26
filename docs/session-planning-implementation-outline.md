@@ -81,7 +81,7 @@
 - [x] Scaffold `features/session-planning` module with wizard shell, reducer, and context provider (autosave engine pending).
 - [x] Build entry-point resolver hook handling lead/project/schedule prefill scenarios (current scope: local props).
 - [x] Implement stepper navigation with placeholder content for each wizard step (hi-fi polish still required).
-- [ ] Port existing session create flow into a shared service callable from wizard confirm action.
+- [x] Port existing session create flow into a shared service callable from wizard confirm action (legacy dialog orchestration still pending).
 - [ ] Add Storybook (or temporary route) harness to demo the lo-fi wizard with mocked data.
 
 ## Design & UI Follow-Up

@@ -10,7 +10,17 @@
   },
   "toast": {
     "draftCapturedTitle": "Session draft captured",
-    "draftCapturedDescription": "Lo-fi wizard completed. Wire backend save before rollout."
+    "draftCapturedDescription": "Lo-fi wizard completed. Wire backend save before rollout.",
+    "sessionCreatedTitle": "Session scheduled",
+    "sessionCreatedDescription": "All reminders and workflows are being processed.",
+    "sessionCreationFailedTitle": "Unable to schedule session",
+    "sessionCreationFailedDescription": "Please review the form and try again.",
+    "sessionWorkflowWarningTitle": "Session scheduled",
+    "sessionWorkflowWarningDescription": "Notifications may be delayed. Check automation settings."
+  },
+  "validation": {
+    "missingLead": "Select a lead before confirming.",
+    "missingSchedule": "Select both a session date and time."
   },
   "steps": {
     "lead": {

@@ -8,6 +8,9 @@ import { useSessionPlanningActions } from "../hooks/useSessionPlanningActions";
 import { useToast } from "@/components/ui/use-toast";
 import { SessionPlanningEntryContext } from "../types";
 import { useTranslation } from "react-i18next";
+import { createSession } from "../api/sessionCreation";
+import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
+import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
 
 interface SessionPlanningWizardSheetProps {
   leadId?: string;
@@ -55,6 +58,8 @@ const SessionPlanningWizardSheetInner = ({
   const { toast } = useToast();
   const [isCompleting, setIsCompleting] = useState(false);
   const { t } = useTranslation("sessionPlanning");
+  const { triggerSessionScheduled } = useWorkflowTriggers();
+  const { scheduleSessionReminders } = useSessionReminderScheduling();
 
   const handleClose = () => {
     if (state.meta.isDirty && typeof window !== "undefined") {
@@ -68,16 +73,93 @@ const SessionPlanningWizardSheetInner = ({
   };
 
   const handleComplete = async () => {
+    const leadId = state.lead.id || entryContext.leadId;
+    const leadName = state.lead.name || entryContext.leadName || "";
+    const sessionDate = state.schedule.date || entryContext.defaultDate || "";
+    const sessionTime = state.schedule.time || entryContext.defaultTime || "";
+    const projectId = state.project.id || entryContext.projectId || undefined;
+
+    if (!leadId) {
+      toast({
+        title: t("validation.missingLead"),
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!sessionDate || !sessionTime) {
+      toast({
+        title: t("validation.missingSchedule"),
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const sessionName =
+      (state.sessionName || "").trim() ||
+      state.sessionTypeLabel ||
+      (leadName ? `${leadName} Session` : undefined) ||
+      t("summary.untitled");
+
     setIsCompleting(true);
     try {
-      console.log("Session planning draft", state);
+      const { sessionId, organizationId } = await createSession(
+        {
+          leadId,
+          leadName,
+          sessionName,
+          sessionDate,
+          sessionTime,
+          notes: state.notes,
+          location: state.location,
+          projectId,
+          status: "planned"
+        },
+        {
+          updateLeadStatus: !projectId,
+          createActivity: !projectId
+        }
+      );
+
+      try {
+        await triggerSessionScheduled(sessionId, organizationId, {
+          session_date: sessionDate,
+          session_time: sessionTime,
+          location: state.location,
+          client_name: leadName,
+          lead_id: leadId,
+          project_id: projectId,
+          status: "planned"
+        });
+      } catch (workflowError) {
+        console.error("Error triggering session workflow", workflowError);
+        toast({
+          title: t("toast.sessionWorkflowWarningTitle"),
+          description: t("toast.sessionWorkflowWarningDescription")
+        });
+      }
+
+      try {
+        await scheduleSessionReminders(sessionId);
+      } catch (reminderError) {
+        console.error("Error scheduling session reminders", reminderError);
+      }
+
       toast({
-        title: t("toast.draftCapturedTitle"),
-        description: t("toast.draftCapturedDescription")
+        title: t("toast.sessionCreatedTitle"),
+        description: t("toast.sessionCreatedDescription")
       });
+
       onSessionScheduled?.();
       reset(entryContext);
       onOpenChange(false);
+    } catch (error: any) {
+      console.error("Error creating session via wizard", error);
+      toast({
+        title: t("toast.sessionCreationFailedTitle"),
+        description: error.message || t("toast.sessionCreationFailedDescription"),
+        variant: "destructive"
+      });
     } finally {
       setIsCompleting(false);
     }

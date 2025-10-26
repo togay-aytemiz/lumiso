@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
-import { formatDate, formatTime } from "@/lib/utils";
+import { createSession } from "@/features/session-planning/api/sessionCreation";
 
 interface SessionFormData {
   session_name: string;
@@ -79,66 +78,35 @@ export function useSessionForm({ leadId, leadName, projectId, onSuccess }: UseSe
 
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
+      const resolvedProjectId = formData.project_id || projectId || undefined;
 
-      // Get user organization
-      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
-      const organizationId = await getUserOrganizationId();
-
-      if (!organizationId) {
-        throw new Error("Organization required");
-      }
-
-      // Update lead status to 'booked' if from lead detail (when no fixed projectId)
-      if (!projectId) {
-        const { data: leadData, error: leadError } = await supabase
-          .from('leads')
-          .select('status')
-          .eq('id', leadId)
-          .single();
-
-        if (leadError) throw leadError;
-
-        if (leadData && !['completed', 'lost'].includes(leadData.status)) {
-          const { error: updateError } = await supabase
-            .from('leads')
-            .update({ status: 'booked' })
-            .eq('id', leadId);
-
-          if (updateError) throw updateError;
+      const { sessionId, organizationId } = await createSession(
+        {
+          leadId,
+          leadName,
+          sessionName: formData.session_name.trim(),
+          sessionDate: formData.session_date,
+          sessionTime: formData.session_time,
+          notes: formData.notes,
+          location: formData.location,
+          projectId: resolvedProjectId
+        },
+        {
+          updateLeadStatus: !resolvedProjectId,
+          createActivity: !resolvedProjectId
         }
-      }
-
-      // Create session
-      const { data: newSession, error: sessionError } = await supabase
-        .from('sessions')
-        .insert({
-          user_id: user.id,
-      organization_id: organizationId,
-          lead_id: leadId,
-          session_name: formData.session_name.trim(),
-          session_date: formData.session_date,
-          session_time: formData.session_time,
-          notes: formData.notes.trim() || null,
-          location: formData.location.trim() || null,
-          project_id: formData.project_id || null
-        })
-        .select('id')
-        .single();
-
-      if (sessionError) throw sessionError;
+      );
 
       // Trigger workflow for session scheduled
       try {
-        console.log(`🚀 Triggering session_scheduled workflow for session: ${newSession.id}`);
-        const workflowResult = await triggerSessionScheduled(newSession.id, organizationId, {
+        console.log(`🚀 Triggering session_scheduled workflow for session: ${sessionId}`);
+        const workflowResult = await triggerSessionScheduled(sessionId, organizationId, {
           session_date: formData.session_date,
           session_time: formData.session_time,
           location: formData.location,
           client_name: leadName,
           lead_id: leadId,
-          project_id: formData.project_id,
+          project_id: resolvedProjectId,
           status: 'planned'
         });
         console.log(`✅ Session workflow result:`, workflowResult);
@@ -153,31 +121,10 @@ export function useSessionForm({ leadId, leadName, projectId, onSuccess }: UseSe
 
       // Schedule session reminders
       try {
-        console.log(`⏰ Scheduling reminders for session: ${newSession.id}`);
-        await scheduleSessionReminders(newSession.id);
+        console.log(`⏰ Scheduling reminders for session: ${sessionId}`);
+        await scheduleSessionReminders(sessionId);
       } catch (reminderError) {
         console.error('❌ Error scheduling session reminders:', reminderError);
-      }
-
-      // Add activity entry for sessions from lead detail (not from project)
-      if (!projectId) {
-        const sessionDate = formatDate(formData.session_date);
-        const sessionTime = formatTime(formData.session_time);
-        const activityContent = `Photo session scheduled for ${sessionDate} at ${sessionTime}`;
-        
-        const { error: activityError } = await supabase
-          .from('activities')
-          .insert({
-            user_id: user.id,
-            organization_id: organizationId,
-            lead_id: leadId,
-            type: 'note',
-            content: activityContent
-          });
-
-        if (activityError) {
-          console.error('Error creating activity:', activityError);
-        }
       }
 
       toast({

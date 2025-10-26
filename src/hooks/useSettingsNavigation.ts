@@ -21,9 +21,10 @@ export function useSettingsNavigation({
   const location = useLocation();
   const currentPath = useRef(location.pathname);
   const isMobile = useIsMobile();
-
   useEffect(() => {
     currentPath.current = location.pathname;
+    // Clear any pending manual navigation when location updates
+    setPendingNavigation(null);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -56,36 +57,42 @@ export function useSettingsNavigation({
 
   const handleModalClose = () => {
     if (isDirty) {
+      setPendingNavigation(null);
       setShowGuard(true);
       return false; // Block close
     }
     return true; // Allow close
   };
 
+  const clearPendingNavigation = () => {
+    setPendingNavigation(null);
+  };
+
+  const proceedWithNavigation = () => {
+    if (pendingNavigation) {
+      navigate(pendingNavigation);
+    }
+    clearPendingNavigation();
+  };
+
   const handleDiscardChanges = () => {
     onDiscard();
     setShowGuard(false);
-    if (pendingNavigation) {
-      navigate(pendingNavigation);
-      setPendingNavigation(null);
-    }
+    proceedWithNavigation();
   };
 
   const handleStayOnPage = () => {
     setShowGuard(false);
-    setPendingNavigation(null);
+    clearPendingNavigation();
   };
 
-  const handleSaveAndExit = async () => {
-    if (onSaveAndExit) {
-      await onSaveAndExit();
-    }
-    setShowGuard(false);
-    if (pendingNavigation) {
-      navigate(pendingNavigation);
-      setPendingNavigation(null);
-    }
-  };
+  const handleSaveAndExit = onSaveAndExit
+    ? async () => {
+        await onSaveAndExit();
+        setShowGuard(false);
+        proceedWithNavigation();
+      }
+    : undefined;
 
   return {
     showGuard,

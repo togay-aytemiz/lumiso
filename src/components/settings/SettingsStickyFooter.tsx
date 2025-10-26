@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface SettingsStickyFooterProps {
+export interface SettingsStickyFooterProps {
   show: boolean;
   isSaving: boolean;
   showSuccess?: boolean;

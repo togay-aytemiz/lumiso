@@ -15,6 +15,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
+import { NavigationGuardDialog } from "./NavigationGuardDialog";
 
 interface Package {
   id: string;
@@ -343,6 +345,18 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
     packageData.default_add_ons.length > 0
   );
 
+  const navigation = useModalNavigation({
+    isDirty,
+    onDiscard: () => {
+      resetForm();
+      onOpenChange(false);
+    },
+    onSaveAndExit: async () => {
+      await handleSubmit();
+    },
+    message: t('package.delete_confirmation.description')
+  });
+
   useEffect(() => {
     if (!open) {
       resetForm();
@@ -413,7 +427,8 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
   };
 
   const handleDirtyClose = () => {
-    if (window.confirm(t('package.delete_confirmation.description'))) {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
       resetForm();
       onOpenChange(false);
     }
@@ -422,7 +437,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
   const footerActions = [
     {
       label: t('buttons.cancel', { ns: 'common' }),
-      onClick: () => onOpenChange(false),
+      onClick: handleDirtyClose,
       variant: "outline" as const,
       disabled: loading
     },
@@ -585,6 +600,13 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
           />
         </div>
       </div>
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message={navigation.message}
+      />
 
     </AppSheetModal>
   );
@@ -735,19 +757,44 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
     }));
   };
 
-  const isDirtyEdit = Boolean(
-    pkg && (
-      packageData.name !== pkg.name ||
-      packageData.description !== (pkg.description || "") ||
-      packageData.price !== pkg.price.toString() ||
-      JSON.stringify(packageData.applicable_types.sort()) !== JSON.stringify(pkg.applicable_types.sort()) ||
-      JSON.stringify(packageData.default_add_ons.sort()) !== JSON.stringify(pkg.default_add_ons.sort()) ||
-      packageData.is_active !== pkg.is_active
-    )
-  );
+  const resetEditForm = () => {
+    if (!pkg) return;
+    setPackageData({
+      name: pkg.name,
+      description: pkg.description || "",
+      price: pkg.price.toString(),
+      applicable_types: [...pkg.applicable_types],
+      default_add_ons: [...pkg.default_add_ons],
+      is_active: pkg.is_active
+    });
+    setErrors({});
+  };
+
+  const isDirtyEdit = pkg ? Boolean(
+    packageData.name !== pkg.name ||
+    packageData.description !== (pkg.description || "") ||
+    packageData.price !== pkg.price.toString() ||
+    JSON.stringify([...packageData.applicable_types].sort()) !== JSON.stringify([...pkg.applicable_types].sort()) ||
+    JSON.stringify([...packageData.default_add_ons].sort()) !== JSON.stringify([...pkg.default_add_ons].sort()) ||
+    packageData.is_active !== pkg.is_active
+  ) : false;
+
+  const navigationEdit = useModalNavigation({
+    isDirty: isDirtyEdit,
+    onDiscard: () => {
+      resetEditForm();
+      onOpenChange(false);
+    },
+    onSaveAndExit: async () => {
+      await handleSubmit();
+    },
+    message: t('confirm.unsaved_changes', { ns: 'common' })
+  });
 
   const handleDirtyCloseEdit = () => {
-    if (window.confirm(t('confirm.unsaved_changes', { ns: 'common' }))) {
+    const canClose = navigationEdit.handleModalClose();
+    if (canClose) {
+      resetEditForm();
       onOpenChange(false);
     }
   };
@@ -755,7 +802,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
   const footerActionsEdit = [
     {
       label: t('buttons.cancel', { ns: 'common' }),
-      onClick: () => onOpenChange(false),
+      onClick: handleDirtyCloseEdit,
       variant: "outline" as const,
       disabled: loading
     },
@@ -910,6 +957,14 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
           />
         </div>
       </div>
+
+      <NavigationGuardDialog
+        open={navigationEdit.showGuard}
+        onDiscard={navigationEdit.handleDiscardChanges}
+        onStay={navigationEdit.handleStayOnModal}
+        onSaveAndExit={navigationEdit.handleSaveAndExit}
+        message={navigationEdit.message}
+      />
 
     </AppSheetModal>
   );

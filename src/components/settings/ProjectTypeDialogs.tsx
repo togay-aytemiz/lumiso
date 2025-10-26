@@ -8,6 +8,8 @@ import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useTranslation } from "react-i18next";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
+import { NavigationGuardDialog } from "./NavigationGuardDialog";
 
 interface AddProjectTypeDialogProps {
   open: boolean;
@@ -92,8 +94,20 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
 
   const isDirty = Boolean(formData.name.trim() || formData.is_default);
 
+  const navigation = useModalNavigation({
+    isDirty,
+    onDiscard: () => {
+      setFormData({ name: "", is_default: false });
+      onOpenChange(false);
+    },
+    onSaveAndExit: async () => {
+      await handleSubmit();
+    }
+  });
+
   const handleDirtyClose = () => {
-    if (window.confirm(t('project_type.confirm.discard_changes'))) {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
       setFormData({ name: "", is_default: false });
       onOpenChange(false);
     }
@@ -102,7 +116,7 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
   const footerActions = [
     {
       label: t('common:buttons.cancel'),
-      onClick: () => onOpenChange(false),
+      onClick: handleDirtyClose,
       variant: "outline" as const,
       disabled: loading
     },
@@ -155,6 +169,13 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
           </div>
         </div>
       </div>
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message={navigation.message}
+      />
     </AppSheetModal>
   );
 }
@@ -240,12 +261,33 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
     }
   };
 
+  const isDirty = type ? Boolean(formData.name !== type.name || formData.is_default !== (type.is_default || false)) : false;
+
+  const navigation = useModalNavigation({
+    isDirty,
+    onDiscard: () => {
+      if (type) {
+        setFormData({
+          name: type.name,
+          is_default: type.is_default || false,
+        });
+      }
+      onOpenChange(false);
+    },
+    onSaveAndExit: async () => {
+      await handleSubmit();
+    }
+  });
+
   if (!type) return null;
 
-  const isDirty = Boolean(formData.name !== type.name || formData.is_default !== (type.is_default || false));
-
   const handleDirtyClose = () => {
-    if (window.confirm(t('project_type.confirm.discard_changes'))) {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      setFormData({
+        name: type.name,
+        is_default: type.is_default || false,
+      });
       onOpenChange(false);
     }
   };
@@ -303,7 +345,7 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
     },
     {
       label: t('common:buttons.cancel'),
-      onClick: () => onOpenChange(false),
+      onClick: handleDirtyClose,
       variant: "outline" as const,
       disabled: loading
     },
@@ -355,6 +397,13 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
           </div>
         </div>
       </div>
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message={navigation.message}
+      />
     </AppSheetModal>
   );
 }

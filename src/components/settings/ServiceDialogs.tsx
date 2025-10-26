@@ -10,6 +10,8 @@ import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
+import { NavigationGuardDialog } from "./NavigationGuardDialog";
 
 interface AddServiceDialogProps {
   open: boolean;
@@ -154,8 +156,9 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
     formData.extra
   );
 
-  const handleDirtyClose = () => {
-    if (window.confirm(t('service.unsaved_changes.description'))) {
+  const navigation = useModalNavigation({
+    isDirty,
+    onDiscard: () => {
       setFormData({
         name: "",
         description: "",
@@ -165,6 +168,29 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
         selling_price: "",
         extra: false,
       });
+      setShowNewCategoryInput(false);
+      setNewCategoryName("");
+      onOpenChange(false);
+    },
+    onSaveAndExit: async () => {
+      await handleSubmit();
+    }
+  });
+
+  const handleDirtyClose = () => {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      setFormData({
+        name: "",
+        description: "",
+        category: "",
+        price: "",
+        cost_price: "",
+        selling_price: "",
+        extra: false,
+      });
+      setShowNewCategoryInput(false);
+      setNewCategoryName("");
       onOpenChange(false);
     }
   };
@@ -172,7 +198,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
   const footerActions = [
     {
       label: t('buttons.cancel', { ns: 'common' }),
-      onClick: () => onOpenChange(false),
+      onClick: handleDirtyClose,
       variant: "outline" as const,
       disabled: loading
     },
@@ -338,6 +364,13 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
           />
         </div>
       </div>
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message={navigation.message}
+      />
     </AppSheetModal>
   );
 }
@@ -473,9 +506,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
     }
   };
 
-  if (!service) return null;
-
-  const isDirty = Boolean(
+  const isDirty = service ? Boolean(
     formData.name !== service.name ||
     formData.description !== (service.description || "") ||
     formData.category !== (service.category || "") ||
@@ -483,18 +514,57 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
     formData.cost_price !== (service.cost_price?.toString() || "") ||
     formData.selling_price !== (service.selling_price?.toString() || "") ||
     formData.extra !== (service.extra || false)
-  );
+  ) : false;
+
+  const navigation = useModalNavigation({
+    isDirty,
+    onDiscard: () => {
+      if (service) {
+        setFormData({
+          name: service.name,
+          description: service.description || "",
+          category: service.category || "",
+          price: service.price?.toString() || "",
+          cost_price: service.cost_price?.toString() || "",
+          selling_price: service.selling_price?.toString() || "",
+          extra: service.extra || false,
+        });
+      }
+      setShowNewCategoryInput(false);
+      setNewCategoryName("");
+      onOpenChange(false);
+    },
+    onSaveAndExit: async () => {
+      await handleSubmit();
+    }
+  });
 
   const handleDirtyClose = () => {
-    if (window.confirm(t('service.unsaved_changes.description'))) {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      if (service) {
+        setFormData({
+          name: service.name,
+          description: service.description || "",
+          category: service.category || "",
+          price: service.price?.toString() || "",
+          cost_price: service.cost_price?.toString() || "",
+          selling_price: service.selling_price?.toString() || "",
+          extra: service.extra || false,
+        });
+      }
+      setShowNewCategoryInput(false);
+      setNewCategoryName("");
       onOpenChange(false);
     }
   };
 
+  if (!service) return null;
+
   const footerActions = [
     {
       label: t('buttons.cancel', { ns: 'common' }),
-      onClick: () => onOpenChange(false),
+      onClick: handleDirtyClose,
       variant: "outline" as const,
       disabled: loading
     },
@@ -660,6 +730,13 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
           />
         </div>
       </div>
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message={navigation.message}
+      />
     </AppSheetModal>
   );
 }

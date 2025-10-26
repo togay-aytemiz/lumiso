@@ -132,7 +132,7 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
   const footerActions = [
     {
       label: t('buttons.cancel'),
-      onClick: () => onOpenChange(false),
+      onClick: handleDirtyClose,
       variant: "outline" as const,
       disabled: loading
     },
@@ -383,7 +383,7 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
     }] : []),
     {
       label: t('buttons.cancel'),
-      onClick: () => onOpenChange(false),
+      onClick: handleDirtyClose,
       variant: "outline" as const,
       disabled: loading
     },

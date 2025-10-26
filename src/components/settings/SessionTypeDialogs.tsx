@@ -10,6 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
+import { NavigationGuardDialog } from "./NavigationGuardDialog";
 
 export interface SessionType {
   id: string;
@@ -196,8 +198,23 @@ export function AddSessionTypeDialog({
     );
   }, [formData]);
 
+  const navigation = useModalNavigation({
+    isDirty,
+    onDiscard: () => {
+      setFormData({ ...DEFAULT_FORM_STATE });
+      setErrors({});
+      onOpenChange(false);
+    },
+    onSaveAndExit: async () => {
+      await handleSubmit();
+    }
+  });
+
   const handleDirtyClose = () => {
-    if (window.confirm(t("sessionType.unsaved_changes.description", { ns: "forms" }))) {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      setFormData({ ...DEFAULT_FORM_STATE });
+      setErrors({});
       onOpenChange(false);
     }
   };
@@ -205,7 +222,7 @@ export function AddSessionTypeDialog({
   const footerActions = [
     {
       label: t("buttons.cancel", { ns: "common" }),
-      onClick: () => onOpenChange(false),
+      onClick: handleDirtyClose,
       variant: "outline" as const,
       disabled: loading,
     },
@@ -345,6 +362,13 @@ export function AddSessionTypeDialog({
           </div>
         </div>
       </div>
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message={navigation.message}
+      />
     </AppSheetModal>
   );
 }
@@ -464,18 +488,55 @@ export function EditSessionTypeDialog({
     );
   }, [formData, sessionType, defaultSessionTypeId]);
 
-  if (!sessionType) return null;
+  const navigation = useModalNavigation({
+    isDirty,
+    onDiscard: () => {
+      if (sessionType) {
+        const durationMeta = getDurationOptionForMinutes(sessionType.duration_minutes);
+        setFormData({
+          name: sessionType.name,
+          category: sessionType.category ?? "",
+          description: sessionType.description ?? "",
+          durationOption: durationMeta.option,
+          customDuration: durationMeta.customValue,
+          isActive: sessionType.is_active,
+          setAsDefault: sessionType.id === defaultSessionTypeId,
+        });
+        setErrors({});
+      }
+      onOpenChange(false);
+    },
+    onSaveAndExit: async () => {
+      await handleSubmit();
+    }
+  });
 
   const handleDirtyClose = () => {
-    if (window.confirm(t("sessionType.unsaved_changes.description", { ns: "forms" }))) {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      if (sessionType) {
+        const durationMeta = getDurationOptionForMinutes(sessionType.duration_minutes);
+        setFormData({
+          name: sessionType.name,
+          category: sessionType.category ?? "",
+          description: sessionType.description ?? "",
+          durationOption: durationMeta.option,
+          customDuration: durationMeta.customValue,
+          isActive: sessionType.is_active,
+          setAsDefault: sessionType.id === defaultSessionTypeId,
+        });
+        setErrors({});
+      }
       onOpenChange(false);
     }
   };
 
+  if (!sessionType) return null;
+
   const footerActions = [
     {
       label: t("buttons.cancel", { ns: "common" }),
-      onClick: () => onOpenChange(false),
+      onClick: handleDirtyClose,
       variant: "outline" as const,
       disabled: loading,
     },
@@ -612,6 +673,13 @@ export function EditSessionTypeDialog({
           </div>
         </div>
       </div>
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message={navigation.message}
+      />
     </AppSheetModal>
   );
 }

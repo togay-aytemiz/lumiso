@@ -132,7 +132,7 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
   const footerActions = [
     {
       label: t('common:buttons.cancel'),
-      onClick: () => onOpenChange(false),
+      onClick: handleDirtyClose,
       variant: "outline" as const,
       disabled: loading
     },
@@ -376,7 +376,7 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
     }] : []),
     {
       label: t('common:buttons.cancel'),
-      onClick: () => onOpenChange(false),
+      onClick: handleDirtyClose,
       variant: "outline" as const,
       disabled: loading
     },

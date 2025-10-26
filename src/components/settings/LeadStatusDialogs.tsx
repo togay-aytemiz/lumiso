@@ -8,6 +8,7 @@ import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useTranslation } from "react-i18next";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { NavigationGuardDialog } from "./NavigationGuardDialog";
 
 interface AddLeadStatusDialogProps {
   open: boolean;
@@ -128,7 +129,7 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
   const footerActions = [
     {
       label: t('buttons.cancel', { ns: 'common' }),
-      onClick: () => onOpenChange(false),
+      onClick: handleDirtyClose,
       variant: "outline" as const,
       disabled: loading
     },
@@ -213,6 +214,14 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
         </div>
       </div>
       </div>
+
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message={navigation.message}
+      />
     </AppSheetModal>
   );
 }
@@ -295,10 +304,21 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
     formData.lifecycle !== (status.lifecycle || "active")
   ) : false;
 
+  const navigation = useModalNavigation({
+    isDirty,
+    onDiscard: () => {
+      onOpenChange(false);
+    },
+    onSaveAndExit: async () => {
+      await handleSubmit();
+    }
+  });
+
   if (!status) return null;
 
   const handleDirtyClose = () => {
-    if (window.confirm(t('lead_status.confirm.discard_changes'))) {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
       onOpenChange(false);
     }
   };
@@ -361,7 +381,7 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
     }] : []),
     {
       label: t('buttons.cancel', { ns: 'common' }),
-      onClick: () => onOpenChange(false),
+      onClick: handleDirtyClose,
       variant: "outline" as const,
       disabled: loading
     },
@@ -462,6 +482,14 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
           </div>
         )}
       </div>
+
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message={navigation.message}
+      />
     </AppSheetModal>
   );
 }

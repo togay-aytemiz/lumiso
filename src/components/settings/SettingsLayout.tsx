@@ -19,6 +19,9 @@ import { useSettingsContext } from "@/contexts/SettingsContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTranslation } from "react-i18next";
+import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
+import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { useToast } from "@/hooks/use-toast";
 
 const personalSettingsItems = [
   { title: "profile", href: "/settings/profile", icon: User, testId: "profile-section" },
@@ -37,9 +40,37 @@ const organizationSettingsItems = [
 
 export default function SettingsLayout() {
   const location = useLocation();
-  const { hasCategoryChanges } = useSettingsContext();
+  const { hasCategoryChanges, cancelCategoryChanges, saveCategoryChanges } = useSettingsContext();
   const { shouldLockNavigation } = useOnboarding();
   const { t } = useTranslation('navigation');
+  const { toast } = useToast();
+  const currentPath = location.pathname;
+  const hasChanges = hasCategoryChanges(currentPath);
+
+  const {
+    showGuard,
+    message: guardMessage,
+    handleNavigationAttempt,
+    handleDiscardChanges,
+    handleStayOnPage,
+    handleSaveAndExit
+  } = useSettingsNavigation({
+    isDirty: hasChanges,
+    onDiscard: () => {
+      cancelCategoryChanges(currentPath);
+      toast({
+        title: "Changes discarded",
+        description: "Your unsaved changes have been discarded.",
+      });
+    },
+    onSaveAndExit: async () => {
+      await saveCategoryChanges(currentPath);
+      toast({
+        title: "Settings saved",
+        description: "Your changes have been saved successfully.",
+      });
+    }
+  });
   
   const isItemLocked = (itemHref: string) => {
     // Settings navigation lock check for guided setup
@@ -52,8 +83,13 @@ export default function SettingsLayout() {
     return false;
   };
 
-  const handleLockedItemClick = (e: React.MouseEvent, itemHref: string) => {
+  const handleNavItemInteraction = (e: React.MouseEvent, itemHref: string) => {
     if (isItemLocked(itemHref)) {
+      e.preventDefault();
+      return;
+    }
+
+    if (!handleNavigationAttempt(itemHref)) {
       e.preventDefault();
     }
   };
@@ -85,9 +121,7 @@ export default function SettingsLayout() {
                       ? "bg-sidebar-active text-sidebar-active-foreground font-medium" 
                       : "text-muted-foreground hover:text-foreground",
                     locked && "opacity-50 cursor-not-allowed"
-                  )}
-                  onClick={(e) => handleLockedItemClick(e, item.href)}
-                >
+                  )}>
                   <Icon className={cn(
                     "h-5 w-5 flex-shrink-0 transition-colors group-hover:text-sidebar-primary",
                     isActive && "text-[hsl(var(--sidebar-active-icon))]"
@@ -109,7 +143,10 @@ export default function SettingsLayout() {
                 return locked ? (
                   <Tooltip key={item.href}>
                     <TooltipTrigger asChild>
-                      <div data-walkthrough={item.testId}>
+                      <div
+                        data-walkthrough={item.testId}
+                        onClick={(e) => handleNavItemInteraction(e, item.href)}
+                      >
                         {linkContent}
                       </div>
                     </TooltipTrigger>
@@ -122,6 +159,7 @@ export default function SettingsLayout() {
                     key={item.href}
                     to={item.href}
                     data-walkthrough={item.testId}
+                    onClick={(e) => handleNavItemInteraction(e, item.href)}
                   >
                     {linkContent}
                   </NavLink>
@@ -152,9 +190,7 @@ export default function SettingsLayout() {
                       : "text-muted-foreground hover:text-foreground",
                     isDangerZone && "text-red-600 hover:text-red-700 hover:bg-red-50",
                     locked && "opacity-50 cursor-not-allowed"
-                  )}
-                  onClick={(e) => handleLockedItemClick(e, item.href)}
-                >
+                  )}>
                   <Icon className={cn(
                     "h-5 w-5 flex-shrink-0 transition-colors",
                     !isDangerZone && "group-hover:text-sidebar-primary",
@@ -178,7 +214,10 @@ export default function SettingsLayout() {
                 return locked ? (
                   <Tooltip key={item.href}>
                     <TooltipTrigger asChild>
-                      <div data-walkthrough={item.testId}>
+                      <div
+                        data-walkthrough={item.testId}
+                        onClick={(e) => handleNavItemInteraction(e, item.href)}
+                      >
                         {linkContent}
                       </div>
                     </TooltipTrigger>
@@ -191,6 +230,7 @@ export default function SettingsLayout() {
                     key={item.href}
                     to={item.href}
                     data-walkthrough={item.testId}
+                    onClick={(e) => handleNavItemInteraction(e, item.href)}
                   >
                     {linkContent}
                   </NavLink>
@@ -205,6 +245,14 @@ export default function SettingsLayout() {
       <div className="flex-1">
         <Outlet />
       </div>
+
+      <NavigationGuardDialog
+        open={showGuard}
+        onDiscard={handleDiscardChanges}
+        onStay={handleStayOnPage}
+        onSaveAndExit={handleSaveAndExit}
+        message={guardMessage}
+      />
     </div>
   );
 }

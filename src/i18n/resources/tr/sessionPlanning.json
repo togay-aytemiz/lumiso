@@ -1,0 +1,109 @@
+{
+  "wizard": {
+    "title": "Oturum planla",
+    "cancel": "İptal",
+    "back": "Geri",
+    "next": "İleri",
+    "confirm": "Oturumu onayla",
+    "confirming": "Onaylanıyor...",
+    "discardPrompt": "Oturum taslağı silinsin mi?"
+  },
+  "toast": {
+    "draftCapturedTitle": "Oturum taslağı kaydedildi",
+    "draftCapturedDescription": "Lo-fi sihirbazı tamamlandı. Yayına almadan önce arka uç kaydını bağlayın."
+  },
+  "steps": {
+    "lead": {
+      "navigationLabel": "Lead",
+      "description": "Bu lo-fi adım lead seçimini simüle eder. Hi-fi sürümde arama listesi ve satır içi oluşturma sunulacak.",
+      "nameLabel": "Lead adı",
+      "namePlaceholder": "Lead ara veya oluştur",
+      "idLabel": "Lead kimliği (isteğe bağlı)",
+      "idPlaceholder": "abc-123",
+      "loadDemo": "Demo lead yükle",
+      "demoName": "Demo Lead"
+    },
+    "project": {
+      "navigationLabel": "Proje",
+      "description": "Oturumu mevcut bir projeye bağlayın veya yalnızca lead planı olarak bırakın.",
+      "nameLabel": "Proje adı",
+      "namePlaceholder": "Gün batımı portreleri",
+      "idLabel": "Proje kimliği (isteğe bağlı)",
+      "idPlaceholder": "proj-xyz",
+      "loadDemo": "Demo proje yükle",
+      "demoName": "Düğün hazırlığı"
+    },
+    "sessionType": {
+      "navigationLabel": "Oturum türü",
+      "description": "Oturum türünü seçin. Nihai deneyim organizasyonun yapılandırılmış oturum türlerini kullanacak.",
+      "options": {
+        "consultation": "Danışmanlık",
+        "portrait": "Portre çekimi",
+        "wedding": "Düğün",
+        "other": "Diğer"
+      },
+      "optionDescription": "Demo metin - gerçek etiketler oturum ayarlarından gelecek.",
+      "clear": "Seçimi temizle"
+    },
+    "details": {
+      "navigationLabel": "Detaylar",
+      "description": "Otomatik üretilen oturum adını düzenleyin ve ekip için kısa bir özet ekleyin.",
+      "nameLabel": "Oturum adı",
+      "namePlaceholder": "Örn. Nişan provası",
+      "notesLabel": "Dahili özet (lo-fi)",
+      "notesPlaceholder": "Çekim hedeflerini veya beklentilerini not edin."
+    },
+    "location": {
+      "navigationLabel": "Konum",
+      "description": "Oturumun nerede gerçekleşeceğini yazın. Sonraki sürümlerde adres defteri ve toplantı linkleri bağlanacak.",
+      "addressLabel": "Adres veya mekan",
+      "addressPlaceholder": "Örnek Mah. 123, İstanbul",
+      "meetingUrlLabel": "Toplantı URL'si (lo-fi)",
+      "meetingUrlPlaceholder": "https://"
+    },
+    "schedule": {
+      "navigationLabel": "Tarih",
+      "description": "Bir tarih ve başlangıç saati seçin. Gelecek sürümlerde çakışma kontrolü ve hızlı kaydırmalar eklenecek.",
+      "dateLabel": "Tarih",
+      "timeLabel": "Başlangıç saati",
+      "timezoneLabel": "Saat dilimi",
+      "timezonePlaceholder": "Saat dilimi seçin"
+    },
+    "notes": {
+      "navigationLabel": "Notlar",
+      "description": "Gelecekte lead veya proje zaman çizelgesine senkronlanacak isteğe bağlı notları girin.",
+      "notesLabel": "Notlar",
+      "notesPlaceholder": "Hazırlık listesi, hatırlatıcılar veya müşteri tercihleri."
+    },
+    "summary": {
+      "navigationLabel": "Özet",
+      "description": "Taslak oturumun hızlı özeti. Bu lo-fi sürümde düzenlemek için adım çubuğunu kullanın."
+    }
+  },
+  "summary": {
+    "untitled": "Adsız oturum",
+    "labels": {
+      "lead": "Lead",
+      "project": "Proje",
+      "schedule": "Takvim",
+      "location": "Konum",
+      "notes": "Notlar"
+    },
+    "values": {
+      "notSet": "Ayarlanmamış",
+      "notLinked": "Bağlı değil",
+      "notScheduled": "Planlanmadı",
+      "dateTbd": "Tarih belirlenecek",
+      "timeTbd": "Saat belirlenecek",
+      "empty": "—"
+    },
+    "notifications": {
+      "reminders": "Hatırlatıcılar",
+      "summaryEmail": "Özet e-postası"
+    },
+    "status": {
+      "on": "Açık",
+      "off": "Kapalı"
+    }
+  }
+}

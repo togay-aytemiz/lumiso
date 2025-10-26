@@ -11,6 +11,8 @@ import { SessionFormFields } from "@/components/SessionFormFields";
 import { getUserLocale, formatLongDate, formatTime } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Calendar, Clock, MapPin, User, Briefcase } from "lucide-react";
+import { SessionPlanningWizardSheet } from "@/features/session-planning";
+import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 
 interface Project {
   id: string;
@@ -36,6 +38,24 @@ export function SessionSchedulingSheet({
   onOpenChange,
   onSessionScheduled
 }: SessionSchedulingSheetProps) {
+  const sessionWizardEnabled = isFeatureEnabled(FEATURE_FLAGS.sessionWizardV1, true);
+
+  if (sessionWizardEnabled) {
+    const entrySource = projectId ? "project" : "lead";
+    return (
+      <SessionPlanningWizardSheet
+        leadId={leadId}
+        leadName={leadName}
+        projectId={projectId}
+        projectName={projectName}
+        entrySource={entrySource}
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        onSessionScheduled={onSessionScheduled}
+      />
+    );
+  }
+
   const { t } = useTranslation('forms');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [projects, setProjects] = useState<Project[]>([]);

@@ -1,0 +1,109 @@
+{
+  "wizard": {
+    "title": "Plan session",
+    "cancel": "Cancel",
+    "back": "Back",
+    "next": "Next",
+    "confirm": "Confirm session",
+    "confirming": "Confirming...",
+    "discardPrompt": "Discard session draft?"
+  },
+  "toast": {
+    "draftCapturedTitle": "Session draft captured",
+    "draftCapturedDescription": "Lo-fi wizard completed. Wire backend save before rollout."
+  },
+  "steps": {
+    "lead": {
+      "navigationLabel": "Lead",
+      "description": "This lo-fi step simulates selecting a lead. The hi-fi version will surface a searchable list with inline creation.",
+      "nameLabel": "Lead name",
+      "namePlaceholder": "Search or create a lead",
+      "idLabel": "Lead ID (optional)",
+      "idPlaceholder": "abc-123",
+      "loadDemo": "Load demo lead",
+      "demoName": "Demo Lead"
+    },
+    "project": {
+      "navigationLabel": "Project",
+      "description": "Link the session to an existing project or leave blank for a lead-only plan.",
+      "nameLabel": "Project name",
+      "namePlaceholder": "Sunset Portraits",
+      "idLabel": "Project ID (optional)",
+      "idPlaceholder": "proj-xyz",
+      "loadDemo": "Load demo project",
+      "demoName": "Wedding Prep"
+    },
+    "sessionType": {
+      "navigationLabel": "Session type",
+      "description": "Choose the type of session. The finalized experience will pull from the organization's configured session types.",
+      "options": {
+        "consultation": "Consultation",
+        "portrait": "Portrait session",
+        "wedding": "Wedding",
+        "other": "Other"
+      },
+      "optionDescription": "Demo copy — real labels will come from session settings.",
+      "clear": "Clear selection"
+    },
+    "details": {
+      "navigationLabel": "Details",
+      "description": "Adjust the auto-generated session name and capture a short summary for collaborators.",
+      "nameLabel": "Session name",
+      "namePlaceholder": "E.g., Engagement Preview",
+      "notesLabel": "Internal summary (lo-fi only)",
+      "notesPlaceholder": "Outline goals or expectations for the shoot."
+    },
+    "location": {
+      "navigationLabel": "Location",
+      "description": "Capture where the session happens. Future iterations will connect to the address book and meeting links.",
+      "addressLabel": "Address or venue",
+      "addressPlaceholder": "123 Main Street, Springfield",
+      "meetingUrlLabel": "Meeting URL (lo-fi placeholder)",
+      "meetingUrlPlaceholder": "https://"
+    },
+    "schedule": {
+      "navigationLabel": "Schedule",
+      "description": "Pick a date and start time. Later revisions will include conflict detection, quick offsets, and calendar previews.",
+      "dateLabel": "Date",
+      "timeLabel": "Start time",
+      "timezoneLabel": "Timezone",
+      "timezonePlaceholder": "Select timezone"
+    },
+    "notes": {
+      "navigationLabel": "Notes",
+      "description": "Add optional notes that will sync to the lead or project timeline in future versions.",
+      "notesLabel": "Notes",
+      "notesPlaceholder": "Prep checklist, reminders, or client preferences."
+    },
+    "summary": {
+      "navigationLabel": "Summary",
+      "description": "Quick snapshot of the draft session. Use the stepper to make edits in this lo-fi build."
+    }
+  },
+  "summary": {
+    "untitled": "Untitled session",
+    "labels": {
+      "lead": "Lead",
+      "project": "Project",
+      "schedule": "Schedule",
+      "location": "Location",
+      "notes": "Notes"
+    },
+    "values": {
+      "notSet": "Not set",
+      "notLinked": "Not linked",
+      "notScheduled": "Not scheduled",
+      "dateTbd": "Date TBD",
+      "timeTbd": "Time TBD",
+      "empty": "—"
+    },
+    "notifications": {
+      "reminders": "Reminders",
+      "summaryEmail": "Summary email"
+    },
+    "status": {
+      "on": "On",
+      "off": "Off"
+    }
+  }
+}

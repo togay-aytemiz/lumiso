@@ -9,6 +9,7 @@ import enForms from "./resources/en/forms.json";
 import enNavigation from "./resources/en/navigation.json";
 import enMessages from "./resources/en/messages.json";
 import enPages from "./resources/en/pages.json";
+import enSessionPlanning from "./resources/en/sessionPlanning.json";
 
 import trCommon from "./resources/tr/common.json";
 import trDashboard from "./resources/tr/dashboard.json";
@@ -16,6 +17,7 @@ import trForms from "./resources/tr/forms.json";
 import trNavigation from "./resources/tr/navigation.json";
 import trMessages from "./resources/tr/messages.json";
 import trPages from "./resources/tr/pages.json";
+import trSessionPlanning from "./resources/tr/sessionPlanning.json";
 
 const resources = {
   en: {
@@ -25,6 +27,7 @@ const resources = {
     navigation: enNavigation,
     messages: enMessages,
     pages: enPages,
+    sessionPlanning: enSessionPlanning,
   },
   tr: {
     common: trCommon,
@@ -33,6 +36,7 @@ const resources = {
     navigation: trNavigation,
     messages: trMessages,
     pages: trPages,
+    sessionPlanning: trSessionPlanning,
   },
 };
 
@@ -54,10 +58,12 @@ i18n
     },
 
     defaultNS: "common",
-    ns: ["common", "dashboard", "forms", "navigation", "messages", "pages"],
+    ns: ["common", "dashboard", "forms", "navigation", "messages", "pages", "sessionPlanning"],
   });
 
 i18n.addResourceBundle("en", "forms", enForms, true, false);
 i18n.addResourceBundle("tr", "forms", trForms, true, true);
+i18n.addResourceBundle("en", "sessionPlanning", enSessionPlanning, true, false);
+i18n.addResourceBundle("tr", "sessionPlanning", trSessionPlanning, true, true);
 
 export default i18n;

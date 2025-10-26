@@ -82,6 +82,8 @@ beforeEach(() => {
     activeOrganization: { id: "org-1" },
   });
   checkStorageLimits.mockReturnValue({ canUpload: true });
+  uploadMock.mockResolvedValue({ error: null });
+  removeMock.mockResolvedValue({ error: null });
 
   Object.defineProperty(navigator, "clipboard", {
     configurable: true,
@@ -160,7 +162,7 @@ describe("ImageUpload", () => {
     );
 
     expect(uploadMock).toHaveBeenCalledWith(
-      expect.stringMatching(/hero\.png$/),
+      expect.stringMatching(/^template-images\/.+\.png$/),
       file
     );
     expect(insertMock).toHaveBeenCalled();
@@ -240,7 +242,7 @@ describe("ImageUpload", () => {
     expect(uploadMock).not.toHaveBeenCalled();
   });
 
-  it("surfaces storage limit errors reported by checkStorageLimits", () => {
+  it("surfaces storage limit errors reported by checkStorageLimits", async () => {
     checkStorageLimits.mockReturnValueOnce({
       canUpload: false,
       reason: "No quota remaining",
@@ -263,11 +265,13 @@ describe("ImageUpload", () => {
 
     fireEvent.change(input, { target: { files: [file] } });
 
-    expect(toastMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: "Upload Limit Reached",
-        description: "No quota remaining",
-      })
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Upload Limit Reached",
+          description: "No quota remaining",
+        })
+      )
     );
     expect(uploadMock).not.toHaveBeenCalled();
   });
@@ -363,7 +367,7 @@ describe("ImageLibrarySheet", () => {
     supabase.storage.from.mockReturnValue({
       upload: uploadMock,
       remove: removeMock,
-      getPublicUrl: jest.fn(({ }) => ({
+      getPublicUrl: jest.fn(() => ({
         data: { publicUrl: "https://cdn.local/hero.png" },
       })),
     });
@@ -392,17 +396,16 @@ describe("ImageLibrarySheet", () => {
       expect(screen.getByText("hero.png")).toBeInTheDocument()
     );
 
-    const card = screen.getByText("hero.png").closest("div")!;
-    const copyButton = card.querySelector(
-      '[data-lucide="copy"]'
-    )?.parentElement as HTMLElement;
+    const copyButton = screen.getByRole("button", { name: "Copy image URL" });
 
     fireEvent.click(copyButton);
     expect(clipboardWriteMock).toHaveBeenCalledWith(
       "https://cdn.local/hero.png"
     );
-    expect(toastMock).toHaveBeenCalledWith(
-      expect.objectContaining({ title: "Success" })
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Success" })
+      )
     );
   });
 
@@ -444,19 +447,14 @@ describe("ImageLibrarySheet", () => {
       expect(screen.getByText("hero.png")).toBeInTheDocument()
     );
 
-    const card = screen.getByText("hero.png").closest("div")!;
-    const editButton = card.querySelector(
-      '[data-lucide="edit-3"]'
-    )?.parentElement as HTMLElement;
+    const editButton = screen.getByRole("button", { name: "Edit alt text" });
 
     fireEvent.click(editButton);
 
     const input = screen.getByDisplayValue("Hero shot");
     fireEvent.change(input, { target: { value: "Updated alt" } });
 
-    const confirmButton = card.querySelector(
-      '[data-lucide="check"]'
-    )?.parentElement as HTMLElement;
+    const confirmButton = screen.getByRole("button", { name: "Confirm alt text" });
     fireEvent.click(confirmButton);
 
     await waitFor(() => expect(updateMock).toHaveBeenCalled());
@@ -479,10 +477,7 @@ describe("ImageLibrarySheet", () => {
       expect(screen.getByText("hero.png")).toBeInTheDocument()
     );
 
-    const card = screen.getByText("hero.png").closest("div")!;
-    const deleteButton = card.querySelector(
-      '[data-lucide="trash-2"]'
-    )?.parentElement as HTMLElement;
+    const deleteButton = screen.getByRole("button", { name: "Delete image" });
 
     fireEvent.click(deleteButton);
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
@@ -519,10 +514,7 @@ describe("ImageLibrarySheet", () => {
       expect(screen.getByText("hero.png")).toBeInTheDocument()
     );
 
-    const card = screen.getByText("hero.png").closest("div")!;
-    const deleteButton = card.querySelector(
-      '[data-lucide="trash-2"]'
-    )?.parentElement as HTMLElement;
+    const deleteButton = screen.getByRole("button", { name: "Delete image" });
 
     fireEvent.click(deleteButton);
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));

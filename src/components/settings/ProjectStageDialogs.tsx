@@ -43,7 +43,6 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
   }, [formData.name]);
 
   const handleSubmit = async () => {
-    if (!stage) return;
     if (!formData.name.trim()) {
       toast({
         title: t('errors.title', { defaultValue: 'Error' }),

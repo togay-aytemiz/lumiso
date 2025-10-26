@@ -43,4 +43,11 @@ export interface UserLanguagePreference {
   languageCode: string;
 }
 
-export type TranslationNamespaceType = 'common' | 'dashboard' | 'forms' | 'navigation' | 'messages';
+export type TranslationNamespaceType =
+  | 'common'
+  | 'dashboard'
+  | 'forms'
+  | 'navigation'
+  | 'messages'
+  | 'pages'
+  | 'sessionPlanning';

@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
 import { useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
+import { SessionPlanningWizardSheet } from "@/features/session-planning";
+import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 
 interface Lead {
   id: string;
@@ -31,7 +33,42 @@ interface NewSessionDialogProps {
   children?: React.ReactNode;
 }
 
-const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProps) => {
+const NewSessionDialog = (props: NewSessionDialogProps) => {
+  const sessionWizardEnabled = isFeatureEnabled(FEATURE_FLAGS.sessionWizardV1, true);
+  if (sessionWizardEnabled) {
+    return <WizardNewSessionDialog {...props} />;
+  }
+  return <LegacyNewSessionDialog {...props} />;
+};
+
+const WizardNewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProps) => {
+  const [open, setOpen] = useState(false);
+  const { t: tForms } = useFormsTranslation();
+
+  return (
+    <>
+      {children ? (
+        <div onClick={() => setOpen(true)}>{children}</div>
+      ) : (
+        <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
+          <Plus className="h-4 w-4" />
+          {tForms("sessions.schedule_new")}
+        </Button>
+      )}
+      <SessionPlanningWizardSheet
+        isOpen={open}
+        onOpenChange={setOpen}
+        entrySource="sessionsPage"
+        onSessionScheduled={() => {
+          onSessionScheduled?.();
+          setOpen(false);
+        }}
+      />
+    </>
+  );
+};
+
+const LegacyNewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);

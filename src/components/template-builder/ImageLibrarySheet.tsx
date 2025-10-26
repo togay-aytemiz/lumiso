@@ -230,6 +230,7 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
                         variant="secondary"
                         onClick={() => copyImageUrl(asset.file_path)}
                         className="h-8 w-8 p-0"
+                        aria-label="Copy image URL"
                       >
                         <Copy className="h-3 w-3" />
                       </Button>
@@ -239,6 +240,7 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
                             size="sm"
                             variant="destructive"
                             className="h-8 w-8 p-0"
+                            aria-label="Delete image"
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -286,6 +288,7 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
                             variant="ghost"
                             onClick={() => handleSaveAltText(asset.id)}
                             className="h-7 w-7 p-0"
+                            aria-label="Confirm alt text"
                           >
                             <Check className="h-3 w-3" />
                           </Button>
@@ -294,6 +297,7 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
                             variant="ghost"
                             onClick={handleCancelEditAltText}
                             className="h-7 w-7 p-0"
+                            aria-label="Cancel alt text edit"
                           >
                             <X className="h-3 w-3" />
                           </Button>
@@ -308,6 +312,7 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
                             variant="ghost"
                             onClick={() => handleEditAltText(asset.id, asset.alt_text || '')}
                             className="h-7 w-7 p-0"
+                            aria-label="Edit alt text"
                           >
                             <Edit3 className="h-3 w-3" />
                           </Button>

@@ -68,6 +68,7 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 | Address verification | Launch with trusted user input; track bounce/invalid rates and revisit vendor integration post-V1. | Keeps scope lean while leaving room for future enrichment. | Codex | 2025-02-14 |
 | Session naming | Default to session type label, keep field editable before confirmation. | Supports custom naming conventions without extra step. | Tayte | 2025-02-14 |
 | Notification overrides | Use workflow settings as defaults; allow per-session opt-out toggle before confirmation. | Preserves automation while giving one-off control. | Tayte | 2025-02-14 |
+| Wizard localization | Store wizard copy in dedicated EN/TR `sessionPlanning` namespace and block merges without both translations. | Guarantees copy parity and keeps localization maintainable. | Codex | 2025-02-17 |
 
 ## UX & Interaction Notes
 - Breadcrumb + progress indicator reflect only steps the user touches; skipped steps appear dimmed.
@@ -135,6 +136,7 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 - Integration/E2E: end-to-end flow via lead, project, dashboard, calendar entry points; cover opt-out path.
 - Regression: ensure legacy session creation APIs remain stable until deprecation.
 - Accessibility: automated axe suite + manual keyboard/screen-reader checks.
+- Localization: validate EN/TR rendering for every wizard string via the `sessionPlanning` namespace (snapshot or Storybook toggle).
 - Observability: verify analytics events fire with correct payloads; monitor error logs post-launch.
 
 ## Analytics & Observability

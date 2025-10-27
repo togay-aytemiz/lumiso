@@ -79,7 +79,7 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 - Keep the address book flow to one tap where possible (default selection, quick add) — no extra review screen.
 - Saved note presets display as quick-pick chips; selecting one immediately applies it to the notes field.
 - Address book and saved notes persist locally for now; plan Supabase sync once backend schema lands.
-- Notification preview card lists each outgoing message (e.g., “Client confirmation — immediately”, “Client reminder — 24h before”). Opt-out toggles remove selected workflows from the create payload.
+- Notification preview card lists each outgoing message using live workflow names and delays (e.g., “Client confirmation — immediately”, “Client reminder — 24h before”). Opt-out toggles remove selected workflows from the create payload.
 - Autosave/draft features postponed — keep manual progress handling for now.
 - Provide success toast + link to session detail upon confirmation. Optionally offer “Plan another session”.
 
@@ -95,7 +95,7 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 
 ### Supporting Services
 - Context resolver: deduces entry point, fetches required lead/project data, and pre-populates wizard store.
-- Notification service: extends existing workflow engine to respect per-session opt-outs.
+- Notification service: extends existing workflow engine to respect per-session opt-outs (targeted workflow IDs + skip-reminder flag).
 - Audit logging: record wizard actions for compliance (create, edit, cancel).
 
 ## Technical Implementation Roadmap
@@ -117,17 +117,17 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 - [ ] Session details step enabling optional custom name. *(Step removed from MVP scope; revisit if customization demand resurfaces.)*
 
 ### Phase 3 — Location & Schedule
-- [ ] Address book component with list, quick add, and last-used default.
-- [ ] Inline address form with validation (postal code formatting, URL scheme detection).
+- [x] Address book component with list, quick add, and last-used default.
+- [x] Inline address form with validation (postal code formatting, URL scheme detection).
 - [ ] Schedule picker with timezone handling, conflict detection, and quick actions.
   * Calendar + working-hours time slots restored in wizard lo-fi build; remaining work: conflict detection & quick actions.
-- [ ] Notes step with markdown sanitization.
+- [x] Notes step with markdown sanitization.
 
 ### Phase 4 — Summary & Confirmation
 - [x] Summary review card with edit links. *(Drawer + inline highlight bar live in wizard.)*
-- [ ] Notification preview widget + opt-out toggles integrated with workflow service.
-- [ ] Final confirmation mutation wiring + success state. *(Session mutation wired; success UX still needs final design sign-off.)*
-- [ ] Draft cleanup and telemetry instrumentation. *(Postponed until autosave resumes.)*
+- [x] Notification preview widget + opt-out toggles integrated with workflow service.
+- [x] Final confirmation mutation wiring + success state. *(Success view shipped; design sign-off pending.)*
+- [x] Draft cleanup and telemetry instrumentation. *(Local draft removal + telemetry events wired.)*
 
 ### Phase 5 — Hardening & Rollout
 - [ ] Automated tests (unit, component, integration) per Testing Strategy section.

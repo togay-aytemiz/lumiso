@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -20,6 +20,10 @@ import { NotesStep } from "../steps/NotesStep";
 import { SummaryStep } from "../steps/SummaryStep";
 import { useTranslation } from "react-i18next";
 import { Check, ChevronDown } from "lucide-react";
+import { useSessionTypes } from "@/hooks/useOrganizationData";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useToast } from "@/components/ui/use-toast";
+import { trackEvent } from "@/lib/telemetry";
 
 interface SessionPlanningWizardProps {
   onCancel: () => void;
@@ -43,8 +47,11 @@ export const SessionPlanningWizard = ({
 }: SessionPlanningWizardProps) => {
   const { state } = useSessionPlanningContext();
   const { meta } = state;
-  const { setCurrentStep } = useSessionPlanningActions();
+  const { setCurrentStep, setDefaultSessionType } = useSessionPlanningActions();
   const { t } = useTranslation("sessionPlanning");
+  const { data: sessionTypes = [] } = useSessionTypes();
+  const { settings } = useOrganizationSettings();
+  const { toast } = useToast();
 
   const rawIndex = useMemo(
     () =>
@@ -63,6 +70,45 @@ export const SessionPlanningWizard = ({
   const progressValue =
     totalSteps === 0 ? 0 : Math.round(((currentIndex + 1) / totalSteps) * 100);
   const [mobileStepsOpen, setMobileStepsOpen] = useState(false);
+  const activeSessionTypes = useMemo(
+    () => sessionTypes.filter((type) => type?.is_active !== false),
+    [sessionTypes]
+  );
+  const viewedStepRef = useRef<SessionPlanningStepId | null>(null);
+
+  useEffect(() => {
+    if (state.sessionTypeId) return;
+    if (!activeSessionTypes.length) return;
+
+    const defaultId = settings?.default_session_type_id ?? null;
+    const recommended =
+      (defaultId && activeSessionTypes.find((type) => type.id === defaultId)) ||
+      activeSessionTypes[0];
+
+    if (recommended) {
+      setDefaultSessionType({
+        id: recommended.id,
+        label: recommended.name,
+      });
+    }
+  }, [
+    state.sessionTypeId,
+    activeSessionTypes,
+    settings?.default_session_type_id,
+    setDefaultSessionType,
+  ]);
+
+  useEffect(() => {
+    const stepId = meta.currentStep;
+    if (viewedStepRef.current === stepId) {
+      return;
+    }
+    viewedStepRef.current = stepId;
+    trackEvent("session_wizard_step_viewed", {
+      stepId,
+      entrySource: state.meta.entrySource ?? "direct",
+    });
+  }, [meta.currentStep, state.meta.entrySource]);
 
   const stepSummaries = useMemo(() => {
     const toSummary = (value?: string | null) => {
@@ -113,14 +159,45 @@ export const SessionPlanningWizard = ({
 
   const goToStep = (index: number) => {
     const target = SESSION_PLANNING_STEPS[index];
-    if (target) {
-      setCurrentStep(target.id);
+    if (!target) return;
+
+    if (index > currentIndex) {
+      const currentStep = SESSION_PLANNING_STEPS[currentIndex];
+      trackEvent("session_wizard_step_completed", {
+        stepId: currentStep.id,
+        entrySource: state.meta.entrySource ?? "direct",
+      });
+    } else if (index < currentIndex) {
+      trackEvent("session_wizard_step_revisited", {
+        stepId: target.id,
+        fromStep: SESSION_PLANNING_STEPS[currentIndex].id,
+        entrySource: state.meta.entrySource ?? "direct",
+      });
     }
+
+    setCurrentStep(target.id);
   };
 
   const handleMobileSelect = (index: number) => {
     goToStep(index);
     setMobileStepsOpen(false);
+  };
+
+  const handleNextStep = () => {
+    const nextIndex = Math.min(SESSION_PLANNING_STEPS.length - 1, currentIndex + 1);
+    if (nextIndex === currentIndex) return;
+
+    if (meta.currentStep === "schedule") {
+      if (!state.schedule.date || !state.schedule.time) {
+        toast({
+          title: t("validation.missingSchedule"),
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    goToStep(nextIndex);
   };
 
   const currentStepConfig = SESSION_PLANNING_STEPS[currentIndex];
@@ -225,14 +302,7 @@ export const SessionPlanningWizard = ({
                 </Button>
                 {!isLastStep ? (
                   <Button
-                    onClick={() =>
-                      goToStep(
-                        Math.min(
-                          SESSION_PLANNING_STEPS.length - 1,
-                          currentIndex + 1
-                        )
-                      )
-                    }
+                    onClick={handleNextStep}
                     className="w-full sm:w-auto sm:px-8"
                   >
                     {t("wizard.next")}
@@ -254,7 +324,11 @@ export const SessionPlanningWizard = ({
                 key={meta.currentStep}
                 className="animate-in fade-in slide-in-from-bottom-2 rounded-3xl border border-slate-200/70 bg-white/95 p-6 shadow-xl shadow-slate-900/5 backdrop-blur"
               >
-                <CurrentStepComponent />
+                {meta.currentStep === "project" ? (
+                  <ProjectStep onContinue={() => goToStep(Math.min(SESSION_PLANNING_STEPS.length - 1, currentIndex + 1))} />
+                ) : (
+                  <CurrentStepComponent />
+                )}
               </div>
             </div>
           </div>

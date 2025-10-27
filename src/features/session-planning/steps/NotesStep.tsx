@@ -20,6 +20,7 @@ import {
   SavedNotePresetRecord,
 } from "../api/savedResources";
 import { useSessionSavedResources } from "../context/SessionSavedResourcesProvider";
+import { sanitizeNotesInput } from "../utils/sanitizeNotes";
 
 export const NotesStep = () => {
   const { state } = useSessionPlanningContext();
@@ -41,6 +42,14 @@ export const NotesStep = () => {
   });
   const [newPresetOpen, setNewPresetOpen] = useState(false);
   const [presetHydrated, setPresetHydrated] = useState(false);
+
+  useEffect(() => {
+    if (!state.notes) return;
+    const sanitized = sanitizeNotesInput(state.notes);
+    if (sanitized !== state.notes) {
+      updateSessionFields({ notes: sanitized });
+    }
+  }, [state.notes, updateSessionFields]);
 
   useEffect(() => {
     if (!savedNotesLoaded) {
@@ -71,7 +80,7 @@ export const NotesStep = () => {
       ? `${existingNotes}\n\n${addition}`
       : addition;
     updateSessionFields({
-      notes: nextNotes,
+      notes: sanitizeNotesInput(nextNotes),
     });
   };
 
@@ -101,9 +110,11 @@ export const NotesStep = () => {
   const handleSavePreset = async () => {
     if (!canSavePreset) return;
     try {
+      const sanitizedTitle = sanitizeNotesInput(newPreset.title).trim();
+      const sanitizedBody = sanitizeNotesInput(newPreset.body).trim();
       const preset = await createSavedNotePreset({
-        title: newPreset.title.trim(),
-        body: newPreset.body.trim(),
+        title: sanitizedTitle,
+        body: sanitizedBody,
       });
       updateSavedNotes((current) => [preset, ...current]);
       setSavedNotesError(null);
@@ -132,6 +143,9 @@ export const NotesStep = () => {
         <p className="text-sm text-muted-foreground">
           {t("steps.notes.description")}
         </p>
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+          {t("steps.notes.clientFacingHelper")}
+        </div>
       </div>
 
       {savedNotesLoading && savedNotes.length === 0 ? (
@@ -248,7 +262,7 @@ export const NotesStep = () => {
                 onChange={(event) =>
                   setNewPreset((prev) => ({
                     ...prev,
-                    title: event.target.value,
+                    title: sanitizeNotesInput(event.target.value),
                   }))
                 }
               />
@@ -269,7 +283,7 @@ export const NotesStep = () => {
                 onChange={(event) =>
                   setNewPreset((prev) => ({
                     ...prev,
-                    body: event.target.value,
+                    body: sanitizeNotesInput(event.target.value),
                   }))
                 }
               />
@@ -309,7 +323,7 @@ export const NotesStep = () => {
           placeholder={t("steps.notes.notesPlaceholder")}
           onChange={(event) =>
             updateSessionFields({
-              notes: event.target.value,
+              notes: sanitizeNotesInput(event.target.value),
             })
           }
         />

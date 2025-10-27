@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { SessionPlanningProvider } from "../context/SessionPlanningProvider";
 import { SessionSavedResourcesProvider } from "../context/SessionSavedResourcesProvider";
+import { SessionWorkflowProvider, useSessionWorkflowCatalog } from "../context/SessionWorkflowProvider";
 import { useSessionPlanningEntryContext } from "../hooks/useSessionPlanningEntryContext";
 import { SessionPlanningWizard } from "./SessionPlanningWizard";
 import { useSessionPlanningContext } from "../hooks/useSessionPlanningContext";
 import { useSessionPlanningActions } from "../hooks/useSessionPlanningActions";
 import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
 import { SessionPlanningDraft, SessionPlanningEntryContext, SessionPlanningState } from "../types";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
@@ -15,7 +18,8 @@ import { createLead, createProject } from "../api/leadProjectCreation";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2 } from "lucide-react";
+import { CalendarDays, CheckCircle2, Loader2, MapPin, User, Briefcase } from "lucide-react";
+import { trackEvent } from "@/lib/telemetry";
 
 const DRAFT_STORAGE_PREFIX = "session-wizard-draft";
 const DRAFT_VERSION = 1;
@@ -37,6 +41,19 @@ const parseDraft = (raw: string | null): SessionPlanningDraft | null => {
   }
   return null;
 };
+
+interface CompletionSummary {
+  sessionId: string;
+  sessionName: string;
+  sessionDate: string;
+  sessionTime: string;
+  leadName: string;
+  projectId?: string;
+  projectName?: string;
+  location?: string;
+  entrySource?: string;
+  notifications: SessionPlanningState["notifications"];
+}
 
 const prepareStateForDraft = (state: SessionPlanningState, savedAt: string): SessionPlanningState => {
   const clone = JSON.parse(JSON.stringify(state)) as SessionPlanningState;
@@ -81,7 +98,9 @@ export const SessionPlanningWizardSheet = (props: SessionPlanningWizardSheetProp
 
   return (
     <SessionPlanningProvider key={providerKey} entryContext={entryContext}>
-      <SessionPlanningWizardSheetInner {...props} entryContext={entryContext} />
+      <SessionWorkflowProvider>
+        <SessionPlanningWizardSheetInner {...props} entryContext={entryContext} />
+      </SessionWorkflowProvider>
     </SessionPlanningProvider>
   );
 };
@@ -101,13 +120,17 @@ const SessionPlanningWizardSheetInner = ({
   const { t } = useTranslation("sessionPlanning");
   const { triggerSessionScheduled } = useWorkflowTriggers();
   const { scheduleSessionReminders } = useSessionReminderScheduling();
+  const workflowCatalog = useSessionWorkflowCatalog();
   const [showGuardDialog, setShowGuardDialog] = useState(false);
   const [resumeDraft, setResumeDraft] = useState<SessionPlanningDraft | null>(null);
   const [isResolvingEntryContext, setIsResolvingEntryContext] = useState(false);
+  const [completionSummary, setCompletionSummary] = useState<CompletionSummary | null>(null);
   const draftKeyRef = useRef<string | null>(null);
   const skipNextSaveRef = useRef(false);
   const saveTimerRef = useRef<number | null>(null);
   const contextHydratedRef = useRef(false);
+  const wizardOpenedRef = useRef(false);
+  const successTrackedRef = useRef(false);
   const needsProjectLookup = useMemo(
     () => Boolean(entryContext.projectId) && (!entryContext.projectName || !entryContext.leadId),
     [entryContext.projectId, entryContext.projectName, entryContext.leadId]
@@ -121,6 +144,38 @@ const SessionPlanningWizardSheetInner = ({
   const shouldShowContextLoader =
     isOpen &&
     ((needsLeadLookup || needsProjectLookup) && !contextHydratedRef.current || isResolvingEntryContext);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setCompletionSummary(null);
+      wizardOpenedRef.current = false;
+      successTrackedRef.current = false;
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || shouldShowContextLoader || completionSummary) {
+      return;
+    }
+    if (wizardOpenedRef.current) return;
+    wizardOpenedRef.current = true;
+    trackEvent("session_wizard_opened", {
+      entrySource: entryContext.entrySource ?? "direct",
+    });
+  }, [isOpen, shouldShowContextLoader, entryContext.entrySource, completionSummary]);
+
+  useEffect(() => {
+    if (!completionSummary) {
+      successTrackedRef.current = false;
+      return;
+    }
+    if (successTrackedRef.current) return;
+    successTrackedRef.current = true;
+    trackEvent("session_wizard_success_shown", {
+      sessionId: completionSummary.sessionId,
+      entrySource: completionSummary.entrySource ?? "direct",
+    });
+  }, [completionSummary]);
 
   useEffect(() => {
     let cancelled = false;
@@ -267,6 +322,32 @@ const SessionPlanningWizardSheetInner = ({
       setShowGuardDialog(true);
       return;
     }
+    const entrySource = entryContext.entrySource ?? "direct";
+    if (completionSummary) {
+      trackEvent("session_wizard_success_closed", {
+        entrySource,
+        sessionId: completionSummary.sessionId,
+      });
+    } else {
+      trackEvent("session_wizard_abandoned", {
+        entrySource,
+        reason: "closed",
+      });
+    }
+    if (draftKeyRef.current) {
+      localStorage.removeItem(draftKeyRef.current);
+    }
+    reset(entryContext);
+    setCompletionSummary(null);
+    onOpenChange(false);
+  };
+
+  const handleDiscardDraft = () => {
+    setShowGuardDialog(false);
+    trackEvent("session_wizard_abandoned", {
+      entrySource: entryContext.entrySource ?? "direct",
+      reason: "discard_draft",
+    });
     if (draftKeyRef.current) {
       localStorage.removeItem(draftKeyRef.current);
     }
@@ -274,13 +355,29 @@ const SessionPlanningWizardSheetInner = ({
     onOpenChange(false);
   };
 
-  const handleDiscardDraft = () => {
-    setShowGuardDialog(false);
-    if (draftKeyRef.current) {
-      localStorage.removeItem(draftKeyRef.current);
+  const handleSuccessClose = () => {
+    if (completionSummary) {
+      trackEvent("session_wizard_success_closed", {
+        entrySource: completionSummary.entrySource ?? "direct",
+        sessionId: completionSummary.sessionId,
+      });
     }
+    setCompletionSummary(null);
     reset(entryContext);
     onOpenChange(false);
+  };
+
+  const handleScheduleAnother = () => {
+    if (completionSummary) {
+      trackEvent("session_wizard_schedule_another", {
+        entrySource: completionSummary.entrySource ?? "direct",
+        sessionId: completionSummary.sessionId,
+      });
+    }
+    setCompletionSummary(null);
+    successTrackedRef.current = false;
+    wizardOpenedRef.current = false;
+    reset(entryContext);
   };
 
   useEffect(() => {
@@ -327,11 +424,13 @@ const SessionPlanningWizardSheetInner = ({
   }, [state, markSaving, markSaved]);
 
   const handleComplete = async () => {
+    const entrySource = entryContext.entrySource ?? "direct";
     let leadId = state.lead.mode === "existing" ? state.lead.id || entryContext.leadId : undefined;
     let leadName = state.lead.name || entryContext.leadName || "";
     const sessionDate = state.schedule.date || entryContext.defaultDate || "";
     const sessionTime = state.schedule.time || entryContext.defaultTime || "";
     let projectId = state.project.mode === "existing" ? state.project.id || entryContext.projectId : undefined;
+    let projectName = state.project.name || entryContext.projectName || "";
 
     if (state.lead.mode === "new") {
       if (!state.lead.name?.trim()) {
@@ -380,6 +479,7 @@ const SessionPlanningWizardSheetInner = ({
           description: state.project.description
         });
         projectId = newProject.id;
+        projectName = state.project.name ?? projectName;
       } catch (error: any) {
         toast({
           title: t("steps.project.createErrorTitle"),
@@ -424,16 +524,46 @@ const SessionPlanningWizardSheetInner = ({
         }
       );
 
+      const locationSummary = state.locationLabel || state.location || state.meetingUrl || "";
+      const reminderWorkflowIds = workflowCatalog.reminderWorkflows.map((workflow) => workflow.id);
+      const summaryWorkflowIds = workflowCatalog.summaryEmailWorkflows
+        .filter((workflow) => workflow.triggerType === "session_scheduled")
+        .map((workflow) => workflow.id);
+      const otherSessionScheduledWorkflowIds = workflowCatalog.otherWorkflows
+        .filter((workflow) => workflow.triggerType === "session_scheduled")
+        .map((workflow) => workflow.id);
+
+      const workflowPreferences = {
+        reminderWorkflowIds,
+        summaryWorkflowIds,
+        otherWorkflowIds: workflowCatalog.otherWorkflows.map((workflow) => workflow.id),
+      };
+
+      const selectedWorkflowIdsSet = new Set<string>(otherSessionScheduledWorkflowIds);
+      if (state.notifications.sendSummaryEmail) {
+        summaryWorkflowIds.forEach((id) => selectedWorkflowIdsSet.add(id));
+      }
+      const selectedWorkflowIds = Array.from(selectedWorkflowIdsSet);
+
+      const triggerData = {
+        session_date: sessionDate,
+        session_time: sessionTime,
+        location: locationSummary,
+        client_name: leadName,
+        lead_id: leadId,
+        project_id: projectId,
+        status: "planned",
+        notifications: state.notifications,
+        workflow_preferences: {
+          ...workflowPreferences,
+          selectedWorkflowIds,
+        },
+        skip_reminders: !state.notifications.sendReminder,
+        ...(selectedWorkflowIds.length > 0 ? { workflow_ids: selectedWorkflowIds } : {}),
+      };
+
       try {
-        await triggerSessionScheduled(sessionId, organizationId, {
-          session_date: sessionDate,
-          session_time: sessionTime,
-          location: state.location,
-          client_name: leadName,
-          lead_id: leadId,
-          project_id: projectId,
-          status: "planned"
-        });
+        await triggerSessionScheduled(sessionId, organizationId, triggerData, selectedWorkflowIds);
       } catch (workflowError) {
         console.error("Error triggering session workflow", workflowError);
         toast({
@@ -442,10 +572,12 @@ const SessionPlanningWizardSheetInner = ({
         });
       }
 
-      try {
-        await scheduleSessionReminders(sessionId);
-      } catch (reminderError) {
-        console.error("Error scheduling session reminders", reminderError);
+      if (state.notifications.sendReminder) {
+        try {
+          await scheduleSessionReminders(sessionId);
+        } catch (reminderError) {
+          console.error("Error scheduling session reminders", reminderError);
+        }
       }
 
       toast({
@@ -453,12 +585,41 @@ const SessionPlanningWizardSheetInner = ({
         description: t("toast.sessionCreatedDescription")
       });
 
+      trackEvent("session_wizard_confirmed", {
+        entrySource,
+        sessionId,
+        leadId,
+        projectId,
+        hasProject: Boolean(projectId),
+        notifications: { ...state.notifications },
+        workflows: {
+          triggered: selectedWorkflowIds,
+          reminderIds: workflowPreferences.reminderWorkflowIds,
+          summaryIds: workflowPreferences.summaryWorkflowIds,
+          otherIds: workflowPreferences.otherWorkflowIds,
+        },
+      });
+
+      setCompletionSummary({
+        sessionId,
+        sessionName,
+        sessionDate,
+        sessionTime,
+        leadName,
+        projectId,
+        projectName,
+        location: locationSummary,
+        entrySource,
+        notifications: { ...state.notifications },
+      });
+      wizardOpenedRef.current = false;
+      successTrackedRef.current = false;
+
       onSessionScheduled?.();
       if (draftKeyRef.current) {
         localStorage.removeItem(draftKeyRef.current);
       }
       reset(entryContext);
-      onOpenChange(false);
     } catch (error: any) {
       console.error("Error creating session via wizard", error);
       toast({
@@ -486,6 +647,12 @@ const SessionPlanningWizardSheetInner = ({
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             <span>{t("wizard.preparingEntry")}</span>
           </div>
+        ) : completionSummary ? (
+          <SessionPlanningSuccess
+            summary={completionSummary}
+            onClose={handleSuccessClose}
+            onScheduleAnother={handleScheduleAnother}
+          />
         ) : (
           <SessionSavedResourcesProvider>
             <SessionPlanningWizard onCancel={handleClose} onComplete={handleComplete} isCompleting={isCompleting} />
@@ -545,3 +712,100 @@ const SessionPlanningWizardSheetInner = ({
     </>
   );
 };
+
+const SessionPlanningSuccess = ({
+  summary,
+  onClose,
+  onScheduleAnother,
+}: {
+  summary: CompletionSummary;
+  onClose: () => void;
+  onScheduleAnother: () => void;
+}) => {
+  const { t } = useTranslation("sessionPlanning");
+  const scheduleText = useMemo(() => {
+    const parts = [
+      summary.sessionDate || t("summary.values.dateTbd"),
+      summary.sessionTime || t("summary.values.timeTbd"),
+    ];
+    return parts.join(" · ");
+  }, [summary.sessionDate, summary.sessionTime, t]);
+
+  const locationText = summary.location?.trim()
+    ? summary.location
+    : t("summary.values.notSet");
+
+  const projectText = summary.projectName?.trim()
+    ? summary.projectName
+    : t("summary.values.notLinked");
+
+  return (
+    <div className="flex min-h-[360px] flex-col items-center justify-center gap-6 px-6 py-10 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+        <CheckCircle2 className="h-10 w-10" aria-hidden="true" />
+      </div>
+      <div className="space-y-2">
+        <h2 className="text-2xl font-semibold text-slate-900">{t("wizard.successTitle")}</h2>
+        <p className="text-sm text-muted-foreground">
+          {t("wizard.successSubtitle", { name: summary.sessionName })}
+        </p>
+      </div>
+      <div className="w-full max-w-md space-y-3 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm">
+        <SuccessDetail
+          icon={<CalendarDays className="h-4 w-4" aria-hidden="true" />}
+          label={t("summary.labels.schedule")}
+          value={scheduleText}
+        />
+        <SuccessDetail
+          icon={<User className="h-4 w-4" aria-hidden="true" />}
+          label={t("summary.labels.lead")}
+          value={summary.leadName}
+        />
+        <SuccessDetail
+          icon={<Briefcase className="h-4 w-4" aria-hidden="true" />}
+          label={t("summary.labels.project")}
+          value={projectText}
+        />
+        <SuccessDetail
+          icon={<MapPin className="h-4 w-4" aria-hidden="true" />}
+          label={t("summary.labels.location")}
+          value={locationText}
+        />
+        <p className="rounded-lg bg-slate-50 p-3 text-xs text-muted-foreground">
+          {t("wizard.successNotifications", {
+            reminders: t(summary.notifications.sendReminder ? "summary.status.on" : "summary.status.off"),
+            summaryEmail: t(summary.notifications.sendSummaryEmail ? "summary.status.on" : "summary.status.off"),
+          })}
+        </p>
+      </div>
+      <div className="flex w-full max-w-md flex-col gap-3 sm:flex-row">
+        <Button className="w-full sm:flex-1" onClick={onScheduleAnother}>
+          {t("wizard.successScheduleAnother")}
+        </Button>
+        <Button variant="outline" className="w-full sm:w-auto" onClick={onClose}>
+          {t("wizard.successClose")}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+const SuccessDetail = ({
+  icon,
+  label,
+  value,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+}) => (
+  <div className="flex items-start gap-3">
+    <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+      {icon}
+    </div>
+    <div className="space-y-1">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="text-sm font-medium text-slate-900">{value}</p>
+    </div>
+  </div>
+);

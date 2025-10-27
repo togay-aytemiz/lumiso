@@ -2,7 +2,7 @@
 
 ## Objectives
 - Deliver the progressive, context-aware session planning wizard described in `docs/session-planning-roadmap.md`.
-- Ship a lo-fi prototype first (Storybook or lightweight page) to validate flow, context resolution, and copy scaffolding before high-fidelity polish.
+- Keep the production wizard polished and in sync with design while continuing to reuse the validated prototype learnings.
 - Preserve current entry surfaces (lead, project, dashboard actions) while swapping the underlying UI for the new wizard.
 
 ## High-Level Architecture
@@ -21,13 +21,13 @@
 - Validation composed per step: synchronous functions returning error maps; async validation (e.g., conflict detection) handled via explicit `validateStep` action.
 
 ## Step Breakdown
-1. **LeadStep** — search/select existing lead, or inline create (scoped to lo-fi: existing search only, stub create button).
+1. **LeadStep** — search/select existing lead, or inline create.
 2. **ProjectStep** — choose existing or create; handle optional paths when lead-only flow allowed.
 3. **SessionTypeStep** — fetch system session types, display recommended default, and keep auto-generated names in sync.
-4. **LocationStep** — address book picker + manual entry, meeting URL validation, favoring one-click selection for common spots. *(Local storage fallback until Supabase table ships.)*
-5. **ScheduleStep** — timezone-aware date/time pickers, quick offsets, conflict warnings (lo-fi stubbed).
-6. **NotesStep** — markdown-limited textarea, saved note presets for reusable guidance, character count, CRM feed preview (lo-fi optional). *(Presets persist in local storage for now.)*
-7. **SummaryStep** — review card with edit shortcuts, notification preview, final confirm CTA.
+4. **LocationStep** — address book picker + manual entry, meeting URL validation, and client-facing helper messaging. *(Local storage fallback until Supabase table ships.)*
+5. **ScheduleStep** — timezone-aware date/time pickers with required inputs, quick offsets, conflict warnings (backend flag still pending).
+6. **NotesStep** — markdown-friendly textarea with sanitisation, saved note presets for reusable guidance, CRM feed preview when enabled.
+7. **SummaryStep** — review card with edit shortcuts, notification preview/workflow summary, final confirm CTA, and success view.
 
 *No standalone Session Details step — session names stay auto-generated from context so the flow remains lean.*
 
@@ -35,7 +35,7 @@
 - CRUD service module `features/session-planning/api.ts` that wraps Supabase RPCs/table calls.
 - Leverage existing `useSessionForm` logic where possible by extracting shared `createSession` service.
 - Introduce typed DTOs for leads/projects/sessions to keep wizard code platform-agnostic.
-- Notification preview uses existing workflow triggers for planned sessions; ensure opt-out toggles map to stored preferences.
+- Notification preview pulls active `session_scheduled` workflows via `SessionWorkflowProvider`; confirmation payload only triggers the selected workflows and flags Supabase to skip reminder scheduling when toggled off.
 - Persist saved locations (`session_saved_locations`) and note presets (`session_saved_note_presets`) via Supabase with row-level security; fall back to local form state only while the network request resolves.
 
 ## Autosave & Draft Handling *(Postponed)*
@@ -79,7 +79,7 @@
 - Determine minimal viable notification preview scope for pilot.
 - Define telemetry payloads for the new lead/project sheet launches (so we can measure adoption).
 
-- [ ] Add Storybook (or temporary route) harness to demo the lo-fi wizard with mocked data.
+- [ ] Maintain Storybook (or temporary route) harness to demo the wizard with mocked data.
 
 ## Current Focus
 - Lead/project context resolver sharing across entry points.
@@ -92,7 +92,7 @@
 - ✅ Session type selector now ships with recommended default, tooltips, and keyboard focus management (Feb 19).
 
 ## Design & UI Follow-Up
-- Transition the wizard shell and steps from lo-fi placeholders to production-ready UI adhering to Lumiso design system tokens. *(Initial pass shipped: dual-column layout with persistent summary sidebar and updated step cards.)*
+- Continue refining the wizard shell and steps to adhere to Lumiso design system tokens. *(Initial pass shipped: dual-column layout with persistent summary sidebar and updated step cards.)*
 - Partner with design to lock hi-fi mocks (states, breakpoints, motion) before final styling pass.
 - Introduce reusable UI primitives (step cards, summary tiles, address book list) so future teams can compose consistent flows.
 - Ensure address book and saved-note selectors stay extremely lightweight (default highlights + single action to apply).

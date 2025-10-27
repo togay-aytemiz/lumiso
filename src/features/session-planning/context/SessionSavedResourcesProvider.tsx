@@ -13,6 +13,7 @@ import {
   type SavedLocationRecord,
   type SavedNotePresetRecord,
 } from "../api/savedResources";
+import { sanitizeNotesInput } from "../utils/sanitizeNotes";
 
 interface ResourceState<T> {
   items: T[];
@@ -97,8 +98,12 @@ export const SessionSavedResourcesProvider = ({ children }: { children: ReactNod
     }));
     try {
       const data = await fetchSavedNotePresets();
+      const sanitized = data.map((preset) => ({
+        ...preset,
+        body: sanitizeNotesInput(preset.body),
+      }));
       setNotesState({
-        items: data,
+        items: sanitized,
         loading: false,
         error: null,
         hasLoaded: true,
@@ -136,7 +141,10 @@ export const SessionSavedResourcesProvider = ({ children }: { children: ReactNod
     (updater: (current: SavedNotePresetRecord[]) => SavedNotePresetRecord[]) => {
       setNotesState((prev) => ({
         ...prev,
-        items: updater(prev.items),
+        items: updater(prev.items).map((preset) => ({
+          ...preset,
+          body: sanitizeNotesInput(preset.body),
+        })),
       }));
     },
     []

@@ -17,7 +17,7 @@ interface ProjectOption {
   name: string;
 }
 
-export const ProjectStep = () => {
+export const ProjectStep = ({ onContinue }: { onContinue?: () => void } = {}) => {
   const { state } = useSessionPlanningContext();
   const { updateProject } = useSessionPlanningActions();
   const { t } = useTranslation("sessionPlanning");
@@ -192,6 +192,7 @@ export const ProjectStep = () => {
     });
     setDropdownOpen(false);
     setSearchTerm("");
+    onContinue?.();
   };
 
   useEffect(() => {

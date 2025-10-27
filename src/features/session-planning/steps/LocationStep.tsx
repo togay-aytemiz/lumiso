@@ -74,10 +74,24 @@ export const LocationStep = () => {
 
     if (!initialHydrationRef.current) {
       initialHydrationRef.current = true;
+      if (!state.locationId) {
+        const [latestLocation] = [...savedLocations].sort((a, b) =>
+          a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0
+        );
+
+        if (latestLocation) {
+          updateSessionFields({
+            locationId: latestLocation.id,
+            locationLabel: latestLocation.label,
+            location: latestLocation.address,
+            meetingUrl: latestLocation.meetingUrl ?? "",
+          });
+        }
+      }
       setFormMode({ type: "hidden" });
       setCustomOpen(false);
     }
-  }, [savedLocationsLoaded, savedLocations.length]);
+  }, [savedLocationsLoaded, savedLocations.length, savedLocations, state.locationId, updateSessionFields]);
 
   useEffect(() => {
     if (!savedLocationsLoaded) return;
@@ -175,6 +189,15 @@ export const LocationStep = () => {
       toast({
         title: t("steps.location.toastValidationTitle"),
         description: t("steps.location.toastValidationDescription"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (payload.meetingUrl && !/^https?:\/\//i.test(payload.meetingUrl)) {
+      toast({
+        title: t("steps.location.toastValidationTitle"),
+        description: t("steps.location.invalidMeetingUrl"),
         variant: "destructive",
       });
       return;
@@ -531,6 +554,9 @@ export const LocationStep = () => {
         <p className="text-sm text-muted-foreground">
           {t("steps.location.description")}
         </p>
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+          {t("steps.location.clientFacingHelper")}
+        </div>
       </div>
 
       {renderSavedLocations()}

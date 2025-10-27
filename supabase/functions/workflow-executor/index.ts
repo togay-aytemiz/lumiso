@@ -169,7 +169,6 @@ async function triggerWorkflows(supabase: any, triggerData: {
   console.log(`Looking for workflows with trigger: ${trigger_type} in org: ${organization_id}`);
   console.log(`Trigger data:`, JSON.stringify(trigger_data));
 
-  // If trigger_data contains a specific workflow_id, only execute that workflow
   let workflowQuery = supabase
     .from('workflows')
     .select('*')
@@ -177,11 +176,24 @@ async function triggerWorkflows(supabase: any, triggerData: {
     .eq('organization_id', organization_id)
     .eq('is_active', true);
 
-  // CRITICAL FIX: If trigger_data has workflow_id, only execute that specific workflow
-  const targetedWorkflowId = trigger_data?.workflow_id as string | undefined;
-  if (targetedWorkflowId) {
-    console.log(`Executing specific workflow: ${targetedWorkflowId}`);
-    workflowQuery = workflowQuery.eq('id', targetedWorkflowId);
+  const targetedWorkflowIds = new Set<string>();
+  const registerWorkflowId = (value: unknown) => {
+    if (typeof value === 'string' && value.trim().length > 0) {
+      targetedWorkflowIds.add(value.trim());
+    }
+  };
+
+  registerWorkflowId(trigger_data?.workflow_id);
+  if (Array.isArray(trigger_data?.workflow_ids)) {
+    for (const value of trigger_data.workflow_ids) {
+      registerWorkflowId(value);
+    }
+  }
+
+  if (targetedWorkflowIds.size > 0) {
+    const ids = Array.from(targetedWorkflowIds);
+    console.log(`Executing specific workflow set: ${ids.join(', ')}`);
+    workflowQuery = workflowQuery.in('id', ids);
   }
 
   const { data: workflows, error: workflowsError } = await workflowQuery;
@@ -198,8 +210,13 @@ async function triggerWorkflows(supabase: any, triggerData: {
 
   console.log(`Found ${workflows.length} matching workflows`);
 
+  const shouldHandleSessionScheduling = trigger_type === 'session_scheduled' && trigger_entity_type === 'session';
+  const skipReminders =
+    shouldHandleSessionScheduling &&
+    (trigger_data?.skip_reminders === true || trigger_data?.notifications?.sendReminder === false);
+
   // Special handling for session_scheduled trigger - schedule future reminders
-  if (trigger_type === 'session_scheduled' && trigger_entity_type === 'session') {
+  if (shouldHandleSessionScheduling && !skipReminders) {
     try {
       console.log(`Scheduling session reminders for session: ${trigger_entity_id}`);
       const { error: schedulingError } = await supabase.rpc('schedule_session_reminders', {
@@ -216,11 +233,13 @@ async function triggerWorkflows(supabase: any, triggerData: {
       console.error('Failed to schedule session reminders:', error);
       // Don't throw - continue with workflow execution
     }
+  } else if (shouldHandleSessionScheduling && skipReminders) {
+    console.log(`Skipping reminder scheduling for session ${trigger_entity_id} due to client preference.`);
   }
 
   const executions = [];
   const duplicateFingerprints = new Set();
-  const forceTriggerExecution = Boolean(targetedWorkflowId);
+  const forceTriggerExecution = targetedWorkflowIds.size > 0;
 
   // Create workflow executions for matching workflows
   for (const workflow of workflows) {

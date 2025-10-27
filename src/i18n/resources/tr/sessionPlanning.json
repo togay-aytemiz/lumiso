@@ -7,6 +7,16 @@
     "next": "İleri",
     "confirm": "Seansı onayla",
     "confirming": "Onaylanıyor...",
+    "successTitle": "Seans planlandı!",
+    "successSubtitle": "Devamını biz hallederiz. {{name}} takvime eklendi.",
+    "successNotifications": "Bildirimler — Hatırlatmalar: {{reminders}} • Özet e-postası: {{summaryEmail}}",
+    "successScheduleAnother": "Yeni seans planla",
+    "successClose": "Kapat",
+    "successTitle": "Seans planlandı!",
+    "successSubtitle": "Devamını biz hallederiz. {{name}} takvime eklendi.",
+    "successNotifications": "Bildirimler — Hatırlatmalar: {{reminders}} • Özet e-postası: {{summaryEmail}}",
+    "successScheduleAnother": "Yeni seans planla",
+    "successClose": "Kapat",
     "discardPrompt": "Seans taslağı silinsin mi?",
     "preparingEntry": "Başlangıç verileri yükleniyor..."
   },
@@ -129,10 +139,10 @@
     },
     "location": {
       "navigationLabel": "Konum",
-      "description": "Seansın nerede gerçekleşeceğini yazın. Sonraki sürümlerde adres defteri ve toplantı linkleri bağlanacak.",
+      "description": "Seansın nerede gerçekleşeceğini yazın ve müşteriyle paylaşılacak bilgileri doğrulayın.",
       "addressLabel": "Adres veya mekan",
       "addressPlaceholder": "Örnek Mah. 123, İstanbul",
-      "meetingUrlLabel": "Toplantı URL'si (lo-fi)",
+      "meetingUrlLabel": "Toplantı URL'si (isteğe bağlı)",
       "meetingUrlPlaceholder": "https://",
       "savedHeading": "Kaydedilen konumlar",
       "clearSelection": "Temizle",
@@ -166,11 +176,13 @@
       "toastErrorTitle": "Konum kaydedilemedi",
       "toastErrorDescription": "Lütfen bağlantınızı kontrol edip tekrar deneyin.",
       "toastValidationTitle": "Eksik bilgi",
-      "toastValidationDescription": "Konumu kaydetmek için etiket ve adres ekleyin."
+      "toastValidationDescription": "Konumu kaydetmek için etiket ve adres ekleyin.",
+      "clientFacingHelper": "Bu konum hatırlatıcılarda ve özet e-postalarında müşteriye iletilir.",
+      "invalidMeetingUrl": "Toplantı bağlantısı http:// veya https:// ile başlamalı."
     },
     "schedule": {
       "navigationLabel": "Tarih ve saat",
-      "description": "Bir tarih ve başlangıç saati seçin. Gelecek sürümlerde çakışma kontrolü ve hızlı kaydırmalar eklenecek.",
+      "description": "Bir tarih ve başlangıç saati seçin. Devam etmeden önce ikisi de zorunludur.",
       "dateLabel": "Tarih",
       "timeLabel": "Başlangıç saati",
       "timezoneLabel": "Saat dilimi",
@@ -178,7 +190,7 @@
     },
     "notes": {
       "navigationLabel": "Notlar",
-      "description": "Gelecekte kişi veya proje zaman çizelgesine senkronlanacak isteğe bağlı notları girin.",
+      "description": "Kişi veya proje zaman çizelgesine senkronlanacak isteğe bağlı notları girin.",
       "notesLabel": "Notlar",
       "notesPlaceholder": "Hazırlık listesi, hatırlatıcılar veya müşteri tercihleri.",
       "savedHeading": "Kaydedilen notlar",
@@ -200,11 +212,12 @@
       "toastDeletedTitle": "Not silindi",
       "toastDeletedDescription": "Artık hızlı listede görünmeyecek.",
       "toastErrorTitle": "Not kaydedilemedi",
-      "toastErrorDescription": "Lütfen daha sonra tekrar deneyin."
+      "toastErrorDescription": "Lütfen daha sonra tekrar deneyin.",
+      "clientFacingHelper": "Notlar müşteri iletişiminde paylaşılır. Kısa ve net tutun."
     },
     "summary": {
       "navigationLabel": "Özet",
-      "description": "Taslak oturumun hızlı özeti. Bu lo-fi sürümde düzenlemek için adım çubuğunu kullanın."
+      "description": "Planı onaylamadan önce hızla gözden geçirin ve gerekirse düzenleyin."
     }
   },
   "summary": {
@@ -226,8 +239,35 @@
       "empty": "—"
     },
     "notifications": {
+      "title": "Bildirimler",
+      "subtitle": "Müşterinize otomatik iletilecek güncellemeleri seçin.",
       "reminders": "Hatırlatıcılar",
-      "summaryEmail": "Özet e-postası"
+      "remindersDescription": "Seans başlamadan önce hatırlatma gönder.",
+      "summary": "Özet",
+      "summaryDescription": "Rezervasyonu onayladıktan sonra seans ayrıntılarını otomatik gönder.",
+      "switchLabel": "{{notification}} ayarını değiştir",
+      "workflowHeading": "Çalışacak iş akışları",
+      "workflowLoading": "İş akışları yükleniyor...",
+      "workflowNoneConfigured": "Bu bildirim için henüz bir iş akışı tanımlanmadı.",
+      "workflowMissingReminder": "Hatırlatıcı açık ancak hatırlatma iş akışı tanımlı değil.",
+      "workflowMissingSummary": "Özet açık ancak özet iş akışı tanımlı değil.",
+      "workflowOptOut": "Yukarıdan kapatıldığı için çalıştırılmayacak.",
+      "workflowTags": {
+        "reminder": "Hatırlatma",
+        "summary": "Özet",
+        "other": "Otomasyon"
+      },
+      "workflowTiming": {
+        "immediate": "Planlama tamamlanır tamamlanmaz çalışır.",
+        "minutes": "Başlangıçtan {{count}} dakika önce çalışır.",
+        "minutes_plural": "Başlangıçtan {{count}} dakika önce çalışır.",
+        "hours": "Başlangıçtan {{count}} saat önce çalışır.",
+        "hours_plural": "Başlangıçtan {{count}} saat önce çalışır.",
+        "days": "Başlangıçtan {{count}} gün önce çalışır.",
+        "days_plural": "Başlangıçtan {{count}} gün önce çalışır."
+      },
+      "manageHelp": "Farklı bir düzen mi lazım?",
+      "manageLink": "İş akışlarını yönet"
     },
     "status": {
       "on": "Açık",

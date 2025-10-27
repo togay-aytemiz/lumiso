@@ -74,13 +74,24 @@ export function useWorkflowTriggers() {
   };
 
   // Session-specific triggers
-  const triggerSessionScheduled = (sessionId: string, organizationId: string, sessionData?: any) => {
-    return triggerWorkflow('session_scheduled', 'session', sessionId, organizationId, {
+  const triggerSessionScheduled = (
+    sessionId: string,
+    organizationId: string,
+    sessionData?: any,
+    workflowIds?: string[]
+  ) => {
+    const payload: Record<string, unknown> = {
       session_date: sessionData?.session_date,
       session_time: sessionData?.session_time,
       location: sessionData?.location,
-      ...sessionData
-    });
+      ...sessionData,
+    };
+
+    if (Array.isArray(workflowIds) && workflowIds.length > 0) {
+      payload.workflow_ids = workflowIds;
+    }
+
+    return triggerWorkflow('session_scheduled', 'session', sessionId, organizationId, payload);
   };
 
   const triggerSessionCompleted = (sessionId: string, organizationId: string, sessionData?: any) => {

@@ -7,6 +7,11 @@
     "next": "Next",
     "confirm": "Confirm session",
     "confirming": "Confirming...",
+    "successTitle": "Session scheduled!",
+    "successSubtitle": "We’ll take it from here. {{name}} is on the calendar.",
+    "successNotifications": "Notifications — Reminders: {{reminders}} • Summary email: {{summaryEmail}}",
+    "successScheduleAnother": "Schedule another session",
+    "successClose": "Close",
     "discardPrompt": "Discard session draft?",
     "preparingEntry": "Loading launch context…"
   },
@@ -129,10 +134,10 @@
     },
     "location": {
       "navigationLabel": "Location",
-      "description": "Capture where the session happens. Future iterations will connect to the address book and meeting links.",
+      "description": "Capture where the session happens and confirm the client-facing details.",
       "addressLabel": "Address or venue",
       "addressPlaceholder": "123 Main Street, Springfield",
-      "meetingUrlLabel": "Meeting URL (lo-fi placeholder)",
+      "meetingUrlLabel": "Meeting URL (optional)",
       "meetingUrlPlaceholder": "https://",
       "savedHeading": "Saved locations",
       "clearSelection": "Clear",
@@ -166,11 +171,13 @@
       "toastErrorTitle": "Unable to save location",
       "toastErrorDescription": "Please try again or check your connection.",
       "toastValidationTitle": "Fill in the basics",
-      "toastValidationDescription": "Add a label and address to keep this location handy."
+      "toastValidationDescription": "Add a label and address to keep this location handy.",
+      "clientFacingHelper": "Clients will see this location in reminders and summary emails.",
+      "invalidMeetingUrl": "Meeting link must start with http:// or https://"
     },
     "schedule": {
       "navigationLabel": "Date & time",
-      "description": "Pick a date and start time. Later revisions will include conflict detection, quick offsets, and calendar previews.",
+      "description": "Pick a date and start time. Both are required before you can continue.",
       "dateLabel": "Date",
       "timeLabel": "Start time",
       "timezoneLabel": "Timezone",
@@ -178,7 +185,7 @@
     },
     "notes": {
       "navigationLabel": "Notes",
-      "description": "Add optional notes that will sync to the lead or project timeline in future versions.",
+      "description": "Add optional notes that will sync to the lead or project timeline.",
       "notesLabel": "Notes",
       "notesPlaceholder": "Prep checklist, reminders, or client preferences.",
       "savedHeading": "Saved notes",
@@ -200,11 +207,12 @@
       "toastDeletedTitle": "Note removed",
       "toastDeletedDescription": "It will no longer appear in your quick picks.",
       "toastErrorTitle": "Unable to save note",
-      "toastErrorDescription": "Please try again in a moment."
+      "toastErrorDescription": "Please try again in a moment.",
+      "clientFacingHelper": "Notes are shared in client communications. Keep them short and clear."
     },
     "summary": {
       "navigationLabel": "Summary",
-      "description": "Quick snapshot of the draft session. Use the stepper to make edits in this lo-fi build."
+      "description": "Review the plan and make final edits before confirming."
     }
   },
   "summary": {
@@ -226,8 +234,35 @@
       "empty": "\u2014"
     },
     "notifications": {
+      "title": "Notifications",
+      "subtitle": "Choose which updates we send automatically to your client.",
       "reminders": "Reminders",
-      "summaryEmail": "Summary email"
+      "remindersDescription": "Send a reminder before the session starts.",
+      "summary": "Summary",
+      "summaryDescription": "Send the session details right after you confirm the booking.",
+      "switchLabel": "Toggle {{notification}}",
+      "workflowHeading": "Workflows triggered",
+      "workflowLoading": "Loading available workflows...",
+      "workflowNoneConfigured": "No workflows are configured for this notification yet.",
+      "workflowMissingReminder": "Reminders are enabled, but no reminder workflows are configured.",
+      "workflowMissingSummary": "Summary is enabled, but no summary workflows are configured.",
+      "workflowOptOut": "Disabled above, so we will not run it.",
+      "workflowTags": {
+        "reminder": "Reminder",
+        "summary": "Summary",
+        "other": "Automation"
+      },
+      "workflowTiming": {
+        "immediate": "Runs immediately after scheduling.",
+        "minutes": "Runs {{count}} minute before start.",
+        "minutes_plural": "Runs {{count}} minutes before start.",
+        "hours": "Runs {{count}} hour before start.",
+        "hours_plural": "Runs {{count}} hours before start.",
+        "days": "Runs {{count}} day before start.",
+        "days_plural": "Runs {{count}} days before start."
+      },
+      "manageHelp": "Need a different cadence?",
+      "manageLink": "Manage workflows"
     },
     "status": {
       "on": "On",

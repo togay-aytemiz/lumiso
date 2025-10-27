@@ -1,6 +1,7 @@
 {
   "wizard": {
     "title": "Plan session",
+    "subtitle": "Build a polished plan by working through each stage.",
     "cancel": "Cancel",
     "back": "Back",
     "next": "Next",
@@ -17,6 +18,11 @@
     "sessionCreationFailedDescription": "Please review the form and try again.",
     "sessionWorkflowWarningTitle": "Session scheduled",
     "sessionWorkflowWarningDescription": "Notifications may be delayed. Check automation settings."
+  },
+  "stepper": {
+    "progressLabel": "Step {{current}} of {{total}}",
+    "showSteps": "Show steps",
+    "hideSteps": "Hide steps"
   },
   "validation": {
     "missingLead": "Select or create a lead before confirming.",
@@ -80,7 +86,39 @@
         "wedding": "Wedding",
         "other": "Other"
       },
+      "suggestedBadge": "Default",
       "optionDescription": "Demo copy \u2014 real labels will come from session settings.",
+      "fallbackDescription": "Update this session type in settings to add a helpful summary.",
+      "listHeading": "Available session types",
+      "emptyTitle": "No session types configured",
+      "emptyDescription": "Add or enable session types from Settings \u2192 Services to keep planning moving.",
+      "manageLink": "Open session types settings",
+      "optionDescriptions": {
+        "consultation": {
+          "helper": "Recommended for discovery calls or planning meetings.",
+          "tooltip": "Use this when you want to log a planning or discovery conversation with a client."
+        },
+        "portrait": {
+          "helper": "Great for studio or on-location portrait shoots.",
+          "tooltip": "Track individual or family portrait sessions with this option."
+        },
+        "wedding": {
+          "helper": "Designed for full wedding coverage or key-day events.",
+          "tooltip": "Select this when scheduling ceremonies, receptions, or wedding-day touchpoints."
+        },
+        "other": {
+          "helper": "Catch-all for custom or experimental experiences.",
+          "tooltip": "Pick this when none of the predefined session types fit what you\u2019re planning."
+        }
+      },
+      "moreInfo": "What\u2019s included in {{option}}?",
+      "duration": {
+        "hours_one": "{{count}} hour",
+        "hours_other": "{{count}} hours",
+        "minutes_one": "{{count}} minute",
+        "minutes_other": "{{count}} minutes",
+        "notSet": "Duration not set"
+      },
       "clear": "Clear selection"
     },
     "details": {
@@ -145,20 +183,11 @@
       "off": "Off"
     }
   },
-  "summaryPanel": {
-    "title": "Session overview",
-    "subtitle": "Review selections at a glance. Update any step using the edit links.",
-    "status": {
-      "draft": "In progress"
-    },
-    "notificationsHelper": "Keep clients informed with reminders and summary emails.",
-    "reviewButton": "Review selections"
-  },
   "guardrail": {
     "unsavedTitle": "Leave without saving?",
-    "unsavedDescription": "You have a session draft in progress. Keep editing or discard your changes.",
+    "unsavedDescription": "You're in the middle of scheduling a session. Keep editing or discard your changes.",
     "stay": "Keep editing",
-    "discard": "Discard draft"
+    "discard": "Discard changes"
   },
   "draft": {
     "resumeTitle": "Resume saved draft?",

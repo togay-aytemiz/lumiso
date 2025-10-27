@@ -25,8 +25,14 @@ jest.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
+jest.mock("@/lib/featureFlags", () => ({
+  FEATURE_FLAGS: { sessionWizardV1: "sessionWizardV1" },
+  isFeatureEnabled: () => false,
+}));
+
 jest.mock("@/hooks/useTypedTranslation", () => ({
   useFormsTranslation: () => ({ t: (key: string) => key }),
+  useCommonTranslation: () => ({ t: (key: string) => key }),
 }));
 
 jest.mock("react-i18next", () => ({

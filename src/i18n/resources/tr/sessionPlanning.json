@@ -1,6 +1,7 @@
 {
   "wizard": {
     "title": "Seans planla",
+    "subtitle": "Her aşamayı tamamlayarak profesyonel bir plan oluşturun.",
     "cancel": "İptal",
     "back": "Geri",
     "next": "İleri",
@@ -17,6 +18,11 @@
     "sessionCreationFailedDescription": "Lütfen formu kontrol edip tekrar deneyin.",
     "sessionWorkflowWarningTitle": "Seans planlandı",
     "sessionWorkflowWarningDescription": "Bildirimlerde gecikme olabilir. Otomasyon ayarlarını kontrol edin."
+  },
+  "stepper": {
+    "progressLabel": "Adım {{current}} / {{total}}",
+    "showSteps": "Adımları göster",
+    "hideSteps": "Adımları gizle"
   },
   "validation": {
     "missingLead": "Onaylamadan önce lead seçin veya yeni lead oluşturun.",
@@ -80,7 +86,39 @@
         "wedding": "Düğün",
         "other": "Diğer"
       },
+      "suggestedBadge": "Varsayılan",
       "optionDescription": "Demo metin - gerçek etiketler oturum ayarlarından gelecek.",
+      "fallbackDescription": "Bu seans türüne ayrıntı eklemek için ayarlar bölümünden güncelleyin.",
+      "listHeading": "Mevcut seans türleri",
+      "emptyTitle": "Henüz seans türü tanımlanmadı",
+      "emptyDescription": "Planlamaya devam edebilmek için Ayarlar \u2192 Hizmetler bölümünden seans türleri ekleyin veya etkinleştirin.",
+      "manageLink": "Seans türlerini aç",
+      "optionDescriptions": {
+        "consultation": {
+          "helper": "Tanışma ve planlama görüşmeleri için önerilir.",
+          "tooltip": "Müşteriyle tanışma veya planlama görüşmelerini kaydetmek istediğinizde kullanın."
+        },
+        "portrait": {
+          "helper": "Stüdyo veya dış mekanda yapılan portre çekimleri için ideal.",
+          "tooltip": "Bireysel ya da aile portrelerini planlarken bu seçeneği kullanın."
+        },
+        "wedding": {
+          "helper": "Tüm düğün çekimleri veya önemli düğün günü etkinlikleri için.",
+          "tooltip": "Tören, davet ya da düğün günü temaslarını planlarken seçin."
+        },
+        "other": {
+          "helper": "Standart kategorilere uymayan özel deneyimler için.",
+          "tooltip": "Hazırladığınız hizmet türü listede yoksa bu seçeneği seçin."
+        }
+      },
+      "moreInfo": "{{option}} hakkında daha fazla bilgi",
+      "duration": {
+        "hours_one": "{{count}} saat",
+        "hours_other": "{{count}} saat",
+        "minutes_one": "{{count}} dakika",
+        "minutes_other": "{{count}} dakika",
+        "notSet": "Süre belirlenmemiş"
+      },
       "clear": "Seçimi temizle"
     },
     "details": {
@@ -145,20 +183,11 @@
       "off": "Kapalı"
     }
   },
-  "summaryPanel": {
-    "title": "Seans özeti",
-    "subtitle": "Seçimlerinizi hızlıca gözden geçirin. Düzenle bağlantılarıyla istediğiniz adıma dönün.",
-    "status": {
-      "draft": "Taslak"
-    },
-    "notificationsHelper": "Hatırlatıcılar ve özet e-postalarıyla müşterilerinizi haberdar tutun.",
-    "reviewButton": "Seçimleri gözden geçir"
-  },
   "guardrail": {
     "unsavedTitle": "Kaydetmeden çıkılsın mı?",
-    "unsavedDescription": "Bir seans taslağı üzerinde çalışıyorsunuz. Düzenlemeye devam edin veya taslağı silin.",
+    "unsavedDescription": "Bir seans planlaması üzerinde çalışıyorsunuz. Düzenlemeye devam edin veya değişiklikleri silin.",
     "stay": "Düzenlemeye devam et",
-    "discard": "Taslağı sil"
+    "discard": "Değişiklikleri sil"
   },
   "draft": {
     "resumeTitle": "Kaydedilmiş taslağı devam ettirilsin mi?",

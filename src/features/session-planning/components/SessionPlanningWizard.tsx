@@ -1,6 +1,11 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { SESSION_PLANNING_STEPS } from "../state/sessionPlanningReducer";
 import { useSessionPlanningActions } from "../hooks/useSessionPlanningActions";
@@ -14,10 +19,7 @@ import { ScheduleStep } from "../steps/ScheduleStep";
 import { NotesStep } from "../steps/NotesStep";
 import { SummaryStep } from "../steps/SummaryStep";
 import { useTranslation } from "react-i18next";
-import { SessionPlanningSummarySidebar } from "./SessionPlanningSummarySidebar";
-import { Check, PanelRightOpen, Calendar, MapPin, Briefcase, User, Tag } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Card } from "@/components/ui/card";
+import { Check, ChevronDown } from "lucide-react";
 
 interface SessionPlanningWizardProps {
   onCancel: () => void;
@@ -32,32 +34,79 @@ const STEP_COMPONENTS: Record<SessionPlanningStepId, () => JSX.Element> = {
   location: LocationStep,
   schedule: ScheduleStep,
   notes: NotesStep,
-  summary: SummaryStep
+  summary: SummaryStep,
 };
 
-export const SessionPlanningWizard = ({ onCancel, onComplete, isCompleting }: SessionPlanningWizardProps) => {
-  const {
-    state: { meta }
-  } = useSessionPlanningContext();
+export const SessionPlanningWizard = ({
+  onComplete,
+  isCompleting,
+}: SessionPlanningWizardProps) => {
+  const { state } = useSessionPlanningContext();
+  const { meta } = state;
   const { setCurrentStep } = useSessionPlanningActions();
   const { t } = useTranslation("sessionPlanning");
 
-  const currentIndex = useMemo(
-    () => SESSION_PLANNING_STEPS.findIndex((step) => step.id === meta.currentStep),
+  const rawIndex = useMemo(
+    () =>
+      SESSION_PLANNING_STEPS.findIndex((step) => step.id === meta.currentStep),
     [meta.currentStep]
   );
+  const currentIndex = rawIndex < 0 ? 0 : rawIndex;
 
-  const CurrentStepComponent = useMemo(() => STEP_COMPONENTS[meta.currentStep], [meta.currentStep]);
+  const CurrentStepComponent = useMemo(
+    () => STEP_COMPONENTS[meta.currentStep],
+    [meta.currentStep]
+  );
   const isFirstStep = currentIndex <= 0;
-  const isLastStep = currentIndex === SESSION_PLANNING_STEPS.length - 1;
-  const [summaryOpen, setSummaryOpen] = useState(false);
-  const [focusedSummaryStep, setFocusedSummaryStep] = useState<SessionPlanningStepId | undefined>(undefined);
-  const { state } = useSessionPlanningContext();
-  const handleEditStep = (step: SessionPlanningStepId) => {
-    setFocusedSummaryStep(step);
-    setSummaryOpen(false);
-    setCurrentStep(step);
-  };
+  const isLastStep = currentIndex >= SESSION_PLANNING_STEPS.length - 1;
+  const totalSteps = SESSION_PLANNING_STEPS.length;
+  const progressValue =
+    totalSteps === 0 ? 0 : Math.round(((currentIndex + 1) / totalSteps) * 100);
+  const [mobileStepsOpen, setMobileStepsOpen] = useState(false);
+
+  const stepSummaries = useMemo(() => {
+    const toSummary = (value?: string | null) => {
+      const trimmed = value?.trim();
+      return trimmed ? trimmed : undefined;
+    };
+
+    const getScheduleSummary = () => {
+      if (!state.schedule.date && !state.schedule.time) {
+        return undefined;
+      }
+
+      if (state.schedule.date && state.schedule.time) {
+        return `${state.schedule.date} • ${state.schedule.time}`;
+      }
+
+      if (state.schedule.date) {
+        return `${state.schedule.date} • ${t("summary.values.timeTbd")}`;
+      }
+
+      if (state.schedule.time) {
+        return `${t("summary.values.dateTbd")} • ${state.schedule.time}`;
+      }
+
+      return undefined;
+    };
+
+    const trimmedNotes = toSummary(state.notes);
+    const notesSummary = trimmedNotes
+      ? trimmedNotes.length > 80
+        ? `${trimmedNotes.slice(0, 80)}…`
+        : trimmedNotes
+      : undefined;
+
+    return {
+      lead: toSummary(state.lead.name),
+      project: toSummary(state.project.name),
+      sessionType: toSummary(state.sessionTypeLabel),
+      location: toSummary(state.location) ?? toSummary(state.meetingUrl),
+      schedule: getScheduleSummary(),
+      notes: notesSummary,
+      summary: toSummary(state.sessionName),
+    } satisfies Record<SessionPlanningStepId, string | undefined>;
+  }, [state, t]);
 
   const goToStep = (index: number) => {
     const target = SESSION_PLANNING_STEPS[index];
@@ -66,202 +115,246 @@ export const SessionPlanningWizard = ({ onCancel, onComplete, isCompleting }: Se
     }
   };
 
+  const handleMobileSelect = (index: number) => {
+    goToStep(index);
+    setMobileStepsOpen(false);
+  };
+
+  const currentStepConfig = SESSION_PLANNING_STEPS[currentIndex];
+  const currentStepLabel = currentStepConfig
+    ? t(currentStepConfig.labelKey)
+    : "";
+
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex flex-col gap-3 pb-4 px-4">
-        <StepNavigation currentIndex={currentIndex} onSelectStep={goToStep} translate={t} />
-        <SummaryHighlights
-          onReview={() => {
-            setFocusedSummaryStep(undefined);
-            setSummaryOpen(true);
-          }}
-          onSelectStep={(step) => {
-            setFocusedSummaryStep(step);
-            setSummaryOpen(true);
-          }}
-        />
-        <SummaryMiniCards />
-      </div>
-      <Separator />
-      <div className="flex-1 overflow-y-auto py-6 px-4 pb-32">
-        <div className="mx-auto w-full max-w-3xl space-y-6">
-          <CurrentStepComponent />
-        </div>
-      </div>
-      <div className="sticky bottom-0 left-0 right-0 z-10">
-        <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
-          <Separator />
-          <div className="flex flex-col gap-3 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
-            <Button variant="ghost" onClick={onCancel} className="lg:px-6">
-              {t("wizard.cancel")}
-            </Button>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-              <Button
-                variant="outline"
-                onClick={() => goToStep(Math.max(0, currentIndex - 1))}
-                disabled={isFirstStep}
-                className="sm:px-6"
-              >
-                {t("wizard.back")}
-              </Button>
-              {!isLastStep ? (
+    <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-slate-50 lg:p-4">
+      <div className="flex flex-1 flex-col lg:flex-row lg:items-stretch lg:gap-4">
+        <aside className="relative hidden w-full max-w-xs flex-col overflow-hidden bg-slate-950 text-slate-100 lg:flex lg:rounded-3xl xl:max-w-sm">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(79,70,229,0.35),_transparent_55%)]" />
+          <div className="relative flex h-full flex-col gap-8 overflow-y-auto px-6 py-10">
+            <div className="space-y-3">
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-300">
+                {t("stepper.progressLabel", {
+                  current: currentIndex + 1,
+                  total: totalSteps,
+                })}
+              </p>
+              <Progress value={progressValue} className="h-2 bg-white/10" />
+              <p className="text-sm font-medium tracking-tight text-slate-200">
+                {currentStepLabel}
+              </p>
+            </div>
+            <StepList
+              currentIndex={currentIndex}
+              onSelectStep={goToStep}
+              summaries={stepSummaries}
+              translate={t}
+              variant="desktop"
+            />
+          </div>
+        </aside>
+
+        <div className="flex flex-1 min-h-0 flex-col">
+          <div className="border-b border-slate-200 bg-white/90 px-4 py-4 backdrop-blur lg:hidden">
+            <Collapsible
+              open={mobileStepsOpen}
+              onOpenChange={setMobileStepsOpen}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    {t("stepper.progressLabel", {
+                      current: currentIndex + 1,
+                      total: totalSteps,
+                    })}
+                  </p>
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-900">
+                      {currentStepLabel}
+                    </h2>
+                    <p className="text-sm text-slate-600">
+                      {t(`steps.${meta.currentStep}.description`)}
+                    </p>
+                  </div>
+                </div>
+                <CollapsibleTrigger asChild>
+                  <button
+                    type="button"
+                    className="group flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-slate-100"
+                  >
+                    <span>
+                      {mobileStepsOpen
+                        ? t("stepper.hideSteps")
+                        : t("stepper.showSteps")}
+                    </span>
+                    <ChevronDown className="h-4 w-4 transition group-data-[state=open]:rotate-180" />
+                  </button>
+                </CollapsibleTrigger>
+              </div>
+              <Progress value={progressValue} className="mt-4" />
+              <CollapsibleContent className="mt-6 space-y-3">
+                <StepList
+                  currentIndex={currentIndex}
+                  onSelectStep={handleMobileSelect}
+                  summaries={stepSummaries}
+                  translate={t}
+                  variant="mobile"
+                />
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-4 py-10 sm:px-6 lg:px-8">
+            <div className="mx-auto w-full max-w-3xl space-y-6">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
                 <Button
-                  onClick={() => goToStep(Math.min(SESSION_PLANNING_STEPS.length - 1, currentIndex + 1))}
-                  className="sm:px-8"
+                  variant="outline"
+                  onClick={() => goToStep(Math.max(0, currentIndex - 1))}
+                  disabled={isFirstStep}
+                  className="w-full sm:w-auto sm:px-6"
                 >
-                  {t("wizard.next")}
+                  {t("wizard.back")}
                 </Button>
-              ) : (
-                <Button onClick={onComplete} disabled={isCompleting} aria-busy={isCompleting} className="sm:px-8">
-                  {isCompleting ? t("wizard.confirming") : t("wizard.confirm")}
-                </Button>
-              )}
+                {!isLastStep ? (
+                  <Button
+                    onClick={() =>
+                      goToStep(
+                        Math.min(
+                          SESSION_PLANNING_STEPS.length - 1,
+                          currentIndex + 1
+                        )
+                      )
+                    }
+                    className="w-full sm:w-auto sm:px-8"
+                  >
+                    {t("wizard.next")}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={onComplete}
+                    disabled={isCompleting}
+                    aria-busy={isCompleting}
+                    className="w-full sm:w-auto sm:px-8"
+                  >
+                    {isCompleting
+                      ? t("wizard.confirming")
+                      : t("wizard.confirm")}
+                  </Button>
+                )}
+              </div>
+              <div
+                key={meta.currentStep}
+                className="animate-in fade-in slide-in-from-bottom-2 rounded-3xl border border-slate-200/70 bg-white/95 p-6 shadow-xl shadow-slate-900/5 backdrop-blur"
+              >
+                <CurrentStepComponent />
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      <Sheet open={summaryOpen} onOpenChange={setSummaryOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-xl">
-          <SheetHeader>
-            <SheetTitle>{t("summaryPanel.title")}</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6">
-            <SessionPlanningSummarySidebar onEditStep={handleEditStep} focusedStep={focusedSummaryStep} />
-          </div>
-        </SheetContent>
-      </Sheet>
     </div>
   );
 };
 
-interface StepNavigationProps {
+interface StepListProps {
   currentIndex: number;
   onSelectStep: (index: number) => void;
-  translate: (key: string) => string;
+  summaries: Record<SessionPlanningStepId, string | undefined>;
+  translate: (key: string, options?: Record<string, unknown>) => string;
+  variant: "desktop" | "mobile";
 }
 
-const StepNavigation = ({ currentIndex, onSelectStep, translate }: StepNavigationProps) => (
-  <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+const StepList = ({
+  currentIndex,
+  onSelectStep,
+  summaries,
+  translate,
+  variant,
+}: StepListProps) => (
+  <ol
+    className={cn("flex flex-col", variant === "desktop" ? "gap-4" : "gap-3")}
+  >
     {SESSION_PLANNING_STEPS.map((step, index) => {
       const isActive = index === currentIndex;
       const isComplete = index < currentIndex;
+      const summary = summaries[step.id];
+      const description = translate(`steps.${step.id}.description`);
+      const isSummaryStep = step.id === "summary";
+      const supportingText = !isSummaryStep
+        ? summary ?? description
+        : undefined;
+      const alignmentClass = supportingText ? "items-start" : "items-center";
+
       return (
         <li key={step.id}>
           <button
             type="button"
             onClick={() => onSelectStep(index)}
             className={cn(
-              "group flex w-full flex-col items-start rounded-xl border bg-card/70 px-4 py-3 text-left shadow-sm transition-all",
-              isActive
-                ? "border-primary/60 bg-primary/10 shadow-primary/10"
-                : "border-border/70 hover:border-primary/50 hover:bg-primary/5"
+              "group relative flex w-full flex-col overflow-hidden rounded-3xl border px-4 py-4 text-left transition-all",
+              variant === "desktop"
+                ? cn(
+                    "border-white/10 bg-white/5 text-white/90 shadow-sm hover:border-white/30 hover:bg-white/10",
+                    isActive &&
+                      "border-white/60 bg-white/15 shadow-lg shadow-slate-900/20",
+                    isComplete &&
+                      !isActive &&
+                      "border-emerald-400/50 bg-emerald-400/10"
+                  )
+                : cn(
+                    "border-slate-200 bg-white text-slate-900 shadow-sm hover:border-slate-300 hover:bg-slate-50",
+                    isActive && "border-slate-900/20 bg-slate-900/5 shadow-md",
+                    isComplete &&
+                      !isActive &&
+                      "border-emerald-500/40 bg-emerald-100/40"
+                  )
             )}
           >
-            <span
-              className={cn(
-                "mb-2 inline-flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold",
-                isActive
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : isComplete
-                    ? "border-primary/30 bg-primary/10 text-primary"
-                    : "border-border bg-background text-muted-foreground"
-              )}
-            >
-              {isComplete ? <Check className="h-3.5 w-3.5" /> : index + 1}
-            </span>
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {translate(step.labelKey)}
-            </span>
+            <div className={cn("flex gap-3", alignmentClass)}>
+              <span
+                className={cn(
+                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold transition",
+                  variant === "desktop"
+                    ? cn(
+                        "border-white/40 text-white/80",
+                        isActive &&
+                          "border-white bg-white text-slate-900 shadow",
+                        isComplete &&
+                          "border-emerald-300 bg-emerald-400/20 text-emerald-50"
+                      )
+                    : cn(
+                        "border-slate-300 text-slate-600",
+                        isActive && "border-slate-900 bg-slate-900 text-white",
+                        isComplete &&
+                          "border-emerald-400 bg-emerald-500/20 text-emerald-700"
+                      )
+                )}
+              >
+                {isComplete ? <Check className="h-4 w-4" /> : index + 1}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p
+                  className={cn(
+                    "text-sm font-semibold tracking-tight",
+                    variant === "desktop" ? "text-white" : "text-slate-900"
+                  )}
+                >
+                  {translate(step.labelKey)}
+                </p>
+                {supportingText && (
+                  <p
+                    className={cn(
+                      "mt-1 text-xs truncate leading-relaxed",
+                      variant === "desktop" ? "text-white/90" : "text-slate-700"
+                    )}
+                  >
+                    {supportingText}
+                  </p>
+                )}
+              </div>
+            </div>
           </button>
         </li>
       );
     })}
   </ol>
 );
-
-interface SummaryHighlightsProps {
-  onReview: () => void;
-  onSelectStep: (step: SessionPlanningStepId) => void;
-}
-
-const SummaryHighlights = ({ onReview, onSelectStep }: SummaryHighlightsProps) => {
-  const { state } = useSessionPlanningContext();
-  const { t } = useTranslation("sessionPlanning");
-
-  const scheduleLabel = state.schedule.date
-    ? `${state.schedule.date}${state.schedule.time ? ` • ${state.schedule.time}` : ""}`
-    : t("summary.values.notScheduled");
-
-  return (
-    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border/70 bg-muted/30 px-4 py-3 text-sm shadow-sm">
-      <Highlight icon={User} label={state.lead.name || t("summary.values.notSet")} onClick={() => onSelectStep("lead")} />
-      <Highlight icon={Briefcase} label={state.project.name || t("summary.values.notLinked")} onClick={() => onSelectStep("project")} />
-      <Highlight icon={Tag} label={state.sessionTypeLabel || t("summary.values.notSet")} onClick={() => onSelectStep("sessionType")} />
-      <Highlight icon={Calendar} label={scheduleLabel} onClick={() => onSelectStep("schedule")} />
-      <Highlight icon={MapPin} label={state.location || t("summary.values.notSet")} onClick={() => onSelectStep("location")} />
-      <Button variant="ghost" size="sm" className="ml-auto text-xs" onClick={onReview}>
-        <PanelRightOpen className="mr-2 h-3.5 w-3.5" />
-        {t("summaryPanel.reviewButton")}
-      </Button>
-    </div>
-  );
-};
-
-interface HighlightProps {
-  icon: React.ElementType;
-  label: string;
-  onClick: () => void;
-}
-
-const Highlight = ({ icon: Icon, label, onClick }: HighlightProps) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="flex items-center gap-2 rounded-lg border border-transparent px-2 py-1 transition hover:border-primary/40 hover:bg-primary/5"
-  >
-    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
-      <Icon className="h-3.5 w-3.5" />
-    </span>
-    <span className="max-w-[140px] truncate font-medium text-foreground">{label}</span>
-  </button>
-);
-
-const SummaryMiniCards = () => {
-  const { state } = useSessionPlanningContext();
-  const { t } = useTranslation("sessionPlanning");
-
-  const items = [
-    {
-      title: t("summary.labels.lead"),
-      value: state.lead.name
-    },
-    {
-      title: t("summary.labels.project"),
-      value: state.project.name
-    },
-    {
-      title: t("summary.labels.sessionType"),
-      value: state.sessionTypeLabel
-    },
-    {
-      title: t("summary.labels.location"),
-      value: state.location
-    }
-  ].filter((item) => Boolean(item.value));
-
-  if (items.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {items.map((item) => (
-        <Card key={item.title} className="border border-border/70 bg-muted/30 px-4 py-3 text-sm shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{item.title}</p>
-          <p className="mt-1 font-medium text-foreground">{item.value}</p>
-        </Card>
-      ))}
-    </div>
-  );
-};

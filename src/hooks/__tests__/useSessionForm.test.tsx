@@ -20,9 +20,9 @@ jest.mock("@/hooks/useSessionReminderScheduling", () => ({
   }),
 }));
 
-const getUserOrganizationIdMock = jest.fn();
+let getUserOrganizationIdMock: jest.Mock;
 jest.mock("@/lib/organizationUtils", () => ({
-  getUserOrganizationId: getUserOrganizationIdMock,
+  getUserOrganizationId: (...args: unknown[]) => getUserOrganizationIdMock(...args),
 }));
 
 type SupabaseMock = {
@@ -82,7 +82,7 @@ beforeEach(() => {
   scheduleSessionRemindersMock.mockReset();
   triggerSessionScheduledMock.mockResolvedValue({ ok: true });
   scheduleSessionRemindersMock.mockResolvedValue(undefined);
-  getUserOrganizationIdMock.mockResolvedValue("org-1");
+  getUserOrganizationIdMock = jest.fn().mockResolvedValue("org-1");
   supabaseMock.auth.getUser.mockResolvedValue({
     data: { user: { id: "user-1" } },
     error: null,
@@ -218,6 +218,7 @@ describe("useSessionForm", () => {
       notes: "Bring props",
       location: "Studio",
       project_id: null,
+      status: "planned",
     });
 
     expect(triggerSessionScheduledMock).toHaveBeenCalledWith(
@@ -229,7 +230,7 @@ describe("useSessionForm", () => {
         location: " Studio ",
         client_name: "Alice",
         lead_id: "lead-1",
-        project_id: "",
+        project_id: undefined,
         status: "planned",
       })
     );

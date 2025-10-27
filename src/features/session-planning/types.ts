@@ -48,6 +48,8 @@ export interface SessionPlanningState {
   sessionTypeId?: string;
   sessionTypeLabel?: string;
   sessionName?: string;
+  locationId?: string;
+  locationLabel?: string;
   location?: string;
   meetingUrl?: string;
   schedule: SessionPlanningSchedule;

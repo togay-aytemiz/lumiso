@@ -101,7 +101,10 @@ export const SessionPlanningWizard = ({
       lead: toSummary(state.lead.name),
       project: toSummary(state.project.name),
       sessionType: toSummary(state.sessionTypeLabel),
-      location: toSummary(state.location) ?? toSummary(state.meetingUrl),
+      location:
+        toSummary(state.locationLabel) ??
+        toSummary(state.location) ??
+        toSummary(state.meetingUrl),
       schedule: getScheduleSummary(),
       notes: notesSummary,
       summary: toSummary(state.sessionName),
@@ -128,8 +131,14 @@ export const SessionPlanningWizard = ({
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-slate-50 lg:p-0">
       <div className="flex flex-1 flex-col lg:flex-row lg:items-stretch lg:gap-0">
-        <aside className="relative hidden w-full max-w-xs flex-col overflow-hidden bg-slate-950 text-slate-100 lg:flex lg:rounded-3xl xl:max-w-sm">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(79,70,229,0.35),_transparent_55%)]" />
+        <aside className="relative hidden w-full max-w-xs flex-col overflow-hidden text-slate-100 lg:flex lg:rounded-3xl xl:max-w-sm">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+            <div className="absolute -inset-28 opacity-90 blur-3xl bg-[radial-gradient(900px_500px_at_20%_10%,rgba(16,185,129,0.35),transparent_65%),radial-gradient(720px_520px_at_80%_-10%,rgba(6,182,212,0.24),transparent_60%),radial-gradient(880px_680px_at_50%_95%,rgba(59,130,246,0.18),transparent_65%)]" />
+            <div className="absolute -bottom-24 left-6 h-60 w-60 rounded-full bg-emerald-400/35 blur-3xl float-slow" />
+            <div className="absolute top-20 right-4 h-72 w-72 rounded-full bg-cyan-300/25 blur-3xl float-slow [animation-delay:1s]" />
+            <div className="absolute -top-16 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-sky-400/20 blur-3xl float-slow [animation-delay:2.4s]" />
+          </div>
+          <div className="absolute inset-0 bg-slate-950/80" />
           <div className="relative flex h-full flex-col gap-8 overflow-y-auto overflow-x-hidden px-6 py-10">
             <div className="space-y-3">
               <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-300">

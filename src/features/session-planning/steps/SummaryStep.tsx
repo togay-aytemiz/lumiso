@@ -26,7 +26,12 @@ export const SummaryStep = () => {
           <SummaryRow label={t("summary.labels.schedule")} value={renderSchedule(state.schedule, t)} />
           <SummaryRow
             label={t("summary.labels.location")}
-            value={state.location || state.meetingUrl || t("summary.values.notSet")}
+            value={
+              state.locationLabel ||
+              state.location ||
+              state.meetingUrl ||
+              t("summary.values.notSet")
+            }
           />
           <SummaryRow
             label={t("summary.labels.notes")}

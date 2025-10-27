@@ -78,6 +78,7 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 - Location selector acts like an address book: default card, recents, and “Add new” inline form.
 - Keep the address book flow to one tap where possible (default selection, quick add) — no extra review screen.
 - Saved note presets display as quick-pick chips; selecting one immediately applies it to the notes field.
+- Address book and saved notes persist locally for now; plan Supabase sync once backend schema lands.
 - Notification preview card lists each outgoing message (e.g., “Client confirmation — immediately”, “Client reminder — 24h before”). Opt-out toggles remove selected workflows from the create payload.
 - Autosave/draft features postponed — keep manual progress handling for now.
 - Provide success toast + link to session detail upon confirmation. Optionally offer “Plan another session”.

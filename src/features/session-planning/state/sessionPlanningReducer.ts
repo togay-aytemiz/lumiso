@@ -27,6 +27,8 @@ export const createInitialSessionPlanningState = (
     : entryContext.leadName
       ? `${entryContext.leadName} Session`
       : "",
+  locationId: undefined,
+  locationLabel: undefined,
   location: "",
   meetingUrl: "",
   schedule: {

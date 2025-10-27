@@ -24,9 +24,9 @@
 1. **LeadStep** — search/select existing lead, or inline create (scoped to lo-fi: existing search only, stub create button).
 2. **ProjectStep** — choose existing or create; handle optional paths when lead-only flow allowed.
 3. **SessionTypeStep** — fetch system session types, display recommended default, and keep auto-generated names in sync.
-4. **LocationStep** — address book picker + manual entry, meeting URL validation, favoring one-click selection for common spots.
+4. **LocationStep** — address book picker + manual entry, meeting URL validation, favoring one-click selection for common spots. *(Local storage fallback until Supabase table ships.)*
 5. **ScheduleStep** — timezone-aware date/time pickers, quick offsets, conflict warnings (lo-fi stubbed).
-6. **NotesStep** — markdown-limited textarea, saved note presets for reusable guidance, character count, CRM feed preview (lo-fi optional).
+6. **NotesStep** — markdown-limited textarea, saved note presets for reusable guidance, character count, CRM feed preview (lo-fi optional). *(Presets persist in local storage for now.)*
 7. **SummaryStep** — review card with edit shortcuts, notification preview, final confirm CTA.
 
 *No standalone Session Details step — session names stay auto-generated from context so the flow remains lean.*
@@ -36,6 +36,7 @@
 - Leverage existing `useSessionForm` logic where possible by extracting shared `createSession` service.
 - Introduce typed DTOs for leads/projects/sessions to keep wizard code platform-agnostic.
 - Notification preview uses existing workflow triggers for planned sessions; ensure opt-out toggles map to stored preferences.
+- Persist saved locations (`session_saved_locations`) and note presets (`session_saved_note_presets`) via Supabase with row-level security; fall back to local form state only while the network request resolves.
 
 ## Autosave & Draft Handling *(Postponed)*
 - `session_planning_drafts` table (to be added) storing serialized wizard state, version, user, organization, and context keys. *(On hold.)*
@@ -96,3 +97,4 @@
 - Introduce reusable UI primitives (step cards, summary tiles, address book list) so future teams can compose consistent flows.
 - Ensure address book and saved-note selectors stay extremely lightweight (default highlights + single action to apply).
 - Do not reintroduce a dedicated session-details stage unless strong evidence shows it is necessary.
+- Plan Supabase-backed sync for addresses/notes once schemas land so local storage can become a transparent cache.

@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   Collapsible,
   CollapsibleContent,
@@ -14,13 +13,14 @@ import { cn } from "@/lib/utils";
 import {
   createSavedLocation,
   deleteSavedLocation,
-  fetchSavedLocations,
   SavedLocationRecord,
   updateSavedLocation,
 } from "../api/savedResources";
 import { useSessionPlanningContext } from "../hooks/useSessionPlanningContext";
 import { useSessionPlanningActions } from "../hooks/useSessionPlanningActions";
-import { Loader2, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
+import { MapPin, Pencil, Plus, Trash2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useSessionSavedResources } from "../context/SessionSavedResourcesProvider";
 
 type LocationFormMode =
   | { type: "create" }
@@ -30,14 +30,17 @@ type LocationFormMode =
 export const LocationStep = () => {
   const { state } = useSessionPlanningContext();
   const { updateSessionFields } = useSessionPlanningActions();
-  const { t } = useTranslation("sessionPlanning");
+  const { t } = useTranslation(["sessionPlanning", "common"]);
   const { toast } = useToast();
-
-  const [savedLocations, setSavedLocations] = useState<SavedLocationRecord[]>(
-    []
-  );
-  const [loading, setLoading] = useState(true);
-  const [locationsError, setLocationsError] = useState<string | null>(null);
+  const {
+    savedLocations,
+    savedLocationsLoading,
+    savedLocationsError,
+    savedLocationsLoaded,
+    updateSavedLocations,
+    reloadSavedLocations,
+    setSavedLocationsError,
+  } = useSessionSavedResources();
 
   const [formMode, setFormMode] = useState<LocationFormMode>({
     type: "hidden",
@@ -52,42 +55,60 @@ export const LocationStep = () => {
 
   const selectedLocationId = state.locationId;
 
-  useEffect(() => {
-    const loadLocations = async () => {
-      setLoading(true);
-      setLocationsError(null);
-      try {
-        const data = await fetchSavedLocations();
-        setSavedLocations(data);
-        if (data.length === 0) {
-          setFormMode({ type: "create" });
-          setCustomOpen(true);
-        } else {
-          setFormMode({ type: "hidden" });
-          setCustomOpen(false);
-        }
-      } catch (error: any) {
-        console.error("Failed to load saved locations", error);
-        setLocationsError(error?.message ?? "Unable to load locations");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadLocations();
-  }, []);
+  const initialHydrationRef = useRef(false);
+  const customToggleRef = useRef(false);
 
   useEffect(() => {
-    if (savedLocations.length === 0 && formMode.type === "hidden") {
-      setFormMode({ type: "create" });
-      setCustomOpen(true);
+    if (!savedLocationsLoaded) {
+      return;
     }
-  }, [savedLocations.length, formMode.type]);
 
-  useEffect(() => {
     if (savedLocations.length === 0) {
+      customToggleRef.current = false;
+      setFormMode((prev) =>
+        prev.type === "edit" ? prev : { type: "create" }
+      );
       setCustomOpen(true);
+      return;
     }
-  }, [savedLocations.length]);
+
+    if (!initialHydrationRef.current) {
+      initialHydrationRef.current = true;
+      setFormMode({ type: "hidden" });
+      setCustomOpen(false);
+    }
+  }, [savedLocationsLoaded, savedLocations.length]);
+
+  useEffect(() => {
+    if (!savedLocationsLoaded) return;
+    if (!state.locationId) {
+      const hasCustomDraft =
+        (state.location && state.location.trim().length > 0) ||
+        (state.meetingUrl && state.meetingUrl.trim().length > 0);
+      if (hasCustomDraft && !customToggleRef.current) {
+        setCustomOpen(true);
+      }
+    }
+  }, [
+    savedLocationsLoaded,
+    state.locationId,
+    state.location,
+    state.meetingUrl,
+  ]);
+
+  const handleToggleCustom = () => {
+    setCustomOpen((prev) => {
+      const next = !prev;
+      customToggleRef.current = true;
+      if (!prev) {
+        updateSessionFields({
+          locationId: undefined,
+          locationLabel: undefined,
+        });
+      }
+      return next;
+    });
+  };
 
   const resetForm = () => {
     setFormValues({ label: "", address: "", meetingUrl: "" });
@@ -120,7 +141,9 @@ export const LocationStep = () => {
   const handleDeleteLocation = async (id: string) => {
     try {
       await deleteSavedLocation(id);
-      setSavedLocations((current) => current.filter((item) => item.id !== id));
+      updateSavedLocations((current) =>
+        current.filter((item) => item.id !== id)
+      );
       if (state.locationId === id) {
         updateSessionFields({
           locationId: undefined,
@@ -161,13 +184,17 @@ export const LocationStep = () => {
       let location: SavedLocationRecord;
       if (formMode.type === "edit") {
         location = await updateSavedLocation(formMode.id, payload);
-        setSavedLocations((current) =>
+        updateSavedLocations((current) =>
           current.map((item) => (item.id === location.id ? location : item))
         );
       } else {
         location = await createSavedLocation(payload);
-        setSavedLocations((current) => [location, ...current]);
+        updateSavedLocations((current) => {
+          const without = current.filter((item) => item.id !== location.id);
+          return [location, ...without];
+        });
       }
+      setSavedLocationsError(null);
       handleSelectLocation(location);
       resetForm();
       toast({
@@ -197,18 +224,48 @@ export const LocationStep = () => {
   }, [savedLocations]);
 
   const renderSavedLocations = () => {
-    if (loading) {
+    if (savedLocationsLoading && savedLocations.length === 0) {
       return (
-        <div className="flex h-40 items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div
+              key={index}
+              className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+            >
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <div className="flex flex-1 flex-col gap-2">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+              <div className="flex gap-2">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <Skeleton className="h-8 w-8 rounded-full" />
+              </div>
+            </div>
+          ))}
         </div>
       );
     }
 
-    if (locationsError) {
+    if (savedLocationsError) {
       return (
         <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-          {locationsError}
+          <div className="flex items-center justify-between gap-3">
+            <span>{savedLocationsError}</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-3 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => {
+                setSavedLocationsError(null);
+                void reloadSavedLocations();
+              }}
+            >
+              {t("common:tryAgain")}
+            </Button>
+          </div>
         </div>
       );
     }
@@ -411,7 +468,7 @@ export const LocationStep = () => {
               variant="ghost"
               size="sm"
               className="h-7 px-3 text-xs text-muted-foreground hover:text-primary"
-              onClick={() => setCustomOpen(false)}
+              onClick={handleToggleCustom}
             >
               {t("steps.location.closeCustom")}
             </Button>
@@ -479,30 +536,24 @@ export const LocationStep = () => {
       {renderSavedLocations()}
 
       {savedLocations.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           <Button
             variant="outline"
-            size="sm"
+            className="h-11 gap-2"
             onClick={
               formMode.type === "hidden" ? handleStartCreate : resetForm
             }
           >
+            <Plus className="h-4 w-4" />
             {formMode.type === "hidden"
               ? t("steps.location.addButton")
               : t("steps.location.cancel")}
           </Button>
           <Button
+            type="button"
             variant="ghost"
-            size="sm"
-            onClick={() => {
-              setCustomOpen((prev) => !prev);
-              if (!customOpen) {
-                updateSessionFields({
-                  locationId: undefined,
-                  locationLabel: undefined,
-                });
-              }
-            }}
+            className="h-11 px-4 text-sm font-medium text-muted-foreground transition hover:bg-emerald-50 hover:text-emerald-600"
+            onClick={handleToggleCustom}
           >
             {customOpen
               ? t("steps.location.closeCustom")
@@ -512,8 +563,6 @@ export const LocationStep = () => {
       ) : null}
 
       {renderForm()}
-
-      <Separator />
 
       {savedLocations.length === 0 ? (
         <p className="text-xs text-muted-foreground">

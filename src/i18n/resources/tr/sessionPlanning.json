@@ -61,14 +61,14 @@
       "navigationLabel": "Proje",
       "description": "Seansı mevcut bir projeye bağlayın veya yeni bir proje oluşturun.",
       "useExisting": "Mevcut projeyi kullan",
-      "useExistingDescription": "Seçilen lead'e bağlı projelerden seçim yapın.",
+      "useExistingDescription": "Seçilen kişiye bağlı projelerden seçim yapın.",
       "createNew": "Yeni proje oluştur",
-      "createNewDescription": "Bu lead için yeni bir proje başlatın.",
+      "createNewDescription": "Bu kişi için yeni bir proje başlatın.",
       "selectExisting": "Proje seçin",
       "selectPlaceholder": "Proje seçin",
       "selectLeadFirst": "Proje seçmeden önce kişi seçin.",
       "loading": "Projeler yükleniyor...",
-      "noProjects": "Bu lead için proje bulunmuyor.",
+      "noProjects": "Bu kişi için proje bulunmuyor.",
       "searchHeading": "Proje ara",
       "fetchErrorTitle": "Projeler yüklenemedi",
       "createErrorTitle": "Proje oluşturulamadı",
@@ -80,7 +80,8 @@
       "searchPlaceholder": "Proje ara...",
       "noResults": "Bu aramayla eşleşen proje yok.",
       "createButton": "Yeni proje oluştur",
-      "emptyState": "Bu lead için proje bulunmuyor."
+      "emptyState": "Bu kişi için proje bulunmuyor.",
+      "skipButton": "Projeye bağlamadan devam et"
     },
     "sessionType": {
       "navigationLabel": "Seans türü",
@@ -177,7 +178,7 @@
     },
     "notes": {
       "navigationLabel": "Notlar",
-      "description": "Gelecekte lead veya proje zaman çizelgesine senkronlanacak isteğe bağlı notları girin.",
+      "description": "Gelecekte kişi veya proje zaman çizelgesine senkronlanacak isteğe bağlı notları girin.",
       "notesLabel": "Notlar",
       "notesPlaceholder": "Hazırlık listesi, hatırlatıcılar veya müşteri tercihleri.",
       "savedHeading": "Kaydedilen notlar",

@@ -80,7 +80,8 @@
       "searchPlaceholder": "Search projects...",
       "noResults": "No projects match this search.",
       "createButton": "Create new project",
-      "emptyState": "No projects found for this lead."
+      "emptyState": "No projects found for this lead.",
+      "skipButton": "Continue without linking a project"
     },
     "sessionType": {
       "navigationLabel": "Session type",

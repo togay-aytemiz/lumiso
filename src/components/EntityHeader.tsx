@@ -5,64 +5,7 @@ import { ArrowLeft, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-
-const CONNECTOR_WORDS = new Set([
-  "and",
-  "ve",
-  "ile",
-  "with",
-  "und",
-  "the",
-  "of",
-  "for",
-  "da",
-  "de",
-  "del",
-  "della",
-  "van",
-  "von",
-  "bin",
-  "al",
-  "el"
-]);
-
-const MAX_INITIALS = 3;
-
-const buildInitials = (name: string, fallback: string) => {
-  const trimmed = name.trim();
-  if (!trimmed) {
-    return fallback;
-  }
-
-  const tokens = trimmed.match(/\p{L}+/gu) ?? [];
-  const meaningfulTokens = tokens.filter(token => !CONNECTOR_WORDS.has(token.toLowerCase()));
-  const candidates = meaningfulTokens.length > 0 ? meaningfulTokens : tokens;
-
-  if (candidates.length === 0) {
-    return fallback;
-  }
-
-  const initials: string[] = [];
-  for (const token of candidates) {
-    const chars = Array.from(token);
-    const initial = chars[0]?.toUpperCase();
-    if (initial) {
-      initials.push(initial);
-    }
-    if (initials.length >= MAX_INITIALS) {
-      break;
-    }
-  }
-
-  if (initials.length === 0) {
-    const fallbackToken = candidates[0];
-    const fallbackChars = Array.from(fallbackToken).slice(0, MAX_INITIALS).join("").toUpperCase();
-    return fallbackChars || fallback;
-  }
-
-  const combined = initials.join("");
-  return combined || fallback;
-};
+import { computeLeadInitials } from "@/components/LeadInitials";
 
 export interface EntitySummaryItem {
   key: string;
@@ -109,7 +52,7 @@ export function EntityHeader({
   banner
 }: EntityHeaderProps) {
   const displayInitials = useMemo(
-    () => buildInitials(name, fallbackInitials),
+    () => computeLeadInitials(name, fallbackInitials),
     [name, fallbackInitials]
   );
   const hasSubtext = Boolean(subtext);

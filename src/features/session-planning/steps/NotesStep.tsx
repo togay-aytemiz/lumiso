@@ -12,46 +12,51 @@ import { useToast } from "@/components/ui/use-toast";
 import { useSessionPlanningActions } from "../hooks/useSessionPlanningActions";
 import { useSessionPlanningContext } from "../hooks/useSessionPlanningContext";
 import { useTranslation } from "react-i18next";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   createSavedNotePreset,
   deleteSavedNotePreset,
-  fetchSavedNotePresets,
   SavedNotePresetRecord,
 } from "../api/savedResources";
+import { useSessionSavedResources } from "../context/SessionSavedResourcesProvider";
 
 export const NotesStep = () => {
   const { state } = useSessionPlanningContext();
   const { updateSessionFields } = useSessionPlanningActions();
-  const { t } = useTranslation("sessionPlanning");
+  const { t } = useTranslation(["sessionPlanning", "common"]);
   const { toast } = useToast();
-
-  const [savedNotes, setSavedNotes] = useState<SavedNotePresetRecord[]>([]);
+  const {
+    savedNotes,
+    savedNotesLoading,
+    savedNotesError,
+    savedNotesLoaded,
+    updateSavedNotes,
+    reloadSavedNotes,
+    setSavedNotesError,
+  } = useSessionSavedResources();
   const [newPreset, setNewPreset] = useState({
     title: "",
     body: "",
   });
-  const [loading, setLoading] = useState(true);
-  const [presetsError, setPresetsError] = useState<string | null>(null);
   const [newPresetOpen, setNewPresetOpen] = useState(false);
+  const [presetHydrated, setPresetHydrated] = useState(false);
 
   useEffect(() => {
-    const loadPresets = async () => {
-      setLoading(true);
-      setPresetsError(null);
-      try {
-        const data = await fetchSavedNotePresets();
-        setSavedNotes(data);
-        setNewPresetOpen(data.length === 0);
-      } catch (error: any) {
-        console.error("Failed to load note presets", error);
-        setPresetsError(error?.message ?? "Unable to load saved notes");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadPresets();
-  }, []);
+    if (!savedNotesLoaded) {
+      return;
+    }
+
+    if (!presetHydrated) {
+      setPresetHydrated(true);
+      setNewPresetOpen(savedNotes.length === 0);
+      return;
+    }
+
+    if (savedNotes.length === 0) {
+      setNewPresetOpen(true);
+    }
+  }, [savedNotesLoaded, savedNotes.length, presetHydrated]);
 
   const sortedNotes = useMemo(() => {
     return [...savedNotes].sort((a, b) =>
@@ -73,7 +78,7 @@ export const NotesStep = () => {
   const handleDeletePreset = async (presetId: string) => {
     try {
       await deleteSavedNotePreset(presetId);
-      setSavedNotes((current) =>
+      updateSavedNotes((current) =>
         current.filter((preset) => preset.id !== presetId)
       );
       toast({
@@ -100,7 +105,8 @@ export const NotesStep = () => {
         title: newPreset.title.trim(),
         body: newPreset.body.trim(),
       });
-      setSavedNotes((current) => [preset, ...current]);
+      updateSavedNotes((current) => [preset, ...current]);
+      setSavedNotesError(null);
       setNewPreset({ title: "", body: "" });
       setNewPresetOpen(false);
       toast({
@@ -128,13 +134,35 @@ export const NotesStep = () => {
         </p>
       </div>
 
-      {loading ? (
-        <div className="flex h-24 items-center justify-center">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      {savedNotesLoading && savedNotes.length === 0 ? (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-3 w-24 rounded-full" />
+            <Skeleton className="h-3 w-16 rounded-full" />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton key={index} className="h-8 w-28 rounded-full" />
+            ))}
+          </div>
         </div>
-      ) : presetsError ? (
+      ) : savedNotesError ? (
         <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-          {presetsError}
+          <div className="flex items-center justify-between gap-3">
+            <span>{savedNotesError}</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-3 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => {
+                setSavedNotesError(null);
+                void reloadSavedNotes();
+              }}
+            >
+              {t("common:tryAgain")}
+            </Button>
+          </div>
         </div>
       ) : sortedNotes.length > 0 ? (
         <div className="space-y-3">
@@ -175,11 +203,11 @@ export const NotesStep = () => {
             ))}
           </div>
         </div>
-      ) : (
+      ) : savedNotesLoaded ? (
         <p className="text-xs text-muted-foreground">
           {t("steps.notes.noPresets")}
         </p>
-      )}
+      ) : null}
 
       {sortedNotes.length > 0 ? (
         <Button

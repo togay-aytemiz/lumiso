@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 import { useLeadStatuses } from "@/hooks/useOrganizationData";
+import { LeadInitials } from "@/components/LeadInitials";
 
 interface LeadOption {
   id: string;
@@ -177,8 +178,9 @@ export const LeadStep = () => {
             type="button"
             onClick={() => setDropdownOpen((prev) => !prev)}
             className={cn(
-              "group flex h-12 w-full items-center justify-between rounded-xl border bg-border px-4 py-3 text-left font-semibold text-slate-800 shadow-sm transition hover:border-emerald-400/60 focus-visible:ring-2 focus-visible:ring-emerald-300",
-              dropdownOpen && "border-emerald-400/80 shadow-emerald-200"
+              "group flex h-12 w-full items-center justify-between rounded-xl border border-border/70 bg-white px-4 py-3 text-left font-semibold text-slate-900 shadow-sm transition hover:border-emerald-400/70 hover:shadow-md focus-visible:ring-2 focus-visible:ring-emerald-300",
+              dropdownOpen && "border-emerald-400/80 shadow-emerald-200",
+              loading && leadOptions.length === 0 && "cursor-wait opacity-70"
             )}
             disabled={loading && leadOptions.length === 0}
           >
@@ -257,7 +259,7 @@ export const LeadStep = () => {
                             <div className="flex items-center gap-3">
                               <Avatar className="h-9 w-9 border border-border/70 bg-muted shadow-sm">
                                 <AvatarFallback className="text-sm font-semibold uppercase text-slate-700">
-                                  {computeInitials(lead.name || "?")}
+                                  <LeadInitials name={lead.name} fallback="?" maxInitials={2} />
                                 </AvatarFallback>
                               </Avatar>
                               <div className="flex flex-col">
@@ -317,14 +319,6 @@ export const LeadStep = () => {
         )}
       </div>
 
-      {state.lead.name && (
-        <SelectedLeadCard
-          name={state.lead.name}
-          email={state.lead.email}
-          phone={state.lead.phone}
-        />
-      )}
-
       <EnhancedAddLeadDialog
         open={createLeadOpen}
         onOpenChange={setCreateLeadOpen}
@@ -344,12 +338,11 @@ const LeadSummaryPreview = ({
   textColor?: string;
   subtleColor?: string;
 }) => {
-  const initials = computeInitials(lead.name || "?");
   return (
     <div className="flex w-full items-center gap-3">
       <Avatar className="h-9 w-9 border border-border/60 bg-muted shadow-sm">
         <AvatarFallback className="text-xs font-semibold uppercase text-slate-700">
-          {initials}
+          <LeadInitials name={lead.name} fallback="?" maxInitials={2} />
         </AvatarFallback>
       </Avatar>
       <div className="flex flex-col">
@@ -362,32 +355,4 @@ const LeadSummaryPreview = ({
       </div>
     </div>
   );
-};
-
-const SelectedLeadCard = ({ name, email, phone }: { name: string; email?: string | null; phone?: string | null }) => {
-  const initials = computeInitials(name);
-  return (
-    <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/20 px-4 py-3">
-      <Avatar className="h-9 w-9 border">
-        <AvatarFallback className="text-sm font-semibold uppercase">{initials}</AvatarFallback>
-      </Avatar>
-      <div className="space-y-1">
-        <p className="text-sm font-semibold text-foreground">{name}</p>
-        {(email || phone) && (
-          <p className="text-xs text-muted-foreground">{[email, phone].filter(Boolean).join(" • ")}</p>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const computeInitials = (name: string) => {
-  const trimmed = name.trim();
-  if (!trimmed) return "?";
-  const tokens = trimmed.split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) return "?";
-  if (tokens.length === 1) {
-    return tokens[0].slice(0, 2).toUpperCase();
-  }
-  return `${tokens[0][0]}${tokens[1][0]}`.toUpperCase();
 };

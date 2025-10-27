@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { SessionPlanningProvider } from "../context/SessionPlanningProvider";
+import { SessionSavedResourcesProvider } from "../context/SessionSavedResourcesProvider";
 import { useSessionPlanningEntryContext } from "../hooks/useSessionPlanningEntryContext";
 import { SessionPlanningWizard } from "./SessionPlanningWizard";
 import { useSessionPlanningContext } from "../hooks/useSessionPlanningContext";
@@ -486,7 +487,9 @@ const SessionPlanningWizardSheetInner = ({
             <span>{t("wizard.preparingEntry")}</span>
           </div>
         ) : (
-          <SessionPlanningWizard onCancel={handleClose} onComplete={handleComplete} isCompleting={isCompleting} />
+          <SessionSavedResourcesProvider>
+            <SessionPlanningWizard onCancel={handleClose} onComplete={handleComplete} isCompleting={isCompleting} />
+          </SessionSavedResourcesProvider>
         )}
       </AppSheetModal>
 

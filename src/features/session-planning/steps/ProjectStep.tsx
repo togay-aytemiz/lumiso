@@ -26,10 +26,16 @@ export const ProjectStep = () => {
   const [loading, setLoading] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [hasAnyProject, setHasAnyProject] = useState(false);
+  const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
   const latestRequestRef = useRef(0);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const leadId = state.lead.id;
+  const noProjectsAvailable =
+    Boolean(leadId) && hasLoadedInitial && !hasAnyProject;
+  const dropdownDisabled =
+    !leadId || noProjectsAvailable || (loading && projectOptions.length === 0);
 
   useEffect(() => {
     if (!leadId && state.project.id) {
@@ -45,8 +51,11 @@ export const ProjectStep = () => {
   const loadProjects = useCallback(
     async (targetLeadId: string, term: string) => {
       const requestId = ++latestRequestRef.current;
+      const isBaseQuery = term.trim().length === 0;
       if (!targetLeadId) {
         setProjectOptions([]);
+        setHasAnyProject(false);
+        setHasLoadedInitial(false);
         return;
       }
       setLoading(true);
@@ -55,6 +64,10 @@ export const ProjectStep = () => {
         if (!organizationId) {
           if (latestRequestRef.current === requestId) {
             setProjectOptions([]);
+            if (isBaseQuery) {
+              setHasAnyProject(false);
+              setHasLoadedInitial(true);
+            }
           }
           return;
         }
@@ -77,11 +90,19 @@ export const ProjectStep = () => {
 
         if (latestRequestRef.current === requestId) {
           setProjectOptions((data as ProjectOption[]) || []);
+          if (isBaseQuery) {
+            setHasAnyProject(((data as ProjectOption[]) || []).length > 0);
+            setHasLoadedInitial(true);
+          }
         }
       } catch (error: any) {
         console.error("Failed to load projects", error);
         if (latestRequestRef.current === requestId) {
           setProjectOptions([]);
+          if (isBaseQuery) {
+            setHasAnyProject(false);
+            setHasLoadedInitial(true);
+          }
         }
         toast({
           title: t("steps.project.fetchErrorTitle"),
@@ -100,6 +121,8 @@ export const ProjectStep = () => {
   useEffect(() => {
     if (!leadId) {
       setProjectOptions([]);
+      setHasAnyProject(false);
+      setHasLoadedInitial(false);
       return;
     }
     loadProjects(leadId, "");
@@ -160,6 +183,23 @@ export const ProjectStep = () => {
     }
   };
 
+  const handleSkipProject = () => {
+    updateProject({
+      id: undefined,
+      name: "",
+      description: "",
+      mode: "existing",
+    });
+    setDropdownOpen(false);
+    setSearchTerm("");
+  };
+
+  useEffect(() => {
+    if (dropdownOpen && (!leadId || noProjectsAvailable)) {
+      setDropdownOpen(false);
+    }
+  }, [dropdownOpen, leadId, noProjectsAvailable]);
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -179,15 +219,15 @@ export const ProjectStep = () => {
           <Button
             type="button"
             onClick={() => {
-              if (!leadId) return;
+              if (dropdownDisabled) return;
               setDropdownOpen((prev) => !prev);
             }}
             className={cn(
               "group flex h-12 w-full items-center justify-between rounded-xl border-none bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 px-4 py-3 text-left font-semibold text-white shadow-lg shadow-emerald-500/20 transition focus-visible:ring-2 focus-visible:ring-emerald-300",
               dropdownOpen && "ring-2 ring-emerald-300",
-              !leadId && "cursor-not-allowed opacity-60"
+              dropdownDisabled && "cursor-not-allowed opacity-60"
             )}
-            disabled={!leadId || (loading && projectOptions.length === 0)}
+            disabled={dropdownDisabled}
           >
             {selectedProjectOption ? (
               <span className="text-sm font-semibold text-white">
@@ -262,35 +302,44 @@ export const ProjectStep = () => {
           )}
         </div>
 
-        <EnhancedProjectDialog
-          defaultLeadId={leadId || undefined}
-          onProjectCreated={handleProjectCreated}
-          triggerDisabled={!leadId}
-        >
-          <Button
-            variant="outline"
-            className="gap-2"
-            disabled={!leadId}
-          >
-            <FolderPlus className="h-4 w-4" />
-            {t("steps.project.createButton")}
-          </Button>
-        </EnhancedProjectDialog>
+        {noProjectsAvailable && (
+          <div className="rounded-2xl border border-border/70 bg-white px-4 py-6 text-sm text-muted-foreground shadow-sm">
+            {t("steps.project.noProjects")}
+          </div>
+        )}
 
-        {leadId && projectOptions.length === 0 && !loading && (
+        <div className="flex flex-wrap items-center gap-3">
+          <EnhancedProjectDialog
+            defaultLeadId={leadId || undefined}
+            onProjectCreated={handleProjectCreated}
+            triggerDisabled={!leadId}
+          >
+            <Button
+              variant="outline"
+              className="h-11 gap-2"
+              disabled={!leadId}
+            >
+              <FolderPlus className="h-4 w-4" />
+              {t("steps.project.createButton")}
+            </Button>
+          </EnhancedProjectDialog>
+
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-11 px-4 text-sm font-medium text-muted-foreground transition hover:bg-emerald-50 hover:text-emerald-600"
+            onClick={handleSkipProject}
+          >
+            {t("steps.project.skipButton")}
+          </Button>
+        </div>
+
+        {leadId && projectOptions.length === 0 && !loading && !noProjectsAvailable && (
           <p className="text-xs text-muted-foreground">
             {t("steps.project.emptyState")}
           </p>
         )}
       </div>
-
-      {selectedProjectOption && (
-        <div className="rounded-lg border border-border/70 bg-muted/20 px-4 py-3">
-          <p className="text-sm font-semibold text-foreground">
-            {selectedProjectOption.name}
-          </p>
-        </div>
-      )}
     </div>
   );
 };

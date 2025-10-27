@@ -130,7 +130,7 @@ export const SessionPlanningWizard = ({
       <div className="flex flex-1 flex-col lg:flex-row lg:items-stretch lg:gap-0">
         <aside className="relative hidden w-full max-w-xs flex-col overflow-hidden bg-slate-950 text-slate-100 lg:flex lg:rounded-3xl xl:max-w-sm">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(79,70,229,0.35),_transparent_55%)]" />
-          <div className="relative flex h-full flex-col gap-8 overflow-y-auto px-6 py-10">
+          <div className="relative flex h-full flex-col gap-8 overflow-y-auto overflow-x-hidden px-6 py-10">
             <div className="space-y-3">
               <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-300">
                 {t("stepper.progressLabel", {
@@ -153,7 +153,7 @@ export const SessionPlanningWizard = ({
           </div>
         </aside>
 
-        <div className="flex flex-1 min-h-0 flex-col">
+        <div className="flex flex-1 min-h-0 min-w-0 flex-col">
           <div className="border-b border-slate-200 bg-white/90 px-4 py-4 backdrop-blur lg:hidden">
             <Collapsible
               open={mobileStepsOpen}
@@ -191,7 +191,7 @@ export const SessionPlanningWizard = ({
                 </CollapsibleTrigger>
               </div>
               <Progress value={progressValue} className="mt-4" />
-              <CollapsibleContent className="mt-6 space-y-3">
+              <CollapsibleContent className="mt-6 space-y-3 overflow-x-hidden">
                 <StepList
                   currentIndex={currentIndex}
                   onSelectStep={handleMobileSelect}
@@ -271,7 +271,10 @@ const StepList = ({
   variant,
 }: StepListProps) => (
   <ol
-    className={cn("flex flex-col", variant === "desktop" ? "gap-4" : "gap-3")}
+    className={cn(
+      "flex max-w-full flex-col overflow-x-hidden",
+      variant === "desktop" ? "gap-4" : "gap-3"
+    )}
   >
     {SESSION_PLANNING_STEPS.map((step, index) => {
       const isActive = index === currentIndex;
@@ -290,7 +293,7 @@ const StepList = ({
             type="button"
             onClick={() => onSelectStep(index)}
             className={cn(
-              "group relative flex w-full flex-col overflow-hidden rounded-3xl border px-4 py-4 text-left transition-all",
+              "group relative flex w-full max-w-full flex-col overflow-hidden rounded-3xl border px-4 py-4 text-left transition-all",
               variant === "desktop"
                 ? cn(
                     "border-white/10 bg-white/5 text-white/90 shadow-sm hover:border-white/30 hover:bg-white/10",

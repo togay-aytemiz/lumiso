@@ -217,12 +217,12 @@
   },
   "summary": {
     "untitled": "Untitled session",
-    "sectionTitle": "Session summary",
+    "sectionTitle": "Summary",
     "labels": {
       "lead": "Lead",
       "project": "Project",
       "sessionType": "Session type",
-      "schedule": "Schedule",
+      "schedule": "Date & time",
       "location": "Location",
       "notes": "Notes"
     },

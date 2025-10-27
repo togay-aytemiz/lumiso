@@ -222,12 +222,12 @@
   },
   "summary": {
     "untitled": "Adsız seans",
-    "sectionTitle": "Seans özeti",
+    "sectionTitle": "Özet",
     "labels": {
       "lead": "Kişi",
       "project": "Proje",
       "sessionType": "Seans türü",
-      "schedule": "Program",
+      "schedule": "Tarih ve saat",
       "location": "Konum",
       "notes": "Notlar"
     },

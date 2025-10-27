@@ -14,7 +14,7 @@
 ## Guiding Principles
 - Respect reusable component patterns; avoid bespoke wizard logic.
 - No user-facing copy without EN & TR locale updates.
-- Autosave to protect in-progress data and support cross-device continuity.
+ - Autosave/draft versioning postponed for MVP; revisit after core flow hardens.
 - Accessibility first: keyboard navigation, focus management, semantic headings, and ARIA where needed.
 - Lean, observable, testable code: unit coverage for reducers/validators, component tests for steps, and analytics telemetry wired from day one.
 
@@ -23,6 +23,7 @@
 - Lead/project selection or creation within the flow based on entry point.
 - Session type selection with defaults and auto-generated session names (editable).
 - Location handling with address book, last-used defaults, and online meeting URLs.
+- Saved note presets so photographers can reapply common guidance with minimal clicks.
 - Schedule selection with timezone awareness, calendar prefills, and quick actions.
 - Optional notes, summary review, and notification workflow preview with opt-out controls.
 - CRUD APIs and persistence for sessions, addresses, and notification preferences.
@@ -47,11 +48,10 @@
 1. **Lead** — search, filter, or create inline with validation; context banner appears when prefilled.
 2. **Project** — select existing (sorted by recency), create inline, or skip when not required.
 3. **Session Type** — list system-defined types, mark recommended default, include description tooltip.
-4. **Session Details** — auto-name from session type; provide optional edit toggle for custom names.
-5. **Location** — address book picker with inline create/edit; supports physical addresses and meeting URLs.
-6. **Schedule** — date/time pickers with timezone awareness, quick buttons (+30m, +1h), conflict warnings.
-7. **Notes** — optional markdown-limited field; integrate with CRM notes when enabled.
-8. **Summary** — review of selections, edit shortcuts, notification workflow preview, confirmation action.
+4. **Location** — address book picker with inline create/edit; supports physical addresses and meeting URLs with one-tap selection.
+5. **Schedule** — date/time pickers with timezone awareness, quick buttons (+30m, +1h), conflict warnings.
+6. **Notes** — optional markdown-limited field plus saved note presets; integrate with CRM notes when enabled.
+7. **Summary** — review of selections, edit shortcuts, notification workflow preview, confirmation action.
 
 Skipped steps remain accessible from breadcrumbs; analytics record auto-skips for insight.
 
@@ -67,17 +67,19 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 | Topic | Decision | Rationale | Owner | Date |
 | --- | --- | --- | --- | --- |
 | Address verification | Launch with trusted user input; track bounce/invalid rates and revisit vendor integration post-V1. | Keeps scope lean while leaving room for future enrichment. | Codex | 2025-02-14 |
-| Session naming | Default to session type label, keep field editable before confirmation. | Supports custom naming conventions without extra step. | Tayte | 2025-02-14 |
+| Session naming | Default to session type label; skip dedicated edit step unless future research requires. | Keeps flow fast while still delivering sensible names. | Tayte | 2025-02-14 |
 | Notification overrides | Use workflow settings as defaults; allow per-session opt-out toggle before confirmation. | Preserves automation while giving one-off control. | Tayte | 2025-02-14 |
 | Wizard localization | Store wizard copy in dedicated EN/TR `sessionPlanning` namespace and block merges without both translations. | Guarantees copy parity and keeps localization maintainable. | Codex | 2025-02-17 |
 
 ## UX & Interaction Notes
 - Breadcrumb + progress indicator reflect only steps the user touches; skipped steps appear dimmed.
 - Context banners explain prefilled data (“Loaded from Project ‘Autumn Wedding’”).
-- “Show more options” accordions hide advanced fields (e.g., custom session name).
+- “Show more options” accordions hide advanced fields (e.g., notification preferences) to keep the core flow minimal.
 - Location selector acts like an address book: default card, recents, and “Add new” inline form.
+- Keep the address book flow to one tap where possible (default selection, quick add) — no extra review screen.
+- Saved note presets display as quick-pick chips; selecting one immediately applies it to the notes field.
 - Notification preview card lists each outgoing message (e.g., “Client confirmation — immediately”, “Client reminder — 24h before”). Opt-out toggles remove selected workflows from the create payload.
-- Autosave drafts after each step; surface “Draft saved” toast with timestamp.
+- Autosave/draft features postponed — keep manual progress handling for now.
 - Provide success toast + link to session detail upon confirmation. Optionally offer “Plan another session”.
 
 ## Data & API Considerations
@@ -102,7 +104,7 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 - [ ] Define analytics event schema and naming conventions.
 
 ### Phase 1 — Infrastructure & Shared Utilities
-- [ ] Build wizard state manager (React context + reducer) with autosave persistence. *(Reducer/provider shipped; autosave/draft resume landed 2025-02-18; add telemetry/conflict analytics.)*
+- [ ] Build wizard state manager (React context + reducer). *(Reducer/provider shipped; autosave/draft layer deferred until post-MVP.)*
 - [ ] Create step shell components (header, actions, progress indicator, breadcrumb). *(Hi-fi shell with sticky footer shipped 2025-02-18; awaiting final design polish.)*
 - [ ] Implement context resolver hooking into existing routing (lead/project/dashboard/calendar). *(Entry hook uses local props; Supabase-backed resolver still pending.)*
 - [x] Extend i18n bundles (EN/TR) with core wizard copy placeholders.
@@ -124,7 +126,7 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 - [x] Summary review card with edit links. *(Drawer + inline highlight bar live in wizard.)*
 - [ ] Notification preview widget + opt-out toggles integrated with workflow service.
 - [ ] Final confirmation mutation wiring + success state. *(Session mutation wired; success UX still needs final design sign-off.)*
-- [ ] Draft cleanup and telemetry instrumentation. *(Autosave shipped; add analytics and cleanup jobs.)*
+- [ ] Draft cleanup and telemetry instrumentation. *(Postponed until autosave resumes.)*
 
 ### Phase 5 — Hardening & Rollout
 - [ ] Automated tests (unit, component, integration) per Testing Strategy section.
@@ -166,7 +168,7 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 
 ## Risks & Mitigations
 - **Risk:** Prefill context fails and confuses users. **Mitigation:** Show explicit fallback states and log context errors.
-- **Risk:** Autosave conflicts (multi-tab). **Mitigation:** Version drafts, warn on newer draft existence, throttle saves.
+- **Risk:** Autosave conflicts (multi-tab). **Mitigation:** Deferred with autosave postponement; reassess when reintroducing drafts.
 - **Risk:** Notification opt-out accidentally disables required reminders. **Mitigation:** Prominent confirmation copy and audit trail.
 - **Risk:** Scope creep from future enhancements. **Mitigation:** Stick to phase boundaries; track extras in parking lot.
 

@@ -14,6 +14,7 @@ import { createLead, createProject } from "../api/leadProjectCreation";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Loader2 } from "lucide-react";
 
 const DRAFT_STORAGE_PREFIX = "session-wizard-draft";
 const DRAFT_VERSION = 1;
@@ -61,6 +62,10 @@ interface SessionPlanningWizardSheetProps {
 }
 
 export const SessionPlanningWizardSheet = (props: SessionPlanningWizardSheetProps) => {
+  const derivedEntrySource =
+    props.entrySource ??
+    (props.projectId ? "project" : props.leadId ? "lead" : undefined);
+
   const entryContext = useSessionPlanningEntryContext({
     leadId: props.leadId,
     leadName: props.leadName,
@@ -68,7 +73,7 @@ export const SessionPlanningWizardSheet = (props: SessionPlanningWizardSheetProp
     projectName: props.projectName,
     defaultDate: props.defaultDate,
     defaultTime: props.defaultTime,
-    entrySource: props.entrySource
+    entrySource: derivedEntrySource
   });
 
   const providerKey = useMemo(() => JSON.stringify(entryContext), [entryContext]);
@@ -89,7 +94,7 @@ const SessionPlanningWizardSheetInner = ({
   entryContext: SessionPlanningEntryContext;
 }) => {
   const { state } = useSessionPlanningContext();
-  const { reset, markSaving, markSaved, applyState } = useSessionPlanningActions();
+  const { reset, markSaving, markSaved, applyState, loadEntryContext } = useSessionPlanningActions();
   const { toast } = useToast();
   const [isCompleting, setIsCompleting] = useState(false);
   const { t } = useTranslation("sessionPlanning");
@@ -97,9 +102,24 @@ const SessionPlanningWizardSheetInner = ({
   const { scheduleSessionReminders } = useSessionReminderScheduling();
   const [showGuardDialog, setShowGuardDialog] = useState(false);
   const [resumeDraft, setResumeDraft] = useState<SessionPlanningDraft | null>(null);
+  const [isResolvingEntryContext, setIsResolvingEntryContext] = useState(false);
   const draftKeyRef = useRef<string | null>(null);
   const skipNextSaveRef = useRef(false);
   const saveTimerRef = useRef<number | null>(null);
+  const contextHydratedRef = useRef(false);
+  const needsProjectLookup = useMemo(
+    () => Boolean(entryContext.projectId) && (!entryContext.projectName || !entryContext.leadId),
+    [entryContext.projectId, entryContext.projectName, entryContext.leadId]
+  );
+  const needsLeadLookup = useMemo(
+    () =>
+      Boolean(entryContext.leadId && !entryContext.leadName) ||
+      (!entryContext.leadId && Boolean(entryContext.projectId)),
+    [entryContext.leadId, entryContext.leadName, entryContext.projectId]
+  );
+  const shouldShowContextLoader =
+    isOpen &&
+    ((needsLeadLookup || needsProjectLookup) && !contextHydratedRef.current || isResolvingEntryContext);
 
   useEffect(() => {
     let cancelled = false;
@@ -123,6 +143,123 @@ const SessionPlanningWizardSheetInner = ({
       cancelled = true;
     };
   }, [entryContext]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      contextHydratedRef.current = false;
+      setIsResolvingEntryContext(false);
+      return;
+    }
+    contextHydratedRef.current = false;
+  }, [
+    isOpen,
+    entryContext.leadId,
+    entryContext.projectId,
+    entryContext.defaultDate,
+    entryContext.defaultTime,
+    entryContext.entrySource
+  ]);
+
+  useEffect(() => {
+    if (!isOpen || contextHydratedRef.current) {
+      return;
+    }
+
+    if (!needsProjectLookup && !needsLeadLookup) {
+      contextHydratedRef.current = true;
+      setIsResolvingEntryContext(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const resolveContext = async () => {
+      setIsResolvingEntryContext(true);
+      try {
+        let nextContext: SessionPlanningEntryContext = { ...entryContext };
+        let leadIdForLookup = nextContext.leadId;
+
+        if (needsProjectLookup && entryContext.projectId) {
+          const { data: projectData, error: projectError } = await supabase
+            .from("projects")
+            .select("id, name, lead_id")
+            .eq("id", entryContext.projectId)
+            .limit(1)
+            .maybeSingle();
+
+          if (projectError) {
+            throw projectError;
+          }
+
+          if (projectData) {
+            nextContext.projectName =
+              nextContext.projectName ?? (projectData as { name?: string }).name ?? nextContext.projectName;
+            const derivedLeadId = (projectData as { lead_id?: string | null }).lead_id;
+            if (!nextContext.leadId && derivedLeadId) {
+              nextContext.leadId = derivedLeadId;
+              leadIdForLookup = derivedLeadId;
+            }
+          }
+        }
+
+        if ((needsLeadLookup || !nextContext.leadName) && leadIdForLookup) {
+          const { data: leadData, error: leadError } = await supabase
+            .from("leads")
+            .select("id, name")
+            .eq("id", leadIdForLookup)
+            .limit(1)
+            .maybeSingle();
+
+          if (leadError) {
+            throw leadError;
+          }
+
+          if (leadData) {
+            nextContext.leadName = nextContext.leadName ?? (leadData as { name?: string }).name ?? nextContext.leadName;
+          }
+        }
+
+        if (!nextContext.entrySource) {
+          nextContext.entrySource = nextContext.projectId
+            ? "project"
+            : nextContext.leadId
+              ? "lead"
+              : "direct";
+        }
+
+        if (cancelled) return;
+
+        skipNextSaveRef.current = true;
+        loadEntryContext(nextContext);
+        contextHydratedRef.current = true;
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Failed to resolve session planning entry context", error);
+          contextHydratedRef.current = true;
+        }
+      } finally {
+        if (!cancelled) {
+          setIsResolvingEntryContext(false);
+        }
+      }
+    };
+
+    resolveContext();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isOpen,
+    entryContext.entrySource,
+    entryContext.leadId,
+    entryContext.leadName,
+    entryContext.projectId,
+    entryContext.projectName,
+    loadEntryContext,
+    needsLeadLookup,
+    needsProjectLookup
+  ]);
 
   const handleClose = () => {
     if (state.meta.isDirty) {
@@ -343,7 +480,14 @@ const SessionPlanningWizardSheetInner = ({
         dirty={state.meta.isDirty}
         onDirtyClose={handleClose}
       >
-        <SessionPlanningWizard onCancel={handleClose} onComplete={handleComplete} isCompleting={isCompleting} />
+        {shouldShowContextLoader ? (
+          <div className="flex h-[360px] flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <span>{t("wizard.preparingEntry")}</span>
+          </div>
+        ) : (
+          <SessionPlanningWizard onCancel={handleClose} onComplete={handleComplete} isCompleting={isCompleting} />
+        )}
       </AppSheetModal>
 
       <AlertDialog open={showGuardDialog} onOpenChange={setShowGuardDialog}>

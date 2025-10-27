@@ -7,7 +7,8 @@
     "next": "Next",
     "confirm": "Confirm session",
     "confirming": "Confirming...",
-    "discardPrompt": "Discard session draft?"
+    "discardPrompt": "Discard session draft?",
+    "preparingEntry": "Loading launch context…"
   },
   "toast": {
     "draftCapturedTitle": "Session draft captured",
@@ -120,14 +121,6 @@
         "notSet": "Duration not set"
       },
       "clear": "Clear selection"
-    },
-    "details": {
-      "navigationLabel": "Details",
-      "description": "Adjust the auto-generated session name and capture a short summary for collaborators.",
-      "nameLabel": "Session name",
-      "namePlaceholder": "E.g., Engagement Preview",
-      "notesLabel": "Internal summary (lo-fi only)",
-      "notesPlaceholder": "Outline goals or expectations for the shoot."
     },
     "location": {
       "navigationLabel": "Location",

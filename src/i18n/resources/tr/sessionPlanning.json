@@ -7,7 +7,8 @@
     "next": "İleri",
     "confirm": "Seansı onayla",
     "confirming": "Onaylanıyor...",
-    "discardPrompt": "Seans taslağı silinsin mi?"
+    "discardPrompt": "Seans taslağı silinsin mi?",
+    "preparingEntry": "Başlangıç verileri yükleniyor..."
   },
   "toast": {
     "draftCapturedTitle": "Seans taslağı kaydedildi",
@@ -120,14 +121,6 @@
         "notSet": "Süre belirlenmemiş"
       },
       "clear": "Seçimi temizle"
-    },
-    "details": {
-      "navigationLabel": "Detaylar",
-      "description": "Otomatik üretilen seans adını düzenleyin ve ekip için kısa bir özet ekleyin.",
-      "nameLabel": "Seans adı",
-      "namePlaceholder": "Örn. Nişan provası",
-      "notesLabel": "Dahili özet (lo-fi)",
-      "notesPlaceholder": "Çekim hedeflerini veya beklentilerini not edin."
     },
     "location": {
       "navigationLabel": "Konum",

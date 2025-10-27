@@ -1,16 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
 import { useSessionPlanningActions } from "../hooks/useSessionPlanningActions";
 import { useSessionPlanningContext } from "../hooks/useSessionPlanningContext";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/components/ui/use-toast";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
-import { ChevronDown, FolderPlus } from "lucide-react";
+import { Check, ChevronDown, FolderPlus, Search } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { ProjectDialogWithLeadSelector } from "@/components/ProjectDialogWithLeadSelector";
+import { cn } from "@/lib/utils";
+import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 
 interface ProjectOption {
   id: string;
@@ -26,7 +26,8 @@ export const ProjectStep = () => {
   const [loading, setLoading] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [projectSheetOpen, setProjectSheetOpen] = useState(false);
+  const latestRequestRef = useRef(0);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const leadId = state.lead.id;
 
@@ -36,14 +37,15 @@ export const ProjectStep = () => {
         id: undefined,
         name: "",
         description: "",
-        mode: "existing"
+        mode: "existing",
       });
     }
   }, [leadId, state.project.id, updateProject]);
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      if (!leadId) {
+  const loadProjects = useCallback(
+    async (targetLeadId: string, term: string) => {
+      const requestId = ++latestRequestRef.current;
+      if (!targetLeadId) {
         setProjectOptions([]);
         return;
       }
@@ -51,149 +53,244 @@ export const ProjectStep = () => {
       try {
         const organizationId = await getUserOrganizationId();
         if (!organizationId) {
-          setProjectOptions([]);
+          if (latestRequestRef.current === requestId) {
+            setProjectOptions([]);
+          }
           return;
         }
 
-        const { data, error } = await supabase
+        const sanitized = term.trim().replace(/[%_]/g, "\\$&");
+        let query = supabase
           .from("projects")
           .select("id, name")
-          .eq("lead_id", leadId)
+          .eq("lead_id", targetLeadId)
           .eq("organization_id", organizationId)
-          .order("name", { ascending: true });
+          .order("updated_at", { ascending: false })
+          .limit(25);
 
+        if (sanitized) {
+          query = query.ilike("name", `%${sanitized}%`);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
-        setProjectOptions((data as ProjectOption[]) || []);
+
+        if (latestRequestRef.current === requestId) {
+          setProjectOptions((data as ProjectOption[]) || []);
+        }
       } catch (error: any) {
         console.error("Failed to load projects", error);
+        if (latestRequestRef.current === requestId) {
+          setProjectOptions([]);
+        }
         toast({
           title: t("steps.project.fetchErrorTitle"),
           description: error.message,
-          variant: "destructive"
+          variant: "destructive",
         });
-        setProjectOptions([]);
       } finally {
-        setLoading(false);
+        if (latestRequestRef.current === requestId) {
+          setLoading(false);
+        }
+      }
+    },
+    [toast, t]
+  );
+
+  useEffect(() => {
+    if (!leadId) {
+      setProjectOptions([]);
+      return;
+    }
+    loadProjects(leadId, "");
+  }, [leadId, loadProjects]);
+
+  useEffect(() => {
+    if (!dropdownOpen || !leadId) return;
+    const handler = window.setTimeout(() => {
+      loadProjects(leadId, searchTerm);
+    }, 250);
+    return () => {
+      window.clearTimeout(handler);
+    };
+  }, [dropdownOpen, searchTerm, leadId, loadProjects]);
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setDropdownOpen(false);
       }
     };
-
-    fetchProjects();
-  }, [leadId, toast, t]);
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [dropdownOpen]);
 
   const selectedProjectOption = useMemo(() => {
     if (!state.project.id) return undefined;
     return projectOptions.find((project) => project.id === state.project.id);
   }, [projectOptions, state.project.id]);
 
-  const filteredProjects = useMemo(() => {
-    const term = searchTerm.toLowerCase();
-    return projectOptions.filter((project) => project.name.toLowerCase().includes(term));
-  }, [projectOptions, searchTerm]);
-
   const handleSelectProject = (project: ProjectOption) => {
     updateProject({
       id: project.id,
       name: project.name,
       description: state.project.description,
-      mode: "existing"
+      mode: "existing",
     });
     setDropdownOpen(false);
     setSearchTerm("");
   };
 
-  const handleProjectCreated = (project: { id: string; name: string }) => {
-    setProjectSheetOpen(false);
-    const option = { id: project.id, name: project.name };
-    setProjectOptions((prev) => {
-      const without = prev.filter((item) => item.id !== project.id);
-      return [...without, option].sort((a, b) => a.name.localeCompare(b.name));
-    });
-    handleSelectProject(option);
+  const handleProjectCreated = (project?: { id: string; name: string }) => {
+    if (project) {
+      const option = { id: project.id, name: project.name };
+      setProjectOptions((prev) => {
+        const without = prev.filter((item) => item.id !== project.id);
+        return [option, ...without];
+      });
+      handleSelectProject(option);
+    } else if (leadId) {
+      void loadProjects(leadId, "");
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h2 className="text-xl font-semibold tracking-tight">{t("steps.project.navigationLabel")}</h2>
-        <p className="text-sm text-muted-foreground">{t("steps.project.description")}</p>
+        <h2 className="text-xl font-semibold tracking-tight">
+          {t("steps.project.navigationLabel")}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          {t("steps.project.description")}
+        </p>
       </div>
 
       <div className="space-y-3">
         <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {t("steps.project.selectExisting")}
         </Label>
-        <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-full justify-between text-left h-auto min-h-[42px]"
-              disabled={!leadId || loading || projectOptions.length === 0}
-            >
-              {selectedProjectOption ? (
-                <span className="text-sm font-medium text-foreground">{selectedProjectOption.name}</span>
-              ) : !leadId ? (
-                t("steps.project.selectLeadFirst")
-              ) : loading ? (
-                t("steps.project.loading")
-              ) : (
-                t("steps.project.selectPlaceholder")
-              )}
-              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="p-0 w-[360px]" align="start">
-            <Command>
-              <CommandInput
-                placeholder={t("steps.project.searchPlaceholder")}
-                value={searchTerm}
-                onValueChange={setSearchTerm}
-              />
-              <CommandList>
-                <CommandEmpty>{t("steps.project.noProjects")}</CommandEmpty>
-                <CommandGroup>
-                  {filteredProjects.map((project) => (
-                    <CommandItem
-                      key={project.id}
-                      value={project.id}
-                      onSelect={() => handleSelectProject(project)}
-                      className="flex items-center gap-3"
-                    >
-                      <span className="text-sm font-medium text-foreground">{project.name}</span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+        <div className="relative" ref={containerRef}>
+          <Button
+            type="button"
+            onClick={() => {
+              if (!leadId) return;
+              setDropdownOpen((prev) => !prev);
+            }}
+            className={cn(
+              "group flex h-12 w-full items-center justify-between rounded-xl border-none bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 px-4 py-3 text-left font-semibold text-white shadow-lg shadow-emerald-500/20 transition focus-visible:ring-2 focus-visible:ring-emerald-300",
+              dropdownOpen && "ring-2 ring-emerald-300",
+              !leadId && "cursor-not-allowed opacity-60"
+            )}
+            disabled={!leadId || (loading && projectOptions.length === 0)}
+          >
+            {selectedProjectOption ? (
+              <span className="text-sm font-semibold text-white">
+                {selectedProjectOption.name}
+              </span>
+            ) : !leadId ? (
+              t("steps.project.selectLeadFirst")
+            ) : loading ? (
+              t("steps.project.loading")
+            ) : (
+              t("steps.project.selectPlaceholder")
+            )}
+            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-80 transition group-data-[state=open]:rotate-180" />
+          </Button>
 
-        <Button
-          variant="outline"
-          className="gap-2"
-          onClick={() => setProjectSheetOpen(true)}
-          disabled={!leadId}
+          {dropdownOpen && (
+            <div className="absolute top-full left-0 right-0 z-50 mt-2 overflow-hidden rounded-2xl border border-emerald-200/40 bg-white shadow-2xl shadow-emerald-900/10">
+              <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 px-4 py-3 text-sm font-semibold text-white">
+                {t("steps.project.searchHeading")}
+              </div>
+              <div className="px-4 py-3">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500" />
+                  <Input
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    placeholder={t("steps.project.searchPlaceholder")}
+                    className="h-11 rounded-xl border border-emerald-300/60 bg-white pl-9 text-sm shadow-inner shadow-emerald-900/5 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    autoFocus
+                  />
+                </div>
+              </div>
+              <div className="max-h-64 overflow-y-auto border-t border-slate-100">
+                {loading ? (
+                  <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+                    {t("steps.project.loading")}
+                  </p>
+                ) : projectOptions.length === 0 ? (
+                  <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+                    {searchTerm
+                      ? t("steps.project.noResults")
+                      : t("steps.project.emptyState")}
+                  </p>
+                ) : (
+                  projectOptions.map((project) => {
+                    const isActive = state.project.id === project.id;
+                    return (
+                      <button
+                        key={project.id}
+                        type="button"
+                        onClick={() => handleSelectProject(project)}
+                        className={cn(
+                          "flex w-full items-center justify-between px-4 py-3 text-left transition hover:bg-emerald-50/70",
+                          isActive && "bg-emerald-500/10"
+                        )}
+                      >
+                        <span className="text-sm font-semibold text-slate-900">
+                          {project.name}
+                        </span>
+                        <Check
+                          className={cn(
+                            "h-4 w-4 text-emerald-500 transition",
+                            isActive ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <EnhancedProjectDialog
+          defaultLeadId={leadId || undefined}
+          onProjectCreated={handleProjectCreated}
+          triggerDisabled={!leadId}
         >
-          <FolderPlus className="h-4 w-4" />
-          {t("steps.project.createButton")}
-        </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            disabled={!leadId}
+          >
+            <FolderPlus className="h-4 w-4" />
+            {t("steps.project.createButton")}
+          </Button>
+        </EnhancedProjectDialog>
 
         {leadId && projectOptions.length === 0 && !loading && (
-          <p className="text-xs text-muted-foreground">{t("steps.project.emptyState")}</p>
+          <p className="text-xs text-muted-foreground">
+            {t("steps.project.emptyState")}
+          </p>
         )}
       </div>
 
       {selectedProjectOption && (
         <div className="rounded-lg border border-border/70 bg-muted/20 px-4 py-3">
-          <p className="text-sm font-semibold text-foreground">{selectedProjectOption.name}</p>
+          <p className="text-sm font-semibold text-foreground">
+            {selectedProjectOption.name}
+          </p>
         </div>
       )}
-
-      <ProjectDialogWithLeadSelector
-        open={projectSheetOpen}
-        onOpenChange={setProjectSheetOpen}
-        onProjectCreated={handleProjectCreated}
-        defaultLeadId={leadId}
-      />
     </div>
   );
 };

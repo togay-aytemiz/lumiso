@@ -50,9 +50,10 @@ interface Service {
 
 interface EnhancedProjectDialogProps {
   defaultLeadId?: string;
-  onProjectCreated?: () => void;
+  onProjectCreated?: (project?: { id: string; name: string }) => void;
   children?: React.ReactNode;
   defaultStatusId?: string | null;
+  triggerDisabled?: boolean;
 }
 
 export function EnhancedProjectDialog({
@@ -60,6 +61,7 @@ export function EnhancedProjectDialog({
   onProjectCreated,
   children,
   defaultStatusId,
+  triggerDisabled = false,
 }: EnhancedProjectDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -402,9 +404,7 @@ export function EnhancedProjectDialog({
       resetForm();
       setOpen(false);
 
-      if (onProjectCreated) {
-        onProjectCreated();
-      }
+      onProjectCreated?.({ id: newProject.id, name: name.trim() });
     } catch (error: any) {
       toast({
         title: tCommon("labels.error"),
@@ -542,9 +542,20 @@ export function EnhancedProjectDialog({
   return (
     <>
       {children ? (
-        <div onClick={() => setOpen(true)}>{children}</div>
+        <div
+          onClick={(event) => {
+            if (triggerDisabled) {
+              event.preventDefault();
+              return;
+            }
+            setOpen(true);
+          }}
+          className={triggerDisabled ? "opacity-60" : undefined}
+        >
+          {children}
+        </div>
       ) : (
-        <Button onClick={() => setOpen(true)}>
+        <Button onClick={() => setOpen(true)} disabled={triggerDisabled}>
           <Plus className="h-4 w-4 mr-2" />
           {tForms("projectDialog.addProject")}
         </Button>

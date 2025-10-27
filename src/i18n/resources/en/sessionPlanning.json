@@ -43,6 +43,7 @@
       "selectPlaceholder": "Choose a lead",
       "loading": "Loading leads...",
       "noLeads": "No leads found yet.",
+      "searchHeading": "Search clients",
       "emailLabel": "Email",
       "emailPlaceholder": "client@example.com",
       "phoneLabel": "Phone",
@@ -52,6 +53,7 @@
       "fetchErrorTitle": "Unable to load leads",
       "createErrorTitle": "Unable to create lead",
       "searchPlaceholder": "Search leads...",
+      "noResults": "No clients match this search.",
       "createButton": "Create new lead",
       "emptyState": "No leads available yet. Create one to get started."
     },
@@ -67,6 +69,7 @@
       "selectLeadFirst": "Select a lead before choosing a project.",
       "loading": "Loading projects...",
       "noProjects": "No projects found for this lead.",
+      "searchHeading": "Search projects",
       "fetchErrorTitle": "Unable to load projects",
       "createErrorTitle": "Unable to create project",
       "missingName": "Enter a project name",
@@ -75,6 +78,7 @@
       "descriptionLabel": "Project notes",
       "descriptionPlaceholder": "Optional notes for the project.",
       "searchPlaceholder": "Search projects...",
+      "noResults": "No projects match this search.",
       "createButton": "Create new project",
       "emptyState": "No projects found for this lead."
     },

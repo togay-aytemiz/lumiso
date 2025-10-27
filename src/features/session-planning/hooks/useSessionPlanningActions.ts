@@ -48,6 +48,13 @@ export const useSessionPlanningActions = () => {
     [dispatch]
   );
 
+  const setDefaultSessionType = useCallback(
+    (sessionType: { id?: string; label?: string }) => {
+      dispatch({ type: "SET_DEFAULT_SESSION_TYPE", payload: sessionType });
+    },
+    [dispatch]
+  );
+
   const updateSessionFields = useCallback(
     (fields: Record<string, unknown>) => {
       dispatch({ type: "UPDATE_FIELD", payload: fields });
@@ -109,6 +116,7 @@ export const useSessionPlanningActions = () => {
     setCurrentStep,
     updateLead,
     updateProject,
+    setDefaultSessionType,
     updateSessionType,
     updateSessionFields,
     updateSchedule,

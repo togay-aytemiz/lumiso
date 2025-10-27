@@ -118,6 +118,30 @@ export const sessionPlanningReducer = (
         }
       };
     }
+    case "SET_DEFAULT_SESSION_TYPE": {
+      if (state.sessionTypeId) {
+        return state;
+      }
+
+      const nextLabel = action.payload.label;
+      const shouldUpdateName =
+        !state.sessionName ||
+        !state.sessionName.trim() ||
+        state.sessionName === state.sessionTypeLabel;
+
+      return {
+        ...state,
+        sessionTypeId: action.payload.id,
+        sessionTypeLabel: nextLabel,
+        sessionName:
+          shouldUpdateName && nextLabel
+            ? `${nextLabel}`
+            : state.sessionName,
+        meta: {
+          ...state.meta
+        }
+      };
+    }
     case "UPDATE_FIELD": {
       return {
         ...state,

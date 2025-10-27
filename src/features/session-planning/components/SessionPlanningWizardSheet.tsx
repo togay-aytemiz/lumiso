@@ -354,7 +354,10 @@ const SessionPlanningWizardSheetInner = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("guardrail.stay")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDiscardDraft}>
+            <AlertDialogAction
+              onClick={handleDiscardDraft}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               {t("guardrail.discard")}
             </AlertDialogAction>
           </AlertDialogFooter>

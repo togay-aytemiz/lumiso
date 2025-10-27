@@ -86,6 +86,7 @@
 - ✅ Lead picker wired to shared lead creation sheet + searchable command UI.
 - ✅ Project picker reuses project creation sheet with lead prefill and search.
 - ✅ Drawer summary + bottom-sticky actions replaced the dual-column layout.
+- ✅ Session type selector now ships with recommended default, tooltips, and keyboard focus management (Feb 19).
 
 ## Design & UI Follow-Up
 - Transition the wizard shell and steps from lo-fi placeholders to production-ready UI adhering to Lumiso design system tokens. *(Initial pass shipped: dual-column layout with persistent summary sidebar and updated step cards.)*

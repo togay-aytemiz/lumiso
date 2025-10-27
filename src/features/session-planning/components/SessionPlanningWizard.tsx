@@ -126,8 +126,8 @@ export const SessionPlanningWizard = ({
     : "";
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-slate-50 lg:p-4">
-      <div className="flex flex-1 flex-col lg:flex-row lg:items-stretch lg:gap-4">
+    <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-slate-50 lg:p-0">
+      <div className="flex flex-1 flex-col lg:flex-row lg:items-stretch lg:gap-0">
         <aside className="relative hidden w-full max-w-xs flex-col overflow-hidden bg-slate-950 text-slate-100 lg:flex lg:rounded-3xl xl:max-w-sm">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(79,70,229,0.35),_transparent_55%)]" />
           <div className="relative flex h-full flex-col gap-8 overflow-y-auto px-6 py-10">

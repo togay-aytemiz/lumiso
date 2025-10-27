@@ -89,10 +89,6 @@ export const SessionTypeStep = () => {
     updateSessionType(option);
   };
 
-  const handleClear = () => {
-    updateSessionType({ id: undefined, label: undefined });
-  };
-
   const isLoadingData = sessionTypesLoading || settingsLoading;
   const hasOptions = options.length > 0;
 
@@ -198,11 +194,6 @@ export const SessionTypeStep = () => {
         )}
       </div>
 
-      <div className="flex justify-end">
-        <Button variant="outline" onClick={handleClear} disabled={!selectedId || !hasOptions}>
-          {t("steps.sessionType.clear")}
-        </Button>
-      </div>
     </div>
   );
 };

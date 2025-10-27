@@ -110,7 +110,7 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 ### Phase 2 — Core Steps
 - [x] Lead selection/creation step with search + inline create modal. *(Shared lead sheet + searchable picker shipped 2025-02-17.)*
 - [x] Project selection/creation step with optional skip and validation. *(Reuses project sheet with lead prefill 2025-02-17.)*
-- [ ] Session type selector with default, description tooltip, and accessibility focus handling.
+- [x] Session type selector with default, description tooltip, and accessibility focus handling. *(Recommended default, tooltip copy, and focus handling shipped 2025-02-19.)*
 - [ ] Session details step enabling optional custom name. *(Step removed from MVP scope; revisit if customization demand resurfaces.)*
 
 ### Phase 3 — Location & Schedule

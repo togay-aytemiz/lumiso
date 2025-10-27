@@ -71,6 +71,7 @@ export type SessionPlanningAction =
   | { type: "SET_STEP"; payload: SessionPlanningStepId }
   | { type: "UPDATE_LEAD"; payload: SessionPlanningLead }
   | { type: "UPDATE_PROJECT"; payload: SessionPlanningProject }
+  | { type: "SET_DEFAULT_SESSION_TYPE"; payload: { id?: string; label?: string } }
   | { type: "UPDATE_SESSION_TYPE"; payload: { id?: string; label?: string } }
   | { type: "UPDATE_FIELD"; payload: Partial<Omit<SessionPlanningState, "meta" | "lead" | "project" | "schedule" | "notifications">> }
   | { type: "UPDATE_SCHEDULE"; payload: Partial<SessionPlanningSchedule> }

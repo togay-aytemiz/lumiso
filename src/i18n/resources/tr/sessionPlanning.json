@@ -222,6 +222,7 @@
   },
   "summary": {
     "untitled": "Adsız seans",
+    "sectionTitle": "Seans özeti",
     "labels": {
       "lead": "Kişi",
       "project": "Proje",
@@ -272,6 +273,9 @@
     "status": {
       "on": "Açık",
       "off": "Kapalı"
+    },
+    "warnings": {
+      "missing": "Eksik bilgi"
     }
   },
   "guardrail": {

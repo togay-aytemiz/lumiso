@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from "react";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { BellRing, Mail } from "lucide-react";
+import { AlertTriangle, BellRing, Mail } from "lucide-react";
 import { useSessionPlanningContext } from "../hooks/useSessionPlanningContext";
 import { useSessionPlanningActions } from "../hooks/useSessionPlanningActions";
 import { useTranslation } from "react-i18next";
@@ -22,6 +22,7 @@ export const SummaryStep = () => {
     () => sanitizeNotesInput(state.notes ?? ""),
     [state.notes]
   );
+  const warningLabel = t("summary.warnings.missing");
 
   const handleNotificationToggle = useCallback(
     (key: keyof SessionPlanningNotifications, value: boolean) => {
@@ -30,33 +31,81 @@ export const SummaryStep = () => {
     [updateNotifications]
   );
 
+  const leadValue = state.lead.name?.trim();
+  const leadMissing = !leadValue;
+  const leadDisplay: ReactNode = leadMissing
+    ? <span className="text-muted-foreground">{t("summary.values.notSet")}</span>
+    : leadValue!;
+
+  const projectValue = state.project.name?.trim();
+  const projectMissing = !projectValue;
+  const projectDisplay: ReactNode = projectMissing
+    ? <span className="text-muted-foreground">{t("summary.values.notLinked")}</span>
+    : projectValue!;
+
+  const sessionTypeValue = state.sessionTypeLabel?.trim();
+  const sessionTypeMissing = !sessionTypeValue;
+  const sessionTypeDisplay: ReactNode = sessionTypeMissing
+    ? <span className="text-muted-foreground">{t("summary.values.notSet")}</span>
+    : sessionTypeValue!;
+
+  const locationValue =
+    state.location?.trim() ||
+    state.meetingUrl?.trim() ||
+    state.locationLabel?.trim();
+  const locationMissing = !locationValue;
+  const locationDisplay: ReactNode = locationMissing
+    ? <span className="text-muted-foreground">{t("summary.values.notSet")}</span>
+    : locationValue!;
+
+  const scheduleMissing = !state.schedule.date || !state.schedule.time;
+  const scheduleDisplay: ReactNode = scheduleMissing
+    ? <span className="text-muted-foreground">{t("summary.values.notScheduled")}</span>
+    : renderSchedule(state.schedule, t);
+
   return (
     <div className="space-y-4">
+      <h3 className="text-base font-semibold text-slate-900">
+        {t("summary.sectionTitle")}
+      </h3>
       <p className="text-sm text-muted-foreground">{t("steps.summary.description")}</p>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {state.sessionName || t("summary.untitled")}
-            {state.sessionTypeLabel ? <Badge variant="secondary">{state.sessionTypeLabel}</Badge> : null}
-          </CardTitle>
-        </CardHeader>
         <CardContent className="space-y-3 text-sm">
-          <SummaryRow label={t("summary.labels.lead")} value={state.lead.name ?? t("summary.values.notSet")} />
-          <SummaryRow label={t("summary.labels.project")} value={state.project.name ?? t("summary.values.notLinked")} />
-          <SummaryRow label={t("summary.labels.schedule")} value={renderSchedule(state.schedule, t)} />
+          <SummaryRow
+            label={t("summary.labels.lead")}
+            value={leadDisplay}
+            warning={leadMissing}
+            warningLabel={warningLabel}
+          />
+          <SummaryRow
+            label={t("summary.labels.project")}
+            value={projectDisplay}
+            warning={projectMissing}
+            warningLabel={warningLabel}
+          />
+          <SummaryRow
+            label={t("summary.labels.sessionType")}
+            value={sessionTypeDisplay}
+            warning={sessionTypeMissing}
+            warningLabel={warningLabel}
+          />
+          <SummaryRow
+            label={t("summary.labels.schedule")}
+            value={scheduleDisplay}
+            warning={scheduleMissing}
+            warningLabel={warningLabel}
+          />
           <SummaryRow
             label={t("summary.labels.location")}
-            value={
-              state.locationLabel ||
-              state.location ||
-              state.meetingUrl ||
-              t("summary.values.notSet")
-            }
+            value={locationDisplay}
+            warning={locationMissing}
+            warningLabel={warningLabel}
           />
           <SummaryRow
             label={t("summary.labels.notes")}
             value={<NotesPreview content={sanitizedNotes} fallback={t("summary.values.empty")} />}
+            warningLabel={warningLabel}
           />
           <NotificationPreview
             notifications={state.notifications}
@@ -71,12 +120,21 @@ export const SummaryStep = () => {
 interface SummaryRowProps {
   label: string;
   value: ReactNode;
+  warning?: boolean;
+  warningLabel: string;
 }
 
-const SummaryRow = ({ label, value }: SummaryRowProps) => (
-  <div className="flex items-start gap-3">
-    <span className="w-24 shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
-    <span className="flex-1">{value}</span>
+const SummaryRow = ({ label, value, warning = false, warningLabel }: SummaryRowProps) => (
+  <div className="grid grid-cols-[120px,1fr] items-start gap-4 text-sm">
+    <span className="flex items-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      {label}
+    </span>
+    <div className="flex min-w-0 items-start gap-2">
+      <div className="min-w-0 break-words text-slate-900">{value}</div>
+      {warning ? (
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" aria-label={warningLabel} />
+      ) : null}
+    </div>
   </div>
 );
 

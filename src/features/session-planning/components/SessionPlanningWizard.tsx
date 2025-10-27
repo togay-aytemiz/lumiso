@@ -19,7 +19,7 @@ import { ScheduleStep } from "../steps/ScheduleStep";
 import { NotesStep } from "../steps/NotesStep";
 import { SummaryStep } from "../steps/SummaryStep";
 import { useTranslation } from "react-i18next";
-import { Check, ChevronDown } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown } from "lucide-react";
 import { useSessionTypes } from "@/hooks/useOrganizationData";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useToast } from "@/components/ui/use-toast";
@@ -110,7 +110,7 @@ export const SessionPlanningWizard = ({
     });
   }, [meta.currentStep, state.meta.entrySource]);
 
-  const stepSummaries = useMemo(() => {
+  const stepStatus = useMemo(() => {
     const toSummary = (value?: string | null) => {
       const trimmed = value?.trim();
       return trimmed ? trimmed : undefined;
@@ -143,18 +143,45 @@ export const SessionPlanningWizard = ({
         : trimmedNotes
       : undefined;
 
+    const leadSummary = toSummary(state.lead.name);
+    const hasLead = Boolean(state.lead.id || state.lead.name?.trim());
+
+    const projectSummary = toSummary(state.project.name);
+    const hasProject = Boolean(state.project.id || state.project.name?.trim());
+
+    const sessionTypeSummary = toSummary(state.sessionTypeLabel);
+    const hasSessionType = Boolean(state.sessionTypeId);
+
+    const locationSummary =
+      toSummary(state.location) ??
+      toSummary(state.meetingUrl) ??
+      toSummary(state.locationLabel);
+    const hasLocation = Boolean(
+      state.locationLabel?.trim() ||
+        state.location?.trim() ||
+        state.meetingUrl?.trim()
+    );
+
+    const scheduleSummary = getScheduleSummary();
+    const hasSchedule = Boolean(state.schedule.date && state.schedule.time);
+
+    const hasNotes = Boolean(notesSummary);
+
+    const summaryName = toSummary(state.sessionName);
+    const hasSummaryName = Boolean(summaryName);
+
     return {
-      lead: toSummary(state.lead.name),
-      project: toSummary(state.project.name),
-      sessionType: toSummary(state.sessionTypeLabel),
-      location:
-        toSummary(state.locationLabel) ??
-        toSummary(state.location) ??
-        toSummary(state.meetingUrl),
-      schedule: getScheduleSummary(),
-      notes: notesSummary,
-      summary: toSummary(state.sessionName),
-    } satisfies Record<SessionPlanningStepId, string | undefined>;
+      lead: { summary: leadSummary, hasValue: hasLead },
+      project: { summary: projectSummary, hasValue: hasProject },
+      sessionType: { summary: sessionTypeSummary, hasValue: hasSessionType },
+      location: { summary: locationSummary, hasValue: hasLocation },
+      schedule: { summary: scheduleSummary, hasValue: hasSchedule },
+      notes: { summary: notesSummary, hasValue: hasNotes },
+      summary: { summary: summaryName, hasValue: hasSummaryName },
+    } satisfies Record<
+      SessionPlanningStepId,
+      { summary?: string; hasValue: boolean }
+    >;
   }, [state, t]);
 
   const goToStep = (index: number) => {
@@ -232,7 +259,7 @@ export const SessionPlanningWizard = ({
             <StepList
               currentIndex={currentIndex}
               onSelectStep={goToStep}
-              summaries={stepSummaries}
+              statuses={stepStatus}
               translate={t}
               variant="desktop"
             />
@@ -281,7 +308,7 @@ export const SessionPlanningWizard = ({
                 <StepList
                   currentIndex={currentIndex}
                   onSelectStep={handleMobileSelect}
-                  summaries={stepSummaries}
+                  statuses={stepStatus}
                   translate={t}
                   variant="mobile"
                 />
@@ -338,10 +365,20 @@ export const SessionPlanningWizard = ({
   );
 };
 
+const REQUIRED_STEPS: Record<SessionPlanningStepId, boolean> = {
+  lead: true,
+  project: true,
+  sessionType: true,
+  location: true,
+  schedule: true,
+  notes: false,
+  summary: false,
+};
+
 interface StepListProps {
   currentIndex: number;
   onSelectStep: (index: number) => void;
-  summaries: Record<SessionPlanningStepId, string | undefined>;
+  statuses: Record<SessionPlanningStepId, { summary?: string; hasValue: boolean }>;
   translate: (key: string, options?: Record<string, unknown>) => string;
   variant: "desktop" | "mobile";
 }
@@ -349,7 +386,7 @@ interface StepListProps {
 const StepList = ({
   currentIndex,
   onSelectStep,
-  summaries,
+  statuses,
   translate,
   variant,
 }: StepListProps) => (
@@ -361,8 +398,12 @@ const StepList = ({
   >
     {SESSION_PLANNING_STEPS.map((step, index) => {
       const isActive = index === currentIndex;
-      const isComplete = index < currentIndex;
-      const summary = summaries[step.id];
+      const status = statuses[step.id] ?? { summary: undefined, hasValue: false };
+      const summary = status.summary;
+      const hasValue = status.hasValue;
+      const isComplete = index < currentIndex && hasValue;
+      const requiresAttention = REQUIRED_STEPS[step.id] ?? false;
+      const needsAttention = !isActive && requiresAttention && index < currentIndex && !hasValue;
       const description = translate(`steps.${step.id}.description`);
       const isSummaryStep = step.id === "summary";
       const supportingText = !isSummaryStep
@@ -383,15 +424,17 @@ const StepList = ({
                     isActive &&
                       "border-white/60 bg-white/15 shadow-lg shadow-slate-900/20",
                     isComplete &&
-                      !isActive &&
-                      "border-emerald-400/50 bg-emerald-400/10"
+                      "border-emerald-400/50 bg-emerald-400/10 text-emerald-50 hover:border-emerald-300 hover:bg-emerald-400/20",
+                    needsAttention &&
+                      "border-amber-300/70 bg-amber-200/15 text-amber-100 hover:border-amber-200 hover:bg-amber-200/25"
                   )
                 : cn(
                     "border-slate-200 bg-white text-slate-900 shadow-sm hover:border-slate-300 hover:bg-slate-50",
                     isActive && "border-slate-900/20 bg-slate-900/5 shadow-md",
                     isComplete &&
-                      !isActive &&
-                      "border-emerald-500/40 bg-emerald-100/40"
+                      "border-emerald-400 bg-emerald-500/20 text-emerald-700 hover:border-emerald-500 hover:bg-emerald-500/30",
+                    needsAttention &&
+                      "border-amber-300 bg-amber-50 text-amber-900 hover:border-amber-400 hover:bg-amber-100"
                   )
             )}
           >
@@ -405,23 +448,39 @@ const StepList = ({
                         isActive &&
                           "border-white bg-white text-slate-900 shadow",
                         isComplete &&
-                          "border-emerald-300 bg-emerald-400/20 text-emerald-50"
+                          "border-emerald-300 bg-emerald-400/20 text-emerald-950",
+                        needsAttention &&
+                          "border-amber-200 bg-amber-300/30 text-amber-900"
                       )
                     : cn(
                         "border-slate-300 text-slate-600",
                         isActive && "border-slate-900 bg-slate-900 text-white",
                         isComplete &&
-                          "border-emerald-400 bg-emerald-500/20 text-emerald-700"
+                          "border-emerald-400 bg-emerald-500/20 text-emerald-700",
+                        needsAttention &&
+                          "border-amber-300 bg-amber-100 text-amber-900"
                       )
                 )}
               >
-                {isComplete ? <Check className="h-4 w-4" /> : index + 1}
+                {isComplete ? (
+                  <Check className="h-4 w-4" />
+                ) : needsAttention ? (
+                  <AlertTriangle className="h-4 w-4" />
+                ) : (
+                  index + 1
+                )}
               </span>
               <div className="flex-1 min-w-0">
                 <p
                   className={cn(
                     "text-sm font-semibold tracking-tight",
-                    variant === "desktop" ? "text-white" : "text-slate-900"
+                    variant === "desktop"
+                      ? needsAttention
+                        ? "text-amber-100"
+                        : "text-white"
+                      : needsAttention
+                        ? "text-amber-900"
+                        : "text-slate-900"
                   )}
                 >
                   {translate(step.labelKey)}
@@ -430,7 +489,13 @@ const StepList = ({
                   <p
                     className={cn(
                       "mt-1 text-xs truncate leading-relaxed",
-                      variant === "desktop" ? "text-white/90" : "text-slate-700"
+                      variant === "desktop"
+                        ? needsAttention
+                          ? "text-amber-100/80"
+                          : "text-white/90"
+                        : needsAttention
+                          ? "text-amber-800"
+                          : "text-slate-700"
                     )}
                   >
                     {supportingText}

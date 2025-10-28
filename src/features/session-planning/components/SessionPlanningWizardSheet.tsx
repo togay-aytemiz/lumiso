@@ -380,8 +380,6 @@ const SessionPlanningWizardSheetInner = ({
             session_time,
             notes,
             location,
-            meeting_url,
-            timezone,
             session_type_id,
             lead_id,
             project_id,
@@ -450,11 +448,10 @@ const SessionPlanningWizardSheetInner = ({
           locationId: undefined,
           locationLabel: undefined,
           location: record.location ?? "",
-          meetingUrl: record.meeting_url ?? "",
           schedule: {
             date: record.session_date ?? entryContext.defaultDate,
             time: record.session_time ?? entryContext.defaultTime,
-            timezone: record.timezone ?? undefined
+            timezone: undefined
           },
           notes: record.notes ?? "",
           notifications: { ...state.notifications },

@@ -88,7 +88,6 @@ export async function createSession(
       session_time: payload.sessionTime,
       notes: payload.notes?.trim() || null,
       location: payload.location?.trim() || null,
-      meeting_url: payload.meetingUrl?.trim() || null,
       session_type_id: payload.sessionTypeId ?? null,
       status: payload.status ?? "planned"
     })
@@ -171,7 +170,6 @@ export async function updateSession(payload: UpdateSessionPayload): Promise<Upda
       session_time: payload.sessionTime,
       notes: payload.notes?.trim() || null,
       location: payload.location?.trim() || null,
-      meeting_url: payload.meetingUrl?.trim() || null,
       session_type_id: payload.sessionTypeId ?? null
     })
     .eq("id", payload.sessionId);

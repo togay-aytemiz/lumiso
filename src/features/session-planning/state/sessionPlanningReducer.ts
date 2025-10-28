@@ -244,6 +244,10 @@ export const sessionPlanningReducer = (
   }
 };
 
+export const __testUtils = {
+  computeInitialStep,
+};
+
 export interface SessionPlanningStepConfig {
   id: SessionPlanningStepId;
   labelKey: string;

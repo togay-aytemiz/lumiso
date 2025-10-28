@@ -71,6 +71,7 @@ export interface SessionPlanningEntryContext {
   entrySource?: string;
   sessionId?: string;
   mode?: "create" | "edit";
+  startStepOverride?: SessionPlanningStepId;
 }
 
 export type SessionPlanningAction =

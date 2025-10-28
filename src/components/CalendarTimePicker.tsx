@@ -33,6 +33,7 @@ interface CalendarTimePickerProps {
   onDateChange: (date: Date | undefined) => void;
   onTimeChange: (time: string) => void;
   onDateStringChange: (dateString: string) => void;
+  selectedSessionDurationMinutes?: number | null;
 }
 
 export function CalendarTimePicker({
@@ -41,6 +42,7 @@ export function CalendarTimePicker({
   onDateChange,
   onTimeChange,
   onDateStringChange,
+  selectedSessionDurationMinutes,
 }: CalendarTimePickerProps) {
   const { t } = useFormsTranslation();
   const [visibleMonth, setVisibleMonth] = useState<Date>(new Date());
@@ -263,6 +265,7 @@ export function CalendarTimePicker({
         referenceDate={weeklyReferenceDate}
         selectedDate={selectedDate}
         selectedTime={selectedTime}
+        selectedDurationMinutes={selectedSessionDurationMinutes}
         locale={browserLocale}
       />
 

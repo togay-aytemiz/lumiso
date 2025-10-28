@@ -55,6 +55,9 @@ export const createInitialSessionPlanningState = (
 });
 
 const computeInitialStep = (entryContext: SessionPlanningEntryContext): SessionPlanningStepId => {
+  if (entryContext.startStepOverride) {
+    return entryContext.startStepOverride;
+  }
   if (entryContext.mode === "edit" || entryContext.sessionId) {
     return "summary";
   }

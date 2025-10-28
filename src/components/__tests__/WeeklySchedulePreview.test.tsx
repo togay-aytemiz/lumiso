@@ -176,11 +176,96 @@ describe("WeeklySchedulePreview", () => {
 
     const draftBlock = screen.getByTestId("weekly-draft-selection");
     expect(draftBlock).toBeInTheDocument();
-    expect(draftBlock).toHaveClass("border-dashed");
-    expect(draftBlock).toHaveClass("border-amber-400/80");
+    const draftBox = draftBlock.firstElementChild as HTMLElement;
+    expect(draftBox).toHaveClass("border-dashed");
+    expect(draftBox).toHaveClass("border-amber-400/80");
     expect(draftBlock.textContent).toContain("15:30");
     expect(draftBlock.textContent).toContain(
       "sessionScheduling.weekly_preview_draft_label"
     );
+  });
+
+  it("uses the provided session duration for the draft preview", () => {
+    render(
+      <WeeklySchedulePreview
+        sessions={[]}
+        referenceDate={monday}
+        selectedDate={new Date("2024-05-24T00:00:00Z")}
+        selectedTime="10:00"
+        selectedDurationMinutes={90}
+        locale="en-GB"
+      />
+    );
+
+    const draftBlock = screen.getByTestId("weekly-draft-selection");
+    const draftBox = draftBlock.firstElementChild as HTMLElement;
+    const expectedHeight = Math.max(90 * PIXELS_PER_MINUTE, MIN_BLOCK_HEIGHT);
+
+    expect(draftBlock.textContent).toContain("10:00");
+    expect(draftBlock.textContent).toContain("11:30");
+    expect(draftBox).toHaveStyle(`height: ${expectedHeight}px`);
+  });
+
+  it("shares the available column space when the draft overlaps an existing session", () => {
+    const sessions: WeeklyScheduleSession[] = [
+      {
+        id: "planned-session",
+        session_date: "2024-05-25",
+        session_time: "14:00",
+        duration_minutes: 60,
+        lead_name: "Jamie",
+      },
+    ];
+
+    render(
+      <WeeklySchedulePreview
+        sessions={sessions}
+        referenceDate={new Date("2024-05-22T00:00:00Z")}
+        selectedDate={new Date("2024-05-25T00:00:00Z")}
+        selectedTime="14:00"
+        selectedDurationMinutes={60}
+        locale="en-GB"
+      />
+    );
+
+    const plannedBlock = screen.getByTestId("weekly-session-planned-session");
+    const draftBlock = screen.getByTestId("weekly-draft-selection");
+
+    expect(plannedBlock.style.width).toBe("calc(50% - 2px)");
+    expect(plannedBlock.style.left).toBe("calc(0% + 1px)");
+    expect(draftBlock).toHaveStyle("width: calc(50% - 2px)");
+    expect(draftBlock).toHaveStyle("left: calc(50% + 1px)");
+  });
+
+  it("labels the time column using whole-hour increments", () => {
+    const sessions: WeeklyScheduleSession[] = [
+      {
+        id: "half-hour-session",
+        session_date: "2024-05-26",
+        session_time: "12:30",
+        duration_minutes: 45,
+        lead_name: "Jordan",
+      },
+    ];
+
+    render(
+      <WeeklySchedulePreview
+        sessions={sessions}
+        referenceDate={new Date("2024-05-26T00:00:00Z")}
+        selectedDate={new Date("2024-05-26T00:00:00Z")}
+        selectedTime="12:30"
+        locale="en-GB"
+      />
+    );
+
+    const markers = screen
+      .getAllByTestId("weekly-hour-marker")
+      .map((marker) => marker.textContent ?? "");
+
+    expect(markers.length).toBeGreaterThan(0);
+    markers.forEach((label) => {
+      expect(label).toMatch(/:00/);
+      expect(label).not.toMatch(/:30/);
+    });
   });
 });

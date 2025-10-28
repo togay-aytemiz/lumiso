@@ -11,6 +11,7 @@ interface UseSessionPlanningEntryContextProps {
   entrySource?: string;
   sessionId?: string;
   mode?: "create" | "edit";
+  startStepOverride?: SessionPlanningEntryContext["startStepOverride"];
 }
 
 export const useSessionPlanningEntryContext = ({
@@ -22,7 +23,8 @@ export const useSessionPlanningEntryContext = ({
   defaultTime,
   entrySource,
   sessionId,
-  mode
+  mode,
+  startStepOverride
 }: UseSessionPlanningEntryContextProps): SessionPlanningEntryContext =>
   useMemo(
     () => ({
@@ -34,7 +36,8 @@ export const useSessionPlanningEntryContext = ({
       defaultTime,
       entrySource,
       sessionId,
-      mode
+      mode,
+      startStepOverride
     }),
-    [leadId, leadName, projectId, projectName, defaultDate, defaultTime, entrySource, sessionId, mode]
+    [leadId, leadName, projectId, projectName, defaultDate, defaultTime, entrySource, sessionId, mode, startStepOverride]
   );

@@ -10,7 +10,7 @@ import { useSessionPlanningContext } from "../hooks/useSessionPlanningContext";
 import { useSessionPlanningActions } from "../hooks/useSessionPlanningActions";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { SessionPlanningDraft, SessionPlanningEntryContext, SessionPlanningState } from "../types";
+import { SessionPlanningDraft, SessionPlanningEntryContext, SessionPlanningState, SessionPlanningStepId } from "../types";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { createSession, updateSession } from "../api/sessionCreation";
@@ -83,6 +83,7 @@ interface SessionPlanningWizardSheetProps {
   entrySource?: string;
   sessionId?: string;
   mode?: "create" | "edit";
+  startStepOverride?: SessionPlanningStepId;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSessionScheduled?: () => void;
@@ -104,7 +105,8 @@ export const SessionPlanningWizardSheet = (props: SessionPlanningWizardSheetProp
     defaultTime: props.defaultTime,
     entrySource: derivedEntrySource,
     sessionId: props.sessionId,
-    mode: derivedMode
+    mode: derivedMode,
+    startStepOverride: props.startStepOverride
   });
 
   const providerKey = useMemo(() => JSON.stringify(entryContext), [entryContext]);

@@ -6,11 +6,13 @@ import { useSessionPlanningActions } from "../hooks/useSessionPlanningActions";
 import { useSessionPlanningContext } from "../hooks/useSessionPlanningContext";
 import { useTranslation } from "react-i18next";
 import { format, parseISO } from "date-fns";
+import { useSessionTypes } from "@/hooks/useOrganizationData";
 
 export const ScheduleStep = () => {
   const { state } = useSessionPlanningContext();
   const { updateSchedule } = useSessionPlanningActions();
   const { t } = useTranslation("sessionPlanning");
+  const { data: sessionTypes = [] } = useSessionTypes();
 
   const initialDate = useMemo(() => {
     if (!state.schedule.date) return undefined;
@@ -55,6 +57,15 @@ export const ScheduleStep = () => {
     updateSchedule({ time });
   };
 
+  const selectedSessionDurationMinutes = useMemo(() => {
+    if (!state.sessionTypeId) return null;
+    const match = sessionTypes.find((type) => type.id === state.sessionTypeId);
+    if (typeof match?.duration_minutes === "number" && match.duration_minutes > 0) {
+      return match.duration_minutes;
+    }
+    return null;
+  }, [sessionTypes, state.sessionTypeId]);
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -68,6 +79,7 @@ export const ScheduleStep = () => {
         onDateChange={handleDateChange}
         onTimeChange={handleTimeChange}
         onDateStringChange={handleDateStringChange}
+        selectedSessionDurationMinutes={selectedSessionDurationMinutes ?? undefined}
       />
 
     </div>

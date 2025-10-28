@@ -19,7 +19,7 @@ const MINUTES_IN_DAY = 24 * 60;
 const PIXELS_PER_MINUTE = 0.9;
 const MIN_BLOCK_HEIGHT = 36;
 const MIN_VIEW_RANGE = 6 * 60;
-const DRAFT_SELECTION_DURATION = 60;
+const DEFAULT_DRAFT_DURATION = 60;
 
 export interface WeeklyScheduleSession {
   id: string;
@@ -36,6 +36,7 @@ interface WeeklySchedulePreviewProps {
   referenceDate: Date;
   selectedDate?: Date;
   selectedTime?: string;
+  selectedDurationMinutes?: number | null;
   locale?: string;
 }
 
@@ -164,6 +165,7 @@ export const WeeklySchedulePreview = ({
   referenceDate,
   selectedDate,
   selectedTime,
+  selectedDurationMinutes,
   locale = typeof navigator !== "undefined" ? navigator.language : "en-US",
 }: WeeklySchedulePreviewProps) => {
   const { t } = useFormsTranslation();
@@ -183,6 +185,13 @@ export const WeeklySchedulePreview = ({
     [selectedTime]
   );
 
+  const draftDurationMinutes = useMemo(() => {
+    if (typeof selectedDurationMinutes === "number" && selectedDurationMinutes > 0) {
+      return Math.min(selectedDurationMinutes, MINUTES_IN_DAY);
+    }
+    return DEFAULT_DRAFT_DURATION;
+  }, [selectedDurationMinutes]);
+
   const isDraftWithinWeek =
     selectedDayIndex !== null &&
     selectedDayIndex >= 0 &&
@@ -190,7 +199,7 @@ export const WeeklySchedulePreview = ({
     draftStartMinutes !== null;
 
   const draftEndMinutes = isDraftWithinWeek
-    ? Math.min(draftStartMinutes! + DRAFT_SELECTION_DURATION, MINUTES_IN_DAY - 1)
+    ? Math.min(draftStartMinutes! + draftDurationMinutes, MINUTES_IN_DAY - 1)
     : null;
 
   const days = useMemo(
@@ -202,7 +211,7 @@ export const WeeklySchedulePreview = ({
     [weekStart]
   );
 
-  const { positionedSessions, noTimeSessions, viewWindow } = useMemo(() => {
+  const { dayLayouts, daySessionsMap, noTimeSessions, viewWindow } = useMemo(() => {
     const dayMap = new Map<number, Array<WeeklyScheduleSession & { startMinutes: number; endMinutes: number }>>();
     const noTimeMap = new Map<number, WeeklyScheduleSession[]>();
     const startCandidates: number[] = [];
@@ -250,17 +259,18 @@ export const WeeklySchedulePreview = ({
     const rawEnd = endCandidates.length ? Math.max(...endCandidates) : 17 * 60;
     const viewWindow = clampRange(rawStart, rawEnd);
 
-    const positioned: PositionedSession[] = [];
+    const layoutsByDay = new Map<number, PositionedSession[]>();
     dayMap.forEach((daySessions, dayIndex) => {
       const layouts = buildDayLayout(daySessions).map((session) => ({
         ...session,
         dayIndex,
       }));
-      positioned.push(...layouts);
+      layoutsByDay.set(dayIndex, layouts);
     });
 
     return {
-      positionedSessions: positioned,
+      dayLayouts: layoutsByDay,
+      daySessionsMap: dayMap,
       noTimeSessions: noTimeMap,
       viewWindow,
     };
@@ -275,16 +285,16 @@ export const WeeklySchedulePreview = ({
   const containerHeight = (viewWindow.end - viewWindow.start) * PIXELS_PER_MINUTE;
   const hourMarkers = useMemo(() => {
     const markers: Array<{ label: string; minute: number }> = [];
-    for (let minute = viewWindow.start; minute <= viewWindow.end; minute += 60) {
-      const hours = Math.floor(minute / 60);
-      const minutes = minute % 60;
-      const labelDate = new Date();
-      labelDate.setHours(hours, minutes, 0, 0);
+    if (viewWindow.end <= viewWindow.start) {
+      return markers;
+    }
+    const firstMarker = Math.ceil(viewWindow.start / 60) * 60;
+    if (firstMarker > viewWindow.end) {
+      return markers;
+    }
+    for (let minute = firstMarker; minute <= viewWindow.end; minute += 60) {
       markers.push({
-        label: new Intl.DateTimeFormat(locale, {
-          hour: "numeric",
-          minute: "2-digit",
-        }).format(labelDate),
+        label: formatTimeLabel(minute, locale),
         minute,
       });
     }
@@ -344,6 +354,7 @@ export const WeeklySchedulePreview = ({
                 return (
                   <div
                     key={marker.minute}
+                    data-testid="weekly-hour-marker"
                     className="absolute left-0 right-0 flex items-center justify-end pr-2 text-[11px] text-muted-foreground"
                     style={{ top: `${offset}px` }}
                   >
@@ -351,12 +362,11 @@ export const WeeklySchedulePreview = ({
                   </div>
                 );
               })}
-            </div>
           </div>
+        </div>
           {days.map(({ index }) => {
-            const daySessions = positionedSessions.filter(
-              (session) => session.dayIndex === index
-            );
+            const baseDaySessions = dayLayouts.get(index) ?? [];
+            const rawDaySessions = daySessionsMap.get(index) ?? [];
             const dayNoTime = noTimeSessions.get(index) ?? [];
             const draftStart = draftStartMinutes ?? 0;
             const draftEnd = draftEndMinutes ?? draftStart;
@@ -365,6 +375,70 @@ export const WeeklySchedulePreview = ({
               selectedDayIndex === index &&
               draftStartMinutes !== null &&
               draftEndMinutes !== null;
+
+            let renderedSessions = baseDaySessions;
+            let draftLayout: PositionedSession | null = null;
+
+            if (showDraftSelection) {
+              const draftSession: WeeklyScheduleSession & {
+                startMinutes: number;
+                endMinutes: number;
+              } = {
+                id: "__draft__",
+                session_time: selectedTime ?? null,
+                duration_minutes: draftDurationMinutes,
+                startMinutes: draftStart,
+                endMinutes: draftEnd,
+              };
+
+              const layoutWithDraft = buildDayLayout([
+                ...rawDaySessions,
+                draftSession,
+              ]).map((session) => ({
+                ...session,
+                dayIndex: index,
+              }));
+
+              draftLayout =
+                layoutWithDraft.find((session) => session.id === draftSession.id) ??
+                null;
+
+              renderedSessions = layoutWithDraft.filter(
+                (session) => session.id !== draftSession.id
+              );
+            }
+
+            const draftBlockMetrics = showDraftSelection
+              ? (() => {
+                  const top =
+                    (draftStart - viewWindow.start) * PIXELS_PER_MINUTE;
+                  const height = Math.max(
+                    (draftEnd - draftStart) * PIXELS_PER_MINUTE,
+                    MIN_BLOCK_HEIGHT
+                  );
+                  const columnCount =
+                    draftLayout?.columnCount && draftLayout.columnCount > 0
+                      ? draftLayout.columnCount
+                      : 1;
+                  const columnIndex =
+                    draftLayout?.columnIndex && draftLayout.columnIndex >= 0
+                      ? draftLayout.columnIndex
+                      : 0;
+                  const widthPercent = 100 / columnCount;
+                  const leftPercent = (columnIndex * widthPercent).toFixed(3);
+                  const widthValue = widthPercent.toFixed(3);
+                  const gutter = columnCount > 1 ? 1 : 0;
+
+                  return {
+                    top,
+                    height,
+                    left: `calc(${leftPercent}% + ${gutter}px)`,
+                    width: `calc(${widthValue}% - ${gutter * 2}px)`,
+                    startLabel: formatTimeLabel(draftStart, locale),
+                    endLabel: formatTimeLabel(draftEnd, locale),
+                  };
+                })()
+              : null;
 
             return (
               <div
@@ -389,28 +463,31 @@ export const WeeklySchedulePreview = ({
                       />
                     );
                   })}
-                  {showDraftSelection ? (
+                  {draftBlockMetrics ? (
                     <div
                       data-testid="weekly-draft-selection"
                       aria-hidden="true"
-                      className="pointer-events-none absolute inset-x-1 rounded-xl border border-dashed border-amber-400/80 bg-amber-50/90 px-1.5 py-1 text-[10px] font-medium uppercase tracking-wide text-amber-900 shadow-none"
+                      className="pointer-events-none absolute flex flex-col items-stretch text-center"
                       style={{
-                        top: `${(draftStart - viewWindow.start) * PIXELS_PER_MINUTE}px`,
-                        height: `${Math.max(
-                          (draftEnd - draftStart) * PIXELS_PER_MINUTE,
-                          MIN_BLOCK_HEIGHT
-                        )}px`,
+                        top: `${draftBlockMetrics.top}px`,
+                        left: draftBlockMetrics.left,
+                        width: draftBlockMetrics.width,
                       }}
                     >
-                      <div className="text-[11px] capitalize tracking-normal">
-                        {formatTimeLabel(draftStart, locale)} – {formatTimeLabel(draftEnd, locale)}
+                      <div
+                        className="rounded-xl border border-dashed border-amber-400/80 bg-amber-50/90 px-1.5 py-1 text-[10px] font-medium uppercase tracking-wide text-amber-900 shadow-none"
+                        style={{ height: `${draftBlockMetrics.height}px` }}
+                      >
+                        <div className="text-[11px] capitalize tracking-normal">
+                          {draftBlockMetrics.startLabel} – {draftBlockMetrics.endLabel}
+                        </div>
                       </div>
-                      <div className="text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                      <div className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
                         {t("sessionScheduling.weekly_preview_draft_label")}
                       </div>
                     </div>
                   ) : null}
-                  {daySessions.map((session) => {
+                  {renderedSessions.map((session) => {
                     const topOffset =
                       (session.startMinutes - viewWindow.start) * PIXELS_PER_MINUTE;
                     const blockHeight = Math.max(

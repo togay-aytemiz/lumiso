@@ -420,45 +420,45 @@ const StepList = ({
               "group relative flex w-full max-w-full flex-col overflow-hidden rounded-3xl border px-4 py-4 text-left transition-all",
               variant === "desktop"
                 ? cn(
-                    "border-white/10 bg-white/5 text-white/90 shadow-sm hover:border-white/30 hover:bg-white/10",
+                    "border-white/10 bg-white/10 text-white/90 shadow-sm supports-[backdrop-filter]:backdrop-blur-md hover:border-white/30 hover:bg-white/15",
                     isActive &&
-                      "border-white/60 bg-white/15 shadow-lg shadow-slate-900/20",
+                      "border-white/60 bg-white/20 shadow-lg shadow-slate-900/20",
                     isComplete &&
-                      "border-emerald-400/50 bg-emerald-400/10 text-emerald-50 hover:border-emerald-300 hover:bg-emerald-400/20",
+                      "border-sky-400/60 bg-sky-500/20 text-sky-50 hover:border-sky-300 hover:bg-sky-500/25",
                     needsAttention &&
-                      "border-amber-300/70 bg-amber-200/15 text-amber-100 hover:border-amber-200 hover:bg-amber-200/25"
+                      "border-rose-400/60 bg-rose-400/25 text-rose-50 hover:border-rose-300 hover:bg-rose-400/30"
                   )
                 : cn(
                     "border-slate-200 bg-white text-slate-900 shadow-sm hover:border-slate-300 hover:bg-slate-50",
                     isActive && "border-slate-900/20 bg-slate-900/5 shadow-md",
                     isComplete &&
-                      "border-emerald-400 bg-emerald-500/20 text-emerald-700 hover:border-emerald-500 hover:bg-emerald-500/30",
+                      "border-sky-400 bg-sky-500/20 text-sky-800 hover:border-sky-400/80 hover:bg-sky-500/25",
                     needsAttention &&
-                      "border-amber-300 bg-amber-50 text-amber-900 hover:border-amber-400 hover:bg-amber-100"
+                      "border-rose-300 bg-rose-50 text-rose-900 hover:border-rose-400 hover:bg-rose-100"
                   )
             )}
           >
             <div className={cn("flex gap-3", alignmentClass)}>
               <span
                 className={cn(
-                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold transition",
+                  "flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-full border text-sm font-semibold transition",
                   variant === "desktop"
                     ? cn(
                         "border-white/40 text-white/80",
                         isActive &&
                           "border-white bg-white text-slate-900 shadow",
                         isComplete &&
-                          "border-emerald-300 bg-emerald-400/20 text-emerald-950",
+                          "border-sky-200 bg-sky-500/20 text-sky-200",
                         needsAttention &&
-                          "border-amber-200 bg-amber-300/30 text-amber-900"
+                          "border-rose-200 bg-rose-400/25 text-rose-200"
                       )
                     : cn(
                         "border-slate-300 text-slate-600",
                         isActive && "border-slate-900 bg-slate-900 text-white",
                         isComplete &&
-                          "border-emerald-400 bg-emerald-500/20 text-emerald-700",
+                          "border-sky-300 bg-sky-500/15 text-sky-700",
                         needsAttention &&
-                          "border-amber-300 bg-amber-100 text-amber-900"
+                          "border-rose-300 bg-rose-100 text-rose-700"
                       )
                 )}
               >
@@ -476,10 +476,10 @@ const StepList = ({
                     "text-sm font-semibold tracking-tight",
                     variant === "desktop"
                       ? needsAttention
-                        ? "text-amber-100"
+                        ? "text-rose-50"
                         : "text-white"
                       : needsAttention
-                        ? "text-amber-900"
+                        ? "text-rose-900"
                         : "text-slate-900"
                   )}
                 >
@@ -491,10 +491,10 @@ const StepList = ({
                       "mt-1 text-xs truncate leading-relaxed",
                       variant === "desktop"
                         ? needsAttention
-                          ? "text-amber-100/80"
+                          ? "text-rose-100/80"
                           : "text-white/90"
                         : needsAttention
-                          ? "text-amber-800"
+                          ? "text-rose-800"
                           : "text-slate-700"
                     )}
                   >

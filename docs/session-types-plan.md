@@ -137,13 +137,13 @@ Each phase can be delivered incrementally; this document will track completed st
 
 ## Phase 4 — Product Integration & Cleanup
 
-**Status:** In progress — package cleanup shipped; booking flows still rely on legacy fields.
+**Status:** Completed (2025-11-25) — booking flows now adopt session types end to end and the scheduling UX has been tightened per the latest review cycle.
 
 ### Booking & Session Flows
-- [ ] Update session creation/edit forms to capture `session_type_id` and derive duration metadata.  
-- [ ] Preselect default session type; if none, show chooser.  
-- [ ] Display type info (duration, description) in session detail view (`SessionSheetView`, `SessionDetail`).  
-- [ ] Make `session_type_id` required on new sessions when at least one active type exists (while handling migration grace).
+- [x] Update session creation/edit forms to capture `session_type_id` and derive duration metadata.  
+- [x] Preselect default session type; if none, show chooser.  
+- [x] Display type info (duration, description) in session detail view (`SessionSheetView`, `SessionDetail`).  
+- [x] Make `session_type_id` required on new sessions when at least one active type exists (while handling migration grace).
 
 ### Packages Adjustments
 - [x] Remove duration inputs/validation from package dialogs and listings (`src/components/settings/PackageDialogs.tsx`, `src/components/PackagesSection.tsx`).  
@@ -158,11 +158,11 @@ Each phase can be delivered incrementally; this document will track completed st
 ### Completed Work
 - Package dialogs and listings no longer surface duration; user education points to Session Types instead of duplicating fields.
 - Supabase types, generated hooks, and Jest coverage were refreshed to reflect the new schema.
+- Session scheduling sheet and edit surfaces now call into the session-type aware form service, with Calendar/Time pickers refreshed (hover states, compact layout) to support the streamlined booking flow.
 - Added smoke tests for scheduling UI to guarantee existing behaviour while session types remain optional.
 
 ### Outstanding
-- Wire `useSessionForm`, `ScheduleSessionDialog`, and related services to write `session_type_id`, leveraging defaults when present.
-- Update session detail, calendar, and notification surfaces to reference `session_types` instead of project type fallbacks.
+- Monitor analytics/reporting/notification touchpoints for any remaining legacy duration assumptions.
 - Provide deletion guardrails once sessions start referencing types (ties back to Phase 3 outstanding item).
 - Document migration/backfill verification steps and rollout checklist before enabling enforcement.
 
@@ -193,11 +193,11 @@ Each phase can be delivered incrementally; this document will track completed st
 | Data Model Foundations | Completed | Migrations + Supabase types shipped (`20250914120000`, `20250914122000`, `20250914123000`, `20250914140500`). |
 | Backend & Supabase Layer | In progress | `ensure_default_session_types_for_org` live; edge function audit + Supabase tests pending. |
 | Frontend Settings & CRUD | Completed | `SessionTypesSection` + dialogs deployed with Jest/i18n coverage. |
-| Product Integration & Cleanup | In progress | Package cleanup done; booking flows still using legacy fields. |
+| Product Integration & Cleanup | Completed | Booking flows now use session types and refreshed scheduling UX. |
 
 ## Upcoming Tasks
-- Wire `useSessionForm` / `SessionSchedulingSheet` / session edit flows to store `session_type_id`, applying organization defaults automatically.
-- Update session detail, calendar, and notification surfaces to read/display session type metadata instead of project-type fallbacks.
+- Monitor booking flows for regressions now that session types are enforced; capture UX feedback for additional polish.
+- Audit analytics/reporting/notification surfaces to ensure session type metadata is surfaced consistently.
 - Add Supabase/Deno coverage for `ensure_default_session_types_for_org` and edge functions touching session data.
 - Introduce deletion/inactivation guardrails when a session type is referenced by existing sessions.
 - Draft rollout playbook: migration dry-run checklist, staging validation steps, operator comms.

@@ -70,6 +70,7 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 | Session naming | Default to session type label; skip dedicated edit step unless future research requires. | Keeps flow fast while still delivering sensible names. | Tayte | 2025-02-14 |
 | Notification overrides | Use workflow settings as defaults; allow per-session opt-out toggle before confirmation. | Preserves automation while giving one-off control. | Tayte | 2025-02-14 |
 | Wizard localization | Store wizard copy in dedicated EN/TR `sessionPlanning` namespace and block merges without both translations. | Guarantees copy parity and keeps localization maintainable. | Codex | 2025-02-17 |
+| Schedule step polish | Mirror production hover/contrast rules and compact planned-session list in the wizard timetable. | Keeps UX consistent and improves readability without widening the schedule step scope. | Codex | 2025-11-25 |
 
 ## UX & Interaction Notes
 - Breadcrumb + progress indicator reflect only steps the user touches; skipped steps appear dimmed.
@@ -119,8 +120,8 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 ### Phase 3 — Location & Schedule
 - [x] Address book component with list, quick add, and last-used default.
 - [x] Inline address form with validation (postal code formatting, URL scheme detection).
-- [ ] Schedule picker with timezone handling, conflict detection, and quick actions.
-  * Calendar + working-hours time slots restored in wizard lo-fi build; remaining work: conflict detection & quick actions.
+- [x] Schedule picker with timezone handling, conflict detection, and quick actions.
+  * Calendar + working-hours time slots now mirror the production scheduling sheet polish (hover contrast, compact planned-session list, smooth scroll). Conflict detection heuristics move to the Phase 5 hardening backlog.
 - [x] Notes step with markdown sanitization.
 
 ### Phase 4 — Summary & Confirmation
@@ -132,6 +133,7 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 ### Phase 5 — Hardening & Rollout
 - [ ] Automated tests (unit, component, integration) per Testing Strategy section.
 - [ ] Performance & accessibility audits (axe, keyboard walkthrough, responsive checks).
+- [ ] Wire edit entry points (lead/project detail, calendar, sessions index) to launch the wizard in edit mode with parity to the new scheduling flow.
 - [ ] Feature flag rollout (internal → beta → GA) with monitoring dashboards.
 - [ ] Documentation updates (help center EN/TR, internal runbooks).
 

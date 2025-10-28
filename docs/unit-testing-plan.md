@@ -39,14 +39,15 @@
 | Core Libraries & Helpers | 18 | 18 | 100% |
 | Services & Data Access | 5 | 6 | 83% |
 | Contexts & Hooks | 34 | 35 | 97% |
-| UI Components & Pages | 89 | 89 | 100% |
+| UI Components & Pages | 89 | 90 | 99% |
 | UI Primitives & Shared Components | 22 | 23 | 96% |
 | Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **177** | **183** | **97%** |
+| **Overall** | **177** | **184** | **96%** |
 
 > **Latest audit notes (2025-10-25):** Re-baselined totals after discovering untested utility hooks (`src/utils/**`, `src/hooks/useEntityActions.ts`, `useDataTable.ts`), workspace-specific hooks, settings/template-builder UI shells, and shared onboarding/activity primitives. See new "Not Started" rows below for concrete follow-up targets.
 > **Follow-up (2025-11-18):** Supabase client wrapper tests remain outstanding—revisit `src/integrations/supabase/client.ts` once we settle the Jest ESM mocking strategy.
 > **Follow-up (2025-11-22):** Added direct specs for `SessionStatusDialogs`, `ProjectTypeDialogs`, `ServiceDialogs`, `PackageDialogs`, `LeadStatusDialogs`, `ProjectStageDialogs`, plus `useMilestoneNotifications`; remaining focus shifts to data table primitives and hook gaps.
+> **Follow-up (2025-11-25):** Schedule picker polish shipped—add focused tests for `CalendarTimePicker` + `TimeSlotPicker` hover states, smooth scroll, and locale formatting.
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -127,6 +128,7 @@
 | Enhanced project dialog | `src/components/EnhancedProjectDialog.tsx` | Cross-entity linking, lead selection, Supabase upserts | High | Done | Covered by `src/components/__tests__/EnhancedProjectDialog.test.tsx` ensuring data fetch, custom setup, and close/reopen resets. |
 | Session scheduling dialog | `src/components/ScheduleSessionDialog.tsx` | Prefill data, reminder scheduling hooks, status updates | High | Done | Covered via `src/components/__tests__/ScheduleSessionDialog.test.tsx` & `SessionSchedulingSheet.test.tsx`. |
 | Session scheduling sheet | `src/components/SessionSchedulingSheet.tsx` | Mobile sheet state, timezone-aware slots, submission flow | Medium | Done | Covered by `src/components/__tests__/SessionSchedulingSheet.test.tsx` validating slot selection, summary updates, and guarded closing. |
+| Calendar & time slot pickers | `src/components/CalendarTimePicker.tsx`, `src/components/TimeSlotPicker.tsx` | Hover styling, planned-session scroll handling, slot highlighting/focus | Medium | Not Started | New UI polish shipped (Nov 25); add component-level tests to lock hover classes, smooth scroll triggers, and locale formatting paths. |
 | Project Kanban board | `src/components/ProjectKanbanBoard.tsx` | Drag/drop ordering, status filtering, performance memoization | Medium | Done | Covered by `src/components/__tests__/ProjectKanbanBoard.test.tsx` for multi-status rendering, no-status fallback, quick view wiring, and pagination actions. |
 | Workflow health dashboard | `src/components/WorkflowHealthDashboard.tsx` | Status aggregations, error states, filter interactions | Medium | Done | Covered by `src/components/__tests__/WorkflowHealthDashboard.test.tsx` for loading skeleton, empty state, critical metrics, and action buttons. |
 | Add payment dialog | `src/components/AddPaymentDialog.tsx` | Required field gating, insert payload shaping, due status propagation | High | Done | Covered by `src/components/__tests__/AddPaymentDialog.test.tsx` asserting disabled submit, insert/reset flow, due status toggles, and guard reset callbacks. |

@@ -25,7 +25,7 @@
 2. **ProjectStep** — choose existing or create; handle optional paths when lead-only flow allowed.
 3. **SessionTypeStep** — fetch system session types, display recommended default, and keep auto-generated names in sync.
 4. **LocationStep** — address book picker + manual entry, meeting URL validation, and client-facing helper messaging. *(Local storage fallback until Supabase table ships.)*
-5. **ScheduleStep** — timezone-aware date/time pickers with required inputs, quick offsets, conflict warnings (backend flag still pending).
+5. **ScheduleStep** — timezone-aware date/time pickers with required inputs, quick offsets, conflict warnings (backend heuristics queued for hardening); mirrors production Calendar/TimeSlot polish including accent hover states and compact planned-session list.
 6. **NotesStep** — markdown-friendly textarea with sanitisation, saved note presets for reusable guidance, CRM feed preview when enabled.
 7. **SummaryStep** — review card with edit shortcuts, notification preview/workflow summary, final confirm CTA, and success view.
 
@@ -84,12 +84,17 @@
 ## Current Focus
 - Lead/project context resolver sharing across entry points.
 - Analytics instrumentation and session confirmation flow hardening.
+- Backfilling regression coverage for the refreshed schedule pickers and wiring conflict detection heuristics behind a feature toggle.
 
 ### Recently Landed (Feb 17)
 - ✅ Lead picker wired to shared lead creation sheet + searchable command UI.
 - ✅ Project picker reuses project creation sheet with lead prefill and search.
 - ✅ Drawer summary + bottom-sticky actions replaced the dual-column layout.
 - ✅ Session type selector now ships with recommended default, tooltips, and keyboard focus management (Feb 19).
+
+### Recently Landed (Nov 25)
+- ✅ Schedule step polish: Calendar hover/readability fixes, centered time slot chips, and smooth planned-session scroll carried over from the production scheduling sheet.
+- ✅ Session booking form now threads session-type defaults throughout, keeping wizard parity with existing scheduling flows.
 
 ## Design & UI Follow-Up
 - Continue refining the wizard shell and steps to adhere to Lumiso design system tokens. *(Initial pass shipped: dual-column layout with persistent summary sidebar and updated step cards.)*

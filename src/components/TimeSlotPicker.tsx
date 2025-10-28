@@ -130,10 +130,10 @@ export function TimeSlotPicker({ selectedDate, selectedTime, onTimeSelect, class
             variant="outline"
             size="sm"
             className={cn(
-              "justify-start text-xs h-8 transition-colors",
+              "justify-center text-xs h-8 transition-colors text-center",
               selectedTime?.trim().startsWith(slot.trim())
                 ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                : "hover:bg-accent hover:text-accent-foreground"
+                : "hover:bg-primary/10 hover:text-primary"
             )}
             aria-pressed={selectedTime?.trim().startsWith(slot.trim())}
             onClick={() => onTimeSelect(slot)}

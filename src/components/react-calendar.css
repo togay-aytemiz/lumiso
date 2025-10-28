@@ -33,7 +33,16 @@
   @apply grid grid-cols-7 gap-y-1 px-2 pb-2;
 }
 .react-calendar__tile {
-  @apply relative h-9 md:h-10 flex items-center justify-center text-sm transition-colors rounded-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary;
+  @apply relative h-9 md:h-10 flex items-center justify-center text-sm transition-colors rounded-md text-foreground;
+}
+
+.react-calendar__tile:enabled:hover,
+.react-calendar__tile:enabled:focus {
+  @apply bg-primary/10 text-primary;
+}
+
+.react-calendar__tile:enabled:focus-visible {
+  @apply outline-none ring-2 ring-primary/40;
 }
 
 /* Today */
@@ -67,4 +76,3 @@
 .react-calendar__month-view__days__day--weekend {
   @apply text-destructive/80;
 }
-

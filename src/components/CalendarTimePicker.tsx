@@ -111,7 +111,7 @@ export function CalendarTimePicker({
   return (
     <div className="space-y-6">
       {(selectedDate || selectedTime) && (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-accent/30 bg-accent/10 p-4">
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-accent/30 bg-accent/10 p-4">
           {selectedDate && (
             <div className="flex items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-emerald-700">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -191,6 +191,7 @@ export function CalendarTimePicker({
               type="button"
               variant="secondary"
               size="sm"
+              className="transition-colors hover:bg-primary/10 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/40"
               onClick={() => {
                 const today = new Date();
                 onDateChange(today);

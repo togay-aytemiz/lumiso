@@ -146,8 +146,14 @@ export const SessionPlanningWizard = ({
     const leadSummary = toSummary(state.lead.name);
     const hasLead = Boolean(state.lead.id || state.lead.name?.trim());
 
-    const projectSummary = toSummary(state.project.name);
-    const hasProject = Boolean(state.project.id || state.project.name?.trim());
+    const projectSkipped = state.project.isSkipped === true;
+    const hasProjectValue = Boolean(state.project.id || state.project.name?.trim());
+    const projectSummary = hasProjectValue
+      ? toSummary(state.project.name)
+      : projectSkipped
+        ? t("summary.values.notLinkedSkipped")
+        : undefined;
+    const hasProject = hasProjectValue || projectSkipped;
 
     const sessionTypeSummary = toSummary(state.sessionTypeLabel);
     const hasSessionType = Boolean(state.sessionTypeId);

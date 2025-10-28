@@ -234,6 +234,7 @@
     "values": {
       "notSet": "Ayarlanmamış",
       "notLinked": "Bağlı değil",
+      "notLinkedSkipped": "Projeye bağlanmadan ilerleniyor",
       "notScheduled": "Planlanmadı",
       "dateTbd": "Tarih belirlenecek",
       "timeTbd": "Saat belirlenecek",

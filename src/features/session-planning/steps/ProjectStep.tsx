@@ -44,6 +44,7 @@ export const ProjectStep = ({ onContinue }: { onContinue?: () => void } = {}) =>
         name: "",
         description: "",
         mode: "existing",
+        isSkipped: false,
       });
     }
   }, [leadId, state.project.id, updateProject]);
@@ -165,6 +166,7 @@ export const ProjectStep = ({ onContinue }: { onContinue?: () => void } = {}) =>
       name: project.name,
       description: state.project.description,
       mode: "existing",
+      isSkipped: false,
     });
     setDropdownOpen(false);
     setSearchTerm("");
@@ -189,6 +191,7 @@ export const ProjectStep = ({ onContinue }: { onContinue?: () => void } = {}) =>
       name: "",
       description: "",
       mode: "existing",
+      isSkipped: true,
     });
     setDropdownOpen(false);
     setSearchTerm("");

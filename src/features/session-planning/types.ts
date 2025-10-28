@@ -21,6 +21,7 @@ export interface SessionPlanningProject {
   name?: string;
   description?: string;
   mode: "existing" | "new";
+  isSkipped?: boolean;
 }
 
 export interface SessionPlanningSchedule {

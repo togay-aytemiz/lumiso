@@ -229,6 +229,7 @@
     "values": {
       "notSet": "Not set",
       "notLinked": "Not linked",
+      "notLinkedSkipped": "Proceeding without a project",
       "notScheduled": "Not scheduled",
       "dateTbd": "Date TBD",
       "timeTbd": "Time TBD",

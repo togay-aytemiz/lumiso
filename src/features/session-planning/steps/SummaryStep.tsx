@@ -36,11 +36,14 @@ export const SummaryStep = () => {
     ? <span className="text-muted-foreground">{t("summary.values.notSet")}</span>
     : leadValue!;
 
+  const projectSkipped = state.project.isSkipped === true;
   const projectValue = state.project.name?.trim();
-  const projectMissing = !projectValue;
-  const projectDisplay: ReactNode = projectMissing
-    ? <span className="text-muted-foreground">{t("summary.values.notLinked")}</span>
-    : projectValue!;
+  const projectMissing = !projectValue && !projectSkipped;
+  const projectDisplay: ReactNode = projectValue
+    ? projectValue
+    : projectSkipped
+      ? <span className="text-slate-900">{t("summary.values.notLinkedSkipped")}</span>
+      : <span className="text-muted-foreground">{t("summary.values.notLinked")}</span>;
 
   const sessionTypeValue = state.sessionTypeLabel?.trim();
   const sessionTypeMissing = !sessionTypeValue;

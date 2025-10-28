@@ -18,7 +18,8 @@ export const createInitialSessionPlanningState = (
   project: {
     id: entryContext.projectId,
     name: entryContext.projectName,
-    mode: entryContext.projectId ? "existing" : "existing"
+    mode: entryContext.projectId ? "existing" : "existing",
+    isSkipped: false
   },
   sessionTypeId: undefined,
   sessionTypeLabel: undefined,

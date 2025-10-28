@@ -82,13 +82,14 @@ Each phase can be delivered incrementally; this document will track completed st
 
 ## Phase 2 — Backend & Supabase Layer
 
-**Status:** In progress — core RPCs and hooks shipped; edge function audit + Supabase tests pending.
+**Status:** In progress — deletion guard function + Deno coverage shipped; legacy edge-function audit still underway.
 
 ### Tasks
 - [x] Extend `ensure_organization_settings` to guarantee a settings row with `default_session_type_id`.  
 - [x] Introduce `ensure_default_session_types_for_org(user_uuid uuid, org_id uuid)` RPC mirroring existing seeding patterns.  
 - [x] Update RLS policies and stored procedures (`ensure_default_packages_for_org`, triggers) to account for session type dependencies.  
 - [x] Ship Supabase client helpers & hooks (`useSessionTypes`, settings prefetch).  
+- [x] Add `session-types-delete` edge function flow with Deno tests to block deleting in-use session types.  
 - [ ] Confirm existing edge functions (notifications, reminders) don’t break with new column (update queries if needed) and produce regression tests.
 
 ### Deliverables
@@ -101,10 +102,19 @@ Each phase can be delivered incrementally; this document will track completed st
 - Prefetches now run through `OrganizationContext` to guarantee defaults before rendering dependent UI.
 - `useSessionTypes` exposes normalized access; new tests cover query key composition and RPC invocation.
 - CRUD paths (create/update/delete/default) live inside `SessionTypeDialogs`/`SessionTypesSection`, each calling Supabase directly with optimistic cache invalidation.
+- Supabase `session-types-delete` edge function ships with guards that surface actionable messaging in the UI and Deno tests locking the in-use protection path.
 
 ### Outstanding
-- Audit Supabase edge functions (notifications, reminder processors, calendar sync) for reliance on legacy duration fields; update queries or fallbacks to leverage `session_type_id`.
-- Add targeted Supabase tests (e.g., Deno tests mirroring `ensure_default_session_types_for_org`) once schema stabilizes.
+- [ ] Audit remaining Supabase edge functions (notifications, reminder processors, calendar sync) for reliance on legacy duration fields; update queries or fallbacks to leverage `session_type_id`.
+- [ ] Extend coverage beyond the deletion guard once additional edge entry points are refactored to use the new schema.
+
+#### Edge Function Audit Checklist
+- [x] `process-session-reminders` — ensure schedule lookups prefer `session_type_id` duration metadata and update payload typings. *(Function now fetches session type join and forwards metadata to workflow executor; test asserts new fields.)*
+- [x] `send-reminder-notifications` — confirm localized template branches surface session type info when present. *(Daily summary queries now pull session type/name/duration for email templates.)*
+- [x] `workflow-executor` — gate automation routing on `session_type_id` where legacy duration logic existed. *(Fallback lookup includes session type join and exposes `session_type_*` fields in entity data.)*
+- [ ] `schedule-daily-notifications` / `simple-daily-notifications` — verify cron windows for follow-ups use session type duration or add notes if not required.
+- [x] `notification-processor` — double-check filter clauses and analytics payloads for new column support. *(Workflow message processor now prefers `session_type_name` over project label.)*
+- [ ] Add/extend Deno tests for each function above once queries are updated (mirroring the new deletion guard test harness).
 
 ## Phase 3 — Frontend Settings & CRUD
 
@@ -113,7 +123,7 @@ Each phase can be delivered incrementally; this document will track completed st
 ### Session Types Management UI
 - [x] Add `SessionTypesSection` to `src/pages/settings/Services.tsx`, above packages.  
 - [x] UI elements: list with filters (active/inactive), inline actions to set default, create/edit dialog capturing name/duration/category/description.  
-- [ ] Warn before deleting a type that is referenced by sessions (require migration or soft-delete).  
+- [x] Warn before deleting a type that is referenced by sessions (require migration or soft-delete).  
 - [x] Ensure `ensure_default_session_types_for_org` is invoked analogously to packages/services when settings load.
 
 ### Default Selection
@@ -126,10 +136,12 @@ Each phase can be delivered incrementally; this document will track completed st
 - Implemented `SessionTypeDialogs` with validation, `set as default` toggle, `is_active` switch, and translation coverage (EN/TR).
 - Integrated section into Settings Services page and added Jest tests (`src/components/__tests__/SessionTypesSection.test.tsx`, `src/components/settings/__tests__/SessionTypeDialogs.test.tsx`).
 - Updated settings data prefetch + React Query cache invalidation to keep list in sync after mutations.
+- Delete action now routes through the guarded Supabase function, showing localized messaging when a type is in use and confirming success when deletion is allowed.
 
 ### Outstanding
-- Block deletion (or convert to `is_active` toggle only) when Supabase reports existing `sessions.session_type_id` references; surface actionable messaging in UI.
-- Revisit filtering (active/inactive toggle) once usage data arrives.
+- [ ] Revisit filtering (active/inactive toggle) once usage data arrives (may promote inactive-first views for large orgs).
+- [ ] Design and validate a “soft deactivate” affordance: decide between an explicit `Deactivate` action or enhanced `is_active` flows, include UI copy, and align with analytics/reporting needs.
+- [ ] Document the deactivate workflow (UI + Supabase expectations) once the product decision is finalized.
 
 ### Deliverables
 - New components, forms, and translations.  
@@ -160,10 +172,10 @@ Each phase can be delivered incrementally; this document will track completed st
 - Supabase types, generated hooks, and Jest coverage were refreshed to reflect the new schema.
 - Session scheduling sheet and edit surfaces now call into the session-type aware form service, with Calendar/Time pickers refreshed (hover states, compact layout) to support the streamlined booking flow.
 - Added smoke tests for scheduling UI to guarantee existing behaviour while session types remain optional.
+- Edge deletion guard now blocks removal of in-use session types via a Supabase function covered by Deno tests.
 
 ### Outstanding
 - Monitor analytics/reporting/notification touchpoints for any remaining legacy duration assumptions.
-- Provide deletion guardrails once sessions start referencing types (ties back to Phase 3 outstanding item).
 - Document migration/backfill verification steps and rollout checklist before enabling enforcement.
 
 ### Deliverables
@@ -191,15 +203,16 @@ Each phase can be delivered incrementally; this document will track completed st
 | Phase | Status | Notes |
 | --- | --- | --- |
 | Data Model Foundations | Completed | Migrations + Supabase types shipped (`20250914120000`, `20250914122000`, `20250914123000`, `20250914140500`). |
-| Backend & Supabase Layer | In progress | `ensure_default_session_types_for_org` live; edge function audit + Supabase tests pending. |
+| Backend & Supabase Layer | In progress | In-use deletion guard (edge function + Deno tests) shipped; follow-up audit covers notification/reminder edge flows on new schema. |
 | Frontend Settings & CRUD | Completed | `SessionTypesSection` + dialogs deployed with Jest/i18n coverage. |
 | Product Integration & Cleanup | Completed | Booking flows now use session types and refreshed scheduling UX. |
 
 ## Upcoming Tasks
 - Monitor booking flows for regressions now that session types are enforced; capture UX feedback for additional polish.
 - Audit analytics/reporting/notification surfaces to ensure session type metadata is surfaced consistently.
-- Add Supabase/Deno coverage for `ensure_default_session_types_for_org` and edge functions touching session data.
-- Introduce deletion/inactivation guardrails when a session type is referenced by existing sessions.
+- Extend Supabase/Deno coverage to the remaining RPCs that touch session data (e.g., `ensure_default_session_types_for_org`).
+- Complete the remaining edge-function checklist items (`schedule-daily-notifications`, `simple-daily-notifications`) and add regression tests for the updated flows.
+- Prototype the soft-deactivation UX (wireframes + acceptance criteria) prior to engineering.
 - Draft rollout playbook: migration dry-run checklist, staging validation steps, operator comms.
 
 ## Iteration Log
@@ -235,3 +248,12 @@ Each phase can be delivered incrementally; this document will track completed st
   - **Review**: Spot-checked updated `SessionTypesSection` interactions (set/clear default, edit, delete).  
   - **Testing**: Re-ran targeted Jest suites for settings modules.  
   - **Next**: Add deletion guard for in-use types and expose session type picker in scheduling UI.
+- **2025-11-25** — Added edge deletion guard + Supabase function tests to block removing session types that are referenced by sessions; front-end now surfaces an inactivation message.  
+  - **Review**: Verified guard via Deno tests and updated `SessionTypesSection` confirmation flow.  
+  - **Testing**: New Jest coverage for Calendar/Time slot pickers and updated Session Types section ensures softer hover states remain locked in.
+- **2025-11-26** — Captured Phase 2/3 follow-up work: edge-function audit checklist + soft-deactivate backlog entries.  
+  - **Review**: Identified notification/reminder functions still reading legacy duration fields; defined audit owners.  
+  - **Next**: Draft UX for deactivate toggle and stub Deno tests mirroring new query paths.
+- **2025-11-26 (later)** — Updated reminder/workflow edge functions to include `session_type_id` metadata and weekly email data.  
+  - **Review**: Patched `process-session-reminders`, `workflow-executor`, `send-reminder-notifications`, and `notification-processor` to hydrate session type info.  
+  - **Testing**: Extended `process-session-reminders` Deno test to assert new payload fields; remaining functions queued for follow-up tests.

@@ -924,6 +924,11 @@ async function getEntityData(supabase: any, entityType: string, entityId: string
       .from('sessions')
       .select(`
         *,
+        session_types:session_type_id (
+          id,
+          name,
+          duration_minutes
+        ),
         leads:lead_id (
           id,
           name,
@@ -969,6 +974,9 @@ async function getEntityData(supabase: any, entityType: string, entityId: string
       project_name: session?.projects?.name,
       project_type: session?.projects?.project_types?.name || '',
       client_email: session?.leads?.email,
+      session_type_id: session?.session_type_id ?? null,
+      session_type_name: session?.session_types?.name ?? null,
+      session_type_duration_minutes: session?.session_types?.duration_minutes ?? null,
       ...leadFieldValues,
       ...session
     };

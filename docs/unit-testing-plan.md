@@ -39,15 +39,16 @@
 | Core Libraries & Helpers | 18 | 18 | 100% |
 | Services & Data Access | 5 | 6 | 83% |
 | Contexts & Hooks | 34 | 35 | 97% |
-| UI Components & Pages | 89 | 90 | 99% |
+| UI Components & Pages | 92 | 92 | 100% |
 | UI Primitives & Shared Components | 22 | 23 | 96% |
-| Supabase Edge Functions & Automation | 9 | 9 | 100% |
-| **Overall** | **177** | **184** | **96%** |
+| Supabase Edge Functions & Automation | 10 | 10 | 100% |
+| **Overall** | **179** | **186** | **96%** |
 
 > **Latest audit notes (2025-10-25):** Re-baselined totals after discovering untested utility hooks (`src/utils/**`, `src/hooks/useEntityActions.ts`, `useDataTable.ts`), workspace-specific hooks, settings/template-builder UI shells, and shared onboarding/activity primitives. See new "Not Started" rows below for concrete follow-up targets.
 > **Follow-up (2025-11-18):** Supabase client wrapper tests remain outstanding—revisit `src/integrations/supabase/client.ts` once we settle the Jest ESM mocking strategy.
 > **Follow-up (2025-11-22):** Added direct specs for `SessionStatusDialogs`, `ProjectTypeDialogs`, `ServiceDialogs`, `PackageDialogs`, `LeadStatusDialogs`, `ProjectStageDialogs`, plus `useMilestoneNotifications`; remaining focus shifts to data table primitives and hook gaps.
-> **Follow-up (2025-11-25):** Schedule picker polish shipped—add focused tests for `CalendarTimePicker` + `TimeSlotPicker` hover states, smooth scroll, and locale formatting.
+> **Follow-up (2025-11-25):** Schedule picker polish shipped—tests added for `CalendarTimePicker` + `TimeSlotPicker` to lock hover classes, smooth scroll, and locale formatting.
+> **Follow-up (2025-11-26):** Next testing slice targets the wizard integration harness (create/edit/reschedule) and the Supabase client wrapper mocking strategy—see new backlog entries below.
 
 ### Core Libraries & Helpers
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -79,7 +80,7 @@
 | Lead data service | `src/services/LeadService.ts` | Search/filter combinations, pagination guards, Supabase fallbacks | High | Done | Covered via `src/services/__tests__/LeadService.test.ts` (custom field merge + filter/sort). |
 | Lead detail aggregator | `src/services/LeadDetailService.ts` | Parallel fetch composition, null safety when relations missing | Medium | Done | Covered via `src/services/__tests__/LeadDetailService.test.ts` for archived filtering, payment math, and activity fallbacks. |
 | Base entity service foundation | `src/services/BaseEntityService.ts` | Shared `getOrganizationId`, error handling, caching | Medium | Done | Covered by `src/services/__tests__/BaseEntityService.test.ts` for org lookup failure handling and authenticated user guard. |
-| Supabase client wrapper | `src/integrations/supabase/client.ts` | Auth-aware client initialization, edge-function channel reuse, error surfacing | High | Not Started | Needs isolated tests around `createClient`, session expiry refresh, and SSR safety guards. |
+| Supabase client wrapper | `src/integrations/supabase/client.ts` | Auth-aware client initialization, edge-function channel reuse, error surfacing | High | Not Started | Establish Jest-compatible mock factory for `@supabase/supabase-js`, then cover `createClient`, session expiry refresh, SSR safety guards, and edge-function channel reuse. |
 
 ### Contexts & Hooks
 | Area | File(s) | What to Cover | Priority | Status | Notes |
@@ -128,7 +129,9 @@
 | Enhanced project dialog | `src/components/EnhancedProjectDialog.tsx` | Cross-entity linking, lead selection, Supabase upserts | High | Done | Covered by `src/components/__tests__/EnhancedProjectDialog.test.tsx` ensuring data fetch, custom setup, and close/reopen resets. |
 | Session scheduling dialog | `src/components/ScheduleSessionDialog.tsx` | Prefill data, reminder scheduling hooks, status updates | High | Done | Covered via `src/components/__tests__/ScheduleSessionDialog.test.tsx` & `SessionSchedulingSheet.test.tsx`. |
 | Session scheduling sheet | `src/components/SessionSchedulingSheet.tsx` | Mobile sheet state, timezone-aware slots, submission flow | Medium | Done | Covered by `src/components/__tests__/SessionSchedulingSheet.test.tsx` validating slot selection, summary updates, and guarded closing. |
-| Calendar & time slot pickers | `src/components/CalendarTimePicker.tsx`, `src/components/TimeSlotPicker.tsx` | Hover styling, planned-session scroll handling, slot highlighting/focus | Medium | Not Started | New UI polish shipped (Nov 25); add component-level tests to lock hover classes, smooth scroll triggers, and locale formatting paths. |
+| Session planning wizard integration | `src/features/session-planning/state/__tests__/SessionPlanningProvider.integration.test.tsx` | Multi-entry flow coverage (create, edit/reschedule), reducer/applyState behaviour, notification toggles | High | Done | Integration tests drive create → schedule → notify path, hydrate edit mode, ensure reschedule + reset flows honour dirty/save flags. |
+| Weekly schedule preview | `src/components/WeeklySchedulePreview.tsx` | Duration-based block sizing, overlap column layout, time-TBD handling | Medium | Done | Covered by `src/components/__tests__/WeeklySchedulePreview.test.tsx` validating stretched heights, column placement, and empty-week messaging. |
+| Calendar & time slot pickers | `src/components/CalendarTimePicker.tsx`, `src/components/TimeSlotPicker.tsx` | Hover styling, planned-session scroll handling, slot highlighting/focus | Medium | Done | Added focused tests covering hover classnames, smooth planned-session scroll, and locale-aware slot selection. |
 | Project Kanban board | `src/components/ProjectKanbanBoard.tsx` | Drag/drop ordering, status filtering, performance memoization | Medium | Done | Covered by `src/components/__tests__/ProjectKanbanBoard.test.tsx` for multi-status rendering, no-status fallback, quick view wiring, and pagination actions. |
 | Workflow health dashboard | `src/components/WorkflowHealthDashboard.tsx` | Status aggregations, error states, filter interactions | Medium | Done | Covered by `src/components/__tests__/WorkflowHealthDashboard.test.tsx` for loading skeleton, empty state, critical metrics, and action buttons. |
 | Add payment dialog | `src/components/AddPaymentDialog.tsx` | Required field gating, insert payload shaping, due status propagation | High | Done | Covered by `src/components/__tests__/AddPaymentDialog.test.tsx` asserting disabled submit, insert/reset flow, due status toggles, and guard reset callbacks. |
@@ -243,6 +246,7 @@
 | User email lookup | `supabase/functions/get-users-email/index.ts` | Auth enforcement, filtering, pagination | Medium | Done | Covered by `supabase/functions/tests/get-users-email.test.ts` for happy path, validation, and failure skips. |
 | Email localization helpers | `supabase/functions/_shared/email-i18n.ts` | Language normalization, fallback to EN, list helpers | Low | Done | Validated via `supabase/functions/tests/email-i18n.test.ts` for default, Turkish, and fallback behaviors. |
 | Test callback harness | `supabase/functions/test-callback/index.ts` | Echo behavior, validation of payload schema | Low | Done | Covered by `supabase/functions/tests/test-callback.test.ts` for CORS, metadata rendering, and error handling. |
+| Session type deletion guard | `supabase/functions/session-types-delete/index.ts` | In-use protection, localized error handling, success messaging | Medium | Done | Covered by `supabase/functions/tests/session-types-delete.test.ts` for referenced-type rejection and happy-path deletion. |
 
 _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`. Update the relevant table after every iteration that touches a listed area; add new rows when new risk surfaces.
 
@@ -355,6 +359,9 @@ _Statuses_: `Not started`, `In progress`, `Blocked`, `Ready for review`, `Done`.
 | 2025-11-19 | Codex | Added activity timeline primitive coverage | Added `src/components/__tests__/ActivityTimeline.test.tsx`, `ActivityTimelineItem.test.tsx`, and `ActivityForm.test.tsx` to exercise grouping, project context, completion toggles, and reminder scheduling validation | Next: focus on onboarding tutorial surfaces and advanced data table primitives |
 | 2025-11-19 (later) | Codex | Added onboarding tutorial surface coverage | Added `src/components/__tests__/BaseOnboardingModal.test.tsx`, `OnboardingTutorial.test.tsx`, `TutorialFloatingCard.test.tsx`, and `TutorialExitGuardDialog.test.tsx` to validate modal progression, floating card gating, exit guard controls, and tutorial navigation hooks | Next: tackle advanced data table primitives and template builder surfaces |
 | 2025-11-19 (even later) | Codex | Added template builder editing & preview coverage | Added `src/components/template-builder/__tests__/TemplateBuilderEditors.test.tsx`, `TemplateBuilderPreview.test.tsx`, `TemplateBuilderDialogs.test.tsx`, and `TemplateBuilderStorage.test.tsx` to cover block editing, form validation, channel previews, send-test behavior, storage indicators, and deletion dialogs | Next: focus on template builder asset utilities and advanced data table primitives |
+| 2025-11-25 | Codex | Locked schedule picker hover + session-type guard coverage | Added `src/components/__tests__/CalendarTimePicker.test.tsx`, `TimeSlotPicker.test.tsx`, and `supabase/functions/tests/session-types-delete.test.ts` to verify hover contrast, smooth scroll to planned sessions, and in-use deletion guard messaging | Next: Layer integration coverage for wizard edit/reschedule flows and complete the remaining edge-function audit for `session_type_id` adoption |
+| 2025-11-26 | Codex | Planned wizard integration + Supabase client coverage | Documented backlog entries for `SessionPlanningWizard` integration specs and the Supabase client mocking harness to unblock Phase 5 testing | Next: Build the Supabase mock factory and land the first integration spec |
+| 2025-11-26 (later) | Codex | Added weekly schedule preview + session planning integration tests | Added `src/components/__tests__/WeeklySchedulePreview.test.tsx`, updated `CalendarTimePicker.test.tsx`, and introduced `SessionPlanningProvider.integration.test.tsx` to validate duration stretch, overlap columns, and reducer-driven edit flows | Next: Mock Supabase client wrapper + extend edge-function audit harness |
 
 ## Maintenance Rules of Thumb
 - Treat this file like the single source of truth for unit testing status—update it in the same PR as any test additions or strategy changes.

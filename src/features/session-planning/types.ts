@@ -41,6 +41,8 @@ export interface SessionPlanningMetaState {
   isSavingDraft: boolean;
   lastSavedAt?: string;
   entrySource?: string;
+  mode: "create" | "edit";
+  sessionId?: string;
 }
 
 export interface SessionPlanningState {
@@ -67,6 +69,8 @@ export interface SessionPlanningEntryContext {
   defaultDate?: string;
   defaultTime?: string;
   entrySource?: string;
+  sessionId?: string;
+  mode?: "create" | "edit";
 }
 
 export type SessionPlanningAction =

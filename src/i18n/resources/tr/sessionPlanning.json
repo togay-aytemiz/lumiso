@@ -28,7 +28,13 @@
     "sessionCreationFailedTitle": "Seans planlanamadı",
     "sessionCreationFailedDescription": "Lütfen formu kontrol edip tekrar deneyin.",
     "sessionWorkflowWarningTitle": "Seans planlandı",
-    "sessionWorkflowWarningDescription": "Bildirimlerde gecikme olabilir. Otomasyon ayarlarını kontrol edin."
+    "sessionWorkflowWarningDescription": "Bildirimlerde gecikme olabilir. Otomasyon ayarlarını kontrol edin.",
+    "sessionUpdatedTitle": "Seans güncellendi",
+    "sessionUpdatedDescription": "Değişiklikler kaydedildi.",
+    "sessionUpdateFailedTitle": "Seans güncellenemedi",
+    "sessionUpdateFailedDescription": "Lütfen değişiklikleri kontrol edip tekrar deneyin.",
+    "sessionLoadFailedTitle": "Seans yüklenemedi",
+    "sessionLoadFailedDescription": "Lütfen sihirbazı kapatıp yeniden deneyin."
   },
   "stepper": {
     "progressLabel": "Adım {{current}} / {{total}}",

@@ -25,11 +25,9 @@
 2. **ProjectStep** — choose existing or create; handle optional paths when lead-only flow allowed.
 3. **SessionTypeStep** — fetch system session types, display recommended default, and keep auto-generated names in sync.
 4. **LocationStep** — address book picker + manual entry, meeting URL validation, and client-facing helper messaging. *(Local storage fallback until Supabase table ships.)*
-5. **ScheduleStep** — timezone-aware date/time pickers with required inputs, quick offsets, conflict warnings (backend heuristics queued for hardening); mirrors production Calendar/TimeSlot polish including accent hover states and compact planned-session list.
+5. **ScheduleStep** — timezone-aware date/time pickers with required inputs, quick offsets, conflict warnings (backend heuristics queued for hardening); auto-derives end times from the selected session type duration and ensures weekly calendar surfaces stretch session blocks across their full runtime, splitting overlapping sessions into equal-width columns just like mainstream calendar apps.
 6. **NotesStep** — markdown-friendly textarea with sanitisation, saved note presets for reusable guidance, CRM feed preview when enabled.
 7. **SummaryStep** — review card with edit shortcuts, notification preview/workflow summary, final confirm CTA, and success view.
-
-*No standalone Session Details step — session names stay auto-generated from context so the flow remains lean.*
 
 ## Data & API Integration
 - CRUD service module `features/session-planning/api.ts` that wraps Supabase RPCs/table calls.
@@ -75,16 +73,35 @@
 
 ## Open Questions / Follow-Ups
 - Confirm data model updates (notification preference schema; draft table deferred).
-- Clarify requirements for calendar conflict detection (needs backend support?).
+- Clarify requirements for calendar conflict detection (needs backend support?) so the overlapping layout stays accurate as we stretch blocks to actual duration.
 - Determine minimal viable notification preview scope for pilot.
 - Define telemetry payloads for the new lead/project sheet launches (so we can measure adoption).
 
 - [ ] Maintain Storybook (or temporary route) harness to demo the wizard with mocked data.
 
 ## Current Focus
-- Lead/project context resolver sharing across entry points.
-- Analytics instrumentation and session confirmation flow hardening.
-- Backfilling regression coverage for the refreshed schedule pickers and wiring conflict detection heuristics behind a feature toggle.
+- Phase 5 hardening: ship the weekly calendar layout stretch + conflict heuristics behind the feature flag.
+- Expand automated coverage to the edit/reschedule flow so reminders and Supabase updates stay guarded.
+- Schedule accessibility & performance audits once the calendar upgrade stabilizes.
+- Prep the phased feature-flag rollout plan and monitoring dashboards ahead of beta.
+
+### Phase 5 Backlog Breakdown
+- **Integration coverage**
+  - [x] Author a happy-path integration spec that plans a session from each entry surface (lead/project/dashboard/calendar) and asserts Supabase payload parity. *(Initial provider-level spec covers create flow; UI-driven variants still optional once Supabase mocks land.)*
+  - [x] Add an edit/reschedule spec that hydrates an existing session, tweaks schedule + reminders, and verifies analytics telemetry stubs. *(Provider integration test now exercises reschedule + notification toggles; telemetry assertions remain TODO when analytics mock is introduced.)*
+  - [ ] Extend reducer tests to cover conflict-resolution actions introduced for edit mode.
+- **Weekly calendar stretch**
+  - [x] Update the timetable renderer to derive slot heights from `sessionType.durationMinutes`. *(Weekly preview grid now sizes blocks by duration.)*
+  - [x] Implement overlap normalization (parallel columns) plus snapshot tests for 30/45/90 min types. *(Unit tests validate overlapping sessions split into equal-width lanes.)*
+  - [ ] Reconcile conflict warning banners with the stretched layout to avoid clipping.
+- **Perf & accessibility**
+  - [ ] Run automated axe sweep across Storybook stories for every wizard step; log actionable issues.
+  - [ ] Perform manual keyboard + screen reader reviews (NVDA + VoiceOver) and capture fixes.
+  - [ ] Profile render/transition timings with React Profiler and note optimizations in the rollout checklist.
+- **Rollout & docs**
+  - [ ] Draft rollout plan detailing cohort sequencing, success metrics, and rollback triggers.
+  - [ ] Update help center + internal runbook with edit-mode guidance and the new calendar screenshots.
+  - [ ] Ensure feature flag toggles emit telemetry for enable/disable events and document the operator workflow.
 
 ### Recently Landed (Feb 17)
 - ✅ Lead picker wired to shared lead creation sheet + searchable command UI.
@@ -95,11 +112,11 @@
 ### Recently Landed (Nov 25)
 - ✅ Schedule step polish: Calendar hover/readability fixes, centered time slot chips, and smooth planned-session scroll carried over from the production scheduling sheet.
 - ✅ Session booking form now threads session-type defaults throughout, keeping wizard parity with existing scheduling flows.
+- ✅ Wizard edit mode hydrates existing sessions, updates Supabase (session type + reminders), and replaces `EditSessionDialog` when the feature flag is enabled.
 
 ## Design & UI Follow-Up
 - Continue refining the wizard shell and steps to adhere to Lumiso design system tokens. *(Initial pass shipped: dual-column layout with persistent summary sidebar and updated step cards.)*
 - Partner with design to lock hi-fi mocks (states, breakpoints, motion) before final styling pass.
 - Introduce reusable UI primitives (step cards, summary tiles, address book list) so future teams can compose consistent flows.
 - Ensure address book and saved-note selectors stay extremely lightweight (default highlights + single action to apply).
-- Do not reintroduce a dedicated session-details stage unless strong evidence shows it is necessary.
 - Plan Supabase-backed sync for addresses/notes once schemas land so local storage can become a transparent cache.

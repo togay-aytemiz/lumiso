@@ -486,7 +486,7 @@ export async function processWorkflowMessage(supabase: any, notification: any) {
   const variables = {
     customer_name: entity_data?.customer_name || entity_data?.client_name || 'Valued Client',
     customer_email: entity_data?.customer_email || entity_data?.client_email || '',
-    session_type: entity_data?.project_name || 'Session',
+    session_type: entity_data?.session_type_name || entity_data?.project_name || 'Session',
     session_date: entity_data?.session_date || '',
     session_time: entity_data?.session_time || '',
     session_location: entity_data?.location || 'Studio',

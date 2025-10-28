@@ -10,7 +10,9 @@ export interface CreateSessionPayload {
   sessionTime: string;
   notes?: string;
   location?: string;
+  meetingUrl?: string;
   projectId?: string;
+  sessionTypeId?: string;
   status?: string;
 }
 
@@ -86,6 +88,8 @@ export async function createSession(
       session_time: payload.sessionTime,
       notes: payload.notes?.trim() || null,
       location: payload.location?.trim() || null,
+      meeting_url: payload.meetingUrl?.trim() || null,
+      session_type_id: payload.sessionTypeId ?? null,
       status: payload.status ?? "planned"
     })
     .select("id")
@@ -122,5 +126,61 @@ export async function createSession(
     sessionId: newSession.id,
     organizationId,
     userId: user.id
+  };
+}
+
+export interface UpdateSessionPayload {
+  sessionId: string;
+  leadId: string;
+  sessionName?: string;
+  sessionDate: string;
+  sessionTime: string;
+  notes?: string;
+  location?: string;
+  meetingUrl?: string;
+  projectId?: string;
+  sessionTypeId?: string;
+}
+
+export interface UpdateSessionResult {
+  organizationId: string;
+}
+
+export async function updateSession(payload: UpdateSessionPayload): Promise<UpdateSessionResult> {
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError) {
+    throw authError;
+  }
+  const user = authData?.user;
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
+  const organizationId = await getUserOrganizationId();
+  if (!organizationId) {
+    throw new Error("Organization required");
+  }
+
+  const { error: updateError } = await supabase
+    .from("sessions")
+    .update({
+      lead_id: payload.leadId,
+      project_id: payload.projectId ?? null,
+      session_name: payload.sessionName?.trim() || null,
+      session_date: payload.sessionDate,
+      session_time: payload.sessionTime,
+      notes: payload.notes?.trim() || null,
+      location: payload.location?.trim() || null,
+      meeting_url: payload.meetingUrl?.trim() || null,
+      session_type_id: payload.sessionTypeId ?? null
+    })
+    .eq("id", payload.sessionId);
+
+  if (updateError) {
+    throw updateError;
+  }
+
+  return {
+    organizationId
   };
 }

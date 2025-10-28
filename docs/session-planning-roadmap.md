@@ -24,7 +24,7 @@
 - Session type selection with defaults and auto-generated session names (editable).
 - Location handling with address book, last-used defaults, and online meeting URLs.
 - Saved note presets so photographers can reapply common guidance with minimal clicks.
-- Schedule selection with timezone awareness, calendar prefills, and quick actions.
+- Schedule selection with timezone awareness, calendar prefills, quick actions, and weekly calendar blocks sized to the session duration (with overlap splitting).
 - Optional notes, summary review, and notification workflow preview with opt-out controls.
 - CRUD APIs and persistence for sessions, addresses, and notification preferences.
 - Analytics, logging, and rollout plan for a staged release behind feature flags.
@@ -49,7 +49,7 @@
 2. **Project** — select existing (sorted by recency), create inline, or skip when not required.
 3. **Session Type** — list system-defined types, mark recommended default, include description tooltip.
 4. **Location** — address book picker with inline create/edit; supports physical addresses and meeting URLs with one-tap selection.
-5. **Schedule** — date/time pickers with timezone awareness, quick buttons (+30m, +1h), conflict warnings.
+5. **Schedule** — date/time pickers with timezone awareness, quick buttons (+30m, +1h), conflict warnings, and auto-derived end times from session type durations so the weekly calendar renders full-length blocks and stacks conflicts side by side.
 6. **Notes** — optional markdown-limited field plus saved note presets; integrate with CRM notes when enabled.
 7. **Summary** — review of selections, edit shortcuts, notification workflow preview, confirmation action.
 
@@ -100,22 +100,22 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 - Audit logging: record wizard actions for compliance (create, edit, cancel).
 
 ## Technical Implementation Roadmap
+> ✅ Phases 1–4 shipped as of 2025-11-25; remaining work is concentrated in Phase 5 hardening tasks below.
 ### Phase 0 — Discovery & Design
 - [ ] Validate flow with design, produce mid-fi wireframes and interaction specs.
 - [ ] Confirm API contract updates with backend lead (session, addresses, notifications).
 - [ ] Define analytics event schema and naming conventions.
 
 ### Phase 1 — Infrastructure & Shared Utilities
-- [ ] Build wizard state manager (React context + reducer). *(Reducer/provider shipped; autosave/draft layer deferred until post-MVP.)*
-- [ ] Create step shell components (header, actions, progress indicator, breadcrumb). *(Hi-fi shell with sticky footer shipped 2025-02-18; awaiting final design polish.)*
-- [ ] Implement context resolver hooking into existing routing (lead/project/dashboard/calendar). *(Entry hook uses local props; Supabase-backed resolver still pending.)*
+- [x] Build wizard state manager (React context + reducer). *(Reducer/provider shipped; autosave/draft layer deferred until post-MVP.)*
+- [x] Create step shell components (header, actions, progress indicator, breadcrumb). *(Hi-fi shell with sticky footer shipped 2025-02-18; design polish ongoing.)*
+- [x] Implement context resolver hooking into existing routing (lead/project/dashboard/calendar). *(Supabase-backed resolver now hydrates lead/project context and edit-mode sessions.)*
 - [x] Extend i18n bundles (EN/TR) with core wizard copy placeholders.
 
 ### Phase 2 — Core Steps
 - [x] Lead selection/creation step with search + inline create modal. *(Shared lead sheet + searchable picker shipped 2025-02-17.)*
 - [x] Project selection/creation step with optional skip and validation. *(Reuses project sheet with lead prefill 2025-02-17.)*
 - [x] Session type selector with default, description tooltip, and accessibility focus handling. *(Recommended default, tooltip copy, and focus handling shipped 2025-02-19.)*
-- [ ] Session details step enabling optional custom name. *(Step removed from MVP scope; revisit if customization demand resurfaces.)*
 
 ### Phase 3 — Location & Schedule
 - [x] Address book component with list, quick add, and last-used default.
@@ -132,10 +132,25 @@ Skipped steps remain accessible from breadcrumbs; analytics record auto-skips fo
 
 ### Phase 5 — Hardening & Rollout
 - [ ] Automated tests (unit, component, integration) per Testing Strategy section.
+  * [x] Write `SessionPlanningWizard` integration specs that cover create vs. edit/reschedule flows, reminder toggles, and Supabase update assertions (lead/project/dashboard/calendar entry points). *(`SessionPlanningProvider.integration.test.tsx` now exercises create + edit/reschedule paths and notification toggles.)*
+  * [ ] Add reducer/selector regression tests for edit-mode actions (`hydrateSession`, `applyScheduleFromExisting`, reminder overrides).
+  * CalendarTimePicker & TimeSlotPicker specs now lock hover styles and scroll behaviour; integration/edit-flow coverage still pending.
 - [ ] Performance & accessibility audits (axe, keyboard walkthrough, responsive checks).
-- [ ] Wire edit entry points (lead/project detail, calendar, sessions index) to launch the wizard in edit mode with parity to the new scheduling flow.
+  * [ ] Run automated axe sweep in Storybook + Jest environment and capture remediation backlog.
+  * [ ] Conduct manual keyboard + screen reader pass across every wizard step including success screen.
+  * [ ] Measure render/transition timings (React Profiler) and document follow-up optimizations before beta.
+- [x] Wire edit entry points (lead/project detail, calendar, sessions index) to launch the wizard in edit mode with parity to the new scheduling flow. *(Feature flag routes `EditSessionDialog` through the wizard and updates Supabase + reminders.)*
+- [x] Update the calendar weekly view to stretch session blocks across their full duration (leveraging session type defaults) and evenly divide overlapping sessions into parallel columns.
+  * [x] Introduce duration-aware block sizing to the schedule grid and keep hover/select parity with the production sheet. *(`WeeklySchedulePreview` renders week-at-a-glance grid with duration-based sizing.)*
+  * [x] Normalize overlap splitting heuristics so multi-session days render deterministic column ordering. *(Column assignment logic partitions overlapping sessions into equal-width lanes.)*
+  * [x] Backfill component tests (and Storybook stories) that exercise 30/45/90 minute types and overlapping bookings. *(Unit tests cover 60/90-minute spans and overlapping 45-minute sessions; Storybook follow-up still optional.)*
 - [ ] Feature flag rollout (internal → beta → GA) with monitoring dashboards.
+  * [ ] Define success/rollback criteria + observability dashboards ahead of the pilot.
+  * [ ] Sequence rollout comms (internal enablement doc, beta announcement, GA release notes).
+  * [ ] Capture fallback toggle + telemetry alerts for regression spikes during staged rollout.
 - [ ] Documentation updates (help center EN/TR, internal runbooks).
+  * [ ] Refresh `docs/session-planning-implementation-outline.md` & help center articles with edit-mode instructions and calendar screenshots once Phase 5 ships.
+  * [ ] Create internal runbook covering reschedule flow, reminder overrides, and troubleshooting guide.
 
 ## Testing Strategy
 - Unit: reducers, validation helpers, autosave persistence, notification override serializer.

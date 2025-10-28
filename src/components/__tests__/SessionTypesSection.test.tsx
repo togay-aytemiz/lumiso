@@ -41,6 +41,9 @@ jest.mock("@tanstack/react-query", () => {
 jest.mock("@/integrations/supabase/client", () => ({
   supabase: {
     from: jest.fn(),
+    functions: {
+      invoke: jest.fn(),
+    },
   },
 }));
 
@@ -55,14 +58,11 @@ const mockUseToast = useToast as jest.Mock;
 const mockUseFormsTranslation = useFormsTranslation as jest.Mock;
 const mockUseCommonTranslation = useCommonTranslation as jest.Mock;
 const mockUseQueryClient = useQueryClient as unknown as jest.Mock;
-const mockSupabaseFrom = supabase.from as jest.Mock;
+const mockSupabaseInvoke = supabase.functions.invoke as jest.Mock;
 
 const mockUpdateSettings = jest.fn();
 const mockToast = jest.fn();
 const mockInvalidateQueries = jest.fn();
-
-const mockDeleteEq = jest.fn().mockResolvedValue({ error: null });
-const mockDelete = jest.fn(() => ({ eq: mockDeleteEq }));
 
 const buildSessionType = (overrides: Partial<SessionType> = {}): SessionType => ({
   id: "type-1",
@@ -85,8 +85,7 @@ beforeEach(() => {
   mockUpdateSettings.mockResolvedValue({ success: true });
   mockToast.mockReset();
   mockInvalidateQueries.mockReset();
-  mockDelete.mockClear();
-  mockDeleteEq.mockClear();
+  mockSupabaseInvoke.mockReset();
 
   mockUseSessionTypes.mockReturnValue({
     data: [],
@@ -119,9 +118,6 @@ beforeEach(() => {
     invalidateQueries: mockInvalidateQueries,
   });
 
-  mockSupabaseFrom.mockImplementation(() => ({
-    delete: mockDelete,
-  }));
 });
 
 afterEach(() => {
@@ -178,6 +174,8 @@ describe("SessionTypesSection", () => {
       isLoading: false,
     });
 
+    mockSupabaseInvoke.mockResolvedValue({ data: null, error: null });
+
     render(<SessionTypesSection />);
 
     const deleteButtons = screen.getAllByRole("button", { name: "sessionTypes.actions.delete" });
@@ -186,13 +184,44 @@ describe("SessionTypesSection", () => {
     fireEvent.click(screen.getByRole("button", { name: "buttons.delete" }));
 
     await waitFor(() => {
-      expect(mockDelete).toHaveBeenCalled();
-      expect(mockDeleteEq).toHaveBeenCalledWith("id", "type-30");
+      expect(mockSupabaseInvoke).toHaveBeenCalledWith("session-types-delete", {
+        body: { session_type_id: "type-30" },
+      });
     });
     expect(mockToast).toHaveBeenCalledWith({
       title: "toast.success",
       description: "sessionTypes.success.deleted",
     });
     expect(mockInvalidateQueries).toHaveBeenCalled();
+  });
+
+  it("shows in-use error when session type is linked to sessions", async () => {
+    mockUseSessionTypes.mockReturnValue({
+      data: [buildSessionType({ id: "type-44", name: "Wedding" })],
+      isLoading: false,
+    });
+
+    mockSupabaseInvoke.mockResolvedValue({
+      data: null,
+      error: { message: "SESSION_TYPE_IN_USE" },
+    });
+
+    render(<SessionTypesSection />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "sessionTypes.actions.delete" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: "buttons.delete" }));
+
+    await waitFor(() => {
+      expect(mockSupabaseInvoke).toHaveBeenCalledWith("session-types-delete", {
+        body: { session_type_id: "type-44" },
+      });
+    });
+
+    expect(mockToast).toHaveBeenCalledWith({
+      title: "toast.error",
+      description: "sessionTypes.errors.delete_in_use",
+      variant: "destructive",
+    });
+    expect(mockInvalidateQueries).not.toHaveBeenCalled();
   });
 });

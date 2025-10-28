@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
+import { SessionPlanningWizardSheet } from "@/features/session-planning";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
 import { generateSessionName } from "@/lib/sessionUtils";
@@ -14,6 +15,7 @@ import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
+import { FEATURE_FLAGS, isFeatureEnabled } from "@/lib/featureFlags";
 
 interface Project {
   id: string;
@@ -49,6 +51,29 @@ const EditSessionDialog = ({
   open = false, 
   onOpenChange 
 }: EditSessionDialogProps) => {
+  const sessionWizardEnabled = isFeatureEnabled(FEATURE_FLAGS.sessionWizardV1, true);
+
+  if (sessionWizardEnabled) {
+    const entrySource = currentProjectId ? "project" : "lead";
+    return (
+      <SessionPlanningWizardSheet
+        mode="edit"
+        sessionId={sessionId}
+        leadId={leadId}
+        leadName={leadName}
+        projectId={currentProjectId}
+        projectName={undefined}
+        defaultDate={currentDate}
+        defaultTime={currentTime}
+        entrySource={entrySource}
+        isOpen={open}
+        onOpenChange={onOpenChange ?? (() => {})}
+        onSessionScheduled={onSessionUpdated}
+        onSessionUpdated={onSessionUpdated}
+      />
+    );
+  }
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [initError, setInitError] = useState<string | null>(null);
   const { t } = useTranslation();

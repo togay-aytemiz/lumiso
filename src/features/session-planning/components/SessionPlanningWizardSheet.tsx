@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { SessionPlanningDraft, SessionPlanningEntryContext, SessionPlanningState } from "../types";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
-import { createSession } from "../api/sessionCreation";
+import { createSession, updateSession } from "../api/sessionCreation";
 import { createLead, createProject } from "../api/leadProjectCreation";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
@@ -25,7 +25,14 @@ const DRAFT_STORAGE_PREFIX = "session-wizard-draft";
 const DRAFT_VERSION = 1;
 
 const buildDraftKey = (userId: string | null, context: SessionPlanningEntryContext) => {
-  const parts = [userId || "anon", context.leadId || "new", context.projectId || "none", context.entrySource || "default"];
+  const parts = [
+    userId || "anon",
+    context.sessionId || "new-session",
+    context.leadId || "new",
+    context.projectId || "none",
+    context.entrySource || "default",
+    context.mode || "create"
+  ];
   return `${DRAFT_STORAGE_PREFIX}:${parts.join(":")}`;
 };
 
@@ -74,15 +81,19 @@ interface SessionPlanningWizardSheetProps {
   defaultDate?: string;
   defaultTime?: string;
   entrySource?: string;
+  sessionId?: string;
+  mode?: "create" | "edit";
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSessionScheduled?: () => void;
+  onSessionUpdated?: () => void;
 }
 
 export const SessionPlanningWizardSheet = (props: SessionPlanningWizardSheetProps) => {
   const derivedEntrySource =
     props.entrySource ??
     (props.projectId ? "project" : props.leadId ? "lead" : undefined);
+  const derivedMode = props.mode ?? (props.sessionId ? "edit" : "create");
 
   const entryContext = useSessionPlanningEntryContext({
     leadId: props.leadId,
@@ -91,7 +102,9 @@ export const SessionPlanningWizardSheet = (props: SessionPlanningWizardSheetProp
     projectName: props.projectName,
     defaultDate: props.defaultDate,
     defaultTime: props.defaultTime,
-    entrySource: derivedEntrySource
+    entrySource: derivedEntrySource,
+    sessionId: props.sessionId,
+    mode: derivedMode
   });
 
   const providerKey = useMemo(() => JSON.stringify(entryContext), [entryContext]);
@@ -109,8 +122,12 @@ const SessionPlanningWizardSheetInner = ({
   isOpen,
   onOpenChange,
   onSessionScheduled,
+  onSessionUpdated,
   entryContext
-}: Pick<SessionPlanningWizardSheetProps, "isOpen" | "onOpenChange" | "onSessionScheduled"> & {
+}: Pick<
+  SessionPlanningWizardSheetProps,
+  "isOpen" | "onOpenChange" | "onSessionScheduled" | "onSessionUpdated"
+> & {
   entryContext: SessionPlanningEntryContext;
 }) => {
   const { state } = useSessionPlanningContext();
@@ -119,8 +136,10 @@ const SessionPlanningWizardSheetInner = ({
   const [isCompleting, setIsCompleting] = useState(false);
   const { t } = useTranslation("sessionPlanning");
   const { triggerSessionScheduled } = useWorkflowTriggers();
-  const { scheduleSessionReminders } = useSessionReminderScheduling();
+  const { scheduleSessionReminders, rescheduleSessionReminders, cancelSessionReminders } =
+    useSessionReminderScheduling();
   const workflowCatalog = useSessionWorkflowCatalog();
+  const isEditing = state.meta.mode === "edit" || entryContext.mode === "edit" || Boolean(entryContext.sessionId);
   const [showGuardDialog, setShowGuardDialog] = useState(false);
   const [resumeDraft, setResumeDraft] = useState<SessionPlanningDraft | null>(null);
   const [isResolvingEntryContext, setIsResolvingEntryContext] = useState(false);
@@ -131,15 +150,21 @@ const SessionPlanningWizardSheetInner = ({
   const contextHydratedRef = useRef(false);
   const wizardOpenedRef = useRef(false);
   const successTrackedRef = useRef(false);
+  const initialSessionSnapshotRef = useRef<SessionPlanningState | null>(null);
+  const pendingSessionPrefillRef = useRef(false);
   const needsProjectLookup = useMemo(
-    () => Boolean(entryContext.projectId) && (!entryContext.projectName || !entryContext.leadId),
-    [entryContext.projectId, entryContext.projectName, entryContext.leadId]
+    () =>
+      !isEditing &&
+      Boolean(entryContext.projectId) &&
+      (!entryContext.projectName || !entryContext.leadId),
+    [entryContext.projectId, entryContext.projectName, entryContext.leadId, isEditing]
   );
   const needsLeadLookup = useMemo(
     () =>
-      Boolean(entryContext.leadId && !entryContext.leadName) ||
-      (!entryContext.leadId && Boolean(entryContext.projectId)),
-    [entryContext.leadId, entryContext.leadName, entryContext.projectId]
+      !isEditing &&
+      (Boolean(entryContext.leadId && !entryContext.leadName) ||
+        (!entryContext.leadId && Boolean(entryContext.projectId))),
+    [entryContext.leadId, entryContext.leadName, entryContext.projectId, isEditing]
   );
   const shouldShowContextLoader =
     isOpen &&
@@ -204,9 +229,12 @@ const SessionPlanningWizardSheetInner = ({
     if (!isOpen) {
       contextHydratedRef.current = false;
       setIsResolvingEntryContext(false);
+      initialSessionSnapshotRef.current = null;
+      pendingSessionPrefillRef.current = false;
       return;
     }
     contextHydratedRef.current = false;
+    pendingSessionPrefillRef.current = false;
   }, [
     isOpen,
     entryContext.leadId,
@@ -218,6 +246,10 @@ const SessionPlanningWizardSheetInner = ({
 
   useEffect(() => {
     if (!isOpen || contextHydratedRef.current) {
+      return;
+    }
+
+    if (isEditing) {
       return;
     }
 
@@ -314,7 +346,171 @@ const SessionPlanningWizardSheetInner = ({
     entryContext.projectName,
     loadEntryContext,
     needsLeadLookup,
-    needsProjectLookup
+    needsProjectLookup,
+    isEditing
+  ]);
+
+  useEffect(() => {
+    if (!isOpen || !isEditing || !entryContext.sessionId) {
+      return;
+    }
+
+    if (contextHydratedRef.current && initialSessionSnapshotRef.current) {
+      return;
+    }
+
+    if (pendingSessionPrefillRef.current) {
+      return;
+    }
+
+    let cancelled = false;
+    pendingSessionPrefillRef.current = true;
+    setIsResolvingEntryContext(true);
+
+    const hydrateExistingSession = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("sessions")
+          .select(
+            `id,
+            session_name,
+            session_date,
+            session_time,
+            notes,
+            location,
+            meeting_url,
+            timezone,
+            session_type_id,
+            lead_id,
+            project_id,
+            leads:lead_id ( id, name, email, phone, notes ),
+            projects:project_id ( id, name ),
+            session_types:session_type_id ( id, name )`
+          )
+          .eq("id", entryContext.sessionId)
+          .maybeSingle();
+
+        if (error) {
+          throw error;
+        }
+
+        if (!data) {
+          throw new Error("Session not found");
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        const record = data as any;
+        const resolvedLeadId: string | undefined = record.lead_id ?? entryContext.leadId ?? undefined;
+        const resolvedLeadName: string = record.leads?.name ?? entryContext.leadName ?? "";
+        const resolvedProjectId: string | undefined = record.project_id ?? entryContext.projectId ?? undefined;
+        const resolvedProjectName: string | undefined = record.projects?.name ?? entryContext.projectName ?? undefined;
+
+        const nextContext: SessionPlanningEntryContext = {
+          ...entryContext,
+          leadId: resolvedLeadId,
+          leadName: resolvedLeadName,
+          projectId: resolvedProjectId,
+          projectName: resolvedProjectName,
+          sessionId: record.id,
+          mode: "edit",
+          entrySource:
+            entryContext.entrySource ??
+            (resolvedProjectId ? "project" : resolvedLeadId ? "lead" : "direct"),
+          defaultDate: record.session_date ?? entryContext.defaultDate,
+          defaultTime: record.session_time ?? entryContext.defaultTime
+        };
+
+        skipNextSaveRef.current = true;
+        loadEntryContext(nextContext);
+
+        const nextState: SessionPlanningState = {
+          lead: {
+            id: resolvedLeadId,
+            name: resolvedLeadName,
+            email: record.leads?.email ?? undefined,
+            phone: record.leads?.phone ?? undefined,
+            notes: record.leads?.notes ?? undefined,
+            mode: "existing"
+          },
+          project: {
+            id: resolvedProjectId,
+            name: resolvedProjectName ?? "",
+            description: "",
+            mode: resolvedProjectId ? "existing" : "existing",
+            isSkipped: !resolvedProjectId
+          },
+          sessionTypeId: record.session_type_id ?? undefined,
+          sessionTypeLabel: record.session_types?.name ?? undefined,
+          sessionName: record.session_name ?? "",
+          locationId: undefined,
+          locationLabel: undefined,
+          location: record.location ?? "",
+          meetingUrl: record.meeting_url ?? "",
+          schedule: {
+            date: record.session_date ?? entryContext.defaultDate,
+            time: record.session_time ?? entryContext.defaultTime,
+            timezone: record.timezone ?? undefined
+          },
+          notes: record.notes ?? "",
+          notifications: { ...state.notifications },
+          meta: {
+            currentStep: "summary",
+            isDirty: false,
+            isSavingDraft: false,
+            lastSavedAt: undefined,
+            entrySource: nextContext.entrySource,
+            mode: "edit",
+            sessionId: record.id
+          }
+        };
+
+        initialSessionSnapshotRef.current = nextState;
+        applyState(nextState);
+        contextHydratedRef.current = true;
+      } catch (error: any) {
+        if (!cancelled) {
+          console.error("Failed to load session for editing", error);
+          contextHydratedRef.current = true;
+          toast({
+            title: t("toast.sessionLoadFailedTitle"),
+            description: error?.message || t("toast.sessionLoadFailedDescription"),
+            variant: "destructive"
+          });
+          onOpenChange(false);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsResolvingEntryContext(false);
+          pendingSessionPrefillRef.current = false;
+        }
+      }
+    };
+
+    hydrateExistingSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isOpen,
+    isEditing,
+    entryContext.sessionId,
+    entryContext.entrySource,
+    entryContext.leadId,
+    entryContext.leadName,
+    entryContext.projectId,
+    entryContext.projectName,
+    entryContext.defaultDate,
+    entryContext.defaultTime,
+    loadEntryContext,
+    applyState,
+    toast,
+    t,
+    onOpenChange,
+    state.notifications
   ]);
 
   const handleClose = () => {
@@ -425,12 +621,14 @@ const SessionPlanningWizardSheetInner = ({
 
   const handleComplete = async () => {
     const entrySource = entryContext.entrySource ?? "direct";
-    let leadId = state.lead.mode === "existing" ? state.lead.id || entryContext.leadId : undefined;
+    const sessionTypeId = state.sessionTypeId;
+    const sessionTypeLabel = state.sessionTypeLabel;
+    const sessionIdForEdit = entryContext.sessionId || state.meta.sessionId;
+    const originalSnapshot = initialSessionSnapshotRef.current;
+
+    let leadId =
+      state.lead.mode === "existing" ? state.lead.id || entryContext.leadId : undefined;
     let leadName = state.lead.name || entryContext.leadName || "";
-    const sessionDate = state.schedule.date || entryContext.defaultDate || "";
-    const sessionTime = state.schedule.time || entryContext.defaultTime || "";
-    let projectId = state.project.mode === "existing" ? state.project.id || entryContext.projectId : undefined;
-    let projectName = state.project.name || entryContext.projectName || "";
 
     if (state.lead.mode === "new") {
       if (!state.lead.name?.trim()) {
@@ -442,7 +640,7 @@ const SessionPlanningWizardSheetInner = ({
           name: state.lead.name,
           email: state.lead.email,
           phone: state.lead.phone,
-          notes: state.lead.notes
+          notes: state.lead.notes,
         });
         leadId = newLead.id;
         leadName = newLead.name;
@@ -450,7 +648,7 @@ const SessionPlanningWizardSheetInner = ({
         toast({
           title: t("steps.lead.createErrorTitle"),
           description: error.message,
-          variant: "destructive"
+          variant: "destructive",
         });
         return;
       }
@@ -459,16 +657,20 @@ const SessionPlanningWizardSheetInner = ({
     if (!leadId) {
       toast({
         title: t("validation.missingLead"),
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
+
+    let projectId =
+      state.project.mode === "existing" ? state.project.id || entryContext.projectId : undefined;
+    let projectName = state.project.name || entryContext.projectName || "";
 
     if (state.project.mode === "new") {
       if (!state.project.name?.trim()) {
         toast({
           title: t("steps.project.missingName"),
-          variant: "destructive"
+          variant: "destructive",
         });
         return;
       }
@@ -476,7 +678,7 @@ const SessionPlanningWizardSheetInner = ({
         const newProject = await createProject({
           leadId,
           name: state.project.name,
-          description: state.project.description
+          description: state.project.description,
         });
         projectId = newProject.id;
         projectName = state.project.name ?? projectName;
@@ -484,25 +686,131 @@ const SessionPlanningWizardSheetInner = ({
         toast({
           title: t("steps.project.createErrorTitle"),
           description: error.message,
-          variant: "destructive"
+          variant: "destructive",
         });
         return;
       }
     }
 
+    if (state.project.isSkipped) {
+      projectId = undefined;
+      projectName = "";
+    }
+
+    const sessionDate =
+      state.schedule.date ||
+      entryContext.defaultDate ||
+      originalSnapshot?.schedule.date ||
+      "";
+    const sessionTime =
+      state.schedule.time ||
+      entryContext.defaultTime ||
+      originalSnapshot?.schedule.time ||
+      "";
+
     if (!sessionDate || !sessionTime) {
       toast({
         title: t("validation.missingSchedule"),
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     const sessionName =
       (state.sessionName || "").trim() ||
-      state.sessionTypeLabel ||
+      sessionTypeLabel ||
       (leadName ? `${leadName} Session` : undefined) ||
+      originalSnapshot?.sessionName ||
       t("summary.untitled");
+
+    const locationSummary = state.locationLabel || state.location || state.meetingUrl || "";
+
+    if (isEditing && sessionIdForEdit) {
+      setIsCompleting(true);
+      try {
+        const { organizationId } = await updateSession({
+          sessionId: sessionIdForEdit,
+          leadId,
+          projectId,
+          sessionName,
+          sessionDate,
+          sessionTime,
+          notes: state.notes,
+          location: state.location,
+          meetingUrl: state.meetingUrl,
+          sessionTypeId,
+        });
+
+        const previousDate = originalSnapshot?.schedule.date ?? sessionDate;
+        const previousTime = originalSnapshot?.schedule.time ?? sessionTime;
+        const dateTimeChanged = previousDate !== sessionDate || previousTime !== sessionTime;
+
+        if (dateTimeChanged) {
+          try {
+            await triggerSessionRescheduled(
+              sessionIdForEdit,
+              organizationId,
+              `${previousDate} ${previousTime}`.trim(),
+              `${sessionDate} ${sessionTime}`.trim(),
+              {
+                lead_id: leadId,
+                project_id: projectId,
+                session_type_id: sessionTypeId,
+                location: locationSummary,
+                client_name: leadName,
+              }
+            );
+          } catch (workflowError) {
+            console.error("Error triggering session rescheduled workflow", workflowError);
+          }
+        }
+
+        try {
+          if (state.notifications.sendReminder) {
+            await rescheduleSessionReminders(sessionIdForEdit);
+          } else {
+            await cancelSessionReminders(sessionIdForEdit);
+          }
+        } catch (reminderError) {
+          console.error("Error updating session reminders", reminderError);
+        }
+
+        toast({
+          title: t("toast.sessionUpdatedTitle"),
+          description: t("toast.sessionUpdatedDescription"),
+        });
+
+        trackEvent("session_wizard_updated", {
+          entrySource,
+          sessionId: sessionIdForEdit,
+          leadId,
+          projectId,
+          hasProject: Boolean(projectId),
+          notifications: { ...state.notifications },
+          scheduleChanged: dateTimeChanged,
+          sessionTypeChanged: sessionTypeId !== originalSnapshot?.sessionTypeId,
+        });
+
+        onSessionUpdated?.();
+        if (draftKeyRef.current) {
+          localStorage.removeItem(draftKeyRef.current);
+        }
+        initialSessionSnapshotRef.current = null;
+        reset(entryContext);
+        setCompletionSummary(null);
+        onOpenChange(false);
+      } catch (error: any) {
+        console.error("Error updating session via wizard", error);
+        toast({
+          title: t("toast.sessionUpdateFailedTitle"),
+          description: error.message || t("toast.sessionUpdateFailedDescription"),
+          variant: "destructive",
+        });
+      } finally {
+        setIsCompleting(false);
+      }
+      return;
+    }
 
     setIsCompleting(true);
     try {
@@ -515,16 +823,17 @@ const SessionPlanningWizardSheetInner = ({
           sessionTime,
           notes: state.notes,
           location: state.location,
+          meetingUrl: state.meetingUrl,
           projectId,
-          status: "planned"
+          sessionTypeId,
+          status: "planned",
         },
         {
           updateLeadStatus: !projectId,
-          createActivity: !projectId
+          createActivity: !projectId,
         }
       );
 
-      const locationSummary = state.locationLabel || state.location || state.meetingUrl || "";
       const reminderWorkflowIds = workflowCatalog.reminderWorkflows.map((workflow) => workflow.id);
       const summaryWorkflowIds = workflowCatalog.summaryEmailWorkflows
         .filter((workflow) => workflow.triggerType === "session_scheduled")
@@ -552,6 +861,7 @@ const SessionPlanningWizardSheetInner = ({
         client_name: leadName,
         lead_id: leadId,
         project_id: projectId,
+        session_type_id: sessionTypeId,
         status: "planned",
         notifications: state.notifications,
         workflow_preferences: {
@@ -568,7 +878,7 @@ const SessionPlanningWizardSheetInner = ({
         console.error("Error triggering session workflow", workflowError);
         toast({
           title: t("toast.sessionWorkflowWarningTitle"),
-          description: t("toast.sessionWorkflowWarningDescription")
+          description: t("toast.sessionWorkflowWarningDescription"),
         });
       }
 
@@ -582,7 +892,7 @@ const SessionPlanningWizardSheetInner = ({
 
       toast({
         title: t("toast.sessionCreatedTitle"),
-        description: t("toast.sessionCreatedDescription")
+        description: t("toast.sessionCreatedDescription"),
       });
 
       trackEvent("session_wizard_confirmed", {
@@ -625,7 +935,7 @@ const SessionPlanningWizardSheetInner = ({
       toast({
         title: t("toast.sessionCreationFailedTitle"),
         description: error.message || t("toast.sessionCreationFailedDescription"),
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsCompleting(false);

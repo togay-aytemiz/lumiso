@@ -482,6 +482,12 @@ export const handler = async (req: Request): Promise<Response> => {
         id,
         session_date,
         session_time,
+        session_type_id,
+        session_types:session_type_id (
+          id,
+          name,
+          duration_minutes
+        ),
         notes,
         location,
         leads(id, name),
@@ -498,6 +504,12 @@ export const handler = async (req: Request): Promise<Response> => {
         id,
         session_date,
         session_time,
+        session_type_id,
+        session_types:session_type_id (
+          id,
+          name,
+          duration_minutes
+        ),
         notes,
         location,
         leads(id, name),

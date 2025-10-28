@@ -7,6 +7,9 @@ const DEFAULT_NOTIFICATIONS = {
 
 const DEFAULT_STEP: SessionPlanningStepId = "lead";
 
+const deriveMode = (entryContext: SessionPlanningEntryContext): "create" | "edit" =>
+  entryContext.mode ?? (entryContext.sessionId ? "edit" : "create");
+
 export const createInitialSessionPlanningState = (
   entryContext: SessionPlanningEntryContext = {}
 ): SessionPlanningState => ({
@@ -45,11 +48,16 @@ export const createInitialSessionPlanningState = (
     isDirty: false,
     isSavingDraft: false,
     lastSavedAt: undefined,
-    entrySource: entryContext.entrySource
+    entrySource: entryContext.entrySource,
+    mode: deriveMode(entryContext),
+    sessionId: entryContext.sessionId
   }
 });
 
 const computeInitialStep = (entryContext: SessionPlanningEntryContext): SessionPlanningStepId => {
+  if (entryContext.mode === "edit" || entryContext.sessionId) {
+    return "summary";
+  }
   if (entryContext.leadId) {
     if (entryContext.projectId) {
       return "sessionType";
@@ -221,6 +229,8 @@ export const sessionPlanningReducer = (
         ...action.payload,
         meta: {
           ...action.payload.meta,
+          mode: action.payload.meta?.mode ?? "create",
+          sessionId: action.payload.meta?.sessionId,
           isDirty: false,
           isSavingDraft: false
         }

@@ -23,7 +23,13 @@
     "sessionCreationFailedTitle": "Unable to schedule session",
     "sessionCreationFailedDescription": "Please review the form and try again.",
     "sessionWorkflowWarningTitle": "Session scheduled",
-    "sessionWorkflowWarningDescription": "Notifications may be delayed. Check automation settings."
+    "sessionWorkflowWarningDescription": "Notifications may be delayed. Check automation settings.",
+    "sessionUpdatedTitle": "Session updated",
+    "sessionUpdatedDescription": "Changes saved successfully.",
+    "sessionUpdateFailedTitle": "Unable to update session",
+    "sessionUpdateFailedDescription": "Please review the changes and try again.",
+    "sessionLoadFailedTitle": "Unable to load session",
+    "sessionLoadFailedDescription": "Please close the wizard and try again."
   },
   "stepper": {
     "progressLabel": "Step {{current}} of {{total}}",

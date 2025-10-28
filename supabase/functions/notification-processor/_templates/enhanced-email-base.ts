@@ -42,6 +42,9 @@ export interface Session {
   session_time?: string | null;
   notes?: string | null;
   location?: string | null;
+   session_type_id?: string | null;
+   session_type_name?: string | null;
+   session_type_duration_minutes?: number | null;
   leads?: SessionLead | SessionLead[] | null;
   projects?: SessionProject | SessionProject[] | null;
 }

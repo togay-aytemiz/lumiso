@@ -63,6 +63,12 @@ export async function processScheduledReminders(supabase: any) {
         id,
         session_date,
         session_time,
+        session_type_id,
+        session_types:session_type_id (
+          id,
+          name,
+          duration_minutes
+        ),
         location,
         notes,
         organization_id,
@@ -162,7 +168,10 @@ export async function processScheduledReminders(supabase: any) {
               session_date: reminder.sessions.session_date,
               session_time: reminder.sessions.session_time,
               location: reminder.sessions.location,
-              notes: reminder.sessions.notes
+              notes: reminder.sessions.notes,
+              session_type_id: reminder.sessions.session_type_id,
+              session_type_name: reminder.sessions.session_types?.name ?? null,
+              session_type_duration_minutes: reminder.sessions.session_types?.duration_minutes ?? null
             },
             lead_data: {
               id: reminder.sessions.leads.id,

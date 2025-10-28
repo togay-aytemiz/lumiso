@@ -52,6 +52,7 @@ export const SessionPlanningWizard = ({
   const { data: sessionTypes = [] } = useSessionTypes();
   const { settings } = useOrganizationSettings();
   const { toast } = useToast();
+  const isEditing = state.meta.mode === "edit";
 
   const rawIndex = useMemo(
     () =>
@@ -77,6 +78,7 @@ export const SessionPlanningWizard = ({
   const viewedStepRef = useRef<SessionPlanningStepId | null>(null);
 
   useEffect(() => {
+    if (isEditing) return;
     if (state.sessionTypeId) return;
     if (!activeSessionTypes.length) return;
 
@@ -96,6 +98,7 @@ export const SessionPlanningWizard = ({
     activeSessionTypes,
     settings?.default_session_type_id,
     setDefaultSessionType,
+    isEditing,
   ]);
 
   useEffect(() => {

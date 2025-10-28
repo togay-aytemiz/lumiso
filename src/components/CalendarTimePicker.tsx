@@ -4,11 +4,28 @@ import { Button } from "@/components/ui/button";
 import { TimeSlotPicker } from "@/components/TimeSlotPicker";
 import { getUserLocale, formatLongDate } from "@/lib/utils";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
-import { format } from "date-fns";
+import { addDays, format, parseISO, startOfWeek } from "date-fns";
 import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "@/components/react-calendar.css";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import {
+  WeeklySchedulePreview,
+  WeeklyScheduleSession,
+} from "./WeeklySchedulePreview";
+
+interface PlannedSessionRecord {
+  id: string;
+  session_date?: string | null;
+  session_time?: string | null;
+  lead_id?: string | null;
+  project_id?: string | null;
+  leads?: { name?: string | null } | null;
+  projects?: { name?: string | null } | null;
+  status?: string | null;
+  session_type_id?: string | null;
+  session_types?: { duration_minutes?: number | null } | null;
+}
 
 interface CalendarTimePickerProps {
   selectedDate?: Date;
@@ -23,11 +40,11 @@ export function CalendarTimePicker({
   selectedTime,
   onDateChange,
   onTimeChange,
-  onDateStringChange
+  onDateStringChange,
 }: CalendarTimePickerProps) {
   const { t } = useFormsTranslation();
   const [visibleMonth, setVisibleMonth] = useState<Date>(new Date());
-  const [plannedSessions, setPlannedSessions] = useState<any[]>([]);
+  const [plannedSessions, setPlannedSessions] = useState<PlannedSessionRecord[]>([]);
   const browserLocale = getUserLocale();
   const plannedSessionsRef = useRef<HTMLDivElement | null>(null);
   const previousSelectedKeyRef = useRef<string | undefined>();
@@ -49,11 +66,13 @@ export function CalendarTimePicker({
           id,
           session_date,
           session_time,
+          session_type_id,
           lead_id,
           project_id,
           leads:lead_id (name),
           projects:project_id (name),
-          status
+          status,
+          session_types:session_type_id (duration_minutes)
         `)
         .eq('organization_id', organizationId)
         .eq('status', 'planned')
@@ -107,6 +126,33 @@ export function CalendarTimePicker({
     }
     previousSelectedKeyRef.current = selectedKey;
   }, [selectedKey, sessionsForDay.length]);
+
+  const weeklyReferenceDate = selectedDate ?? visibleMonth ?? new Date();
+
+  const weeklySessions = useMemo<WeeklyScheduleSession[]>(() => {
+    const weekStart = startOfWeek(weeklyReferenceDate, { weekStartsOn: 1 });
+    const weekEnd = addDays(weekStart, 7);
+
+    return (plannedSessions || [])
+      .map((session) => {
+        if (!session.session_date) return null;
+        const parsed = parseISO(session.session_date);
+        if (Number.isNaN(parsed.getTime())) return null;
+        if (parsed < weekStart || parsed >= weekEnd) return null;
+
+        return {
+          id: session.id,
+          session_date: session.session_date,
+          session_time: session.session_time,
+          duration_minutes:
+            session.session_types?.duration_minutes ?? undefined,
+          session_type_name: session.session_types?.name ?? undefined,
+          lead_name: session.leads?.name ?? undefined,
+          project_name: session.projects?.name ?? undefined,
+        };
+      })
+      .filter(Boolean) as WeeklyScheduleSession[];
+  }, [plannedSessions, weeklyReferenceDate]);
 
   return (
     <div className="space-y-6">
@@ -211,6 +257,13 @@ export function CalendarTimePicker({
           />
         </div>
       </div>
+
+      <WeeklySchedulePreview
+        sessions={weeklySessions}
+        referenceDate={weeklyReferenceDate}
+        selectedDate={selectedDate}
+        locale={browserLocale}
+      />
 
       {sessionsForDay.length > 0 && (
         <div ref={plannedSessionsRef} className="space-y-3">

@@ -133,6 +133,12 @@ function buildReminder(overrides: Partial<Reminder> = {}): Reminder {
       id: "session-123",
       session_date: "2025-01-01",
       session_time: "10:00",
+      session_type_id: "type-1",
+      session_types: {
+        id: "type-1",
+        name: "Signature",
+        duration_minutes: 90,
+      },
       location: "Studio",
       notes: "Bring props",
       leads: {
@@ -203,11 +209,21 @@ Deno.test("successfully triggers workflows for valid reminders", async () => {
     body: {
       action?: string;
       trigger_type?: string;
-      trigger_data?: { reminder_type?: string };
+      trigger_data?: {
+        reminder_type?: string;
+        session_data?: {
+          session_type_id?: string | null;
+          session_type_name?: string | null;
+          session_type_duration_minutes?: number | null;
+        };
+      };
     };
   };
   assertEquals(payload.body.action, "trigger");
   assertEquals(payload.body.trigger_type, "session_reminder");
   assertEquals(payload.body.trigger_data?.reminder_type, reminder.reminder_type);
+  assertEquals(payload.body.trigger_data?.session_data?.session_type_id, "type-1");
+  assertEquals(payload.body.trigger_data?.session_data?.session_type_name, "Signature");
+  assertEquals(payload.body.trigger_data?.session_data?.session_type_duration_minutes, 90);
   assertEquals(supabase.rpcCalls, ["cleanup_old_session_reminders"]);
 });

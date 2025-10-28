@@ -969,7 +969,11 @@
     "configure_working_hours": "Configure working hours in settings to view availability",
     "no_time_slots": "No available time slots",
     "available_times": "Availability",
-    "slots": "slot"
+    "slots": "slot",
+    "weekly_preview_heading": "Week at a glance",
+    "weekly_preview_empty": "No other sessions scheduled this week.",
+    "weekly_preview_time_column": "Time",
+    "weekly_preview_time_tbd": "Time TBD"
   },
   "timeRelative": {
     "today": "Today",
@@ -1303,6 +1307,7 @@
       "add_failed": "Failed to add session type.",
       "update_failed": "Failed to update session type.",
       "delete_failed": "Failed to delete session type.",
+      "delete_in_use": "This session type is linked to existing sessions. Set it inactive instead of deleting.",
       "default_failed": "Failed to update default session type.",
       "toggle_failed": "Failed to update session type status.",
       "cannot_deactivate_default_title": "Cannot deactivate default",

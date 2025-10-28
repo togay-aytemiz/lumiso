@@ -891,7 +891,11 @@
     "configure_working_hours": "Müsait saatleri görmek için ayarlarda çalışma saatlerini yapılandırın",
     "no_time_slots": "Müsait saat dilimi yok",
     "available_times": "Müsait Saatler",
-    "slots": "slot"
+    "slots": "slot",
+    "weekly_preview_heading": "Haftaya genel bakış",
+    "weekly_preview_empty": "Bu hafta planlanmış başka seans yok.",
+    "weekly_preview_time_column": "Saat",
+    "weekly_preview_time_tbd": "Saat belirsiz"
   },
   "timeRelative": {
     "today": "Bugün",
@@ -1304,6 +1308,7 @@
       "add_failed": "Seans türü eklenemedi.",
       "update_failed": "Seans türü güncellenemedi.",
       "delete_failed": "Seans türü silinemedi.",
+      "delete_in_use": "Bu seans türü mevcut seanslarla bağlantılı. Silmek yerine pasif duruma getirin.",
       "default_failed": "Varsayılan seans türü güncellenemedi.",
       "toggle_failed": "Seans türü durumu güncellenemedi.",
       "cannot_deactivate_default_title": "Varsayılan pasifleştirilemez",

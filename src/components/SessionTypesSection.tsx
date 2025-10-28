@@ -127,17 +127,29 @@ const SessionTypesSection = () => {
     }
   };
 
+  const SESSION_TYPE_IN_USE = "SESSION_TYPE_IN_USE";
+
   const handleDeleteSessionType = async () => {
     if (!sessionTypeToDelete) return;
 
     try {
       setDeletingId(sessionTypeToDelete.id);
-      const { error } = await supabase
-        .from("session_types")
-        .delete()
-        .eq("id", sessionTypeToDelete.id);
+      const { error } = await supabase.functions.invoke("session-types-delete", {
+        body: { session_type_id: sessionTypeToDelete.id },
+      });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message === SESSION_TYPE_IN_USE) {
+          toast({
+            title: tCommon("toast.error"),
+            description: tForms("sessionTypes.errors.delete_in_use"),
+            variant: "destructive",
+          });
+        } else {
+          throw new Error(error.message);
+        }
+        return;
+      }
 
       toast({
         title: tCommon("toast.success"),

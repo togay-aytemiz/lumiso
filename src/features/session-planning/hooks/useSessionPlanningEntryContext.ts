@@ -9,6 +9,8 @@ interface UseSessionPlanningEntryContextProps {
   defaultDate?: string;
   defaultTime?: string;
   entrySource?: string;
+  sessionId?: string;
+  mode?: "create" | "edit";
 }
 
 export const useSessionPlanningEntryContext = ({
@@ -18,7 +20,9 @@ export const useSessionPlanningEntryContext = ({
   projectName,
   defaultDate,
   defaultTime,
-  entrySource
+  entrySource,
+  sessionId,
+  mode
 }: UseSessionPlanningEntryContextProps): SessionPlanningEntryContext =>
   useMemo(
     () => ({
@@ -28,8 +32,9 @@ export const useSessionPlanningEntryContext = ({
       projectName,
       defaultDate,
       defaultTime,
-      entrySource
+      entrySource,
+      sessionId,
+      mode
     }),
-    [leadId, leadName, projectId, projectName, defaultDate, defaultTime, entrySource]
+    [leadId, leadName, projectId, projectName, defaultDate, defaultTime, entrySource, sessionId, mode]
   );
-

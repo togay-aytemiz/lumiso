@@ -19,6 +19,7 @@ const MINUTES_IN_DAY = 24 * 60;
 const PIXELS_PER_MINUTE = 0.9;
 const MIN_BLOCK_HEIGHT = 36;
 const MIN_VIEW_RANGE = 6 * 60;
+const DRAFT_SELECTION_DURATION = 60;
 
 export interface WeeklyScheduleSession {
   id: string;
@@ -34,6 +35,7 @@ interface WeeklySchedulePreviewProps {
   sessions: WeeklyScheduleSession[];
   referenceDate: Date;
   selectedDate?: Date;
+  selectedTime?: string;
   locale?: string;
 }
 
@@ -161,6 +163,7 @@ export const WeeklySchedulePreview = ({
   sessions,
   referenceDate,
   selectedDate,
+  selectedTime,
   locale = typeof navigator !== "undefined" ? navigator.language : "en-US",
 }: WeeklySchedulePreviewProps) => {
   const { t } = useFormsTranslation();
@@ -169,6 +172,26 @@ export const WeeklySchedulePreview = ({
     () => startOfWeek(referenceDate, { weekStartsOn: 1 }),
     [referenceDate]
   );
+
+  const selectedDayIndex = useMemo(() => {
+    if (!selectedDate) return null;
+    return differenceInCalendarDays(selectedDate, weekStart);
+  }, [selectedDate, weekStart]);
+
+  const draftStartMinutes = useMemo(
+    () => parseTimeToMinutes(selectedTime),
+    [selectedTime]
+  );
+
+  const isDraftWithinWeek =
+    selectedDayIndex !== null &&
+    selectedDayIndex >= 0 &&
+    selectedDayIndex <= 6 &&
+    draftStartMinutes !== null;
+
+  const draftEndMinutes = isDraftWithinWeek
+    ? Math.min(draftStartMinutes! + DRAFT_SELECTION_DURATION, MINUTES_IN_DAY - 1)
+    : null;
 
   const days = useMemo(
     () =>
@@ -218,6 +241,11 @@ export const WeeklySchedulePreview = ({
       endCandidates.push(safeEnd);
     });
 
+    if (isDraftWithinWeek && draftStartMinutes !== null && draftEndMinutes !== null) {
+      startCandidates.push(draftStartMinutes);
+      endCandidates.push(draftEndMinutes);
+    }
+
     const rawStart = startCandidates.length ? Math.min(...startCandidates) : 9 * 60;
     const rawEnd = endCandidates.length ? Math.max(...endCandidates) : 17 * 60;
     const viewWindow = clampRange(rawStart, rawEnd);
@@ -236,7 +264,13 @@ export const WeeklySchedulePreview = ({
       noTimeSessions: noTimeMap,
       viewWindow,
     };
-  }, [sessions, weekStart]);
+  }, [
+    draftEndMinutes,
+    draftStartMinutes,
+    isDraftWithinWeek,
+    sessions,
+    weekStart,
+  ]);
 
   const containerHeight = (viewWindow.end - viewWindow.start) * PIXELS_PER_MINUTE;
   const hourMarkers = useMemo(() => {
@@ -257,11 +291,9 @@ export const WeeklySchedulePreview = ({
     return markers;
   }, [viewWindow.end, viewWindow.start, locale]);
 
-  const selectedDayIndex = selectedDate
-    ? differenceInCalendarDays(selectedDate, weekStart)
-    : null;
+  const hasDraftSelection = Boolean(isDraftWithinWeek);
 
-  if (!sessions.length) {
+  if (!sessions.length && !hasDraftSelection) {
     return (
       <div className="rounded-xl border border-dashed border-primary/30 bg-primary/5 p-6 text-sm text-muted-foreground">
         {t("sessionScheduling.weekly_preview_empty")}
@@ -326,6 +358,13 @@ export const WeeklySchedulePreview = ({
               (session) => session.dayIndex === index
             );
             const dayNoTime = noTimeSessions.get(index) ?? [];
+            const draftStart = draftStartMinutes ?? 0;
+            const draftEnd = draftEndMinutes ?? draftStart;
+            const showDraftSelection =
+              hasDraftSelection &&
+              selectedDayIndex === index &&
+              draftStartMinutes !== null &&
+              draftEndMinutes !== null;
 
             return (
               <div
@@ -350,6 +389,27 @@ export const WeeklySchedulePreview = ({
                       />
                     );
                   })}
+                  {showDraftSelection ? (
+                    <div
+                      data-testid="weekly-draft-selection"
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-x-1 rounded-xl border border-dashed border-amber-400/80 bg-amber-50/90 px-1.5 py-1 text-[10px] font-medium uppercase tracking-wide text-amber-900 shadow-none"
+                      style={{
+                        top: `${(draftStart - viewWindow.start) * PIXELS_PER_MINUTE}px`,
+                        height: `${Math.max(
+                          (draftEnd - draftStart) * PIXELS_PER_MINUTE,
+                          MIN_BLOCK_HEIGHT
+                        )}px`,
+                      }}
+                    >
+                      <div className="text-[11px] capitalize tracking-normal">
+                        {formatTimeLabel(draftStart, locale)} – {formatTimeLabel(draftEnd, locale)}
+                      </div>
+                      <div className="text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                        {t("sessionScheduling.weekly_preview_draft_label")}
+                      </div>
+                    </div>
+                  ) : null}
                   {daySessions.map((session) => {
                     const topOffset =
                       (session.startMinutes - viewWindow.start) * PIXELS_PER_MINUTE;

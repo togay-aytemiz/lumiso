@@ -262,6 +262,7 @@ export function CalendarTimePicker({
         sessions={weeklySessions}
         referenceDate={weeklyReferenceDate}
         selectedDate={selectedDate}
+        selectedTime={selectedTime}
         locale={browserLocale}
       />
 

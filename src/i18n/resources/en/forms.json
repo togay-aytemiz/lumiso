@@ -973,7 +973,8 @@
     "weekly_preview_heading": "Week at a glance",
     "weekly_preview_empty": "No other sessions scheduled this week.",
     "weekly_preview_time_column": "Time",
-    "weekly_preview_time_tbd": "Time TBD"
+    "weekly_preview_time_tbd": "Time TBD",
+    "weekly_preview_draft_label": "Draft selection"
   },
   "timeRelative": {
     "today": "Today",

@@ -162,4 +162,25 @@ describe("WeeklySchedulePreview", () => {
     expect(leadText).toHaveClass("font-light");
     expect(leadText).toHaveClass("line-clamp-6");
   });
+
+  it("renders a draft selection block when both date and time are chosen", () => {
+    render(
+      <WeeklySchedulePreview
+        sessions={[]}
+        referenceDate={monday}
+        selectedDate={new Date("2024-05-23T00:00:00Z")}
+        selectedTime="15:30"
+        locale="en-GB"
+      />
+    );
+
+    const draftBlock = screen.getByTestId("weekly-draft-selection");
+    expect(draftBlock).toBeInTheDocument();
+    expect(draftBlock).toHaveClass("border-dashed");
+    expect(draftBlock).toHaveClass("border-amber-400/80");
+    expect(draftBlock.textContent).toContain("15:30");
+    expect(draftBlock.textContent).toContain(
+      "sessionScheduling.weekly_preview_draft_label"
+    );
+  });
 });

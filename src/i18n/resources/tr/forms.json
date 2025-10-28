@@ -895,7 +895,8 @@
     "weekly_preview_heading": "Haftaya genel bakış",
     "weekly_preview_empty": "Bu hafta planlanmış başka seans yok.",
     "weekly_preview_time_column": "Saat",
-    "weekly_preview_time_tbd": "Saat belirsiz"
+    "weekly_preview_time_tbd": "Saat belirsiz",
+    "weekly_preview_draft_label": "Taslak seçim"
   },
   "timeRelative": {
     "today": "Bugün",

@@ -108,4 +108,58 @@ describe("WeeklySchedulePreview", () => {
     expect(firstBlock.style.width).toBe("calc(50% - 2px)");
     expect(secondBlock.style.width).toBe("calc(50% - 2px)");
   });
+
+  it("renders localized day headers with the provided locale", () => {
+    const sessions: WeeklyScheduleSession[] = [
+      {
+        id: "session-localized",
+        session_date: "2024-05-20",
+        session_time: "09:00",
+        duration_minutes: 60,
+        lead_name: "Morgan",
+      },
+    ];
+
+    render(
+      <WeeklySchedulePreview
+        sessions={sessions}
+        referenceDate={monday}
+        selectedDate={monday}
+        locale="en-GB"
+      />
+    );
+
+    expect(screen.getByText("Mon")).toBeInTheDocument();
+    expect(screen.getByText("20/05")).toBeInTheDocument();
+    expect(screen.queryByText("05/20")).not.toBeInTheDocument();
+  });
+
+  it("applies accent styling and lightweight typography to session blocks", () => {
+    const sessions: WeeklyScheduleSession[] = [
+      {
+        id: "session-style",
+        session_date: "2024-05-22",
+        session_time: "14:00",
+        duration_minutes: 75,
+        lead_name: "Dakota",
+      },
+    ];
+
+    render(
+      <WeeklySchedulePreview
+        sessions={sessions}
+        referenceDate={monday}
+        selectedDate={monday}
+        locale="en-GB"
+      />
+    );
+
+    const sessionBlock = screen.getByTestId("weekly-session-session-style");
+    expect(sessionBlock).toHaveClass("bg-emerald-50");
+    expect(sessionBlock).toHaveClass("border-emerald-300/80");
+
+    const leadText = screen.getByText("Dakota");
+    expect(leadText).toHaveClass("font-light");
+    expect(leadText).toHaveClass("line-clamp-6");
+  });
 });

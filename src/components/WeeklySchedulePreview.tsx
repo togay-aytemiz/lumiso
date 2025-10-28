@@ -293,7 +293,10 @@ export const WeeklySchedulePreview = ({
             >
               <div>{new Intl.DateTimeFormat(locale, { weekday: "short" }).format(date)}</div>
               <div className="text-[11px] font-semibold text-slate-600">
-                {format(date, "MM/dd")}
+                {new Intl.DateTimeFormat(locale, {
+                  day: "2-digit",
+                  month: "2-digit",
+                }).format(date)}
               </div>
             </div>
           ))}
@@ -367,7 +370,7 @@ export const WeeklySchedulePreview = ({
                       durationMinutes !== undefined
                         ? formatDurationLabel(durationMinutes, t)
                         : undefined;
-                    const gutter = session.columnCount > 1 ? 4 : 2;
+                    const gutter = session.columnCount > 1 ? 1 : 0;
                     const tooltipDetails = [
                       session.lead_name || t("sessionScheduling.unknown_client"),
                       session.project_name,
@@ -385,8 +388,8 @@ export const WeeklySchedulePreview = ({
                             data-testid={`weekly-session-${session.id}`}
                             aria-label={ariaLabel}
                             className={cn(
-                              "absolute overflow-hidden rounded-xl border border-emerald-200 bg-white/90 px-1.5 py-1.5 text-left shadow-[0_16px_28px_rgba(15,118,110,0.1)] backdrop-blur-sm transition-all",
-                              "hover:border-emerald-300 hover:bg-white hover:shadow-[0_20px_34px_rgba(15,118,110,0.18)]"
+                              "absolute overflow-hidden rounded-xl border border-emerald-300/80 bg-emerald-50 px-1.5 py-1.5 text-left shadow-[0_16px_28px_rgba(15,118,110,0.08)] transition-all",
+                              "hover:border-emerald-400 hover:bg-emerald-100/90 hover:shadow-[0_20px_34px_rgba(15,118,110,0.15)]"
                             )}
                             style={{
                               top: `${topOffset}px`,
@@ -395,7 +398,7 @@ export const WeeklySchedulePreview = ({
                               width: `calc(${widthValue}% - ${gutter * 2}px)`,
                             }}
                           >
-                            <p className="flex-1 break-words text-xs font-normal leading-tight text-slate-900 line-clamp-4">
+                            <p className="flex-1 break-all text-[11px] font-light leading-snug text-slate-800 line-clamp-6">
                               {session.lead_name || t("sessionScheduling.unknown_client")}
                             </p>
                           </div>

@@ -103,9 +103,9 @@ describe("WeeklySchedulePreview", () => {
     const firstBlock = screen.getByTestId("weekly-session-session-a");
     const secondBlock = screen.getByTestId("weekly-session-session-b");
 
-    expect(firstBlock.style.left).toBe("calc(0% + 4px)");
-    expect(secondBlock.style.left).toBe("calc(50% + 4px)");
-    expect(firstBlock.style.width).toBe("calc(50% - 8px)");
-    expect(secondBlock.style.width).toBe("calc(50% - 8px)");
+    expect(firstBlock.style.left).toBe("calc(0% + 1px)");
+    expect(secondBlock.style.left).toBe("calc(50% + 1px)");
+    expect(firstBlock.style.width).toBe("calc(50% - 2px)");
+    expect(secondBlock.style.width).toBe("calc(50% - 2px)");
   });
 });

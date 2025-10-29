@@ -5,6 +5,7 @@ import { InlineSubjectEditor } from "../InlineSubjectEditor";
 import { InlinePreheaderEditor } from "../InlinePreheaderEditor";
 
 const dndHooks: { onDragEnd?: (result: any) => void } = {};
+const imageLibraryCalls: any[] = [];
 
 jest.mock("react-i18next", () => ({
   useTranslation: jest.fn(() => ({
@@ -19,25 +20,51 @@ jest.mock("../BlockEditor", () => ({
     onRemove,
     onMoveDown,
     onMoveUp,
-  }: any) => (
-    <div data-testid={`editor-${block.id}`}>
-      <button
-        data-testid="editor-update"
-        onClick={() => onUpdate({ ...block.data, updated: true })}
-      >
-        update
-      </button>
-      <button data-testid="editor-remove" onClick={onRemove}>
-        remove
-      </button>
-      <button data-testid="editor-move-down" onClick={onMoveDown}>
-        move-down
-      </button>
-      <button data-testid="editor-move-up" onClick={onMoveUp}>
-        move-up
-      </button>
-    </div>
-  ),
+  }: any) => {
+    const React = require("react");
+    const { ImageLibrarySheet } = require("../ImageLibrarySheet");
+    const [isLibraryOpen, setIsLibraryOpen] = React.useState(false);
+
+    const handleImageSelect = (src: string, alt?: string) => {
+      onUpdate({ ...block.data, src, alt, placeholder: false });
+      setIsLibraryOpen(false);
+    };
+
+    return (
+      <div data-testid={`editor-${block.id}`}>
+        <button
+          data-testid="editor-update"
+          onClick={() => onUpdate({ ...block.data, updated: true })}
+        >
+          update
+        </button>
+        <button data-testid="editor-remove" onClick={onRemove}>
+          remove
+        </button>
+        <button data-testid="editor-move-down" onClick={onMoveDown}>
+          move-down
+        </button>
+        <button data-testid="editor-move-up" onClick={onMoveUp}>
+          move-up
+        </button>
+        {block.type === "image" && (
+          <>
+            <button
+              type="button"
+              onClick={() => setIsLibraryOpen(true)}
+            >
+              templateBuilder.blockEditor.image.openLibrary
+            </button>
+            <ImageLibrarySheet
+              open={isLibraryOpen}
+              onOpenChange={setIsLibraryOpen}
+              onImageSelect={handleImageSelect}
+            />
+          </>
+        )}
+      </div>
+    );
+  },
 }));
 
 jest.mock("../AddBlockSheet", () => ({
@@ -81,6 +108,26 @@ jest.mock("../VariablePicker", () => ({
       ),
 }));
 
+jest.mock("../ImageLibrarySheet", () => ({
+  ImageLibrarySheet: (props: any) => {
+    imageLibraryCalls.push(props);
+    if (!props.open) {
+      return null;
+    }
+    return (
+      <div data-testid="mock-image-library">
+        <button
+          type="button"
+          data-testid="mock-library-select"
+          onClick={() => props.onImageSelect("https://cdn.lumiso.test/library.jpg", "Library Image")}
+        >
+          select-library-image
+        </button>
+      </div>
+    );
+  },
+}));
+
 jest.mock("@hello-pangea/dnd", () => {
   const React = require("react");
   return {
@@ -107,6 +154,10 @@ jest.mock("@hello-pangea/dnd", () => {
 });
 
 describe("OptimizedTemplateEditor", () => {
+  beforeEach(() => {
+    imageLibraryCalls.length = 0;
+  });
+
   const baseBlocks = [
     {
       id: "block-1",
@@ -210,6 +261,48 @@ describe("OptimizedTemplateEditor", () => {
     expect(newBlocks).toHaveLength(3);
     expect(newBlocks[2].type).toBe("image");
     expect(newBlocks[2].visible).toBe(true);
+  });
+
+  it("opens the image library and applies selected image", async () => {
+    const onBlocksChange = jest.fn();
+
+    const { rerender } = render(
+      <OptimizedTemplateEditor blocks={baseBlocks} onBlocksChange={onBlocksChange} />
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "templateBuilder.editor.addBlock",
+      })
+    );
+    fireEvent.click(screen.getByTestId("mock-add-block"));
+
+    await waitFor(() => expect(onBlocksChange).toHaveBeenCalled());
+    const newBlocks = onBlocksChange.mock.calls[0][0];
+    const imageBlock = newBlocks.find((block: any) => block.type === "image");
+    expect(imageBlock).toBeDefined();
+    onBlocksChange.mockClear();
+
+    rerender(
+      <OptimizedTemplateEditor blocks={newBlocks} onBlocksChange={onBlocksChange} />
+    );
+
+    fireEvent.click(screen.getByText("templateBuilder.blockTitles.image"));
+    const openLibraryButton = await screen.findByRole("button", {
+      name: "templateBuilder.blockEditor.image.openLibrary",
+    });
+    fireEvent.click(openLibraryButton);
+
+    expect(imageLibraryCalls.some((call) => call.open === true)).toBe(true);
+
+    fireEvent.click(screen.getByTestId("mock-library-select"));
+
+    await waitFor(() => expect(onBlocksChange).toHaveBeenCalled());
+    const updatedBlocks = onBlocksChange.mock.calls[0][0];
+    const updatedImageBlock = updatedBlocks.find((block: any) => block.id === imageBlock.id);
+    expect(updatedImageBlock.data.src).toBe("https://cdn.lumiso.test/library.jpg");
+    expect(updatedImageBlock.data.alt).toBe("Library Image");
+    expect(updatedImageBlock.data.placeholder).toBe(false);
   });
 });
 

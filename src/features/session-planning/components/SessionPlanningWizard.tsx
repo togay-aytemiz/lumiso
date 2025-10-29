@@ -489,13 +489,13 @@ const StepList = ({
               "group relative flex w-full max-w-full flex-col overflow-hidden rounded-3xl border px-4 py-4 text-left transition-all",
               variant === "desktop"
                 ? cn(
-                    "border-white/10 bg-white/10 text-white/90 shadow-sm supports-[backdrop-filter]:backdrop-blur-md hover:border-white/30 hover:bg-white/15",
+                    "border-white/15 bg-white/5 text-slate-100/80 shadow-sm transition-colors duration-200 supports-[backdrop-filter]:backdrop-blur-md before:absolute before:inset-y-3 before:left-0 before:w-1 before:rounded-r-full before:bg-transparent before:opacity-0 before:transition before:duration-200 before:content-['']",
                     isActive &&
-                      "border-white/60 bg-white/20 shadow-lg shadow-slate-900/20",
+                      "border-cyan-200/80 bg-cyan-400/20 text-white shadow-xl shadow-cyan-950/20 before:bg-amber-300 before:opacity-100 before:shadow-[0_0_14px_rgba(251,191,36,0.45)]",
                     isComplete &&
-                      "border-sky-400/60 bg-sky-500/20 text-sky-50 hover:border-sky-300 hover:bg-sky-500/25",
+                      "border-emerald-300/70 bg-emerald-400/20 text-emerald-50",
                     needsAttention &&
-                      "border-rose-400/60 bg-rose-400/25 text-rose-50 hover:border-rose-300 hover:bg-rose-400/30"
+                      "border-amber-300/70 bg-amber-500/20 text-amber-50 shadow-lg shadow-amber-900/20"
                   )
                 : cn(
                     "border-slate-200 bg-white text-slate-900 shadow-sm hover:border-slate-300 hover:bg-slate-50",
@@ -513,13 +513,13 @@ const StepList = ({
                   "flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-full border text-sm font-semibold transition",
                   variant === "desktop"
                     ? cn(
-                        "border-white/40 text-white/80",
+                        "border-white/30 bg-white/10 text-slate-100/80",
                         isActive &&
-                          "border-white bg-white text-slate-900 shadow",
+                          "border-cyan-100 bg-cyan-400 text-slate-900 shadow",
                         isComplete &&
-                          "border-sky-200 bg-sky-500/20 text-sky-200",
+                          "border-emerald-200 bg-emerald-400/20 text-emerald-50",
                         needsAttention &&
-                          "border-rose-200 bg-rose-400/25 text-rose-200"
+                          "border-amber-200 bg-amber-500/20 text-amber-50"
                       )
                     : cn(
                         "border-slate-300 text-slate-600",
@@ -545,11 +545,17 @@ const StepList = ({
                     "text-sm font-semibold tracking-tight",
                     variant === "desktop"
                       ? needsAttention
-                        ? "text-rose-50"
-                        : "text-white"
+                        ? "text-amber-50"
+                        : isActive
+                          ? "text-white"
+                          : isComplete
+                            ? "text-emerald-50"
+                            : "text-slate-100"
                       : needsAttention
                         ? "text-rose-900"
-                        : "text-slate-900"
+                        : isComplete
+                          ? "text-sky-800"
+                          : "text-slate-900"
                   )}
                 >
                   {translate(step.labelKey)}
@@ -560,8 +566,12 @@ const StepList = ({
                       "mt-1 text-xs truncate leading-relaxed",
                       variant === "desktop"
                         ? needsAttention
-                          ? "text-rose-100/80"
-                          : "text-white/90"
+                          ? "text-amber-100/80"
+                          : isActive
+                            ? "text-white/90"
+                            : isComplete
+                              ? "text-emerald-100/80"
+                              : "text-slate-100/80"
                         : needsAttention
                           ? "text-rose-800"
                           : "text-slate-700"

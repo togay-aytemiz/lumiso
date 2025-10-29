@@ -218,6 +218,7 @@ describe("useSessionForm", () => {
       notes: "Bring props",
       location: "Studio",
       project_id: null,
+      session_type_id: null,
       status: "planned",
     });
 

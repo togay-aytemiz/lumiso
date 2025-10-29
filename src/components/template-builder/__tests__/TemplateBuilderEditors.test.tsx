@@ -1,8 +1,10 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@/utils/testUtils";
+import { render, screen, fireEvent, waitFor, act } from "@/utils/testUtils";
 import { OptimizedTemplateEditor } from "../OptimizedTemplateEditor";
 import { InlineSubjectEditor } from "../InlineSubjectEditor";
 import { InlinePreheaderEditor } from "../InlinePreheaderEditor";
+
+const dndHooks: { onDragEnd?: (result: any) => void } = {};
 
 jest.mock("react-i18next", () => ({
   useTranslation: jest.fn(() => ({
@@ -79,6 +81,31 @@ jest.mock("../VariablePicker", () => ({
       ),
 }));
 
+jest.mock("@hello-pangea/dnd", () => {
+  const React = require("react");
+  return {
+    DragDropContext: ({ onDragEnd, children }: any) => {
+      dndHooks.onDragEnd = onDragEnd;
+      return <div data-testid="drag-context">{typeof children === "function" ? children() : children}</div>;
+    },
+    Droppable: ({ children }: any) =>
+      children({
+        innerRef: jest.fn(),
+        droppableProps: {},
+        placeholder: null,
+      }),
+    Draggable: ({ children, draggableId }: any) =>
+      children(
+        {
+          innerRef: jest.fn(),
+          draggableProps: { "data-draggable-id": draggableId },
+          dragHandleProps: { "data-drag-handle": draggableId },
+        },
+        { isDragging: false }
+      ),
+  };
+});
+
 describe("OptimizedTemplateEditor", () => {
   const baseBlocks = [
     {
@@ -128,6 +155,32 @@ describe("OptimizedTemplateEditor", () => {
       screen.getByText("templateBuilder.blockTitles.text")
     );
     fireEvent.click(screen.getByTestId("editor-move-down"));
+
+    await waitFor(() => expect(onBlocksChange).toHaveBeenCalled());
+    const reordered = onBlocksChange.mock.calls[0][0];
+    expect(reordered.map((block: any) => block.id)).toEqual([
+      "block-2",
+      "block-1",
+    ]);
+  });
+
+  it("reorders blocks when drag and drop completes", async () => {
+    const onBlocksChange = jest.fn();
+
+    render(
+      <OptimizedTemplateEditor blocks={baseBlocks} onBlocksChange={onBlocksChange} />
+    );
+
+    expect(dndHooks.onDragEnd).toBeDefined();
+
+    act(() => {
+      dndHooks.onDragEnd?.({
+        source: { index: 0 },
+        destination: { index: 1 },
+        draggableId: "block-1",
+        type: "DEFAULT",
+      });
+    });
 
     await waitFor(() => expect(onBlocksChange).toHaveBeenCalled());
     const reordered = onBlocksChange.mock.calls[0][0];

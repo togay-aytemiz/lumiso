@@ -252,6 +252,53 @@ describe("TemplatePreview", () => {
       });
     });
   });
+
+  it("switches email preview device between desktop and mobile", () => {
+    render(
+      <TemplatePreview
+        blocks={sampleBlocks}
+        activeChannel="email"
+        onChannelChange={jest.fn()}
+        previewData={previewData}
+      />
+    );
+
+    const previewContainerBefore = document.querySelector(".mx-auto.transition-all");
+    expect(previewContainerBefore?.className).toContain("max-w-2xl");
+
+    fireEvent.click(screen.getByRole("button", { name: /templateBuilder\.preview\.mobile/ }));
+
+    const previewContainerAfter = document.querySelector(".mx-auto.transition-all");
+    expect(previewContainerAfter?.className).toContain("max-w-sm");
+  });
+
+  it("renders WhatsApp preview when channel is whatsapp", () => {
+    render(
+      <TemplatePreview
+        blocks={sampleBlocks}
+        activeChannel="whatsapp"
+        onChannelChange={jest.fn()}
+        previewData={previewData}
+      />
+    );
+
+    expect(screen.getByText(/templateBuilder\.preview\.whatsapp\.online/)).toBeInTheDocument();
+    expect(screen.getByText(/Hello 👋 Alice Example/)).toBeInTheDocument();
+  });
+
+  it("renders SMS preview when channel is sms", () => {
+    render(
+      <TemplatePreview
+        blocks={sampleBlocks}
+        activeChannel="sms"
+        onChannelChange={jest.fn()}
+        previewData={previewData}
+      />
+    );
+
+    expect(screen.getByText(/templateBuilder\.preview\.sms\.label/)).toBeInTheDocument();
+    expect(screen.getByText(/templateBuilder\.preview\.sms\.characters/)).toBeInTheDocument();
+  });
 });
 
 describe("PlainTextPreview", () => {

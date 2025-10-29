@@ -12,8 +12,10 @@ export interface EntitySummaryItem {
   icon: LucideIcon;
   label: ReactNode;
   primary: ReactNode;
-  secondary: ReactNode;
+  secondary?: ReactNode;
   secondaryClassName?: string;
+  action?: ReactNode;
+  actionClassName?: string;
   info?: {
     content: ReactNode;
     ariaLabel?: string;
@@ -142,15 +144,27 @@ export function EntityHeader({
                     )}
                   </p>
                   <p className="text-sm font-semibold text-foreground">{item.primary}</p>
-                  <div
-                    className={cn(
-                      "text-xs",
-                      typeof item.secondary === "string" || typeof item.secondary === "number" ? "text-muted-foreground" : "",
-                      item.secondaryClassName
-                    )}
-                  >
-                    {item.secondary}
-                  </div>
+                  {item.secondary && (
+                    <div
+                      className={cn(
+                        "text-xs",
+                        typeof item.secondary === "string" || typeof item.secondary === "number" ? "text-muted-foreground" : "",
+                        item.secondaryClassName
+                      )}
+                    >
+                      {item.secondary}
+                    </div>
+                  )}
+                  {item.action && (
+                    <div
+                      className={cn(
+                        "mt-1 text-xs text-primary",
+                        item.actionClassName
+                      )}
+                    >
+                      {item.action}
+                    </div>
+                  )}
                 </div>
               </div>
             );

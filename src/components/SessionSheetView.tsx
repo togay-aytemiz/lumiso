@@ -157,6 +157,14 @@ export default function SessionSheetView({
   const sessionTypeLabel = session?.projects?.project_types?.name || tForms('sessionBanner.session');
   const sessionNameDisplay = session ? getDisplaySessionName(session) : '';
 
+  const openEditStep = useCallback(
+    (step: SessionPlanningStepId) => {
+      setEditStartStep(step);
+      setIsEditDialogOpen(true);
+    },
+    [setEditStartStep, setIsEditDialogOpen]
+  );
+
   const summaryItems = useMemo(
     () =>
       session
@@ -168,10 +176,25 @@ export default function SessionSheetView({
               notes: tForms('sessionSheet.notes'),
               location: tForms('sessionSheet.location'),
             },
+            placeholders: {
+              project: tForms('sessionSheet.placeholders.project'),
+              notes: tForms('sessionSheet.placeholders.notes'),
+              location: tForms('sessionSheet.placeholders.location'),
+            },
+            actions: {
+              editSchedule: tForms('sessionSheet.actions.editSchedule'),
+              connectProject: tForms('sessionSheet.actions.connectProject'),
+              addNotes: tForms('sessionSheet.actions.addNotes'),
+              addLocation: tForms('sessionSheet.actions.addLocation'),
+            },
             onProjectClick: session.project_id ? handleProjectClick : undefined,
+            onEditSchedule: () => openEditStep('schedule'),
+            onConnectProject: () => openEditStep('project'),
+            onAddNotes: () => openEditStep('notes'),
+            onAddLocation: () => openEditStep('location'),
           })
         : [],
-    [session, tForms, handleProjectClick]
+    [session, tForms, handleProjectClick, openEditStep]
   );
 
   const overdueBanner =

@@ -3,6 +3,7 @@ import { Calendar, FolderOpen, FileText, MapPin } from "lucide-react";
 import type { EntitySummaryItem } from "@/components/EntityHeader";
 import { formatLongDate, formatTime } from "@/lib/utils";
 import { TruncatedTextWithTooltip } from "@/components/TruncatedTextWithTooltip";
+import { Button } from "@/components/ui/button";
 
 interface SessionSummaryProjectInfo {
   id: string;
@@ -26,13 +27,34 @@ interface BuildSessionSummaryItemsParams {
     notes: ReactNode;
     location: ReactNode;
   };
+  placeholders: {
+    project: ReactNode;
+    notes: ReactNode;
+    location: ReactNode;
+  };
+  actions: {
+    editSchedule: ReactNode;
+    connectProject: ReactNode;
+    addNotes: ReactNode;
+    addLocation: ReactNode;
+  };
   onProjectClick?: () => void;
+  onEditSchedule?: () => void;
+  onConnectProject?: () => void;
+  onAddNotes?: () => void;
+  onAddLocation?: () => void;
 }
 
 export function buildSessionSummaryItems({
   session,
   labels,
+  placeholders,
+  actions,
   onProjectClick,
+  onEditSchedule,
+  onConnectProject,
+  onAddNotes,
+  onAddLocation,
 }: BuildSessionSummaryItemsParams): EntitySummaryItem[] {
   const items: EntitySummaryItem[] = [];
 
@@ -42,17 +64,28 @@ export function buildSessionSummaryItems({
     label: labels.dateTime,
     primary: formatLongDate(session.session_date),
     secondary: session.session_time ? formatTime(session.session_time) : undefined,
+    action:
+      onEditSchedule ? (
+        <Button
+          variant="link"
+          size="sm"
+          className="h-auto p-0 text-xs font-medium text-primary hover:text-primary/80"
+          onClick={onEditSchedule}
+        >
+          {actions.editSchedule}
+        </Button>
+      ) : undefined,
   });
 
-  if (session.projects?.name) {
-    const projectName = session.projects.name;
-    const projectTypeName = session.projects.project_types?.name ?? undefined;
+  const projectName = session.projects?.name;
+  const projectTypeName = session.projects?.project_types?.name ?? undefined;
 
-    items.push({
-      key: "project",
-      icon: FolderOpen,
-      label: labels.project,
-      primary: onProjectClick ? (
+  items.push({
+    key: "project",
+    icon: FolderOpen,
+    label: labels.project,
+    primary: projectName ? (
+      onProjectClick ? (
         <button
           type="button"
           onClick={onProjectClick}
@@ -62,46 +95,83 @@ export function buildSessionSummaryItems({
         </button>
       ) : (
         <span className="line-clamp-2">{projectName}</span>
-      ),
-      secondary: projectTypeName,
-    });
-  }
+      )
+    ) : (
+      <span className="text-sm font-semibold text-muted-foreground">{placeholders.project}</span>
+    ),
+    secondary: projectName ? projectTypeName : undefined,
+    action:
+      !projectName && onConnectProject ? (
+        <Button
+          variant="link"
+          size="sm"
+          className="h-auto p-0 text-xs font-medium text-primary hover:text-primary/80"
+          onClick={onConnectProject}
+        >
+          {actions.connectProject}
+        </Button>
+      ) : undefined,
+  });
 
-  if (session.notes) {
-    items.push({
-      key: "notes",
-      icon: FileText,
-      label: labels.notes,
-      primary: (
-        <TruncatedTextWithTooltip
-          text={session.notes}
-          lines={2}
-          as="span"
-          tooltipSide="bottom"
-          tooltipAlign="start"
-        />
-      ),
-      secondary: null,
-    });
-  }
+  const notesValue = session.notes?.trim();
 
-  if (session.location) {
-    items.push({
-      key: "location",
-      icon: MapPin,
-      label: labels.location,
-      primary: (
-        <TruncatedTextWithTooltip
-          text={session.location}
-          lines={2}
-          as="span"
-          tooltipSide="bottom"
-          tooltipAlign="start"
-        />
-      ),
-      secondary: null,
-    });
-  }
+  items.push({
+    key: "notes",
+    icon: FileText,
+    label: labels.notes,
+    primary: notesValue ? (
+      <TruncatedTextWithTooltip
+        text={notesValue}
+        lines={2}
+        as="span"
+        tooltipSide="bottom"
+        tooltipAlign="start"
+      />
+    ) : (
+      <span className="text-sm font-semibold text-muted-foreground">{placeholders.notes}</span>
+    ),
+    action:
+      !notesValue && onAddNotes ? (
+        <Button
+          variant="link"
+          size="sm"
+          className="h-auto p-0 text-xs font-medium text-primary hover:text-primary/80"
+          onClick={onAddNotes}
+        >
+          {actions.addNotes}
+        </Button>
+      ) : undefined,
+  });
+
+  const locationValue = session.location?.trim();
+
+  items.push({
+    key: "location",
+    icon: MapPin,
+    label: labels.location,
+    primary: locationValue ? (
+      <TruncatedTextWithTooltip
+        text={locationValue}
+        lines={2}
+        as="span"
+        tooltipSide="bottom"
+        tooltipAlign="start"
+      />
+    ) : (
+      <span className="text-sm font-semibold text-muted-foreground">{placeholders.location}</span>
+    ),
+    action:
+      !locationValue && onAddLocation ? (
+        <Button
+          variant="link"
+          size="sm"
+          className="h-auto p-0 text-xs font-medium text-primary hover:text-primary/80"
+          onClick={onAddLocation}
+        >
+          {actions.addLocation}
+        </Button>
+      ) : undefined,
+  });
 
   return items;
 }

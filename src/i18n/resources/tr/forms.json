@@ -1112,6 +1112,17 @@
     "project": "Proje",
     "notes": "Notlar",
     "location": "Konum",
+    "placeholders": {
+      "project": "Bağlı proje yok",
+      "notes": "Henüz not yok",
+      "location": "Konum eklenmedi"
+    },
+    "actions": {
+      "editSchedule": "Güncelle",
+      "connectProject": "Projeye bağla",
+      "addNotes": "Not ekle",
+      "addLocation": "Konum ekle"
+    },
     "clientDetails": "Kişi Detayları",
     "dangerZone": "Tehlike Bölgesi",
     "deleteSession": "Seansı Sil",

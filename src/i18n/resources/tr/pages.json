@@ -353,6 +353,19 @@
       "location": "Konum",
       "at": "saat"
     },
+    "summary": {
+      "placeholders": {
+        "project": "Bağlı proje yok",
+        "notes": "Henüz not yok",
+        "location": "Konum eklenmedi"
+      },
+      "actions": {
+        "editSchedule": "Güncelle",
+        "connectProject": "Projeye bağla",
+        "addNotes": "Not ekle",
+        "addLocation": "Konum ekle"
+      }
+    },
     "unknownClient": "Bilinmeyen Kişi",
     "gallery": {
       "title": "Seans Galerisi",

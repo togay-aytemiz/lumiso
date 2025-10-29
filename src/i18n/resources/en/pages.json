@@ -353,6 +353,19 @@
       "location": "Location",
       "at": "at"
     },
+    "summary": {
+      "placeholders": {
+        "project": "No project linked",
+        "notes": "No notes yet",
+        "location": "No location provided"
+      },
+      "actions": {
+        "editSchedule": "Update",
+        "connectProject": "Connect project",
+        "addNotes": "Add note",
+        "addLocation": "Add location"
+      }
+    },
     "unknownClient": "Unknown Client",
     "gallery": {
       "title": "Session Gallery",

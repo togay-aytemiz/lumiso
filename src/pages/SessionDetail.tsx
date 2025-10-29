@@ -187,6 +187,14 @@ export default function SessionDetail() {
   const sessionTypeLabel = session?.projects?.project_types?.name || tForms('sessionBanner.session');
   const sessionNameDisplay = session ? getDisplaySessionName(session) : '';
 
+  const openEditStep = useCallback(
+    (step: SessionPlanningStepId) => {
+      setEditStartStep(step);
+      setIsEditDialogOpen(true);
+    },
+    [setEditStartStep, setIsEditDialogOpen]
+  );
+
   const summaryItems = useMemo(
     () =>
       session
@@ -198,10 +206,30 @@ export default function SessionDetail() {
               notes: tPages('sessionDetail.labels.notes'),
               location: tPages('sessionDetail.labels.location'),
             },
+            placeholders: {
+              project: tPages('sessionDetail.summary.placeholders.project'),
+              notes: tPages('sessionDetail.summary.placeholders.notes'),
+              location: tPages('sessionDetail.summary.placeholders.location'),
+            },
+            actions: {
+              editSchedule: tPages('sessionDetail.summary.actions.editSchedule'),
+              connectProject: tPages('sessionDetail.summary.actions.connectProject'),
+              addNotes: tPages('sessionDetail.summary.actions.addNotes'),
+              addLocation: tPages('sessionDetail.summary.actions.addLocation'),
+            },
             onProjectClick: session.project_id ? handleProjectClick : undefined,
+            onEditSchedule: () => openEditStep('schedule'),
+            onConnectProject: () => openEditStep('project'),
+            onAddNotes: () => openEditStep('notes'),
+            onAddLocation: () => openEditStep('location'),
           })
         : [],
-    [session, tPages, handleProjectClick]
+    [
+      session,
+      tPages,
+      handleProjectClick,
+      openEditStep,
+    ]
   );
 
   if (loading) {

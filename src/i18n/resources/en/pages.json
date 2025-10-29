@@ -355,18 +355,26 @@
     },
     "unknownClient": "Unknown Client",
     "gallery": {
-      "title": "Session Gallery"
+      "title": "Session Gallery",
+      "emptyState": {
+        "title": "No images yet",
+        "description": "Upload photos from this session to create a beautiful gallery for your client.",
+        "button": "Upload Images",
+        "comingSoon": "Coming soon"
+      },
+      "imageAlt": "Session image {{index}}",
+      "addImageAriaLabel": "Add new session image"
     },
     "dangerZone": {
       "title": "Danger Zone",
       "button": "Delete Session",
       "description": "This will permanently delete the session and all related data."
     },
-  "overdue": {
-    "title": "This session is overdue",
-    "description": "Please update the session status or reschedule if needed.",
-    "reschedule": "Reschedule"
-  },
+    "overdue": {
+      "title": "This session is overdue",
+      "description": "Please update the session status or reschedule if needed.",
+      "reschedule": "Reschedule"
+    },
     "modal": {
       "deleteTitle": "Delete Session"
     }

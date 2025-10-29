@@ -355,18 +355,26 @@
     },
     "unknownClient": "Bilinmeyen Kişi",
     "gallery": {
-      "title": "Seans Galerisi"
+      "title": "Seans Galerisi",
+      "emptyState": {
+        "title": "Henüz görsel yok",
+        "description": "Bu seansın fotoğraflarını yükleyerek müşteriniz için güzel bir galeri oluşturun.",
+        "button": "Görselleri Yükle",
+        "comingSoon": "Çok yakında"
+      },
+      "imageAlt": "Seans görseli {{index}}",
+      "addImageAriaLabel": "Yeni seans görseli ekle"
     },
     "dangerZone": {
       "title": "Tehlikeli Alan",
       "button": "Seansı Sil",
       "description": "Bu işlem seansı ve ilgili tüm verileri kalıcı olarak silecektir."
     },
-  "overdue": {
-    "title": "Bu seans gecikti",
-    "description": "Lütfen seans durumunu güncelleyin veya gerekiyorsa yeniden planlayın.",
-    "reschedule": "Yeniden planla"
-  },
+    "overdue": {
+      "title": "Bu seans gecikti",
+      "description": "Lütfen seans durumunu güncelleyin veya gerekiyorsa yeniden planlayın.",
+      "reschedule": "Yeniden planla"
+    },
     "modal": {
       "deleteTitle": "Seansı Sil"
     }

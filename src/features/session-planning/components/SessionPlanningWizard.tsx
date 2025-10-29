@@ -53,6 +53,9 @@ export const SessionPlanningWizard = ({
   const { settings } = useOrganizationSettings();
   const { toast } = useToast();
   const isEditing = state.meta.mode === "edit";
+  const [visitedSteps, setVisitedSteps] = useState<
+    Set<SessionPlanningStepId>
+  >(() => new Set());
 
   const rawIndex = useMemo(
     () =>
@@ -193,6 +196,39 @@ export const SessionPlanningWizard = ({
     >;
   }, [state, t]);
 
+  useEffect(() => {
+    setVisitedSteps((previous) => {
+      if (previous.has(meta.currentStep)) {
+        return previous;
+      }
+
+      const next = new Set(previous);
+      next.add(meta.currentStep);
+      return next;
+    });
+  }, [meta.currentStep]);
+
+  useEffect(() => {
+    if (!isEditing) {
+      return;
+    }
+
+    setVisitedSteps((previous) => {
+      let changed = false;
+      const next = new Set(previous);
+
+      SESSION_PLANNING_STEPS.forEach((step) => {
+        const status = stepStatus[step.id];
+        if (status?.hasValue && !next.has(step.id)) {
+          next.add(step.id);
+          changed = true;
+        }
+      });
+
+      return changed ? next : previous;
+    });
+  }, [isEditing, stepStatus]);
+
   const goToStep = (index: number) => {
     const target = SESSION_PLANNING_STEPS[index];
     if (!target) return;
@@ -281,6 +317,7 @@ export const SessionPlanningWizard = ({
               statuses={stepStatus}
               translate={t}
               variant="desktop"
+              visitedSteps={visitedSteps}
             />
           </div>
         </aside>
@@ -330,6 +367,7 @@ export const SessionPlanningWizard = ({
                   statuses={stepStatus}
                   translate={t}
                   variant="mobile"
+                  visitedSteps={visitedSteps}
                 />
               </CollapsibleContent>
             </Collapsible>
@@ -409,6 +447,7 @@ interface StepListProps {
   statuses: Record<SessionPlanningStepId, { summary?: string; hasValue: boolean }>;
   translate: (key: string, options?: Record<string, unknown>) => string;
   variant: "desktop" | "mobile";
+  visitedSteps: Set<SessionPlanningStepId>;
 }
 
 const StepList = ({
@@ -417,6 +456,7 @@ const StepList = ({
   statuses,
   translate,
   variant,
+  visitedSteps,
 }: StepListProps) => (
   <ol
     className={cn(
@@ -429,7 +469,8 @@ const StepList = ({
       const status = statuses[step.id] ?? { summary: undefined, hasValue: false };
       const summary = status.summary;
       const hasValue = status.hasValue;
-      const isComplete = index < currentIndex && hasValue;
+      const hasVisited = visitedSteps.has(step.id) || index <= currentIndex;
+      const isComplete = hasValue && hasVisited && !isActive;
       const requiresAttention = REQUIRED_STEPS[step.id] ?? false;
       const needsAttention = !isActive && requiresAttention && index < currentIndex && !hasValue;
       const description = translate(`steps.${step.id}.description`);

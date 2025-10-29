@@ -17,6 +17,7 @@ import {
 import SessionStatusBadge from '@/components/SessionStatusBadge';
 import { isOverdueSession } from '@/lib/dateUtils';
 import EditSessionDialog from '@/components/EditSessionDialog';
+import type { SessionPlanningStepId } from '@/features/session-planning';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useSessionActions } from '@/hooks/useSessionActions';
 import ProjectDetailsLayout from '@/components/project-details/ProjectDetailsLayout';
@@ -70,6 +71,7 @@ export default function SessionDetail() {
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editStartStep, setEditStartStep] = useState<SessionPlanningStepId | undefined>(undefined);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const fetchSession = async () => {
@@ -126,6 +128,7 @@ export default function SessionDetail() {
 
 
   const handleEdit = () => {
+    setEditStartStep(undefined);
     setIsEditDialogOpen(true);
   };
 
@@ -162,6 +165,7 @@ export default function SessionDetail() {
   const handleSessionUpdated = () => {
     fetchSession();
     setIsEditDialogOpen(false);
+    setEditStartStep(undefined);
   };
 
   const handleStatusChange = () => {
@@ -282,21 +286,36 @@ export default function SessionDetail() {
 
   const overdueBanner = isOverdue
     ? (
-        <div className="flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm leading-relaxed text-orange-800">
-          <AlertTriangle className="mt-0.5 h-4 w-4 text-orange-600" aria-hidden="true" />
-          <div className="space-y-1">
-            <p className="font-semibold text-orange-900">{tPages('sessionDetail.overdue.title')}</p>
-            <p>{tPages('sessionDetail.overdue.description')}</p>
+        <div className="space-y-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm leading-relaxed text-orange-800">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 text-orange-600" aria-hidden="true" />
+            <div className="space-y-1">
+              <p className="font-semibold text-orange-900">{tPages('sessionDetail.overdue.title')}</p>
+              <p>{tPages('sessionDetail.overdue.description')}</p>
+            </div>
+          </div>
+          <div className="pl-7">
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-orange-300 text-orange-700 hover:bg-orange-100 hover:text-orange-700"
+              onClick={() => {
+                setEditStartStep("schedule");
+                setIsEditDialogOpen(true);
+              }}
+            >
+              {tPages('sessionDetail.overdue.reschedule')}
+            </Button>
           </div>
         </div>
       )
     : undefined;
 
   const headerActions = session ? (
-    <Button variant="outline" size="sm" onClick={handleEdit} className="gap-2 text-sm font-medium">
-      <Edit className="h-4 w-4" />
-      <span>{tForms('sessions.editSession')}</span>
-    </Button>
+          <Button variant="outline" size="sm" onClick={handleEdit} className="gap-2 text-sm font-medium">
+            <Edit className="h-4 w-4" />
+            <span>{tForms('sessions.editSession')}</span>
+          </Button>
   ) : undefined;
 
   const headerTitle = session ? (
@@ -357,7 +376,12 @@ export default function SessionDetail() {
         >
           <EditSessionDialog
             open={isEditDialogOpen}
-            onOpenChange={setIsEditDialogOpen}
+            onOpenChange={(open) => {
+              if (!open) {
+                setEditStartStep(undefined);
+              }
+              setIsEditDialogOpen(open);
+            }}
             sessionId={session.id}
             leadId={session.lead_id}
             currentSessionName={session.session_name || ''}
@@ -368,6 +392,7 @@ export default function SessionDetail() {
             currentProjectId={session.project_id}
             leadName={session.leads?.name || ''}
             onSessionUpdated={handleSessionUpdated}
+            startStep={editStartStep}
           />
         </ErrorBoundary>
       )}

@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import SessionStatusBadge from '@/components/SessionStatusBadge';
 import { isOverdueSession } from '@/lib/dateUtils';
 import EditSessionDialog from '@/components/EditSessionDialog';
+import type { SessionPlanningStepId } from '@/features/session-planning';
 import { useSessionActions } from '@/hooks/useSessionActions';
 import { UnifiedClientDetails } from '@/components/UnifiedClientDetails';
 import SessionGallery from '@/components/SessionGallery';
@@ -76,6 +77,7 @@ export default function SessionSheetView({
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editStartStep, setEditStartStep] = useState<SessionPlanningStepId | undefined>(undefined);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const fetchSession = async () => {
     if (!sessionId) return;
@@ -119,6 +121,7 @@ export default function SessionSheetView({
     }
   }, [isOpen, sessionId]);
   const handleEdit = () => {
+    setEditStartStep(undefined);
     setIsEditDialogOpen(true);
   };
   const handleDelete = async () => {
@@ -132,6 +135,7 @@ export default function SessionSheetView({
   const handleSessionUpdated = () => {
     fetchSession();
     setIsEditDialogOpen(false);
+    setEditStartStep(undefined);
     onSessionUpdated?.(); // Notify parent components
   };
   const handleStatusChange = () => {
@@ -172,11 +176,26 @@ export default function SessionSheetView({
 
   const overdueBanner =
     session && isOverdueSession(session.session_date, session.status) ? (
-      <div className="flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm leading-relaxed text-orange-800">
-        <AlertTriangle className="mt-0.5 h-4 w-4 text-orange-600" aria-hidden="true" />
-        <div className="space-y-1">
-          <p className="font-semibold text-orange-900">{tForms('sessionSheet.overdueWarning')}</p>
-          <p>{tForms('sessionSheet.overdueDescription')}</p>
+      <div className="space-y-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm leading-relaxed text-orange-800">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="mt-0.5 h-4 w-4 text-orange-600" aria-hidden="true" />
+          <div className="space-y-1">
+            <p className="font-semibold text-orange-900">{tForms('sessionSheet.overdueWarning')}</p>
+            <p>{tForms('sessionSheet.overdueDescription')}</p>
+          </div>
+        </div>
+        <div className="pl-7">
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-orange-300 text-orange-700 hover:bg-orange-100 hover:text-orange-700"
+            onClick={() => {
+              setEditStartStep('schedule');
+              setIsEditDialogOpen(true);
+            }}
+          >
+            {tForms('sessionSheet.overdueReschedule')}
+          </Button>
         </div>
       </div>
     ) : undefined;
@@ -330,7 +349,28 @@ export default function SessionSheetView({
       </Sheet>
 
       {/* Edit Dialog */}
-      {session && isEditDialogOpen && <EditSessionDialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} sessionId={session.id} leadId={session.lead_id} currentDate={session.session_date} currentTime={session.session_time} currentNotes={session.notes || ''} currentLocation={session.location || ''} currentProjectId={session.project_id} currentSessionName={session.session_name} leadName={session.leads?.name || ''} onSessionUpdated={handleSessionUpdated} />}
+      {session && isEditDialogOpen && (
+        <EditSessionDialog
+          open={isEditDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditStartStep(undefined);
+            }
+            setIsEditDialogOpen(open);
+          }}
+          sessionId={session.id}
+          leadId={session.lead_id}
+          currentDate={session.session_date}
+          currentTime={session.session_time}
+          currentNotes={session.notes || ''}
+          currentLocation={session.location || ''}
+          currentProjectId={session.project_id}
+          currentSessionName={session.session_name}
+          leadName={session.leads?.name || ''}
+          onSessionUpdated={handleSessionUpdated}
+          startStep={editStartStep}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

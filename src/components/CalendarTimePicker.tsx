@@ -34,6 +34,7 @@ interface CalendarTimePickerProps {
   onTimeChange: (time: string) => void;
   onDateStringChange: (dateString: string) => void;
   selectedSessionDurationMinutes?: number | null;
+  enableDraftPreview?: boolean;
 }
 
 export function CalendarTimePicker({
@@ -43,6 +44,7 @@ export function CalendarTimePicker({
   onTimeChange,
   onDateStringChange,
   selectedSessionDurationMinutes,
+  enableDraftPreview = true,
 }: CalendarTimePickerProps) {
   const { t } = useFormsTranslation();
   const [visibleMonth, setVisibleMonth] = useState<Date>(new Date());
@@ -266,6 +268,7 @@ export function CalendarTimePicker({
         selectedDate={selectedDate}
         selectedTime={selectedTime}
         selectedDurationMinutes={selectedSessionDurationMinutes}
+        showDraftSelection={enableDraftPreview}
         locale={browserLocale}
       />
 

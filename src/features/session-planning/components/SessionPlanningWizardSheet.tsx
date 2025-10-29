@@ -4,6 +4,7 @@ import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { SessionPlanningProvider } from "../context/SessionPlanningProvider";
 import { SessionSavedResourcesProvider } from "../context/SessionSavedResourcesProvider";
 import { SessionWorkflowProvider, useSessionWorkflowCatalog } from "../context/SessionWorkflowProvider";
+import { SessionPlanningOriginalStateProvider } from "../context/SessionPlanningOriginalStateContext";
 import { useSessionPlanningEntryContext } from "../hooks/useSessionPlanningEntryContext";
 import { SessionPlanningWizard } from "./SessionPlanningWizard";
 import { useSessionPlanningContext } from "../hooks/useSessionPlanningContext";
@@ -420,7 +421,8 @@ const SessionPlanningWizardSheetInner = ({
             entryContext.entrySource ??
             (resolvedProjectId ? "project" : resolvedLeadId ? "lead" : "direct"),
           defaultDate: record.session_date ?? entryContext.defaultDate,
-          defaultTime: record.session_time ?? entryContext.defaultTime
+          defaultTime: record.session_time ?? entryContext.defaultTime,
+          startStepOverride: entryContext.startStepOverride
         };
 
         skipNextSaveRef.current = true;
@@ -456,7 +458,7 @@ const SessionPlanningWizardSheetInner = ({
           notes: record.notes ?? "",
           notifications: { ...state.notifications },
           meta: {
-            currentStep: "summary",
+            currentStep: entryContext.startStepOverride ?? "summary",
             isDirty: false,
             isSavingDraft: false,
             lastSavedAt: undefined,
@@ -963,9 +965,11 @@ const SessionPlanningWizardSheetInner = ({
             onScheduleAnother={handleScheduleAnother}
           />
         ) : (
-          <SessionSavedResourcesProvider>
-            <SessionPlanningWizard onCancel={handleClose} onComplete={handleComplete} isCompleting={isCompleting} />
-          </SessionSavedResourcesProvider>
+          <SessionPlanningOriginalStateProvider value={initialSessionSnapshotRef.current}>
+            <SessionSavedResourcesProvider>
+              <SessionPlanningWizard onCancel={handleClose} onComplete={handleComplete} isCompleting={isCompleting} />
+            </SessionSavedResourcesProvider>
+          </SessionPlanningOriginalStateProvider>
         )}
       </AppSheetModal>
 

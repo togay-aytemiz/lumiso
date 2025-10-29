@@ -206,6 +206,21 @@ describe("WeeklySchedulePreview", () => {
     expect(draftBox).toHaveStyle(`height: ${expectedHeight}px`);
   });
 
+  it("can hide the draft preview when requested", () => {
+    render(
+      <WeeklySchedulePreview
+        sessions={[]}
+        referenceDate={monday}
+        selectedDate={new Date("2024-05-24T00:00:00Z")}
+        selectedTime="10:00"
+        showDraftSelection={false}
+        locale="en-GB"
+      />
+    );
+
+    expect(screen.queryByTestId("weekly-draft-selection")).not.toBeInTheDocument();
+  });
+
   it("shares the available column space when the draft overlaps an existing session", () => {
     const sessions: WeeklyScheduleSession[] = [
       {

@@ -30,7 +30,7 @@ const EditSessionDialog = ({
   startStep,
 }: EditSessionDialogProps) => {
   const entrySource = currentProjectId ? "project" : "lead";
-  const resolvedStartStep: SessionPlanningStepId = startStep ?? "lead";
+  const resolvedStartStep: SessionPlanningStepId = startStep ?? "summary";
 
   return (
     <SessionPlanningWizardSheet

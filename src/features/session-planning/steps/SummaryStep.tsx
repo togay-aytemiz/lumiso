@@ -11,11 +11,15 @@ import { sanitizeNotesInput } from "../utils/sanitizeNotes";
 import { useSessionWorkflowCatalog, type WorkflowSummary } from "../context/SessionWorkflowProvider";
 import type { SessionPlanningNotifications } from "../types";
 import { Link } from "react-router-dom";
+import { useSessionPlanningOriginalState } from "../context/SessionPlanningOriginalStateContext";
+import { cn } from "@/lib/utils";
 
 export const SummaryStep = () => {
   const { state } = useSessionPlanningContext();
   const { updateNotifications } = useSessionPlanningActions();
   const { t } = useTranslation("sessionPlanning");
+  const originalState = useSessionPlanningOriginalState();
+  const isEditing = state.meta.mode === "edit";
 
   const sanitizedNotes = useMemo(
     () => sanitizeNotesInput(state.notes ?? ""),
@@ -32,6 +36,12 @@ export const SummaryStep = () => {
 
   const leadValue = state.lead.name?.trim();
   const leadMissing = !leadValue;
+  const originalLeadValue = originalState?.lead.name?.trim();
+  const leadChanged = Boolean(
+    isEditing &&
+      originalState &&
+      (originalState.lead.id !== state.lead.id || originalLeadValue !== leadValue)
+  );
   const leadDisplay: ReactNode = leadMissing
     ? <span className="text-muted-foreground">{t("summary.values.notSet")}</span>
     : leadValue!;
@@ -44,12 +54,24 @@ export const SummaryStep = () => {
     : projectSkipped
       ? <span className="text-slate-900">{t("summary.values.notLinkedSkipped")}</span>
       : <span className="text-muted-foreground">{t("summary.values.notLinked")}</span>;
+  const originalProjectValue = originalState?.project.name?.trim();
+  const originalProjectSkipped = originalState?.project.isSkipped === true;
+  const projectChanged = Boolean(
+    isEditing &&
+      originalState &&
+      (originalProjectValue !== projectValue || projectSkipped !== originalProjectSkipped || originalState.project.id !== state.project.id)
+  );
 
   const sessionTypeValue = state.sessionTypeLabel?.trim();
   const sessionTypeMissing = !sessionTypeValue;
   const sessionTypeDisplay: ReactNode = sessionTypeMissing
     ? <span className="text-muted-foreground">{t("summary.values.notSet")}</span>
     : sessionTypeValue!;
+  const sessionTypeChanged = Boolean(
+    isEditing &&
+      originalState &&
+      (originalState.sessionTypeId !== state.sessionTypeId || originalState.sessionTypeLabel?.trim() !== sessionTypeValue)
+  );
 
   const locationValue =
     state.location?.trim() ||
@@ -59,11 +81,35 @@ export const SummaryStep = () => {
   const locationDisplay: ReactNode = locationMissing
     ? <span className="text-muted-foreground">{t("summary.values.notSet")}</span>
     : locationValue!;
+  const originalLocationValue =
+    originalState?.location?.trim() ||
+    originalState?.meetingUrl?.trim() ||
+    originalState?.locationLabel?.trim();
+  const locationChanged = Boolean(
+    isEditing && originalState && originalLocationValue !== locationValue
+  );
 
   const scheduleMissing = !state.schedule.date || !state.schedule.time;
+  const currentScheduleSummary = renderSchedule(state.schedule, t);
   const scheduleDisplay: ReactNode = scheduleMissing
     ? <span className="text-muted-foreground">{t("summary.values.notScheduled")}</span>
-    : renderSchedule(state.schedule, t);
+    : currentScheduleSummary;
+  const originalScheduleSummary = originalState
+    ? renderSchedule(originalState.schedule, t)
+    : undefined;
+  const scheduleChanged = Boolean(
+    isEditing &&
+      originalState &&
+      originalScheduleSummary !== currentScheduleSummary
+  );
+
+  const originalNotesSanitized = useMemo(
+    () => sanitizeNotesInput(originalState?.notes ?? ""),
+    [originalState?.notes]
+  );
+  const notesChanged = Boolean(
+    isEditing && originalState && originalNotesSanitized !== sanitizedNotes
+  );
 
   return (
     <div className="space-y-6 text-sm text-slate-900">
@@ -82,34 +128,40 @@ export const SummaryStep = () => {
           value={leadDisplay}
           warning={leadMissing}
           warningLabel={warningLabel}
+          changed={leadChanged}
         />
         <SummaryRow
           label={t("summary.labels.project")}
           value={projectDisplay}
           warning={projectMissing}
           warningLabel={warningLabel}
+          changed={projectChanged}
         />
         <SummaryRow
           label={t("summary.labels.sessionType")}
           value={sessionTypeDisplay}
           warning={sessionTypeMissing}
           warningLabel={warningLabel}
+          changed={sessionTypeChanged}
         />
         <SummaryRow
           label={t("summary.labels.location")}
           value={locationDisplay}
           warning={locationMissing}
           warningLabel={warningLabel}
+          changed={locationChanged}
         />
         <SummaryRow
           label={t("summary.labels.schedule")}
           value={scheduleDisplay}
           warning={scheduleMissing}
           warningLabel={warningLabel}
+          changed={scheduleChanged}
         />
         <SummaryRow
           label={t("summary.labels.notes")}
           value={<NotesPreview content={sanitizedNotes} fallback={t("summary.values.empty")} />}
+          changed={notesChanged}
           warningLabel={warningLabel}
         />
       </div>
@@ -127,15 +179,28 @@ interface SummaryRowProps {
   value: ReactNode;
   warning?: boolean;
   warningLabel: string;
+  changed?: boolean;
 }
 
-const SummaryRow = ({ label, value, warning = false, warningLabel }: SummaryRowProps) => (
+const SummaryRow = ({ label, value, warning = false, warningLabel, changed = false }: SummaryRowProps) => (
   <div className="grid grid-cols-[140px,1fr] gap-4 text-sm">
-    <span className="flex items-center self-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+    <span
+      className={cn(
+        "flex items-center self-center text-xs font-semibold uppercase tracking-wide",
+        changed ? "text-emerald-600" : "text-muted-foreground"
+      )}
+    >
       {label}
     </span>
     <div className="flex min-w-0 items-start gap-2 sm:items-center">
-      <div className="min-w-0 break-words leading-relaxed text-slate-900">{value}</div>
+      <div
+        className={cn(
+          "min-w-0 break-words leading-relaxed",
+          changed ? "text-emerald-600 [&_*]:text-emerald-600" : "text-slate-900"
+        )}
+      >
+        {value}
+      </div>
       {warning ? (
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" aria-label={warningLabel} />
       ) : null}

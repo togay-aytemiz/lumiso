@@ -38,6 +38,7 @@ interface WeeklySchedulePreviewProps {
   selectedTime?: string;
   selectedDurationMinutes?: number | null;
   locale?: string;
+  showDraftSelection?: boolean;
 }
 
 interface PositionedSession extends WeeklyScheduleSession {
@@ -166,6 +167,7 @@ export const WeeklySchedulePreview = ({
   selectedDate,
   selectedTime,
   selectedDurationMinutes,
+  showDraftSelection = true,
   locale = typeof navigator !== "undefined" ? navigator.language : "en-US",
 }: WeeklySchedulePreviewProps) => {
   const { t } = useFormsTranslation();
@@ -370,7 +372,8 @@ export const WeeklySchedulePreview = ({
             const dayNoTime = noTimeSessions.get(index) ?? [];
             const draftStart = draftStartMinutes ?? 0;
             const draftEnd = draftEndMinutes ?? draftStart;
-            const showDraftSelection =
+            const shouldRenderDraft =
+              showDraftSelection &&
               hasDraftSelection &&
               selectedDayIndex === index &&
               draftStartMinutes !== null &&
@@ -463,7 +466,7 @@ export const WeeklySchedulePreview = ({
                       />
                     );
                   })}
-                  {draftBlockMetrics ? (
+                  {draftBlockMetrics && shouldRenderDraft ? (
                     <div
                       data-testid="weekly-draft-selection"
                       aria-hidden="true"

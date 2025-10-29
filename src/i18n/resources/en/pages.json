@@ -362,10 +362,11 @@
       "button": "Delete Session",
       "description": "This will permanently delete the session and all related data."
     },
-    "overdue": {
-      "title": "This session is overdue",
-      "description": "Please update the session status or reschedule if needed."
-    },
+  "overdue": {
+    "title": "This session is overdue",
+    "description": "Please update the session status or reschedule if needed.",
+    "reschedule": "Reschedule"
+  },
     "modal": {
       "deleteTitle": "Delete Session"
     }

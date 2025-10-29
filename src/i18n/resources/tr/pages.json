@@ -362,10 +362,11 @@
       "button": "Seansı Sil",
       "description": "Bu işlem seansı ve ilgili tüm verileri kalıcı olarak silecektir."
     },
-    "overdue": {
-      "title": "Bu seans gecikti",
-      "description": "Lütfen seans durumunu güncelleyin veya gerekiyorsa yeniden planlayın."
-    },
+  "overdue": {
+    "title": "Bu seans gecikti",
+    "description": "Lütfen seans durumunu güncelleyin veya gerekiyorsa yeniden planlayın.",
+    "reschedule": "Yeniden planla"
+  },
     "modal": {
       "deleteTitle": "Seansı Sil"
     }

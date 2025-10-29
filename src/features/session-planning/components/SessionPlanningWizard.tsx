@@ -240,6 +240,16 @@ export const SessionPlanningWizard = ({
   const currentStepLabel = currentStepConfig
     ? t(currentStepConfig.labelKey)
     : "";
+  const summaryIndex = useMemo(
+    () => SESSION_PLANNING_STEPS.findIndex((step) => step.id === "summary"),
+    []
+  );
+
+  const handleReview = () => {
+    if (summaryIndex < 0) return;
+    if (meta.currentStep === "summary") return;
+    goToStep(summaryIndex);
+  };
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-slate-50 lg:p-0">
@@ -355,6 +365,15 @@ export const SessionPlanningWizard = ({
                       : t("wizard.confirm")}
                   </Button>
                 )}
+                {state.meta.mode === "edit" && meta.currentStep !== "summary" ? (
+                  <Button
+                    variant="secondary"
+                    onClick={handleReview}
+                    className="w-full sm:w-auto sm:px-6"
+                  >
+                    {t("wizard.review")}
+                  </Button>
+                ) : null}
               </div>
               <div
                 key={meta.currentStep}

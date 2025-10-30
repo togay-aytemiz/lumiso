@@ -217,6 +217,48 @@ All colors MUST be HSL.
   }
 }
 
+@layer components {
+  .toast-progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 0.25rem;
+    overflow: hidden;
+    border-bottom-left-radius: calc(var(--radius) - 2px);
+    border-bottom-right-radius: calc(var(--radius) - 2px);
+    background-color: hsl(var(--foreground) / 0.15);
+  }
+
+  .toast-progress-bar {
+    display: block;
+    height: 100%;
+    width: 100%;
+    transform-origin: left;
+    background-color: hsl(var(--foreground) / 0.45);
+    animation: toast-progress var(--toast-progress-duration, 5000ms) linear
+      forwards;
+  }
+
+  .destructive .toast-progress {
+    background-color: hsl(var(--destructive-foreground) / 0.25);
+  }
+
+  .destructive .toast-progress-bar {
+    background-color: hsl(var(--destructive-foreground) / 0.65);
+  }
+}
+
+@keyframes toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
 /* Elegant aurora gradient + animation utilities for Auth highlight */
 @keyframes aurora-move {
   0% { background-position: 0% 0%, 100% 0%, 50% 100%; }

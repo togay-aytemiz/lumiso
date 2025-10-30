@@ -4,6 +4,7 @@ import {
   ToastAction,
   ToastClose,
   ToastDescription,
+  ToastProgress,
   ToastProvider,
   ToastTitle,
   ToastViewport,
@@ -63,5 +64,23 @@ describe("Toast primitives", () => {
 
     const destructiveToast = screen.getByTestId("toast");
     expect(destructiveToast.className).toContain("destructive");
+  });
+
+  it("exposes a progress indicator with configurable duration", () => {
+    render(
+      <ToastProvider>
+        <Toast open data-testid="toast" onOpenChange={() => {}}>
+          <ToastTitle>Loading</ToastTitle>
+          <ToastProgress duration={2000} data-testid="progress" />
+        </Toast>
+        <ToastViewport />
+      </ToastProvider>
+    );
+
+    const progress = screen.getByTestId("progress") as HTMLElement;
+    expect(progress).toBeInTheDocument();
+    expect(progress.style.getPropertyValue("--toast-progress-duration")).toBe(
+      "2000ms"
+    );
   });
 });

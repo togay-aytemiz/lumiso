@@ -38,6 +38,9 @@ describe("Toaster", () => {
 
     const closeButtons = container.querySelectorAll('[toast-close]');
     expect(closeButtons).toHaveLength(2);
+
+    const progressBars = container.querySelectorAll('[data-testid="toast-progress"]');
+    expect(progressBars).toHaveLength(2);
   });
 
   it("always mounts the toast viewport for accessibility", () => {

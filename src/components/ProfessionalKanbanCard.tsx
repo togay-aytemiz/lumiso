@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { computeLeadInitials } from "@/components/LeadInitials";
-import { User, Calendar, DollarSign, Package } from "lucide-react";
+import { Calendar, DollarSign, Package } from "lucide-react";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
 interface Project {
@@ -54,8 +54,8 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
       className="cursor-pointer hover:shadow-md transition-shadow bg-card border border-border"
       onClick={onClick}
     >
-      <CardContent className="p-4 md:p-3">
-        <div className="space-y-4">
+      <CardContent className="p-3 md:p-2.5">
+        <div className="space-y-2.5">
           {/* Project Type Badge */}
           {kanbanSettings.kanban_show_project_type && project.project_type && (
             <Badge
@@ -68,25 +68,20 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
 
           {/* Project Name */}
           {kanbanSettings.kanban_show_project_name && (
-            <h3 className="text-lg font-semibold line-clamp-2 leading-snug text-slate-900">
+            <h3 className="text-sm font-medium line-clamp-2 leading-snug text-slate-900">
               {project.name}
             </h3>
           )}
 
           {/* Client Information */}
           {kanbanSettings.kanban_show_client_name && (
-            <div className="flex items-center gap-3 text-sm text-slate-900">
-              <Avatar className="h-9 w-9">
+            <div className="flex items-center gap-2 text-xs text-slate-900">
+              <Avatar className="h-6 w-6">
                 <AvatarFallback className="bg-muted text-slate-700 font-semibold uppercase">
                   {leadInitials}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex items-center gap-1.5 min-w-0 text-muted-foreground">
-                <User className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate text-slate-900">
-                  {leadName}
-                </span>
-              </div>
+              <span className="truncate text-muted-foreground">{leadName}</span>
             </div>
           )}
 
@@ -113,9 +108,9 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
             (kanbanSettings.kanban_show_service_count &&
               project.services &&
               project.services.length > 0)) && (
-            <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-3">
+            <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-2">
               {/* Left Side - Session Count, Revenue, Service Count */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 {kanbanSettings.kanban_show_session_count && (
                   <div className="flex items-center gap-1.5">
                     <Calendar className="h-3.5 w-3.5" />

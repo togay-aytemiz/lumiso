@@ -1,0 +1,108 @@
+{
+  "stepper": {
+    "progressLabel": "Step {{current}} of {{total}}",
+    "showSteps": "Show steps",
+    "hideSteps": "Hide steps",
+    "unknownStep": "Project wizard"
+  },
+  "wizard": {
+    "back": "Back",
+    "next": "Next",
+    "cancel": "Cancel",
+    "createProject": "Create project",
+    "creating": "Creating…",
+    "title": "Create project"
+  },
+  "summary": {
+    "sectionTitle": "Review and confirm",
+    "values": {
+      "packageSelected": "Package selected",
+      "servicesSelected": "{{count}} service(s) selected",
+      "customServices": "Custom services selected",
+      "notSet": "Not set",
+      "none": "None"
+    },
+    "labels": {
+      "lead": "Person",
+      "projectName": "Project",
+      "basePrice": "Base price",
+      "package": "Package",
+      "services": "Services",
+      "description": "Project description"
+    }
+  },
+  "guardrail": {
+    "unsavedTitle": "Leave without saving?",
+    "unsavedDescription": "You're in the middle of creating a project. Keep editing or discard your changes.",
+    "stay": "Keep editing",
+    "discard": "Discard changes"
+  },
+  "validation": {
+    "lead": {
+      "title": "Select a person",
+      "description": "Choose an existing person or create a new one before continuing."
+    },
+    "details": {
+      "title": "Add project details",
+      "description": "Enter a project name and type so we can create it successfully."
+    }
+  },
+  "steps": {
+    "lead": {
+      "navigationLabel": "Person",
+      "heading": "Person selection",
+      "description": "Pick an existing person or create someone new for this project.",
+      "selectExisting": "Select a person",
+      "selectPlaceholder": "Choose a person",
+      "searchPlaceholder": "Search people…",
+      "loading": "Loading people…",
+      "noResults": "No people match this search.",
+      "emptyState": "No people available yet. Create one to get started.",
+      "createButton": "Create new person",
+      "fetchErrorTitle": "Unable to load people"
+    },
+    "details": {
+      "navigationLabel": "Details",
+      "heading": "Project details",
+      "description": "Add the core information for the project.",
+      "nameLabel": "Project name",
+      "namePlaceholder": "Autumn Wedding",
+      "typeLabel": "Project type",
+      "typePlaceholder": "Select project type…",
+      "statusLabel": "Project status",
+      "statusPlaceholder": "Select a status…",
+      "statusLoading": "Loading statuses…",
+      "statusEmpty": "No project statuses configured yet.",
+      "descriptionLabel": "Project description",
+      "descriptionPlaceholder": "Add context for the project (optional)."
+    },
+    "packages": {
+      "navigationLabel": "Packages",
+      "heading": "Packages & services",
+      "description": "Bundle services or choose a package to customise the project.",
+      "packageLabel": "Select a package",
+      "clearPackage": "Clear package",
+      "resetCustom": "Reset custom setup",
+      "loadingPackages": "Loading packages…",
+      "packagesError": "Unable to load packages.",
+      "retry": "Retry",
+      "noPackages": "No packages available yet. Create one from settings.",
+      "defaultServices": "Includes {{count}} service(s)",
+      "customSetupPrompt": "Prefer a custom setup? Build it with your own pricing and services.",
+      "enableCustom": "Enable custom setup",
+      "basePriceLabel": "Base price",
+      "basePricePlaceholder": "0",
+      "servicesLabel": "Services & add-ons",
+      "servicesBadge": "{{count}} selected",
+      "servicesError": "Unable to load services. Try again in a moment.",
+      "selectedIndicator": "Selected",
+      "selectedSummary": "Selected package: {{name}}"
+    },
+    "summary": {
+      "navigationLabel": "Summary",
+      "heading": "Summary",
+      "description": "Review everything before creating the project.",
+      "placeholder": "Final review will appear here with project overview before creation."
+    }
+  }
+}

@@ -7,201 +7,72 @@ import {
 } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { SESSION_PLANNING_STEPS } from "../state/sessionPlanningReducer";
-import { useSessionPlanningActions } from "../hooks/useSessionPlanningActions";
-import { useSessionPlanningContext } from "../hooks/useSessionPlanningContext";
-import { SessionPlanningStepId } from "../types";
-import { LeadStep } from "../steps/LeadStep";
-import { ProjectStep } from "../steps/ProjectStep";
-import { SessionTypeStep } from "../steps/SessionTypeStep";
-import { LocationStep } from "../steps/LocationStep";
-import { ScheduleStep } from "../steps/ScheduleStep";
-import { NotesStep } from "../steps/NotesStep";
-import { SummaryStep } from "../steps/SummaryStep";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle, Check, ChevronDown } from "lucide-react";
-import { useSessionTypes } from "@/hooks/useOrganizationData";
-import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useToast } from "@/components/ui/use-toast";
 import { trackEvent } from "@/lib/telemetry";
+import {
+  PROJECT_CREATION_STEPS,
+  ProjectCreationStepConfig,
+} from "../state/projectCreationReducer";
+import { useProjectCreationActions } from "../hooks/useProjectCreationActions";
+import { useProjectCreationContext } from "../hooks/useProjectCreationContext";
+import { ProjectCreationStepId } from "../types";
+import { LeadStep } from "../steps/LeadStep";
+import { DetailsStep } from "../steps/DetailsStep";
+import { PackagesStep } from "../steps/PackagesStep";
+import { SummaryStep } from "../steps/SummaryStep";
 
-interface SessionPlanningWizardProps {
-  onCancel: () => void;
+const STEP_COMPONENTS: Record<ProjectCreationStepId, () => JSX.Element> = {
+  lead: LeadStep,
+  details: DetailsStep,
+  packages: PackagesStep,
+  summary: SummaryStep,
+};
+
+interface ProjectCreationWizardProps {
   onComplete: () => void;
   isCompleting?: boolean;
 }
 
-const STEP_COMPONENTS: Record<SessionPlanningStepId, () => JSX.Element> = {
-  lead: LeadStep,
-  project: ProjectStep,
-  sessionType: SessionTypeStep,
-  location: LocationStep,
-  schedule: ScheduleStep,
-  notes: NotesStep,
-  summary: SummaryStep,
-};
-
-export const SessionPlanningWizard = ({
+export const ProjectCreationWizard = ({
   onComplete,
   isCompleting,
-}: SessionPlanningWizardProps) => {
-  const { state } = useSessionPlanningContext();
+}: ProjectCreationWizardProps) => {
+  const { state } = useProjectCreationContext();
   const { meta } = state;
-  const { setCurrentStep, setDefaultSessionType } = useSessionPlanningActions();
-  const { t } = useTranslation("sessionPlanning");
-  const { data: sessionTypes = [] } = useSessionTypes();
-  const { settings } = useOrganizationSettings();
+  const { setCurrentStep } = useProjectCreationActions();
+  const { t } = useTranslation("projectCreation");
   const { toast } = useToast();
-  const isEditing = state.meta.mode === "edit";
-  const [visitedSteps, setVisitedSteps] = useState<
-    Set<SessionPlanningStepId>
-  >(() => new Set());
+
+  const [visitedSteps, setVisitedSteps] = useState<Set<ProjectCreationStepId>>(
+    () => new Set()
+  );
+  const [mobileStepsOpen, setMobileStepsOpen] = useState(false);
+  const viewedStepRef = useRef<ProjectCreationStepId | null>(null);
 
   const rawIndex = useMemo(
     () =>
-      SESSION_PLANNING_STEPS.findIndex((step) => step.id === meta.currentStep),
+      PROJECT_CREATION_STEPS.findIndex((step) => step.id === meta.currentStep),
     [meta.currentStep]
   );
   const currentIndex = rawIndex < 0 ? 0 : rawIndex;
+  const totalSteps = PROJECT_CREATION_STEPS.length;
+  const isFirstStep = currentIndex <= 0;
+  const isLastStep = currentIndex >= totalSteps - 1;
+  const progressValue =
+    totalSteps === 0 ? 0 : Math.round(((currentIndex + 1) / totalSteps) * 100);
 
   const CurrentStepComponent = useMemo(
     () => STEP_COMPONENTS[meta.currentStep],
     [meta.currentStep]
   );
-  const isFirstStep = currentIndex <= 0;
-  const isLastStep = currentIndex >= SESSION_PLANNING_STEPS.length - 1;
-  const totalSteps = SESSION_PLANNING_STEPS.length;
-  const progressValue =
-    totalSteps === 0 ? 0 : Math.round(((currentIndex + 1) / totalSteps) * 100);
-  const [mobileStepsOpen, setMobileStepsOpen] = useState(false);
-  const activeSessionTypes = useMemo(
-    () => sessionTypes.filter((type) => type?.is_active !== false),
-    [sessionTypes]
-  );
-  const viewedStepRef = useRef<SessionPlanningStepId | null>(null);
-
-  useEffect(() => {
-    if (isEditing) return;
-    if (state.sessionTypeId) return;
-    if (!activeSessionTypes.length) return;
-
-    const defaultId = settings?.default_session_type_id ?? null;
-    const recommended =
-      (defaultId && activeSessionTypes.find((type) => type.id === defaultId)) ||
-      activeSessionTypes[0];
-
-    if (recommended) {
-      setDefaultSessionType({
-        id: recommended.id,
-        label: recommended.name,
-      });
-    }
-  }, [
-    state.sessionTypeId,
-    activeSessionTypes,
-    settings?.default_session_type_id,
-    setDefaultSessionType,
-    isEditing,
-  ]);
-
-  useEffect(() => {
-    const stepId = meta.currentStep;
-    if (viewedStepRef.current === stepId) {
-      return;
-    }
-    viewedStepRef.current = stepId;
-    trackEvent("session_wizard_step_viewed", {
-      stepId,
-      entrySource: state.meta.entrySource ?? "direct",
-    });
-  }, [meta.currentStep, state.meta.entrySource]);
-
-  const stepStatus = useMemo(() => {
-    const toSummary = (value?: string | null) => {
-      const trimmed = value?.trim();
-      return trimmed ? trimmed : undefined;
-    };
-
-    const getScheduleSummary = () => {
-      if (!state.schedule.date && !state.schedule.time) {
-        return undefined;
-      }
-
-      if (state.schedule.date && state.schedule.time) {
-        return `${state.schedule.date} • ${state.schedule.time}`;
-      }
-
-      if (state.schedule.date) {
-        return `${state.schedule.date} • ${t("summary.values.timeTbd")}`;
-      }
-
-      if (state.schedule.time) {
-        return `${t("summary.values.dateTbd")} • ${state.schedule.time}`;
-      }
-
-      return undefined;
-    };
-
-    const trimmedNotes = toSummary(state.notes);
-    const notesSummary = trimmedNotes
-      ? trimmedNotes.length > 80
-        ? `${trimmedNotes.slice(0, 80)}…`
-        : trimmedNotes
-      : undefined;
-
-    const leadSummary = toSummary(state.lead.name);
-    const hasLead = Boolean(state.lead.id || state.lead.name?.trim());
-
-    const projectSkipped = state.project.isSkipped === true;
-    const hasProjectValue = Boolean(state.project.id || state.project.name?.trim());
-    const projectSummary = hasProjectValue
-      ? toSummary(state.project.name)
-      : projectSkipped
-        ? t("summary.values.notLinkedSkipped")
-        : undefined;
-    const hasProject = hasProjectValue || projectSkipped;
-
-    const sessionTypeSummary = toSummary(state.sessionTypeLabel);
-    const hasSessionType = Boolean(state.sessionTypeId);
-
-    const locationSummary =
-      toSummary(state.location) ??
-      toSummary(state.meetingUrl) ??
-      toSummary(state.locationLabel);
-    const hasLocation = Boolean(
-      state.locationLabel?.trim() ||
-        state.location?.trim() ||
-        state.meetingUrl?.trim()
-    );
-
-    const scheduleSummary = getScheduleSummary();
-    const hasSchedule = Boolean(state.schedule.date && state.schedule.time);
-
-    const hasNotes = Boolean(notesSummary);
-
-    const summaryName = toSummary(state.sessionName);
-    const hasSummaryName = Boolean(summaryName);
-
-    return {
-      lead: { summary: leadSummary, hasValue: hasLead },
-      project: { summary: projectSummary, hasValue: hasProject },
-      sessionType: { summary: sessionTypeSummary, hasValue: hasSessionType },
-      location: { summary: locationSummary, hasValue: hasLocation },
-      schedule: { summary: scheduleSummary, hasValue: hasSchedule },
-      notes: { summary: notesSummary, hasValue: hasNotes },
-      summary: { summary: summaryName, hasValue: hasSummaryName },
-    } satisfies Record<
-      SessionPlanningStepId,
-      { summary?: string; hasValue: boolean }
-    >;
-  }, [state, t]);
 
   useEffect(() => {
     setVisitedSteps((previous) => {
       if (previous.has(meta.currentStep)) {
         return previous;
       }
-
       const next = new Set(previous);
       next.add(meta.currentStep);
       return next;
@@ -209,44 +80,77 @@ export const SessionPlanningWizard = ({
   }, [meta.currentStep]);
 
   useEffect(() => {
-    if (!isEditing) {
-      return;
+    if (
+      !state.meta.isDirty &&
+      meta.currentStep === PROJECT_CREATION_STEPS[0]?.id
+    ) {
+      setVisitedSteps(new Set([PROJECT_CREATION_STEPS[0].id]));
     }
+  }, [meta.currentStep, state.meta.isDirty]);
 
-    setVisitedSteps((previous) => {
-      let changed = false;
-      const next = new Set(previous);
-
-      SESSION_PLANNING_STEPS.forEach((step) => {
-        const status = stepStatus[step.id];
-        if (status?.hasValue && !next.has(step.id)) {
-          next.add(step.id);
-          changed = true;
-        }
-      });
-
-      return changed ? next : previous;
+  useEffect(() => {
+    if (viewedStepRef.current === meta.currentStep) return;
+    viewedStepRef.current = meta.currentStep;
+    trackEvent("project_wizard_step_viewed", {
+      stepId: meta.currentStep,
+      entrySource: state.meta.entrySource ?? "direct",
     });
-  }, [isEditing, stepStatus]);
+  }, [meta.currentStep, state.meta.entrySource]);
+
+  const stepStatus = useMemo(() => {
+    const leadSummary = state.lead.name?.trim();
+    const hasLead = Boolean(state.lead.id || leadSummary);
+
+    const projectName = state.details.name?.trim();
+    const projectTypeLabel = state.details.projectTypeLabel?.trim();
+    const hasDetails = Boolean(projectName && state.details.projectTypeId);
+    const detailsSummary = projectName ?? projectTypeLabel;
+
+    const packageSummary = state.services.packageLabel
+      ? state.services.packageLabel
+      : state.services.packageId
+      ? t("summary.values.packageSelected")
+      : state.services.selectedServiceIds.length > 0
+      ? t("summary.values.servicesSelected", {
+          count: state.services.selectedServiceIds.length,
+        })
+      : undefined;
+    const hasPackages =
+      Boolean(state.services.packageId) ||
+      state.services.selectedServiceIds.length > 0;
+
+    const summaryNotes = state.details.description?.trim();
+
+    return {
+      lead: { summary: leadSummary, hasValue: hasLead },
+      details: { summary: detailsSummary, hasValue: hasDetails },
+      packages: { summary: packageSummary, hasValue: hasPackages },
+      summary: {
+        summary: summaryNotes,
+        hasValue: Boolean(summaryNotes),
+      },
+    } satisfies Record<
+      ProjectCreationStepId,
+      { summary?: string; hasValue: boolean }
+    >;
+  }, [state.details, state.lead, state.services, t]);
 
   const goToStep = (index: number) => {
-    const target = SESSION_PLANNING_STEPS[index];
+    const target = PROJECT_CREATION_STEPS[index];
     if (!target) return;
-
     if (index > currentIndex) {
-      const currentStep = SESSION_PLANNING_STEPS[currentIndex];
-      trackEvent("session_wizard_step_completed", {
+      const currentStep = PROJECT_CREATION_STEPS[currentIndex];
+      trackEvent("project_wizard_step_completed", {
         stepId: currentStep.id,
         entrySource: state.meta.entrySource ?? "direct",
       });
     } else if (index < currentIndex) {
-      trackEvent("session_wizard_step_revisited", {
+      trackEvent("project_wizard_step_revisited", {
         stepId: target.id,
-        fromStep: SESSION_PLANNING_STEPS[currentIndex].id,
+        fromStep: PROJECT_CREATION_STEPS[currentIndex].id,
         entrySource: state.meta.entrySource ?? "direct",
       });
     }
-
     setCurrentStep(target.id);
   };
 
@@ -256,49 +160,45 @@ export const SessionPlanningWizard = ({
   };
 
   const handleNextStep = () => {
-    const nextIndex = Math.min(SESSION_PLANNING_STEPS.length - 1, currentIndex + 1);
+    const nextIndex = Math.min(totalSteps - 1, currentIndex + 1);
     if (nextIndex === currentIndex) return;
 
-    if (meta.currentStep === "schedule") {
-      if (!state.schedule.date || !state.schedule.time) {
-        toast({
-          title: t("validation.missingSchedule"),
-          variant: "destructive",
-        });
-        return;
-      }
+    const validationKey = validateStep(
+      PROJECT_CREATION_STEPS[currentIndex],
+      stepStatus
+    );
+    if (validationKey) {
+      toast({
+        title: t(validationKey.title),
+        description: t(validationKey.description),
+        variant: "destructive",
+      });
+      return;
     }
 
     goToStep(nextIndex);
   };
 
-  const currentStepConfig = SESSION_PLANNING_STEPS[currentIndex];
-  const currentStepLabel = currentStepConfig
-    ? t(currentStepConfig.labelKey)
-    : "";
-  const summaryIndex = useMemo(
-    () => SESSION_PLANNING_STEPS.findIndex((step) => step.id === "summary"),
-    []
-  );
-
-  const handleReview = () => {
-    if (summaryIndex < 0) return;
-    if (meta.currentStep === "summary") return;
-    goToStep(summaryIndex);
-  };
+  const currentStepConfig = PROJECT_CREATION_STEPS[currentIndex];
+  const currentStepLabel =
+    (currentStepConfig && t(currentStepConfig.labelKey)) ||
+    t("stepper.unknownStep");
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-slate-50 lg:p-0">
+    <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-slate-50">
       <div className="grid flex-1 grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <aside className="relative hidden h-full flex-col overflow-hidden text-slate-100 transition-all duration-300 ease-out lg:flex lg:rounded-l-3xl">
-          <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        <aside className="relative hidden h-full w-full flex-col text-slate-100 transition-all duration-300 ease-out lg:flex lg:rounded-l-3xl">
+          <div
+            className="pointer-events-none absolute inset-0 rounded-l-3xl overflow-hidden"
+            aria-hidden="true"
+          >
             <div className="absolute -inset-28 opacity-90 blur-3xl bg-[radial-gradient(900px_500px_at_20%_10%,rgba(16,185,129,0.35),transparent_65%),radial-gradient(720px_520px_at_80%_-10%,rgba(6,182,212,0.24),transparent_60%),radial-gradient(880px_680px_at_50%_95%,rgba(59,130,246,0.18),transparent_65%)]" />
             <div className="absolute -bottom-24 left-6 h-60 w-60 rounded-full bg-emerald-400/35 blur-3xl float-slow" />
             <div className="absolute top-20 right-4 h-72 w-72 rounded-full bg-cyan-300/25 blur-3xl float-slow [animation-delay:1s]" />
             <div className="absolute -top-16 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-sky-400/20 blur-3xl float-slow [animation-delay:2.4s]" />
           </div>
-          <div className="absolute inset-0 bg-slate-950/80" />
-          <div className="relative flex h-full flex-col gap-8 overflow-y-auto overflow-x-hidden px-6 py-10 transition-all duration-300 ease-out">
+          <div className="absolute inset-0 rounded-l-3xl bg-slate-950/80" />
+          <div className="relative flex h-full min-h-[640px] flex-col gap-8 overflow-y-auto overflow-x-hidden px-6 py-10 transition-all duration-300 ease-out">
             <div className="space-y-3">
               <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-300">
                 {t("stepper.progressLabel", {
@@ -311,10 +211,11 @@ export const SessionPlanningWizard = ({
                 {currentStepLabel}
               </p>
             </div>
-            <StepList
+            <ProjectStepList
               currentIndex={currentIndex}
               onSelectStep={goToStep}
               statuses={stepStatus}
+              steps={PROJECT_CREATION_STEPS}
               translate={t}
               variant="desktop"
               visitedSteps={visitedSteps}
@@ -322,7 +223,7 @@ export const SessionPlanningWizard = ({
           </div>
         </aside>
 
-        <div className="flex flex-1 min-h-0 min-w-0 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <div className="border-b border-slate-200 bg-white/90 px-4 py-4 backdrop-blur lg:hidden">
             <Collapsible
               open={mobileStepsOpen}
@@ -361,10 +262,11 @@ export const SessionPlanningWizard = ({
               </div>
               <Progress value={progressValue} className="mt-4" />
               <CollapsibleContent className="mt-6 space-y-3 overflow-x-hidden">
-                <StepList
+                <ProjectStepList
                   currentIndex={currentIndex}
                   onSelectStep={handleMobileSelect}
                   statuses={stepStatus}
+                  steps={PROJECT_CREATION_STEPS}
                   translate={t}
                   variant="mobile"
                   visitedSteps={visitedSteps}
@@ -399,29 +301,16 @@ export const SessionPlanningWizard = ({
                     className="w-full sm:w-auto sm:px-8"
                   >
                     {isCompleting
-                      ? t("wizard.confirming")
-                      : t("wizard.confirm")}
+                      ? t("wizard.creating")
+                      : t("wizard.createProject")}
                   </Button>
                 )}
-                {state.meta.mode === "edit" && meta.currentStep !== "summary" ? (
-                  <Button
-                    variant="secondary"
-                    onClick={handleReview}
-                    className="w-full sm:w-auto sm:px-6"
-                  >
-                    {t("wizard.review")}
-                  </Button>
-                ) : null}
               </div>
               <div
                 key={meta.currentStep}
-                className="animate-in fade-in slide-in-from-bottom-3 rounded-3xl border border-slate-200/70 bg-white/95 p-6 shadow-xl shadow-slate-900/5 backdrop-blur transition-all duration-300 ease-out"
+                className="animate-in fade-in slide-in-from-bottom-3 rounded-3xl border border-slate-200/70 bg-white/95 p-6 shadow-xl shadow-slate-900/5 backdrop-blur overflow-visible transition-all duration-300 ease-out"
               >
-                {meta.currentStep === "project" ? (
-                  <ProjectStep onContinue={() => goToStep(Math.min(SESSION_PLANNING_STEPS.length - 1, currentIndex + 1))} />
-                ) : (
-                  <CurrentStepComponent />
-                )}
+                <CurrentStepComponent />
               </div>
             </div>
           </div>
@@ -431,53 +320,79 @@ export const SessionPlanningWizard = ({
   );
 };
 
-const REQUIRED_STEPS: Record<SessionPlanningStepId, boolean> = {
+const REQUIRED_STEPS: Record<ProjectCreationStepId, boolean> = {
   lead: true,
-  project: true,
-  sessionType: true,
-  location: true,
-  schedule: true,
-  notes: false,
+  details: true,
+  packages: false,
   summary: false,
 };
 
-interface StepListProps {
+const validateStep = (
+  stepConfig: ProjectCreationStepConfig,
+  statuses: Record<
+    ProjectCreationStepId,
+    { summary?: string; hasValue: boolean }
+  >
+) => {
+  const stepId = stepConfig.id;
+  if (!REQUIRED_STEPS[stepId]) {
+    return null;
+  }
+
+  if (statuses[stepId]?.hasValue) {
+    return null;
+  }
+
+  return {
+    title: `validation.${stepId}.title`,
+    description: `validation.${stepId}.description`,
+  };
+};
+
+interface ProjectStepListProps {
   currentIndex: number;
   onSelectStep: (index: number) => void;
-  statuses: Record<SessionPlanningStepId, { summary?: string; hasValue: boolean }>;
+  statuses: Record<
+    ProjectCreationStepId,
+    { summary?: string; hasValue: boolean }
+  >;
+  steps: ProjectCreationStepConfig[];
   translate: (key: string, options?: Record<string, unknown>) => string;
   variant: "desktop" | "mobile";
-  visitedSteps: Set<SessionPlanningStepId>;
+  visitedSteps: Set<ProjectCreationStepId>;
 }
 
-const StepList = ({
+const ProjectStepList = ({
   currentIndex,
   onSelectStep,
   statuses,
+  steps,
   translate,
   variant,
   visitedSteps,
-}: StepListProps) => (
+}: ProjectStepListProps) => (
   <ol
     className={cn(
       "flex max-w-full flex-col overflow-x-hidden",
       variant === "desktop" ? "gap-4" : "gap-3"
     )}
   >
-    {SESSION_PLANNING_STEPS.map((step, index) => {
+    {steps.map((step, index) => {
       const isActive = index === currentIndex;
-      const status = statuses[step.id] ?? { summary: undefined, hasValue: false };
+      const status = statuses[step.id] ?? {
+        summary: undefined,
+        hasValue: false,
+      };
       const summary = status.summary;
       const hasValue = status.hasValue;
       const hasVisited = visitedSteps.has(step.id) || index <= currentIndex;
       const isComplete = hasValue && hasVisited && !isActive;
       const requiresAttention = REQUIRED_STEPS[step.id] ?? false;
-      const needsAttention = !isActive && requiresAttention && index < currentIndex && !hasValue;
+      const needsAttention =
+        !isActive && requiresAttention && index < currentIndex && !hasValue;
       const description = translate(`steps.${step.id}.description`);
-      const isSummaryStep = step.id === "summary";
-      const supportingText = !isSummaryStep
-        ? summary ?? description
-        : undefined;
+      const supportingText =
+        step.id === "summary" ? undefined : summary ?? description;
       const alignmentClass = supportingText ? "items-start" : "items-center";
 
       return (
@@ -539,7 +454,7 @@ const StepList = ({
                   index + 1
                 )}
               </span>
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0 flex-1">
                 <p
                   className={cn(
                     "text-sm font-semibold tracking-tight",
@@ -547,15 +462,15 @@ const StepList = ({
                       ? needsAttention
                         ? "text-amber-50"
                         : isActive
-                          ? "text-white"
-                          : isComplete
-                            ? "text-emerald-50"
-                            : "text-slate-100"
-                      : needsAttention
-                        ? "text-rose-900"
+                        ? "text-white"
                         : isComplete
-                          ? "text-sky-800"
-                          : "text-slate-900"
+                        ? "text-emerald-50"
+                        : "text-slate-100"
+                      : needsAttention
+                      ? "text-rose-900"
+                      : isComplete
+                      ? "text-sky-800"
+                      : "text-slate-900"
                   )}
                 >
                   {translate(step.labelKey)}
@@ -568,13 +483,13 @@ const StepList = ({
                         ? needsAttention
                           ? "text-amber-100/80"
                           : isActive
-                            ? "text-white/90"
-                            : isComplete
-                              ? "text-emerald-100/80"
-                              : "text-slate-100/80"
+                          ? "text-white/90"
+                          : isComplete
+                          ? "text-emerald-100/80"
+                          : "text-slate-100/80"
                         : needsAttention
-                          ? "text-rose-800"
-                          : "text-slate-700"
+                        ? "text-rose-800"
+                        : "text-slate-700"
                     )}
                   >
                     {supportingText}

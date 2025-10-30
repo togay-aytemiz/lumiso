@@ -1,0 +1,108 @@
+{
+  "stepper": {
+    "progressLabel": "Adım {{current}} / {{total}}",
+    "showSteps": "Adımları göster",
+    "hideSteps": "Adımları gizle",
+    "unknownStep": "Proje sihirbazı"
+  },
+  "wizard": {
+    "back": "Geri",
+    "next": "İleri",
+    "cancel": "İptal",
+    "createProject": "Projeyi oluştur",
+    "creating": "Oluşturuluyor…",
+    "title": "Proje oluştur"
+  },
+  "summary": {
+    "sectionTitle": "Kontrol edin ve onaylayın",
+    "values": {
+      "packageSelected": "Paket seçildi",
+      "servicesSelected": "{{count}} hizmet seçildi",
+      "customServices": "Özel hizmetler seçildi",
+      "notSet": "Belirtilmedi",
+      "none": "Yok"
+    },
+    "labels": {
+      "lead": "Kişi",
+      "projectName": "Proje",
+      "basePrice": "Başlangıç fiyatı",
+      "package": "Paket",
+      "services": "Hizmetler",
+      "description": "Proje açıklaması"
+    }
+  },
+  "guardrail": {
+    "unsavedTitle": "Kaydetmeden çıkılsın mı?",
+    "unsavedDescription": "Bir proje oluşturuyorsunuz. Düzenlemeye devam edin veya değişiklikleri silin.",
+    "stay": "Düzenlemeye devam et",
+    "discard": "Değişiklikleri sil"
+  },
+  "validation": {
+    "lead": {
+      "title": "Bir kişi seçin",
+      "description": "Devam etmeden önce mevcut bir kişiyi seçin veya yeni bir kişi oluşturun."
+    },
+    "details": {
+      "title": "Proje detaylarını ekleyin",
+      "description": "Projeyi oluşturabilmemiz için ad ve tür bilgisi girin."
+    }
+  },
+  "steps": {
+    "lead": {
+      "navigationLabel": "Kişi",
+      "heading": "Kişi seçimi",
+      "description": "Bu proje için mevcut bir kişiyi seçin veya yeni bir kişi oluşturun.",
+      "selectExisting": "Kişi seçin",
+      "selectPlaceholder": "Bir kişi seçin",
+      "searchPlaceholder": "Kişilerde arayın…",
+      "loading": "Kişiler yükleniyor…",
+      "noResults": "Bu aramayla eşleşen kişi bulunamadı.",
+      "emptyState": "Henüz kişi yok. Başlamak için yeni bir kişi oluşturun.",
+      "createButton": "Yeni kişi oluştur",
+      "fetchErrorTitle": "Kişiler yüklenemedi"
+    },
+    "details": {
+      "navigationLabel": "Detaylar",
+      "heading": "Proje detayları",
+      "description": "Projenin temel bilgilerini ekleyin.",
+      "nameLabel": "Proje adı",
+      "namePlaceholder": "Sonbahar Düğünü",
+      "typeLabel": "Proje türü",
+      "typePlaceholder": "Proje türü seçin…",
+      "statusLabel": "Proje durumu",
+      "statusPlaceholder": "Bir durum seçin…",
+      "statusLoading": "Durumlar yükleniyor…",
+      "statusEmpty": "Henüz proje durumu tanımlanmadı.",
+      "descriptionLabel": "Proje açıklaması",
+      "descriptionPlaceholder": "Proje için kısa bir açıklama ekleyin (isteğe bağlı)."
+    },
+    "packages": {
+      "navigationLabel": "Paketler",
+      "heading": "Paketler ve hizmetler",
+      "description": "Projeyi özelleştirmek için paket seçin veya hizmetleri gruplayın.",
+      "packageLabel": "Paket seçin",
+      "clearPackage": "Paketi temizle",
+      "resetCustom": "Özel kurulumu sıfırla",
+      "loadingPackages": "Paketler yükleniyor…",
+      "packagesError": "Paketler yüklenemedi.",
+      "retry": "Tekrar dene",
+      "noPackages": "Henüz paket yok. Ayarlardan bir paket oluşturun.",
+      "defaultServices": "{{count}} hizmet içeriyor",
+      "customSetupPrompt": "Özel bir kurulum mu tercih ediyorsunuz? Kendi fiyat ve hizmetlerinizle oluşturun.",
+      "enableCustom": "Özel kurulum aç",
+      "basePriceLabel": "Başlangıç fiyatı",
+      "basePricePlaceholder": "0",
+      "servicesLabel": "Hizmetler ve ekler",
+      "servicesBadge": "{{count}} adet seçildi",
+      "servicesError": "Hizmetler yüklenemedi. Lütfen birazdan tekrar deneyin.",
+      "selectedIndicator": "Seçili",
+      "selectedSummary": "Seçilen paket: {{name}}"
+    },
+    "summary": {
+      "navigationLabel": "Özet",
+      "heading": "Özet",
+      "description": "Oluşturmadan önce her şeyi gözden geçirin.",
+      "placeholder": "Projeyi oluşturmeden önce son özet burada görünecek."
+    }
+  }
+}

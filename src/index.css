@@ -218,10 +218,15 @@ All colors MUST be HSL.
 }
 
 @layer components {
+  [data-toast-root] {
+    --toast-padding-inline-start: theme("spacing.6");
+    --toast-padding-inline-end: theme("spacing.8");
+  }
+
   .toast-progress {
     position: absolute;
-    left: 0;
-    right: 0;
+    left: calc(-1 * var(--toast-padding-inline-start, 0px));
+    right: calc(-1 * var(--toast-padding-inline-end, 0px));
     bottom: 0;
     height: 0.25rem;
     overflow: hidden;

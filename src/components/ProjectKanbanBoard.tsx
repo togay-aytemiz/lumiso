@@ -71,7 +71,7 @@ function computeSortForInsert(
 
 async function reindexColumn(
   statusId: string | null,
-  ordered: ProjectListItem[]
+  ordered: Array<Pick<ProjectListItem, "id">>
 ) {
   await Promise.all(
     ordered.map((p, i) =>
@@ -263,6 +263,51 @@ const ProjectKanbanBoard = ({
     }
   };
 
+  const promoteNewProjectToTop = async (projectId: string) => {
+    try {
+      const { data: projectRecord, error: projectFetchError } = await supabase
+        .from("projects")
+        .select("status_id")
+        .eq("id", projectId)
+        .single();
+
+      if (projectFetchError) throw projectFetchError;
+
+      const projectStatusId = projectRecord?.status_id ?? null;
+
+      let query = supabase
+        .from("projects")
+        .select("sort_order")
+        .order("sort_order", { ascending: true })
+        .limit(1);
+
+      if (projectStatusId) {
+        query = query.eq("status_id", projectStatusId);
+      } else {
+        query = query.is("status_id", null);
+      }
+
+      const { data: minSortData, error: minSortError } = await query;
+      if (minSortError) throw minSortError;
+
+      const minSortOrder =
+        typeof minSortData?.[0]?.sort_order === "number"
+          ? minSortData[0].sort_order
+          : null;
+
+      const newSortOrder = (minSortOrder ?? GAP) - GAP;
+
+      const { error: updateError } = await supabase
+        .from("projects")
+        .update({ status_id: projectStatusId, sort_order: newSortOrder })
+        .eq("id", projectId);
+
+      if (updateError) throw updateError;
+    } catch (error) {
+      console.error("Error promoting new project to the top of the kanban column:", error);
+    }
+  };
+
   const renderProjectCard = (project: ProjectListItem, index: number) => (
     <DnD.Draggable key={project.id} draggableId={project.id} index={index}>
       {(provided) => (
@@ -270,7 +315,7 @@ const ProjectKanbanBoard = ({
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className="mb-3 md:mb-2"
+          className="mb-2 last:mb-0"
         >
           <ProfessionalKanbanCard
             project={project}
@@ -292,12 +337,12 @@ const ProjectKanbanBoard = ({
     return (
       <div
         key={statusId}
-        className="flex w-80 flex-shrink-0 flex-col rounded-2xl border border-border/40 bg-muted/30"
+        className="flex w-72 flex-shrink-0 flex-col rounded-2xl border border-border/40 bg-muted/30"
       >
-        <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-3">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-1.5 px-2.5 pt-3 pb-2">
+          <div className="flex items-center gap-1.5">
             <button
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80"
               style={{
                 backgroundColor: statusColor + "20",
                 color: statusColor,
@@ -327,21 +372,21 @@ const ProjectKanbanBoard = ({
               ref={provided.innerRef}
               {...provided.droppableProps}
               className={cn(
-                "relative flex flex-col gap-4 px-4 pb-5",
+                "relative flex flex-col gap-2.5 px-2.5 pb-3 pt-1",
                 snapshot.isDraggingOver && "bg-accent/10"
               )}
             >
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col">
                 {ordered.map((project, index) => renderProjectCard(project, index))}
               </div>
 
               <div>
                 {ordered.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-muted-foreground/30 bg-background/60 px-4 py-8 text-center">
+                  <div className="flex flex-col items-center justify-center gap-2.5 rounded-xl border-2 border-dashed border-muted-foreground/30 bg-background/60 px-3 py-7 text-center">
                     <Button
                       variant="outline"
                       onClick={() => handleAddProject(status?.id || null)}
-                      className="flex items-center gap-2 border-dashed"
+                      className="flex items-center gap-1.5 border-dashed"
                     >
                       <Plus className="h-4 w-4" />
                       {t('common:buttons.add_project')}
@@ -354,7 +399,7 @@ const ProjectKanbanBoard = ({
                   <Button
                     variant="outline"
                     onClick={() => handleAddProject(status?.id || null)}
-                    className="w-full flex items-center gap-2 border-dashed"
+                    className="w-full flex items-center gap-1.5 border-dashed"
                   >
                     <Plus className="h-4 w-4" />
                     {t('common:buttons.add_project')}
@@ -362,7 +407,7 @@ const ProjectKanbanBoard = ({
                 )}
               </div>
 
-              <div className="flex-1 min-h-16" />
+              <div className="flex-1 min-h-10" />
               {provided.placeholder}
 
               {snapshot.isDraggingOver && (
@@ -390,9 +435,9 @@ const ProjectKanbanBoard = ({
         className="w-full max-w-full overflow-x-auto"
         style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "thin", touchAction: "pan-x pan-y" }}
       >
-        <div className="p-4 sm:p-6">
+        <div className="px-3 py-3 sm:px-5 sm:py-4">
           <DnD.DragDropContext onDragEnd={handleDragEnd}>
-            <div className="flex items-start gap-3 sm:gap-4 pb-4" style={{ width: "max-content", minWidth: "100%" }}>
+            <div className="flex items-start gap-2.5 sm:gap-3 pb-3" style={{ width: "max-content", minWidth: "100%" }}>
               {statuses.map(status => renderColumn(status, getProjectsByStatus(status.id)))}
               {getProjectsWithoutStatus().length > 0 && renderColumn(null, getProjectsWithoutStatus())}
             </div>
@@ -410,7 +455,10 @@ const ProjectKanbanBoard = ({
         }}
         defaultStatusId={selectedStatusId}
         entrySource="kanban"
-        onProjectCreated={() => {
+        onProjectCreated={async (createdProject) => {
+          if (createdProject?.id) {
+            await promoteNewProjectToTop(createdProject.id);
+          }
           onProjectsChange();
           setSelectedStatusId(null);
         }}

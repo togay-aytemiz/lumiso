@@ -54,7 +54,7 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
       className="cursor-pointer hover:shadow-md transition-shadow bg-card border border-border"
       onClick={onClick}
     >
-      <CardContent className="p-3 md:p-2.5">
+      <CardContent className="p-2.5 md:p-2">
         <div className="space-y-2.5">
           {/* Project Type Badge */}
           {kanbanSettings.kanban_show_project_type && project.project_type && (
@@ -75,7 +75,7 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
 
           {/* Client Information */}
           {kanbanSettings.kanban_show_client_name && (
-            <div className="flex items-center gap-2 text-xs text-slate-900">
+            <div className="flex items-center gap-1.5 text-xs text-slate-900">
               <Avatar className="h-6 w-6">
                 <AvatarFallback className="bg-muted text-slate-700 font-semibold uppercase">
                   {leadInitials}
@@ -110,7 +110,7 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
               project.services.length > 0)) && (
             <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-2">
               {/* Left Side - Session Count, Revenue, Service Count */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 {kanbanSettings.kanban_show_session_count && (
                   <div className="flex items-center gap-1.5">
                     <Calendar className="h-3.5 w-3.5" />

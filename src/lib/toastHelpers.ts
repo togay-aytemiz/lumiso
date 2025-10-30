@@ -1,5 +1,13 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { ToastActionElement } from '@/components/ui/toast';
 import { toast } from '@/hooks/use-toast';
+
+type ToastOptions = {
+  action?: ToastActionElement;
+  duration?: number;
+  className?: string;
+};
 
 /**
  * Hook that provides internationalized toast notifications
@@ -9,26 +17,27 @@ export const useI18nToast = () => {
   const { t } = useTranslation('common');
   
   return {
-    success: (description: string) => 
+    success: (description: ReactNode, options?: ToastOptions) => 
       toast({ 
         title: t('toast.success'), 
-        description 
+        description,
+        ...options
       }),
     
-    error: (description: string) => 
+    error: (description: ReactNode) => 
       toast({ 
         title: t('toast.error'), 
         description, 
         variant: 'destructive' 
       }),
     
-    warning: (description: string) => 
+    warning: (description: ReactNode) => 
       toast({ 
         title: t('toast.warning'), 
         description 
       }),
     
-    info: (description: string) => 
+    info: (description: ReactNode) => 
       toast({ 
         title: t('toast.info'), 
         description 

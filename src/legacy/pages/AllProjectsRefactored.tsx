@@ -1,13 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, List, Archive, Settings } from "lucide-react";
+import { LayoutGrid, List, Archive, Settings, Plus } from "lucide-react";
 import { EntityListView } from "@/legacy/components/common/EntityListView";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { TableLoadingState } from "@/legacy/components/common/LoadingStates";
 import { ProjectService, ProjectWithDetails } from "@/services/ProjectService";
 import { useEntityData } from "@/hooks/useEntityData";
-import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { ProjectSheetView } from "@/components/ProjectSheetView";
 import ProjectKanbanBoard from "@/components/ProjectKanbanBoard";
@@ -17,6 +16,7 @@ import { KanbanSettingsSheet } from "@/components/KanbanSettingsSheet";
 import { PROJECT_STATUS } from "@/constants/entityConstants";
 import { formatDate } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { ProjectCreationWizardSheet } from "@/features/project-creation";
 
 type ViewMode = 'board' | 'list' | 'archived';
 
@@ -26,6 +26,7 @@ const AllProjectsRefactored = () => {
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [quickViewProject, setQuickViewProject] = useState<ProjectWithDetails | null>(null);
   const [showQuickView, setShowQuickView] = useState(false);
+  const [isProjectWizardOpen, setProjectWizardOpen] = useState(false);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const isMobile = useIsMobile();
@@ -198,14 +199,24 @@ const AllProjectsRefactored = () => {
         {t("projects.archived_view")} ({archivedProjects.length})
       </Button>
       <Button
-        variant="outline"
+        variant="default"
         size="sm"
-        onClick={() => setShowKanbanSettings(true)}
+        onClick={() => setProjectWizardOpen(true)}
         className="flex items-center gap-2"
       >
-        <Settings className="h-4 w-4" />
-        <span className="hidden sm:inline">{t("navigation:settings")}</span>
+        <Plus className="h-4 w-4" />
+        {t("common:buttons.add_project")}
       </Button>
+      <KanbanSettingsSheet>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
+        >
+          <Settings className="h-4 w-4" />
+          <span className="hidden sm:inline">{t("navigation:settings")}</span>
+        </Button>
+      </KanbanSettingsSheet>
     </div>
   );
 
@@ -216,7 +227,14 @@ const AllProjectsRefactored = () => {
   // Board/Kanban view
   if (viewMode === 'board') {
     return (
-      <ErrorBoundary>
+      <>
+        <ProjectCreationWizardSheet
+          isOpen={isProjectWizardOpen}
+          onOpenChange={setProjectWizardOpen}
+          entrySource="legacy_board"
+          onProjectCreated={refetchProjects}
+        />
+        <ErrorBoundary>
         <div className="min-h-screen p-4 sm:p-6">
           <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -234,7 +252,6 @@ const AllProjectsRefactored = () => {
         />
         </div>
 
-        <EnhancedProjectDialog onProjectCreated={refetchProjects} entrySource="legacy" />
         <ViewProjectDialog 
           project={viewingProject}
           open={showViewDialog}
@@ -250,14 +267,21 @@ const AllProjectsRefactored = () => {
           leadName={quickViewProject?.lead?.name || ""}
           onViewFullDetails={handleViewFullDetails}
         />
-        <KanbanSettingsSheet />
-      </ErrorBoundary>
+        </ErrorBoundary>
+      </>
     );
   }
 
   // List view
   return (
-    <ErrorBoundary>
+    <>
+      <ProjectCreationWizardSheet
+        isOpen={isProjectWizardOpen}
+        onOpenChange={setProjectWizardOpen}
+        entrySource="legacy_list"
+        onProjectCreated={refetchProjects}
+      />
+      <ErrorBoundary>
       <EntityListView
         title="Projects"
         subtitle={viewMode === 'archived' ? "Archived projects" : "Manage your photography projects"}
@@ -265,13 +289,12 @@ const AllProjectsRefactored = () => {
         columns={projectColumns}
         loading={loading}
         onRowClick={handleProjectClick}
-        onAddClick={() => {/* Open add project dialog */}}
-        addButtonText="Add Project"
+        onAddClick={() => setProjectWizardOpen(true)}
+        addButtonText={t("common:buttons.add_project")}
         headerActions={viewModeButtons}
         itemsPerPage={20}
       />
 
-      <EnhancedProjectDialog onProjectCreated={refetchProjects} entrySource="legacy" />
       <ViewProjectDialog 
         project={viewingProject}
         open={showViewDialog}
@@ -287,8 +310,8 @@ const AllProjectsRefactored = () => {
         leadName={quickViewProject?.lead?.name || ""}
         onViewFullDetails={handleViewFullDetails}
       />
-      <KanbanSettingsSheet />
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </>
   );
 };
 

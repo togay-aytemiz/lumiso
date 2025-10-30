@@ -9,7 +9,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, LayoutGrid, List, Archive, ArrowUpDown, ArrowUp, ArrowDown, Settings } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { ProjectSheetView } from "@/components/ProjectSheetView";
 import ProjectKanbanBoard from "@/components/ProjectKanbanBoard";
@@ -25,6 +24,7 @@ import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { KanbanSettingsSheet } from "@/components/KanbanSettingsSheet";
 import { useTranslation } from 'react-i18next';
 import { useDashboardTranslation, useFormsTranslation } from '@/hooks/useTypedTranslation';
+import { ProjectCreationWizardSheet } from "@/features/project-creation";
 
 interface ProjectStatus {
   id: string;
@@ -92,6 +92,7 @@ const AllProjects = () => {
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [quickViewProject, setQuickViewProject] = useState<Project | null>(null);
   const [showQuickView, setShowQuickView] = useState(false);
+  const [isProjectWizardOpen, setProjectWizardOpen] = useState(false);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const navigate = useNavigate();
@@ -609,7 +610,14 @@ const AllProjects = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-x-hidden">
+    <>
+      <ProjectCreationWizardSheet
+        isOpen={isProjectWizardOpen}
+        onOpenChange={setProjectWizardOpen}
+        entrySource="legacy"
+        onProjectCreated={fetchProjects}
+      />
+      <div className="flex flex-col h-screen overflow-x-hidden">
       {/* Header */}
       <div className="flex-shrink-0">
         <PageHeader
@@ -621,21 +629,15 @@ const AllProjects = () => {
               <div className="flex-1 min-w-0">
                 <GlobalSearch />
               </div>
-              <EnhancedProjectDialog
-                onProjectCreated={() => {
-                  fetchProjects();
-                }}
-                entrySource="legacy"
+              <Button 
+                size="sm"
+                className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
+                data-testid="add-project-button"
+                onClick={() => setProjectWizardOpen(true)}
               >
-                <Button 
-                  size="sm"
-                  className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
-                  data-testid="add-project-button"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">{t('common:buttons.add_project')}</span>
-                </Button>
-              </EnhancedProjectDialog>
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">{t('common:buttons.add_project')}</span>
+              </Button>
             </div>
           </PageHeaderSearch>
         </PageHeader>
@@ -919,7 +921,8 @@ const AllProjects = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

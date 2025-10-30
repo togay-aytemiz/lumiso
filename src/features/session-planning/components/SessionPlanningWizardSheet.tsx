@@ -21,6 +21,7 @@ import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduli
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { CalendarDays, CheckCircle2, Loader2, MapPin, User, Briefcase } from "lucide-react";
 import { trackEvent } from "@/lib/telemetry";
+import { useNavigate } from "react-router-dom";
 
 const DRAFT_STORAGE_PREFIX = "session-wizard-draft";
 const DRAFT_VERSION = 1;
@@ -138,6 +139,7 @@ const SessionPlanningWizardSheetInner = ({
   const { toast } = useToast();
   const [isCompleting, setIsCompleting] = useState(false);
   const { t } = useTranslation("sessionPlanning");
+  const { t: tCommon } = useTranslation("common");
   const { triggerSessionScheduled } = useWorkflowTriggers();
   const { scheduleSessionReminders, rescheduleSessionReminders, cancelSessionReminders } =
     useSessionReminderScheduling();
@@ -155,6 +157,7 @@ const SessionPlanningWizardSheetInner = ({
   const successTrackedRef = useRef(false);
   const initialSessionSnapshotRef = useRef<SessionPlanningState | null>(null);
   const pendingSessionPrefillRef = useRef(false);
+  const navigate = useNavigate();
   const needsProjectLookup = useMemo(
     () =>
       !isEditing &&
@@ -893,7 +896,19 @@ const SessionPlanningWizardSheetInner = ({
 
       toast({
         title: t("toast.sessionCreatedTitle"),
-        description: t("toast.sessionCreatedDescription"),
+        description: (
+          <div className="space-y-2">
+            <p>{t("toast.sessionCreatedDescription")}</p>
+            <button
+              type="button"
+              className="text-sm font-semibold text-primary transition-colors hover:text-primary/80 focus-visible:outline-none"
+              onClick={() => navigate(`/sessions/${sessionId}`)}
+            >
+              {tCommon("buttons.view_session")}
+            </button>
+          </div>
+        ),
+        className: "flex-col items-start",
       });
 
       trackEvent("session_wizard_confirmed", {

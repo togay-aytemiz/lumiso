@@ -26,6 +26,7 @@
 - Legacy sheet/modal components (`ProjectSheetView`, `ProjectDialog*`, `EnhancedProjectDialog`) are tagged as deprecated to steer new work toward the wizard.
 - Core entry points (projects index, dashboard widgets, kanban board, session planner) now mount `ProjectCreationWizardSheet` directly; only legacy routes keep the compat wrapper.
 - Toast copy across project + session wizards now relies on translated keys in EN/TR.
+- Removed the legacy project creation dialog components; even legacy routes now open `ProjectCreationWizardSheet` directly.
 - Remaining gaps: broaden automated coverage, run cross-entry QA, and remove legacy dialog artifacts once confidence is high.
 
 ## Current State Snapshot

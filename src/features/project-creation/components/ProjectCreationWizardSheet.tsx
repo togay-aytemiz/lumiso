@@ -21,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useNavigate } from "react-router-dom";
 
 interface ProjectCreationWizardSheetProps {
   isOpen: boolean;
@@ -85,6 +86,7 @@ const ProjectCreationWizardSheetInner = ({
   const { currentStep, shouldLockNavigation, completeCurrentStep } = useOnboarding();
   const openedRef = useRef(false);
   const [showGuardDialog, setShowGuardDialog] = useState(false);
+  const navigate = useNavigate();
 
   const forceClose = useCallback(() => {
     onOpenChange(false);
@@ -240,7 +242,19 @@ const ProjectCreationWizardSheetInner = ({
 
       toast({
         title: tCommon("actions.success"),
-        description: tCommon("messages.success.project_created"),
+        description: (
+          <div className="space-y-2">
+            <p>{tCommon("messages.success.project_created")}</p>
+            <button
+              type="button"
+              className="text-sm font-semibold text-primary transition-colors hover:text-primary/80 focus-visible:outline-none"
+              onClick={() => navigate(`/projects/${newProject.id}`)}
+            >
+              {tCommon("buttons.view_project")}
+            </button>
+          </div>
+        ),
+        className: "flex-col items-start",
       });
 
       if (shouldLockNavigation && currentStep === 3) {

@@ -19,6 +19,7 @@ import { useI18nToast } from "@/lib/toastHelpers";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
+import { useNavigate } from "react-router-dom";
 
 interface EnhancedAddLeadDialogProps {
   open: boolean;
@@ -34,12 +35,14 @@ export function EnhancedAddLeadDialog({
   onSuccess 
 }: EnhancedAddLeadDialogProps) {
   const { t } = useTranslation('forms');
+  const { t: tCommon } = useTranslation('common');
   const { fieldDefinitions, loading: fieldsLoading } = useLeadFieldDefinitions();
   const { upsertFieldValues } = useLeadFieldValues("");
   const toast = useI18nToast();
   const { profile } = useProfile();
   const [loading, setLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const navigate = useNavigate();
   // Assignees removed - single user organization
 
   // Create dynamic schema based on field definitions
@@ -169,7 +172,21 @@ export function EnhancedAddLeadDialog({
       // Save field values
       await upsertFieldValues(newLead.id, fieldValues);
 
-      toast.success(t('leadDialog.successCreated'));
+      toast.success(
+        <div className="space-y-2">
+          <p>{t('leadDialog.successCreated')}</p>
+          <button
+            type="button"
+            className="text-sm font-semibold text-primary transition-colors hover:text-primary/80 focus-visible:outline-none"
+            onClick={() => navigate(`/leads/${newLead.id}`)}
+          >
+            {tCommon('buttons.view_lead')}
+          </button>
+        </div>,
+        {
+          className: "flex-col items-start",
+        }
+      );
 
       onSuccess?.({
         id: newLead.id,

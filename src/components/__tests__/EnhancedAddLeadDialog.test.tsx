@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { Children, isValidElement } from "react";
 import { EnhancedAddLeadDialog } from "../EnhancedAddLeadDialog";
 import { useLeadFieldDefinitions } from "@/hooks/useLeadFieldDefinitions";
 import { useLeadFieldValues } from "@/hooks/useLeadFieldValues";
@@ -299,7 +300,19 @@ describe("EnhancedAddLeadDialog", () => {
       status: "New"
     });
 
-    expect(toastMock.success).toHaveBeenCalledWith("leadDialog.successCreated");
+    expect(toastMock.success).toHaveBeenCalledTimes(1);
+    const [toastContent, toastOptions] = toastMock.success.mock.calls[0];
+    expect(isValidElement(toastContent)).toBe(true);
+    const childrenArray = Children.toArray(
+      (toastContent as any).props.children
+    );
+    const [messageNode, actionNode] = childrenArray as any[];
+    expect(messageNode.props.children).toBe("leadDialog.successCreated");
+    expect(actionNode.props.children).toBe("buttons.view_lead");
+    expect(typeof actionNode.props.onClick).toBe("function");
+    expect(toastOptions).toEqual(
+      expect.objectContaining({ className: "flex-col items-start" })
+    );
     expect(onSuccess).toHaveBeenCalledWith(expect.objectContaining({ id: "lead-123" }));
     expect(onClose).toHaveBeenCalled();
   });

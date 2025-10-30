@@ -464,7 +464,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       title={t('package.add_title')}
       isOpen={open}
       onOpenChange={onOpenChange}
-      size="default"
+      size="content"
       dirty={isDirty}
       onDirtyClose={handleDirtyClose}
       footerActions={footerActions}
@@ -822,7 +822,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       title={t('package.edit_title')}
       isOpen={open}
       onOpenChange={onOpenChange}
-      size="default"
+      size="content"
       dirty={isDirtyEdit}
       onDirtyClose={handleDirtyCloseEdit}
       footerActions={footerActionsEdit}

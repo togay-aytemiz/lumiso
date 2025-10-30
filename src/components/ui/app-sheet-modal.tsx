@@ -55,7 +55,7 @@ export function AppSheetModal({
   const sideVariant = isMobile ? 'bottom' : 'right';
   
   const sheetContentClass = cn(
-    "flex flex-col",
+    "flex flex-col overflow-visible",
     !isMobile && "sm:max-w-6xl w-full",
     isMobile && "max-h-[85vh] rounded-t-xl",
     size === 'content' && !isMobile && "sm:max-w-md",
@@ -85,11 +85,11 @@ export function AppSheetModal({
           </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto pb-6 my-0 py-0 px-[4px]" style={{ 
+        <div className="flex-1 overflow-y-auto pb-6 my-0 py-0 px-[4px] overflow-visible" style={{ 
           WebkitOverflowScrolling: 'touch',
           touchAction: 'manipulation'
         }}>
-          <div className="space-y-4 [&_input]:border [&_input]:border-border [&_input]:bg-muted/50 [&_textarea]:border [&_textarea]:border-border [&_textarea]:bg-muted/50 [&_[role=combobox]]:border [&_[role=combobox]]:border-border [&_[role=combobox]]:bg-muted/50">
+          <div className="space-y-4 overflow-visible [&_input]:border [&_input]:border-border [&_input]:bg-muted/50 [&_textarea]:border [&_textarea]:border-border [&_textarea]:bg-muted/50 [&_[role=combobox]]:border [&_[role=combobox]]:border-border [&_[role=combobox]]:bg-muted/50">
             {children}
           </div>
         </div>

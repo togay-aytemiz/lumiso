@@ -68,7 +68,10 @@ interface ProjectSheetViewProps {
   onViewFullDetails?: () => void; // Callback to switch to full page
 }
 
-export function ProjectSheetView({
+/**
+ * @deprecated Legacy project sheet experience. Prefer the new project creation wizard and detail flows.
+ */
+export function LegacyProjectSheetView({
   project,
   open,
   onOpenChange,
@@ -947,3 +950,5 @@ export function ProjectSheetView({
     </>
   );
 }
+
+export { LegacyProjectSheetView as ProjectSheetView };

@@ -215,7 +215,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
       title={t('service.add_title')}
       isOpen={open}
       onOpenChange={onOpenChange}
-      size="default"
+      size="content"
       dirty={isDirty}
       onDirtyClose={handleDirtyClose}
       footerActions={footerActions}
@@ -581,7 +581,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       title={t('service.edit_title')}
       isOpen={open}
       onOpenChange={onOpenChange}
-      size="default"
+      size="content"
       dirty={isDirty}
       onDirtyClose={handleDirtyClose}
       footerActions={footerActions}

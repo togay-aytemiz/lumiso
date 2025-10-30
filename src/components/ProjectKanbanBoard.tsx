@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18nToast } from "@/lib/toastHelpers";
-import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { ProfessionalKanbanCard } from "@/components/ProfessionalKanbanCard";
 import { KanbanLoadingSkeleton } from "@/components/ui/loading-presets";
@@ -17,6 +16,7 @@ import { useKanbanSettings } from "@/hooks/useKanbanSettings";
 import { useTranslation } from 'react-i18next';
 import { LIFECYCLE_STATES, PROJECT_STATUS } from "@/constants/entityConstants";
 import type { ProjectListItem, ProjectStatusSummary } from "@/pages/projects/types";
+import { ProjectCreationWizardSheet } from "@/features/project-creation";
 
 interface ProjectKanbanBoardProps {
   projects: ProjectListItem[];
@@ -100,6 +100,7 @@ const ProjectKanbanBoard = ({
   const [selectedStatusId, setSelectedStatusId] = useState<string | null>(null);
   const [viewingProject, setViewingProject] = useState<ProjectListItem | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
+  const [isProjectWizardOpen, setProjectWizardOpen] = useState(false);
 
   const { triggerProjectMilestone } = useNotificationTriggers();
   const { activeOrganization } = useOrganization();
@@ -250,8 +251,7 @@ const ProjectKanbanBoard = ({
 
   const handleAddProject = (statusId: string | null) => {
     setSelectedStatusId(statusId);
-    const triggerButton = document.getElementById("kanban-add-project-trigger");
-    triggerButton?.click();
+    setProjectWizardOpen(true);
   };
 
   const handleProjectClick = (project: ProjectListItem) => {
@@ -393,15 +393,21 @@ const ProjectKanbanBoard = ({
         </div>
       </div>
 
-      <EnhancedProjectDialog
+      <ProjectCreationWizardSheet
+        isOpen={isProjectWizardOpen}
+        onOpenChange={(open) => {
+          setProjectWizardOpen(open);
+          if (!open) {
+            setSelectedStatusId(null);
+          }
+        }}
         defaultStatusId={selectedStatusId}
+        entrySource="kanban"
         onProjectCreated={() => {
           onProjectsChange();
           setSelectedStatusId(null);
         }}
-      >
-        <Button id="kanban-add-project-trigger" className="hidden">{t('kanban.add_project')}</Button>
-      </EnhancedProjectDialog>
+      />
 
       <ViewProjectDialog
         project={viewingProject}

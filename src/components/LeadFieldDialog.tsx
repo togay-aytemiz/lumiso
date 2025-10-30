@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Settings } from "lucide-react";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import {
   Form,
@@ -15,7 +14,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -34,6 +32,8 @@ import {
 } from "@/types/leadFields";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
 
 // System-reserved field keys that cannot be used for custom fields
 const RESERVED_FIELD_KEYS = new Set([
@@ -142,9 +142,9 @@ export function LeadFieldDialog({
   const selectedFieldType = form.watch("field_type") as LeadFieldType;
   const fieldTypeConfig = FIELD_TYPE_CONFIG[selectedFieldType];
 
-  useEffect(() => {
-    if (field && open) {
-      form.reset({
+  const getInitialValues = useCallback((): FieldFormData => {
+    if (field) {
+      return {
         label: field.label,
         field_type: field.field_type as LeadFieldType,
         is_required: field.is_required,
@@ -152,18 +152,26 @@ export function LeadFieldDialog({
         options: field.options?.options ? field.options.options.join(", ") : "",
         allow_multiple: field.allow_multiple || false,
         validation_rules: field.validation_rules as any,
-      });
-    } else if (!field && open) {
-      form.reset({
-        label: "",
-        field_type: "text",
-        is_required: false,
-        is_visible_in_form: true,
-        options: "",
-        allow_multiple: false,
-      });
+      };
     }
-  }, [field, open, form]);
+
+    return {
+      label: "",
+      field_type: "text",
+      is_required: false,
+      is_visible_in_form: true,
+      options: "",
+      allow_multiple: false,
+      validation_rules: undefined,
+    };
+  }, [field]);
+
+  useEffect(() => {
+    if (open) {
+      form.reset(getInitialValues());
+      setIsDirty(false);
+    }
+  }, [open, form, getInitialValues]);
 
   const onSubmit = async (data: FieldFormData) => {
     try {
@@ -221,12 +229,26 @@ export function LeadFieldDialog({
     }
   };
 
-  const handleClose = () => {
-    if (isDirty) {
-      if (confirm(t("lead_field.unsaved_changes"))) {
-        onClose();
-      }
-    } else {
+  const handleSave = form.handleSubmit(onSubmit);
+
+  const navigation = useModalNavigation({
+    isDirty,
+    onDiscard: () => {
+      form.reset(getInitialValues());
+      setIsDirty(false);
+      onClose();
+    },
+    onSaveAndExit: async () => {
+      await handleSave();
+    },
+    message: t("lead_field.unsaved_changes"),
+  });
+
+  const handleDirtyClose = () => {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      form.reset(getInitialValues());
+      setIsDirty(false);
       onClose();
     }
   };
@@ -234,7 +256,7 @@ export function LeadFieldDialog({
   const footerActions = [
     {
       label: t("buttons.cancel", { ns: "common" }),
-      onClick: onClose,
+      onClick: handleDirtyClose,
       variant: "outline" as const,
     },
     {
@@ -243,7 +265,7 @@ export function LeadFieldDialog({
         : isEdit
         ? t("lead_field.update_field")
         : t("lead_field.create_field"),
-      onClick: form.handleSubmit(onSubmit),
+      onClick: handleSave,
       loading,
       disabled: loading,
     },
@@ -258,7 +280,7 @@ export function LeadFieldDialog({
       onOpenChange={onOpenChange}
       size="lg"
       dirty={isDirty}
-      onDirtyClose={handleClose}
+      onDirtyClose={handleDirtyClose}
       footerActions={footerActions}
     >
       <div className="space-y-1 mb-6">
@@ -437,6 +459,13 @@ export function LeadFieldDialog({
           )}
         </div>
       </Form>
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message={navigation.message}
+      />
     </AppSheetModal>
   );
 }

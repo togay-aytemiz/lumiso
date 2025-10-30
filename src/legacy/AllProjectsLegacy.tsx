@@ -625,6 +625,7 @@ const AllProjects = () => {
                 onProjectCreated={() => {
                   fetchProjects();
                 }}
+                entrySource="legacy"
               >
                 <Button 
                   size="sm"

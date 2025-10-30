@@ -6,7 +6,6 @@ import { Switch } from "@/components/ui/switch";
 import { Plus } from "lucide-react";
 import { ProjectCard } from "./ProjectCard";
 import { ProjectSheetView } from "./ProjectSheetView";
-import { EnhancedProjectDialog } from "./EnhancedProjectDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +19,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { ProjectCreationWizardSheet } from "@/features/project-creation";
 
 interface Project {
   id: string;
@@ -56,6 +56,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   const [hasArchived, setHasArchived] = useState(false);
   const [archivedStatusId, setArchivedStatusId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isProjectWizardOpen, setProjectWizardOpen] = useState(false);
   const { toast } = useToast();
 
   const fetchProjects = async () => {
@@ -181,12 +182,28 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
     }
   };
 
+  const handleWizardProjectCreated = () => {
+    fetchProjects();
+    setRefreshTrigger((prev) => prev + 1);
+    onProjectUpdated?.();
+  };
+
   const archivedId = archivedStatusId;
   const activeProjects = archivedId ? projects.filter((p) => p.status_id !== archivedId) : projects;
   const archivedProjects = archivedId ? projects.filter((p) => p.status_id === archivedId) : [];
 
   return (
-    <Card className="w-full">
+    <>
+      <ProjectCreationWizardSheet
+        isOpen={isProjectWizardOpen}
+        onOpenChange={setProjectWizardOpen}
+        leadId={leadId}
+        leadName={leadName}
+        entrySource="dashboard_projects"
+        onProjectCreated={handleWizardProjectCreated}
+      />
+
+      <Card className="w-full">
       <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between space-y-0 pb-4">
         <CardTitle className="text-xl font-semibold">{t('pages:projects.title')}</CardTitle>
         <div className="flex flex-col gap-3 w-full md:w-auto md:flex-row md:items-center">
@@ -197,19 +214,14 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
             </div>
           )}
           {projects.length > 0 && (
-            <EnhancedProjectDialog
-              defaultLeadId={leadId}
-              onProjectCreated={() => {
-                fetchProjects();
-                setRefreshTrigger(prev => prev + 1);
-                onProjectUpdated?.();
-              }}
+            <Button
+              size="sm"
+              className="w-full md:w-auto"
+              onClick={() => setProjectWizardOpen(true)}
             >
-              <Button size="sm" className="w-full md:w-auto">
-                <Plus className="h-4 w-4 mr-2" />
-                {t('pages:projects.addProject')}
-              </Button>
-            </EnhancedProjectDialog>
+              <Plus className="h-4 w-4 mr-2" />
+              {t('pages:projects.addProject')}
+            </Button>
           )}
         </div>
       </CardHeader>
@@ -227,19 +239,13 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
         ) : projects.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
             <p className="mb-4">{t('pages:projects.noProjectsYet')}</p>
-            <EnhancedProjectDialog
-              defaultLeadId={leadId}
-              onProjectCreated={() => {
-                fetchProjects();
-                setRefreshTrigger(prev => prev + 1);
-                onProjectUpdated?.();
-              }}
+            <Button
+              variant="outline"
+              onClick={() => setProjectWizardOpen(true)}
             >
-              <Button variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
-                {t('pages:projects.addProject')}
-              </Button>
-            </EnhancedProjectDialog>
+              <Plus className="h-4 w-4 mr-2" />
+              {t('pages:projects.addProject')}
+            </Button>
           </div>
         ) : (
           <div className="space-y-6">
@@ -314,5 +320,6 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
         </AlertDialogContent>
       </AlertDialog>
     </Card>
+    </>
   );
 }

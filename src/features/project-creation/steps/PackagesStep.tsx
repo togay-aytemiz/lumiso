@@ -282,9 +282,12 @@ export const PackagesStep = () => {
             className="flex items-center justify-end gap-2 rounded-full bg-slate-100/80 px-3 py-1.5 transition-opacity duration-200"
           >
             {state.services.packageLabel ? (
-              <span className="mr-auto text-xs font-medium text-slate-600">
+              <Badge
+                variant="secondary"
+                className="mr-auto h-7 rounded-full bg-emerald-100 px-3 text-xs font-medium text-emerald-700"
+              >
                 {t("steps.packages.selectedSummary", { name: state.services.packageLabel })}
-              </span>
+              </Badge>
             ) : null}
             <Button
               variant="ghost"

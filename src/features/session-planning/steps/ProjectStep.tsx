@@ -10,7 +10,7 @@ import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { Check, ChevronDown, FolderPlus, Search } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
+import { ProjectCreationWizardSheet } from "@/features/project-creation";
 
 interface ProjectOption {
   id: string;
@@ -28,6 +28,7 @@ export const ProjectStep = ({ onContinue }: { onContinue?: () => void } = {}) =>
   const [searchTerm, setSearchTerm] = useState("");
   const [hasAnyProject, setHasAnyProject] = useState(false);
   const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
+  const [isProjectWizardOpen, setProjectWizardOpen] = useState(false);
   const latestRequestRef = useRef(0);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -204,18 +205,34 @@ export const ProjectStep = ({ onContinue }: { onContinue?: () => void } = {}) =>
     }
   }, [dropdownOpen, leadId, noProjectsAvailable]);
 
-  return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-xl font-semibold tracking-tight">
-          {t("steps.project.navigationLabel")}
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          {t("steps.project.description")}
-        </p>
-      </div>
+  useEffect(() => {
+    if (!leadId && isProjectWizardOpen) {
+      setProjectWizardOpen(false);
+    }
+  }, [isProjectWizardOpen, leadId]);
 
-      <div className="space-y-3">
+  return (
+    <>
+      <ProjectCreationWizardSheet
+        isOpen={isProjectWizardOpen}
+        onOpenChange={setProjectWizardOpen}
+        leadId={leadId || undefined}
+        leadName={state.lead.name}
+        onProjectCreated={handleProjectCreated}
+        entrySource="session_planning"
+      />
+
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold tracking-tight">
+            {t("steps.project.navigationLabel")}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t("steps.project.description")}
+          </p>
+        </div>
+
+        <div className="space-y-3">
         <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {t("steps.project.selectExisting")}
         </Label>
@@ -313,20 +330,18 @@ export const ProjectStep = ({ onContinue }: { onContinue?: () => void } = {}) =>
         )}
 
         <div className="flex flex-wrap items-center gap-3">
-          <EnhancedProjectDialog
-            defaultLeadId={leadId || undefined}
-            onProjectCreated={handleProjectCreated}
-            triggerDisabled={!leadId}
+          <Button
+            variant="outline"
+            className="h-11 gap-2"
+            disabled={!leadId}
+            onClick={() => {
+              if (!leadId) return;
+              setProjectWizardOpen(true);
+            }}
           >
-            <Button
-              variant="outline"
-              className="h-11 gap-2"
-              disabled={!leadId}
-            >
-              <FolderPlus className="h-4 w-4" />
-              {t("steps.project.createButton")}
-            </Button>
-          </EnhancedProjectDialog>
+            <FolderPlus className="h-4 w-4" />
+            {t("steps.project.createButton")}
+          </Button>
 
           <Button
             type="button"
@@ -343,7 +358,8 @@ export const ProjectStep = ({ onContinue }: { onContinue?: () => void } = {}) =>
             {t("steps.project.emptyState")}
           </p>
         )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };

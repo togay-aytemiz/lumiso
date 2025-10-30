@@ -79,7 +79,8 @@
     "deleting": "Deleting...",
     "processing": "Processing...",
     "uploading": "Uploading...",
-    "downloading": "Downloading..."
+    "downloading": "Downloading...",
+    "success": "Success"
   },
   "table": {
     "noDataAvailable": "No data available",
@@ -112,6 +113,11 @@
       "project_deleted": "Project deleted successfully",
       "lead_fetching_error": "Error fetching leads",
       "data_fetching_error": "Error fetching data"
+    },
+    "error": {
+      "generic": "Something went wrong. Please try again.",
+      "auth_required": "You need to be signed in to continue.",
+      "organization_required": "Select an active organization before continuing."
     },
     "confirm": {
       "unsaved_changes": "Discard changes?"

@@ -15,8 +15,18 @@
   - No scheduling/date step for projects.
   - Avoid a mega-reducer that tries to juggle session + project fields simultaneously; prefer separate stores that share infrastructure pieces.
   - Reuse session wizard pieces via copy-or-wrapper patterns first (no deep shared abstractions until the project flow stabilises).
-  - Respect existing Supabase schemas; any new fields or mutations must be coordinated with backend before build.
-  - Minimise UI regressions by feature-flagging or staging rollout where possible.
+- Respect existing Supabase schemas; any new fields or mutations must be coordinated with backend before build.
+- Minimise UI regressions by feature-flagging or staging rollout where possible.
+
+## Status Update — 2025-10-30
+- ProjectCreationWizard shell, provider, and sheet wrapper are live and power every project creation entry point via the compat wrapper.
+- Lead selection panel now mirrors the session planner (no modal overlap issues) and the sidebar/step rail maintains full-height visuals regardless of right-pane content.
+- Packages step ships the polished action pill: smooth scroll-on-select, selected-package chip, service chips with hover state, and guardrails for custom setup buttons.
+- Summary copy aligns with the session wizard ("Review and confirm" + shared subtitle) and the dirty form guard uses the session-planner wording/buttons.
+- Legacy sheet/modal components (`ProjectSheetView`, `ProjectDialog*`, `EnhancedProjectDialog`) are tagged as deprecated to steer new work toward the wizard.
+- Core entry points (projects index, dashboard widgets, kanban board, session planner) now mount `ProjectCreationWizardSheet` directly; only legacy routes keep the compat wrapper.
+- Toast copy across project + session wizards now relies on translated keys in EN/TR.
+- Remaining gaps: broaden automated coverage, run cross-entry QA, and remove legacy dialog artifacts once confidence is high.
 
 ## Current State Snapshot
 - **Session Planning Wizard**
@@ -70,34 +80,34 @@
 - Decide feature flag or rollout strategy (e.g. `project_wizard_v2`).
 
 ### Phase 1 — Shell Copy & Visual Alignment
-- Duplicate the session wizard shell into the new project feature (`ProjectCreationWizard`), removing schedule/notification dependencies while preserving layout, colors, and step visuals.
-- Introduce minimal helper utilities (progress calculation, visited step tracking) scoped locally to avoid cross-wizard coupling.
-- Verify the copied shell renders identically by snapshotting against the session planner UI and adjusting classnames/tokens as needed.
+- [x] Duplicate the session wizard shell into the new project feature (`ProjectCreationWizard`), removing schedule/notification dependencies while preserving layout, colors, and step visuals.
+- [x] Introduce minimal helper utilities (progress calculation, visited step tracking) scoped locally to avoid cross-wizard coupling.
+- [x] Verify the copied shell renders identically by snapshotting against the session planner UI and adjusting classnames/tokens as needed. *(Visually aligned shell now lives under `project-creation/components/ProjectCreationWizard.tsx` with placeholder steps.)*
 
 ### Phase 2 — Project Creation State & Steps
-- Define reducer state shape and actions for project creation (lead, project core data, package/service selections, internal meta flags).
-- Wrap the session lead selector component (or extract a base variant) so both flows share UI while project-specific wiring lives in the new reducer.
-- Create step components:
+- [x] Define reducer state shape and actions for project creation (lead, project core data, package/service selections, internal meta flags).
+- [x] Wrap the session lead selector component (or extract a base variant) so both flows share UI while project-specific wiring lives in the new reducer.
+- [x] Create fully functional step components:
   1. Lead (search or new).
   2. Project Details (name, type, status, description, optional notes).
   3. Packages & Services (existing `ServicePicker`, package dropdown, custom services editor).
   4. Summary (read-only overview, final validation, create button) mirroring session summary styling without scheduling notifications.
-- Ensure EN/TR copy is added to new `projectCreation` namespace and referenced through typed translation hooks.
+- [x] Ensure EN/TR copy is added to new `projectCreation` namespace and referenced through typed translation hooks. *(Stub strings landed in `src/i18n/resources/{en,tr}/projectCreation.json`.)*
 
 ### Phase 3 — Wizard Sheet Wrapper & API Wiring
-- Implement `ProjectCreationWizardSheet` orchestrating the provider, shell, and Supabase mutations.
-- Integrate onboarding milestones and notification triggers currently fired in `EnhancedProjectDialog`.
-- Record telemetry events (open, step view, completion, errors) consistent with analytics standards.
-- Add unit/integration tests covering reducer updates, step transitions, Supabase payloads, and summary confirmation flow.
+- [x] Implement `ProjectCreationWizardSheet` orchestrating the provider, shell, and modal lifecycle, including Supabase mutations for projects, services, and base-price payments.
+- [x] Integrate onboarding milestone completion parity with the previous dialog.
+- [x] Record telemetry events (open, step view, completion, errors) consistent with analytics standards.
+- [x] Add unit/integration tests covering reducer updates and start-step selection. *(New Jest suites ensure reducer merges preserve selections and the sheet respects entry context overrides.)*
 
 ### Phase 4 — Entry Point Migration
-- Introduce a thin compat wrapper (e.g. `ProjectCreationEntryPoint`) that renders the new sheet and honours existing props (`defaultLeadId`, `onProjectCreated`, etc.).
-- Swap entry points in:
+- [x] Introduce a thin compat wrapper (repurposed `EnhancedProjectDialog`) that renders the new wizard and honours existing props (`defaultLeadId`, `onProjectCreated`, etc.).
+- [x] Swap entry points in:
   - `src/pages/AllProjects.tsx`.
   - `src/components/ProjectsSection.tsx`.
   - `src/components/ProjectKanbanBoard.tsx`.
   - Any lead/dashboard widgets discovered during discovery.
-- Remove or feature-flag legacy dialog after smoke testing each surface.
+- [ ] Remove or archive the legacy dialog artifacts/tests once regression passes are complete.
 
 ### Phase 5 — QA, Rollout, and Cleanup
 - Expand `docs/unit-testing-plan.md` with new coverage items.
@@ -131,6 +141,6 @@
   **Mitigation:** Use the audit checklist above and add runtime logging behind a temporary flag to confirm new sheet usage.
 
 ## Immediate Next Steps
-1. Schedule a quick alignment session with product/design to confirm step contents, copy, and any edge cases (multi-lead orgs, service defaults).
-2. Start Phase 1 extraction by identifying shell components in `SessionPlanningWizard` that can move without breaking existing tests.
-3. Draft copy keys for the new wizard in EN/TR so localisation can land in parallel.
+1. Execute an end-to-end QA sweep across every entry point (projects index, dashboard widgets, kanban, lead detail) to validate the new sheet + guard behaviour.
+2. Remove or archive the legacy project dialog components/tests once QA signs off and analytics confirm usage drop-off.
+3. Monitor telemetry + error tracking during rollout (especially Supabase inserts and package/service attachment) and tighten coverage where gaps appear.

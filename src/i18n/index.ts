@@ -10,6 +10,7 @@ import enNavigation from "./resources/en/navigation.json";
 import enMessages from "./resources/en/messages.json";
 import enPages from "./resources/en/pages.json";
 import enSessionPlanning from "./resources/en/sessionPlanning.json";
+import enProjectCreation from "./resources/en/projectCreation.json";
 
 import trCommon from "./resources/tr/common.json";
 import trDashboard from "./resources/tr/dashboard.json";
@@ -18,6 +19,7 @@ import trNavigation from "./resources/tr/navigation.json";
 import trMessages from "./resources/tr/messages.json";
 import trPages from "./resources/tr/pages.json";
 import trSessionPlanning from "./resources/tr/sessionPlanning.json";
+import trProjectCreation from "./resources/tr/projectCreation.json";
 
 const resources = {
   en: {
@@ -28,6 +30,7 @@ const resources = {
     messages: enMessages,
     pages: enPages,
     sessionPlanning: enSessionPlanning,
+    projectCreation: enProjectCreation,
   },
   tr: {
     common: trCommon,
@@ -37,6 +40,7 @@ const resources = {
     messages: trMessages,
     pages: trPages,
     sessionPlanning: trSessionPlanning,
+    projectCreation: trProjectCreation,
   },
 };
 
@@ -58,12 +62,14 @@ i18n
     },
 
     defaultNS: "common",
-    ns: ["common", "dashboard", "forms", "navigation", "messages", "pages", "sessionPlanning"],
+    ns: ["common", "dashboard", "forms", "navigation", "messages", "pages", "sessionPlanning", "projectCreation"],
   });
 
 i18n.addResourceBundle("en", "forms", enForms, true, false);
 i18n.addResourceBundle("tr", "forms", trForms, true, true);
 i18n.addResourceBundle("en", "sessionPlanning", enSessionPlanning, true, false);
 i18n.addResourceBundle("tr", "sessionPlanning", trSessionPlanning, true, true);
+i18n.addResourceBundle("en", "projectCreation", enProjectCreation, true, false);
+i18n.addResourceBundle("tr", "projectCreation", trProjectCreation, true, true);
 
 export default i18n;

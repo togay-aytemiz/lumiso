@@ -44,9 +44,16 @@ jest.mock("@/components/ProfessionalKanbanCard", () => ({
   ProfessionalKanbanCard: (props: any) => professionalCardMock(props),
 }));
 
-jest.mock("@/components/EnhancedProjectDialog", () => ({
-  EnhancedProjectDialog: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="enhanced-project-dialog">{children}</div>
+jest.mock("@/features/project-creation", () => ({
+  ProjectCreationWizardSheet: ({ isOpen, onOpenChange }: { isOpen: boolean; onOpenChange: (open: boolean) => void }) => (
+    <button
+      type="button"
+      data-testid="project-wizard-sheet"
+      data-open={String(isOpen)}
+      onClick={() => onOpenChange(false)}
+    >
+      Wizard
+    </button>
   ),
 }));
 

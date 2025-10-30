@@ -219,12 +219,12 @@
     },
     "summary": {
       "navigationLabel": "Summary",
-      "description": "Review the plan and make final edits before confirming."
+      "description": "Review everything before confirming the session."
     }
   },
   "summary": {
     "untitled": "Untitled session",
-    "sectionTitle": "Summary",
+    "sectionTitle": "Review and confirm",
     "labels": {
       "lead": "Lead",
       "project": "Project",

@@ -10,9 +10,16 @@ import { useConnectivity } from "@/contexts/ConnectivityContext";
 import { useProjectTypes, useProjectStatuses, useServices } from "@/hooks/useOrganizationData";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 
-jest.mock("@/components/EnhancedProjectDialog", () => ({
-  EnhancedProjectDialog: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="enhanced-project-dialog">{children}</div>
+jest.mock("@/features/project-creation", () => ({
+  ProjectCreationWizardSheet: ({ isOpen, onOpenChange }: { isOpen: boolean; onOpenChange: (open: boolean) => void }) => (
+    <button
+      type="button"
+      data-testid="project-wizard-sheet"
+      data-open={String(isOpen)}
+      onClick={() => onOpenChange(false)}
+    >
+      Wizard
+    </button>
   ),
 }));
 

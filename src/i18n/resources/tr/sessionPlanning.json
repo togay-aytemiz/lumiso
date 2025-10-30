@@ -224,12 +224,12 @@
     },
     "summary": {
       "navigationLabel": "Özet",
-      "description": "Planı onaylamadan önce hızla gözden geçirin ve gerekirse düzenleyin."
+      "description": "Seansı onaylamadan önce her şeyi gözden geçirin."
     }
   },
   "summary": {
     "untitled": "Adsız seans",
-    "sectionTitle": "Özet",
+    "sectionTitle": "Gözden geçir ve onayla",
     "labels": {
       "lead": "Kişi",
       "project": "Proje",

@@ -28,7 +28,10 @@ interface ProjectDialogWithLeadSelectorProps {
   defaultLeadId?: string;
 }
 
-export function ProjectDialogWithLeadSelector({ 
+/**
+ * @deprecated Legacy creation modal that predates the project wizard. Use ProjectCreationWizardSheet instead.
+ */
+export function LegacyProjectDialogWithLeadSelector({ 
   open, 
   onOpenChange, 
   onProjectCreated,
@@ -322,3 +325,5 @@ export function ProjectDialogWithLeadSelector({
     </Dialog>
   );
 }
+
+export { LegacyProjectDialogWithLeadSelector as ProjectDialogWithLeadSelector };

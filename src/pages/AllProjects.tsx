@@ -6,10 +6,10 @@ import { Plus, LayoutGrid, List, Archive, Settings, FileDown, Loader2 } from "lu
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
-import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { ProjectSheetView } from "@/components/ProjectSheetView";
 import ProjectKanbanBoard from "@/components/ProjectKanbanBoard";
+import { ProjectCreationWizardSheet } from "@/features/project-creation";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
@@ -59,6 +59,7 @@ const AllProjects = () => {
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [quickViewProject, setQuickViewProject] = useState<ProjectListItem | null>(null);
   const [showQuickView, setShowQuickView] = useState(false);
+  const [isProjectWizardOpen, setProjectWizardOpen] = useState(false);
   const [sortField, setSortField] = useState<ProjectSortField>('created_at');
   const [sortDirection, setSortDirection] = useState<ProjectSortDirection>('desc');
   const [sortState, setSortState] = useState<AdvancedDataTableSortState>({ columnId: 'created_at', direction: 'desc' });
@@ -1102,7 +1103,15 @@ const AllProjects = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-x-hidden">
+    <>
+      <ProjectCreationWizardSheet
+        isOpen={isProjectWizardOpen}
+        onOpenChange={setProjectWizardOpen}
+        entrySource="projects"
+        onProjectCreated={refreshAll}
+      />
+
+      <div className="flex flex-col h-screen overflow-x-hidden">
       {/* Header */}
       <div className="flex-shrink-0">
         <PageHeader
@@ -1114,16 +1123,15 @@ const AllProjects = () => {
               <div className="flex-1 min-w-0">
                 <GlobalSearch />
               </div>
-              <EnhancedProjectDialog onProjectCreated={refreshAll}>
-                <Button 
-                  size="sm"
-                  className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
-                  data-testid="add-project-button"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">{t('common:buttons.add_project')}</span>
-                </Button>
-              </EnhancedProjectDialog>
+              <Button 
+                size="sm"
+                className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
+                data-testid="add-project-button"
+                onClick={() => setProjectWizardOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">{t('common:buttons.add_project')}</span>
+              </Button>
             </div>
           </PageHeaderSearch>
         </PageHeader>
@@ -1279,6 +1287,7 @@ const AllProjects = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

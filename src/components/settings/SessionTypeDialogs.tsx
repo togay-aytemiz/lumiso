@@ -239,6 +239,7 @@ export function AddSessionTypeDialog({
       title={t("sessionType.add_title", { ns: "forms" })}
       isOpen={open}
       onOpenChange={onOpenChange}
+      size="content"
       dirty={isDirty}
       onDirtyClose={handleDirtyClose}
       footerActions={footerActions}
@@ -553,6 +554,7 @@ export function EditSessionTypeDialog({
       title={t("sessionType.edit_title", { ns: "forms" })}
       isOpen={open}
       onOpenChange={onOpenChange}
+      size="content"
       dirty={isDirty}
       onDirtyClose={handleDirtyClose}
       footerActions={footerActions}

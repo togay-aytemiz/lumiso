@@ -234,7 +234,7 @@ const AllProjectsRefactored = () => {
         />
         </div>
 
-        <EnhancedProjectDialog onProjectCreated={refetchProjects} />
+        <EnhancedProjectDialog onProjectCreated={refetchProjects} entrySource="legacy" />
         <ViewProjectDialog 
           project={viewingProject}
           open={showViewDialog}
@@ -271,7 +271,7 @@ const AllProjectsRefactored = () => {
         itemsPerPage={20}
       />
 
-      <EnhancedProjectDialog onProjectCreated={refetchProjects} />
+      <EnhancedProjectDialog onProjectCreated={refetchProjects} entrySource="legacy" />
       <ViewProjectDialog 
         project={viewingProject}
         open={showViewDialog}

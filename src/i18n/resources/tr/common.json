@@ -79,7 +79,8 @@
     "deleting": "Siliniyor...",
     "processing": "İşleniyor...",
     "uploading": "Yükleniyor...",
-    "downloading": "İndiriliyor..."
+    "downloading": "İndiriliyor...",
+    "success": "Başarılı"
   },
   "table": {
     "noDataAvailable": "Veri yok",
@@ -112,6 +113,11 @@
       "project_deleted": "Proje başarıyla silindi",
       "lead_fetching_error": "Kişi bilgisi alınırken hata",
       "data_fetching_error": "Veri alınırken hata"
+    },
+    "error": {
+      "generic": "Bir sorun oluştu. Lütfen tekrar deneyin.",
+      "auth_required": "Devam etmek için giriş yapmalısınız.",
+      "organization_required": "Devam etmeden önce aktif bir organizasyon seçin."
     },
     "confirm": {
       "unsaved_changes": "Değişiklikler iptal edilsin mi?"

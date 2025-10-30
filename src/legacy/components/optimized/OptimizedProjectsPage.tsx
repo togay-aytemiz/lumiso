@@ -269,7 +269,7 @@ const OptimizedProjectsPage = React.memo(() => {
           </main>
         </div>
 
-        <EnhancedProjectDialog onProjectCreated={refetchProjects} />
+        <EnhancedProjectDialog onProjectCreated={refetchProjects} entrySource="legacy" />
         <ViewProjectDialog 
           project={viewingProject}
           open={showViewDialog}
@@ -312,7 +312,7 @@ const OptimizedProjectsPage = React.memo(() => {
         />
       </main>
 
-      <EnhancedProjectDialog onProjectCreated={refetchProjects} />
+      <EnhancedProjectDialog onProjectCreated={refetchProjects} entrySource="legacy" />
       <ViewProjectDialog 
         project={viewingProject}
         open={showViewDialog}

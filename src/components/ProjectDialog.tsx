@@ -19,7 +19,10 @@ interface ProjectDialogProps {
   onProjectCreated: () => void;
 }
 
-export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: ProjectDialogProps) {
+/**
+ * @deprecated Legacy project creation modal. Use ProjectCreationWizardSheet for new flows.
+ */
+export function LegacyProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: ProjectDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [projectTypeId, setProjectTypeId] = useState("");
@@ -226,3 +229,5 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
     </AppSheetModal>
   );
 }
+
+export { LegacyProjectDialog as ProjectDialog };

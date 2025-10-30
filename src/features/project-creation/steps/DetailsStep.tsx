@@ -37,10 +37,13 @@ export const DetailsStep = () => {
     if (fallbackId) {
       const fallbackLabel =
         statusOptions.find((option) => option.id === fallbackId)?.label;
-      updateDetails({
-        statusId: fallbackId,
-        statusLabel: fallbackLabel,
-      });
+      updateDetails(
+        {
+          statusId: fallbackId,
+          statusLabel: fallbackLabel,
+        },
+        { markDirty: false }
+      );
     }
   }, [state.details.statusId, state.meta.defaultStatusId, statusOptions, updateDetails]);
 
@@ -56,7 +59,7 @@ export const DetailsStep = () => {
     if (!state.details.statusId) return;
     const selected = statusOptions.find((option) => option.id === state.details.statusId);
     if (selected && state.details.statusLabel !== selected.label) {
-      updateDetails({ statusLabel: selected.label });
+      updateDetails({ statusLabel: selected.label }, { markDirty: false });
     }
   }, [
     state.details.statusId,
@@ -69,7 +72,7 @@ export const DetailsStep = () => {
     if (!state.details.projectTypeId) return;
     const selected = projectTypes.find((type) => type.id === state.details.projectTypeId);
     if (selected && state.details.projectTypeLabel !== selected.name) {
-      updateDetails({ projectTypeLabel: selected.name });
+      updateDetails({ projectTypeLabel: selected.name }, { markDirty: false });
     }
   }, [
     state.details.projectTypeId,
@@ -78,12 +81,15 @@ export const DetailsStep = () => {
     updateDetails,
   ]);
 
-  const handleProjectTypeChange = (value: string) => {
+  const handleProjectTypeChange = (value: string, options?: { isAutomatic?: boolean }) => {
     const selected = projectTypes.find((type) => type.id === value);
-    updateDetails({
-      projectTypeId: value,
-      projectTypeLabel: selected?.name,
-    });
+    updateDetails(
+      {
+        projectTypeId: value,
+        projectTypeLabel: selected?.name,
+      },
+      { markDirty: options?.isAutomatic ? false : undefined }
+    );
   };
 
   return (

@@ -17,7 +17,7 @@ interface ProjectType {
 
 interface ProjectTypeSelectorProps {
   value?: string;
-  onValueChange: (value: string) => void;
+  onValueChange: (value: string, meta?: { isAutomatic?: boolean }) => void;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
@@ -62,7 +62,7 @@ export function ProjectTypeSelector({
       if (!value && data && data.length > 0) {
         const defaultType = data.find(type => type.is_default);
         if (defaultType) {
-          onValueChange(defaultType.id);
+          onValueChange(defaultType.id, { isAutomatic: true });
         }
       }
     } catch (error: any) {

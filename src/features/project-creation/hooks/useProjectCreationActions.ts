@@ -26,22 +26,40 @@ export const useProjectCreationActions = () => {
   );
 
   const updateLead = useCallback(
-    (lead: ProjectCreationLead) => {
-      dispatch({ type: "UPDATE_LEAD", payload: lead });
+    (lead: ProjectCreationLead, options?: { markDirty?: boolean }) => {
+      dispatch({
+        type: "UPDATE_LEAD",
+        payload: lead,
+        markDirty: options?.markDirty,
+      });
     },
     [dispatch]
   );
 
   const updateDetails = useCallback(
-    (details: Partial<ProjectCreationDetails>) => {
-      dispatch({ type: "UPDATE_DETAILS", payload: details });
+    (
+      details: Partial<ProjectCreationDetails>,
+      options?: { markDirty?: boolean }
+    ) => {
+      dispatch({
+        type: "UPDATE_DETAILS",
+        payload: details,
+        markDirty: options?.markDirty,
+      });
     },
     [dispatch]
   );
 
   const updateServices = useCallback(
-    (services: Partial<ProjectCreationServices>) => {
-      dispatch({ type: "UPDATE_SERVICES", payload: services });
+    (
+      services: Partial<ProjectCreationServices>,
+      options?: { markDirty?: boolean }
+    ) => {
+      dispatch({
+        type: "UPDATE_SERVICES",
+        payload: services,
+        markDirty: options?.markDirty,
+      });
     },
     [dispatch]
   );

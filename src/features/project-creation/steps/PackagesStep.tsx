@@ -10,7 +10,7 @@ import { useProjectCreationActions } from "../hooks/useProjectCreationActions";
 import { ServicePicker, PickerService } from "@/components/ServicePicker";
 import { cn } from "@/lib/utils";
 import { Loader2, Sparkles } from "lucide-react";
-import type { ProjectCreationServices } from "../types";
+import type { ProjectCreationDetails, ProjectCreationServices } from "../types";
 
 interface PackageRecord {
   id: string;
@@ -132,7 +132,7 @@ export const PackagesStep = () => {
       showCustomSetup: true,
     });
 
-    const updates: Record<string, string> = {};
+    const updates: Partial<ProjectCreationDetails> = {};
     if (pkg.price != null) {
       updates.basePrice = pkg.price.toString();
     }

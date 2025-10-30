@@ -113,6 +113,7 @@ export function ProjectStatusBadge({
 
       const newStatus = statuses.find(s => s.id === newStatusId);
       if (!newStatus) throw new Error('Status not found');
+      const organizationId = activeOrganization?.id ?? null;
 
       // Get project details to get the lead_id
       const { data: projectData, error: projectError } = await supabase
@@ -132,7 +133,7 @@ export function ProjectStatusBadge({
       if (updateError) throw updateError;
 
       // Log the status change as an activity (only if there was a previous status)
-      if (currentStatus) {
+      if (organizationId && currentStatus) {
         const { error: activityError } = await supabase
           .from('activities')
           .insert({
@@ -140,13 +141,14 @@ export function ProjectStatusBadge({
             type: 'status_change',
             project_id: projectId,
             lead_id: projectData.lead_id,
-            user_id: userData.user.id
+            user_id: userData.user.id,
+            organization_id: organizationId
           });
 
         if (activityError) {
           console.error('Error logging activity:', activityError);
         }
-      } else {
+      } else if (organizationId) {
         // Log initial status assignment
         const { error: activityError } = await supabase
           .from('activities')
@@ -155,7 +157,8 @@ export function ProjectStatusBadge({
             type: 'status_change',
             project_id: projectId,
             lead_id: projectData.lead_id,
-            user_id: userData.user.id
+            user_id: userData.user.id,
+            organization_id: organizationId
           });
 
         if (activityError) {
@@ -173,14 +176,14 @@ export function ProjectStatusBadge({
       });
 
       // Send milestone notifications for status change
-      if (activeOrganization?.id && currentStatus?.id) {
-        await triggerProjectMilestone(projectId, currentStatus.id, newStatusId, activeOrganization.id, []);
+      if (organizationId && currentStatus?.id) {
+        await triggerProjectMilestone(projectId, currentStatus.id, newStatusId, organizationId, []);
       }
 
       // Trigger workflow for project status change
-      if (activeOrganization?.id && currentStatus?.id) {
+      if (organizationId && currentStatus?.id) {
         try {
-          await triggerProjectStatusChange(projectId, activeOrganization.id, currentStatus.name, newStatus.name, {
+          await triggerProjectStatusChange(projectId, organizationId, currentStatus.name, newStatus.name, {
             old_status_id: currentStatus.id,
             new_status_id: newStatusId,
             project_id: projectId,

@@ -146,6 +146,7 @@ export function LeadStatusBadge({
 
       const newStatus = statuses.find(s => s.id === newStatusId);
       if (!newStatus) throw new Error(tForms('status.statusNotFound'));
+      const organizationId = activeOrganization?.id ?? null;
 
       // Update lead status using status_id
       const { error: updateError } = await supabase
@@ -159,20 +160,21 @@ export function LeadStatusBadge({
       if (updateError) throw updateError;
 
       // Log the status change as an activity
-      if (currentStatusData) {
+      if (organizationId && currentStatusData) {
         const { error: activityError } = await supabase
           .from('activities')
           .insert({
             content: `Status changed from "${currentStatusData.name}" to "${newStatus.name}"`,
             type: 'status_change',
             lead_id: leadId,
-            user_id: userData.user.id
+            user_id: userData.user.id,
+            organization_id: organizationId
           });
 
         if (activityError) {
           console.error('Error logging activity:', activityError);
         }
-      } else {
+      } else if (organizationId) {
         // Log initial status assignment
         const { error: activityError } = await supabase
           .from('activities')
@@ -180,7 +182,8 @@ export function LeadStatusBadge({
             content: `Status set to "${newStatus.name}"`,
             type: 'status_change',
             lead_id: leadId,
-            user_id: userData.user.id
+            user_id: userData.user.id,
+            organization_id: organizationId
           });
 
         if (activityError) {

@@ -5,15 +5,38 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle2, Circle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useFormsTranslation, useMessagesTranslation } from "@/hooks/useTypedTranslation";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { useTranslation } from "react-i18next";
 
+const normalizeAuthPath = (pathname: string) => {
+  const trimmed = pathname.endsWith("/") && pathname !== "/" ? pathname.slice(0, -1) : pathname;
+  return trimmed.toLowerCase();
+};
+
+const getModeFromLocation = (pathname: string, search: string): "signin" | "signup" => {
+  const params = new URLSearchParams(search);
+  const queryMode = (params.get("view") || params.get("mode") || "").toLowerCase();
+
+  if (queryMode === "signup" || queryMode === "sign-up") return "signup";
+  if (queryMode === "signin" || queryMode === "sign-in" || queryMode === "login") return "signin";
+
+  const normalized = normalizeAuthPath(pathname || "");
+  if (normalized.endsWith("/auth/signup") || normalized.endsWith("/auth/sign-up")) {
+    return "signup";
+  }
+
+  return "signin";
+};
+
 const Auth = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(() => getModeFromLocation(location.pathname, location.search) === "signup");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isPasswordResetMode, setIsPasswordResetMode] = useState(false);
@@ -25,8 +48,6 @@ const Auth = () => {
   const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [prevFeatureIndex, setPrevFeatureIndex] = useState<number | null>(null);
-  const { user } = useAuth();
-  const navigate = useNavigate();
   const { t: tForm } = useFormsTranslation();
   const { t: tMsg } = useMessagesTranslation();
   const { t: tPages } = useTranslation('pages');
@@ -52,6 +73,15 @@ const Auth = () => {
   };
   const pwdStrength = getPasswordStrength(password);
   const resetPwdStrength = getPasswordStrength(newPassword);
+
+  useEffect(() => {
+    const derivedMode = (isPasswordResetMode || isPasswordResetRequestMode)
+      ? "signin"
+      : getModeFromLocation(location.pathname, location.search);
+    const shouldSignUp = derivedMode === "signup";
+
+    setIsSignUp((prev) => (prev === shouldSignUp ? prev : shouldSignUp));
+  }, [location.pathname, location.search, isPasswordResetMode, isPasswordResetRequestMode]);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -173,7 +203,7 @@ const Auth = () => {
     setResettingPassword(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?type=recovery`,
+        redirectTo: `${window.location.origin}/auth/signin?type=recovery`,
       });
 
       if (error) throw error;
@@ -220,15 +250,19 @@ const Auth = () => {
   };
 
   useEffect(() => {
-    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-    const searchParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(location.hash.replace(/^#/, ""));
+    const searchParams = new URLSearchParams(location.search);
+
     if (hashParams.get("type") === "recovery" || searchParams.get("type") === "recovery") {
+      if (getModeFromLocation(location.pathname, location.search) === "signup") {
+        navigate("/auth/signin", { replace: true });
+      }
       setIsSignUp(false);
       setIsPasswordResetRequestMode(false);
       setIsPasswordResetMode(true);
       setShowPassword(false);
     }
-  }, []);
+  }, [location, navigate]);
 
   const authLabel = isPasswordResetMode
     ? tForm('auth.password_reset.title')
@@ -442,6 +476,7 @@ const Auth = () => {
                               setIsPasswordResetMode(false);
                               setIsPasswordResetRequestMode(true);
                               setShowPassword(false);
+                              navigate("/auth/signin");
                             }}
                             disabled={loading}
                             className="px-0 text-sm font-semibold text-primary hover:text-primary/80"
@@ -521,7 +556,14 @@ const Auth = () => {
                     </span>
                     <Button
                       variant="link"
-                      onClick={() => setIsSignUp(!isSignUp)}
+                      onClick={() => {
+                        const nextIsSignUp = !isSignUp;
+                        setIsSignUp(nextIsSignUp);
+                        setIsPasswordResetMode(false);
+                        setIsPasswordResetRequestMode(false);
+                        setShowPassword(false);
+                        navigate(nextIsSignUp ? "/auth/signup" : "/auth/signin");
+                      }}
                       disabled={loading}
                       className="px-0 text-sm font-semibold text-primary hover:text-primary/80"
                     >
@@ -541,6 +583,7 @@ const Auth = () => {
                       setConfirmPassword("");
                       setShowPassword(false);
                       setIsSignUp(false);
+                      navigate("/auth/signin");
                     }}
                     disabled={updatingPassword || resettingPassword}
                     className="px-0 text-sm font-semibold text-primary hover:text-primary/80"

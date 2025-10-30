@@ -445,6 +445,7 @@ export function useProjectsData({
     next_session_date: row.next_session_date ?? null,
     todo_count: row.todo_count ?? 0,
     completed_todo_count: row.completed_todo_count ?? 0,
+    assignees: Array.isArray(row.assignees) ? row.assignees : row.assignees ?? null,
     open_todos: Array.isArray(row.open_todos) ? row.open_todos : [],
     paid_amount: row.paid_amount ?? 0,
     remaining_amount: row.remaining_amount ?? 0,
@@ -661,6 +662,7 @@ export function useProjectsData({
             paid_amount: paidAmount,
             remaining_amount: Number(project.base_price || 0) - paidAmount,
             services: servicesMap[project.id] ?? [],
+            assignees: Array.isArray(project.assignees) ? project.assignees : project.assignees ?? null,
           } as ProjectListItem;
         });
 

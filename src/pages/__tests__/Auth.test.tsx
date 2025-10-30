@@ -201,7 +201,8 @@ describe("Auth page", () => {
       expect(toastMock.success).toHaveBeenCalledWith("auth.email_confirmation");
     });
 
-    expect(navigateMock).not.toHaveBeenCalled();
+    expect(navigateMock).toHaveBeenCalledTimes(1);
+    expect(navigateMock).toHaveBeenCalledWith("/auth/signup");
   });
 
   it("completes sign up when email already confirmed", async () => {
@@ -256,7 +257,7 @@ describe("Auth page", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send reset link" }));
 
     expect(authMock.resetPasswordForEmail).toHaveBeenCalledWith("reset@example.com", {
-      redirectTo: "http://localhost/auth?type=recovery",
+      redirectTo: "http://localhost/auth/signin?type=recovery",
     });
 
     await waitFor(() => {

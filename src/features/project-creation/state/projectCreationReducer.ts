@@ -13,6 +13,16 @@ export interface ProjectCreationStepConfig {
   labelKey: string;
 }
 
+const shallowEqual = <T extends Record<string, unknown>>(a: T, b: T) => {
+  const keys = new Set([...Object.keys(a ?? {}), ...Object.keys(b ?? {})]);
+  for (const key of keys) {
+    if (!Object.is(a[key as keyof T], b[key as keyof T])) {
+      return false;
+    }
+  }
+  return true;
+};
+
 export const PROJECT_CREATION_STEPS: ProjectCreationStepConfig[] = [
   { id: "lead", labelKey: "steps.lead.navigationLabel" },
   { id: "details", labelKey: "steps.details.navigationLabel" },
@@ -25,6 +35,7 @@ const deriveInitialMeta = (entryContext: ProjectCreationEntryContext = {}): Proj
   isDirty: false,
   entrySource: entryContext.entrySource,
   defaultStatusId: entryContext.defaultStatusId,
+  initialEntryContext: Object.keys(entryContext).length ? { ...entryContext } : undefined,
 });
 
 export const createInitialProjectCreationState = (
@@ -82,30 +93,42 @@ export const projectCreationReducer = (
           currentStep: action.payload,
         },
       };
-    case "UPDATE_LEAD":
+    case "UPDATE_LEAD": {
+      const nextLead = {
+        ...state.lead,
+        ...action.payload,
+      };
+      if (shallowEqual(state.lead, nextLead)) {
+        return state;
+      }
+      const shouldMarkDirty = action.markDirty ?? true;
       return {
         ...state,
-        lead: {
-          ...state.lead,
-          ...action.payload,
-        },
+        lead: nextLead,
         meta: {
           ...state.meta,
-          isDirty: true,
+          isDirty: shouldMarkDirty ? true : state.meta.isDirty,
         },
       };
-    case "UPDATE_DETAILS":
+    }
+    case "UPDATE_DETAILS": {
+      const nextDetails = {
+        ...state.details,
+        ...action.payload,
+      };
+      if (shallowEqual(state.details, nextDetails)) {
+        return state;
+      }
+      const shouldMarkDirty = action.markDirty ?? true;
       return {
         ...state,
-        details: {
-          ...state.details,
-          ...action.payload,
-        },
+        details: nextDetails,
         meta: {
           ...state.meta,
-          isDirty: true,
+          isDirty: shouldMarkDirty ? true : state.meta.isDirty,
         },
       };
+    }
     case "UPDATE_SERVICES": {
       const nextServices = {
         ...state.services,
@@ -118,12 +141,16 @@ export const projectCreationReducer = (
       if (!nextServices.selectedServices) {
         nextServices.selectedServices = state.services.selectedServices;
       }
+      if (shallowEqual(state.services, nextServices)) {
+        return state;
+      }
+      const shouldMarkDirty = action.markDirty ?? true;
       return {
         ...state,
         services: nextServices,
         meta: {
           ...state.meta,
-          isDirty: true,
+          isDirty: shouldMarkDirty ? true : state.meta.isDirty,
         },
       };
     }

@@ -38,6 +38,7 @@ export interface ProjectCreationMetaState {
   isDirty: boolean;
   entrySource?: string;
   defaultStatusId?: string | null;
+  initialEntryContext?: ProjectCreationEntryContext;
 }
 
 export interface ProjectCreationState {
@@ -58,8 +59,16 @@ export interface ProjectCreationEntryContext {
 export type ProjectCreationAction =
   | { type: "LOAD_ENTRY_CONTEXT"; payload: ProjectCreationEntryContext }
   | { type: "SET_STEP"; payload: ProjectCreationStepId }
-  | { type: "UPDATE_LEAD"; payload: ProjectCreationLead }
-  | { type: "UPDATE_DETAILS"; payload: Partial<ProjectCreationDetails> }
-  | { type: "UPDATE_SERVICES"; payload: Partial<ProjectCreationServices> }
+  | { type: "UPDATE_LEAD"; payload: ProjectCreationLead; markDirty?: boolean }
+  | {
+      type: "UPDATE_DETAILS";
+      payload: Partial<ProjectCreationDetails>;
+      markDirty?: boolean;
+    }
+  | {
+      type: "UPDATE_SERVICES";
+      payload: Partial<ProjectCreationServices>;
+      markDirty?: boolean;
+    }
   | { type: "MARK_DIRTY"; payload: boolean }
   | { type: "RESET"; payload?: ProjectCreationEntryContext };

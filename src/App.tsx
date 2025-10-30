@@ -44,6 +44,10 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/signin" element={<Auth />} />
+          <Route path="/auth/sign-in" element={<Auth />} />
+          <Route path="/auth/signup" element={<Auth />} />
+          <Route path="/auth/sign-up" element={<Auth />} />
           {/* Team invitation routes removed for single photographer mode */}
           <Route path="/" element={<ProtectedRoute />}>
             <Route index element={<Index />} />

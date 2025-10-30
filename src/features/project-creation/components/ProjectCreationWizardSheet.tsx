@@ -90,11 +90,11 @@ const ProjectCreationWizardSheetInner = ({
 
   const forceClose = useCallback(() => {
     onOpenChange(false);
-    reset();
+    reset(state.meta.initialEntryContext);
     setIsCreating(false);
     openedRef.current = false;
     setShowGuardDialog(false);
-  }, [onOpenChange, reset]);
+  }, [onOpenChange, reset, state.meta.initialEntryContext]);
 
   const requestClose = useCallback(() => {
     if (state.meta.isDirty) {

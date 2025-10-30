@@ -26,6 +26,10 @@ describe("projectCreationReducer initialisation", () => {
     expect(state.lead.name).toBe("Taylor");
     expect(state.meta.currentStep).toBe("details");
     expect(state.meta.isDirty).toBe(false);
+    expect(state.meta.initialEntryContext).toEqual({
+      leadId: "lead-123",
+      leadName: "Taylor",
+    });
   });
 
   it("honours explicit start step overrides even with context", () => {
@@ -39,6 +43,35 @@ describe("projectCreationReducer initialisation", () => {
 });
 
 describe("projectCreationReducer mutations", () => {
+  it("preserves the initial entry context when state mutates", () => {
+    const base = createInitialProjectCreationState({
+      leadId: "lead-77",
+      leadName: "Avery",
+    });
+
+    const dirty = reduce(base, {
+      type: "UPDATE_DETAILS",
+      payload: { name: "Spring Wedding" },
+    });
+
+    expect(dirty.meta.initialEntryContext).toEqual({
+      leadId: "lead-77",
+      leadName: "Avery",
+    });
+  });
+
+  it("allows system updates without marking the wizard dirty", () => {
+    const base = createInitialProjectCreationState();
+    const updated = reduce(base, {
+      type: "UPDATE_DETAILS",
+      payload: { statusId: "status-123" },
+      markDirty: false,
+    });
+
+    expect(updated.details.statusId).toBe("status-123");
+    expect(updated.meta.isDirty).toBe(false);
+  });
+
   it("marks state dirty when updating lead", () => {
     const base = createInitialProjectCreationState();
     const updated = reduce(base, {
@@ -81,6 +114,7 @@ describe("projectCreationReducer mutations", () => {
       payload: { name: "Autumn Wedding" },
     });
     expect(dirty.meta.isDirty).toBe(true);
+    expect(dirty.meta.initialEntryContext).toBeUndefined();
 
     const reset = reduce(dirty, {
       type: "RESET",
@@ -90,5 +124,9 @@ describe("projectCreationReducer mutations", () => {
     expect(reset.meta.isDirty).toBe(false);
     expect(reset.lead.id).toBe("lead-42");
     expect(reset.meta.currentStep).toBe("details");
+    expect(reset.meta.initialEntryContext).toEqual({
+      leadId: "lead-42",
+      leadName: "Jordan",
+    });
   });
 });

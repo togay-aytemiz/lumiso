@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { computeLeadInitials } from "@/components/LeadInitials";
 import { User, Calendar, DollarSign, Package } from "lucide-react";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
@@ -41,6 +43,11 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
   onClick,
 }: ProfessionalKanbanCardProps) => {
   const { t } = useFormsTranslation();
+  const leadInitials = useMemo(
+    () => computeLeadInitials(project.lead?.name, "??", 2),
+    [project.lead?.name]
+  );
+  const leadName = project.lead?.name || t("projects.no_lead");
 
   return (
     <Card
@@ -48,28 +55,38 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
       onClick={onClick}
     >
       <CardContent className="p-4 md:p-3">
-        <div className="space-y-3">
+        <div className="space-y-4">
           {/* Project Type Badge */}
           {kanbanSettings.kanban_show_project_type && project.project_type && (
-            <Badge variant="secondary" className="text-xs font-medium">
+            <Badge
+              variant="secondary"
+              className="text-xs font-semibold bg-accent/15 text-accent border border-accent/20"
+            >
               {project.project_type.name}
             </Badge>
           )}
 
           {/* Project Name */}
           {kanbanSettings.kanban_show_project_name && (
-            <h3 className="font-bold text-base line-clamp-2 leading-tight">
+            <h3 className="text-lg font-semibold line-clamp-2 leading-snug text-slate-900">
               {project.name}
             </h3>
           )}
 
           {/* Client Information */}
           {kanbanSettings.kanban_show_client_name && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <User className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate">
-                {project.lead?.name || t("projects.no_lead")}
-              </span>
+            <div className="flex items-center gap-3 text-sm text-slate-900">
+              <Avatar className="h-9 w-9">
+                <AvatarFallback className="bg-muted text-slate-700 font-semibold uppercase">
+                  {leadInitials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex items-center gap-1.5 min-w-0 text-muted-foreground">
+                <User className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate text-slate-900">
+                  {leadName}
+                </span>
+              </div>
             </div>
           )}
 

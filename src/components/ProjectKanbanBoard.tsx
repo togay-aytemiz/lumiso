@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { LIFECYCLE_STATES, PROJECT_STATUS } from "@/constants/entityConstants";
 import type { ProjectListItem, ProjectStatusSummary } from "@/pages/projects/types";
 import { ProjectCreationWizardSheet } from "@/features/project-creation";
+import { cn } from "@/lib/utils";
 
 interface ProjectKanbanBoardProps {
   projects: ProjectListItem[];
@@ -289,8 +290,11 @@ const ProjectKanbanBoard = ({
     const ordered = orderProjects(columnProjects);
 
     return (
-      <div key={statusId} className="flex-shrink-0 w-80 bg-muted/30 rounded-lg flex flex-col">
-        <div className="p-4 pb-2 flex items-center justify-between flex-shrink-0">
+      <div
+        key={statusId}
+        className="flex w-80 flex-shrink-0 flex-col rounded-2xl border border-border/40 bg-muted/30"
+      >
+        <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-3">
           <div className="flex items-center gap-2">
             <button
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80"
@@ -317,57 +321,60 @@ const ProjectKanbanBoard = ({
           </Button>
         </div>
 
-        <div className="flex-1 px-4 pb-4 min-h-0">
-          <DnD.Droppable droppableId={statusId}>
-            {(provided, snapshot) => (
-              <div
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                className={`h-full flex flex-col transition-colors ${snapshot.isDraggingOver ? "bg-accent/20 rounded" : ""}`}
-              >
-                {/* Projects area */}
-                <div className="flex flex-col gap-2 mb-3">
-                  {ordered.map((project, index) => renderProjectCard(project, index))}
-                </div>
+        <DnD.Droppable droppableId={statusId}>
+          {(provided, snapshot) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className={cn(
+                "relative flex flex-col gap-4 px-4 pb-5",
+                snapshot.isDraggingOver && "bg-accent/10"
+              )}
+            >
+              <div className="flex flex-col gap-3">
+                {ordered.map((project, index) => renderProjectCard(project, index))}
+              </div>
 
-                {/* Add Project Button */}
-                <div className="mb-3">
-                  {ordered.length === 0 ? (
-                    <div className="flex items-center justify-center h-32 border-2 border-dashed border-muted-foreground/20 rounded-lg">
-                      <Button
-                        variant="outline"
-                        onClick={() => handleAddProject(status?.id || null)}
-                        className="flex items-center gap-2 border-dashed"
-                      >
-                        <Plus className="h-4 w-4" />
-                        {t('common:buttons.add_project')}
-                      </Button>
-                    </div>
-                  ) : (
+              <div>
+                {ordered.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-muted-foreground/30 bg-background/60 px-4 py-8 text-center">
                     <Button
                       variant="outline"
                       onClick={() => handleAddProject(status?.id || null)}
-                      className="w-full flex items-center gap-2 border-dashed"
+                      className="flex items-center gap-2 border-dashed"
                     >
                       <Plus className="h-4 w-4" />
                       {t('common:buttons.add_project')}
                     </Button>
-                  )}
-                </div>
-
-                {/* Large drop zone area */}
-                <div className="flex-1 min-h-32 relative">
-                  {provided.placeholder}
-                  {snapshot.isDraggingOver && (
-                    <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-lg bg-primary/5 flex items-center justify-center">
-                      <span className="text-muted-foreground text-sm">{t('forms:projects.drop_here')}</span>
-                    </div>
-                  )}
-                </div>
+                    <p className="text-xs text-muted-foreground">
+                      {t('forms:projects.drop_here')}
+                    </p>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={() => handleAddProject(status?.id || null)}
+                    className="w-full flex items-center gap-2 border-dashed"
+                  >
+                    <Plus className="h-4 w-4" />
+                    {t('common:buttons.add_project')}
+                  </Button>
+                )}
               </div>
-            )}
-          </DnD.Droppable>
-        </div>
+
+              <div className="flex-1 min-h-16" />
+              {provided.placeholder}
+
+              {snapshot.isDraggingOver && (
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl border-2 border-accent/40">
+                  <span className="text-sm font-medium text-accent">
+                    {t('forms:projects.drop_here')}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </DnD.Droppable>
       </div>
     );
   };
@@ -380,12 +387,12 @@ const ProjectKanbanBoard = ({
   return (
     <>
       <div
-        className="h-full w-full max-w-full overflow-x-auto"
+        className="w-full max-w-full overflow-x-auto"
         style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "thin", touchAction: "pan-x pan-y" }}
       >
-        <div className="p-4 sm:p-6 h-full">
+        <div className="p-4 sm:p-6">
           <DnD.DragDropContext onDragEnd={handleDragEnd}>
-            <div className="flex gap-2 sm:gap-3 pb-4 h-full" style={{ width: "max-content", minWidth: "100%" }}>
+            <div className="flex items-start gap-3 sm:gap-4 pb-4" style={{ width: "max-content", minWidth: "100%" }}>
               {statuses.map(status => renderColumn(status, getProjectsByStatus(status.id)))}
               {getProjectsWithoutStatus().length > 0 && renderColumn(null, getProjectsWithoutStatus())}
             </div>

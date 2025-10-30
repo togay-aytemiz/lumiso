@@ -163,8 +163,43 @@ const ProjectKanbanBoard = ({
     const moving = projects.find(p => p.id === projectId);
     if (!moving) return;
 
-    // OPTIMISTIC UPDATE: Update UI immediately (defer server refetch until after DB writes)
-    if (onProjectUpdate) onProjectUpdate({ ...moving, status_id: dstStatusId });
+    const shouldForceRefresh = !onProjectUpdate;
+
+    const dstBase = orderProjects(projects.filter(p => p.status_id === dstStatusId && p.id !== moving.id));
+    const insertIndex = Math.min(Math.max(destination.index, 0), dstBase.length);
+
+    const dstWithMoving: ProjectListItem[] = [...dstBase];
+    dstWithMoving.splice(insertIndex, 0, { ...moving, status_id: dstStatusId });
+
+    const { value, needReindex } = computeSortForInsert(dstWithMoving, insertIndex);
+    const requiresReindex = needReindex || value === null;
+
+    const srcAfterMove =
+      srcStatusId !== dstStatusId
+        ? orderProjects(projects.filter(p => p.status_id === srcStatusId && p.id !== moving.id))
+        : [];
+
+    if (onProjectUpdate) {
+      if (!requiresReindex && value !== null) {
+        onProjectUpdate({ ...moving, status_id: dstStatusId, sort_order: value });
+      } else {
+        const updatedDest = dstWithMoving.map((project, idx) => ({
+          ...project,
+          status_id: dstStatusId,
+          sort_order: (idx + 1) * GAP,
+        }));
+        updatedDest.forEach(project => onProjectUpdate(project));
+
+        if (srcStatusId !== dstStatusId && srcAfterMove.length > 0) {
+          const updatedSrc = srcAfterMove.map((project, idx) => ({
+            ...project,
+            status_id: srcStatusId,
+            sort_order: (idx + 1) * GAP,
+          }));
+          updatedSrc.forEach(project => onProjectUpdate(project));
+        }
+      }
+    }
 
     // Show immediate feedback
     if (srcStatusId !== dstStatusId) {
@@ -181,16 +216,8 @@ const ProjectKanbanBoard = ({
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error(t('forms:user_not_authenticated'));
 
-        const dstBase = orderProjects(projects.filter(p => p.status_id === dstStatusId && p.id !== moving.id));
-        const insertIndex = Math.min(Math.max(destination.index, 0), dstBase.length);
-
-        const dstWithMoving: ProjectListItem[] = [...dstBase];
-        dstWithMoving.splice(insertIndex, 0, { ...moving, status_id: dstStatusId });
-
-        const { value, needReindex } = computeSortForInsert(dstWithMoving, insertIndex);
-
         // Update project position in database
-        if (!needReindex && value !== null) {
+        if (!requiresReindex && value !== null) {
           const { error } = await supabase
             .from("projects")
             .update({ status_id: dstStatusId, sort_order: value })
@@ -199,7 +226,6 @@ const ProjectKanbanBoard = ({
         } else {
           await reindexColumn(dstStatusId, dstWithMoving);
           if (srcStatusId !== dstStatusId) {
-            const srcAfterMove = orderProjects(projects.filter(p => p.status_id === srcStatusId && p.id !== moving.id));
             await reindexColumn(srcStatusId, srcAfterMove);
           }
         }
@@ -239,12 +265,16 @@ const ProjectKanbanBoard = ({
           await Promise.all([activityPromise, notificationPromise]);
         }
 
-        // Background database operations completed, now refresh from server to ensure consistency
-        onProjectsChange();
+        // Background database operations completed; fall back to full refresh only when local state wasn't updated
+        if (shouldForceRefresh && onProjectsChange) {
+          onProjectsChange();
+        }
       } catch (error) {
         console.error("Error in background database operations:", error);
         // Sync with server to reflect actual state
-        onProjectsChange();
+        if (onProjectsChange) {
+          onProjectsChange();
+        }
         toast.error(t('forms:projects.toasts.move_sync_failed'));
       }
     })();

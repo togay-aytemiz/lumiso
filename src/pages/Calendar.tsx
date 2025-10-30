@@ -198,6 +198,10 @@ export default function Calendar() {
   const openProjectById = useCallback(
     async (projectId?: string | null) => {
       if (!projectId) return;
+      if (isMobile) {
+        navigate(`/projects/${projectId}`);
+        return;
+      }
       const { data, error } = await supabase
         .from("projects")
         .select("*")
@@ -209,7 +213,7 @@ export default function Calendar() {
         setProjectDialogOpen(true);
       }
     },
-    [leadsMap]
+    [isMobile, leadsMap, navigate]
   );
 
   const handleViewFullDetails = useCallback(() => {
@@ -219,10 +223,17 @@ export default function Calendar() {
     }
   }, [selectedProject, navigate]);
 
-  const handleSessionClick = useCallback((session: Session) => {
-    setSelectedSessionId(session.id);
-    setSessionSheetOpen(true);
-  }, []);
+  const handleSessionClick = useCallback(
+    (session: Session) => {
+      if (isMobile) {
+        navigate(`/sessions/${session.id}`);
+        return;
+      }
+      setSelectedSessionId(session.id);
+      setSessionSheetOpen(true);
+    },
+    [isMobile, navigate]
+  );
 
   const handleActivityClick = useCallback(
     (activity: Activity) => {

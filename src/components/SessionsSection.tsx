@@ -9,6 +9,7 @@ import { NewSessionDialogForProject } from "./NewSessionDialogForProject";
 import { useNavigate, useLocation } from "react-router-dom";
 import { sortSessionsByLifecycle, SessionWithStatus } from "@/lib/sessionSorting";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { useIsMobile } from "@/hooks/use-mobile";
 interface Session extends SessionWithStatus {
   session_name?: string | null;
   session_time: string;
@@ -40,6 +41,7 @@ export function SessionsSection({
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useFormsTranslation();
+  const isMobile = useIsMobile();
   const handleSessionUpdated = () => {
     onSessionUpdated();
     setEditingSessionId(null);
@@ -58,6 +60,10 @@ export function SessionsSection({
   };
 
   const handleSessionClick = (sessionId: string) => {
+    if (isMobile) {
+      navigate(`/sessions/${sessionId}`);
+      return;
+    }
     setSelectedSessionId(sessionId);
     setIsSessionSheetOpen(true);
   };

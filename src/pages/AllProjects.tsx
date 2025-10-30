@@ -244,9 +244,13 @@ const AllProjects = () => {
 
   // Helpers moved above first usage to avoid TDZ errors
   const handleQuickView = useCallback((project: ProjectListItem) => {
+    if (isMobile) {
+      navigate(`/projects/${project.id}`);
+      return;
+    }
     setQuickViewProject(project);
     setShowQuickView(true);
-  }, []);
+  }, [isMobile, navigate]);
 
   const handleLeadClick = useCallback((leadId: string) => {
     navigate(`/leads/${leadId}`);
@@ -948,9 +952,8 @@ const AllProjects = () => {
   }, [registerRetry, refreshAll]);
 
   const handleProjectClick = useCallback((project: ProjectListItem) => {
-    setQuickViewProject(project);
-    setShowQuickView(true);
-  }, []);
+    handleQuickView(project);
+  }, [handleQuickView]);
 
   const handleViewFullDetails = useCallback(() => {
     if (quickViewProject) {

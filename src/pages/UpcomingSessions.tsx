@@ -37,6 +37,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useSessionStatuses } from "@/hooks/useOrganizationData";
 import { Badge } from "@/components/ui/badge";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Session {
   id: string;
@@ -168,6 +169,7 @@ const AllSessions = () => {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const isMobile = useIsMobile();
 
   const fetchSessions = useCallback(async () => {
     setLoading(true);
@@ -513,6 +515,10 @@ const AllSessions = () => {
   }, [activeSegment, computedSessions, sortState]);
 
   const handleRowClick = (session: SessionWithComputed) => {
+    if (isMobile) {
+      navigate(`/sessions/${session.id}`);
+      return;
+    }
     setSelectedSessionId(session.id);
     setIsSessionSheetOpen(true);
   };
@@ -535,6 +541,10 @@ const AllSessions = () => {
   const handleProjectClick = useCallback(async (e: React.MouseEvent, session: SessionWithComputed) => {
     e.stopPropagation();
     if (!session.project_id) return;
+    if (isMobile) {
+      navigate(`/projects/${session.project_id}`);
+      return;
+    }
     try {
       const { data, error } = await supabase
         .from('projects')
@@ -555,7 +565,7 @@ const AllSessions = () => {
     } catch (err: any) {
       toast({ title: 'Unable to open project', description: err.message, variant: 'destructive' });
     }
-  }, []);
+  }, [isMobile, navigate]);
 
   const renderSegmentLabel = useCallback(
     (label: string, count: number) => (

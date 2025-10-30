@@ -5,6 +5,7 @@ import { DateRangePicker } from "@/components/DateRangePicker";
 import { ProjectSheetView } from "@/components/ProjectSheetView";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   format,
   subDays,
@@ -77,6 +78,7 @@ const pageSize = PAGE_SIZE;
   const [trendGrouping, setTrendGrouping] = useState<TrendGrouping>("month");
   const sheetCloseTimeoutRef = useRef<number | null>(null);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const dateLocale = useMemo(() => getDateFnsLocale(), []);
   const handleDataError = useCallback((error: Error) => {
     toast({
@@ -251,10 +253,14 @@ const pageSize = PAGE_SIZE;
       if (!payment.project_id || !payment.projects) {
         return;
       }
+      if (isMobile) {
+        navigate(`/projects/${payment.project_id}`);
+        return;
+      }
       setSelectedProject(payment.projects);
       handleProjectSheetOpenChange(true);
     },
-    [handleProjectSheetOpenChange]
+    [handleProjectSheetOpenChange, isMobile, navigate]
   );
 
   const handleNavigateToLead = useCallback(

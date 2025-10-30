@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { ProjectCreationWizardSheet } from "@/features/project-creation";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Project {
   id: string;
@@ -42,6 +43,7 @@ interface ProjectsSectionProps {
 
 export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onActivityUpdated, onProjectClicked }: ProjectsSectionProps) {
   const { t } = useTranslation(['pages', 'common']);
+  const isMobile = useIsMobile();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -130,6 +132,10 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   };
 
   const handleQuickViewProject = (project: Project) => {
+    if (isMobile) {
+      navigate(`/projects/${project.id}`);
+      return;
+    }
     setViewingProject(project);
     setShowViewDialog(true);
     // Call tutorial callback immediately when project is clicked

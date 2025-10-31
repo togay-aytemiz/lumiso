@@ -361,62 +361,57 @@ const PackagesSection = () => {
                               );
                             })()}
                           </td>
-                             <td className="px-4 py-3">
-                              <div className="flex flex-wrap gap-1">
-                                {pkg.applicable_types.length === 0 ? (
-                                  <Badge variant="outline" className="text-xs">{t('packages.all_types')}</Badge>
-                                ) : (
-                                  pkg.applicable_types.map((type) => (
-                                    <Badge key={type} variant="secondary" className="text-xs">
-                                      {type}
-                                    </Badge>
-                                  ))
-                                )}
-                              </div>
-                            </td>
-                             <td className="px-4 py-3">
-                               <div className="flex flex-wrap gap-1">
-                                 {pkg.default_add_ons.length === 0 ? (
-                                   <span className="text-sm text-muted-foreground">{t('packages.none')}</span>
-                                 ) : (
-                                   <TooltipProvider>
-                                     <Tooltip>
-                                       <TooltipTrigger asChild>
-                                         <div className="cursor-help">
-                                           <Badge variant="outline" className="text-xs">
-                                             {t('packages.addons_count', { count: pkg.default_add_ons.length })}
-                                           </Badge>
-                                         </div>
-                                       </TooltipTrigger>
-                                       <TooltipContent>
-                                         <div className="max-w-xs">
-                                           <p className="font-medium">{t('packages.default_addons_tooltip')}</p>
-                                           {pkg.default_add_ons.length > 0 ? (
-                                             <ul className="mt-1 text-sm">
-                                               {pkg.default_add_ons.map(serviceId => {
-                                                 const service = services.find(s => s.id === serviceId);
-                                                 return (
-                                                   <li key={serviceId}>
-                                                     • {service?.name || t('packages.unknown_service')}
-                                                   </li>
-                                                 );
-                                               })}
-                                             </ul>
-                                           ) : (
-                                             <p className="text-sm text-muted-foreground">{t('packages.no_services_selected')}</p>
-                                           )}
-                                         </div>
-                                       </TooltipContent>
-                                     </Tooltip>
-                                   </TooltipProvider>
-                                 )}
-                               </div>
-                             </td>
-                            <td className="px-4 py-3">
-                              <Badge variant={pkg.is_active ? "default" : "secondary"}>
-                                {pkg.is_active ? t('packages.active') : t('packages.inactive')}
-                              </Badge>
-                            </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-wrap gap-1">
+                              {pkg.applicable_types.length === 0 ? (
+                                <Badge variant="outline" className="text-xs">{t('packages.all_types')}</Badge>
+                              ) : (
+                                pkg.applicable_types.map((type) => (
+                                  <Badge key={type} variant="secondary" className="text-xs">
+                                    {type}
+                                  </Badge>
+                                ))
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-wrap gap-1">
+                              {pkg.default_add_ons.length === 0 ? (
+                                <span className="text-sm text-muted-foreground">{t('packages.none')}</span>
+                              ) : (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="cursor-help">
+                                        <Badge variant="outline" className="text-xs">
+                                          {t('packages.addons_count', { count: pkg.default_add_ons.length })}
+                                        </Badge>
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <div className="max-w-xs">
+                                        <p className="font-medium">{t('packages.default_addons_tooltip')}</p>
+                                        {pkg.default_add_ons.length > 0 ? (
+                                          <ul className="mt-1 text-sm">
+                                            {pkg.default_add_ons.map((serviceId) => {
+                                              const service = services.find((s) => s.id === serviceId);
+                                              return (
+                                                <li key={serviceId}>
+                                                  • {service?.name || t('packages.unknown_service')}
+                                                </li>
+                                              );
+                                            })}
+                                          </ul>
+                                        ) : (
+                                          <p className="text-sm text-muted-foreground">{t('packages.no_services_selected')}</p>
+                                        )}
+                                      </div>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                            </div>
+                          </td>
                             <td className="px-4 py-3">
                               {canManagePackages ? (
                                <IconActionButtonGroup>

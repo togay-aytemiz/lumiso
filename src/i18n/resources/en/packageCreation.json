@@ -54,8 +54,8 @@
           "all": "All project types"
         },
         "visibility": {
-          "label": "Visible in packages list",
-          "helper": "Turn off to hide this package from new bookings while keeping it saved."
+          "label": "Active",
+          "helper": "When off, it becomes passive but stays in your records."
         }
       }
     },

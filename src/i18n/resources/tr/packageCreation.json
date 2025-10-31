@@ -54,8 +54,8 @@
           "all": "Tüm proje türleri"
         },
         "visibility": {
-          "label": "Paket listesinde görünsün",
-          "helper": "Kapattığında paket yeni tekliflerde gizlenir, ancak kaydedilmiş kalır."
+          "label": "Aktif",
+          "helper": "Kapattığınızda pasif olur, kayıtlarda kalır."
         }
       }
     },

@@ -279,7 +279,17 @@
     "add": "Add Service",
     "edit": "Edit Services",
     "selected_services": "Selected Services",
-    "services_updated": "Project services updated successfully"
+    "services_updated": "Project services updated successfully",
+    "types": {
+      "coverage": "Team & coverage",
+      "deliverable": "Products & deliverables",
+      "coverage_hint": "Assign photographers, videographers or assistants to shoots.",
+      "deliverable_hint": "Albums, prints, digital deliveries and other add-ons."
+    },
+    "empty": {
+      "coverage": "No coverage services yet. Add your team or staffing options.",
+      "deliverable": "No deliverables yet. Add albums, print packs or extras."
+    }
   },
   "project_stages": {
     "title": "Project Stages",
@@ -1249,6 +1259,15 @@
     "price": "Price",
     "extra": "Mark as Extra/Add-on",
     "extra_help": "Extras can be added to projects as optional add-on services",
+    "intro": "Classify each service so bundles and projects stay clear for your team and clients.",
+    "service_type_label": "Service type",
+    "service_type_coverage": "Team & coverage",
+    "service_type_deliverable": "Products & deliverables",
+    "service_type_coverage_hint": "Staff-driven services like second shooters, videographers or assistants.",
+    "service_type_deliverable_hint": "Albums, prints, canvases, digital galleries and other deliverables.",
+    "default_categories_label": "Default categories",
+    "custom_categories_label": "Custom categories",
+    "new_category_placeholder": "Enter new category name",
     "categories": {
       "albums": "Albums",
       "prints": "Prints",

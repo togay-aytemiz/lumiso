@@ -10,7 +10,6 @@ export interface LeadWithCustomFields {
   phone: string;
   status: string;
   status_id: string;
-  assignees: string[];
   updated_at: string;
   created_at: string;
   due_date?: string;
@@ -73,7 +72,6 @@ export function useLeadsWithCustomFields() {
       // Combine leads with their custom field values
       const leadsWithFields: LeadWithCustomFields[] = (leadsData || []).map(lead => ({
         ...lead,
-        assignees: [], // Single photographer mode - no assignees needed
         custom_fields: fieldValuesByLead[lead.id] || {},
       }));
 

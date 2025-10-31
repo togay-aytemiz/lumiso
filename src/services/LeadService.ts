@@ -8,7 +8,6 @@ export interface LeadWithCustomFields {
   phone: string;
   status: string;
   status_id: string;
-  assignees: string[];
   updated_at: string;
   created_at: string;
   due_date?: string;
@@ -101,13 +100,12 @@ export class LeadService extends BaseEntityService {
       return acc;
     }, {} as Record<string, Record<string, string | null>>);
 
-    // Combine leads with their custom field values
-    return (leadsData || []).map(lead => ({
-      ...lead,
-      assignees: [], // Single photographer mode - no assignees needed
-      custom_fields: fieldValuesByLead[lead.id] || {},
-    }));
-  }
+  // Combine leads with their custom field values
+  return (leadsData || []).map(lead => ({
+    ...lead,
+    custom_fields: fieldValuesByLead[lead.id] || {},
+  }));
+}
 
   /**
    * Fetch filtered and sorted leads

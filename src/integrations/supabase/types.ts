@@ -1191,13 +1191,16 @@ export type Database = {
           description: string | null
           extra: boolean | null
           id: string
+          is_people_based: boolean
           is_sample: boolean | null
           name: string
           organization_id: string | null
           price: number | null
+          service_type: "coverage" | "deliverable"
           selling_price: number | null
           updated_at: string
           user_id: string
+          default_unit: string | null
         }
         Insert: {
           category?: string | null
@@ -1206,13 +1209,16 @@ export type Database = {
           description?: string | null
           extra?: boolean | null
           id?: string
+          is_people_based?: boolean
           is_sample?: boolean | null
           name: string
           organization_id?: string | null
           price?: number | null
+          service_type?: "coverage" | "deliverable"
           selling_price?: number | null
           updated_at?: string
           user_id: string
+          default_unit?: string | null
         }
         Update: {
           category?: string | null
@@ -1221,13 +1227,16 @@ export type Database = {
           description?: string | null
           extra?: boolean | null
           id?: string
+          is_people_based?: boolean
           is_sample?: boolean | null
           name?: string
           organization_id?: string | null
           price?: number | null
+          service_type?: "coverage" | "deliverable"
           selling_price?: number | null
           updated_at?: string
           user_id?: string
+          default_unit?: string | null
         }
         Relationships: []
       }

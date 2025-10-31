@@ -199,7 +199,7 @@ Deno.test("sends assignment notification when enabled", withMockedResend(async (
 Deno.test("skips milestone notification when lifecycle is not milestone", withMockedResend(async () => {
   const supabase = createSupabaseStub({
     select: {
-      projects: { data: { id: "project-1", name: "Spring Wedding", assignees: [], status_id: "status-1" } },
+      projects: { data: { id: "project-1", name: "Spring Wedding", status_id: "status-1" } },
       project_statuses: { data: { name: "Editing", lifecycle: "active" } },
       organization_settings: { data: { notification_project_milestone_enabled: true, notification_global_enabled: true } },
     },
@@ -222,19 +222,12 @@ Deno.test("skips milestone notification when lifecycle is not milestone", withMo
   assertEquals(body.successful, 0);
 }));
 
-Deno.test("sends milestone notifications to assigned users", withMockedResend(async () => {
+Deno.test("returns skip response for milestone notifications in single photographer mode", withMockedResend(async () => {
   const supabase = createSupabaseStub({
     select: {
-      projects: { data: { id: "project-1", name: "Spring Wedding", description: "Notes", assignees: ["user-1"], project_types: { name: "Wedding" }, status_id: "status-2", lead_id: "lead-1" } },
+      projects: { data: { id: "project-1", name: "Spring Wedding", description: "Notes", project_types: { name: "Wedding" }, status_id: "status-2", lead_id: "lead-1" } },
       leads: { data: { name: "Elif" } },
       project_statuses: { data: { name: "Completed", lifecycle: "completed" } },
-      organization_settings: { data: { photography_business_name: "Studio", primary_brand_color: "#123456", notification_project_milestone_enabled: true, notification_global_enabled: true } },
-      profiles: { data: { full_name: "Assignee Profile" } },
-      user_language_preferences: { data: { language_code: "en" } },
-      user_settings: { data: { notification_project_milestone_enabled: true, notification_global_enabled: true } },
-    },
-    authUsers: {
-      "user-1": { data: { user: { email: "user@example.com", user_metadata: { full_name: "Metadata" } } } },
     },
   });
 
@@ -251,10 +244,9 @@ Deno.test("sends milestone notifications to assigned users", withMockedResend(as
 
   const body = await response.json();
   assertEquals(response.status, 200);
-  assertEquals(body.successful, 1);
+  assertEquals(body.successful, 0);
   assertEquals(body.failed, 0);
-  assertEquals(body.total, 1);
-  assertEquals(supabase.updateCalls.length > 0, true);
-  const lastUpdate = supabase.updateCalls[supabase.updateCalls.length - 1];
-  assertEquals(lastUpdate.values.status, "sent");
+  assertEquals(body.total, 0);
+  assertEquals(body.skipped, 1);
+  assertEquals(body.message, "Milestone notifications disabled in single photographer mode");
 }));

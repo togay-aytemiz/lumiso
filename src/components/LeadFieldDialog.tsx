@@ -43,7 +43,6 @@ const RESERVED_FIELD_KEYS = new Set([
   "status",
   "updated_at",
   "created_at",
-  "assignees",
   "status_id",
   "due_date",
   "notes",

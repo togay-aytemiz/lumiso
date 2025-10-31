@@ -37,10 +37,9 @@ describe("useNotificationTriggers", () => {
       "status-old",
       "status-new",
       "org-1",
-      ["assignee-1", "assignee-2"],
     ] as const;
 
-    it("creates milestone notifications and invokes processor", async () => {
+    it("fetches statuses and exits without notifications", async () => {
       supabaseGetUserMock.mockResolvedValue({
         data: { user: { id: "user-123" } },
       });
@@ -57,15 +56,8 @@ describe("useNotificationTriggers", () => {
         if (table === "project_statuses") {
           return statusChain;
         }
-        if (table === "notifications") {
-          return {
-            insert: jest.fn(() => Promise.resolve({ error: null })),
-          };
-        }
         throw new Error(`Unexpected table ${table}`);
       });
-
-      supabaseInvokeMock.mockResolvedValue({ data: null, error: null });
 
       const { result } = renderHook(() => useNotificationTriggers());
 
@@ -73,14 +65,12 @@ describe("useNotificationTriggers", () => {
         await result.current.triggerProjectMilestone(...milestoneArgs);
       });
 
-      expect(supabaseFromMock).toHaveBeenCalledWith("notifications");
-      expect(supabaseInvokeMock).toHaveBeenCalledWith("notification-processor", {
-        body: { action: "process-pending", organizationId: "org-1" },
-      });
+      expect(supabaseFromMock).toHaveBeenCalledWith("project_statuses");
+      expect(supabaseInvokeMock).not.toHaveBeenCalled();
       expect(toastMock).not.toHaveBeenCalled();
     });
 
-    it("shows destructive toast when insertion fails", async () => {
+    it("shows destructive toast when status fetch throws", async () => {
       supabaseGetUserMock.mockResolvedValue({
         data: { user: { id: "user-123" } },
       });
@@ -88,7 +78,7 @@ describe("useNotificationTriggers", () => {
       const statusChain = {
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({ data: { name: "Status", lifecycle: "milestone" } })),
+            single: jest.fn(() => Promise.reject(new Error("status fetch failed"))),
           })),
         })),
       };
@@ -97,17 +87,8 @@ describe("useNotificationTriggers", () => {
         if (table === "project_statuses") {
           return statusChain;
         }
-        if (table === "notifications") {
-          return {
-            insert: jest.fn(() =>
-              Promise.resolve({ error: new Error("insert failed") })
-            ),
-          };
-        }
         throw new Error(`Unexpected table ${table}`);
       });
-
-      supabaseInvokeMock.mockResolvedValue({ data: null, error: null });
 
       const { result } = renderHook(() => useNotificationTriggers());
 

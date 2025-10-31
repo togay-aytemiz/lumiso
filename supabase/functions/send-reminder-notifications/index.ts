@@ -1189,7 +1189,6 @@ export async function handleProjectMilestoneNotification(requestData: ReminderRe
         id,
         name,
         description,
-        assignees,
         project_types(name),
         status_id,
         lead_id
@@ -1241,180 +1240,14 @@ export async function handleProjectMilestoneNotification(requestData: ReminderRe
       });
     }
 
-    // Get organization settings for branding and notification preferences
-    const { data: orgSettings } = await adminSupabase
-      .from('organization_settings')
-      .select('photography_business_name, primary_brand_color, notification_project_milestone_enabled, notification_global_enabled')
-      .eq('organization_id', organizationId)
-      .maybeSingle();
-
-    let successful = 0;
-    let failed = 0;
-    let skipped = 0;
-    const total = project.assignees?.length || 0;
-
-    // Send notifications to all assigned users
-    for (const assigneeId of project.assignees || []) {
-      try {
-        // Get assignee details
-        const { data: assigneeProfile } = await adminSupabase
-          .from('profiles')
-          .select('full_name')
-          .eq('user_id', assigneeId)
-          .maybeSingle();
-
-        const { data: assigneeAuth } = await adminSupabase.auth.admin.getUserById(assigneeId);
-        
-        if (!assigneeAuth?.user?.email) {
-          console.log('No email found for assignee:', assigneeId);
-          failed++;
-          continue;
-        }
-
-        const assigneeName = assigneeProfile?.full_name || 
-                            assigneeAuth.user.user_metadata?.full_name || 
-                            assigneeAuth.user.email.split('@')[0];
-
-        const { data: assigneeLanguage } = await adminSupabase
-          .from('user_language_preferences')
-          .select('language_code')
-          .eq('user_id', assigneeId)
-          .maybeSingle();
-
-        const localization = createEmailLocalization(assigneeLanguage?.language_code);
-        const t = localization.t;
-
-        // Get user-level notification settings (takes precedence over org settings)
-        const { data: userSettings } = await adminSupabase
-          .from('user_settings')
-          .select('notification_project_milestone_enabled, notification_global_enabled')
-          .eq('user_id', assigneeId)
-          .maybeSingle();
-
-        // Check if milestone notifications are disabled - user settings override org settings
-        const globalEnabled = (userSettings?.notification_global_enabled ?? orgSettings?.notification_global_enabled) ?? true;
-        const milestoneEnabled = (userSettings?.notification_project_milestone_enabled ?? orgSettings?.notification_project_milestone_enabled) ?? true;
-
-        if (!globalEnabled || !milestoneEnabled) {
-          console.log(`Milestone notifications disabled for user ${assigneeId} - Global: ${globalEnabled}, Milestone: ${milestoneEnabled}`);
-          
-          // Update notification to skipped
-          await adminSupabase
-            .from('notifications')
-            .update({ status: 'skipped', updated_at: new Date().toISOString() })
-            .eq('user_id', assigneeId)
-            .eq('notification_type', 'project-milestone')
-            .eq('status', 'pending')
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-          skipped++;
-          continue;
-        }
-
-        // Generate unified milestone notification
-        const notificationData: ProjectMilestoneData = {
-          type: 'project-milestone' as const,
-          organizationId: organizationId,
-          triggeredByUser: {
-            name: changedByUserName,
-            id: milestone_user_id || ''
-          },
-          project: {
-            id: project.id,
-            name: project.name,
-            type: project.project_types?.name || undefined,
-            oldStatus: old_status || 'Previous Status',
-            newStatus: currentStatusName,
-            lifecycle: lifecycle as 'completed' | 'cancelled',
-            notes: project.description || undefined,
-            leadName: leadName || undefined
-          },
-          assignee: {
-            name: assigneeName,
-            email: assigneeAuth.user.email
-          }
-        };
-
-        const emailData: ImmediateNotificationEmailData = {
-          user: {
-            fullName: assigneeName,
-            email: assigneeAuth.user.email
-          },
-          business: {
-            businessName: orgSettings?.photography_business_name || 'Lumiso',
-            brandColor: orgSettings?.primary_brand_color || '#1EB29F'
-          },
-          notificationData,
-          language: localization.language,
-          localization,
-          baseUrl: 'https://my.lumiso.app'
-        };
-        
-        const emailHtml = generateImmediateNotificationEmail(emailData);
-        const emailSubject = generateSubject(notificationData, t);
-
-        // Send the email
-        const emailResult = await resend.emails.send({
-          from: 'Lumiso <hello@updates.lumiso.app>',
-          to: [assigneeAuth.user.email],
-          subject: emailSubject,
-          html: emailHtml
-        });
-
-        console.log(`Milestone notification sent to ${assigneeAuth.user.email}:`, emailResult);
-
-        // Update notification status to sent
-        await adminSupabase
-          .from('notifications')
-          .update({ 
-            status: 'sent', 
-            updated_at: new Date().toISOString(),
-            email_id: emailResult.data?.id || null 
-          })
-          .eq('user_id', assigneeId)
-          .eq('notification_type', 'project-milestone')
-          .eq('status', 'pending')
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        successful++;
-
-      } catch (error: unknown) {
-        console.error(`Error sending milestone notification to ${assigneeId}:`, error);
-        
-        // Log error in notifications table
-        try {
-          await adminSupabase
-            .from('notifications')
-            .update({ 
-              status: 'failed', 
-              error_message: getErrorMessage(error),
-              updated_at: new Date().toISOString(),
-              retry_count: 1
-            })
-            .eq('user_id', assigneeId)
-            .eq('notification_type', 'project-milestone')
-            .eq('status', 'pending')
-            .order('created_at', { ascending: false })
-            .limit(1);
-        } catch (logError) {
-          console.error('Failed to update error log:', logError);
-        }
-
-        failed++;
-      }
-    }
+    console.log('Milestone notifications disabled in single photographer mode — skipping email delivery');
 
     return new Response(JSON.stringify({
-      message: `Project milestone notifications processed for ${project.name}`,
-      successful,
-      failed,
-      skipped,
-      total,
-      projectName: project.name,
-      newStatus: currentStatusName,
-      lifecycle
+      message: 'Milestone notifications disabled in single photographer mode',
+      successful: 0,
+      failed: 0,
+      skipped: 1,
+      total: 0
     }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },

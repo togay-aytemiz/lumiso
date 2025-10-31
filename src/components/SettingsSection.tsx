@@ -17,15 +17,15 @@ const SettingsSection = ({ title, description, action, children }: SettingsSecti
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-1">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0 space-y-1">
             <CardTitle>{title}</CardTitle>
             {description && <CardDescription>{description}</CardDescription>}
           </div>
           {action && (
             <Button
               onClick={action.onClick}
-              className="flex w-full items-center justify-center gap-2 sm:w-auto sm:justify-center"
+              className="flex items-center gap-2 whitespace-nowrap"
             >
               {action.icon}
               {action.label}

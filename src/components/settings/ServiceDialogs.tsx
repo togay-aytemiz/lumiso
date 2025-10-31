@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
@@ -13,81 +13,138 @@ import { useTranslation } from "react-i18next";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./NavigationGuardDialog";
 
-interface AddServiceDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onServiceAdded: () => void;
+type ServiceType = "coverage" | "deliverable";
+
+interface ServiceFormState {
+  name: string;
+  description: string;
+  category: string;
+  price: string;
+  cost_price: string;
+  selling_price: string;
+  extra: boolean;
+  service_type: ServiceType;
 }
 
-export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServiceDialogProps) {
-  const { t } = useTranslation(['forms', 'common']);
-  const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    category: "",
-    price: "",
-    cost_price: "",
-    selling_price: "",
-    extra: false,
-  });
+const PREDEFINED_CATEGORIES = ["Albums", "Prints", "Extras", "Digital", "Packages", "Retouching", "Frames"];
 
-  // Predefined categories and fetch existing ones
-  const predefinedCategories = ["Albums", "Prints", "Extras", "Digital", "Packages", "Retouching", "Frames"];
-  
+const createFormState = (serviceType: ServiceType, overrides: Partial<ServiceFormState> = {}): ServiceFormState => ({
+  name: "",
+  description: "",
+  category: "",
+  price: "",
+  cost_price: "",
+  selling_price: "",
+  extra: false,
+  service_type: serviceType,
+  ...overrides,
+});
+
+const useServiceCategories = (open: boolean) => {
+  const [categories, setCategories] = useState<string[]>([]);
+
   useEffect(() => {
+    if (!open) return;
+
+    let cancelled = false;
     const fetchCategories = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Get user's active organization
         const organizationId = await getUserOrganizationId();
-        if (!organizationId) {
-          return;
-        }
+        if (!organizationId) return;
 
         const { data, error } = await supabase
-          .from('services')
-          .select('category')
-          .eq('organization_id', organizationId)
-          .not('category', 'is', null);
+          .from("services")
+          .select("category")
+          .eq("organization_id", organizationId)
+          .not("category", "is", null);
 
         if (error) throw error;
 
-        const uniqueCategories = [...new Set(data.map(item => item.category).filter(Boolean))];
-        const customCategories = uniqueCategories.filter(cat => !predefinedCategories.includes(cat));
-        setCategories(customCategories);
+        if (!cancelled) {
+          const uniqueCategories = [...new Set((data || []).map((item) => item.category).filter(Boolean))] as string[];
+          const customCategories = uniqueCategories.filter((category) => !PREDEFINED_CATEGORIES.includes(category));
+          setCategories(customCategories);
+        }
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error("Error fetching categories:", error);
       }
     };
 
-    if (open) {
-      fetchCategories();
-      setShowNewCategoryInput(false);
-      setNewCategoryName("");
-    }
+    fetchCategories();
+
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
-  const handleCreateNewCategory = () => {
-    if (newCategoryName.trim()) {
-      setFormData(prev => ({ ...prev, category: newCategoryName.trim() }));
-      setCategories(prev => [...prev, newCategoryName.trim()]);
+  return { categories, setCategories };
+};
+
+interface AddServiceDialogProps {
+  open: boolean;
+  initialType: ServiceType;
+  onOpenChange: (open: boolean) => void;
+  onServiceAdded: () => void;
+}
+
+export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialType }: AddServiceDialogProps) {
+  const { t } = useTranslation(["forms", "common"]);
+  const [loading, setLoading] = useState(false);
+  const { categories, setCategories } = useServiceCategories(open);
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [formData, setFormData] = useState<ServiceFormState>(() => createFormState(initialType));
+
+  useEffect(() => {
+    if (open) {
+      setFormData(createFormState(initialType));
       setShowNewCategoryInput(false);
       setNewCategoryName("");
     }
+  }, [open, initialType]);
+
+  const serviceTypeOptions = useMemo(
+    () => [
+      {
+        value: "coverage" as ServiceType,
+        label: t("service.service_type_coverage"),
+        description: t("service.service_type_coverage_hint"),
+      },
+      {
+        value: "deliverable" as ServiceType,
+        label: t("service.service_type_deliverable"),
+        description: t("service.service_type_deliverable_hint"),
+      },
+    ],
+    [t]
+  );
+
+  const handleServiceTypeChange = (type: ServiceType) => {
+    setFormData((prev) => ({
+      ...prev,
+      service_type: type,
+    }));
+  };
+
+  const handleCreateNewCategory = () => {
+    if (!newCategoryName.trim()) return;
+
+    const normalized = newCategoryName.trim();
+    setFormData((prev) => ({ ...prev, category: normalized }));
+    setCategories((prev) => (prev.includes(normalized) ? prev : [...prev, normalized]));
+    setShowNewCategoryInput(false);
+    setNewCategoryName("");
   };
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast({
-        title: t('common.toast.error'),
-        description: t('service.errors.name_required'),
-        variant: "destructive"
+        title: t("toast.error", { ns: "common" }),
+        description: t("service.errors.name_required"),
+        variant: "destructive",
       });
       return;
     }
@@ -95,100 +152,79 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user) throw new Error("User not authenticated");
 
-      // Get user's active organization
       const organizationId = await getUserOrganizationId();
-      if (!organizationId) {
-        throw new Error("Organization required");
-      }
+      if (!organizationId) throw new Error("Organization required");
 
-      const { error } = await supabase
-        .from('services')
-        .insert({
-          user_id: user.id,
-          organization_id: organizationId,
-          name: formData.name.trim(),
-          description: formData.description.trim() || null,
-          category: formData.category.trim() || null,
-          price: formData.price ? parseFloat(formData.price) : 0,
-          cost_price: formData.cost_price ? parseFloat(formData.cost_price) : 0,
-          selling_price: formData.selling_price ? parseFloat(formData.selling_price) : 0,
-          extra: formData.extra,
-        });
+      const serviceType = formData.service_type;
+      const isCoverage = serviceType === "coverage";
+
+      const { error } = await supabase.from("services").insert({
+        user_id: user.id,
+        organization_id: organizationId,
+        name: formData.name.trim(),
+        description: formData.description.trim() || null,
+        category: formData.category.trim() || null,
+        price: formData.price ? parseFloat(formData.price) : 0,
+        cost_price: formData.cost_price ? parseFloat(formData.cost_price) : 0,
+        selling_price: formData.selling_price ? parseFloat(formData.selling_price) : 0,
+        extra: formData.extra,
+        service_type: serviceType,
+        is_people_based: isCoverage,
+        default_unit: null,
+      });
 
       if (error) throw error;
 
       toast({
-        title: t('common.toast.success'),
-        description: t('service.success.added')
+        title: t("toast.success", { ns: "common" }),
+        description: t("service.success.added"),
       });
 
-      setFormData({
-        name: "",
-        description: "",
-        category: "",
-        price: "",
-        cost_price: "",
-        selling_price: "",
-        extra: false,
-      });
+      setFormData(createFormState(initialType));
       onOpenChange(false);
       onServiceAdded();
     } catch (error: any) {
       toast({
-        title: t('common.toast.error'),
+        title: t("toast.error", { ns: "common" }),
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const isDirty = Boolean(
-    formData.name.trim() ||
-    formData.description.trim() ||
-    formData.category.trim() ||
-    formData.price.trim() ||
-    formData.cost_price.trim() ||
-    formData.selling_price.trim() ||
-    formData.extra
-  );
+  const isDirty = useMemo(() => {
+    const baseState = createFormState(initialType);
+    return (
+      formData.name.trim() !== baseState.name ||
+      formData.description.trim() !== baseState.description ||
+      formData.category.trim() !== baseState.category ||
+      formData.price.trim() !== baseState.price ||
+      formData.cost_price.trim() !== baseState.cost_price ||
+      formData.selling_price.trim() !== baseState.selling_price ||
+      formData.extra !== baseState.extra ||
+      formData.service_type !== baseState.service_type
+    );
+  }, [formData, initialType]);
 
   const navigation = useModalNavigation({
     isDirty,
     onDiscard: () => {
-      setFormData({
-        name: "",
-        description: "",
-        category: "",
-        price: "",
-        cost_price: "",
-        selling_price: "",
-        extra: false,
-      });
+      setFormData(createFormState(initialType));
       setShowNewCategoryInput(false);
       setNewCategoryName("");
       onOpenChange(false);
     },
-    onSaveAndExit: async () => {
-      await handleSubmit();
-    }
+    onSaveAndExit: handleSubmit,
   });
 
   const handleDirtyClose = () => {
     const canClose = navigation.handleModalClose();
     if (canClose) {
-      setFormData({
-        name: "",
-        description: "",
-        category: "",
-        price: "",
-        cost_price: "",
-        selling_price: "",
-        extra: false,
-      });
+      setFormData(createFormState(initialType));
       setShowNewCategoryInput(false);
       setNewCategoryName("");
       onOpenChange(false);
@@ -197,22 +233,22 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
 
   const footerActions = [
     {
-      label: t('buttons.cancel', { ns: 'common' }),
+      label: t("buttons.cancel", { ns: "common" }),
       onClick: handleDirtyClose,
       variant: "outline" as const,
-      disabled: loading
+      disabled: loading,
     },
     {
-      label: loading ? t('actions.saving', { ns: 'common' }) : t('buttons.save', { ns: 'common' }),
+      label: loading ? t("actions.saving", { ns: "common" }) : t("buttons.save", { ns: "common" }),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
-      loading: loading
-    }
+      loading,
+    },
   ];
 
   return (
     <AppSheetModal
-      title={t('service.add_title')}
+      title={t("service.add_title")}
       isOpen={open}
       onOpenChange={onOpenChange}
       size="content"
@@ -221,35 +257,51 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
       footerActions={footerActions}
     >
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">{t('service.description_placeholder')}</p>
-        
+        <p className="text-sm text-muted-foreground">{t("service.intro")}</p>
+
         <div className="space-y-2">
-          <Label htmlFor="category">{t('service.category')} *</Label>
+          <Label>{t("service.service_type_label")}</Label>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {serviceTypeOptions.map((option) => {
+              const isSelected = formData.service_type === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => handleServiceTypeChange(option.value)}
+                  className={`rounded-xl border p-3 text-left transition-colors ${
+                    isSelected ? "border-primary bg-primary/5" : "hover:border-muted-foreground/30"
+                  }`}
+                >
+                  <div className="font-medium">{option.label}</div>
+                  <p className="mt-1 text-sm text-muted-foreground">{option.description}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="category">{t("service.category")} *</Label>
           {showNewCategoryInput ? (
             <div className="flex gap-2">
               <Input
                 value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                placeholder="Enter new category name"
+                onChange={(event) => setNewCategoryName(event.target.value)}
+                placeholder={t("service.new_category_placeholder")}
                 className="rounded-xl"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
                     handleCreateNewCategory();
                   }
-                  if (e.key === 'Escape') {
+                  if (event.key === "Escape") {
                     setShowNewCategoryInput(false);
                     setNewCategoryName("");
                   }
                 }}
               />
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleCreateNewCategory}
-                disabled={!newCategoryName.trim()}
-                className="w-16"
-              >
-                Add
+              <Button type="button" size="sm" onClick={handleCreateNewCategory} disabled={!newCategoryName.trim()} className="w-16">
+                {t("buttons.add", { ns: "common" })}
               </Button>
               <Button
                 type="button"
@@ -261,37 +313,38 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
                 }}
                 className="w-16"
               >
-                Cancel
+                {t("buttons.cancel", { ns: "common" })}
               </Button>
             </div>
           ) : (
-            <Select value={formData.category} onValueChange={(value) => {
-              if (value === "create-new") {
-                setShowNewCategoryInput(true);
-              } else {
-                setFormData(prev => ({ ...prev, category: value }));
-              }
-            }}>
+            <Select
+              value={formData.category}
+              onValueChange={(value) => {
+                if (value === "create-new") {
+                  setShowNewCategoryInput(true);
+                } else {
+                  setFormData((prev) => ({ ...prev, category: value }));
+                }
+              }}
+            >
               <SelectTrigger className="rounded-xl">
-                <SelectValue placeholder={t('service.category_placeholder')} />
+                <SelectValue placeholder={t("service.category_placeholder")} />
               </SelectTrigger>
               <SelectContent className="bg-popover border border-border shadow-lg z-50">
-                {/* Default Categories */}
-                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Default Categories
+                <div className="px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("service.default_categories_label")}
                 </div>
-                {predefinedCategories.map((category) => (
+                {PREDEFINED_CATEGORIES.map((category) => (
                   <SelectItem key={category} value={category} className="hover:bg-accent hover:text-accent-foreground">
                     {category}
                   </SelectItem>
                 ))}
-                
-                {/* Custom Categories */}
+
                 {categories.length > 0 && (
                   <>
                     <SelectSeparator />
-                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      Custom Categories
+                    <div className="px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {t("service.custom_categories_label")}
                     </div>
                     {categories.map((category) => (
                       <SelectItem key={category} value={category} className="hover:bg-accent hover:text-accent-foreground">
@@ -300,13 +353,12 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
                     ))}
                   </>
                 )}
-                
-                {/* Create New */}
+
                 <SelectSeparator />
                 <SelectItem value="create-new" className="text-primary hover:bg-accent hover:text-accent-foreground">
                   <div className="flex items-center">
                     <Plus className="mr-2 h-4 w-4" />
-                    {t('service.new_category')}
+                    {t("service.new_category")}
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -315,55 +367,57 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="name">{t('service.name')} *</Label>
+          <Label htmlFor="name">{t("service.name")} *</Label>
           <Input
             id="name"
             value={formData.name}
-            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder={t('service.name_placeholder')}
+            onChange={(event) => setFormData((prev) => ({ ...prev, name: event.target.value }))}
+            placeholder={t("service.name_placeholder")}
             maxLength={100}
             className="rounded-xl"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="cost_price">{t('service.cost_price')} (TRY)</Label>
+            <Label htmlFor="cost_price">{t("service.cost_price")} (TRY)</Label>
             <Input
               id="cost_price"
               type="number"
+              inputMode="decimal"
               step="0.01"
               value={formData.cost_price}
-              onChange={(e) => setFormData(prev => ({ ...prev, cost_price: e.target.value }))}
+              onChange={(event) => setFormData((prev) => ({ ...prev, cost_price: event.target.value }))}
               placeholder="0.00"
             />
           </div>
-
           <div className="space-y-2">
-            <Label htmlFor="selling_price">{t('service.selling_price')} (TRY)</Label>
+            <Label htmlFor="selling_price">{t("service.selling_price")} (TRY)</Label>
             <Input
               id="selling_price"
               type="number"
+              inputMode="decimal"
               step="0.01"
               value={formData.selling_price}
-              onChange={(e) => setFormData(prev => ({ ...prev, selling_price: e.target.value }))}
+              onChange={(event) => setFormData((prev) => ({ ...prev, selling_price: event.target.value }))}
               placeholder="0.00"
             />
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="description">{t('service.description')}</Label>
+          <Label htmlFor="description">{t("service.description")}</Label>
           <Textarea
             id="description"
             value={formData.description}
-            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            placeholder={t('service.description_placeholder')}
+            onChange={(event) => setFormData((prev) => ({ ...prev, description: event.target.value }))}
+            placeholder={t("service.description_placeholder")}
             rows={4}
             className="resize-none"
           />
         </div>
       </div>
+
       <NavigationGuardDialog
         open={navigation.showGuard}
         onDiscard={navigation.handleDiscardChanges}
@@ -383,98 +437,83 @@ interface EditServiceDialogProps {
 }
 
 export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdated }: EditServiceDialogProps) {
-  const { t } = useTranslation(['forms', 'common']);
+  const { t } = useTranslation(["forms", "common"]);
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState<string[]>([]);
+  const { categories, setCategories } = useServiceCategories(open);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    category: "",
-    price: "",
-    cost_price: "",
-    selling_price: "",
-    extra: false,
-  });
-
-  // Predefined categories and fetch existing ones
-  const predefinedCategories = ["Albums", "Prints", "Extras", "Digital", "Packages", "Retouching", "Frames"];
-  
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        // Get user's organization ID
-        const { getUserOrganizationId } = await import('@/lib/organizationUtils');
-        const organizationId = await getUserOrganizationId();
-
-        if (!organizationId) {
-          return;
-        }
-
-        const { data, error } = await supabase
-          .from('services')
-          .select('category')
-          .eq('organization_id', organizationId)
-          .not('category', 'is', null);
-
-        if (error) throw error;
-
-        const uniqueCategories = [...new Set(data.map(item => item.category).filter(Boolean))];
-        const customCategories = uniqueCategories.filter(cat => !predefinedCategories.includes(cat));
-        setCategories(customCategories);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      }
-    };
-
-    if (open) {
-      fetchCategories();
-      setShowNewCategoryInput(false);
-      setNewCategoryName("");
-    }
-  }, [open]);
-
-  const handleCreateNewCategory = () => {
-    if (newCategoryName.trim()) {
-      setFormData(prev => ({ ...prev, category: newCategoryName.trim() }));
-      setCategories(prev => [...prev, newCategoryName.trim()]);
-      setShowNewCategoryInput(false);
-      setNewCategoryName("");
-    }
-  };
+  const [formData, setFormData] = useState<ServiceFormState>(() => createFormState("deliverable"));
 
   useEffect(() => {
     if (service && open) {
-      setFormData({
-        name: service.name,
-        description: service.description || "",
-        category: service.category || "",
-        price: service.price?.toString() || "",
-        cost_price: service.cost_price?.toString() || "",
-        selling_price: service.selling_price?.toString() || "",
-        extra: service.extra || false,
-      });
+      setFormData(
+        createFormState((service.service_type ?? "deliverable") as ServiceType, {
+          name: service.name || "",
+          description: service.description || "",
+          category: service.category || "",
+          price: service.price?.toString() || "",
+          cost_price: service.cost_price?.toString() || "",
+          selling_price: service.selling_price?.toString() || "",
+          extra: service.extra ?? false,
+          service_type: (service.service_type ?? "deliverable") as ServiceType,
+        })
+      );
+      setShowNewCategoryInput(false);
+      setNewCategoryName("");
     }
   }, [service, open]);
 
+  const serviceTypeOptions = useMemo(
+    () => [
+      {
+        value: "coverage" as ServiceType,
+        label: t("service.service_type_coverage"),
+        description: t("service.service_type_coverage_hint"),
+      },
+      {
+        value: "deliverable" as ServiceType,
+        label: t("service.service_type_deliverable"),
+        description: t("service.service_type_deliverable_hint"),
+      },
+    ],
+    [t]
+  );
+
+  const handleServiceTypeChange = (type: ServiceType) => {
+    setFormData((prev) => ({
+      ...prev,
+      service_type: type,
+    }));
+  };
+
+  const handleCreateNewCategory = () => {
+    if (!newCategoryName.trim()) return;
+    const normalized = newCategoryName.trim();
+    setFormData((prev) => ({ ...prev, category: normalized }));
+    setCategories((prev) => (prev.includes(normalized) ? prev : [...prev, normalized]));
+    setShowNewCategoryInput(false);
+    setNewCategoryName("");
+  };
+
   const handleSubmit = async () => {
-    if (!formData.name.trim()) {
+    if (!service || !formData.name.trim()) {
       toast({
-        title: t('common.toast.error'),
-        description: t('service.errors.name_required'),
-        variant: "destructive"
+        title: t("toast.error", { ns: "common" }),
+        description: t("service.errors.name_required"),
+        variant: "destructive",
       });
       return;
     }
 
     setLoading(true);
     try {
+      const serviceType = formData.service_type;
+      const isCoverage = serviceType === "coverage";
+      const resolvedStaffing = isCoverage ? (service?.is_people_based ?? true) : false;
+      const preservedUnit = service?.default_unit ?? null;
+
       const { error } = await supabase
-        .from('services')
+        .from("services")
         .update({
           name: formData.name.trim(),
           description: formData.description.trim() || null,
@@ -483,102 +522,119 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
           cost_price: formData.cost_price ? parseFloat(formData.cost_price) : 0,
           selling_price: formData.selling_price ? parseFloat(formData.selling_price) : 0,
           extra: formData.extra,
+          service_type: serviceType,
+          is_people_based: resolvedStaffing,
+          default_unit: preservedUnit,
         })
-        .eq('id', service.id);
+        .eq("id", service.id);
 
       if (error) throw error;
 
       toast({
-        title: t('common.toast.success'),
-        description: t('service.success.updated')
+        title: t("toast.success", { ns: "common" }),
+        description: t("service.success.updated"),
       });
 
       onOpenChange(false);
       onServiceUpdated();
     } catch (error: any) {
       toast({
-        title: t('common.toast.error'),
+        title: t("toast.error", { ns: "common" }),
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const isDirty = service ? Boolean(
-    formData.name !== service.name ||
-    formData.description !== (service.description || "") ||
-    formData.category !== (service.category || "") ||
-    formData.price !== (service.price?.toString() || "") ||
-    formData.cost_price !== (service.cost_price?.toString() || "") ||
-    formData.selling_price !== (service.selling_price?.toString() || "") ||
-    formData.extra !== (service.extra || false)
-  ) : false;
+  const isDirty = useMemo(() => {
+    if (!service) return false;
+    const baseState = createFormState((service.service_type ?? "deliverable") as ServiceType, {
+      name: service.name || "",
+      description: service.description || "",
+      category: service.category || "",
+      price: service.price?.toString() || "",
+      cost_price: service.cost_price?.toString() || "",
+      selling_price: service.selling_price?.toString() || "",
+      extra: service.extra ?? false,
+      service_type: (service.service_type ?? "deliverable") as ServiceType,
+    });
+
+    return (
+      formData.name !== baseState.name ||
+      formData.description !== baseState.description ||
+      formData.category !== baseState.category ||
+      formData.price !== baseState.price ||
+      formData.cost_price !== baseState.cost_price ||
+      formData.selling_price !== baseState.selling_price ||
+      formData.extra !== baseState.extra ||
+      formData.service_type !== baseState.service_type
+    );
+  }, [formData, service]);
 
   const navigation = useModalNavigation({
     isDirty,
     onDiscard: () => {
-      if (service) {
-        setFormData({
-          name: service.name,
+      if (!service) return;
+      setFormData(
+        createFormState((service.service_type ?? "deliverable") as ServiceType, {
+          name: service.name || "",
           description: service.description || "",
           category: service.category || "",
           price: service.price?.toString() || "",
           cost_price: service.cost_price?.toString() || "",
           selling_price: service.selling_price?.toString() || "",
-          extra: service.extra || false,
-        });
-      }
+          extra: service.extra ?? false,
+          service_type: (service.service_type ?? "deliverable") as ServiceType,
+        })
+      );
       setShowNewCategoryInput(false);
       setNewCategoryName("");
       onOpenChange(false);
     },
-    onSaveAndExit: async () => {
-      await handleSubmit();
-    }
+    onSaveAndExit: handleSubmit,
   });
 
   const handleDirtyClose = () => {
     const canClose = navigation.handleModalClose();
-    if (canClose) {
-      if (service) {
-        setFormData({
-          name: service.name,
+    if (canClose && service) {
+      setFormData(
+        createFormState((service.service_type ?? "deliverable") as ServiceType, {
+          name: service.name || "",
           description: service.description || "",
           category: service.category || "",
           price: service.price?.toString() || "",
           cost_price: service.cost_price?.toString() || "",
           selling_price: service.selling_price?.toString() || "",
-          extra: service.extra || false,
-        });
-      }
+          extra: service.extra ?? false,
+          service_type: (service.service_type ?? "deliverable") as ServiceType,
+        })
+      );
       setShowNewCategoryInput(false);
       setNewCategoryName("");
       onOpenChange(false);
     }
   };
 
-  if (!service) return null;
-
   const footerActions = [
     {
-      label: t('buttons.cancel', { ns: 'common' }),
+      label: t("buttons.cancel", { ns: "common" }),
       onClick: handleDirtyClose,
       variant: "outline" as const,
-      disabled: loading
+      disabled: loading,
     },
     {
-      label: loading ? t('actions.saving', { ns: 'common' }) : t('buttons.update', { ns: 'common' }),
+      label: loading ? t("actions.saving", { ns: "common" }) : t("buttons.save", { ns: "common" }),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
-      loading: loading
-    }
+      loading,
+    },
   ];
 
   return (
     <AppSheetModal
-      title={t('service.edit_title')}
+      title={t("service.edit_title")}
       isOpen={open}
       onOpenChange={onOpenChange}
       size="content"
@@ -587,33 +643,52 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       footerActions={footerActions}
     >
       <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">{t("service.intro")}</p>
+
         <div className="space-y-2">
-          <Label htmlFor="category">{t('service.category')}</Label>
+          <Label>{t("service.service_type_label")}</Label>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {serviceTypeOptions.map((option) => {
+              const isSelected = formData.service_type === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => handleServiceTypeChange(option.value)}
+                  className={`rounded-xl border p-3 text-left transition-colors ${
+                    isSelected ? "border-primary bg-primary/5" : "hover:border-muted-foreground/30"
+                  }`}
+                >
+                  <div className="font-medium">{option.label}</div>
+                  <p className="mt-1 text-sm text-muted-foreground">{option.description}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="edit-category">{t("service.category")} *</Label>
           {showNewCategoryInput ? (
             <div className="flex gap-2">
               <Input
+                id="edit-category"
                 value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                placeholder="Enter new category name"
+                onChange={(event) => setNewCategoryName(event.target.value)}
+                placeholder={t("service.new_category_placeholder")}
                 className="rounded-xl"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
                     handleCreateNewCategory();
                   }
-                  if (e.key === 'Escape') {
+                  if (event.key === "Escape") {
                     setShowNewCategoryInput(false);
                     setNewCategoryName("");
                   }
                 }}
               />
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleCreateNewCategory}
-                disabled={!newCategoryName.trim()}
-                className="w-16"
-              >
-                Add
+              <Button type="button" size="sm" onClick={handleCreateNewCategory} disabled={!newCategoryName.trim()} className="w-16">
+                {t("buttons.add", { ns: "common" })}
               </Button>
               <Button
                 type="button"
@@ -625,37 +700,38 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
                 }}
                 className="w-16"
               >
-                Cancel
+                {t("buttons.cancel", { ns: "common" })}
               </Button>
             </div>
           ) : (
-            <Select value={formData.category} onValueChange={(value) => {
-              if (value === "create-new") {
-                setShowNewCategoryInput(true);
-              } else {
-                setFormData(prev => ({ ...prev, category: value }));
-              }
-            }}>
+            <Select
+              value={formData.category}
+              onValueChange={(value) => {
+                if (value === "create-new") {
+                  setShowNewCategoryInput(true);
+                } else {
+                  setFormData((prev) => ({ ...prev, category: value }));
+                }
+              }}
+            >
               <SelectTrigger className="rounded-xl">
-                <SelectValue placeholder={t('service.category_placeholder')} />
+                <SelectValue placeholder={t("service.category_placeholder")} />
               </SelectTrigger>
               <SelectContent className="bg-popover border border-border shadow-lg z-50">
-                {/* Default Categories */}
-                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Default Categories
+                <div className="px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("service.default_categories_label")}
                 </div>
-                {predefinedCategories.map((category) => (
+                {PREDEFINED_CATEGORIES.map((category) => (
                   <SelectItem key={category} value={category} className="hover:bg-accent hover:text-accent-foreground">
                     {category}
                   </SelectItem>
                 ))}
-                
-                {/* Custom Categories */}
+
                 {categories.length > 0 && (
                   <>
                     <SelectSeparator />
-                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      Custom Categories
+                    <div className="px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {t("service.custom_categories_label")}
                     </div>
                     {categories.map((category) => (
                       <SelectItem key={category} value={category} className="hover:bg-accent hover:text-accent-foreground">
@@ -664,13 +740,12 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
                     ))}
                   </>
                 )}
-                
-                {/* Create New */}
+
                 <SelectSeparator />
                 <SelectItem value="create-new" className="text-primary hover:bg-accent hover:text-accent-foreground">
                   <div className="flex items-center">
                     <Plus className="mr-2 h-4 w-4" />
-                    {t('service.new_category')}
+                    {t("service.new_category")}
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -679,57 +754,57 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="name">{t('service.name')} *</Label>
+          <Label htmlFor="edit-name">{t("service.name")} *</Label>
           <Input
-            id="name"
+            id="edit-name"
             value={formData.name}
-            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder={t('service.name_placeholder')}
+            onChange={(event) => setFormData((prev) => ({ ...prev, name: event.target.value }))}
+            placeholder={t("service.name_placeholder")}
             maxLength={100}
             className="rounded-xl"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="cost_price">{t('service.cost_price')} (TRY)</Label>
+            <Label htmlFor="edit-cost-price">{t("service.cost_price")} (TRY)</Label>
             <Input
-              id="cost_price"
+              id="edit-cost-price"
               type="number"
+              inputMode="decimal"
               step="0.01"
               value={formData.cost_price}
-              onChange={(e) => setFormData(prev => ({ ...prev, cost_price: e.target.value }))}
+              onChange={(event) => setFormData((prev) => ({ ...prev, cost_price: event.target.value }))}
               placeholder="0.00"
-              className="rounded-xl"
             />
           </div>
-
           <div className="space-y-2">
-            <Label htmlFor="selling_price">{t('service.selling_price')} (TRY)</Label>
+            <Label htmlFor="edit-selling-price">{t("service.selling_price")} (TRY)</Label>
             <Input
-              id="selling_price"
+              id="edit-selling-price"
               type="number"
+              inputMode="decimal"
               step="0.01"
               value={formData.selling_price}
-              onChange={(e) => setFormData(prev => ({ ...prev, selling_price: e.target.value }))}
+              onChange={(event) => setFormData((prev) => ({ ...prev, selling_price: event.target.value }))}
               placeholder="0.00"
-              className="rounded-xl"
             />
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="description">{t('service.description')}</Label>
+          <Label htmlFor="edit-description">{t("service.description")}</Label>
           <Textarea
-            id="description"
+            id="edit-description"
             value={formData.description}
-            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            placeholder={t('service.description_placeholder')}
+            onChange={(event) => setFormData((prev) => ({ ...prev, description: event.target.value }))}
+            placeholder={t("service.description_placeholder")}
             rows={4}
-            className="resize-none rounded-xl"
+            className="resize-none"
           />
         </div>
       </div>
+
       <NavigationGuardDialog
         open={navigation.showGuard}
         onDiscard={navigation.handleDiscardChanges}

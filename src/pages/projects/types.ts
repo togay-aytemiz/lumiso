@@ -54,5 +54,4 @@ export interface ProjectListItem {
   paid_amount?: number | null;
   remaining_amount?: number | null;
   services?: ProjectServiceSummary[];
-  assignees?: string[] | null;
 }

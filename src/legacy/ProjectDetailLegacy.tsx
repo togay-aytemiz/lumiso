@@ -35,7 +35,6 @@ interface Project {
   status_id?: string | null;
   previous_status_id?: string | null;
   project_type_id?: string | null;
-  assignees?: string[];
 }
 
 interface Lead {

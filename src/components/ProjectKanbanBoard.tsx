@@ -33,9 +33,6 @@ interface ProjectKanbanBoardProps {
 
 const GAP = 1000;
 
-const normalizeAssignees = (assignees: ProjectListItem["assignees"]) =>
-  Array.isArray(assignees) ? assignees : assignees === null ? [] : undefined;
-
 const orderProjects = (list: ProjectListItem[]) =>
   [...list].sort((a, b) => {
     const ao = a.sort_order ?? Number.MAX_SAFE_INTEGER;
@@ -74,20 +71,15 @@ function computeSortForInsert(
 
 async function reindexColumn(
   statusId: string | null,
-  ordered: Array<Pick<ProjectListItem, "id" | "assignees">>
+  ordered: Array<Pick<ProjectListItem, "id">>
 ) {
   await Promise.all(
-    ordered.map((p, i) => {
-      const assignees = normalizeAssignees(p.assignees);
-      const updatePayload: Record<string, unknown> = {
-        status_id: statusId,
-        sort_order: (i + 1) * GAP,
-      };
-      if (assignees !== undefined) {
-        updatePayload.assignees = assignees;
-      }
-      return supabase.from("projects").update(updatePayload).eq("id", p.id);
-    })
+    ordered.map((p, i) =>
+      supabase
+        .from("projects")
+        .update({ status_id: statusId, sort_order: (i + 1) * GAP })
+        .eq("id", p.id)
+    )
   );
 }
 
@@ -171,7 +163,6 @@ const ProjectKanbanBoard = ({
     const moving = projects.find(p => p.id === projectId);
     if (!moving) return;
 
-    const normalizedMovingAssignees = normalizeAssignees(moving.assignees);
     const organizationId = activeOrganization?.id ?? null;
     const shouldForceRefresh = !onProjectUpdate;
 
@@ -179,11 +170,7 @@ const ProjectKanbanBoard = ({
     const insertIndex = Math.min(Math.max(destination.index, 0), dstBase.length);
 
     const dstWithMoving: ProjectListItem[] = [...dstBase];
-    const projectForInsertion: ProjectListItem = {
-      ...moving,
-      status_id: dstStatusId,
-      ...(normalizedMovingAssignees !== undefined ? { assignees: normalizedMovingAssignees } : {}),
-    };
+    const projectForInsertion: ProjectListItem = { ...moving, status_id: dstStatusId };
     dstWithMoving.splice(insertIndex, 0, projectForInsertion);
 
     const { value, needReindex } = computeSortForInsert(dstWithMoving, insertIndex);
@@ -200,30 +187,21 @@ const ProjectKanbanBoard = ({
           ...moving,
           status_id: dstStatusId,
           sort_order: value,
-          ...(normalizedMovingAssignees !== undefined ? { assignees: normalizedMovingAssignees } : {}),
         });
       } else {
-        const updatedDest = dstWithMoving.map((project, idx) => {
-          const assignees = normalizeAssignees(project.assignees);
-          return {
-            ...project,
-            status_id: dstStatusId,
-            sort_order: (idx + 1) * GAP,
-            ...(assignees !== undefined ? { assignees } : {}),
-          };
-        });
+        const updatedDest = dstWithMoving.map((project, idx) => ({
+          ...project,
+          status_id: dstStatusId,
+          sort_order: (idx + 1) * GAP,
+        }));
         updatedDest.forEach(project => onProjectUpdate(project));
 
         if (srcStatusId !== dstStatusId && srcAfterMove.length > 0) {
-          const updatedSrc = srcAfterMove.map((project, idx) => {
-            const assignees = normalizeAssignees(project.assignees);
-            return {
-              ...project,
-              status_id: srcStatusId,
-              sort_order: (idx + 1) * GAP,
-              ...(assignees !== undefined ? { assignees } : {}),
-            };
-          });
+          const updatedSrc = srcAfterMove.map((project, idx) => ({
+            ...project,
+            status_id: srcStatusId,
+            sort_order: (idx + 1) * GAP,
+          }));
           updatedSrc.forEach(project => onProjectUpdate(project));
         }
       }
@@ -246,16 +224,9 @@ const ProjectKanbanBoard = ({
 
         // Update project position in database
         if (!requiresReindex && value !== null) {
-          const updatePayload: Record<string, unknown> = {
-            status_id: dstStatusId,
-            sort_order: value,
-          };
-          if (normalizedMovingAssignees !== undefined) {
-            updatePayload.assignees = normalizedMovingAssignees;
-          }
           const { error } = await supabase
             .from("projects")
-            .update(updatePayload)
+            .update({ status_id: dstStatusId, sort_order: value })
             .eq("id", projectId);
           if (error) throw error;
         } else {
@@ -292,8 +263,7 @@ const ProjectKanbanBoard = ({
                 projectId,
                 srcStatusId || "",
                 dstStatusId || "",
-                organizationId,
-                [] // Single photographer mode - no assignees
+                organizationId
               ).catch(error => console.error("Failed to trigger milestone notification:", error))
             : Promise.resolve();
 

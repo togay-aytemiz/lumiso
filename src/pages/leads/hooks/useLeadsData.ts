@@ -235,7 +235,6 @@ export function useLeadsData({
               status_id: r.status_id,
               updated_at: r.updated_at,
               created_at: r.created_at,
-              assignees: [],
               custom_fields: {},
               lead_statuses: r.lead_statuses,
             }));
@@ -299,7 +298,6 @@ export function useLeadsData({
         status_id: r.status_id,
         updated_at: r.updated_at,
         created_at: r.created_at,
-        assignees: [],
         custom_fields: {},
         lead_statuses: r.lead_statuses
       }));
@@ -356,7 +354,7 @@ export function useLeadsData({
       if (table.error) throw table.error;
       const raw = (table.data as any[]) ?? [];
       const count = includeCount ? (table.count ?? raw.length) : raw.length;
-      let leads: LeadWithCustomFields[] = raw.map((lead: any) => ({ ...lead, assignees: [], custom_fields: {} }));
+      let leads: LeadWithCustomFields[] = raw.map((lead: any) => ({ ...lead, custom_fields: {} }));
       // Populate custom field values for the fetched leads (fallback path)
       if (leads.length) {
         const leadIds = leads.map((l) => l.id);

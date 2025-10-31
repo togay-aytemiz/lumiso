@@ -74,7 +74,6 @@ interface Project {
     id: string;
     name: string;
   }>;
-  assignees?: string[];
 }
 
 type SortField = 'name' | 'lead_name' | 'project_type' | 'status' | 'created_at' | 'updated_at';

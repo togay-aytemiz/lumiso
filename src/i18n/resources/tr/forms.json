@@ -280,7 +280,17 @@
     "add": "Hizmet Ekle",
     "edit": "Hizmetleri Düzenle",
     "selected_services": "Seçili Hizmetler",
-    "services_updated": "Proje hizmetleri başarıyla güncellendi"
+    "services_updated": "Proje hizmetleri başarıyla güncellendi",
+    "types": {
+      "coverage": "Ekip & çekim kapsamı",
+      "deliverable": "Ürünler & teslimatlar",
+      "coverage_hint": "Fotoğrafçı, videograf veya yardımcı personel seçeneklerini yönetin.",
+      "deliverable_hint": "Albüm, baskı paketi, dijital teslimat gibi ürünleri ekleyin."
+    },
+    "empty": {
+      "coverage": "Henüz kapsam hizmeti yok. Ekip veya personel seçenekleri ekleyin.",
+      "deliverable": "Henüz teslimat hizmeti yok. Albüm, baskı veya dijital ürün ekleyin."
+    }
   },
   "project_stages": {
     "title": "Proje Aşamaları",
@@ -1250,6 +1260,15 @@
     "price": "Fiyat",
     "extra": "Ekstra/Ek Hizmet Olarak İşaretle",
     "extra_help": "Ekstralar projelere isteğe bağlı ek hizmetler olarak eklenebilir",
+    "intro": "Her hizmeti sınıflandırarak paketlerin ve projelerin net kalmasını sağlayın.",
+    "service_type_label": "Hizmet tipi",
+    "service_type_coverage": "Ekip & çekim kapsamı",
+    "service_type_deliverable": "Ürünler & teslimatlar",
+    "service_type_coverage_hint": "İkinci fotoğrafçı, videograf veya asistan gibi sahada personele ihtiyaç duyan hizmetler.",
+    "service_type_deliverable_hint": "Albüm, baskı seti, dijital teslimat gibi ürünleri ekleyin.",
+    "default_categories_label": "Varsayılan kategoriler",
+    "custom_categories_label": "Özel kategoriler",
+    "new_category_placeholder": "Yeni kategori adı girin",
     "categories": {
       "albums": "Albümler",
       "prints": "Baskılar",

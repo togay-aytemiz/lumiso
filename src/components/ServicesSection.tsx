@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Plus, Trash2, ChevronDown, ChevronRight, Edit } from "lucide-react";
@@ -7,10 +7,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AddServiceDialog, EditServiceDialog } from "./settings/ServiceDialogs";
 import SettingsSection from "./SettingsSection";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 // Permissions removed for single photographer mode
 import { useServices } from "@/hooks/useOrganizationData";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
+
+type ServiceType = "coverage" | "deliverable";
 
 interface Service {
   id: string;
@@ -19,6 +22,9 @@ interface Service {
   description?: string;
   cost_price?: number;
   selling_price?: number;
+  service_type?: ServiceType;
+  is_people_based?: boolean;
+  default_unit?: string | null;
 }
 
 const ServicesSection = () => {
@@ -26,7 +32,7 @@ const ServicesSection = () => {
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [showEditServiceDialog, setShowEditServiceDialog] = useState(false);
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
-  const [newCategoriesAdded, setNewCategoriesAdded] = useState<string[]>([]);
+  const [activeType, setActiveType] = useState<ServiceType>("coverage");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t: tForms } = useFormsTranslation();
@@ -64,8 +70,72 @@ const ServicesSection = () => {
     },
   });
 
-  // Group services by category
-  const groupedServices = services.reduce((acc, service) => {
+  const normalizedServices = useMemo(() => {
+    return services.map((service) => {
+      const serviceType = (service.service_type ?? "deliverable") as ServiceType;
+      return {
+        ...service,
+        service_type: serviceType,
+        is_people_based: service.is_people_based ?? (serviceType === "coverage"),
+      };
+    });
+  }, [services]);
+
+  const formatCount = useCallback((value: number) => {
+    return new Intl.NumberFormat("tr-TR").format(value);
+  }, []);
+
+  const typeCounts = useMemo(
+    () =>
+      normalizedServices.reduce(
+        (acc, service) => {
+          if (service.service_type === "coverage") {
+            acc.coverage += 1;
+          } else {
+            acc.deliverable += 1;
+          }
+          return acc;
+        },
+        { coverage: 0, deliverable: 0 }
+      ),
+    [normalizedServices]
+  );
+
+  const renderSegmentLabel = useCallback(
+    (label: string, count: number) => (
+      <span className="inline-flex items-center gap-1.5">
+        <span className="font-medium leading-tight">{label}</span>
+        <span className="inline-flex min-w-[1.75rem] justify-center rounded-full border border-border/60 bg-background px-1.5 py-0.5 text-[11px] font-semibold leading-none text-current shadow-sm">
+          {formatCount(count)}
+        </span>
+      </span>
+    ),
+    [formatCount]
+  );
+
+  useEffect(() => {
+    if (normalizedServices.length === 0) {
+      setActiveType("coverage");
+      return;
+    }
+    const hasActiveType = normalizedServices.some((service) => service.service_type === activeType);
+    if (!hasActiveType) {
+      const fallback = normalizedServices.some((service) => service.service_type === "coverage")
+        ? "coverage"
+        : "deliverable";
+      if (fallback !== activeType) {
+        setActiveType(fallback);
+      }
+    }
+  }, [normalizedServices, activeType]);
+
+  const filteredServices = useMemo(
+    () => normalizedServices.filter((service) => service.service_type === activeType),
+    [normalizedServices, activeType]
+  );
+
+  // Group services by category for selected type
+  const groupedServices = filteredServices.reduce((acc, service) => {
     const category = service.category || tForms('services.uncategorized');
     if (!acc[category]) {
       acc[category] = [];
@@ -88,24 +158,9 @@ const ServicesSection = () => {
     deleteServiceMutation.mutate(serviceId);
   };
 
-  const handleCategoryAdded = (newCategory: string) => {
-    // Add the new category to our local state for immediate availability
-    // But only if it's not already in existing categories or newCategoriesAdded
-    const existingCats = Object.keys(groupedServices).filter(cat => cat !== 'Uncategorized');
-    const allExistingCats = [...existingCats, ...newCategoriesAdded];
-    
-    if (!allExistingCats.some(cat => cat.toLowerCase() === newCategory.toLowerCase())) {
-      setNewCategoriesAdded(prev => [...prev, newCategory]);
-    }
-  };
-
-  // Clear new categories when dialog closes or service is created successfully
+  // Track modal state and ensure sheets close cleanly
   const handleDialogChange = (open: boolean) => {
     setShowNewServiceDialog(open);
-    if (!open) {
-      // Clear the temporary categories when dialog closes
-      setNewCategoriesAdded([]);
-    }
   };
 
   if (isLoading) {
@@ -113,6 +168,11 @@ const ServicesSection = () => {
       <SettingsSection 
         title={tForms('services.title')}
         description={tForms('services.description')}
+        action={{
+          label: tForms('services.add_service'),
+          onClick: () => setShowNewServiceDialog(true),
+          icon: <Plus className="h-4 w-4" />
+        }}
       >
         <div className="space-y-4">
           {[1, 2].map((i) => (
@@ -141,15 +201,45 @@ const ServicesSection = () => {
       <SettingsSection 
         title={tForms('services.title')}
         description={tForms('services.description')}
-        action={(Object.keys(groupedServices).length > 0 && canManageServices) ? {
+        action={canManageServices ? {
           label: tForms('services.add_service'),
           onClick: () => setShowNewServiceDialog(true),
           icon: <Plus className="h-4 w-4" />
         } : undefined}
       >
+
+        <div className="mb-6 space-y-2">
+          <SegmentedControl
+            value={activeType}
+            onValueChange={(value) => setActiveType(value as ServiceType)}
+            options={[
+              {
+                value: "coverage",
+                label: renderSegmentLabel(tForms('services.types.coverage'), typeCounts.coverage),
+                tooltip: tForms('services.types.coverage_hint'),
+              },
+              {
+                value: "deliverable",
+                label: renderSegmentLabel(tForms('services.types.deliverable'), typeCounts.deliverable),
+                tooltip: tForms('services.types.deliverable_hint'),
+              },
+            ]}
+            className="w-full sm:w-auto"
+          />
+          <p className="text-sm text-muted-foreground max-w-2xl">
+            {activeType === "coverage"
+              ? tForms('services.types.coverage_hint')
+              : tForms('services.types.deliverable_hint')}
+          </p>
+        </div>
+
         {Object.keys(groupedServices).length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">{tForms('services.no_services')}</p>
+            <p className="text-muted-foreground mb-4">
+              {activeType === "coverage"
+                ? tForms('services.empty.coverage')
+                : tForms('services.empty.deliverable')}
+            </p>
             {canManageServices && (
               <Button onClick={() => setShowNewServiceDialog(true)} variant="outline">
                 <Plus className="h-4 w-4 mr-2" />
@@ -159,19 +249,6 @@ const ServicesSection = () => {
           </div>
         ) : (
           <>
-            {/* Mobile Add Button */}
-            {canManageServices && (
-              <div className="md:hidden mb-4">
-                <Button 
-                  onClick={() => setShowNewServiceDialog(true)} 
-                  className="w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {tForms('services.add_service')}
-                </Button>
-              </div>
-            )}
-
             <div className="space-y-4">
               {Object.entries(groupedServices).map(([category, categoryServices]) => (
                 <Collapsible
@@ -194,7 +271,7 @@ const ServicesSection = () => {
                     </div>
                   </CollapsibleTrigger>
                   
-                  <CollapsibleContent className="mt-3">
+                  <CollapsibleContent className="mt-3 overflow-hidden transition-all data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
                     {/* Desktop view - existing layout */}
                     <div className="hidden md:block space-y-2 pl-6">
                       {categoryServices.map((service) => (
@@ -232,7 +309,7 @@ const ServicesSection = () => {
                                    setEditingService(service);
                                    setShowEditServiceDialog(true);
                                  }}
-                                 className="text-muted-foreground hover:text-foreground"
+                                 className="h-9 w-9 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                                  aria-label={`Edit service ${service.name}`}
                                >
                                  <Edit className="h-4 w-4" />
@@ -242,7 +319,7 @@ const ServicesSection = () => {
                                  size="sm"
                                  onClick={() => handleDeleteService(service.id)}
                                  disabled={deleteServiceMutation.isPending}
-                                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                 className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 w-9 rounded-lg"
                                  aria-label={`Delete service ${service.name}`}
                                >
                                  <Trash2 className="h-4 w-4" />
@@ -276,7 +353,6 @@ const ServicesSection = () => {
                                 </p>
                               )}
                             </div>
-
                             {/* Pricing information */}
                             {((service.cost_price || 0) > 0 || (service.selling_price || 0) > 0) && (
                               <div className="space-y-1">
@@ -297,13 +373,13 @@ const ServicesSection = () => {
                              {canManageServices && (
                                <div className="flex gap-2 pt-2 border-t">
                                  <Button
-                                   variant="outline"
+                                   variant="ghost"
                                    size="sm"
                                    onClick={() => {
                                      setEditingService(service);
                                      setShowEditServiceDialog(true);
                                    }}
-                                   className="flex-1 h-10 min-w-0"
+                                   className="flex-1 h-10 min-w-0 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                                    aria-label={`Edit service ${service.name}`}
                                  >
                                    <Edit className="h-4 w-4" />
@@ -336,6 +412,7 @@ const ServicesSection = () => {
         <>
           <AddServiceDialog
             open={showNewServiceDialog}
+            initialType={activeType}
             onOpenChange={handleDialogChange}
             onServiceAdded={() => {
               queryClient.invalidateQueries({ queryKey: ['services', activeOrganizationId] });

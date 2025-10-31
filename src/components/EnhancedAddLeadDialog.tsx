@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
@@ -41,7 +41,6 @@ export function EnhancedAddLeadDialog({
   const toast = useI18nToast();
   const { profile } = useProfile();
   const [loading, setLoading] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
   const navigate = useNavigate();
   // Assignees removed - single user organization
 
@@ -53,19 +52,13 @@ export function EnhancedAddLeadDialog({
     defaultValues: {},
   });
 
-  // Auto-add current user as first assignee (single photographer mode)
-
-  // Track form dirty state
-  const formValues = form.watch();
-  useEffect(() => {
-    const hasValues = Object.values(formValues).some(value => 
-      value !== '' && value !== null && value !== undefined
-    );
-    setIsDirty(hasValues);
-  }, [formValues]);
+  const [defaultsReady, setDefaultsReady] = useState(false);
+  const initialValuesRef = useRef<Record<string, any>>({});
+  const watchedValues = form.watch();
 
   useEffect(() => {
     if (open && !fieldsLoading) {
+      setDefaultsReady(false);
       // Reset form when dialog opens
       const setDefaultValues = async () => {
         const defaultValues: Record<string, any> = {};
@@ -105,12 +98,69 @@ export function EnhancedAddLeadDialog({
           }
         }
         
+        initialValuesRef.current = { ...defaultValues };
         form.reset(defaultValues);
+        setDefaultsReady(true);
       };
-      
+
       setDefaultValues();
+    } else if (!open) {
+      setDefaultsReady(false);
     }
   }, [open, fieldsLoading, fieldDefinitions, form]);
+
+  const hasDirtyValue = useMemo(() => {
+    if (!defaultsReady) {
+      return false;
+    }
+
+    const initialValues = initialValuesRef.current ?? {};
+    const currentValues = watchedValues ?? {};
+    const keys = new Set([
+      ...Object.keys(initialValues),
+      ...Object.keys(currentValues),
+    ]);
+
+    const valuesEqual = (a: any, b: any): boolean => {
+      if (a === b) {
+        return true;
+      }
+      const isEmpty = (value: any) =>
+        value === "" || value === null || typeof value === "undefined";
+      if (isEmpty(a) && isEmpty(b)) {
+        return true;
+      }
+      if (Array.isArray(a) && Array.isArray(b)) {
+        if (a.length !== b.length) {
+          return false;
+        }
+        return a.every((item, index) => valuesEqual(item, b[index]));
+      }
+      if (a instanceof Date && b instanceof Date) {
+        return a.getTime() === b.getTime();
+      }
+      if (
+        typeof a === "object" &&
+        a !== null &&
+        typeof b === "object" &&
+        b !== null
+      ) {
+        return JSON.stringify(a) === JSON.stringify(b);
+      }
+      return false;
+    };
+
+    for (const key of keys) {
+      if (key === "field_status") {
+        continue;
+      }
+      if (!valuesEqual(initialValues[key], currentValues[key])) {
+        return true;
+      }
+    }
+
+    return false;
+  }, [defaultsReady, watchedValues]);
 
   const onSubmit = async (data: any) => {
     try {
@@ -204,7 +254,7 @@ export function EnhancedAddLeadDialog({
   };
 
   const navigation = useModalNavigation({
-    isDirty,
+    isDirty: hasDirtyValue,
     onDiscard: () => {
       onClose();
     },
@@ -234,7 +284,7 @@ export function EnhancedAddLeadDialog({
     }
   ];
 
-  if (fieldsLoading) {
+  if (fieldsLoading || !defaultsReady) {
     return (
       <AppSheetModal
         title={t('leadDialog.addTitle')}
@@ -255,7 +305,7 @@ export function EnhancedAddLeadDialog({
         isOpen={open}
         onOpenChange={onOpenChange}
         size="lg"
-        dirty={isDirty}
+        dirty={hasDirtyValue}
         onDirtyClose={handleDirtyClose}
         footerActions={footerActions}
       >

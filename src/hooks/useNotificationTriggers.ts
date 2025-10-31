@@ -9,8 +9,7 @@ export function useNotificationTriggers() {
     projectId: string,
     oldStatusId: string,
     newStatusId: string,
-    organizationId: string,
-    assigneeIds: string[] = []
+    organizationId: string
   ) => {
     try {
       console.log(`Triggering milestone notification: ${projectId} (${oldStatusId} → ${newStatusId})`);
@@ -40,47 +39,10 @@ export function useNotificationTriggers() {
         return;
       }
 
-      // Create notification record for each assignee
-      const notifications = assigneeIds.map(assigneeId => ({
-        organization_id: organizationId,
-        user_id: assigneeId,
-        notification_type: 'project-milestone',
-        delivery_method: 'immediate',
-        status: 'pending',
-        metadata: {
-          project_id: projectId,
-          old_status: oldStatus.name,
-          new_status: newStatus.name,
-          new_status_lifecycle: newStatus.lifecycle,
-          changed_by_user_id: user.id
-        }
-      }));
-
-      if (notifications.length === 0) {
-        console.log('No assignees for milestone notification');
-        return;
-      }
-
-      // Insert notification records
-      const { error } = await supabase
-        .from('notifications')
-        .insert(notifications);
-
-      if (error) {
-        console.error('Error creating milestone notifications:', error);
-        throw error;
-      }
-
-      console.log(`Created ${notifications.length} milestone notification records`);
-
-      // Trigger immediate processing
-      await supabase.functions.invoke('notification-processor', {
-        body: {
-          action: 'process-pending',
-          organizationId: organizationId
-        }
-      });
-
+      // Single photographer mode: notifications disabled, only log intent
+      console.log(
+        `Milestone change recorded for project ${projectId}: ${oldStatus.name} → ${newStatus.name} (organization ${organizationId})`
+      );
     } catch (error: any) {
       console.error('Error in triggerProjectMilestone:', error);
       toast({

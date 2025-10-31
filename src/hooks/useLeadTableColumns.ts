@@ -16,7 +16,6 @@ const RESERVED_CORE_KEYS = new Set([
   "status",
   "updated_at",
   "created_at",
-  "assignees",
   "status_id",
   "due_date",
   "notes",
@@ -41,7 +40,6 @@ export interface LeadWithCustomFields {
   phone: string;
   status: string;
   status_id: string;
-  assignees: string[];
   updated_at: string;
   created_at: string;
   due_date?: string;

@@ -35,7 +35,6 @@ interface Project {
   status_id?: string | null;
   previous_status_id?: string | null;
   project_type_id?: string | null;
-  assignees?: string[];
 }
 interface Lead {
   id: string;
@@ -327,7 +326,6 @@ export function ViewProjectDialog({
     }
   };
   const handleAssigneesUpdate = () => {
-    // Force parent to refetch project data to get updated assignees
     onProjectUpdated();
   };
 

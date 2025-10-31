@@ -43,7 +43,6 @@ export interface ProjectWithDetails {
     id: string;
     name: string;
   }>;
-  assignees?: string[];
 }
 
 export interface CreateProjectData {

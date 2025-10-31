@@ -177,7 +177,7 @@ export function ProjectStatusBadge({
 
       // Send milestone notifications for status change
       if (organizationId && currentStatus?.id) {
-        await triggerProjectMilestone(projectId, currentStatus.id, newStatusId, organizationId, []);
+        await triggerProjectMilestone(projectId, currentStatus.id, newStatusId, organizationId);
       }
 
       // Trigger workflow for project status change

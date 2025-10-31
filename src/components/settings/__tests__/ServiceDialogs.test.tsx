@@ -115,9 +115,14 @@ const translations: Record<string, string> = {
   "service.edit_title": "Edit service",
   "service.name": "Service name",
   "service.description": "Service description",
+  "service.description_placeholder": "Describe the service",
+  "service.intro": "Organise services",
   "service.category": "Category",
   "service.category_placeholder": "Select category",
   "service.new_category": "New category",
+  "service.new_category_placeholder": "Enter new category name",
+  "service.default_categories_label": "Default categories",
+  "service.custom_categories_label": "Custom categories",
   "service.errors.name_required": "Service name is required",
   "service.success.added": "Service created",
   "service.success.updated": "Service updated",
@@ -129,6 +134,15 @@ const translations: Record<string, string> = {
   "service.cost_price": "Cost price",
   "service.selling_price": "Selling price",
   "service.extra_label": "Extra",
+  "service.service_type_label": "Service type",
+  "service.service_type_coverage": "Team coverage",
+  "service.service_type_deliverable": "Products & deliverables",
+  "service.service_type_coverage_hint": "Services that require people on-site",
+  "service.service_type_deliverable_hint": "Albums, prints and other deliverables",
+  "service.default_unit_label": "Default unit",
+  "service.default_unit_placeholder": "e.g. hour, album, 10-print pack",
+  "service.requires_staff_label": "Requires staffing",
+  "service.requires_staff_hint": "Toggle when this affects staffing or scheduling",
   "common.toast.success": "Success",
   "buttons.save": "Save",
   "buttons.add": "Add",
@@ -210,6 +224,7 @@ describe("ServiceDialogs", () => {
     render(
       <AddServiceDialog
         open
+        initialType="deliverable"
         onOpenChange={onOpenChange}
         onServiceAdded={onServiceAdded}
       />
@@ -248,6 +263,9 @@ describe("ServiceDialogs", () => {
         extra: false,
         organization_id: "org-123",
         user_id: "user-1",
+        service_type: "deliverable",
+        is_people_based: false,
+        default_unit: null,
       })
     );
     expect(onServiceAdded).toHaveBeenCalled();
@@ -264,13 +282,7 @@ describe("ServiceDialogs", () => {
     const servicesTable = createServicesTable();
     supabaseFromMock.mockImplementation(() => servicesTable.builder);
 
-    render(
-      <AddServiceDialog
-        open
-        onOpenChange={jest.fn()}
-        onServiceAdded={jest.fn()}
-      />
-    );
+    render(<AddServiceDialog open initialType="deliverable" onOpenChange={jest.fn()} onServiceAdded={jest.fn()} />);
 
     await waitFor(() => expect(servicesTable.selectMock).toHaveBeenCalled());
 
@@ -298,6 +310,9 @@ describe("ServiceDialogs", () => {
           cost_price: 25,
           selling_price: 150,
           extra: false,
+          service_type: "deliverable",
+          is_people_based: false,
+          default_unit: "album",
         } as any}
         onOpenChange={onOpenChange}
         onServiceUpdated={onServiceUpdated}
@@ -309,7 +324,7 @@ describe("ServiceDialogs", () => {
       target: { value: "Advanced Retouching" },
     });
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Update" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save" }));
     });
 
     await waitFor(() => expect(servicesTable.updateEqMock).toHaveBeenCalledWith("id", "svc-1"));
@@ -319,6 +334,9 @@ describe("ServiceDialogs", () => {
         name: "Advanced Retouching",
         extra: false,
         selling_price: 150,
+        service_type: "deliverable",
+        is_people_based: false,
+        default_unit: "album",
       })
     );
     expect(onServiceUpdated).toHaveBeenCalled();

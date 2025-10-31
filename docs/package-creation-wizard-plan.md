@@ -67,22 +67,41 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 3. Supabase interactions wrapped in `services/PackageCreationService.ts` to keep sheets lean.
 
 ## Implementation Phases
-1. **Phase 0 (this doc):** finalize design + plan.
-2. **Phase 1 – Skeleton & State:**
-   - Scaffold feature directory, provider, reducer with typed state.
-   - Implement wizard shell with stepper, navigation, guard, placeholder steps.
-   - Hook into settings UI (open sheet).
-3. **Phase 2 – Basics + Services Steps:**
-   - Build actual form controls, service selection experience, totals computation.
-   - Introduce custom service entry stored in state only.
-4. **Phase 3 – Delivery + Pricing Steps:**
-   - Implement delivery selectors, persistence models, deposit logic, computed totals.
-   - Add shared catalog management for delivery methods.
-5. **Phase 4 – Summary & Submission:**
-   - Compose summary cards, submit handler creating package + line items.
-   - Wire analytics, error handling, optimistic updates.
-6. **Phase 5 – Polish & QA:**
-   - Localization, tests (unit + integration), accessibility passes, docs update.
+### Phase 0 – Plan & Alignment (now)
+- ✅ Produce this plan, confirm MVP scope, gather answers to open questions.
+- Outcome: clear list of requirements & decisions before writing code.
+
+### Phase 1 – Skeleton & State (week 1)
+- Create `features/package-creation/` folder with provider, reducer scaffolding, typed state slices (`basics`, `lineItems`, `delivery`, `pricing`, `meta`).
+- Implement wizard shell using existing stepper + guard components, with placeholder step bodies.
+- Hook sheet into Services/Packages settings entry point behind feature flag (hidden by default).
+- Deliverables: navigation works (Next/Back), state resets, telemetry scaffolding ready.
+
+### Phase 2 – Basics & Services (week 1-2)
+- Build Basics step UI with validation, type multi-select (reuse combos from project wizard), visibility toggle.
+- Implement Services & Inclusions step with service list (via `useServices`), quantity controls, running totals, and lightweight “quick add” custom item (state only).
+- Compute totals in selectors, update step completion rules.
+- Deliverables: user can configure basics + add line items; services step shows totals but doesn’t persist to Supabase yet.
+- **Decision checkpoint:** requires confirmation on ad-hoc service behaviour (package-only vs save-to-catalog toggle).
+
+### Phase 3 – Delivery & Pricing (week 2)
+- Add Delivery step fields (photo count/range toggle, lead time value/unit, delivery method chips with inline add). Persist custom methods in state; migrations for stored list if required.
+- Build Pricing step with base price input, auto services total (read-only), deposit selector (percent presets + custom percent/fixed). Confirm deposit calculation rule before coding.
+- Deliverables: all wizard steps capture MVP data, computed summary state available.
+- **Decision checkpoint:** delivery method persistence approach (reuse session table vs new field) + deposit calculation basis.
+
+### Phase 4 – Summary & Submission (week 3)
+- Compose Summary step with collapsible review cards, edit shortcuts, validation warnings.
+- Implement submission pipeline: write package record, create line items, handle custom services (package-only for MVP), store delivery metadata.
+- Add analytics events + success toast, closing behaviour.
+- Deliverables: package creation end-to-end works in dev, error handling + loading states covered.
+- **Decision checkpoint:** confirm no KDV/tax requirements before finalizing submission payload.
+
+### Phase 5 – Polish & QA (week 3+)
+- Localization (EN/TR), accessibility pass, responsive tweaks.
+- Unit tests for reducer/actions, step validations; integration test covering happy path.
+- Update docs, internal runbook, feature flag rollout plan.
+- Deliverables: production-ready wizard ready for enablement once content validated.
 
 ## Dependencies & Reuse Checklist
 - [ ] Reuse `AppSheetModal`, `NavigationGuardDialog`, `WizardStepper` patterns.
@@ -91,12 +110,11 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 - [ ] Seed default delivery methods relevant to Turkish photographers (Online Gallery, USB Stick, Album, Printed Photos).
 - [ ] Ensure new tables or columns (e.g., delivery methods) are defined with migrations before Phase 3.
 
-## Open Questions
-- Should ad-hoc services become full services automatically, or remain package-only? **Proposal:** default to package-only for MVP but log interest in “Save to catalog” for later.
-- Deposit: should the percent apply to subtotal (base + services) or base price only? Need confirmation before Phase 3.
-- Delivery methods storage: reuse existing session planning table or introduce `package_delivery_methods`? For MVP we can keep methods in state and store serialized array on the package.
-- Do we need Turkish tax/VAT handling (KDV) in MVP? Currently assumed **no**.
+## Decisions Recap
+- **Ad-hoc services:** MVP supports adding custom (package-only) services inside the wizard. We will log interest in a future “Save to catalog” toggle but keep the first release simple.
+- **Deposit toggle:** provide a control so photographers choose whether the percentage applies to the base price or the subtotal (base + services), defaulting to subtotal.
+- **Delivery methods:** persist methods in the database so they follow the photographer across devices. Prefer reusing the session planning table; create a lightweight `package_delivery_methods` table if reuse is not practical.
+- **Taxes (KDV):** out of scope for MVP.
 
 ## Next Steps
-1. Validate open questions with Tayte.
-2. Kick off Phase 1 once requirements locked: scaffold feature structure + empty steps.
+1. Kick off Phase 1: scaffold feature structure, reducer, and wizard shell with placeholder steps using the shared wizard components.

@@ -16,19 +16,19 @@
   - Respect current Supabase schema; any new columns or tables require coordination but aim for additive changes.
   - Avoid regressing existing catalog management or project creation during rollout—feature-flag where needed.
 
-## Phase 1 — Reshape Service Catalog
+## Phase 1 — Reshape Service Catalog *(in progress)*
 - **Data design**
-  - Add a `service_type` (enum/string) and optional metadata fields (`is_people_based`, `default_unit`) to `services`.
-  - Prepare migration + backfill script (default existing services to `deliverable` unless labeled otherwise).
+  - ✅ Added `service_type` + `is_people_based` to `services` (UI is consuming both the segmented filters and new dialogs).
+  - ⏳ Prepare migration + backfill script so existing rows pick the right type and staffing flag (still outstanding).
+  - ⏳ Decide whether `default_unit` stays in scope for v1 or should be postponed/removed.
 - **UI & UX**
-  - Update Settings → Services to present segmented filters or tabs (Coverage vs Deliverables) with concise descriptions.
-  - Keep the create/edit form nearly identical; only expose new fields when relevant so we avoid intimidating users.
-  - Add guidance text and empty states that mention common Turkish photographer examples (second shooter, album, 10-print pack).
+  - ✅ Services settings now use the segmented control (coverage vs deliverable) and refreshed cards/dialog copy.
+  - ✅ Dialogs expose the new fields only when relevant and include empty-state guidance.
 - **Tech tasks**
-  - Extend hooks/services fetching to include the new fields.
-  - Adjust tests and fixtures to cover both types.
+  - ✅ Hooks/tests updated to return the new columns.
+  - ⏳ Audit downstream consumers (packages, project flows, reports) to ensure they tolerate the richer payload.
 - **Output**
-  - A catalog that clearly differentiates people-based services from deliverables, ready for reuse elsewhere.
+  - Catalog UI differentiates staffing vs deliverables; backfill + consumer audit remain before closing the phase.
 
 ## Phase 2 — Bundle Authoring for Packages
 - **Catalog integration**
@@ -66,12 +66,12 @@
   - Maintain feature flags or staged rollout to prevent regressions during migration.
 
 ## Tracking & Follow-ups
-- Backfill existing services with the new `service_type` + staffing metadata so coverage items land in the correct tab.
-- Audit package and wizard consumers to ensure service loading remains stable, then plan their migrations onto the line-item editor.
-- Monitor Supabase queries for any places that still assume a flat list of services (e.g. reports) and update them to read the new columns.
+- Backfill existing services with the new `service_type` + staffing metadata so coverage items land in the correct tab. *(pending)*
+- Audit package and wizard consumers to ensure service loading remains stable, then plan their migrations onto the line-item editor. *(pending)*
+- Monitor Supabase queries for any places that still assume a flat list of services (e.g. reports) and update them to read the new columns. *(pending)*
 
 ## Immediate Next Steps
-1. Review this plan with product/design to confirm scope and level of complexity.
-2. Draft the service schema change (ERD snippet + migration checklist) and run it past backend.
-3. Wireframe the updated settings catalog screens and bundle builder for quick validation.
-4. Schedule implementation tasks per phase, aligning with ongoing work on the project wizard.
+1. Review this plan with product/design to confirm scope and level of complexity. *(todo)*
+2. Draft the service schema change (ERD snippet + migration checklist) and run it past backend. *(todo – schema tweaks landed but migration/backfill checklist still required)*
+3. Wireframe the bundle builder experience (packages + project flows) using the new line-item pattern. *(todo)*
+4. Schedule implementation tasks per phase, aligning with ongoing work on the project wizard. *(todo)*

@@ -251,38 +251,46 @@ const SessionTypesSection = () => {
                     isInactive && "opacity-70"
                   )}
                 >
-                  <div className="space-y-2">
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-1">
-                        <h3 className="text-base font-semibold leading-none">
-                          {sessionType.name}
-                        </h3>
-                        {isDefault ? (
-                          <Badge variant="default" className="bg-primary text-primary-foreground">
-                            {tForms("sessionTypes.default_badge")}
-                          </Badge>
-                        ) : canManageSessionTypes ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 rounded-full px-2.5 text-xs font-semibold text-muted-foreground hover:text-primary hover:bg-primary/10"
-                            onClick={() => handleSetDefault(sessionType)}
-                            disabled={settingDefaultId === sessionType.id}
-                          >
-                            {tForms("sessionTypes.set_default")}
-                          </Button>
-                        ) : null}
-                        {isInactive && (
-                          <Badge variant="outline">
-                            {tCommon("status.inactive")}
-                          </Badge>
+                  <div className="flex h-full flex-col gap-3">
+                    <div className="flex flex-1 flex-col gap-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 flex-col gap-1.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-base font-semibold leading-none">
+                              {sessionType.name}
+                            </h3>
+                            {isInactive && (
+                              <Badge variant="outline">
+                                {tCommon("status.inactive")}
+                              </Badge>
+                            )}
+                          </div>
+                          {sessionType.description && (
+                            <p className="text-xs leading-snug text-muted-foreground">
+                              {sessionType.description}
+                            </p>
+                          )}
+                        </div>
+                        {(isDefault || canManageSessionTypes) && (
+                          <div className="flex items-start">
+                            {isDefault ? (
+                              <Badge variant="default" className="bg-primary text-primary-foreground">
+                                {tForms("sessionTypes.default_badge")}
+                              </Badge>
+                            ) : canManageSessionTypes ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 whitespace-nowrap rounded-full px-3 text-xs font-semibold text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                                onClick={() => handleSetDefault(sessionType)}
+                                disabled={settingDefaultId === sessionType.id}
+                              >
+                                {tForms("sessionTypes.set_default")}
+                              </Button>
+                            ) : null}
+                          </div>
                         )}
                       </div>
-                      {sessionType.description && (
-                        <p className="text-xs text-muted-foreground leading-snug">
-                          {sessionType.description}
-                        </p>
-                      )}
                     </div>
 
                     <div className="flex items-center justify-between gap-3 text-sm">

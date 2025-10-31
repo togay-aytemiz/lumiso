@@ -19,8 +19,8 @@
 ## Phase 1 — Reshape Service Catalog *(in progress)*
 - **Data design**
   - ✅ Added `service_type` + `is_people_based` to `services` (UI is consuming both the segmented filters and new dialogs).
-  - ⏳ Prepare migration + backfill script so existing rows pick the right type and staffing flag (still outstanding).
-  - ⏳ Decide whether `default_unit` stays in scope for v1 or should be postponed/removed.
+  - ✅ Prepare migration + backfill script so existing rows pick the right type and staffing flag (`supabase/migrations/20251107120000_services_backfill_types.sql` drafted; QA + rollout checklist pending).
+  - ✅ Decision: keep the `default_unit` column in the schema but defer exposing it in v1—line-item work will revisit once package quantity pickers land.
 - **UI & UX**
   - ✅ Services settings now use the segmented control (coverage vs deliverable) and refreshed cards/dialog copy.
   - ✅ Dialogs expose the new fields only when relevant and include empty-state guidance.
@@ -66,12 +66,12 @@
   - Maintain feature flags or staged rollout to prevent regressions during migration.
 
 ## Tracking & Follow-ups
-- Backfill existing services with the new `service_type` + staffing metadata so coverage items land in the correct tab. *(pending)*
+- 🚧 Run and verify the new backfill migration (`supabase/migrations/20251107120000_services_backfill_types.sql`) before enabling the segmented UI for all orgs. *(pending QA/deployment)*
 - Audit package and wizard consumers to ensure service loading remains stable, then plan their migrations onto the line-item editor. *(pending)*
 - Monitor Supabase queries for any places that still assume a flat list of services (e.g. reports) and update them to read the new columns. *(pending)*
 
 ## Immediate Next Steps
 1. Review this plan with product/design to confirm scope and level of complexity. *(todo)*
-2. Draft the service schema change (ERD snippet + migration checklist) and run it past backend. *(todo – schema tweaks landed but migration/backfill checklist still required)*
+2. Walk backend through the new schema additions + backfill heuristics so we have agreement on rollout sequencing and QA steps. *(todo)*
 3. Wireframe the bundle builder experience (packages + project flows) using the new line-item pattern. *(todo)*
 4. Schedule implementation tasks per phase, aligning with ongoing work on the project wizard. *(todo)*

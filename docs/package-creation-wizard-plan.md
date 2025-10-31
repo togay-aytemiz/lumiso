@@ -28,7 +28,8 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 - ⬜ **Quick add custom (MVP):** minimal inline form (name + selling price, optional cost) to capture ad-hoc items without leaving the flow. Default vendor blank. Later we can add “Save to catalog” toggle.
 - ⬜ **Summary panel:** show running totals (cost, selling, margin) in TRY. Keep visuals simple (two stat chips) for MVP.
 - ⬜ **Out of scope for MVP:** tiered pricing per service, time-based scheduling, automatic tax calculations.
-- ⬜ **State:** slice `lineItems` with `type` (`existing`/`custom`), `serviceId`, `name`, `quantity`, `unitCost`, `unitPrice`.
+- ⬜ **Units:** provide a unit selector (session, hour, day, item) seeded from the service catalog. Default to the service’s recommended unit so downstream flows know how to price overrides.
+- ⬜ **State:** slice `lineItems` with `type` (`existing`/`custom`), `serviceId`, `name`, `unit`, `quantity`, `unitCost`, `unitPrice`.
 
 ### 3. Delivery
 - ⬜ **Fields:** estimated photo count (single number with optional range toggle), delivery lead time (numeric value + unit select of `days` or `weeks`), delivery methods (chip selector with seeded options: Online Gallery, USB, Album). Allow users to add a custom method inline; persistence to shared catalog can wait for post-MVP.
@@ -50,7 +51,7 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 ## Data Flow & Persistence
 - ⬜ When submitting, create package record in `packages` table (fields: name, description, applicable types, visibility, delivery metadata, pricing).
 - ⬜ Persist base price to `packages.price`, final client-facing total to `packages.client_total`, the inclusive/exclusive flag via `packages.include_addons_in_price`, and deposit settings inside `packages.pricing_metadata` (enable flag, mode, value, target).
-- ⬜ Bulk insert line items into `package_services` / new `package_line_items` table including quick-add entries (generate services if user opted to save to catalog).
+- ⬜ Bulk insert line items into `package_services` / new `package_line_items` table including quick-add entries and their `unit` metadata (generate services if user opted to save to catalog).
 - ⬜ Store delivery methods in existing catalog table (mirroring session planning) with `organization_id`.
 - ⬜ Track analytics events per step using `trackEvent` (phase 2).
 
@@ -105,6 +106,21 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 - ✅ Update docs, internal runbook, feature flag rollout plan.
 - ✅ Deliverables: production-ready wizard ready for enablement once content validated.
 
+### Phase 6 – Project Wizard Package Selection Enhancements (week 4)
+- ⬜ Refresh the package selection step inside project creation to surface package cards, key inclusions, TRY totals (base + services), and deposit preview.
+- ⬜ Allow photographers to toggle service inclusion per package, adjust quantities/units, and override prices inline without leaving the project flow. Persist overrides as project-scoped line items.
+- ⬜ Add unit selector mirroring package wizard options so adjustments remain consistent. Default to package units and highlight any overrides before submission.
+- ⬜ Display quantity badges alongside service names whenever quantity > 1 so photographers can spot multi-count inclusions at a glance.
+- ⬜ Deliverables: project wizard reflects updated pricing summary, supports per-project overrides, and keeps the review step accurate.
+- ⬜ **MVP rule:** always keep overrides scoped to the project; log a future enhancement to push changes back into the base package if we support multi-photographer teams later.
+
+### Phase 7 – Project Details Editing Entry Points (week 4-5)
+- ⬜ Replace the standalone services section on the project details sheet with a summarized package block (name, totals, key deliverables) plus an “Edit package” action.
+- ⬜ Launch the package wizard in edit mode from the project sheet, preloaded with the project’s current selections and overrides. Ensure save cancels gracefully and writes back to project records.
+- ⬜ Surface change tracking (e.g., price deltas, removed services) so photographers understand impact before confirming updates.
+- ⬜ Deliverables: photographers can review package context inside the project and re-run the wizard to make adjustments without duplicated UIs.
+- ⬜ **MVP rule:** if the base package template changes later, keep project overrides as-is; future roadmap item is to offer a bulk sync flow listing affected projects.
+
 ## Dependencies & Reuse Checklist
 - ✅ Reuse `AppSheetModal`, `NavigationGuardDialog`, `WizardStepper` patterns.
 - ✅ Share service fetching logic via `useServices`.
@@ -117,6 +133,7 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 - ✅ **Deposit toggle:** provide a control so photographers choose whether the percentage applies to the base price or the subtotal (base + services), defaulting to subtotal.
 - ✅ **Delivery methods:** persist methods in the database so they follow the photographer across devices. Prefer reusing the session planning table; create a lightweight `package_delivery_methods` table if reuse is not practical.
 - ✅ **Taxes (KDV):** out of scope for MVP.
+- ✅ **Project overrides:** keep project changes scoped to the project for MVP; note a post-MVP roadmap item to offer optional sync-back or bulk update flows.
 
 ## Automated Coverage
 - ✅ Snapshot helpers now cover hydration + update payload logic, ensuring pricing metadata (base vs client totals, deposit toggles) persists correctly.
@@ -126,3 +143,4 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 - ✅ Decide how settings lists should display pricing (base vs client total) and align copy accordingly.
 - ⬜ Smoke-test create & edit flows end-to-end in staging (existing packages without metadata, new ones with deposits, optional delivery).
 - ⬜ Expand component-level tests (e.g., Pricing step mode switch, Summary step render) once UI polish is finalised.
+- ⬜ Capture backlog ticket for future “sync updated package to projects” workflow including affected-projects preview.

@@ -752,6 +752,7 @@ export type Database = {
           applicable_types: string[] | null
           created_at: string
           default_add_ons: string[] | null
+          line_items: Json
           description: string | null
           id: string
           is_active: boolean
@@ -765,6 +766,7 @@ export type Database = {
           applicable_types?: string[] | null
           created_at?: string
           default_add_ons?: string[] | null
+          line_items?: Json
           description?: string | null
           id?: string
           is_active?: boolean
@@ -778,6 +780,7 @@ export type Database = {
           applicable_types?: string[] | null
           created_at?: string
           default_add_ons?: string[] | null
+          line_items?: Json
           description?: string | null
           id?: string
           is_active?: boolean

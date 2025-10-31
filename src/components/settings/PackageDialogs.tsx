@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./NavigationGuardDialog";
+import { createLineItem } from "@/types/serviceLineItems";
 
 interface Package {
   id: string;
@@ -26,6 +27,7 @@ interface Package {
   applicable_types: string[];
   default_add_ons: string[];
   is_active: boolean;
+  line_items?: any;
 }
 
 interface AddPackageDialogProps {
@@ -40,6 +42,23 @@ interface EditPackageDialogProps {
   onOpenChange: (open: boolean) => void;
   onPackageUpdated: () => void;
 }
+
+const extractAddonIds = (pkg?: Partial<Package> & { line_items?: unknown }): string[] => {
+  if (!pkg) return [];
+  if (Array.isArray(pkg.line_items)) {
+    const addons = pkg.line_items
+      .filter(
+        (entry): entry is { serviceId: unknown; role?: unknown } =>
+          Boolean(entry && typeof entry === "object")
+      )
+      .filter((entry) => entry.role === "addon" && typeof entry.serviceId === "string")
+      .map((entry) => String(entry.serviceId));
+    if (addons.length > 0) {
+      return addons;
+    }
+  }
+  return Array.isArray(pkg?.default_add_ons) ? pkg!.default_add_ons : [];
+};
 
 // Service picker component for default add-ons
 const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
@@ -392,6 +411,10 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
         throw new Error("Organization required");
       }
 
+      const addonLineItems = packageData.default_add_ons.map((serviceId) =>
+        createLineItem(serviceId, "addon")
+      );
+
       const { error } = await supabase
         .from('packages')
         .insert({
@@ -403,6 +426,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
           duration: null,
           applicable_types: packageData.applicable_types,
           default_add_ons: packageData.default_add_ons,
+          line_items: addonLineItems,
           is_active: packageData.is_active
         });
 
@@ -626,6 +650,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const originalAddOns = useMemo(() => extractAddonIds(pkg), [pkg]);
 
   // Fetch project types
   const { data: projectTypes = [] } = useQuery({
@@ -686,12 +711,12 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
         description: pkg.description || "",
         price: pkg.price.toString(),
         applicable_types: [...pkg.applicable_types],
-        default_add_ons: [...pkg.default_add_ons],
+        default_add_ons: [...originalAddOns],
         is_active: pkg.is_active
       });
       setErrors({});
     }
-  }, [pkg, open]);
+  }, [pkg, open, originalAddOns]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -715,6 +740,10 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       setLoading(true);
       if (!pkg) return;
 
+      const addonLineItems = packageData.default_add_ons.map((serviceId) =>
+        createLineItem(serviceId, "addon")
+      );
+
       const { error } = await supabase
         .from('packages')
         .update({
@@ -724,6 +753,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
           duration: null,
           applicable_types: packageData.applicable_types,
           default_add_ons: packageData.default_add_ons,
+          line_items: addonLineItems,
           is_active: packageData.is_active
         })
         .eq('id', pkg.id);
@@ -764,7 +794,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       description: pkg.description || "",
       price: pkg.price.toString(),
       applicable_types: [...pkg.applicable_types],
-      default_add_ons: [...pkg.default_add_ons],
+      default_add_ons: [...originalAddOns],
       is_active: pkg.is_active
     });
     setErrors({});
@@ -775,7 +805,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
     packageData.description !== (pkg.description || "") ||
     packageData.price !== pkg.price.toString() ||
     JSON.stringify([...packageData.applicable_types].sort()) !== JSON.stringify([...pkg.applicable_types].sort()) ||
-    JSON.stringify([...packageData.default_add_ons].sort()) !== JSON.stringify([...pkg.default_add_ons].sort()) ||
+    JSON.stringify([...packageData.default_add_ons].sort()) !== JSON.stringify([...originalAddOns].sort()) ||
     packageData.is_active !== pkg.is_active
   ) : false;
 

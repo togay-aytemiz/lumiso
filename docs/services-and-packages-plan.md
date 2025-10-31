@@ -40,7 +40,7 @@
 - **Tech tasks**
   - Share a new `ServiceLineItems` state shape (`serviceId`, `quantity?`, `unitPrice?`) even if quantity defaults to 1.
   - Ensure package previews in the wizard and project detail reuse this structure.
-  - Update Supabase persistence to store the ordered list; remain backward compatible with existing data until migration completes.
+  - ✅ Update Supabase persistence to store the ordered list (`packages.line_items` jsonb) and mirror legacy add-ons until front-end migration lands.
 - **Output**
   - Packages reflect real-world combinations (base shoot + album + print pack) and seed the upcoming project flow updates.
 
@@ -67,6 +67,7 @@
 
 ## Tracking & Follow-ups
 - 🚧 Run and verify the new backfill migration (`supabase/migrations/20251107120000_services_backfill_types.sql`) before enabling the segmented UI for all orgs. *(pending QA/deployment)*
+- 🚧 Roll out the new `packages.line_items` column (`supabase/migrations/20251107133000_packages_line_items.sql`) and confirm seed helpers/backfill behave as expected in staging. *(pending QA/deployment)*
 - Audit package and wizard consumers to ensure service loading remains stable, then plan their migrations onto the line-item editor. *(pending)*
 - Monitor Supabase queries for any places that still assume a flat list of services (e.g. reports) and update them to read the new columns. *(pending)*
 

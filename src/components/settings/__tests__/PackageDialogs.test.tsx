@@ -246,6 +246,7 @@ describe("PackageDialogs", () => {
         price: 500,
         applicable_types: ["Wedding"],
         default_add_ons: [],
+        line_items: [],
         organization_id: "org-123",
         user_id: "user-1",
       })
@@ -315,6 +316,7 @@ describe("PackageDialogs", () => {
           price: 400,
           applicable_types: ["Wedding"],
           default_add_ons: [],
+          line_items: [],
           is_active: true,
         } as any}
         onOpenChange={jest.fn()}
@@ -343,6 +345,7 @@ describe("PackageDialogs", () => {
       expect.objectContaining({
         name: "Premium Package",
         price: 750,
+        line_items: [],
         is_active: false,
       })
     );

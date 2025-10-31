@@ -1,0 +1,196 @@
+import {
+  buildPackageHydrationFromRecord,
+  buildPackageUpdatePayload,
+} from "../packageCreationSnapshot";
+import type { Database } from "@/integrations/supabase/types";
+
+type PackageRow = Database["public"]["Tables"]["packages"]["Row"];
+
+const baseRecord = (): PackageRow => ({
+  applicable_types: ["wedding"],
+  created_at: "2024-11-08T10:30:00.000Z",
+  client_total: 2300,
+  default_add_ons: ["svc-2"],
+  delivery_estimate_type: "range",
+  delivery_lead_time_unit: "weeks",
+  delivery_lead_time_value: 4,
+  delivery_methods: [
+    {
+      methodId: "online-gallery",
+      name: "Online gallery",
+    },
+  ],
+  delivery_photo_count_max: 400,
+  delivery_photo_count_min: 250,
+  description: "Full day coverage with album",
+  id: "pkg-1",
+  include_addons_in_price: false,
+  is_active: true,
+  line_items: [
+    {
+      id: "line-1",
+      type: "existing",
+      serviceId: "svc-1",
+      name: "Primary shoot",
+      quantity: 1,
+      unitCost: 500,
+      unitPrice: 1800,
+      vendorName: "Internal",
+      source: "catalog",
+    },
+    {
+      id: "line-2",
+      type: "custom",
+      name: "Drone footage",
+      quantity: 1,
+      unitCost: 200,
+      unitPrice: 500,
+      vendorName: "Freelancer",
+    },
+  ],
+  name: "Golden Wedding",
+  organization_id: "org-1",
+  pricing_metadata: {
+    enableDeposit: true,
+    depositMode: "percent_subtotal",
+    depositValue: 25,
+    depositTarget: "subtotal",
+    depositAmount: 575,
+  },
+  price: 1800,
+  updated_at: "2024-11-08T10:30:00.000Z",
+  user_id: "user-1",
+});
+
+describe("buildPackageHydrationFromRecord", () => {
+  it("hydrates basics, services, delivery, and pricing slices", () => {
+    const hydration = buildPackageHydrationFromRecord(baseRecord());
+
+    expect(hydration.basics).toMatchObject({
+      name: "Golden Wedding",
+      description: "Full day coverage with album",
+      applicableTypeIds: ["wedding"],
+      isActive: true,
+    });
+
+    expect(hydration.services.items).toHaveLength(2);
+    expect(hydration.services.items[0]).toMatchObject({
+      id: "line-1",
+      type: "existing",
+      serviceId: "svc-1",
+      quantity: 1,
+      unitPrice: 1800,
+      vendorName: "Internal",
+      source: "catalog",
+    });
+
+    expect(hydration.delivery).toMatchObject({
+      enablePhotoEstimate: true,
+      enableLeadTime: true,
+      enableMethods: true,
+      estimateType: "range",
+      countMin: 250,
+      countMax: 400,
+      leadTimeValue: 4,
+      leadTimeUnit: "weeks",
+      methods: ["online-gallery"],
+    });
+
+    expect(hydration.pricing).toMatchObject({
+      basePrice: "1800",
+      includeAddOnsInPrice: false,
+      enableDeposit: true,
+      depositMode: "percent_subtotal",
+      depositValue: "25",
+    });
+  });
+
+  it("falls back to defaults when optional metadata is missing", () => {
+    const record = baseRecord();
+    record.pricing_metadata = {};
+    record.delivery_methods = [];
+    record.include_addons_in_price = null as unknown as boolean;
+
+    const hydration = buildPackageHydrationFromRecord(record);
+
+    expect(hydration.delivery.enableMethods).toBe(false);
+    expect(hydration.delivery.methods).toEqual([]);
+    expect(hydration.pricing.includeAddOnsInPrice).toBe(true);
+    expect(hydration.pricing.enableDeposit).toBe(false);
+    expect(hydration.pricing.depositMode).toBe("percent_subtotal");
+    expect(hydration.pricing.depositValue).toBe("");
+  });
+
+  it("maps snapshot into update payload correctly", () => {
+    const record = baseRecord();
+    const hydration = buildPackageHydrationFromRecord(record);
+    const contextSnapshot = {
+      basics: hydration.basics,
+      services: {
+        items: hydration.services.items.map((item) => ({
+          ...item,
+          unitCost: item.unitCost ?? null,
+          unitPrice: item.unitPrice ?? null,
+        })),
+        totals: { cost: 0, price: 0 },
+        defaultAddOnIds: [],
+        itemCount: hydration.services.items.length,
+        totalQuantity: hydration.services.items.reduce((acc, item) => acc + item.quantity, 0),
+      },
+      delivery: {
+        photosEnabled: hydration.delivery.enablePhotoEstimate,
+        leadTimeEnabled: hydration.delivery.enableLeadTime,
+        methodsEnabled: hydration.delivery.enableMethods,
+        estimateType: hydration.delivery.estimateType,
+        photoCountMin: hydration.delivery.countMin,
+        photoCountMax: hydration.delivery.countMax,
+        leadTimeValue: hydration.delivery.leadTimeValue,
+        leadTimeUnit: hydration.delivery.leadTimeUnit,
+        methods: hydration.delivery.methods.map((methodId) => ({
+          methodId,
+          name: methodId,
+        })),
+      },
+      pricing: {
+        basePrice: Number(hydration.pricing.basePrice),
+        servicesCostTotal: 0,
+        servicesPriceTotal: 0,
+        servicesMargin: 0,
+        subtotal: Number(hydration.pricing.basePrice),
+        clientTotal: record.client_total,
+        includeAddOnsInPrice: hydration.pricing.includeAddOnsInPrice,
+        depositMode: hydration.pricing.depositMode,
+        depositValue: Number(hydration.pricing.depositValue),
+        depositAmount: record.pricing_metadata?.depositAmount ?? 0,
+        enableDeposit: hydration.pricing.enableDeposit,
+      },
+      meta: {
+        selectedServiceCount: hydration.services.items.length,
+        totalSelectedQuantity: hydration.services.items.reduce(
+          (acc, item) => acc + item.quantity,
+          0
+        ),
+      },
+    } as const;
+
+    const updatePayload = buildPackageUpdatePayload(
+      contextSnapshot,
+      record.id
+    );
+
+    expect(updatePayload).toMatchObject({
+      id: "pkg-1",
+      name: "Golden Wedding",
+      price: Number(hydration.pricing.basePrice),
+      client_total: record.client_total,
+      include_addons_in_price: false,
+    });
+    expect(updatePayload.pricing_metadata).toEqual(
+      expect.objectContaining({
+        enableDeposit: true,
+        depositMode: "percent_subtotal",
+        depositValue: Number(hydration.pricing.depositValue),
+      })
+    );
+  });
+});

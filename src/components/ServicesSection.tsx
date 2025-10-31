@@ -1,10 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Plus, Trash2, ChevronDown, ChevronRight, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +25,7 @@ import SettingsSection from "./SettingsSection";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { IconActionButton } from "@/components/ui/icon-action-button";
 import { IconActionButtonGroup } from "@/components/ui/icon-action-button-group";
+import { Switch } from "@/components/ui/switch";
 // Permissions removed for single photographer mode
 import { useServices } from "@/hooks/useOrganizationData";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -21,6 +33,7 @@ import {
   useFormsTranslation,
   useCommonTranslation,
 } from "@/hooks/useTypedTranslation";
+import { cn } from "@/lib/utils";
 
 type ServiceType = "coverage" | "deliverable";
 
@@ -44,10 +57,14 @@ const ServicesSection = () => {
   const [showEditServiceDialog, setShowEditServiceDialog] = useState(false);
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
   const [activeType, setActiveType] = useState<ServiceType>("coverage");
+  const [showInactive, setShowInactive] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t: tForms } = useFormsTranslation();
   const { t: tCommon } = useCommonTranslation();
+  const passiveBadgeLabel = tCommon("status.passive_badge");
   // Permissions removed for single photographer mode - always allow
   const { activeOrganizationId } = useOrganization();
 
@@ -64,14 +81,20 @@ const ServicesSection = () => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, serviceId) => {
       queryClient.invalidateQueries({
         queryKey: ["services", activeOrganizationId],
       });
+      const serviceName =
+        services.find((service) => service.id === serviceId)?.name ?? "";
       toast({
         title: tForms("services.service_deleted"),
-        description: tForms("services.service_deleted_desc"),
+        description: tForms("services.service_deleted_desc", {
+          name: serviceName,
+        }),
       });
+      setDeleteConfirmOpen(false);
+      setServiceToDelete(null);
     },
     onError: (error) => {
       toast({
@@ -80,6 +103,40 @@ const ServicesSection = () => {
         variant: "destructive",
       });
       console.error("Delete service error:", error);
+    },
+  });
+
+  const markServiceInactiveMutation = useMutation({
+    mutationFn: async (serviceId: string) => {
+      const { error } = await supabase
+        .from("services")
+        .update({ is_active: false })
+        .eq("id", serviceId);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, serviceId) => {
+      queryClient.invalidateQueries({
+        queryKey: ["services", activeOrganizationId],
+      });
+      const serviceName =
+        services.find((service) => service.id === serviceId)?.name ?? "";
+      toast({
+        title: tForms("services.service_marked_inactive"),
+        description: tForms("services.service_marked_inactive_desc", {
+          name: serviceName,
+        }),
+      });
+      setDeleteConfirmOpen(false);
+      setServiceToDelete(null);
+    },
+    onError: (error) => {
+      toast({
+        title: tCommon("labels.error"),
+        description: tForms("services.error_marking_inactive"),
+        variant: "destructive",
+      });
+      console.error("Deactivate service error:", error);
     },
   });
 
@@ -150,9 +207,11 @@ const ServicesSection = () => {
   const filteredServices = useMemo(
     () =>
       normalizedServices.filter(
-        (service) => service.service_type === activeType
+        (service) =>
+          service.service_type === activeType &&
+          (showInactive || service.is_active !== false)
       ),
-    [normalizedServices, activeType]
+    [normalizedServices, activeType, showInactive]
   );
 
   // Group services by category for selected type
@@ -175,8 +234,19 @@ const ServicesSection = () => {
     setOpenCategories(newOpenCategories);
   };
 
-  const handleDeleteService = (serviceId: string) => {
-    deleteServiceMutation.mutate(serviceId);
+  const openDeleteDialog = (service: Service) => {
+    setServiceToDelete(service);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDeleteService = () => {
+    if (!serviceToDelete) return;
+    deleteServiceMutation.mutate(serviceToDelete.id);
+  };
+
+  const handleMarkServiceInactive = () => {
+    if (!serviceToDelete) return;
+    markServiceInactiveMutation.mutate(serviceToDelete.id);
   };
 
   // Track modal state and ensure sheets close cleanly
@@ -184,16 +254,44 @@ const ServicesSection = () => {
     setShowNewServiceDialog(open);
   };
 
+  // Always show services in single photographer mode
+  // if (!hasPermission('view_services')) {
+  //   return null;
+  // }
+
+  const canManageServices = true; // Always allow in single photographer mode
+
+  const sectionActions = (
+    <div className="flex items-center gap-3">
+      <label
+        htmlFor="services-show-inactive"
+        className="flex items-center gap-2 text-sm text-muted-foreground"
+      >
+        <Switch
+          id="services-show-inactive"
+          checked={showInactive}
+          onCheckedChange={setShowInactive}
+        />
+        <span>{tCommon("labels.show_inactive")}</span>
+      </label>
+      {canManageServices && (
+        <Button
+          onClick={() => setShowNewServiceDialog(true)}
+          className="flex items-center gap-2 whitespace-nowrap"
+        >
+          <Plus className="h-4 w-4" />
+          {tForms("services.add_service")}
+        </Button>
+      )}
+    </div>
+  );
+
   if (isLoading) {
     return (
       <SettingsSection
         title={tForms("services.title")}
         description={tForms("services.description")}
-        action={{
-          label: tForms("services.add_service"),
-          onClick: () => setShowNewServiceDialog(true),
-          icon: <Plus className="h-4 w-4" />,
-        }}
+        actions={sectionActions}
       >
         <div className="space-y-4">
           {[1, 2].map((i) => (
@@ -210,27 +308,12 @@ const ServicesSection = () => {
     );
   }
 
-  // Always show services in single photographer mode
-  // if (!hasPermission('view_services')) {
-  //   return null;
-  // }
-
-  const canManageServices = true; // Always allow in single photographer mode
-
   return (
     <>
       <SettingsSection
         title={tForms("services.title")}
         description={tForms("services.description")}
-        action={
-          canManageServices
-            ? {
-                label: tForms("services.add_service"),
-                onClick: () => setShowNewServiceDialog(true),
-                icon: <Plus className="h-4 w-4" />,
-              }
-            : undefined
-        }
+        actions={sectionActions}
       >
         <div className="mb-6 space-y-2">
           <SegmentedControl
@@ -311,129 +394,63 @@ const ServicesSection = () => {
                       <div className="overflow-hidden space-y-3">
                         <div className="hidden md:block space-y-3 pl-3">
                           <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
-                            {categoryServices.map((service) => (
-                              <div
-                                key={service.id}
-                                className="flex h-full flex-col justify-between rounded-lg border bg-background p-3 shadow-sm"
-                              >
-                                <div className="space-y-2">
-                                  <h4 className="text-sm font-semibold leading-tight text-foreground">
-                                    {service.name}
-                                  </h4>
-                                  {service.description && (
-                                    <p className="text-xs text-muted-foreground leading-snug">
-                                      {service.description}
-                                    </p>
+                            {categoryServices.map((service) => {
+                              const isInactive = service.is_active === false;
+                              return (
+                                <div
+                                  key={service.id}
+                                  className={cn(
+                                    "flex h-full flex-col justify-between rounded-lg border bg-background p-3 shadow-sm transition-opacity",
+                                    isInactive && "opacity-75"
                                   )}
-                                  {service.vendor_name && (
-                                    <p className="text-xs italic text-muted-foreground/80">
-                                      {tForms("services.vendor_label", {
-                                        name: service.vendor_name,
-                                      })}
-                                    </p>
-                                  )}
-                                </div>
-
-                                <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                                  <div className="space-y-1">
-                                    {(service.cost_price || 0) > 0 && (
-                                      <div className="font-medium text-foreground/90">
-                                        {tForms("services.cost")}:{" "}
-                                        <span className="text-foreground">
-                                          TRY {service.cost_price}
-                                        </span>
-                                      </div>
+                                >
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                      <h4 className="text-sm font-semibold leading-tight text-foreground">
+                                        {service.name}
+                                      </h4>
+                                      {isInactive && (
+                                        <Badge
+                                          variant="outline"
+                                          className="text-[10px] font-semibold uppercase tracking-wide"
+                                        >
+                                          {passiveBadgeLabel}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    {service.description && (
+                                      <p className="text-xs text-muted-foreground leading-snug">
+                                        {service.description}
+                                      </p>
                                     )}
-                                    {(service.selling_price || 0) > 0 && (
-                                      <div className="font-semibold text-primary">
-                                        {tForms("services.selling")}: TRY{" "}
-                                        {service.selling_price}
-                                      </div>
+                                    {service.vendor_name && (
+                                      <p className="text-xs italic text-muted-foreground/80">
+                                        {tForms("services.vendor_label", {
+                                          name: service.vendor_name,
+                                        })}
+                                      </p>
                                     )}
                                   </div>
 
-                                  {canManageServices ? (
-                                    <IconActionButtonGroup>
-                                      <IconActionButton
-                                        onClick={() => {
-                                          setEditingService(service);
-                                          setShowEditServiceDialog(true);
-                                        }}
-                                        aria-label={`Edit service ${service.name}`}
-                                      >
-                                        <Edit className="h-4 w-4" />
-                                      </IconActionButton>
-                                      <IconActionButton
-                                        onClick={() =>
-                                          handleDeleteService(service.id)
-                                        }
-                                        disabled={deleteServiceMutation.isPending}
-                                        aria-label={`Delete service ${service.name}`}
-                                        variant="danger"
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </IconActionButton>
-                                    </IconActionButtonGroup>
-                                  ) : (
-                                    <span className="text-xs text-muted-foreground">
-                                      {tForms("services.view_only")}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Mobile view */}
-                        <div className="md:hidden space-y-3 pl-3">
-                          {categoryServices.length === 0 ? (
-                            <div className="text-center py-6 text-muted-foreground">
-                              <p className="text-sm">
-                                {tForms("services.no_services_in_category")}
-                              </p>
-                            </div>
-                          ) : (
-                            categoryServices.map((service) => (
-                              <div
-                                key={service.id}
-                                className="border rounded-lg p-3 bg-background space-y-3"
-                              >
-                                {/* Service name */}
-                                <div>
-                                  <h4 className="font-semibold text-base">
-                                    {service.name}
-                                  </h4>
-                                  {service.description && (
-                                    <p className="text-sm text-muted-foreground mt-1 break-words">
-                                      {service.description}
-                                    </p>
-                                  )}
-                                  {service.vendor_name && (
-                                    <p className="text-xs italic text-muted-foreground/80 mt-1">
-                                      {tForms("services.vendor_label", {
-                                        name: service.vendor_name,
-                                      })}
-                                    </p>
-                                  )}
-                                </div>
-                                {(service.cost_price || 0) > 0 ||
-                                (service.selling_price || 0) > 0 ? (
-                                  <div className="flex items-center justify-between gap-2 text-sm">
-                                    <div className="space-y-1 text-muted-foreground">
+                                  <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                                    <div className="space-y-1">
                                       {(service.cost_price || 0) > 0 && (
-                                        <div>
-                                          {tForms("services.cost")}: TRY {service.cost_price}
+                                        <div className="font-medium text-foreground/90">
+                                          {tForms("services.cost")}:{" "}
+                                          <span className="text-foreground">
+                                            TRY {service.cost_price}
+                                          </span>
                                         </div>
                                       )}
                                       {(service.selling_price || 0) > 0 && (
-                                        <div className="font-medium text-primary">
-                                          {tForms("services.selling")}: TRY {service.selling_price}
+                                        <div className="font-semibold text-primary">
+                                          {tForms("services.selling")}: TRY{" "}
+                                          {service.selling_price}
                                         </div>
                                       )}
                                     </div>
 
-                                    {canManageServices && (
+                                    {canManageServices ? (
                                       <IconActionButtonGroup>
                                         <IconActionButton
                                           onClick={() => {
@@ -445,40 +462,145 @@ const ServicesSection = () => {
                                           <Edit className="h-4 w-4" />
                                         </IconActionButton>
                                         <IconActionButton
-                                          onClick={() => handleDeleteService(service.id)}
-                                          disabled={deleteServiceMutation.isPending}
+                                          onClick={() => openDeleteDialog(service)}
+                                          disabled={
+                                            deleteServiceMutation.isPending ||
+                                            markServiceInactiveMutation.isPending
+                                          }
                                           aria-label={`Delete service ${service.name}`}
                                           variant="danger"
                                         >
                                           <Trash2 className="h-4 w-4" />
                                         </IconActionButton>
                                       </IconActionButtonGroup>
+                                    ) : (
+                                      <span className="text-xs text-muted-foreground">
+                                        {tForms("services.view_only")}
+                                      </span>
                                     )}
                                   </div>
-                                ) : canManageServices ? (
-                                  <IconActionButtonGroup>
-                                    <IconActionButton
-                                      onClick={() => {
-                                        setEditingService(service);
-                                        setShowEditServiceDialog(true);
-                                      }}
-                                      aria-label={`Edit service ${service.name}`}
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </IconActionButton>
-                                    <IconActionButton
-                                      onClick={() => handleDeleteService(service.id)}
-                                      disabled={deleteServiceMutation.isPending}
-                                      aria-label={`Delete service ${service.name}`}
-                                      variant="danger"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </IconActionButton>
-                                  </IconActionButtonGroup>
-                                ) : null}
-                              </div>
-                            ))
-                          )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Mobile view */}
+                        <div className="md:hidden space-y-3 pl-3">
+                          {categoryServices.length === 0 ? (
+                            <div className="text-center py-6 text-muted-foreground">
+                              <p className="text-sm">
+                                {tForms("services.no_services_in_category")}
+                              </p>
+                            </div>
+                          ) : categoryServices.map((service) => {
+                            const isInactive = service.is_active === false;
+                              return (
+                                <div
+                                  key={service.id}
+                                  className={cn(
+                                    "space-y-3 rounded-lg border bg-background p-3 transition-opacity",
+                                    isInactive && "opacity-75"
+                                  )}
+                                >
+                                  {/* Service name */}
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <h4 className="text-base font-semibold">
+                                        {service.name}
+                                      </h4>
+                                      {isInactive && (
+                                        <Badge
+                                          variant="outline"
+                                          className="text-[10px] font-semibold uppercase tracking-wide"
+                                        >
+                                          {passiveBadgeLabel}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    {service.description && (
+                                      <p className="mt-1 break-words text-sm text-muted-foreground">
+                                        {service.description}
+                                      </p>
+                                    )}
+                                    {service.vendor_name && (
+                                      <p className="mt-1 text-xs italic text-muted-foreground/80">
+                                        {tForms("services.vendor_label", {
+                                          name: service.vendor_name,
+                                        })}
+                                      </p>
+                                    )}
+                                  </div>
+                                  {(service.cost_price || 0) > 0 ||
+                                  (service.selling_price || 0) > 0 ? (
+                                    <div className="flex items-center justify-between gap-2 text-sm">
+                                      <div className="space-y-1 text-muted-foreground">
+                                        {(service.cost_price || 0) > 0 && (
+                                          <div>
+                                            {tForms("services.cost")}: TRY{" "}
+                                            {service.cost_price}
+                                          </div>
+                                        )}
+                                        {(service.selling_price || 0) > 0 && (
+                                          <div className="font-medium text-primary">
+                                            {tForms("services.selling")}: TRY{" "}
+                                            {service.selling_price}
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {canManageServices && (
+                                        <IconActionButtonGroup>
+                                          <IconActionButton
+                                            onClick={() => {
+                                              setEditingService(service);
+                                              setShowEditServiceDialog(true);
+                                            }}
+                                            aria-label={`Edit service ${service.name}`}
+                                          >
+                                            <Edit className="h-4 w-4" />
+                                          </IconActionButton>
+                                          <IconActionButton
+                                            onClick={() => openDeleteDialog(service)}
+                                            disabled={
+                                              deleteServiceMutation.isPending ||
+                                              markServiceInactiveMutation.isPending
+                                            }
+                                            aria-label={`Delete service ${service.name}`}
+                                            variant="danger"
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </IconActionButton>
+                                        </IconActionButtonGroup>
+                                      )}
+                                    </div>
+                                  ) : canManageServices ? (
+                                    <IconActionButtonGroup>
+                                      <IconActionButton
+                                        onClick={() => {
+                                          setEditingService(service);
+                                          setShowEditServiceDialog(true);
+                                        }}
+                                        aria-label={`Edit service ${service.name}`}
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </IconActionButton>
+                                      <IconActionButton
+                                        onClick={() => openDeleteDialog(service)}
+                                        disabled={
+                                          deleteServiceMutation.isPending ||
+                                          markServiceInactiveMutation.isPending
+                                        }
+                                        aria-label={`Delete service ${service.name}`}
+                                        variant="danger"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </IconActionButton>
+                                    </IconActionButtonGroup>
+                                  ) : null}
+                                </div>
+                              );
+                            })}
                         </div>
                       </div>
                     </CollapsibleContent>
@@ -515,6 +637,52 @@ const ServicesSection = () => {
               setShowEditServiceDialog(false);
             }}
           />
+
+          <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{tForms("services.delete_title")}</AlertDialogTitle>
+                <AlertDialogDescription className="space-y-2 text-sm text-muted-foreground">
+                  <p className="text-foreground">
+                    {tForms("services.delete_confirm", {
+                      name: serviceToDelete?.name ?? "",
+                    })}
+                  </p>
+                  <p>{tForms("services.delete_consider_inactive")}</p>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel
+                  disabled={
+                    deleteServiceMutation.isPending ||
+                    markServiceInactiveMutation.isPending
+                  }
+                >
+                  {tCommon("buttons.cancel")}
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleMarkServiceInactive}
+                  disabled={
+                    markServiceInactiveMutation.isPending ||
+                    deleteServiceMutation.isPending
+                  }
+                  className="border border-input bg-background text-foreground hover:bg-muted"
+                >
+                  {tForms("services.mark_inactive")}
+                </AlertDialogAction>
+                <AlertDialogAction
+                  onClick={handleConfirmDeleteService}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  disabled={
+                    deleteServiceMutation.isPending ||
+                    markServiceInactiveMutation.isPending
+                  }
+                >
+                  {tCommon("buttons.delete")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </>
       )}
     </>

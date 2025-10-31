@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 interface SettingsSectionProps {
   title: string;
   description?: string;
+  actions?: ReactNode;
   action?: {
     label: string;
     onClick: () => void;
@@ -13,7 +14,14 @@ interface SettingsSectionProps {
   children: ReactNode;
 }
 
-const SettingsSection = ({ title, description, action, children }: SettingsSectionProps) => {
+const SettingsSection = ({ title, description, action, actions, children }: SettingsSectionProps) => {
+  const renderedAction = action ? (
+    <Button onClick={action.onClick} className="flex items-center gap-2 whitespace-nowrap">
+      {action.icon}
+      {action.label}
+    </Button>
+  ) : null;
+
   return (
     <Card>
       <CardHeader>
@@ -22,14 +30,11 @@ const SettingsSection = ({ title, description, action, children }: SettingsSecti
             <CardTitle>{title}</CardTitle>
             {description && <CardDescription>{description}</CardDescription>}
           </div>
-          {action && (
-            <Button
-              onClick={action.onClick}
-              className="flex items-center gap-2 whitespace-nowrap"
-            >
-              {action.icon}
-              {action.label}
-            </Button>
+          {(actions || renderedAction) && (
+            <div className="flex flex-wrap items-center gap-3">
+              {actions}
+              {renderedAction}
+            </div>
           )}
         </div>
       </CardHeader>

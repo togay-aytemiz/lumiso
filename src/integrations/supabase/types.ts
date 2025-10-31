@@ -751,13 +751,22 @@ export type Database = {
         Row: {
           applicable_types: string[] | null
           created_at: string
+          client_total: number
           default_add_ons: string[] | null
+          delivery_estimate_type: string
+          delivery_lead_time_unit: string | null
+          delivery_lead_time_value: number | null
+          delivery_methods: Json
+          delivery_photo_count_max: number | null
+          delivery_photo_count_min: number | null
           line_items: Json
           description: string | null
           id: string
           is_active: boolean
+          include_addons_in_price: boolean
           name: string
           organization_id: string | null
+          pricing_metadata: Json
           price: number
           updated_at: string
           user_id: string
@@ -765,13 +774,22 @@ export type Database = {
         Insert: {
           applicable_types?: string[] | null
           created_at?: string
+          client_total?: number
           default_add_ons?: string[] | null
+          delivery_estimate_type?: string
+          delivery_lead_time_unit?: string | null
+          delivery_lead_time_value?: number | null
+          delivery_methods?: Json
+          delivery_photo_count_max?: number | null
+          delivery_photo_count_min?: number | null
           line_items?: Json
           description?: string | null
           id?: string
           is_active?: boolean
+          include_addons_in_price?: boolean
           name: string
           organization_id?: string | null
+          pricing_metadata?: Json
           price?: number
           updated_at?: string
           user_id: string
@@ -779,13 +797,22 @@ export type Database = {
         Update: {
           applicable_types?: string[] | null
           created_at?: string
+          client_total?: number
           default_add_ons?: string[] | null
+          delivery_estimate_type?: string
+          delivery_lead_time_unit?: string | null
+          delivery_lead_time_value?: number | null
+          delivery_methods?: Json
+          delivery_photo_count_max?: number | null
+          delivery_photo_count_min?: number | null
           line_items?: Json
           description?: string | null
           id?: string
           is_active?: boolean
+          include_addons_in_price?: boolean
           name?: string
           organization_id?: string | null
+          pricing_metadata?: Json
           price?: number
           updated_at?: string
           user_id?: string

@@ -64,6 +64,7 @@
     "project_description": "Proje açıklaması (isteğe bağlı)",
     "showing_results": "{{total}} sonucun {{start}} - {{end}} arası gösteriliyor",
     "visible_columns": "{{total}} sütunun {{visible}} tanesi görünür",
+    "show_inactive": "Pasifleri göster",
     "from": "Başlangıç",
     "to": "Bitiş"
   },
@@ -74,7 +75,8 @@
     "completed": "Tamamlandı",
     "cancelled": "İptal Edildi",
     "draft": "Taslak",
-    "published": "Yayınlandı"
+    "published": "Yayınlandı",
+    "passive_badge": "PASİF"
   },
   "actions": {
     "loading": "Yükleniyor...",

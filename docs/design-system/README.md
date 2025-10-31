@@ -63,6 +63,12 @@ This document captures the current design primitives, shared patterns, and imple
 - Use `<Badge>` with variants (`default`, `secondary`, `outline`) for short metadata.
 - Lifecycle-specific badges (session/lead/project statuses) map to the tokens defined in Tailwind; do not introduce new color combos without updating tokens.
 
+### 3.7 Toggle Section
+- Reusable opt-in wrapper for optional form groups (`src/components/ui/toggle-section.tsx`). Each block renders a heading, helper text, summary line, and a switch that reveals the section.
+- Default state is **off**; enabling a section automatically expands the content while applying a subtle primary halo (`border-primary/40` + `bg-primary/5`).
+- Expansion/collapse uses the shared `Collapsible` primitives with smooth slide/fade transitions—do not swap in ad-hoc animations elsewhere.
+- Provide concise summary copy so the collapsed state communicates whether data exists (e.g., “3 methods selected” vs “Not tracked”).
+
 ## 4. Forms & Dialogs
 - Input components (text, textarea, select, switch) live under `src/components/ui/`. They already handle focus rings and dark mode—import them instead of raw HTML elements.
 - `AppSheetModal` standardises sheet-style dialogs (used in settings). Keep footer actions as structured arrays for consistent button ordering.

@@ -1,0 +1,173 @@
+[
+  {
+    "name": "Wedding Standard",
+    "description": "Full day wedding coverage with essentials",
+    "price": 15000,
+    "applicable_types": [
+      "Wedding"
+    ],
+    "default_add_ons": [
+      "Standard Wedding Album",
+      "Parent Album (smaller copy)",
+      "Basic Retouch (per photo)"
+    ],
+    "delivery_methods": [
+      "Çevrim içi galeri"
+    ],
+    "line_items": [
+      {
+        "service": "Standard Wedding Album",
+        "role": "addon",
+        "quantity": 1
+      },
+      {
+        "service": "Parent Album (smaller copy)",
+        "role": "addon",
+        "quantity": 1
+      },
+      {
+        "service": "Basic Retouch (per photo)",
+        "role": "addon",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "name": "Engagement Session",
+    "description": "Casual outdoor or studio engagement photoshoot",
+    "price": 3500,
+    "applicable_types": [
+      "Portrait"
+    ],
+    "default_add_ons": [
+      "Small Print (13x18cm)",
+      "Slideshow Video"
+    ],
+    "delivery_methods": [
+      "Çevrim içi galeri"
+    ],
+    "line_items": [
+      {
+        "service": "Small Print (13x18cm)",
+        "role": "addon",
+        "quantity": 1
+      },
+      {
+        "service": "Slideshow Video",
+        "role": "addon",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "name": "Newborn Session",
+    "description": "In-home newborn session with props and editing",
+    "price": 4500,
+    "applicable_types": [
+      "Newborn"
+    ],
+    "default_add_ons": [
+      "USB with High-Resolution Photos",
+      "Small Print (13x18cm)"
+    ],
+    "delivery_methods": [
+      "Baskılı albüm"
+    ],
+    "line_items": [
+      {
+        "service": "USB with High-Resolution Photos",
+        "role": "addon",
+        "quantity": 1
+      },
+      {
+        "service": "Small Print (13x18cm)",
+        "role": "addon",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "name": "Baby Milestone Package",
+    "description": "Capture 3, 6, 12 month milestones",
+    "price": 6500,
+    "applicable_types": [
+      "Family",
+      "Newborn"
+    ],
+    "default_add_ons": [
+      "Large Print (50x70cm)",
+      "Standard Wedding Album"
+    ],
+    "delivery_methods": [
+      "USB Bellek"
+    ],
+    "line_items": [
+      {
+        "service": "Large Print (50x70cm)",
+        "role": "addon",
+        "quantity": 1
+      },
+      {
+        "service": "Standard Wedding Album",
+        "role": "addon",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "name": "Family Portrait",
+    "description": "Lifestyle family photography in studio or outdoor",
+    "price": 3000,
+    "applicable_types": [
+      "Family",
+      "Portrait"
+    ],
+    "default_add_ons": [
+      "Wooden Frame",
+      "Large Print (50x70cm)"
+    ],
+    "delivery_methods": [
+      "Çevrim içi galeri"
+    ],
+    "line_items": [
+      {
+        "service": "Wooden Frame",
+        "role": "addon",
+        "quantity": 1
+      },
+      {
+        "service": "Large Print (50x70cm)",
+        "role": "addon",
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "name": "Event Coverage Standard",
+    "description": "Full coverage for corporate or private events",
+    "price": 7500,
+    "applicable_types": [
+      "Corporate",
+      "Event"
+    ],
+    "default_add_ons": [
+      "USB with High-Resolution Photos",
+      "Premium Frame (glass protected)"
+    ],
+    "delivery_methods": [
+      "USB Bellek"
+    ],
+    "line_items": [
+      {
+        "service": "USB with High-Resolution Photos",
+        "role": "addon",
+        "quantity": 1
+      },
+      {
+        "service": "Premium Frame (glass protected)",
+        "role": "addon",
+        "quantity": 1
+      }
+    ]
+  }
+]

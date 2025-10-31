@@ -1,0 +1,350 @@
+{
+  "wizard": {
+    "title": "Build a new package",
+    "titleEdit": "Edit package",
+    "errors": {
+      "nameRequired": "Add a package name before finishing.",
+      "organizationRequired": "Select an organization before creating packages.",
+      "priceRequired": "Enter a package price greater than zero.",
+      "loadFailed": "We couldn’t load this package. Please try again."
+    },
+    "toasts": {
+      "created": "Package created successfully.",
+      "createFailed": "We couldn't create the package. Please try again.",
+      "updated": "Package updated successfully.",
+      "updateFailed": "We couldn't update the package. Please try again."
+    },
+    "actions": {
+      "retry": "Retry"
+    }
+  },
+  "stepper": {
+    "progressLabel": "Step {{current}} / {{total}}",
+    "currentStep": "Currently on {{step}}",
+    "mobileCurrent": "Step {{current}} of {{total}}",
+    "unknownStep": "Step",
+    "showSteps": "Show steps",
+    "hideSteps": "Hide steps"
+  },
+  "actions": {
+    "previous": "Previous",
+    "next": "Next",
+    "finish": "Finish",
+    "finishing": "Finishing…"
+  },
+  "steps": {
+    "basics": {
+      "navigationLabel": "Basics",
+      "navigationLabel.hint": "Name, description, visibility",
+      "title": "Package basics",
+      "description": "Give the package a clear name and decide who sees it.",
+      "fields": {
+        "name": {
+          "label": "Package name",
+          "placeholder": "e.g., Gold Wedding"
+        },
+        "description": {
+          "label": "Description",
+          "placeholder": "Optional summary of what is included"
+        },
+        "types": {
+          "label": "Applicable project types",
+          "helper": "Choose the project types this package should appear for.",
+          "empty": "No project types yet. Create types in Settings → Projects.",
+          "all": "All project types"
+        },
+        "visibility": {
+          "label": "Visible in packages list",
+          "helper": "Turn off to hide this package from new bookings while keeping it saved."
+        }
+      }
+    },
+    "services": {
+      "navigationLabel": "Services",
+      "navigationLabel.hint": "Select add-ons & quantities",
+      "title": "Services & inclusions",
+      "description": "Pick the services bundled into this package and adjust their quantities.",
+      "picker": {
+        "label": "Add services from your catalog",
+        "empty": "You don’t have any services yet.",
+        "emptyCta": "Create services",
+        "error": "We couldn’t load services."
+      },
+      "summary": {
+        "title": "Bundle summary",
+        "cost": "Total cost",
+        "price": "Total price",
+        "margin": "Estimated margin",
+        "empty": "No services added yet.",
+        "selectedCount": "{{count}} service selected",
+        "selectedCount_plural": "{{count}} services selected"
+      },
+      "list": {
+        "quantity": "Qty",
+        "unitCost": "Unit cost",
+        "unitPrice": "Unit price",
+        "vendor": "Vendor",
+        "remove": "Remove"
+      },
+      "custom": {
+        "toggle": "Quick add custom item",
+        "title": "Add a custom service",
+        "nameLabel": "Service name",
+        "costLabel": "Cost (TRY)",
+        "priceLabel": "Price (TRY)",
+        "add": "Add custom service",
+        "cancel": "Cancel",
+        "namePlaceholder": "e.g., Drone footage",
+        "pricePlaceholder": "0.00",
+        "costPlaceholder": "0.00",
+        "errors": {
+          "name": "Name is required.",
+          "price": "Enter a valid price.",
+          "cost": "Enter a valid cost."
+        }
+      }
+    },
+    "delivery": {
+      "navigationLabel": "Delivery",
+      "navigationLabel.hint": "Photo counts & lead time",
+      "title": "Delivery details",
+      "description": "Capture estimated photo counts, lead times, and delivery methods.",
+      "photoCount": {
+        "label": "Estimated photo count",
+        "single": {
+          "label": "Single value",
+          "placeholder": "e.g. 300",
+          "helper": "Share one expected number for the gallery."
+        },
+        "range": {
+          "label": "Range",
+          "minPlaceholder": "Minimum",
+          "maxPlaceholder": "Maximum",
+          "minHelper": "Lowest number you’ll deliver.",
+          "maxHelper": "Upper bound for the gallery."
+        }
+      },
+      "leadTime": {
+        "label": "Delivery lead time",
+        "placeholder": "e.g. 3",
+        "unitPlaceholder": "Select unit",
+        "days": "Days",
+        "weeks": "Weeks",
+        "helper": "Let clients know how long editing and delivery usually take."
+      },
+      "methods": {
+        "label": "Delivery methods",
+        "helper": "Pick every way you hand over final photos.",
+        "empty": "No delivery methods yet. Add one below.",
+        "placeholder": "Add new method (e.g. Album pickup)",
+        "add": "Add method",
+        "saving": "Saving…",
+        "addHelper": "New methods become part of your delivery catalog for next time.",
+        "errors": {
+          "required": "Enter a delivery method name.",
+          "organization": "Select an organization before adding delivery methods.",
+          "duplicate": "This delivery method already exists."
+        },
+        "success": "Delivery method added."
+      },
+      "sections": {
+        "disabled": "Tracking disabled",
+        "photo": {
+          "title": "Photo estimate",
+          "description": "Share how many photos clients can expect.",
+          "single": "{{count}} photos",
+          "range": "{{min}}-{{max}} photos",
+          "notSet": "Not specified"
+        },
+        "leadTime": {
+          "title": "Delivery lead time",
+          "description": "Communicate how long editing and delivery take.",
+          "value": "{{value}} {{unit}}",
+          "notSet": "Not specified"
+        },
+        "methods": {
+          "title": "Delivery methods",
+          "description": "List every way final photos reach the client.",
+          "count": "{{count}} method selected",
+          "count_plural": "{{count}} methods selected",
+          "notSet": "No methods selected"
+        }
+      },
+      "summary": {
+        "photosSuffix": "photos",
+        "methods": "Delivery methods ready",
+        "methodsFallback": "Delivery methods ready"
+      }
+    },
+    "pricing": {
+      "navigationLabel": "Pricing",
+      "navigationLabel.hint": "Package price & deposit",
+      "title": "Pricing & deposit",
+      "description": "Set the package price, keep an eye on service totals, and configure the deposit.",
+      "descriptionInclusive": "Client-facing price: {{amount}}. Selected services are already included.",
+      "descriptionAddOns": "Client-facing price: {{amount}}. This combines the package price with selected services.",
+      "basePrice": {
+        "label": "Package price (TRY)",
+        "placeholder": "0.00",
+        "helperInclusive": "Enter the full price clients see for this package.",
+        "helperAddOns": "Enter just the package portion. Selected services will be added on top."
+      },
+      "summary": {
+        "packagePrice": "Package price",
+        "servicesTotal": "Selected services total",
+        "addOnsClientTotal": "Package + services total",
+        "clientTotalTitle": "Client-facing price",
+        "clientTotalHelperTitle": "Total presented to the client",
+        "clientTotalHelper": {
+          "inclusive": "The package price already includes the selected services.",
+          "addOns": "Client total = package price + selected services."
+        }
+      },
+      "includeAddOns": {
+        "title": "How do you charge add-ons?",
+        "description": "Pick the pricing style that matches how you quote packages.",
+        "optionInclusive": {
+          "title": "Include add-ons in the package price",
+          "description": "Clients see one all-in price. Services remain for internal tracking."
+        },
+        "optionAddOns": {
+          "title": "Bill add-ons on top of the package",
+          "description": "Show a package price and list services as additional charges."
+        },
+        "helperInclusive": "Client total equals the package price.",
+        "helperAddOns": "Client total is the package price plus selected services.",
+        "clientTotalLabel": "Client total"
+      },
+      "deposit": {
+        "label": "Deposit",
+        "percentOption": "Percentage",
+        "fixedOption": "Fixed amount",
+        "description": "Collect an upfront payment to secure bookings.",
+        "disabled": "Not enabled",
+        "modeTitle": "Deposit type",
+        "percentTarget": {
+          "label": "Apply percentage to",
+          "subtotal": "Package + services total",
+          "base": "Package price only",
+          "autoPackage": "When add-ons live inside the package price, the deposit uses the package price."
+        },
+        "customPercentPlaceholder": "Custom %",
+        "customPercentLabel": "Custom percent",
+        "percentHelper": "Use a preset or enter your own percentage.",
+        "fixedLabel": "Fixed deposit (TRY)",
+        "fixedPlaceholder": "0.00",
+        "fixedHelper": "Set a flat deposit amount.",
+        "preview": "Deposit amount",
+        "baseRequired": "Enter a package price to calculate the deposit"
+      }
+    },
+    "summary": {
+      "navigationLabel": "Summary",
+      "navigationLabel.hint": "Review & confirm",
+      "title": "Summary & review",
+      "description": "Confirm package basics, inclusions, delivery expectations, and pricing before publishing.",
+      "placeholder": "A detailed review card will live here along with final confirmation actions."
+    }
+  },
+  "services": {
+    "searchPlaceholder": "Search services…",
+    "addService": "Add service"
+  },
+  "summaryView": {
+    "sectionTitle": "Review package",
+    "intro": "Double-check the details before creating the package.",
+    "notSet": "Not set",
+    "none": "None",
+    "meta": {
+      "title": "Quick stats"
+    },
+    "cards": {
+      "name": "Package name",
+      "descriptionFallback": "No short description",
+      "visibility": "Visibility",
+      "visibilityActive": "Active",
+      "visibilityInactive": "Hidden",
+      "types": "Project types",
+      "typesAll": "All project types",
+      "services": "Services summary",
+      "servicesCount": "{{count}} service selected",
+      "servicesCount_plural": "{{count}} services selected",
+      "servicesQuantity": "{{count}} total quantity",
+      "servicesQuantity_plural": "{{count}} total quantity"
+    },
+    "services": {
+      "title": "Services & inclusions",
+      "empty": "No services selected yet.",
+      "columns": {
+        "name": "Service",
+        "vendor": "Vendor",
+        "quantity": "Qty",
+        "unitPrice": "Unit price",
+        "lineTotal": "Line total"
+      },
+      "customTag": "Quick add item",
+      "customVendorFallback": "—",
+      "totals": {
+        "cost": "Cost total",
+        "price": "Price total",
+        "margin": "Margin"
+      }
+    },
+    "delivery": {
+      "title": "Delivery details",
+      "estimateLabel": "Photo estimate",
+      "estimate": {
+        "single": "{{count}} photos",
+        "range": "{{min}}-{{max}} photos",
+        "notSet": "Not specified",
+        "disabled": "Not tracked"
+      },
+      "leadTime": {
+        "label": "Lead time",
+        "value": "{{value}} {{unit}}",
+        "notSet": "Not specified",
+        "disabled": "Not tracked",
+        "unit": {
+          "days": "days",
+          "weeks": "weeks"
+        }
+      },
+      "methods": {
+        "label": "Delivery methods",
+        "empty": "No delivery methods selected.",
+        "unknown": "Unnamed method",
+        "disabled": "Not tracked"
+      }
+    },
+    "pricing": {
+      "title": "Pricing & deposit",
+      "packagePrice": "Package price",
+      "servicesTotal": "Selected services total",
+      "servicesTotalHelper": "Internal reference only – clients will not see this amount.",
+      "addOnsClientTotal": "Package + services total",
+      "addOnsClientTotalHelper": "Clients see this when you bill services on top of the package.",
+      "costTotal": "Cost total",
+      "margin": "Margin",
+      "deposit": {
+        "label": "Deposit",
+        "none": "No deposit collected",
+        "fixed": "Fixed amount",
+        "percent": "{{percent}}% of {{target}}",
+        "amountDue": "Deposit to collect"
+      },
+      "targets": {
+        "subtotal": "package + services total",
+        "base": "package price"
+      },
+      "clientTotal": "Client total",
+      "clientTotalHelper": {
+        "inclusive": "Package price already includes selected services.",
+        "addOns": "Client total = package price + selected services."
+      }
+    },
+    "description": {
+      "title": "Description",
+      "empty": "No description provided."
+    }
+  }
+}

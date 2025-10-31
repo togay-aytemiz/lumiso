@@ -46,5 +46,5 @@ export const isFeatureEnabled = (flag: string, defaultValue = false): boolean =>
 };
 
 export const FEATURE_FLAGS = {
-  sessionWizardV1: "session_wizard_v1"
+  sessionWizardV1: "session_wizard_v1",
 } as const;

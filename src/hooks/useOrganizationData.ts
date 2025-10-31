@@ -126,6 +126,29 @@ export function usePackages() {
   });
 }
 
+export function usePackageDeliveryMethods() {
+  const { activeOrganizationId } = useOrganization();
+
+  return useQuery({
+    queryKey: ['package_delivery_methods', activeOrganizationId],
+    queryFn: async () => {
+      if (!activeOrganizationId) return [];
+
+      const { data, error } = await supabase
+        .from('package_delivery_methods')
+        .select('*')
+        .eq('organization_id', activeOrganizationId)
+        .order('sort_order')
+        .order('name');
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!activeOrganizationId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function useSessionTypes() {
   const { activeOrganizationId } = useOrganization();
 

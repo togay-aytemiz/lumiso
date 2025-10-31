@@ -1,0 +1,350 @@
+{
+  "wizard": {
+    "title": "Yeni paket oluştur",
+    "titleEdit": "Paketi düzenle",
+    "errors": {
+      "nameRequired": "Tamamlamadan önce paket adına ihtiyacımız var.",
+      "organizationRequired": "Paket eklemek için önce bir organizasyon seçmelisin.",
+      "priceRequired": "Paket için sıfırdan büyük bir fiyat gir.",
+      "loadFailed": "Bu paketi yükleyemedik. Lütfen tekrar dene."
+    },
+    "toasts": {
+      "created": "Paket başarıyla oluşturuldu.",
+      "createFailed": "Paketi oluşturamadık. Lütfen tekrar dene.",
+      "updated": "Paket başarıyla güncellendi.",
+      "updateFailed": "Paketi güncelleyemedik. Lütfen tekrar dene."
+    },
+    "actions": {
+      "retry": "Tekrar dene"
+    }
+  },
+  "stepper": {
+    "progressLabel": "Adım {{current}} / {{total}}",
+    "currentStep": "Şu anda {{step}} adımındasın",
+    "mobileCurrent": "Adım {{current}} / {{total}}",
+    "unknownStep": "Adım",
+    "showSteps": "Adımları göster",
+    "hideSteps": "Adımları gizle"
+  },
+  "actions": {
+    "previous": "Geri",
+    "next": "İleri",
+    "finish": "Tamamla",
+    "finishing": "Tamamlanıyor…"
+  },
+  "steps": {
+    "basics": {
+      "navigationLabel": "Temeller",
+      "navigationLabel.hint": "Ad, açıklama, görünürlük",
+      "title": "Paket bilgileri",
+      "description": "Paketin net bir adını yaz ve kimlerin görebileceğini seç.",
+      "fields": {
+        "name": {
+          "label": "Paket adı",
+          "placeholder": "Örn. Altın Düğün"
+        },
+        "description": {
+          "label": "Açıklama",
+          "placeholder": "İsteğe bağlı olarak paketin içeriğini özetle"
+        },
+        "types": {
+          "label": "Geçerli proje türleri",
+          "helper": "Bu paketin hangi proje türlerinde görüneceğini seç.",
+          "empty": "Henüz proje türü yok. Ayarlar → Projeler bölümünden ekleyebilirsin.",
+          "all": "Tüm proje türleri"
+        },
+        "visibility": {
+          "label": "Paket listesinde görünsün",
+          "helper": "Kapattığında paket yeni tekliflerde gizlenir, ancak kaydedilmiş kalır."
+        }
+      }
+    },
+    "services": {
+      "navigationLabel": "Hizmetler",
+      "navigationLabel.hint": "Eklentiler ve adetler",
+      "title": "Hizmetler ve dahil edilenler",
+      "description": "Pakete dahil olacak hizmetleri seç ve adetlerini ayarla.",
+      "picker": {
+        "label": "Katalogundan hizmet ekle",
+        "empty": "Henüz tanımlanmış hizmetin yok.",
+        "emptyCta": "Hizmet oluştur",
+        "error": "Hizmetler yüklenemedi."
+      },
+      "summary": {
+        "title": "Paket özeti",
+        "cost": "Toplam maliyet",
+        "price": "Toplam satış",
+        "margin": "Tahmini kâr",
+        "empty": "Henüz hizmet eklenmedi.",
+        "selectedCount": "{{count}} hizmet seçildi",
+        "selectedCount_other": "{{count}} hizmet seçildi"
+      },
+      "list": {
+        "quantity": "Adet",
+        "unitCost": "Birim maliyet",
+        "unitPrice": "Birim satış",
+        "vendor": "Tedarikçi",
+        "remove": "Kaldır"
+      },
+      "custom": {
+        "toggle": "Hızlı özel hizmet ekle",
+        "title": "Özel hizmet ekle",
+        "nameLabel": "Hizmet adı",
+        "costLabel": "Maliyet (TRY)",
+        "priceLabel": "Satış (TRY)",
+        "add": "Özel hizmeti ekle",
+        "cancel": "Vazgeç",
+        "namePlaceholder": "Örn. Drone çekimi",
+        "pricePlaceholder": "0.00",
+        "costPlaceholder": "0.00",
+        "errors": {
+          "name": "Hizmet adı zorunludur.",
+          "price": "Geçerli bir satış fiyatı girin.",
+          "cost": "Geçerli bir maliyet girin."
+        }
+      }
+    },
+    "delivery": {
+      "navigationLabel": "Teslimat",
+      "navigationLabel.hint": "Fotoğraf sayısı ve süre",
+      "title": "Teslimat detayları",
+      "description": "Tahmini fotoğraf sayısı, teslim süresi ve teslim yöntemlerini kaydet.",
+      "photoCount": {
+        "label": "Tahmini fotoğraf adedi",
+        "single": {
+          "label": "Tek değer",
+          "placeholder": "örn. 300",
+          "helper": "Galeri için tek bir sayı paylaş."
+        },
+        "range": {
+          "label": "Aralık",
+          "minPlaceholder": "Minimum",
+          "maxPlaceholder": "Maksimum",
+          "minHelper": "Teslim edeceğin en düşük sayı.",
+          "maxHelper": "Galeri için üst sınır."
+        }
+      },
+      "leadTime": {
+        "label": "Teslim süresi",
+        "placeholder": "örn. 3",
+        "unitPlaceholder": "Birim seç",
+        "days": "Gün",
+        "weeks": "Hafta",
+        "helper": "Montaj ve teslimatın ne kadar süreceğini belirt."
+      },
+      "methods": {
+        "label": "Teslim yöntemleri",
+        "helper": "Final fotoğrafları nasıl teslim ettiğini seç.",
+        "empty": "Henüz teslim yöntemi yok. Aşağıdan ekleyebilirsin.",
+        "placeholder": "Yeni yöntem ekle (örn. Albüm teslimatı)",
+        "add": "Yöntem ekle",
+        "saving": "Kaydediliyor…",
+        "addHelper": "Eklediğin yöntemler kataloğuna kaydedilir.",
+        "errors": {
+          "required": "Teslim yöntemi adı gir.",
+          "organization": "Teslim yöntemi eklemeden önce bir organizasyon seç.",
+          "duplicate": "Bu teslim yöntemi zaten mevcut."
+        },
+        "success": "Teslim yöntemi eklendi."
+      },
+      "sections": {
+        "disabled": "Etkin değil",
+        "photo": {
+          "title": "Fotoğraf tahmini",
+          "description": "Müşterilere kaç fotoğraf alacaklarını belirt.",
+          "single": "{{count}} fotoğraf",
+          "range": "{{min}}-{{max}} fotoğraf",
+          "notSet": "Belirtilmedi"
+        },
+        "leadTime": {
+          "title": "Teslim süresi",
+          "description": "Kurgulama ve teslimin ne kadar süreceğini paylaş.",
+          "value": "{{value}} {{unit}}",
+          "notSet": "Belirtilmedi"
+        },
+        "methods": {
+          "title": "Teslim yöntemleri",
+          "description": "Final fotoğrafları hangi yollarla verdiğini listele.",
+          "count": "{{count}} yöntem seçildi",
+          "count_plural": "{{count}} yöntem seçildi",
+          "notSet": "Yöntem seçilmedi"
+        }
+      },
+      "summary": {
+        "photosSuffix": "fotoğraf",
+        "methods": "Teslim yöntemleri hazır",
+        "methodsFallback": "Teslim yöntemleri hazır"
+      }
+    },
+    "pricing": {
+      "navigationLabel": "Fiyatlandırma",
+      "navigationLabel.hint": "Paket fiyatı ve kapora",
+      "title": "Fiyatlandırma ve kapora",
+      "description": "Paket fiyatını belirle, hizmetlerin iç toplamını gör ve kapora ayarlarını yap.",
+      "descriptionInclusive": "Müşteriye sunacağın toplam tutar: {{amount}}. Seçilen hizmetler bu fiyata dahil.",
+      "descriptionAddOns": "Müşteriye sunacağın toplam tutar: {{amount}}. Bu tutar paket fiyatı ile seçilen hizmetlerin toplamıdır.",
+      "basePrice": {
+        "label": "Paket fiyatı (TRY)",
+        "placeholder": "0.00",
+        "helperInclusive": "Müşteriye göstereceğin toplam paket fiyatını yaz.",
+        "helperAddOns": "Burada sadece paket tutarını belirt; seçilen hizmetler bu fiyatın üzerine eklenir."
+      },
+      "summary": {
+        "packagePrice": "Paket fiyatı",
+        "servicesTotal": "Seçili hizmetlerin toplam satış tutarı",
+        "addOnsClientTotal": "Paket + hizmetler toplamı",
+        "clientTotalTitle": "Müşteri fiyatı",
+        "clientTotalHelperTitle": "Müşteriye sunulacak tutar",
+        "clientTotalHelper": {
+          "inclusive": "Paket fiyatı seçilen hizmetleri zaten kapsıyor.",
+          "addOns": "Toplam tutar = paket fiyatı + seçilen hizmetler."
+        }
+      },
+      "includeAddOns": {
+        "title": "Hizmetleri nasıl fiyatlandırıyorsun?",
+        "description": "Paketlerini nasıl açıkladığına göre fiyatlama tarzını seç.",
+        "optionInclusive": {
+          "title": "Hizmetleri paket fiyatının içine dahil et",
+          "description": "Müşteri tek bir toplam fiyat görür. Hizmetler iç takip için kalır."
+        },
+        "optionAddOns": {
+          "title": "Hizmetleri paket fiyatına ek olarak göster",
+          "description": "Bir paket fiyatı belirt, hizmetleri ayrıca ücretlendir."
+        },
+        "helperInclusive": "Müşteriye sunulan toplam paket fiyatıyla aynıdır.",
+        "helperAddOns": "Müşteriye sunulan toplam = paket fiyatı + seçilen hizmetler.",
+        "clientTotalLabel": "Müşteriye sunulan toplam"
+      },
+      "deposit": {
+        "label": "Kapora",
+        "percentOption": "Yüzde",
+        "fixedOption": "Sabit tutar",
+        "description": "Rezervasyonu güvenceye almak için peşinat talep et.",
+        "disabled": "Kapora alınmıyor",
+        "modeTitle": "Kapora türü",
+        "percentTarget": {
+          "label": "Yüzdeyi uygula",
+          "subtotal": "Paket + hizmetler toplamı",
+          "base": "Sadece paket fiyatı",
+          "autoPackage": "Hizmetleri paket fiyatına dahil ettiğinde kapora paket fiyatı üzerinden hesaplanır."
+        },
+        "customPercentPlaceholder": "Özel %",
+        "customPercentLabel": "Özel yüzde",
+        "percentHelper": "Sık kullandığın yüzdeleri seçebilir veya değer girebilirsin.",
+        "fixedLabel": "Sabit kapora (TRY)",
+        "fixedPlaceholder": "0.00",
+        "fixedHelper": "Sabit tutarda kapora belirle.",
+        "preview": "Alınacak kapora miktarı",
+        "baseRequired": "Kapora hesaplamak için önce paket fiyatı gir"
+      }
+    },
+    "summary": {
+      "navigationLabel": "Özet",
+      "navigationLabel.hint": "Kontrol ve onay",
+      "title": "Özet ve onay",
+      "description": "Yayınlamadan önce paket bilgilerini, hizmetleri, teslimatı ve fiyatlandırmayı kontrol et.",
+      "placeholder": "Detaylı özet kartı ve onay adımı burada yer alacak."
+    }
+  },
+  "services": {
+    "searchPlaceholder": "Hizmet ara…",
+    "addService": "Hizmet ekle"
+  },
+  "summaryView": {
+    "sectionTitle": "Paketi gözden geçir",
+    "intro": "Paketi oluşturmadan önce ayrıntıları son kez kontrol et.",
+    "notSet": "Belirtilmedi",
+    "none": "Yok",
+    "meta": {
+      "title": "Hızlı özet"
+    },
+    "cards": {
+      "name": "Paket adı",
+      "descriptionFallback": "Kısa açıklama yok",
+      "visibility": "Görünürlük",
+      "visibilityActive": "Aktif",
+      "visibilityInactive": "Pasif",
+      "types": "Proje türleri",
+      "typesAll": "Tüm proje türleri",
+      "services": "Hizmet özeti",
+      "servicesCount": "{{count}} hizmet seçildi",
+      "servicesCount_plural": "{{count}} hizmet seçildi",
+      "servicesQuantity": "{{count}} toplam adet",
+      "servicesQuantity_plural": "{{count}} toplam adet"
+    },
+    "services": {
+      "title": "Hizmetler ve dahil edilenler",
+      "empty": "Henüz hizmet seçilmedi.",
+      "columns": {
+        "name": "Hizmet",
+        "vendor": "Tedarikçi",
+        "quantity": "Adet",
+        "unitPrice": "Birim satış",
+        "lineTotal": "Satış toplamı"
+      },
+      "customTag": "Hızlı eklenen öğe",
+      "customVendorFallback": "—",
+      "totals": {
+        "cost": "Maliyet toplamı",
+        "price": "Satış toplamı",
+        "margin": "Kâr"
+      }
+    },
+    "delivery": {
+      "title": "Teslimat detayları",
+      "estimateLabel": "Fotoğraf tahmini",
+      "estimate": {
+        "single": "{{count}} fotoğraf",
+        "range": "{{min}}-{{max}} fotoğraf",
+        "notSet": "Belirtilmedi",
+        "disabled": "Etkin değil"
+      },
+      "leadTime": {
+        "label": "Teslim süresi",
+        "value": "{{value}} {{unit}}",
+        "notSet": "Belirtilmedi",
+        "disabled": "Etkin değil",
+        "unit": {
+          "days": "gün",
+          "weeks": "hafta"
+        }
+      },
+      "methods": {
+        "label": "Teslim yöntemleri",
+        "empty": "Teslim yöntemi seçilmedi.",
+        "unknown": "İsimsiz yöntem",
+        "disabled": "Etkin değil"
+      }
+    },
+    "pricing": {
+      "title": "Fiyatlandırma ve kapora",
+      "packagePrice": "Paket fiyatı",
+      "servicesTotal": "Seçili hizmetlerin satış toplamı",
+      "servicesTotalHelper": "Bu tutar müşteriye gösterilmez, iç takip içindir.",
+      "addOnsClientTotal": "Paket + hizmetler toplamı",
+      "addOnsClientTotalHelper": "Hizmetleri ayrıca fiyatlandırmayı seçersen müşteriye görünen toplam.",
+      "costTotal": "Maliyet toplamı",
+      "margin": "Kâr",
+      "deposit": {
+        "label": "Kapora",
+        "none": "Kapora alınmıyor",
+        "fixed": "Sabit tutar",
+        "percent": "%{{percent}} {{target}} üzerinden",
+        "amountDue": "Tahsil edilecek kapora"
+      },
+      "targets": {
+        "subtotal": "paket + hizmetler toplamı",
+        "base": "paket fiyatı"
+      },
+      "clientTotal": "Müşteriye sunulan toplam",
+      "clientTotalHelper": {
+        "inclusive": "Paket fiyatı seçilen hizmetleri kapsıyor.",
+        "addOns": "Toplam tutar = paket fiyatı + seçilen hizmetler."
+      }
+    },
+    "description": {
+      "title": "Açıklama",
+      "empty": "Açıklama eklenmedi."
+    }
+  }
+}

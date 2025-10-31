@@ -11,6 +11,7 @@ import enMessages from "./resources/en/messages.json";
 import enPages from "./resources/en/pages.json";
 import enSessionPlanning from "./resources/en/sessionPlanning.json";
 import enProjectCreation from "./resources/en/projectCreation.json";
+import enPackageCreation from "./resources/en/packageCreation.json";
 
 import trCommon from "./resources/tr/common.json";
 import trDashboard from "./resources/tr/dashboard.json";
@@ -20,6 +21,7 @@ import trMessages from "./resources/tr/messages.json";
 import trPages from "./resources/tr/pages.json";
 import trSessionPlanning from "./resources/tr/sessionPlanning.json";
 import trProjectCreation from "./resources/tr/projectCreation.json";
+import trPackageCreation from "./resources/tr/packageCreation.json";
 
 const resources = {
   en: {
@@ -31,6 +33,7 @@ const resources = {
     pages: enPages,
     sessionPlanning: enSessionPlanning,
     projectCreation: enProjectCreation,
+    packageCreation: enPackageCreation,
   },
   tr: {
     common: trCommon,
@@ -41,6 +44,7 @@ const resources = {
     pages: trPages,
     sessionPlanning: trSessionPlanning,
     projectCreation: trProjectCreation,
+    packageCreation: trPackageCreation,
   },
 };
 
@@ -62,7 +66,7 @@ i18n
     },
 
     defaultNS: "common",
-    ns: ["common", "dashboard", "forms", "navigation", "messages", "pages", "sessionPlanning", "projectCreation"],
+    ns: ["common", "dashboard", "forms", "navigation", "messages", "pages", "sessionPlanning", "projectCreation", "packageCreation"],
   });
 
 i18n.addResourceBundle("en", "forms", enForms, true, false);
@@ -71,5 +75,7 @@ i18n.addResourceBundle("en", "sessionPlanning", enSessionPlanning, true, false);
 i18n.addResourceBundle("tr", "sessionPlanning", trSessionPlanning, true, true);
 i18n.addResourceBundle("en", "projectCreation", enProjectCreation, true, false);
 i18n.addResourceBundle("tr", "projectCreation", trProjectCreation, true, true);
+i18n.addResourceBundle("en", "packageCreation", enPackageCreation, true, false);
+i18n.addResourceBundle("tr", "packageCreation", trPackageCreation, true, true);
 
 export default i18n;

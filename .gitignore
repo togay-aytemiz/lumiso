@@ -36,3 +36,4 @@ bun.lockb
 Thumbs.db
 .codex/
 deno.lock
+.supabase-plan.md

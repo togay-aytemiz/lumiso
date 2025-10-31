@@ -1,0 +1,92 @@
+[
+  {
+    "name": "Standard Wedding Album",
+    "description": "Professional wedding album with premium binding",
+    "category": "Albums",
+    "cost_price": 1500,
+    "selling_price": 3000,
+    "price": 3000,
+    "extra": false
+  },
+  {
+    "name": "Parent Album (smaller copy)",
+    "description": "Smaller copy of main album for parents",
+    "category": "Albums",
+    "cost_price": 800,
+    "selling_price": 1500,
+    "price": 1500,
+    "extra": false
+  },
+  {
+    "name": "Large Print (50x70cm)",
+    "description": "High-quality large format print",
+    "category": "Prints",
+    "cost_price": 200,
+    "selling_price": 500,
+    "price": 500,
+    "extra": false
+  },
+  {
+    "name": "Small Print (13x18cm)",
+    "description": "Standard size photo print",
+    "category": "Prints",
+    "cost_price": 20,
+    "selling_price": 60,
+    "price": 60,
+    "extra": false
+  },
+  {
+    "name": "USB with High-Resolution Photos",
+    "description": "All photos delivered on branded USB drive",
+    "category": "Digital",
+    "cost_price": 100,
+    "selling_price": 300,
+    "price": 300,
+    "extra": true
+  },
+  {
+    "name": "Slideshow Video",
+    "description": "Professional slideshow with music and transitions",
+    "category": "Digital",
+    "cost_price": 400,
+    "selling_price": 1000,
+    "price": 1000,
+    "extra": true
+  },
+  {
+    "name": "Basic Retouch (per photo)",
+    "description": "Basic color correction and exposure adjustment",
+    "category": "Retouching",
+    "cost_price": 30,
+    "selling_price": 100,
+    "price": 100,
+    "extra": false
+  },
+  {
+    "name": "Advanced Retouch (skin, background)",
+    "description": "Professional skin retouching and background editing",
+    "category": "Retouching",
+    "cost_price": 80,
+    "selling_price": 200,
+    "price": 200,
+    "extra": false
+  },
+  {
+    "name": "Wooden Frame",
+    "description": "Classic wooden frame for prints",
+    "category": "Frames",
+    "cost_price": 150,
+    "selling_price": 400,
+    "price": 400,
+    "extra": false
+  },
+  {
+    "name": "Premium Frame (glass protected)",
+    "description": "High-end frame with protective glass",
+    "category": "Frames",
+    "cost_price": 300,
+    "selling_price": 700,
+    "price": 700,
+    "extra": false
+  }
+]

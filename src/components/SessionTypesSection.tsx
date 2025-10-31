@@ -24,6 +24,7 @@ import { AddSessionTypeDialog, EditSessionTypeDialog, SessionType } from "./sett
 import { IconActionButton } from "@/components/ui/icon-action-button";
 import { IconActionButtonGroup } from "@/components/ui/icon-action-button-group";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 
 const formatDuration = (
   minutes: number,
@@ -66,6 +67,8 @@ const SessionTypesSection = () => {
   const [sessionTypeToDelete, setSessionTypeToDelete] = useState<SessionType | null>(null);
   const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
+  const [showInactive, setShowInactive] = useState(false);
 
   const defaultSessionTypeId = settings?.default_session_type_id ?? null;
 
@@ -94,11 +97,13 @@ const SessionTypesSection = () => {
         });
         invalidateSessionTypeQueries();
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Failed to set default session type:", error);
+      const message =
+        error instanceof Error ? error.message : undefined;
       toast({
         title: tCommon("toast.error"),
-        description: error.message || tForms("sessionTypes.errors.default_failed"),
+        description: message || tForms("sessionTypes.errors.default_failed"),
         variant: "destructive",
       });
     } finally {
@@ -117,11 +122,13 @@ const SessionTypesSection = () => {
         });
         invalidateSessionTypeQueries();
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Failed to clear default session type:", error);
+      const message =
+        error instanceof Error ? error.message : undefined;
       toast({
         title: tCommon("toast.error"),
-        description: error.message || tForms("sessionTypes.errors.default_failed"),
+        description: message || tForms("sessionTypes.errors.default_failed"),
         variant: "destructive",
       });
     } finally {
@@ -159,17 +166,55 @@ const SessionTypesSection = () => {
       });
 
       invalidateSessionTypeQueries();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Failed to delete session type:", error);
+      const message =
+        error instanceof Error ? error.message : undefined;
       toast({
         title: tCommon("toast.error"),
-        description: error.message || tForms("sessionTypes.errors.delete_failed"),
+        description: message || tForms("sessionTypes.errors.delete_failed"),
         variant: "destructive",
       });
     } finally {
       setDeletingId(null);
       setDeleteConfirmOpen(false);
       setSessionTypeToDelete(null);
+    }
+  };
+
+  const handleMarkSessionTypeInactive = async () => {
+    if (!sessionTypeToDelete) return;
+
+    try {
+      setDeactivatingId(sessionTypeToDelete.id);
+      const { error } = await supabase
+        .from("session_types")
+        .update({ is_active: false })
+        .eq("id", sessionTypeToDelete.id);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      toast({
+        title: tCommon("toast.success"),
+        description: tForms("sessionTypes.success.marked_inactive"),
+      });
+
+      invalidateSessionTypeQueries();
+      setDeleteConfirmOpen(false);
+      setSessionTypeToDelete(null);
+    } catch (error) {
+      console.error("Failed to deactivate session type:", error);
+      const message =
+        error instanceof Error ? error.message : undefined;
+      toast({
+        title: tCommon("toast.error"),
+        description: message || tForms("sessionTypes.errors.mark_inactive_failed"),
+        variant: "destructive",
+      });
+    } finally {
+      setDeactivatingId(null);
     }
   };
 
@@ -201,22 +246,40 @@ const SessionTypesSection = () => {
   };
 
   const canManageSessionTypes = true; // Single-photographer mode permits full access
+  const passiveBadgeLabel = tCommon("status.passive_badge");
 
-  const emptyState = !isLoading && sessionTypes.length === 0;
+  const filteredSessionTypes = useMemo(
+    () => (showInactive ? sessionTypes : sessionTypes.filter((type) => type.is_active !== false)),
+    [sessionTypes, showInactive]
+  );
+
+  const emptyState = !isLoading && filteredSessionTypes.length === 0;
 
   return (
     <>
       <SettingsSection
         title={tForms("sessionTypes.title")}
         description={tForms("sessionTypes.description")}
-        action={
-          canManageSessionTypes
-            ? {
-                label: tForms("sessionTypes.add_session_type"),
-                onClick: () => setShowAddDialog(true),
-                icon: <Plus className="h-4 w-4" />,
-              }
-            : undefined
+        actions={
+          <div className="flex items-center gap-3">
+            <label htmlFor="session-types-show-inactive" className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Switch
+                id="session-types-show-inactive"
+                checked={showInactive}
+                onCheckedChange={setShowInactive}
+              />
+              <span>{tCommon("labels.show_inactive")}</span>
+            </label>
+            {canManageSessionTypes && (
+              <Button
+                onClick={() => setShowAddDialog(true)}
+                className="flex items-center gap-2 whitespace-nowrap"
+              >
+                <Plus className="h-4 w-4" />
+                {tForms("sessionTypes.add_session_type")}
+              </Button>
+            )}
+          </div>
         }
       >
         {isLoading ? (
@@ -238,7 +301,7 @@ const SessionTypesSection = () => {
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {sessionTypes.map((sessionType) => {
+            {filteredSessionTypes.map((sessionType) => {
               const isDefault = sessionType.id === defaultSessionTypeId;
               const isInactive = !sessionType.is_active;
 
@@ -260,9 +323,7 @@ const SessionTypesSection = () => {
                               {sessionType.name}
                             </h3>
                             {isInactive && (
-                              <Badge variant="outline">
-                                {tCommon("status.inactive")}
-                              </Badge>
+                              <Badge variant="outline">{passiveBadgeLabel}</Badge>
                             )}
                           </div>
                           {sessionType.description && (
@@ -356,20 +417,41 @@ const SessionTypesSection = () => {
             <AlertDialogTitle>
               {tForms("sessionTypes.delete_title")}
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              {tForms("sessionTypes.delete_description", {
-                name: sessionTypeToDelete?.name ?? "",
-              })}
+            <AlertDialogDescription className="space-y-2 text-sm text-muted-foreground">
+              <p className="text-foreground">
+                {tForms("sessionTypes.delete_description", {
+                  name: sessionTypeToDelete?.name ?? "",
+                })}
+              </p>
+              <p>{tForms("sessionTypes.delete_consider_inactive")}</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>
+            <AlertDialogCancel
+              disabled={
+                deletingId === sessionTypeToDelete?.id ||
+                deactivatingId === sessionTypeToDelete?.id
+              }
+            >
               {tCommon("buttons.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
+              onClick={handleMarkSessionTypeInactive}
+              className="border border-input bg-background text-foreground hover:bg-muted"
+              disabled={
+                deactivatingId === sessionTypeToDelete?.id ||
+                deletingId === sessionTypeToDelete?.id
+              }
+            >
+              {tForms("sessionTypes.mark_inactive")}
+            </AlertDialogAction>
+            <AlertDialogAction
               onClick={handleDeleteSessionType}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={deletingId === sessionTypeToDelete?.id}
+              disabled={
+                deletingId === sessionTypeToDelete?.id ||
+                deactivatingId === sessionTypeToDelete?.id
+              }
             >
               {tCommon("buttons.delete")}
             </AlertDialogAction>

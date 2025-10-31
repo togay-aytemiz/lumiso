@@ -21,6 +21,8 @@ import { useSessionTypes } from "@/hooks/useOrganizationData";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { AddSessionTypeDialog, EditSessionTypeDialog, SessionType } from "./settings/SessionTypeDialogs";
+import { IconActionButton } from "@/components/ui/icon-action-button";
+import { IconActionButtonGroup } from "@/components/ui/icon-action-button-group";
 import { cn } from "@/lib/utils";
 
 const formatDuration = (
@@ -235,7 +237,7 @@ const SessionTypesSection = () => {
             )}
           </div>
         ) : (
-          <div className="space-y-1.5">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {sessionTypes.map((sessionType) => {
               const isDefault = sessionType.id === defaultSessionTypeId;
               const isInactive = !sessionType.is_active;
@@ -244,12 +246,12 @@ const SessionTypesSection = () => {
                 <div
                   key={sessionType.id}
                   className={cn(
-                    "rounded-lg border bg-card p-2.5 shadow-sm transition-colors",
+                    "rounded-lg border bg-card p-3 shadow-sm transition-colors",
                     isDefault && "border-primary/70 bg-primary/15",
                     isInactive && "opacity-70"
                   )}
                 >
-                  <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-2">
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-1">
                         <h3 className="text-base font-semibold leading-none">
@@ -282,44 +284,40 @@ const SessionTypesSection = () => {
                         </p>
                       )}
                     </div>
-                    {canManageSessionTypes && (
-                      <div className="flex items-center gap-1.5 self-end sm:self-start">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-white"
-                          onClick={() => handleOpenEdit(sessionType)}
-                          aria-label={tForms("sessionTypes.actions.edit")}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => {
-                            setSessionTypeToDelete(sessionType);
-                            setDeleteConfirmOpen(true);
-                          }}
-                          aria-label={tForms("sessionTypes.actions.delete")}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
 
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm">
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <span className="sr-only">
-                        {tForms("sessionTypes.table.duration")}
-                      </span>
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
-                        <Clock className="h-3 w-3" />
-                      </span>
-                      <span className="font-medium text-foreground">
-                        {formatDuration(sessionType.duration_minutes, tForms)}
-                      </span>
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <span className="sr-only">
+                          {tForms("sessionTypes.table.duration")}
+                        </span>
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+                          <Clock className="h-3 w-3" />
+                        </span>
+                        <span className="font-medium text-foreground">
+                          {formatDuration(sessionType.duration_minutes, tForms)}
+                        </span>
+                      </div>
+
+                      {canManageSessionTypes && (
+                        <IconActionButtonGroup>
+                          <IconActionButton
+                            onClick={() => handleOpenEdit(sessionType)}
+                            aria-label={tForms("sessionTypes.actions.edit")}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </IconActionButton>
+                          <IconActionButton
+                            onClick={() => {
+                              setSessionTypeToDelete(sessionType);
+                              setDeleteConfirmOpen(true);
+                            }}
+                            aria-label={tForms("sessionTypes.actions.delete")}
+                            variant="danger"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </IconActionButton>
+                        </IconActionButtonGroup>
+                      )}
                     </div>
                   </div>
                 </div>

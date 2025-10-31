@@ -32,6 +32,8 @@ import { LeadFieldDefinition, FIELD_TYPE_CONFIG } from "@/types/leadFields";
 import { useTranslation } from "react-i18next";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { IconActionButton } from "@/components/ui/icon-action-button";
+import { IconActionButtonGroup } from "@/components/ui/icon-action-button-group";
 
 interface LeadFieldsListProps {
   fields: LeadFieldDefinition[];
@@ -180,27 +182,21 @@ export function LeadFieldsList({
                         </div>
                       </div>
 
-                      <div className="mt-4 flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onEdit(field)}
-                        >
+                      <IconActionButtonGroup className="mt-4">
+                        <IconActionButton onClick={() => onEdit(field)}>
                           <Edit className="h-4 w-4" />
                           <span className="sr-only">Edit</span>
-                        </Button>
+                        </IconActionButton>
                         {!field.is_system && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
+                          <IconActionButton
                             onClick={() => setDeleteField(field)}
+                            variant="danger"
                           >
                             <Trash2 className="h-4 w-4" />
                             <span className="sr-only">Delete</span>
-                          </Button>
+                          </IconActionButton>
                         )}
-                      </div>
+                      </IconActionButtonGroup>
                     </div>
                   );
                 }}
@@ -296,24 +292,19 @@ export function LeadFieldsList({
                         </span>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onEdit(field)}
-                          >
+                        <IconActionButtonGroup>
+                          <IconActionButton onClick={() => onEdit(field)}>
                             <Edit className="h-4 w-4" />
-                          </Button>
+                          </IconActionButton>
                           {!field.is_system && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
+                            <IconActionButton
                               onClick={() => setDeleteField(field)}
+                              variant="danger"
                             >
                               <Trash2 className="h-4 w-4" />
-                            </Button>
+                            </IconActionButton>
                           )}
-                        </div>
+                        </IconActionButtonGroup>
                       </TableCell>
                     </TableRow>
                   )}

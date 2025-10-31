@@ -14,6 +14,8 @@ import { usePackages, useServices } from "@/hooks/useOrganizationData";
 import { useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useTranslation } from "react-i18next";
+import { IconActionButton } from "@/components/ui/icon-action-button";
+import { IconActionButtonGroup } from "@/components/ui/icon-action-button-group";
 
 interface Package {
   id: string;
@@ -240,27 +242,24 @@ const PackagesSection = () => {
                             </td>
                             <td className="px-4 py-3">
                               {canManagePackages ? (
-                               <div className="flex gap-2">
-                                <Button
-                                   variant="ghost"
-                                   size="sm"
+                               <IconActionButtonGroup>
+                                <IconActionButton
                                    onClick={() => {
                                      setEditingPackage(pkg);
                                      setShowEditPackageDialog(true);
                                    }}
-                                   className="text-muted-foreground hover:text-white"
+                                   aria-label={`Edit package ${pkg.name}`}
                                  >
                                    <Edit className="h-4 w-4" />
-                                 </Button>
-                                 <Button
-                                   variant="ghost"
-                                   size="sm"
+                                 </IconActionButton>
+                                 <IconActionButton
                                    onClick={() => handleDeleteClick(pkg)}
-                                   className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                   aria-label={`Delete package ${pkg.name}`}
+                                   variant="danger"
                                  >
                                    <Trash2 className="h-4 w-4" />
-                                 </Button>
-                               </div>
+                                 </IconActionButton>
+                               </IconActionButtonGroup>
                               ) : (
                                 <span className="text-sm text-muted-foreground">{t('packages.view_only')}</span>
                               )}
@@ -330,27 +329,26 @@ const PackagesSection = () => {
                     {/* Actions row */}
                     {canManagePackages && (
                       <div className="flex gap-2 pt-2 border-t">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditingPackage(pkg);
-                            setShowEditPackageDialog(true);
-                          }}
-                          className="flex-1 h-10 min-w-0"
-                          aria-label={`Edit package ${pkg.name}`}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteClick(pkg)}
-                          className="flex-1 h-10 min-w-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          aria-label={`Delete package ${pkg.name}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <IconActionButtonGroup className="w-full">
+                          <IconActionButton
+                            onClick={() => {
+                              setEditingPackage(pkg);
+                              setShowEditPackageDialog(true);
+                            }}
+                            className="flex-1 h-10 min-w-0"
+                            aria-label={`Edit package ${pkg.name}`}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </IconActionButton>
+                          <IconActionButton
+                            onClick={() => handleDeleteClick(pkg)}
+                            className="flex-1 h-10 min-w-0"
+                            aria-label={`Delete package ${pkg.name}`}
+                            variant="danger"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </IconActionButton>
+                        </IconActionButtonGroup>
                       </div>
                     )}
                 </div>

@@ -8,6 +8,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AddServiceDialog, EditServiceDialog } from "./settings/ServiceDialogs";
 import SettingsSection from "./SettingsSection";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { IconActionButton } from "@/components/ui/icon-action-button";
+import { IconActionButtonGroup } from "@/components/ui/icon-action-button-group";
 // Permissions removed for single photographer mode
 import { useServices } from "@/hooks/useOrganizationData";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -271,9 +273,9 @@ const ServicesSection = () => {
                     </div>
                   </CollapsibleTrigger>
                   
-                  <CollapsibleContent className="mt-3 overflow-hidden transition-all data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-                    {/* Desktop view - existing layout */}
-                    <div className="hidden md:block space-y-2 pl-6">
+                  <CollapsibleContent className="mt-3 grid grid-rows-[0fr] transition-[grid-template-rows,opacity] duration-250 ease-out data-[state=open]:grid-rows-[1fr] data-[state=closed]:opacity-0 data-[state=open]:opacity-100">
+                    <div className="overflow-hidden space-y-3">
+                      <div className="hidden md:block space-y-2 pl-6">
                       {categoryServices.map((service) => (
                         <div
                           key={service.id}
@@ -300,31 +302,26 @@ const ServicesSection = () => {
                             </div>
                            </div>
                            
-                           {canManageServices ? (
-                             <div className="flex gap-2">
-                               <Button
-                                 variant="ghost"
-                                 size="sm"
-                                 onClick={() => {
-                                   setEditingService(service);
-                                   setShowEditServiceDialog(true);
-                                 }}
-                                 className="h-9 w-9 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                                 aria-label={`Edit service ${service.name}`}
-                               >
-                                 <Edit className="h-4 w-4" />
-                               </Button>
-                               <Button
-                                 variant="ghost"
-                                 size="sm"
-                                 onClick={() => handleDeleteService(service.id)}
-                                 disabled={deleteServiceMutation.isPending}
-                                 className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 w-9 rounded-lg"
-                                 aria-label={`Delete service ${service.name}`}
-                               >
-                                 <Trash2 className="h-4 w-4" />
-                               </Button>
-                              </div>
+                            {canManageServices ? (
+                              <IconActionButtonGroup>
+                                <IconActionButton
+                                  onClick={() => {
+                                    setEditingService(service);
+                                    setShowEditServiceDialog(true);
+                                  }}
+                                  aria-label={`Edit service ${service.name}`}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </IconActionButton>
+                                <IconActionButton
+                                  onClick={() => handleDeleteService(service.id)}
+                                  disabled={deleteServiceMutation.isPending}
+                                  aria-label={`Delete service ${service.name}`}
+                                  variant="danger"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </IconActionButton>
+                              </IconActionButtonGroup>
                             ) : (
                               <span className="text-sm text-muted-foreground">{tForms('services.view_only')}</span>
                             )}
@@ -371,34 +368,32 @@ const ServicesSection = () => {
 
                              {/* Actions row */}
                              {canManageServices && (
-                               <div className="flex gap-2 pt-2 border-t">
-                                 <Button
-                                   variant="ghost"
-                                   size="sm"
+                               <IconActionButtonGroup className="border-t pt-2 w-full">
+                                 <IconActionButton
                                    onClick={() => {
                                      setEditingService(service);
                                      setShowEditServiceDialog(true);
                                    }}
-                                   className="flex-1 h-10 min-w-0 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                                   className="flex-1 h-10 min-w-0"
                                    aria-label={`Edit service ${service.name}`}
                                  >
                                    <Edit className="h-4 w-4" />
-                                 </Button>
-                                 <Button
-                                   variant="outline"
-                                   size="sm"
+                                 </IconActionButton>
+                                 <IconActionButton
                                    onClick={() => handleDeleteService(service.id)}
                                    disabled={deleteServiceMutation.isPending}
-                                   className="flex-1 h-10 min-w-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                   className="flex-1 h-10 min-w-0"
                                    aria-label={`Delete service ${service.name}`}
+                                   variant="danger"
                                  >
                                    <Trash2 className="h-4 w-4" />
-                                 </Button>
-                               </div>
+                                 </IconActionButton>
+                               </IconActionButtonGroup>
                              )}
                           </div>
                         ))
                       )}
+                    </div>
                     </div>
                   </CollapsibleContent>
                 </Collapsible>

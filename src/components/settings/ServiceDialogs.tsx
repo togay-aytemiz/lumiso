@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from "@/components/ui/select";
@@ -24,6 +25,8 @@ interface ServiceFormState {
   selling_price: string;
   extra: boolean;
   service_type: ServiceType;
+  vendor_name: string;
+  is_active: boolean;
 }
 
 const PREDEFINED_CATEGORIES = ["Albums", "Prints", "Extras", "Digital", "Packages", "Retouching", "Frames"];
@@ -37,6 +40,8 @@ const createFormState = (serviceType: ServiceType, overrides: Partial<ServiceFor
   selling_price: "",
   extra: false,
   service_type: serviceType,
+  vendor_name: "",
+  is_active: true,
   ...overrides,
 });
 
@@ -172,6 +177,8 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
         extra: formData.extra,
         service_type: serviceType,
         is_people_based: isCoverage,
+        is_active: formData.is_active,
+        vendor_name: formData.vendor_name.trim() || null,
         default_unit: null,
       });
 
@@ -206,7 +213,9 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
       formData.cost_price.trim() !== baseState.cost_price ||
       formData.selling_price.trim() !== baseState.selling_price ||
       formData.extra !== baseState.extra ||
-      formData.service_type !== baseState.service_type
+      formData.service_type !== baseState.service_type ||
+      formData.vendor_name.trim() !== baseState.vendor_name.trim() ||
+      formData.is_active !== baseState.is_active
     );
   }, [formData, initialType]);
 
@@ -378,6 +387,18 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
           />
         </div>
 
+        <div className="space-y-2">
+          <Label htmlFor="description">{t("service.description")}</Label>
+          <Textarea
+            id="description"
+            value={formData.description}
+            onChange={(event) => setFormData((prev) => ({ ...prev, description: event.target.value }))}
+            placeholder={t("service.description_placeholder")}
+            rows={3}
+            className="resize-none"
+          />
+        </div>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="cost_price">{t("service.cost_price")} (TRY)</Label>
@@ -406,14 +427,28 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="description">{t("service.description")}</Label>
-          <Textarea
-            id="description"
-            value={formData.description}
-            onChange={(event) => setFormData((prev) => ({ ...prev, description: event.target.value }))}
-            placeholder={t("service.description_placeholder")}
-            rows={4}
-            className="resize-none"
+          <Label htmlFor="vendor_name">
+            {t("service.vendor_label")}
+            <span className="ml-1 text-xs text-muted-foreground">{t("service.optional_hint")}</span>
+          </Label>
+          <Input
+            id="vendor_name"
+            value={formData.vendor_name}
+            onChange={(event) => setFormData((prev) => ({ ...prev, vendor_name: event.target.value }))}
+            placeholder={t("service.vendor_placeholder")}
+          />
+        </div>
+
+        <div className="flex items-start justify-between rounded-lg border p-4">
+          <div>
+            <p className="text-sm font-medium leading-none">{t("service.visibility_label")}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("service.visibility_help")}</p>
+          </div>
+          <Switch
+            id="service-is-active"
+            checked={formData.is_active}
+            onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_active: checked }))}
+            aria-label={t("service.visibility_label")}
           />
         </div>
       </div>
@@ -456,6 +491,8 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
           selling_price: service.selling_price?.toString() || "",
           extra: service.extra ?? false,
           service_type: (service.service_type ?? "deliverable") as ServiceType,
+          vendor_name: service.vendor_name || "",
+          is_active: service.is_active ?? true,
         })
       );
       setShowNewCategoryInput(false);
@@ -525,6 +562,8 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
           service_type: serviceType,
           is_people_based: resolvedStaffing,
           default_unit: preservedUnit,
+          is_active: formData.is_active,
+          vendor_name: formData.vendor_name.trim() || null,
         })
         .eq("id", service.id);
 
@@ -559,6 +598,8 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       selling_price: service.selling_price?.toString() || "",
       extra: service.extra ?? false,
       service_type: (service.service_type ?? "deliverable") as ServiceType,
+      vendor_name: service.vendor_name || "",
+      is_active: service.is_active ?? true,
     });
 
     return (
@@ -569,7 +610,9 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       formData.cost_price !== baseState.cost_price ||
       formData.selling_price !== baseState.selling_price ||
       formData.extra !== baseState.extra ||
-      formData.service_type !== baseState.service_type
+      formData.service_type !== baseState.service_type ||
+      formData.vendor_name !== baseState.vendor_name ||
+      formData.is_active !== baseState.is_active
     );
   }, [formData, service]);
 
@@ -587,6 +630,8 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
           selling_price: service.selling_price?.toString() || "",
           extra: service.extra ?? false,
           service_type: (service.service_type ?? "deliverable") as ServiceType,
+          vendor_name: service.vendor_name || "",
+          is_active: service.is_active ?? true,
         })
       );
       setShowNewCategoryInput(false);
@@ -609,6 +654,8 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
           selling_price: service.selling_price?.toString() || "",
           extra: service.extra ?? false,
           service_type: (service.service_type ?? "deliverable") as ServiceType,
+          vendor_name: service.vendor_name || "",
+          is_active: service.is_active ?? true,
         })
       );
       setShowNewCategoryInput(false);
@@ -765,6 +812,18 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
           />
         </div>
 
+        <div className="space-y-2">
+          <Label htmlFor="edit-description">{t("service.description")}</Label>
+          <Textarea
+            id="edit-description"
+            value={formData.description}
+            onChange={(event) => setFormData((prev) => ({ ...prev, description: event.target.value }))}
+            placeholder={t("service.description_placeholder")}
+            rows={3}
+            className="resize-none"
+          />
+        </div>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="edit-cost-price">{t("service.cost_price")} (TRY)</Label>
@@ -793,14 +852,28 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="edit-description">{t("service.description")}</Label>
-          <Textarea
-            id="edit-description"
-            value={formData.description}
-            onChange={(event) => setFormData((prev) => ({ ...prev, description: event.target.value }))}
-            placeholder={t("service.description_placeholder")}
-            rows={4}
-            className="resize-none"
+          <Label htmlFor="edit-vendor-name">
+            {t("service.vendor_label")}
+            <span className="ml-1 text-xs text-muted-foreground">{t("service.optional_hint")}</span>
+          </Label>
+          <Input
+            id="edit-vendor-name"
+            value={formData.vendor_name}
+            onChange={(event) => setFormData((prev) => ({ ...prev, vendor_name: event.target.value }))}
+            placeholder={t("service.vendor_placeholder")}
+          />
+        </div>
+
+        <div className="flex items-start justify-between rounded-lg border p-4">
+          <div>
+            <p className="text-sm font-medium leading-none">{t("service.visibility_label")}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("service.visibility_help")}</p>
+          </div>
+          <Switch
+            id="edit-service-is-active"
+            checked={formData.is_active}
+            onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_active: checked }))}
+            aria-label={t("service.visibility_label")}
           />
         </div>
       </div>

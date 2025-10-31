@@ -92,11 +92,12 @@ jest.mock("@/components/ui/select", () => {
 });
 
 jest.mock("@/components/ui/switch", () => ({
-  Switch: ({ checked, onCheckedChange }: any) => (
+  Switch: ({ checked, onCheckedChange, ...props }: any) => (
     <input
       type="checkbox"
       role="switch"
       checked={checked}
+      {...props}
       onChange={(event) => onCheckedChange(event.target.checked)}
     />
   ),
@@ -139,6 +140,11 @@ const translations: Record<string, string> = {
   "service.service_type_deliverable": "Products & deliverables",
   "service.service_type_coverage_hint": "Services that require people on-site",
   "service.service_type_deliverable_hint": "Albums, prints and other deliverables",
+  "service.vendor_label": "Vendor",
+  "service.vendor_placeholder": "Vendor name",
+  "service.optional_hint": "Optional",
+  "service.visibility_label": "Visibility",
+  "service.visibility_help": "Hide this service when turned off",
   "service.default_unit_label": "Default unit",
   "service.default_unit_placeholder": "e.g. hour, album, 10-print pack",
   "service.requires_staff_label": "Requires staffing",
@@ -241,6 +247,11 @@ describe("ServiceDialogs", () => {
     fireEvent.change(screen.getByLabelText(/Selling price/i), {
       target: { value: "200" },
     });
+    fireEvent.change(screen.getByLabelText(/Vendor/i), {
+      target: { value: "Local Lab" },
+    });
+    const visibilityToggle = screen.getByRole("switch", { name: /Visibility/i });
+    fireEvent.click(visibilityToggle);
 
     fireEvent.click(screen.getByText("Albums"));
 
@@ -266,6 +277,8 @@ describe("ServiceDialogs", () => {
         service_type: "deliverable",
         is_people_based: false,
         default_unit: null,
+        vendor_name: "Local Lab",
+        is_active: false,
       })
     );
     expect(onServiceAdded).toHaveBeenCalled();
@@ -313,6 +326,8 @@ describe("ServiceDialogs", () => {
           service_type: "deliverable",
           is_people_based: false,
           default_unit: "album",
+          vendor_name: "Print Lab",
+          is_active: true,
         } as any}
         onOpenChange={onOpenChange}
         onServiceUpdated={onServiceUpdated}
@@ -323,6 +338,10 @@ describe("ServiceDialogs", () => {
     fireEvent.change(nameInput, {
       target: { value: "Advanced Retouching" },
     });
+    fireEvent.change(screen.getByLabelText(/Vendor/i), {
+      target: { value: "Pro Lab" },
+    });
+    fireEvent.click(screen.getByRole("switch", { name: /Visibility/i }));
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Save" }));
     });
@@ -337,6 +356,8 @@ describe("ServiceDialogs", () => {
         service_type: "deliverable",
         is_people_based: false,
         default_unit: "album",
+        vendor_name: "Pro Lab",
+        is_active: false,
       })
     );
     expect(onServiceUpdated).toHaveBeenCalled();

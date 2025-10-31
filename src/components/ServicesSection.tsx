@@ -34,6 +34,8 @@ interface Service {
   service_type?: ServiceType;
   is_people_based?: boolean;
   default_unit?: string | null;
+  is_active?: boolean;
+  vendor_name?: string | null;
 }
 
 const ServicesSection = () => {
@@ -323,6 +325,13 @@ const ServicesSection = () => {
                                       {service.description}
                                     </p>
                                   )}
+                                  {service.vendor_name && (
+                                    <p className="text-xs italic text-muted-foreground/80">
+                                      {tForms("services.vendor_label", {
+                                        name: service.vendor_name,
+                                      })}
+                                    </p>
+                                  )}
                                 </div>
 
                                 <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
@@ -398,6 +407,13 @@ const ServicesSection = () => {
                                   {service.description && (
                                     <p className="text-sm text-muted-foreground mt-1 break-words">
                                       {service.description}
+                                    </p>
+                                  )}
+                                  {service.vendor_name && (
+                                    <p className="text-xs italic text-muted-foreground/80 mt-1">
+                                      {tForms("services.vendor_label", {
+                                        name: service.vendor_name,
+                                      })}
                                     </p>
                                   )}
                                 </div>

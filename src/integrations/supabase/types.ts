@@ -1195,12 +1195,14 @@ export type Database = {
           extra: boolean | null
           id: string
           is_people_based: boolean
+          is_active: boolean
           is_sample: boolean | null
           name: string
           organization_id: string | null
           price: number | null
           service_type: "coverage" | "deliverable"
           selling_price: number | null
+          vendor_name: string | null
           updated_at: string
           user_id: string
           default_unit: string | null
@@ -1213,12 +1215,14 @@ export type Database = {
           extra?: boolean | null
           id?: string
           is_people_based?: boolean
+          is_active?: boolean
           is_sample?: boolean | null
           name: string
           organization_id?: string | null
           price?: number | null
           service_type?: "coverage" | "deliverable"
           selling_price?: number | null
+          vendor_name?: string | null
           updated_at?: string
           user_id: string
           default_unit?: string | null
@@ -1231,12 +1235,14 @@ export type Database = {
           extra?: boolean | null
           id?: string
           is_people_based?: boolean
+          is_active?: boolean
           is_sample?: boolean | null
           name?: string
           organization_id?: string | null
           price?: number | null
           service_type?: "coverage" | "deliverable"
           selling_price?: number | null
+          vendor_name?: string | null
           updated_at?: string
           user_id?: string
           default_unit?: string | null

@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,29 +44,26 @@ interface EditPackageDialogProps {
   onPackageUpdated: () => void;
 }
 
-const extractAddonIds = (pkg?: Partial<Package> & { line_items?: unknown }): string[] => {
-  if (!pkg) return [];
-  if (Array.isArray(pkg.line_items)) {
-    const addons = pkg.line_items
-      .filter(
-        (entry): entry is { serviceId: unknown; role?: unknown } =>
-          Boolean(entry && typeof entry === "object")
-      )
-      .filter((entry) => entry.role === "addon" && typeof entry.serviceId === "string")
-      .map((entry) => String(entry.serviceId));
-    if (addons.length > 0) {
-      return addons;
-    }
-  }
-  return Array.isArray(pkg?.default_add_ons) ? pkg!.default_add_ons : [];
-};
+const extractAddonIds = (pkg?: Partial<Package> & { line_items?: unknown }): string[] =>
+  Array.isArray(pkg?.default_add_ons) ? pkg!.default_add_ons : [];
+
+const getServiceUnitPrice = (service: any): number =>
+  service?.selling_price ?? service?.price ?? 0;
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("tr-TR", {
+    style: "currency",
+    currency: "TRY",
+    minimumFractionDigits: 0,
+  }).format(value);
 
 // Service picker component for default add-ons
-const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
+const ServiceAddOnsPicker = ({ services, value, onChange, navigate, disabledServiceIds = [] }: {
   services: any[];
   value: string[];
   onChange: (addons: string[]) => void;
   navigate: (path: string) => void;
+  disabledServiceIds?: string[];
 }) => {
   const { t } = useTranslation(['forms', 'common']);
   const [isEditing, setIsEditing] = useState(false);
@@ -107,6 +105,7 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
   };
 
   const toggleService = (serviceId: string) => {
+    if (disabledServiceIds.includes(serviceId)) return;
     if (tempValue.includes(serviceId)) {
       setTempValue(prev => prev.filter(v => v !== serviceId));
     } else {
@@ -171,6 +170,7 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
                               "overflow-hidden text-ellipsis",
                               selected ? "" : "border",
                             )}
+                            disabled={disabledServiceIds.includes(service.id)}
                             title={`${service.name}${hasPrices ? ` · Cost: ₺${costPrice} · Selling: ₺${sellingPrice}` : ''}`}
                           >
                             <div className="flex items-center gap-2">
@@ -319,7 +319,6 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       return data || [];
     },
   });
-
   // Fetch services
   const { data: services = [] } = useQuery({
     queryKey: ['services'],
@@ -343,6 +342,16 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       return data || [];
     },
   });
+
+  const addonServices = useMemo(
+    () => services.filter((service) => packageData.default_add_ons.includes(service.id)),
+    [services, packageData.default_add_ons]
+  );
+
+  const addonServicesTotal = useMemo(
+    () => addonServices.reduce((sum, service) => sum + getServiceUnitPrice(service), 0),
+    [addonServices]
+  );
 
   const resetForm = () => {
     setPackageData({
@@ -414,6 +423,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       const addonLineItems = packageData.default_add_ons.map((serviceId) =>
         createLineItem(serviceId, "addon")
       );
+      const lineItems = addonLineItems;
 
       const { error } = await supabase
         .from('packages')
@@ -426,7 +436,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
           duration: null,
           applicable_types: packageData.applicable_types,
           default_add_ons: packageData.default_add_ons,
-          line_items: addonLineItems,
+          line_items: lineItems,
           is_active: packageData.is_active
         });
 
@@ -534,7 +544,9 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
           {errors.price && <p className="text-sm text-destructive">{errors.price}</p>}
         </div>
 
+        {/* Base Service */}
         {/* Duration */}
+        {/* Base Service */}
         <div className="rounded-md border border-dashed bg-muted/10 p-3 text-xs text-muted-foreground">
           {t('package.session_type_hint')}
         </div>
@@ -559,6 +571,27 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
             onChange={(addons) => setPackageData(prev => ({ ...prev, default_add_ons: addons }))}
             navigate={navigate}
           />
+        </div>
+
+        {/* Bundle Summary */}
+        <div className="space-y-2">
+          <Label>{t('package.bundle_summary_title')}</Label>
+          <div className="rounded-md border bg-muted/20 p-3 space-y-1">
+            <div className="flex items-center justify-between text-sm font-medium">
+              <span>{t('package.bundle_summary_total_label')}</span>
+              <span>{formatCurrency(addonServicesTotal)}</span>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {t('package.bundle_summary_breakdown_addons_only', {
+                addons: formatCurrency(addonServicesTotal),
+              })}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {t('package.bundle_summary_count', {
+                count: addonServices.length,
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Applicable Types */}
@@ -704,6 +737,16 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
     },
   });
 
+  const addonServices = useMemo(
+    () => services.filter((service) => packageData.default_add_ons.includes(service.id)),
+    [services, packageData.default_add_ons]
+  );
+
+  const addonServicesTotal = useMemo(
+    () => addonServices.reduce((sum, service) => sum + getServiceUnitPrice(service), 0),
+    [addonServices]
+  );
+
   useEffect(() => {
     if (pkg && open) {
       setPackageData({
@@ -743,6 +786,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       const addonLineItems = packageData.default_add_ons.map((serviceId) =>
         createLineItem(serviceId, "addon")
       );
+      const lineItems = addonLineItems;
 
       const { error } = await supabase
         .from('packages')
@@ -753,7 +797,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
           duration: null,
           applicable_types: packageData.applicable_types,
           default_add_ons: packageData.default_add_ons,
-          line_items: addonLineItems,
+          line_items: lineItems,
           is_active: packageData.is_active
         })
         .eq('id', pkg.id);
@@ -922,6 +966,27 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
             onChange={(addons) => setPackageData(prev => ({ ...prev, default_add_ons: addons }))}
             navigate={navigate}
           />
+        </div>
+
+        {/* Bundle Summary */}
+        <div className="space-y-2">
+          <Label>{t('package.bundle_summary_title')}</Label>
+          <div className="rounded-md border bg-muted/20 p-3 space-y-1">
+            <div className="flex items-center justify-between text-sm font-medium">
+              <span>{t('package.bundle_summary_total_label')}</span>
+              <span>{formatCurrency(addonServicesTotal)}</span>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {t('package.bundle_summary_breakdown_addons_only', {
+                addons: formatCurrency(addonServicesTotal),
+              })}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {t('package.bundle_summary_count', {
+                count: addonServices.length,
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Applicable Types */}

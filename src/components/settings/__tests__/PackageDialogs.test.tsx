@@ -88,6 +88,23 @@ jest.mock("@/components/ui/accordion", () => ({
   AccordionContent: ({ children }: any) => <div>{children}</div>,
 }));
 
+jest.mock("@/components/ui/select", () => ({
+  Select: ({ value, onValueChange, children }: any) => (
+    <select value={value || ""} onChange={(event) => onValueChange?.(event.target.value)}>
+      {children}
+    </select>
+  ),
+  SelectTrigger: ({ children }: any) => <>{children}</>,
+  SelectContent: ({ children }: any) => <>{children}</>,
+  SelectItem: ({ value, children }: any) => <option value={value}>{children}</option>,
+  SelectValue: ({ placeholder, children }: any) => (
+    <>
+      {children}
+      {placeholder ? <option value="">{placeholder}</option> : null}
+    </>
+  ),
+}));
+
 jest.mock("../NavigationGuardDialog", () => ({
   NavigationGuardDialog: () => null,
 }));
@@ -120,6 +137,10 @@ const translations: Record<string, string> = {
   "package.add_ons_help_1": "Manage add-ons via",
   "package.add_ons_help_2": "to keep them organised.",
   "package.services_section": "services",
+  "package.bundle_summary_title": "Add-on summary",
+  "package.bundle_summary_total_label": "Add-on subtotal",
+  "package.bundle_summary_breakdown_addons_only": "{{addons}} add-ons",
+  "package.bundle_summary_count": "{{count}} services selected",
   "package.no_services_yet": "No services yet",
   "package.create_service": "Create a service",
   "package.add_services": "Add services",

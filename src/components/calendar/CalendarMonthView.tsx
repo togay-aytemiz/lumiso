@@ -124,13 +124,18 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
               className={`
                 min-h-16 md:min-h-24 p-1 md:p-2 bg-card hover:bg-accent/50 transition-colors relative
                 ${!isCurrentMonth ? "text-muted-foreground" : ""}
-                ${isDayToday ? "bg-primary/10 ring-1 ring-primary/20" : ""}
                 ${isMobile ? "min-h-11 cursor-pointer" : ""}
               `}
             >
               {/* Day number in top right corner */}
-              <div className={`absolute top-1 right-1 md:top-2 md:right-2 text-xs md:text-sm font-medium ${isDayToday ? "text-primary" : ""}`}>
-                {format(day, "d")}
+              <div className="absolute top-1 right-1 md:top-2 md:right-2">
+                <span
+                  className={`flex h-5 w-5 md:h-7 md:w-7 items-center justify-center rounded-full text-[11px] md:text-sm font-medium transition-colors
+                    ${isDayToday ? "bg-primary text-primary-foreground shadow-sm" : ""}
+                  `}
+                >
+                  {format(day, "d")}
+                </span>
               </div>
               
               {/* Events - with top margin to avoid overlap with day number */}

@@ -37,6 +37,15 @@ type SidebarContext = {
 
 const SidebarContext = React.createContext<SidebarContext | null>(null)
 
+type SidebarMenuHoverContextValue = {
+  hoveringMenuId: string | null
+  setHoveringMenuId: (id: string | null) => void
+}
+
+const SidebarMenuHoverContext = React.createContext<
+  SidebarMenuHoverContextValue | null
+>(null)
+
 function useSidebar() {
   const context = React.useContext(SidebarContext)
   if (!context) {
@@ -68,6 +77,9 @@ const SidebarProvider = React.forwardRef<
   ) => {
     const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
+    const [hoveringMenuId, setHoveringMenuId] = React.useState<string | null>(
+      null
+    )
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
@@ -128,27 +140,34 @@ const SidebarProvider = React.forwardRef<
       [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
     )
 
+    const hoverContextValue = React.useMemo<SidebarMenuHoverContextValue>(
+      () => ({ hoveringMenuId, setHoveringMenuId }),
+      [hoveringMenuId]
+    )
+
     return (
       <SidebarContext.Provider value={contextValue}>
-        <TooltipProvider delayDuration={0}>
-          <div
-            style={
-              {
-                "--sidebar-width": SIDEBAR_WIDTH,
-                "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-                ...style,
-              } as React.CSSProperties
-            }
-            className={cn(
-              "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar",
-              className
-            )}
-            ref={ref}
-            {...props}
-          >
-            {children}
-          </div>
-        </TooltipProvider>
+        <SidebarMenuHoverContext.Provider value={hoverContextValue}>
+          <TooltipProvider delayDuration={0}>
+            <div
+              style={
+                {
+                  "--sidebar-width": SIDEBAR_WIDTH,
+                  "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+                  ...style,
+                } as React.CSSProperties
+              }
+              className={cn(
+                "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar",
+                className
+              )}
+              ref={ref}
+              {...props}
+            >
+              {children}
+            </div>
+          </TooltipProvider>
+        </SidebarMenuHoverContext.Provider>
       </SidebarContext.Provider>
     )
   }
@@ -507,6 +526,8 @@ const SidebarMenu = React.forwardRef<
   const activeNodeRef = React.useRef<HTMLElement | null>(null)
   const hoverNodeRef = React.useRef<HTMLElement | null>(null)
   const rafRef = React.useRef<number | null>(null)
+  const hoverContext = React.useContext(SidebarMenuHoverContext)
+  const menuId = React.useId()
   const [indicator, setIndicator] = React.useState<{
     x: number
     y: number
@@ -582,9 +603,15 @@ const SidebarMenu = React.forwardRef<
       if (hoverNodeRef.current && hoverNodeRef.current !== node) {
         return
       }
+      if (
+        hoverContext?.hoveringMenuId &&
+        hoverContext.hoveringMenuId !== menuId
+      ) {
+        return
+      }
       scheduleIndicator(node, "active")
     },
-    [resetIndicator, scheduleIndicator]
+    [hoverContext?.hoveringMenuId, menuId, resetIndicator, scheduleIndicator]
   )
 
   const unsetActive = React.useCallback(
@@ -613,15 +640,19 @@ const SidebarMenu = React.forwardRef<
         } else {
           resetIndicator()
         }
+        if (hoverContext?.hoveringMenuId === menuId) {
+          hoverContext.setHoveringMenuId(null)
+        }
         return
       }
+      hoverContext?.setHoveringMenuId(menuId)
       const mode =
         activeNodeRef.current && activeNodeRef.current === node
           ? "active"
           : "hover"
       scheduleIndicator(node, mode)
     },
-    [resetIndicator, scheduleIndicator]
+    [hoverContext, menuId, resetIndicator, scheduleIndicator]
   )
 
   const clearHover = React.useCallback(
@@ -629,13 +660,16 @@ const SidebarMenu = React.forwardRef<
       if (!node) return
       if (hoverNodeRef.current !== node) return
       hoverNodeRef.current = null
+      if (hoverContext?.hoveringMenuId === menuId) {
+        hoverContext.setHoveringMenuId(null)
+      }
       if (activeNodeRef.current) {
         scheduleIndicator(activeNodeRef.current, "active")
       } else {
         resetIndicator()
       }
     },
-    [resetIndicator, scheduleIndicator]
+    [hoverContext, menuId, resetIndicator, scheduleIndicator]
   )
 
   const unregister = React.useCallback(
@@ -655,8 +689,11 @@ const SidebarMenu = React.forwardRef<
           resetIndicator()
         }
       }
+      if (hoverContext?.hoveringMenuId === menuId) {
+        hoverContext.setHoveringMenuId(null)
+      }
     },
-    [resetIndicator, scheduleIndicator]
+    [hoverContext, menuId, resetIndicator, scheduleIndicator]
   )
 
   React.useEffect(() => {
@@ -705,6 +742,26 @@ const SidebarMenu = React.forwardRef<
       observer.disconnect()
     }
   }, [scheduleIndicator])
+
+  React.useEffect(() => {
+    if (!hoverContext) return
+    if (
+      hoverContext.hoveringMenuId &&
+      hoverContext.hoveringMenuId !== menuId &&
+      !hoverNodeRef.current
+    ) {
+      resetIndicator()
+      return
+    }
+    if (
+      (!hoverContext.hoveringMenuId ||
+        hoverContext.hoveringMenuId === menuId) &&
+      !hoverNodeRef.current &&
+      activeNodeRef.current
+    ) {
+      scheduleIndicator(activeNodeRef.current, "active")
+    }
+  }, [hoverContext, menuId, resetIndicator, scheduleIndicator])
 
   const setMenuRef = React.useCallback(
     (node: HTMLUListElement | null) => {

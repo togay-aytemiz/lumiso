@@ -36,7 +36,7 @@ export default function AdminLocalization() {
     downloadAllTranslations,
     uploadTranslationFile,
     getAvailableLanguages,
-    getAvailableNamespaces,
+    getNamespacesForLanguage,
     getTranslationStats,
     isProcessing,
   } = useTranslationFiles();
@@ -308,8 +308,8 @@ export default function AdminLocalization() {
                 <div className="space-y-2">
                   <h4 className="font-medium">{t("admin.localization.dialog.individual")}</h4>
                   <div className="grid grid-cols-2 gap-2">
-                    {getAvailableLanguages().map(lang => 
-                      getAvailableNamespaces().map(ns => (
+                    {getAvailableLanguages().flatMap(lang =>
+                      getNamespacesForLanguage(lang).map(ns => (
                         <Button
                           key={`${lang}-${ns}`}
                           variant="outline"
@@ -428,23 +428,30 @@ export default function AdminLocalization() {
                 <CardDescription>{t("admin.localization.cards.quickActions.description")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <h4 className="font-medium text-sm">{t("admin.localization.cards.quickActions.downloadIndividual")}</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    {getAvailableLanguages().map(lang => 
-                      getAvailableNamespaces().slice(0, 4).map(ns => (
-                        <Button
-                          key={`${lang}-${ns}`}
-                          variant="outline"
-                          size="sm"
-                          onClick={() => downloadLanguageFile(lang, ns)}
-                          className="text-xs justify-start"
-                        >
-                          <FileDown className="w-3 h-3 mr-1" />
-                          {lang}/{ns}
-                        </Button>
-                      ))
-                    )}
+                  <div className="space-y-3">
+                    {getAvailableLanguages().map(lang => (
+                      <div key={lang} className="space-y-2">
+                        <div className="text-xs font-medium text-muted-foreground">
+                          {lang.toUpperCase()}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {getNamespacesForLanguage(lang).map(ns => (
+                            <Button
+                              key={`${lang}-${ns}`}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => downloadLanguageFile(lang, ns)}
+                              className="text-xs justify-start"
+                            >
+                              <FileDown className="w-3 h-3 mr-1" />
+                              {lang}/{ns}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
                 

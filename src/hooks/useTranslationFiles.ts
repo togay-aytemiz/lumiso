@@ -1,38 +1,49 @@
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
 
-// Import existing translation files
-import enCommon from '@/i18n/resources/en/common.json';
-import enDashboard from '@/i18n/resources/en/dashboard.json';
-import enForms from '@/i18n/resources/en/forms.json';
-import enNavigation from '@/i18n/resources/en/navigation.json';
-import enMessages from '@/i18n/resources/en/messages.json';
-import enPages from '@/i18n/resources/en/pages.json';
+type TranslationRecord = Record<string, Record<string, any>>;
 
-import trCommon from '@/i18n/resources/tr/common.json';
-import trDashboard from '@/i18n/resources/tr/dashboard.json';
-import trForms from '@/i18n/resources/tr/forms.json';
-import trNavigation from '@/i18n/resources/tr/navigation.json';
-import trMessages from '@/i18n/resources/tr/messages.json';
-import trPages from '@/i18n/resources/tr/pages.json';
+const translationModules = import.meta.glob<{ default: any }>(
+  '@/i18n/resources/*/*.json',
+  { eager: true }
+);
 
-const translations = {
-  en: {
-    common: enCommon,
-    dashboard: enDashboard,
-    forms: enForms,
-    navigation: enNavigation,
-    messages: enMessages,
-    pages: enPages,
-  },
-  tr: {
-    common: trCommon,
-    dashboard: trDashboard,
-    forms: trForms,
-    navigation: trNavigation,
-    messages: trMessages,
-    pages: trPages,
-  },
+const buildTranslations = () => {
+  const result: TranslationRecord = {};
+
+  Object.entries(translationModules).forEach(([path, module]) => {
+    const match = path.match(/resources\/(.+?)\/(.+?)\.json$/);
+    if (!match) {
+      return;
+    }
+
+    const [, language, namespace] = match;
+    const data = 'default' in module ? module.default : module;
+
+    if (!result[language]) {
+      result[language] = {};
+    }
+
+    result[language][namespace] = data;
+  });
+
+  return result;
+};
+
+const translations = buildTranslations();
+
+const getSupportedLanguages = () => Object.keys(translations).sort();
+
+const getSupportedNamespaces = () => {
+  const namespaceSet = new Set<string>();
+
+  Object.values(translations).forEach((languageData) => {
+    Object.keys(languageData).forEach((namespace) => {
+      namespaceSet.add(namespace);
+    });
+  });
+
+  return Array.from(namespaceSet).sort();
 };
 
 export const useTranslationFiles = () => {
@@ -40,7 +51,7 @@ export const useTranslationFiles = () => {
 
   const downloadLanguageFile = (languageCode: string, namespace: string) => {
     try {
-      const data = translations[languageCode as keyof typeof translations]?.[namespace as keyof typeof translations.en];
+      const data = translations[languageCode]?.[namespace];
       if (!data) {
         toast({
           title: "Error",
@@ -76,7 +87,7 @@ export const useTranslationFiles = () => {
 
   const downloadLanguagePack = (languageCode: string) => {
     try {
-      const languageData = translations[languageCode as keyof typeof translations];
+      const languageData = translations[languageCode];
       if (!languageData) {
         toast({
           title: "Error",
@@ -166,14 +177,10 @@ export const useTranslationFiles = () => {
           if (fileName.includes('-')) {
             // Individual file format: en-common.json
             [languageCode, namespace] = fileName.split('-');
-            
+
             // Validate language and namespace
-            if (!['en', 'tr'].includes(languageCode)) {
-              throw new Error(`Invalid language code: ${languageCode}. Supported: en, tr`);
-            }
-            
-            if (!['common', 'dashboard', 'forms', 'navigation', 'messages', 'pages'].includes(namespace)) {
-              throw new Error(`Invalid namespace: ${namespace}. Supported: common, dashboard, forms, navigation, messages, pages`);
+            if (!getSupportedLanguages().includes(languageCode)) {
+              throw new Error(`Invalid language code: ${languageCode}. Supported: ${getSupportedLanguages().join(', ')}`);
             }
 
             // Write individual file
@@ -182,12 +189,13 @@ export const useTranslationFiles = () => {
               const fileContent = JSON.stringify(parsed, null, 2);
               await onFileWrite(filePath, fileContent);
             }
-            
+
             // Update in-memory translations immediately
-            if (translations[languageCode as keyof typeof translations]) {
-              (translations[languageCode as keyof typeof translations] as any)[namespace] = parsed;
-            }
-            
+            translations[languageCode] = {
+              ...(translations[languageCode] || {}),
+              [namespace]: parsed,
+            };
+
             toast({
               title: "Success",
               description: `Translation file ${file.name} uploaded successfully`,
@@ -198,33 +206,29 @@ export const useTranslationFiles = () => {
             const match = fileName.match(/^([a-z]{2})(-language-pack)?$/);
             if (match) {
               languageCode = match[1];
-              
-              if (!['en', 'tr'].includes(languageCode)) {
-                throw new Error(`Invalid language code: ${languageCode}. Supported: en, tr`);
+
+              if (!getSupportedLanguages().includes(languageCode)) {
+                throw new Error(`Invalid language code: ${languageCode}. Supported: ${getSupportedLanguages().join(', ')}`);
               }
-              
+
               // Handle language pack format
               if (typeof parsed === 'object' && Object.keys(parsed).some(key => key.includes('.json'))) {
                 // Language pack format with .json keys
                 for (const [fileKey, fileData] of Object.entries(parsed)) {
                   if (fileKey.endsWith('.json')) {
                     const ns = fileKey.replace('.json', '');
-                    
-                    if (!['common', 'dashboard', 'forms', 'navigation', 'messages', 'pages'].includes(ns)) {
-                      console.warn(`Skipping invalid namespace: ${ns}`);
-                      continue;
-                    }
-                    
+
                     if (onFileWrite) {
                       const filePath = `src/i18n/resources/${languageCode}/${ns}.json`;
                       const fileContent = JSON.stringify(fileData, null, 2);
                       await onFileWrite(filePath, fileContent);
                     }
-                    
+
                     // Update in-memory translations
-                    if (translations[languageCode as keyof typeof translations]) {
-                      (translations[languageCode as keyof typeof translations] as any)[ns] = fileData;
-                    }
+                    translations[languageCode] = {
+                      ...(translations[languageCode] || {}),
+                      [ns]: fileData,
+                    };
                   }
                 }
                 
@@ -268,19 +272,26 @@ export const useTranslationFiles = () => {
     });
   };
 
-  const getAvailableLanguages = () => Object.keys(translations);
-  const getAvailableNamespaces = () => Object.keys(translations.en);
-  
+  const getAvailableLanguages = () => getSupportedLanguages();
+  const getAvailableNamespaces = () => getSupportedNamespaces();
+
+  const getNamespacesForLanguage = (languageCode: string) =>
+    Object.keys(translations[languageCode] || {}).sort();
+
   const getTranslationStats = () => {
     const stats: { [key: string]: { [key: string]: number } } = {};
-    
-    Object.entries(translations).forEach(([langCode, langData]) => {
+
+    getSupportedLanguages().forEach((langCode) => {
+      const langData = translations[langCode] || {};
       stats[langCode] = {};
-      Object.entries(langData).forEach(([namespace, nsData]) => {
-        stats[langCode][namespace] = countKeys(nsData);
-      });
+
+      Object.keys(langData)
+        .sort()
+        .forEach((namespace) => {
+          stats[langCode][namespace] = countKeys(langData[namespace]);
+        });
     });
-    
+
     return stats;
   };
 
@@ -303,6 +314,7 @@ export const useTranslationFiles = () => {
     uploadTranslationFile,
     getAvailableLanguages,
     getAvailableNamespaces,
+    getNamespacesForLanguage,
     getTranslationStats,
     isProcessing,
   };

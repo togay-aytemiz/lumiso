@@ -1,10 +1,9 @@
-import React, { memo, useMemo } from 'react';
-import { format, addDays, startOfWeek, isToday, isSameDay } from 'date-fns';
-import { formatTime, getUserLocale, getStartOfWeek, getDateFnsLocale } from '@/lib/utils';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { format, addDays, isToday, isSameDay } from 'date-fns';
+import { getUserLocale, getStartOfWeek, getDateFnsLocale } from '@/lib/utils';
 import { CalendarDay } from './CalendarDay';
 import { useSmartTimeRange } from '@/hooks/useSmartTimeRange';
 import { useOrganizationTimezone } from '@/hooks/useOrganizationTimezone';
-import { Badge } from '@/components/ui/badge';
 import { useTranslation } from 'react-i18next';
 
 
@@ -65,6 +64,11 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   const dateFnsLocale = getDateFnsLocale();
   const { formatTime: formatOrgTime, loading: timezoneLoading } = useOrganizationTimezone();
   const { timeSlots, getSlotIndex } = useSmartTimeRange(sessions, activities);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const autoScrollRef = useRef(false);
+  const [slotHeight, setSlotHeight] = useState(0);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
 
   const weekDays = useMemo(() => {
     const weekStart = getStartOfWeek(currentDate, userLocale);
@@ -90,6 +94,130 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
     });
     return eventMap;
   }, [weekDays, getEventsForDate, timeSlots, getSlotIndex]);
+  const eventSlotCount = eventsByDayAndSlot.size;
+  const currentDateTimestamp = currentDate.getTime();
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || isMobile) return;
+
+    const updateCurrentTime = () => setCurrentTime(new Date());
+    updateCurrentTime();
+    const intervalId = window.setInterval(updateCurrentTime, 60_000);
+    return () => window.clearInterval(intervalId);
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (isMobile) return;
+
+    const measureSlotHeight = () => {
+      if (!gridRef.current?.firstElementChild) return;
+      const firstRow = gridRef.current.firstElementChild as HTMLElement;
+      const { height } = firstRow.getBoundingClientRect();
+      setSlotHeight(height);
+    };
+
+    measureSlotHeight();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', measureSlotHeight);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', measureSlotHeight);
+      }
+    };
+  }, [isMobile, timeSlots.length, eventSlotCount]);
+
+  useEffect(() => {
+    autoScrollRef.current = false;
+  }, [currentDateTimestamp, timeSlots.length, isMobile]);
+
+  const currentTimeIndicator = useMemo(() => {
+    if (isMobile || !slotHeight || timeSlots.length === 0) {
+      return null;
+    }
+
+    const startSlot = timeSlots[0];
+    const endSlot = timeSlots[timeSlots.length - 1];
+    const startMinutes = startSlot.hour * 60 + startSlot.minute;
+    const endMinutes = endSlot.hour * 60 + endSlot.minute + 30;
+    const nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+
+    if (nowMinutes < startMinutes || nowMinutes > endMinutes) {
+      return null;
+    }
+
+    const minutesFromStart = nowMinutes - startMinutes;
+    const baseIndex = Math.floor(minutesFromStart / 30);
+    const remainderMinutes = minutesFromStart % 30;
+    const offset = slotHeight * baseIndex + (slotHeight * remainderMinutes) / 30;
+    const label = formatOrgTime(
+      `${currentTime.getHours().toString().padStart(2, '0')}:${currentTime
+        .getMinutes()
+        .toString()
+        .padStart(2, '0')}`
+    );
+
+    return { offset, label };
+  }, [currentTime, formatOrgTime, isMobile, slotHeight, timeSlots]);
+
+  const firstBusySlotIndex = useMemo(() => {
+    if (isMobile) return -1;
+
+    for (let slotIndex = 0; slotIndex < timeSlots.length; slotIndex++) {
+      const hasEvents = weekDays.some(day => {
+        const dayKey = format(day, 'yyyy-MM-dd');
+        return eventsByDayAndSlot.has(`${dayKey}-${slotIndex}`);
+      });
+
+      if (hasEvents) {
+        return slotIndex;
+      }
+    }
+
+    return -1;
+  }, [eventsByDayAndSlot, isMobile, timeSlots, weekDays]);
+
+  useEffect(() => {
+    if (
+      isMobile ||
+      !scrollContainerRef.current ||
+      !gridRef.current ||
+      slotHeight === 0 ||
+      autoScrollRef.current
+    ) {
+      return;
+    }
+
+    const container = scrollContainerRef.current;
+    const gridElement = gridRef.current;
+
+    if (!container || !gridElement) {
+      return;
+    }
+
+    const containerHeight = container.clientHeight;
+    const maxScrollable = gridElement.scrollHeight - containerHeight;
+
+    const scrollTo = (target: number) => {
+      let nextTarget = target;
+      if (nextTarget < 0) nextTarget = 0;
+      if (nextTarget > maxScrollable) nextTarget = maxScrollable;
+      container.scrollTo({ top: nextTarget, behavior: 'smooth' });
+    };
+
+    if (currentTimeIndicator) {
+      scrollTo(currentTimeIndicator.offset - containerHeight / 2);
+      autoScrollRef.current = true;
+      return;
+    }
+
+    if (firstBusySlotIndex >= 0) {
+      scrollTo(firstBusySlotIndex * slotHeight - containerHeight / 2);
+      autoScrollRef.current = true;
+    }
+  }, [currentTimeIndicator, firstBusySlotIndex, isMobile, slotHeight]);
 
   // loading skeleton that uses the same grid template to avoid layout jump
   if (timezoneLoading) {
@@ -278,67 +406,92 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
         })}
       </div>
 
-      <div className="flex-1 max-h-[70vh] overflow-y-auto relative">
-        {timeSlots.map((slot, slotIndex) => {
-          const isHour = slot.minute === 0;
-          const labelText = slot.display || '';
+      <div ref={scrollContainerRef} className="flex-1 max-h-[70vh] overflow-y-auto relative">
+        <div ref={gridRef} className="relative">
+          {timeSlots.map((slot, slotIndex) => {
+            const isHour = slot.minute === 0;
+            const labelText = slot.display || '';
 
-          return (
-            <div
-              key={`slot-${slotIndex}`}
-              className="grid border-b border-border/80 min-h-8 relative"
-              style={{ gridTemplateColumns: `${TIME_COL_PX}px repeat(7, minmax(0, 1fr))` }}
-            >
-              {/* time rail cell, sticky and with matching bottom border */}
+            return (
               <div
-                className={`sticky left-0 z-30 bg-card flex items-center justify-end pr-3 text-xs text-muted-foreground border-r border-border border-b border-border/80 ${isHour ? 'font-medium' : ''}`}
+                key={`slot-${slotIndex}`}
+                className="grid border-b border-border/80 min-h-8 relative"
+                style={{ gridTemplateColumns: `${TIME_COL_PX}px repeat(7, minmax(0, 1fr))` }}
               >
-                {labelText || '\u00A0'}
+                {/* time rail cell, sticky and with matching bottom border */}
+                <div
+                  className={`sticky left-0 z-30 bg-card flex items-center justify-end pr-3 text-xs text-muted-foreground border-r border-border border-b border-border/80 ${isHour ? 'font-medium' : ''}`}
+                >
+                  {labelText || '\u00A0'}
+                </div>
+
+                {weekDays.map((day, dayIndex) => {
+                  const dayKey = format(day, 'yyyy-MM-dd');
+                  const key = `${dayKey}-${slotIndex}`;
+                  const events = eventsByDayAndSlot.get(key);
+
+                  return (
+                    <div
+                      key={dayIndex}
+                      className="relative p-1 hover:bg-accent/30 transition-colors border-r border-border"
+                    >
+                      {events && (
+                        <div className="space-y-1">
+                          {showSessions &&
+                            events.sessions.map(session => (
+                              <button
+                                key={session.id}
+                                className="w-full text-left px-2 py-1 text-xs bg-primary/20 text-primary rounded hover:bg-primary/30 transition-colors truncate"
+                                onClick={() => onSessionClick(session)}
+                              >
+                                {leadsMap[session.lead_id]?.name || t('calendar.labels.lead')}
+                              </button>
+                            ))}
+
+                          {showReminders &&
+                            events.activities.map(activity => (
+                              <button
+                                key={activity.id}
+                                className={`w-full text-left px-2 py-1 text-xs bg-muted text-muted-foreground rounded hover:bg-accent transition-colors truncate ${
+                                  activity.completed ? 'opacity-60 line-through' : ''
+                                }`}
+                                onClick={() => onActivityClick(activity)}
+                              >
+                                {leadsMap[activity.lead_id]?.name || t('calendar.labels.lead')}
+                              </button>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
+            );
+          })}
 
-              {weekDays.map((day, dayIndex) => {
-                const dayKey = format(day, 'yyyy-MM-dd');
-                const key = `${dayKey}-${slotIndex}`;
-                const events = eventsByDayAndSlot.get(key);
-
-                return (
-                  <div
-                    key={dayIndex}
-                    className="relative p-1 hover:bg-accent/30 transition-colors border-r border-border"
-                  >
-                    {events && (
-                      <div className="space-y-1">
-                        {showSessions &&
-                          events.sessions.map(session => (
-                            <button
-                              key={session.id}
-                              className="w-full text-left px-2 py-1 text-xs bg-primary/20 text-primary rounded hover:bg-primary/30 transition-colors truncate"
-                              onClick={() => onSessionClick(session)}
-                            >
-                              {leadsMap[session.lead_id]?.name || t('calendar.labels.lead')}
-                            </button>
-                          ))}
-
-                        {showReminders &&
-                          events.activities.map(activity => (
-                            <button
-                              key={activity.id}
-                              className={`w-full text-left px-2 py-1 text-xs bg-muted text-muted-foreground rounded hover:bg-accent transition-colors truncate ${
-                                activity.completed ? 'opacity-60 line-through' : ''
-                              }`}
-                              onClick={() => onActivityClick(activity)}
-                            >
-                              {leadsMap[activity.lead_id]?.name || t('calendar.labels.lead')}
-                            </button>
-                          ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+          {currentTimeIndicator && (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute left-0 right-0"
+              style={{ top: `${currentTimeIndicator.offset}px` }}
+            >
+              <div
+                className="grid items-center"
+                style={{ gridTemplateColumns: `${TIME_COL_PX}px repeat(7, minmax(0, 1fr))` }}
+              >
+                <div className="sticky left-0 z-40 flex justify-end pr-2">
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary text-primary-foreground shadow-sm">
+                    {currentTimeIndicator.label}
+                  </span>
+                </div>
+                <div className="col-span-7 relative flex items-center">
+                  <span className="absolute -left-1 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-primary shadow-sm" />
+                  <span className="h-px w-full bg-primary" />
+                </div>
+              </div>
             </div>
-          );
-        })}
+          )}
+        </div>
       </div>
     </div>
   );

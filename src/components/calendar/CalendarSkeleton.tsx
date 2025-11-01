@@ -20,40 +20,45 @@ export function CalendarSkeleton() {
       
       {/* Calendar grid skeleton - 6 weeks */}
       <div className="grid grid-cols-7 gap-px bg-border">
-        {Array.from({ length: 42 }).map((_, index) => (
-          <div
-            key={index}
-            className="min-h-16 md:min-h-24 p-1 md:p-2 bg-card relative"
-          >
-            {/* Day number skeleton in top right */}
-            <div className="absolute top-1 right-1 md:top-2 md:right-2">
-              <Skeleton className="h-3 w-4 md:h-4 md:w-5" />
-            </div>
-            
-            {/* Event items skeleton */}
-            <div className="space-y-0.5 mt-6 md:mt-8">
-              {/* Mobile: dots, Desktop: event bars */}
-              <div className="md:hidden absolute bottom-1 left-1 flex items-center gap-1">
-                {Math.random() > 0.7 && (
-                  <>
+        {Array.from({ length: 42 }).map((_, index) => {
+          const showMobileDots = index % 3 === 0;
+          const showSecondMobileDot = index % 6 === 0;
+          const showFirstDesktopBar = index % 4 === 0;
+          const showSecondDesktopBar = index % 5 === 0;
+
+          return (
+            <div
+              key={index}
+              className="min-h-16 md:min-h-24 p-1 md:p-2 bg-card relative"
+            >
+              {/* Day number skeleton in top right */}
+              <div className="absolute top-1 right-1 md:top-2 md:right-2">
+                <Skeleton className="h-3 w-4 md:h-4 md:w-5" />
+              </div>
+
+              {/* Event items skeleton */}
+              <div className="space-y-0.5 mt-6 md:mt-8">
+                {/* Mobile: dots, Desktop: event bars */}
+                <div className="md:hidden absolute bottom-1 left-1 flex items-center gap-1">
+                  {showMobileDots && <Skeleton className="h-2 w-2 rounded-full" />}
+                  {showMobileDots && showSecondMobileDot && (
                     <Skeleton className="h-2 w-2 rounded-full" />
-                    {Math.random() > 0.5 && <Skeleton className="h-2 w-2 rounded-full" />}
-                  </>
-                )}
-              </div>
-              
-              {/* Desktop: event bars */}
-              <div className="hidden md:block space-y-0.5">
-                {Math.random() > 0.6 && (
-                  <Skeleton className="h-6 w-full rounded" />
-                )}
-                {Math.random() > 0.8 && (
-                  <Skeleton className="h-6 w-3/4 rounded" />
-                )}
+                  )}
+                </div>
+
+                {/* Desktop: event bars */}
+                <div className="hidden md:block space-y-0.5">
+                  {showFirstDesktopBar && (
+                    <Skeleton className="h-6 w-full rounded" />
+                  )}
+                  {showSecondDesktopBar && (
+                    <Skeleton className="h-6 w-3/4 rounded" />
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -83,13 +88,14 @@ export function CalendarWeekSkeleton() {
             <div className="p-2 w-16 shrink-0 text-right border-r border-border">
               {slot % 2 === 0 && <Skeleton className="h-3 w-12 ml-auto" />}
             </div>
-            {Array.from({ length: 7 }).map((_, day) => (
-              <div key={day} className="relative p-1 border-r border-border/30">
-                {Math.random() > 0.85 && (
-                  <Skeleton className="h-6 w-full rounded" />
-                )}
-              </div>
-            ))}
+            {Array.from({ length: 7 }).map((_, day) => {
+              const showEvent = (slot + day) % 5 === 0;
+              return (
+                <div key={day} className="relative p-1 border-r border-border/30">
+                  {showEvent && <Skeleton className="h-6 w-full rounded" />}
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>

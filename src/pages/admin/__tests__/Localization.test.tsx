@@ -26,7 +26,9 @@ jest.mock("@/hooks/use-toast", () => ({
   toast: jest.fn(),
 }));
 
-jest.mock("@/hooks/useTranslationFiles");
+jest.mock("@/hooks/useTranslationFiles", () => ({
+  useTranslationFiles: jest.fn(),
+}));
 
 jest.mock("@/components/ui/card", () => ({
   Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -190,6 +192,7 @@ describe("Admin Localization page", () => {
       uploadTranslationFile: jest.fn(),
       getAvailableLanguages: jest.fn(() => languagesData.map((language) => language.code)),
       getAvailableNamespaces: jest.fn(() => namespacesData.map((namespace) => namespace.name)),
+      getNamespacesForLanguage: jest.fn(() => namespacesData.map((namespace) => namespace.name)),
       getTranslationStats: jest.fn(() => ({ totalKeys: translationKeysData.length, translatedKeys: translationsData.length })),
       isProcessing: false,
     });

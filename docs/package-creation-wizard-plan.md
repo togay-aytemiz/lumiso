@@ -110,7 +110,6 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 - ⬜ Refresh the package selection step inside project creation to surface package cards, key inclusions, TRY totals (base + services), and deposit preview.
 - ⬜ Allow photographers to toggle service inclusion per package, adjust quantities/units, and override prices inline without leaving the project flow. Persist overrides as project-scoped line items.
 - ⬜ Add unit selector mirroring package wizard options so adjustments remain consistent. Default to package units and highlight any overrides before submission.
-- ⬜ Display quantity badges alongside service names whenever quantity > 1 so photographers can spot multi-count inclusions at a glance.
 - ⬜ Deliverables: project wizard reflects updated pricing summary, supports per-project overrides, and keeps the review step accurate.
 - ⬜ **MVP rule:** always keep overrides scoped to the project; log a future enhancement to push changes back into the base package if we support multi-photographer teams later.
 

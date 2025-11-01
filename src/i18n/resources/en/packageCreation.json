@@ -76,7 +76,6 @@
       },
       "inventory": {
         "add": "Add",
-        "selected": "{{count}}× in bundle",
         "uncategorized": "Other",
         "inactive": "Inactive",
         "empty": "No services in your catalog yet. Create services to add them here.",
@@ -103,8 +102,12 @@
         "empty": "No services added yet.",
         "selectedCount": "{{count}} service selected",
         "selectedCount_plural": "{{count}} services selected",
-        "listHeading": "Currently included",
-        "typeBreakdown": "By service type"
+        "listHeading": "Selected services",
+        "typeBreakdown": "By service type",
+        "table": {
+          "name": "Service",
+          "quantity": "Qty"
+        }
       },
       "list": {
         "quantity": "Qty",
@@ -125,7 +128,7 @@
         "pricePlaceholder": "0.00",
         "costPlaceholder": "0.00",
         "managerTitle": "Custom services",
-        "managerDescription": "Add ad-hoc services that aren’t part of your catalog yet.",
+        "managerDescription": "Add one-off services that aren’t part of your catalog yet.",
         "emptyState": "No custom services yet.",
         "errors": {
           "name": "Name is required.",

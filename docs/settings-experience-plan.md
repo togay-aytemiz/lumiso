@@ -9,6 +9,7 @@
 
 ## Goals
 - Unify page shells: consistent header stack (title, eyebrow/subtext, actions/help), responsive paddings, and max-width behavior.
+- Deliver a mobile-first navigation model that feels like a native settings app: dedicated icon + text index screen, near-edge gutters on small viewports, and clear back navigation when drilling into subsections; pair with desktop sticky anchor navigation so dense pages stay scannable.
 - Define reusable section patterns (form, table, drag-and-drop management, danger blocks) with tokens for spacing, typography, and action placement.
 - Normalize interactivity: predictable save vs. auto-save models, sticky footer triggers, and keyboard/accessibility affordances.
 - Reduce unnecessary data churn by introducing caching, fetch-on-focus policies, and background refresh hooks for low-churn settings.
@@ -58,6 +59,7 @@ Cross-cutting components:
 ## Pain Points & Risks
 - **Visual consistency**: headings range from `text-xl` to `text-3xl`, card paddings fluctuate (`p-4`, `p-6`, `border-2`), and action buttons jump between inline and stacked layouts.
 - **Information density**: large cards with generous whitespace push key controls below the fold, especially on laptops; drag-and-drop lists stretch full width instead of aligning to a grid.
+- **Mobile UX gap**: horizontal icon-only navigation hides labels, consumes vertical space, and lacks an in-page back control; wide gutters make forms feel zoomed-out instead of app-native.
 - **Interaction friction**: some sections auto-save on toggle, others rely on the sticky footer; the state of dirty forms is not always evident (small pulse indicator).
 - **Technical churn**: frequent refetches (every section change triggers `useQuery` invalidations), and uploads (logo, avatar) duplicate logic across sections.
 - **Content maintenance**: help drawer strings are generic/duplicated; translations vary in tone between pages; no centralized tokens for spacing or typography.
@@ -67,15 +69,17 @@ Cross-cutting components:
 ### 1. Page Shell Standardization
 - New `SettingsShell` wrapper combines `SettingsPageWrapper` padding logic with a configurable max-width (`1280px` target) and responsive gutter (24px mobile → 48px desktop).
 - `SettingsHeader` upgrade:
-  - Title size locked to `text-[22px]` mobile / `text-[28px]` desktop with consistent line-height.
+  - Title size locked to `text-[22px]` mobile / `text-[28px]` desktop with consistent line-height to avoid the oversized “starter project” look.
   - Optional eyebrow label (e.g., “Account”) for grouping sub-pages.
   - Subtext constrained to `max-w-2xl`, with multiline spacing token.
   - Actions/help aligned to the top-right with consistent icon sizing; collapse into overflow menu below `sm`.
+  - Mobile sub-pages surface a sticky top bar with chevron-back, page title, and optional contextual action; the header fades into a single-row layout when scrolling.
   - Fade-in micro transition for page change to keep UI calm.
 - Sticky footer aligns to new grid (max width, shadow token) and surfaces last-saved timestamp.
 
 ### 2. Section Patterns & Tokens
 - Introduce `settingsTokens.ts` (spacing, typography, border radius, shadow, section gap).
+ - Add `SettingsAnchorNav` variant (same interaction/rhythm as the sticky anchors already shipping on Project Details, Lead Details, and Sheet Details) that pins under the header on desktop, highlights active subsection, and exposes jump links; collapse into the mobile index/back pattern below `md`.
 - Define section templates:
   1. **Form Card** (`SettingsFormSection`): label grid, description slot, default vertical spacing `space-y-5`, standard Save/Cancel hooks.
   2. **Collection Manager** (`SettingsCollectionSection`): header + table/list region with drag handles, add button inline; supports optional metrics footer.
@@ -98,6 +102,14 @@ Cross-cutting components:
 - Provide reduced-motion variant for transitions (respect `prefers-reduced-motion`).
 - Guarantee drag-and-drop sections expose reorder options for keyboard users (fallback move buttons).
 - Audit color contrast of backgrounds/borders vs. text (target WCAG AA).
+- Mobile breakpoint game plan:
+  - `/settings` routes to a dedicated `SettingsMobileDashboard` with categorized cards (icon + label + chevron) and compact gutters (12–16px) to maximize usable space.
+  - Sub-pages reuse the dashboard categories for breadcrumb context and always expose a top-left back arrow.
+  - Forms tighten vertical rhythm (`space-y-4` default) and align actions to the screen edge so the view feels native-app compact.
+  - Borrow sizing cues from modern OS settings (24px icons, 56px row height target) so the catalog reads familiar.
+- Tablet/desktop breakpoint plan:
+  - Keep existing two-column affordances where present but pin the new anchor nav under the header.
+  - Maintain 48px outer gutters while allowing sticky nav to lock at 24px from the left content edge.
 
 ### 5. Content & Localization
 - Update `settingsHelpContent` to match new structure; trim marketing fluff, align with actual functionality.
@@ -115,12 +127,14 @@ Cross-cutting components:
 
 ### Phase 0 — Audit & Design Foundations
 - [ ] Screenshot and measure current layouts (desktop/tablet/mobile) for each page.
+- [ ] Map existing mobile navigation journeys (horizontal icon bar, nested routes) and note breakpoints where the experience breaks down.
 - [ ] Define typography & spacing tokens (`settingsTokens.ts`, Figma tokens if available).
 - [ ] Align with brand guidelines (confirm color palette & radius scale).
 - Deliverables: token spec, audit notes, before-state assets archived in `/docs/assets/settings/`.
 
 ### Phase 1 — Core Components & Utilities
 - [ ] Build `SettingsShell` + upgraded `SettingsHeader`.
+ - [ ] Create `SettingsMobileDashboard`, `SettingsSubpageHeader`, and `SettingsAnchorNav` primitives with storybook examples, reusing the scroll-spy + sticky behaviors proven in Project/Lead/Sheet detail pages.
 - [ ] Introduce section primitives (`SettingsFormSection`, `SettingsCollectionSection`, `SettingsToggleSection`, `SettingsDangerSection`, `SettingsPlaceholderSection`).
 - [ ] Create shared uploader hook and refresh button pattern.
 - [ ] Add storybook/preview entries (optional) or Chromatic snapshots.
@@ -128,15 +142,17 @@ Cross-cutting components:
 
 ### Phase 2 — Page Wave A (Foundation)
 - `[ ]` Profile: migrate to new sections, refine avatar/work hours layout, hook to shared uploader.
-- `[ ]` General: apply form + collection sections, add explicit save for branding/regional, unify social channels card.
+- `[ ]` General: apply form + collection sections, add explicit save for branding/regional, unify social channels card, and wire anchor nav jump links per section.
 - `[ ]` Notifications: convert toggles to `SettingsToggleSection`, throttle fetches, add `Test` button alignment.
 - `[ ]` Ship translation updates and ensure tutorials overlay the refreshed layout.
+- `[ ]` Routing & breakpoints: route `/settings` to the mobile dashboard below `md`, ensure back navigation + compact spacing tokens apply across Profile/General/Notifications.
 
 ### Phase 3 — Page Wave B (Data Collections)
 - `[ ]` Leads: refactor statuses & fields into collection sections, add keyboard reorder, align modals.
 - `[ ]` Projects: same pattern as leads; ensure statuses/types share components.
 - `[ ]` Services: standardize cards for session types/packages/services; consolidate onboarding surfaces.
 - `[ ]` Document data fetch policies (manual refresh vs. auto).
+- `[ ]` Extend anchor nav mapping and mobile back pattern to collection-heavy pages (Leads/Projects/Services) with sensible section groupings.
 
 ### Phase 4 — Peripheral Pages & Cleanup
 - `[ ]` Danger Zone: apply danger block pattern, tighten copy, confirm double-confirm flow.

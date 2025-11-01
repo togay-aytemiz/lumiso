@@ -1309,6 +1309,7 @@
     "service_type_deliverable": "Products & deliverables",
     "service_type_coverage_hint": "Staff-driven services like second shooters, videographers or assistants.",
     "service_type_deliverable_hint": "Albums, prints, canvases, digital galleries and other deliverables.",
+    "service_type_hint": "Choose the type first so categories update accordingly.",
     "vendor_label": "Vendor",
     "vendor_placeholder": "e.g., Album printer, framing studio, canvas producer",
     "visibility_label": "Active",
@@ -1326,6 +1327,7 @@
     "new_category": "Create a new category: ",
     "errors": {
       "name_required": "Service name is required",
+      "category_required": "Category is required",
       "delete_failed": "Error deleting service"
     },
     "success": {

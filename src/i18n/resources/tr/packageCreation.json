@@ -76,7 +76,6 @@
       },
       "inventory": {
         "add": "Ekle",
-        "selected": "Pakette {{count}}×",
         "uncategorized": "Diğer",
         "inactive": "Pasif",
         "empty": "Kataloğunuzda henüz hizmet yok. Buraya eklemek için hizmet oluşturun.",
@@ -103,8 +102,12 @@
         "empty": "Henüz hizmet eklenmedi.",
         "selectedCount": "{{count}} hizmet seçildi",
         "selectedCount_other": "{{count}} hizmet seçildi",
-        "listHeading": "Pakete dahil olanlar",
-        "typeBreakdown": "Hizmet türüne göre"
+        "listHeading": "Seçilen hizmetler",
+        "typeBreakdown": "Hizmet türüne göre",
+        "table": {
+          "name": "Hizmet",
+          "quantity": "Adet"
+        }
       },
       "list": {
         "quantity": "Adet",
@@ -125,7 +128,7 @@
         "pricePlaceholder": "0.00",
         "costPlaceholder": "0.00",
         "managerTitle": "Özel hizmetler",
-        "managerDescription": "Kataloğunda olmayan ad-hoc hizmetleri ekle.",
+        "managerDescription": "Kataloğunda henüz yer almayan özel hizmetleri buradan rahatça ekleyebilirsin.",
         "emptyState": "Henüz özel hizmet eklenmedi.",
         "errors": {
           "name": "Hizmet adı zorunludur.",

@@ -140,6 +140,7 @@ const translations: Record<string, string> = {
   "service.service_type_deliverable": "Products & deliverables",
   "service.service_type_coverage_hint": "Services that require people on-site",
   "service.service_type_deliverable_hint": "Albums, prints and other deliverables",
+  "service.service_type_hint": "Select a type to continue",
   "service.vendor_label": "Vendor",
   "service.vendor_placeholder": "Vendor name",
   "service.optional_hint": "Optional",
@@ -238,7 +239,10 @@ describe("ServiceDialogs", () => {
 
     await waitFor(() => expect(servicesTable.selectMock).toHaveBeenCalled());
 
-    fireEvent.change(screen.getByLabelText(/Service name/i), {
+    fireEvent.click(screen.getByText("Albums"));
+
+    const nameInput = await screen.findByLabelText(/Service name/i);
+    fireEvent.change(nameInput, {
       target: { value: "Photo Editing" },
     });
     fireEvent.change(screen.getByLabelText(/Cost price/i), {
@@ -252,8 +256,6 @@ describe("ServiceDialogs", () => {
     });
     const visibilityToggle = screen.getByRole("switch", { name: /Visibility/i });
     fireEvent.click(visibilityToggle);
-
-    fireEvent.click(screen.getByText("Albums"));
 
     const navigationConfig = useModalNavigationMock.mock.calls.at(-1)?.[0] as { onSaveAndExit?: () => Promise<void> };
     expect(navigationConfig?.onSaveAndExit).toBeDefined();
@@ -351,11 +353,14 @@ describe("ServiceDialogs", () => {
     expect(servicesTable.updateMock).toHaveBeenCalledWith(
       expect.objectContaining({
         name: "Advanced Retouching",
+        description: "Basic retouching",
+        category: "Extras",
+        price: 100,
+        cost_price: 25,
         extra: false,
         selling_price: 150,
         service_type: "deliverable",
         is_people_based: false,
-        default_unit: "album",
         vendor_name: "Pro Lab",
         is_active: false,
       })

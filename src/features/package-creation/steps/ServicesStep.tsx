@@ -10,6 +10,7 @@ import {
   type ServiceInventoryItem,
   type ServiceInventoryType,
 } from "@/components/ServiceInventorySelector";
+import { ServicesTableCard, type ServicesTableRow } from "@/components/ServicesTableCard";
 import { useServices } from "@/hooks/useOrganizationData";
 import { usePackageCreationContext } from "../hooks/usePackageCreationContext";
 import { usePackageCreationActions } from "../hooks/usePackageCreationActions";
@@ -190,6 +191,18 @@ export const ServicesStep = () => {
     });
   };
 
+  const handleSetExistingServiceQuantity = (serviceId: string, quantity: number) => {
+    const nextExisting = existingItems.map((item) => {
+      if (item.serviceId !== serviceId) return item;
+      return { ...item, quantity: Math.max(1, quantity) };
+    });
+
+    updateServices({
+      items: [...nextExisting, ...customItems],
+      showQuickAdd: state.services.showQuickAdd,
+    });
+  };
+
   const handleRemoveExistingService = (serviceId: string) => {
     const nextExisting = existingItems.filter((item) => item.serviceId !== serviceId);
     updateServices({
@@ -216,8 +229,8 @@ export const ServicesStep = () => {
             defaultValue: "Albums, prints and other client handoffs",
           }),
           icon: PackageIcon,
-          iconBackgroundClassName: "bg-sky-50",
-          iconClassName: "text-sky-600",
+          iconBackgroundClassName: "bg-emerald-50",
+          iconClassName: "text-emerald-600",
         },
         unknown: {
           title: t("steps.services.inventory.types.unknown.title", { defaultValue: "Other services" }),
@@ -225,8 +238,8 @@ export const ServicesStep = () => {
             defaultValue: "Items without a service type yet",
           }),
           icon: Layers,
-          iconBackgroundClassName: "bg-slate-100",
-          iconClassName: "text-slate-600",
+          iconBackgroundClassName: "bg-emerald-50",
+          iconClassName: "text-emerald-600",
         },
       },
       add: t("steps.services.inventory.add", { defaultValue: "Add" }),
@@ -241,8 +254,7 @@ export const ServicesStep = () => {
       empty: t("steps.services.inventory.empty", {
         defaultValue: "No services in your catalog yet. Create services to add them here.",
       }),
-      selectedPill: (quantity: number) =>
-        t("steps.services.inventory.selected", { defaultValue: "{{count}}× in bundle", count: quantity }),
+      quantity: t("steps.services.list.quantity", { defaultValue: "Quantity" }),
       retry: t("common:actions.retry", { defaultValue: "Retry" }),
     }),
     [t]
@@ -267,6 +279,57 @@ export const ServicesStep = () => {
       count: selectionByType.unknown,
     },
   ].filter((row) => row.count > 0);
+
+  const serviceTableLabels = useMemo(
+    () => ({
+      columns: {
+        name: t("steps.services.summary.table.name", { defaultValue: "Service" }),
+        vendor: t("summaryView.services.columns.vendor"),
+        quantity: t("steps.services.summary.table.quantity", { defaultValue: "Qty" }),
+        unitPrice: t("summaryView.services.columns.unitPrice"),
+        lineTotal: t("summaryView.services.columns.lineTotal"),
+      },
+      totals: {
+        cost: t("summaryView.services.totals.cost"),
+        price: t("summaryView.services.totals.price"),
+        margin: t("summaryView.services.totals.margin"),
+      },
+      customTag: t("summaryView.services.customTag"),
+      customVendorFallback: t("summaryView.services.customVendorFallback"),
+    }),
+    [t]
+  );
+
+  const summaryTableRows = useMemo<ServicesTableRow[]>(() => {
+    return state.services.items.map((item) => {
+      const quantity = Math.max(1, item.quantity ?? 1);
+      const unitPriceValue =
+        typeof item.unitPrice === "number" && Number.isFinite(item.unitPrice) ? item.unitPrice : null;
+      const lineTotal =
+        unitPriceValue === null ? null : Math.round(unitPriceValue * quantity * 100) / 100;
+      const service =
+        item.type === "existing" && item.serviceId ? serviceMap.get(item.serviceId) : null;
+
+      const vendor =
+        service?.vendor_name ??
+        // @ts-expect-error legacy camelCase vendor
+        service?.vendorName ??
+        item.vendorName ??
+        null;
+
+      const displayName = item.name ?? service?.name ?? item.serviceId ?? "—";
+
+      return {
+        id: item.id,
+        name: displayName,
+        vendor,
+        quantity,
+        unitPrice: unitPriceValue,
+        lineTotal,
+        isCustom: item.type === "custom",
+      };
+    });
+  }, [serviceMap, state.services.items]);
 
   const updateItem = (itemId: string, updates: Partial<PackageCreationLineItem>) => {
     const nextItems = state.services.items.map((item) =>
@@ -359,293 +422,275 @@ export const ServicesStep = () => {
         onAdd={handleAddExistingService}
         onIncrease={handleIncreaseExistingService}
         onDecrease={handleDecreaseExistingService}
+        onSetQuantity={handleSetExistingServiceQuantity}
         onRemove={handleRemoveExistingService}
         isLoading={servicesQuery.isLoading}
         error={servicesQuery.error ? t("steps.services.picker.error") : null}
         onRetry={servicesQuery.error ? () => servicesQuery.refetch() : undefined}
       />
-
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="space-y-4 rounded-2xl border border-border/70 bg-white/80 p-5 shadow-sm backdrop-blur">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold text-slate-900">
-                {t("steps.services.summary.title")}
-              </h3>
-              <Badge variant="secondary" className="rounded-full text-xs font-medium">
-                {t("steps.services.summary.selectedCount", { count: totalSelected })}
-              </Badge>
-            </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">{t("steps.services.summary.cost")}</span>
-                <span className="font-medium text-slate-900">{formatCurrency(totals.cost)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">{t("steps.services.summary.price")}</span>
-                <span className="font-medium text-slate-900">{formatCurrency(totals.price)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">{t("steps.services.summary.margin")}</span>
-                <span className={cn("font-medium", margin >= 0 ? "text-emerald-600" : "text-destructive")}>
-                  {formatCurrency(margin)}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {summaryTypeRows.length > 0 ? (
-            <div className="space-y-1.5 border-t border-border/60 pt-3 text-xs">
-              <p className="font-medium uppercase tracking-wide text-muted-foreground">
-                {t("steps.services.summary.typeBreakdown", { defaultValue: "By service type" })}
-              </p>
-              {summaryTypeRows.map((row) => (
-                <div key={row.key} className="flex items-center justify-between text-slate-900">
-                  <span className="text-muted-foreground">{row.label}</span>
-                  <span className="font-semibold">{row.count}</span>
-                </div>
-              ))}
-            </div>
-          ) : null}
-
-          <div className="space-y-2 border-t border-border/60 pt-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("steps.services.summary.listHeading", { defaultValue: "Currently included" })}
+      <div className="space-y-4 rounded-2xl border border-border/70 bg-white/80 p-5 shadow-sm backdrop-blur">
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1">
+            <h3 className="text-sm font-semibold text-slate-900">
+              {t("steps.services.custom.managerTitle", { defaultValue: "Custom services" })}
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              {t("steps.services.custom.managerDescription", {
+                defaultValue: "Add one-off services that aren’t part of your catalog yet.",
+              })}
             </p>
-            <div className="flex flex-wrap gap-2">
-              {totalSelected === 0 ? (
-                <Badge variant="outline" className="rounded-full text-xs text-muted-foreground">
-                  {t("steps.services.summary.empty")}
-                </Badge>
-              ) : (
-                <>
-                  {existingItems.map((item) => {
-                    const service = item.serviceId ? serviceMap.get(item.serviceId) : null;
-                    const name = service?.name ?? item.name;
-                    const quantityValue = Math.max(1, item.quantity ?? 1);
-                    return (
-                      <Badge key={`existing-${item.id}`} variant="outline" className="rounded-full text-xs">
-                        {name} × {quantityValue}
-                      </Badge>
-                    );
-                  })}
-                  {customItems.map((item) => (
-                    <Badge key={`custom-${item.id}`} variant="secondary" className="rounded-full text-xs">
-                      {item.name} × {Math.max(1, item.quantity ?? 1)}
-                    </Badge>
-                  ))}
-                </>
-              )}
-            </div>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleQuickAdd}
+            className="h-8 rounded-full px-3 text-xs"
+          >
+            {state.services.showQuickAdd
+              ? t("steps.services.custom.cancel")
+              : t("steps.services.custom.toggle")}
+          </Button>
         </div>
 
-        <div className="space-y-4 rounded-2xl border border-border/70 bg-white/80 p-5 shadow-sm backdrop-blur">
-          <div className="flex items-start justify-between gap-3">
-            <div className="space-y-1">
-              <h3 className="text-sm font-semibold text-slate-900">
-                {t("steps.services.custom.managerTitle", { defaultValue: "Custom services" })}
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                {t("steps.services.custom.managerDescription", {
-                  defaultValue: "Add ad-hoc services that aren’t part of your catalog yet.",
-                })}
-              </p>
+        {state.services.showQuickAdd && (
+          <div className="space-y-3 rounded-xl border border-dashed border-emerald-200 bg-emerald-50/40 p-4">
+            <h4 className="text-sm font-semibold text-slate-900">
+              {t("steps.services.custom.title")}
+            </h4>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="sm:col-span-3">
+                <Label htmlFor="custom-name">{t("steps.services.custom.nameLabel")}</Label>
+                <Input
+                  id="custom-name"
+                  value={customName}
+                  onChange={(event) => setCustomName(event.target.value)}
+                  placeholder={t("steps.services.custom.namePlaceholder")}
+                />
+              </div>
+              <div>
+                <Label htmlFor="custom-cost">{t("steps.services.custom.costLabel")}</Label>
+                <Input
+                  id="custom-cost"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={customCost}
+                  onChange={(event) => setCustomCost(event.target.value)}
+                  placeholder={t("steps.services.custom.costPlaceholder")}
+                />
+              </div>
+              <div>
+                <Label htmlFor="custom-price">{t("steps.services.custom.priceLabel")}</Label>
+                <Input
+                  id="custom-price"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={customPrice}
+                  onChange={(event) => setCustomPrice(event.target.value)}
+                  placeholder={t("steps.services.custom.pricePlaceholder")}
+                />
+              </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleQuickAdd}
-              className="h-8 rounded-full px-3 text-xs"
-            >
-              {state.services.showQuickAdd
-                ? t("steps.services.custom.cancel")
-                : t("steps.services.custom.toggle")}
-            </Button>
+            {customError ? <p className="text-xs text-destructive">{customError}</p> : null}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" onClick={handleAddCustomService}>
+                {t("steps.services.custom.add")}
+              </Button>
+              <Button size="sm" variant="outline" onClick={toggleQuickAdd}>
+                {t("steps.services.custom.cancel")}
+              </Button>
+            </div>
           </div>
+        )}
 
-          {state.services.showQuickAdd && (
-            <div className="space-y-3 rounded-xl border border-dashed border-emerald-200 bg-emerald-50/40 p-4">
-              <h4 className="text-sm font-semibold text-slate-900">
-                {t("steps.services.custom.title")}
-              </h4>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="sm:col-span-3">
-                  <Label htmlFor="custom-name">{t("steps.services.custom.nameLabel")}</Label>
-                  <Input
-                    id="custom-name"
-                    value={customName}
-                    onChange={(event) => setCustomName(event.target.value)}
-                    placeholder={t("steps.services.custom.namePlaceholder")}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="custom-cost">{t("steps.services.custom.costLabel")}</Label>
-                  <Input
-                    id="custom-cost"
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={customCost}
-                    onChange={(event) => setCustomCost(event.target.value)}
-                    placeholder={t("steps.services.custom.costPlaceholder")}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="custom-price">{t("steps.services.custom.priceLabel")}</Label>
-                  <Input
-                    id="custom-price"
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={customPrice}
-                    onChange={(event) => setCustomPrice(event.target.value)}
-                    placeholder={t("steps.services.custom.pricePlaceholder")}
-                  />
-                </div>
-              </div>
-              {customError ? (
-                <p className="text-xs text-destructive">{customError}</p>
-              ) : null}
-              <div className="flex flex-wrap items-center gap-2">
-                <Button size="sm" onClick={handleAddCustomService}>
-                  {t("steps.services.custom.add")}
-                </Button>
-                <Button size="sm" variant="ghost" onClick={toggleQuickAdd}>
-                  {t("steps.services.custom.cancel")}
-                </Button>
-              </div>
-            </div>
-          )}
+        {customItems.length > 0 ? (
+          <div className="space-y-3">
+            {customItems.map((item) => {
+              const quantityValue = Math.max(1, item.quantity ?? 1);
+              const showInlineDelete = quantityValue === 1;
 
-          {customItems.length > 0 ? (
-            <div className="space-y-3">
-              {customItems.map((item) => {
-                const quantityValue = item.quantity ?? 1;
-                const showInlineDelete = quantityValue <= 1;
-
-                return (
-                  <div key={item.id} className="rounded-lg border bg-muted/10 p-4">
+              return (
+                <div key={item.id} className="rounded-lg border bg-muted/10 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+                    <div className="flex-1 space-y-2">
+                      <Label htmlFor={`custom-name-${item.id}`} className="text-xs text-muted-foreground">
+                        {t("steps.services.custom.nameLabel")}
+                      </Label>
+                      <Input
+                        id={`custom-name-${item.id}`}
+                        value={item.name}
+                        onChange={(event) => updateItem(item.id, { name: event.target.value })}
+                        className="h-10 w-full"
+                      />
+                    </div>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
-                      <div className="flex-1 space-y-2">
-                        <Label htmlFor={`custom-name-${item.id}`} className="text-xs text-muted-foreground">
-                          {t("steps.services.custom.nameLabel")}
+                      <div className="space-y-2 sm:w-40 sm:flex-none">
+                        <Label htmlFor={`custom-cost-${item.id}`} className="text-xs text-muted-foreground">
+                          {t("steps.services.list.unitCost")}
                         </Label>
                         <Input
-                          id={`custom-name-${item.id}`}
-                          value={item.name}
-                          onChange={(event) => updateItem(item.id, { name: event.target.value })}
-                          className="h-10 w-full"
+                          id={`custom-cost-${item.id}`}
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={item.unitCost ?? ""}
+                          onChange={(event) =>
+                            updateItem(item.id, {
+                              unitCost: event.target.value === "" ? null : Number(event.target.value),
+                            })
+                          }
+                          className="h-10 w-full sm:w-40"
                         />
                       </div>
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
-                        <div className="space-y-2 sm:w-40 sm:flex-none">
-                          <Label htmlFor={`custom-cost-${item.id}`} className="text-xs text-muted-foreground">
-                            {t("steps.services.list.unitCost")}
-                          </Label>
-                          <Input
-                            id={`custom-cost-${item.id}`}
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            value={item.unitCost ?? ""}
-                            onChange={(event) =>
-                              updateItem(item.id, {
-                                unitCost: event.target.value === "" ? null : Number(event.target.value),
-                              })
-                            }
-                            className="h-10 w-full sm:w-40"
-                          />
-                        </div>
-                        <div className="space-y-2 sm:w-40 sm:flex-none">
-                          <Label htmlFor={`custom-price-${item.id}`} className="text-xs text-muted-foreground">
-                            {t("steps.services.list.unitPrice")}
-                          </Label>
-                          <Input
-                            id={`custom-price-${item.id}`}
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            value={item.unitPrice ?? ""}
-                            onChange={(event) =>
-                              updateItem(item.id, {
-                                unitPrice: event.target.value === "" ? null : Number(event.target.value),
-                              })
-                            }
-                            className="h-10 w-full sm:w-40"
-                          />
-                        </div>
+                      <div className="space-y-2 sm:w-40 sm:flex-none">
+                        <Label htmlFor={`custom-price-${item.id}`} className="text-xs text-muted-foreground">
+                          {t("steps.services.list.unitPrice")}
+                        </Label>
+                        <Input
+                          id={`custom-price-${item.id}`}
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={item.unitPrice ?? ""}
+                          onChange={(event) =>
+                            updateItem(item.id, {
+                              unitPrice: event.target.value === "" ? null : Number(event.target.value),
+                            })
+                          }
+                          className="h-10 w-full sm:w-40"
+                        />
                       </div>
                     </div>
+                  </div>
 
-                    <div className="mt-4 flex flex-wrap items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium uppercase text-muted-foreground">
-                          {t("steps.services.list.quantity")}
-                        </span>
-                        <div className="flex items-center gap-1 rounded-full border px-1 py-1">
-                          {showInlineDelete ? (
-                            <IconActionButton
-                              onClick={() => removeItem(item.id)}
-                              aria-label={t("steps.services.list.remove")}
-                              variant="danger"
-                              className="h-8 w-8"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </IconActionButton>
-                          ) : (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              onClick={() => adjustQuantity(item.id, -1)}
-                              aria-label={t("common:actions.decrease", { defaultValue: "Decrease" })}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Input
-                            id={`custom-quantity-${item.id}`}
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            value={String(quantityValue)}
-                            onChange={(event) => handleQuantityChange(item.id, event.target.value)}
-                            className="h-8 w-14 border-0 bg-transparent text-center text-sm font-medium focus-visible:ring-0"
-                          />
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium uppercase text-muted-foreground">
+                        {t("steps.services.list.quantity")}
+                      </span>
+                      <div className="flex items-center gap-1 rounded-full border px-1 py-1">
+                        {showInlineDelete ? (
+                          <IconActionButton
+                            onClick={() => removeItem(item.id)}
+                            aria-label={t("steps.services.list.remove")}
+                            variant="danger"
+                            className="h-8 w-8"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </IconActionButton>
+                        ) : (
                           <Button
                             type="button"
                             variant="ghost"
                             className="h-8 w-8 p-0"
-                            onClick={() => adjustQuantity(item.id, 1)}
-                            aria-label={t("common:actions.increase", { defaultValue: "Increase" })}
+                            onClick={() => adjustQuantity(item.id, -1)}
+                            aria-label={t("common:actions.decrease", { defaultValue: "Decrease" })}
                           >
-                            <Plus className="h-4 w-4" />
+                            <Minus className="h-4 w-4" />
                           </Button>
-                        </div>
-                      </div>
-
-                      {!showInlineDelete ? (
-                        <IconActionButton
-                          onClick={() => removeItem(item.id)}
-                          aria-label={t("steps.services.list.remove")}
-                          variant="danger"
-                          className="h-8 w-8"
+                        )}
+                        <Input
+                          id={`custom-quantity-${item.id}`}
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={String(quantityValue)}
+                          onChange={(event) => handleQuantityChange(item.id, event.target.value)}
+                          className="h-8 w-14 border-0 bg-transparent text-center text-sm font-medium focus-visible:ring-0"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="h-8 w-8 p-0"
+                          onClick={() => adjustQuantity(item.id, 1)}
+                          aria-label={t("common:actions.increase", { defaultValue: "Increase" })}
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </IconActionButton>
-                      ) : null}
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
+
+                    {!showInlineDelete ? (
+                      <IconActionButton
+                        onClick={() => removeItem(item.id)}
+                        aria-label={t("steps.services.list.remove")}
+                        variant="danger"
+                        className="h-8 w-8"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </IconActionButton>
+                    ) : null}
                   </div>
-                );
-              })}
+                </div>
+              );
+            })}
+          </div>
+        ) : !state.services.showQuickAdd ? (
+          <p className="text-sm text-muted-foreground">
+            {t("steps.services.custom.emptyState", { defaultValue: "No custom services yet." })}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="space-y-4 rounded-2xl border border-border/70 bg-white/80 p-5 shadow-sm backdrop-blur">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-sm font-semibold text-slate-900">
+              {t("steps.services.summary.title")}
+            </h3>
+            <Badge variant="secondary" className="rounded-full text-xs font-medium transition-colors duration-200">
+              {t("steps.services.summary.selectedCount", { count: totalSelected })}
+            </Badge>
+          </div>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">{t("steps.services.summary.cost")}</span>
+              <span className="font-medium text-slate-900">{formatCurrency(totals.cost)}</span>
             </div>
-          ) : !state.services.showQuickAdd ? (
-            <p className="text-sm text-muted-foreground">
-              {t("steps.services.custom.emptyState", { defaultValue: "No custom services yet." })}
-            </p>
-          ) : null}
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">{t("steps.services.summary.price")}</span>
+              <span className="font-medium text-slate-900">{formatCurrency(totals.price)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">{t("steps.services.summary.margin")}</span>
+              <span className={cn("font-medium transition-colors duration-200", margin >= 0 ? "text-emerald-600" : "text-destructive")}>
+                {formatCurrency(margin)}
+              </span>
+            </div>
+          </div>
         </div>
+
+        {summaryTypeRows.length > 0 ? (
+          <div className="space-y-1.5 border-t border-border/60 pt-3 text-xs">
+            <p className="font-medium uppercase tracking-wide text-muted-foreground">
+              {t("steps.services.summary.typeBreakdown", { defaultValue: "By service type" })}
+            </p>
+            {summaryTypeRows.map((row) => (
+              <div
+                key={row.key}
+                className="flex items-center justify-between text-slate-900 transition-colors duration-200"
+              >
+                <span className="text-muted-foreground">{row.label}</span>
+                <span className="font-semibold">{row.count}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="space-y-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {t("steps.services.summary.listHeading", { defaultValue: "Selected services" })}
+        </p>
+        <ServicesTableCard
+          rows={summaryTableRows}
+          totals={{ cost: totals.cost, price: totals.price, margin }}
+          labels={serviceTableLabels}
+          emptyMessage={t("steps.services.summary.empty")}
+          formatCurrency={formatCurrency}
+          className="bg-white/80 backdrop-blur"
+        />
       </div>
     </div>
   );

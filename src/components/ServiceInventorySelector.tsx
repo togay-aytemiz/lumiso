@@ -1,9 +1,12 @@
-import { useMemo } from "react";
-import { LucideIcon, FolderOpen, Layers, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { LucideIcon, FolderOpen, Layers, Trash2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IconActionButton } from "@/components/ui/icon-action-button";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { Input } from "@/components/ui/input";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
 export type ServiceInventoryType = "coverage" | "deliverable" | "unknown";
@@ -41,7 +44,7 @@ export interface ServiceInventoryLabels {
   uncategorized: string;
   inactive: string;
   empty: string;
-  selectedPill: (quantity: number) => string;
+  quantity: string;
   retry?: string;
 }
 
@@ -52,6 +55,7 @@ interface ServiceInventorySelectorProps {
   onAdd(serviceId: string): void;
   onIncrease(serviceId: string): void;
   onDecrease(serviceId: string): void;
+  onSetQuantity(serviceId: string, quantity: number): void;
   onRemove(serviceId: string): void;
   isLoading?: boolean;
   error?: string | null;
@@ -80,6 +84,7 @@ export function ServiceInventorySelector({
   onAdd,
   onIncrease,
   onDecrease,
+  onSetQuantity,
   onRemove,
   isLoading,
   error,
@@ -111,6 +116,88 @@ export function ServiceInventorySelector({
 
     return grouped;
   }, [labels.uncategorized, services]);
+
+  const typeStats = useMemo(
+    () =>
+      typeOrder.reduce<
+        Record<ServiceInventoryType, { totalServices: number; selectedServices: number; totalQuantity: number }>
+      >((acc, type) => {
+        const categories = Object.values(groupedByType[type] ?? {});
+        const totals = categories.reduce(
+          (stats, items) => {
+            stats.totalServices += items.length;
+            items.forEach((item) => {
+              const quantity = selectedMap.get(item.id) ?? 0;
+              if (quantity > 0) {
+                stats.selectedServices += 1;
+                stats.totalQuantity += quantity;
+              }
+            });
+            return stats;
+          },
+          { totalServices: 0, selectedServices: 0, totalQuantity: 0 }
+        );
+
+        acc[type] = totals;
+        return acc;
+      }, {} as Record<ServiceInventoryType, { totalServices: number; selectedServices: number; totalQuantity: number }>),
+    [groupedByType, selectedMap]
+  );
+
+  const availableTypes = useMemo(
+    () => typeOrder.filter((type) => typeStats[type]?.totalServices > 0),
+    [typeStats]
+  );
+
+  const [activeType, setActiveType] = useState<ServiceInventoryType>(() => availableTypes[0] ?? "coverage");
+
+  useEffect(() => {
+    if (!availableTypes.includes(activeType)) {
+      setActiveType(availableTypes[0] ?? "coverage");
+    }
+  }, [availableTypes, activeType]);
+
+  const categoryDefaultOpen = useMemo(() => {
+    const defaults: Record<string, boolean> = {};
+    typeOrder.forEach((type) => {
+      const categories = Object.keys(groupedByType[type] ?? {});
+      const shouldExpandByDefault = categories.length <= 1;
+      categories.forEach((category) => {
+        defaults[`${type}::${category}`] = shouldExpandByDefault;
+      });
+    });
+    return defaults;
+  }, [groupedByType]);
+
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+    ...categoryDefaultOpen,
+  });
+
+  useEffect(() => {
+    setExpandedCategories((previous) => {
+      const next = { ...previous };
+      let mutates = false;
+
+      Object.entries(categoryDefaultOpen).forEach(([key, defaultOpen]) => {
+        if (!(key in next)) {
+          next[key] = defaultOpen;
+          mutates = true;
+        } else if (defaultOpen && !next[key]) {
+          next[key] = true;
+          mutates = true;
+        }
+      });
+
+      Object.keys(next).forEach((key) => {
+        if (!(key in categoryDefaultOpen)) {
+          delete next[key];
+          mutates = true;
+        }
+      });
+
+      return mutates ? next : previous;
+    });
+  }, [categoryDefaultOpen]);
 
   const hasServices = services.length > 0;
 
@@ -155,184 +242,213 @@ export function ServiceInventorySelector({
     );
   }
 
+  const resolvedType = availableTypes.includes(activeType) ? activeType : availableTypes[0] ?? "coverage";
+  const activeMeta = labels.typeMeta[resolvedType];
+  const activeCategories = Object.entries(groupedByType[resolvedType] ?? {});
+  const activeStats = typeStats[resolvedType] ?? { totalServices: 0, selectedServices: 0, totalQuantity: 0 };
+  const ActiveIcon = activeMeta?.icon ?? (resolvedType === "coverage" ? Layers : FolderOpen);
+
   return (
     <div className="space-y-5">
-      {typeOrder.map((type) => {
-        const categories = groupedByType[type];
-        const categoryEntries = Object.entries(categories);
-        if (categoryEntries.length === 0) {
-          return null;
-        }
+      {availableTypes.length > 1 ? (
+        <SegmentedControl
+          value={resolvedType}
+          onValueChange={(next) => setActiveType(next as ServiceInventoryType)}
+          options={availableTypes.map((type) => {
+            const meta = labels.typeMeta[type];
+            const stats = typeStats[type] ?? { totalServices: 0, selectedServices: 0 };
+            return {
+              label: `${meta?.title ?? type} (${stats.selectedServices}/${stats.totalServices})`,
+              value: type,
+            };
+          })}
+        />
+      ) : null}
 
-        const meta = labels.typeMeta[type];
-        const IconComponent = meta?.icon ?? (type === "coverage" ? Layers : FolderOpen);
-        const totalCount = categoryEntries.reduce((acc, [, items]) => acc + items.length, 0);
-        const selectedCount = categoryEntries.reduce(
-          (acc, [, items]) => acc + items.filter((item) => selectedMap.has(item.id)).length,
-          0
-        );
+      <section
+        className={cn(
+          "space-y-4 rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur",
+          activeMeta?.borderClassName ?? "border-border/60"
+        )}
+      >
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <span
+              className={cn(
+                "flex h-11 w-11 items-center justify-center rounded-full",
+                activeMeta?.iconBackgroundClassName ?? "bg-emerald-50",
+                activeMeta?.iconClassName ?? "text-emerald-600"
+              )}
+            >
+              <ActiveIcon className="h-5 w-5" aria-hidden />
+            </span>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">{activeMeta?.title}</h3>
+              {activeMeta?.subtitle ? (
+                <p className="text-xs text-muted-foreground">{activeMeta.subtitle}</p>
+              ) : null}
+            </div>
+          </div>
+          <Badge variant="secondary" className="self-start rounded-full text-xs font-medium">
+            {activeStats.selectedServices}/{activeStats.totalServices}
+          </Badge>
+        </header>
 
-        return (
-          <section
-            key={type}
-            className={cn(
-              "space-y-4 rounded-2xl border bg-white/70 p-5 shadow-sm backdrop-blur",
-              meta?.borderClassName ?? "border-border/60"
-            )}
-          >
-            <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <span
-                  className={cn(
-                    "flex h-11 w-11 items-center justify-center rounded-full",
-                    meta?.iconBackgroundClassName ?? "bg-emerald-50",
-                    meta?.iconClassName ?? "text-emerald-600"
-                  )}
-                >
-                  <IconComponent className="h-5 w-5" aria-hidden />
-                </span>
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-900">{meta?.title}</h3>
-                  {meta?.subtitle ? (
-                    <p className="text-xs text-muted-foreground">{meta.subtitle}</p>
-                  ) : null}
-                </div>
-              </div>
-              <Badge variant="secondary" className="self-start rounded-full text-xs font-medium">
-                {selectedCount}/{totalCount}
-              </Badge>
-            </header>
+        <div className="space-y-4">
+          {activeCategories.map(([category, items]) => {
+            const categoryKey = `${resolvedType}::${category}`;
+            const isExpanded = expandedCategories[categoryKey] ?? categoryDefaultOpen[categoryKey] ?? false;
+            const categorySelected = items.filter((item) => (selectedMap.get(item.id) ?? 0) > 0).length;
+            const categoryQuantity = items.reduce((total, item) => total + (selectedMap.get(item.id) ?? 0), 0);
+            const CategoryIcon = FolderOpen;
 
-            <div className="space-y-4">
-              {categoryEntries.map(([category, items]) => {
-                const categorySelected = items.filter((item) => selectedMap.has(item.id)).length;
-                const CategoryIcon = FolderOpen;
-
-                return (
-                  <div
-                    key={`${type}-${category}`}
-                    className="overflow-hidden rounded-xl border border-border/50 bg-muted/20"
+            return (
+              <Collapsible
+                key={categoryKey}
+                open={isExpanded}
+                onOpenChange={(nextOpen) =>
+                  setExpandedCategories((previous) => ({ ...previous, [categoryKey]: nextOpen }))
+                }
+                className="overflow-hidden rounded-xl border border-border/50 bg-muted/20 transition-shadow duration-200"
+              >
+                <CollapsibleTrigger asChild>
+                  <button
+                    type="button"
+                    className="group flex w-full items-center justify-between border-b border-border/60 bg-muted/30 px-4 py-3 text-left transition-colors duration-200 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                   >
-                    <div className="flex items-center justify-between border-b border-border/60 bg-muted/30 px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-muted-foreground">
-                          <CategoryIcon className="h-4 w-4" aria-hidden />
-                        </span>
-                        <div>
-                          <p className="text-sm font-medium text-slate-900">{category}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {categorySelected}/{items.length}
-                          </p>
-                        </div>
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                        <CategoryIcon className="h-4 w-4" aria-hidden />
+                      </span>
+                      <div className="flex flex-col">
+                        <p className="text-sm font-medium text-slate-900">{category}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {labels.quantity}: {categoryQuantity}
+                        </p>
                       </div>
                     </div>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-white/80 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 shadow-sm">
+                        {categorySelected}/{items.length}
+                      </span>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                    </div>
+                  </button>
+                </CollapsibleTrigger>
 
-                    <div className="divide-y divide-border/40">
-                      {items.map((service) => {
-                        const quantity = selectedMap.get(service.id) ?? 0;
-                        const isSelected = quantity > 0;
-                        const unitCostLabel = formatCurrency(service.unitCost ?? 0);
-                        const unitPriceLabel = formatCurrency(service.unitPrice ?? 0);
+                <CollapsibleContent className="grid grid-rows-[0fr] transition-[grid-template-rows,opacity] duration-250 ease-out data-[state=open]:grid-rows-[1fr] data-[state=closed]:opacity-0 data-[state=open]:opacity-100">
+                  <div className="divide-y divide-border/40 overflow-hidden">
+                    {items.map((service) => {
+                      const quantity = selectedMap.get(service.id) ?? 0;
+                      const isSelected = quantity > 0;
+                      const unitCostLabel = formatCurrency(service.unitCost ?? 0);
+                      const unitPriceLabel = formatCurrency(service.unitPrice ?? 0);
 
-                        return (
-                          <div
-                            key={service.id}
-                            className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
-                          >
-                            <div className="space-y-1.5">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <p className="text-sm font-medium text-slate-900">{service.name}</p>
-                                {isSelected ? (
-                                  <Badge variant="outline" className="rounded-full text-[11px]">
-                                    {labels.selectedPill(quantity)}
-                                  </Badge>
-                                ) : null}
-                                {service.isActive === false && (
-                                  <Badge
-                                    variant="outline"
-                                    className="rounded-full border-amber-200 bg-amber-50 text-[11px] text-amber-700"
-                                  >
-                                    {labels.inactive}
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                                <span>
-                                  {labels.unitCost}: {unitCostLabel}
-                                </span>
-                                <span>
-                                  {labels.unitPrice}: {unitPriceLabel}
-                                </span>
-                                {service.vendorName ? (
-                                  <span>
-                                    {labels.vendor}: {service.vendorName}
-                                  </span>
-                                ) : null}
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              {isSelected ? (
-                                <>
-                                  <div className="flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-1 py-1 shadow-inner">
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => onDecrease(service.id)}
-                                      aria-label={labels.decrease}
-                                      className="h-7 w-7"
-                                    >
-                                      –
-                                    </Button>
-                                    <span className="w-8 text-center text-sm font-semibold text-slate-900">
-                                      {quantity}
-                                    </span>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => onIncrease(service.id)}
-                                      aria-label={labels.increase}
-                                      className="h-7 w-7"
-                                    >
-                                      +
-                                    </Button>
-                                  </div>
-                                  <IconActionButton
-                                    onClick={() => onRemove(service.id)}
-                                    aria-label={labels.remove}
-                                    variant="danger"
-                                    className="h-8 w-8"
-                                  >
-                                    <Trash2 className="h-4 w-4" aria-hidden />
-                                  </IconActionButton>
-                                </>
-                              ) : (
-                                <Button
-                                  type="button"
+                      return (
+                        <div
+                          key={service.id}
+                          className="flex flex-col gap-4 px-4 py-4 transition-colors duration-200 sm:flex-row sm:items-center sm:justify-between data-[selected=true]:bg-emerald-50/40"
+                          data-selected={isSelected}
+                        >
+                          <div className="space-y-1.5">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-sm font-medium text-slate-900">{service.name}</p>
+                              {service.isActive === false && (
+                                <Badge
                                   variant="outline"
-                                  size="sm"
-                                  disabled={service.isActive === false}
-                                  onClick={() => onAdd(service.id)}
-                                  aria-label={labels.add}
-                                  className="h-8 rounded-full px-3 text-xs"
+                                  className="rounded-full border-amber-200 bg-amber-50 text-[11px] text-amber-700"
                                 >
-                                  {labels.add}
-                                </Button>
+                                  {labels.inactive}
+                                </Badge>
                               )}
                             </div>
+                            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                              <span>
+                                {labels.unitCost}: {unitCostLabel}
+                              </span>
+                              <span>
+                                {labels.unitPrice}: {unitPriceLabel}
+                              </span>
+                              {service.vendorName ? (
+                                <span>
+                                  {labels.vendor}: {service.vendorName}
+                                </span>
+                              ) : null}
+                            </div>
                           </div>
-                        );
-                      })}
-                    </div>
+
+                          <div className="flex items-center gap-2">
+                            {isSelected ? (
+                              <>
+                                <div className="flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-1 py-1 shadow-inner transition-colors duration-200">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => onDecrease(service.id)}
+                                    aria-label={labels.decrease}
+                                    className="h-7 w-7 transition-colors duration-200"
+                                    disabled={quantity <= 1}
+                                  >
+                                    –
+                                  </Button>
+                                  <Input
+                                    aria-label={labels.quantity}
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    value={String(quantity)}
+                                    onChange={(event) => {
+                                      const numeric = event.target.value.replace(/[^0-9]/g, "");
+                                      const parsed = parseInt(numeric, 10);
+                                      const nextQuantity = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+                                      onSetQuantity(service.id, nextQuantity);
+                                    }}
+                                    className="h-7 w-12 rounded-full border-0 bg-transparent px-0 text-center text-sm font-semibold text-slate-900 focus-visible:ring-0"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => onIncrease(service.id)}
+                                    aria-label={labels.increase}
+                                    className="h-7 w-7 transition-colors duration-200"
+                                  >
+                                    +
+                                  </Button>
+                                </div>
+                                <IconActionButton
+                                  onClick={() => onRemove(service.id)}
+                                  aria-label={labels.remove}
+                                  variant="danger"
+                                  className="h-8 w-8 transition-colors duration-200"
+                                >
+                                  <Trash2 className="h-4 w-4" aria-hidden />
+                                </IconActionButton>
+                              </>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={service.isActive === false}
+                                onClick={() => onAdd(service.id)}
+                                aria-label={labels.add}
+                                className="h-8 rounded-full px-3 text-xs transition-colors duration-200"
+                              >
+                                {labels.add}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
-          </section>
-        );
-      })}
+                </CollapsibleContent>
+              </Collapsible>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

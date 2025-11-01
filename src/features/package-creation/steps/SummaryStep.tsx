@@ -1,6 +1,7 @@
 import { ReactNode, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
+import { ServicesTableCard, type ServicesTableRow } from "@/components/ServicesTableCard";
 import { cn } from "@/lib/utils";
 import { useProjectTypes } from "@/hooks/useOrganizationData";
 import { usePackageCreationSnapshot } from "../hooks/usePackageCreationSnapshot";
@@ -145,7 +146,7 @@ export const SummaryStep = () => {
     ? t("summaryView.pricing.clientTotalHelper.addOns")
     : t("summaryView.pricing.clientTotalHelper.inclusive");
 
-  const servicesRows = snapshot.services.items.map((item) => {
+  const servicesRows: ServicesTableRow[] = snapshot.services.items.map((item) => {
     const unitPrice = item.unitPrice ?? null;
     const lineTotal = unitPrice === null ? null : roundToTwo(unitPrice * item.quantity);
 
@@ -204,66 +205,32 @@ export const SummaryStep = () => {
 
       <section className="space-y-3">
         <SummaryHeading>{t("summaryView.services.title")}</SummaryHeading>
-        {servicesRows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("summaryView.services.empty")}</p>
-        ) : (
-          <div className="overflow-hidden rounded-2xl border border-border/70 bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-muted-foreground">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-semibold">{t("summaryView.services.columns.name")}</th>
-                    <th className="px-4 py-3 text-left font-semibold">{t("summaryView.services.columns.vendor")}</th>
-                    <th className="px-4 py-3 text-right font-semibold">{t("summaryView.services.columns.quantity")}</th>
-                    <th className="px-4 py-3 text-right font-semibold">{t("summaryView.services.columns.unitPrice")}</th>
-                    <th className="px-4 py-3 text-right font-semibold">{t("summaryView.services.columns.lineTotal")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {servicesRows.map((row, index) => (
-                    <tr
-                      key={row.id}
-                      className={cn(
-                        "border-t border-slate-100",
-                        index % 2 === 1 ? "bg-slate-50/40" : "bg-white"
-                      )}
-                    >
-                      <td className="px-4 py-3 align-top">
-                        <div className="font-medium text-slate-900">{row.name}</div>
-                        {row.isCustom ? (
-                          <div className="text-xs text-muted-foreground">
-                            {t("summaryView.services.customTag")}
-                          </div>
-                        ) : null}
-                      </td>
-                      <td className="px-4 py-3 align-top text-sm text-muted-foreground">
-                        {row.vendor ?? t("summaryView.services.customVendorFallback")}
-                      </td>
-                      <td className="px-4 py-3 align-top text-right font-medium text-slate-900">
-                        {row.quantity}
-                      </td>
-                      <td className="px-4 py-3 align-top text-right text-sm text-slate-700">
-                        {row.unitPrice === null ? "—" : formatCurrency(row.unitPrice)}
-                      </td>
-                      <td className="px-4 py-3 align-top text-right font-semibold text-slate-900">
-                        {row.lineTotal === null ? "—" : formatCurrency(row.lineTotal)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="grid gap-3 border-t border-slate-100 bg-slate-50/80 p-4 text-sm sm:grid-cols-3">
-              <SummaryMetric label={t("summaryView.services.totals.cost")} value={formatCurrency(snapshot.services.totals.cost)} />
-              <SummaryMetric label={t("summaryView.services.totals.price")} value={formatCurrency(snapshot.services.totals.price)} />
-              <SummaryMetric
-                label={t("summaryView.services.totals.margin")}
-                value={formatCurrency(snapshot.pricing.servicesMargin)}
-                tone={snapshot.pricing.servicesMargin >= 0 ? "positive" : "negative"}
-              />
-            </div>
-          </div>
-        )}
+        <ServicesTableCard
+          rows={servicesRows}
+          totals={{
+            cost: snapshot.services.totals.cost,
+            price: snapshot.services.totals.price,
+            margin: snapshot.pricing.servicesMargin,
+          }}
+          labels={{
+            columns: {
+              name: t("summaryView.services.columns.name"),
+              vendor: t("summaryView.services.columns.vendor"),
+              quantity: t("summaryView.services.columns.quantity"),
+              unitPrice: t("summaryView.services.columns.unitPrice"),
+              lineTotal: t("summaryView.services.columns.lineTotal"),
+            },
+            totals: {
+              cost: t("summaryView.services.totals.cost"),
+              price: t("summaryView.services.totals.price"),
+              margin: t("summaryView.services.totals.margin"),
+            },
+            customTag: t("summaryView.services.customTag"),
+            customVendorFallback: t("summaryView.services.customVendorFallback"),
+          }}
+          emptyMessage={t("summaryView.services.empty")}
+          formatCurrency={(value) => formatCurrency(value)}
+        />
       </section>
 
       <section className="space-y-3">
@@ -360,30 +327,6 @@ const SummaryCard = ({
     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
     <div className="mt-2 text-sm font-semibold text-slate-900">{primary}</div>
     {helper ? <div className="mt-1 text-xs text-muted-foreground">{helper}</div> : null}
-  </div>
-);
-
-const SummaryMetric = ({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: ReactNode;
-  tone?: "positive" | "negative";
-}) => (
-  <div>
-    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-    <p
-      className={cn(
-        "mt-1 text-sm font-semibold",
-        tone === "positive" && "text-emerald-600",
-        tone === "negative" && "text-rose-600",
-        !tone && "text-slate-900"
-      )}
-    >
-      {value}
-    </p>
   </div>
 );
 

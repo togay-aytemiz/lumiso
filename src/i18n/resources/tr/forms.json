@@ -1308,6 +1308,7 @@
     "service_type_deliverable": "Ürünler & teslimatlar",
     "service_type_coverage_hint": "İkinci fotoğrafçı, videograf veya asistan gibi sahada personele ihtiyaç duyan hizmetler.",
     "service_type_deliverable_hint": "Albüm, baskı seti, dijital teslimat gibi ürünleri ekleyin.",
+    "service_type_hint": "Önce hizmet tipini seçin, kategoriler ona göre güncellensin.",
     "vendor_label": "Tedarikçi",
     "vendor_placeholder": "örn., Albüm baskı evi, çerçeve atölyesi, canvas üreticisi",
     "visibility_label": "Aktif",
@@ -1325,6 +1326,7 @@
     "new_category": "Yeni kategori oluştur: ",
     "errors": {
       "name_required": "Hizmet adı zorunludur",
+      "category_required": "Kategori zorunludur",
       "delete_failed": "Hizmet silinirken hata oluştu"
     },
     "success": {

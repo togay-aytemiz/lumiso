@@ -5,7 +5,8 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 
 ## MVP Focus & Audience
 - ⬜ **Primary user:** independent or small-studio Turkish photographers (weddings, engagements, corporate shoots) launching with minimal operational tooling.
-- ⬜ **Currency & language:** default to TRY pricing, copy localized in EN/TR; avoid multi-currency or tax widgets in MVP.
+- ⬜ **Currency & language:** default to TRY pricing, copy localized in EN/TR; keep the experience single-currency while surfacing lightweight KDV controls.
+- ⬜ **Organization defaults:** hydrate wizard state from the new organization Tax & Billing profile (legal entity, company name, default KDV mode/rate) so users see the right context without retyping.
 - ⬜ **Complexity guardrails:** keep each step lightweight, avoid deep branching or advanced automations. Anything beyond core needs should be flagged as “post-MVP”.
 - ⬜ **Common inclusions we should support out of the box:** second shooter, drone, video add-on, retouching, printed album, digital gallery delivery, USB handover.
 
@@ -19,6 +20,7 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 
 ### 1. Basics
 - ⬜ **MVP fields:** package name, short description, applicable project/session types (multi-select), visibility toggle (active/inactive).
+- ⬜ **Billing context:** read-only chips showing the organization billing identity (company name, tax office, VKN/TCKN) with quick link back to settings if missing.
 - ⬜ **Deferred (post-MVP):** marketing tags, color coding, internal notes.
 - ⬜ **UX:** reuse `FormFieldCard` styling from project wizard details step; include validation states + inline hints. Keep form to a single column on mobile.
 - ⬜ **Data:** initial reducer slice `basics` with `name`, `description`, `applicableTypeIds`, `isActive`. `status`/tags stay bool/array ready for later.
@@ -27,9 +29,9 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 - ⬜ **Service selection:** embed a searchable list of existing services (reuse service picker from `PackagesStep` in project wizard). Quantity control via `StepperInput` or plus/minus buttons.
 - ⬜ **Quick add custom (MVP):** minimal inline form (name + selling price, optional cost) to capture ad-hoc items without leaving the flow. Default vendor blank. Later we can add “Save to catalog” toggle.
 - ⬜ **Summary panel:** show running totals (cost, selling, margin) in TRY. Keep visuals simple (two stat chips) for MVP.
-- ⬜ **Out of scope for MVP:** tiered pricing per service, time-based scheduling, automatic tax calculations.
+- ⬜ **Out of scope for MVP:** tiered pricing per service, time-based scheduling, automatic tax calculations beyond flat KDV percentages.
 - ⬜ **Units:** provide a unit selector (session, hour, day, item) seeded from the service catalog. Default to the service’s recommended unit so downstream flows know how to price overrides.
-- ⬜ **State:** slice `lineItems` with `type` (`existing`/`custom`), `serviceId`, `name`, `unit`, `quantity`, `unitCost`, `unitPrice`.
+- ⬜ **State:** slice `lineItems` with `type` (`existing`/`custom`), `serviceId`, `name`, `unit`, `quantity`, `unitCost`, `unitPrice`, `vatMode`, `vatRate`.
 
 ### 3. Delivery
 - ⬜ **Fields:** estimated photo count (single number with optional range toggle), delivery lead time (numeric value + unit select of `days` or `weeks`), delivery methods (chip selector with seeded options: Online Gallery, USB, Album). Allow users to add a custom method inline; persistence to shared catalog can wait for post-MVP.
@@ -38,20 +40,22 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 - ⬜ **Post-MVP:** courier tracking, staged deliveries, automatic reminders.
 
 ### 4. Pricing
-- ⬜ **Fields:** package base price (manual input), auto services total (read-only), calculated subtotal (base + services), deposit configuration.
-- ⬜ **Deposit controls:** segmented control for quick percentages (5, 10, 25, 50) plus toggle for custom percent or fixed TRY amount. Keep calculations simple (no tax). Percent should apply to subtotal (base + services) — confirm with Tayte before implementation.
-- ⬜ **State:** slice `pricing` { `basePrice`, `depositMode`, `depositValue` }. Services total computed via selector from `lineItems`.
+- ⬜ **Fields:** package base price (manual input), auto services total (read-only), calculated subtotal (base + services), KDV breakdown (line-item summary + total), deposit configuration.
+- ⬜ **Defaults:** pre-fill KDV mode/rate per line item from the service record; fall back to organization defaults for new custom items and highlight when values diverge from org settings.
+- ⬜ **Deposit controls:** segmented control for quick percentages (5, 10, 25, 50) plus toggle for custom percent or fixed TRY amount. Calculations run on the client total (subtotal ± KDV depending on inclusion). Percent should apply to the KDV-inclusive client total — confirm with Tayte before implementation.
+- ⬜ **State:** slice `pricing` { `basePrice`, `depositMode`, `depositValue`, `vatTotal`, `clientTotal` }. Services total computed via selector from `lineItems`.
 - ⬜ **Post-MVP:** currency conversion, payment schedule builder, discounts.
 
 ### 5. Summary
 - ⬜ **Review:** render collapsible summary cards mirroring project wizard summary step: basics info, delivery details, line item table, pricing breakdown, validation warnings.
 - ⬜ **Confirmation:** final CTA to create package, with "Edit" links jumping back to steps.
-- ⬜ **MVP display hints:** highlight total price in TRY, show deposit due, and list deliverables/services in plain language. Avoid printable PDFs or customer-facing exports for MVP.
+- ⬜ **MVP display hints:** highlight total price in TRY, show deposit due, surface KDV summary (`KDV dahil` vs `+KDV`) per line and in totals, and list deliverables/services in plain language. Avoid printable PDFs or customer-facing exports for MVP.
 
 ## Data Flow & Persistence
 - ⬜ When submitting, create package record in `packages` table (fields: name, description, applicable types, visibility, delivery metadata, pricing).
-- ⬜ Persist base price to `packages.price`, final client-facing total to `packages.client_total`, the inclusive/exclusive flag via `packages.include_addons_in_price`, and deposit settings inside `packages.pricing_metadata` (enable flag, mode, value, target).
-- ⬜ Bulk insert line items into `package_services` / new `package_line_items` table including quick-add entries and their `unit` metadata (generate services if user opted to save to catalog).
+- ⬜ Persist base price to `packages.price`, final client-facing total to `packages.client_total`, the inclusive/exclusive flag via `packages.include_addons_in_price`, aggregate KDV to `packages.vat_total`, and deposit settings inside `packages.pricing_metadata` (enable flag, mode, value, target).
+- ⬜ Bulk insert line items into `package_services` / new `package_line_items` table including quick-add entries and their `unit` metadata (generate services if user opted to save to catalog). Persist `vatMode` + `vatRate` alongside pricing so downstream flows can reconstruct totals without recomputing.
+- ⬜ Store a `billing_snapshot` per package referencing organization fields (company name, tax office, identifiers) so invoices reflect the values used at creation even if the org updates them later.
 - ⬜ Store delivery methods in existing catalog table (mirroring session planning) with `organization_id`.
 - ⬜ Track analytics events per step using `trackEvent` (phase 2).
 
@@ -92,13 +96,14 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 - ✅ Create the Supabase migration (delivery method storage or supporting tables) at the start of this phase so UI work hooks into the new schema immediately.
 - ✅ Deliverables: all wizard steps capture MVP data, computed summary state available.
 - ✅ **Decision checkpoint:** delivery method persistence approach (reuse session table vs new field) + deposit calculation basis.
+- ✅ **Decision checkpoint:** confirm organization default KDV rate, inclusive/exclusive default, and whether custom line items can override both fields.
 
 ### Phase 4 – Summary & Submission (week 3)
 - ✅ Compose Summary step with collapsible review cards, edit shortcuts, validation warnings.
 - ✅ Implement submission pipeline: write package record, create line items, handle custom services (package-only for MVP), store delivery metadata.
 - ✅ Add analytics events + success toast, closing behaviour.
 - ✅ Deliverables: package creation end-to-end works in dev, error handling + loading states covered.
-- ✅ **Decision checkpoint:** confirm no KDV/tax requirements before finalizing submission payload.
+- ✅ **Decision checkpoint:** validate KDV math (inclusive vs exclusive) against manual spreadsheet scenarios before release toggle.
 
 ### Phase 5 – Polish & QA (week 3+)
 - ✅ Localization (EN/TR), accessibility pass, responsive tweaks.
@@ -108,8 +113,8 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 - ✅ Deliverables: production-ready wizard ready for enablement once content validated.
 
 ### Phase 6 – Project Wizard Package Selection Enhancements (week 4)
-- ⬜ Refresh the package selection step inside project creation to surface package cards, key inclusions, TRY totals (base + services), and deposit preview.
-- ⬜ Allow photographers to toggle service inclusion per package, adjust quantities/units, and override prices inline without leaving the project flow. Persist overrides as project-scoped line items.
+- ⬜ Refresh the package selection step inside project creation to surface package cards, key inclusions, TRY totals (base + services), KDV breakdown, and deposit preview.
+- ⬜ Allow photographers to toggle service inclusion per package, adjust quantities/units, override prices, and edit KDV mode/rate inline without leaving the project flow. Persist overrides as project-scoped line items.
 - ⬜ Add unit selector mirroring package wizard options so adjustments remain consistent. Default to package units and highlight any overrides before submission.
 - ⬜ Deliverables: project wizard reflects updated pricing summary, supports per-project overrides, and keeps the review step accurate.
 - ⬜ **MVP rule:** always keep overrides scoped to the project; log a future enhancement to push changes back into the base package if we support multi-photographer teams later.
@@ -117,7 +122,7 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 ### Phase 7 – Project Details Editing Entry Points (week 4-5)
 - ⬜ Replace the standalone services section on the project details sheet with a summarized package block (name, totals, key deliverables) plus an “Edit package” action.
 - ⬜ Launch the package wizard in edit mode from the project sheet, preloaded with the project’s current selections and overrides. Ensure save cancels gracefully and writes back to project records.
-- ⬜ Surface change tracking (e.g., price deltas, removed services) so photographers understand impact before confirming updates.
+- ⬜ Surface change tracking (e.g., price deltas, removed services, KDV differences) so photographers understand impact before confirming updates.
 - ⬜ Deliverables: photographers can review package context inside the project and re-run the wizard to make adjustments without duplicated UIs.
 - ⬜ **MVP rule:** if the base package template changes later, keep project overrides as-is; future roadmap item is to offer a bulk sync flow listing affected projects.
 
@@ -130,9 +135,9 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 
 ## Decisions Recap
 - ✅ **Ad-hoc services:** MVP supports adding custom (package-only) services inside the wizard. We will log interest in a future “Save to catalog” toggle but keep the first release simple.
-- ✅ **Deposit toggle:** provide a control so photographers choose whether the percentage applies to the base price or the subtotal (base + services), defaulting to subtotal.
+- ✅ **Deposit toggle:** provide a control so photographers choose whether the percentage applies to the base price or the client total (base + services ± KDV), defaulting to the KDV-inclusive client total.
 - ✅ **Delivery methods:** persist methods in the database so they follow the photographer across devices. Prefer reusing the session planning table; create a lightweight `package_delivery_methods` table if reuse is not practical.
-- ✅ **Taxes (KDV):** out of scope for MVP.
+- ✅ **KDV defaults:** inherit each service's `vatMode`/`vatRate`, allow overrides per package line item, and ensure we only apply tax once per item when calculating totals.
 - ✅ **Project overrides:** keep project changes scoped to the project for MVP; note a post-MVP roadmap item to offer optional sync-back or bulk update flows.
 
 ## Automated Coverage

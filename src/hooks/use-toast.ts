@@ -139,20 +139,31 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
-function toast({ ...props }: Toast) {
+function toast({ duration, ...props }: Toast) {
   const id = genId()
+  const effectiveDuration =
+    typeof duration === "number" ? duration : 5000
+
+  let autoDismissTimer: ReturnType<typeof setTimeout> | undefined
 
   const update = (props: ToasterToast) =>
     dispatch({
       type: "UPDATE_TOAST",
       toast: { ...props, id },
     })
-  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
+  const dismiss = () => {
+    if (autoDismissTimer) {
+      clearTimeout(autoDismissTimer)
+      autoDismissTimer = undefined
+    }
+    dispatch({ type: "DISMISS_TOAST", toastId: id })
+  }
 
   dispatch({
     type: "ADD_TOAST",
     toast: {
       ...props,
+      duration: effectiveDuration,
       id,
       open: true,
       onOpenChange: (open) => {
@@ -160,6 +171,12 @@ function toast({ ...props }: Toast) {
       },
     },
   })
+
+  if (effectiveDuration !== Infinity) {
+    autoDismissTimer = setTimeout(() => {
+      dismiss()
+    }, effectiveDuration)
+  }
 
   return {
     id: id,

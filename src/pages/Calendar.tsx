@@ -579,7 +579,12 @@ export default function Calendar() {
             <SessionSheetView
               sessionId={selectedSessionId}
               isOpen={sessionSheetOpen}
-              onOpenChange={setSessionSheetOpen}
+              onOpenChange={(open) => {
+                setSessionSheetOpen(open);
+                if (!open) {
+                  refreshCalendar();
+                }
+              }}
               onViewFullDetails={() => {
                 const currentPath = `${location.pathname}${location.search}${location.hash}`;
                 navigate(`/sessions/${selectedSessionId}`, { state: { from: currentPath } });
@@ -587,6 +592,7 @@ export default function Calendar() {
               }}
               onNavigateToLead={(leadId) => navigate(`/leads/${leadId}`)}
               onNavigateToProject={(projectId) => openProjectById(projectId)}
+              onSessionUpdated={refreshCalendar}
             />
           )}
         </div>

@@ -122,7 +122,7 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
               }}
               onKeyDown={(event) => handleDayKeyDown(event, day)}
               className={`
-                min-h-16 md:min-h-24 p-1 md:p-2 bg-card hover:bg-accent/50 transition-colors relative
+                min-h-16 md:min-h-24 p-1 md:p-2 bg-card transition-colors relative
                 ${!isCurrentMonth ? "text-muted-foreground" : ""}
                 ${isMobile ? "min-h-11 cursor-pointer" : ""}
               `}

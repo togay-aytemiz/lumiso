@@ -157,6 +157,9 @@ const SessionPlanningWizardSheetInner = ({
   const successTrackedRef = useRef(false);
   const initialSessionSnapshotRef = useRef<SessionPlanningState | null>(null);
   const pendingSessionPrefillRef = useRef(false);
+  const contextResolutionRequestIdRef = useRef(0);
+  const sessionHydrationRequestIdRef = useRef(0);
+  const isMountedRef = useRef(true);
   const navigate = useNavigate();
   const needsProjectLookup = useMemo(
     () =>
@@ -175,6 +178,12 @@ const SessionPlanningWizardSheetInner = ({
   const shouldShowContextLoader =
     isOpen &&
     ((needsLeadLookup || needsProjectLookup) && !contextHydratedRef.current || isResolvingEntryContext);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!isOpen) {
@@ -265,10 +274,10 @@ const SessionPlanningWizardSheetInner = ({
       return;
     }
 
-    let cancelled = false;
+    const requestId = ++contextResolutionRequestIdRef.current;
+    setIsResolvingEntryContext(true);
 
     const resolveContext = async () => {
-      setIsResolvingEntryContext(true);
       try {
         let nextContext: SessionPlanningEntryContext = { ...entryContext };
         let leadIdForLookup = nextContext.leadId;
@@ -321,28 +330,27 @@ const SessionPlanningWizardSheetInner = ({
               : "direct";
         }
 
-        if (cancelled) return;
+        if (!isMountedRef.current || contextResolutionRequestIdRef.current !== requestId) {
+          return;
+        }
 
         skipNextSaveRef.current = true;
         loadEntryContext(nextContext);
         contextHydratedRef.current = true;
       } catch (error) {
-        if (!cancelled) {
-          console.error("Failed to resolve session planning entry context", error);
-          contextHydratedRef.current = true;
+        if (!isMountedRef.current || contextResolutionRequestIdRef.current !== requestId) {
+          return;
         }
+        console.error("Failed to resolve session planning entry context", error);
+        contextHydratedRef.current = true;
       } finally {
-        if (!cancelled) {
+        if (isMountedRef.current && contextResolutionRequestIdRef.current === requestId) {
           setIsResolvingEntryContext(false);
         }
       }
     };
 
     resolveContext();
-
-    return () => {
-      cancelled = true;
-    };
   }, [
     isOpen,
     entryContext.entrySource,
@@ -369,7 +377,7 @@ const SessionPlanningWizardSheetInner = ({
       return;
     }
 
-    let cancelled = false;
+    const requestId = ++sessionHydrationRequestIdRef.current;
     pendingSessionPrefillRef.current = true;
     setIsResolvingEntryContext(true);
 
@@ -402,7 +410,7 @@ const SessionPlanningWizardSheetInner = ({
           throw new Error("Session not found");
         }
 
-        if (cancelled) {
+        if (!isMountedRef.current || sessionHydrationRequestIdRef.current !== requestId) {
           return;
         }
 
@@ -475,18 +483,19 @@ const SessionPlanningWizardSheetInner = ({
         applyState(nextState);
         contextHydratedRef.current = true;
       } catch (error: any) {
-        if (!cancelled) {
-          console.error("Failed to load session for editing", error);
-          contextHydratedRef.current = true;
-          toast({
-            title: t("toast.sessionLoadFailedTitle"),
-            description: error?.message || t("toast.sessionLoadFailedDescription"),
-            variant: "destructive"
-          });
-          onOpenChange(false);
+        if (!isMountedRef.current || sessionHydrationRequestIdRef.current !== requestId) {
+          return;
         }
+        console.error("Failed to load session for editing", error);
+        contextHydratedRef.current = true;
+        toast({
+          title: t("toast.sessionLoadFailedTitle"),
+          description: error?.message || t("toast.sessionLoadFailedDescription"),
+          variant: "destructive"
+        });
+        onOpenChange(false);
       } finally {
-        if (!cancelled) {
+        if (isMountedRef.current && sessionHydrationRequestIdRef.current === requestId) {
           setIsResolvingEntryContext(false);
           pendingSessionPrefillRef.current = false;
         }
@@ -494,10 +503,6 @@ const SessionPlanningWizardSheetInner = ({
     };
 
     hydrateExistingSession();
-
-    return () => {
-      cancelled = true;
-    };
   }, [
     isOpen,
     isEditing,

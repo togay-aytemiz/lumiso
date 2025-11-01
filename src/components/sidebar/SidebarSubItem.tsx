@@ -26,6 +26,13 @@ export function SidebarSubItem({
   onLockedClick,
   onClick
 }: SidebarSubItemProps) {
+  const buttonClasses = cn(
+    "group/item w-full h-8 border border-transparent",
+    "data-[active=true]:bg-[linear-gradient(135deg,_hsl(var(--accent-100)),_hsl(var(--accent-300)))]",
+    "data-[active=true]:border-[hsl(var(--accent-300))]",
+    "data-[active=true]:shadow-[0_20px_36px_-28px_hsl(var(--accent-400)_/_0.85)]"
+  );
+
   const content = (
     <div
       className={cn(
@@ -48,7 +55,7 @@ export function SidebarSubItem({
         <Tooltip>
           <TooltipTrigger asChild>
             <SidebarMenuButton
-              className="group/item w-full h-8 cursor-not-allowed rounded-lg bg-[linear-gradient(135deg,_hsl(var(--accent-50)),_hsl(var(--accent-100)))] text-[hsl(var(--accent-800))]"
+              className="group/item w-full h-8 cursor-not-allowed rounded-lg border border-transparent bg-[linear-gradient(135deg,_hsl(var(--accent-50)),_hsl(var(--accent-100)))] text-[hsl(var(--accent-800))]"
             >
               {content}
             </SidebarMenuButton>
@@ -61,7 +68,7 @@ export function SidebarSubItem({
         <SidebarMenuButton
           asChild
           isActive={isActive}
-          className="group/item w-full h-8 data-[active=true]:shadow-[0_20px_36px_-28px_hsl(var(--accent-400)_/_0.85)] data-[active=true]:before:absolute data-[active=true]:before:inset-[2px] data-[active=true]:before:-z-10 data-[active=true]:before:rounded-[calc(var(--radius)-0.5rem)] data-[active=true]:before:bg-[radial-gradient(circle_at_top,_hsl(var(--accent-100)),_transparent_70%)] data-[active=true]:before:content-['']"
+          className={buttonClasses}
         >
           <NavLink to={url} className="flex items-center gap-2.5 w-full" onClick={onClick}>
             {content}

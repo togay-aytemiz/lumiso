@@ -9,6 +9,7 @@ interface Session {
   notes?: string;
   lead_id: string;
   project_id?: string | null;
+  duration_minutes?: number | null;
 }
 
 interface Activity {

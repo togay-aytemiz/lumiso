@@ -65,12 +65,25 @@ describe("CalendarWeek", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    const timeSlots = [
+      { hour: 9, minute: 0, display: "09:00" },
+      { hour: 9, minute: 30, display: "09:30" },
+      { hour: 10, minute: 0, display: "10:00" },
+      { hour: 10, minute: 30, display: "10:30" },
+      { hour: 11, minute: 0, display: "11:00" },
+    ];
     mockUseSmartTimeRange.mockReturnValue({
-      timeSlots: [
-        { hour: 9, minute: 0, display: "09:00" },
-        { hour: 10, minute: 0, display: "10:00" },
-      ],
-      getSlotIndex: jest.fn(() => 0),
+      timeSlots,
+      getSlotIndex: jest.fn((time: string) => {
+        const [hour, minute] = time.split(":").map(Number);
+        if (Number.isNaN(hour) || Number.isNaN(minute)) return 0;
+        const rolledMinute = minute < 15 ? 0 : minute < 45 ? 30 : 0;
+        const targetHour = minute >= 45 ? hour + 1 : hour;
+        const matchIndex = timeSlots.findIndex(
+          (slot) => slot.hour === targetHour && slot.minute === rolledMinute
+        );
+        return matchIndex >= 0 ? matchIndex : 0;
+      }),
     });
     mockUseOrganizationTimezone.mockReturnValue({
       formatTime: (value: string) => `org-${value}`,
@@ -173,5 +186,31 @@ describe("CalendarWeek", () => {
     const activityButton = screen.getAllByRole("button", { name: /Bob/ })[0];
     fireEvent.click(activityButton);
     expect(onActivityClick).toHaveBeenCalledWith(expect.objectContaining({ id: "activity-1" }));
+  });
+
+  it("scales session height to match its duration", () => {
+    const longSession = {
+      ...sessions[0],
+      duration_minutes: 120,
+    };
+
+    render(
+      <CalendarWeek
+        currentDate={currentDate}
+        sessions={[longSession]}
+        activities={[]}
+        showSessions
+        showReminders={false}
+        leadsMap={leadsMap}
+        projectsMap={projectsMap}
+        isMobile={false}
+        getEventsForDate={() => ({ sessions: [longSession], activities: [] })}
+        onSessionClick={jest.fn()}
+        onActivityClick={jest.fn()}
+      />
+    );
+
+    const [eventButton] = screen.getAllByRole("button", { name: /Wedding/ });
+    expect(eventButton.style.height).toBe("128px");
   });
 });

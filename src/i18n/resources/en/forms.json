@@ -1310,7 +1310,7 @@
     "service_type_coverage_hint": "Staff-driven services like second shooters, videographers or assistants.",
     "service_type_deliverable_hint": "Albums, prints, canvases, digital galleries and other deliverables.",
     "vendor_label": "Vendor",
-    "vendor_placeholder": "e.g., Local lab or partner",
+    "vendor_placeholder": "e.g., Album printer, framing studio, canvas producer",
     "visibility_label": "Active",
     "visibility_help": "When off, it becomes passive but stays in your records.",
     "default_categories_label": "Default categories",

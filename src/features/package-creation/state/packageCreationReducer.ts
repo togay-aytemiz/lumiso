@@ -76,6 +76,7 @@ const deriveInitialMeta = (
   entrySource: entryContext.entrySource,
   startStepOverride: entryContext.startStepOverride,
   initialEntryContext: Object.keys(entryContext).length ? { ...entryContext } : undefined,
+  mode: entryContext.mode ?? "create",
 });
 
 export const createInitialPackageCreationState = (

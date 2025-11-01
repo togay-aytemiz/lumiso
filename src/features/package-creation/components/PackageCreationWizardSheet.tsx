@@ -41,6 +41,7 @@ export const PackageCreationWizardSheet = ({
   const entryContext = useMemo<PackageCreationEntryContext>(() => {
     const context: PackageCreationEntryContext = {
       entrySource,
+      mode: packageId ? "edit" : "create",
     };
     const explicitOverride = startStepOverride ?? (packageId ? "summary" : undefined);
     if (explicitOverride) {
@@ -338,6 +339,7 @@ const PackageCreationWizardSheetInner = ({
         open={showGuardDialog}
         onDiscard={forceClose}
         onStay={() => setShowGuardDialog(false)}
+        stayLabel={t("wizard.guard.stay", "Continue editing")}
       />
     </>
   );

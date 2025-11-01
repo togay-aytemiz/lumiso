@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Settings } from "lucide-react";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { useTranslation } from "react-i18next";
 import {
@@ -13,10 +12,38 @@ import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useLeadFieldValues } from "@/hooks/useLeadFieldValues";
 import { createDynamicLeadSchema } from "@/lib/leadFieldValidation";
 import { supabase } from "@/integrations/supabase/client";
+import { LeadFieldDefinition } from "@/types/leadFields";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
+
+const normalizeValueForComparison = (
+  value: unknown,
+  fieldType: LeadFieldDefinition["field_type"]
+) => {
+  if (fieldType === "checkbox") {
+    return Boolean(value);
+  }
+
+  if (fieldType === "number") {
+    if (value === "" || value === null || value === undefined) {
+      return "";
+    }
+    const numeric =
+      typeof value === "number" ? value : Number(value as number | string);
+    return Number.isFinite(numeric) ? numeric : "";
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (item == null ? "" : String(item)))
+      .sort()
+      .join(",");
+  }
+
+  return value ?? "";
+};
 
 interface Lead {
   id: string;
@@ -57,65 +84,114 @@ export function EnhancedEditLeadDialog({
     defaultValues: {},
   });
 
+  const getFallbackValue = useCallback(
+    (fieldKey: string) => {
+      if (!lead) return "";
+
+      switch (fieldKey) {
+        case "name":
+          return lead.name || "";
+        case "email":
+          return lead.email || "";
+        case "phone":
+          return lead.phone || "";
+        case "notes":
+          return lead.notes || "";
+        case "status":
+          return lead.status || "";
+        default:
+          return "";
+      }
+    },
+    [lead]
+  );
+
+  const getInitialValueForField = useCallback(
+    (field: LeadFieldDefinition) => {
+      const existingValue = fieldValues.find(
+        (fv) => fv.field_key === field.field_key
+      )?.value;
+
+      if (field.field_type === "checkbox") {
+        if (existingValue != null) {
+          return existingValue === "true";
+        }
+        return false;
+      }
+
+      if (field.field_type === "number") {
+        if (existingValue != null && existingValue !== "") {
+          const parsed = Number(existingValue);
+          return Number.isFinite(parsed) ? parsed : "";
+        }
+        return "";
+      }
+
+      if (existingValue != null) {
+        return existingValue;
+      }
+
+      return getFallbackValue(field.field_key);
+    },
+    [fieldValues, getFallbackValue]
+  );
+
   const formValues = form.watch();
   
   // Track form dirty state by comparing with original values
   useEffect(() => {
-    if (!lead || valuesLoading) return;
-    
-    const hasChanges = Object.entries(formValues).some(([key, value]) => {
-      if (!key.startsWith('field_')) return false;
-      
-      const fieldKey = key.replace('field_', '');
-      const originalValue = fieldValues.find(fv => fv.field_key === fieldKey)?.value || '';
-      
-      // Handle different field types for comparison
-      const currentValue = value === null || value === undefined ? '' : String(value);
+    if (!lead || valuesLoading || fieldsLoading) return;
+
+    const hasChanges = fieldDefinitions.some((field) => {
+      const fieldName = `field_${field.field_key}`;
+
+      if (!(fieldName in formValues)) {
+        return false;
+      }
+
+      const currentValue = normalizeValueForComparison(
+        formValues[fieldName],
+        field.field_type
+      );
+      const originalValue = normalizeValueForComparison(
+        getInitialValueForField(field),
+        field.field_type
+      );
+
       return currentValue !== originalValue;
     });
-    
+
     setIsDirty(hasChanges);
-  }, [formValues, fieldValues, lead, valuesLoading]);
+  }, [
+    formValues,
+    fieldDefinitions,
+    getInitialValueForField,
+    lead,
+    valuesLoading,
+    fieldsLoading,
+  ]);
 
   // Load existing field values when dialog opens
   useEffect(() => {
     if (open && lead && !fieldsLoading && !valuesLoading) {
       const formData: Record<string, any> = {};
       
-      fieldDefinitions.forEach(field => {
+      fieldDefinitions.forEach((field) => {
         const fieldName = `field_${field.field_key}`;
-        const existingValue = fieldValues.find(fv => fv.field_key === field.field_key);
-        
-        // Get fallback value from lead object for system fields
-        const getFallbackValue = (fieldKey: string) => {
-          switch (fieldKey) {
-            case 'name': return lead.name || '';
-            case 'email': return lead.email || '';
-            case 'phone': return lead.phone || '';
-            case 'notes': return lead.notes || '';
-            case 'status': return lead.status || '';
-            default: return '';
-          }
-        };
-
-        switch (field.field_type) {
-          case 'checkbox':
-            formData[fieldName] = existingValue?.value === 'true';
-            break;
-          case 'number':
-            formData[fieldName] = existingValue?.value ? Number(existingValue.value) : '';
-            break;
-          case 'select':
-            formData[fieldName] = existingValue?.value || getFallbackValue(field.field_key);
-            break;
-          default:
-            formData[fieldName] = existingValue?.value || getFallbackValue(field.field_key);
-        }
+        formData[fieldName] = getInitialValueForField(field);
       });
       
       form.reset(formData);
     }
-  }, [open, lead, fieldsLoading, valuesLoading, fieldDefinitions, fieldValues, form]);
+  }, [
+    open,
+    lead,
+    fieldsLoading,
+    valuesLoading,
+    fieldDefinitions,
+    getInitialValueForField,
+    form,
+  ]);
 
   const onSubmit = async (data: any) => {
     if (!lead) return;

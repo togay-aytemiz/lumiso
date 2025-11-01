@@ -786,6 +786,34 @@ const SidebarMenu = React.forwardRef<
     [clearHover, setActive, setHover, unregister, unsetActive]
   )
 
+  const handleMenuPointerLeave = React.useCallback(() => {
+    if (hoverNodeRef.current) {
+      setHover(null)
+      return
+    }
+
+    if (!hoverContext) {
+      return
+    }
+
+    if (hoverContext.hoveringMenuId !== menuId) {
+      return
+    }
+
+    hoverContext.setHoveringMenuId(null)
+    if (activeNodeRef.current) {
+      scheduleIndicator(activeNodeRef.current, "active")
+    } else {
+      resetIndicator()
+    }
+  }, [
+    hoverContext,
+    menuId,
+    resetIndicator,
+    scheduleIndicator,
+    setHover,
+  ])
+
   return (
     <SidebarMenuHighlightContext.Provider value={contextValue}>
       <ul
@@ -795,12 +823,13 @@ const SidebarMenu = React.forwardRef<
           "relative flex w-full min-w-0 flex-col gap-1",
           className
         )}
+        onPointerLeave={handleMenuPointerLeave}
         {...props}
       >
         <li
           aria-hidden="true"
           data-sidebar="menu-highlight"
-          className="pointer-events-none absolute left-0 top-0 z-0 list-none border border-[hsl(var(--accent-200))] bg-[linear-gradient(135deg,_hsl(var(--accent-50)),_hsl(var(--accent-200)))] shadow-[0_18px_30px_-20px_hsl(var(--accent-400)_/_0.8)] transition-[opacity,transform,width,height] duration-300 ease-out will-change-transform data-[mode=hover]:shadow-[0_14px_24px_-18px_hsl(var(--accent-300)_/_0.7)]"
+          className="pointer-events-none absolute left-0 top-0 z-0 list-none border border-[hsl(var(--accent-200))] bg-[linear-gradient(135deg,_hsl(var(--accent-100)),_hsl(var(--accent-300)))] shadow-[0_20px_36px_-26px_hsl(var(--accent-400)_/_0.85)] transition-[opacity,transform,width,height] duration-300 ease-out will-change-transform data-[mode=hover]:border-[hsl(var(--accent-300))] data-[mode=hover]:shadow-[0_24px_40px_-24px_hsl(var(--accent-400)_/_0.92)] data-[mode=active]:border-[hsl(var(--accent-300))] data-[mode=active]:shadow-[0_24px_40px_-24px_hsl(var(--accent-400)_/_0.92)]"
           data-mode={indicator.mode}
           style={{
             transform: `translate3d(${indicator.x}px, ${indicator.y}px, 0)`,

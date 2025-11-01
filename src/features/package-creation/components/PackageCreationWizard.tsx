@@ -52,6 +52,7 @@ export const PackageCreationWizard = ({
   const { state } = usePackageCreationContext();
   const { setCurrentStep } = usePackageCreationActions();
   const { t } = useTranslation("packageCreation");
+  const isEditing = state.meta.mode === "edit";
 
   const [visitedSteps, setVisitedSteps] = useState<Set<PackageCreationStepId>>(
     () => new Set()
@@ -177,13 +178,36 @@ export const PackageCreationWizard = ({
   }, [state.meta.currentStep]);
 
   useEffect(() => {
+    if (isEditing) {
+      return;
+    }
     if (
       !state.meta.isDirty &&
       state.meta.currentStep === PACKAGE_CREATION_STEPS[0]?.id
     ) {
       setVisitedSteps(new Set([PACKAGE_CREATION_STEPS[0].id]));
     }
-  }, [state.meta.currentStep, state.meta.isDirty]);
+  }, [state.meta.currentStep, state.meta.isDirty, isEditing]);
+
+  useEffect(() => {
+    if (!isEditing) {
+      return;
+    }
+    setVisitedSteps((previous) => {
+      let changed = false;
+      const next = new Set(previous);
+
+      PACKAGE_CREATION_STEPS.forEach((step) => {
+        const status = stepStatus[step.id];
+        if (status?.hasValue && !next.has(step.id)) {
+          next.add(step.id);
+          changed = true;
+        }
+      });
+
+      return changed ? next : previous;
+    });
+  }, [isEditing, stepStatus]);
 
   useEffect(() => {
     viewedStepRef.current = state.meta.currentStep;
@@ -211,6 +235,15 @@ export const PackageCreationWizard = ({
   const handlePreviousStep = () => {
     if (isFirstStep) return;
     goToStep(Math.max(0, currentIndex - 1));
+  };
+
+  const handleReview = () => {
+    const summaryIndex = PACKAGE_CREATION_STEPS.findIndex(
+      (step) => step.id === "summary"
+    );
+    if (summaryIndex < 0) return;
+    if (state.meta.currentStep === "summary") return;
+    goToStep(summaryIndex);
   };
 
   const currentStepConfig = PACKAGE_CREATION_STEPS[currentIndex];
@@ -322,21 +355,30 @@ export const PackageCreationWizard = ({
                     onClick={handleNextStep}
                     className="w-full sm:w-auto sm:px-8"
                   >
-                    {t("actions.next", "Next")}
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleNextStep}
-                    disabled={isCompleting}
-                    aria-busy={isCompleting}
-                    className="w-full sm:w-auto sm:px-8"
-                  >
-                    {isCompleting
-                      ? t("actions.finishing", "Finishing…")
-                      : t("actions.finish", "Finish")}
-                  </Button>
-                )}
-              </div>
+                {t("actions.next", "Next")}
+              </Button>
+            ) : (
+              <Button
+                onClick={handleNextStep}
+                disabled={isCompleting}
+                aria-busy={isCompleting}
+                className="w-full sm:w-auto sm:px-8"
+              >
+                {isCompleting
+                  ? t("actions.finishing", "Finishing…")
+                  : t("actions.finish", "Finish")}
+              </Button>
+            )}
+            {isEditing && state.meta.currentStep !== "summary" ? (
+              <Button
+                variant="secondary"
+                onClick={handleReview}
+                className="w-full sm:w-auto sm:px-6"
+              >
+                {t("actions.reviewSummary", "Review summary")}
+              </Button>
+            ) : null}
+          </div>
               <div
                 key={state.meta.currentStep}
                 className="animate-in fade-in slide-in-from-bottom-3 rounded-3xl border border-slate-200/70 bg-white/95 p-6 shadow-xl shadow-slate-900/5 backdrop-blur transition-all duration-300 ease-out"

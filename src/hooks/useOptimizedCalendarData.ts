@@ -11,6 +11,7 @@ interface Session {
   notes?: string;
   lead_id: string;
   project_id?: string | null;
+  duration_minutes?: number | null;
   leads?: { id: string; name: string };
   projects?: { id: string; name: string; status_id?: string };
 }
@@ -73,7 +74,8 @@ export function useOptimizedCalendarData(currentDate: Date, viewMode: 'day' | 'w
             lead_id,
             project_id,
             leads!inner(id, name),
-            projects(id, name, status_id)
+            projects(id, name, status_id),
+            session_types:session_type_id(duration_minutes)
           `)
           .eq('organization_id', organizationId)
           .gte('session_date', dateRange.start)
@@ -102,8 +104,22 @@ export function useOptimizedCalendarData(currentDate: Date, viewMode: 'day' | 'w
         return true;
       });
 
+      const normalizedSessions: Session[] = (
+        filteredSessions as Array<
+          Session & { session_types?: { duration_minutes?: number | null } | null }
+        >
+      ).map(session => {
+        const { session_types, ...rest } = session as Session & {
+          session_types?: { duration_minutes?: number | null } | null;
+        };
+        return {
+          ...rest,
+          duration_minutes: session_types?.duration_minutes ?? rest.duration_minutes ?? null,
+        };
+      });
+
       return {
-        sessions: filteredSessions as Session[],
+        sessions: normalizedSessions,
         organizationId,
         archivedStatusId
       };

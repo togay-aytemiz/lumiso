@@ -16,6 +16,7 @@ interface NavigationGuardDialogProps {
   onStay: () => void;
   onSaveAndExit?: () => void;
   message?: string;
+  stayLabel?: string;
 }
 
 export function NavigationGuardDialog({ 
@@ -23,7 +24,8 @@ export function NavigationGuardDialog({
   onDiscard, 
   onStay, 
   onSaveAndExit,
-  message 
+  message,
+  stayLabel,
 }: NavigationGuardDialogProps) {
   const { t } = useTranslation('forms');
   
@@ -38,7 +40,7 @@ export function NavigationGuardDialog({
         </AlertDialogHeader>
         <AlertDialogFooter className="gap-2">
           <AlertDialogCancel onClick={onStay}>
-            {t('navigationGuard.stay')}
+            {stayLabel ?? t('navigationGuard.stay')}
           </AlertDialogCancel>
           {onSaveAndExit && (
             <AlertDialogAction 

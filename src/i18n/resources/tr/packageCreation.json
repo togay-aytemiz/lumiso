@@ -16,6 +16,9 @@
     },
     "actions": {
       "retry": "Tekrar dene"
+    },
+    "guard": {
+      "stay": "Düzenlemeye Devam Et"
     }
   },
   "stepper": {
@@ -30,7 +33,8 @@
     "previous": "Geri",
     "next": "İleri",
     "finish": "Tamamla",
-    "finishing": "Tamamlanıyor…"
+    "finishing": "Tamamlanıyor…",
+    "reviewSummary": "Özeti incele"
   },
   "steps": {
     "basics": {

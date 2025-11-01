@@ -58,6 +58,7 @@ export interface PackageCreationMetaState {
   entrySource?: string;
   startStepOverride?: PackageCreationStepId;
   initialEntryContext?: PackageCreationEntryContext;
+  mode: "create" | "edit";
 }
 
 export interface PackageCreationState {
@@ -71,6 +72,7 @@ export interface PackageCreationState {
 export interface PackageCreationEntryContext {
   entrySource?: string;
   startStepOverride?: PackageCreationStepId;
+  mode?: "create" | "edit";
 }
 
 export interface PackageCreationHydrationPayload {

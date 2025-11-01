@@ -3,6 +3,68 @@ import { toast } from '@/hooks/use-toast';
 
 type TranslationRecord = Record<string, Record<string, any>>;
 
+const DOWNLOAD_THROTTLE_MS = 5500;
+const recentDownloads = new Map<string, number>();
+
+const shouldThrottleDownload = (key: string): boolean => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const now = Date.now();
+  const last = recentDownloads.get(key);
+
+  if (last && now - last < DOWNLOAD_THROTTLE_MS) {
+    return true;
+  }
+
+  recentDownloads.set(key, now);
+
+  window.setTimeout(() => {
+    const stored = recentDownloads.get(key);
+    if (stored && stored <= now) {
+      recentDownloads.delete(key);
+    }
+  }, DOWNLOAD_THROTTLE_MS);
+
+  return false;
+};
+
+const triggerDownload = (blob: Blob, fileName: string) => {
+  if (typeof document === 'undefined') {
+    return;
+  }
+
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.rel = 'noopener';
+  anchor.style.display = 'none';
+  document.body.appendChild(anchor);
+
+  const clickEvent = new MouseEvent('click', {
+    bubbles: true,
+    cancelable: true,
+    view: typeof window !== 'undefined' ? window : undefined,
+  });
+
+  anchor.dispatchEvent(clickEvent);
+
+  const cleanup = () => {
+    if (anchor.parentNode) {
+      document.body.removeChild(anchor);
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 750);
+  };
+
+  if (typeof requestAnimationFrame === 'function') {
+    requestAnimationFrame(cleanup);
+  } else {
+    cleanup();
+  }
+};
+
 const translationModules = import.meta.glob<{ default: any }>(
   '@/i18n/resources/*/*.json',
   { eager: true }
@@ -61,15 +123,14 @@ export const useTranslationFiles = () => {
         return;
       }
 
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${languageCode}-${namespace}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      if (shouldThrottleDownload(`file:${languageCode}:${namespace}`)) {
+        return;
+      }
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: 'application/json',
+      });
+      triggerDownload(blob, `${languageCode}-${namespace}.json`);
 
       toast({
         title: "Success",
@@ -103,17 +164,16 @@ export const useTranslationFiles = () => {
         files[`${namespace}.json`] = data;
       });
 
+      if (shouldThrottleDownload(`pack:${languageCode}`)) {
+        return;
+      }
+
       // For now, download as a single combined file
       // In a real app, you might want to create an actual zip file
-      const blob = new Blob([JSON.stringify(files, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${languageCode}-language-pack.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const blob = new Blob([JSON.stringify(files, null, 2)], {
+        type: 'application/json',
+      });
+      triggerDownload(blob, `${languageCode}-language-pack.json`);
 
       toast({
         title: "Success",
@@ -131,15 +191,14 @@ export const useTranslationFiles = () => {
 
   const downloadAllTranslations = () => {
     try {
-      const blob = new Blob([JSON.stringify(translations, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'all-translations.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      if (shouldThrottleDownload('pack:all')) {
+        return;
+      }
+
+      const blob = new Blob([JSON.stringify(translations, null, 2)], {
+        type: 'application/json',
+      });
+      triggerDownload(blob, 'all-translations.json');
 
       toast({
         title: "Success",

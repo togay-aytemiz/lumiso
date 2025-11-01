@@ -58,18 +58,6 @@ jest.mock("@/components/ui/button", () => {
   };
 });
 
-jest.mock("@/components/ui/input", () => ({
-  Input: ({ value, onChange, ...props }: any) => (
-    <input value={value} onChange={(event) => onChange?.(event)} {...props} />
-  ),
-}));
-
-jest.mock("@/components/ui/textarea", () => ({
-  Textarea: ({ value, onChange }: any) => (
-    <textarea value={value} onChange={(event) => onChange?.(event)} />
-  ),
-}));
-
 jest.mock("@/components/ui/dialog", () => ({
   Dialog: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DialogTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -86,27 +74,21 @@ jest.mock("@/components/ui/switch", () => ({
   ),
 }));
 
-jest.mock("@/components/ui/select", () => ({
-  Select: ({ value, onValueChange, children }: any) => (
-    <select value={value} onChange={(event) => onValueChange?.(event.target.value)}>{children}</select>
+jest.mock("@/components/ui/segmented-control", () => ({
+  SegmentedControl: ({ value, onValueChange, options }: any) => (
+    <div>
+      {options.map((option: any) => (
+        <button
+          key={option.value}
+          data-testid={`segment-${option.value}`}
+          aria-pressed={option.value === value}
+          onClick={() => onValueChange(option.value)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
   ),
-  SelectTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  SelectContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  SelectItem: ({ value, children }: { value: string; children: React.ReactNode }) => (
-    <option value={value}>{children}</option>
-  ),
-  SelectValue: () => null,
-}));
-
-jest.mock("@/components/ui/tabs", () => ({
-  Tabs: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  TabsList: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  TabsTrigger: ({ children, value, onClick }: any) => (
-    <button data-testid={`tab-${value}`} onClick={onClick}>
-      {children}
-    </button>
-  ),
-  TabsContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 jest.mock("@/components/ui/table", () => ({
@@ -193,7 +175,10 @@ describe("Admin Localization page", () => {
       getAvailableLanguages: jest.fn(() => languagesData.map((language) => language.code)),
       getAvailableNamespaces: jest.fn(() => namespacesData.map((namespace) => namespace.name)),
       getNamespacesForLanguage: jest.fn(() => namespacesData.map((namespace) => namespace.name)),
-      getTranslationStats: jest.fn(() => ({ totalKeys: translationKeysData.length, translatedKeys: translationsData.length })),
+      getTranslationStats: jest.fn(() => ({
+        en: Object.fromEntries(namespacesData.map((namespace) => [namespace.name, 1])),
+        tr: Object.fromEntries(namespacesData.map((namespace) => [namespace.name, 0])),
+      })),
       isProcessing: false,
     });
 
@@ -204,8 +189,11 @@ describe("Admin Localization page", () => {
     jest.clearAllMocks();
   });
 
-  it("loads languages and namespaces on mount", async () => {
+  it("loads languages when the languages segment is selected", async () => {
     render(<AdminLocalization />);
+
+    const languagesSegment = await screen.findByTestId("segment-languages");
+    fireEvent.click(languagesSegment);
 
     await waitFor(() => {
       expect(supabaseMock.from).toHaveBeenCalledWith("languages");
@@ -217,6 +205,9 @@ describe("Admin Localization page", () => {
 
   it("updates a language when toggled", async () => {
     render(<AdminLocalization />);
+
+    const languagesSegment = await screen.findByTestId("segment-languages");
+    fireEvent.click(languagesSegment);
 
     await screen.findAllByText("English");
 

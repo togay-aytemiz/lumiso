@@ -378,50 +378,96 @@ export const ServicesStep = () => {
                 );
               })}
 
-              {customItems.map((item) => (
-                <div key={item.id} className="rounded-lg border bg-white p-4 shadow-sm">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="space-y-2">
-                      <Label htmlFor={`custom-name-${item.id}`} className="text-xs text-muted-foreground">
-                        {t("steps.services.custom.nameLabel")}
-                      </Label>
-                      <Input
-                        id={`custom-name-${item.id}`}
-                        value={item.name}
-                        onChange={(event) => updateItem(item.id, { name: event.target.value })}
-                      />
-                    </div>
-                    <IconActionButton
-                      onClick={() => removeItem(item.id)}
-                      aria-label={t("steps.services.list.remove")}
-                      variant="danger"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </IconActionButton>
-                  </div>
+              {customItems.map((item) => {
+                const quantityValue = item.quantity ?? 1;
+                const showInlineDelete = quantityValue <= 1;
 
-                  <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                    <div>
-                      <Label htmlFor={`custom-quantity-${item.id}`} className="text-xs text-muted-foreground">
-                        {t("steps.services.list.quantity")}
-                      </Label>
-                      <div className="mt-1 flex items-center gap-2">
+                return (
+                  <div key={item.id} className="rounded-lg border bg-muted/10 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+                      <div className="flex-1 space-y-2">
+                        <Label htmlFor={`custom-name-${item.id}`} className="text-xs text-muted-foreground">
+                          {t("steps.services.custom.nameLabel")}
+                        </Label>
+                        <Input
+                          id={`custom-name-${item.id}`}
+                          value={item.name}
+                          onChange={(event) => updateItem(item.id, { name: event.target.value })}
+                          className="h-10 w-full"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+                        <div className="space-y-2 sm:w-40 sm:flex-none">
+                          <Label htmlFor={`custom-cost-${item.id}`} className="text-xs text-muted-foreground">
+                            {t("steps.services.list.unitCost")}
+                          </Label>
+                          <Input
+                            id={`custom-cost-${item.id}`}
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={item.unitCost ?? ""}
+                            onChange={(event) =>
+                              updateItem(item.id, {
+                                unitCost: event.target.value === "" ? null : Number(event.target.value),
+                              })
+                            }
+                            className="h-10 w-full sm:w-40"
+                          />
+                        </div>
+                        <div className="space-y-2 sm:w-40 sm:flex-none">
+                          <Label htmlFor={`custom-price-${item.id}`} className="text-xs text-muted-foreground">
+                            {t("steps.services.list.unitPrice")}
+                          </Label>
+                          <Input
+                            id={`custom-price-${item.id}`}
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={item.unitPrice ?? ""}
+                            onChange={(event) =>
+                              updateItem(item.id, {
+                                unitPrice: event.target.value === "" ? null : Number(event.target.value),
+                              })
+                            }
+                            className="h-10 w-full sm:w-40"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium uppercase text-muted-foreground">
+                          {t("steps.services.list.quantity")}
+                        </span>
                         <div className="flex items-center gap-1 rounded-full border px-1 py-1">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="h-8 w-8 p-0"
-                            onClick={() => adjustQuantity(item.id, -1)}
-                            aria-label={t("common:actions.decrease", { defaultValue: "Decrease" })}
-                          >
-                            <Minus className="h-4 w-4" />
-                          </Button>
+                          {showInlineDelete ? (
+                            <IconActionButton
+                              onClick={() => removeItem(item.id)}
+                              aria-label={t("steps.services.list.remove")}
+                              variant="danger"
+                              className="h-8 w-8"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </IconActionButton>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              onClick={() => adjustQuantity(item.id, -1)}
+                              aria-label={t("common:actions.decrease", { defaultValue: "Decrease" })}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Input
                             id={`custom-quantity-${item.id}`}
                             type="text"
                             inputMode="numeric"
                             pattern="[0-9]*"
-                            value={String(item.quantity ?? 1)}
+                            value={String(quantityValue)}
                             onChange={(event) => handleQuantityChange(item.id, event.target.value)}
                             className="h-8 w-14 border-0 bg-transparent text-center text-sm font-medium focus-visible:ring-0"
                           />
@@ -436,44 +482,21 @@ export const ServicesStep = () => {
                           </Button>
                         </div>
                       </div>
-                    </div>
-                    <div>
-                      <Label htmlFor={`custom-cost-${item.id}`} className="text-xs text-muted-foreground">
-                        {t("steps.services.list.unitCost")}
-                      </Label>
-                      <Input
-                        id={`custom-cost-${item.id}`}
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        value={item.unitCost ?? ""}
-                        onChange={(event) =>
-                          updateItem(item.id, {
-                            unitCost: event.target.value === "" ? null : Number(event.target.value),
-                          })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor={`custom-price-${item.id}`} className="text-xs text-muted-foreground">
-                        {t("steps.services.list.unitPrice")}
-                      </Label>
-                      <Input
-                        id={`custom-price-${item.id}`}
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        value={item.unitPrice ?? ""}
-                        onChange={(event) =>
-                          updateItem(item.id, {
-                            unitPrice: event.target.value === "" ? null : Number(event.target.value),
-                          })
-                        }
-                      />
+
+                      {!showInlineDelete ? (
+                        <IconActionButton
+                          onClick={() => removeItem(item.id)}
+                          aria-label={t("steps.services.list.remove")}
+                          variant="danger"
+                          className="h-8 w-8"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </IconActionButton>
+                      ) : null}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

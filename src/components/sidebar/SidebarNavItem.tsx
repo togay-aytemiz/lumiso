@@ -33,6 +33,14 @@ export function SidebarNavItem({
   className = "",
   badge
 }: SidebarNavItemProps) {
+  const buttonClasses = cn(
+    "group/item w-full h-9 border border-transparent",
+    "data-[active=true]:bg-[linear-gradient(135deg,_hsl(var(--accent-100)),_hsl(var(--accent-300)))]",
+    "data-[active=true]:border-[hsl(var(--accent-300))]",
+    "data-[active=true]:shadow-[0_26px_45px_-32px_hsl(var(--accent-400)_/_0.95)]",
+    className
+  );
+
   const content = (
     <div
       className={cn(
@@ -55,7 +63,7 @@ export function SidebarNavItem({
       <TooltipTrigger asChild>
         <SidebarMenuButton
           className={cn(
-            "group/item w-full h-9 cursor-not-allowed rounded-xl",
+            "group/item w-full h-9 cursor-not-allowed rounded-xl border border-transparent",
             "bg-[linear-gradient(135deg,_hsl(var(--accent-50)),_hsl(var(--accent-100)))] text-[hsl(var(--accent-800))]",
             className
           )}
@@ -71,12 +79,7 @@ export function SidebarNavItem({
     <SidebarMenuButton
       asChild
       isActive={isActive}
-      className={cn(
-        "group/item w-full h-9",
-        "data-[active=true]:shadow-[0_26px_45px_-32px_hsl(var(--accent-400)_/_0.95)]",
-        "data-[active=true]:before:absolute data-[active=true]:before:inset-[2px] data-[active=true]:before:-z-10 data-[active=true]:before:rounded-[calc(var(--radius)-0.375rem)] data-[active=true]:before:bg-[radial-gradient(circle_at_top,_hsl(var(--accent-100)),_transparent_65%)] data-[active=true]:before:content-['']",
-        className
-      )}
+      className={buttonClasses}
     >
       <NavLink to={url} className="flex items-center gap-2.5 w-full">
         {content}
@@ -86,12 +89,7 @@ export function SidebarNavItem({
     <SidebarMenuButton
       onClick={onClick}
       isActive={isActive}
-      className={cn(
-        "group/item w-full h-9",
-        "data-[active=true]:shadow-[0_26px_45px_-32px_hsl(var(--accent-400)_/_0.95)]",
-        "data-[active=true]:before:absolute data-[active=true]:before:inset-[2px] data-[active=true]:before:-z-10 data-[active=true]:before:rounded-[calc(var(--radius)-0.375rem)] data-[active=true]:before:bg-[radial-gradient(circle_at_top,_hsl(var(--accent-100)),_transparent_65%)] data-[active=true]:before:content-['']",
-        className
-      )}
+      className={buttonClasses}
     >
       {content}
     </SidebarMenuButton>

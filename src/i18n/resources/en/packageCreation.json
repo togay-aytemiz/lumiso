@@ -16,6 +16,9 @@
     },
     "actions": {
       "retry": "Retry"
+    },
+    "guard": {
+      "stay": "Continue editing"
     }
   },
   "stepper": {
@@ -30,7 +33,8 @@
     "previous": "Previous",
     "next": "Next",
     "finish": "Finish",
-    "finishing": "Finishing…"
+    "finishing": "Finishing…",
+    "reviewSummary": "Review summary"
   },
   "steps": {
     "basics": {

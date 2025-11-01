@@ -26,9 +26,10 @@ interface Package {
   price: number;
   client_total?: number | null;
   applicable_types: string[];
-  default_add_ons: string[];
+  default_add_ons: string[] | null;
   is_active: boolean;
   include_addons_in_price?: boolean | null;
+  line_items: unknown;
   pricing_metadata?: {
     enableDeposit?: boolean;
     depositAmount?: number;
@@ -38,6 +39,78 @@ interface Package {
   } | null;
 }
 
+type LineItemLookup = {
+  byId: Map<string, number>;
+  byName: Map<string, number>;
+};
+
+const normalizeQuantity = (value: unknown): number | undefined => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const rounded = Math.round(value);
+    return rounded > 0 ? rounded : undefined;
+  }
+
+  if (typeof value === "string" && value.trim().length) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      const rounded = Math.round(parsed);
+      return rounded > 0 ? rounded : undefined;
+    }
+  }
+
+  return undefined;
+};
+
+const buildLineItemLookup = (
+  lineItems: unknown,
+  serviceIdByNameMap: Map<string, string>
+): LineItemLookup => {
+  const lookup: LineItemLookup = {
+    byId: new Map<string, number>(),
+    byName: new Map<string, number>(),
+  };
+
+  if (!Array.isArray(lineItems)) {
+    return lookup;
+  }
+
+  for (const entry of lineItems as unknown[]) {
+    if (!entry || typeof entry !== "object") continue;
+    const record = entry as Record<string, unknown>;
+
+    const quantity = normalizeQuantity(record.quantity);
+    if (!quantity) continue;
+
+    const rawServiceId =
+      typeof record.serviceId === "string" && record.serviceId.trim().length
+        ? record.serviceId.trim()
+        : undefined;
+
+    if (rawServiceId) {
+      lookup.byId.set(rawServiceId, quantity);
+      continue;
+    }
+
+    const rawNameCandidate =
+      typeof record.name === "string" && record.name.trim().length
+        ? record.name.trim()
+        : typeof record.service === "string" && record.service.trim().length
+        ? record.service.trim()
+        : undefined;
+
+    if (!rawNameCandidate) continue;
+
+    const resolvedId = serviceIdByNameMap.get(rawNameCandidate);
+    if (resolvedId) {
+      lookup.byId.set(resolvedId, quantity);
+    } else {
+      lookup.byName.set(rawNameCandidate, quantity);
+    }
+  }
+
+  return lookup;
+};
+
 const PackagesSection = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [packageToDelete, setPackageToDelete] = useState<Package | null>(null);
@@ -46,6 +119,7 @@ const PackagesSection = () => {
   const toast = useI18nToast();
   const { t } = useTranslation('forms');
   const { t: tCommon } = useCommonTranslation();
+  const unknownServiceLabel = t('packages.unknown_service');
   // Permissions removed for single photographer mode - always allow
   const { activeOrganizationId } = useOrganization();
   const queryClient = useQueryClient();
@@ -60,6 +134,20 @@ const PackagesSection = () => {
     services.forEach((service) => {
       if (service?.id && service?.name) {
         map.set(service.id, service.name);
+      }
+    });
+    return map;
+  }, [services]);
+
+  const serviceIdByNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    services.forEach((service) => {
+      if (service?.id && service?.name) {
+        map.set(service.name, service.id);
+        const trimmed = service.name.trim();
+        if (trimmed !== service.name) {
+          map.set(trimmed, service.id);
+        }
       }
     });
     return map;
@@ -130,6 +218,20 @@ const PackagesSection = () => {
     () => (showInactive ? packages : packages.filter((pkg) => pkg.is_active)),
     [packages, showInactive]
   );
+
+  const packageLineItemQuantities = useMemo(() => {
+    const lookups = new Map<string, LineItemLookup>();
+
+    filteredPackages.forEach((pkg) => {
+      if (!pkg?.id) return;
+      lookups.set(
+        pkg.id,
+        buildLineItemLookup(pkg.line_items, serviceIdByNameMap)
+      );
+    });
+
+    return lookups;
+  }, [filteredPackages, serviceIdByNameMap]);
 
   const handleWizardOpenChange = (open: boolean) => {
     setPackageWizardOpen(open);
@@ -309,11 +411,50 @@ const PackagesSection = () => {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {filteredPackages.map((pkg) => {
               const depositSummary = extractDepositSummary(pkg);
-              const resolvedAddOns = pkg.default_add_ons
-                .map((serviceId) => serviceNameMap.get(serviceId) ?? t('packages.unknown_service'))
-                .filter((name): name is string => Boolean(name));
-              const displayedAddOns = resolvedAddOns.slice(0, 4);
-              const remainingAddOnCount = resolvedAddOns.length - displayedAddOns.length;
+              const quantityLookup = packageLineItemQuantities.get(pkg.id);
+              const defaultAddOns = Array.isArray(pkg.default_add_ons) ? pkg.default_add_ons : [];
+              const addOnBadges = defaultAddOns
+                .map((rawServiceId, index) => {
+                  const fallbackLabel =
+                    typeof rawServiceId === "string" && rawServiceId.trim().length
+                      ? rawServiceId.trim()
+                      : unknownServiceLabel;
+                  const serviceLabelFromId =
+                    typeof rawServiceId === "string"
+                      ? serviceNameMap.get(rawServiceId)
+                      : undefined;
+                  const baseLabel = serviceLabelFromId ?? fallbackLabel;
+                  const normalizedLabel =
+                    baseLabel && baseLabel.trim().length ? baseLabel.trim() : unknownServiceLabel;
+
+                  const byId = quantityLookup?.byId;
+                  const byName = quantityLookup?.byName;
+
+                  let quantity: number | undefined;
+                  if (typeof rawServiceId === "string") {
+                    quantity = byId?.get(rawServiceId);
+                  }
+                  if (quantity === undefined) {
+                    quantity =
+                      byName?.get(normalizedLabel) ??
+                      (fallbackLabel !== normalizedLabel
+                        ? byName?.get(fallbackLabel)
+                        : undefined);
+                  }
+
+                  const label =
+                    quantity && quantity > 1
+                      ? `${normalizedLabel} x${quantity}`
+                      : normalizedLabel;
+
+                  return {
+                    key: `${pkg.id}-${typeof rawServiceId === "string" ? rawServiceId : index}`,
+                    label,
+                  };
+                })
+                .filter((entry) => Boolean(entry.label));
+              const displayedAddOns = addOnBadges.slice(0, 4);
+              const remainingAddOnCount = addOnBadges.length - displayedAddOns.length;
               const showAllTypes = pkg.applicable_types.length === 0;
 
               return (
@@ -397,20 +538,20 @@ const PackagesSection = () => {
                       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                         {t('packages.default_addons')}
                       </p>
-                      {resolvedAddOns.length === 0 ? (
+                      {addOnBadges.length === 0 ? (
                         <p className="text-sm text-muted-foreground">
                           {t('packages.none')}
                         </p>
                       ) : (
                         <div className="flex flex-wrap items-center gap-2">
-                          {displayedAddOns.map((name) => (
-                            <Badge key={name} variant="secondary" className="text-xs">
-                              {name}
+                          {displayedAddOns.map((entry) => (
+                            <Badge key={entry.key} variant="secondary" className="text-xs">
+                              {entry.label}
                             </Badge>
                           ))}
                           {remainingAddOnCount > 0 && (
                             <Badge variant="outline" className="text-xs">
-                              {t('packages.addons_count', { count: resolvedAddOns.length })}
+                              {t('packages.addons_count', { count: addOnBadges.length })}
                             </Badge>
                           )}
                         </div>

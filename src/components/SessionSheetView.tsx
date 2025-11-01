@@ -290,7 +290,7 @@ export default function SessionSheetView({
   ) : undefined;
   return <>
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:max-w-5xl h-[100vh] overflow-y-auto overscroll-contain pr-2 pt-8 sm:pt-6">
+        <SheetContent className="w-full h-[100vh] overflow-y-auto overscroll-contain pr-2 pt-8 sm:pt-6 sm:max-w-6xl lg:max-w-7xl">
           {loading ? <div className="p-6">
               <div className="animate-pulse space-y-4">
                 <div className="h-6 bg-muted rounded w-1/3"></div>

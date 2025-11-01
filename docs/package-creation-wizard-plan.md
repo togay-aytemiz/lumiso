@@ -104,6 +104,7 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 - ✅ Localization (EN/TR), accessibility pass, responsive tweaks.
 - ✅ Unit tests for reducer/actions, step validations; integration test covering happy path.
 - ✅ Update docs, internal runbook, feature flag rollout plan.
+- ✅ Surface service quantity badges (e.g., “x5”) on package cards in Settings › Services when quantity > 1 so photographers see inclusion counts outside the wizard.
 - ✅ Deliverables: production-ready wizard ready for enablement once content validated.
 
 ### Phase 6 – Project Wizard Package Selection Enhancements (week 4)

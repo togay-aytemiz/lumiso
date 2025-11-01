@@ -98,6 +98,8 @@
         "title": "Bundle summary",
         "cost": "Total cost",
         "price": "Total price",
+        "vat": "VAT",
+        "gross": "Total (incl. VAT)",
         "margin": "Estimated margin",
         "empty": "No services added yet.",
         "selectedCount": "{{count}} service selected",
@@ -320,6 +322,8 @@
       "totals": {
         "cost": "Cost total",
         "price": "Price total",
+        "vat": "VAT total",
+        "total": "Total (incl. VAT)",
         "margin": "Margin"
       }
     },
@@ -354,6 +358,8 @@
       "packagePrice": "Package price",
       "servicesTotal": "Selected services total",
       "servicesTotalHelper": "Internal reference only – clients will not see this amount.",
+      "servicesVatTotal": "VAT total",
+      "servicesGrossTotal": "Total (incl. VAT)",
       "addOnsClientTotal": "Package + services total",
       "addOnsClientTotalHelper": "Clients see this when you bill services on top of the package.",
       "costTotal": "Cost total",

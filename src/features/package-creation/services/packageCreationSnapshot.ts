@@ -8,6 +8,7 @@ import type {
   PackageCreationState,
   PackageLineItemType,
 } from "../types";
+import { calculateLineItemPricing } from "../utils/lineItemPricing";
 
 type PackageInsert = Database["public"]["Tables"]["packages"]["Insert"];
 type PackageRow = Database["public"]["Tables"]["packages"]["Row"];
@@ -24,6 +25,8 @@ export interface PackageLineItemPayload {
   unitPrice: number | null;
   vendorName: string | null;
   source?: "catalog" | "adhoc";
+  vatRate: number | null;
+  vatMode: PackageCreationLineItem["vatMode"];
 }
 
 export interface PackageDeliveryMethodPayload {
@@ -35,6 +38,8 @@ export interface PackagePricingDetailsPayload {
   basePrice: number;
   servicesCostTotal: number;
   servicesPriceTotal: number;
+  servicesVatTotal: number;
+  servicesGrossTotal: number;
   servicesMargin: number;
   subtotal: number;
   clientTotal: number;
@@ -51,6 +56,8 @@ export interface PackageServicesSnapshot {
   totals: {
     cost: number;
     price: number;
+    vat: number;
+    total: number;
   };
   defaultAddOnIds: string[];
   itemCount: number;
@@ -301,20 +308,25 @@ const buildBasicsSnapshot = (state: PackageCreationState): PackageBasicsSnapshot
 };
 
 const buildServicesSnapshot = (items: PackageCreationLineItem[]): PackageServicesSnapshot => {
-  const payloadItems = items.map(toLineItemPayload);
-  const totals = payloadItems.reduce(
-    (accum, item) => {
-      const quantity = item.quantity;
-      const unitCost = item.unitCost ?? 0;
-      const unitPrice = item.unitPrice ?? 0;
+  const totalsAccumulator = {
+    cost: 0,
+    price: 0,
+    vat: 0,
+    total: 0,
+  };
 
-      accum.cost += unitCost * quantity;
-      accum.price += unitPrice * quantity;
+  const payloadItems = items.map((item) => {
+    const quantity = normalizeInteger(item.quantity, { fallback: 1 }) ?? 1;
+    const unitCost = Number(item.unitCost ?? 0);
+    const pricing = calculateLineItemPricing(item);
 
-      return accum;
-    },
-    { cost: 0, price: 0 }
-  );
+    totalsAccumulator.cost += unitCost * quantity;
+    totalsAccumulator.price += pricing.net;
+    totalsAccumulator.vat += pricing.vat;
+    totalsAccumulator.total += pricing.gross;
+
+    return toLineItemPayload(item);
+  });
 
   const defaultAddOnIds = Array.from(
     new Set(
@@ -329,8 +341,10 @@ const buildServicesSnapshot = (items: PackageCreationLineItem[]): PackageService
   return {
     items: payloadItems,
     totals: {
-      cost: roundCurrency(totals.cost),
-      price: roundCurrency(totals.price),
+      cost: roundCurrency(totalsAccumulator.cost),
+      price: roundCurrency(totalsAccumulator.price),
+      vat: roundCurrency(totalsAccumulator.vat),
+      total: roundCurrency(totalsAccumulator.total),
     },
     defaultAddOnIds,
     itemCount: payloadItems.length,
@@ -385,13 +399,15 @@ const buildDeliverySnapshot = (
 
 const buildPricingSnapshot = (
   state: PackageCreationState,
-  totals: { cost: number; price: number }
+  totals: { cost: number; price: number; vat: number; total: number }
 ): PackagePricingDetailsPayload => {
   const basePrice = roundCurrency(parseCurrency(state.pricing.basePrice));
   const servicesCostTotal = roundCurrency(totals.cost);
   const servicesPriceTotal = roundCurrency(totals.price);
+  const servicesVatTotal = roundCurrency(totals.vat);
+  const servicesGrossTotal = roundCurrency(totals.total);
   const servicesMargin = roundCurrency(servicesPriceTotal - servicesCostTotal);
-  const subtotal = roundCurrency(basePrice + servicesPriceTotal);
+  const subtotal = roundCurrency(basePrice + servicesGrossTotal);
   const includeAddOns = state.pricing.includeAddOnsInPrice ?? true;
   const clientTotal = roundCurrency(includeAddOns ? basePrice : subtotal);
 
@@ -405,6 +421,8 @@ const buildPricingSnapshot = (
       basePrice,
       servicesCostTotal,
       servicesPriceTotal,
+      servicesVatTotal,
+      servicesGrossTotal,
       servicesMargin,
       subtotal,
       clientTotal,
@@ -430,6 +448,8 @@ const buildPricingSnapshot = (
     basePrice,
     servicesCostTotal,
     servicesPriceTotal,
+    servicesVatTotal,
+    servicesGrossTotal,
     servicesMargin,
     subtotal,
     clientTotal,
@@ -459,6 +479,8 @@ const toLineItemPayload = (item: PackageCreationLineItem): PackageLineItemPayloa
     unitCost,
     unitPrice,
     vendorName: item.vendorName ?? null,
+    vatRate: normalizeVatRate(item.vatRate),
+    vatMode: item.vatMode ?? "exclusive",
   };
 
   if (item.source) {
@@ -509,6 +531,15 @@ const parseServiceLineItems = (value: Json): PackageCreationLineItem[] => {
       item.source === "catalog" || item.source === "adhoc"
         ? (item.source as "catalog" | "adhoc")
         : undefined;
+    const vatRate =
+      item.vatRate != null && !Number.isNaN(Number(item.vatRate))
+        ? normalizeVatRate(Number(item.vatRate))
+        : null;
+    const rawVatMode = item.vatMode;
+    const vatMode: PackageCreationLineItem["vatMode"] =
+      rawVatMode === "inclusive" || rawVatMode === "exclusive"
+        ? rawVatMode
+        : "exclusive";
 
     return {
       id: typeof item.id === "string" ? item.id : createRandomId(),
@@ -527,6 +558,8 @@ const parseServiceLineItems = (value: Json): PackageCreationLineItem[] => {
       vendorName:
         typeof item.vendorName === "string" ? item.vendorName : undefined,
       source,
+      vatRate,
+      vatMode,
     };
   });
 };
@@ -595,6 +628,8 @@ const createFallbackLineItem = (seed: number): PackageCreationLineItem => ({
   type: "custom",
   name: `Hizmet ${seed + 1}`,
   quantity: 1,
+  vatRate: null,
+  vatMode: "exclusive",
 });
 
 const createRandomId = (): string => {
@@ -628,6 +663,13 @@ const normalizeMoney = (value: number | null | undefined): number | null => {
   if (value === null || value === undefined) return null;
   if (Number.isNaN(value)) return null;
   return roundCurrency(Number(value));
+};
+
+const normalizeVatRate = (value: number | null | undefined): number | null => {
+  if (value === null || value === undefined) return null;
+  if (!Number.isFinite(value)) return null;
+  if (value <= 0) return null;
+  return Math.min(99.99, Math.max(0, Number(value)));
 };
 
 const parseCurrency = (input: string | number | null | undefined): number => {

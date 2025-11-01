@@ -33,6 +33,8 @@ const labels = {
   totals: {
     cost: "Cost total",
     price: "Price total",
+    vat: "VAT total",
+    total: "Total",
     margin: "Margin",
   },
   customTag: "Custom item",
@@ -51,7 +53,7 @@ describe("ServicesTableCard", () => {
     render(
       <ServicesTableCard
         rows={rows}
-        totals={{ cost: 4000, price: 17400, margin: 13400 }}
+        totals={{ cost: 4000, price: 17400, vat: 2400, total: 19800, margin: 13400 }}
         labels={labels}
         emptyMessage="No services"
         formatCurrency={formatCurrency}
@@ -69,9 +71,18 @@ describe("ServicesTableCard", () => {
     expect(screen.getByText("₺15.000")).toBeInTheDocument();
     expect(screen.getByText("₺1.200")).toBeInTheDocument();
 
-    expect(screen.getByText("Cost total")).toBeInTheDocument();
-    expect(screen.getByText("₺4.000")).toBeInTheDocument();
-    expect(screen.getByText("₺17.400")).toBeInTheDocument();
+    const costMetric = screen.getByText("Cost total").closest("div");
+    expect(costMetric).toHaveTextContent("₺4.000");
+
+    const priceMetric = screen.getByText("Price total").closest("div");
+    expect(priceMetric).toHaveTextContent("₺17.400");
+
+    const vatMetric = screen.getByText("VAT total").closest("div");
+    expect(vatMetric).toHaveTextContent("₺2.400");
+
+    const totalMetric = screen.getByText("Total").closest("div");
+    expect(totalMetric).toHaveTextContent("₺19.800");
+
     const marginValue = screen.getByText("₺13.400");
     expect(marginValue.parentElement).toHaveClass("text-emerald-600");
   });

@@ -13,6 +13,7 @@ export interface PackageCreationBasics {
 }
 
 export type PackageLineItemType = "existing" | "custom";
+export type PackageVatMode = "inclusive" | "exclusive";
 
 export interface PackageCreationLineItem {
   id: string;
@@ -24,6 +25,8 @@ export interface PackageCreationLineItem {
   unitPrice?: number | null;
   vendorName?: string | null;
   source?: "catalog" | "adhoc";
+  vatRate?: number | null;
+  vatMode?: PackageVatMode;
 }
 
 export interface PackageCreationServicesState {

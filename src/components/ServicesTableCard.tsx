@@ -13,6 +13,8 @@ export interface ServicesTableRow {
 export interface ServicesTableTotals {
   cost?: number | null;
   price?: number | null;
+  vat?: number | null;
+  total?: number | null;
   margin?: number | null;
 }
 
@@ -25,9 +27,11 @@ export interface ServicesTableLabels {
     lineTotal: string;
   };
   totals?: {
-    cost: string;
-    price: string;
-    margin: string;
+    cost?: string;
+    price?: string;
+    vat?: string;
+    total?: string;
+    margin?: string;
   };
   customTag?: string;
   customVendorFallback: string;
@@ -56,10 +60,9 @@ export function ServicesTableCard({
 
   const costLabel = totals?.cost ?? null;
   const priceLabel = totals?.price ?? null;
+  const vatLabel = totals?.vat ?? null;
+  const totalLabel = totals?.total ?? null;
   const marginValue = totals?.margin ?? null;
-
-  const marginTone =
-    marginValue === null ? "text-slate-900" : marginValue >= 0 ? "text-emerald-600" : "text-destructive";
 
   return (
     <div
@@ -113,27 +116,48 @@ export function ServicesTableCard({
       </div>
 
       {totals ? (
-        <div className="grid gap-3 border-t border-slate-100 bg-slate-50/80 p-4 text-sm sm:grid-cols-3">
-          {typeof costLabel === "number" ? (
+        <div className="grid gap-3 border-t border-slate-100 bg-slate-50/80 p-4 text-sm sm:grid-cols-2 md:grid-cols-4">
+          {typeof costLabel === "number" && labels.totals?.cost ? (
             <div className="font-medium text-slate-900">
               <span className="block text-xs uppercase tracking-wide text-muted-foreground">
-                {labels.totals?.cost}
+                {labels.totals.cost}
               </span>
               <span>{formatCurrency(costLabel)}</span>
             </div>
           ) : null}
-          {typeof priceLabel === "number" ? (
+          {typeof priceLabel === "number" && labels.totals?.price ? (
             <div className="font-medium text-slate-900">
               <span className="block text-xs uppercase tracking-wide text-muted-foreground">
-                {labels.totals?.price}
+                {labels.totals.price}
               </span>
               <span>{formatCurrency(priceLabel)}</span>
             </div>
           ) : null}
-          {marginValue !== null ? (
-            <div className={cn("font-semibold", marginTone)}>
+          {typeof vatLabel === "number" && labels.totals?.vat ? (
+            <div className="font-medium text-slate-900">
+              <span className="block text-xs uppercase tracking-wide text-muted-foreground">
+                {labels.totals.vat}
+              </span>
+              <span>{formatCurrency(vatLabel)}</span>
+            </div>
+          ) : null}
+          {typeof totalLabel === "number" && labels.totals?.total ? (
+            <div className="font-medium text-slate-900">
+              <span className="block text-xs uppercase tracking-wide text-muted-foreground">
+                {labels.totals.total}
+              </span>
+              <span>{formatCurrency(totalLabel)}</span>
+            </div>
+          ) : null}
+          {marginValue !== null && labels.totals?.margin ? (
+            <div
+              className={cn(
+                "font-semibold",
+                marginValue >= 0 ? "text-emerald-600" : "text-destructive"
+              )}
+            >
               <span className="block text-xs uppercase tracking-wide text-muted-foreground text-slate-600">
-                {labels.totals?.margin}
+                {labels.totals.margin}
               </span>
               <span>{formatCurrency(marginValue)}</span>
             </div>

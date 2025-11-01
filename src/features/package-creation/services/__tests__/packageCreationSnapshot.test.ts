@@ -1,8 +1,10 @@
 import {
   buildPackageHydrationFromRecord,
   buildPackageUpdatePayload,
+  preparePackagePersistence,
 } from "../packageCreationSnapshot";
 import type { Database } from "@/integrations/supabase/types";
+import type { PackageCreationState } from "../../types";
 
 type PackageRow = Database["public"]["Tables"]["packages"]["Row"];
 
@@ -37,6 +39,8 @@ const baseRecord = (): PackageRow => ({
       unitPrice: 1800,
       vendorName: "Internal",
       source: "catalog",
+      vatRate: 18,
+      vatMode: "inclusive",
     },
     {
       id: "line-2",
@@ -46,6 +50,8 @@ const baseRecord = (): PackageRow => ({
       unitCost: 200,
       unitPrice: 500,
       vendorName: "Freelancer",
+      vatRate: null,
+      vatMode: "exclusive",
     },
   ],
   name: "Golden Wedding",
@@ -82,6 +88,8 @@ describe("buildPackageHydrationFromRecord", () => {
       unitPrice: 1800,
       vendorName: "Internal",
       source: "catalog",
+      vatRate: 18,
+      vatMode: "inclusive",
     });
 
     expect(hydration.delivery).toMatchObject({
@@ -131,8 +139,10 @@ describe("buildPackageHydrationFromRecord", () => {
           ...item,
           unitCost: item.unitCost ?? null,
           unitPrice: item.unitPrice ?? null,
+          vatRate: item.vatRate ?? null,
+          vatMode: item.vatMode ?? "exclusive",
         })),
-        totals: { cost: 0, price: 0 },
+        totals: { cost: 0, price: 0, vat: 0, total: 0 },
         defaultAddOnIds: [],
         itemCount: hydration.services.items.length,
         totalQuantity: hydration.services.items.reduce((acc, item) => acc + item.quantity, 0),
@@ -155,6 +165,8 @@ describe("buildPackageHydrationFromRecord", () => {
         basePrice: Number(hydration.pricing.basePrice),
         servicesCostTotal: 0,
         servicesPriceTotal: 0,
+        servicesVatTotal: 0,
+        servicesGrossTotal: 0,
         servicesMargin: 0,
         subtotal: Number(hydration.pricing.basePrice),
         clientTotal: record.client_total,
@@ -192,5 +204,82 @@ describe("buildPackageHydrationFromRecord", () => {
         depositValue: Number(hydration.pricing.depositValue),
       })
     );
+
+    const lineItems = updatePayload.line_items as unknown[];
+    expect(Array.isArray(lineItems)).toBe(true);
+    expect(lineItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          serviceId: "svc-1",
+          quantity: 1,
+          unitPrice: 1800,
+          vatMode: "inclusive",
+          vatRate: 18,
+        }),
+        expect.objectContaining({
+          name: "Drone footage",
+          unitPrice: 500,
+          vatMode: "exclusive",
+          vatRate: null,
+        }),
+      ])
+    );
+  });
+
+  it("builds insert payloads with enriched line item metadata", () => {
+    const record = baseRecord();
+    const hydration = buildPackageHydrationFromRecord(record);
+
+    const state: PackageCreationState = {
+      basics: hydration.basics,
+      services: hydration.services,
+      delivery: hydration.delivery,
+      pricing: hydration.pricing,
+      meta: {
+        currentStep: "summary",
+        isDirty: false,
+        mode: "create",
+      },
+    };
+
+    const { insert, snapshot } = preparePackagePersistence(state, {
+      userId: "user-1",
+      organizationId: record.organization_id ?? "org-1",
+    });
+
+    expect(snapshot.services.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          serviceId: "svc-1",
+          quantity: 1,
+          unitPrice: 1800,
+          vatMode: "inclusive",
+          vatRate: 18,
+        }),
+      ])
+    );
+
+    const persisted = insert.line_items as unknown[];
+    expect(Array.isArray(persisted)).toBe(true);
+    const baseLineItem = persisted.find(
+      (item) => (item as any).serviceId === "svc-1"
+    ) as Record<string, unknown>;
+    expect(baseLineItem).toMatchObject({
+      serviceId: "svc-1",
+      quantity: 1,
+      unitPrice: 1800,
+      vatMode: "inclusive",
+      vatRate: 18,
+    });
+
+    const customLineItem = persisted.find(
+      (item) => (item as any).type === "custom"
+    ) as Record<string, unknown>;
+    expect(customLineItem).toMatchObject({
+      name: "Drone footage",
+      unitPrice: 500,
+      vatMode: "exclusive",
+    });
+    expect(customLineItem).toHaveProperty("vatRate", null);
   });
 });

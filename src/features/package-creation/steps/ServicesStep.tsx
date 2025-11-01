@@ -17,6 +17,7 @@ import { usePackageCreationActions } from "../hooks/usePackageCreationActions";
 import type { PackageCreationLineItem } from "../types";
 import { IconActionButton } from "@/components/ui/icon-action-button";
 import { cn } from "@/lib/utils";
+import { calculateLineItemPricing } from "../utils/lineItemPricing";
 
 interface ServiceRecord {
   id: string;
@@ -121,12 +122,14 @@ export const ServicesStep = () => {
       (acc, item) => {
         const quantity = Math.max(1, item.quantity ?? 1);
         const unitCost = Number(item.unitCost ?? 0);
-        const unitPrice = Number(item.unitPrice ?? 0);
+        const pricing = calculateLineItemPricing(item);
         acc.cost += unitCost * quantity;
-        acc.price += unitPrice * quantity;
+        acc.price += pricing.net;
+        acc.vat += pricing.vat;
+        acc.total += pricing.gross;
         return acc;
       },
-      { cost: 0, price: 0 }
+      { cost: 0, price: 0, vat: 0, total: 0 }
     );
   }, [state.services.items]);
 
@@ -155,6 +158,8 @@ export const ServicesStep = () => {
         unitPrice: service.unitPrice,
         vendorName: service.vendor_name ?? null,
         source: "catalog",
+        vatRate: null,
+        vatMode: "exclusive",
       },
       ...customItems,
     ];
@@ -290,9 +295,11 @@ export const ServicesStep = () => {
         lineTotal: t("summaryView.services.columns.lineTotal"),
       },
       totals: {
-        cost: t("summaryView.services.totals.cost"),
-        price: t("summaryView.services.totals.price"),
-        margin: t("summaryView.services.totals.margin"),
+        cost: t("summaryView.services.totals.cost", { defaultValue: "Cost total" }),
+        price: t("summaryView.services.totals.price", { defaultValue: "Price total" }),
+        vat: t("summaryView.services.totals.vat", { defaultValue: "VAT total" }),
+        total: t("summaryView.services.totals.total", { defaultValue: "Total" }),
+        margin: t("summaryView.services.totals.margin", { defaultValue: "Margin" }),
       },
       customTag: t("summaryView.services.customTag"),
       customVendorFallback: t("summaryView.services.customVendorFallback"),
@@ -305,8 +312,7 @@ export const ServicesStep = () => {
       const quantity = Math.max(1, item.quantity ?? 1);
       const unitPriceValue =
         typeof item.unitPrice === "number" && Number.isFinite(item.unitPrice) ? item.unitPrice : null;
-      const lineTotal =
-        unitPriceValue === null ? null : Math.round(unitPriceValue * quantity * 100) / 100;
+      const pricing = calculateLineItemPricing(item);
       const service =
         item.type === "existing" && item.serviceId ? serviceMap.get(item.serviceId) : null;
 
@@ -325,7 +331,7 @@ export const ServicesStep = () => {
         vendor,
         quantity,
         unitPrice: unitPriceValue,
-        lineTotal,
+        lineTotal: Math.round(pricing.gross * 100) / 100,
         isCustom: item.type === "custom",
       };
     });
@@ -392,6 +398,8 @@ export const ServicesStep = () => {
       unitPrice: parsedPrice,
       vendorName: null,
       source: "adhoc",
+      vatRate: null,
+      vatMode: "exclusive",
     };
 
     updateServices({
@@ -653,6 +661,18 @@ export const ServicesStep = () => {
               <span className="font-medium text-slate-900">{formatCurrency(totals.price)}</span>
             </div>
             <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">
+                {t("steps.services.summary.vat", { defaultValue: "VAT" })}
+              </span>
+              <span className="font-medium text-slate-900">{formatCurrency(totals.vat)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">
+                {t("steps.services.summary.gross", { defaultValue: "Total" })}
+              </span>
+              <span className="font-medium text-slate-900">{formatCurrency(totals.total)}</span>
+            </div>
+            <div className="flex items-center justify-between">
               <span className="text-muted-foreground">{t("steps.services.summary.margin")}</span>
               <span className={cn("font-medium transition-colors duration-200", margin >= 0 ? "text-emerald-600" : "text-destructive")}>
                 {formatCurrency(margin)}
@@ -685,7 +705,7 @@ export const ServicesStep = () => {
         </p>
         <ServicesTableCard
           rows={summaryTableRows}
-          totals={{ cost: totals.cost, price: totals.price, margin }}
+          totals={{ cost: totals.cost, price: totals.price, vat: totals.vat, total: totals.total, margin }}
           labels={serviceTableLabels}
           emptyMessage={t("steps.services.summary.empty")}
           formatCurrency={formatCurrency}

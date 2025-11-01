@@ -5,6 +5,8 @@ import { ServicesTableCard, type ServicesTableRow } from "@/components/ServicesT
 import { cn } from "@/lib/utils";
 import { useProjectTypes } from "@/hooks/useOrganizationData";
 import { usePackageCreationSnapshot } from "../hooks/usePackageCreationSnapshot";
+import { calculateLineItemPricing } from "../utils/lineItemPricing";
+import type { PackageCreationLineItem } from "../types";
 
 const formatCurrency = (value: number | null | undefined) => {
   if (value === null || value === undefined || Number.isNaN(value)) {
@@ -148,7 +150,17 @@ export const SummaryStep = () => {
 
   const servicesRows: ServicesTableRow[] = snapshot.services.items.map((item) => {
     const unitPrice = item.unitPrice ?? null;
-    const lineTotal = unitPrice === null ? null : roundToTwo(unitPrice * item.quantity);
+    const pricing = calculateLineItemPricing({
+      id: item.id,
+      type: item.type,
+      name: item.name,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      unitCost: item.unitCost,
+      vatRate: item.vatRate ?? null,
+      vatMode: item.vatMode ?? "exclusive",
+      vendorName: item.vendorName ?? null,
+    } as PackageCreationLineItem);
 
     return {
       id: item.id,
@@ -157,7 +169,7 @@ export const SummaryStep = () => {
       vendor: item.vendorName,
       isCustom: item.type === "custom",
       unitPrice,
-      lineTotal,
+      lineTotal: roundToTwo(pricing.gross),
     };
   });
 
@@ -210,6 +222,8 @@ export const SummaryStep = () => {
           totals={{
             cost: snapshot.services.totals.cost,
             price: snapshot.services.totals.price,
+            vat: snapshot.services.totals.vat,
+            total: snapshot.services.totals.total,
             margin: snapshot.pricing.servicesMargin,
           }}
           labels={{
@@ -270,6 +284,14 @@ export const SummaryStep = () => {
             label={t("summaryView.pricing.servicesTotal")}
             value={formatCurrency(snapshot.pricing.servicesPriceTotal)}
             helper={t("summaryView.pricing.servicesTotalHelper")}
+          />
+          <SummaryListItem
+            label={t("summaryView.pricing.servicesVatTotal", { defaultValue: "VAT total" })}
+            value={formatCurrency(snapshot.pricing.servicesVatTotal)}
+          />
+          <SummaryListItem
+            label={t("summaryView.pricing.servicesGrossTotal", { defaultValue: "Total (incl. VAT)" })}
+            value={formatCurrency(snapshot.pricing.servicesGrossTotal)}
           />
           {!includeAddOnsInPrice ? (
             <SummaryListItem

@@ -98,6 +98,8 @@
         "title": "Paket özeti",
         "cost": "Toplam maliyet",
         "price": "Toplam satış",
+        "vat": "KDV",
+        "gross": "Toplam (KDV dahil)",
         "margin": "Tahmini kâr",
         "empty": "Henüz hizmet eklenmedi.",
         "selectedCount": "{{count}} hizmet seçildi",
@@ -320,6 +322,8 @@
       "totals": {
         "cost": "Maliyet toplamı",
         "price": "Satış toplamı",
+        "vat": "KDV toplamı",
+        "total": "Toplam (KDV dahil)",
         "margin": "Kâr"
       }
     },
@@ -354,6 +358,8 @@
       "packagePrice": "Paket fiyatı",
       "servicesTotal": "Seçili hizmetlerin satış toplamı",
       "servicesTotalHelper": "Bu tutar müşteriye gösterilmez, iç takip içindir.",
+      "servicesVatTotal": "KDV toplamı",
+      "servicesGrossTotal": "Toplam (KDV dahil)",
       "addOnsClientTotal": "Paket + hizmetler toplamı",
       "addOnsClientTotalHelper": "Hizmetleri ayrıca fiyatlandırmayı seçersen müşteriye görünen toplam.",
       "costTotal": "Maliyet toplamı",

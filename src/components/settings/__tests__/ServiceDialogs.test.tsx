@@ -239,6 +239,8 @@ describe("ServiceDialogs", () => {
 
     await waitFor(() => expect(servicesTable.selectMock).toHaveBeenCalled());
 
+    expect(screen.queryByText("Albums")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText("Products & deliverables"));
     fireEvent.click(screen.getByText("Albums"));
 
     const nameInput = await screen.findByLabelText(/Service name/i);

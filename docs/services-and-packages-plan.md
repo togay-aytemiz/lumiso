@@ -37,10 +37,11 @@
 - **Tech tasks**
   - ✅ Hooks/tests updated to return the new columns.
   - ⏳ Audit downstream consumers (packages, project flows, reports) to ensure they tolerate the richer payload.
-  - 🚧 Normalize KDV math helpers (`calculateVatPortion`, `applyVat`) so both settings and package builders share a single implementation. Ensure inclusive prices surface the tax amount separately without altering stored base price.
+  - ✅ Normalize KDV math helpers (`calculateVatPortion`, `applyVat`) so both settings and package builders share a single implementation. Landed in `src/lib/accounting/vat.ts` and covered by unit tests/power the package wizard snapshot math.
+  - 🚧 Adopt the shared VAT helpers inside service dialogs/settings once the new schema fields exist so the settings UI and package wizard stay in sync.
   - 🚧 Extend `useOrganization` payload with `taxProfile` (entity type, names, identifiers, default `vatRate`, `vatMode`) sourced from the new settings screen. Ensure service/package forms hydrate from it while allowing per-item overrides.
 - **Output**
-  - Catalog UI differentiates staffing vs deliverables; backfill + consumer audit remain before closing the phase.
+  - Catalog UI differentiates staffing vs deliverables, and VAT helpers are ready for reuse; service dialog VAT inputs plus backfill/consumer audit remain before closing the phase.
 
 ## Phase 2 — Bundle Authoring for Packages
 - **Catalog integration**
@@ -84,6 +85,7 @@
 ## Tracking & Follow-ups
 - 🚧 Run and verify the new backfill migration (`supabase/migrations/20251107120000_services_backfill_types.sql`) before enabling the segmented UI for all orgs. *(pending QA/deployment)*
 - 🚧 Roll out the new `packages.line_items` column (`supabase/migrations/20251107133000_packages_line_items.sql`) and confirm seed helpers/backfill behave as expected in staging. *(pending QA/deployment)*
+- 🚧 QA the new enrichment pass (`supabase/migrations/20251108134500_packages_line_items_enrich.sql`) that backfills `unitPrice`/VAT metadata onto existing package line items so staging totals match the wizard.
 - Audit package and wizard consumers to ensure service loading remains stable, then plan their migrations onto the line-item editor. *(pending)*
 - Monitor Supabase queries for any places that still assume a flat list of services (e.g. reports) and update them to read the new columns. *(pending)*
 

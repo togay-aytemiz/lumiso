@@ -139,14 +139,14 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [formData, setFormData] = useState<ServiceFormState>(() => createFormState(initialType));
-  const [selectedType, setSelectedType] = useState<ServiceType | null>(() => initialType);
+  const [selectedType, setSelectedType] = useState<ServiceType | null>(null);
 
   useEffect(() => {
     if (open) {
       setFormData(createFormState(initialType));
       setShowNewCategoryInput(false);
       setNewCategoryName("");
-      setSelectedType(initialType);
+      setSelectedType(null);
     }
   }, [open, initialType]);
 
@@ -179,12 +179,17 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
     setNewCategoryName("");
   }, []);
 
-  const activeType: ServiceType = (selectedType ?? formData.service_type ?? initialType) as ServiceType;
-  const defaultCategories = useMemo(() => DEFAULT_CATEGORIES[activeType], [activeType]);
-  const customCategories = useMemo(
-    () => (categoriesByType[activeType] ?? []).filter((category) => !defaultCategories.includes(category)),
-    [categoriesByType, activeType, defaultCategories]
+  const defaultCategories = useMemo(
+    () => (selectedType ? DEFAULT_CATEGORIES[selectedType] : []),
+    [selectedType]
   );
+  const customCategories = useMemo(() => {
+    if (!selectedType) {
+      return [];
+    }
+    const categories = categoriesByType[selectedType] ?? [];
+    return categories.filter((category) => !DEFAULT_CATEGORIES[selectedType].includes(category));
+  }, [categoriesByType, selectedType]);
 
   const hasSelectedType = selectedType !== null;
   const hasSelectedCategory = hasSelectedType && Boolean(formData.category.trim());
@@ -253,7 +258,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
       });
 
       setFormData(createFormState(initialType));
-      setSelectedType(initialType);
+      setSelectedType(null);
       setShowNewCategoryInput(false);
       setNewCategoryName("");
       onOpenChange(false);
@@ -291,7 +296,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
       setFormData(createFormState(initialType));
       setShowNewCategoryInput(false);
       setNewCategoryName("");
-      setSelectedType(initialType);
+      setSelectedType(null);
       onOpenChange(false);
     },
     onSaveAndExit: handleSubmit,
@@ -303,7 +308,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
       setFormData(createFormState(initialType));
       setShowNewCategoryInput(false);
       setNewCategoryName("");
-      setSelectedType(initialType);
+      setSelectedType(null);
       onOpenChange(false);
     }
   };

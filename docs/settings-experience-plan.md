@@ -46,7 +46,9 @@ Settings (src/pages/settings)
 │   ├── Packages (pricing cards + onboarding tutorial)
 │   └── Services Catalog (category cards)
 ├── Contracts (placeholder copy)
-├── Billing   (placeholder copy)
+├── Billing
+│   ├── Tax & Billing Profile (organization defaults for KDV + invoice identity)
+│   └── Payment Methods (future state / integrations)
 └── Danger Zone (destructive actions, password confirmation)
 
 Cross-cutting components:
@@ -143,6 +145,7 @@ Cross-cutting components:
 ### Phase 2 — Page Wave A (Foundation)
 - `[ ]` Profile: migrate to new sections, refine avatar/work hours layout, hook to shared uploader.
 - `[ ]` General: apply form + collection sections, add explicit save for branding/regional, unify social channels card, and wire anchor nav jump links per section.
+- `[ ]` Billing › Tax & Billing Profile: design the KDV + invoice identity form using `SettingsFormSection`, surface organization defaults (legal entity, company name, tax office, VKN/TCKN, billing address, default KDV mode + rate, e-Fatura readiness toggle), and provide inline helper text explaining how values cascade into services/packages and future invoicing.
 - `[ ]` Notifications: convert toggles to `SettingsToggleSection`, throttle fetches, add `Test` button alignment.
 - `[ ]` Ship translation updates and ensure tutorials overlay the refreshed layout.
 - `[ ]` Routing & breakpoints: route `/settings` to the mobile dashboard below `md`, ensure back navigation + compact spacing tokens apply across Profile/General/Notifications.
@@ -153,6 +156,13 @@ Cross-cutting components:
 - `[ ]` Services: standardize cards for session types/packages/services; consolidate onboarding surfaces.
 - `[ ]` Document data fetch policies (manual refresh vs. auto).
 - `[ ]` Extend anchor nav mapping and mobile back pattern to collection-heavy pages (Leads/Projects/Services) with sensible section groupings.
+
+### Phase 3.5 — Compliance & Billing Foundations
+- `[ ]` Persist organization tax profile via `useOrganizationSettings` with optimistic save + dirty state pill; ensure partial updates do not clear existing tax identifiers.
+- `[ ]` Add validation masks for TCKN/VKN (11-digit national ID vs 10-digit tax number) and guard rails for numeric KDV ranges (0–99.99%).
+- `[ ]` Surface audit log events (`settings_tax_profile_updated`) so finance tooling can track changes before e-Fatura integrations.
+- `[ ]` Store structured invoice address (`street`, `district`, `city`, `country`, `postalCode`) ready for electronic invoice payloads.
+- `[ ]` Document API contracts for downstream billing services (e.g., `POST /billing/profile/snapshot`) and expose a "Download billing profile" action for manual compliance exports.
 
 ### Phase 4 — Peripheral Pages & Cleanup
 - `[ ]` Danger Zone: apply danger block pattern, tighten copy, confirm double-confirm flow.
@@ -178,7 +188,7 @@ Cross-cutting components:
 | Projects | Statuses / Types / Session Statuses | [ ] | Drag reorder + inline defaults | Shared hook for status entities | Not Started | Do project status/type templates need to stay synced across teams or can users diverge freely? |
 | Services | Session Types / Packages / Services | [ ] | Multi-step onboarding alignment | Consolidate queries, lazy-load heavy dialogs | Not Started | Are packages expected to support multi-currency pricing in this release or remain single-currency? |
 | Contracts | Placeholder | [ ] | N/A (display card) | Static copy | Not Started | Should the placeholder point to upcoming in-product templates or route to external contract resources until builder ships? |
-| Billing | Placeholder | [ ] | N/A (display card) | Static copy | Not Started | Do we expose plan/usage details here now, or defer to finance portal messaging until billing revamp? |
+| Billing | Tax & Billing Profile / Payment Methods | [ ] | Explicit save with helper modals + audit log surface | Persist `taxProfile` jsonb, prepare payment method vault stub | Not Started | Which e-Fatura provider (if any) are we targeting first, and do we need multi-address support for branches? |
 | Danger Zone | Delete org | [ ] | Double confirm + password field | No auto-refetch | Not Started | Does org deletion require a grace period or approval workflow beyond the password confirmation flow? |
 
 > Update the table as work lands (check items, add Notes column if needed).

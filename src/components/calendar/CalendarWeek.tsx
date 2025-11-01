@@ -691,9 +691,11 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                         const safeColumnCount = columnCount > 0 ? columnCount : 1;
                         const widthPercent = 100 / safeColumnCount;
                         const leftPercent = widthPercent * columnIndex;
-                        const gutter = safeColumnCount > 1 ? 1 : 0;
-                        const leftValue = `calc(${leftPercent.toFixed(3)}% + ${gutter}px)`;
-                        const widthValue = `calc(${widthPercent.toFixed(3)}% - ${gutter * 2}px)`;
+                        const isSingleColumn = safeColumnCount === 1;
+                        const horizontalInset = isSingleColumn ? 4 : Math.min(2, widthPercent / 4);
+                        const insetValue = horizontalInset.toFixed(3);
+                        const leftValue = `calc(${leftPercent.toFixed(3)}% + ${insetValue}px)`;
+                        const widthValue = `calc(${widthPercent.toFixed(3)}% - ${(horizontalInset * 2).toFixed(3)}px)`;
                         const tooltipDetails = [
                           projectName || t('calendar.labels.session'),
                           leadName,
@@ -705,11 +707,15 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                           <button
                             type="button"
                             key={session.id}
-                            className="absolute z-20 pointer-events-auto overflow-hidden rounded-xl border border-emerald-300/80 bg-emerald-50 px-2 py-2 text-left text-[11px] text-emerald-900 shadow-[0_16px_28px_rgba(15,118,110,0.08)] transition-all hover:border-emerald-400 hover:bg-emerald-100/90 hover:shadow-[0_20px_34px_rgba(15,118,110,0.15)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
+                            className="absolute z-20 pointer-events-auto overflow-hidden rounded-xl border border-emerald-300/80 bg-emerald-50 py-2 pl-3 pr-2 text-left text-[11px] text-emerald-900 shadow-[0_16px_28px_rgba(15,118,110,0.08)] transition-all hover:border-emerald-400 hover:bg-emerald-100/90 hover:shadow-[0_20px_34px_rgba(15,118,110,0.15)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
                             style={{ top, height, left: leftValue, width: widthValue }}
                             onClick={() => onSessionClick(session)}
                             aria-label={ariaLabel}
                           >
+                            <span
+                              aria-hidden="true"
+                              className="pointer-events-none absolute bottom-1 left-0 top-1 w-[3px] rounded-full bg-emerald-400 shadow-[0_0_0_1px_rgba(16,185,129,0.35)]"
+                            />
                             <div className="space-y-1 leading-snug">
                               <p className="font-medium line-clamp-3">
                                 {projectName || t('calendar.labels.session')}
@@ -733,9 +739,11 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                         const safeColumnCount = columnCount > 0 ? columnCount : 1;
                         const widthPercent = 100 / safeColumnCount;
                         const leftPercent = widthPercent * columnIndex;
-                        const gutter = safeColumnCount > 1 ? 1 : 0;
-                        const leftValue = `calc(${leftPercent.toFixed(3)}% + ${gutter}px)`;
-                        const widthValue = `calc(${widthPercent.toFixed(3)}% - ${gutter * 2}px)`;
+                        const isSingleColumn = safeColumnCount === 1;
+                        const horizontalInset = isSingleColumn ? 4 : Math.min(2, widthPercent / 4);
+                        const insetValue = horizontalInset.toFixed(3);
+                        const leftValue = `calc(${leftPercent.toFixed(3)}% + ${insetValue}px)`;
+                        const widthValue = `calc(${widthPercent.toFixed(3)}% - ${(horizontalInset * 2).toFixed(3)}px)`;
                         const ariaLabel = [activity.content, projectName || leadName, startLabel].filter(Boolean).join(' • ');
 
                         return (
@@ -773,7 +781,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
           {currentTimeIndicator && (
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute left-0 right-0"
+              className="pointer-events-none absolute left-0 right-0 z-50"
               style={{ top: `${currentTimeIndicator.offset}px` }}
             >
               <div
@@ -787,7 +795,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                 </div>
                 <div className="col-span-7 relative flex items-center">
                   <span className="absolute -left-1 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-emerald-500 shadow-sm" />
-                  <span className="h-px w-full bg-emerald-500" />
+                  <span className="h-0.5 w-full rounded-full bg-emerald-500 shadow-[0_0_0_1px_rgba(16,185,129,0.2)]" />
                 </div>
               </div>
             </div>

@@ -74,6 +74,27 @@
         "emptyCta": "Create services",
         "error": "We couldn’t load services."
       },
+      "inventory": {
+        "add": "Add",
+        "selected": "{{count}}× in bundle",
+        "uncategorized": "Other",
+        "inactive": "Inactive",
+        "empty": "No services in your catalog yet. Create services to add them here.",
+        "types": {
+          "coverage": {
+            "title": "Crew services",
+            "subtitle": "People-based coverage like photographers or videographers"
+          },
+          "deliverable": {
+            "title": "Deliverables",
+            "subtitle": "Albums, prints and other client handoffs"
+          },
+          "unknown": {
+            "title": "Other services",
+            "subtitle": "Items without a service type yet"
+          }
+        }
+      },
       "summary": {
         "title": "Bundle summary",
         "cost": "Total cost",
@@ -81,7 +102,9 @@
         "margin": "Estimated margin",
         "empty": "No services added yet.",
         "selectedCount": "{{count}} service selected",
-        "selectedCount_plural": "{{count}} services selected"
+        "selectedCount_plural": "{{count}} services selected",
+        "listHeading": "Currently included",
+        "typeBreakdown": "By service type"
       },
       "list": {
         "quantity": "Qty",
@@ -101,6 +124,9 @@
         "namePlaceholder": "e.g., Drone footage",
         "pricePlaceholder": "0.00",
         "costPlaceholder": "0.00",
+        "managerTitle": "Custom services",
+        "managerDescription": "Add ad-hoc services that aren’t part of your catalog yet.",
+        "emptyState": "No custom services yet.",
         "errors": {
           "name": "Name is required.",
           "price": "Enter a valid price.",

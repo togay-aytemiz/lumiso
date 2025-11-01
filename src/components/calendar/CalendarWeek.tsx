@@ -52,6 +52,52 @@ const minutesToTimeString = (minutes: number) => {
   return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
 };
 
+interface PositionedLayout<T> {
+  entity: T;
+  top: number;
+  height: number;
+  startMinutes: number;
+  endMinutes: number;
+  columnIndex: number;
+  columnCount: number;
+}
+
+function assignColumnLayout<T>(items: PositionedLayout<T>[]) {
+  const sorted = [...items].sort((a, b) => {
+    if (a.startMinutes === b.startMinutes) {
+      return a.endMinutes - b.endMinutes;
+    }
+    return a.startMinutes - b.startMinutes;
+  });
+
+  const active: Array<{ columnIndex: number; endMinutes: number; item: PositionedLayout<T> }> = [];
+
+  sorted.forEach(item => {
+    for (let i = active.length - 1; i >= 0; i -= 1) {
+      if (active[i].endMinutes <= item.startMinutes) {
+        active.splice(i, 1);
+      }
+    }
+
+    const usedColumns = new Set(active.map(entry => entry.columnIndex));
+    let columnIndex = 0;
+    while (usedColumns.has(columnIndex)) {
+      columnIndex += 1;
+    }
+
+    item.columnIndex = columnIndex;
+    item.columnCount = Math.max(item.columnCount, active.length + 1);
+
+    active.push({ columnIndex, endMinutes: item.endMinutes, item });
+    active.sort((a, b) => a.endMinutes - b.endMinutes);
+
+    const overlapCount = active.length;
+    active.forEach(entry => {
+      entry.item.columnCount = Math.max(entry.item.columnCount, overlapCount);
+    });
+  });
+}
+
 export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   currentDate,
   sessions,
@@ -76,6 +122,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   const autoScrollRef = useRef(false);
   const [slotHeight, setSlotHeight] = useState(0);
   const [currentTime, setCurrentTime] = useState(() => new Date());
+  const [scrollbarPadding, setScrollbarPadding] = useState(0);
   const effectiveSlotHeight = slotHeight || 32; // fallback to base cell height until measured
 
   const weekDays = useMemo(() => {
@@ -140,6 +187,35 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   useEffect(() => {
     autoScrollRef.current = false;
   }, [currentDateTimestamp, timeSlots.length, isMobile]);
+
+  useEffect(() => {
+    if (isMobile) return;
+
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const updatePadding = () => {
+      const target = scrollContainerRef.current;
+      if (!target) return;
+      const offsetWidth = target.offsetWidth;
+      const clientWidth = target.clientWidth;
+      const nextPadding = Math.max(0, offsetWidth - clientWidth);
+      setScrollbarPadding(current => (current !== nextPadding ? nextPadding : current));
+    };
+
+    updatePadding();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(() => updatePadding());
+      observer.observe(container);
+      return () => observer.disconnect();
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', updatePadding);
+      return () => window.removeEventListener('resize', updatePadding);
+    }
+  }, [isMobile, timeSlots.length]);
 
   const currentTimeIndicator = useMemo(() => {
     if (isMobile || timeSlots.length === 0) {
@@ -256,16 +332,10 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
     return hourPart * 60 + minutePart;
   };
 
-  interface LayoutItem<T> {
-    entity: T;
-    top: number;
-    height: number;
-    startMinutes: number;
-    endMinutes: number;
-  }
-
   const eventLayoutsByDay = useMemo(() => {
-    if (!timeSlots.length) return new Map<string, { sessions: Array<LayoutItem<Session>>; activities: Array<LayoutItem<Activity>> }>();
+    if (!timeSlots.length) {
+      return new Map<string, { sessions: Array<PositionedLayout<Session>>; activities: Array<PositionedLayout<Activity>> }>();
+    }
 
     const minutesToPixels = (minutes: number) => (minutes / 30) * effectiveSlotHeight;
     const minVisualHeight = effectiveSlotHeight * 0.75;
@@ -274,8 +344,8 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
       const dayKey = format(day, 'yyyy-MM-dd');
       const dayEvents = getEventsForDate(day);
 
-      const sessionLayouts: Array<LayoutItem<Session>> = [];
-      const activityLayouts: Array<LayoutItem<Activity>> = [];
+      const sessionLayouts: Array<PositionedLayout<Session>> = [];
+      const activityLayouts: Array<PositionedLayout<Activity>> = [];
 
       dayEvents.sessions.forEach(session => {
         const startMinutes = parseTimeToMinutes(session.session_time);
@@ -300,7 +370,9 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
           top: minutesToPixels(topMinutes),
           height: Math.max(minVisualHeight, minutesToPixels(heightMinutes)),
           startMinutes: clampedStart,
-          endMinutes: clampedEnd
+          endMinutes: clampedEnd,
+          columnIndex: 0,
+          columnCount: 1
         });
       });
 
@@ -323,13 +395,18 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
           top: minutesToPixels(topMinutes),
           height: Math.max(minVisualHeight * 0.6, minutesToPixels(heightMinutes)),
           startMinutes: clampedStart,
-          endMinutes: clampedEnd
+          endMinutes: clampedEnd,
+          columnIndex: 0,
+          columnCount: 1
         });
       });
 
+      assignColumnLayout(sessionLayouts);
+      assignColumnLayout(activityLayouts);
+
       acc.set(dayKey, { sessions: sessionLayouts, activities: activityLayouts });
       return acc;
-    }, new Map<string, { sessions: Array<LayoutItem<Session>>; activities: Array<LayoutItem<Activity>> }>());
+    }, new Map<string, { sessions: Array<PositionedLayout<Session>>; activities: Array<PositionedLayout<Activity>> }>());
   }, [effectiveSlotHeight, getEventsForDate, rangeEndMinutes, rangeStartMinutes, timeSlots.length, weekDays]);
 
   // loading skeleton that uses the same grid template to avoid layout jump
@@ -507,6 +584,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
       <div
         className="grid grid-cols-[72px_repeat(7,minmax(0,1fr))] border-b border-slate-200/80 bg-slate-50/70 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+        style={{ paddingRight: scrollbarPadding }}
       >
         <div className="px-3 py-2 text-right border-r border-slate-200/70">
           {t('forms:sessionScheduling.weekly_preview_time_column', { defaultValue: 'Time' })}
@@ -605,11 +683,17 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                     style={{ height: gridHeight }}
                   >
                     {showSessions &&
-                      layoutSessions.map(({ entity: session, top, height, startMinutes, endMinutes }) => {
+                      layoutSessions.map(({ entity: session, top, height, startMinutes, endMinutes, columnCount, columnIndex }) => {
                         const leadName = leadsMap[session.lead_id]?.name || t('calendar.labels.lead');
                         const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
                         const startLabel = formatOrgTime(minutesToTimeString(startMinutes));
                         const endLabel = formatOrgTime(minutesToTimeString(endMinutes));
+                        const safeColumnCount = columnCount > 0 ? columnCount : 1;
+                        const widthPercent = 100 / safeColumnCount;
+                        const leftPercent = widthPercent * columnIndex;
+                        const gutter = safeColumnCount > 1 ? 1 : 0;
+                        const leftValue = `calc(${leftPercent.toFixed(3)}% + ${gutter}px)`;
+                        const widthValue = `calc(${widthPercent.toFixed(3)}% - ${gutter * 2}px)`;
                         const tooltipDetails = [
                           projectName || t('calendar.labels.session'),
                           leadName,
@@ -621,8 +705,8 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                           <button
                             type="button"
                             key={session.id}
-                            className="absolute left-1 right-1 z-20 pointer-events-auto overflow-hidden rounded-xl border border-emerald-300/80 bg-emerald-50 px-2 py-2 text-left text-[11px] text-emerald-900 shadow-[0_16px_28px_rgba(15,118,110,0.08)] transition-all hover:border-emerald-400 hover:bg-emerald-100/90 hover:shadow-[0_20px_34px_rgba(15,118,110,0.15)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
-                            style={{ top, height }}
+                            className="absolute z-20 pointer-events-auto overflow-hidden rounded-xl border border-emerald-300/80 bg-emerald-50 px-2 py-2 text-left text-[11px] text-emerald-900 shadow-[0_16px_28px_rgba(15,118,110,0.08)] transition-all hover:border-emerald-400 hover:bg-emerald-100/90 hover:shadow-[0_20px_34px_rgba(15,118,110,0.15)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
+                            style={{ top, height, left: leftValue, width: widthValue }}
                             onClick={() => onSessionClick(session)}
                             aria-label={ariaLabel}
                           >
@@ -642,10 +726,16 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                       })}
 
                     {showReminders &&
-                      layoutActivities.map(({ entity: activity, top, height, startMinutes }) => {
+                      layoutActivities.map(({ entity: activity, top, height, startMinutes, columnCount, columnIndex }) => {
                         const leadName = leadsMap[activity.lead_id]?.name || t('calendar.labels.lead');
                         const projectName = activity.project_id ? projectsMap[activity.project_id]?.name : undefined;
                         const startLabel = formatOrgTime(minutesToTimeString(startMinutes));
+                        const safeColumnCount = columnCount > 0 ? columnCount : 1;
+                        const widthPercent = 100 / safeColumnCount;
+                        const leftPercent = widthPercent * columnIndex;
+                        const gutter = safeColumnCount > 1 ? 1 : 0;
+                        const leftValue = `calc(${leftPercent.toFixed(3)}% + ${gutter}px)`;
+                        const widthValue = `calc(${widthPercent.toFixed(3)}% - ${gutter * 2}px)`;
                         const ariaLabel = [activity.content, projectName || leadName, startLabel].filter(Boolean).join(' • ');
 
                         return (
@@ -653,12 +743,12 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                             type="button"
                             key={activity.id}
                             className={cn(
-                              'absolute left-1 right-1 z-10 pointer-events-auto rounded-lg border px-2 py-2 text-left text-[11px] shadow-sm transition-colors',
+                              'absolute z-10 pointer-events-auto rounded-lg border px-2 py-2 text-left text-[11px] shadow-sm transition-colors',
                               activity.completed
                                 ? 'border-slate-200 bg-slate-100 text-slate-400 line-through'
                                 : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
                             )}
-                            style={{ top, height }}
+                            style={{ top, height, left: leftValue, width: widthValue }}
                             onClick={() => onActivityClick(activity)}
                             aria-label={ariaLabel}
                           >

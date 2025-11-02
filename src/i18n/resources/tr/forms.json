@@ -190,7 +190,6 @@
     "active": "Aktif",
     "inactive": "Pasif",
     "view_only": "Sadece Görüntüle",
-
     "price_inclusive_helper": "Hizmetler fiyata dahil · {{package}}",
     "price_addons_helper": "Paket: {{package}} · Eklentiler: {{addons}}",
     "price_addons_none": "Paket: {{package}} (hizmetler dahil)",
@@ -208,8 +207,7 @@
     "delete_consider_inactive": "Paketi tamamen silmek yerine pasif duruma getirip ileride tekrar etkinleştirebilirsiniz.",
     "mark_inactive": "Pasife al",
     "add_services": "Hizmet Ekle",
-    "no_addons_selected": "Ek hizmet seçilmedi",
-    "sessions_via_types": "Seanslar Seans Türleri bölümünden yönetilir"
+    "no_addons_selected": "Ek hizmet seçilmedi"
   },
   "package": {
     "add_title": "Paket Ekle",
@@ -295,7 +293,6 @@
     "cost": "Maliyet",
     "selling": "Satış",
     "view_only": "Sadece Görüntüle",
-
     "price_inclusive_helper": "Hizmetler fiyata dahil · {{package}}",
     "price_addons_helper": "Paket: {{package}} · Eklentiler: {{addons}}",
     "price_addons_none": "Paket: {{package}} (hizmetler dahil)",
@@ -331,7 +328,15 @@
     "empty": {
       "coverage": "Henüz kapsam hizmeti yok. Ekip veya personel seçenekleri ekleyin.",
       "deliverable": "Henüz teslimat hizmeti yok. Albüm, baskı veya dijital ürün ekleyin."
-    }
+    },
+    "vat_rate_label": "KDV %: {{rate}}",
+    "vat_amount_label": "KDV tutarı: {{amount}}",
+    "vat_mode": {
+      "inclusive": "KDV fiyata dahil",
+      "exclusive": "KDV ayrıca eklenecek"
+    },
+    "vat_label_compact": "KDV (%{{rate}})",
+    "total_price": "Toplam fiyat"
   },
   "project_stages": {
     "title": "Proje Aşamaları",
@@ -1157,8 +1162,8 @@
     "close": "Kapat",
     "more": "Daha Fazla",
     "overdueWarning": "Bu seans gecikmiş durumda",
-  "overdueDescription": "Lütfen seans durumunu güncelleyin veya gerekirse yeniden planlayın.",
-  "overdueReschedule": "Yeniden planla",
+    "overdueDescription": "Lütfen seans durumunu güncelleyin veya gerekirse yeniden planlayın.",
+    "overdueReschedule": "Yeniden planla",
     "dateTime": "Tarih ve Saat",
     "project": "Proje",
     "notes": "Notlar",
@@ -1313,6 +1318,23 @@
     "vendor_placeholder": "örn., Albüm baskı evi, çerçeve atölyesi, canvas üreticisi",
     "visibility_label": "Aktif",
     "visibility_help": "Kapattığınızda pasif olur, kayıtlarda kalır.",
+    "vat_section": {
+      "title": "KDV (Vergi)",
+      "description": "Bu hizmet paket ve projelerde kullanıldığında KDV uygulamasını kontrol edin.",
+      "rate_label": "KDV oranı (%)",
+      "mode_label": "KDV uygulaması",
+      "mode_inclusive": "Fiyata dahil",
+      "mode_exclusive": "Üstüne ekle",
+      "defaults_hint": "Varsayılan değerler Vergi ve Faturalama profilinden gelir.",
+      "toggle_label": "KDV ayarlarını düzenle",
+      "toggle_helper": "Bu hizmet için varsayılanları değiştirmek için açın.",
+      "summary": "KDV %{{rate}} • {{mode}}",
+      "summary_mode": {
+        "inclusive": "fiyata dahil",
+        "exclusive": "üstüne eklenecek"
+      },
+      "prices_include": "Fiyatlara KDV dahil"
+    },
     "default_categories_label": "Varsayılan kategoriler",
     "custom_categories_label": "Özel kategoriler",
     "new_category_placeholder": "Yeni kategori adı girin",
@@ -1327,7 +1349,9 @@
     "errors": {
       "name_required": "Hizmet adı zorunludur",
       "category_required": "Kategori zorunludur",
-      "delete_failed": "Hizmet silinirken hata oluştu"
+      "delete_failed": "Hizmet silinirken hata oluştu",
+      "vat_rate_invalid": "Geçerli bir KDV oranı girin.",
+      "vat_rate_range": "KDV oranı 0 ile 99,99 arasında olmalı."
     },
     "success": {
       "added": "Hizmet başarıyla eklendi",
@@ -1440,6 +1464,63 @@
     },
     "unsaved_changes": {
       "description": "Değişiklikleri iptal etmek istiyor musunuz?"
+    }
+  },
+  "taxBilling": {
+    "title": "Vergi ve Faturalama profili",
+    "description": "Fatura ve hizmet fiyatları için varsayılan değerleri ayarlayın.",
+    "unsaved": "Kaydedilmemiş değişiklikler",
+    "save": "Değişiklikleri kaydet",
+    "saving": "Kaydediliyor…",
+    "reset": "Sıfırla",
+    "legalEntity": {
+      "label": "Tüzel tür",
+      "individual": "Şahıs",
+      "individualHint": "Faturaları şahıs şirketi olarak kesiyorsanız seçin.",
+      "company": "Şirket",
+      "companyHint": "Limited/Anonim gibi kayıtlı şirketler için kullanın."
+    },
+    "companyName": {
+      "label": "Şirket veya fatura adı",
+      "placeholder": "Ticari unvan",
+      "helper": "Faturalarda ve müşterilerle paylaşılan alanlarda görünür."
+    },
+    "taxOffice": {
+      "label": "Vergi dairesi",
+      "placeholder": "örn., Kadıköy V.D."
+    },
+    "taxNumber": {
+      "label": "Vergi / T.C. Kimlik no",
+      "placeholder": "VKN veya TCKN girin",
+      "helper": "Faturalarda ve resmi belgelerde yer alır."
+    },
+    "billingAddress": {
+      "label": "Fatura adresi",
+      "placeholder": "Sokak, ilçe, şehir, ülke"
+    },
+    "defaultVatRate": {
+      "label": "Varsayılan KDV oranı",
+      "helper": "Yeni hizmet ve paketlere varsayılan olarak uygulanır."
+    },
+    "defaultVatMode": {
+      "label": "Varsayılan KDV uygulaması",
+      "inclusive": "Fiyata dahil",
+      "inclusiveHint": "Paket fiyatları KDV dahil kabul edilir.",
+      "exclusive": "KDV üstüne eklensin",
+      "exclusiveHint": "KDV satır toplamlarına ayrıca eklenir."
+    },
+    "pricesIncludeVat": {
+      "label": "Katalog fiyatlarına KDV dahil",
+      "helper": "Açık olduğunda yeni hizmetler KDV dahil işaretlenir."
+    },
+    "validation": {
+      "companyNameRequired": "Şirket türü seçildiğinde şirket adı zorunludur.",
+      "vatRateInvalid": "Geçerli bir KDV oranı girin.",
+      "vatRateRange": "KDV oranı 0 ile 99,99 arasında olmalı."
+    },
+    "notifications": {
+      "saved": "Vergi ve faturalama varsayılanları güncellendi.",
+      "saveFailed": "Vergi ve faturalama varsayılanları güncellenemedi."
     }
   },
   "password_tips": {

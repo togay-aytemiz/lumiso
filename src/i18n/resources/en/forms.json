@@ -187,7 +187,6 @@
     "active": "Active",
     "inactive": "Inactive",
     "view_only": "View Only",
-
     "price_inclusive_helper": "Services included · {{package}}",
     "price_addons_helper": "Package: {{package}} · Add-ons: {{addons}}",
     "price_addons_none": "Package: {{package}} (includes services)",
@@ -294,7 +293,6 @@
     "cost": "Cost",
     "selling": "Selling",
     "view_only": "View Only",
-
     "price_inclusive_helper": "Services included · {{package}}",
     "price_addons_helper": "Package: {{package}} · Add-ons: {{addons}}",
     "price_addons_none": "Package: {{package}} (includes services)",
@@ -332,7 +330,15 @@
     "empty": {
       "coverage": "No coverage services yet. Add your team or staffing options.",
       "deliverable": "No deliverables yet. Add albums, print packs or extras."
-    }
+    },
+    "vat_rate_label": "VAT %: {{rate}}",
+    "vat_amount_label": "VAT amount: {{amount}}",
+    "vat_mode": {
+      "inclusive": "VAT included in price",
+      "exclusive": "VAT added on top"
+    },
+    "vat_label_compact": "VAT ({{rate}}%)",
+    "total_price": "Total price"
   },
   "project_stages": {
     "title": "Project Stages",
@@ -626,8 +632,8 @@
     "close": "Close",
     "more": "More",
     "overdueWarning": "This session is overdue",
-  "overdueDescription": "Please update the session status or reschedule if needed.",
-  "overdueReschedule": "Reschedule",
+    "overdueDescription": "Please update the session status or reschedule if needed.",
+    "overdueReschedule": "Reschedule",
     "dateTime": "Date & Time",
     "project": "Project",
     "notes": "Notes",
@@ -1314,6 +1320,23 @@
     "vendor_placeholder": "e.g., Album printer, framing studio, canvas producer",
     "visibility_label": "Active",
     "visibility_help": "When off, it becomes passive but stays in your records.",
+    "vat_section": {
+      "title": "VAT (Tax)",
+      "description": "Control how VAT is applied when this service is used in packages and projects.",
+      "rate_label": "VAT rate (%)",
+      "mode_label": "VAT handling",
+      "mode_inclusive": "Included in price",
+      "mode_exclusive": "Add on top",
+      "defaults_hint": "Defaults come from your Tax & Billing profile.",
+      "toggle_label": "Adjust VAT settings",
+      "toggle_helper": "Enable to override the defaults for this service.",
+      "summary": "VAT {{rate}}% • {{mode}}",
+      "summary_mode": {
+        "inclusive": "included in price",
+        "exclusive": "added on top"
+      },
+      "prices_include": "Catalog prices include VAT"
+    },
     "default_categories_label": "Default categories",
     "custom_categories_label": "Custom categories",
     "new_category_placeholder": "Enter new category name",
@@ -1328,7 +1351,9 @@
     "errors": {
       "name_required": "Service name is required",
       "category_required": "Category is required",
-      "delete_failed": "Error deleting service"
+      "delete_failed": "Error deleting service",
+      "vat_rate_invalid": "Enter a valid VAT rate.",
+      "vat_rate_range": "VAT rate must be between 0 and 99.99."
     },
     "success": {
       "added": "Service added successfully",
@@ -1454,6 +1479,63 @@
     "fair": "Fair",
     "good": "Good",
     "strong": "Strong"
+  },
+  "taxBilling": {
+    "title": "Tax & Billing profile",
+    "description": "Set organization defaults for invoices and service pricing.",
+    "unsaved": "Unsaved changes",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "reset": "Reset",
+    "legalEntity": {
+      "label": "Legal entity type",
+      "individual": "Individual (Şahıs)",
+      "individualHint": "Use when invoicing as a sole proprietor.",
+      "company": "Company (Şirket)",
+      "companyHint": "Use for registered limited/anonim companies."
+    },
+    "companyName": {
+      "label": "Company or billing name",
+      "placeholder": "Registered company name",
+      "helper": "Shown on invoices and shared with clients."
+    },
+    "taxOffice": {
+      "label": "Tax office",
+      "placeholder": "e.g., Kadıköy V.D."
+    },
+    "taxNumber": {
+      "label": "Tax / ID number",
+      "placeholder": "Enter VKN or TCKN",
+      "helper": "Used on invoices and official documents."
+    },
+    "billingAddress": {
+      "label": "Billing address",
+      "placeholder": "Street, district, city, country"
+    },
+    "defaultVatRate": {
+      "label": "Default VAT rate",
+      "helper": "Applied to new services and packages unless overridden."
+    },
+    "defaultVatMode": {
+      "label": "Default VAT handling",
+      "inclusive": "Included in price",
+      "inclusiveHint": "Package prices already include VAT.",
+      "exclusive": "Add VAT on top",
+      "exclusiveHint": "VAT will be added to line totals."
+    },
+    "pricesIncludeVat": {
+      "label": "Catalog prices include VAT",
+      "helper": "When enabled, new services mark VAT as included by default."
+    },
+    "validation": {
+      "companyNameRequired": "Company name is required for company entities.",
+      "vatRateInvalid": "Enter a valid VAT rate.",
+      "vatRateRange": "VAT rate must be between 0 and 99.99."
+    },
+    "notifications": {
+      "saved": "Tax & Billing defaults updated.",
+      "saveFailed": "We couldn’t update your Tax & Billing defaults."
+    }
   },
   "auth": {
     "sign_in": {

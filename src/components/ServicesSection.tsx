@@ -206,6 +206,146 @@ const ServicesSection = () => {
     [formatCount]
   );
 
+  const renderServiceCard = (service: Service) => {
+    const isInactive = service.is_active === false;
+    const costPrice = Number(service.cost_price ?? 0) || 0;
+    const sellingPrice =
+      Number(service.selling_price ?? service.price ?? 0) || 0;
+    const vatRateValue =
+      typeof service.vat_rate === "number" && Number.isFinite(service.vat_rate)
+        ? service.vat_rate
+        : 0;
+    const vatAmountValue =
+      sellingPrice > 0 && vatRateValue > 0
+        ? calculateVatPortion(
+            sellingPrice,
+            vatRateValue,
+            service.price_includes_vat ? "inclusive" : "exclusive"
+          )
+        : 0;
+    const totalPrice = service.price_includes_vat
+      ? sellingPrice
+      : sellingPrice + vatAmountValue;
+    const pricingRows = [
+      {
+        key: "cost",
+        label: tForms("services.cost"),
+        value: formatCurrency(costPrice),
+        valueClassName: "text-foreground",
+      },
+      {
+        key: "selling",
+        label: tForms("services.selling"),
+        value: formatCurrency(sellingPrice),
+        valueClassName: "text-foreground",
+      },
+      {
+        key: "vat",
+        label: tForms("services.vat_label_compact", {
+          rate: formatRate(vatRateValue),
+        }),
+        value: formatCurrency(vatAmountValue),
+        valueClassName: "text-foreground",
+      },
+      {
+        key: "total",
+        label: tForms("services.total_price"),
+        value: formatCurrency(totalPrice),
+        valueClassName: "text-emerald-500",
+      },
+    ];
+
+    return (
+      <div
+        key={service.id}
+        className={cn(
+          "flex h-full flex-col gap-4 rounded-xl border bg-background p-4 shadow-sm transition-opacity",
+          isInactive && "opacity-75"
+        )}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="flex items-center gap-2">
+              <h4 className="text-base font-semibold leading-tight text-foreground break-words">
+                {service.name}
+              </h4>
+              {isInactive && (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-semibold uppercase tracking-wide"
+                >
+                  {passiveBadgeLabel}
+                </Badge>
+              )}
+            </div>
+            {service.description && (
+              <p className="text-sm text-muted-foreground leading-snug break-words">
+                {service.description}
+              </p>
+            )}
+            {service.vendor_name && (
+              <p className="text-xs italic text-muted-foreground/80 break-words">
+                {tForms("services.vendor_label", {
+                  name: service.vendor_name,
+                })}
+              </p>
+            )}
+          </div>
+          {canManageServices ? (
+            <IconActionButtonGroup className="flex-shrink-0 self-start">
+              <IconActionButton
+                onClick={() => {
+                  setEditingService(service);
+                  setShowEditServiceDialog(true);
+                }}
+                aria-label={`Edit service ${service.name}`}
+              >
+                <Edit className="h-4 w-4" />
+              </IconActionButton>
+              <IconActionButton
+                onClick={() => openDeleteDialog(service)}
+                disabled={
+                  deleteServiceMutation.isPending ||
+                  markServiceInactiveMutation.isPending
+                }
+                aria-label={`Delete service ${service.name}`}
+                variant="danger"
+              >
+                <Trash2 className="h-4 w-4" />
+              </IconActionButton>
+            </IconActionButtonGroup>
+          ) : (
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {tForms("services.view_only")}
+            </span>
+          )}
+        </div>
+        <div className="rounded-lg border border-border/80 bg-muted/30 p-4 text-sm">
+          <div className="space-y-3">
+            {pricingRows.map((row) => (
+              <div
+                key={row.key}
+                className="flex items-center justify-between gap-4"
+              >
+                <span className="font-medium text-muted-foreground">
+                  {row.label}
+                </span>
+                <span
+                  className={cn(
+                    "tabular-nums text-right font-semibold",
+                    row.valueClassName
+                  )}
+                >
+                  {row.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   useEffect(() => {
     if (normalizedServices.length === 0) {
       setActiveType("coverage");
@@ -413,298 +553,26 @@ const ServicesSection = () => {
                     </CollapsibleTrigger>
 
                     <CollapsibleContent className="mt-2.5 grid grid-rows-[0fr] transition-[grid-template-rows,opacity] duration-250 ease-out data-[state=open]:grid-rows-[1fr] data-[state=closed]:opacity-0 data-[state=open]:opacity-100">
-                      <div className="overflow-hidden space-y-3">
-                        <div className="hidden md:block space-y-3 pl-3">
-                          <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
-                            {categoryServices.map((service) => {
-                              const isInactive = service.is_active === false;
-                              const costPrice = Number(service.cost_price ?? 0) || 0;
-                              const sellingPrice = Number(service.selling_price ?? service.price ?? 0) || 0;
-                              const vatRateValue =
-                                typeof service.vat_rate === "number" && Number.isFinite(service.vat_rate)
-                                  ? service.vat_rate
-                                  : 0;
-                              const vatAmountValue =
-                                sellingPrice > 0 && vatRateValue > 0
-                                  ? calculateVatPortion(
-                                      sellingPrice,
-                                      vatRateValue,
-                                      service.price_includes_vat ? "inclusive" : "exclusive"
-                                    )
-                                  : 0;
-                              const totalPrice = service.price_includes_vat
-                                ? sellingPrice
-                                : sellingPrice + vatAmountValue;
-                              const pricingRows = [
-                                {
-                                  key: "cost",
-                                  label: tForms("services.cost"),
-                                  value: formatCurrency(costPrice),
-                                  valueClassName: "text-foreground",
-                                },
-                                {
-                                  key: "selling",
-                                  label: tForms("services.selling"),
-                                  value: formatCurrency(sellingPrice),
-                                  valueClassName: "text-foreground",
-                                },
-                                {
-                                  key: "vat",
-                                  label: tForms("services.vat_label_compact", {
-                                    rate: formatRate(vatRateValue),
-                                  }),
-                                  value: formatCurrency(vatAmountValue),
-                                  valueClassName: "text-foreground",
-                                },
-                                {
-                                  key: "total",
-                                  label: tForms("services.total_price"),
-                                  value: formatCurrency(totalPrice),
-                                  valueClassName: "text-emerald-500",
-                                },
-                              ];
-                              return (
-                                <div
-                                  key={service.id}
-                                  className={cn(
-                                    "flex h-full flex-col justify-between rounded-lg border bg-background p-3 shadow-sm transition-opacity",
-                                    isInactive && "opacity-75"
-                                  )}
-                                >
-                                  <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                      <h4 className="text-sm font-semibold leading-tight text-foreground">
-                                        {service.name}
-                                      </h4>
-                                      {isInactive && (
-                                        <Badge
-                                          variant="outline"
-                                          className="text-[10px] font-semibold uppercase tracking-wide"
-                                        >
-                                          {passiveBadgeLabel}
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    {service.description && (
-                                      <p className="text-xs text-muted-foreground leading-snug">
-                                        {service.description}
-                                      </p>
-                                    )}
-                                    {service.vendor_name && (
-                                      <p className="text-xs italic text-muted-foreground/80">
-                                        {tForms("services.vendor_label", {
-                                          name: service.vendor_name,
-                                        })}
-                                      </p>
-                                    )}
-                                  </div>
-
-                                  <div className="mt-4 space-y-3 text-sm">
-                                    <div className="rounded-md border border-border/80 bg-muted/30 p-3">
-                                      <div className="space-y-2">
-                                        {pricingRows.map((row) => (
-                                          <div
-                                            key={row.key}
-                                            className="flex items-center justify-between gap-4"
-                                          >
-                                            <span className="font-medium text-muted-foreground">
-                                              {row.label}
-                                            </span>
-                                            <span
-                                              className={cn(
-                                                "tabular-nums text-right font-semibold",
-                                                row.valueClassName
-                                              )}
-                                            >
-                                              {row.value}
-                                            </span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-
-                                    {canManageServices ? (
-                                      <IconActionButtonGroup>
-                                        <IconActionButton
-                                          onClick={() => {
-                                            setEditingService(service);
-                                            setShowEditServiceDialog(true);
-                                          }}
-                                          aria-label={`Edit service ${service.name}`}
-                                        >
-                                          <Edit className="h-4 w-4" />
-                                        </IconActionButton>
-                                        <IconActionButton
-                                          onClick={() => openDeleteDialog(service)}
-                                          disabled={
-                                            deleteServiceMutation.isPending ||
-                                            markServiceInactiveMutation.isPending
-                                          }
-                                          aria-label={`Delete service ${service.name}`}
-                                          variant="danger"
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                        </IconActionButton>
-                                      </IconActionButtonGroup>
-                                    ) : (
-                                      <span className="text-xs text-muted-foreground">
-                                        {tForms("services.view_only")}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
+                      <div className="overflow-hidden space-y-4">
+                        <div className="hidden md:block space-y-4 pl-3">
+                          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                            {categoryServices.map((service) => renderServiceCard(service))}
                           </div>
                         </div>
 
                         {/* Mobile view */}
-                        <div className="md:hidden space-y-3 pl-3">
+                        <div className="md:hidden space-y-4 pl-3">
                           {categoryServices.length === 0 ? (
                             <div className="text-center py-6 text-muted-foreground">
                               <p className="text-sm">
                                 {tForms("services.no_services_in_category")}
                               </p>
                             </div>
-                          ) : categoryServices.map((service) => {
-                            const isInactive = service.is_active === false;
-                            const costPrice = Number(service.cost_price ?? 0) || 0;
-                            const sellingPrice = Number(service.selling_price ?? service.price ?? 0) || 0;
-                            const vatRateValue =
-                              typeof service.vat_rate === "number" && Number.isFinite(service.vat_rate)
-                                ? service.vat_rate
-                                : 0;
-                            const vatAmountValue =
-                              sellingPrice > 0 && vatRateValue > 0
-                                ? calculateVatPortion(
-                                    sellingPrice,
-                                    vatRateValue,
-                                    service.price_includes_vat ? "inclusive" : "exclusive"
-                                  )
-                                : 0;
-                            const totalPrice = service.price_includes_vat
-                              ? sellingPrice
-                              : sellingPrice + vatAmountValue;
-                            const pricingRows = [
-                              {
-                                key: "cost",
-                                label: tForms("services.cost"),
-                                value: formatCurrency(costPrice),
-                                valueClassName: "text-foreground",
-                              },
-                              {
-                                key: "selling",
-                                label: tForms("services.selling"),
-                                value: formatCurrency(sellingPrice),
-                                valueClassName: "text-foreground",
-                              },
-                              {
-                                key: "vat",
-                                label: tForms("services.vat_label_compact", {
-                                  rate: formatRate(vatRateValue),
-                                }),
-                                value: formatCurrency(vatAmountValue),
-                                valueClassName: "text-foreground",
-                              },
-                              {
-                                key: "total",
-                                label: tForms("services.total_price"),
-                                value: formatCurrency(totalPrice),
-                                valueClassName: "text-emerald-500",
-                              },
-                            ];
-                            return (
-                              <div
-                                key={service.id}
-                                className={cn(
-                                  "space-y-3 rounded-lg border bg-background p-3 transition-opacity",
-                                    isInactive && "opacity-75"
-                                  )}
-                                >
-                                  {/* Service name */}
-                                  <div>
-                                    <div className="flex items-center gap-2">
-                                      <h4 className="text-base font-semibold">
-                                        {service.name}
-                                      </h4>
-                                      {isInactive && (
-                                        <Badge
-                                          variant="outline"
-                                          className="text-[10px] font-semibold uppercase tracking-wide"
-                                        >
-                                          {passiveBadgeLabel}
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    {service.description && (
-                                      <p className="mt-1 break-words text-sm text-muted-foreground">
-                                        {service.description}
-                                      </p>
-                                    )}
-                                    {service.vendor_name && (
-                                      <p className="mt-1 text-xs italic text-muted-foreground/80">
-                                        {tForms("services.vendor_label", {
-                                          name: service.vendor_name,
-                                        })}
-                                      </p>
-                                    )}
-                                  </div>
-                                  <div className="space-y-3">
-                                    <div className="rounded-md border border-border/80 bg-muted/30 p-3 text-sm">
-                                      <div className="space-y-2">
-                                        {pricingRows.map((row) => (
-                                          <div
-                                            key={row.key}
-                                            className="flex items-center justify-between gap-4"
-                                          >
-                                            <span className="font-medium text-muted-foreground">
-                                              {row.label}
-                                            </span>
-                                            <span
-                                              className={cn(
-                                                "tabular-nums text-right font-semibold",
-                                                row.valueClassName
-                                              )}
-                                            >
-                                              {row.value}
-                                            </span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-
-                                    {canManageServices ? (
-                                      <IconActionButtonGroup>
-                                        <IconActionButton
-                                          onClick={() => {
-                                            setEditingService(service);
-                                            setShowEditServiceDialog(true);
-                                          }}
-                                          aria-label={`Edit service ${service.name}`}
-                                        >
-                                          <Edit className="h-4 w-4" />
-                                        </IconActionButton>
-                                        <IconActionButton
-                                          onClick={() => openDeleteDialog(service)}
-                                          disabled={
-                                            deleteServiceMutation.isPending ||
-                                            markServiceInactiveMutation.isPending
-                                          }
-                                          aria-label={`Delete service ${service.name}`}
-                                          variant="danger"
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                        </IconActionButton>
-                                      </IconActionButtonGroup>
-                                    ) : (
-                                      <span className="text-xs text-muted-foreground">
-                                        {tForms("services.view_only")}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
+                          ) : (
+                            categoryServices.map((service) =>
+                              renderServiceCard(service)
+                            )
+                          )}
                         </div>
                       </div>
                     </CollapsibleContent>

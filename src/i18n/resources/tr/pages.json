@@ -1227,7 +1227,7 @@
     },
     "billing": {
       "title": "Faturalandırma ve Ödemeler",
-      "description": "Aboneliğinizi, ödeme yöntemlerinizi ve faturalandırma bilgilerinizi yönetin",
+      "description": "Fatura bilgilerinizi, KDV varsayılanlarını ve ödeme yöntemlerinizi yönetin",
       "comingSoon": "Yakında geliyor..."
     },
     "integrations": {

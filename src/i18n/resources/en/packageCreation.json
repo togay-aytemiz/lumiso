@@ -94,8 +94,22 @@
           }
         }
       },
+      "vatControls": {
+        "title": "VAT overrides",
+        "description": "Adjust VAT handling for individual items when they differ from the service defaults.",
+        "modeLabel": "VAT handling",
+        "rateLabel": "VAT rate (%)",
+        "mode": {
+          "inclusive": "Included in price",
+          "exclusive": "Add on top"
+        },
+        "toggleLabel": "Enable per-service overrides",
+        "toggleDescription": "Only adjust VAT when a line item needs different handling.",
+        "vendorLabel": "Vendor: {{vendor}}",
+        "typeLabel": "Type: {{type}}"
+      },
       "summary": {
-        "title": "Bundle summary",
+        "title": "Selected services summary",
         "cost": "Total cost",
         "price": "Total price",
         "vat": "VAT",

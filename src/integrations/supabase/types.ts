@@ -620,6 +620,7 @@ export type Database = {
           primary_brand_color: string | null
           show_quick_status_buttons: boolean | null
           social_channels: Json | null
+          tax_profile: Json | null
           time_format: string | null
           timezone: string | null
           updated_at: string
@@ -646,6 +647,7 @@ export type Database = {
           primary_brand_color?: string | null
           show_quick_status_buttons?: boolean | null
           social_channels?: Json | null
+          tax_profile?: Json | null
           time_format?: string | null
           timezone?: string | null
           updated_at?: string
@@ -672,6 +674,7 @@ export type Database = {
           primary_brand_color?: string | null
           show_quick_status_buttons?: boolean | null
           social_channels?: Json | null
+          tax_profile?: Json | null
           time_format?: string | null
           timezone?: string | null
           updated_at?: string
@@ -1229,6 +1232,8 @@ export type Database = {
           price: number | null
           service_type: "coverage" | "deliverable"
           selling_price: number | null
+          vat_rate: number
+          price_includes_vat: boolean
           vendor_name: string | null
           updated_at: string
           user_id: string
@@ -1249,6 +1254,8 @@ export type Database = {
           price?: number | null
           service_type?: "coverage" | "deliverable"
           selling_price?: number | null
+          vat_rate?: number
+          price_includes_vat?: boolean
           vendor_name?: string | null
           updated_at?: string
           user_id: string
@@ -1269,6 +1276,8 @@ export type Database = {
           price?: number | null
           service_type?: "coverage" | "deliverable"
           selling_price?: number | null
+          vat_rate?: number
+          price_includes_vat?: boolean
           vendor_name?: string | null
           updated_at?: string
           user_id?: string

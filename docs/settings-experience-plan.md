@@ -14,6 +14,7 @@
 - Normalize interactivity: predictable save vs. auto-save models, sticky footer triggers, and keyboard/accessibility affordances.
 - Reduce unnecessary data churn by introducing caching, fetch-on-focus policies, and background refresh hooks for low-churn settings.
 - Deliver a living checklist per settings page and module so progress can be tracked and shared across the team.
+- Ship the refreshed experience behind a dedicated feature flag (`settings_refresh_v2`) so we can toggle it safely until the rollout is final.
 
 ## Non-Goals
 - Replacing the underlying settings navigation structure or routing.
@@ -69,32 +70,36 @@ Cross-cutting components:
 ## Proposed System
 
 ### 1. Page Shell Standardization
-- New `SettingsShell` wrapper combines `SettingsPageWrapper` padding logic with a configurable max-width (`1280px` target) and responsive gutter (24px mobile → 48px desktop).
+- New `SettingsShell` wrapper combines `SettingsPageWrapper` padding logic with a configurable max-width (`1280px` target) and responsive gutter (quiet 20px mobile → 32px desktop) so the layout feels tighter and less “starter template.”
+- Global canvas shifts to a neutral gray background (`#f6f8fa` / `bg-slate-50`) so content reads as floating cards instead of bordered boxes.
 - `SettingsHeader` upgrade:
   - Title size locked to `text-[22px]` mobile / `text-[28px]` desktop with consistent line-height to avoid the oversized “starter project” look.
   - Optional eyebrow label (e.g., “Account”) for grouping sub-pages.
   - Subtext constrained to `max-w-2xl`, with multiline spacing token.
   - Actions/help aligned to the top-right with consistent icon sizing; collapse into overflow menu below `sm`.
+  - Header surfaces the same contextual glyph as the active settings module (gear, folder, receipt, etc.) so the help affordance and sheet feel polished and brand-aligned.
+  - `Need help?` CTA launches a reusable `SettingsHelpSheet` component that accepts markdown + rich media slots (video, GIF, static imagery, charts) so the placeholder evolves into a guided walkthrough surface.
   - Mobile sub-pages surface a sticky top bar with chevron-back, page title, and optional contextual action; the header fades into a single-row layout when scrolling.
   - Fade-in micro transition for page change to keep UI calm.
 - Sticky footer aligns to new grid (max width, shadow token) and surfaces last-saved timestamp.
 
 ### 2. Section Patterns & Tokens
 - Introduce `settingsTokens.ts` (spacing, typography, border radius, shadow, section gap).
+- Lock reusable section surfaces to a borderless white card (`bg-white`) with `rounded-lg` corners (desktop `rounded-xl`), soft ambient shadow (`shadow-[0_12px_28px_-18px_rgba(15,23,42,0.55)]`), and tighter padding defaults (20px mobile / 24px desktop). Document matching dark mode token (`bg-slate-950/60`, subtle border) for parity.
  - Add `SettingsAnchorNav` variant (same interaction/rhythm as the sticky anchors already shipping on Project Details, Lead Details, and Sheet Details) that pins under the header on desktop, highlights active subsection, and exposes jump links; collapse into the mobile index/back pattern below `md`.
 - Define section templates:
-  1. **Form Card** (`SettingsFormSection`): label grid, description slot, default vertical spacing `space-y-5`, standard Save/Cancel hooks.
-  2. **Collection Manager** (`SettingsCollectionSection`): header + table/list region with drag handles, add button inline; supports optional metrics footer.
-  3. **Toggle Panel** (`SettingsToggleSection`): compact rows with icon, description, trailing toggle/test controls; responsive stack rules.
+  1. **Form Card** (`SettingsFormSection`): label grid, description slot, default vertical spacing `space-y-4`, standard Save/Cancel hooks; opts into the new elevated card surface.
+  2. **Collection Manager** (`SettingsCollectionSection`): header + table/list region with drag handles, add button inline; supports optional metrics footer; caps list regions to avoid edge-to-edge sprawl with consistent outer gutters.
+  3. **Toggle Panel** (`SettingsToggleSection`): compact rows with icon, description, trailing toggle/test controls; responsive stack rules keep row height around 56px.
   4. **Danger Block**: red-accented variant with icon slot, bullet list, confirm button anchored bottom-right.
   5. **Placeholder / Coming Soon**: empty state card shared by `Billing`/`Contracts`.
 - Unify typography tokens (e.g., section title `text-lg font-semibold`, description `text-sm text-muted-foreground`).
-- Provide class utilities (via `cva` or helper) to guarantee consistent padding across breakpoints.
+- Provide class utilities (via `cva` or helper) to guarantee consistent padding across breakpoints while capping max spacing tokens to avoid oversized gutters.
 
 ### 3. Data & Interaction Strategy
 - **Fetch cadence**: set `react-query` options (`staleTime`, `refetchOnWindowFocus: false`), and add manual refresh CTA per page (via `SettingsHeader` action slot).
 - **Edit flows**: adopt explicit save for multi-field sections, auto-save only for idempotent toggles with optimistic UI. Document behavior per section in checklist.
-- **Dirty state**: replace pulse dot with pill badge (“Unsaved changes”) and highlight section border to increase visibility.
+- **Dirty state**: replace pulse dot with pill badge (“Unsaved changes”) and add a soft brand-accent glow/top stripe so the borderless card still signals state.
 - **Asset uploads**: extract shared uploader hook (validation, optimistic preview, cleanup) for profile photo & logo.
 - **Tutorial overlays**: encapsulate onboarding triggers with new `useSettingsTutorial` hook so visuals stay consistent with refreshed layout.
 - **Analytics**: add instrumentation plan (event names: `settings_section_viewed`, `settings_save_submitted`, `settings_help_opened`).
@@ -114,8 +119,9 @@ Cross-cutting components:
   - Maintain 48px outer gutters while allowing sticky nav to lock at 24px from the left content edge.
 
 ### 5. Content & Localization
-- Update `settingsHelpContent` to match new structure; trim marketing fluff, align with actual functionality.
-- Sync EN/TR translations for new copy; provide glossary for repeated terms (e.g., “Section”, “Digest”).
+- Update `settingsHelpContent` to drive the sheet component; trim marketing fluff, map to real troubleshooting steps, and define slots for embedded media callouts.
+- Migrate `SettingsHelpSheet` strings into shared i18n namespaces (EN/TR first), including alt text and captions for videos/charts so localized help experiences stay in sync.
+- Capture the new tax & billing defaults (VAT mode/rate, entity fields) in the same namespaces so UI copy, the new `TaxBillingSection`, and documentation stay synchronized.
 - Document microcopy tone: declarative, concise, professional (avoid exclamation unless destructive).
 
 ### 6. Empty State Illustrations
@@ -132,11 +138,14 @@ Cross-cutting components:
 - [ ] Map existing mobile navigation journeys (horizontal icon bar, nested routes) and note breakpoints where the experience breaks down.
 - [ ] Define typography & spacing tokens (`settingsTokens.ts`, Figma tokens if available).
 - [ ] Align with brand guidelines (confirm color palette & radius scale).
+- [ ] Partner with platform team to provision the `settings_refresh_v2` feature flag, document rollout criteria, and ensure per-workspace toggling works in staging.
 - Deliverables: token spec, audit notes, before-state assets archived in `/docs/assets/settings/`.
 
 ### Phase 1 — Core Components & Utilities
 - [ ] Build `SettingsShell` + upgraded `SettingsHeader`.
+ - [ ] Wrap new shell/components in the `settings_refresh_v2` feature flag with runtime switch + fallback to legacy layout.
  - [ ] Create `SettingsMobileDashboard`, `SettingsSubpageHeader`, and `SettingsAnchorNav` primitives with storybook examples, reusing the scroll-spy + sticky behaviors proven in Project/Lead/Sheet detail pages.
+- [ ] Implement `SettingsHelpSheet` component triggered by the header `Need help?` action; support markdown + media embeds and connect content to the shared i18n pipeline.
 - [ ] Introduce section primitives (`SettingsFormSection`, `SettingsCollectionSection`, `SettingsToggleSection`, `SettingsDangerSection`, `SettingsPlaceholderSection`).
 - [ ] Create shared uploader hook and refresh button pattern.
 - [ ] Add storybook/preview entries (optional) or Chromatic snapshots.
@@ -145,7 +154,7 @@ Cross-cutting components:
 ### Phase 2 — Page Wave A (Foundation)
 - `[ ]` Profile: migrate to new sections, refine avatar/work hours layout, hook to shared uploader.
 - `[ ]` General: apply form + collection sections, add explicit save for branding/regional, unify social channels card, and wire anchor nav jump links per section.
-- `[ ]` Billing › Tax & Billing Profile: design the KDV + invoice identity form using `SettingsFormSection`, surface organization defaults (legal entity, company name, tax office, VKN/TCKN, billing address, default KDV mode + rate, e-Fatura readiness toggle), and provide inline helper text explaining how values cascade into services/packages and future invoicing.
+- `[x]` Billing › Tax & Billing Profile: refactor onto the shared `TaxBillingSection` primitives, surface organization defaults (legal entity, company name, tax office, VKN/TCKN, billing address, default KDV mode + rate), wire translations/help copy, and persist changes through `useOrganizationSettings`.
 - `[ ]` Notifications: convert toggles to `SettingsToggleSection`, throttle fetches, add `Test` button alignment.
 - `[ ]` Ship translation updates and ensure tutorials overlay the refreshed layout.
 - `[ ]` Routing & breakpoints: route `/settings` to the mobile dashboard below `md`, ensure back navigation + compact spacing tokens apply across Profile/General/Notifications.
@@ -158,7 +167,9 @@ Cross-cutting components:
 - `[ ]` Extend anchor nav mapping and mobile back pattern to collection-heavy pages (Leads/Projects/Services) with sensible section groupings.
 
 ### Phase 3.5 — Compliance & Billing Foundations
-- `[ ]` Persist organization tax profile via `useOrganizationSettings` with optimistic save + dirty state pill; ensure partial updates do not clear existing tax identifiers.
+- `[x]` Persist organization tax profile via `useOrganizationSettings` with optimistic save + dirty-state pill; ensure partial updates do not clear existing tax identifiers.
+- `[x]` Validate the Supabase migration `20251109120000_services_vat_profile.sql` (service VAT columns + tax profile defaults) and document rollout sequencing. *(Applied to prod 2025‑11‑09.)*
+- `[ ]` QA + deploy follow-up migration `20251109161000_tax_profile_defaults_include.sql` to align defaults with VAT-inclusive pricing and update seeded sample services.
 - `[ ]` Add validation masks for TCKN/VKN (11-digit national ID vs 10-digit tax number) and guard rails for numeric KDV ranges (0–99.99%).
 - `[ ]` Surface audit log events (`settings_tax_profile_updated`) so finance tooling can track changes before e-Fatura integrations.
 - `[ ]` Store structured invoice address (`street`, `district`, `city`, `country`, `postalCode`) ready for electronic invoice payloads.
@@ -188,7 +199,7 @@ Cross-cutting components:
 | Projects | Statuses / Types / Session Statuses | [ ] | Drag reorder + inline defaults | Shared hook for status entities | Not Started | Do project status/type templates need to stay synced across teams or can users diverge freely? |
 | Services | Session Types / Packages / Services | [ ] | Multi-step onboarding alignment | Consolidate queries, lazy-load heavy dialogs | Not Started | Are packages expected to support multi-currency pricing in this release or remain single-currency? |
 | Contracts | Placeholder | [ ] | N/A (display card) | Static copy | Not Started | Should the placeholder point to upcoming in-product templates or route to external contract resources until builder ships? |
-| Billing | Tax & Billing Profile / Payment Methods | [ ] | Explicit save with helper modals + audit log surface | Persist `taxProfile` jsonb, prepare payment method vault stub | Not Started | Which e-Fatura provider (if any) are we targeting first, and do we need multi-address support for branches? |
+| Billing | Tax & Billing Profile / Payment Methods | [x] | Explicit save with helper modals + audit log surface | Persist `taxProfile` jsonb, inclusive defaults cached; payment method vault stub still pending | In Progress | Which e-Fatura provider (if any) are we targeting first, and do we need multi-address support for branches? |
 | Danger Zone | Delete org | [ ] | Double confirm + password field | No auto-refetch | Not Started | Does org deletion require a grace period or approval workflow beyond the password confirmation flow? |
 
 > Update the table as work lands (check items, add Notes column if needed).

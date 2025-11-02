@@ -1227,7 +1227,7 @@
     },
     "billing": {
       "title": "Billing & Payments",
-      "description": "Manage your subscription, payment methods, and billing information",
+      "description": "Manage your billing identity, tax defaults, and payment methods",
       "comingSoon": "Coming soon..."
     },
     "integrations": {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -11,13 +11,15 @@ import {
   type ServiceInventoryType,
 } from "@/components/ServiceInventorySelector";
 import { ServicesTableCard, type ServicesTableRow } from "@/components/ServicesTableCard";
-import { useServices } from "@/hooks/useOrganizationData";
+import { useServices, useOrganizationTaxProfile } from "@/hooks/useOrganizationData";
 import { usePackageCreationContext } from "../hooks/usePackageCreationContext";
 import { usePackageCreationActions } from "../hooks/usePackageCreationActions";
-import type { PackageCreationLineItem } from "../types";
+import type { PackageCreationLineItem, PackageVatMode } from "../types";
 import { IconActionButton } from "@/components/ui/icon-action-button";
 import { cn } from "@/lib/utils";
 import { calculateLineItemPricing } from "../utils/lineItemPricing";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 interface ServiceRecord {
   id: string;
@@ -29,6 +31,18 @@ interface ServiceRecord {
   vendor_name?: string | null;
   is_active?: boolean | null;
   service_type?: ServiceInventoryType | null;
+  vat_rate?: number | null;
+  price_includes_vat?: boolean | null;
+}
+
+interface ServiceWithMetadata extends ServiceRecord {
+  unitCost: number;
+  unitPrice: number;
+  serviceType: ServiceInventoryType;
+  isActive: boolean;
+  vatRate: number | null;
+  vatMode: PackageVatMode;
+  priceIncludesVat: boolean;
 }
 
 const formatCurrency = (amount: number) =>
@@ -44,6 +58,18 @@ export const ServicesStep = () => {
   const { updateServices } = usePackageCreationActions();
 
   const servicesQuery = useServices();
+  const taxProfileQuery = useOrganizationTaxProfile();
+  const taxProfile = taxProfileQuery.data;
+  const defaultVatRate = useMemo(() => {
+    if (typeof taxProfile?.defaultVatRate === "number" && Number.isFinite(taxProfile.defaultVatRate)) {
+      return Number(taxProfile.defaultVatRate);
+    }
+    return 0;
+  }, [taxProfile]);
+  const defaultVatMode: PackageVatMode = useMemo(
+    () => (taxProfile?.defaultVatMode === "inclusive" ? "inclusive" : "exclusive"),
+    [taxProfile]
+  );
   const services = useMemo(
     () => ((servicesQuery.data as ServiceRecord[] | undefined) ?? []),
     [servicesQuery.data]
@@ -53,21 +79,50 @@ export const ServicesStep = () => {
   const [customCost, setCustomCost] = useState("");
   const [customPrice, setCustomPrice] = useState("");
   const [customError, setCustomError] = useState<string | null>(null);
+  const hasVatOverrides = useMemo(() => {
+    return state.services.items.some((item) => {
+      const rate =
+        typeof item.vatRate === "number" && Number.isFinite(item.vatRate)
+          ? item.vatRate
+          : null;
+      const mode = item.vatMode ?? null;
+      const rateDiff = rate != null && Math.abs(rate - defaultVatRate) > 0.001;
+      const modeDiff = mode != null && mode !== defaultVatMode;
+      return rateDiff || modeDiff;
+    });
+  }, [state.services.items, defaultVatRate, defaultVatMode]);
+  const [showVatControls, setShowVatControls] = useState(hasVatOverrides);
 
-  const serviceMap = useMemo(
+  useEffect(() => {
+    if (hasVatOverrides) {
+      setShowVatControls(true);
+    }
+  }, [hasVatOverrides]);
+
+  const serviceMap = useMemo<Map<string, ServiceWithMetadata>>(
     () =>
       new Map(
-        services.map((service) => [
-          service.id,
-          {
-            ...service,
-            unitCost: service.cost_price ?? 0,
-            unitPrice: service.selling_price ?? service.price ?? 0,
-            serviceType: (service.service_type ?? "unknown") as ServiceInventoryType,
-            isActive: service.is_active !== false,
-          },
-        ])
-      ),
+        services.map((service) => {
+          const vatRate =
+            typeof service.vat_rate === "number" && Number.isFinite(service.vat_rate)
+              ? Number(service.vat_rate)
+              : null;
+          const vatMode: PackageVatMode = service.price_includes_vat ? "inclusive" : "exclusive";
+          return [
+            service.id,
+            {
+              ...service,
+              unitCost: service.cost_price ?? 0,
+              unitPrice: service.selling_price ?? service.price ?? 0,
+              serviceType: (service.service_type ?? "unknown") as ServiceInventoryType,
+              isActive: service.is_active !== false,
+              vatRate,
+              vatMode,
+              priceIncludesVat: service.price_includes_vat ?? false,
+            },
+          ] as const;
+        })
+      ) as Map<string, ServiceWithMetadata>,
     [services]
   );
 
@@ -82,6 +137,11 @@ export const ServicesStep = () => {
         unitCost: service.cost_price ?? null,
         unitPrice: service.selling_price ?? service.price ?? null,
         isActive: service.is_active !== false,
+        vatRate:
+          typeof service.vat_rate === "number" && Number.isFinite(service.vat_rate)
+            ? Number(service.vat_rate)
+            : null,
+        priceIncludesVat: service.price_includes_vat ?? false,
       })),
     [services]
   );
@@ -145,6 +205,13 @@ export const ServicesStep = () => {
     const service = serviceMap.get(serviceId);
     if (!service) return;
 
+    const vatRate =
+      typeof service.vatRate === "number" && Number.isFinite(service.vatRate)
+        ? Number(service.vatRate)
+        : defaultVatRate;
+    const vatMode: PackageVatMode =
+      service.vatMode ?? (service.priceIncludesVat ? "inclusive" : defaultVatMode);
+
     const filteredExisting = existingItems.filter((item) => item.serviceId !== serviceId);
     const nextItems: PackageCreationLineItem[] = [
       ...filteredExisting,
@@ -158,8 +225,8 @@ export const ServicesStep = () => {
         unitPrice: service.unitPrice,
         vendorName: service.vendor_name ?? null,
         source: "catalog",
-        vatRate: null,
-        vatMode: "exclusive",
+        vatRate,
+        vatMode,
       },
       ...customItems,
     ];
@@ -344,6 +411,26 @@ export const ServicesStep = () => {
     updateServices({ items: nextItems });
   };
 
+  const handleVatModeChange = (itemId: string, mode: PackageVatMode) => {
+    updateItem(itemId, { vatMode: mode });
+  };
+
+  const handleVatRateChange = (itemId: string, value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      updateItem(itemId, { vatRate: null });
+      return;
+    }
+
+    const numeric = Number(trimmed.replace(/,/g, "."));
+    if (Number.isNaN(numeric)) {
+      return;
+    }
+
+    const clamped = Math.min(99.99, Math.max(0, numeric));
+    updateItem(itemId, { vatRate: clamped });
+  };
+
   const removeItem = (itemId: string) => {
     updateServices({
       items: state.services.items.filter((item) => item.id !== itemId),
@@ -398,8 +485,8 @@ export const ServicesStep = () => {
       unitPrice: parsedPrice,
       vendorName: null,
       source: "adhoc",
-      vatRate: null,
-      vatMode: "exclusive",
+      vatRate: defaultVatRate,
+      vatMode: defaultVatMode,
     };
 
     updateServices({
@@ -436,6 +523,116 @@ export const ServicesStep = () => {
         error={servicesQuery.error ? t("steps.services.picker.error") : null}
         onRetry={servicesQuery.error ? () => servicesQuery.refetch() : undefined}
       />
+      {state.services.items.length > 0 ? (
+        <div className="space-y-4 rounded-2xl border border-border/70 bg-white/80 p-5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="space-y-1 max-w-xl">
+              <h3 className="text-sm font-semibold text-slate-900">
+                {t("steps.services.vatControls.title")}
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                {t("steps.services.vatControls.description")}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Switch
+                id="package-vat-adjust-toggle"
+                checked={showVatControls}
+                onCheckedChange={setShowVatControls}
+                aria-label={t("steps.services.vatControls.toggleLabel")}
+              />
+              <div className="space-y-1">
+                <Label htmlFor="package-vat-adjust-toggle" className="text-sm font-medium text-slate-900">
+                  {t("steps.services.vatControls.toggleLabel")}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {t("steps.services.vatControls.toggleDescription")}
+                </p>
+              </div>
+            </div>
+          </div>
+          {showVatControls ? (
+            <div className="space-y-3">
+              {state.services.items.map((item) => {
+                const service = item.serviceId ? serviceMap.get(item.serviceId) : null;
+                const vatModeValue: PackageVatMode = item.vatMode ?? defaultVatMode;
+                const vatRateValue =
+                  typeof item.vatRate === "number" && Number.isFinite(item.vatRate)
+                    ? String(item.vatRate)
+                    : "";
+                const serviceTypeLabel = service
+                  ? t(`steps.services.inventory.types.${service.serviceType ?? "unknown"}.title`)
+                  : t("steps.services.inventory.types.unknown.title");
+                const vendorLabel = item.vendorName
+                  ? t("steps.services.vatControls.vendorLabel", { vendor: item.vendorName })
+                  : service?.vendor_name
+                  ? t("steps.services.vatControls.vendorLabel", { vendor: service.vendor_name })
+                  : null;
+                const typeLabel = t("steps.services.vatControls.typeLabel", { type: serviceTypeLabel });
+                const vatRateInputId = `vat-rate-${item.id}`;
+
+                return (
+                  <div key={item.id} className="rounded-xl border border-border/60 bg-white/95 p-4 shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div className="min-w-[220px] space-y-1">
+                        <p className="text-sm font-semibold text-slate-900">{item.name}</p>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                          {vendorLabel ? <span>{vendorLabel}</span> : null}
+                          <span>{typeLabel}</span>
+                          {item.type === "custom" ? (
+                            <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
+                              {t("summaryView.services.customTag")}
+                            </Badge>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex flex-col gap-1">
+                          <Label
+                            htmlFor={vatRateInputId}
+                            className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          >
+                            {t("steps.services.vatControls.rateLabel")}
+                          </Label>
+                          <Input
+                            id={vatRateInputId}
+                            type="number"
+                            inputMode="decimal"
+                            min={0}
+                            max={99.99}
+                            step="0.01"
+                            value={vatRateValue}
+                            onChange={(event) => handleVatRateChange(item.id, event.target.value)}
+                            className="h-9 w-[96px] sm:w-[110px]"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            {t("steps.services.vatControls.modeLabel")}
+                          </Label>
+                          <Select
+                            value={vatModeValue}
+                            onValueChange={(value) => handleVatModeChange(item.id, value as PackageVatMode)}
+                          >
+                            <SelectTrigger className="h-9 w-[160px] sm:w-[180px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="inclusive">{t("steps.services.vatControls.mode.inclusive")}</SelectItem>
+                              <SelectItem value="exclusive">{t("steps.services.vatControls.mode.exclusive")}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="space-y-4 rounded-2xl border border-border/70 bg-white/80 p-5 shadow-sm backdrop-blur">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
@@ -644,9 +841,7 @@ export const ServicesStep = () => {
       <div className="space-y-4 rounded-2xl border border-border/70 bg-white/80 p-5 shadow-sm backdrop-blur">
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-semibold text-slate-900">
-              {t("steps.services.summary.title")}
-            </h3>
+            <h3 className="text-sm font-semibold text-slate-900">{t("steps.services.summary.title")}</h3>
             <Badge variant="secondary" className="rounded-full text-xs font-medium transition-colors duration-200">
               {t("steps.services.summary.selectedCount", { count: totalSelected })}
             </Badge>

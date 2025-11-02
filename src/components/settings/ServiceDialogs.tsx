@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
@@ -14,6 +14,8 @@ import { useTranslation } from "react-i18next";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./NavigationGuardDialog";
 import { cn } from "@/lib/utils";
+import { useOrganizationTaxProfile } from "@/hooks/useOrganizationData";
+import { DEFAULT_ORGANIZATION_TAX_PROFILE } from "@/lib/organizationSettingsCache";
 
 type ServiceType = "coverage" | "deliverable";
 
@@ -24,6 +26,8 @@ interface ServiceFormState {
   price: string;
   cost_price: string;
   selling_price: string;
+  vat_rate: string;
+  price_includes_vat: boolean;
   extra: boolean;
   service_type: ServiceType;
   vendor_name: string;
@@ -35,13 +39,29 @@ const DEFAULT_CATEGORIES: Record<ServiceType, string[]> = {
   deliverable: ["Albums", "Prints", "Digital", "Retouching", "Frames", "Extras", "Packages"],
 };
 
-const createFormState = (serviceType: ServiceType, overrides: Partial<ServiceFormState> = {}): ServiceFormState => ({
+interface ServiceVatDefaults {
+  vatRate?: number | null;
+  priceIncludesVat?: boolean | null;
+}
+
+const formatVatRate = (value?: number | null) => {
+  if (value == null || Number.isNaN(value)) return "";
+  return String(value);
+};
+
+const createFormState = (
+  serviceType: ServiceType,
+  overrides: Partial<ServiceFormState> = {},
+  vatDefaults: ServiceVatDefaults = {}
+): ServiceFormState => ({
   name: "",
   description: "",
   category: "",
   price: "",
   cost_price: "",
   selling_price: "",
+  vat_rate: formatVatRate(vatDefaults.vatRate),
+  price_includes_vat: Boolean(vatDefaults.priceIncludesVat),
   extra: false,
   service_type: serviceType,
   vendor_name: "",
@@ -124,6 +144,175 @@ const useServiceCategories = (open: boolean) => {
   return { categoriesByType, addCategory };
 };
 
+interface VatSettingsSectionProps {
+  t: (key: string, options?: Record<string, unknown>) => string;
+  open: boolean;
+  vatDefaults: ServiceVatDefaults;
+  vatRateValue: string;
+  onVatRateChange: (value: string) => void;
+  vatRateValid: boolean;
+  priceIncludesVat: boolean;
+  onPriceIncludesVatChange: (value: boolean) => void;
+}
+
+const VatSettingsSection = ({
+  t,
+  open,
+  vatDefaults,
+  vatRateValue,
+  onVatRateChange,
+  vatRateValid,
+  priceIncludesVat,
+  onPriceIncludesVatChange,
+}: VatSettingsSectionProps) => {
+  const toggleId = useId();
+  const rateInputId = useId();
+
+  const defaultRate = vatDefaults.vatRate ?? DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate;
+  const defaultMode =
+    vatDefaults.priceIncludesVat ?? DEFAULT_ORGANIZATION_TAX_PROFILE.pricesIncludeVat;
+
+  const trimmedRate = vatRateValue.trim();
+  const parsedRate = parseFloat(trimmedRate.replace(",", "."));
+  const usesDefaultRate =
+    trimmedRate === "" ||
+    (!Number.isNaN(parsedRate) && Math.abs(parsedRate - defaultRate) < 0.001);
+  const usesDefaultMode = priceIncludesVat === defaultMode;
+  const differsFromDefaults = !usesDefaultRate || !usesDefaultMode;
+
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setExpanded(false);
+      return;
+    }
+    if ((differsFromDefaults || !vatRateValid) && !expanded) {
+      setExpanded(true);
+    }
+  }, [open, differsFromDefaults, vatRateValid, expanded]);
+
+  useEffect(() => {
+    if (!vatRateValid && !expanded) {
+      setExpanded(true);
+    }
+  }, [vatRateValid, expanded]);
+
+  useEffect(() => {
+    if (differsFromDefaults && !expanded) {
+      setExpanded(true);
+    }
+  }, [differsFromDefaults, expanded]);
+
+  const formatter = useMemo(
+    () =>
+      new Intl.NumberFormat("tr-TR", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }),
+    []
+  );
+
+  const summaryRate = (() => {
+    if (trimmedRate === "") {
+      return formatter.format(defaultRate);
+    }
+    const numeric = parseFloat(trimmedRate.replace(",", "."));
+    if (!Number.isFinite(numeric)) {
+      return formatter.format(defaultRate);
+    }
+    return formatter.format(numeric);
+  })();
+
+  const summaryMode = t(
+    `service.vat_section.summary_mode.${priceIncludesVat ? "inclusive" : "exclusive"}`
+  );
+  const summaryText = t("service.vat_section.summary", {
+    rate: summaryRate,
+    mode: summaryMode,
+  });
+
+  const handleToggleChange = useCallback(
+    (checked: boolean) => {
+      if (!checked) {
+        onVatRateChange("");
+        onPriceIncludesVatChange(Boolean(defaultMode));
+      }
+      setExpanded(checked);
+    },
+    [defaultMode, onPriceIncludesVatChange, onVatRateChange, setExpanded]
+  );
+
+  return (
+    <div className="space-y-3 rounded-xl border border-border/70 bg-muted/10 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-slate-900">{t("service.vat_section.title")}</p>
+          <p className="text-xs text-muted-foreground">
+            {expanded ? t("service.vat_section.description") : summaryText}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Switch id={toggleId} checked={expanded} onCheckedChange={handleToggleChange} />
+          <div className="space-y-1">
+            <Label htmlFor={toggleId} className="text-sm font-medium text-slate-900">
+              {t("service.vat_section.toggle_label")}
+            </Label>
+            <p className="text-xs text-muted-foreground">{t("service.vat_section.toggle_helper")}</p>
+          </div>
+        </div>
+      </div>
+
+      {expanded ? (
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex min-w-[140px] flex-col gap-1">
+            <Label
+              htmlFor={rateInputId}
+              className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
+              {t("service.vat_section.rate_label")}
+            </Label>
+            <Input
+              id={rateInputId}
+              type="number"
+              inputMode="decimal"
+              min={0}
+              max={99.99}
+              step="0.01"
+              value={vatRateValue}
+              onChange={(event) => onVatRateChange(event.target.value)}
+              placeholder={String(defaultRate)}
+              className="h-9 w-[120px]"
+            />
+            <p className={cn("text-xs", vatRateValid ? "text-muted-foreground" : "text-destructive")}>
+              {vatRateValid
+                ? t("service.vat_section.defaults_hint")
+                : t("service.errors.vat_rate_range")}
+            </p>
+          </div>
+          <div className="flex min-w-[180px] flex-col gap-1">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("service.vat_section.mode_label")}
+            </Label>
+            <Select
+              value={priceIncludesVat ? "inclusive" : "exclusive"}
+              onValueChange={(value) => onPriceIncludesVatChange(value === "inclusive")}
+            >
+              <SelectTrigger className="h-9 rounded-xl">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="inclusive">{t("service.vat_section.mode_inclusive")}</SelectItem>
+                <SelectItem value="exclusive">{t("service.vat_section.mode_exclusive")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
 interface AddServiceDialogProps {
   open: boolean;
   initialType: ServiceType;
@@ -138,17 +327,27 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
   const { categoriesByType, addCategory } = useServiceCategories(open);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [formData, setFormData] = useState<ServiceFormState>(() => createFormState(initialType));
+  const { data: organizationTaxProfile } = useOrganizationTaxProfile();
+  const vatDefaults = useMemo(
+    () => ({
+      vatRate: organizationTaxProfile?.defaultVatRate ?? DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate,
+      priceIncludesVat: organizationTaxProfile?.pricesIncludeVat ?? DEFAULT_ORGANIZATION_TAX_PROFILE.pricesIncludeVat,
+    }),
+    [organizationTaxProfile]
+  );
+  const [formData, setFormData] = useState<ServiceFormState>(() =>
+    createFormState(initialType, {}, vatDefaults)
+  );
   const [selectedType, setSelectedType] = useState<ServiceType | null>(null);
 
   useEffect(() => {
     if (open) {
-      setFormData(createFormState(initialType));
+      setFormData(createFormState(initialType, {}, vatDefaults));
       setShowNewCategoryInput(false);
       setNewCategoryName("");
       setSelectedType(null);
     }
-  }, [open, initialType]);
+  }, [open, initialType, vatDefaults]);
 
   const serviceTypeOptions = useMemo(
     () => [
@@ -193,7 +392,12 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
 
   const hasSelectedType = selectedType !== null;
   const hasSelectedCategory = hasSelectedType && Boolean(formData.category.trim());
-  const isSaveDisabled = loading || !hasSelectedCategory || !formData.name.trim();
+  const vatRateNumeric = parseFloat(formData.vat_rate.replace(",", "."));
+  const vatRateValid =
+    (formData.vat_rate.trim() === "" && vatDefaults.vatRate != null) ||
+    (!Number.isNaN(vatRateNumeric) && vatRateNumeric >= 0 && vatRateNumeric <= 99.99);
+  const isSaveDisabled =
+    loading || !hasSelectedCategory || !formData.name.trim() || !vatRateValid;
 
   const typeCardBase = "group flex flex-col gap-3 rounded-xl border p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
 
@@ -216,6 +420,20 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
       toast({
         title: t("toast.error", { ns: "common" }),
         description: t("service.errors.name_required"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const parsedVatRate =
+      formData.vat_rate.trim() === ""
+        ? vatDefaults.vatRate ?? DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate
+        : parseFloat(formData.vat_rate.replace(",", "."));
+
+    if (Number.isNaN(parsedVatRate) || parsedVatRate < 0 || parsedVatRate > 99.99) {
+      toast({
+        title: t("toast.error", { ns: "common" }),
+        description: t("service.errors.vat_rate_invalid"),
         variant: "destructive",
       });
       return;
@@ -248,6 +466,8 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
         is_active: formData.is_active,
         vendor_name: formData.vendor_name.trim() || null,
         default_unit: null,
+        vat_rate: parsedVatRate,
+        price_includes_vat: formData.price_includes_vat,
       });
 
       if (error) throw error;
@@ -257,7 +477,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
         description: t("service.success.added"),
       });
 
-      setFormData(createFormState(initialType));
+      setFormData(createFormState(initialType, {}, vatDefaults));
       setSelectedType(null);
       setShowNewCategoryInput(false);
       setNewCategoryName("");
@@ -275,7 +495,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
   };
 
   const isDirty = useMemo(() => {
-    const baseState = createFormState(initialType);
+    const baseState = createFormState(initialType, {}, vatDefaults);
     return (
       formData.name.trim() !== baseState.name ||
       formData.description.trim() !== baseState.description ||
@@ -283,17 +503,19 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
       formData.price.trim() !== baseState.price ||
       formData.cost_price.trim() !== baseState.cost_price ||
       formData.selling_price.trim() !== baseState.selling_price ||
+      formData.vat_rate.trim() !== baseState.vat_rate.trim() ||
+      formData.price_includes_vat !== baseState.price_includes_vat ||
       formData.extra !== baseState.extra ||
       formData.service_type !== baseState.service_type ||
       formData.vendor_name.trim() !== baseState.vendor_name.trim() ||
       formData.is_active !== baseState.is_active
     );
-  }, [formData, initialType]);
+  }, [formData, initialType, vatDefaults]);
 
   const navigation = useModalNavigation({
     isDirty,
     onDiscard: () => {
-      setFormData(createFormState(initialType));
+      setFormData(createFormState(initialType, {}, vatDefaults));
       setShowNewCategoryInput(false);
       setNewCategoryName("");
       setSelectedType(null);
@@ -305,7 +527,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
   const handleDirtyClose = () => {
     const canClose = navigation.handleModalClose();
     if (canClose) {
-      setFormData(createFormState(initialType));
+      setFormData(createFormState(initialType, {}, vatDefaults));
       setShowNewCategoryInput(false);
       setNewCategoryName("");
       setSelectedType(null);
@@ -515,25 +737,38 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
                   placeholder="0.00"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="selling_price">{t("service.selling_price")} (TRY)</Label>
-                <Input
-                  id="selling_price"
-                  type="number"
+            <div className="space-y-2">
+              <Label htmlFor="selling_price">{t("service.selling_price")} (TRY)</Label>
+              <Input
+                id="selling_price"
+                type="number"
                   inputMode="decimal"
                   step="0.01"
                   value={formData.selling_price}
                   onChange={(event) => setFormData((prev) => ({ ...prev, selling_price: event.target.value }))}
-                  placeholder="0.00"
-                />
-              </div>
+                placeholder="0.00"
+              />
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="vendor_name">
-                {t("service.vendor_label")}
-                <span className="ml-1 text-xs text-muted-foreground">{t("service.optional_hint")}</span>
-              </Label>
+          <VatSettingsSection
+            t={t}
+            open={open}
+            vatDefaults={vatDefaults}
+            vatRateValue={formData.vat_rate}
+            onVatRateChange={(value) => setFormData((prev) => ({ ...prev, vat_rate: value }))}
+            vatRateValid={vatRateValid}
+            priceIncludesVat={formData.price_includes_vat}
+            onPriceIncludesVatChange={(value) =>
+              setFormData((prev) => ({ ...prev, price_includes_vat: value }))
+            }
+          />
+
+          <div className="space-y-2">
+            <Label htmlFor="vendor_name">
+              {t("service.vendor_label")}
+              <span className="ml-1 text-xs text-muted-foreground">{t("service.optional_hint")}</span>
+            </Label>
               <Input
                 id="vendor_name"
                 value={formData.vendor_name}
@@ -582,31 +817,48 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
   const { categoriesByType, addCategory } = useServiceCategories(open);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [formData, setFormData] = useState<ServiceFormState>(() => createFormState("deliverable"));
+  const { data: organizationTaxProfile } = useOrganizationTaxProfile();
+  const vatDefaults = useMemo(
+    () => ({
+      vatRate: organizationTaxProfile?.defaultVatRate ?? DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate,
+      priceIncludesVat: organizationTaxProfile?.pricesIncludeVat ?? DEFAULT_ORGANIZATION_TAX_PROFILE.pricesIncludeVat,
+    }),
+    [organizationTaxProfile]
+  );
+  const [formData, setFormData] = useState<ServiceFormState>(() =>
+    createFormState("deliverable", {}, vatDefaults)
+  );
   const [selectedType, setSelectedType] = useState<ServiceType | null>(null);
 
   useEffect(() => {
     if (service && open) {
       const resolvedType = (service.service_type ?? "deliverable") as ServiceType;
       setFormData(
-        createFormState(resolvedType, {
-          name: service.name || "",
-          description: service.description || "",
-          category: service.category || "",
-          price: service.price?.toString() || "",
-          cost_price: service.cost_price?.toString() || "",
-          selling_price: service.selling_price?.toString() || "",
-          extra: service.extra ?? false,
-          service_type: resolvedType,
-          vendor_name: service.vendor_name || "",
-          is_active: service.is_active ?? true,
-        })
+        createFormState(
+          resolvedType,
+          {
+            name: service.name || "",
+            description: service.description || "",
+            category: service.category || "",
+            price: service.price?.toString() || "",
+            cost_price: service.cost_price?.toString() || "",
+            selling_price: service.selling_price?.toString() || "",
+            vat_rate: service.vat_rate != null ? String(service.vat_rate) : "",
+            price_includes_vat:
+              service.price_includes_vat ?? (vatDefaults.priceIncludesVat ?? DEFAULT_ORGANIZATION_TAX_PROFILE.pricesIncludeVat),
+            extra: service.extra ?? false,
+            service_type: resolvedType,
+            vendor_name: service.vendor_name || "",
+            is_active: service.is_active ?? true,
+          },
+          vatDefaults
+        )
       );
       setShowNewCategoryInput(false);
       setNewCategoryName("");
       setSelectedType(resolvedType);
     }
-  }, [service, open]);
+  }, [service, open, vatDefaults]);
 
   const serviceTypeOptions = useMemo(
     () => [
@@ -646,8 +898,12 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
 
   const hasSelectedType = selectedType !== null;
   const hasSelectedCategory = Boolean(formData.category?.trim());
+  const editVatRateNumeric = parseFloat(formData.vat_rate.replace(",", "."));
+  const editVatRateValid =
+    (formData.vat_rate.trim() === "" && vatDefaults.vatRate != null) ||
+    (!Number.isNaN(editVatRateNumeric) && editVatRateNumeric >= 0 && editVatRateNumeric <= 99.99);
   const isSaveDisabled =
-    loading || !hasSelectedType || !hasSelectedCategory || !formData.name.trim();
+    loading || !hasSelectedType || !hasSelectedCategory || !formData.name.trim() || !editVatRateValid;
 
   const typeCardBase = "group flex flex-col gap-3 rounded-xl border p-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
 
@@ -685,6 +941,20 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       return;
     }
 
+    const parsedVatRate =
+      formData.vat_rate.trim() === ""
+        ? vatDefaults.vatRate ?? DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate
+        : parseFloat(formData.vat_rate.replace(",", "."));
+
+    if (Number.isNaN(parsedVatRate) || parsedVatRate < 0 || parsedVatRate > 99.99) {
+      toast({
+        title: t("toast.error", { ns: "common" }),
+        description: t("service.errors.vat_rate_invalid"),
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const { error } = await supabase
@@ -701,6 +971,8 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
           is_people_based: selectedType === "coverage" ? (service?.is_people_based ?? true) : false,
           vendor_name: formData.vendor_name.trim() || null,
           is_active: formData.is_active,
+          vat_rate: parsedVatRate,
+          price_includes_vat: formData.price_includes_vat,
         })
         .eq("id", service?.id);
 
@@ -726,18 +998,25 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
 
   const isDirty = useMemo(() => {
     if (!service) return false;
-    const baseState = createFormState((service.service_type ?? "deliverable") as ServiceType, {
-      name: service.name || "",
-      description: service.description || "",
-      category: service.category || "",
-      price: service.price?.toString() || "",
-      cost_price: service.cost_price?.toString() || "",
-      selling_price: service.selling_price?.toString() || "",
-      extra: service.extra ?? false,
-      service_type: (service.service_type ?? "deliverable") as ServiceType,
-      vendor_name: service.vendor_name || "",
-      is_active: service.is_active ?? true,
-    });
+    const baseState = createFormState(
+      (service.service_type ?? "deliverable") as ServiceType,
+      {
+        name: service.name || "",
+        description: service.description || "",
+        category: service.category || "",
+        price: service.price?.toString() || "",
+        cost_price: service.cost_price?.toString() || "",
+        selling_price: service.selling_price?.toString() || "",
+        vat_rate: service.vat_rate != null ? String(service.vat_rate) : "",
+        price_includes_vat:
+          service.price_includes_vat ?? (vatDefaults.priceIncludesVat ?? DEFAULT_ORGANIZATION_TAX_PROFILE.pricesIncludeVat),
+        extra: service.extra ?? false,
+        service_type: (service.service_type ?? "deliverable") as ServiceType,
+        vendor_name: service.vendor_name || "",
+        is_active: service.is_active ?? true,
+      },
+      vatDefaults
+    );
 
     return (
       formData.name.trim() !== baseState.name.trim() ||
@@ -746,12 +1025,14 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       formData.price.trim() !== baseState.price.trim() ||
       formData.cost_price.trim() !== baseState.cost_price.trim() ||
       formData.selling_price.trim() !== baseState.selling_price.trim() ||
+      formData.vat_rate.trim() !== baseState.vat_rate.trim() ||
+      formData.price_includes_vat !== baseState.price_includes_vat ||
       formData.extra !== baseState.extra ||
       formData.service_type !== baseState.service_type ||
       formData.vendor_name.trim() !== baseState.vendor_name?.trim() ||
       formData.is_active !== baseState.is_active
     );
-  }, [formData, service]);
+  }, [formData, service, vatDefaults]);
 
   const navigation = useModalNavigation({
     isDirty,
@@ -762,18 +1043,25 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       }
       const resolvedType = (service.service_type ?? "deliverable") as ServiceType;
       setFormData(
-        createFormState(resolvedType, {
-          name: service.name || "",
-          description: service.description || "",
-          category: service.category || "",
-          price: service.price?.toString() || "",
-          cost_price: service.cost_price?.toString() || "",
-          selling_price: service.selling_price?.toString() || "",
-          extra: service.extra ?? false,
-          service_type: resolvedType,
-          vendor_name: service.vendor_name || "",
-          is_active: service.is_active ?? true,
-        })
+        createFormState(
+          resolvedType,
+          {
+            name: service.name || "",
+            description: service.description || "",
+            category: service.category || "",
+            price: service.price?.toString() || "",
+            cost_price: service.cost_price?.toString() || "",
+            selling_price: service.selling_price?.toString() || "",
+            vat_rate: service.vat_rate != null ? String(service.vat_rate) : "",
+            price_includes_vat:
+              service.price_includes_vat ?? (vatDefaults.priceIncludesVat ?? DEFAULT_ORGANIZATION_TAX_PROFILE.pricesIncludeVat),
+            extra: service.extra ?? false,
+            service_type: resolvedType,
+            vendor_name: service.vendor_name || "",
+            is_active: service.is_active ?? true,
+          },
+          vatDefaults
+        )
       );
       setShowNewCategoryInput(false);
       setNewCategoryName("");
@@ -788,18 +1076,25 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
     if (canClose && service) {
       const resolvedType = (service.service_type ?? "deliverable") as ServiceType;
       setFormData(
-        createFormState(resolvedType, {
-          name: service.name || "",
-          description: service.description || "",
-          category: service.category || "",
-          price: service.price?.toString() || "",
-          cost_price: service.cost_price?.toString() || "",
-          selling_price: service.selling_price?.toString() || "",
-          extra: service.extra ?? false,
-          service_type: resolvedType,
-          vendor_name: service.vendor_name || "",
-          is_active: service.is_active ?? true,
-        })
+        createFormState(
+          resolvedType,
+          {
+            name: service.name || "",
+            description: service.description || "",
+            category: service.category || "",
+            price: service.price?.toString() || "",
+            cost_price: service.cost_price?.toString() || "",
+            selling_price: service.selling_price?.toString() || "",
+            vat_rate: service.vat_rate != null ? String(service.vat_rate) : "",
+            price_includes_vat:
+              service.price_includes_vat ?? (vatDefaults.priceIncludesVat ?? DEFAULT_ORGANIZATION_TAX_PROFILE.pricesIncludeVat),
+            extra: service.extra ?? false,
+            service_type: resolvedType,
+            vendor_name: service.vendor_name || "",
+            is_active: service.is_active ?? true,
+          },
+          vatDefaults
+        )
       );
       setShowNewCategoryInput(false);
       setNewCategoryName("");
@@ -1010,19 +1305,32 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
                   placeholder="0.00"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-selling-price">{t("service.selling_price")} (TRY)</Label>
-                <Input
-                  id="edit-selling-price"
-                  type="number"
+            <div className="space-y-2">
+              <Label htmlFor="edit-selling-price">{t("service.selling_price")} (TRY)</Label>
+              <Input
+                id="edit-selling-price"
+                type="number"
                   inputMode="decimal"
                   step="0.01"
                   value={formData.selling_price}
                   onChange={(event) => setFormData((prev) => ({ ...prev, selling_price: event.target.value }))}
-                  placeholder="0.00"
-                />
-              </div>
+                placeholder="0.00"
+              />
             </div>
+          </div>
+
+          <VatSettingsSection
+            t={t}
+            open={open}
+            vatDefaults={vatDefaults}
+            vatRateValue={formData.vat_rate}
+            onVatRateChange={(value) => setFormData((prev) => ({ ...prev, vat_rate: value }))}
+            vatRateValid={editVatRateValid}
+            priceIncludesVat={formData.price_includes_vat}
+            onPriceIncludesVatChange={(value) =>
+              setFormData((prev) => ({ ...prev, price_includes_vat: value }))
+            }
+          />
 
             <div className="space-y-2">
               <Label htmlFor="edit-vendor-name">

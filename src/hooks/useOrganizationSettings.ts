@@ -9,6 +9,8 @@ import {
   getOrganizationSettingsFromCache,
   setOrganizationSettingsCache,
   CachedOrganizationSettings,
+  DEFAULT_ORGANIZATION_TAX_PROFILE,
+  OrganizationTaxProfile,
   ORGANIZATION_SETTINGS_CACHE_TTL,
 } from "@/lib/organizationSettingsCache";
 
@@ -32,10 +34,10 @@ export interface SocialChannel {
 
 export interface OrganizationSettings extends CachedOrganizationSettings {
   socialChannels?: Record<string, SocialChannel>;
+  taxProfile?: OrganizationTaxProfile;
 }
 
 const DEFAULT_SOCIAL_CHANNELS: Record<string, SocialChannel> = {};
-
 const normalizeSettings = (
   settings: CachedOrganizationSettings | null
 ): OrganizationSettings | null => {
@@ -43,10 +45,20 @@ const normalizeSettings = (
   const socialChannels =
     (settings.social_channels as Record<string, SocialChannel> | null) ||
     DEFAULT_SOCIAL_CHANNELS;
+  const rawProfile = settings.tax_profile as OrganizationTaxProfile | null;
+  const taxProfile: OrganizationTaxProfile = {
+    ...DEFAULT_ORGANIZATION_TAX_PROFILE,
+    ...(rawProfile ?? {}),
+    companyName:
+      rawProfile?.companyName ??
+      settings.photography_business_name ??
+      DEFAULT_ORGANIZATION_TAX_PROFILE.companyName,
+  };
 
   return {
     ...settings,
     socialChannels,
+    taxProfile,
   };
 };
 
@@ -94,10 +106,15 @@ export const useOrganizationSettings = () => {
           throw new Error("No active organization found");
         }
 
-        const { socialChannels, ...otherUpdates } = updates;
+        const { socialChannels, taxProfile, ...otherUpdates } = updates;
         const dbUpdates: Record<string, unknown> = { ...otherUpdates };
         if (socialChannels) {
           dbUpdates.social_channels = socialChannels;
+        }
+        if (taxProfile) {
+          dbUpdates.tax_profile = taxProfile;
+        } else if (updates.taxProfile === null) {
+          dbUpdates.tax_profile = null;
         }
 
         let result;

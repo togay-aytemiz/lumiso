@@ -20,6 +20,8 @@ export interface ServiceInventoryItem {
   unitCost?: number | null;
   unitPrice?: number | null;
   isActive?: boolean | null;
+  vatRate?: number | null;
+  priceIncludesVat?: boolean | null;
 }
 
 export interface ServiceInventoryLabels {
@@ -300,7 +302,6 @@ export function ServiceInventorySelector({
             const isExpanded = expandedCategories[categoryKey] ?? categoryDefaultOpen[categoryKey] ?? false;
             const categorySelected = items.filter((item) => (selectedMap.get(item.id) ?? 0) > 0).length;
             const categoryQuantity = items.reduce((total, item) => total + (selectedMap.get(item.id) ?? 0), 0);
-            const CategoryIcon = FolderOpen;
 
             return (
               <Collapsible
@@ -317,9 +318,6 @@ export function ServiceInventorySelector({
                     className="group flex w-full items-center justify-between border-b border-border/60 bg-muted/30 px-4 py-3 text-left transition-colors duration-200 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                        <CategoryIcon className="h-4 w-4" aria-hidden />
-                      </span>
                       <div className="flex flex-col">
                         <p className="text-sm font-medium text-slate-900">{category}</p>
                         <p className="text-xs text-muted-foreground">
@@ -336,7 +334,10 @@ export function ServiceInventorySelector({
                   </button>
                 </CollapsibleTrigger>
 
-                <CollapsibleContent className="grid grid-rows-[0fr] transition-[grid-template-rows,opacity] duration-250 ease-out data-[state=open]:grid-rows-[1fr] data-[state=closed]:opacity-0 data-[state=open]:opacity-100">
+                <CollapsibleContent
+                  forceMount
+                  className="grid grid-rows-[0fr] transition-[grid-template-rows,opacity] duration-250 ease-in-out data-[state=open]:grid-rows-[1fr] data-[state=open]:opacity-100 data-[state=closed]:opacity-0"
+                >
                   <div className="divide-y divide-border/40 overflow-hidden">
                     {items.map((service) => {
                       const quantity = selectedMap.get(service.id) ?? 0;

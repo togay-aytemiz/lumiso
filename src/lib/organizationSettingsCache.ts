@@ -1,5 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export interface OrganizationTaxProfile {
+  legalEntityType: "individual" | "company";
+  companyName: string | null;
+  taxOffice: string | null;
+  taxNumber: string | null;
+  billingAddress: string | null;
+  defaultVatRate: number;
+  defaultVatMode: "inclusive" | "exclusive";
+  pricesIncludeVat: boolean;
+}
+
 export interface CachedOrganizationSettings {
   id?: string;
   organization_id?: string;
@@ -12,8 +23,20 @@ export interface CachedOrganizationSettings {
   time_format?: string | null;
   timezone?: string | null;
   social_channels?: Record<string, unknown> | null;
+  tax_profile?: OrganizationTaxProfile | null;
   [key: string]: unknown;
 }
+
+export const DEFAULT_ORGANIZATION_TAX_PROFILE: OrganizationTaxProfile = {
+  legalEntityType: "individual",
+  companyName: null,
+  taxOffice: null,
+  taxNumber: null,
+  billingAddress: null,
+  defaultVatRate: 20,
+  defaultVatMode: "inclusive",
+  pricesIncludeVat: true,
+};
 
 interface CacheEntry {
   data: CachedOrganizationSettings | null;

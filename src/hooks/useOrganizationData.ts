@@ -1,6 +1,12 @@
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import {
+  DEFAULT_ORGANIZATION_TAX_PROFILE,
+  OrganizationTaxProfile,
+  ORGANIZATION_SETTINGS_CACHE_TTL,
+  fetchOrganizationSettingsWithCache,
+} from '@/lib/organizationSettingsCache';
 
 // Hook for fetching organization-specific data with automatic cache invalidation
 export function useOrganizationData<T>(
@@ -200,6 +206,37 @@ export function useProjectStatuses() {
     enabled: !!activeOrganizationId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     placeholderData: keepPreviousData,
+  });
+}
+
+export function useOrganizationTaxProfile() {
+  const { activeOrganizationId } = useOrganization();
+
+  return useQuery({
+    queryKey: ['organization_tax_profile', activeOrganizationId],
+    queryFn: async (): Promise<OrganizationTaxProfile> => {
+      if (!activeOrganizationId) {
+        return { ...DEFAULT_ORGANIZATION_TAX_PROFILE };
+      }
+
+      const settings = await fetchOrganizationSettingsWithCache(activeOrganizationId);
+      if (!settings) {
+        return { ...DEFAULT_ORGANIZATION_TAX_PROFILE };
+      }
+
+      const rawProfile = (settings.tax_profile ?? null) as OrganizationTaxProfile | null;
+      return {
+        ...DEFAULT_ORGANIZATION_TAX_PROFILE,
+        ...(rawProfile ?? {}),
+        companyName:
+          rawProfile?.companyName ??
+          (settings.photography_business_name as string | null) ??
+          DEFAULT_ORGANIZATION_TAX_PROFILE.companyName,
+      };
+    },
+    enabled: !!activeOrganizationId,
+    staleTime: ORGANIZATION_SETTINGS_CACHE_TTL,
+    initialData: () => ({ ...DEFAULT_ORGANIZATION_TAX_PROFILE }),
   });
 }
 

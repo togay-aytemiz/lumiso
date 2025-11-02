@@ -43,6 +43,15 @@ const formatPercent = (value: number | null | undefined) => {
   }).format(value);
 };
 
+interface SummaryMetric {
+  key: string;
+  label: string;
+  value: ReactNode;
+  helper?: ReactNode;
+  tone?: "positive" | "negative";
+  span?: "full";
+}
+
 export const SummaryStep = () => {
   const { t } = useTranslation("packageCreation");
   const { snapshot } = usePackageCreationSnapshot();
@@ -173,6 +182,67 @@ export const SummaryStep = () => {
     };
   });
 
+  const pricingMetrics: SummaryMetric[] = [
+    {
+      key: "packagePrice",
+      label: t("summaryView.pricing.packagePrice"),
+      value: formatCurrency(snapshot.pricing.basePrice),
+    },
+    {
+      key: "servicesPrice",
+      label: t("summaryView.pricing.servicesTotal"),
+      value: formatCurrency(snapshot.pricing.servicesPriceTotal),
+      helper: t("summaryView.pricing.servicesTotalHelper"),
+    },
+    {
+      key: "servicesVat",
+      label: t("summaryView.pricing.servicesVatTotal", { defaultValue: "VAT total" }),
+      value: formatCurrency(snapshot.pricing.servicesVatTotal),
+    },
+    {
+      key: "servicesGross",
+      label: t("summaryView.pricing.servicesGrossTotal", { defaultValue: "Total (incl. VAT)" }),
+      value: formatCurrency(snapshot.pricing.servicesGrossTotal),
+    },
+  ];
+
+  if (!includeAddOnsInPrice) {
+    pricingMetrics.push({
+      key: "addOnsTotal",
+      label: t("summaryView.pricing.addOnsClientTotal"),
+      value: formatCurrency(snapshot.pricing.subtotal),
+      helper: t("summaryView.pricing.addOnsClientTotalHelper"),
+    });
+  }
+
+  pricingMetrics.push(
+    {
+      key: "cost",
+      label: t("summaryView.pricing.costTotal"),
+      value: formatCurrency(snapshot.pricing.servicesCostTotal),
+    },
+    {
+      key: "margin",
+      label: t("summaryView.pricing.margin"),
+      value: formatCurrency(snapshot.pricing.servicesMargin),
+      tone: snapshot.pricing.servicesMargin >= 0 ? "positive" : "negative",
+    },
+    {
+      key: "clientTotal",
+      label: t("summaryView.pricing.clientTotal"),
+      value: formatCurrency(clientTotal),
+      helper: clientTotalHelper,
+      span: "full",
+    },
+    {
+      key: "deposit",
+      label: t("summaryView.pricing.deposit.label"),
+      value: depositSummary,
+      helper: depositHelper ?? undefined,
+      span: "full",
+    }
+  );
+
   return (
     <div className="space-y-6">
       <header className="space-y-2">
@@ -276,42 +346,18 @@ export const SummaryStep = () => {
       <section className="space-y-3">
         <SummaryHeading>{t("summaryView.pricing.title")}</SummaryHeading>
         <div className="rounded-2xl border border-border/70 bg-white/95 p-4 shadow-sm">
-          <SummaryListItem
-            label={t("summaryView.pricing.packagePrice")}
-            value={formatCurrency(snapshot.pricing.basePrice)}
-          />
-          <SummaryListItem
-            label={t("summaryView.pricing.servicesTotal")}
-            value={formatCurrency(snapshot.pricing.servicesPriceTotal)}
-            helper={t("summaryView.pricing.servicesTotalHelper")}
-          />
-          <SummaryListItem
-            label={t("summaryView.pricing.servicesVatTotal", { defaultValue: "VAT total" })}
-            value={formatCurrency(snapshot.pricing.servicesVatTotal)}
-          />
-          <SummaryListItem
-            label={t("summaryView.pricing.servicesGrossTotal", { defaultValue: "Total (incl. VAT)" })}
-            value={formatCurrency(snapshot.pricing.servicesGrossTotal)}
-          />
-          {!includeAddOnsInPrice ? (
-            <SummaryListItem
-              label={t("summaryView.pricing.addOnsClientTotal")}
-              value={formatCurrency(snapshot.pricing.subtotal)}
-              helper={t("summaryView.pricing.addOnsClientTotalHelper")}
-            />
-          ) : null}
-          <SummaryListItem label={t("summaryView.pricing.costTotal") } value={formatCurrency(snapshot.pricing.servicesCostTotal)} />
-          <SummaryListItem
-            label={t("summaryView.pricing.margin")}
-            value={formatCurrency(snapshot.pricing.servicesMargin)}
-            tone={snapshot.pricing.servicesMargin >= 0 ? "positive" : "negative"}
-          />
-          <SummaryListItem
-            label={t("summaryView.pricing.clientTotal")}
-            value={formatCurrency(clientTotal)}
-            helper={clientTotalHelper}
-          />
-          <SummaryListItem label={t("summaryView.pricing.deposit.label") } value={depositSummary} helper={depositHelper} />
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {pricingMetrics.map((metric) => (
+              <SummaryMetricCard
+                key={metric.key}
+                label={metric.label}
+                value={metric.value}
+                helper={metric.helper}
+                tone={metric.tone}
+                span={metric.span}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
@@ -349,6 +395,33 @@ const SummaryCard = ({
     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
     <div className="mt-2 text-sm font-semibold text-slate-900">{primary}</div>
     {helper ? <div className="mt-1 text-xs text-muted-foreground">{helper}</div> : null}
+  </div>
+);
+
+const SummaryMetricCard = ({
+  label,
+  value,
+  helper,
+  tone,
+  span,
+}: Omit<SummaryMetric, "key">) => (
+  <div
+    className={cn(
+      "rounded-xl border border-border/60 bg-white/90 p-3 shadow-sm",
+      span === "full" && "sm:col-span-2 xl:col-span-3"
+    )}
+  >
+    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+    <div
+      className={cn(
+        "mt-1 text-sm font-semibold text-slate-900",
+        tone === "positive" && "text-emerald-600",
+        tone === "negative" && "text-rose-600"
+      )}
+    >
+      {value}
+    </div>
+    {helper ? <p className="mt-1 text-xs text-muted-foreground">{helper}</p> : null}
   </div>
 );
 

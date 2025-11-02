@@ -94,8 +94,22 @@
           }
         }
       },
+      "vatControls": {
+        "title": "KDV düzenlemeleri",
+        "description": "Hizmet varsayılanından farklıysa kalem bazında KDV uygulamasını güncelleyin.",
+        "modeLabel": "KDV uygulaması",
+        "rateLabel": "KDV oranı (%)",
+        "mode": {
+          "inclusive": "Fiyata dahil",
+          "exclusive": "Üstüne ekle"
+        },
+        "toggleLabel": "Hizmet bazlı düzenlemeleri aç",
+        "toggleDescription": "Sadece satır kalemi farklı KDV gerektiriyorsa değiştirin.",
+        "vendorLabel": "Tedarikçi: {{vendor}}",
+        "typeLabel": "Tür: {{type}}"
+      },
       "summary": {
-        "title": "Paket özeti",
+        "title": "Seçilen hizmetler özeti",
         "cost": "Toplam maliyet",
         "price": "Toplam satış",
         "vat": "KDV",

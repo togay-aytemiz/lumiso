@@ -24,24 +24,27 @@
   - ✅ Added `service_type` + `is_people_based` to `services` (UI is consuming both the segmented filters and new dialogs).
   - ✅ Prepare migration + backfill script so existing rows pick the right type and staffing flag (`supabase/migrations/20251107120000_services_backfill_types.sql` drafted; QA + rollout checklist pending).
   - ✅ Decision: keep the `default_unit` column in the schema but defer exposing it in v1—line-item work will revisit once package quantity pickers land.
-  - 🚧 Introduce `vat_rate` (`numeric(5,2)`) and `price_includes_vat` (`boolean`, default `false`) on `services`, seeded from an organization-level default. Backfill existing services to `0%` so totals stay unchanged until users opt in.
-  - 🚧 Extend `organizations` (or companion `organization_settings`) with `tax_profile` jsonb capturing billing identity + default KDV settings, including migration/backfill using the existing single KDV field when present.
+  - ✅ Introduce `vat_rate` (`numeric(5,2)`) and `price_includes_vat` (`boolean`, default `false`) on `services`, with `organization_settings.tax_profile` defaulting to **20%** KDV for new and existing orgs. Migration `20251109120000_services_vat_profile.sql` seeds the schema.
+  - ✅ Extend `organizations` (or companion `organization_settings`) with `tax_profile` jsonb capturing billing identity + default KDV settings, including migration/backfill using the existing single KDV field when present. *(Migration + settings UI now populate defaults at 20% KDV.)*
+  - ✅ Follow-up migration `20251109161000_tax_profile_defaults_include.sql` realigns defaults to VAT-inclusive pricing, backfills seeded sample services, and refreshes `ensure_default_services_for_org` so new orgs inherit their tax profile (20 % / include KDV) out of the box.
 - **Organization settings**
-  - 🚧 Add a **Tax & Billing** section under organization settings so owners can define defaults once and reuse them across services/packages.
-  - 🚧 Fields: legal entity toggle (`Şahıs` vs `Şirket`), company name, tax office, VKN/TCKN, optional billing address, default KDV rate %, and whether catalog prices include KDV by default.
-  - 🚧 Surface helper text clarifying that defaults only pre-fill new services/packages; existing records keep their stored values until edited.
+  - ✅ Add a **Tax & Billing** section under organization settings so owners can define defaults once and reuse them across services/packages.
+  - ✅ Fields: legal entity toggle (`Şahıs` vs `Şirket`), company name, tax office, VKN/TCKN, optional billing address, default KDV rate %, and whether catalog prices include KDV by default.
+  - ✅ Surface helper text clarifying that defaults only pre-fill new services/packages; existing records keep their stored values until edited.
 - **UI & UX**
   - ✅ Services settings now use the segmented control (coverage vs deliverable) and refreshed cards/dialog copy.
   - ✅ Dialogs expose the new fields only when relevant and include empty-state guidance.
-  - 🚧 Extend the service dialog pricing block with a "KDV" accordion: radio control for **Included in price** vs **Add on top** plus a numeric percentage input. Mirror copy in TR (`KDV fiyatın içinde` / `KDV ayrıca eklenecek`). Persist the choices to the new fields.
+  - ✅ Extend the service dialog pricing block with a "KDV" accordion: radio control for **Included in price** vs **Add on top** plus a numeric percentage input. Mirror copy in TR (`KDV fiyatın içinde` / `KDV ayrıca eklenecek`). Persist the choices to the new fields.
 - **Tech tasks**
   - ✅ Hooks/tests updated to return the new columns.
   - ⏳ Audit downstream consumers (packages, project flows, reports) to ensure they tolerate the richer payload.
   - ✅ Normalize KDV math helpers (`calculateVatPortion`, `applyVat`) so both settings and package builders share a single implementation. Landed in `src/lib/accounting/vat.ts` and covered by unit tests/power the package wizard snapshot math.
-  - 🚧 Adopt the shared VAT helpers inside service dialogs/settings once the new schema fields exist so the settings UI and package wizard stay in sync.
+  - ✅ Hydrate package wizard line items with the new service-level VAT defaults and organization tax profile so inclusive/exclusive math stays consistent.
+  - ✅ Adopt the shared VAT helpers inside service dialogs/settings once the new schema fields exist so the settings UI and package wizard stay in sync.
+  - ✅ Settings › Services listing now surfaces VAT %/amount and whether pricing includes KDV to help admins audit catalog data quickly.
   - 🚧 Extend `useOrganization` payload with `taxProfile` (entity type, names, identifiers, default `vatRate`, `vatMode`) sourced from the new settings screen. Ensure service/package forms hydrate from it while allowing per-item overrides.
 - **Output**
-  - Catalog UI differentiates staffing vs deliverables, and VAT helpers are ready for reuse; service dialog VAT inputs plus backfill/consumer audit remain before closing the phase.
+  - Catalog UI differentiates staffing vs deliverables, Tax & Billing defaults are editable, and service dialogs now persist VAT metadata; backfill/consumer audit remain before closing the phase.
 
 ## Phase 2 — Bundle Authoring for Packages
 - **Catalog integration**
@@ -56,7 +59,7 @@
   - Share a new `ServiceLineItems` state shape (`serviceId`, `quantity?`, `unitPrice?`) even if quantity defaults to 1.
   - Ensure package previews in the wizard and project detail reuse this structure.
   - ✅ Update Supabase persistence to store the ordered list (`packages.line_items` jsonb) and mirror legacy add-ons until front-end migration lands.
-  - Extend the line item schema to `{ serviceId, quantity?, unitPrice?, vatRate, vatMode: 'included' | 'exclusive' }`, defaulting from the service record. Guard against adding organization-level KDV again at package submission.
+  - ✅ Extend the line item schema to `{ serviceId, quantity?, unitPrice?, vatRate, vatMode: 'included' | 'exclusive' }`, defaulting from the service record. Guard against adding organization-level KDV again at package submission.
 - **Output**
   - Packages reflect real-world combinations (base shoot + album + print pack) and seed the upcoming project flow updates.
 
@@ -86,11 +89,14 @@
 - 🚧 Run and verify the new backfill migration (`supabase/migrations/20251107120000_services_backfill_types.sql`) before enabling the segmented UI for all orgs. *(pending QA/deployment)*
 - 🚧 Roll out the new `packages.line_items` column (`supabase/migrations/20251107133000_packages_line_items.sql`) and confirm seed helpers/backfill behave as expected in staging. *(pending QA/deployment)*
 - 🚧 QA the new enrichment pass (`supabase/migrations/20251108134500_packages_line_items_enrich.sql`) that backfills `unitPrice`/VAT metadata onto existing package line items so staging totals match the wizard.
+- ✅ VAT + tax profile schema migration (`supabase/migrations/20251109120000_services_vat_profile.sql`) verified in staging and applied to production on 2025-11-09; service inserts respect the new constraints.
+- 🚧 QA & deploy the defaults alignment migration (`supabase/migrations/20251109161000_tax_profile_defaults_include.sql`). This also backfills seeded sample services and updates `ensure_default_services_for_org` to honour each org’s VAT defaults.
 - Audit package and wizard consumers to ensure service loading remains stable, then plan their migrations onto the line-item editor. *(pending)*
 - Monitor Supabase queries for any places that still assume a flat list of services (e.g. reports) and update them to read the new columns. *(pending)*
 
 ## Immediate Next Steps
-1. Review this plan with product/design to confirm scope and level of complexity. *(todo)*
-2. Walk backend through the new schema additions + backfill heuristics so we have agreement on rollout sequencing and QA steps. *(todo)*
-3. Wireframe the bundle builder experience (packages + project flows) using the new line-item pattern. *(todo)*
-4. Schedule implementation tasks per phase, aligning with ongoing work on the project wizard. *(todo)*
+1. Run `20251109161000_tax_profile_defaults_include.sql` through staging QA, then apply to production per the Supabase runbook so inclusive VAT defaults go live. *(todo)*
+2. Review this plan with product/design to confirm scope and level of complexity. *(todo)*
+3. Walk backend through the new schema additions + backfill heuristics so we have agreement on rollout sequencing and QA steps. *(todo)*
+4. Wireframe the bundle builder experience (packages + project flows) using the new line-item pattern. *(todo)*
+5. Schedule implementation tasks per phase, aligning with ongoing work on the project wizard. *(todo)*

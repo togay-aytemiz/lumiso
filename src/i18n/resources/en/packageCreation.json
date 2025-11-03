@@ -112,6 +112,8 @@
       },
       "inventory": {
         "add": "Add",
+        "selectedTag": "{{selected}}/{{total}} selected",
+        "quantityTag": "Quantity: {{count}}",
         "uncategorized": "Other",
         "inactive": "Inactive",
         "empty": "No services in your catalog yet. Create services to add them here.",
@@ -553,6 +555,16 @@
     "description": {
       "title": "Description",
       "empty": "No description provided."
+    },
+    "emptyState": {
+      "title": "Peek at the summary once basics are set",
+      "description": "Fill in the Basics and Pricing steps to see package totals and delivery details here.",
+      "checklist": {
+        "basics": "Set a name, description, and project types in Basics.",
+        "pricing": "Add at least a package price or client total in Pricing."
+      },
+      "ctaBasics": "Go to Basics",
+      "ctaPricing": "Open Pricing"
     }
   }
 }

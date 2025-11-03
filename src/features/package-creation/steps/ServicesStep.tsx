@@ -8,7 +8,11 @@ import {
 import {
   ServicesTableCard,
   type ServicesTableRow,
-} from "@/components/ServicesTableCard";
+  SummaryTotalRow,
+  SummaryTotalsCard,
+  SummaryTotalsDivider,
+  SummaryTotalsSection,
+} from "@/components/services";
 import {
   useServices,
   useOrganizationTaxProfile,
@@ -44,12 +48,6 @@ import {
   type CustomServiceFormState,
   type CustomServiceItemView,
 } from "@/features/services/components/CustomServicesSection";
-import {
-  SummaryTotalRow,
-  SummaryTotalsCard,
-  SummaryTotalsDivider,
-  SummaryTotalsSection,
-} from "@/features/services/components/SummaryTotalsCard";
 interface ServiceRecord {
   id: string;
   name: string;
@@ -428,6 +426,15 @@ export const ServicesStep = () => {
           "No services in your catalog yet. Create services to add them here.",
       }),
       quantity: t("steps.services.list.quantity", { defaultValue: "Quantity" }),
+      selectedTag: (selected: number, total: number) =>
+        t("steps.services.inventory.selectedTag", {
+          selected,
+          total,
+        }),
+      quantityTag: (count: number) =>
+        t("steps.services.inventory.quantityTag", {
+          count,
+        }),
       retry: t("common:actions.retry", { defaultValue: "Retry" }),
     }),
     [t, tForms]

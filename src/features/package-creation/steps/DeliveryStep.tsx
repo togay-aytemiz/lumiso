@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2 } from "lucide-react";
+import { SelectablePill } from "@/components/ui/selectable-pill";
 
 interface DeliveryMethodRecord {
   id: string;
@@ -427,39 +426,21 @@ export const DeliveryStep = () => {
             ) : (
               <div className="flex flex-wrap gap-2">
                 {methods.map((method) => {
-                  const isSelected = state.delivery.methods.includes(method.id);
+                  const isSelected = selectedMethodIds.includes(method.id);
                   return (
-                    <Badge
+                    <SelectablePill
                       key={method.id}
-                      variant={isSelected ? "default" : "outline"}
-                      className="group flex cursor-pointer items-center gap-2 rounded-full px-3 py-1 text-xs transition-colors"
+                      selected={isSelected}
                       onClick={() => toggleMethod(method.id)}
-                      role="button"
-                      aria-pressed={isSelected}
-                      tabIndex={0}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          toggleMethod(method.id);
-                        }
-                      }}
+                      onRemove={() => handleRequestDeleteMethod(method)}
+                      removeLabel={t("steps.delivery.methods.removeLabel", {
+                        name: method.name,
+                        defaultValue: "Remove method",
+                      })}
+                      className="text-xs"
                     >
-                      <span>{method.name}</span>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleRequestDeleteMethod(method);
-                        }}
-                        className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-slate-900/10 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                        aria-label={t("steps.delivery.methods.removeLabel", {
-                          name: method.name,
-                          defaultValue: "Remove method",
-                        })}
-                      >
-                        <Trash2 className="h-3.5 w-3.5 opacity-70" aria-hidden />
-                      </button>
-                    </Badge>
+                      {method.name}
+                    </SelectablePill>
                   );
                 })}
               </div>

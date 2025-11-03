@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { HelperTooltip } from "./HelperTooltip";
+import { Surface } from "@/components/layout-primitives";
 
 export type VatModeOption = "inclusive" | "exclusive";
 
@@ -53,7 +54,7 @@ export const ServiceVatOverridesSection = ({
   onModeChange,
   emptyMessage,
 }: ServiceVatOverridesSectionProps) => (
-  <section className="space-y-4 rounded-2xl border border-border/70 bg-white/80 p-5 shadow-sm">
+  <Surface className="space-y-4" padding="md">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div className="space-y-1 max-w-xl">
         <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
@@ -76,13 +77,16 @@ export const ServiceVatOverridesSection = ({
       items.length ? (
         <div className="space-y-3">
           {items.map((item) => (
-            <div
+            <Surface
               key={item.id}
-              className="rounded-xl border border-border/60 bg-white/95 p-4 shadow-sm transition-shadow hover:shadow-sm"
+              as="div"
+              padding="sm"
+              radius="lg"
+              className="border border-border/60 bg-white/95 transition-shadow hover:shadow-sm"
             >
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="min-w-[220px] space-y-1">
-                  <p className="text-sm font-semibold text-slate-900">{item.name}</p>
+              <div className="flex flex-wrap items-start gap-4">
+                <div className="flex min-w-[220px] flex-1 flex-col gap-1">
+                  <p className="text-sm font-semibold text-slate-900 break-words">{item.name}</p>
                   {item.meta?.length ? (
                     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                       {item.meta.map((meta, index) =>
@@ -101,50 +105,50 @@ export const ServiceVatOverridesSection = ({
                     </div>
                   ) : null}
                 </div>
-              </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {rateLabel}
-                  </Label>
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    min={0}
-                    max={99.99}
-                    step="0.01"
-                    value={item.vatRate}
-                    onChange={(event) => onRateChange(item.id, event.target.value)}
-                    className="h-9"
-                  />
+                <div className="flex min-w-[240px] flex-1 flex-wrap gap-3 sm:flex-nowrap">
+                  <div className="flex min-w-[140px] flex-1 flex-col gap-1">
+                    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {rateLabel}
+                    </Label>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      max={99.99}
+                      step="0.01"
+                      value={item.vatRate}
+                      onChange={(event) => onRateChange(item.id, event.target.value)}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="flex min-w-[160px] flex-1 flex-col gap-1">
+                    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {modeLabel}
+                    </Label>
+                    <Select
+                      value={item.vatMode}
+                      onValueChange={(value) => onModeChange(item.id, value as VatModeOption)}
+                    >
+                      <SelectTrigger className="h-9 w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {modeOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {modeLabel}
-                  </Label>
-                  <Select
-                    value={item.vatMode}
-                    onValueChange={(value) => onModeChange(item.id, value as VatModeOption)}
-                  >
-                    <SelectTrigger className="h-9 w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {modeOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
-            </div>
+            </Surface>
           ))}
         </div>
       ) : emptyMessage ? (
         <p className="text-sm text-muted-foreground">{emptyMessage}</p>
       ) : null
     ) : null}
-  </section>
+  </Surface>
 );

@@ -9,14 +9,18 @@ import { usePackageCreationSnapshot } from "../hooks/usePackageCreationSnapshot"
 import { calculateLineItemPricing } from "../utils/lineItemPricing";
 import type { PackageCreationLineItem } from "../types";
 import { DEFAULT_SERVICE_UNIT, normalizeServiceUnit } from "@/lib/services/units";
-import { ServicesTableCard, type ServicesTableRow } from "@/components/ServicesTableCard";
 import {
+  ServicesTableCard,
+  type ServicesTableRow,
   SummaryTotalRow,
   SummaryTotalsCard,
   SummaryTotalsDivider,
   SummaryTotalsSection,
-} from "@/features/services/components/SummaryTotalsCard";
+} from "@/components/services";
 import { usePackageCreationActions } from "../hooks/usePackageCreationActions";
+import { SummaryCard, SummarySectionHeading } from "@/components/summary";
+import { Sparkles } from "lucide-react";
+import { Surface } from "@/components/layout-primitives";
 
 const formatCurrency = (value: number | null | undefined) => {
   if (value === null || value === undefined || Number.isNaN(value)) {
@@ -56,7 +60,7 @@ const formatPercent = (value: number | null | undefined) => {
 export const SummaryStep = () => {
   const { t } = useTranslation("packageCreation");
   const { snapshot } = usePackageCreationSnapshot();
-  const { updateBasics } = usePackageCreationActions();
+  const { updateBasics, setCurrentStep } = usePackageCreationActions();
   const { data: projectTypes = [] } = useProjectTypes();
 
   const projectTypeMap = useMemo(
@@ -266,6 +270,64 @@ export const SummaryStep = () => {
     updateBasics({ isActive: nextValue });
   };
 
+  const basicsComplete = Boolean(snapshot.basics.name?.trim());
+  const pricingComplete =
+    typeof snapshot.pricing.basePrice === "number" && snapshot.pricing.basePrice > 0
+      ? true
+      : typeof snapshot.pricing.clientTotal === "number" && snapshot.pricing.clientTotal > 0;
+  const canRenderSummary = basicsComplete && pricingComplete;
+  const missingBasics = !basicsComplete;
+  const missingPricing = !pricingComplete;
+
+  if (!canRenderSummary) {
+    return (
+      <div className="space-y-6">
+        <header className="space-y-2">
+          <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+            {t("summaryView.sectionTitle")}
+          </h2>
+          <p className="text-sm text-muted-foreground">{t("summaryView.intro")}</p>
+        </header>
+
+        <div className="rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-8 text-center shadow-sm">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Sparkles className="h-7 w-7" />
+          </div>
+          <h3 className="mt-4 text-lg font-semibold text-slate-900">
+            {t("summaryView.emptyState.title")}
+          </h3>
+          <p className="mt-2 text-sm text-muted-foreground">{t("summaryView.emptyState.description")}</p>
+          <ul className="mt-5 space-y-2 text-left text-sm text-muted-foreground">
+            {missingBasics ? (
+              <li className="flex items-start gap-2">
+                <span className="mt-[6px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
+                <span>{t("summaryView.emptyState.checklist.basics")}</span>
+              </li>
+            ) : null}
+            {missingPricing ? (
+              <li className="flex items-start gap-2">
+                <span className="mt-[6px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
+                <span>{t("summaryView.emptyState.checklist.pricing")}</span>
+              </li>
+            ) : null}
+          </ul>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            {missingBasics ? (
+              <Button onClick={() => setCurrentStep("basics")} variant="default">
+                {t("summaryView.emptyState.ctaBasics")}
+              </Button>
+            ) : null}
+            {missingPricing ? (
+              <Button onClick={() => setCurrentStep("pricing")} variant={missingBasics ? "outline" : "default"}>
+                {t("summaryView.emptyState.ctaPricing")}
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <header className="space-y-2">
@@ -276,7 +338,7 @@ export const SummaryStep = () => {
       </header>
 
       <section className="space-y-3">
-        <SummaryHeading>{t("summaryView.meta.title")}</SummaryHeading>
+        <SummarySectionHeading>{t("summaryView.meta.title")}</SummarySectionHeading>
         <div className="grid gap-3 lg:grid-cols-4">
           <SummaryCard
             title={t("summaryView.pricing.clientTotalTitle")}
@@ -331,7 +393,7 @@ export const SummaryStep = () => {
         </div>
       </section>
 
-      <div className="rounded-xl border border-border/70 bg-white/95 p-4 shadow-sm">
+      <Surface as="div" radius="lg" padding="sm" className="bg-white/95">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-slate-900">{t("steps.basics.fields.visibility.label")}</p>
@@ -339,10 +401,10 @@ export const SummaryStep = () => {
           </div>
           <Switch checked={snapshot.basics.isActive} onCheckedChange={handleVisibilityToggle} />
         </div>
-      </div>
+      </Surface>
 
       <section className="space-y-3">
-        <SummaryHeading>{t("summaryView.description.title")}</SummaryHeading>
+        <SummarySectionHeading>{t("summaryView.description.title")}</SummarySectionHeading>
         <div className="rounded-xl border border-border/60 bg-white p-4">
           <p
             className={cn(
@@ -356,7 +418,7 @@ export const SummaryStep = () => {
       </section>
 
       <section className="space-y-3">
-        <SummaryHeading>{t("summaryView.delivery.title")}</SummaryHeading>
+        <SummarySectionHeading>{t("summaryView.delivery.title")}</SummarySectionHeading>
         <div className="grid gap-3 md:grid-cols-3">
           <SummaryCard
             title={t("summaryView.delivery.estimateLabel")}
@@ -388,7 +450,7 @@ export const SummaryStep = () => {
       </section>
 
       <section ref={servicesSectionRef} className="space-y-3">
-        <SummaryHeading>{t("summaryView.servicesAndPricingTitle")}</SummaryHeading>
+        <SummarySectionHeading>{t("summaryView.servicesAndPricingTitle")}</SummarySectionHeading>
         <ServicesTableCard
           rows={servicesTableRows}
           totals={undefined}
@@ -509,31 +571,6 @@ export const SummaryStep = () => {
     </div>
   );
 };
-
-const SummaryHeading = ({ children }: { children: string }) => (
-  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{children}</p>
-);
-
-const SummaryCard = ({
-  title,
-  primary,
-  helper,
-  className,
-  helperClassName,
-}: {
-  title: string;
-  primary: ReactNode;
-  helper?: ReactNode;
-  className?: string;
-  helperClassName?: string;
-}) => (
-  <div className={cn("rounded-2xl border border-border/70 bg-white/95 p-4 shadow-sm", className)}>
-    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
-    <div className="mt-2 text-sm font-semibold text-slate-900">{primary}</div>
-    {helper ? <div className={cn("mt-1 text-xs text-muted-foreground", helperClassName)}>{helper}</div> : null}
-  </div>
-);
-
 const truncate = (value: string, limit: number) => {
   if (value.length <= limit) return value;
   return `${value.slice(0, Math.max(0, limit - 3))}...`;

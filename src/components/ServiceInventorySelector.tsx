@@ -49,6 +49,8 @@ export interface ServiceInventoryLabels {
   inactive: string;
   empty: string;
   quantity: string;
+  selectedTag: (selected: number, total: number) => string;
+  quantityTag: (count: number) => string;
   retry?: string;
 }
 
@@ -310,6 +312,9 @@ export function ServiceInventorySelector({
             const isExpanded = expandedCategories[categoryKey] ?? categoryDefaultOpen[categoryKey] ?? false;
             const categorySelected = items.filter((item) => (selectedMap.get(item.id) ?? 0) > 0).length;
             const categoryQuantity = items.reduce((total, item) => total + (selectedMap.get(item.id) ?? 0), 0);
+            const hasSelection = categorySelected > 0;
+            const selectedTagLabel = labels.selectedTag(categorySelected, items.length);
+            const quantityTagLabel = labels.quantityTag(categoryQuantity);
 
             return (
               <Collapsible
@@ -318,25 +323,40 @@ export function ServiceInventorySelector({
                 onOpenChange={(nextOpen) =>
                   setExpandedCategories((previous) => ({ ...previous, [categoryKey]: nextOpen }))
                 }
-                className="overflow-hidden rounded-xl border border-border/50 bg-muted/20 transition-shadow duration-200"
+                className={cn(
+                  "overflow-hidden rounded-xl border border-border/50 bg-muted/20 transition-shadow duration-200",
+                  hasSelection && "border-emerald-300/70 bg-emerald-50/30 shadow-sm"
+                )}
               >
                 <CollapsibleTrigger asChild>
                   <button
                     type="button"
-                    className="group flex w-full items-center justify-between border-b border-border/60 bg-muted/30 px-4 py-3 text-left transition-colors duration-200 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                    className={cn(
+                      "group flex w-full items-center justify-between border-b border-border/60 px-4 py-3 text-left transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
+                      hasSelection ? "bg-white" : "bg-muted/30 hover:bg-muted/40"
+                    )}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="flex flex-col">
-                        <p className="text-sm font-medium text-slate-900">{category}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {labels.quantity}: {categoryQuantity}
-                        </p>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm font-medium text-slate-900">{category}</p>
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <Badge
+                          variant={hasSelection ? "default" : "outline"}
+                          className={cn(
+                            "rounded-full px-2.5 py-0.5 font-semibold",
+                            hasSelection ? "" : "text-muted-foreground"
+                          )}
+                        >
+                          {selectedTagLabel}
+                        </Badge>
+                        <Badge
+                          variant="secondary"
+                          className="rounded-full bg-white/90 px-2.5 py-0.5 font-medium text-muted-foreground shadow-sm"
+                        >
+                          {quantityTagLabel}
+                        </Badge>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-white/80 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 shadow-sm">
-                        {categorySelected}/{items.length}
-                      </span>
                       <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                     </div>
                   </button>

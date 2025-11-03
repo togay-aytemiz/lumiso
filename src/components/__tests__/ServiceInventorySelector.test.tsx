@@ -33,6 +33,8 @@ const buildLabels = (overrides: Partial<ServiceInventoryLabels> = {}): ServiceIn
   inactive: "Inactive",
   empty: "Empty inventory",
   quantity: "Quantity",
+  selectedTag: (selected, total) => `${selected}/${total} selected`,
+  quantityTag: (count) => `Quantity: ${count}`,
   retry: "Retry",
   ...overrides,
 });

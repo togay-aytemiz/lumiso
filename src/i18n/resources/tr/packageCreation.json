@@ -112,6 +112,8 @@
       },
       "inventory": {
         "add": "Ekle",
+        "selectedTag": "{{selected}}/{{total}} seçildi",
+        "quantityTag": "Toplam adet: {{count}}",
         "uncategorized": "Diğer",
         "inactive": "Pasif",
         "empty": "Kataloğunuzda henüz hizmet yok. Buraya eklemek için hizmet oluşturun.",
@@ -551,6 +553,16 @@
     "description": {
       "title": "Açıklama",
       "empty": "Açıklama eklenmedi."
+    },
+    "emptyState": {
+      "title": "Özet için önce temel adımları tamamla",
+      "description": "Paketi yayınlamadan önce Temeller ve Fiyatlandırma adımlarını doldurursan tüm rakamları burada görebilirsin.",
+      "checklist": {
+        "basics": "Temeller adımında paket adını, açıklamayı ve proje türlerini belirle.",
+        "pricing": "Fiyatlandırma adımında en az bir paket fiyatı veya müşteri toplamı gir."
+      },
+      "ctaBasics": "Temellere git",
+      "ctaPricing": "Fiyatlandırmayı aç"
     }
   }
 }

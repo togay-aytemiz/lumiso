@@ -10,7 +10,7 @@ import {
   type ServiceInventoryItem,
   type ServiceInventoryType,
 } from "@/components/ServiceInventorySelector";
-import { ServicesTableCard, type ServicesTableRow } from "@/components/ServicesTableCard";
+import { ServicesTableCard, type ServicesTableRow } from "@/components/services";
 import { usePackages, useProjectTypes, useServices } from "@/hooks/useOrganizationData";
 import { useProjectCreationContext } from "../hooks/useProjectCreationContext";
 import { useProjectCreationActions } from "../hooks/useProjectCreationActions";

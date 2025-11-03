@@ -15,8 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Info } from "lucide-react";
+import { Surface } from "@/components/layout-primitives";
+import { SummaryMetric } from "@/components/summary";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +32,7 @@ import { usePackageCreationContext } from "../hooks/usePackageCreationContext";
 import { usePackageCreationActions } from "../hooks/usePackageCreationActions";
 import type { PackageCreationLineItem, PackageCreationPricingState, PackageVatMode } from "../types";
 import { calculateLineItemPricing } from "../utils/lineItemPricing";
+import { HelperTooltip } from "@/features/services/components/HelperTooltip";
 
 const PERCENT_PRESETS = [5, 10, 25, 50];
 
@@ -380,15 +381,15 @@ export const PricingStep = () => {
                 </div>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
-                <StatCard
+                <SummaryMetric
                   label={t("steps.pricing.packageVat.netLabel")}
                   value={formatCurrency(basePriceNet)}
                 />
-                <StatCard
+                <SummaryMetric
                   label={t("steps.pricing.packageVat.vatLabel")}
                   value={formatCurrency(basePriceVatAmount)}
                 />
-                <StatCard
+                <SummaryMetric
                   label={t("steps.pricing.packageVat.grossLabel")}
                   value={formatCurrency(basePriceGross)}
                 />
@@ -397,42 +398,40 @@ export const PricingStep = () => {
           ) : null}
         </section>
 
-        <section className="rounded-2xl border border-border/70 bg-white/80 p-4 shadow-sm">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="space-y-1">
-              <h3 className="text-sm font-semibold text-slate-900">
-                {t("steps.pricing.servicesReference.title")}
-              </h3>
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-xs text-muted-foreground">
-                  {t("steps.pricing.servicesReference.description")}
-                </p>
-                <Button
-                  variant="link"
-                  size="sm"
-                  onClick={() => setCurrentStep("services")}
-                  className="h-auto px-0 text-xs font-semibold"
-                >
-                  {t("steps.pricing.servicesReference.action")}
-                </Button>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
+        <Surface padding="sm" className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-1">
+            <h3 className="text-sm font-semibold text-slate-900">
+              {t("steps.pricing.servicesReference.title")}
+            </h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-xs text-muted-foreground">
+                {t("steps.pricing.servicesReference.description")}
+              </p>
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => setCurrentStep("services")}
+                className="h-auto px-0 text-xs font-semibold"
+              >
+                {t("steps.pricing.servicesReference.action")}
+              </Button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline">
+                {t("steps.pricing.servicesReference.count", { count: state.services.items.length })}
+              </Badge>
+              {servicesGrossTotal > 0 ? (
                 <Badge variant="outline">
-                  {t("steps.pricing.servicesReference.count", { count: state.services.items.length })}
+                  {t("steps.pricing.servicesReference.total", {
+                    amount: formatCurrency(servicesGrossTotal),
+                  })}
                 </Badge>
-                {servicesGrossTotal > 0 ? (
-                  <Badge variant="outline">
-                    {t("steps.pricing.servicesReference.total", {
-                      amount: formatCurrency(servicesGrossTotal),
-                    })}
-                  </Badge>
-                ) : null}
-              </div>
+              ) : null}
             </div>
           </div>
-        </section>
+        </Surface>
 
-        <section className="space-y-3 rounded-2xl border border-border/70 bg-white/80 p-5 shadow-sm">
+        <Surface className="space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-sm font-semibold text-slate-900">
               {t("steps.pricing.includeAddOns.title")}
@@ -484,9 +483,9 @@ export const PricingStep = () => {
               </div>
             </label>
           </RadioGroup>
-        </section>
+        </Surface>
 
-        <section className="space-y-4 rounded-2xl border border-border/70 bg-white/80 p-5 shadow-sm">
+        <Surface className="space-y-4">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-sm font-semibold text-slate-900">
               {t("steps.pricing.finalSummary.title")}
@@ -497,15 +496,15 @@ export const PricingStep = () => {
             />
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
-            <StatCard
+            <SummaryMetric
               label={t("steps.pricing.finalSummary.net")}
               value={formatCurrency(combinedNet)}
             />
-            <StatCard
+            <SummaryMetric
               label={t("steps.pricing.finalSummary.vat")}
               value={formatCurrency(combinedVat)}
             />
-            <StatCard
+            <SummaryMetric
               label={t("steps.pricing.finalSummary.gross")}
               value={formatCurrency(combinedGross)}
             />
@@ -522,9 +521,9 @@ export const PricingStep = () => {
               })}
             </p>
           </div>
-        </section>
+        </Surface>
 
-        <section className="space-y-4 rounded-2xl border border-border/70 bg-white/80 p-5 shadow-sm">
+        <Surface className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="space-y-1">
               <h3 className="text-sm font-semibold text-slate-900">
@@ -669,25 +668,25 @@ export const PricingStep = () => {
                 </div>
               )}
 
-              <div className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
-                <span className="font-medium text-slate-900">
-                  {clientTotal > 0
-                    ? t("steps.pricing.deposit.preview")
-                    : t("steps.pricing.deposit.baseRequired", {
-                        defaultValue: "Enter a base price to calculate deposit",
-                      })}
-                </span>
-                <Badge variant="outline" className="text-base font-semibold">
-                  {formatCurrency(clientTotal > 0 ? depositAmount : 0)}
-                </Badge>
-              </div>
-            </div>
-          ) : (
-            <p className="border-t border-border/60 pt-4 text-xs text-muted-foreground">
-              {t("steps.pricing.deposit.disabled")}
-            </p>
-          )}
-        </section>
+                  <div className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
+                    <span className="font-medium text-slate-900">
+                      {clientTotal > 0
+                        ? t("steps.pricing.deposit.preview")
+                        : t("steps.pricing.deposit.baseRequired", {
+                            defaultValue: "Enter a base price to calculate deposit",
+                          })}
+                    </span>
+                    <Badge variant="outline" className="text-base font-semibold">
+                      {formatCurrency(clientTotal > 0 ? depositAmount : 0)}
+                    </Badge>
+                  </div>
+                </div>
+              ) : (
+                <p className="border-t border-border/60 pt-4 text-xs text-muted-foreground">
+                  {t("steps.pricing.deposit.disabled")}
+                </p>
+              )}
+        </Surface>
       </div>
       <VatResetDialog
         open={showVatResetPrompt}
@@ -731,32 +730,6 @@ function formatCurrency(amount: number) {
     minimumFractionDigits: 0,
   }).format(amount);
 }
-
-const StatCard = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-xl border border-slate-200/70 bg-slate-50 px-3 py-2 text-sm shadow-sm">
-    <p className="text-xs text-muted-foreground">{label}</p>
-    <p className="font-semibold text-slate-900">{value}</p>
-  </div>
-);
-
-const HelperTooltip = ({ label, content }: { label: string; content: string }) => (
-  <TooltipProvider delayDuration={150} disableHoverableContent>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          className="text-muted-foreground transition-colors hover:text-slate-900"
-          aria-label={label}
-        >
-          <Info className="h-4 w-4" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent className="max-w-xs text-xs leading-snug">
-        {content}
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-);
 
 const VatResetDialog = ({
   open,

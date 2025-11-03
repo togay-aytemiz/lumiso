@@ -64,7 +64,6 @@ describe("ServicesTableCard", () => {
     expect(screen.getByText("Kemal")).toBeInTheDocument();
     expect(screen.getByText("Fine Art Album")).toBeInTheDocument();
     expect(screen.getByText("Custom item")).toBeInTheDocument();
-    // Vendor fallback should render for rows without vendor
     expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(1);
 
     expect(screen.getByText("₺5.000")).toBeInTheDocument();

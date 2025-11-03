@@ -13,6 +13,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useToast } from "@/hooks/use-toast";
 import { ToggleSection } from "@/components/ui/toggle-section";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Trash2 } from "lucide-react";
 
 interface DeliveryMethodRecord {
   id: string;
@@ -47,11 +58,14 @@ export const DeliveryStep = () => {
   const [newMethodName, setNewMethodName] = useState("");
   const [isSavingMethod, setIsSavingMethod] = useState(false);
   const [methodError, setMethodError] = useState<string | null>(null);
+  const [methodToDelete, setMethodToDelete] = useState<DeliveryMethodRecord | null>(null);
+  const [isDeletingMethod, setIsDeletingMethod] = useState(false);
 
   const leadTimeUnit = state.delivery.leadTimeUnit ?? "days";
   const photoEnabled = state.delivery.enablePhotoEstimate !== false;
   const leadTimeEnabled = state.delivery.enableLeadTime !== false;
   const methodsEnabled = state.delivery.enableMethods !== false;
+  const selectedMethodIds = Array.isArray(state.delivery.methods) ? state.delivery.methods : [];
 
   const handleEstimateChange = (value: string) => {
     if (value !== "single" && value !== "range") return;
@@ -83,11 +97,10 @@ export const DeliveryStep = () => {
 
   const toggleMethod = (methodId: string) => {
     if (!methodsEnabled) return;
-    const current = state.delivery.methods ?? [];
-    if (current.includes(methodId)) {
-      updateDelivery({ methods: current.filter((id) => id !== methodId) });
+    if (selectedMethodIds.includes(methodId)) {
+      updateDelivery({ methods: selectedMethodIds.filter((id) => id !== methodId) });
     } else {
-      updateDelivery({ methods: [...current, methodId] });
+      updateDelivery({ methods: [...selectedMethodIds, methodId] });
     }
   };
 
@@ -143,8 +156,8 @@ export const DeliveryStep = () => {
     : t("steps.delivery.sections.disabled");
 
   const methodsSummary = methodsEnabled
-    ? state.delivery.methods.length
-      ? t("steps.delivery.sections.methods.count", { count: state.delivery.methods.length })
+    ? selectedMethodIds.length
+      ? t("steps.delivery.sections.methods.count", { count: selectedMethodIds.length })
       : t("steps.delivery.sections.methods.notSet")
     : t("steps.delivery.sections.disabled");
 
@@ -166,8 +179,13 @@ export const DeliveryStep = () => {
       return;
     }
 
-    const exists = methods.some((method) => method.name.toLowerCase() === trimmed.toLowerCase());
-    if (exists) {
+    const catalogRecords = (methodsQuery.data as DeliveryMethodRecord[] | undefined) ?? [];
+    const normalizedInput = trimmed.toLocaleLowerCase("tr-TR");
+    const existingRecord = catalogRecords.find(
+      (record) => record.name?.trim().toLocaleLowerCase("tr-TR") === normalizedInput
+    );
+
+    if (existingRecord && existingRecord.is_active !== false) {
       setMethodError(t("steps.delivery.methods.errors.duplicate", { defaultValue: "This method already exists." }));
       return;
     }
@@ -178,37 +196,104 @@ export const DeliveryStep = () => {
       if (authError) throw authError;
       if (!user) throw new Error("Auth required");
 
-      const { data, error } = await supabase
-        .from("package_delivery_methods")
-        .insert([
-          {
-            organization_id: activeOrganizationId,
-            user_id: user.id,
-            name: trimmed,
-            sort_order: DEFAULT_METHOD_NAMES.includes(trimmed) ? 0 : 100,
-          },
-        ])
-        .select()
-        .single();
+      let methodId: string | null = null;
+      let reactivated = false;
 
-      if (error) throw error;
+      if (existingRecord && existingRecord.is_active === false) {
+        const { error } = await supabase
+          .from("package_delivery_methods")
+          .update({ is_active: true })
+          .eq("id", existingRecord.id);
+        if (error) throw error;
+        methodId = existingRecord.id;
+        reactivated = true;
+      } else {
+        const { data, error } = await supabase
+          .from("package_delivery_methods")
+          .insert([
+            {
+              organization_id: activeOrganizationId,
+              user_id: user.id,
+              name: trimmed,
+              sort_order: DEFAULT_METHOD_NAMES.includes(trimmed) ? 0 : 100,
+            },
+          ])
+          .select()
+          .single();
+
+        if (error) throw error;
+        methodId = data?.id ?? null;
+      }
 
       await methodsQuery.refetch();
-      if (data?.id) {
+      if (methodId) {
         updateDelivery({
-          methods: [...state.delivery.methods.filter(Boolean), data.id],
+          methods: Array.from(new Set([...selectedMethodIds.filter(Boolean), methodId])),
         });
       }
       setNewMethodName("");
       toast({
         title: t("common:toast.success"),
-        description: t("steps.delivery.methods.success", { defaultValue: "Delivery method added." }),
+        description: reactivated
+          ? t("steps.delivery.methods.reactivateSuccess", {
+              name: existingRecord?.name ?? trimmed,
+              defaultValue: "Delivery method restored.",
+            })
+          : t("steps.delivery.methods.success", { defaultValue: "Delivery method added." }),
       });
     } catch (error: any) {
       console.error("Failed to add delivery method", error);
       setMethodError(error.message ?? "Unable to add delivery method");
     } finally {
       setIsSavingMethod(false);
+    }
+  };
+
+  const handleRequestDeleteMethod = (method: DeliveryMethodRecord) => {
+    setMethodToDelete(method);
+  };
+
+  const handleConfirmDeleteMethod = async () => {
+    if (!methodToDelete) return;
+    setIsDeletingMethod(true);
+    try {
+      const { error } = await supabase
+        .from("package_delivery_methods")
+        .update({ is_active: false })
+        .eq("id", methodToDelete.id);
+
+      if (error) throw error;
+
+      updateDelivery({
+        methods: selectedMethodIds.filter((id) => id !== methodToDelete.id),
+      });
+
+      await methodsQuery.refetch();
+      toast({
+        title: t("common:toast.success", { defaultValue: "Success" }),
+        description: t("steps.delivery.methods.removeSuccess", {
+          name: methodToDelete.name,
+          defaultValue: "Delivery method removed.",
+        }),
+      });
+      setMethodToDelete(null);
+    } catch (error: any) {
+      console.error("Failed to remove delivery method", error);
+      toast({
+        variant: "destructive",
+        title: t("common:toast.error", { defaultValue: "Something went wrong" }),
+        description: t("steps.delivery.methods.removeError", {
+          defaultValue: "We couldn't remove this delivery method.",
+        }),
+      });
+    } finally {
+      setIsDeletingMethod(false);
+    }
+  };
+
+  const handleDeleteDialogOpenChange = (open: boolean) => {
+    if (!open && !isDeletingMethod) {
+      setMethodToDelete(null);
     }
   };
 
@@ -347,10 +432,33 @@ export const DeliveryStep = () => {
                     <Badge
                       key={method.id}
                       variant={isSelected ? "default" : "outline"}
-                      className="cursor-pointer rounded-full px-3 py-1 text-xs transition-colors"
+                      className="group flex cursor-pointer items-center gap-2 rounded-full px-3 py-1 text-xs transition-colors"
                       onClick={() => toggleMethod(method.id)}
+                      role="button"
+                      aria-pressed={isSelected}
+                      tabIndex={0}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          toggleMethod(method.id);
+                        }
+                      }}
                     >
-                      {method.name}
+                      <span>{method.name}</span>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleRequestDeleteMethod(method);
+                        }}
+                        className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-slate-900/10 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        aria-label={t("steps.delivery.methods.removeLabel", {
+                          name: method.name,
+                          defaultValue: "Remove method",
+                        })}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 opacity-70" aria-hidden />
+                      </button>
                     </Badge>
                   );
                 })}
@@ -382,6 +490,39 @@ export const DeliveryStep = () => {
           </div>
         </ToggleSection>
       </div>
+
+      <AlertDialog open={!!methodToDelete} onOpenChange={handleDeleteDialogOpenChange}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("steps.delivery.methods.removeConfirmTitle", {
+                name: methodToDelete?.name ?? "",
+                defaultValue: "Remove this delivery method?",
+              })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("steps.delivery.methods.removeConfirmDescription", {
+                defaultValue:
+                  "This method will disappear from your catalog. Any packages using it will stop showing this method.",
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingMethod}>
+              {t("steps.delivery.methods.removeCancel", { defaultValue: "Keep" })}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDeleteMethod}
+              disabled={isDeletingMethod}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingMethod
+                ? t("steps.delivery.methods.removeInProgress", { defaultValue: "Removing…" })
+                : t("steps.delivery.methods.removeConfirm", { defaultValue: "Remove" })}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

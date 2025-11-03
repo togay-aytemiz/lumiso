@@ -1,18 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-  Plus,
-  Minus,
-  Trash2,
-  Users,
-  Package as PackageIcon,
-  Layers,
-  Info,
-} from "lucide-react";
 import {
   ServiceInventorySelector,
   type ServiceInventoryItem,
@@ -29,22 +16,8 @@ import {
 import { usePackageCreationContext } from "../hooks/usePackageCreationContext";
 import { usePackageCreationActions } from "../hooks/usePackageCreationActions";
 import type { PackageCreationLineItem, PackageVatMode } from "../types";
-import { IconActionButton } from "@/components/ui/icon-action-button";
 import { cn } from "@/lib/utils";
 import { calculateLineItemPricing } from "../utils/lineItemPricing";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   DEFAULT_SERVICE_UNIT,
   normalizeServiceUnit,
@@ -60,7 +33,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
+import { Users, Package as PackageIcon, Layers } from "lucide-react";
+import {
+  ServiceVatOverridesSection,
+  type ServiceVatOverridesItem,
+  type ServiceVatOverridesMeta,
+} from "@/features/services/components/ServiceVatOverridesSection";
+import {
+  CustomServicesSection,
+  type CustomServiceFormState,
+  type CustomServiceItemView,
+} from "@/features/services/components/CustomServicesSection";
+import {
+  SummaryTotalRow,
+  SummaryTotalsCard,
+  SummaryTotalsDivider,
+  SummaryTotalsSection,
+} from "@/features/services/components/SummaryTotalsCard";
 interface ServiceRecord {
   id: string;
   name: string;
@@ -444,6 +433,70 @@ export const ServicesStep = () => {
     [t, tForms]
   );
 
+  const vatModeOptions = useMemo(
+    () => [
+      {
+        value: "inclusive" as PackageVatMode,
+        label: t("steps.services.vatControls.mode.inclusive"),
+      },
+      {
+        value: "exclusive" as PackageVatMode,
+        label: t("steps.services.vatControls.mode.exclusive"),
+      },
+    ],
+    [t]
+  );
+
+  const vatOverrideItems = useMemo<ServiceVatOverridesItem[]>(() => {
+    return state.services.items.map((item) => {
+      const service =
+        item.type === "existing" && item.serviceId ? serviceMap.get(item.serviceId) : null;
+      const vatRateValue =
+        typeof item.vatRate === "number" && Number.isFinite(item.vatRate)
+          ? String(item.vatRate)
+          : "";
+      const vatModeValue: PackageVatMode =
+        item.vatMode === "inclusive" || item.vatMode === "exclusive"
+          ? item.vatMode
+          : defaultVatMode;
+      const meta: ServiceVatOverridesMeta[] = [];
+      const vendorLabel = item.vendorName
+        ? t("steps.services.vatControls.vendorLabel", { vendor: item.vendorName })
+        : service?.vendor_name
+        ? t("steps.services.vatControls.vendorLabel", { vendor: service.vendor_name })
+        : null;
+      if (vendorLabel) {
+        meta.push({ label: vendorLabel });
+      }
+      const serviceTypeKey =
+        (service?.serviceType as ServiceInventoryType | undefined) ?? "unknown";
+      const serviceTypeLabel =
+        serviceTypeKey === "unknown"
+          ? t("steps.services.inventory.types.unknown.title")
+          : tForms(`services.types.${serviceTypeKey}`, {
+              defaultValue: t(
+                `steps.services.inventory.types.${serviceTypeKey}.title`
+              ),
+            });
+      meta.push({
+        label: t("steps.services.vatControls.typeLabel", { type: serviceTypeLabel }),
+      });
+      if (item.type === "custom") {
+        meta.push({
+          label: t("summaryView.services.customTag"),
+          variant: "badge",
+        });
+      }
+      return {
+        id: item.id,
+        name: item.name,
+        vatRate: vatRateValue,
+        vatMode: vatModeValue,
+        meta,
+      };
+    });
+  }, [state.services.items, serviceMap, defaultVatMode, t, tForms]);
+
   const getUnitLabel = useCallback(
     (unit?: string | null) =>
       t(`steps.services.units.short.${normalizeServiceUnit(unit)}`, {
@@ -601,6 +654,84 @@ export const ServicesStep = () => {
     updateItem(itemId, { quantity: next });
   };
 
+  const customFormState: CustomServiceFormState = {
+    name: customName,
+    cost: customCost,
+    price: customPrice,
+    vatRate: customVatRate,
+    vatMode: customVatMode,
+    vatFormOpen: showQuickAddVatForm,
+  };
+
+  const handleCustomFormChange = (updates: Partial<CustomServiceFormState>) => {
+    if (updates.name !== undefined) setCustomName(updates.name);
+    if (updates.cost !== undefined) setCustomCost(updates.cost);
+    if (updates.price !== undefined) setCustomPrice(updates.price);
+    if (updates.vatRate !== undefined) setCustomVatRate(updates.vatRate);
+    if (updates.vatMode !== undefined) setCustomVatMode(updates.vatMode);
+  };
+
+  const customServiceItems = useMemo<CustomServiceItemView[]>(
+    () =>
+      customItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        quantity: Math.max(1, item.quantity ?? 1),
+        unitCost: item.unitCost ?? null,
+        unitPrice: item.unitPrice ?? null,
+        unitLabel: getUnitLabel(item.unit ?? DEFAULT_SERVICE_UNIT),
+        vatRate:
+          typeof item.vatRate === "number" && Number.isFinite(item.vatRate)
+            ? item.vatRate
+            : null,
+        vatMode:
+          item.vatMode === "inclusive" || item.vatMode === "exclusive"
+            ? item.vatMode
+            : defaultVatMode,
+        vatEditorOpen: Boolean(customVatPanels[item.id]),
+      })),
+    [customItems, customVatPanels, getUnitLabel, defaultVatMode]
+  );
+
+  const customServicesStrings = useMemo(() => {
+    const vatModeLabel = t(`steps.services.vatControls.mode.${defaultVatMode}`);
+    const vatHelperText = t("steps.services.custom.vatHelper", {
+      rate: formatPercent(defaultVatRate),
+      mode: vatModeLabel,
+    });
+    return {
+      nameLabel: t("steps.services.custom.nameLabel"),
+      namePlaceholder: t("steps.services.custom.namePlaceholder"),
+      costLabel: t("steps.services.custom.costLabel"),
+      costPlaceholder: t("steps.services.custom.costPlaceholder"),
+      priceLabel: t("steps.services.custom.priceLabel"),
+      pricePlaceholder: t("steps.services.custom.pricePlaceholder"),
+      listCostLabel: t("steps.services.list.unitCost"),
+      listPriceLabel: t("steps.services.list.unitPrice"),
+      addButton: t("steps.services.custom.add"),
+      cancelButton: t("steps.services.custom.cancel"),
+      vatToggleOpen: t("steps.services.custom.vatButtonOpen"),
+      vatToggleClose: t("steps.services.custom.vatButtonClose"),
+      vatRateLabel: t("steps.services.custom.vatRateLabel"),
+      vatRatePlaceholder: t("steps.services.custom.vatRatePlaceholder"),
+      vatModeLabel: t("steps.services.custom.vatModeLabel"),
+      vatHelper: vatHelperText,
+      vatHelperPerItem: vatHelperText,
+      quantityLabel: t("steps.services.list.quantity"),
+      decreaseAriaLabel: t("common:actions.decrease", {
+        defaultValue: "Decrease",
+      }),
+      increaseAriaLabel: t("common:actions.increase", {
+        defaultValue: "Increase",
+      }),
+      removeAriaLabel: t("steps.services.list.remove"),
+      customBadgeLabel: t("summaryView.services.customTag"),
+      emptyState: t("steps.services.custom.emptyState", {
+        defaultValue: "No custom services yet.",
+      }),
+    };
+  }, [t, defaultVatRate, defaultVatMode]);
+
   const handleToggleVatControls = () => {
     if (showVatControls) {
       if (hasVatOverrides) {
@@ -662,21 +793,23 @@ export const ServicesStep = () => {
     [defaultVatMode, defaultVatRate]
   );
 
-  const handleCustomVatToggle = (item: PackageCreationLineItem) => {
-    const isOpen = Boolean(customVatPanels[item.id]);
+  const handleCustomVatToggle = (itemId: string) => {
+    const item = state.services.items.find((serviceItem) => serviceItem.id === itemId);
+    if (!item) return;
+    const isOpen = Boolean(customVatPanels[itemId]);
     if (isOpen) {
       if (customItemHasVatOverrides(item)) {
-        setPendingCustomVatResetId(item.id);
+        setPendingCustomVatResetId(itemId);
         return;
       }
       setCustomVatPanels((previous) => {
         const next = { ...previous };
-        delete next[item.id];
+        delete next[itemId];
         return next;
       });
       return;
     }
-    setCustomVatPanels((previous) => ({ ...previous, [item.id]: true }));
+    setCustomVatPanels((previous) => ({ ...previous, [itemId]: true }));
   };
 
   const handleConfirmCustomVatReset = () => {
@@ -843,555 +976,61 @@ export const ServicesStep = () => {
         }
       />
       {state.services.items.length > 0 ? (
-        <div className="space-y-4 rounded-2xl border border-border/70 bg-white/80 p-5 shadow-sm">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="space-y-1 max-w-xl">
-              <h3 className="text-sm font-semibold text-slate-900">
-                {t("steps.services.vatControls.title")}
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                {t("steps.services.vatControls.description")}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <HelperTooltip
-                label={t("steps.services.vatControls.toggleLabel")}
-                content={t("steps.services.vatControls.toggleDescription")}
-              />
-              <Button
-                type="button"
-                variant="link"
-                size="sm"
-                className="h-auto px-0 text-xs font-semibold"
-                onClick={handleToggleVatControls}
-              >
-                {showVatControls
-                  ? t("steps.services.vatControls.buttonClose")
-                  : t("steps.services.vatControls.buttonOpen")}
-              </Button>
-            </div>
-          </div>
-          {showVatControls ? (
-            <div className="space-y-3">
-              {state.services.items.map((item) => {
-                const service = item.serviceId
-                  ? serviceMap.get(item.serviceId)
-                  : null;
-                const vatModeValue: PackageVatMode =
-                  item.vatMode ?? defaultVatMode;
-                const vatRateValue =
-                  typeof item.vatRate === "number" &&
-                  Number.isFinite(item.vatRate)
-                    ? String(item.vatRate)
-                    : "";
-                const serviceTypeKey =
-                  (service?.serviceType as ServiceInventoryType | undefined) ??
-                  "unknown";
-                const serviceTypeLabel =
-                  serviceTypeKey === "unknown"
-                    ? t("steps.services.inventory.types.unknown.title")
-                    : tForms(`services.types.${serviceTypeKey}`, {
-                        defaultValue: t(
-                          `steps.services.inventory.types.${serviceTypeKey}.title`
-                        ),
-                      });
-                const vendorLabel = item.vendorName
-                  ? t("steps.services.vatControls.vendorLabel", {
-                      vendor: item.vendorName,
-                    })
-                  : service?.vendor_name
-                  ? t("steps.services.vatControls.vendorLabel", {
-                      vendor: service.vendor_name,
-                    })
-                  : null;
-                const typeLabel = t("steps.services.vatControls.typeLabel", {
-                  type: serviceTypeLabel,
-                });
-                const vatRateInputId = `vat-rate-${item.id}`;
-                return (
-                  <div
-                    key={item.id}
-                    className="rounded-xl border border-border/60 bg-white/95 p-4 shadow-sm"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-4">
-                      <div className="min-w-[220px] space-y-1">
-                        <p className="text-sm font-semibold text-slate-900">
-                          {item.name}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          {vendorLabel ? <span>{vendorLabel}</span> : null}
-                          <span>{typeLabel}</span>
-                          {item.type === "custom" ? (
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] uppercase tracking-wide"
-                            >
-                              {t("summaryView.services.customTag")}
-                            </Badge>
-                          ) : null}
-                        </div>
-                      </div>
-                      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-end">
-                        <div className="space-y-1">
-                          <Label
-                            htmlFor={vatRateInputId}
-                            className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                          >
-                            {t("steps.services.vatControls.rateLabel")}
-                          </Label>
-                          <Input
-                            id={vatRateInputId}
-                            type="number"
-                            inputMode="decimal"
-                            min={0}
-                            max={99.99}
-                            step="0.01"
-                            value={vatRateValue}
-                            onChange={(event) =>
-                              handleVatRateChange(item.id, event.target.value)
-                            }
-                            className="h-9"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            {t("steps.services.vatControls.modeLabel")}
-                          </Label>
-                          <Select
-                            value={vatModeValue}
-                            onValueChange={(value) =>
-                              handleVatModeChange(
-                                item.id,
-                                value as PackageVatMode
-                              )
-                            }
-                          >
-                            <SelectTrigger className="h-9 w-full">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="inclusive">
-                                {t("steps.services.vatControls.mode.inclusive")}
-                              </SelectItem>
-                              <SelectItem value="exclusive">
-                                {t("steps.services.vatControls.mode.exclusive")}
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
-        </div>
+        <ServiceVatOverridesSection
+          title={t("steps.services.vatControls.title")}
+          description={t("steps.services.vatControls.description")}
+          tooltipLabel={t("steps.services.vatControls.toggleLabel")}
+          tooltipContent={t("steps.services.vatControls.toggleDescription")}
+          toggleButtonLabel={
+            showVatControls
+              ? t("steps.services.vatControls.buttonClose")
+              : t("steps.services.vatControls.buttonOpen")
+          }
+          isOpen={showVatControls}
+          onToggle={handleToggleVatControls}
+          items={vatOverrideItems}
+          rateLabel={t("steps.services.vatControls.rateLabel")}
+          modeLabel={t("steps.services.vatControls.modeLabel")}
+          modeOptions={vatModeOptions}
+          onRateChange={handleVatRateChange}
+          onModeChange={handleVatModeChange}
+        />
       ) : null}
 
-      <div className="space-y-4 rounded-2xl border border-border/70 bg-white/80 p-5 shadow-sm backdrop-blur">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-1 max-w-xl">
-            <h3 className="text-sm font-semibold text-slate-900">
-              {t("steps.services.custom.managerTitle")}
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              {t("steps.services.custom.managerDescription")}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <HelperTooltip
-              label={t("steps.services.custom.managerTitle")}
-              content={t("steps.services.custom.catalogTooltip")}
-            />
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              onClick={toggleQuickAdd}
-              className="h-auto px-0 text-xs font-semibold"
-            >
-              {state.services.showQuickAdd
-                ? t("steps.services.custom.buttonClose")
-                : t("steps.services.custom.buttonOpen")}
-            </Button>
-          </div>
-        </div>
-
-        {state.services.showQuickAdd && (
-          <div className="space-y-3 rounded-xl border border-dashed border-emerald-200 bg-emerald-50/40 p-4">
-            <h4 className="text-sm font-semibold text-slate-900">
-              {t("steps.services.custom.title")}
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              {t("steps.services.custom.catalogNotice")}
-            </p>
-            <div className="grid gap-3 sm:grid-cols-4">
-              <div className="sm:col-span-4">
-                <Label htmlFor="custom-name">
-                  {t("steps.services.custom.nameLabel")}
-                </Label>
-                <Input
-                  id="custom-name"
-                  value={customName}
-                  onChange={(event) => setCustomName(event.target.value)}
-                  placeholder={t("steps.services.custom.namePlaceholder")}
-                />
-              </div>
-              <div className="sm:col-span-1">
-                <Label htmlFor="custom-cost">
-                  {t("steps.services.custom.costLabel")}
-                </Label>
-                <Input
-                  id="custom-cost"
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={customCost}
-                  onChange={(event) => setCustomCost(event.target.value)}
-                  placeholder={t("steps.services.custom.costPlaceholder")}
-                />
-              </div>
-              <div className="sm:col-span-1">
-                <Label htmlFor="custom-price">
-                  {t("steps.services.custom.priceLabel")}
-                </Label>
-                <Input
-                  id="custom-price"
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={customPrice}
-                  onChange={(event) => setCustomPrice(event.target.value)}
-                  placeholder={t("steps.services.custom.pricePlaceholder")}
-                />
-              </div>
-            </div>
-            <div className="pt-1">
-              <Button
-                type="button"
-                variant="link"
-                size="sm"
-                className="h-auto px-0 text-xs font-semibold"
-                onClick={handleQuickAddVatToggle}
-              >
-                {showQuickAddVatForm
-                  ? t("steps.services.custom.vatButtonClose")
-                  : t("steps.services.custom.vatButtonOpen")}
-              </Button>
-            </div>
-            {showQuickAddVatForm ? (
-              <>
-                <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
-                  <div className="sm:col-span-1">
-                    <Label htmlFor="custom-vat-rate">
-                      {t("steps.services.custom.vatRateLabel")}
-                    </Label>
-                    <Input
-                      id="custom-vat-rate"
-                      type="number"
-                      inputMode="decimal"
-                      min={0}
-                      max={99.99}
-                      step="0.01"
-                      value={customVatRate}
-                      onChange={(event) =>
-                        setCustomVatRate(
-                          event.target.value.replace(/[^0-9.,]/g, "")
-                        )
-                      }
-                      placeholder={t(
-                        "steps.services.custom.vatRatePlaceholder"
-                      )}
-                      className="h-10"
-                    />
-                  </div>
-                  <div className="sm:col-span-1">
-                    <Label className="text-xs text-muted-foreground">
-                      {t("steps.services.custom.vatModeLabel")}
-                    </Label>
-                    <Select
-                      value={customVatMode}
-                      onValueChange={(value) =>
-                        setCustomVatMode(value as PackageVatMode)
-                      }
-                    >
-                      <SelectTrigger className="h-10 w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="inclusive">
-                          {t("steps.services.vatControls.mode.inclusive")}
-                        </SelectItem>
-                        <SelectItem value="exclusive">
-                          {t("steps.services.vatControls.mode.exclusive")}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <p className="text-[11px] text-muted-foreground">
-                  {t("steps.services.custom.vatHelper", {
-                    rate: formatPercent(defaultVatRate),
-                    mode: t(
-                      `steps.services.vatControls.mode.${defaultVatMode}`
-                    ),
-                  })}
-                </p>
-              </>
-            ) : null}
-            {customError ? (
-              <p className="text-xs text-destructive">{customError}</p>
-            ) : null}
-            <div className="flex flex-wrap items-center gap-2">
-              <Button size="sm" onClick={handleAddCustomService}>
-                {t("steps.services.custom.add")}
-              </Button>
-              <Button size="sm" variant="outline" onClick={toggleQuickAdd}>
-                {t("steps.services.custom.cancel")}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {customItems.length > 0 ? (
-          <div className="space-y-3">
-            {customItems.map((item) => {
-              const quantityValue = Math.max(1, item.quantity ?? 1);
-              const showInlineDelete = quantityValue === 1;
-              const isVatPanelOpen = Boolean(customVatPanels[item.id]);
-              const customItemVatRateValue =
-                typeof item.vatRate === "number" &&
-                Number.isFinite(item.vatRate)
-                  ? String(item.vatRate)
-                  : "";
-              const customItemVatModeValue: PackageVatMode =
-                item.vatMode === "inclusive" || item.vatMode === "exclusive"
-                  ? item.vatMode
-                  : defaultVatMode;
-
-              return (
-                <div
-                  key={item.id}
-                  className="rounded-lg border bg-muted/10 p-4"
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
-                    <div className="flex-1 space-y-2">
-                      <Label
-                        htmlFor={`custom-name-${item.id}`}
-                        className="text-xs text-muted-foreground"
-                      >
-                        {t("steps.services.custom.nameLabel")}
-                      </Label>
-                      <Input
-                        id={`custom-name-${item.id}`}
-                        value={item.name}
-                        onChange={(event) =>
-                          updateItem(item.id, { name: event.target.value })
-                        }
-                        className="h-10 w-full"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
-                      <div className="space-y-2 sm:w-40 sm:flex-none">
-                        <Label
-                          htmlFor={`custom-cost-${item.id}`}
-                          className="text-xs text-muted-foreground"
-                        >
-                          {t("steps.services.list.unitCost")}
-                        </Label>
-                        <Input
-                          id={`custom-cost-${item.id}`}
-                          type="number"
-                          min={0}
-                          step="0.01"
-                          value={item.unitCost ?? ""}
-                          onChange={(event) =>
-                            updateItem(item.id, {
-                              unitCost:
-                                event.target.value === ""
-                                  ? null
-                                  : Number(event.target.value),
-                            })
-                          }
-                          className="h-10 w-full sm:w-40"
-                        />
-                      </div>
-                      <div className="space-y-2 sm:w-40 sm:flex-none">
-                        <Label
-                          htmlFor={`custom-price-${item.id}`}
-                          className="text-xs text-muted-foreground"
-                        >
-                          {t("steps.services.list.unitPrice")}
-                        </Label>
-                        <Input
-                          id={`custom-price-${item.id}`}
-                          type="number"
-                          min={0}
-                          step="0.01"
-                          value={item.unitPrice ?? ""}
-                          onChange={(event) =>
-                            updateItem(item.id, {
-                              unitPrice:
-                                event.target.value === ""
-                                  ? null
-                                  : Number(event.target.value),
-                            })
-                          }
-                          className="h-10 w-full sm:w-40"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium uppercase text-muted-foreground">
-                        {t("steps.services.list.quantity")}
-                      </span>
-                      <div className="flex items-center gap-1 rounded-full border px-1 py-1">
-                        {showInlineDelete ? (
-                          <IconActionButton
-                            onClick={() => removeItem(item.id)}
-                            aria-label={t("steps.services.list.remove")}
-                            variant="danger"
-                            className="h-8 w-8"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </IconActionButton>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="h-8 w-8 p-0"
-                            onClick={() => adjustQuantity(item.id, -1)}
-                            aria-label={t("common:actions.decrease", {
-                              defaultValue: "Decrease",
-                            })}
-                          >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Input
-                          id={`custom-quantity-${item.id}`}
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          value={String(quantityValue)}
-                          onChange={(event) =>
-                            handleQuantityChange(item.id, event.target.value)
-                          }
-                          className="h-8 w-14 border-0 bg-transparent text-center text-sm font-medium focus-visible:ring-0"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="h-8 w-8 p-0"
-                          onClick={() => adjustQuantity(item.id, 1)}
-                          aria-label={t("common:actions.increase", {
-                            defaultValue: "Increase",
-                          })}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="link"
-                      size="sm"
-                      className="h-auto px-0 text-xs font-semibold"
-                      onClick={() => handleCustomVatToggle(item)}
-                    >
-                      {isVatPanelOpen
-                        ? t("steps.services.custom.vatButtonClose")
-                        : t("steps.services.custom.vatButtonOpen")}
-                    </Button>
-
-                    {!showInlineDelete ? (
-                      <IconActionButton
-                        onClick={() => removeItem(item.id)}
-                        aria-label={t("steps.services.list.remove")}
-                        variant="danger"
-                        className="h-8 w-8"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </IconActionButton>
-                    ) : null}
-                  </div>
-                  {isVatPanelOpen ? (
-                    <div className="mt-3 space-y-3">
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="space-y-1">
-                          <Label
-                            htmlFor={`custom-vat-rate-${item.id}`}
-                            className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                          >
-                            {t("steps.services.custom.vatRateLabel")}
-                          </Label>
-                          <Input
-                            id={`custom-vat-rate-${item.id}`}
-                            type="number"
-                            inputMode="decimal"
-                            min={0}
-                            max={99.99}
-                            step="0.01"
-                            value={customItemVatRateValue}
-                            onChange={(event) =>
-                              handleVatRateChange(item.id, event.target.value)
-                            }
-                            className="h-10"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            {t("steps.services.custom.vatModeLabel")}
-                          </Label>
-                          <Select
-                            value={customItemVatModeValue}
-                            onValueChange={(value) =>
-                              handleVatModeChange(
-                                item.id,
-                                value as PackageVatMode
-                              )
-                            }
-                          >
-                            <SelectTrigger className="h-10 w-full">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="inclusive">
-                                {t("steps.services.vatControls.mode.inclusive")}
-                              </SelectItem>
-                              <SelectItem value="exclusive">
-                                {t("steps.services.vatControls.mode.exclusive")}
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground">
-                        {t("steps.services.custom.vatHelper", {
-                          rate: formatPercent(defaultVatRate),
-                          mode: t(
-                            `steps.services.vatControls.mode.${defaultVatMode}`
-                          ),
-                        })}
-                      </p>
-                    </div>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        ) : !state.services.showQuickAdd ? (
-          <p className="text-sm text-muted-foreground">
-            {t("steps.services.custom.emptyState", {
-              defaultValue: "No custom services yet.",
-            })}
-          </p>
-        ) : null}
-      </div>
+      <CustomServicesSection
+        title={t("steps.services.custom.managerTitle")}
+        description={t("steps.services.custom.managerDescription")}
+        tooltipLabel={t("steps.services.custom.managerTitle")}
+        tooltipContent={t("steps.services.custom.catalogTooltip")}
+        toggleButtonLabels={{
+          open: t("steps.services.custom.buttonOpen"),
+          close: t("steps.services.custom.buttonClose"),
+        }}
+        open={state.services.showQuickAdd}
+        onToggle={toggleQuickAdd}
+        form={customFormState}
+        onFormChange={handleCustomFormChange}
+        onSubmit={handleAddCustomService}
+        onCancel={toggleQuickAdd}
+        error={customError}
+        strings={customServicesStrings}
+        vatModeOptions={vatModeOptions}
+        onQuickAddVatToggle={handleQuickAddVatToggle}
+        items={customServiceItems}
+        onItemNameChange={(itemId, value) => updateItem(itemId, { name: value })}
+        onItemCostChange={(itemId, value) =>
+          updateItem(itemId, { unitCost: value === "" ? null : Number(value) })
+        }
+        onItemPriceChange={(itemId, value) =>
+          updateItem(itemId, { unitPrice: value === "" ? null : Number(value) })
+        }
+        onItemQuantityChange={handleQuantityChange}
+        onItemAdjustQuantity={adjustQuantity}
+        onItemRemove={removeItem}
+        onItemVatToggle={handleCustomVatToggle}
+        onItemVatRateChange={handleVatRateChange}
+        onItemVatModeChange={handleVatModeChange}
+      />
 
       <div className="space-y-3">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -1409,23 +1048,23 @@ export const ServicesStep = () => {
         />
         {summaryTableRows.length ? (
           <div className="flex justify-end">
-            <div className="w-full space-y-3 rounded-xl border border-border/60 bg-white p-4 shadow-sm sm:w-auto sm:min-w-[320px]">
-              <div className="flex items-center justify-between text-sm text-slate-900">
-                <span className="text-muted-foreground">
-                  {t("steps.services.summary.countLabel")}
-                </span>
-                <span className="font-medium">{totalSelected}</span>
-              </div>
+            <SummaryTotalsCard className="sm:w-auto sm:min-w-[320px]">
               <SummaryTotalRow
-                label={t("steps.services.summary.cost")}
-                value={formatCurrency(totals.cost)}
+                label={t("steps.services.summary.countLabel")}
+                value={totalSelected}
               />
-              <SummaryTotalRow
-                label={t("steps.services.summary.price")}
-                value={formatCurrency(totals.price)}
-              />
+              <SummaryTotalsSection>
+                <SummaryTotalRow
+                  label={t("steps.services.summary.cost")}
+                  value={formatCurrency(totals.cost)}
+                />
+                <SummaryTotalRow
+                  label={t("steps.services.summary.price")}
+                  value={formatCurrency(totals.price)}
+                />
+              </SummaryTotalsSection>
               {vatBreakdown.length ? (
-                <div className="space-y-1">
+                <SummaryTotalsSection className="space-y-1">
                   {vatBreakdown.map((entry) => (
                     <SummaryTotalRow
                       key={entry.rate}
@@ -1435,21 +1074,26 @@ export const ServicesStep = () => {
                       value={formatCurrency(entry.amount)}
                     />
                   ))}
-                </div>
+                </SummaryTotalsSection>
               ) : null}
               {vatBreakdown.length !== 1 ? (
-                <SummaryTotalRow
-                  label={
-                    vatBreakdown.length > 1
-                      ? t("steps.services.summary.vatTotal", {
-                          defaultValue: "Total VAT",
-                        })
-                      : t("steps.services.summary.vat", { defaultValue: "VAT" })
-                  }
-                  value={formatCurrency(totals.vat)}
-                />
+                <SummaryTotalsSection>
+                  <SummaryTotalRow
+                    label={
+                      vatBreakdown.length > 1
+                        ? t("steps.services.summary.vatTotal", {
+                            defaultValue: "Total VAT",
+                          })
+                        : t("steps.services.summary.vat", {
+                            defaultValue: "VAT",
+                          })
+                    }
+                    value={formatCurrency(totals.vat)}
+                  />
+                </SummaryTotalsSection>
               ) : null}
-              <div className="border-t border-border/60 pt-3 space-y-2">
+              <SummaryTotalsDivider />
+              <SummaryTotalsSection className="pt-3">
                 <SummaryTotalRow
                   label={t("steps.services.summary.gross", {
                     defaultValue: "Total",
@@ -1463,8 +1107,8 @@ export const ServicesStep = () => {
                   tone={margin >= 0 ? "positive" : "negative"}
                   emphasizeLabel
                 />
-              </div>
-            </div>
+              </SummaryTotalsSection>
+            </SummaryTotalsCard>
           </div>
         ) : null}
       </div>
@@ -1562,61 +1206,3 @@ export const ServicesStep = () => {
     </div>
   );
 };
-
-const SummaryTotalRow = ({
-  label,
-  value,
-  tone,
-  emphasizeLabel,
-}: {
-  label: string;
-  value: string;
-  tone?: "positive" | "negative";
-  emphasizeLabel?: boolean;
-}) => {
-  const valueClassName = cn(
-    "font-medium",
-    tone === "positive" && "text-emerald-600",
-    tone === "negative" && "text-destructive"
-  );
-
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <span
-        className={cn(
-          emphasizeLabel
-            ? "font-semibold text-slate-900"
-            : "text-muted-foreground"
-        )}
-      >
-        {label}
-      </span>
-      <span className={valueClassName}>{value}</span>
-    </div>
-  );
-};
-
-const HelperTooltip = ({
-  label,
-  content,
-}: {
-  label: string;
-  content: string;
-}) => (
-  <TooltipProvider delayDuration={150} disableHoverableContent>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          className="text-muted-foreground transition-colors hover:text-slate-900"
-          aria-label={label}
-        >
-          <Info className="h-4 w-4" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent className="max-w-xs text-xs leading-snug">
-        {content}
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-);

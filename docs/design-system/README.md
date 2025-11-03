@@ -40,6 +40,7 @@ This document captures the current design primitives, shared patterns, and imple
 ### 3.1 Buttons
 - Primary call-to-action: `<Button />` with `variant="default"`.
 - Secondary actions: `variant="outline"` (bordered) or `variant="ghost"` (text-level). Reserve `variant="destructive"` for irreversible actions.
+- Inline text actions: use `variant="link"` with `size="sm"` to expose lightweight affordances inside dense cards or forms. Pair with `className="h-auto px-0 text-xs font-semibold"` (see Services/Pricing wizards) to align with body text, and only surface contextual adjustments (e.g., “KDV’yi düzenlemek istiyorum”). These buttons should sit beside helper copy or metadata badges, never as primary step navigation.
 
 ### 3.2 Icon Action Button / Group
 - Use `IconActionButton` (`src/components/ui/icon-action-button.tsx`) for standalone icon controls.

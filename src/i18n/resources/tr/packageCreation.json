@@ -53,7 +53,7 @@
         },
         "types": {
           "label": "Geçerli proje türleri",
-          "helper": "Bu paketin hangi proje türlerinde görüneceğini seç.",
+          "helper": "Bu paketin hangi proje türlerinde görüneceğini seç. Seçim yapmazsan tüm proje türlerinde görünür.",
           "empty": "Henüz proje türü yok. Ayarlar → Projeler bölümünden ekleyebilirsin.",
           "all": "Tüm proje türleri"
         },
@@ -362,11 +362,12 @@
         "servicesVatTotal": "KDV toplamı",
         "servicesGrossTotal": "Seçili hizmetler (KDV dahil)",
         "addOnsClientTotal": "Paket + hizmetler toplamı",
-        "clientTotalTitle": "Müşteri fiyatı",
+        "clientTotalTitle": "Müşteriye sunulan toplam",
+        "servicesAndPricingTitle": "Hizmetler ve fiyatlandırma özeti",
         "clientTotalHelperTitle": "Müşteriye sunulacak tutar",
         "clientTotalHelper": {
-          "inclusive": "Paket fiyatı seçilen hizmetleri zaten kapsıyor.",
-          "addOns": "Toplam tutar = paket fiyatı + seçilen hizmetler."
+          "inclusive": "Toplam = paket fiyatı (hizmetler dahil).",
+          "addOns": "Toplam = paket fiyatı + seçilen hizmetler."
         },
         "clientTotalBreakdown": "Net: {{net}} • KDV: {{vat}}",
         "costTotal": "Maliyet toplamı",
@@ -443,18 +444,36 @@
       "servicesCount": "{{count}} hizmet seçildi",
       "servicesCount_plural": "{{count}} hizmet seçildi",
       "servicesQuantity": "{{count}} toplam adet",
-      "servicesQuantity_plural": "{{count}} toplam adet"
+      "servicesQuantity_plural": "{{count}} toplam adet",
+      "typesAllHelper": "Tüm proje türlerinde kullanılabilir."
     },
-    "services": {
-      "title": "Hizmetler ve dahil edilenler",
-      "empty": "Henüz hizmet seçilmedi.",
-      "columns": {
-        "name": "Hizmet",
-        "vendor": "Tedarikçi",
-        "quantity": "Adet",
-        "unitPrice": "Birim satış",
-        "lineTotal": "Satış toplamı"
-      },
+    "servicesAndPricingTitle": "Hizmetler ve fiyatlandırma özeti",
+    "actions": {
+      "viewDetails": "Detayları incele"
+    },
+    "servicesTotals": {
+      "serviceCost": "Toplam hizmet maliyeti",
+      "servicePrice": "Toplam hizmet satış",
+      "serviceGross": "Toplam hizmet (KDV dahil)",
+      "serviceMargin": "Hesaplanan hizmet kârı",
+      "packageNet": "Paket fiyatı (net)",
+      "packageVatLabel": "Paket KDV ({{rate}})",
+      "packageGross": "Toplam paket fiyatı",
+      "clientNet": "Müşteriye sunulan toplam (net)",
+      "totalTax": "Toplam vergi",
+      "grandTotal": "Genel toplam"
+    },
+      "services": {
+        "title": "Hizmetler ve dahil edilenler",
+        "empty": "Henüz hizmet seçilmedi.",
+        "columns": {
+          "name": "Hizmet",
+          "cost": "Maliyet",
+          "vendor": "Tedarikçi",
+          "quantity": "Adet",
+          "unitPrice": "Birim satış",
+          "lineTotal": "Satış toplamı"
+        },
       "customTag": "Hızlı eklenen öğe",
       "customVendorFallback": "—",
       "totals": {
@@ -502,6 +521,7 @@
       "addOnsClientTotalHelper": "Hizmetleri ayrıca fiyatlandırmayı seçersen müşteriye görünen toplam.",
       "costTotal": "Maliyet toplamı",
       "margin": "Kâr",
+      "clientTotalTitle": "Müşteriye sunulan toplam",
       "deposit": {
         "label": "Kapora",
         "none": "Kapora alınmıyor",

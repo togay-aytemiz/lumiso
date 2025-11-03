@@ -145,6 +145,8 @@
         "description": "Adjust VAT rate or mode for services in this project.",
         "toggleLabel": "Override VAT settings",
         "toggleDescription": "Switch on to override the default VAT for selected services.",
+        "buttonOpen": "Adjust VAT per service",
+        "buttonClose": "Hide VAT overrides",
         "vendorLabel": "Vendor: {{vendor}}",
         "typeLabel": "{{type}}",
         "rateLabel": "VAT rate (%)",
@@ -152,7 +154,11 @@
         "mode": {
           "inclusive": "Included in price",
           "exclusive": "Added on top"
-        }
+        },
+        "resetConfirmTitle": "Reset VAT overrides?",
+        "resetConfirmDescription": "Turning this off restores VAT settings from the service defaults.",
+        "resetConfirmCancel": "Keep overrides",
+        "resetConfirmConfirm": "Reset VAT"
       },
       "servicesEmpty": "No services selected yet.",
       "summary": {

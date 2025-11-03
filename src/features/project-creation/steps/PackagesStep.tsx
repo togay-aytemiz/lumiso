@@ -5,7 +5,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import {
   ServiceInventorySelector,
   type ServiceInventoryItem,
@@ -22,6 +21,22 @@ import { calculateLineItemPricing } from "@/features/package-creation/utils/line
 import { DEFAULT_SERVICE_UNIT, SERVICE_UNIT_OPTIONS, normalizeServiceUnit } from "@/lib/services/units";
 import type { VatMode } from "@/lib/accounting/vat";
 import { IconActionButton } from "@/components/ui/icon-action-button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  ServiceVatOverridesSection,
+  type ServiceVatOverridesItem,
+  type ServiceVatOverridesMeta,
+  type VatModeOption,
+} from "@/features/services/components/ServiceVatOverridesSection";
 
 interface PackageRecord {
   id: string;
@@ -155,7 +170,9 @@ export const PackagesStep = () => {
   const selectedQuantities = useMemo(
     () =>
       existingItems.reduce<Record<string, number>>((acc, item) => {
-        acc[item.serviceId] = Math.max(1, item.quantity ?? 1);
+        if (item.serviceId) {
+          acc[item.serviceId] = Math.max(1, item.quantity ?? 1);
+        }
         return acc;
       }, {}),
     [existingItems]
@@ -177,6 +194,13 @@ export const PackagesStep = () => {
     );
   }, [existingItems]);
 
+  const setItems = useCallback(
+    (items: ProjectServiceLineItem[]) => {
+      updateServices({ items });
+    },
+    [updateServices]
+  );
+
   const servicesMargin = totals.net - totals.cost;
 
   const hasVatOverrides = useMemo(() => {
@@ -193,6 +217,7 @@ export const PackagesStep = () => {
   }, [existingItems, serviceMap]);
 
   const [showVatControls, setShowVatControls] = useState(hasVatOverrides);
+  const [showVatResetPrompt, setShowVatResetPrompt] = useState(false);
 
   useEffect(() => {
     if (hasVatOverrides) {
@@ -200,9 +225,41 @@ export const PackagesStep = () => {
     }
   }, [hasVatOverrides]);
 
-  const setItems = (items: ProjectServiceLineItem[]) => {
-    updateServices({ items });
+  const handleToggleVatControls = () => {
+    if (showVatControls) {
+      if (hasVatOverrides) {
+        setShowVatResetPrompt(true);
+        return;
+      }
+      setShowVatControls(false);
+      return;
+    }
+    setShowVatControls(true);
   };
+
+  const resetVatOverrides = useCallback(() => {
+    const resetItems = existingItems.map((item) => {
+      const service = item.serviceId ? serviceMap.get(item.serviceId) : null;
+      const fallbackRate =
+        typeof service?.vatRate === "number" && Number.isFinite(service.vatRate)
+          ? service.vatRate
+          : null;
+      const fallbackMode: VatModeOption =
+        service?.vatMode === "inclusive" || service?.vatMode === "exclusive"
+          ? service.vatMode
+          : "exclusive";
+
+      return {
+        ...item,
+        vatRate: fallbackRate,
+        vatMode: fallbackMode,
+      };
+    });
+
+    setItems(resetItems);
+    setShowVatControls(false);
+    setShowVatResetPrompt(false);
+  }, [existingItems, serviceMap, setItems]);
 
   const updateItem = (itemId: string, updates: Partial<ProjectServiceLineItem>) => {
     const nextItems = existingItems.map((item) =>
@@ -267,7 +324,7 @@ export const PackagesStep = () => {
     removeItem(serviceId);
   };
 
-  const handleVatModeChange = (itemId: string, mode: VatMode) => {
+  const handleVatModeChange = (itemId: string, mode: VatModeOption) => {
     updateItem(itemId, { vatMode: mode });
   };
 
@@ -339,6 +396,20 @@ export const PackagesStep = () => {
     [t]
   );
 
+  const vatModeOptions = useMemo(
+    () => [
+      {
+        value: "inclusive" as VatModeOption,
+        label: t("steps.packages.vatControls.mode.inclusive"),
+      },
+      {
+        value: "exclusive" as VatModeOption,
+        label: t("steps.packages.vatControls.mode.exclusive"),
+      },
+    ],
+    [t]
+  );
+
   const serviceTableLabels = useMemo(
     () => ({
       columns: {
@@ -360,6 +431,60 @@ export const PackagesStep = () => {
     }),
     [t]
   );
+
+  const vatOverrideItems = useMemo<ServiceVatOverridesItem[]>(() => {
+    return existingItems.map((item) => {
+      const service = item.serviceId ? serviceMap.get(item.serviceId) : null;
+      const vatRateValue =
+        typeof item.vatRate === "number" && Number.isFinite(item.vatRate)
+          ? String(item.vatRate)
+          : "";
+      const fallbackMode =
+        service?.vatMode === "inclusive" || service?.vatMode === "exclusive"
+          ? service.vatMode
+          : "exclusive";
+      const vatModeValue: VatModeOption =
+        item.vatMode === "inclusive" || item.vatMode === "exclusive"
+          ? item.vatMode
+          : fallbackMode;
+      const meta: ServiceVatOverridesMeta[] = [];
+
+      const vendorLabel = item.vendorName
+        ? t("steps.packages.vatControls.vendorLabel", { vendor: item.vendorName })
+        : service?.vendor_name
+        ? t("steps.packages.vatControls.vendorLabel", { vendor: service.vendor_name })
+        : null;
+      if (vendorLabel) {
+        meta.push({ label: vendorLabel });
+      }
+
+      const serviceTypeKey = service?.serviceType ?? "unknown";
+      const serviceTypeLabel = t(
+        `steps.packages.inventory.types.${serviceTypeKey}.title`,
+        {
+          defaultValue: t("steps.packages.inventory.types.unknown.title"),
+        }
+      );
+      meta.push({
+        label: t("steps.packages.vatControls.typeLabel", { type: serviceTypeLabel }),
+      });
+
+      if (item.type === "custom") {
+        meta.push({
+          label: t("steps.packages.summary.customTag", { defaultValue: "Custom item" }),
+          variant: "badge",
+        });
+      }
+
+      return {
+        id: item.id,
+        name: item.name,
+        vatRate: vatRateValue,
+        vatMode: vatModeValue,
+        meta,
+      };
+    });
+  }, [existingItems, serviceMap, t]);
 
   const summaryTableRows = useMemo<ServicesTableRow[]>(() => {
     return existingItems.map((item) => {
@@ -643,43 +768,11 @@ export const PackagesStep = () => {
             </div>
 
             {existingItems.length > 0 ? (
-              <div className="space-y-4 rounded-2xl border border-border/70 bg-slate-50/60 p-5 shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-semibold text-slate-900">
-                      {t("steps.packages.vatControls.title")}
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      {t("steps.packages.vatControls.description")}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Switch
-                      id="project-vat-adjust-toggle"
-                      checked={showVatControls}
-                      onCheckedChange={setShowVatControls}
-                      aria-label={t("steps.packages.vatControls.toggleLabel")}
-                    />
-                    <div className="space-y-1">
-                      <Label htmlFor="project-vat-adjust-toggle" className="text-sm font-medium text-slate-900">
-                        {t("steps.packages.vatControls.toggleLabel")}
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        {t("steps.packages.vatControls.toggleDescription")}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
+              <>
+                <div className="space-y-3 rounded-2xl border border-border/70 bg-slate-50/60 p-5 shadow-sm">
                   {existingItems.map((item) => {
                     const service = item.serviceId ? serviceMap.get(item.serviceId) : null;
                     const quantityValue = Math.max(1, item.quantity ?? 1);
-                    const vatModeValue: VatMode = (item.vatMode ?? service?.vatMode ?? "exclusive") as VatMode;
-                    const vatRateValue =
-                      typeof item.vatRate === "number" && Number.isFinite(item.vatRate)
-                        ? String(item.vatRate)
-                        : "";
                     const serviceTypeLabel = service
                       ? t(`steps.packages.inventory.types.${service.serviceType ?? "unknown"}.title`)
                       : t("steps.packages.inventory.types.unknown.title");
@@ -792,52 +885,31 @@ export const PackagesStep = () => {
                             </Select>
                           </div>
                         </div>
-
-                        {showVatControls ? (
-                          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-[repeat(2,minmax(0,220px))]">
-                            <div className="space-y-1">
-                              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                {t("steps.packages.vatControls.rateLabel")}
-                              </Label>
-                              <Input
-                                type="number"
-                                inputMode="decimal"
-                                min={0}
-                                max={99.99}
-                                step="0.01"
-                                value={vatRateValue}
-                                onChange={(event) => handleVatRateChange(item.id, event.target.value)}
-                                className="h-9"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                {t("steps.packages.vatControls.modeLabel")}
-                              </Label>
-                              <Select
-                                value={vatModeValue}
-                                onValueChange={(value) => handleVatModeChange(item.id, value as VatMode)}
-                              >
-                                <SelectTrigger className="h-9">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="inclusive">
-                                    {t("steps.packages.vatControls.mode.inclusive")}
-                                  </SelectItem>
-                                  <SelectItem value="exclusive">
-                                    {t("steps.packages.vatControls.mode.exclusive")}
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                        ) : null}
                       </div>
                     );
                   })}
                 </div>
-              </div>
+
+                <ServiceVatOverridesSection
+                  title={t("steps.packages.vatControls.title")}
+                  description={t("steps.packages.vatControls.description")}
+                  tooltipLabel={t("steps.packages.vatControls.toggleLabel")}
+                  tooltipContent={t("steps.packages.vatControls.toggleDescription")}
+                  toggleButtonLabel={
+                    showVatControls
+                      ? t("steps.packages.vatControls.buttonClose")
+                      : t("steps.packages.vatControls.buttonOpen")
+                  }
+                  isOpen={showVatControls}
+                  onToggle={handleToggleVatControls}
+                  items={vatOverrideItems}
+                  rateLabel={t("steps.packages.vatControls.rateLabel")}
+                  modeLabel={t("steps.packages.vatControls.modeLabel")}
+                  modeOptions={vatModeOptions}
+                  onRateChange={handleVatRateChange}
+                  onModeChange={handleVatModeChange}
+                />
+              </>
             ) : (
               <p className="text-sm text-muted-foreground">
                 {t("steps.packages.servicesEmpty")}
@@ -866,6 +938,30 @@ export const PackagesStep = () => {
           </div>
         </div>
       )}
+
+      <AlertDialog open={showVatResetPrompt} onOpenChange={setShowVatResetPrompt}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("steps.packages.vatControls.resetConfirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("steps.packages.vatControls.resetConfirmDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowVatResetPrompt(false)}>
+              {t("steps.packages.vatControls.resetConfirmCancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={resetVatOverrides}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("steps.packages.vatControls.resetConfirmConfirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

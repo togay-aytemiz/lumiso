@@ -145,6 +145,8 @@
         "description": "Bu proje için KDV oranını veya şeklini güncelle.",
         "toggleLabel": "KDV'yi özelleştir",
         "toggleDescription": "Seçilen hizmetlerde varsayılan KDV ayarlarını değiştirmek için aç.",
+        "buttonOpen": "KDV’yi düzenlemek istiyorum",
+        "buttonClose": "KDV ayarlarını gizle",
         "vendorLabel": "Tedarikçi: {{vendor}}",
         "typeLabel": "{{type}}",
         "rateLabel": "KDV oranı (%)",
@@ -152,7 +154,11 @@
         "mode": {
           "inclusive": "Fiyata dahil",
           "exclusive": "Üstüne eklenecek"
-        }
+        },
+        "resetConfirmTitle": "KDV ayarlarını sıfırlamak ister misiniz?",
+        "resetConfirmDescription": "Kapatıldığında tüm hizmetlerin KDV oranı ve türü hizmet varsayılanlarına döner.",
+        "resetConfirmCancel": "Değişiklikleri koru",
+        "resetConfirmConfirm": "KDV’yi sıfırla"
       },
       "servicesEmpty": "Henüz hizmet seçilmedi.",
       "summary": {

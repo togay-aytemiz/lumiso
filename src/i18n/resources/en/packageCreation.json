@@ -53,7 +53,7 @@
         },
         "types": {
           "label": "Applicable project types",
-          "helper": "Choose the project types this package should appear for.",
+          "helper": "Choose the project types this package should appear for. Leave everything unchecked to make it available everywhere.",
           "empty": "No project types yet. Create types in Settings → Projects.",
           "all": "All project types"
         },
@@ -365,8 +365,8 @@
         "clientTotalTitle": "Client-facing price",
         "clientTotalHelperTitle": "Total presented to the client",
         "clientTotalHelper": {
-          "inclusive": "The package price already includes the selected services.",
-          "addOns": "Client total = package price + selected services."
+          "inclusive": "Total = package price (services included).",
+          "addOns": "Total = package price + selected services."
         },
         "clientTotalBreakdown": "Net: {{net}} • VAT: {{vat}}",
         "costTotal": "Cost total",
@@ -443,18 +443,36 @@
       "servicesCount": "{{count}} service selected",
       "servicesCount_plural": "{{count}} services selected",
       "servicesQuantity": "{{count}} total quantity",
-      "servicesQuantity_plural": "{{count}} total quantity"
+      "servicesQuantity_plural": "{{count}} total quantity",
+      "typesAllHelper": "Applies to all project types."
     },
-    "services": {
-      "title": "Services & inclusions",
-      "empty": "No services selected yet.",
-      "columns": {
-        "name": "Service",
-        "vendor": "Vendor",
-        "quantity": "Qty",
-        "unitPrice": "Unit price",
-        "lineTotal": "Line total"
-      },
+    "servicesAndPricingTitle": "Services & pricing overview",
+    "actions": {
+      "viewDetails": "View details"
+    },
+    "servicesTotals": {
+      "serviceCost": "Total service cost",
+      "servicePrice": "Total service sales",
+      "serviceGross": "Total services (incl. VAT)",
+      "serviceMargin": "Calculated service margin",
+      "packageNet": "Package price (net)",
+      "packageVatLabel": "Package VAT ({{rate}})",
+      "packageGross": "Package price (gross)",
+      "clientNet": "Client total (net)",
+      "totalTax": "Total tax",
+      "grandTotal": "Grand total"
+    },
+      "services": {
+        "title": "Services & inclusions",
+        "empty": "No services selected yet.",
+        "columns": {
+          "name": "Service",
+          "cost": "Cost",
+          "vendor": "Vendor",
+          "quantity": "Qty",
+          "unitPrice": "Unit price",
+          "lineTotal": "Line total"
+        },
       "customTag": "Quick add item",
       "customVendorFallback": "—",
       "totals": {
@@ -502,6 +520,10 @@
       "addOnsClientTotalHelper": "Clients see this when you bill services on top of the package.",
       "costTotal": "Cost total",
       "margin": "Margin",
+      "clientTotalTitle": "Client-facing price",
+      "servicesAndPricingTitle": "Services & pricing overview",
+      "clientTotalTitle": "Client-facing price",
+      "servicesAndPricingTitle": "Services & pricing overview",
       "deposit": {
         "label": "Deposit",
         "none": "No deposit collected",

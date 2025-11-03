@@ -54,6 +54,7 @@ export const createInitialProjectCreationState = (
     name: undefined,
     description: undefined,
     basePrice: undefined,
+    depositAmount: undefined,
   },
   services: {
     packageId: undefined,

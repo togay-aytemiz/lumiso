@@ -20,6 +20,7 @@ export interface ProjectCreationDetails {
   statusId?: string;
   statusLabel?: string;
   basePrice?: string;
+  depositAmount?: string;
 }
 
 export type ProjectServiceLineItemType = "existing" | "custom";

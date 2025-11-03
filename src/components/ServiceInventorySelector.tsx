@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { LucideIcon, FolderOpen, Layers, Trash2, ChevronDown, Package as PackageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +54,11 @@ export interface ServiceInventoryLabels {
   retry?: string;
 }
 
+export interface ServiceInventorySelectedContext {
+  service: ServiceInventoryItem;
+  quantity: number;
+}
+
 interface ServiceInventorySelectorProps {
   services: ServiceInventoryItem[];
   selected: Record<string, number>;
@@ -66,6 +71,12 @@ interface ServiceInventorySelectorProps {
   isLoading?: boolean;
   error?: string | null;
   onRetry?: () => void;
+  renderSelectedActions?: (
+    context: ServiceInventorySelectedContext
+  ) => ReactNode;
+  renderSelectedContent?: (
+    context: ServiceInventorySelectedContext
+  ) => ReactNode;
 }
 
 const typeOrder: ServiceInventoryType[] = ["deliverable", "coverage", "unknown"];
@@ -95,6 +106,8 @@ export function ServiceInventorySelector({
   isLoading,
   error,
   onRetry,
+  renderSelectedActions,
+  renderSelectedContent,
 }: ServiceInventorySelectorProps) {
   const selectedMap = useMemo(() => new Map(Object.entries(selected || {})), [selected]);
 
@@ -372,108 +385,124 @@ export function ServiceInventorySelector({
                       const isSelected = quantity > 0;
                       const unitCostLabel = formatCurrency(service.unitCost ?? 0);
                       const unitPriceLabel = formatCurrency(service.unitPrice ?? 0);
+                      const context: ServiceInventorySelectedContext = {
+                        service,
+                        quantity,
+                      };
 
                       return (
                         <div
                           key={service.id}
-                          className="flex flex-col gap-4 px-4 py-4 transition-colors duration-200 sm:flex-row sm:items-center sm:justify-between data-[selected=true]:bg-emerald-50/40"
+                          className="space-y-3 px-4 py-4 transition-colors duration-200 data-[selected=true]:bg-emerald-50/40"
                           data-selected={isSelected}
                         >
-                          <div className="space-y-1.5">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="text-sm font-medium text-slate-900">{service.name}</p>
-                              {service.isActive === false && (
-                                <Badge
-                                  variant="outline"
-                                  className="rounded-full border-amber-200 bg-amber-50 text-[11px] text-amber-700"
-                                >
-                                  {labels.inactive}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                              <span>
-                                {labels.unitCost}: {unitCostLabel}
-                              </span>
-                              <span>
-                                {labels.unitPrice}: {unitPriceLabel}
-                              </span>
-                              {service.vendorName ? (
+                          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="space-y-1.5">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="text-sm font-medium text-slate-900">{service.name}</p>
+                                {service.isActive === false && (
+                                  <Badge
+                                    variant="outline"
+                                    className="rounded-full border-amber-200 bg-amber-50 text-[11px] text-amber-700"
+                                  >
+                                    {labels.inactive}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                                 <span>
-                                  {labels.vendor}: {service.vendorName}
+                                  {labels.unitCost}: {unitCostLabel}
                                 </span>
+                                <span>
+                                  {labels.unitPrice}: {unitPriceLabel}
+                                </span>
+                                {service.vendorName ? (
+                                  <span>
+                                    {labels.vendor}: {service.vendorName}
+                                  </span>
+                                ) : null}
+                              </div>
+                              {isSelected && renderSelectedActions ? (
+                                <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-emerald-600">
+                                  {renderSelectedActions(context)}
+                                </div>
                               ) : null}
                             </div>
-                          </div>
 
-                          <div className="flex items-center gap-2">
-                            {isSelected ? (
-                              <>
-                                <div className="flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-1 py-1 shadow-inner transition-colors duration-200">
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => onDecrease(service.id)}
-                                    aria-label={labels.decrease}
-                                    className="h-7 w-7 transition-colors duration-200"
-                                    disabled={quantity <= 1}
+                            <div className="flex items-center gap-2">
+                              {isSelected ? (
+                                <>
+                                  <div className="flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-1 py-1 shadow-inner transition-colors duration-200">
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => onDecrease(service.id)}
+                                      aria-label={labels.decrease}
+                                      className="h-7 w-7 transition-colors duration-200"
+                                      disabled={quantity <= 1}
+                                    >
+                                      –
+                                    </Button>
+                                    <Input
+                                      aria-label={labels.quantity}
+                                      inputMode="numeric"
+                                      pattern="[0-9]*"
+                                      value={String(quantity)}
+                                      onChange={(event) => {
+                                        const numeric = event.target.value.replace(/[^0-9]/g, "");
+                                        const parsed = parseInt(numeric, 10);
+                                        const nextQuantity = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+                                        onSetQuantity(service.id, nextQuantity);
+                                      }}
+                                      className="h-7 w-12 rounded-full border-0 bg-transparent px-0 text-center text-sm font-semibold text-slate-900 focus-visible:ring-0"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => onIncrease(service.id)}
+                                      aria-label={labels.increase}
+                                      className="h-7 w-7 transition-colors duration-200"
+                                    >
+                                      +
+                                    </Button>
+                                  </div>
+                                  <IconActionButton
+                                    onClick={() => onRemove(service.id)}
+                                    aria-label={labels.remove}
+                                    variant="danger"
+                                    className="h-8 w-8 transition-colors duration-200"
                                   >
-                                    –
-                                  </Button>
-                                  <Input
-                                    aria-label={labels.quantity}
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                    value={String(quantity)}
-                                    onChange={(event) => {
-                                      const numeric = event.target.value.replace(/[^0-9]/g, "");
-                                      const parsed = parseInt(numeric, 10);
-                                      const nextQuantity = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-                                      onSetQuantity(service.id, nextQuantity);
-                                    }}
-                                    className="h-7 w-12 rounded-full border-0 bg-transparent px-0 text-center text-sm font-semibold text-slate-900 focus-visible:ring-0"
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => onIncrease(service.id)}
-                                    aria-label={labels.increase}
-                                    className="h-7 w-7 transition-colors duration-200"
-                                  >
-                                    +
-                                  </Button>
-                                </div>
-                                <IconActionButton
-                                  onClick={() => onRemove(service.id)}
-                                  aria-label={labels.remove}
-                                  variant="danger"
-                                  className="h-8 w-8 transition-colors duration-200"
+                                    <Trash2 className="h-4 w-4" aria-hidden />
+                                  </IconActionButton>
+                                </>
+                              ) : (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={service.isActive === false}
+                                  onClick={() => onAdd(service.id)}
+                                  aria-label={labels.add}
+                                  className="h-8 rounded-full px-3 text-xs transition-colors duration-200"
                                 >
-                                  <Trash2 className="h-4 w-4" aria-hidden />
-                                </IconActionButton>
-                              </>
-                            ) : (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                disabled={service.isActive === false}
-                                onClick={() => onAdd(service.id)}
-                                aria-label={labels.add}
-                                className="h-8 rounded-full px-3 text-xs transition-colors duration-200"
-                              >
-                                {labels.add}
-                              </Button>
-                            )}
+                                  {labels.add}
+                                </Button>
+                              )}
+                            </div>
                           </div>
+                          {isSelected && renderSelectedContent ? (
+                            <div className="space-y-3">
+                              {renderSelectedContent(context)}
+                            </div>
+                          ) : null}
                         </div>
                       );
                     })}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
+                 </div>
+               </CollapsibleContent>
+             </Collapsible>
             );
           })}
         </div>

@@ -25,10 +25,39 @@
     "labels": {
       "lead": "Kişi",
       "projectName": "Proje",
-      "basePrice": "Başlangıç fiyatı",
+      "packagePrice": "Paket fiyatı",
       "package": "Paket",
       "services": "Hizmetler",
       "description": "Proje açıklaması"
+    },
+    "cards": {
+      "pricing": {
+        "title": "Müşteriye sunulan toplam",
+        "depositLabel": "Kapora",
+        "depositHelperDefault": "Kapora proje onaylandığında tahsil edilir.",
+        "detailsLink": "Detayları incele"
+      },
+      "lead": {
+        "title": "Kişi",
+        "helperFallback": "İletişim bilgisi eklenmemiş"
+      },
+      "project": {
+        "title": "Proje"
+      },
+      "package": {
+        "title": "Paket",
+        "helperWithServices": "{{count}} hizmet seçildi",
+        "helperNoServices": "Ek hizmet seçilmedi"
+      }
+    },
+    "description": {
+      "heading": "Proje açıklaması",
+      "empty": "Açıklama eklenmemiş."
+    },
+    "services": {
+      "heading": "Hizmetler ve fiyatlandırma özeti",
+      "empty": "Henüz hizmet seçilmedi.",
+      "badgeHeading": "Seçilen hizmetler"
     }
   },
   "guardrail": {
@@ -90,8 +119,10 @@
       "defaultServices": "{{count}} hizmet içeriyor",
       "customSetupPrompt": "Özel bir kurulum mu tercih ediyorsunuz? Kendi fiyat ve hizmetlerinizle oluşturun.",
       "enableCustom": "Özel kurulum aç",
-      "basePriceLabel": "Başlangıç fiyatı",
+      "basePriceLabel": "Paket fiyatı (TRY)",
       "basePricePlaceholder": "0",
+      "depositLabel": "Kapora (TRY)",
+      "depositPlaceholder": "0",
       "servicesLabel": "Hizmetler ve ekler",
       "servicesBadge": "{{count}} adet seçildi",
       "servicesError": "Hizmetler yüklenemedi. Lütfen birazdan tekrar deneyin.",
@@ -122,10 +153,16 @@
       "actions": {
         "editPricing": "Fiyatı düzenle",
         "resetPricing": "Varsayılan fiyata dön",
+        "resetPricingConfirmTitle": "Fiyatları varsayılanlara döndür?",
         "resetPricingConfirm": "Bu işlem hizmetin varsayılan fiyat ve KDV değerlerini geri yükleyecek. Devam etmek istiyor musun?",
+        "resetPricingConfirmCancel": "Değişiklikleri koru",
+        "resetPricingConfirmConfirm": "Fiyatı sıfırla",
         "editVat": "KDV’yi düzenle",
         "resetVat": "Varsayılan KDV'ye dön",
-        "resetVatConfirm": "Bu işlem hizmetin varsayılan KDV ayarlarını geri yükleyecek. Devam etmek istiyor musun?"
+        "resetVatConfirmTitle": "KDV ayarlarını sıfırla?",
+        "resetVatConfirm": "Bu işlem hizmetin varsayılan KDV ayarlarını geri yükleyecek. Devam etmek istiyor musun?",
+        "resetVatConfirmCancel": "Ayarları koru",
+        "resetVatConfirmConfirm": "KDV'yi sıfırla"
       },
       "list": {
         "remove": "Kaldır",

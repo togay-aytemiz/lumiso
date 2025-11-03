@@ -25,10 +25,39 @@
     "labels": {
       "lead": "Person",
       "projectName": "Project",
-      "basePrice": "Base price",
+      "packagePrice": "Package price",
       "package": "Package",
       "services": "Services",
       "description": "Project description"
+    },
+    "cards": {
+      "pricing": {
+        "title": "Client total",
+        "depositLabel": "Deposit",
+        "depositHelperDefault": "Deposit collected when the project is confirmed.",
+        "detailsLink": "View details"
+      },
+      "lead": {
+        "title": "Person",
+        "helperFallback": "Contact details not provided"
+      },
+      "project": {
+        "title": "Project"
+      },
+      "package": {
+        "title": "Package",
+        "helperWithServices": "{{count}} service(s) selected",
+        "helperNoServices": "No additional services selected"
+      }
+    },
+    "description": {
+      "heading": "Project description",
+      "empty": "No description added."
+    },
+    "services": {
+      "heading": "Services & pricing summary",
+      "empty": "No services selected yet.",
+      "badgeHeading": "Selected services"
     }
   },
   "guardrail": {
@@ -90,8 +119,10 @@
       "defaultServices": "Includes {{count}} service(s)",
       "customSetupPrompt": "Prefer a custom setup? Build it with your own pricing and services.",
       "enableCustom": "Enable custom setup",
-      "basePriceLabel": "Base price",
+      "basePriceLabel": "Package price (TRY)",
       "basePricePlaceholder": "0",
+      "depositLabel": "Deposit (TRY)",
+      "depositPlaceholder": "0",
       "servicesLabel": "Services & add-ons",
       "servicesBadge": "{{count}} selected",
       "servicesError": "Unable to load services. Try again in a moment.",
@@ -122,10 +153,16 @@
     "actions": {
       "editPricing": "Edit prices",
       "resetPricing": "Revert to default price",
+      "resetPricingConfirmTitle": "Reset price overrides?",
       "resetPricingConfirm": "This will restore the original price and VAT values for this service. Do you want to continue?",
+      "resetPricingConfirmCancel": "Keep changes",
+      "resetPricingConfirmConfirm": "Reset price",
       "editVat": "Adjust VAT",
       "resetVat": "Revert to default VAT",
-      "resetVatConfirm": "This will restore the default VAT settings for this service. Do you want to continue?"
+      "resetVatConfirmTitle": "Reset VAT overrides?",
+      "resetVatConfirm": "This will restore the default VAT settings for this service. Do you want to continue?",
+      "resetVatConfirmCancel": "Keep VAT",
+      "resetVatConfirmConfirm": "Reset VAT"
     },
     "list": {
       "remove": "Remove",

@@ -6,6 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   ServiceInventorySelector,
   type ServiceInventoryItem,
   type ServiceInventoryType,
@@ -33,9 +43,12 @@ interface PackageRecord {
   name: string;
   description?: string | null;
   price?: number | null;
+  client_total?: number | null;
   applicable_types: string[];
   default_add_ons: string[];
   is_active?: boolean;
+  include_addons_in_price?: boolean | null;
+  pricing_metadata?: Record<string, unknown> | null;
 }
 
 interface ServiceRecord {
@@ -68,6 +81,7 @@ type VatModeOption = "inclusive" | "exclusive";
 
 export const PackagesStep = () => {
   const { t } = useTranslation("projectCreation");
+  const { t: tPackages } = useTranslation("packageCreation");
   const { state } = useProjectCreationContext();
   const { updateServices, updateDetails } = useProjectCreationActions();
 
@@ -137,7 +151,9 @@ export const PackagesStep = () => {
 
   const inventoryServices = useMemo<ServiceInventoryItem[]>(
     () =>
-      services.map((service) => ({
+      services
+        .filter((service) => service.is_active !== false)
+        .map((service) => ({
         id: service.id,
         name: service.name,
         category: service.category,
@@ -158,8 +174,11 @@ export const PackagesStep = () => {
   );
 
   const existingItems = state.services.items;
+  const hasServices = existingItems.length > 0;
   const [openPricingIds, setOpenPricingIds] = useState<Set<string>>(() => new Set());
   const [openVatIds, setOpenVatIds] = useState<Set<string>>(() => new Set());
+  const [pendingPricingResetId, setPendingPricingResetId] = useState<string | null>(null);
+  const [pendingVatResetId, setPendingVatResetId] = useState<string | null>(null);
   const selectedItemsByServiceId = useMemo(() => {
     const map = new Map<string, ProjectServiceLineItem>();
     existingItems.forEach((item) => {
@@ -330,7 +349,7 @@ export const PackagesStep = () => {
     removeItem(serviceId);
   };
 
-  const closePricingAndVatEditors = (itemId: string) => {
+  const closePricingAndVatEditors = useCallback((itemId: string) => {
     setOpenPricingIds((previous) => {
       if (!previous.has(itemId)) {
         return previous;
@@ -347,7 +366,18 @@ export const PackagesStep = () => {
       next.delete(itemId);
       return next;
     });
-  };
+  }, []);
+
+  const closeVatEditor = useCallback((itemId: string) => {
+    setOpenVatIds((previous) => {
+      if (!previous.has(itemId)) {
+        return previous;
+      }
+      const next = new Set(previous);
+      next.delete(itemId);
+      return next;
+    });
+  }, []);
 
   const getLineItemDefaults = useCallback(
     (lineItem: ProjectServiceLineItem) => {
@@ -438,12 +468,8 @@ export const PackagesStep = () => {
 
     const dirty = isPricingDirty(lineItem);
     if (dirty) {
-      const shouldReset =
-        typeof window === "undefined" ||
-        window.confirm(t("steps.packages.actions.resetPricingConfirm"));
-      if (!shouldReset) {
-        return;
-      }
+      setPendingPricingResetId(lineItem.id);
+      return;
     }
 
     resetLineItemPricing(lineItem);
@@ -463,22 +489,12 @@ export const PackagesStep = () => {
 
     const dirty = isVatDirty(lineItem);
     if (dirty) {
-      const shouldReset =
-        typeof window === "undefined" || window.confirm(t("steps.packages.actions.resetVatConfirm"));
-      if (!shouldReset) {
-        return;
-      }
+      setPendingVatResetId(lineItem.id);
+      return;
     }
 
     resetLineItemVat(lineItem);
-    setOpenVatIds((previous) => {
-      if (!previous.has(lineItem.id)) {
-        return previous;
-      }
-      const next = new Set(previous);
-      next.delete(lineItem.id);
-      return next;
-    });
+    closeVatEditor(lineItem.id);
   };
 
   const handleVatModeChange = (itemId: string, mode: VatModeOption) => {
@@ -500,6 +516,60 @@ export const PackagesStep = () => {
     const clamped = Math.min(99.99, Math.max(0, numeric));
     updateItem(itemId, { vatRate: clamped });
   };
+
+  const pendingPricingLineItem = useMemo(() => {
+    if (!pendingPricingResetId) {
+      return null;
+    }
+    return (
+      existingItems.find(
+        (item) => item.id === pendingPricingResetId || item.serviceId === pendingPricingResetId
+      ) ?? null
+    );
+  }, [existingItems, pendingPricingResetId]);
+
+  const pendingVatLineItem = useMemo(() => {
+    if (!pendingVatResetId) {
+      return null;
+    }
+    return (
+      existingItems.find(
+        (item) => item.id === pendingVatResetId || item.serviceId === pendingVatResetId
+      ) ?? null
+    );
+  }, [existingItems, pendingVatResetId]);
+
+  useEffect(() => {
+    if (pendingPricingResetId && !pendingPricingLineItem) {
+      setPendingPricingResetId(null);
+    }
+  }, [pendingPricingLineItem, pendingPricingResetId]);
+
+  useEffect(() => {
+    if (pendingVatResetId && !pendingVatLineItem) {
+      setPendingVatResetId(null);
+    }
+  }, [pendingVatLineItem, pendingVatResetId]);
+
+  const confirmPricingReset = useCallback(() => {
+    if (!pendingPricingLineItem) {
+      setPendingPricingResetId(null);
+      return;
+    }
+    resetLineItemPricing(pendingPricingLineItem);
+    closePricingAndVatEditors(pendingPricingLineItem.id);
+    setPendingPricingResetId(null);
+  }, [pendingPricingLineItem, resetLineItemPricing, closePricingAndVatEditors]);
+
+  const confirmVatReset = useCallback(() => {
+    if (!pendingVatLineItem) {
+      setPendingVatResetId(null);
+      return;
+    }
+    resetLineItemVat(pendingVatLineItem);
+    closeVatEditor(pendingVatLineItem.id);
+    setPendingVatResetId(null);
+  }, [pendingVatLineItem, resetLineItemVat, closeVatEditor]);
 
   const inventoryLabels = useMemo(
     () => ({
@@ -640,6 +710,105 @@ export const PackagesStep = () => {
     return 0;
   }, [state.details.basePrice, selectedPackage]);
 
+  const includeAddOnsInPrice = selectedPackage?.include_addons_in_price ?? true;
+
+  const packageDepositConfig = useMemo(() => {
+    const metadata = selectedPackage?.pricing_metadata;
+    if (!metadata || typeof metadata !== "object") {
+      return null;
+    }
+    const record = metadata as Record<string, unknown>;
+    const enableDeposit = Boolean(record.enableDeposit);
+    const rawMode = record.depositMode;
+    const depositMode =
+      typeof rawMode === "string" ? (rawMode as string) : undefined;
+    const rawValue = record.depositValue;
+    const depositValue =
+      typeof rawValue === "number"
+        ? rawValue
+        : Number.isFinite(Number(rawValue))
+        ? Number(rawValue)
+        : null;
+    const rawTarget = record.depositTarget;
+    const depositTarget =
+      typeof rawTarget === "string" ? (rawTarget as string) : null;
+    const rawAmount = record.depositAmount;
+    const depositAmount =
+      typeof rawAmount === "number"
+        ? rawAmount
+        : Number.isFinite(Number(rawAmount))
+        ? Number(rawAmount)
+        : null;
+    return {
+      enableDeposit,
+      depositMode,
+      depositValue,
+      depositTarget,
+      depositAmount,
+    };
+  }, [selectedPackage]);
+
+  const suggestedDepositAmount = useMemo(() => {
+    if (!packageDepositConfig || !packageDepositConfig.enableDeposit) {
+      return 0;
+    }
+    const { depositMode, depositValue, depositTarget, depositAmount } = packageDepositConfig;
+    const roundCurrency = (value: number) => Math.round(value * 100) / 100;
+    if (depositMode === "fixed") {
+      if (depositAmount != null && depositAmount > 0) {
+        return roundCurrency(depositAmount);
+      }
+      if (depositValue != null && depositValue > 0) {
+        return roundCurrency(depositValue);
+      }
+      return 0;
+    }
+    if (!(depositValue != null && depositValue > 0)) {
+      return depositAmount != null && depositAmount > 0 ? roundCurrency(depositAmount) : 0;
+    }
+    const targetKey = depositTarget === "base" ? "base" : "subtotal";
+    const subtotal = Math.max(0, basePriceValue + totals.total);
+    const clientTotal = includeAddOnsInPrice ? basePriceValue : subtotal;
+    const targetAmount =
+      targetKey === "base"
+        ? basePriceValue
+        : includeAddOnsInPrice
+        ? clientTotal
+        : subtotal;
+    if (!(targetAmount > 0)) {
+      return depositAmount != null && depositAmount > 0 ? roundCurrency(depositAmount) : 0;
+    }
+    const calculated = (targetAmount * depositValue) / 100;
+    const rounded = roundCurrency(calculated);
+    if (rounded > 0) {
+      return rounded;
+    }
+    return depositAmount != null && depositAmount > 0 ? roundCurrency(depositAmount) : 0;
+  }, [packageDepositConfig, basePriceValue, totals.total, includeAddOnsInPrice]);
+
+  const depositInputValue =
+    state.details.depositAmount !== undefined
+      ? state.details.depositAmount
+      : suggestedDepositAmount > 0
+      ? String(suggestedDepositAmount)
+      : "";
+
+  const depositNumeric = useMemo(() => {
+    const raw = state.details.depositAmount;
+    if (raw == null) {
+      return suggestedDepositAmount > 0 ? suggestedDepositAmount : 0;
+    }
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      return suggestedDepositAmount > 0 ? suggestedDepositAmount : 0;
+    }
+    const numeric = Number(trimmed);
+    if (!Number.isFinite(numeric)) {
+      return suggestedDepositAmount > 0 ? suggestedDepositAmount : 0;
+    }
+    return Math.max(0, Math.round(numeric * 100) / 100);
+  }, [state.details.depositAmount, suggestedDepositAmount]);
+
   const packageDerived = useMemo(() => {
     const round = (value: number) => Math.round(value * 100) / 100;
     const singleVatRate =
@@ -680,7 +849,30 @@ export const PackagesStep = () => {
   const clientNet = packageDerived.packageNet;
   const clientTax = packageDerived.packageVat;
   const clientTotal = packageDerived.packageGross;
-  const depositValue = 0;
+  const depositValue = depositNumeric;
+  const depositHelperText = useMemo(() => {
+    if (!(depositValue > 0)) {
+      return t("steps.packages.summary.depositHelperNone");
+    }
+    if (packageDepositConfig?.depositMode === "fixed") {
+      return tPackages("summaryView.pricing.deposit.fixed", {
+        defaultValue: "Fixed upfront amount",
+      });
+    }
+    if (
+      packageDepositConfig?.depositMode &&
+      packageDepositConfig.depositValue != null &&
+      packageDepositConfig.depositValue > 0
+    ) {
+      return tPackages("summaryView.pricing.deposit.percent", {
+        percent: formatPercent(packageDepositConfig.depositValue),
+        target: tPackages(
+          `summaryView.pricing.targets.${packageDepositConfig.depositTarget ?? "subtotal"}`
+        ),
+      });
+    }
+    return t("summary.cards.pricing.depositHelperDefault");
+  }, [depositValue, packageDepositConfig, t, tPackages, formatPercent]);
 
   const renderServicePreview = (pkg: PackageRecord) => {
     const defaultServiceIds = pkg.default_add_ons ?? [];
@@ -727,6 +919,7 @@ export const PackagesStep = () => {
       showCustomSetup: true,
     });
 
+    updateDetails({ depositAmount: undefined });
     if (pkg.price != null) {
       updateDetails({ basePrice: pkg.price.toString() });
     }
@@ -756,6 +949,7 @@ export const PackagesStep = () => {
     });
     updateDetails({
       basePrice: "",
+      depositAmount: undefined,
     });
   };
 
@@ -765,12 +959,13 @@ export const PackagesStep = () => {
   const servicesError = servicesQuery.error as Error | null;
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-          {t("steps.packages.heading")}
-        </h2>
-        <p className="text-sm text-muted-foreground">{t("steps.packages.description")}</p>
+    <>
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+            {t("steps.packages.heading")}
+          </h2>
+          <p className="text-sm text-muted-foreground">{t("steps.packages.description")}</p>
       </div>
 
       <div className="space-y-3">
@@ -888,17 +1083,31 @@ export const PackagesStep = () => {
 
       {showCustomSetup && (
         <div className="animate-in fade-in slide-in-from-top-2 space-y-6 rounded-2xl border border-border/80 bg-white/80 p-6 shadow-sm transition-all duration-300 ease-out">
-          <div className="space-y-2">
-            <Label htmlFor="project-base-price">{t("steps.packages.basePriceLabel")}</Label>
-            <Input
-              id="project-base-price"
-              type="number"
-              min="0"
-              step="1"
-              value={state.details.basePrice ?? ""}
-              onChange={(event) => updateDetails({ basePrice: event.target.value })}
-              placeholder={t("steps.packages.basePricePlaceholder")}
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="project-base-price">{t("steps.packages.basePriceLabel")}</Label>
+              <Input
+                id="project-base-price"
+                type="number"
+                min="0"
+                step="1"
+                value={state.details.basePrice ?? ""}
+                onChange={(event) => updateDetails({ basePrice: event.target.value })}
+                placeholder={t("steps.packages.basePricePlaceholder")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="project-deposit-amount">{t("steps.packages.depositLabel")}</Label>
+              <Input
+                id="project-deposit-amount"
+                type="number"
+                min="0"
+                step="0.01"
+                value={depositInputValue}
+                onChange={(event) => updateDetails({ depositAmount: event.target.value })}
+                placeholder={t("steps.packages.depositPlaceholder")}
+              />
+            </div>
           </div>
 
           <div className="space-y-6">
@@ -1062,16 +1271,23 @@ export const PackagesStep = () => {
               />
             </div>
 
-            {existingItems.length > 0 ? (
-              <>
-                <ServicesTableCard
-                  rows={summaryTableRows}
-                  labels={serviceTableLabels}
-                  emptyMessage={t("steps.packages.summary.empty")}
-                  formatCurrency={formatCurrency}
-                />
-                <div className="flex justify-end">
-                  <SummaryTotalsCard className="sm:w-auto sm:min-w-[320px]">
+            {hasServices ? (
+              <ServicesTableCard
+                rows={summaryTableRows}
+                labels={serviceTableLabels}
+                emptyMessage={t("steps.packages.summary.empty")}
+                formatCurrency={formatCurrency}
+              />
+            ) : null}
+            <div className={cn("flex", hasServices ? "justify-end" : "justify-stretch")}>
+              <SummaryTotalsCard
+                className={cn(
+                  "bg-white/95",
+                  hasServices ? "sm:w-auto sm:min-w-[320px]" : "w-full max-w-none"
+                )}
+              >
+                {hasServices ? (
+                  <>
                     <SummaryTotalsSection>
                       <SummaryTotalRow
                         label={t("steps.packages.summary.servicesCount")}
@@ -1111,73 +1327,139 @@ export const PackagesStep = () => {
                       />
                     </SummaryTotalsSection>
                     <SummaryTotalsDivider />
-                    <SummaryTotalsSection className="pt-3">
-                      <SummaryTotalRow
-                        label={t("steps.packages.summary.packageNet")}
-                        value={formatCurrency(packageDerived.packageNet)}
-                      />
-                      <SummaryTotalRow
-                        label={
-                          packageDerived.packageVatRate != null
-                            ? t("steps.packages.summary.packageVatWithRate", {
-                                rate: formatPercent(packageDerived.packageVatRate),
-                              })
-                            : t("steps.packages.summary.packageVat")
-                        }
-                        value={formatCurrency(packageDerived.packageVat)}
-                        helper={
-                          packageDerived.packageVatRate != null
-                            ? t("steps.packages.summary.packageVatHelperInclusive")
-                            : undefined
-                        }
-                      />
-                      <SummaryTotalRow
-                        label={t("steps.packages.summary.packageGross")}
-                        value={formatCurrency(packageDerived.packageGross)}
-                        emphasizeLabel
-                      />
-                    </SummaryTotalsSection>
-                    <SummaryTotalsDivider />
-                    <SummaryTotalsSection className="pt-3">
-                      <SummaryTotalRow
-                        label={t("steps.packages.summary.clientNet")}
-                        value={formatCurrency(clientNet)}
-                      />
-                      <SummaryTotalRow
-                        label={t("steps.packages.summary.clientTax")}
-                        value={formatCurrency(clientTax)}
-                      />
-                      <SummaryTotalRow
-                        label={t("steps.packages.summary.clientTotal")}
-                        value={formatCurrency(clientTotal)}
-                        tone="positive"
-                        emphasizeLabel
-                        helper={
-                          basePriceValue > 0
-                            ? t("steps.packages.summary.clientTotalHelperInclusive")
-                            : undefined
-                        }
-                      />
-                    </SummaryTotalsSection>
-                    <SummaryTotalsDivider />
-                    <SummaryTotalsSection className="pt-3">
-                      <SummaryTotalRow
-                        label={t("steps.packages.summary.deposit")}
-                        value={formatCurrency(depositValue)}
-                        helper={t("steps.packages.summary.depositHelperNone")}
-                      />
-                    </SummaryTotalsSection>
-                  </SummaryTotalsCard>
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">
+                  </>
+                ) : null}
+                <SummaryTotalsSection className={cn("space-y-3", hasServices ? "pt-3" : undefined)}>
+                  <SummaryTotalRow
+                    label={t("steps.packages.summary.packageNet")}
+                    value={formatCurrency(packageDerived.packageNet)}
+                    emphasizeLabel
+                  />
+                  <SummaryTotalRow
+                    label={
+                      packageDerived.packageVatRate != null
+                        ? t("steps.packages.summary.packageVatWithRate", {
+                            rate: formatPercent(packageDerived.packageVatRate),
+                          })
+                        : t("steps.packages.summary.packageVat")
+                    }
+                    value={formatCurrency(packageDerived.packageVat)}
+                    helper={
+                      packageDerived.packageVatRate != null
+                        ? t("steps.packages.summary.packageVatHelperInclusive")
+                        : undefined
+                    }
+                  />
+                  <SummaryTotalRow
+                    label={t("steps.packages.summary.packageGross")}
+                    value={formatCurrency(packageDerived.packageGross)}
+                    emphasizeLabel
+                  />
+                </SummaryTotalsSection>
+                <SummaryTotalsDivider />
+                <SummaryTotalsSection className={cn("space-y-3", hasServices ? "pt-3" : undefined)}>
+                  <SummaryTotalRow
+                    label={t("steps.packages.summary.clientNet")}
+                    value={formatCurrency(clientNet)}
+                  />
+                  <SummaryTotalRow
+                    label={t("steps.packages.summary.clientTax")}
+                    value={formatCurrency(clientTax)}
+                  />
+                  <SummaryTotalRow
+                    label={t("steps.packages.summary.clientTotal")}
+                    value={formatCurrency(clientTotal)}
+                    tone="positive"
+                    emphasizeLabel
+                    helper={
+                      basePriceValue > 0
+                        ? t("steps.packages.summary.clientTotalHelperInclusive")
+                        : undefined
+                    }
+                  />
+                </SummaryTotalsSection>
+                <SummaryTotalsDivider />
+                <SummaryTotalsSection className={cn("space-y-3", hasServices ? "pt-3" : undefined)}>
+                  <SummaryTotalRow
+                    label={t("steps.packages.summary.deposit")}
+                    value={formatCurrency(depositValue)}
+                    helper={depositHelperText}
+                    emphasizeLabel={depositValue > 0}
+                  />
+                </SummaryTotalsSection>
+              </SummaryTotalsCard>
+            </div>
+            {!hasServices ? (
+              <div className="rounded-xl border border-dashed border-border/70 bg-white/80 p-4 text-sm text-muted-foreground">
                 {t("steps.packages.servicesEmpty")}
-              </p>
-            )}
+              </div>
+            ) : null}
           </div>
         </div>
       )}
-    </div>
+      </div>
+
+      {pendingPricingLineItem ? (
+        <AlertDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setPendingPricingResetId(null);
+            }
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("steps.packages.actions.resetPricingConfirmTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("steps.packages.actions.resetPricingConfirm")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setPendingPricingResetId(null)}>
+                {t("steps.packages.actions.resetPricingConfirmCancel")}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmPricingReset}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {t("steps.packages.actions.resetPricingConfirmConfirm")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
+
+      {pendingVatLineItem ? (
+        <AlertDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setPendingVatResetId(null);
+            }
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("steps.packages.actions.resetVatConfirmTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("steps.packages.actions.resetVatConfirm")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setPendingVatResetId(null)}>
+                {t("steps.packages.actions.resetVatConfirmCancel")}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmVatReset}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {t("steps.packages.actions.resetVatConfirmConfirm")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
+    </>
   );
 };

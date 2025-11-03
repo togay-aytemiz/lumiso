@@ -29,6 +29,15 @@
 - Removed the legacy project creation dialog components; even legacy routes now open `ProjectCreationWizardSheet` directly.
 - Remaining gaps: broaden automated coverage, run cross-entry QA, and remove legacy dialog artifacts once confidence is high.
 
+## Package Wizard Parity Audit — 2025-11-26
+- **Shared step rail:** `src/features/package-creation/components/PackageCreationWizard.tsx:214-322` ships the latest `WizardStepList` with hint-aware summaries and safe translation fallbacks. The project flow reimplements the same rail inline at `src/features/project-creation/components/ProjectCreationWizard.tsx:215-506`, which explains minor visual drift and duplicated logic. Extract the package version into a shared `WizardStepList` helper (e.g. `src/features/wizard/components/WizardStepList.tsx`) and point both wizards at it.
+- **Visited-step hydration:** Package edit mode seeds `visitedSteps` based on existing data (`PackageCreationWizard.tsx:132-166`), preventing completed steps from flagging as incomplete when revisiting. The project wizard lacks this guard, so prefilled flows reopen with empty progress. Reuse the package effect (minus package-specific dependencies) when we add edit mode for projects.
+- **Step footer actions:** Packages offer an inline “Review summary” escape hatch while editing (`PackageCreationWizard.tsx:308-320`), keeping review reachable without polluting step 1 & 2; replicating this button in the project flow satisfies parity without touching `LeadStep` or `DetailsStep`.
+- **Service inventory labels:** Package services configure the new `selectedTag` / `quantityTag` callbacks for `ServiceInventorySelector` (`ServicesStep.tsx:357-407`). The project `PackagesStep` omits them (`src/features/project-creation/steps/PackagesStep.tsx:360-387`), which now breaks category badges after the selector upgrade. Port the label helpers verbatim.
+- **Category collapse bug:** The project custom-services container is keyed by selected service IDs (`PackagesStep.tsx:725-732`), forcing `ServiceInventorySelector` to remount and lose expansion state. Drop the synthetic key (or scope it to the package ID only) so the selector’s internal expanded-category state survives quantity edits.
+- **VAT override UX:** Package flow keeps override toggles collapsed unless a diff exists (`ServicesStep.tsx:740-836`). Project flow mirrors the controls but never hides the section once toggled (`PackagesStep.tsx:770-850`). Align the toggle behavior so we surface the lighter default state first.
+- **Ground rules:** Upcoming work must leave `LeadStep` and `DetailsStep` untouched; all parity changes happen in `PackagesStep.tsx`, the shared wizard chrome, and summary logic.
+
 ## Current State Snapshot
 - **Session Planning Wizard**
   - Lives under `src/features/session-planning/*`.
@@ -142,6 +151,8 @@
   **Mitigation:** Use the audit checklist above and add runtime logging behind a temporary flag to confirm new sheet usage.
 
 ## Immediate Next Steps
-1. Execute an end-to-end QA sweep across every entry point (projects index, dashboard widgets, kanban, lead detail) to validate the new sheet + guard behaviour.
-2. Remove or archive the legacy project dialog components/tests once QA signs off and analytics confirm usage drop-off.
-3. Monitor telemetry + error tracking during rollout (especially Supabase inserts and package/service attachment) and tighten coverage where gaps appear.
+1. Extract the shared `WizardStepList` from the package wizard and reuse it in the project wizard without altering `LeadStep` or `DetailsStep`.
+2. Bring the `ServiceInventorySelector` label config and VAT toggle behavior in `PackagesStep.tsx` up to date; remove the remounting `key` so category accordions stay open.
+3. Execute an end-to-end QA sweep across every entry point (projects index, dashboard widgets, kanban, lead detail) to validate the new chrome + package-step behaviour.
+4. Remove or archive the legacy project dialog components/tests once QA signs off and analytics confirm usage drop-off.
+5. Monitor telemetry + error tracking during rollout (especially Supabase inserts and package/service attachment) and tighten coverage where gaps appear.

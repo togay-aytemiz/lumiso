@@ -115,7 +115,17 @@
         "add": "Ekle",
         "uncategorized": "Diğer",
         "inactive": "Pasif",
-        "empty": "Kataloğunuzda henüz hizmet yok. Buraya eklemek için hizmet oluşturun."
+        "empty": "Kataloğunuzda henüz hizmet yok. Buraya eklemek için hizmet oluşturun.",
+        "selectedTag": "{{selected}}/{{total}} seçildi",
+        "quantityTag": "Toplam adet: {{count}}"
+      },
+      "actions": {
+        "editPricing": "Fiyatı düzenle",
+        "resetPricing": "Varsayılan fiyata dön",
+        "resetPricingConfirm": "Bu işlem hizmetin varsayılan fiyat ve KDV değerlerini geri yükleyecek. Devam etmek istiyor musun?",
+        "editVat": "KDV’yi düzenle",
+        "resetVat": "Varsayılan KDV'ye dön",
+        "resetVatConfirm": "Bu işlem hizmetin varsayılan KDV ayarlarını geri yükleyecek. Devam etmek istiyor musun?"
       },
       "list": {
         "remove": "Kaldır",
@@ -179,7 +189,27 @@
         },
         "customTag": "Özel kalem",
         "customVendorFallback": "—",
-        "empty": "Hizmet eklenmedi."
+        "empty": "Hizmet eklenmedi.",
+        "servicesCount": "Seçilen hizmet sayısı",
+        "totalQuantity": "Toplam adet",
+        "vatBreakdown": "KDV (%{{rate}})",
+        "servicesCost": "Toplam hizmet maliyeti",
+        "servicesPrice": "Toplam hizmet satış",
+        "servicesVat": "KDV",
+        "servicesVatWithRate": "KDV (%{{rate}})",
+        "servicesGross": "Toplam hizmet (KDV dahil)",
+        "servicesMargin": "Hesaplanan hizmet kârı",
+        "packageNet": "Paket fiyatı (net)",
+        "packageVat": "Paket KDV",
+        "packageVatWithRate": "Paket KDV (%{{rate}})",
+        "packageVatHelperInclusive": "Fiyata dahil",
+        "packageGross": "Toplam paket fiyatı",
+        "clientNet": "Müşteriye sunulan toplam (net)",
+        "clientTax": "Toplam vergi",
+        "clientTotal": "Genel toplam",
+        "clientTotalHelperInclusive": "Paket fiyatı seçilen hizmetleri kapsıyor.",
+        "deposit": "Kapora",
+        "depositHelperNone": "Kapora alınmıyor"
       }
     },
     "summary": {

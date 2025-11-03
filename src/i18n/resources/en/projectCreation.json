@@ -111,16 +111,26 @@
             "title": "Other services",
             "subtitle": "Items without a service type yet."
           }
-        },
-        "add": "Add",
-        "uncategorized": "Other",
-        "inactive": "Inactive",
-        "empty": "No services in your catalog yet. Create services to add them here."
       },
-      "list": {
-        "remove": "Remove",
-        "vendor": "Vendor",
-        "unitCost": "Unit cost",
+      "add": "Add",
+      "uncategorized": "Other",
+      "inactive": "Inactive",
+      "empty": "No services in your catalog yet. Create services to add them here.",
+      "selectedTag": "{{selected}}/{{total}} selected",
+      "quantityTag": "Quantity: {{count}}"
+    },
+    "actions": {
+      "editPricing": "Edit prices",
+      "resetPricing": "Revert to default price",
+      "resetPricingConfirm": "This will restore the original price and VAT values for this service. Do you want to continue?",
+      "editVat": "Adjust VAT",
+      "resetVat": "Revert to default VAT",
+      "resetVatConfirm": "This will restore the default VAT settings for this service. Do you want to continue?"
+    },
+    "list": {
+      "remove": "Remove",
+      "vendor": "Vendor",
+      "unitCost": "Unit cost",
         "unitPrice": "Unit price",
         "quantity": "Quantity"
       },
@@ -179,7 +189,27 @@
         },
         "customTag": "Custom item",
         "customVendorFallback": "—",
-        "empty": "No services added yet."
+        "empty": "No services added yet.",
+        "servicesCount": "Services selected",
+        "totalQuantity": "Total quantity",
+        "vatBreakdown": "VAT (%{{rate}})",
+        "servicesCost": "Total service cost",
+        "servicesPrice": "Total service price",
+        "servicesVat": "VAT",
+        "servicesVatWithRate": "VAT (%{{rate}})",
+        "servicesGross": "Total service (incl. VAT)",
+        "servicesMargin": "Calculated service margin",
+        "packageNet": "Package price (net)",
+        "packageVat": "Package VAT",
+        "packageVatWithRate": "Package VAT (%{{rate}})",
+        "packageVatHelperInclusive": "VAT included",
+        "packageGross": "Total package price",
+        "clientNet": "Client total (net)",
+        "clientTax": "Total tax",
+        "clientTotal": "Grand total",
+        "clientTotalHelperInclusive": "Package price covers selected services.",
+        "deposit": "Deposit",
+        "depositHelperNone": "No deposit collected"
       }
     },
     "summary": {

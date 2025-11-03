@@ -10,33 +10,23 @@ import {
   type ServiceInventoryItem,
   type ServiceInventoryType,
 } from "@/components/ServiceInventorySelector";
-import { ServicesTableCard, type ServicesTableRow } from "@/components/services";
+import {
+  ServicesTableCard,
+  SummaryTotalRow,
+  SummaryTotalsCard,
+  SummaryTotalsDivider,
+  SummaryTotalsSection,
+  type ServicesTableRow,
+} from "@/components/services";
 import { usePackages, useProjectTypes, useServices } from "@/hooks/useOrganizationData";
 import { useProjectCreationContext } from "../hooks/useProjectCreationContext";
 import { useProjectCreationActions } from "../hooks/useProjectCreationActions";
 import { cn } from "@/lib/utils";
-import { Loader2, Sparkles, Plus, Minus, Trash2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import type { ProjectCreationDetails, ProjectServiceLineItem } from "../types";
 import { calculateLineItemPricing } from "@/features/package-creation/utils/lineItemPricing";
-import { DEFAULT_SERVICE_UNIT, SERVICE_UNIT_OPTIONS, normalizeServiceUnit } from "@/lib/services/units";
+import { DEFAULT_SERVICE_UNIT, normalizeServiceUnit } from "@/lib/services/units";
 import type { VatMode } from "@/lib/accounting/vat";
-import { IconActionButton } from "@/components/ui/icon-action-button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  ServiceVatOverridesSection,
-  type ServiceVatOverridesItem,
-  type ServiceVatOverridesMeta,
-  type VatModeOption,
-} from "@/features/services/components/ServiceVatOverridesSection";
 
 interface PackageRecord {
   id: string;
@@ -73,6 +63,8 @@ interface ServiceWithMetadata extends ServiceRecord {
   unit: string;
   isActive: boolean;
 }
+
+type VatModeOption = "inclusive" | "exclusive";
 
 export const PackagesStep = () => {
   const { t } = useTranslation("projectCreation");
@@ -166,6 +158,19 @@ export const PackagesStep = () => {
   );
 
   const existingItems = state.services.items;
+  const [openPricingIds, setOpenPricingIds] = useState<Set<string>>(() => new Set());
+  const [openVatIds, setOpenVatIds] = useState<Set<string>>(() => new Set());
+  const selectedItemsByServiceId = useMemo(() => {
+    const map = new Map<string, ProjectServiceLineItem>();
+    existingItems.forEach((item) => {
+      if (item.serviceId) {
+        map.set(item.serviceId, item);
+      } else {
+        map.set(item.id, item);
+      }
+    });
+    return map;
+  }, [existingItems]);
 
   const selectedQuantities = useMemo(
     () =>
@@ -177,6 +182,34 @@ export const PackagesStep = () => {
       }, {}),
     [existingItems]
   );
+
+  useEffect(() => {
+    const validIds = new Set(existingItems.map((item) => item.id));
+    setOpenPricingIds((previous) => {
+      let changed = false;
+      const next = new Set<string>();
+      previous.forEach((id) => {
+        if (validIds.has(id)) {
+          next.add(id);
+        } else {
+          changed = true;
+        }
+      });
+      return changed ? next : previous;
+    });
+    setOpenVatIds((previous) => {
+      let changed = false;
+      const next = new Set<string>();
+      previous.forEach((id) => {
+        if (validIds.has(id)) {
+          next.add(id);
+        } else {
+          changed = true;
+        }
+      });
+      return changed ? next : previous;
+    });
+  }, [existingItems]);
 
   const totals = useMemo(() => {
     return existingItems.reduce(
@@ -202,64 +235,47 @@ export const PackagesStep = () => {
   );
 
   const servicesMargin = totals.net - totals.cost;
-
-  const hasVatOverrides = useMemo(() => {
-    return existingItems.some((item) => {
-      const service = serviceMap.get(item.serviceId);
-      const defaultRate = service?.vatRate ?? 0;
-      const defaultMode = service?.vatMode ?? "exclusive";
-      const rate = typeof item.vatRate === "number" ? item.vatRate : defaultRate;
-      const mode = (item.vatMode ?? defaultMode) as VatMode;
-      const rateDiff = Math.abs(rate - defaultRate) > 0.001;
-      const modeDiff = mode !== defaultMode;
-      return rateDiff || modeDiff;
+  const formatCurrency = useCallback(
+    (value: number) =>
+      new Intl.NumberFormat("tr-TR", {
+        style: "currency",
+        currency: "TRY",
+        minimumFractionDigits: 0,
+      }).format(value),
+    []
+  );
+  const formatPercent = useCallback(
+    (value: number) =>
+      new Intl.NumberFormat("tr-TR", {
+        minimumFractionDigits: Number.isInteger(value) ? 0 : 1,
+        maximumFractionDigits: 2,
+      }).format(value),
+    []
+  );
+  const totalQuantity = useMemo(
+    () =>
+      existingItems.reduce(
+        (acc, item) => acc + Math.max(1, item.quantity ?? 1),
+        0
+      ),
+    [existingItems]
+  );
+  const vatBreakdown = useMemo(() => {
+    const buckets = new Map<number, number>();
+    existingItems.forEach((item) => {
+      const pricing = calculateLineItemPricing(item);
+      if (!(pricing.vat > 0)) return;
+      const rate =
+        typeof item.vatRate === "number" && Number.isFinite(item.vatRate)
+          ? item.vatRate
+          : 0;
+      const current = buckets.get(rate) ?? 0;
+      buckets.set(rate, current + pricing.vat);
     });
-  }, [existingItems, serviceMap]);
-
-  const [showVatControls, setShowVatControls] = useState(hasVatOverrides);
-  const [showVatResetPrompt, setShowVatResetPrompt] = useState(false);
-
-  useEffect(() => {
-    if (hasVatOverrides) {
-      setShowVatControls(true);
-    }
-  }, [hasVatOverrides]);
-
-  const handleToggleVatControls = () => {
-    if (showVatControls) {
-      if (hasVatOverrides) {
-        setShowVatResetPrompt(true);
-        return;
-      }
-      setShowVatControls(false);
-      return;
-    }
-    setShowVatControls(true);
-  };
-
-  const resetVatOverrides = useCallback(() => {
-    const resetItems = existingItems.map((item) => {
-      const service = item.serviceId ? serviceMap.get(item.serviceId) : null;
-      const fallbackRate =
-        typeof service?.vatRate === "number" && Number.isFinite(service.vatRate)
-          ? service.vatRate
-          : null;
-      const fallbackMode: VatModeOption =
-        service?.vatMode === "inclusive" || service?.vatMode === "exclusive"
-          ? service.vatMode
-          : "exclusive";
-
-      return {
-        ...item,
-        vatRate: fallbackRate,
-        vatMode: fallbackMode,
-      };
-    });
-
-    setItems(resetItems);
-    setShowVatControls(false);
-    setShowVatResetPrompt(false);
-  }, [existingItems, serviceMap, setItems]);
+    return Array.from(buckets.entries())
+      .sort((a, b) => b[0] - a[0])
+      .map(([rate, amount]) => ({ rate, amount }));
+  }, [existingItems]);
 
   const updateItem = (itemId: string, updates: Partial<ProjectServiceLineItem>) => {
     const nextItems = existingItems.map((item) =>
@@ -270,16 +286,6 @@ export const PackagesStep = () => {
 
   const removeItem = (itemId: string) => {
     setItems(existingItems.filter((item) => item.id !== itemId && item.serviceId !== itemId));
-  };
-
-  const parseQuantityInput = (value: string) => {
-    const numeric = value.replace(/[^0-9]/g, "");
-    const parsed = parseInt(numeric, 10);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-  };
-
-  const handleSetQuantity = (itemId: string, value: string) => {
-    updateItem(itemId, { quantity: parseQuantityInput(value) });
   };
 
   const adjustQuantity = (itemId: string, delta: number) => {
@@ -324,6 +330,157 @@ export const PackagesStep = () => {
     removeItem(serviceId);
   };
 
+  const closePricingAndVatEditors = (itemId: string) => {
+    setOpenPricingIds((previous) => {
+      if (!previous.has(itemId)) {
+        return previous;
+      }
+      const next = new Set(previous);
+      next.delete(itemId);
+      return next;
+    });
+    setOpenVatIds((previous) => {
+      if (!previous.has(itemId)) {
+        return previous;
+      }
+      const next = new Set(previous);
+      next.delete(itemId);
+      return next;
+    });
+  };
+
+  const getLineItemDefaults = useCallback(
+    (lineItem: ProjectServiceLineItem) => {
+      const serviceMeta = serviceMap.get(lineItem.serviceId ?? lineItem.id);
+      const toFiniteNumber = (value: number | null | undefined) =>
+        typeof value === "number" && Number.isFinite(value) ? value : null;
+
+      return {
+        serviceMeta,
+        unitCost: serviceMeta?.unitCost ?? toFiniteNumber(lineItem.unitCost),
+        unitPrice: serviceMeta?.unitPrice ?? toFiniteNumber(lineItem.unitPrice),
+        vatMode: serviceMeta?.vatMode ?? (lineItem.vatMode ?? "exclusive"),
+        vatRate: serviceMeta ? toFiniteNumber(serviceMeta.vatRate) : toFiniteNumber(lineItem.vatRate),
+      };
+    },
+    [serviceMap]
+  );
+
+  const isPricingDirty = useCallback(
+    (lineItem: ProjectServiceLineItem) => {
+      const defaults = getLineItemDefaults(lineItem);
+      const toFiniteNumber = (value: number | null | undefined) =>
+        typeof value === "number" && Number.isFinite(value) ? value : null;
+
+      const currentUnitCost = toFiniteNumber(lineItem.unitCost);
+      const currentUnitPrice = toFiniteNumber(lineItem.unitPrice);
+      const currentVatMode = lineItem.vatMode ?? defaults.vatMode;
+      const currentVatRate = toFiniteNumber(lineItem.vatRate);
+
+      return (
+        currentUnitCost !== defaults.unitCost ||
+        currentUnitPrice !== defaults.unitPrice ||
+        currentVatMode !== defaults.vatMode ||
+        currentVatRate !== defaults.vatRate
+      );
+    },
+    [getLineItemDefaults]
+  );
+
+  const isVatDirty = useCallback(
+    (lineItem: ProjectServiceLineItem) => {
+      const defaults = getLineItemDefaults(lineItem);
+      const toFiniteNumber = (value: number | null | undefined) =>
+        typeof value === "number" && Number.isFinite(value) ? value : null;
+
+      const currentVatMode = lineItem.vatMode ?? defaults.vatMode;
+      const currentVatRate = toFiniteNumber(lineItem.vatRate);
+
+      return currentVatMode !== defaults.vatMode || currentVatRate !== defaults.vatRate;
+    },
+    [getLineItemDefaults]
+  );
+
+  const resetLineItemPricing = useCallback(
+    (lineItem: ProjectServiceLineItem) => {
+      const defaults = getLineItemDefaults(lineItem);
+      updateItem(lineItem.id, {
+        unitCost: defaults.unitCost,
+        unitPrice: defaults.unitPrice,
+        vatMode: defaults.vatMode,
+        vatRate: defaults.vatRate ?? null,
+      });
+    },
+    [getLineItemDefaults, updateItem]
+  );
+
+  const resetLineItemVat = useCallback(
+    (lineItem: ProjectServiceLineItem) => {
+      const defaults = getLineItemDefaults(lineItem);
+      updateItem(lineItem.id, {
+        vatMode: defaults.vatMode,
+        vatRate: defaults.vatRate ?? null,
+      });
+    },
+    [getLineItemDefaults, updateItem]
+  );
+
+  const handlePricingButtonClick = (lineItem: ProjectServiceLineItem) => {
+    const isOpen = openPricingIds.has(lineItem.id);
+    if (!isOpen) {
+      setOpenPricingIds((previous) => {
+        const next = new Set(previous);
+        next.add(lineItem.id);
+        return next;
+      });
+      return;
+    }
+
+    const dirty = isPricingDirty(lineItem);
+    if (dirty) {
+      const shouldReset =
+        typeof window === "undefined" ||
+        window.confirm(t("steps.packages.actions.resetPricingConfirm"));
+      if (!shouldReset) {
+        return;
+      }
+    }
+
+    resetLineItemPricing(lineItem);
+    closePricingAndVatEditors(lineItem.id);
+  };
+
+  const handleVatButtonClick = (lineItem: ProjectServiceLineItem) => {
+    const isOpen = openVatIds.has(lineItem.id);
+    if (!isOpen) {
+      setOpenVatIds((previous) => {
+        const next = new Set(previous);
+        next.add(lineItem.id);
+        return next;
+      });
+      return;
+    }
+
+    const dirty = isVatDirty(lineItem);
+    if (dirty) {
+      const shouldReset =
+        typeof window === "undefined" || window.confirm(t("steps.packages.actions.resetVatConfirm"));
+      if (!shouldReset) {
+        return;
+      }
+    }
+
+    resetLineItemVat(lineItem);
+    setOpenVatIds((previous) => {
+      if (!previous.has(lineItem.id)) {
+        return previous;
+      }
+      const next = new Set(previous);
+      next.delete(lineItem.id);
+      return next;
+    });
+  };
+
   const handleVatModeChange = (itemId: string, mode: VatModeOption) => {
     updateItem(itemId, { vatMode: mode });
   };
@@ -342,10 +499,6 @@ export const PackagesStep = () => {
 
     const clamped = Math.min(99.99, Math.max(0, numeric));
     updateItem(itemId, { vatRate: clamped });
-  };
-
-  const handleUnitChange = (itemId: string, unit: string) => {
-    updateItem(itemId, { unit: normalizeServiceUnit(unit) });
   };
 
   const inventoryLabels = useMemo(
@@ -383,6 +536,17 @@ export const PackagesStep = () => {
         defaultValue: "No services in your catalog yet. Create services to add them here.",
       }),
       quantity: t("steps.packages.list.quantity", { defaultValue: "Quantity" }),
+      selectedTag: (selected: number, total: number) =>
+        t("steps.packages.inventory.selectedTag", {
+          defaultValue: "{{selected}} of {{total}} selected",
+          selected,
+          total,
+        }),
+      quantityTag: (count: number) =>
+        t("steps.packages.inventory.quantityTag", {
+          defaultValue: "{{count}} items",
+          count,
+        }),
       retry: t("common:actions.retry", { defaultValue: "Retry" }),
     }),
     [t]
@@ -432,60 +596,6 @@ export const PackagesStep = () => {
     [t]
   );
 
-  const vatOverrideItems = useMemo<ServiceVatOverridesItem[]>(() => {
-    return existingItems.map((item) => {
-      const service = item.serviceId ? serviceMap.get(item.serviceId) : null;
-      const vatRateValue =
-        typeof item.vatRate === "number" && Number.isFinite(item.vatRate)
-          ? String(item.vatRate)
-          : "";
-      const fallbackMode =
-        service?.vatMode === "inclusive" || service?.vatMode === "exclusive"
-          ? service.vatMode
-          : "exclusive";
-      const vatModeValue: VatModeOption =
-        item.vatMode === "inclusive" || item.vatMode === "exclusive"
-          ? item.vatMode
-          : fallbackMode;
-      const meta: ServiceVatOverridesMeta[] = [];
-
-      const vendorLabel = item.vendorName
-        ? t("steps.packages.vatControls.vendorLabel", { vendor: item.vendorName })
-        : service?.vendor_name
-        ? t("steps.packages.vatControls.vendorLabel", { vendor: service.vendor_name })
-        : null;
-      if (vendorLabel) {
-        meta.push({ label: vendorLabel });
-      }
-
-      const serviceTypeKey = service?.serviceType ?? "unknown";
-      const serviceTypeLabel = t(
-        `steps.packages.inventory.types.${serviceTypeKey}.title`,
-        {
-          defaultValue: t("steps.packages.inventory.types.unknown.title"),
-        }
-      );
-      meta.push({
-        label: t("steps.packages.vatControls.typeLabel", { type: serviceTypeLabel }),
-      });
-
-      if (item.type === "custom") {
-        meta.push({
-          label: t("steps.packages.summary.customTag", { defaultValue: "Custom item" }),
-          variant: "badge",
-        });
-      }
-
-      return {
-        id: item.id,
-        name: item.name,
-        vatRate: vatRateValue,
-        vatMode: vatModeValue,
-        meta,
-      };
-    });
-  }, [existingItems, serviceMap, t]);
-
   const summaryTableRows = useMemo<ServicesTableRow[]>(() => {
     return existingItems.map((item) => {
       const service = serviceMap.get(item.serviceId);
@@ -497,7 +607,7 @@ export const PackagesStep = () => {
           : service?.unitCost
           ? Math.round(service.unitCost * quantity * 100) / 100
           : null;
-      const vendorLabel = service?.vendor_name ?? item.vendorName ?? t("steps.packages.summary.customVendorFallback", { defaultValue: "—" });
+      const vendorLabel = service?.vendor_name ?? item.vendorName ?? undefined;
       return {
         id: item.id,
         name: item.name,
@@ -517,6 +627,60 @@ export const PackagesStep = () => {
     if (!state.services.packageId && !showCustomSetup) return;
     actionsRef.current.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
   }, [state.services.packageId, showCustomSetup]);
+
+  const basePriceValue = useMemo(() => {
+    const parsed = parseFloat(state.details.basePrice ?? "");
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+    if (selectedPackage && typeof selectedPackage.price === "number") {
+      const packagePrice = Number(selectedPackage.price);
+      return Number.isFinite(packagePrice) && packagePrice > 0 ? packagePrice : 0;
+    }
+    return 0;
+  }, [state.details.basePrice, selectedPackage]);
+
+  const packageDerived = useMemo(() => {
+    const round = (value: number) => Math.round(value * 100) / 100;
+    const singleVatRate =
+      vatBreakdown.length === 1 && Number.isFinite(vatBreakdown[0].rate)
+        ? vatBreakdown[0].rate
+        : null;
+
+    if (basePriceValue > 0) {
+      if (singleVatRate != null) {
+        const divisor = 1 + singleVatRate / 100;
+        const net = round(basePriceValue / divisor);
+        const vat = round(basePriceValue - net);
+        return {
+          packageNet: net,
+          packageVat: vat,
+          packageGross: round(basePriceValue),
+          packageVatRate: singleVatRate,
+        };
+      }
+      const vatPortion = Math.min(totals.vat, basePriceValue);
+      const netPortion = round(Math.max(basePriceValue - vatPortion, 0));
+      return {
+        packageNet: netPortion,
+        packageVat: round(vatPortion),
+        packageGross: round(basePriceValue),
+        packageVatRate: singleVatRate,
+      };
+    }
+
+    return {
+      packageNet: round(totals.net),
+      packageVat: round(totals.vat),
+      packageGross: round(totals.total),
+      packageVatRate: singleVatRate,
+    };
+  }, [basePriceValue, totals, vatBreakdown]);
+
+  const clientNet = packageDerived.packageNet;
+  const clientTax = packageDerived.packageVat;
+  const clientTotal = packageDerived.packageGross;
+  const depositValue = 0;
 
   const renderServicePreview = (pkg: PackageRecord) => {
     const defaultServiceIds = pkg.default_add_ons ?? [];
@@ -723,10 +887,7 @@ export const PackagesStep = () => {
       </div>
 
       {showCustomSetup && (
-        <div
-          key={`custom-${state.services.packageId}-${existingItems.map((item) => item.id).join(",")}`}
-          className="animate-in fade-in slide-in-from-top-2 space-y-6 rounded-2xl border border-border/80 bg-white/80 p-6 shadow-sm transition-all duration-300 ease-out"
-        >
+        <div className="animate-in fade-in slide-in-from-top-2 space-y-6 rounded-2xl border border-border/80 bg-white/80 p-6 shadow-sm transition-all duration-300 ease-out">
           <div className="space-y-2">
             <Label htmlFor="project-base-price">{t("steps.packages.basePriceLabel")}</Label>
             <Input
@@ -764,204 +925,259 @@ export const PackagesStep = () => {
                 isLoading={servicesLoading}
                 error={servicesError ? t("steps.packages.servicesError") : null}
                 onRetry={servicesError ? () => servicesQuery.refetch() : undefined}
+                renderSelectedActions={({ service }) => {
+                  const lineItem = selectedItemsByServiceId.get(service.id);
+                  if (!lineItem) return null;
+                  const isPricingOpen = openPricingIds.has(lineItem.id);
+                  const isVatOpen = openVatIds.has(lineItem.id);
+                  return (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="px-0 text-emerald-600"
+                        onClick={() => handlePricingButtonClick(lineItem)}
+                      >
+                        {isPricingOpen
+                          ? t("steps.packages.actions.resetPricing")
+                          : t("steps.packages.actions.editPricing")}
+                      </Button>
+                    </div>
+                  );
+                }}
+                renderSelectedContent={({ service }) => {
+                  const lineItem = selectedItemsByServiceId.get(service.id);
+                  if (!lineItem) return null;
+                  const isPricingOpen = openPricingIds.has(lineItem.id);
+                  if (!isPricingOpen) {
+                    return null;
+                  }
+                  const serviceMeta = serviceMap.get(lineItem.serviceId ?? service.id);
+                  const isVatOpen = openVatIds.has(lineItem.id);
+                  const vatModeDefault: VatModeOption =
+                    lineItem.vatMode === "inclusive" || lineItem.vatMode === "exclusive"
+                      ? lineItem.vatMode
+                      : serviceMeta?.vatMode === "inclusive"
+                      ? "inclusive"
+                      : "exclusive";
+                  const vatRateValue =
+                    typeof lineItem.vatRate === "number" && Number.isFinite(lineItem.vatRate)
+                      ? String(lineItem.vatRate)
+                      : serviceMeta?.vatRate != null
+                      ? String(serviceMeta.vatRate)
+                      : "";
+
+                  return (
+                    <div className="animate-in fade-in slide-in-from-top-2 space-y-3 rounded-xl border border-emerald-100 bg-white/90 p-4 shadow-sm transition-all duration-200">
+                      <div className="grid gap-3 sm:grid-cols-[repeat(2,minmax(0,200px))]">
+                        <div className="space-y-1">
+                          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            {t("steps.packages.list.unitCost")}
+                          </Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={lineItem.unitCost ?? ""}
+                            onChange={(event) =>
+                              updateItem(lineItem.id, {
+                                unitCost: event.target.value === "" ? null : Number(event.target.value),
+                              })
+                            }
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            {t("steps.packages.list.unitPrice")}
+                          </Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={lineItem.unitPrice ?? ""}
+                            onChange={(event) =>
+                              updateItem(lineItem.id, {
+                                unitPrice: event.target.value === "" ? null : Number(event.target.value),
+                              })
+                            }
+                            className="h-9"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-3">
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="w-fit px-0 text-emerald-600"
+                          onClick={() => handleVatButtonClick(lineItem)}
+                        >
+                          {isVatOpen
+                            ? t("steps.packages.actions.resetVat")
+                            : t("steps.packages.actions.editVat")}
+                        </Button>
+                        {isVatOpen ? (
+                          <div className="animate-in fade-in slide-in-from-top-2 grid gap-3 sm:max-w-[420px] sm:grid-cols-2 transition-all duration-200">
+                            <div className="space-y-1">
+                              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                {t("steps.packages.vatControls.modeLabel")}
+                              </Label>
+                              <Select
+                                value={vatModeDefault}
+                                onValueChange={(value) => handleVatModeChange(lineItem.id, value as VatModeOption)}
+                              >
+                                <SelectTrigger className="h-9">
+                                  <SelectValue placeholder={t("steps.packages.vatControls.modeLabel")} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {vatModeOptions.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                      {option.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                {t("steps.packages.vatControls.rateLabel")}
+                              </Label>
+                              <Input
+                                type="number"
+                                min={0}
+                                max={99.99}
+                                step="0.01"
+                                value={vatRateValue}
+                                onChange={(event) => handleVatRateChange(lineItem.id, event.target.value)}
+                                className="h-9"
+                              />
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                }}
               />
             </div>
 
             {existingItems.length > 0 ? (
               <>
-                <div className="space-y-3 rounded-2xl border border-border/70 bg-slate-50/60 p-5 shadow-sm">
-                  {existingItems.map((item) => {
-                    const service = item.serviceId ? serviceMap.get(item.serviceId) : null;
-                    const quantityValue = Math.max(1, item.quantity ?? 1);
-                    const serviceTypeLabel = service
-                      ? t(`steps.packages.inventory.types.${service.serviceType ?? "unknown"}.title`)
-                      : t("steps.packages.inventory.types.unknown.title");
-                    const vendorLabel = item.vendorName
-                      ? t("steps.packages.vatControls.vendorLabel", { vendor: item.vendorName })
-                      : service?.vendor_name
-                      ? t("steps.packages.vatControls.vendorLabel", { vendor: service.vendor_name })
-                      : null;
-                    const typeLabel = t("steps.packages.vatControls.typeLabel", { type: serviceTypeLabel });
-                    const unitValue = normalizeServiceUnit(item.unit ?? service?.unit ?? DEFAULT_SERVICE_UNIT);
-                    const targetId = item.serviceId ?? item.id;
-
-                    return (
-                      <div
-                        key={item.id}
-                        className="rounded-xl border border-border/60 bg-white/95 p-4 shadow-sm transition-shadow hover:shadow-sm"
-                      >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold text-slate-900">{item.name}</p>
-                            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                              {vendorLabel ? <span>{vendorLabel}</span> : null}
-                              <span>{typeLabel}</span>
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveService(targetId)}
-                            className="h-8 gap-1 rounded-full text-xs text-slate-500 hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            {t("steps.packages.list.remove", { defaultValue: "Remove" })}
-                          </Button>
-                        </div>
-
-                        <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,220px)_repeat(3,minmax(0,200px))]">
-                          <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-white px-3 py-2">
-                            <IconActionButton
-                              icon={Minus}
-                              label={t("common:actions.decrease", { defaultValue: "Decrease" })}
-                              onClick={() => handleDecreaseService(targetId)}
-                              size="sm"
-                            />
-                            <Input
-                              value={quantityValue}
-                              onChange={(event) => handleSetQuantity(targetId, event.target.value)}
-                              inputMode="numeric"
-                              className="h-9 w-16 text-center"
-                            />
-                            <IconActionButton
-                              icon={Plus}
-                              label={t("common:actions.increase", { defaultValue: "Increase" })}
-                              onClick={() => handleIncreaseService(targetId)}
-                              size="sm"
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                              {t("steps.packages.list.unitCost")}
-                            </Label>
-                            <Input
-                              type="number"
-                              min={0}
-                              step="0.01"
-                              value={item.unitCost ?? ""}
-                              onChange={(event) =>
-                                updateItem(item.id, {
-                                  unitCost: event.target.value === "" ? null : Number(event.target.value),
-                                })
-                              }
-                              className="h-9"
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                              {t("steps.packages.list.unitPrice")}
-                            </Label>
-                            <Input
-                              type="number"
-                              min={0}
-                              step="0.01"
-                              value={item.unitPrice ?? ""}
-                              onChange={(event) =>
-                                updateItem(item.id, {
-                                  unitPrice: event.target.value === "" ? null : Number(event.target.value),
-                                })
-                              }
-                              className="h-9"
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                              {t("steps.packages.units.label")}
-                            </Label>
-                            <Select value={unitValue} onValueChange={(value) => handleUnitChange(item.id, value)}>
-                              <SelectTrigger className="h-9">
-                                <SelectValue placeholder={t("steps.packages.units.placeholder")} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {SERVICE_UNIT_OPTIONS.map((option) => (
-                                  <SelectItem key={option.value} value={option.value}>
-                                    {t(option.translationKey)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <ServiceVatOverridesSection
-                  title={t("steps.packages.vatControls.title")}
-                  description={t("steps.packages.vatControls.description")}
-                  tooltipLabel={t("steps.packages.vatControls.toggleLabel")}
-                  tooltipContent={t("steps.packages.vatControls.toggleDescription")}
-                  toggleButtonLabel={
-                    showVatControls
-                      ? t("steps.packages.vatControls.buttonClose")
-                      : t("steps.packages.vatControls.buttonOpen")
-                  }
-                  isOpen={showVatControls}
-                  onToggle={handleToggleVatControls}
-                  items={vatOverrideItems}
-                  rateLabel={t("steps.packages.vatControls.rateLabel")}
-                  modeLabel={t("steps.packages.vatControls.modeLabel")}
-                  modeOptions={vatModeOptions}
-                  onRateChange={handleVatRateChange}
-                  onModeChange={handleVatModeChange}
+                <ServicesTableCard
+                  rows={summaryTableRows}
+                  labels={serviceTableLabels}
+                  emptyMessage={t("steps.packages.summary.empty")}
+                  formatCurrency={formatCurrency}
                 />
+                <div className="flex justify-end">
+                  <SummaryTotalsCard className="sm:w-auto sm:min-w-[320px]">
+                    <SummaryTotalsSection>
+                      <SummaryTotalRow
+                        label={t("steps.packages.summary.servicesCount")}
+                        value={String(existingItems.length)}
+                      />
+                      <SummaryTotalRow
+                        label={
+                          vatBreakdown.length === 1
+                            ? t("steps.packages.summary.servicesVatWithRate", {
+                                rate: formatPercent(vatBreakdown[0].rate),
+                              })
+                            : t("steps.packages.summary.servicesVat")
+                        }
+                        value={formatCurrency(totals.vat)}
+                      />
+                      <SummaryTotalRow
+                        label={t("steps.packages.summary.servicesCost")}
+                        value={formatCurrency(totals.cost)}
+                      />
+                      <SummaryTotalRow
+                        label={t("steps.packages.summary.servicesPrice")}
+                        value={formatCurrency(totals.net)}
+                      />
+                    </SummaryTotalsSection>
+                    <SummaryTotalsDivider />
+                    <SummaryTotalsSection className="pt-3">
+                      <SummaryTotalRow
+                        label={t("steps.packages.summary.servicesGross")}
+                        value={formatCurrency(totals.total)}
+                        emphasizeLabel
+                      />
+                      <SummaryTotalRow
+                        label={t("steps.packages.summary.servicesMargin")}
+                        value={formatCurrency(servicesMargin)}
+                        tone={servicesMargin >= 0 ? "positive" : "negative"}
+                        emphasizeLabel
+                      />
+                    </SummaryTotalsSection>
+                    <SummaryTotalsDivider />
+                    <SummaryTotalsSection className="pt-3">
+                      <SummaryTotalRow
+                        label={t("steps.packages.summary.packageNet")}
+                        value={formatCurrency(packageDerived.packageNet)}
+                      />
+                      <SummaryTotalRow
+                        label={
+                          packageDerived.packageVatRate != null
+                            ? t("steps.packages.summary.packageVatWithRate", {
+                                rate: formatPercent(packageDerived.packageVatRate),
+                              })
+                            : t("steps.packages.summary.packageVat")
+                        }
+                        value={formatCurrency(packageDerived.packageVat)}
+                        helper={
+                          packageDerived.packageVatRate != null
+                            ? t("steps.packages.summary.packageVatHelperInclusive")
+                            : undefined
+                        }
+                      />
+                      <SummaryTotalRow
+                        label={t("steps.packages.summary.packageGross")}
+                        value={formatCurrency(packageDerived.packageGross)}
+                        emphasizeLabel
+                      />
+                    </SummaryTotalsSection>
+                    <SummaryTotalsDivider />
+                    <SummaryTotalsSection className="pt-3">
+                      <SummaryTotalRow
+                        label={t("steps.packages.summary.clientNet")}
+                        value={formatCurrency(clientNet)}
+                      />
+                      <SummaryTotalRow
+                        label={t("steps.packages.summary.clientTax")}
+                        value={formatCurrency(clientTax)}
+                      />
+                      <SummaryTotalRow
+                        label={t("steps.packages.summary.clientTotal")}
+                        value={formatCurrency(clientTotal)}
+                        tone="positive"
+                        emphasizeLabel
+                        helper={
+                          basePriceValue > 0
+                            ? t("steps.packages.summary.clientTotalHelperInclusive")
+                            : undefined
+                        }
+                      />
+                    </SummaryTotalsSection>
+                    <SummaryTotalsDivider />
+                    <SummaryTotalsSection className="pt-3">
+                      <SummaryTotalRow
+                        label={t("steps.packages.summary.deposit")}
+                        value={formatCurrency(depositValue)}
+                        helper={t("steps.packages.summary.depositHelperNone")}
+                      />
+                    </SummaryTotalsSection>
+                  </SummaryTotalsCard>
+                </div>
               </>
             ) : (
               <p className="text-sm text-muted-foreground">
                 {t("steps.packages.servicesEmpty")}
               </p>
             )}
-
-            <ServicesTableCard
-              rows={summaryTableRows}
-              totals={{
-                cost: totals.cost,
-                price: totals.net,
-                vat: totals.vat,
-                total: totals.total,
-                margin: servicesMargin,
-              }}
-              labels={serviceTableLabels}
-              emptyMessage={t("steps.packages.summary.empty")}
-              formatCurrency={(value) =>
-                new Intl.NumberFormat("tr-TR", {
-                  style: "currency",
-                  currency: "TRY",
-                  minimumFractionDigits: 0,
-                }).format(value)
-              }
-            />
           </div>
         </div>
       )}
-
-      <AlertDialog open={showVatResetPrompt} onOpenChange={setShowVatResetPrompt}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("steps.packages.vatControls.resetConfirmTitle")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("steps.packages.vatControls.resetConfirmDescription")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowVatResetPrompt(false)}>
-              {t("steps.packages.vatControls.resetConfirmCancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={resetVatOverrides}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {t("steps.packages.vatControls.resetConfirmConfirm")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };

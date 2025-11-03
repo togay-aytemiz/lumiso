@@ -336,28 +336,28 @@ export function ServiceInventorySelector({
                       hasSelection ? "bg-white" : "bg-muted/30 hover:bg-muted/40"
                     )}
                   >
-                    <div className="flex flex-col gap-1">
+                    <div className="flex w-full items-center gap-3">
                       <p className="text-sm font-medium text-slate-900">{category}</p>
-                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <div className="ml-auto flex items-center gap-2">
                         <Badge
-                          variant={hasSelection ? "default" : "outline"}
+                          variant="outline"
                           className={cn(
-                            "rounded-full px-2.5 py-0.5 font-semibold",
-                            hasSelection ? "" : "text-muted-foreground"
+                            "rounded-full px-2.5 py-0.5 text-xs font-semibold shadow-sm",
+                            hasSelection
+                              ? "border-amber-400/80 bg-amber-50 text-amber-700"
+                              : "border-slate-300 bg-slate-100 text-slate-500"
                           )}
                         >
                           {selectedTagLabel}
                         </Badge>
                         <Badge
                           variant="secondary"
-                          className="rounded-full bg-white/90 px-2.5 py-0.5 font-medium text-muted-foreground shadow-sm"
+                          className="rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-medium text-muted-foreground shadow-sm"
                         >
                           {quantityTagLabel}
                         </Badge>
+                        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                     </div>
                   </button>
                 </CollapsibleTrigger>

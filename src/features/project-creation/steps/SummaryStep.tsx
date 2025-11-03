@@ -47,10 +47,15 @@ export const SummaryStep = () => {
       state.services.packageLabel?.trim() ??
       (state.services.packageId ? t("summary.values.packageSelected") : none);
 
-    const services =
-      state.services.selectedServices.length > 0
-        ? state.services.selectedServices
-        : null;
+    const lineItems = state.services.items;
+    const services = lineItems.length
+      ? lineItems.map((item) => ({
+          id: item.id,
+          name: item.name,
+          quantity: Math.max(1, item.quantity ?? 1),
+          unit: item.unit,
+        }))
+      : null;
 
     const description = state.details.description?.trim();
 
@@ -110,8 +115,10 @@ export const SummaryStep = () => {
         {servicesSummary.services ? (
           <div className="flex flex-wrap gap-2">
             {servicesSummary.services.map((service) => (
-              <Badge key={service.id} variant="secondary" className="text-xs">
-                {service.name}
+              <Badge key={service.id} variant="secondary" className="text-xs font-medium">
+                {service.quantity > 1
+                  ? `${service.name} ×${service.quantity}`
+                  : service.name}
               </Badge>
             ))}
           </div>

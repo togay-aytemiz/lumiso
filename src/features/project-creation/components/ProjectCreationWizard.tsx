@@ -106,18 +106,19 @@ export const ProjectCreationWizard = ({
     const hasDetails = Boolean(projectName && state.details.projectTypeId);
     const detailsSummary = projectName ?? projectTypeLabel;
 
+    const lineItemCount = state.services.items.length;
+
     const packageSummary = state.services.packageLabel
       ? state.services.packageLabel
       : state.services.packageId
       ? t("summary.values.packageSelected")
-      : state.services.selectedServiceIds.length > 0
+      : lineItemCount > 0
       ? t("summary.values.servicesSelected", {
-          count: state.services.selectedServiceIds.length,
+          count: lineItemCount,
         })
       : undefined;
     const hasPackages =
-      Boolean(state.services.packageId) ||
-      state.services.selectedServiceIds.length > 0;
+      Boolean(state.services.packageId) || lineItemCount > 0;
 
     const summaryNotes = state.details.description?.trim();
 

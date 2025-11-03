@@ -93,6 +93,8 @@
 - 🚧 QA & deploy the defaults alignment migration (`supabase/migrations/20251109161000_tax_profile_defaults_include.sql`). This also backfills seeded sample services and updates `ensure_default_services_for_org` to honour each org’s VAT defaults.
 - Audit package and wizard consumers to ensure service loading remains stable, then plan their migrations onto the line-item editor. *(pending)*
 - Monitor Supabase queries for any places that still assume a flat list of services (e.g. reports) and update them to read the new columns. *(pending)*
+- 🚧 Project creation wizard now uses the shared line-item selector with VAT/unit overrides; follow up with deposit preview UX and persistence once the project service metadata migration lands.
+- 🚧 Scope Supabase changes for `project_services` (quantity/unit/unit_price/vat columns or companion table) so the new overrides persist beyond the wizard UI.
 
 ## Immediate Next Steps
 1. Run `20251109161000_tax_profile_defaults_include.sql` through staging QA, then apply to production per the Supabase runbook so inclusive VAT defaults go live. *(todo)*

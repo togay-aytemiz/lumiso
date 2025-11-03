@@ -27,6 +27,7 @@ export interface PackageLineItemPayload {
   source?: "catalog" | "adhoc";
   vatRate: number | null;
   vatMode: PackageCreationLineItem["vatMode"];
+  unit: string | null;
 }
 
 export interface PackageDeliveryMethodPayload {
@@ -36,6 +37,9 @@ export interface PackageDeliveryMethodPayload {
 
 export interface PackagePricingDetailsPayload {
   basePrice: number;
+  basePriceInput: number;
+  basePriceNet: number;
+  basePriceVatPortion: number;
   servicesCostTotal: number;
   servicesPriceTotal: number;
   servicesVatTotal: number;
@@ -49,6 +53,9 @@ export interface PackagePricingDetailsPayload {
   depositTarget?: "subtotal" | "base";
   depositAmount: number;
   enableDeposit: boolean;
+  packageVatRate: number;
+  packageVatMode: PackageCreationLineItem["vatMode"];
+  packageVatOverrideEnabled: boolean;
 }
 
 export interface PackageServicesSnapshot {
@@ -279,8 +286,23 @@ export const buildPackageHydrationFromRecord = (
       ? true
       : record.include_addons_in_price;
 
+  const basePriceInput =
+    pricingMeta.basePriceInput != null
+      ? pricingMeta.basePriceInput
+      : record.price != null
+      ? Number(record.price)
+      : null;
+  const packageVatInitialized =
+    pricingMeta.packageVatRate !== null ||
+    pricingMeta.packageVatOverrideEnabled ||
+    pricingMeta.basePriceInput !== null;
+
   const pricing: PackageCreationPricingState = {
-    basePrice: record.price != null ? String(record.price) : "",
+    basePrice: basePriceInput != null ? String(basePriceInput) : "",
+    packageVatRate: pricingMeta.packageVatRate,
+    packageVatMode: pricingMeta.packageVatMode,
+    packageVatOverrideEnabled: pricingMeta.packageVatOverrideEnabled,
+    packageVatInitialized,
     depositMode: pricingMeta.depositMode,
     depositValue: pricingMeta.depositValue != null ? String(pricingMeta.depositValue) : "",
     enableDeposit: pricingMeta.enableDeposit,
@@ -401,7 +423,26 @@ const buildPricingSnapshot = (
   state: PackageCreationState,
   totals: { cost: number; price: number; vat: number; total: number }
 ): PackagePricingDetailsPayload => {
-  const basePrice = roundCurrency(parseCurrency(state.pricing.basePrice));
+  const basePriceInput = roundCurrency(parseCurrency(state.pricing.basePrice));
+  const packageVatRate = normalizeVatRate(state.pricing.packageVatRate) ?? 0;
+  const packageVatMode: PackageCreationLineItem["vatMode"] =
+    state.pricing.packageVatMode === "inclusive" ? "inclusive" : "exclusive";
+  const packageVatOverrideEnabled = Boolean(state.pricing.packageVatOverrideEnabled);
+
+  const basePricePricing = calculateLineItemPricing({
+    id: "package-base-price",
+    type: "custom",
+    name: "Package price",
+    quantity: 1,
+    unitPrice: basePriceInput,
+    vatRate: packageVatRate,
+    vatMode: packageVatMode,
+  } as PackageCreationLineItem);
+
+  const basePriceNet = roundCurrency(basePricePricing.net);
+  const basePriceVatPortion = roundCurrency(basePricePricing.vat);
+  const basePrice = roundCurrency(basePricePricing.gross);
+
   const servicesCostTotal = roundCurrency(totals.cost);
   const servicesPriceTotal = roundCurrency(totals.price);
   const servicesVatTotal = roundCurrency(totals.vat);
@@ -431,6 +472,12 @@ const buildPricingSnapshot = (
       depositValue: depositRaw,
       depositAmount,
       enableDeposit,
+      basePriceInput,
+      basePriceNet,
+      basePriceVatPortion,
+      packageVatRate,
+      packageVatMode,
+      packageVatOverrideEnabled,
     };
   }
 
@@ -455,10 +502,16 @@ const buildPricingSnapshot = (
     clientTotal,
     includeAddOnsInPrice: includeAddOns,
     depositMode,
-    depositTarget,
-    depositValue: percentValue,
-    depositAmount: enableDeposit ? depositAmount : 0,
-    enableDeposit,
+      depositTarget,
+      depositValue: percentValue,
+      depositAmount: enableDeposit ? depositAmount : 0,
+      enableDeposit,
+      basePriceInput,
+      basePriceNet,
+      basePriceVatPortion,
+      packageVatRate,
+      packageVatMode,
+      packageVatOverrideEnabled,
   };
 };
 
@@ -481,6 +534,7 @@ const toLineItemPayload = (item: PackageCreationLineItem): PackageLineItemPayloa
     vendorName: item.vendorName ?? null,
     vatRate: normalizeVatRate(item.vatRate),
     vatMode: item.vatMode ?? "exclusive",
+    unit: typeof item.unit === "string" && item.unit.trim().length ? item.unit : null,
   };
 
   if (item.source) {
@@ -497,6 +551,10 @@ const buildPricingMetadata = (pricing: PackagePricingDetailsPayload): Json => {
     depositValue: pricing.depositValue,
     depositTarget: pricing.depositTarget ?? null,
     depositAmount: pricing.depositAmount,
+    packageVatRate: pricing.packageVatRate,
+    packageVatMode: pricing.packageVatMode,
+    packageVatOverrideEnabled: pricing.packageVatOverrideEnabled,
+    basePriceInput: pricing.basePriceInput,
   } as Json;
 };
 
@@ -540,6 +598,12 @@ const parseServiceLineItems = (value: Json): PackageCreationLineItem[] => {
       rawVatMode === "inclusive" || rawVatMode === "exclusive"
         ? rawVatMode
         : "exclusive";
+    const unit =
+      typeof item.unit === "string" && item.unit.trim().length
+        ? item.unit
+        : typeof (item as any).defaultUnit === "string" && (item as any).defaultUnit.trim().length
+        ? ((item as any).defaultUnit as string)
+        : null;
 
     return {
       id: typeof item.id === "string" ? item.id : createRandomId(),
@@ -560,6 +624,7 @@ const parseServiceLineItems = (value: Json): PackageCreationLineItem[] => {
       source,
       vatRate,
       vatMode,
+      unit,
     };
   });
 };
@@ -592,12 +657,20 @@ const parsePricingMetadata = (
   enableDeposit: boolean;
   depositMode: PackageCreationState["pricing"]["depositMode"];
   depositValue: number | null;
+  packageVatRate: number | null;
+  packageVatMode: PackageCreationLineItem["vatMode"];
+  packageVatOverrideEnabled: boolean;
+  basePriceInput: number | null;
 } => {
   if (!value || typeof value !== "object") {
     return {
       enableDeposit: false,
       depositMode: "percent_subtotal",
       depositValue: null,
+      packageVatRate: null,
+      packageVatMode: "inclusive",
+      packageVatOverrideEnabled: false,
+      basePriceInput: null,
     };
   }
 
@@ -616,10 +689,32 @@ const parsePricingMetadata = (
       ? Number(metadata.depositValue)
       : null;
 
+  const packageVatRate = normalizeVatRate(
+    typeof metadata.packageVatRate === "number"
+      ? metadata.packageVatRate
+      : Number.isFinite(Number(metadata.packageVatRate))
+      ? Number(metadata.packageVatRate)
+      : null
+  );
+  const rawPackageVatMode = metadata.packageVatMode;
+  const packageVatMode: PackageCreationLineItem["vatMode"] =
+    rawPackageVatMode === "inclusive" || rawPackageVatMode === "exclusive" ? rawPackageVatMode : "inclusive";
+  const packageVatOverrideEnabled = Boolean(metadata.packageVatOverrideEnabled);
+  const basePriceInput =
+    typeof metadata.basePriceInput === "number"
+      ? metadata.basePriceInput
+      : Number.isFinite(Number(metadata.basePriceInput))
+      ? Number(metadata.basePriceInput)
+      : null;
+
   return {
     enableDeposit,
     depositMode,
     depositValue,
+    packageVatRate,
+    packageVatMode,
+    packageVatOverrideEnabled,
+    basePriceInput,
   };
 };
 
@@ -630,6 +725,7 @@ const createFallbackLineItem = (seed: number): PackageCreationLineItem => ({
   quantity: 1,
   vatRate: null,
   vatMode: "exclusive",
+  unit: null,
 });
 
 const createRandomId = (): string => {

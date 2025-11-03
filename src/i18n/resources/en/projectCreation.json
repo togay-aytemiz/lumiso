@@ -96,7 +96,85 @@
       "servicesBadge": "{{count}} selected",
       "servicesError": "Unable to load services. Try again in a moment.",
       "selectedIndicator": "Selected",
-      "selectedSummary": "Selected package: {{name}}"
+      "selectedSummary": "Selected package: {{name}}",
+      "inventory": {
+        "types": {
+          "coverage": {
+            "title": "Crew services",
+            "subtitle": "On-site coverage like photographers or videographers."
+          },
+          "deliverable": {
+            "title": "Deliverables",
+            "subtitle": "Prints, albums and other client handoffs."
+          },
+          "unknown": {
+            "title": "Other services",
+            "subtitle": "Items without a service type yet."
+          }
+        },
+        "add": "Add",
+        "uncategorized": "Other",
+        "inactive": "Inactive",
+        "empty": "No services in your catalog yet. Create services to add them here."
+      },
+      "list": {
+        "remove": "Remove",
+        "vendor": "Vendor",
+        "unitCost": "Unit cost",
+        "unitPrice": "Unit price",
+        "quantity": "Quantity"
+      },
+      "units": {
+        "label": "Unit",
+        "placeholder": "Select unit",
+        "options": {
+          "item": "Per item",
+          "session": "Per session",
+          "hour": "Per hour",
+          "day": "Per day"
+        },
+        "short": {
+          "item": "Item",
+          "session": "Session",
+          "hour": "Hour",
+          "day": "Day"
+        }
+      },
+      "vatControls": {
+        "title": "VAT overrides",
+        "description": "Adjust VAT rate or mode for services in this project.",
+        "toggleLabel": "Override VAT settings",
+        "toggleDescription": "Switch on to override the default VAT for selected services.",
+        "vendorLabel": "Vendor: {{vendor}}",
+        "typeLabel": "{{type}}",
+        "rateLabel": "VAT rate (%)",
+        "modeLabel": "VAT mode",
+        "mode": {
+          "inclusive": "Included in price",
+          "exclusive": "Added on top"
+        }
+      },
+      "servicesEmpty": "No services selected yet.",
+      "summary": {
+        "table": {
+          "name": "Service",
+          "vendor": "Vendor",
+          "quantity": "Qty",
+          "unitPrice": "Unit price",
+          "lineTotal": "Line total",
+          "cost": "Cost"
+        },
+        "totals": {
+          "cost": "Cost total",
+          "price": "Price total",
+          "vat": "VAT total",
+          "total": "Total (incl. VAT)",
+          "margin": "Margin"
+        },
+        "customTag": "Custom item",
+        "customVendorFallback": "—",
+        "empty": "No services added yet."
+      }
     },
     "summary": {
       "navigationLabel": "Summary",

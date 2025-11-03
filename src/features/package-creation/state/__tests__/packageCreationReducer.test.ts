@@ -49,6 +49,10 @@ const createHydrationPayload = (): PackageCreationHydrationPayload => {
 
   const pricing: PackageCreationPricingState = {
     basePrice: "18000",
+    packageVatRate: 18,
+    packageVatMode: "inclusive",
+    packageVatOverrideEnabled: true,
+    packageVatInitialized: true,
     depositMode: "percent_subtotal",
     depositValue: "25",
     enableDeposit: true,

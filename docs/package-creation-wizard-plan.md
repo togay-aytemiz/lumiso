@@ -20,7 +20,7 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 
 ### 1. Basics
 - ✅ **MVP fields:** package name, short description, applicable project/session types (multi-select), visibility toggle (active/inactive).
-- ⬜ **Billing context:** read-only chips showing the organization billing identity (company name, tax office, VKN/TCKN) with quick link back to settings if missing.
+- ✅ **Billing context:** read-only chips showing the organization billing identity (company name, tax office, VKN/TCKN) with quick link back to settings if missing.
 - ⬜ **Deferred (post-MVP):** marketing tags, color coding, internal notes.
 - ✅ **UX:** reuse `FormFieldCard` styling from project wizard details step; include validation states + inline hints. Keep form to a single column on mobile.
 - ✅ **Data:** initial reducer slice `basics` with `name`, `description`, `applicableTypeIds`, `isActive`. `status`/tags stay bool/array ready for later.
@@ -30,7 +30,7 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 - ✅ **Quick add custom (MVP):** minimal inline form (name + selling price, optional cost) to capture ad-hoc items without leaving the flow. Default vendor blank. Later we can add “Save to catalog” toggle.
 - ✅ **Summary panel:** show running totals (cost, selling, margin) in TRY. Keep visuals simple (two stat chips) for MVP.
 - ⬜ **Out of scope for MVP:** tiered pricing per service, time-based scheduling, automatic tax calculations beyond flat KDV percentages.
-- ⬜ **Units:** provide a unit selector (session, hour, day, item) seeded from the service catalog. Default to the service’s recommended unit so downstream flows know how to price overrides.
+- ✅ **Units:** provide a unit selector (session, hour, day, item) seeded from the service catalog. Default to the service’s recommended unit so downstream flows know how to price overrides.
 - ✅ **State:** slice `lineItems` with `type` (`existing`/`custom`), `serviceId`, `name`, `quantity`, `unitCost`, `unitPrice`, `vatMode`, `vatRate`. VAT defaults now hydrate from services or the organization profile (inclusive); unit support remains out of scope for MVP.
 
 ### 3. Delivery
@@ -40,7 +40,7 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 - ⬜ **Post-MVP:** courier tracking, staged deliveries, automatic reminders.
 
 ### 4. Pricing
-- 🚧 **Fields:** package base price (manual input), auto services total (read-only), calculated subtotal (base + services), deposit configuration delivered. Pricing step still needs inline VAT totals/labels; the Summary step now covers the breakdown as an interim solution.
+- ✅ **Fields:** package base price (manual input), auto services total (read-only), calculated subtotal (base + services), deposit configuration delivered. Pricing step now surfaces inline VAT totals/labels so users can review net/VAT/gross while editing.
 - ✅ **Defaults:** service selections now hydrate `vatMode`/`vatRate` from catalog data, custom items fall back to the organization tax profile, and per-line overrides surface inside the Services step.
 - ✅ **Deposit controls:** segmented control for quick percentages (5, 10, 25, 50) plus toggle for custom percent or fixed TRY amount. Calculations run on the client total (subtotal ± KDV depending on inclusion). Percent should apply to the KDV-inclusive client total — confirm with Tayte before implementation.
 - ✅ **State:** slice `pricing` { `basePrice`, `depositMode`, `depositValue`, `includeAddOnsInPrice`, `enableDeposit` }. Selectors now compute client totals + VAT portions feeding the summary step.
@@ -113,10 +113,10 @@ Introduce a guided, multi-step experience for configuring packages that matches 
 - ✅ Deliverables: production-ready wizard ready for enablement once content validated.
 
 ### Phase 6 – Project Wizard Package Selection Enhancements (week 4)
-- ⬜ Refresh the package selection step inside project creation to surface package cards, key inclusions, TRY totals (base + services), KDV breakdown, and deposit preview.
-- ⬜ Allow photographers to toggle service inclusion per package, adjust quantities/units, override prices, and edit KDV mode/rate inline without leaving the project flow. Persist overrides as project-scoped line items.
-- ⬜ Add unit selector mirroring package wizard options so adjustments remain consistent. Default to package units and highlight any overrides before submission.
-- ⬜ Deliverables: project wizard reflects updated pricing summary, supports per-project overrides, and keeps the review step accurate.
+- 🚧 Refresh the package selection step inside project creation to surface package cards, key inclusions, TRY totals (base + services), KDV breakdown, and deposit preview. *(Cards and line-item tables updated; deposit preview still pending.)*
+- ✅ Allow photographers to toggle service inclusion per package, adjust quantities/units, override prices, and edit KDV mode/rate inline without leaving the project flow. Persist overrides as project-scoped line items.
+- ✅ Add unit selector mirroring package wizard options so adjustments remain consistent. Default to package units and highlight any overrides before submission.
+- 🚧 Deliverables: project wizard reflects updated pricing summary, supports per-project overrides, and keeps the review step accurate. *(Summary step now lists overrides; end-to-end QA + totals carry-over to submission still in progress.)*
 - ⬜ **MVP rule:** always keep overrides scoped to the project; log a future enhancement to push changes back into the base package if we support multi-photographer teams later.
 
 ### Phase 7 – Project Details Editing Entry Points (week 4-5)

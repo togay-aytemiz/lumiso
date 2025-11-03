@@ -4,7 +4,8 @@ import {
   preparePackagePersistence,
 } from "../packageCreationSnapshot";
 import type { Database } from "@/integrations/supabase/types";
-import type { PackageCreationState } from "../../types";
+import type { PackageCreationLineItem, PackageCreationState } from "../../types";
+import { calculateLineItemPricing } from "../../utils/lineItemPricing";
 
 type PackageRow = Database["public"]["Tables"]["packages"]["Row"];
 
@@ -62,6 +63,10 @@ const baseRecord = (): PackageRow => ({
     depositValue: 25,
     depositTarget: "subtotal",
     depositAmount: 575,
+    packageVatRate: 18,
+    packageVatMode: "inclusive",
+    packageVatOverrideEnabled: false,
+    basePriceInput: 1800,
   },
   price: 1800,
   updated_at: "2024-11-08T10:30:00.000Z",
@@ -110,6 +115,10 @@ describe("buildPackageHydrationFromRecord", () => {
       enableDeposit: true,
       depositMode: "percent_subtotal",
       depositValue: "25",
+      packageVatRate: 18,
+      packageVatMode: "inclusive",
+      packageVatOverrideEnabled: false,
+      packageVatInitialized: true,
     });
   });
 
@@ -127,11 +136,29 @@ describe("buildPackageHydrationFromRecord", () => {
     expect(hydration.pricing.enableDeposit).toBe(false);
     expect(hydration.pricing.depositMode).toBe("percent_subtotal");
     expect(hydration.pricing.depositValue).toBe("");
+    expect(hydration.pricing.packageVatOverrideEnabled).toBe(false);
+    expect(hydration.pricing.packageVatInitialized).toBe(false);
   });
 
   it("maps snapshot into update payload correctly", () => {
     const record = baseRecord();
     const hydration = buildPackageHydrationFromRecord(record);
+    const basePriceNumeric = Number(hydration.pricing.basePrice);
+    const baseVatRate = hydration.pricing.packageVatRate ?? 0;
+    const baseVatMode = hydration.pricing.packageVatMode;
+    const basePriceLine: PackageCreationLineItem = {
+      id: "base",
+      type: "custom",
+      name: "Package price",
+      quantity: 1,
+      unitPrice: basePriceNumeric,
+      vatRate: baseVatRate,
+      vatMode: baseVatMode,
+    };
+    const basePricing = calculateLineItemPricing(basePriceLine);
+    const basePriceGross = Math.round(basePricing.gross * 100) / 100;
+    const basePriceNet = Math.round(basePricing.net * 100) / 100;
+    const basePriceVatPortion = Math.round(basePricing.vat * 100) / 100;
     const contextSnapshot = {
       basics: hydration.basics,
       services: {
@@ -162,19 +189,25 @@ describe("buildPackageHydrationFromRecord", () => {
         })),
       },
       pricing: {
-        basePrice: Number(hydration.pricing.basePrice),
+        basePrice: basePriceGross,
+        basePriceInput: basePriceNumeric,
+        basePriceNet,
+        basePriceVatPortion,
         servicesCostTotal: 0,
         servicesPriceTotal: 0,
         servicesVatTotal: 0,
         servicesGrossTotal: 0,
         servicesMargin: 0,
-        subtotal: Number(hydration.pricing.basePrice),
+        subtotal: basePriceGross,
         clientTotal: record.client_total,
         includeAddOnsInPrice: hydration.pricing.includeAddOnsInPrice,
         depositMode: hydration.pricing.depositMode,
         depositValue: Number(hydration.pricing.depositValue),
         depositAmount: record.pricing_metadata?.depositAmount ?? 0,
         enableDeposit: hydration.pricing.enableDeposit,
+        packageVatRate: baseVatRate,
+        packageVatMode: baseVatMode,
+        packageVatOverrideEnabled: hydration.pricing.packageVatOverrideEnabled,
       },
       meta: {
         selectedServiceCount: hydration.services.items.length,
@@ -202,6 +235,10 @@ describe("buildPackageHydrationFromRecord", () => {
         enableDeposit: true,
         depositMode: "percent_subtotal",
         depositValue: Number(hydration.pricing.depositValue),
+        packageVatRate: baseVatRate,
+        packageVatMode: baseVatMode,
+        packageVatOverrideEnabled: hydration.pricing.packageVatOverrideEnabled,
+        basePriceInput: basePriceNumeric,
       })
     );
 

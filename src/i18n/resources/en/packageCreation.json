@@ -61,7 +61,43 @@
           "label": "Active",
           "helper": "When off, it becomes passive but stays in your records."
         }
+      },
+      "billing": {
+        "title": "Tax & billing defaults",
+        "helper": "Pulled from Settings → Billing so packages match your invoices.",
+        "empty": "No tax & billing profile yet.",
+        "link": "Open settings",
+        "companyLabel": "Company",
+        "taxOfficeLabel": "Tax office",
+        "taxNumberLabel": "Tax / ID",
+        "vatLabel": "VAT",
+        "vatValue": "{{rate}}% • {{mode}}",
+        "vatMode": {
+          "inclusive": "Included in price",
+          "exclusive": "Added on top"
+        },
+        "pricingLabel": "Pricing",
+        "pricingIncluded": "Prices include VAT",
+        "pricingExcluded": "VAT added on top"
       }
+    },
+    "billing": {
+      "title": "Tax & billing defaults",
+      "helper": "Pulled from Settings → Billing so packages match your invoices.",
+      "empty": "No tax & billing profile yet.",
+      "link": "Open settings",
+      "companyLabel": "Company",
+      "taxOfficeLabel": "Tax office",
+      "taxNumberLabel": "Tax / ID",
+      "vatLabel": "VAT",
+      "vatValue": "{{rate}}% • {{mode}}",
+      "vatMode": {
+        "inclusive": "Included in price",
+        "exclusive": "Added on top"
+      },
+      "pricingLabel": "Pricing",
+      "pricingIncluded": "Prices include VAT",
+      "pricingExcluded": "VAT added on top"
     },
     "services": {
       "navigationLabel": "Services",
@@ -80,18 +116,34 @@
         "inactive": "Inactive",
         "empty": "No services in your catalog yet. Create services to add them here.",
         "types": {
-          "coverage": {
-            "title": "Crew services",
-            "subtitle": "People-based coverage like photographers or videographers"
-          },
-          "deliverable": {
-            "title": "Deliverables",
-            "subtitle": "Albums, prints and other client handoffs"
-          },
+  "coverage": {
+    "title": "Team & coverage",
+    "subtitle": "Assign photographers, videographers or assistants to shoots."
+  },
+  "deliverable": {
+    "title": "Products & deliverables",
+    "subtitle": "Albums, prints, digital deliveries and other add-ons."
+  },
           "unknown": {
             "title": "Other services",
             "subtitle": "Items without a service type yet"
           }
+        }
+      },
+      "units": {
+        "label": "Unit",
+        "placeholder": "Select unit",
+        "options": {
+          "item": "Per item",
+          "session": "Per session",
+          "hour": "Per hour",
+          "day": "Per day"
+        },
+        "short": {
+          "item": "Item",
+          "session": "Session",
+          "hour": "Hour",
+          "day": "Day"
         }
       },
       "vatControls": {
@@ -103,10 +155,16 @@
           "inclusive": "Included in price",
           "exclusive": "Add on top"
         },
-        "toggleLabel": "Enable per-service overrides",
-        "toggleDescription": "Only adjust VAT when a line item needs different handling.",
-        "vendorLabel": "Vendor: {{vendor}}",
-        "typeLabel": "Type: {{type}}"
+  "toggleLabel": "Enable per-service overrides",
+  "toggleDescription": "Only adjust VAT when a line item needs different handling.",
+  "buttonOpen": "Adjust VAT per service",
+  "buttonClose": "Hide VAT overrides",
+  "vendorLabel": "Vendor: {{vendor}}",
+        "typeLabel": "Type: {{type}}",
+        "resetConfirmTitle": "Reset VAT overrides?",
+        "resetConfirmDescription": "Turning this off restores VAT rate and mode for each service to your organization defaults.",
+        "resetConfirmConfirm": "Reset VAT",
+        "resetConfirmCancel": "Keep overrides"
       },
       "summary": {
         "title": "Selected services summary",
@@ -114,7 +172,7 @@
         "price": "Total price",
         "vat": "VAT",
         "gross": "Total (incl. VAT)",
-        "margin": "Estimated margin",
+        "margin": "Calculated margin",
         "empty": "No services added yet.",
         "selectedCount": "{{count}} service selected",
         "selectedCount_plural": "{{count}} services selected",
@@ -122,8 +180,12 @@
         "typeBreakdown": "By service type",
         "table": {
           "name": "Service",
-          "quantity": "Qty"
-        }
+          "quantity": "Qty",
+          "cost": "Cost"
+        },
+        "countLabel": "Services selected",
+        "vatBreakdownItem": "VAT (%{{rate}})",
+        "vatTotal": "Total VAT"
       },
       "list": {
         "quantity": "Qty",
@@ -133,24 +195,35 @@
         "remove": "Remove"
       },
       "custom": {
-        "toggle": "Quick add custom item",
-        "title": "Add a custom service",
-        "nameLabel": "Service name",
-        "costLabel": "Cost (TRY)",
-        "priceLabel": "Price (TRY)",
-        "add": "Add custom service",
-        "cancel": "Cancel",
-        "namePlaceholder": "e.g., Drone footage",
-        "pricePlaceholder": "0.00",
-        "costPlaceholder": "0.00",
-        "managerTitle": "Custom services",
-        "managerDescription": "Add one-off services that aren’t part of your catalog yet.",
-        "emptyState": "No custom services yet.",
-        "errors": {
-          "name": "Name is required.",
-          "price": "Enter a valid price.",
-          "cost": "Enter a valid cost."
-        }
+      "toggle": "Quick add custom item",
+      "title": "Add a custom service",
+      "nameLabel": "Service name",
+      "costLabel": "Cost (TRY)",
+      "priceLabel": "Price (TRY)",
+      "vatRateLabel": "VAT rate (%)",
+      "vatRatePlaceholder": "e.g. 20",
+      "vatModeLabel": "VAT mode",
+      "vatHelper": "Defaults to {{rate}} {{mode}} based on your organization settings.",
+      "add": "Add custom service",
+      "cancel": "Cancel",
+      "namePlaceholder": "e.g., Drone footage",
+      "pricePlaceholder": "0.00",
+      "costPlaceholder": "0.00",
+      "managerTitle": "Need to add something that isn’t in the catalog?",
+      "managerDescription": "Create one-off services that only live inside this package.",
+      "catalogTooltip": "Custom services are scoped to this package only and won’t update your catalog.",
+      "catalogNotice": "These services are package-specific and won’t be written to your catalog.",
+      "buttonOpen": "Add one-off service",
+      "buttonClose": "Hide one-off form",
+      "vatButtonOpen": "I want to modify VAT",
+      "vatButtonClose": "Reset to default VAT",
+      "emptyState": "No custom services yet.",
+      "errors": {
+        "name": "Name is required.",
+        "price": "Enter a valid price.",
+        "cost": "Enter a valid cost.",
+        "vat": "Enter a valid VAT rate."
+      }
       }
     },
     "delivery": {
@@ -236,18 +309,69 @@
         "label": "Package price (TRY)",
         "placeholder": "0.00",
         "helperInclusive": "Enter the full price clients see for this package.",
-        "helperAddOns": "Enter just the package portion. Selected services will be added on top."
+        "helperAddOns": "Enter just the package portion. Selected services will be added on top.",
+        "helperLabel": "About the package price"
+      },
+      "packageVat": {
+        "title": "VAT for package price",
+        "description": "Control the VAT rate and handling for the base package price.",
+        "toggleLabel": "Override package VAT",
+        "toggleHelper": "Leave off to use your organization default.",
+        "rateLabel": "VAT rate (%)",
+        "modeLabel": "VAT handling",
+        "mode": {
+          "inclusive": "Included in price",
+          "exclusive": "Add on top"
+        },
+        "summaryDefault": "Using organization default: %{{rate}} • {{mode}}",
+        "summaryOverride": "Custom override: %{{rate}} • {{mode}}",
+        "inputHint": "This amount applies VAT %{{rate}} with {{mode}} handling.",
+        "netLabel": "Package (excl. VAT)",
+        "vatLabel": "VAT amount",
+        "grossLabel": "Package (incl. VAT)",
+        "buttonOpen": "I want to modify VAT",
+        "buttonClose": "Use organization default",
+        "resetTitle": "Reset package VAT?",
+        "resetDescription": "Turning this off restores the package VAT rate and handling to your organization defaults.",
+        "resetConfirm": "Reset VAT",
+        "resetCancel": "Keep overrides"
+      },
+      "servicesReference": {
+        "title": "Service details",
+        "description": "Review service VAT and line items in the Services step.",
+        "action": "Open services",
+        "count_one": "1 service selected",
+        "count_other": "{{count}} services selected",
+        "total": "Service total: {{amount}}"
+      },
+      "finalSummary": {
+        "title": "Package price summary",
+        "tooltip": "Shows the net, VAT, and gross totals based on how you price selected services.",
+        "net": "Package (excl. VAT)",
+        "vat": "VAT amount",
+        "gross": "Package (incl. VAT)",
+        "inclusiveHelper": "Selected services are priced inside the package total.",
+        "addOnsHelper": "Client total includes the package price plus selected services.",
+        "servicesLine": "Services total: {{amount}} (internal tracking)."
       },
       "summary": {
         "packagePrice": "Package price",
         "servicesTotal": "Selected services total",
+        "servicesNetTotal": "Selected services (net)",
+        "servicesNetHelper": "Sum of line items before VAT is applied.",
+        "servicesVatTotal": "VAT total",
+        "servicesGrossTotal": "Selected services (incl. VAT)",
         "addOnsClientTotal": "Package + services total",
         "clientTotalTitle": "Client-facing price",
         "clientTotalHelperTitle": "Total presented to the client",
         "clientTotalHelper": {
           "inclusive": "The package price already includes the selected services.",
           "addOns": "Client total = package price + selected services."
-        }
+        },
+        "clientTotalBreakdown": "Net: {{net}} • VAT: {{vat}}",
+        "costTotal": "Cost total",
+        "margin": "Margin",
+        "packageVatSummary": "VAT %{{rate}} • {{mode}} • VAT amount {{amount}}"
       },
       "includeAddOns": {
         "title": "How do you charge add-ons?",

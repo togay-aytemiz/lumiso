@@ -5,6 +5,8 @@ export interface ServicesTableRow {
   name: string;
   vendor?: string | null;
   quantity: number;
+  unitLabel?: string | null;
+  lineCost?: number | null;
   unitPrice: number | null;
   lineTotal: number | null;
   isCustom?: boolean;
@@ -21,8 +23,8 @@ export interface ServicesTableTotals {
 export interface ServicesTableLabels {
   columns: {
     name: string;
-    vendor: string;
     quantity: string;
+    cost?: string;
     unitPrice: string;
     lineTotal: string;
   };
@@ -58,6 +60,7 @@ export function ServicesTableCard({
     return <p className="text-sm text-muted-foreground">{emptyMessage}</p>;
   }
 
+  const showCostColumn = Boolean(labels.columns.cost);
   const costLabel = totals?.cost ?? null;
   const priceLabel = totals?.price ?? null;
   const vatLabel = totals?.vat ?? null;
@@ -76,8 +79,10 @@ export function ServicesTableCard({
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <th className="px-4 py-3 text-left font-semibold">{labels.columns.name}</th>
-              <th className="px-4 py-3 text-left font-semibold">{labels.columns.vendor}</th>
               <th className="px-4 py-3 text-right font-semibold">{labels.columns.quantity}</th>
+              {showCostColumn ? (
+                <th className="px-4 py-3 text-right font-semibold">{labels.columns.cost}</th>
+              ) : null}
               <th className="px-4 py-3 text-right font-semibold">{labels.columns.unitPrice}</th>
               <th className="px-4 py-3 text-right font-semibold">{labels.columns.lineTotal}</th>
             </tr>
@@ -91,22 +96,29 @@ export function ServicesTableCard({
                   index % 2 === 1 ? "bg-slate-50/40" : "bg-white"
                 )}
               >
-                <td className="px-4 py-3 align-top">
+                <td className="px-4 py-3 align-middle">
                   <div className="font-medium text-slate-900">{row.name}</div>
+                  {row.vendor ? (
+                    <div className="text-xs text-muted-foreground">{row.vendor}</div>
+                  ) : null}
                   {row.isCustom && labels.customTag ? (
                     <div className="text-xs text-muted-foreground">{labels.customTag}</div>
                   ) : null}
                 </td>
-                <td className="px-4 py-3 align-top text-sm text-muted-foreground">
-                  {row.vendor ?? labels.customVendorFallback}
-                </td>
-                <td className="px-4 py-3 align-top text-right font-medium text-slate-900">
+                <td className="px-4 py-3 align-middle text-right font-medium text-slate-900">
                   {row.quantity}
                 </td>
-                <td className="px-4 py-3 align-top text-right text-sm text-slate-700">
+                {showCostColumn ? (
+                  <td className="px-4 py-3 align-middle text-right text-sm text-slate-700">
+                    {row.lineCost === null || row.lineCost === undefined
+                      ? "—"
+                      : formatCurrency(row.lineCost)}
+                  </td>
+                ) : null}
+                <td className="px-4 py-3 align-middle text-right text-sm text-slate-700">
                   {row.unitPrice === null ? "—" : formatCurrency(row.unitPrice)}
                 </td>
-                <td className="px-4 py-3 align-top text-right font-semibold text-slate-900">
+                <td className="px-4 py-3 align-middle text-right font-semibold text-slate-900">
                   {row.lineTotal === null ? "—" : formatCurrency(row.lineTotal)}
                 </td>
               </tr>

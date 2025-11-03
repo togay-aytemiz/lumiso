@@ -96,7 +96,85 @@
       "servicesBadge": "{{count}} adet seçildi",
       "servicesError": "Hizmetler yüklenemedi. Lütfen birazdan tekrar deneyin.",
       "selectedIndicator": "Seçili",
-      "selectedSummary": "Seçilen paket: {{name}}"
+      "selectedSummary": "Seçilen paket: {{name}}",
+      "inventory": {
+        "types": {
+          "coverage": {
+            "title": "Ekip hizmetleri",
+            "subtitle": "Fotoğrafçı, videograf gibi sahada çalışacak ekip."
+          },
+          "deliverable": {
+            "title": "Teslimatlar",
+            "subtitle": "Albüm, baskı ve diğer müşteri teslimleri."
+          },
+          "unknown": {
+            "title": "Diğer hizmetler",
+            "subtitle": "Türü henüz belirlenmemiş kalemler."
+          }
+        },
+        "add": "Ekle",
+        "uncategorized": "Diğer",
+        "inactive": "Pasif",
+        "empty": "Kataloğunuzda henüz hizmet yok. Buraya eklemek için hizmet oluşturun."
+      },
+      "list": {
+        "remove": "Kaldır",
+        "vendor": "Tedarikçi",
+        "unitCost": "Birim maliyet",
+        "unitPrice": "Birim satış",
+        "quantity": "Adet"
+      },
+      "units": {
+        "label": "Birim",
+        "placeholder": "Birim seç",
+        "options": {
+          "item": "Adet",
+          "session": "Seans",
+          "hour": "Saat",
+          "day": "Gün"
+        },
+        "short": {
+          "item": "Adet",
+          "session": "Seans",
+          "hour": "Saat",
+          "day": "Gün"
+        }
+      },
+      "vatControls": {
+        "title": "KDV ayarları",
+        "description": "Bu proje için KDV oranını veya şeklini güncelle.",
+        "toggleLabel": "KDV'yi özelleştir",
+        "toggleDescription": "Seçilen hizmetlerde varsayılan KDV ayarlarını değiştirmek için aç.",
+        "vendorLabel": "Tedarikçi: {{vendor}}",
+        "typeLabel": "{{type}}",
+        "rateLabel": "KDV oranı (%)",
+        "modeLabel": "KDV türü",
+        "mode": {
+          "inclusive": "Fiyata dahil",
+          "exclusive": "Üstüne eklenecek"
+        }
+      },
+      "servicesEmpty": "Henüz hizmet seçilmedi.",
+      "summary": {
+        "table": {
+          "name": "Hizmet",
+          "vendor": "Tedarikçi",
+          "quantity": "Adet",
+          "unitPrice": "Birim satış",
+          "lineTotal": "Satış toplamı",
+          "cost": "Maliyet"
+        },
+        "totals": {
+          "cost": "Maliyet toplamı",
+          "price": "Satış toplamı",
+          "vat": "KDV toplamı",
+          "total": "Toplam (KDV dahil)",
+          "margin": "Kâr"
+        },
+        "customTag": "Özel kalem",
+        "customVendorFallback": "—",
+        "empty": "Hizmet eklenmedi."
+      }
     },
     "summary": {
       "navigationLabel": "Özet",

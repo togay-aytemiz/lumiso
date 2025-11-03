@@ -1,3 +1,6 @@
+import type { VatMode } from "@/lib/accounting/vat";
+import type { ServiceUnit } from "@/lib/services/units";
+
 export type ProjectCreationStepId = "lead" | "details" | "packages" | "summary";
 
 export interface ProjectCreationLead {
@@ -19,17 +22,27 @@ export interface ProjectCreationDetails {
   basePrice?: string;
 }
 
+export type ProjectServiceLineItemType = "existing" | "custom";
+
+export interface ProjectServiceLineItem {
+  id: string;
+  type: ProjectServiceLineItemType;
+  serviceId?: string;
+  name: string;
+  quantity: number;
+  unitPrice?: number | null;
+  unitCost?: number | null;
+  vendorName?: string | null;
+  vatRate?: number | null;
+  vatMode?: VatMode;
+  unit?: ServiceUnit | string | null;
+  source?: "catalog" | "adhoc";
+}
+
 export interface ProjectCreationServices {
   packageId?: string;
   packageLabel?: string;
-  selectedServiceIds: string[];
-  selectedServices: Array<{
-    id: string;
-    name: string;
-    category?: string | null;
-    cost_price?: number;
-    selling_price?: number;
-  }>;
+  items: ProjectServiceLineItem[];
   showCustomSetup?: boolean;
 }
 

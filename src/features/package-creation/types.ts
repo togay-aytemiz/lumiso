@@ -27,6 +27,7 @@ export interface PackageCreationLineItem {
   source?: "catalog" | "adhoc";
   vatRate?: number | null;
   vatMode?: PackageVatMode;
+  unit?: string | null;
 }
 
 export interface PackageCreationServicesState {
@@ -49,6 +50,10 @@ export interface PackageCreationDeliveryState {
 
 export interface PackageCreationPricingState {
   basePrice: string;
+  packageVatRate: number | null;
+  packageVatMode: PackageVatMode;
+  packageVatOverrideEnabled: boolean;
+  packageVatInitialized: boolean;
   depositMode: "percent_subtotal" | "percent_base" | "fixed";
   depositValue: string;
   enableDeposit: boolean;

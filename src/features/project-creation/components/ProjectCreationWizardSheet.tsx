@@ -226,10 +226,14 @@ const ProjectCreationWizardSheetInner = ({
         if (paymentError) throw paymentError;
       }
 
-      if (state.services.selectedServiceIds.length > 0) {
-        const servicePayload = state.services.selectedServiceIds.map((serviceId) => ({
+      const catalogLineItems = state.services.items.filter(
+        (item) => item.type === "existing" && item.serviceId
+      );
+
+      if (catalogLineItems.length > 0) {
+        const servicePayload = catalogLineItems.map((item) => ({
           project_id: newProject.id,
-          service_id: serviceId,
+          service_id: item.serviceId!,
           user_id: user.id,
         }));
 
@@ -269,7 +273,7 @@ const ProjectCreationWizardSheetInner = ({
         projectId: newProject.id,
         entrySource,
         packageId: state.services.packageId ?? null,
-        serviceCount: state.services.selectedServiceIds.length,
+        serviceCount: catalogLineItems.length,
         basePrice: basePriceValue,
       });
       onProjectCreated?.({
@@ -308,8 +312,8 @@ const ProjectCreationWizardSheetInner = ({
     state.lead.id,
     state.meta.defaultStatusId,
     state.meta.entrySource,
+    state.services.items,
     state.services.packageId,
-    state.services.selectedServiceIds,
     tCommon,
     tForms,
     tProject,

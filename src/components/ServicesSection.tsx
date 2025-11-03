@@ -60,7 +60,7 @@ const ServicesSection = () => {
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [showEditServiceDialog, setShowEditServiceDialog] = useState(false);
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
-  const [activeType, setActiveType] = useState<ServiceType>("coverage");
+  const [activeType, setActiveType] = useState<ServiceType>("deliverable");
   const [showInactive, setShowInactive] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
@@ -348,7 +348,7 @@ const ServicesSection = () => {
 
   useEffect(() => {
     if (normalizedServices.length === 0) {
-      setActiveType("coverage");
+      setActiveType("deliverable");
       return;
     }
     const hasActiveType = normalizedServices.some(
@@ -356,10 +356,10 @@ const ServicesSection = () => {
     );
     if (!hasActiveType) {
       const fallback = normalizedServices.some(
-        (service) => service.service_type === "coverage"
+        (service) => service.service_type === "deliverable"
       )
-        ? "coverage"
-        : "deliverable";
+        ? "deliverable"
+        : "coverage";
       if (fallback !== activeType) {
         setActiveType(fallback);
       }
@@ -483,14 +483,6 @@ const ServicesSection = () => {
             onValueChange={(value) => setActiveType(value as ServiceType)}
             options={[
               {
-                value: "coverage",
-                label: renderSegmentLabel(
-                  tForms("services.types.coverage"),
-                  typeCounts.coverage
-                ),
-                tooltip: tForms("services.types.coverage_hint"),
-              },
-              {
                 value: "deliverable",
                 label: renderSegmentLabel(
                   tForms("services.types.deliverable"),
@@ -498,13 +490,21 @@ const ServicesSection = () => {
                 ),
                 tooltip: tForms("services.types.deliverable_hint"),
               },
+              {
+                value: "coverage",
+                label: renderSegmentLabel(
+                  tForms("services.types.coverage"),
+                  typeCounts.coverage
+                ),
+                tooltip: tForms("services.types.coverage_hint"),
+              },
             ]}
             className="w-full sm:w-auto"
           />
           <p className="text-sm text-muted-foreground max-w-2xl">
-            {activeType === "coverage"
-              ? tForms("services.types.coverage_hint")
-              : tForms("services.types.deliverable_hint")}
+            {activeType === "deliverable"
+              ? tForms("services.types.deliverable_hint")
+              : tForms("services.types.coverage_hint")}
           </p>
         </div>
 

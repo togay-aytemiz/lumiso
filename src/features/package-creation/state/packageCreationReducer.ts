@@ -62,6 +62,10 @@ const createInitialDeliveryState = (): PackageCreationDeliveryState => ({
 
 const createInitialPricingState = (): PackageCreationPricingState => ({
   basePrice: "",
+  packageVatRate: null,
+  packageVatMode: "inclusive",
+  packageVatOverrideEnabled: false,
+  packageVatInitialized: false,
   depositMode: "percent_subtotal",
   depositValue: "",
   enableDeposit: false,

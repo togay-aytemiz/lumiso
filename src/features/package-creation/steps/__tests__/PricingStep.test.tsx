@@ -14,6 +14,21 @@ jest.mock("react-i18next", () => ({
   useTranslation: jest.fn(),
 }));
 
+jest.mock("@/hooks/useOrganizationData", () => {
+  const actual = jest.requireActual("@/hooks/useOrganizationData");
+  return {
+    ...actual,
+    useOrganizationTaxProfile: jest.fn(() => ({
+      data: {
+        defaultVatRate: 18,
+        defaultVatMode: "inclusive",
+      },
+      isLoading: false,
+      error: null,
+    })),
+  };
+});
+
 type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
@@ -106,7 +121,7 @@ describe("PricingStep", () => {
     });
   });
 
-  it("shows inclusive pricing summary by default and hides add-on client total row", () => {
+  it("renders default package VAT summary and stats", () => {
     const overrides: DeepPartial<PackageCreationState> = {
       services: {
         items: [
@@ -124,27 +139,21 @@ describe("PricingStep", () => {
       pricing: {
         basePrice: "18000",
         includeAddOnsInPrice: true,
-        depositMode: "percent_subtotal",
       },
     };
 
     renderWithState(overrides);
 
+    expect(screen.getByLabelText("Package price (TRY)")).toHaveValue(18000);
     expect(
-      screen.getByLabelText("Package price (TRY)")
-    ).toHaveValue(18000);
-
-    const addOnRowWrapper = screen
-      .getByText("Package + services total")
-      .parentElement?.parentElement as HTMLElement;
-    expect(addOnRowWrapper).toHaveClass("max-h-0");
-
-    expect(
-      screen.getByText("Client total equals the package price.")
+      screen.getByText(
+        "This amount applies VAT %18 with Included in price handling."
+      )
     ).toBeInTheDocument();
+    expect(screen.getByText("Package (incl. VAT)")).toBeInTheDocument();
   });
 
-  it("switches to add-on mode and reveals client total row", () => {
+  it("switches to add-on mode and updates helper text", () => {
     const overrides: DeepPartial<PackageCreationState> = {
       services: {
         items: [
@@ -162,22 +171,15 @@ describe("PricingStep", () => {
       pricing: {
         basePrice: "15000",
         includeAddOnsInPrice: true,
-        depositMode: "percent_subtotal",
       },
     };
 
     renderWithState(overrides);
 
-    const radios = screen.getAllByRole("radio");
-    fireEvent.click(radios[1]);
+    fireEvent.click(screen.getByText("Bill add-ons on top of the package"));
 
-    const addOnRowWrapper = screen
-      .getByText("Package + services total")
-      .parentElement?.parentElement as HTMLElement;
-
-    expect(addOnRowWrapper).toHaveClass("max-h-24");
     expect(
-      screen.getByText("Client total is the package price plus selected services.")
+      screen.getByText(/This combines the package price with selected services\./)
     ).toBeInTheDocument();
   });
 
@@ -199,7 +201,6 @@ describe("PricingStep", () => {
       pricing: {
         basePrice: "12000",
         includeAddOnsInPrice: false,
-        depositMode: "percent_subtotal",
         enableDeposit: false,
       },
     };
@@ -217,53 +218,25 @@ describe("PricingStep", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows auto-target note in inclusive mode and segmented control when add-ons mode is active", () => {
-    const overrides: DeepPartial<PackageCreationState> = {
-      services: {
-        items: [
-          {
-            id: "line-1",
-            type: "existing",
-            name: "Retouching",
-            serviceId: "svc-1",
-            quantity: 1,
-            unitCost: 200,
-            unitPrice: 600,
-          },
-        ],
-      },
+  it("allows overriding package VAT values", () => {
+    renderWithState({
       pricing: {
-        basePrice: "10000",
+        basePrice: "15000",
         includeAddOnsInPrice: true,
-        depositMode: "percent_subtotal",
-        enableDeposit: true,
-        depositValue: "30",
       },
-    };
+    });
 
-    renderWithState(overrides);
+    const toggle = screen.getByRole("button", { name: "I want to modify VAT" });
+    fireEvent.click(toggle);
 
-    const noteWrapper = screen
-      .getByText(
-        "When add-ons live inside the package price, the deposit uses the package price."
-      )
-      .parentElement as HTMLElement;
-    expect(noteWrapper).toHaveClass("max-h-20");
-    const initialSegmentWrapper = screen
-      .getByText("Package price only")
-      .parentElement?.parentElement as HTMLElement;
-    expect(initialSegmentWrapper).toHaveClass("max-h-0");
+    const rateInput = screen.getByLabelText("VAT rate (%)");
+    fireEvent.change(rateInput, { target: { value: "10" } });
 
-    const radios = screen.getAllByRole("radio");
-    fireEvent.click(radios[1]);
-
-    expect(noteWrapper).toHaveClass("max-h-0");
-    const segmentWrapper = screen
-      .getByText("Package price only")
-      .parentElement?.parentElement as HTMLElement;
-    expect(segmentWrapper).toHaveClass("max-h-24");
+    expect(rateInput).toHaveValue(10);
     expect(
-      screen.getByRole("button", { name: "Package + services total" })
+      screen.getByText(
+        "This amount applies VAT %10 with Included in price handling."
+      )
     ).toBeInTheDocument();
   });
 });

@@ -13,7 +13,7 @@ import {
   PACKAGE_CREATION_STEPS,
   PackageCreationStepConfig,
 } from "../state/packageCreationReducer";
-import { PackageCreationStepId } from "../types";
+import { PackageCreationLineItem, PackageCreationStepId, PackageVatMode } from "../types";
 import { usePackageCreationContext } from "../hooks/usePackageCreationContext";
 import { usePackageCreationActions } from "../hooks/usePackageCreationActions";
 import {
@@ -23,6 +23,7 @@ import {
   ServicesStep,
   SummaryStep,
 } from "../steps";
+import { calculateLineItemPricing } from "../utils/lineItemPricing";
 
 const STEP_COMPONENTS: Record<PackageCreationStepId, () => JSX.Element> = {
   basics: BasicsStep,
@@ -77,7 +78,25 @@ export const PackageCreationWizard = ({
   const CurrentStepComponent =
     STEP_COMPONENTS[state.meta.currentStep] ?? BasicsStep;
 
-  const basePrice = parseWizardAmount(state.pricing.basePrice);
+  const basePriceInput = parseWizardAmount(state.pricing.basePrice);
+  const packageVatRate =
+    typeof state.pricing.packageVatRate === "number" && Number.isFinite(state.pricing.packageVatRate)
+      ? state.pricing.packageVatRate
+      : 0;
+  const packageVatMode: PackageVatMode =
+    state.pricing.packageVatMode === "inclusive" || state.pricing.packageVatMode === "exclusive"
+      ? state.pricing.packageVatMode
+      : "inclusive";
+  const basePricePricing = calculateLineItemPricing({
+    id: "package-base-price",
+    type: "custom",
+    name: "Package price",
+    quantity: 1,
+    unitPrice: basePriceInput,
+    vatRate: packageVatRate,
+    vatMode: packageVatMode,
+  } as PackageCreationLineItem);
+  const basePriceGross = Math.round(basePricePricing.gross * 100) / 100;
 
   const stepStatus = useMemo<
     Record<PackageCreationStepId, { summary?: string; hasValue: boolean }>
@@ -104,8 +123,8 @@ export const PackageCreationWizard = ({
     );
 
     const pricingSummaryParts: string[] = [];
-    if (basePrice > 0) {
-      pricingSummaryParts.push(formatWizardCurrency(basePrice));
+    if (basePriceGross > 0) {
+      pricingSummaryParts.push(formatWizardCurrency(basePriceGross));
     }
     if (state.pricing.depositMode === "fixed" && state.pricing.depositValue) {
       pricingSummaryParts.push(
@@ -144,7 +163,7 @@ export const PackageCreationWizard = ({
         },
       pricing: {
         summary: pricingSummary,
-        hasValue: basePrice > 0,
+        hasValue: basePriceGross > 0,
       },
       summary: {
         summary: undefined,
@@ -152,7 +171,7 @@ export const PackageCreationWizard = ({
       },
     };
   }, [
-    basePrice,
+    basePriceGross,
     state.basics.name,
     state.delivery.countMax,
     state.delivery.countMin,

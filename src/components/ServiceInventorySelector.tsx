@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { LucideIcon, FolderOpen, Layers, Trash2, ChevronDown } from "lucide-react";
+import { LucideIcon, FolderOpen, Layers, Trash2, ChevronDown, Package as PackageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,6 +19,8 @@ export interface ServiceInventoryItem {
   vendorName?: string | null;
   unitCost?: number | null;
   unitPrice?: number | null;
+  unit?: string | null;
+  defaultUnit?: string | null;
   isActive?: boolean | null;
   vatRate?: number | null;
   priceIncludesVat?: boolean | null;
@@ -64,7 +66,7 @@ interface ServiceInventorySelectorProps {
   onRetry?: () => void;
 }
 
-const typeOrder: ServiceInventoryType[] = ["coverage", "deliverable", "unknown"];
+const typeOrder: ServiceInventoryType[] = ["deliverable", "coverage", "unknown"];
 
 const formatCurrency = (amount?: number | null) => {
   if (!amount || Number.isNaN(amount)) return "₺0";
@@ -151,11 +153,11 @@ export function ServiceInventorySelector({
     [typeStats]
   );
 
-  const [activeType, setActiveType] = useState<ServiceInventoryType>(() => availableTypes[0] ?? "coverage");
+  const [activeType, setActiveType] = useState<ServiceInventoryType>(() => availableTypes[0] ?? "deliverable");
 
   useEffect(() => {
     if (!availableTypes.includes(activeType)) {
-      setActiveType(availableTypes[0] ?? "coverage");
+      setActiveType(availableTypes[0] ?? "deliverable");
     }
   }, [availableTypes, activeType]);
 
@@ -244,11 +246,17 @@ export function ServiceInventorySelector({
     );
   }
 
-  const resolvedType = availableTypes.includes(activeType) ? activeType : availableTypes[0] ?? "coverage";
+  const resolvedType = availableTypes.includes(activeType) ? activeType : availableTypes[0] ?? "deliverable";
   const activeMeta = labels.typeMeta[resolvedType];
   const activeCategories = Object.entries(groupedByType[resolvedType] ?? {});
   const activeStats = typeStats[resolvedType] ?? { totalServices: 0, selectedServices: 0, totalQuantity: 0 };
-  const ActiveIcon = activeMeta?.icon ?? (resolvedType === "coverage" ? Layers : FolderOpen);
+  const ActiveIcon =
+    activeMeta?.icon ??
+    (resolvedType === "deliverable"
+      ? PackageIcon
+      : resolvedType === "coverage"
+      ? Layers
+      : FolderOpen);
 
   return (
     <div className="space-y-5">

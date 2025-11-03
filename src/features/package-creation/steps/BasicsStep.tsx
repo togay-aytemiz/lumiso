@@ -10,6 +10,8 @@ import { usePackageCreationContext } from "../hooks/usePackageCreationContext";
 import { usePackageCreationActions } from "../hooks/usePackageCreationActions";
 import { useProjectTypes } from "@/hooks/useOrganizationData";
 import { X } from "lucide-react";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { Link } from "react-router-dom";
 
 interface ProjectTypeRecord {
   id: string;
@@ -22,6 +24,8 @@ export const BasicsStep = () => {
   const { updateBasics } = usePackageCreationActions();
 
   const { data: projectTypes = [], isLoading, error, refetch } = useProjectTypes();
+  const { settings, loading: settingsLoading } = useOrganizationSettings();
+  const taxProfile = settings?.taxProfile ?? null;
 
   const projectTypeMap = useMemo(
     () =>
@@ -53,6 +57,61 @@ export const BasicsStep = () => {
       .map((id) => projectTypeMap.get(id))
       .filter(Boolean) as string[];
   }, [projectTypeMap, state.basics.applicableTypeIds]);
+
+  const billingBadges = useMemo(() => {
+    const chips: Array<{ id: string; label: string; value: string }> = [];
+    const companyName = taxProfile?.companyName ?? settings?.photography_business_name ?? "";
+    if (companyName) {
+      chips.push({
+        id: "company",
+        label: t("steps.basics.billing.companyLabel"),
+        value: companyName,
+      });
+    }
+
+    if (taxProfile?.taxOffice) {
+      chips.push({
+        id: "taxOffice",
+        label: t("steps.basics.billing.taxOfficeLabel"),
+        value: taxProfile.taxOffice,
+      });
+    }
+
+    if (taxProfile?.taxNumber) {
+      chips.push({
+        id: "taxNumber",
+        label: t("steps.basics.billing.taxNumberLabel"),
+        value: taxProfile.taxNumber,
+      });
+    }
+
+    if (typeof taxProfile?.defaultVatRate === "number") {
+      const vatRate = new Intl.NumberFormat("tr-TR", {
+        maximumFractionDigits: Number.isInteger(taxProfile.defaultVatRate) ? 0 : 2,
+      }).format(taxProfile.defaultVatRate);
+      const vatModeKey = taxProfile.defaultVatMode === "inclusive" ? "inclusive" : "exclusive";
+      chips.push({
+        id: "vat",
+        label: t("steps.basics.billing.vatLabel"),
+        value: t("steps.basics.billing.vatValue", {
+          rate: vatRate,
+          mode: t(`steps.basics.billing.vatMode.${vatModeKey}`),
+        }),
+      });
+    }
+
+    if (taxProfile?.pricesIncludeVat !== undefined) {
+      chips.push({
+        id: "pricing",
+        label: t("steps.basics.billing.pricingLabel"),
+        value: taxProfile.pricesIncludeVat
+          ? t("steps.basics.billing.pricingIncluded")
+          : t("steps.basics.billing.pricingExcluded"),
+      });
+    }
+
+    return chips;
+  }, [settings?.photography_business_name, t, taxProfile]);
 
   return (
     <div className="space-y-6">

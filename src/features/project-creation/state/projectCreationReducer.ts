@@ -58,8 +58,7 @@ export const createInitialProjectCreationState = (
   services: {
     packageId: undefined,
     packageLabel: undefined,
-    selectedServiceIds: [],
-    selectedServices: [],
+    items: [],
     showCustomSetup: false,
   },
   meta: deriveInitialMeta(entryContext),
@@ -134,12 +133,8 @@ export const projectCreationReducer = (
         ...state.services,
         ...action.payload,
       };
-      // Ensure we don't accidentally lose the service selections array
-      if (!nextServices.selectedServiceIds) {
-        nextServices.selectedServiceIds = state.services.selectedServiceIds;
-      }
-      if (!nextServices.selectedServices) {
-        nextServices.selectedServices = state.services.selectedServices;
+      if (!nextServices.items) {
+        nextServices.items = state.services.items;
       }
       if (shallowEqual(state.services, nextServices)) {
         return state;

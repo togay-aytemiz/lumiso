@@ -61,7 +61,43 @@
           "label": "Aktif",
           "helper": "Kapattığınızda pasif olur, kayıtlarda kalır."
         }
+      },
+      "billing": {
+        "title": "Vergi ve fatura varsayılanları",
+        "helper": "Paketler faturalarla uyumlu olsun diye Ayarlar → Faturalama bilgilerinden alınır.",
+        "empty": "Henüz vergi ve fatura profiliniz yok.",
+        "link": "Ayarları aç",
+        "companyLabel": "Ünvan",
+        "taxOfficeLabel": "Vergi dairesi",
+        "taxNumberLabel": "VKN / TCKN",
+        "vatLabel": "KDV",
+        "vatValue": "%{{rate}} • {{mode}}",
+        "vatMode": {
+          "inclusive": "Fiyata dahil",
+          "exclusive": "Üstüne eklenecek"
+        },
+        "pricingLabel": "Fiyatlandırma",
+        "pricingIncluded": "Fiyatlara KDV dahil",
+        "pricingExcluded": "KDV ayrıca eklenecek"
       }
+    },
+    "billing": {
+      "title": "Vergi ve fatura varsayılanları",
+      "helper": "Paketler faturalarla uyumlu olsun diye Ayarlar → Faturalama bilgilerinden alınır.",
+      "empty": "Henüz vergi ve fatura profiliniz yok.",
+      "link": "Ayarları aç",
+      "companyLabel": "Ünvan",
+      "taxOfficeLabel": "Vergi dairesi",
+      "taxNumberLabel": "VKN / TCKN",
+      "vatLabel": "KDV",
+      "vatValue": "%{{rate}} • {{mode}}",
+      "vatMode": {
+        "inclusive": "Fiyata dahil",
+        "exclusive": "Üstüne eklenecek"
+      },
+      "pricingLabel": "Fiyatlandırma",
+      "pricingIncluded": "Fiyatlara KDV dahil",
+      "pricingExcluded": "KDV ayrıca eklenecek"
     },
     "services": {
       "navigationLabel": "Hizmetler",
@@ -80,18 +116,34 @@
         "inactive": "Pasif",
         "empty": "Kataloğunuzda henüz hizmet yok. Buraya eklemek için hizmet oluşturun.",
         "types": {
-          "coverage": {
-            "title": "Ekip hizmetleri",
-            "subtitle": "Fotoğrafçı, videograf gibi sahada çalışacak kişiler"
-          },
-          "deliverable": {
-            "title": "Teslimatlar",
-            "subtitle": "Albüm, baskı ve diğer müşteri teslimleri"
-          },
+  "coverage": {
+    "title": "Ekip & çekim kapsamı",
+    "subtitle": "Fotoğrafçı, videograf veya yardımcı personel seçeneklerini yönetin."
+  },
+  "deliverable": {
+    "title": "Ürünler & teslimatlar",
+    "subtitle": "Albüm, baskı ve diğer müşteri teslimlerini yönetin."
+  },
           "unknown": {
             "title": "Diğer hizmetler",
             "subtitle": "Henüz türü belirlenmemiş kalemler"
           }
+        }
+      },
+      "units": {
+        "label": "Birim",
+        "placeholder": "Birim seç",
+        "options": {
+          "item": "Adet",
+          "session": "Seans",
+          "hour": "Saat",
+          "day": "Gün"
+        },
+        "short": {
+          "item": "Adet",
+          "session": "Seans",
+          "hour": "Saat",
+          "day": "Gün"
         }
       },
       "vatControls": {
@@ -103,10 +155,16 @@
           "inclusive": "Fiyata dahil",
           "exclusive": "Üstüne ekle"
         },
-        "toggleLabel": "Hizmet bazlı düzenlemeleri aç",
-        "toggleDescription": "Sadece satır kalemi farklı KDV gerektiriyorsa değiştirin.",
-        "vendorLabel": "Tedarikçi: {{vendor}}",
-        "typeLabel": "Tür: {{type}}"
+  "toggleLabel": "Hizmet bazlı düzenlemeleri aç",
+  "toggleDescription": "Sadece satır kalemi farklı KDV gerektiriyorsa değiştirin.",
+  "buttonOpen": "Hizmet bazlı KDV’yi düzenle",
+  "buttonClose": "KDV düzenlemelerini gizle",
+  "vendorLabel": "Tedarikçi: {{vendor}}",
+        "typeLabel": "Tür: {{type}}",
+        "resetConfirmTitle": "KDV ayarlarını sıfırlamak ister misin?",
+        "resetConfirmDescription": "Anahtarı kapattığında tüm satırların KDV oranı ve türü organizasyon varsayılanlarına döner.",
+        "resetConfirmConfirm": "KDV’yi sıfırla",
+        "resetConfirmCancel": "Değişiklikleri koru"
       },
       "summary": {
         "title": "Seçilen hizmetler özeti",
@@ -114,7 +172,7 @@
         "price": "Toplam satış",
         "vat": "KDV",
         "gross": "Toplam (KDV dahil)",
-        "margin": "Tahmini kâr",
+        "margin": "Hesaplanan kar",
         "empty": "Henüz hizmet eklenmedi.",
         "selectedCount": "{{count}} hizmet seçildi",
         "selectedCount_other": "{{count}} hizmet seçildi",
@@ -122,8 +180,12 @@
         "typeBreakdown": "Hizmet türüne göre",
         "table": {
           "name": "Hizmet",
-          "quantity": "Adet"
-        }
+          "quantity": "Adet",
+          "cost": "Maliyet"
+        },
+        "countLabel": "Seçilen hizmet sayısı",
+        "vatBreakdownItem": "KDV (%{{rate}})",
+        "vatTotal": "Toplam KDV"
       },
       "list": {
         "quantity": "Adet",
@@ -133,24 +195,35 @@
         "remove": "Kaldır"
       },
       "custom": {
-        "toggle": "Hızlı özel hizmet ekle",
-        "title": "Özel hizmet ekle",
-        "nameLabel": "Hizmet adı",
-        "costLabel": "Maliyet (TRY)",
-        "priceLabel": "Satış (TRY)",
-        "add": "Özel hizmeti ekle",
-        "cancel": "Vazgeç",
-        "namePlaceholder": "Örn. Drone çekimi",
-        "pricePlaceholder": "0.00",
-        "costPlaceholder": "0.00",
-        "managerTitle": "Özel hizmetler",
-        "managerDescription": "Kataloğunda henüz yer almayan özel hizmetleri buradan rahatça ekleyebilirsin.",
-        "emptyState": "Henüz özel hizmet eklenmedi.",
-        "errors": {
-          "name": "Hizmet adı zorunludur.",
-          "price": "Geçerli bir satış fiyatı girin.",
-          "cost": "Geçerli bir maliyet girin."
-        }
+      "toggle": "Hızlı özel hizmet ekle",
+      "title": "Özel hizmet ekle",
+      "nameLabel": "Hizmet adı",
+      "costLabel": "Maliyet (TRY)",
+      "priceLabel": "Satış (TRY)",
+      "vatRateLabel": "KDV oranı (%)",
+      "vatRatePlaceholder": "örn. 20",
+      "vatModeLabel": "KDV uygulaması",
+      "vatHelper": "Varsayılan ayarın: %{{rate}} {{mode}}.",
+      "add": "Özel hizmeti ekle",
+      "cancel": "Vazgeç",
+      "namePlaceholder": "Örn. Drone çekimi",
+      "pricePlaceholder": "0.00",
+      "costPlaceholder": "0.00",
+      "managerTitle": "Katalogda olmayan bir hizmet mi eklemek istiyorsun?",
+      "managerDescription": "Bu tek seferlik hizmetler sadece bu paket içinde saklanır.",
+      "catalogTooltip": "Özel hizmetler yalnızca bu paket için tutulur ve kataloğunu güncellemez.",
+      "catalogNotice": "Girilen bilgiler kataloğa eklenmez; sadece bu paket için kullanılır.",
+      "buttonOpen": "Tek seferlik hizmet ekle",
+      "buttonClose": "Formu gizle",
+      "vatButtonOpen": "KDV’yi düzenlemek istiyorum",
+      "vatButtonClose": "Varsayılan KDV’ye dön",
+      "emptyState": "Henüz özel hizmet eklenmedi.",
+      "errors": {
+        "name": "Hizmet adı zorunludur.",
+        "price": "Geçerli bir satış fiyatı girin.",
+        "cost": "Geçerli bir maliyet girin.",
+        "vat": "Geçerli bir KDV oranı girin."
+      }
       }
     },
     "delivery": {
@@ -236,18 +309,69 @@
         "label": "Paket fiyatı (TRY)",
         "placeholder": "0.00",
         "helperInclusive": "Müşteriye göstereceğin toplam paket fiyatını yaz.",
-        "helperAddOns": "Burada sadece paket tutarını belirt; seçilen hizmetler bu fiyatın üzerine eklenir."
+        "helperAddOns": "Burada sadece paket tutarını belirt; seçilen hizmetler bu fiyatın üzerine eklenir.",
+        "helperLabel": "Paket fiyatı hakkında bilgi"
+      },
+      "packageVat": {
+        "title": "Paket için KDV",
+        "description": "Paket fiyatına uygulanacak KDV oranını ve şeklini kontrol et.",
+        "toggleLabel": "Paket KDV’sini özelleştir",
+        "toggleHelper": "Kapalıyken organizasyon varsayılanı kullanılır.",
+        "rateLabel": "KDV oranı (%)",
+        "modeLabel": "KDV uygulaması",
+        "mode": {
+          "inclusive": "Fiyata dahil",
+          "exclusive": "Üstüne ekle"
+        },
+        "summaryDefault": "Organizasyon varsayılanı: %{{rate}} • {{mode}}",
+        "summaryOverride": "Özel ayar: %{{rate}} • {{mode}}",
+        "inputHint": "Bu tutar %{{rate}} KDV ile {{mode}} olarak hesaplanır.",
+        "netLabel": "Paket fiyatı (KDV hariç)",
+        "vatLabel": "KDV tutarı",
+        "grossLabel": "Paket fiyatı (KDV dahil)",
+        "buttonOpen": "KDV’yi düzenlemek istiyorum",
+        "buttonClose": "Varsayılan KDV’ye dön",
+        "resetTitle": "KDV ayarlarını sıfırlamak ister misin?",
+        "resetDescription": "Bu alanları kapatırsan paket KDV oranı ve uygulaması organizasyon varsayılanlarına döner.",
+        "resetConfirm": "KDV’yi sıfırla",
+        "resetCancel": "Değişiklikleri koru"
+      },
+      "servicesReference": {
+        "title": "Hizmet detayları",
+        "description": "Seçili hizmetlerin KDV ve satır bilgileri Hizmetler adımında yer alır.",
+        "action": "Hizmetleri aç",
+        "count_one": "1 hizmet seçildi",
+        "count_other": "{{count}} hizmet seçildi",
+        "total": "Hizmet toplamı: {{amount}}"
+      },
+      "finalSummary": {
+        "title": "Paket fiyatı özeti",
+        "tooltip": "Seçilen hizmetleri nasıl fiyatlandırdığına göre net, KDV ve KDV dahil toplamları gösterir.",
+        "net": "Paket fiyatı (KDV hariç)",
+        "vat": "KDV tutarı",
+        "gross": "Paket fiyatı (KDV dahil)",
+        "inclusiveHelper": "Seçilen hizmetler paket fiyatının içinde kabul edilir.",
+        "addOnsHelper": "Müşteri toplamı = paket fiyatı + seçilen hizmetler.",
+        "servicesLine": "Hizmet toplamı: {{amount}} (iç takip)."
       },
       "summary": {
         "packagePrice": "Paket fiyatı",
         "servicesTotal": "Seçili hizmetlerin toplam satış tutarı",
+        "servicesNetTotal": "Seçili hizmetler (KDV hariç)",
+        "servicesNetHelper": "KDV eklenmeden önceki satır kalemi toplamı.",
+        "servicesVatTotal": "KDV toplamı",
+        "servicesGrossTotal": "Seçili hizmetler (KDV dahil)",
         "addOnsClientTotal": "Paket + hizmetler toplamı",
         "clientTotalTitle": "Müşteri fiyatı",
         "clientTotalHelperTitle": "Müşteriye sunulacak tutar",
         "clientTotalHelper": {
           "inclusive": "Paket fiyatı seçilen hizmetleri zaten kapsıyor.",
           "addOns": "Toplam tutar = paket fiyatı + seçilen hizmetler."
-        }
+        },
+        "clientTotalBreakdown": "Net: {{net}} • KDV: {{vat}}",
+        "costTotal": "Maliyet toplamı",
+        "margin": "Kâr",
+        "packageVatSummary": "KDV %{{rate}} • {{mode}} • KDV tutarı {{amount}}"
       },
       "includeAddOns": {
         "title": "Hizmetleri nasıl fiyatlandırıyorsun?",

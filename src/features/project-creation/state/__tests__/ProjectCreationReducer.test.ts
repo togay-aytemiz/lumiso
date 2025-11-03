@@ -83,13 +83,23 @@ describe("projectCreationReducer mutations", () => {
     expect(updated.meta.isDirty).toBe(true);
   });
 
-  it("persists service selections while merging updates", () => {
+  it("persists service line items while merging updates", () => {
     const base = createInitialProjectCreationState();
     const withServices = reduce(base, {
       type: "UPDATE_SERVICES",
       payload: {
-        selectedServiceIds: ["svc-1"],
-        selectedServices: [{ id: "svc-1", name: "Timeline planning" }],
+        items: [
+          {
+            id: "svc-1",
+            type: "existing",
+            serviceId: "svc-1",
+            name: "Timeline planning",
+            quantity: 1,
+            unitPrice: 2500,
+            vatMode: "inclusive",
+            vatRate: 20,
+          },
+        ],
       },
     });
 
@@ -102,7 +112,8 @@ describe("projectCreationReducer mutations", () => {
       },
     });
 
-    expect(toggled.services.selectedServiceIds).toEqual(["svc-1"]);
+    expect(toggled.services.items).toHaveLength(1);
+    expect(toggled.services.items[0]?.name).toBe("Timeline planning");
     expect(toggled.services.packageLabel).toBe("Basic package");
     expect(toggled.meta.isDirty).toBe(true);
   });

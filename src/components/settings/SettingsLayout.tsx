@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
@@ -15,7 +22,11 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useSettingsContext } from "@/contexts/SettingsContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -36,30 +47,106 @@ interface NavItem {
 }
 
 const personalSettingsItems: NavItem[] = [
-  { title: "profile", href: "/settings/profile", icon: User, testId: "profile-section" },
-  { title: "notifications", href: "/settings/notifications", icon: Bell, testId: "notifications-section" },
+  {
+    title: "profile",
+    href: "/settings/profile",
+    icon: User,
+    testId: "profile-section",
+  },
+  {
+    title: "notifications",
+    href: "/settings/notifications",
+    icon: Bell,
+    testId: "notifications-section",
+  },
 ];
 
 const organizationSettingsItems: NavItem[] = [
-  { title: "general", href: "/settings/general", icon: Settings, testId: "general-section" },
-  { title: "projects", href: "/settings/projects", icon: FolderOpen, testId: "projects-section" },
-  { title: "leads", href: "/settings/leads", icon: UserCheck, testId: "leads-section" },
-  { title: "services", href: "/settings/services", icon: Package, testId: "services-section" },
-  { title: "contracts", href: "/settings/contracts", icon: FileText, testId: "contracts-section" },
-  { title: "billing", href: "/settings/billing", icon: CreditCard, testId: "billing-section" },
-  { title: "dangerZone", href: "/settings/danger-zone", icon: AlertTriangle, testId: "danger-section", variant: "danger" },
+  {
+    title: "general",
+    href: "/settings/general",
+    icon: Settings,
+    testId: "general-section",
+  },
+  {
+    title: "projects",
+    href: "/settings/projects",
+    icon: FolderOpen,
+    testId: "projects-section",
+  },
+  {
+    title: "leads",
+    href: "/settings/leads",
+    icon: UserCheck,
+    testId: "leads-section",
+  },
+  {
+    title: "services",
+    href: "/settings/services",
+    icon: Package,
+    testId: "services-section",
+  },
+  {
+    title: "contracts",
+    href: "/settings/contracts",
+    icon: FileText,
+    testId: "contracts-section",
+  },
+  {
+    title: "billing",
+    href: "/settings/billing",
+    icon: CreditCard,
+    testId: "billing-section",
+  },
+  {
+    title: "dangerZone",
+    href: "/settings/danger-zone",
+    icon: AlertTriangle,
+    testId: "danger-section",
+    variant: "danger",
+  },
 ];
 
-const pageMetadata: Record<string, { titleKey: string; descriptionKey?: string }> = {
-  "/settings/profile": { titleKey: "settings.profile.title", descriptionKey: "settings.profile.description" },
-  "/settings/notifications": { titleKey: "settings.notifications.title", descriptionKey: "settings.notifications.description" },
-  "/settings/general": { titleKey: "settings.general.title", descriptionKey: "settings.general.description" },
-  "/settings/projects": { titleKey: "settings.projects.title", descriptionKey: "settings.projects.description" },
-  "/settings/leads": { titleKey: "settings.leads.title", descriptionKey: "settings.leads.description" },
-  "/settings/services": { titleKey: "settings.services.title", descriptionKey: "settings.services.description" },
-  "/settings/contracts": { titleKey: "settings.contracts.title", descriptionKey: "settings.contracts.description" },
-  "/settings/billing": { titleKey: "settings.billing.title", descriptionKey: "settings.billing.description" },
-  "/settings/danger-zone": { titleKey: "settings.dangerZone.title", descriptionKey: "settings.dangerZone.description" },
+const pageMetadata: Record<
+  string,
+  { titleKey: string; descriptionKey?: string }
+> = {
+  "/settings/profile": {
+    titleKey: "settings.profile.title",
+    descriptionKey: "settings.profile.description",
+  },
+  "/settings/notifications": {
+    titleKey: "settings.notifications.title",
+    descriptionKey: "settings.notifications.description",
+  },
+  "/settings/general": {
+    titleKey: "settings.general.title",
+    descriptionKey: "settings.general.description",
+  },
+  "/settings/projects": {
+    titleKey: "settings.projects.title",
+    descriptionKey: "settings.projects.description",
+  },
+  "/settings/leads": {
+    titleKey: "settings.leads.title",
+    descriptionKey: "settings.leads.description",
+  },
+  "/settings/services": {
+    titleKey: "settings.services.title",
+    descriptionKey: "settings.services.description",
+  },
+  "/settings/contracts": {
+    titleKey: "settings.contracts.title",
+    descriptionKey: "settings.contracts.description",
+  },
+  "/settings/billing": {
+    titleKey: "settings.billing.title",
+    descriptionKey: "settings.billing.description",
+  },
+  "/settings/danger-zone": {
+    titleKey: "settings.dangerZone.title",
+    descriptionKey: "settings.dangerZone.description",
+  },
 };
 
 const CLOSE_TARGET = "__settings_close__";
@@ -68,7 +155,8 @@ const LAST_NON_SETTINGS_PATH_KEY = "lumiso:last-non-settings-path";
 export default function SettingsLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { hasCategoryChanges, cancelCategoryChanges, saveCategoryChanges } = useSettingsContext();
+  const { hasCategoryChanges, cancelCategoryChanges, saveCategoryChanges } =
+    useSettingsContext();
   const { shouldLockNavigation } = useOnboarding();
   const { t } = useTranslation("navigation");
   const { t: tCommon } = useTranslation("common");
@@ -107,7 +195,9 @@ export default function SettingsLayout() {
     navigate(target, { replace: true });
   }, [navigate]);
 
-  const [modalState, setModalState] = useState<"enter" | "idle" | "exit">("enter");
+  const [modalState, setModalState] = useState<"enter" | "idle" | "exit">(
+    "enter"
+  );
   const [showHelp, setShowHelp] = useState(false);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -225,13 +315,19 @@ export default function SettingsLayout() {
     }
 
     // Attempt to match settings index routes
-    const matchedEntry = Object.entries(pageMetadata).find(([path]) => currentPath.startsWith(path));
+    const matchedEntry = Object.entries(pageMetadata).find(([path]) =>
+      currentPath.startsWith(path)
+    );
     return matchedEntry ? matchedEntry[1] : null;
   }, [currentPath]);
 
-  const headerTitle = headerMeta ? tPages(headerMeta.titleKey) : t("settings.title");
+  const headerTitle = headerMeta
+    ? tPages(headerMeta.titleKey)
+    : t("settings.title");
   const headerDescription =
-    headerMeta && headerMeta.descriptionKey ? tPages(headerMeta.descriptionKey) : undefined;
+    headerMeta && headerMeta.descriptionKey
+      ? tPages(headerMeta.descriptionKey)
+      : undefined;
 
   const helpKey = useMemo(() => {
     const segments = currentPath.split("/").filter(Boolean);
@@ -239,7 +335,12 @@ export default function SettingsLayout() {
     return rawKey.replace(/-([a-z])/g, (_, char: string) => char.toUpperCase());
   }, [currentPath]);
 
-  const helpContent = (settingsHelpContent as Record<string, typeof settingsHelpContent.profile | undefined>)[helpKey];
+  const helpContent = (
+    settingsHelpContent as Record<
+      string,
+      typeof settingsHelpContent.profile | undefined
+    >
+  )[helpKey];
 
   useEffect(() => {
     setShowHelp(false);
@@ -280,7 +381,9 @@ export default function SettingsLayout() {
           <Icon
             className={cn(
               "h-4 w-4 flex-shrink-0 transition-colors",
-              isActive && item.variant !== "danger" && "text-[hsl(var(--accent-700))]",
+              isActive &&
+                item.variant !== "danger" &&
+                "text-[hsl(var(--accent-700))]",
               !isActive && "text-muted-foreground/80"
             )}
           />
@@ -301,7 +404,10 @@ export default function SettingsLayout() {
         return (
           <Tooltip key={item.href}>
             <TooltipTrigger asChild>
-              <div data-walkthrough={item.testId} onClick={(event) => handleNavItemInteraction(event, item.href)}>
+              <div
+                data-walkthrough={item.testId}
+                onClick={(event) => handleNavItemInteraction(event, item.href)}
+              >
                 {linkContent}
               </div>
             </TooltipTrigger>
@@ -352,7 +458,7 @@ export default function SettingsLayout() {
       >
         <div
           className={cn(
-            "relative flex h-full max-h-[min(960px,calc(100vh-2rem))] w-full max-w-7xl overflow-hidden rounded-3xl border border-border/70 bg-[hsl(var(--background))] shadow-[var(--settings-overlay-shadow)]",
+            "relative flex h-full max-h-[min(960px,calc(100vh-2rem))] w-full max-w-[92rem] overflow-hidden rounded-3xl border border-border/70 bg-[hsl(var(--background))] shadow-[var(--settings-overlay-shadow)]",
             modalState === "enter" && "settings-modal-enter",
             modalState === "exit" && "settings-modal-exit"
           )}
@@ -367,30 +473,50 @@ export default function SettingsLayout() {
               <div className="flex-1 overflow-y-auto px-3 py-6">
                 <div className="space-y-6">
                   <section>
-                    <p className={cn(settingsClasses.railSectionLabel, "px-2 text-muted-foreground/70")}>
+                    <p
+                      className={cn(
+                        settingsClasses.railSectionLabel,
+                        "px-2 text-muted-foreground/70"
+                      )}
+                    >
                       {t("settings.personalSettings")}
                     </p>
-                    <nav className="mt-3 space-y-1.5">{personalSettingsItems.map(renderNavLink)}</nav>
+                    <nav className="mt-3 space-y-1.5">
+                      {personalSettingsItems.map(renderNavLink)}
+                    </nav>
                   </section>
                   <section>
-                    <p className={cn(settingsClasses.railSectionLabel, "px-2 text-muted-foreground/70")}>
+                    <p
+                      className={cn(
+                        settingsClasses.railSectionLabel,
+                        "px-2 text-muted-foreground/70"
+                      )}
+                    >
                       {t("settings.organizationSettings")}
                     </p>
-                    <nav className="mt-3 space-y-1.5">{organizationSettingsItems.map(renderNavLink)}</nav>
+                    <nav className="mt-3 space-y-1.5">
+                      {organizationSettingsItems.map(renderNavLink)}
+                    </nav>
                   </section>
                 </div>
               </div>
             </aside>
 
-            <div className="flex min-h-0 flex-1 flex-col bg-card">
-              <header className="sticky top-0 z-30 border-b border-border/70 bg-card/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-card/80 sm:px-6">
+            <div className="flex min-h-0 flex-1 flex-col bg-[hsl(var(--background))]">
+              <header className="sticky top-0 z-30 border-b border-border/60 bg-[hsl(var(--background))] px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-[hsl(var(--background))] sm:px-6">
                 <div
                   key={currentPath}
-                  className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between settings-header-motion"
+                  className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between settings-header-motion"
                 >
-                  <div className="min-w-0 space-y-1">
-                    <h1 className={cn(settingsClasses.headerTitle, "truncate")}>{headerTitle}</h1>
-                    {headerDescription && <p className={settingsClasses.headerDescription}>{headerDescription}</p>}
+                  <div className="min-w-0 space-y-1 py-4">
+                    <h1 className={cn(settingsClasses.headerTitle, "truncate")}>
+                      {headerTitle}
+                    </h1>
+                    {headerDescription && (
+                      <p className={settingsClasses.headerDescription}>
+                        {headerDescription}
+                      </p>
+                    )}
                   </div>
                   <div className="flex shrink-0 items-center justify-end gap-2">
                     <Button
@@ -426,7 +552,9 @@ export default function SettingsLayout() {
                         key={`mobile-${item.href}`}
                         to={item.href}
                         replace
-                        onClick={(event) => handleNavItemInteraction(event, item.href)}
+                        onClick={(event) =>
+                          handleNavItemInteraction(event, item.href)
+                        }
                         className={cn(
                           "settings-nav-item inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                           isActive
@@ -441,8 +569,6 @@ export default function SettingsLayout() {
                   })}
                 </nav>
               </header>
-
-              <div className="hidden border-b border-border/70 bg-card/80 px-6 py-3 md:block" data-slot="settings-anchor-nav" />
 
               <div
                 key={`${currentPath}-content`}

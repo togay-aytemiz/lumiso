@@ -146,73 +146,73 @@ Cross-cutting components:
 ## Implementation Roadmap
 
 ### Phase 0 — Audit & Design Foundations
-- [ ] Screenshot and measure current layouts (desktop/tablet/mobile) for each page.
-- [ ] Map existing mobile navigation journeys (horizontal icon bar, nested routes) and note breakpoints where the experience breaks down.
-- [x] Define typography & spacing tokens (`settingsTokens.ts`, Tailwind utilities in `src/index.css`).
-- [ ] Align with brand guidelines (confirm color palette & radius scale).
-- [ ] Partner with platform team to provision the `settings_modal_overlay_v1` feature flag, document rollout criteria, and ensure per-workspace toggling works in staging.
+- ▫️ Screenshot and measure current layouts (desktop/tablet/mobile) for each page.
+- ▫️ Map existing mobile navigation journeys (horizontal icon bar, nested routes) and note breakpoints where the experience breaks down.
+- ✅ Define typography & spacing tokens (`settingsTokens.ts`, Tailwind utilities in `src/index.css`).
+- ▫️ Align with brand guidelines (confirm color palette & radius scale).
+- ▫️ Partner with platform team to provision the `settings_modal_overlay_v1` feature flag, document rollout criteria, and ensure per-workspace toggling works in staging.
 - Deliverables: token spec, audit notes, before-state assets archived in `/docs/assets/settings/`.
 
 ### Phase 1 — Core Components & Utilities
-- [x] Build `SettingsModalShell` + upgraded `SettingsHeader`.
- - [ ] Wrap new shell/components in the `settings_modal_overlay_v1` feature flag with runtime switch + fallback to legacy layout.
- - [ ] Create `SettingsMobileDashboard`, `SettingsSubpageHeader`, `SettingsAnchorNav`, and `useSettingsAnchorRegistry` primitives with storybook examples, reusing the scroll-spy + sticky behaviors proven in Project/Lead/Sheet detail pages.
-- [x] Implement `SettingsHelpSheet` component triggered by the header `Need help?` action; support markdown + media embeds and connect content to the shared i18n pipeline.
-- [ ] Introduce section primitives (`SettingsFormSection`, `SettingsCollectionSection`, `SettingsToggleSection`, `SettingsDangerSection`, `SettingsPlaceholderSection`).
-- [ ] Create shared uploader hook and refresh button pattern.
-- [ ] Add storybook/preview entries (optional) or Chromatic snapshots.
-- [ ] Update tests for new primitives (`src/components/settings/__tests__`).
+- ✅ Build `SettingsModalShell` + upgraded `SettingsHeader`.
+ - ▫️ Wrap new shell/components in the `settings_modal_overlay_v1` feature flag with runtime switch + fallback to legacy layout.
+ - ▫️ Create `SettingsMobileDashboard`, `SettingsSubpageHeader`, `SettingsAnchorNav`, and `useSettingsAnchorRegistry` primitives with storybook examples, reusing the scroll-spy + sticky behaviors proven in Project/Lead/Sheet detail pages.
+- ✅ Implement `SettingsHelpSheet` component triggered by the header `Need help?` action; support markdown + media embeds and connect content to the shared i18n pipeline.
+- ▫️ Introduce section primitives (`SettingsFormSection`, `SettingsCollectionSection`, `SettingsToggleSection`, `SettingsDangerSection`, `SettingsPlaceholderSection`).
+- ▫️ Create shared uploader hook and refresh button pattern.
+- ▫️ Add storybook/preview entries (optional) or Chromatic snapshots.
+- ▫️ Update tests for new primitives (`src/components/settings/__tests__`).
 
 ### Phase 2 — Page Wave A (Foundation)
-- `[ ]` Profile: migrate to new sections, refine avatar/work hours layout, hook to shared uploader.
-- `[ ]` General: apply form + collection sections, add explicit save for branding/regional, unify social channels card, and wire anchor nav jump links per section.
-- `[ ]` Billing: move `Tax & Billing Profile` + `Payment Methods` into modal sections, wire anchor registry + dirty guard + shared footer events, surface organization defaults (legal entity, company name, tax office, VKN/TCKN, billing address, default KDV mode + rate), and persist updates through `useOrganizationSettings`.
-- `[ ]` Notifications: convert toggles to `SettingsToggleSection`, throttle fetches, add `Test` button alignment.
-- `[ ]` Ship translation updates and ensure tutorials overlay the refreshed layout.
-- `[ ]` Routing & breakpoints: route `/settings` to the mobile dashboard below `md`, ensure back navigation + compact spacing tokens apply across Profile/General/Notifications.
+- ▫️ Profile: migrate to new sections, refine avatar/work hours layout, hook to shared uploader.
+- ▫️ General: apply form + collection sections, add explicit save for branding/regional, unify social channels card, and wire anchor nav jump links per section.
+- ▫️ Billing: move `Tax & Billing Profile` + `Payment Methods` into modal sections, wire anchor registry + dirty guard + shared footer events, surface organization defaults (legal entity, company name, tax office, VKN/TCKN, billing address, default KDV mode + rate), and persist updates through `useOrganizationSettings`.
+- ▫️ Notifications: convert toggles to `SettingsToggleSection`, throttle fetches, add `Test` button alignment.
+- ▫️ Ship translation updates and ensure tutorials overlay the refreshed layout.
+- ▫️ Routing & breakpoints: route `/settings` to the mobile dashboard below `md`, ensure back navigation + compact spacing tokens apply across Profile/General/Notifications.
 
 ### Phase 3 — Page Wave B (Data Collections)
-- `[ ]` Leads: refactor statuses & fields into collection sections, add keyboard reorder, align modals.
-- `[ ]` Projects: same pattern as leads; ensure statuses/types share components.
-- `[ ]` Services: standardize cards for session types/packages/services; consolidate onboarding surfaces.
-- `[ ]` Document data fetch policies (manual refresh vs. auto).
-- `[ ]` Extend anchor nav mapping and mobile back pattern to collection-heavy pages (Leads/Projects/Services) with sensible section groupings.
+- ▫️ Leads: refactor statuses & fields into collection sections, add keyboard reorder, align modals.
+- ▫️ Projects: same pattern as leads; ensure statuses/types share components.
+- ▫️ Services: standardize cards for session types/packages/services; consolidate onboarding surfaces.
+- ▫️ Document data fetch policies (manual refresh vs. auto).
+- ▫️ Extend anchor nav mapping and mobile back pattern to collection-heavy pages (Leads/Projects/Services) with sensible section groupings.
 
 ### Phase 3.5 — Compliance & Billing Foundations
-- `[x]` Persist organization tax profile via `useOrganizationSettings` with optimistic save + dirty-state pill; ensure partial updates do not clear existing tax identifiers.
-- `[x]` Validate the Supabase migration `20251109120000_services_vat_profile.sql` (service VAT columns + tax profile defaults) and document rollout sequencing. *(Applied to prod 2025‑11‑09.)*
-- `[ ]` QA + deploy follow-up migration `20251109161000_tax_profile_defaults_include.sql` to align defaults with VAT-inclusive pricing and update seeded sample services.
-- `[ ]` Add validation masks for TCKN/VKN (11-digit national ID vs 10-digit tax number) and guard rails for numeric KDV ranges (0–99.99%).
-- `[ ]` Surface audit log events (`settings_tax_profile_updated`) so finance tooling can track changes before e-Fatura integrations.
-- `[ ]` Store structured invoice address (`street`, `district`, `city`, `country`, `postalCode`) ready for electronic invoice payloads.
-- `[ ]` Document API contracts for downstream billing services (e.g., `POST /billing/profile/snapshot`) and expose a "Download billing profile" action for manual compliance exports.
+- ✅ Persist organization tax profile via `useOrganizationSettings` with optimistic save + dirty-state pill; ensure partial updates do not clear existing tax identifiers.
+- ✅ Validate the Supabase migration `20251109120000_services_vat_profile.sql` (service VAT columns + tax profile defaults) and document rollout sequencing. *(Applied to prod 2025‑11‑09.)*
+- ▫️ QA + deploy follow-up migration `20251109161000_tax_profile_defaults_include.sql` to align defaults with VAT-inclusive pricing and update seeded sample services.
+- ▫️ Add validation masks for TCKN/VKN (11-digit national ID vs 10-digit tax number) and guard rails for numeric KDV ranges (0–99.99%).
+- ▫️ Surface audit log events (`settings_tax_profile_updated`) so finance tooling can track changes before e-Fatura integrations.
+- ▫️ Store structured invoice address (`street`, `district`, `city`, `country`, `postalCode`) ready for electronic invoice payloads.
+- ▫️ Document API contracts for downstream billing services (e.g., `POST /billing/profile/snapshot`) and expose a "Download billing profile" action for manual compliance exports.
 
 ### Phase 4 — Peripheral Pages & Cleanup
-- `[ ]` Danger Zone: apply danger block pattern, tighten copy, confirm double-confirm flow.
-- `[ ]` Billing & Contracts: replace placeholder paragraphs with reusable empty-state card.
-- `[ ]` Remove deprecated components (`SettingsSection`, `EnhancedSettingsSection`) once unused.
-- `[x]` Update `SettingsPageWrapper` sticky footer visuals.
-- `[ ]` Ensure analytics + logging in place.
+- ▫️ Danger Zone: apply danger block pattern, tighten copy, confirm double-confirm flow.
+- ▫️ Billing & Contracts: replace placeholder paragraphs with reusable empty-state card.
+- ▫️ Remove deprecated components (`SettingsSection`, `EnhancedSettingsSection`) once unused.
+- ✅ Update `SettingsPageWrapper` sticky footer visuals.
+- ▫️ Ensure analytics + logging in place.
 
 ### Phase 5 — QA, Performance, and Rollout
-- [ ] Cross-browser testing (Chrome, Safari, Firefox) desktop/tablet/mobile.
-- [ ] Usability pass with sample users (record feedback on density & clarity).
-- [ ] Measure Supabase call volume pre/post refactor.
-- [ ] Prepare migration notes + update this document with progress and learnings.
-- [ ] Align release messaging and changelog.
+- ▫️ Cross-browser testing (Chrome, Safari, Firefox) desktop/tablet/mobile.
+- ▫️ Usability pass with sample users (record feedback on density & clarity).
+- ▫️ Measure Supabase call volume pre/post refactor.
+- ▫️ Prepare migration notes + update this document with progress and learnings.
+- ▫️ Align release messaging and changelog.
 
 ## Page-by-Page Checklist
 | Page | Section(s) | UI Refresh | Interaction Model | Data Strategy | Status | Product Team Questions |
 | --- | --- | --- | --- | --- | --- | --- |
-| Profile | Profile Info / Working Hours | [ ] | Define save vs. auto-save, tutorial overlay | Cache profile + working hours, manual refresh | Not Started | Should organization admins be allowed to change staff working hours directly, or must owners confirm adjustments? |
-| General | Branding / Social / Regional | [ ] | Explicit save w/ footer + inline upload | Cached, refetch on demand | Not Started | Do we enforce brand color/logo constraints aligned with marketing guidelines or permit unrestricted customization? |
-| Notifications | Master / Scheduled / Immediate | [ ] | Auto-save toggles + manual test triggers | Batch updates, debounce Supabase writes | Not Started | Which notification channels (email, SMS, push) need to be represented at launch and what delivery windows are promised? |
-| Leads | Statuses / Fields | [ ] | Drag reorder + dialog pattern | Normalize queries, reduce background polling | Not Started | What default pipeline stages must every workspace retain, and can teams delete core stages? |
-| Projects | Statuses / Types / Session Statuses | [ ] | Drag reorder + inline defaults | Shared hook for status entities | Not Started | Do project status/type templates need to stay synced across teams or can users diverge freely? |
-| Services | Session Types / Packages / Services | [ ] | Multi-step onboarding alignment | Consolidate queries, lazy-load heavy dialogs | Not Started | Are packages expected to support multi-currency pricing in this release or remain single-currency? |
-| Contracts | Placeholder | [ ] | N/A (display card) | Static copy | Not Started | Should the placeholder point to upcoming in-product templates or route to external contract resources until builder ships? |
-| Billing | Tax & Billing Profile / Payment Methods | [ ] | Modal overlay + shared sticky footer/guard dialog + anchor pills | Persist `taxProfile` jsonb, inclusive defaults cached; payment method vault stub still pending | In Progress | Which e-Fatura provider (if any) are we targeting first, and do we need multi-address support for branches? |
-| Danger Zone | Delete org | [ ] | Double confirm + password field | No auto-refetch | Not Started | Does org deletion require a grace period or approval workflow beyond the password confirmation flow? |
+| Profile | Profile Info / Working Hours | ▫️ | Define save vs. auto-save, tutorial overlay | Cache profile + working hours, manual refresh | Not Started | Should organization admins be allowed to change staff working hours directly, or must owners confirm adjustments? |
+| General | Branding / Social / Regional | ▫️ | Explicit save w/ footer + inline upload | Cached, refetch on demand | Not Started | Do we enforce brand color/logo constraints aligned with marketing guidelines or permit unrestricted customization? |
+| Notifications | Master / Scheduled / Immediate | ▫️ | Auto-save toggles + manual test triggers | Batch updates, debounce Supabase writes | Not Started | Which notification channels (email, SMS, push) need to be represented at launch and what delivery windows are promised? |
+| Leads | Statuses / Fields | ▫️ | Drag reorder + dialog pattern | Normalize queries, reduce background polling | Not Started | What default pipeline stages must every workspace retain, and can teams delete core stages? |
+| Projects | Statuses / Types / Session Statuses | ▫️ | Drag reorder + inline defaults | Shared hook for status entities | Not Started | Do project status/type templates need to stay synced across teams or can users diverge freely? |
+| Services | Session Types / Packages / Services | ▫️ | Multi-step onboarding alignment | Consolidate queries, lazy-load heavy dialogs | Not Started | Are packages expected to support multi-currency pricing in this release or remain single-currency? |
+| Contracts | Placeholder | ▫️ | N/A (display card) | Static copy | Not Started | Should the placeholder point to upcoming in-product templates or route to external contract resources until builder ships? |
+| Billing | Tax & Billing Profile / Payment Methods | ▫️ | Modal overlay + shared sticky footer/guard dialog + anchor pills | Persist `taxProfile` jsonb, inclusive defaults cached; payment method vault stub still pending | In Progress | Which e-Fatura provider (if any) are we targeting first, and do we need multi-address support for branches? |
+| Danger Zone | Delete org | ▫️ | Double confirm + password field | No auto-refetch | Not Started | Does org deletion require a grace period or approval workflow beyond the password confirmation flow? |
 
 > Update the table as work lands (check items, add Notes column if needed).
 

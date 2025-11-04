@@ -24,6 +24,16 @@ interface AddPaymentDialogProps {
   onPaymentAdded: () => void;
 }
 
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "An unexpected error occurred";
+};
+
 export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialogProps) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
@@ -36,9 +46,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
   const { t } = useFormsTranslation();
   const browserLocale = getUserLocale();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
     if (!amount.trim()) {
       toast.error(t('payments.amount_required'));
       return;
@@ -76,8 +84,8 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
       resetForm();
       setOpen(false);
       onPaymentAdded();
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -109,8 +117,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
   };
 
   const handleSubmitClick = () => {
-    const event = { preventDefault: () => {} } as React.FormEvent;
-    handleSubmit(event);
+    void handleSubmit();
   };
 
   const footerActions = [

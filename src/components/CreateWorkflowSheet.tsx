@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { ComponentType } from "react";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,17 +10,25 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Loader2, Mail, MessageCircle, Phone, Clock } from "lucide-react";
-import { WorkflowFormData, TriggerType } from "@/types/workflow";
+import { WorkflowFormData, TriggerType, Workflow } from "@/types/workflow";
 import { useTemplates } from "@/hooks/useTemplates";
 import { cn } from "@/lib/utils";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { useTranslation } from "react-i18next";
+interface EditableWorkflow extends Workflow {
+  template_id?: string | null;
+  reminder_delay_minutes?: number | null;
+  email_enabled?: boolean | null;
+  whatsapp_enabled?: boolean | null;
+  sms_enabled?: boolean | null;
+}
+
 interface CreateWorkflowSheetProps {
   onCreateWorkflow: (data: WorkflowFormData) => Promise<void>;
-  editWorkflow?: any;
+  editWorkflow?: EditableWorkflow | null;
   onUpdateWorkflow?: (id: string, data: WorkflowFormData) => Promise<void>;
-  setEditingWorkflow?: (workflow: any) => void;
+  setEditingWorkflow?: (workflow: EditableWorkflow | null) => void;
   children?: React.ReactNode;
 }
 type ChannelType = 'email' | 'sms' | 'whatsapp';
@@ -54,10 +63,10 @@ export function CreateWorkflowSheet({
     { value: 60, label: t('pages:workflows.createDialog.reminderDelays.60') }
   ];
 
-  const channelConfigs: Record<ChannelType, { enabled: boolean; icon: React.ComponentType<{ className?: string }>; label: string; color: string }> = {
-    email: { enabled: true, icon: Mail, label: t('pages:workflows.createDialog.channels.email'), color: 'bg-blue-500' },
-    whatsapp: { enabled: true, icon: MessageCircle, label: t('pages:workflows.createDialog.channels.whatsapp'), color: 'bg-green-600' },
-    sms: { enabled: true, icon: Phone, label: t('pages:workflows.createDialog.channels.sms'), color: 'bg-green-500' }
+  const channelConfigs: Record<ChannelType, { icon: ComponentType<{ className?: string }>; label: string; color: string }> = {
+    email: { icon: Mail, label: t('pages:workflows.createDialog.channels.email'), color: 'bg-blue-500' },
+    whatsapp: { icon: MessageCircle, label: t('pages:workflows.createDialog.channels.whatsapp'), color: 'bg-green-600' },
+    sms: { icon: Phone, label: t('pages:workflows.createDialog.channels.sms'), color: 'bg-green-500' }
   };
 
   // Initialize form data based on edit workflow
@@ -146,7 +155,9 @@ export function CreateWorkflowSheet({
   const handleSubmit = async () => {
     if (!formData.name.trim() || !formData.trigger_type || !selectedTemplate || !isTemplateValid) return;
     
-    const activeChannels = Object.entries(enabledChannels).filter(([_, enabled]) => enabled).map(([channel, _]) => channel) as ('email' | 'sms' | 'whatsapp')[];
+    const activeChannels = (Object.entries(enabledChannels) as Array<[ChannelType, boolean]>)
+      .filter(([, enabled]) => enabled)
+      .map(([channel]) => channel);
     const workflowStep = {
       step_order: 1,
       action_type: 'send_notification' as const,
@@ -194,7 +205,10 @@ export function CreateWorkflowSheet({
       sms: true
     });
   };
-  const updateFormData = (field: keyof WorkflowFormData, value: any) => {
+  const updateFormData = <Key extends keyof WorkflowFormData>(
+    field: Key,
+    value: WorkflowFormData[Key]
+  ) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

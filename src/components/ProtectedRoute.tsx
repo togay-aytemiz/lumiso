@@ -4,7 +4,11 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import Layout from "./Layout";
 import { useTranslation } from "react-i18next";
 
-const ProtectedRoute = () => {
+type ProtectedRouteProps = {
+  disableLayout?: boolean;
+};
+
+const ProtectedRoute = ({ disableLayout = false }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   const { shouldLockNavigation, loading: onboardingLoading } = useOnboarding();
   const location = useLocation();
@@ -40,6 +44,10 @@ const ProtectedRoute = () => {
   // Redirect to getting-started if user is in guided setup mode and not on an allowed page
   if (shouldLockNavigation && !onboardingStepPaths.some(path => location.pathname.startsWith(path))) {
     return <Navigate to="/getting-started" replace />;
+  }
+
+  if (disableLayout) {
+    return <Outlet />;
   }
 
   return (

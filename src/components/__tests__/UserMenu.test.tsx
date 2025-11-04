@@ -62,7 +62,14 @@ describe("UserMenu", () => {
     await user.click(
       await screen.findByRole("button", { name: "userMenu.profileSettings" })
     );
-    expect(mockNavigate).toHaveBeenCalledWith("/settings/profile");
+    expect(mockNavigate).toHaveBeenCalledWith(
+      "/settings/profile",
+      expect.objectContaining({
+        state: expect.objectContaining({
+          backgroundLocation: expect.objectContaining({ pathname: "/" }),
+        }),
+      })
+    );
     expect(mockOnNavigate).toHaveBeenCalledTimes(1);
 
     await user.click(screen.getAllByText("Jane Smith")[0]);

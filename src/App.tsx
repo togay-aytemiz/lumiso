@@ -1,5 +1,12 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
+import type { Location } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import GettingStarted from "./pages/GettingStarted";
@@ -16,7 +23,6 @@ import Payments from "./pages/Payments";
 import SettingsLayout from "./components/settings/SettingsLayout";
 import GeneralSettings from "./pages/settings/General";
 import ProfileSettings from "./pages/settings/Profile";
-// Team settings removed for single photographer mode
 import NotificationsSettings from "./pages/settings/Notifications";
 import ProjectsSettings from "./pages/settings/Projects";
 import LeadsSettings from "./pages/settings/Leads";
@@ -25,7 +31,6 @@ import ContractsSettings from "./pages/settings/Contracts";
 import BillingSettings from "./pages/settings/Billing";
 import DangerZoneSettings from "./pages/settings/DangerZone";
 import NotFound from "./pages/NotFound";
-// Team invitation pages removed for single photographer mode
 import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Workflows from "./pages/Workflows";
@@ -36,57 +41,75 @@ import AdminLocalization from "./pages/admin/Localization";
 import AdminUsers from "./pages/admin/Users";
 import AdminSystem from "./pages/admin/System";
 
+const renderSettingsRoutes = () => (
+  <Route path="settings" element={<SettingsLayout />}>
+    <Route path="profile" element={<ProfileSettings />} />
+    <Route path="general" element={<GeneralSettings />} />
+    <Route path="notifications" element={<NotificationsSettings />} />
+    <Route path="projects" element={<ProjectsSettings />} />
+    <Route path="leads" element={<LeadsSettings />} />
+    <Route path="services" element={<ServicesSettings />} />
+    <Route path="contracts" element={<ContractsSettings />} />
+    <Route path="billing" element={<BillingSettings />} />
+    <Route path="danger-zone" element={<DangerZoneSettings />} />
+  </Route>
+);
 
+const AppRoutes = () => {
+  const location = useLocation();
+  const state = location.state as { backgroundLocation?: Location } | undefined;
+
+  return (
+    <>
+      <Routes location={state?.backgroundLocation ?? location}>
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/auth/signin" element={<Auth />} />
+        <Route path="/auth/sign-in" element={<Auth />} />
+        <Route path="/auth/signup" element={<Auth />} />
+        <Route path="/auth/sign-up" element={<Auth />} />
+        <Route path="/" element={<ProtectedRoute />}>
+          <Route index element={<Index />} />
+          <Route path="getting-started" element={<GettingStarted />} />
+          <Route path="leads" element={<AllLeads />} />
+          <Route path="projects" element={<AllProjects />} />
+          <Route path="leads/:id" element={<LeadDetail />} />
+          <Route path="projects/:id" element={<ProjectDetail />} />
+          <Route path="sessions" element={<UpcomingSessions />} />
+          <Route path="sessions/:id" element={<SessionDetail />} />
+          <Route path="calendar" element={<Calendar />} />
+          <Route path="reminders" element={<ReminderDetails />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="payments" element={<Payments />} />
+          <Route path="workflows" element={<Workflows />} />
+          <Route path="templates" element={<Templates />} />
+          <Route path="template-builder" element={<TemplateBuilder />} />
+          <Route path="admin" element={<AdminLayout />}>
+            <Route path="localization" element={<AdminLocalization />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="system" element={<AdminSystem />} />
+            <Route index element={<Navigate to="/admin/localization" replace />} />
+          </Route>
+          {renderSettingsRoutes()}
+        </Route>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+
+      {state?.backgroundLocation && (
+        <Routes>
+          <Route path="/" element={<ProtectedRoute disableLayout />}>
+            {renderSettingsRoutes()}
+          </Route>
+        </Routes>
+      )}
+    </>
+  );
+};
 
 const App = () => (
   <ErrorBoundary>
     <TooltipProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/auth/signin" element={<Auth />} />
-          <Route path="/auth/sign-in" element={<Auth />} />
-          <Route path="/auth/signup" element={<Auth />} />
-          <Route path="/auth/sign-up" element={<Auth />} />
-          {/* Team invitation routes removed for single photographer mode */}
-          <Route path="/" element={<ProtectedRoute />}>
-            <Route index element={<Index />} />
-            <Route path="getting-started" element={<GettingStarted />} />
-            <Route path="leads" element={<AllLeads />} />
-            <Route path="projects" element={<AllProjects />} />
-            <Route path="leads/:id" element={<LeadDetail />} />
-            <Route path="projects/:id" element={<ProjectDetail />} />
-            <Route path="sessions" element={<UpcomingSessions />} />
-            <Route path="sessions/:id" element={<SessionDetail />} />
-            <Route path="calendar" element={<Calendar />} />
-            <Route path="reminders" element={<ReminderDetails />} />
-            <Route path="analytics" element={<Analytics />} />
-            <Route path="payments" element={<Payments />} />
-            <Route path="workflows" element={<Workflows />} />
-            <Route path="templates" element={<Templates />} />
-            <Route path="template-builder" element={<TemplateBuilder />} />
-            <Route path="admin" element={<AdminLayout />}>
-              <Route path="localization" element={<AdminLocalization />} />
-              <Route path="users" element={<AdminUsers />} />
-              <Route path="system" element={<AdminSystem />} />
-              <Route index element={<Navigate to="/admin/localization" replace />} />
-            </Route>
-            <Route path="settings" element={<SettingsLayout />}>
-              <Route path="profile" element={<ProfileSettings />} />
-              <Route path="general" element={<GeneralSettings />} />
-              {/* Team management removed for single photographer mode */}
-              <Route path="notifications" element={<NotificationsSettings />} />
-              <Route path="projects" element={<ProjectsSettings />} />
-              <Route path="leads" element={<LeadsSettings />} />
-              <Route path="services" element={<ServicesSettings />} />
-              <Route path="contracts" element={<ContractsSettings />} />
-              <Route path="billing" element={<BillingSettings />} />
-              <Route path="danger-zone" element={<DangerZoneSettings />} />
-            </Route>
-          </Route>
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AppRoutes />
       </BrowserRouter>
     </TooltipProvider>
   </ErrorBoundary>

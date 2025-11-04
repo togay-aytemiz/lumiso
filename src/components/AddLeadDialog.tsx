@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 import { useTranslation } from "react-i18next";
+import type { Database } from "@/integrations/supabase/types";
 
 interface AddLeadDialogProps {
   onLeadAdded: () => void;
@@ -25,12 +26,24 @@ interface AddLeadDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+type LeadStatusRow = Database["public"]["Tables"]["lead_statuses"]["Row"];
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "An unexpected error occurred";
+};
+
 const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) => {
   const { t } = useTranslation(['forms', 'common']);
   const toast = useI18nToast();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
+  const [leadStatuses, setLeadStatuses] = useState<LeadStatusRow[]>([]);
   const { settings: userSettings } = useOrganizationQuickSettings();
   const [formData, setFormData] = useState({
     name: "",
@@ -43,30 +56,33 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
   const { profile } = useProfile();
   // Permissions removed for single photographer mode - always allow
 
-  useEffect(() => {
-    fetchLeadStatuses();
-  }, []);
-
-  // Auto-assignment removed - single user organization
-
-  const fetchLeadStatuses = async () => {
+  const fetchLeadStatuses = useCallback(async () => {
     try {
       const { data, error } = await supabase
-        .from('lead_statuses')
+        .from<LeadStatusRow>('lead_statuses')
         .select('*')
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      setLeadStatuses(data || []);
+      const statuses = data ?? [];
+      setLeadStatuses(statuses);
       
       // Set default status to the first status (typically "New")
-      if (data && data.length > 0 && !formData.status) {
-        setFormData(prev => ({ ...prev, status: data[0].name }));
+      if (statuses.length > 0) {
+        setFormData(prev =>
+          prev.status ? prev : { ...prev, status: statuses[0].name }
+        );
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching lead statuses:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void fetchLeadStatuses();
+  }, [fetchLeadStatuses]);
+
+  // Auto-assignment removed - single user organization
 
   const validateForm = async () => {
     setErrors({});
@@ -136,8 +152,8 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
       resetForm();
       onOpenChange(false);
       onLeadAdded();
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setLoading(false);
     }

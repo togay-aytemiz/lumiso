@@ -81,7 +81,7 @@ export function MobileStickyNav() {
               <item.icon className="h-5 w-5" />
             </NavLink>
           );
-        })}
+        })} 
 
         {/* Projects */}
         <NavLink
@@ -159,6 +159,11 @@ export function MobileStickyNav() {
         <div className="mt-auto">
           <NavLink
             to="/settings"
+            state={
+              !currentPath.startsWith("/settings")
+                ? { backgroundLocation: location }
+                : undefined
+            }
             aria-label="Settings"
             className={`h-12 flex items-center justify-center transition-colors ${
               isActive("/settings")

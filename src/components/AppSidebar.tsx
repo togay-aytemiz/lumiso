@@ -1,4 +1,4 @@
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, 
@@ -74,6 +74,9 @@ export function AppSidebar() {
   const { isAdminOrSupport } = useUserRole();
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const { t } = useNavigationTranslation();
+  const settingsLinkState = !currentPath.startsWith("/settings")
+    ? { backgroundLocation: location }
+    : undefined;
 
   // Mobile sheet states
   const [bookingsSheetOpen, setBookingsSheetOpen] = useState(false);
@@ -391,6 +394,7 @@ export function AppSidebar() {
               <SidebarNavItem
                 title={t('menu.settings')}
                 url="/settings"
+                state={settingsLinkState}
                 icon={Settings}
                 isActive={isActive("/settings")}
                 isLocked={isItemLocked("/settings")}

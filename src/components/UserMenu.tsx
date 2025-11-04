@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Settings, LogOut, ChevronUp, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -19,6 +19,7 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
 
   const handleSignOut = async () => {
     try {
@@ -32,7 +33,11 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
   };
 
   const handleSettings = () => {
-    navigate("/settings");
+    const shouldAttachBackground = !location.pathname.startsWith("/settings");
+    const state = shouldAttachBackground
+      ? { backgroundLocation: location }
+      : undefined;
+    navigate("/settings/profile", state ? { state } : undefined);
     setIsOpen(false);
     onNavigate?.();
   };

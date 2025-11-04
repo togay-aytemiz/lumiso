@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { useI18nToast } from "@/lib/toastHelpers";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 import { useFormsTranslation } from '@/hooks/useTypedTranslation';
+import type { Database } from "@/integrations/supabase/types";
 
 interface Payment {
   id: string;
@@ -34,6 +35,18 @@ interface EditPaymentDialogProps {
   onPaymentUpdated: () => void;
 }
 
+type PaymentUpdate = Database["public"]["Tables"]["payments"]["Update"];
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "An unexpected error occurred";
+};
+
 export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdated }: EditPaymentDialogProps) {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -45,14 +58,28 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
   const { t } = useFormsTranslation();
 
   // Reset form when payment changes
-  useEffect(() => {
-    if (payment && open) {
+  const resetFormFromPayment = useCallback(() => {
+    if (payment) {
       setAmount(payment.amount.toString());
-      setDescription(payment.description || "");
+      setDescription(payment.description ?? "");
       setStatus(payment.status);
       setDatePaid(payment.date_paid ? new Date(payment.date_paid) : undefined);
+    } else {
+      setAmount("");
+      setDescription("");
+      setStatus("paid");
+      setDatePaid(undefined);
     }
-  }, [payment, open]);
+  }, [payment]);
+
+  useEffect(() => {
+    if (open) {
+      resetFormFromPayment();
+    }
+    if (!open) {
+      setDatePaid(undefined);
+    }
+  }, [open, resetFormFromPayment]);
 
   const handleSubmit = async () => {
     if (!payment || !amount.trim()) {
@@ -62,8 +89,13 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
 
     setIsLoading(true);
     try {
-      const updateData: any = {
-        amount: parseFloat(amount),
+      const parsedAmount = Number.parseFloat(amount);
+      if (Number.isNaN(parsedAmount)) {
+        throw new Error(t('edit_payment.invalid_amount', { defaultValue: 'Enter a valid amount' }));
+      }
+
+      const updateData: PaymentUpdate = {
+        amount: parsedAmount,
         description: description.trim() || null,
         status,
         date_paid: status === 'paid' ? datePaid?.toISOString().split('T')[0] : null
@@ -80,7 +112,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
       if (payment.type === 'base_price') {
         const { error: projectError } = await supabase
           .from('projects')
-          .update({ base_price: parseFloat(amount) })
+          .update({ base_price: parsedAmount })
           .eq('id', payment.project_id);
 
         if (projectError) {
@@ -93,8 +125,8 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
 
       onOpenChange(false);
       onPaymentUpdated();
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -114,6 +146,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
   const navigation = useModalNavigation({
     isDirty,
     onDiscard: () => {
+      resetFormFromPayment();
       onOpenChange(false);
     },
   });
@@ -131,7 +164,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
   const footerActions = [
     {
       label: t('buttons.cancel'),
-      onClick: () => onOpenChange(false),
+      onClick: () => handleDirtyClose(),
       variant: "outline" as const,
       disabled: isLoading
     },
@@ -148,7 +181,13 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
       <AppSheetModal
         title={t('edit_payment.title')}
         isOpen={open}
-        onOpenChange={onOpenChange}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            handleDirtyClose();
+          } else {
+            onOpenChange(true);
+          }
+        }}
         size="content"
         dirty={isDirty}
         onDirtyClose={handleDirtyClose}

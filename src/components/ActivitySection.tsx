@@ -20,13 +20,14 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
+import type { Database, Json } from "@/integrations/supabase/types";
 
 interface Activity {
   id: string;
   type: string;
   content: string;
-  reminder_date?: string;
-  reminder_time?: string;
+  reminder_date: string | null;
+  reminder_time: string | null;
   completed: boolean;
   created_at: string;
   updated_at: string;
@@ -34,15 +35,17 @@ interface Activity {
 
 interface Session {
   id: string;
-  session_name?: string;
+  session_name: string | null;
   session_date: string;
   session_time: string;
-  location?: string;
-  notes?: string;
+  location: string | null;
+  notes: string | null;
   status: string;
   created_at: string;
   updated_at: string;
 }
+
+type AuditLogValues = Record<string, unknown> | null;
 
 interface AuditLog {
   id: string;
@@ -50,8 +53,8 @@ interface AuditLog {
   entity_type: string;
   entity_id: string;
   action: string;
-  old_values?: any;
-  new_values?: any;
+  old_values: AuditLogValues;
+  new_values: AuditLogValues;
   created_at: string;
 }
 
@@ -60,6 +63,74 @@ interface ActivitySectionProps {
   entityId: string;
   onUpdate?: () => void;
 }
+
+type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
+type SessionRow = Database["public"]["Tables"]["sessions"]["Row"];
+type AuditLogRow = Database["public"]["Tables"]["audit_log"]["Row"];
+type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+
+const mapActivityRow = (row: ActivityRow): Activity => ({
+  id: row.id,
+  type: row.type,
+  content: row.content,
+  reminder_date: row.reminder_date,
+  reminder_time: row.reminder_time,
+  completed: Boolean(row.completed),
+  created_at: row.created_at,
+  updated_at: row.updated_at,
+});
+
+const mapSessionRow = (row: SessionRow): Session => ({
+  id: row.id,
+  session_name: row.session_name,
+  session_date: row.session_date,
+  session_time: row.session_time,
+  location: row.location,
+  notes: row.notes,
+  status: row.status,
+  created_at: row.created_at,
+  updated_at: row.updated_at,
+});
+
+const jsonToRecord = (value: Json | null): AuditLogValues => {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return null;
+};
+
+const mapAuditLogRow = (row: AuditLogRow): AuditLog => ({
+  id: row.id,
+  user_id: row.user_id,
+  entity_type: row.entity_type,
+  entity_id: row.entity_id,
+  action: row.action,
+  old_values: jsonToRecord(row.old_values),
+  new_values: jsonToRecord(row.new_values),
+  created_at: row.created_at,
+});
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "An unexpected error occurred";
+};
+
+const getRecordValue = <T,>(
+  record: AuditLogValues,
+  key: string,
+  predicate: (value: unknown) => value is T
+): T | undefined => {
+  const value = record?.[key];
+  return predicate(value) ? value : undefined;
+};
+
+const getStringValue = (record: AuditLogValues, key: string): string | undefined =>
+  getRecordValue(record, key, (value): value is string => typeof value === "string");
 
 export default function ActivitySection({ entityType, entityId, onUpdate }: ActivitySectionProps) {
   const [content, setContent] = useState('');
@@ -94,10 +165,10 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
   const [activityType, setActivityType] = useState('note');
 
   useEffect(() => {
-    fetchData();
-  }, [entityType, entityId]);
+    void fetchData();
+  }, [fetchData]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       await Promise.all([
@@ -110,42 +181,67 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchActivities, fetchSessions, fetchAuditLogs]);
 
-  const fetchActivities = async () => {
+  const fetchActivities = useCallback(async () => {
     try {
       const { data, error } = await supabase
-        .from('activities')
+        .from<ActivityRow>('activities')
         .select('*')
         .eq(entityType === 'lead' ? 'lead_id' : 'project_id', entityId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setActivities(data || []);
+      const normalized = (data ?? []).map(mapActivityRow);
+      setActivities(normalized);
     } catch (error) {
       console.error('Error fetching activities:', error);
     }
-  };
+  }, [entityId, entityType]);
 
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     try {
       const { data, error } = await supabase
-        .from('sessions')
+        .from<SessionRow>('sessions')
         .select('*')
         .eq(entityType === 'lead' ? 'lead_id' : 'project_id', entityId)
         .order('session_date', { ascending: false });
 
       if (error) throw error;
-      setSessions(data || []);
+      const normalized = (data ?? []).map(mapSessionRow);
+      setSessions(normalized);
     } catch (error) {
       console.error('Error fetching sessions:', error);
     }
-  };
+  }, [entityId, entityType]);
 
-  const fetchAuditLogs = async () => {
+  const fetchUserProfiles = useCallback(async (userIds: string[]) => {
     try {
       const { data, error } = await supabase
-        .from('audit_log')
+        .from<ProfileRow>('profiles')
+        .select('user_id, full_name, profile_photo_url')
+        .in('user_id', userIds);
+
+      if (error) throw error;
+
+      const profiles = (data ?? []).reduce((acc, profile) => {
+        acc[profile.user_id] = {
+          full_name: profile.full_name,
+          profile_photo_url: profile.profile_photo_url
+        };
+        return acc;
+      }, {} as { [key: string]: { full_name?: string; profile_photo_url?: string } });
+
+      setUserProfiles(prev => ({ ...prev, ...profiles }));
+    } catch (error) {
+      console.error('Error fetching user profiles:', error);
+    }
+  }, []);
+
+  const fetchAuditLogs = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from<AuditLogRow>('audit_log')
         .select('*')
         .eq('entity_id', entityId)
         .order('created_at', { ascending: false })
@@ -153,12 +249,12 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
 
       if (error) throw error;
 
-      const enrichedLogs = data || [];
+      const enrichedLogs = (data ?? []).map(mapAuditLogRow);
       
       // Collect all user IDs from the logs
       const allUserIds = new Set<string>();
       
-      data?.forEach(log => {
+      enrichedLogs.forEach(log => {
         if (log.user_id) {
           allUserIds.add(log.user_id);
         }
@@ -171,12 +267,12 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
       }
       
       setAuditLogs(enrichedLogs);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching audit logs:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [entityId, fetchUserProfiles]);
 
   const handleSaveActivity = async () => {
     if (!content.trim()) {
@@ -244,37 +340,14 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
       // Refresh data
       await fetchActivities();
       onUpdate?.();
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: tCommon('status.error'),
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     } finally {
       setSaving(false);
-    }
-  };
-
-  const fetchUserProfiles = async (userIds: string[]) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('user_id, full_name, profile_photo_url')
-        .in('user_id', userIds);
-
-      if (error) throw error;
-
-      const profiles = (data || []).reduce((acc, profile) => {
-        acc[profile.user_id] = {
-          full_name: profile.full_name,
-          profile_photo_url: profile.profile_photo_url
-        };
-        return acc;
-      }, {} as { [key: string]: { full_name?: string; profile_photo_url?: string } });
-
-      setUserProfiles(prev => ({ ...prev, ...profiles }));
-    } catch (error) {
-      console.error('Error fetching user profiles:', error);
     }
   };
 
@@ -296,10 +369,10 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
         title: tCommon('actions.success'),
         description: completed ? tCommon('status.completed') : tCommon('status.active')
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: tCommon('status.error'),
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     }
@@ -321,10 +394,10 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
         title: tCommon('actions.success'),
         description: tCommon('messages.success.delete')
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: tCommon('status.error'),
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     }
@@ -378,21 +451,34 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
         title: tCommon('actions.success'),
         description: tCommon('messages.success.update')
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: tCommon('status.error'),
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     }
   };
 
-  const formatValue = (value: any, fieldType?: string): string => {
+  const formatValue = (value: unknown, fieldType?: string): string => {
     if (value === null || value === undefined) return '';
     if (typeof value === 'string') return value;
     if (typeof value === 'boolean') return value ? 'Yes' : 'No';
     if (typeof value === 'number') return value.toString();
-    if (Array.isArray(value)) return value.join(', ');
+    if (Array.isArray(value)) {
+      return value.map((item) => formatValue(item, fieldType)).join(', ');
+    }
+    if (value instanceof Date) {
+      return format(value, 'yyyy-MM-dd');
+    }
+    if (typeof value === 'object') {
+      try {
+        return JSON.stringify(value);
+      } catch (jsonError) {
+        console.error('Unable to stringify value', jsonError);
+        return '';
+      }
+    }
     return String(value);
   };
 
@@ -406,10 +492,14 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
         const changes: string[] = [];
         
         // Check for status changes
-        const oldStatus = log.old_values?.status;
-        const newStatus = log.new_values?.status;
-        if (oldStatus !== newStatus) {
-          changes.push(`status changed from "${oldStatus}" to "${newStatus}"`);
+        const oldStatus = getStringValue(log.old_values, 'status');
+        const newStatus = getStringValue(log.new_values, 'status');
+        if (oldStatus || newStatus) {
+          const fromStatus = oldStatus ?? 'unknown';
+          const toStatus = newStatus ?? 'unknown';
+          if (fromStatus !== toStatus) {
+            changes.push(`status changed from "${fromStatus}" to "${toStatus}"`);
+          }
         }
         
         // Assignee tracking removed - single user organization
@@ -421,8 +511,14 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
         return 'Lead updated';
       }
     } else if (log.entity_type === 'lead_field_value') {
-      const fieldLabel = log.new_values?.field_label || log.old_values?.field_label || 'Field';
-      const fieldType = log.new_values?.field_type || log.old_values?.field_type;
+      const fieldLabel =
+        getStringValue(log.new_values, 'field_label') ??
+        getStringValue(log.old_values, 'field_label') ??
+        'Field';
+      const fieldType =
+        getStringValue(log.new_values, 'field_type') ??
+        getStringValue(log.old_values, 'field_type') ??
+        undefined;
       
       if (log.action === 'created') {
         const value = formatValue(log.new_values?.value, fieldType);
@@ -440,7 +536,10 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
         return `${fieldLabel} removed: ${value}`;
       }
     } else if (log.entity_type === 'project') {
-      const name = log.new_values?.name || log.old_values?.name;
+      const name =
+        getStringValue(log.new_values, 'name') ??
+        getStringValue(log.old_values, 'name') ??
+        null;
       if (log.action === 'created') return name ? `Project "${name}" created` : 'Project created';
       if (log.action === 'updated') return name ? `Project "${name}" updated` : 'Project updated';
       if (log.action === 'archived') return name ? `Project "${name}" archived` : 'Project archived';

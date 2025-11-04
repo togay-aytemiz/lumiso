@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { TimeSlotPicker } from "@/components/TimeSlotPicker";
@@ -24,7 +24,7 @@ interface PlannedSessionRecord {
   projects?: { name?: string | null } | null;
   status?: string | null;
   session_type_id?: string | null;
-  session_types?: { duration_minutes?: number | null } | null;
+  session_types?: { duration_minutes?: number | null; name?: string | null } | null;
 }
 
 interface CalendarTimePickerProps {
@@ -53,7 +53,7 @@ export function CalendarTimePicker({
   const plannedSessionsRef = useRef<HTMLDivElement | null>(null);
   const previousSelectedKeyRef = useRef<string | undefined>();
 
-  const fetchPlannedSessions = async (month: Date) => {
+  const fetchPlannedSessions = useCallback(async (month: Date) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -76,7 +76,7 @@ export function CalendarTimePicker({
           leads:lead_id (name),
           projects:project_id (name),
           status,
-          session_types:session_type_id (duration_minutes)
+          session_types:session_type_id (duration_minutes, name)
         `)
         .eq('organization_id', organizationId)
         .eq('status', 'planned')
@@ -84,37 +84,45 @@ export function CalendarTimePicker({
         .lte('session_date', format(end, 'yyyy-MM-dd'));
 
       if (error) throw error;
-      setPlannedSessions(data || []);
-    } catch (err) {
-      console.error('Failed to fetch planned sessions for calendar:', err);
+      setPlannedSessions((data ?? []) as PlannedSessionRecord[]);
+    } catch (error) {
+      console.error('Failed to fetch planned sessions for calendar:', error);
       // Don't crash on mobile, just show empty state
       setPlannedSessions([]);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchPlannedSessions(visibleMonth);
-  }, [visibleMonth]);
+    void fetchPlannedSessions(visibleMonth);
+  }, [fetchPlannedSessions, visibleMonth]);
 
   const selectedKey = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : "";
-  const sessionsForDay = selectedKey ? (plannedSessions || []).filter((s: any) => s.session_date === selectedKey) : [];
+
+  const sessionsForDay = useMemo(() => {
+    if (!selectedKey) {
+      return [] as PlannedSessionRecord[];
+    }
+    return plannedSessions.filter((session) => session.session_date === selectedKey);
+  }, [plannedSessions, selectedKey]);
 
   const sortedSessionsForDay = useMemo(() => {
-    const toMinutes = (t: string | null | undefined) => {
-      if (!t) return Number.POSITIVE_INFINITY;
-      const parts = t.split(':');
-      const h = parseInt(parts[0] || '0', 10);
-      const m = parseInt(parts[1] || '0', 10);
-      return h * 60 + m;
+    const toMinutes = (time: string | null | undefined) => {
+      if (!time) return Number.POSITIVE_INFINITY;
+      const parts = time.split(':');
+      const hours = parseInt(parts[0] || '0', 10);
+      const minutes = parseInt(parts[1] || '0', 10);
+      return hours * 60 + minutes;
     };
-    return [...sessionsForDay].sort((a: any, b: any) => toMinutes(a.session_time) - toMinutes(b.session_time));
+    return [...sessionsForDay].sort(
+      (a, b) => toMinutes(a.session_time) - toMinutes(b.session_time)
+    );
   }, [sessionsForDay]);
 
   const sessionCountByDate = useMemo(() => {
     const map: Record<string, number> = {};
-    (plannedSessions || []).forEach((s: any) => {
-      if (!s.session_date) return;
-      map[s.session_date] = (map[s.session_date] || 0) + 1;
+    plannedSessions.forEach((session) => {
+      if (!session.session_date) return;
+      map[session.session_date] = (map[session.session_date] || 0) + 1;
     });
     return map;
   }, [plannedSessions]);
@@ -131,31 +139,38 @@ export function CalendarTimePicker({
     previousSelectedKeyRef.current = selectedKey;
   }, [selectedKey, sessionsForDay.length]);
 
-  const weeklyReferenceDate = selectedDate ?? visibleMonth ?? new Date();
+  const weeklyReferenceDate = selectedDate ?? visibleMonth;
 
   const weeklySessions = useMemo<WeeklyScheduleSession[]>(() => {
     const weekStart = startOfWeek(weeklyReferenceDate, { weekStartsOn: 1 });
     const weekEnd = addDays(weekStart, 7);
 
-    return (plannedSessions || [])
-      .map((session) => {
-        if (!session.session_date) return null;
-        const parsed = parseISO(session.session_date);
-        if (Number.isNaN(parsed.getTime())) return null;
-        if (parsed < weekStart || parsed >= weekEnd) return null;
+    return plannedSessions.reduce<WeeklyScheduleSession[]>((acc, session) => {
+      if (!session.session_date) {
+        return acc;
+      }
 
-        return {
-          id: session.id,
-          session_date: session.session_date,
-          session_time: session.session_time,
-          duration_minutes:
-            session.session_types?.duration_minutes ?? undefined,
-          session_type_name: session.session_types?.name ?? undefined,
-          lead_name: session.leads?.name ?? undefined,
-          project_name: session.projects?.name ?? undefined,
-        };
-      })
-      .filter(Boolean) as WeeklyScheduleSession[];
+      const parsed = parseISO(session.session_date);
+      if (Number.isNaN(parsed.getTime())) {
+        return acc;
+      }
+
+      if (parsed < weekStart || parsed >= weekEnd) {
+        return acc;
+      }
+
+      acc.push({
+        id: session.id,
+        session_date: session.session_date,
+        session_time: session.session_time,
+        duration_minutes: session.session_types?.duration_minutes ?? undefined,
+        session_type_name: session.session_types?.name ?? undefined,
+        lead_name: session.leads?.name ?? undefined,
+        project_name: session.projects?.name ?? undefined,
+      });
+
+      return acc;
+    }, []);
   }, [plannedSessions, weeklyReferenceDate]);
 
   return (
@@ -280,18 +295,18 @@ export function CalendarTimePicker({
             {selectedDate ? formatLongDate(selectedDate, browserLocale) : t("sessionScheduling.this_day")}
           </div>
           <div className="overflow-hidden rounded-lg border divide-y">
-            {sortedSessionsForDay.map((s: any, index: number) => {
-              const timeLabel = s.session_time
+            {sortedSessionsForDay.map((session, index) => {
+              const timeLabel = session.session_time
                 ? new Intl.DateTimeFormat(browserLocale, {
                   hour: "numeric",
                   minute: "2-digit",
                   hour12: undefined
-                }).format(new Date(`2000-01-01T${s.session_time}`))
+                }).format(new Date(`2000-01-01T${session.session_time}`))
                 : t("sessionScheduling.no_time");
 
               return (
                 <div
-                  key={s.id ?? `${selectedKey}-${index}`}
+                  key={session.id ?? `${selectedKey}-${index}`}
                   className="flex items-center gap-4 px-4 py-2 text-sm"
                 >
                   <span className="w-16 shrink-0 text-xs font-medium text-muted-foreground">
@@ -299,11 +314,11 @@ export function CalendarTimePicker({
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-medium">
-                      {s.leads?.name || t("sessionScheduling.unknown_client")}
+                      {session.leads?.name || t("sessionScheduling.unknown_client")}
                     </div>
-                    {s.projects?.name && (
+                    {session.projects?.name && (
                       <div className="truncate text-xs text-muted-foreground">
-                        {s.projects.name}
+                        {session.projects.name}
                       </div>
                     )}
                   </div>

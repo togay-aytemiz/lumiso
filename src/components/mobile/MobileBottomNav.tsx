@@ -141,6 +141,11 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
     }
   ];
 
+  const shouldAttachSettingsBackground = !location.pathname.startsWith('/settings');
+  const settingsLinkState = shouldAttachSettingsBackground
+    ? { backgroundLocation: location }
+    : undefined;
+
   const moreItems = [
     {
       title: 'Analytics',
@@ -160,7 +165,11 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
     {
       title: 'Settings',
       icon: Settings,
-      onClick: () => navigate('/settings'),
+      onClick: () =>
+        navigate(
+          '/settings',
+          settingsLinkState ? { state: settingsLinkState } : undefined
+        ),
       testId: 'mobile-settings'
     },
     {

@@ -19,6 +19,7 @@ interface SidebarNavItemProps {
   children?: ReactNode;
   className?: string;
   badge?: ReactNode;
+  state?: unknown;
 }
 
 export function SidebarNavItem({ 
@@ -31,7 +32,8 @@ export function SidebarNavItem({
   onLockedClick,
   children,
   className = "",
-  badge
+  badge,
+  state
 }: SidebarNavItemProps) {
   const buttonClasses = cn(
     "group/item w-full h-9 border border-transparent",
@@ -81,7 +83,11 @@ export function SidebarNavItem({
       isActive={isActive}
       className={buttonClasses}
     >
-      <NavLink to={url} className="flex items-center gap-2.5 w-full">
+      <NavLink
+        to={url}
+        state={state}
+        className="flex items-center gap-2.5 w-full"
+      >
         {content}
       </NavLink>
     </SidebarMenuButton>

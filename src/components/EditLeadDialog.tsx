@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 import { useTranslation } from "react-i18next";
+import type { Database } from "@/integrations/supabase/types";
 
 interface Lead {
   id: string;
@@ -27,30 +28,59 @@ interface EditLeadDialogProps {
   onLeadUpdated: () => void;
 }
 
+type LeadStatusRow = Database["public"]["Tables"]["lead_statuses"]["Row"];
+
+type LeadFormState = {
+  name: string;
+  email: string;
+  phone: string;
+  notes: string;
+  status: string;
+};
+
+const createEmptyFormState = (): LeadFormState => ({
+  name: "",
+  email: "",
+  phone: "",
+  notes: "",
+  status: "",
+});
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "An unexpected error occurred";
+};
+
 export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: EditLeadDialogProps) {
   const { t } = useTranslation(['forms', 'common']);
   const toast = useI18nToast();
   const [loading, setLoading] = useState(false);
-  const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    notes: "",
-    status: ""
-  });
+  const [leadStatuses, setLeadStatuses] = useState<LeadStatusRow[]>([]);
+  const [formData, setFormData] = useState<LeadFormState>(() => createEmptyFormState());
+  const [initialFormData, setInitialFormData] = useState<LeadFormState>(() => createEmptyFormState());
 
-  const [initialFormData, setInitialFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    notes: "",
-    status: ""
-  });
+  const fetchLeadStatuses = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from<LeadStatusRow>('lead_statuses')
+        .select('*')
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      setLeadStatuses(data ?? []);
+    } catch (error) {
+      console.error('Error fetching lead statuses:', error);
+    }
+  }, []);
 
   useEffect(() => {
     if (lead && open) {
-      const newFormData = {
+      const newFormData: LeadFormState = {
         name: lead.name || "",
         email: lead.email || "",
         phone: lead.phone || "",
@@ -59,23 +89,15 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
       };
       setFormData(newFormData);
       setInitialFormData(newFormData);
-      fetchLeadStatuses();
+      void fetchLeadStatuses();
     }
-  }, [lead, open]);
 
-  const fetchLeadStatuses = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('lead_statuses')
-        .select('*')
-        .order('sort_order', { ascending: true });
-
-      if (error) throw error;
-      setLeadStatuses(data || []);
-    } catch (error: any) {
-      console.error('Error fetching lead statuses:', error);
+    if (!open) {
+      setLeadStatuses([]);
+      setFormData(createEmptyFormState());
+      setInitialFormData(createEmptyFormState());
     }
-  };
+  }, [fetchLeadStatuses, lead, open]);
 
   const handleSubmit = async () => {
     if (!lead || !formData.name.trim()) {
@@ -86,7 +108,7 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
     setLoading(true);
     try {
       // Find the status ID for the selected status
-      const selectedStatus = leadStatuses.find(s => s.name === formData.status);
+      const selectedStatus = leadStatuses.find(status => status.name === formData.status);
       
       const { error } = await supabase
         .from('leads')
@@ -106,23 +128,32 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
 
       onOpenChange(false);
       onLeadUpdated();
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
   };
 
-  if (!lead) return null;
+  const isDirty = lead ? JSON.stringify(formData) !== JSON.stringify(initialFormData) : false;
 
-  const isDirty = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+  const handleDiscard = useCallback(() => {
+    if (lead) {
+      setFormData(initialFormData);
+    } else {
+      setFormData(createEmptyFormState());
+    }
+    onOpenChange(false);
+  }, [initialFormData, lead, onOpenChange]);
 
   const navigation = useModalNavigation({
     isDirty,
-    onDiscard: () => {
-      onOpenChange(false);
-    },
+    onDiscard: handleDiscard,
   });
+
+  if (!lead) {
+    return null;
+  }
 
   const handleDirtyClose = () => {
     const canClose = navigation.handleModalClose();
@@ -134,7 +165,7 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
   const footerActions = [
     {
       label: t('common:buttons.cancel'),
-      onClick: () => onOpenChange(false),
+      onClick: () => handleDirtyClose(),
       variant: "outline" as const,
       disabled: loading
     },
@@ -151,7 +182,13 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
       <AppSheetModal
         title={t('leadDialog.edit_lead')}
         isOpen={open}
-        onOpenChange={onOpenChange}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            handleDirtyClose();
+          } else {
+            onOpenChange(true);
+          }
+        }}
         dirty={isDirty}
         onDirtyClose={handleDirtyClose}
         footerActions={footerActions}

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, LogOut, Calendar, Users, CheckCircle, XCircle, Bell, AlertTriangle } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
@@ -15,53 +16,29 @@ import { getWeekRange, getUserLocale, formatLongDate, formatTime, formatDate } f
 import { DashboardLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useDashboardTranslation } from "@/hooks/useTypedTranslation";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
+import type { Database } from "@/integrations/supabase/types";
 
-interface Lead {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  due_date: string;
-  notes: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
+type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
+type AppointmentRow = Database["public"]["Tables"]["appointments"]["Row"];
+type SessionRow = Database["public"]["Tables"]["sessions"]["Row"];
+type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
+type SessionWithLead = SessionRow & { lead_name?: string };
 
-interface Appointment {
-  id: string;
-  title: string;
-  date: string;
-  location: string;
-  status: string;
-  lead_id: string;
-}
-
-interface Session {
-  id: string;
-  lead_id: string;
-  session_date: string;
-  session_time: string;
-  notes: string;
-  status: string;
-  lead_name?: string;
-}
-
-interface Activity {
-  id: string;
-  content: string;
-  reminder_date: string;
-  reminder_time: string;
-  type: string;
-  lead_id: string;
-  completed?: boolean;
-}
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "An unexpected error occurred";
+};
 
 const CrmDashboard = () => {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [upcomingSessions, setUpcomingSessions] = useState<Session[]>([]);
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [leads, setLeads] = useState<LeadRow[]>([]);
+  const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
+  const [upcomingSessions, setUpcomingSessions] = useState<SessionWithLead[]>([]);
+  const [activities, setActivities] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
   const navigate = useNavigate();
@@ -71,7 +48,7 @@ const CrmDashboard = () => {
     try {
       // Fetch leads
       const { data: leadsData, error: leadsError } = await supabase
-        .from('leads')
+        .from<LeadRow>('leads')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -79,7 +56,7 @@ const CrmDashboard = () => {
 
       // Fetch appointments
       const { data: appointmentsData, error: appointmentsError } = await supabase
-        .from('appointments')
+        .from<AppointmentRow>('appointments')
         .select('*')
         .order('date', { ascending: true });
 
@@ -87,7 +64,7 @@ const CrmDashboard = () => {
 
       // Fetch activities with reminders
       const { data: activitiesData, error: activitiesError } = await supabase
-        .from('activities')
+        .from<ActivityRow>('activities')
         .select('*')
         .not('reminder_date', 'is', null)
         .order('reminder_date', { ascending: true });
@@ -99,7 +76,7 @@ const CrmDashboard = () => {
       const { start: startOfWeek, end: endOfWeek } = getWeekRange(today);
       
       const { data: sessionsData, error: sessionsError } = await supabase
-        .from('sessions')
+        .from<SessionRow>('sessions')
         .select('*')
         .gte('session_date', startOfWeek.toISOString().split('T')[0])
         .lte('session_date', endOfWeek.toISOString().split('T')[0])
@@ -111,28 +88,29 @@ const CrmDashboard = () => {
       // Get lead names for all sessions (no status filtering - show all sessions this week)
       if (sessionsData && sessionsData.length > 0) {
         const leadIds = sessionsData.map(session => session.lead_id);
+        type LeadSummary = Pick<LeadRow, 'id' | 'name' | 'status'>;
         const { data: leadNamesData } = await supabase
-          .from('leads')
+          .from<LeadSummary>('leads')
           .select('id, name, status')
           .in('id', leadIds);
 
-        const sessionsWithNames = sessionsData.map(session => ({
+        const sessionSummaries: SessionWithLead[] = sessionsData.map(session => ({
           ...session,
           lead_name: leadNamesData?.find(lead => lead.id === session.lead_id)?.name || 'Unknown Client'
         }));
 
-        setUpcomingSessions(sessionsWithNames);
+        setUpcomingSessions(sessionSummaries);
       } else {
         setUpcomingSessions([]);
       }
 
-      setLeads(leadsData || []);
-      setAppointments(appointmentsData || []);
-      setActivities(activitiesData || []);
-    } catch (error: any) {
+      setLeads(leadsData ?? []);
+      setAppointments(appointmentsData ?? []);
+      setActivities(activitiesData ?? []);
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     } finally {
@@ -349,8 +327,14 @@ const CrmDashboard = () => {
                 return lead?.name || 'Unknown Lead';
               };
 
-              const renderReminderSummary = (reminders: any[], type: string, bgColor: string, textColor: string, iconColor: string, icon: any) => {
-                const IconComponent = icon;
+              const renderReminderSummary = (
+                reminders: ActivityRow[],
+                typeLabel: string,
+                bgColor: string,
+                textColor: string,
+                iconColor: string,
+                IconComponent: LucideIcon
+              ) => {
                 const displayReminders = reminders.slice(0, 3);
                 const hasMore = reminders.length > 3;
 
@@ -359,7 +343,7 @@ const CrmDashboard = () => {
                     <div className="flex items-center gap-2 mb-2">
                       <IconComponent className={`h-4 w-4 ${iconColor}`} />
                       <div className="text-sm">
-                        <span className="text-slate-600 dark:text-slate-400">{type}: </span>
+                        <span className="text-slate-600 dark:text-slate-400">{typeLabel}: </span>
                         <span className={`font-semibold ${textColor}`}>{reminders.length}</span>
                       </div>
                     </div>

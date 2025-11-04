@@ -9,6 +9,7 @@ import {
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
+  ArrowUp,
   Bell,
   CreditCard,
   FileText,
@@ -33,6 +34,9 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useTranslation } from "react-i18next";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
 import SettingsHelpSheet from "@/components/settings/SettingsHelpSheet";
+import StickySectionNav, {
+  type StickySectionNavItem,
+} from "@/components/navigation/StickySectionNav";
 import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
 import { useToast } from "@/hooks/use-toast";
 import { settingsHelpContent } from "@/lib/settingsHelpContent";
@@ -155,8 +159,12 @@ const LAST_NON_SETTINGS_PATH_KEY = "lumiso:last-non-settings-path";
 export default function SettingsLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { hasCategoryChanges, cancelCategoryChanges, saveCategoryChanges } =
-    useSettingsContext();
+  const {
+    hasCategoryChanges,
+    cancelCategoryChanges,
+    saveCategoryChanges,
+    categoryChanges,
+  } = useSettingsContext();
   const { shouldLockNavigation } = useOnboarding();
   const { t } = useTranslation("navigation");
   const { t: tCommon } = useTranslation("common");
@@ -200,6 +208,12 @@ export default function SettingsLayout() {
   );
   const [showHelp, setShowHelp] = useState(false);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [scrollTopRightOffset, setScrollTopRightOffset] = useState(24);
+  const [domSectionNavItems, setDomSectionNavItems] = useState<
+    StickySectionNavItem[]
+  >([]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setModalState("idle"), 200);
@@ -222,6 +236,108 @@ export default function SettingsLayout() {
       exitSettings();
     }, 180);
   }, [exitSettings]);
+
+  const updateScrollTopPosition = useCallback(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const container = contentRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const offset = Math.max(window.innerWidth - rect.right + 24, 16);
+    setScrollTopRightOffset(offset);
+  }, []);
+
+  const refreshDomSectionNavItems = useCallback(() => {
+    const container = contentRef.current;
+    if (!container) {
+      setDomSectionNavItems([]);
+      return;
+    }
+
+    const nodes = Array.from(
+      container.querySelectorAll<HTMLElement>("[data-settings-section='true']")
+    );
+
+    const mapped = nodes
+      .map((node) => {
+        const id = node.id?.trim();
+        const title =
+          node.getAttribute("data-settings-section-title")?.trim() ?? "";
+        if (!id || !title) {
+          return null;
+        }
+        return { id, title };
+      })
+      .filter((item): item is StickySectionNavItem => item !== null);
+
+    const unique = mapped.filter(
+      (item, index, array) =>
+        array.findIndex((candidate) => candidate.id === item.id) === index
+    );
+
+    setDomSectionNavItems(unique);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const container = contentRef.current;
+    if (!container) {
+      return;
+    }
+
+    const handleScroll = () => {
+      setShowScrollTop(container.scrollTop > 240);
+    };
+
+    container.scrollTo({ top: 0 });
+    handleScroll();
+    updateScrollTopPosition();
+    refreshDomSectionNavItems();
+
+    container.addEventListener("scroll", handleScroll);
+    window.addEventListener("resize", updateScrollTopPosition);
+
+    let frame = 0;
+    let observer: MutationObserver | null = null;
+
+    if ("MutationObserver" in window) {
+      observer = new MutationObserver(() => {
+        if (frame) {
+          window.cancelAnimationFrame(frame);
+        }
+        frame = window.requestAnimationFrame(() => {
+          refreshDomSectionNavItems();
+        });
+      });
+
+      observer.observe(container, {
+        subtree: true,
+        childList: true,
+      });
+    }
+
+    return () => {
+      if (observer) {
+        observer.disconnect();
+      }
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+      }
+      container.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", updateScrollTopPosition);
+    };
+  }, [currentPath, refreshDomSectionNavItems, updateScrollTopPosition]);
+
+  const handleScrollToTop = useCallback(() => {
+    const container = contentRef.current;
+    if (!container) return;
+    container.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   const {
     showGuard,
@@ -355,6 +471,42 @@ export default function SettingsLayout() {
   const mobileNavItems = useMemo(() => {
     return [...personalSettingsItems, ...organizationSettingsItems];
   }, []);
+
+  const contextSectionNavItems = useMemo(() => {
+    const sections = categoryChanges[currentPath] ?? {};
+    return Object.entries(sections)
+      .map(([id, section]) => ({
+        id,
+        title: section.sectionName,
+      }))
+      .filter((item) => Boolean(item.title?.trim()));
+  }, [categoryChanges, currentPath]);
+
+  const sectionNavItems = useMemo(() => {
+    const merged: StickySectionNavItem[] = [];
+    const seenIds = new Set<string>();
+
+    contextSectionNavItems.forEach((item) => {
+      if (item.id && !seenIds.has(item.id) && item.title) {
+        merged.push(item);
+        seenIds.add(item.id);
+      }
+    });
+
+    domSectionNavItems.forEach((item) => {
+      if (item.id && !seenIds.has(item.id) && item.title) {
+        merged.push(item);
+        seenIds.add(item.id);
+      }
+    });
+
+    return merged;
+  }, [contextSectionNavItems, domSectionNavItems]);
+
+  const sectionNavIds = useMemo(
+    () => sectionNavItems.map((item) => item.id),
+    [sectionNavItems]
+  );
 
   const renderNavLink = useCallback(
     (item: NavItem) => {
@@ -568,13 +720,46 @@ export default function SettingsLayout() {
                     );
                   })}
                 </nav>
+                {sectionNavItems.length > 0 && (
+                  <div className="mt-3 hidden border-t border-border/50 pt-3 md:block">
+                    <StickySectionNav
+                      items={sectionNavItems}
+                      align="start"
+                      navClassName="justify-start"
+                      observeIds={sectionNavIds}
+                      fallbackActiveId={sectionNavIds[0]}
+                      disableSticky
+                      className="border-0 bg-transparent px-0 py-0"
+                    />
+                  </div>
+                )}
               </header>
 
               <div
                 key={`${currentPath}-content`}
-                className="flex-1 overflow-y-auto bg-[hsl(var(--background))] settings-content-motion"
+                ref={contentRef}
+                className="relative flex-1 overflow-y-auto bg-[hsl(var(--background))] settings-content-motion"
               >
                 <Outlet />
+                {showScrollTop && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleScrollToTop}
+                    onMouseDown={(event) => event.stopPropagation()}
+                    className={cn(
+                      "fixed z-[60] h-11 w-11 rounded-full border-transparent bg-[hsl(var(--accent-200))] text-[hsl(var(--accent-900))] shadow-lg transition-all hover:bg-[hsl(var(--accent-300))] hover:shadow-xl focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2",
+                      hasChanges ? "bottom-24 md:bottom-28" : "bottom-5 md:bottom-6"
+                    )}
+                    style={{ right: `${scrollTopRightOffset}px` }}
+                    aria-label={tCommon("buttons.backToTop", {
+                      defaultValue: "Back to top",
+                    })}
+                  >
+                    <ArrowUp className="h-5 w-5" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>

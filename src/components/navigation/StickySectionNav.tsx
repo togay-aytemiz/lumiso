@@ -18,6 +18,7 @@ export interface StickySectionNavProps {
   onActiveChange?: (id: string) => void;
   fallbackActiveId?: string;
   scrollBehavior?: ScrollBehavior;
+  disableSticky?: boolean;
 }
 
 const ALIGN_CLASSNAMES: Record<NonNullable<StickySectionNavProps["align"]>, string> = {
@@ -62,7 +63,8 @@ export function StickySectionNav({
   observeIds,
   onActiveChange,
   fallbackActiveId,
-  scrollBehavior = "smooth"
+  scrollBehavior = "smooth",
+  disableSticky = false
 }: StickySectionNavProps) {
   const [activeId, setActiveId] = useState<string>(() => fallbackActiveId ?? items[0]?.id ?? "");
   const observer = useRef<IntersectionObserver | null>(null);
@@ -146,13 +148,16 @@ export function StickySectionNav({
     return null;
   }
 
+  const containerClasses = disableSticky
+    ? "border-b border-border/20 bg-background/70 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/50"
+    : "sticky z-30 -mx-2 mb-6 border-b border-border/20 bg-background/70 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/50";
+
+  const containerStyle = disableSticky ? undefined : { top: stickyTopOffset };
+
   return (
     <div
-      className={cn(
-        "sticky z-30 -mx-2 mb-6 border-b border-border/20 bg-background/70 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/50",
-        className
-      )}
-      style={{ top: stickyTopOffset }}
+      className={cn(containerClasses, className)}
+      style={containerStyle}
     >
       <nav
         className={cn(

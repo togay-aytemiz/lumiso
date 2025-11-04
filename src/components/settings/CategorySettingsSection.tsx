@@ -37,7 +37,13 @@ export function CategorySettingsSection({
   const isDirty = section?.isDirty || false;
 
   return (
-    <Card className={cn("", className)} data-walkthrough={dataWalkthrough}>
+    <Card
+      id={sectionId}
+      data-settings-section="true"
+      data-settings-section-title={title}
+      className={cn("scroll-mt-28", className)}
+      data-walkthrough={dataWalkthrough}
+    >
       <CardHeader className="space-y-4 pb-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

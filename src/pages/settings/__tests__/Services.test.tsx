@@ -1,9 +1,7 @@
 import React from "react";
 import { act, fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import Services from "../Services";
-import { settingsHelpContent } from "@/lib/settingsHelpContent";
-
-const mockSettingsHeader = jest.fn(() => <div data-testid="settings-header" />);
+const mockSettingsHeader = jest.fn();
 const mockUseOnboarding = jest.fn();
 const mockNavigate = jest.fn();
 
@@ -24,7 +22,10 @@ jest.mock("react-router-dom", () => ({
 
 jest.mock("@/components/settings/SettingsHeader", () => ({
   __esModule: true,
-  default: (props: any) => mockSettingsHeader(props),
+  default: (props: any) => {
+    mockSettingsHeader(props);
+    return null;
+  },
 }));
 
 jest.mock("@/components/settings/SettingsPageWrapper", () => ({
@@ -87,13 +88,7 @@ describe("Services settings page", () => {
     expect(screen.getByTestId("packages-section")).toBeInTheDocument();
     expect(screen.getByTestId("services-section")).toBeInTheDocument();
 
-    expect(mockSettingsHeader).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: "settings.services.title",
-        description: "settings.services.description",
-        helpContent: settingsHelpContent.services,
-      })
-    );
+    expect(mockSettingsHeader).not.toHaveBeenCalled();
 
     expect(mockOnboardingTutorial).toHaveBeenCalledWith(
       expect.objectContaining({ isVisible: true }),

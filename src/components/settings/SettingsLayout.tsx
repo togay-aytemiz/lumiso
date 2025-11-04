@@ -1,251 +1,467 @@
-import { NavLink, useLocation, Outlet } from "react-router-dom";
-import { 
-  User, 
-  Bell, 
-  Settings, 
-  Users, 
-  MessageSquare, 
-  FolderOpen, 
-  UserCheck, 
-  Package, 
-  Plug, 
-  FileText, 
-  CreditCard, 
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import {
   AlertTriangle,
-  Lock
+  Bell,
+  CreditCard,
+  FileText,
+  FolderOpen,
+  LifeBuoy,
+  Lock,
+  Package,
+  Settings,
+  User,
+  UserCheck,
+  X,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useSettingsContext } from "@/contexts/SettingsContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTranslation } from "react-i18next";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
+import SettingsHelpSheet from "@/components/settings/SettingsHelpSheet";
 import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
 import { useToast } from "@/hooks/use-toast";
+import { settingsHelpContent } from "@/lib/settingsHelpContent";
+import { settingsClasses, settingsTokens } from "@/theme/settingsTokens";
 
-const personalSettingsItems = [
+interface NavItem {
+  title: string;
+  href: string;
+  icon: typeof User;
+  testId: string;
+  variant?: "danger";
+}
+
+const personalSettingsItems: NavItem[] = [
   { title: "profile", href: "/settings/profile", icon: User, testId: "profile-section" },
   { title: "notifications", href: "/settings/notifications", icon: Bell, testId: "notifications-section" },
 ];
 
-const organizationSettingsItems = [
+const organizationSettingsItems: NavItem[] = [
   { title: "general", href: "/settings/general", icon: Settings, testId: "general-section" },
   { title: "projects", href: "/settings/projects", icon: FolderOpen, testId: "projects-section" },
   { title: "leads", href: "/settings/leads", icon: UserCheck, testId: "leads-section" },
   { title: "services", href: "/settings/services", icon: Package, testId: "services-section" },
   { title: "contracts", href: "/settings/contracts", icon: FileText, testId: "contracts-section" },
   { title: "billing", href: "/settings/billing", icon: CreditCard, testId: "billing-section" },
-  { title: "dangerZone", href: "/settings/danger-zone", icon: AlertTriangle, testId: "danger-section" },
+  { title: "dangerZone", href: "/settings/danger-zone", icon: AlertTriangle, testId: "danger-section", variant: "danger" },
 ];
+
+const pageMetadata: Record<string, { titleKey: string; descriptionKey?: string }> = {
+  "/settings/profile": { titleKey: "settings.profile.title", descriptionKey: "settings.profile.description" },
+  "/settings/notifications": { titleKey: "settings.notifications.title", descriptionKey: "settings.notifications.description" },
+  "/settings/general": { titleKey: "settings.general.title", descriptionKey: "settings.general.description" },
+  "/settings/projects": { titleKey: "settings.projects.title", descriptionKey: "settings.projects.description" },
+  "/settings/leads": { titleKey: "settings.leads.title", descriptionKey: "settings.leads.description" },
+  "/settings/services": { titleKey: "settings.services.title", descriptionKey: "settings.services.description" },
+  "/settings/contracts": { titleKey: "settings.contracts.title", descriptionKey: "settings.contracts.description" },
+  "/settings/billing": { titleKey: "settings.billing.title", descriptionKey: "settings.billing.description" },
+  "/settings/danger-zone": { titleKey: "settings.dangerZone.title", descriptionKey: "settings.dangerZone.description" },
+};
+
+const CLOSE_TARGET = "__settings_close__";
+const LAST_NON_SETTINGS_PATH_KEY = "lumiso:last-non-settings-path";
 
 export default function SettingsLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { hasCategoryChanges, cancelCategoryChanges, saveCategoryChanges } = useSettingsContext();
   const { shouldLockNavigation } = useOnboarding();
-  const { t } = useTranslation('navigation');
-  const { t: tCommon } = useTranslation('common');
+  const { t } = useTranslation("navigation");
+  const { t: tCommon } = useTranslation("common");
+  const { t: tPages } = useTranslation("pages");
   const { toast } = useToast();
+
   const currentPath = location.pathname;
   const hasChanges = hasCategoryChanges(currentPath);
+
+  const lastPathRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (lastPathRef.current !== null) {
+      return;
+    }
+
+    const locationState = (location.state as { from?: string } | null) ?? null;
+    if (locationState?.from) {
+      lastPathRef.current = locationState.from;
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      const stored = window.sessionStorage.getItem(LAST_NON_SETTINGS_PATH_KEY);
+      if (stored) {
+        lastPathRef.current = stored;
+        return;
+      }
+    }
+
+    lastPathRef.current = "/";
+  }, [location.state]);
+
+  const exitSettings = useCallback(() => {
+    const target = lastPathRef.current ?? "/";
+    navigate(target, { replace: true });
+  }, [navigate]);
+
+  const [modalState, setModalState] = useState<"enter" | "idle" | "exit">("enter");
+  const [showHelp, setShowHelp] = useState(false);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setModalState("idle"), 200);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        window.clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const runCloseAnimation = useCallback(() => {
+    if (closeTimeoutRef.current) return;
+    setShowHelp(false);
+    setModalState("exit");
+    closeTimeoutRef.current = window.setTimeout(() => {
+      exitSettings();
+    }, 180);
+  }, [exitSettings]);
 
   const {
     showGuard,
     message: guardMessage,
     handleNavigationAttempt,
+    handleModalClose,
     handleDiscardChanges,
     handleStayOnPage,
-    handleSaveAndExit
+    handleSaveAndExit,
   } = useSettingsNavigation({
     isDirty: hasChanges,
     onDiscard: () => {
       cancelCategoryChanges(currentPath);
       toast({
-        title: tCommon('toast.settingsDiscardedTitle'),
-        description: tCommon('toast.settingsDiscardedDescription'),
+        title: tCommon("toast.settingsDiscardedTitle"),
+        description: tCommon("toast.settingsDiscardedDescription"),
       });
     },
     onSaveAndExit: async () => {
       await saveCategoryChanges(currentPath);
       toast({
-        title: tCommon('toast.settingsSavedTitle'),
-        description: tCommon('toast.settingsSavedDescription'),
+        title: tCommon("toast.settingsSavedTitle"),
+        description: tCommon("toast.settingsSavedDescription"),
       });
-    }
+    },
+    navigationHandler: (target) => {
+      if (target === CLOSE_TARGET || target === null) {
+        runCloseAnimation();
+        return;
+      }
+      if (target) {
+        navigate(target, { replace: true });
+      }
+    },
   });
-  
-  const isItemLocked = (itemHref: string) => {
-    // Settings navigation lock check for guided setup
-    if (shouldLockNavigation) {
-      const isUnlocked = itemHref === '/settings';
-      return !isUnlocked;
-    }
-    
-    // Not in guided setup - everything is unlocked
-    return false;
-  };
 
-  const handleNavItemInteraction = (e: React.MouseEvent, itemHref: string) => {
-    if (isItemLocked(itemHref)) {
-      e.preventDefault();
-      return;
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (handleModalClose()) {
+          runCloseAnimation();
+        } else {
+          // Guard modal is shown by the hook
+          handleNavigationAttempt(CLOSE_TARGET);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [runCloseAnimation, handleModalClose, handleNavigationAttempt]);
+
+  const isItemLocked = useCallback(
+    (itemHref: string) => {
+      if (shouldLockNavigation) {
+        const isUnlocked = itemHref === "/settings";
+        return !isUnlocked;
+      }
+      return false;
+    },
+    [shouldLockNavigation]
+  );
+
+  const handleCloseClick = useCallback(() => {
+    if (handleModalClose()) {
+      runCloseAnimation();
+    } else {
+      handleNavigationAttempt(CLOSE_TARGET);
+    }
+  }, [runCloseAnimation, handleModalClose, handleNavigationAttempt]);
+
+  const handleNavItemInteraction = useCallback(
+    (event: React.MouseEvent, itemHref: string) => {
+      if (isItemLocked(itemHref)) {
+        event.preventDefault();
+        return;
+      }
+
+      if (!handleNavigationAttempt(itemHref)) {
+        event.preventDefault();
+      }
+    },
+    [handleNavigationAttempt, isItemLocked]
+  );
+
+  const headerMeta = useMemo(() => {
+    const metadata = pageMetadata[currentPath];
+    if (metadata) {
+      return metadata;
     }
 
-    if (!handleNavigationAttempt(itemHref)) {
-      e.preventDefault();
+    // Attempt to match settings index routes
+    const matchedEntry = Object.entries(pageMetadata).find(([path]) => currentPath.startsWith(path));
+    return matchedEntry ? matchedEntry[1] : null;
+  }, [currentPath]);
+
+  const headerTitle = headerMeta ? tPages(headerMeta.titleKey) : t("settings.title");
+  const headerDescription =
+    headerMeta && headerMeta.descriptionKey ? tPages(headerMeta.descriptionKey) : undefined;
+
+  const helpKey = useMemo(() => {
+    const segments = currentPath.split("/").filter(Boolean);
+    const rawKey = segments[segments.length - 1] ?? "profile";
+    return rawKey.replace(/-([a-z])/g, (_, char: string) => char.toUpperCase());
+  }, [currentPath]);
+
+  const helpContent = (settingsHelpContent as Record<string, typeof settingsHelpContent.profile | undefined>)[helpKey];
+
+  useEffect(() => {
+    setShowHelp(false);
+  }, [currentPath]);
+
+  useEffect(() => {
+    if (!helpContent) {
+      setShowHelp(false);
     }
-  };
+  }, [helpContent]);
+
+  const mobileNavItems = useMemo(() => {
+    return [...personalSettingsItems, ...organizationSettingsItems];
+  }, []);
+
+  const renderNavLink = useCallback(
+    (item: NavItem) => {
+      const Icon = item.icon;
+      const isActive = currentPath === item.href;
+      const itemHasChanges = hasCategoryChanges(item.href);
+      const locked = isItemLocked(item.href);
+
+      const linkContent = (
+        <div
+          className={cn(
+            "settings-nav-item group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors",
+            "justify-center md:justify-start border border-transparent",
+            isActive
+              ? "bg-[linear-gradient(135deg,_hsl(var(--accent-100)),_hsl(var(--accent-300)))] text-[hsl(var(--accent-900))] shadow-[0_26px_45px_-32px_hsl(var(--accent-400)_/_0.95)] border-[hsl(var(--accent-300))]"
+              : "text-muted-foreground hover:bg-muted/30 hover:text-foreground",
+            item.variant === "danger" &&
+              (isActive
+                ? "bg-destructive/10 text-destructive"
+                : "text-destructive hover:bg-destructive/10 hover:text-destructive"),
+            locked && "cursor-not-allowed opacity-60"
+          )}
+        >
+          <Icon
+            className={cn(
+              "h-4 w-4 flex-shrink-0 transition-colors",
+              isActive && item.variant !== "danger" && "text-[hsl(var(--accent-700))]",
+              !isActive && "text-muted-foreground/80"
+            )}
+          />
+          <span className="hidden truncate text-sm font-medium md:flex md:items-center md:gap-2">
+            {t(`settings.${item.title}`)}
+            {itemHasChanges && (
+              <span className="inline-flex h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-orange-500" />
+            )}
+            {locked && <Lock className="h-3 w-3 text-muted-foreground" />}
+          </span>
+          {itemHasChanges && (
+            <span className="md:hidden absolute -top-1 -right-1 inline-flex h-1.5 w-1.5 animate-pulse rounded-full bg-orange-500" />
+          )}
+        </div>
+      );
+
+      if (locked) {
+        return (
+          <Tooltip key={item.href}>
+            <TooltipTrigger asChild>
+              <div data-walkthrough={item.testId} onClick={(event) => handleNavItemInteraction(event, item.href)}>
+                {linkContent}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="max-w-xs text-xs">
+              <p>{t("settings.completeGuidedSetup")}</p>
+            </TooltipContent>
+          </Tooltip>
+        );
+      }
+
+      return (
+        <NavLink
+          key={item.href}
+          to={item.href}
+          replace
+          data-walkthrough={item.testId}
+          onClick={(event) => handleNavItemInteraction(event, item.href)}
+        >
+          {linkContent}
+        </NavLink>
+      );
+    },
+    [currentPath, handleNavItemInteraction, hasCategoryChanges, isItemLocked, t]
+  );
+
+  const containerStyle: CSSProperties = {
+    "--settings-rail-width": settingsTokens.railWidth,
+    "--settings-overlay-shadow": settingsTokens.overlayShadow,
+  } as CSSProperties;
 
   return (
-    <div className="flex min-h-screen">
-      {/* Settings Navigation - Left sidebar for all screen sizes */}
-      <div className="w-16 md:w-80 border-r bg-muted/10 flex-shrink-0">
-        <div className="p-2 md:p-6">
-          <h2 className="text-xl font-bold mb-6 hidden md:block">{t('settings.title')}</h2>
-          
-          {/* Personal Settings */}
-          <div className="mb-8">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4 hidden md:block">
-              {t('settings.personalSettings')}
-            </h3>
-            <nav className="space-y-1">
-              {personalSettingsItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.href;
-                const hasChanges = hasCategoryChanges(item.href);
-                const locked = isItemLocked(item.href);
-                
-                const linkContent = (
-                <div className={cn(
-                    "flex items-center gap-4 px-2 md:px-4 py-3 text-sm rounded-lg transition-colors justify-center md:justify-start relative group",
-                    "hover:bg-sidebar-accent",
-                    isActive 
-                      ? "bg-sidebar-active text-sidebar-active-foreground font-medium" 
-                      : "text-muted-foreground hover:text-foreground",
-                    locked && "opacity-50 cursor-not-allowed"
-                  )}>
-                  <Icon className={cn(
-                    "h-5 w-5 flex-shrink-0 transition-colors group-hover:text-sidebar-primary",
-                    isActive && "text-[hsl(var(--sidebar-active-icon))]"
-                  )} />
-                  <span className="hidden md:flex md:items-center md:gap-2">
-                    {t(`settings.${item.title}`)}
-                    {hasChanges && (
-                      <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-                    )}
-                    {locked && <Lock className="h-3 w-3 ml-auto text-muted-foreground" />}
-                  </span>
-                  {/* Show dot on mobile too */}
-                  {hasChanges && (
-                    <div className="md:hidden absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-                  )}
+    <>
+      <div
+        className={cn(
+          "fixed inset-0 z-50 flex items-center justify-center px-3 py-6 sm:px-6 md:py-10",
+          "backdrop-blur supports-[backdrop-filter]:bg-slate-950/30 bg-slate-950/30 dark:bg-slate-950/50",
+          modalState === "enter" && "settings-overlay-enter",
+          modalState === "exit" && "settings-overlay-exit"
+        )}
+        onMouseDown={() => {
+          if (closeTimeoutRef.current) return;
+          if (handleModalClose()) {
+            runCloseAnimation();
+          } else {
+            handleNavigationAttempt(CLOSE_TARGET);
+          }
+        }}
+      >
+        <div
+          className={cn(
+            "relative flex h-full max-h-[min(960px,calc(100vh-2rem))] w-full max-w-7xl overflow-hidden rounded-3xl border border-border/70 bg-[hsl(var(--background))] shadow-[var(--settings-overlay-shadow)]",
+            modalState === "enter" && "settings-modal-enter",
+            modalState === "exit" && "settings-modal-exit"
+          )}
+          style={containerStyle}
+          onMouseDown={(event) => event.stopPropagation()}
+        >
+          <div className="flex h-full w-full">
+            <aside
+              className="hidden h-full shrink-0 flex-col border-r border-border/70 bg-muted/10 backdrop-blur-sm md:flex"
+              style={{ width: "var(--settings-rail-width)" }}
+            >
+              <div className="flex-1 overflow-y-auto px-3 py-6">
+                <div className="space-y-6">
+                  <section>
+                    <p className={cn(settingsClasses.railSectionLabel, "px-2 text-muted-foreground/70")}>
+                      {t("settings.personalSettings")}
+                    </p>
+                    <nav className="mt-3 space-y-1.5">{personalSettingsItems.map(renderNavLink)}</nav>
+                  </section>
+                  <section>
+                    <p className={cn(settingsClasses.railSectionLabel, "px-2 text-muted-foreground/70")}>
+                      {t("settings.organizationSettings")}
+                    </p>
+                    <nav className="mt-3 space-y-1.5">{organizationSettingsItems.map(renderNavLink)}</nav>
+                  </section>
                 </div>
-                );
-                
-                return locked ? (
-                  <Tooltip key={item.href}>
-                    <TooltipTrigger asChild>
-                      <div
-                        data-walkthrough={item.testId}
-                        onClick={(e) => handleNavItemInteraction(e, item.href)}
-                      >
-                        {linkContent}
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                      <p>{t('settings.completeGuidedSetup')}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <NavLink
-                    key={item.href}
-                    to={item.href}
-                    data-walkthrough={item.testId}
-                    onClick={(e) => handleNavItemInteraction(e, item.href)}
-                  >
-                    {linkContent}
-                  </NavLink>
-                );
-              })}
-            </nav>
-          </div>
+              </div>
+            </aside>
 
-          {/* Organization Settings */}
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4 hidden md:block">
-              {t('settings.organizationSettings')}
-            </h3>
-            <nav className="space-y-1">
-              {organizationSettingsItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.href;
-                const hasChanges = hasCategoryChanges(item.href);
-                const locked = isItemLocked(item.href);
-                const isDangerZone = item.title === "dangerZone";
-                
-                const linkContent = (
-                <div className={cn(
-                    "flex items-center gap-4 px-2 md:px-4 py-3 text-sm rounded-lg transition-colors justify-center md:justify-start relative group",
-                    !isDangerZone && "hover:bg-sidebar-accent",
-                    isActive 
-                      ? "bg-sidebar-active text-sidebar-active-foreground font-medium" 
-                      : "text-muted-foreground hover:text-foreground",
-                    isDangerZone && "text-red-600 hover:text-red-700 hover:bg-red-50",
-                    locked && "opacity-50 cursor-not-allowed"
-                  )}>
-                  <Icon className={cn(
-                    "h-5 w-5 flex-shrink-0 transition-colors",
-                    !isDangerZone && "group-hover:text-sidebar-primary",
-                    !isDangerZone && isActive && "text-[hsl(var(--sidebar-active-icon))]",
-                    isDangerZone && "text-red-600"
-                  )} />
-                  <span className="hidden md:flex md:items-center md:gap-2">
-                    {t(`settings.${item.title}`)}
-                    {hasChanges && (
-                      <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-                    )}
-                    {locked && <Lock className="h-3 w-3 ml-auto text-muted-foreground" />}
-                  </span>
-                  {/* Show dot on mobile too */}
-                  {hasChanges && (
-                    <div className="md:hidden absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-                  )}
+            <div className="flex min-h-0 flex-1 flex-col bg-card">
+              <header className="sticky top-0 z-30 border-b border-border/70 bg-card/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-card/80 sm:px-6">
+                <div
+                  key={currentPath}
+                  className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between settings-header-motion"
+                >
+                  <div className="min-w-0 space-y-1">
+                    <h1 className={cn(settingsClasses.headerTitle, "truncate")}>{headerTitle}</h1>
+                    {headerDescription && <p className={settingsClasses.headerDescription}>{headerDescription}</p>}
+                  </div>
+                  <div className="flex shrink-0 items-center justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="hidden whitespace-nowrap sm:inline-flex"
+                      disabled={!helpContent}
+                      onClick={() => {
+                        if (!helpContent) return;
+                        setShowHelp(true);
+                      }}
+                    >
+                      <LifeBuoy className="mr-2 h-4 w-4" />
+                      {tCommon("buttons.needHelp")}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleCloseClick}
+                      aria-label={tCommon("buttons.close")}
+                      className="h-8 w-8 rounded-full"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                );
-                
-                return locked ? (
-                  <Tooltip key={item.href}>
-                    <TooltipTrigger asChild>
-                      <div
-                        data-walkthrough={item.testId}
-                        onClick={(e) => handleNavItemInteraction(e, item.href)}
+
+                <nav className="mt-3 flex gap-2 overflow-x-auto border-t border-border/50 pt-3 md:hidden">
+                  {mobileNavItems.map((item) => {
+                    const isActive = currentPath === item.href;
+                    return (
+                      <NavLink
+                        key={`mobile-${item.href}`}
+                        to={item.href}
+                        replace
+                        onClick={(event) => handleNavItemInteraction(event, item.href)}
+                        className={cn(
+                          "settings-nav-item inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                          isActive
+                            ? "border-[hsl(var(--sidebar-active))] bg-[hsl(var(--sidebar-active))] text-[hsl(var(--sidebar-active-foreground))]"
+                            : "border-transparent bg-muted/30 text-muted-foreground hover:bg-muted/50"
+                        )}
                       >
-                        {linkContent}
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                      <p>{t('settings.completeGuidedSetup')}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <NavLink
-                    key={item.href}
-                    to={item.href}
-                    data-walkthrough={item.testId}
-                    onClick={(e) => handleNavItemInteraction(e, item.href)}
-                  >
-                    {linkContent}
-                  </NavLink>
-                );
-              })}
-            </nav>
+                        <item.icon className="h-3.5 w-3.5" />
+                        {t(`settings.${item.title}`)}
+                      </NavLink>
+                    );
+                  })}
+                </nav>
+              </header>
+
+              <div className="hidden border-b border-border/70 bg-card/80 px-6 py-3 md:block" data-slot="settings-anchor-nav" />
+
+              <div
+                key={`${currentPath}-content`}
+                className="flex-1 overflow-y-auto bg-[hsl(var(--background))] settings-content-motion"
+              >
+                <Outlet />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Settings Content */}
-      <div className="flex-1">
-        <Outlet />
-      </div>
+      {helpContent && (
+        <SettingsHelpSheet
+          open={showHelp}
+          onOpenChange={setShowHelp}
+          helpContent={helpContent}
+        />
+      )}
 
       <NavigationGuardDialog
         open={showGuard}
@@ -254,6 +470,6 @@ export default function SettingsLayout() {
         onSaveAndExit={handleSaveAndExit}
         message={guardMessage}
       />
-    </div>
+    </>
   );
 }

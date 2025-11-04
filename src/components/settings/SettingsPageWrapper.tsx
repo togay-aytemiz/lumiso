@@ -52,7 +52,7 @@ export default function SettingsPageWrapper({ children }: SettingsPageWrapperPro
 
   return (
     <>
-      <div className="p-4 sm:p-6 md:p-8 w-full">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-6 sm:px-8 sm:py-8">
         {children}
       </div>
       

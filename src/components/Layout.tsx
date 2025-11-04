@@ -9,10 +9,20 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import OfflineBanner from "@/components/OfflineBanner";
 import RoutePrefetcher from "@/components/RoutePrefetcher";
 
+const LAST_NON_SETTINGS_PATH_KEY = "lumiso:last-non-settings-path";
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { shouldShowWelcomeModal, loading: onboardingLoading, shouldLockNavigation } = useOnboarding();
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!location.pathname.startsWith("/settings")) {
+      const nextValue = `${location.pathname}${location.search}${location.hash}`;
+      window.sessionStorage.setItem(LAST_NON_SETTINGS_PATH_KEY, nextValue || "/");
+    }
+  }, [location.pathname, location.search, location.hash]);
 
   // Simple rule: Don't show modal on getting-started page
   const isOnGettingStartedPage = location.pathname === '/getting-started';

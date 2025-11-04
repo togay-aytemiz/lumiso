@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
-import SettingsHeader from "@/components/settings/SettingsHeader";
-import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import SessionTypesSection from "@/components/SessionTypesSection";
 import PackagesSection from "@/components/PackagesSection";
 import ServicesSection from "@/components/ServicesSection";
@@ -152,12 +150,6 @@ export default function Services() {
   return (
     <>
       <SettingsPageWrapper>
-        <SettingsHeader
-          title={t("settings.services.title")}
-          description={t("settings.services.description")}
-          helpContent={settingsHelpContent.services}
-        />
-        
         <div className="space-y-8">
           {/* Always show all sections in single photographer mode */}
           <SessionTypesSection />

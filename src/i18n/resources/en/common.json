@@ -39,7 +39,8 @@
     "remove": "Remove",
     "copy": "Copy",
     "tryAgain": "Try Again",
-    "reload": "Reload Page"
+    "reload": "Reload Page",
+    "needHelp": "Need Help"
   },
   "labels": {
     "name": "Name",

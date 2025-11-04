@@ -2,8 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
-import SettingsHeader from "@/components/settings/SettingsHeader";
-import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import { CategorySettingsSection } from "@/components/settings/CategorySettingsSection";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -261,11 +259,6 @@ export default function Profile() {
   if (profileLoading || workingHoursLoading) {
     return (
       <SettingsPageWrapper>
-        <SettingsHeader
-          title={t('settings.profile.title')}
-          description={t('settings.profile.description')}
-          helpContent={settingsHelpContent.profile}
-        />
         <SettingsLoadingSkeleton rows={4} />
       </SettingsPageWrapper>
     );
@@ -273,12 +266,6 @@ export default function Profile() {
 
   return (
     <SettingsPageWrapper>
-      <SettingsHeader
-        title={t('settings.profile.title')}
-        description={t('settings.profile.description')}
-        helpContent={settingsHelpContent.profile}
-      />
-      
       <div className="space-y-8">
         <CategorySettingsSection
           title={t('settings.profile.profileInfo.title')}

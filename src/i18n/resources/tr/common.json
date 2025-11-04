@@ -39,7 +39,8 @@
     "remove": "Kaldır",
     "copy": "Kopyala",
     "tryAgain": "Tekrar Dene",
-    "reload": "Sayfayı Yenile"
+    "reload": "Sayfayı Yenile",
+    "needHelp": "Yardım lazım"
   },
   "labels": {
     "name": "Ad",

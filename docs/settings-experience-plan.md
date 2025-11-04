@@ -77,6 +77,7 @@ Cross-cutting components:
   - Left rail lives inside the modal (140px target width) with compact icon + label pills inspired by the reference designs; it remembers the last active category per workspace.
   - Sticky anchor pills render directly under the modal header, highlighting the active subsection and offering quick jumps without scrolling the rail.
   - Escape, header close button, and outside click respect dirty-state guard logic (see §3).
+  - Motion tokens live in `src/index.css` (`.settings-overlay-enter`, `.settings-modal-enter`, `.settings-header-motion`, `.settings-content-motion`) to keep open/close and nav transitions consistent.
 - `SettingsHeader` upgrades now rely on explicit tokens:
   - `token('settings.header.title')` → `text-[22px]` mobile / `text-[26px]` desktop, tightened line-height, letter-spacing `-0.01em`.
   - `token('settings.header.description')` → `text-sm`, `max-w-xl`, neutral-600 color for compact copy blocks.
@@ -147,16 +148,16 @@ Cross-cutting components:
 ### Phase 0 — Audit & Design Foundations
 - [ ] Screenshot and measure current layouts (desktop/tablet/mobile) for each page.
 - [ ] Map existing mobile navigation journeys (horizontal icon bar, nested routes) and note breakpoints where the experience breaks down.
-- [ ] Define typography & spacing tokens (`settingsTokens.ts`, Figma tokens if available).
+- [x] Define typography & spacing tokens (`settingsTokens.ts`, Tailwind utilities in `src/index.css`).
 - [ ] Align with brand guidelines (confirm color palette & radius scale).
 - [ ] Partner with platform team to provision the `settings_modal_overlay_v1` feature flag, document rollout criteria, and ensure per-workspace toggling works in staging.
 - Deliverables: token spec, audit notes, before-state assets archived in `/docs/assets/settings/`.
 
 ### Phase 1 — Core Components & Utilities
-- [ ] Build `SettingsModalShell` + upgraded `SettingsHeader`.
+- [x] Build `SettingsModalShell` + upgraded `SettingsHeader`.
  - [ ] Wrap new shell/components in the `settings_modal_overlay_v1` feature flag with runtime switch + fallback to legacy layout.
  - [ ] Create `SettingsMobileDashboard`, `SettingsSubpageHeader`, `SettingsAnchorNav`, and `useSettingsAnchorRegistry` primitives with storybook examples, reusing the scroll-spy + sticky behaviors proven in Project/Lead/Sheet detail pages.
-- [ ] Implement `SettingsHelpSheet` component triggered by the header `Need help?` action; support markdown + media embeds and connect content to the shared i18n pipeline.
+- [x] Implement `SettingsHelpSheet` component triggered by the header `Need help?` action; support markdown + media embeds and connect content to the shared i18n pipeline.
 - [ ] Introduce section primitives (`SettingsFormSection`, `SettingsCollectionSection`, `SettingsToggleSection`, `SettingsDangerSection`, `SettingsPlaceholderSection`).
 - [ ] Create shared uploader hook and refresh button pattern.
 - [ ] Add storybook/preview entries (optional) or Chromatic snapshots.
@@ -190,7 +191,7 @@ Cross-cutting components:
 - `[ ]` Danger Zone: apply danger block pattern, tighten copy, confirm double-confirm flow.
 - `[ ]` Billing & Contracts: replace placeholder paragraphs with reusable empty-state card.
 - `[ ]` Remove deprecated components (`SettingsSection`, `EnhancedSettingsSection`) once unused.
-- `[ ]` Update `SettingsPageWrapper` sticky footer visuals.
+- `[x]` Update `SettingsPageWrapper` sticky footer visuals.
 - `[ ]` Ensure analytics + logging in place.
 
 ### Phase 5 — QA, Performance, and Rollout

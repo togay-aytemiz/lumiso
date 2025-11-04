@@ -13,12 +13,7 @@ jest.mock("@/components/settings/SettingsPageWrapper", () => ({
 
 jest.mock("@/components/settings/SettingsHeader", () => ({
   __esModule: true,
-  default: ({ title, description }: { title: string; description?: string }) => (
-    <header data-testid="settings-header">
-      <h1>{title}</h1>
-      {description && <p>{description}</p>}
-    </header>
-  ),
+  default: () => null,
 }));
 
 jest.mock("@/components/settings/CategorySettingsSection", () => ({

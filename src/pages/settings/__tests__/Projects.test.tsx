@@ -1,9 +1,7 @@
 import React from "react";
 import { render, screen } from "@/utils/testUtils";
 import Projects from "../Projects";
-import { settingsHelpContent } from "@/lib/settingsHelpContent";
-
-const mockSettingsHeader = jest.fn(() => <div data-testid="settings-header" />);
+const mockSettingsHeader = jest.fn();
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -13,7 +11,10 @@ jest.mock("react-i18next", () => ({
 
 jest.mock("@/components/settings/SettingsHeader", () => ({
   __esModule: true,
-  default: (props: any) => mockSettingsHeader(props),
+  default: (props: any) => {
+    mockSettingsHeader(props);
+    return null;
+  },
 }));
 
 jest.mock("@/components/settings/SettingsPageWrapper", () => ({
@@ -51,12 +52,6 @@ describe("Projects settings page", () => {
     expect(screen.getByTestId("project-types-section")).toBeInTheDocument();
     expect(screen.getByTestId("session-statuses-section")).toBeInTheDocument();
 
-    expect(mockSettingsHeader).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: "settings.projects.title",
-        description: "settings.projects.description",
-        helpContent: settingsHelpContent.projects,
-      })
-    );
+    expect(mockSettingsHeader).not.toHaveBeenCalled();
   });
 });

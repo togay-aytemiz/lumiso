@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
-import SettingsHeader from "@/components/settings/SettingsHeader";
-import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import { CategorySettingsSection } from "@/components/settings/CategorySettingsSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -231,11 +229,6 @@ export default function General() {
   if (loading) {
     return (
       <SettingsPageWrapper>
-        <SettingsHeader
-          title={t("settings.general.title")}
-          description={t("settings.general.description")}
-          helpContent={settingsHelpContent.general}
-        />
         <SettingsLoadingSkeleton rows={4} />
       </SettingsPageWrapper>
     );
@@ -243,12 +236,6 @@ export default function General() {
 
   return (
     <SettingsPageWrapper>
-      <SettingsHeader
-        title={t("settings.general.title")}
-        description={t("settings.general.description")}
-        helpContent={settingsHelpContent.general}
-      />
-      
       <div className="space-y-8">
         <CategorySettingsSection
           title={t("settings.general.branding.title")}

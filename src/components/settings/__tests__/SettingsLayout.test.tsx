@@ -19,7 +19,18 @@ const translations: Record<string, string> = {
   "settings.contracts": "Contracts",
   "settings.billing": "Billing",
   "settings.dangerZone": "Danger Zone",
+  "settings.currentlyViewing": "Currently viewing",
   "settings.completeGuidedSetup": "Complete guided setup to unlock settings",
+  "buttons.needHelp": "Need Help",
+  "buttons.close": "Close",
+  "toast.settingsSavedTitle": "Saved",
+  "toast.settingsSavedDescription": "Changes saved",
+  "toast.settingsDiscardedTitle": "Discarded",
+  "toast.settingsDiscardedDescription": "Changes discarded",
+  "settings.projects.title": "Projects & Sessions",
+  "settings.projects.description": "Manage project preferences",
+  "settings.general.title": "General",
+  "settings.general.description": "Manage general preferences",
 };
 
 jest.mock("@/contexts/SettingsContext", () => ({
@@ -106,15 +117,16 @@ describe("SettingsLayout", () => {
   it("renders navigation links and highlights active routes", () => {
     renderLayout();
 
-    const projectsNav = document.querySelector(
-      '[data-walkthrough="projects-section"]'
-    ) as HTMLElement;
-    expect(projectsNav).toBeTruthy();
-    expect(projectsNav.tagName).toBe("A");
-    expect(projectsNav.querySelector(".animate-pulse")).toBeTruthy();
+    expect(screen.getByText("Settings")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Close/i })).toBeInTheDocument();
+    expect(screen.getByText("Need Help")).toBeInTheDocument();
+    expect(screen.getAllByText("Projects & Sessions").length).toBeGreaterThan(0);
 
-    const content = screen.getByTestId("settings-content");
-    expect(content).toBeInTheDocument();
+    const projectLinks = screen.getAllByRole("link", { name: /Projects/i });
+    expect(projectLinks.length).toBeGreaterThanOrEqual(1);
+    expect(projectLinks[0].getAttribute("href")).toBe("/settings/projects");
+
+    expect(screen.getByTestId("settings-content")).toBeInTheDocument();
   });
 
   it("locks navigation when guided onboarding requires completion", () => {
@@ -124,9 +136,7 @@ describe("SettingsLayout", () => {
 
     renderLayout();
 
-    const projectsNav = document.querySelector(
-      '[data-walkthrough="projects-section"]'
-    ) as HTMLElement;
+    const projectsNav = document.querySelector('[data-walkthrough="projects-section"]') as HTMLElement;
     expect(projectsNav.tagName).toBe("DIV");
     expect(
       screen.getAllByText("Complete guided setup to unlock settings").length
@@ -136,10 +146,7 @@ describe("SettingsLayout", () => {
   it("retains navigation as links for unlocked items", () => {
     renderLayout("/settings/general");
 
-    const generalNav = document.querySelector(
-      '[data-walkthrough="general-section"]'
-    ) as HTMLElement;
-    expect(generalNav.tagName).toBe("A");
-    expect(generalNav).toHaveAttribute("href", "/settings/general");
+    const generalLinks = screen.getAllByRole("link", { name: /General/i });
+    expect(generalLinks[0]).toHaveAttribute("href", "/settings/general");
   });
 });

@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { render, screen, fireEvent, waitFor } from "@/utils/testUtils";
 import Profile from "../Profile";
-import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useWorkingHours } from "@/hooks/useWorkingHours";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
@@ -9,13 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
 
-const mockHeader = jest.fn(({ title, description, helpContent }: any) => (
-  <header data-testid="settings-header">
-    <h1>{title}</h1>
-    <p>{description}</p>
-    <span data-testid="help-content">{helpContent?.title ?? ""}</span>
-  </header>
-));
+const mockHeader = jest.fn();
 
 const mockCategorySection = jest.fn(({ title, children }: any) => (
   <section data-testid={`category-${title}`}>{children}</section>
@@ -45,7 +38,10 @@ jest.mock("@/components/settings/SettingsPageWrapper", () => ({
 
 jest.mock("@/components/settings/SettingsHeader", () => ({
   __esModule: true,
-  default: (props: any) => mockHeader(props),
+  default: (props: any) => {
+    mockHeader(props);
+    return null;
+  },
 }));
 
 jest.mock("@/components/settings/CategorySettingsSection", () => ({
@@ -220,14 +216,7 @@ describe("Profile settings page", () => {
     render(<Profile />);
 
     expect(screen.getByTestId("settings-loading-skeleton")).toBeInTheDocument();
-    expect(mockHeader).toHaveBeenCalledTimes(1);
-    expect(mockHeader.mock.calls[0][0]).toEqual(
-      expect.objectContaining({
-        title: "settings.profile.title",
-        description: "settings.profile.description",
-        helpContent: settingsHelpContent.profile,
-      })
-    );
+    expect(mockHeader).not.toHaveBeenCalled();
 
     await waitFor(() => {
       expect(mockGetUser).toHaveBeenCalled();

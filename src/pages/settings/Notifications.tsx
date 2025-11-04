@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
-import SettingsHeader from "@/components/settings/SettingsHeader";
-import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import { CategorySettingsSection } from "@/components/settings/CategorySettingsSection";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -223,11 +221,6 @@ export default function Notifications() {
   if (loading) {
     return (
       <SettingsPageWrapper>
-        <SettingsHeader
-          title={t('settings.notifications.title')}
-          description={t('settings.notifications.description')}
-          helpContent={settingsHelpContent.notifications}
-        />
         <SettingsLoadingSkeleton rows={4} />
       </SettingsPageWrapper>
     );
@@ -235,12 +228,6 @@ export default function Notifications() {
 
   return (
     <SettingsPageWrapper>
-      <SettingsHeader
-        title={t('settings.notifications.title')}
-        description={t('settings.notifications.description')}
-        helpContent={settingsHelpContent.notifications}
-      />
-      
       <div className="space-y-8">
         {/* Master Controls */}
         <CategorySettingsSection

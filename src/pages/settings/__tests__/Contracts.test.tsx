@@ -1,15 +1,7 @@
 import type { ReactNode } from "react";
 import { render, screen } from "@/utils/testUtils";
 import Contracts from "../Contracts";
-import { settingsHelpContent } from "@/lib/settingsHelpContent";
-
-const mockHeader = jest.fn(({ title, description, helpContent }: any) => (
-  <header data-testid="settings-header">
-    <h1>{title}</h1>
-    <p>{description}</p>
-    <span data-testid="help-content">{helpContent?.title ?? ""}</span>
-  </header>
-));
+const mockHeader = jest.fn();
 
 jest.mock("@/components/settings/SettingsPageWrapper", () => ({
   __esModule: true,
@@ -20,7 +12,10 @@ jest.mock("@/components/settings/SettingsPageWrapper", () => ({
 
 jest.mock("@/components/settings/SettingsHeader", () => ({
   __esModule: true,
-  default: (props: any) => mockHeader(props),
+  default: (props: any) => {
+    mockHeader(props);
+    return null;
+  },
 }));
 
 jest.mock("react-i18next", () => ({
@@ -34,19 +29,15 @@ describe("Contracts settings page", () => {
     mockHeader.mockClear();
   });
 
-  it("renders the contracts header and coming soon copy", () => {
+  it("renders the contracts content", () => {
     render(<Contracts />);
 
     expect(screen.getByTestId("settings-page-wrapper")).toBeInTheDocument();
-    expect(screen.getByText("settings.contracts.title")).toBeInTheDocument();
-    expect(screen.getByText("settings.contracts.description")).toBeInTheDocument();
     expect(screen.getByText("settings.contracts.comingSoon")).toBeInTheDocument();
   });
 
-  it("passes the correct help content to the settings header", () => {
+  it("does not render the legacy header", () => {
     render(<Contracts />);
-
-    expect(mockHeader).toHaveBeenCalledTimes(1);
-    expect(mockHeader.mock.calls[0][0].helpContent).toBe(settingsHelpContent.contracts);
+    expect(mockHeader).not.toHaveBeenCalled();
   });
 });

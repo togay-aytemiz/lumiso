@@ -7,13 +7,15 @@ interface NavigationGuardOptions {
   onDiscard: () => void;
   onSaveAndExit?: () => Promise<void>;
   message?: string;
+  navigationHandler?: (path: string | null) => void;
 }
 
 export function useSettingsNavigation({ 
   isDirty, 
   onDiscard, 
   onSaveAndExit,
-  message = "You have unsaved changes. Do you want to discard them?" 
+  message = "You have unsaved changes. Do you want to discard them?",
+  navigationHandler
 }: NavigationGuardOptions) {
   const [showGuard, setShowGuard] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
@@ -69,8 +71,14 @@ export function useSettingsNavigation({
   };
 
   const proceedWithNavigation = () => {
-    if (pendingNavigation) {
-      navigate(pendingNavigation);
+    if (pendingNavigation !== null) {
+      if (navigationHandler) {
+        navigationHandler(pendingNavigation);
+      } else if (pendingNavigation) {
+        navigate(pendingNavigation);
+      }
+    } else if (navigationHandler) {
+      navigationHandler(null);
     }
     clearPendingNavigation();
   };

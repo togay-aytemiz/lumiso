@@ -1,7 +1,5 @@
 import { useState } from "react";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
-import SettingsHeader from "@/components/settings/SettingsHeader";
-import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import SettingsSection from "@/components/SettingsSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,12 +50,6 @@ export default function DangerZone() {
 
   return (
     <SettingsPageWrapper>
-      <SettingsHeader
-        title={t('settings.dangerZone.title')}
-        description={t('settings.dangerZone.description')}
-        helpContent={settingsHelpContent.dangerZone}
-      />
-      
       <div className="space-y-6">
         <SettingsSection
           title={t('settings.dangerZone.deleteData.title')}

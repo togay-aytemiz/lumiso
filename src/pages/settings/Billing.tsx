@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
-import SettingsHeader from "@/components/settings/SettingsHeader";
-import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import { TaxBillingSection, TaxProfileFormState, TaxProfileFormErrors } from "@/components/settings/TaxBillingSection";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { DEFAULT_ORGANIZATION_TAX_PROFILE, OrganizationTaxProfile } from "@/lib/organizationSettingsCache";
@@ -149,11 +147,6 @@ export default function Billing() {
 
   return (
     <SettingsPageWrapper>
-      <SettingsHeader
-        title={t("settings.billing.title")}
-        description={t("settings.billing.description")}
-        helpContent={settingsHelpContent.billing}
-      />
       <div className="space-y-6">
         <TaxBillingSection
           profile={formState}

@@ -1,7 +1,5 @@
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
-import SettingsHeader from "@/components/settings/SettingsHeader";
-import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import ProjectStatusesSection from "@/components/ProjectStatusesSection";
 import ProjectTypesSection from "@/components/ProjectTypesSection";
 import SessionStatusesSection from "@/components/SessionStatusesSection";
@@ -42,12 +40,6 @@ export default function Projects() {
   
   return (
     <SettingsPageWrapper>
-      <SettingsHeader
-        title={t("settings.projects.title")}
-        description={t("settings.projects.description")}
-        helpContent={settingsHelpContent.projects}
-      />
-      
       <div className="space-y-8">
         {/* Always show all sections in single photographer mode */}
         <ProjectStatusesSection />

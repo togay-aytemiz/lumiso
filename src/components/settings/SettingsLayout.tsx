@@ -8,18 +8,11 @@ import {
 } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
-  AlertTriangle,
   ArrowUp,
-  Bell,
-  CreditCard,
-  FileText,
-  FolderOpen,
+  ChevronLeft,
+  ChevronRight,
   LifeBuoy,
   Lock,
-  Package,
-  Settings,
-  User,
-  UserCheck,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,121 +30,17 @@ import SettingsHelpSheet from "@/components/settings/SettingsHelpSheet";
 import StickySectionNav, {
   type StickySectionNavItem,
 } from "@/components/navigation/StickySectionNav";
+import {
+  personalSettingsItems,
+  organizationSettingsItems,
+  pageMetadata,
+  type SettingsNavItem,
+} from "@/components/settings/settingsNavConfig";
 import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import { settingsClasses, settingsTokens } from "@/theme/settingsTokens";
-
-interface NavItem {
-  title: string;
-  href: string;
-  icon: typeof User;
-  testId: string;
-  variant?: "danger";
-}
-
-const personalSettingsItems: NavItem[] = [
-  {
-    title: "profile",
-    href: "/settings/profile",
-    icon: User,
-    testId: "profile-section",
-  },
-  {
-    title: "notifications",
-    href: "/settings/notifications",
-    icon: Bell,
-    testId: "notifications-section",
-  },
-];
-
-const organizationSettingsItems: NavItem[] = [
-  {
-    title: "general",
-    href: "/settings/general",
-    icon: Settings,
-    testId: "general-section",
-  },
-  {
-    title: "projects",
-    href: "/settings/projects",
-    icon: FolderOpen,
-    testId: "projects-section",
-  },
-  {
-    title: "leads",
-    href: "/settings/leads",
-    icon: UserCheck,
-    testId: "leads-section",
-  },
-  {
-    title: "services",
-    href: "/settings/services",
-    icon: Package,
-    testId: "services-section",
-  },
-  {
-    title: "contracts",
-    href: "/settings/contracts",
-    icon: FileText,
-    testId: "contracts-section",
-  },
-  {
-    title: "billing",
-    href: "/settings/billing",
-    icon: CreditCard,
-    testId: "billing-section",
-  },
-  {
-    title: "dangerZone",
-    href: "/settings/danger-zone",
-    icon: AlertTriangle,
-    testId: "danger-section",
-    variant: "danger",
-  },
-];
-
-const pageMetadata: Record<
-  string,
-  { titleKey: string; descriptionKey?: string }
-> = {
-  "/settings/profile": {
-    titleKey: "settings.profile.title",
-    descriptionKey: "settings.profile.description",
-  },
-  "/settings/notifications": {
-    titleKey: "settings.notifications.title",
-    descriptionKey: "settings.notifications.description",
-  },
-  "/settings/general": {
-    titleKey: "settings.general.title",
-    descriptionKey: "settings.general.description",
-  },
-  "/settings/projects": {
-    titleKey: "settings.projects.title",
-    descriptionKey: "settings.projects.description",
-  },
-  "/settings/leads": {
-    titleKey: "settings.leads.title",
-    descriptionKey: "settings.leads.description",
-  },
-  "/settings/services": {
-    titleKey: "settings.services.title",
-    descriptionKey: "settings.services.description",
-  },
-  "/settings/contracts": {
-    titleKey: "settings.contracts.title",
-    descriptionKey: "settings.contracts.description",
-  },
-  "/settings/billing": {
-    titleKey: "settings.billing.title",
-    descriptionKey: "settings.billing.description",
-  },
-  "/settings/danger-zone": {
-    titleKey: "settings.dangerZone.title",
-    descriptionKey: "settings.dangerZone.description",
-  },
-};
 
 const CLOSE_TARGET = "__settings_close__";
 const LAST_NON_SETTINGS_PATH_KEY = "lumiso:last-non-settings-path";
@@ -172,6 +61,9 @@ export default function SettingsLayout() {
   const { toast } = useToast();
 
   const currentPath = location.pathname;
+  const isMobile = useIsMobile();
+  const isSettingsRoot = currentPath === "/settings";
+  const showMobileBackButton = isMobile && !isSettingsRoot;
   const hasChanges = hasCategoryChanges(currentPath);
 
   const lastPathRef = useRef<string | null>(null);
@@ -424,6 +316,27 @@ export default function SettingsLayout() {
     [handleNavigationAttempt, isItemLocked]
   );
 
+  const handleMobileBackToDashboard = useCallback(() => {
+    const target = "/settings";
+    if (!handleNavigationAttempt(target)) {
+      return;
+    }
+    navigate(target, { replace: true });
+  }, [handleNavigationAttempt, navigate]);
+
+  const handleMobileNavClick = useCallback(
+    (itemHref: string) => {
+      if (isItemLocked(itemHref)) {
+        return;
+      }
+      if (!handleNavigationAttempt(itemHref)) {
+        return;
+      }
+      navigate(itemHref);
+    },
+    [handleNavigationAttempt, isItemLocked, navigate]
+  );
+
   const headerMeta = useMemo(() => {
     const metadata = pageMetadata[currentPath];
     if (metadata) {
@@ -468,9 +381,125 @@ export default function SettingsLayout() {
     }
   }, [helpContent]);
 
-  const mobileNavItems = useMemo(() => {
-    return [...personalSettingsItems, ...organizationSettingsItems];
-  }, []);
+  const mobileSections = useMemo(
+    () => [
+      {
+        id: "personal",
+        label: t("settings.personalSettings"),
+        items: personalSettingsItems,
+      },
+      {
+        id: "organization",
+        label: t("settings.organizationSettings"),
+        items: organizationSettingsItems,
+      },
+    ],
+    [t]
+  );
+
+  const renderDirectoryButton = useCallback(
+    (item: SettingsNavItem, variant: "mobile" | "desktop") => {
+      const Icon = item.icon;
+      const locked = isItemLocked(item.href);
+      const itemHasChanges = hasCategoryChanges(item.href);
+      const metadata = pageMetadata[item.href];
+      const description =
+        metadata?.descriptionKey ? tPages(metadata.descriptionKey) : undefined;
+
+      const baseButtonClasses =
+        "group flex w-full items-center gap-4 px-4 py-3 text-left transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2";
+
+      const enabledClasses =
+        variant === "mobile"
+          ? "hover:bg-muted/40 active:translate-x-[1px]"
+          : "rounded-2xl border border-border/60 bg-card shadow-sm hover:border-[hsl(var(--accent-300))] hover:shadow-md hover:-translate-y-[1px]";
+
+      const disabledClasses =
+        variant === "mobile"
+          ? "cursor-not-allowed opacity-50"
+          : "cursor-not-allowed opacity-40";
+
+      return (
+        <button
+          key={`settings-directory-${item.href}`}
+          type="button"
+          onClick={() => handleMobileNavClick(item.href)}
+          disabled={locked}
+          data-walkthrough={item.testId}
+          className={cn(
+            baseButtonClasses,
+            locked ? disabledClasses : enabledClasses
+          )}
+        >
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-muted text-[hsl(var(--accent-600))]">
+            <Icon className="h-5 w-5" />
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="truncate text-sm font-semibold text-foreground">
+              {t(`settings.${item.title}`)}
+            </span>
+            {description && (
+              <span className="truncate text-xs text-muted-foreground">
+                {description}
+              </span>
+            )}
+          </span>
+          {itemHasChanges && (
+            <span className="mr-2 h-2 w-2 shrink-0 rounded-full bg-orange-500" />
+          )}
+          {locked ? (
+            <Lock className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          )}
+        </button>
+      );
+    },
+    [
+      handleMobileNavClick,
+      hasCategoryChanges,
+      isItemLocked,
+      t,
+      tPages,
+    ]
+  );
+
+  const renderSettingsDirectory = useCallback(
+    (variant: "mobile" | "desktop") => {
+      const containerClasses =
+        variant === "mobile"
+          ? "flex flex-col gap-6 px-4 py-6 sm:px-6"
+          : "flex flex-col gap-8 px-6 py-8";
+
+      return (
+        <div className={containerClasses}>
+          {mobileSections.map((section) => (
+            <section key={section.id} className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/70">
+                {section.label}
+              </p>
+              {variant === "mobile" ? (
+                <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-sm">
+                  <div className="divide-y divide-border/60">
+                    {section.items.map((item) =>
+                      renderDirectoryButton(item, "mobile")
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {section.items.map((item) =>
+                    renderDirectoryButton(item, "desktop")
+                  )}
+                </div>
+              )}
+            </section>
+          ))}
+        </div>
+      );
+    },
+    [mobileSections, renderDirectoryButton]
+  );
 
   const contextSectionNavItems = useMemo(() => {
     const sections = categoryChanges[currentPath] ?? {};
@@ -503,13 +532,126 @@ export default function SettingsLayout() {
     return merged;
   }, [contextSectionNavItems, domSectionNavItems]);
 
+  const shouldShowScrollTopButton =
+    showScrollTop && !(isMobile && isSettingsRoot);
+
   const sectionNavIds = useMemo(
     () => sectionNavItems.map((item) => item.id),
     [sectionNavItems]
   );
 
+  const headerClassName = cn(
+    "sticky top-0 z-30 px-4 sm:px-6",
+    isMobile
+      ? isSettingsRoot
+        ? "border-none bg-card/95 pb-6 pt-12 shadow-[0_18px_36px_-24px_rgba(15,23,42,0.35)] rounded-b-3xl"
+        : "border-b border-border bg-[hsl(var(--background))] pb-3 pt-4"
+      : "border-b border-border/60 bg-[hsl(var(--background))] py-3 backdrop-blur supports-[backdrop-filter]:bg-[hsl(var(--background))]"
+  );
+
+  const titleWrapperPadding = showMobileBackButton
+    ? "py-3"
+    : isMobile
+    ? "py-1"
+    : "py-4";
+
+  const headerElement = (
+    <header className={headerClassName}>
+      <div
+        key={currentPath}
+        className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between settings-header-motion"
+      >
+        <div
+          className={cn("flex w-full items-center gap-3", titleWrapperPadding)}
+        >
+          {showMobileBackButton && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleMobileBackToDashboard}
+              className="-ml-1 h-9 w-9 rounded-full border border-transparent bg-muted/60 p-0 text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+              aria-label={tCommon("buttons.back", {
+                defaultValue: "Back",
+              })}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+          )}
+          <div className="min-w-0 flex-1 space-y-1">
+            <h1 className={cn(settingsClasses.headerTitle, "truncate")}>
+              {headerTitle}
+            </h1>
+            {headerDescription && !isMobile && (
+              <p className={settingsClasses.headerDescription}>
+                {headerDescription}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center justify-end gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="hidden whitespace-nowrap sm:inline-flex"
+            disabled={!helpContent}
+            onClick={() => {
+              if (!helpContent) return;
+              setShowHelp(true);
+            }}
+          >
+            <LifeBuoy className="mr-2 h-4 w-4" />
+            {tCommon("buttons.needHelp")}
+          </Button>
+          {!isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCloseClick}
+              aria-label={tCommon("buttons.close")}
+              className="h-8 w-8 rounded-full"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {!isMobile && sectionNavItems.length > 0 && (
+        <div className="mt-3 hidden border-t border-border/50 pt-3 md:block">
+          <StickySectionNav
+            items={sectionNavItems}
+            align="start"
+            navClassName="justify-start"
+            observeIds={sectionNavIds}
+            fallbackActiveId={sectionNavIds[0]}
+            disableSticky
+            className="border-0 bg-transparent px-0 py-0"
+          />
+        </div>
+      )}
+    </header>
+  );
+
+  const helpSheet = helpContent ? (
+    <SettingsHelpSheet
+      open={showHelp}
+      onOpenChange={setShowHelp}
+      helpContent={helpContent}
+    />
+  ) : null;
+
+  const guardDialog = (
+    <NavigationGuardDialog
+      open={showGuard}
+      onDiscard={handleDiscardChanges}
+      onStay={handleStayOnPage}
+      onSaveAndExit={handleSaveAndExit}
+      message={guardMessage}
+    />
+  );
+
   const renderNavLink = useCallback(
-    (item: NavItem) => {
+    (item: SettingsNavItem) => {
       const Icon = item.icon;
       const isActive = currentPath === item.href;
       const itemHasChanges = hasCategoryChanges(item.href);
@@ -590,6 +732,50 @@ export default function SettingsLayout() {
     "--settings-overlay-shadow": settingsTokens.overlayShadow,
   } as CSSProperties;
 
+  if (isMobile) {
+    return (
+      <>
+        <div className="flex min-h-screen flex-col bg-[hsl(var(--background))]">
+          {headerElement}
+          <div
+            key={`${currentPath}-content`}
+            ref={contentRef}
+            className="relative flex-1 overflow-y-auto bg-[hsl(var(--background))]"
+          >
+            {isSettingsRoot ? (
+              renderSettingsDirectory("mobile")
+            ) : (
+              <>
+                <Outlet />
+                {shouldShowScrollTopButton && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleScrollToTop}
+                    onMouseDown={(event) => event.stopPropagation()}
+                    className={cn(
+                      "fixed z-[60] h-11 w-11 rounded-full border-transparent bg-[hsl(var(--accent-200))] text-[hsl(var(--accent-900))] shadow-lg transition-all hover:bg-[hsl(var(--accent-300))] hover:shadow-xl focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2",
+                      hasChanges ? "bottom-24 md:bottom-28" : "bottom-5 md:bottom-6"
+                    )}
+                    style={{ right: `${scrollTopRightOffset}px` }}
+                    aria-label={tCommon("buttons.backToTop", {
+                      defaultValue: "Back to top",
+                    })}
+                  >
+                    <ArrowUp className="h-5 w-5" />
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+        {helpSheet}
+        {guardDialog}
+      </>
+    );
+  }
+
   return (
     <>
       <div
@@ -655,110 +841,38 @@ export default function SettingsLayout() {
             </aside>
 
             <div className="flex min-h-0 flex-1 flex-col bg-[hsl(var(--background))]">
-              <header className="sticky top-0 z-30 border-b border-border/60 bg-[hsl(var(--background))] px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-[hsl(var(--background))] sm:px-6">
-                <div
-                  key={currentPath}
-                  className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between settings-header-motion"
-                >
-                  <div className="min-w-0 space-y-1 py-4">
-                    <h1 className={cn(settingsClasses.headerTitle, "truncate")}>
-                      {headerTitle}
-                    </h1>
-                    {headerDescription && (
-                      <p className={settingsClasses.headerDescription}>
-                        {headerDescription}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex shrink-0 items-center justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="hidden whitespace-nowrap sm:inline-flex"
-                      disabled={!helpContent}
-                      onClick={() => {
-                        if (!helpContent) return;
-                        setShowHelp(true);
-                      }}
-                    >
-                      <LifeBuoy className="mr-2 h-4 w-4" />
-                      {tCommon("buttons.needHelp")}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleCloseClick}
-                      aria-label={tCommon("buttons.close")}
-                      className="h-8 w-8 rounded-full"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                <nav className="mt-3 flex gap-2 overflow-x-auto border-t border-border/50 pt-3 md:hidden">
-                  {mobileNavItems.map((item) => {
-                    const isActive = currentPath === item.href;
-                    return (
-                      <NavLink
-                        key={`mobile-${item.href}`}
-                        to={item.href}
-                        replace
-                        onClick={(event) =>
-                          handleNavItemInteraction(event, item.href)
-                        }
-                        className={cn(
-                          "settings-nav-item inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                          isActive
-                            ? "border-[hsl(var(--sidebar-active))] bg-[hsl(var(--sidebar-active))] text-[hsl(var(--sidebar-active-foreground))]"
-                            : "border-transparent bg-muted/30 text-muted-foreground hover:bg-muted/50"
-                        )}
-                      >
-                        <item.icon className="h-3.5 w-3.5" />
-                        {t(`settings.${item.title}`)}
-                      </NavLink>
-                    );
-                  })}
-                </nav>
-                {sectionNavItems.length > 0 && (
-                  <div className="mt-3 hidden border-t border-border/50 pt-3 md:block">
-                    <StickySectionNav
-                      items={sectionNavItems}
-                      align="start"
-                      navClassName="justify-start"
-                      observeIds={sectionNavIds}
-                      fallbackActiveId={sectionNavIds[0]}
-                      disableSticky
-                      className="border-0 bg-transparent px-0 py-0"
-                    />
-                  </div>
-                )}
-              </header>
+              {headerElement}
 
               <div
                 key={`${currentPath}-content`}
                 ref={contentRef}
                 className="relative flex-1 overflow-y-auto bg-[hsl(var(--background))] settings-content-motion"
               >
-                <Outlet />
-                {showScrollTop && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={handleScrollToTop}
-                    onMouseDown={(event) => event.stopPropagation()}
-                    className={cn(
-                      "fixed z-[60] h-11 w-11 rounded-full border-transparent bg-[hsl(var(--accent-200))] text-[hsl(var(--accent-900))] shadow-lg transition-all hover:bg-[hsl(var(--accent-300))] hover:shadow-xl focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2",
-                      hasChanges ? "bottom-24 md:bottom-28" : "bottom-5 md:bottom-6"
+                {isSettingsRoot ? (
+                  renderSettingsDirectory("desktop")
+                ) : (
+                  <>
+                    <Outlet />
+                    {shouldShowScrollTopButton && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={handleScrollToTop}
+                        onMouseDown={(event) => event.stopPropagation()}
+                        className={cn(
+                          "fixed z-[60] h-11 w-11 rounded-full border-transparent bg-[hsl(var(--accent-200))] text-[hsl(var(--accent-900))] shadow-lg transition-all hover:bg-[hsl(var(--accent-300))] hover:shadow-xl focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2",
+                          hasChanges ? "bottom-24 md:bottom-28" : "bottom-5 md:bottom-6"
+                        )}
+                        style={{ right: `${scrollTopRightOffset}px` }}
+                        aria-label={tCommon("buttons.backToTop", {
+                          defaultValue: "Back to top",
+                        })}
+                      >
+                        <ArrowUp className="h-5 w-5" />
+                      </Button>
                     )}
-                    style={{ right: `${scrollTopRightOffset}px` }}
-                    aria-label={tCommon("buttons.backToTop", {
-                      defaultValue: "Back to top",
-                    })}
-                  >
-                    <ArrowUp className="h-5 w-5" />
-                  </Button>
+                  </>
                 )}
               </div>
             </div>
@@ -766,21 +880,8 @@ export default function SettingsLayout() {
         </div>
       </div>
 
-      {helpContent && (
-        <SettingsHelpSheet
-          open={showHelp}
-          onOpenChange={setShowHelp}
-          helpContent={helpContent}
-        />
-      )}
-
-      <NavigationGuardDialog
-        open={showGuard}
-        onDiscard={handleDiscardChanges}
-        onStay={handleStayOnPage}
-        onSaveAndExit={handleSaveAndExit}
-        message={guardMessage}
-      />
+      {helpSheet}
+      {guardDialog}
     </>
   );
 }

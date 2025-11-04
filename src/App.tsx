@@ -82,7 +82,6 @@ const App = () => (
               <Route path="contracts" element={<ContractsSettings />} />
               <Route path="billing" element={<BillingSettings />} />
               <Route path="danger-zone" element={<DangerZoneSettings />} />
-              <Route index element={<Navigate to="/settings/profile" replace />} />
             </Route>
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -419,12 +419,15 @@ export default function SettingsLayout() {
     }
   }, [helpContent]);
 
-  const mobileSections = useMemo(
-    () => [
+  const mobileSections = useMemo(() => {
+    const dangerItems = organizationSettingsItems.filter(
+      (item) => item.variant === "danger"
+    );
+    const sections = [
       {
         id: "personal",
         label: t("settings.personalSettings"),
-        items: personalSettingsItems.filter((item) => item.variant !== "danger"),
+        items: personalSettingsItems,
       },
       {
         id: "organization",
@@ -433,9 +436,18 @@ export default function SettingsLayout() {
           (item) => item.variant !== "danger"
         ),
       },
-    ],
-    [t]
-  );
+    ];
+
+    if (dangerItems.length > 0) {
+      sections.push({
+        id: "danger",
+        label: t("settings.dangerZone"),
+        items: dangerItems,
+      });
+    }
+
+    return sections;
+  }, [t]);
 
   const renderDirectoryButton = useCallback(
     (item: SettingsNavItem, variant: "mobile" | "desktop") => {
@@ -449,9 +461,14 @@ export default function SettingsLayout() {
       const baseButtonClasses =
         "group flex w-full items-center gap-4 px-4 py-3 text-left transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2";
 
+      const isDangerVariant = item.variant === "danger";
+      const isDangerMobile = isDangerVariant && variant === "mobile";
+
       const enabledClasses =
         variant === "mobile"
-          ? "hover:bg-muted/40 active:translate-x-[1px]"
+          ? isDangerMobile
+            ? "border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/15 active:translate-x-[1px]"
+            : "hover:bg-muted/40 active:translate-x-[1px]"
           : "rounded-2xl border border-border/60 bg-card shadow-sm hover:border-[hsl(var(--accent-300))] hover:shadow-md hover:-translate-y-[1px]";
 
       const disabledClasses =
@@ -471,15 +488,32 @@ export default function SettingsLayout() {
             locked ? disabledClasses : enabledClasses
           )}
         >
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-muted text-[hsl(var(--accent-600))]">
+          <span
+            className={cn(
+              "flex h-11 w-11 items-center justify-center rounded-2xl",
+              isDangerMobile
+                ? "bg-destructive/20 text-destructive"
+                : "bg-muted text-[hsl(var(--accent-600))]"
+            )}
+          >
             <Icon className="h-5 w-5" />
           </span>
           <span className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="truncate text-sm font-semibold text-foreground">
+            <span
+              className={cn(
+                "truncate text-sm font-semibold",
+                isDangerMobile ? "text-destructive" : "text-foreground"
+              )}
+            >
               {t(`settings.${item.title}`)}
             </span>
             {description && (
-              <span className="truncate text-xs text-muted-foreground">
+              <span
+                className={cn(
+                  "truncate text-xs",
+                  isDangerMobile ? "text-destructive/80" : "text-muted-foreground"
+                )}
+              >
                 {description}
               </span>
             )}
@@ -488,9 +522,19 @@ export default function SettingsLayout() {
             <span className="mr-2 h-2 w-2 shrink-0 rounded-full bg-orange-500" />
           )}
           {locked ? (
-            <Lock className="h-4 w-4 text-muted-foreground" />
+            <Lock
+              className={cn(
+                "h-4 w-4",
+                isDangerMobile ? "text-destructive/80" : "text-muted-foreground"
+              )}
+            />
           ) : (
-            <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+            <ChevronRight
+              className={cn(
+                "h-4 w-4 transition-transform group-hover:translate-x-0.5",
+                isDangerMobile ? "text-destructive" : "text-muted-foreground"
+              )}
+            />
           )}
         </button>
       );
@@ -511,16 +555,42 @@ export default function SettingsLayout() {
           ? "flex flex-col gap-6 px-4 py-6 sm:px-6"
           : "flex flex-col gap-8 px-6 py-8";
 
+      const sectionsToRender =
+        variant === "mobile"
+          ? mobileSections
+          : mobileSections.filter((section) => section.id !== "danger");
+
       return (
         <div className={containerClasses}>
-          {mobileSections.map((section) => (
+          {sectionsToRender.map((section) => (
             <section key={section.id} className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/70">
+              <p
+                className={cn(
+                  "text-xs font-semibold uppercase tracking-wide text-muted-foreground/70",
+                  section.id === "danger" &&
+                    variant === "mobile" &&
+                    "text-destructive/80"
+                )}
+              >
                 {section.label}
               </p>
               {variant === "mobile" ? (
-                <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-sm">
-                  <div className="divide-y divide-border/60">
+                <div
+                  className={cn(
+                    "overflow-hidden rounded-3xl border bg-card shadow-sm",
+                    section.id === "danger"
+                      ? "border-destructive/40 bg-destructive/5"
+                      : "border-border/60"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "divide-y",
+                      section.id === "danger"
+                        ? "divide-destructive/20"
+                        : "divide-border/60"
+                    )}
+                  >
                     {section.items.map((item) =>
                       renderDirectoryButton(item, "mobile")
                     )}
@@ -795,48 +865,49 @@ export default function SettingsLayout() {
           {mobileHeaderElement}
           <main className="relative flex-1 min-h-0 overflow-hidden bg-[hsl(var(--background))]">
             <div
+              ref={handleDirectoryScrollRef}
               className={cn(
-                "flex h-full w-[200%] transition-transform duration-300 ease-in-out will-change-transform"
+                "absolute inset-0 z-10 flex flex-col overflow-y-auto bg-[hsl(var(--background))] pb-8 transition-transform duration-300 ease-in-out will-change-transform",
+                isSettingsRoot
+                  ? "translate-x-0 pointer-events-auto"
+                  : "-translate-x-full pointer-events-none"
               )}
-              style={{
-                transform: `translateX(${isSettingsRoot ? "0%" : "-50%"})`,
-              }}
+              aria-hidden={!isSettingsRoot}
+              style={{ WebkitOverflowScrolling: "touch" }}
             >
-              <section
-                ref={handleDirectoryScrollRef}
-                className="flex h-full w-1/2 min-h-0 flex-col overflow-y-auto bg-[hsl(var(--background))] pb-8"
-                aria-hidden={!isSettingsRoot}
-                style={{ WebkitOverflowScrolling: "touch" }}
-              >
-                {renderSettingsDirectory("mobile")}
-              </section>
-              <section
-                ref={handleDetailScrollRef}
-                className="flex h-full w-1/2 min-h-0 flex-col overflow-y-auto bg-[hsl(var(--background))] pb-8"
-                aria-hidden={isSettingsRoot}
-                style={{ WebkitOverflowScrolling: "touch" }}
-              >
-                <Outlet />
-                {shouldShowScrollTopButton && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={handleScrollToTop}
-                    onMouseDown={(event) => event.stopPropagation()}
-                    className={cn(
-                      "fixed z-[60] h-11 w-11 rounded-full border-transparent bg-[hsl(var(--accent-200))] text-[hsl(var(--accent-900))] shadow-lg transition-all hover:bg-[hsl(var(--accent-300))] hover:shadow-xl focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2",
-                      hasChanges ? "bottom-24 md:bottom-28" : "bottom-5 md:bottom-6"
-                    )}
-                    style={{ right: `${scrollTopRightOffset}px` }}
-                    aria-label={tCommon("buttons.backToTop", {
-                      defaultValue: "Back to top",
-                    })}
-                  >
-                    <ArrowUp className="h-5 w-5" />
-                  </Button>
-                )}
-              </section>
+              {renderSettingsDirectory("mobile")}
+            </div>
+            <div
+              ref={handleDetailScrollRef}
+              className={cn(
+                "absolute inset-0 z-20 flex flex-col overflow-y-auto bg-[hsl(var(--background))] pb-8 transition-transform duration-300 ease-in-out will-change-transform",
+                isSettingsRoot
+                  ? "translate-x-full pointer-events-none"
+                  : "translate-x-0 pointer-events-auto"
+              )}
+              aria-hidden={isSettingsRoot}
+              style={{ WebkitOverflowScrolling: "touch" }}
+            >
+              <Outlet />
+              {shouldShowScrollTopButton && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={handleScrollToTop}
+                  onMouseDown={(event) => event.stopPropagation()}
+                  className={cn(
+                    "fixed z-[60] h-11 w-11 rounded-full border-transparent bg-[hsl(var(--accent-200))] text-[hsl(var(--accent-900))] shadow-lg transition-all hover:bg-[hsl(var(--accent-300))] hover:shadow-xl focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2",
+                    hasChanges ? "bottom-24 md:bottom-28" : "bottom-5 md:bottom-6"
+                  )}
+                  style={{ right: `${scrollTopRightOffset}px` }}
+                  aria-label={tCommon("buttons.backToTop", {
+                    defaultValue: "Back to top",
+                  })}
+                >
+                  <ArrowUp className="h-5 w-5" />
+                </Button>
+              )}
             </div>
           </main>
         </div>

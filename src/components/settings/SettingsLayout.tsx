@@ -21,7 +21,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { PageHeader } from "@/components/ui/page-header";
 import { cn } from "@/lib/utils";
 import { useSettingsContext } from "@/contexts/SettingsContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -101,12 +100,15 @@ export default function SettingsLayout() {
   );
   const [showHelp, setShowHelp] = useState(false);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const contentRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLElement | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [scrollTopRightOffset, setScrollTopRightOffset] = useState(24);
   const [domSectionNavItems, setDomSectionNavItems] = useState<
     StickySectionNavItem[]
   >([]);
+  const mobileDirectoryScrollRef = useRef<HTMLDivElement | null>(null);
+  const mobileDetailScrollRef = useRef<HTMLDivElement | null>(null);
+  const desktopContentScrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setModalState("idle"), 200);
@@ -172,6 +174,35 @@ export default function SettingsLayout() {
 
     setDomSectionNavItems(unique);
   }, []);
+  const handleDirectoryScrollRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      mobileDirectoryScrollRef.current = node;
+      if (isMobile && isSettingsRoot) {
+        contentRef.current = node;
+      }
+    },
+    [isMobile, isSettingsRoot]
+  );
+
+  const handleDetailScrollRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      mobileDetailScrollRef.current = node;
+      if (isMobile && !isSettingsRoot) {
+        contentRef.current = node;
+      }
+    },
+    [isMobile, isSettingsRoot]
+  );
+
+  const handleDesktopContentRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      desktopContentScrollRef.current = node;
+      if (!isMobile) {
+        contentRef.current = node;
+      }
+    },
+    [isMobile]
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -224,7 +255,13 @@ export default function SettingsLayout() {
       container.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", updateScrollTopPosition);
     };
-  }, [currentPath, refreshDomSectionNavItems, updateScrollTopPosition]);
+  }, [
+    currentPath,
+    isMobile,
+    isSettingsRoot,
+    refreshDomSectionNavItems,
+    updateScrollTopPosition,
+  ]);
 
   const handleScrollToTop = useCallback(() => {
     const container = contentRef.current;
@@ -613,28 +650,32 @@ export default function SettingsLayout() {
   });
 
   const mobileHeaderElement = (
-    <div className="sticky top-0 z-30 border-b border-border bg-[hsl(var(--background))]">
-      <PageHeader
-        title={headerTitle}
-        subtitle={headerDescription}
-        className="bg-transparent"
-      >
+    <header className="sticky top-0 z-30 border-b border-border bg-[hsl(var(--background))]">
+      <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
         {showMobileBackButton && (
-          <div className="flex justify-start">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleMobileBackToDashboard}
-              className="gap-2"
-              aria-label={mobileBackLabel}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              {mobileBackLabel}
-            </Button>
-          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleMobileBackToDashboard}
+            className="h-10 w-10 shrink-0 rounded-full bg-muted text-foreground shadow-sm hover:bg-muted/80 focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2"
+            aria-label={mobileBackLabel}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
         )}
-      </PageHeader>
-    </div>
+        <div className="min-w-0 flex-1">
+          <h1 className={cn(settingsClasses.headerTitle, "truncate")}>
+            {headerTitle}
+          </h1>
+          {headerDescription && (
+            <p className={cn(settingsClasses.headerDescription, "mt-1")}>
+              {headerDescription}
+            </p>
+          )}
+        </div>
+      </div>
+    </header>
   );
 
   const helpSheet = helpContent ? (
@@ -737,21 +778,44 @@ export default function SettingsLayout() {
     "--settings-overlay-shadow": settingsTokens.overlayShadow,
   } as CSSProperties;
 
+  useEffect(() => {
+    if (isMobile) {
+      contentRef.current = isSettingsRoot
+        ? mobileDirectoryScrollRef.current
+        : mobileDetailScrollRef.current;
+    } else {
+      contentRef.current = desktopContentScrollRef.current;
+    }
+  }, [isMobile, isSettingsRoot, currentPath]);
+
   if (isMobile) {
     return (
       <>
         <div className="flex min-h-[100dvh] flex-col bg-[hsl(var(--background))]">
           {mobileHeaderElement}
-          <main
-            key={`${currentPath}-content`}
-            ref={contentRef}
-            className="flex-1 overflow-y-auto bg-[hsl(var(--background))] pb-8"
-            style={{ WebkitOverflowScrolling: "touch" }}
-          >
-            {isSettingsRoot ? (
-              renderSettingsDirectory("mobile")
-            ) : (
-              <>
+          <main className="relative flex-1 min-h-0 overflow-hidden bg-[hsl(var(--background))]">
+            <div
+              className={cn(
+                "flex h-full w-[200%] transition-transform duration-300 ease-in-out will-change-transform"
+              )}
+              style={{
+                transform: `translateX(${isSettingsRoot ? "0%" : "-50%"})`,
+              }}
+            >
+              <section
+                ref={handleDirectoryScrollRef}
+                className="flex h-full w-1/2 min-h-0 flex-col overflow-y-auto bg-[hsl(var(--background))] pb-8"
+                aria-hidden={!isSettingsRoot}
+                style={{ WebkitOverflowScrolling: "touch" }}
+              >
+                {renderSettingsDirectory("mobile")}
+              </section>
+              <section
+                ref={handleDetailScrollRef}
+                className="flex h-full w-1/2 min-h-0 flex-col overflow-y-auto bg-[hsl(var(--background))] pb-8"
+                aria-hidden={isSettingsRoot}
+                style={{ WebkitOverflowScrolling: "touch" }}
+              >
                 <Outlet />
                 {shouldShowScrollTopButton && (
                   <Button
@@ -772,8 +836,8 @@ export default function SettingsLayout() {
                     <ArrowUp className="h-5 w-5" />
                   </Button>
                 )}
-              </>
-            )}
+              </section>
+            </div>
           </main>
         </div>
         {helpSheet}
@@ -851,7 +915,7 @@ export default function SettingsLayout() {
 
               <div
                 key={`${currentPath}-content`}
-                ref={contentRef}
+                ref={handleDesktopContentRef}
                 className="relative flex-1 overflow-y-auto bg-[hsl(var(--background))] settings-content-motion"
               >
                 {isSettingsRoot ? (

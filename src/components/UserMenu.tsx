@@ -32,7 +32,7 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
   };
 
   const handleSettings = () => {
-    navigate("/settings/profile");
+    navigate("/settings");
     setIsOpen(false);
     onNavigate?.();
   };

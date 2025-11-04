@@ -1069,7 +1069,7 @@
   "settings": {
     "general": {
       "title": "Genel",
-      "description": "Genel uygulama tercihlerinizi yönetin",
+      "description": "Çalışma alanı tercihleri ve marka",
       "branding": {
         "title": "Markalaşma",
         "description": "Müşteriye yönelik materyallerde marka görünümünüzü özelleştirin",
@@ -1151,7 +1151,7 @@
     },
     "profile": {
       "title": "Profil",
-      "description": "Kişisel bilgilerinizi ve çalışma saatlerinizi yönetin",
+      "description": "Kişisel bilgiler ve çalışma saatleri",
       "profileInfo": {
         "title": "Profil Bilgileri",
         "description": "Kişisel bilgilerinizi ve fotoğrafınızı güncelleyin.",
@@ -1227,7 +1227,7 @@
     },
     "billing": {
       "title": "Faturalandırma ve Ödemeler",
-      "description": "Fatura bilgilerinizi, KDV varsayılanlarını ve ödeme yöntemlerinizi yönetin",
+      "description": "Fatura profili, vergi ve ödeme bilgileri",
       "comingSoon": "Yakında geliyor..."
     },
     "integrations": {
@@ -1245,7 +1245,7 @@
     },
     "notifications": {
       "title": "Bildirimler",
-      "description": "Fotoğraf işletmeniz için özelleştirilmiş bildirim sistemi",
+      "description": "E-posta ve uygulama bildirimlerini yönet",
       "masterControls": {
         "title": "Ana Kontroller",
         "description": "Genel bildirim ayarları ve zamanlama",
@@ -1286,7 +1286,7 @@
     },
     "dangerZone": {
       "title": "Tehlike Bölgesi",
-      "description": "Bu işlemler geri alınamaz. Dikkatli ilerleyin.",
+      "description": "Geri alınamaz işlemler",
       "deleteData": {
         "title": "Tüm Verileri Sil",
         "description": "Tüm verilerinizi sunucularımızdan kalıcı olarak kaldırın",
@@ -1316,15 +1316,15 @@
     },
     "leads": {
       "title": "Kişi Yönetimi",
-      "description": "Kişi durumlarını ve yönetim ayarlarını yapılandırın"
+      "description": "Kişi aşamalarını ve kurallarını ayarla"
     },
     "projects": {
       "title": "Projeler ve Seanslar",
-      "description": "Proje aşamalarını, türlerini ve seans durumlarını yönetin"
+      "description": "Proje aşamalarını ve türlerini düzenle"
     },
     "services": {
       "title": "Paketler ve Hizmetler",
-      "description": "İşletmeniz için hizmet paketleri oluşturun ve bireysel hizmetleri yönetin",
+      "description": "Hizmetleri, paketleri ve fiyatı yönet",
       "highlights": {
         "reviewPackages": "Varsayılan paketleri gözden geçirip özelleştirin",
         "setPrices": "Paketleriniz için rekabetçi fiyatlar belirleyin",
@@ -1372,7 +1372,7 @@
     },
     "contracts": {
       "title": "Sözleşmeler",
-      "description": "Sözleşme şablonlarını ve yasal belgeleri yönetin",
+      "description": "Sözleşme şablonlarını düzenle",
       "comingSoon": "Yakında geliyor..."
     }
   },

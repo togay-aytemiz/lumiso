@@ -21,6 +21,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { PageHeader } from "@/components/ui/page-header";
 import { cn } from "@/lib/utils";
 import { useSettingsContext } from "@/contexts/SettingsContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -386,12 +387,14 @@ export default function SettingsLayout() {
       {
         id: "personal",
         label: t("settings.personalSettings"),
-        items: personalSettingsItems,
+        items: personalSettingsItems.filter((item) => item.variant !== "danger"),
       },
       {
         id: "organization",
         label: t("settings.organizationSettings"),
-        items: organizationSettingsItems,
+        items: organizationSettingsItems.filter(
+          (item) => item.variant !== "danger"
+        ),
       },
     ],
     [t]
@@ -542,46 +545,21 @@ export default function SettingsLayout() {
 
   const headerClassName = cn(
     "sticky top-0 z-30 px-4 sm:px-6",
-    isMobile
-      ? isSettingsRoot
-        ? "border-none bg-card/95 pb-6 pt-12 shadow-[0_18px_36px_-24px_rgba(15,23,42,0.35)] rounded-b-3xl"
-        : "border-b border-border bg-[hsl(var(--background))] pb-3 pt-4"
-      : "border-b border-border/60 bg-[hsl(var(--background))] py-3 backdrop-blur supports-[backdrop-filter]:bg-[hsl(var(--background))]"
+    "border-b border-border/60 bg-[hsl(var(--background))] py-3 backdrop-blur supports-[backdrop-filter]:bg-[hsl(var(--background))]"
   );
 
-  const titleWrapperPadding = showMobileBackButton
-    ? "py-3"
-    : isMobile
-    ? "py-1"
-    : "py-4";
-
-  const headerElement = (
+  const desktopHeaderElement = (
     <header className={headerClassName}>
       <div
         key={currentPath}
         className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between settings-header-motion"
       >
-        <div
-          className={cn("flex w-full items-center gap-3", titleWrapperPadding)}
-        >
-          {showMobileBackButton && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleMobileBackToDashboard}
-              className="-ml-1 h-9 w-9 rounded-full border border-transparent bg-muted/60 p-0 text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-              aria-label={tCommon("buttons.back", {
-                defaultValue: "Back",
-              })}
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-          )}
+        <div className="flex w-full items-center gap-3 py-4">
           <div className="min-w-0 flex-1 space-y-1">
             <h1 className={cn(settingsClasses.headerTitle, "truncate")}>
               {headerTitle}
             </h1>
-            {headerDescription && !isMobile && (
+            {headerDescription && (
               <p className={settingsClasses.headerDescription}>
                 {headerDescription}
               </p>
@@ -602,21 +580,19 @@ export default function SettingsLayout() {
             <LifeBuoy className="mr-2 h-4 w-4" />
             {tCommon("buttons.needHelp")}
           </Button>
-          {!isMobile && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleCloseClick}
-              aria-label={tCommon("buttons.close")}
-              className="h-8 w-8 rounded-full"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleCloseClick}
+            aria-label={tCommon("buttons.close")}
+            className="h-8 w-8 rounded-full"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
-      {!isMobile && sectionNavItems.length > 0 && (
+      {sectionNavItems.length > 0 && (
         <div className="mt-3 hidden border-t border-border/50 pt-3 md:block">
           <StickySectionNav
             items={sectionNavItems}
@@ -630,6 +606,35 @@ export default function SettingsLayout() {
         </div>
       )}
     </header>
+  );
+
+  const mobileBackLabel = tCommon("buttons.back", {
+    defaultValue: "Back",
+  });
+
+  const mobileHeaderElement = (
+    <div className="sticky top-0 z-30 border-b border-border bg-[hsl(var(--background))]">
+      <PageHeader
+        title={headerTitle}
+        subtitle={headerDescription}
+        className="bg-transparent"
+      >
+        {showMobileBackButton && (
+          <div className="flex justify-start">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleMobileBackToDashboard}
+              className="gap-2"
+              aria-label={mobileBackLabel}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              {mobileBackLabel}
+            </Button>
+          </div>
+        )}
+      </PageHeader>
+    </div>
   );
 
   const helpSheet = helpContent ? (
@@ -735,12 +740,13 @@ export default function SettingsLayout() {
   if (isMobile) {
     return (
       <>
-        <div className="flex min-h-screen flex-col bg-[hsl(var(--background))]">
-          {headerElement}
-          <div
+        <div className="flex min-h-[100dvh] flex-col bg-[hsl(var(--background))]">
+          {mobileHeaderElement}
+          <main
             key={`${currentPath}-content`}
             ref={contentRef}
-            className="relative flex-1 overflow-y-auto bg-[hsl(var(--background))]"
+            className="flex-1 overflow-y-auto bg-[hsl(var(--background))] pb-8"
+            style={{ WebkitOverflowScrolling: "touch" }}
           >
             {isSettingsRoot ? (
               renderSettingsDirectory("mobile")
@@ -768,7 +774,7 @@ export default function SettingsLayout() {
                 )}
               </>
             )}
-          </div>
+          </main>
         </div>
         {helpSheet}
         {guardDialog}
@@ -841,7 +847,7 @@ export default function SettingsLayout() {
             </aside>
 
             <div className="flex min-h-0 flex-1 flex-col bg-[hsl(var(--background))]">
-              {headerElement}
+              {desktopHeaderElement}
 
               <div
                 key={`${currentPath}-content`}

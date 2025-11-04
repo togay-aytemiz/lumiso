@@ -28,6 +28,7 @@ const ProtectedRoute = () => {
   // Allow access to onboarding step pages when in guided setup
   const onboardingStepPaths = [
     "/getting-started",
+    "/settings",
     "/settings/profile", 
     "/settings/general", // Add this missing path!
     "/leads",

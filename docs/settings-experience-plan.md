@@ -126,6 +126,8 @@ Cross-cutting components:
   - Sub-pages reuse the dashboard categories for breadcrumb context and always expose a top-left back arrow.
   - Forms tighten vertical rhythm (`space-y-4` default) and align actions to the screen edge so the view feels native-app compact.
   - Borrow sizing cues from modern OS settings (24px icons, 56px row height target) so the catalog reads familiar.
+  - ✅ Implemented dashboard/back navigation in code, including lock/dirty indicators and shared guard handling on mobile.
+  - ✅ Converted the mobile experience to a full-screen page (no modal chrome) with accent-forward list tiles that route through the shared navigation guard.
 - Tablet/desktop breakpoint plan:
   - Keep existing two-column affordances where present but pin the new anchor nav under the header.
   - Maintain 48px outer gutters while allowing sticky nav to lock at 24px from the left content edge.
@@ -156,7 +158,10 @@ Cross-cutting components:
 ### Phase 1 — Core Components & Utilities
 - ✅ Build `SettingsModalShell` + upgraded `SettingsHeader`.
  - ▫️ Wrap new shell/components in the `settings_modal_overlay_v1` feature flag with runtime switch + fallback to legacy layout.
- - ▫️ Create `SettingsMobileDashboard`, `SettingsSubpageHeader`, `SettingsAnchorNav`, and `useSettingsAnchorRegistry` primitives with storybook examples, reusing the scroll-spy + sticky behaviors proven in Project/Lead/Sheet detail pages.
+- ✅ Implement desktop `SettingsAnchorNav` within the modal shell, including scroll-spy integration, DOM discovery for legacy sections, and consistent sticky behavior across Profile, General, Notifications, Projects, Leads, Services, and other pages.
+- ✅ Ship mobile-first navigation baseline: `SettingsMobileDashboard` + in-modal subpage header/back affordance mirroring native settings apps, wired into existing navigation guard + scroll-spy logic.
+- ✅ Route `/settings` index to the new settings directory rather than auto-routing to Profile, preserving desktop + mobile parity.
+- ▫️ Create `useSettingsAnchorRegistry` primitive with storybook examples, reusing the scroll-spy patterns proven in Project/Lead/Sheet detail pages.
 - ✅ Implement `SettingsHelpSheet` component triggered by the header `Need help?` action; support markdown + media embeds and connect content to the shared i18n pipeline.
 - ▫️ Introduce section primitives (`SettingsFormSection`, `SettingsCollectionSection`, `SettingsToggleSection`, `SettingsDangerSection`, `SettingsPlaceholderSection`).
 - ▫️ Create shared uploader hook and refresh button pattern.
@@ -168,13 +173,17 @@ Cross-cutting components:
 - ▫️ General: apply form + collection sections, add explicit save for branding/regional, unify social channels card, and wire anchor nav jump links per section.
 - ▫️ Billing: move `Tax & Billing Profile` + `Payment Methods` into modal sections, wire anchor registry + dirty guard + shared footer events, surface organization defaults (legal entity, company name, tax office, VKN/TCKN, billing address, default KDV mode + rate), and persist updates through `useOrganizationSettings`.
 - ▫️ Notifications: convert toggles to `SettingsToggleSection`, throttle fetches, add `Test` button alignment.
+  - ✅ Surface sticky anchor navigation pills by tagging existing sections without restructuring legacy components.
 - ▫️ Ship translation updates and ensure tutorials overlay the refreshed layout.
 - ▫️ Routing & breakpoints: route `/settings` to the mobile dashboard below `md`, ensure back navigation + compact spacing tokens apply across Profile/General/Notifications.
 
 ### Phase 3 — Page Wave B (Data Collections)
 - ▫️ Leads: refactor statuses & fields into collection sections, add keyboard reorder, align modals.
+  - ✅ Annotated legacy sections so the refreshed sticky navigation renders across the page.
 - ▫️ Projects: same pattern as leads; ensure statuses/types share components.
+  - ✅ Added anchor metadata to existing sections to participate in the sticky navigation.
 - ▫️ Services: standardize cards for session types/packages/services; consolidate onboarding surfaces.
+  - ✅ Enabled sticky navigation by backfilling section anchors on current components.
 - ▫️ Document data fetch policies (manual refresh vs. auto).
 - ▫️ Extend anchor nav mapping and mobile back pattern to collection-heavy pages (Leads/Projects/Services) with sensible section groupings.
 

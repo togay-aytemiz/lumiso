@@ -1069,7 +1069,7 @@
   "settings": {
     "general": {
       "title": "General",
-      "description": "Manage your general application preferences",
+      "description": "Workspace preferences and branding",
       "branding": {
         "title": "Branding",
         "description": "Customize your brand appearance across client-facing materials",
@@ -1151,7 +1151,7 @@
     },
     "profile": {
       "title": "Profile",
-      "description": "Manage your personal information and working hours",
+      "description": "Personal details and working hours",
       "profileInfo": {
         "title": "Profile Information",
         "description": "Update your personal information and photo.",
@@ -1227,7 +1227,7 @@
     },
     "billing": {
       "title": "Billing & Payments",
-      "description": "Manage your billing identity, tax defaults, and payment methods",
+      "description": "Billing profile, taxes, payment info",
       "comingSoon": "Coming soon..."
     },
     "integrations": {
@@ -1245,7 +1245,7 @@
     },
     "notifications": {
       "title": "Notifications",
-      "description": "Streamlined notification system for your photography business",
+      "description": "Manage email and in-app alerts",
       "masterControls": {
         "title": "Master Controls",
         "description": "Global notification settings and timing",
@@ -1286,7 +1286,7 @@
     },
     "dangerZone": {
       "title": "Danger Zone",
-      "description": "These actions are destructive and cannot be undone. Proceed with caution.",
+      "description": "Destructive account actions",
       "deleteData": {
         "title": "Delete All Data",
         "description": "Permanently remove all your data from our servers",
@@ -1316,15 +1316,15 @@
     },
     "leads": {
       "title": "Lead Management",
-      "description": "Configure lead statuses and management settings"
+      "description": "Configure lead stages and rules"
     },
     "projects": {
       "title": "Projects & Sessions",
-      "description": "Manage project stages, types, and session statuses"
+      "description": "Customize project stages and types"
     },
     "services": {
       "title": "Packages & Services",
-      "description": "Create service packages and manage individual services for your business",
+      "description": "Manage services, packages, pricing",
       "highlights": {
         "reviewPackages": "Review and customize the default packages",
         "setPrices": "Set competitive prices for your packages",
@@ -1372,7 +1372,7 @@
     },
     "contracts": {
       "title": "Contracts",
-      "description": "Manage contract templates and legal documents",
+      "description": "Edit contract templates and docs",
       "comingSoon": "Coming soon..."
     }
   },

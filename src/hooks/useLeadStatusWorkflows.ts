@@ -10,7 +10,7 @@ export function useLeadStatusWorkflows() {
     organizationId: string,
     oldStatusName: string,
     newStatusName: string,
-    leadData?: any
+    leadData?: Parameters<typeof triggerLeadStatusChange>[4]
   ) => {
     try {
       await triggerLeadStatusChange(leadId, organizationId, oldStatusName, newStatusName, leadData);

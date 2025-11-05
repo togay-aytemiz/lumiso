@@ -15,7 +15,11 @@ describe("TruncatedTextWithTooltip", () => {
       observe: jest.fn(),
       disconnect: jest.fn(),
     }));
-    (window as any).ResizeObserver = resizeObserverMock;
+    Object.defineProperty(window, "ResizeObserver", {
+      configurable: true,
+      writable: true,
+      value: resizeObserverMock,
+    });
   });
 
   afterEach(() => {

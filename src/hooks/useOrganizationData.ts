@@ -1,5 +1,6 @@
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import {
   DEFAULT_ORGANIZATION_TAX_PROFILE,
@@ -66,7 +67,7 @@ export function useLeadStatuses() {
       if (!activeOrganizationId) return [];
       
       const { data, error } = await supabase
-        .from('lead_statuses')
+        .from<Database['public']['Tables']['lead_statuses']['Row']>('lead_statuses')
         .select('*')
         .eq('organization_id', activeOrganizationId)
         .order('sort_order');
@@ -141,7 +142,7 @@ export function usePackageDeliveryMethods() {
       if (!activeOrganizationId) return [];
 
       const { data, error } = await supabase
-        .from('package_delivery_methods')
+        .from<Database['public']['Tables']['package_delivery_methods']['Row']>('package_delivery_methods')
         .select('*')
         .eq('organization_id', activeOrganizationId)
         .order('sort_order')

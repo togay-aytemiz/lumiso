@@ -16,7 +16,7 @@ export function useLeadUpdate({ leadId, onSuccess }: UseLeadUpdateProps) {
     
     setIsUpdating(true);
     try {
-      const updates: Record<string, any> = {
+      const updates: Record<string, string | null> = {
         [fieldKey]: value || null,
         updated_at: new Date().toISOString()
       };

@@ -9,7 +9,8 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
 }));
 
 describe("GuidedStepProgress", () => {
-  const useFormsTranslationMock: Mocked<typeof useFormsTranslation> = useFormsTranslation as any;
+  const useFormsTranslationMock: Mocked<typeof useFormsTranslation> =
+    jest.mocked(useFormsTranslation);
   const translations = {
     "progress.tasks_complete": "tasks complete",
   } as const;

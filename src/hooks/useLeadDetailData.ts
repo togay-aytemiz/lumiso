@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import type { Database } from "@/integrations/supabase/types";
 import {
   fetchLeadById,
   fetchLeadSessions,
@@ -15,6 +16,8 @@ import {
 import { useLeadStatuses } from "./useOrganizationData";
 
 const ACTIVE_SESSION_STATUSES = new Set(["planned", "upcoming", "confirmed", "scheduled"]);
+
+type LeadStatusRow = Database["public"]["Tables"]["lead_statuses"]["Row"];
 
 interface SessionMetrics {
   todayCount: number;
@@ -33,7 +36,7 @@ export interface LeadDetailQueryResult {
   summaryQuery: UseQueryResult<LeadProjectSummaryPayload, unknown>;
   latestLeadActivity: string | null;
   latestActivityQuery: UseQueryResult<string | null, unknown>;
-  leadStatuses: any[];
+  leadStatuses: LeadStatusRow[];
   sessionMetrics: SessionMetrics;
   latestSessionUpdate: string | null;
   hasProjects: boolean;

@@ -4,6 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Plus, Check } from "lucide-react";
 import { useTemplateVariables } from "@/hooks/useTemplateVariables";
+import type { TemplateVariable } from "@/types/templateBuilder";
 
 interface VariablePickerProps {
   onVariableSelect: (variable: string) => void;
@@ -19,13 +20,13 @@ export function VariablePicker({ onVariableSelect, trigger }: VariablePickerProp
     setOpen(false);
   };
 
-  const groupedVariables = variables.reduce((acc, variable) => {
+  const groupedVariables = variables.reduce<Record<string, TemplateVariable[]>>((acc, variable) => {
     if (!acc[variable.category]) {
       acc[variable.category] = [];
     }
     acc[variable.category].push(variable);
     return acc;
-  }, {} as Record<string, any[]>);
+  }, {});
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

@@ -8,7 +8,7 @@ jest.mock("@/hooks/useWorkflowHealth", () => ({
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string, options?: Record<string, any>, defaultValue?: string) => {
+    t: (key: string, options?: Record<string, unknown>, defaultValue?: string) => {
       const translations: Record<string, string> = {
         "workflows.health.unableToLoad": "Unable to load",
         "workflows.health.status.title": "Workflow health",

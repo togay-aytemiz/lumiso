@@ -173,10 +173,15 @@ export function useProjectStatusController({
             console.error("Error triggering project status workflow:", workflowError);
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         toast({
           title: tForms("status.errorUpdatingStatus"),
-          description: error.message,
+          description:
+            error instanceof Error
+              ? error.message
+              : tForms("status.genericError", {
+                  defaultValue: "We couldn't update the project status.",
+                }),
           variant: "destructive"
         });
       } finally {

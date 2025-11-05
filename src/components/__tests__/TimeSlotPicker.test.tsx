@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@/utils/testUtils";
 import { TimeSlotPicker } from "../TimeSlotPicker";
+import { useWorkingHours as useWorkingHoursMock } from "@/hooks/useWorkingHours";
 
 jest.mock("@/hooks/useWorkingHours", () => ({
   useWorkingHours: jest.fn(),
@@ -11,7 +12,7 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
   useMessagesTranslation: () => ({ t: (key: string) => key }),
 }));
 
-const mockUseWorkingHours = require("@/hooks/useWorkingHours").useWorkingHours as jest.Mock;
+const mockUseWorkingHours = useWorkingHoursMock as jest.Mock;
 
 beforeAll(() => {
   Object.defineProperty(window.navigator, "language", {

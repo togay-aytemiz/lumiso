@@ -40,7 +40,6 @@ jest.mock("@/lib/templateUtils", () => ({
 }));
 
 jest.mock("@/components/ui/tabs", () => {
-  const React = require("react");
   const TabsContext = React.createContext<{ onValueChange?: (value: string) => void }>({});
 
   const Tabs = ({

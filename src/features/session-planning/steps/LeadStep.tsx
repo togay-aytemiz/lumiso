@@ -72,7 +72,7 @@ export const LeadStep = () => {
         if (latestRequestRef.current === requestId) {
           setLeadOptions((data as LeadOption[]) || []);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Failed to load leads", error);
         if (latestRequestRef.current === requestId) {
           setLeadOptions([]);
@@ -80,7 +80,12 @@ export const LeadStep = () => {
         }
         toast({
           title: t("steps.lead.fetchErrorTitle"),
-          description: error.message,
+          description:
+            error instanceof Error
+              ? error.message
+              : t("steps.lead.fetchErrorDescription", {
+                  defaultValue: "Please try again in a moment.",
+                }),
           variant: "destructive",
         });
       } finally {

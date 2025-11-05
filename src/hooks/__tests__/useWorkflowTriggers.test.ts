@@ -11,23 +11,18 @@ jest.mock("@/integrations/supabase/client", () => {
   };
 });
 
-jest.mock("@/hooks/use-toast", () => {
-  const toast = jest.fn();
-  return {
-    useToast: () => ({ toast }),
-    __esModule: true,
-    _toastMock: toast,
-  };
-});
+const toastMock = jest.fn();
+
+jest.mock("@/hooks/use-toast", () => ({
+  useToast: () => ({ toast: toastMock }),
+}));
 
 import { useWorkflowTriggers } from "../useWorkflowTriggers";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 const VALID_SESSION_ID = "123e4567-e89b-12d3-a456-426614174000";
 const VALID_ORG_ID = "123e4567-e89b-12d3-a456-426614174001";
 const invokeMock = supabase.functions.invoke as jest.Mock;
-const toastMock = (useToast() as { toast: jest.Mock }).toast;
 
 beforeEach(() => {
   invokeMock.mockReset();

@@ -3,6 +3,12 @@
 
 import { ONBOARDING_STEPS, TOTAL_STEPS } from "@/constants/onboarding";
 
+declare global {
+  interface Window {
+    testOnboardingV3?: () => boolean | void;
+  }
+}
+
 export const runOnboardingBulletproofTestV3 = () => {
   // Development-only test suite for onboarding system
   if (process.env.NODE_ENV !== 'development') return;
@@ -99,5 +105,5 @@ export const runOnboardingBulletproofTestV3 = () => {
 
 // Export for testing in development
 if (typeof window !== 'undefined') {
-  (window as any).testOnboardingV3 = runOnboardingBulletproofTestV3;
+  window.testOnboardingV3 = runOnboardingBulletproofTestV3;
 }

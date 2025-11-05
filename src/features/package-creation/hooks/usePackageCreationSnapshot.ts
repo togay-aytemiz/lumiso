@@ -15,7 +15,7 @@ export const usePackageCreationSnapshot = () => {
 
   const catalog = useMemo(() => {
     const raw = deliveryMethodsQuery.data ?? [];
-    return raw.map((entry: any) => ({
+    return raw.map((entry) => ({
       id: entry.id,
       name: entry.name ?? null,
     }));

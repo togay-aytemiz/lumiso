@@ -97,7 +97,7 @@ export const ProjectStep = ({ onContinue }: { onContinue?: () => void } = {}) =>
             setHasLoadedInitial(true);
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Failed to load projects", error);
         if (latestRequestRef.current === requestId) {
           setProjectOptions([]);
@@ -108,7 +108,12 @@ export const ProjectStep = ({ onContinue }: { onContinue?: () => void } = {}) =>
         }
         toast({
           title: t("steps.project.fetchErrorTitle"),
-          description: error.message,
+          description:
+            error instanceof Error
+              ? error.message
+              : t("steps.project.fetchErrorDescription", {
+                  defaultValue: "Please try again in a moment.",
+                }),
           variant: "destructive",
         });
       } finally {

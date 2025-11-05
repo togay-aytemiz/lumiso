@@ -28,9 +28,13 @@ describe("useMilestoneNotifications", () => {
   it("re-exports triggerProjectMilestone from the notification triggers hook", async () => {
     const { triggerProjectMilestone } = useMilestoneNotifications();
 
-    const payload = { projectId: "proj-1", milestoneId: "milestone-2" };
-    await triggerProjectMilestone(payload as any);
+    await triggerProjectMilestone("proj-1", "status-from", "status-to", "org-1");
 
-    expect(triggerProjectMilestoneMock).toHaveBeenCalledWith(payload);
+    expect(triggerProjectMilestoneMock).toHaveBeenCalledWith(
+      "proj-1",
+      "status-from",
+      "status-to",
+      "org-1"
+    );
   });
 });

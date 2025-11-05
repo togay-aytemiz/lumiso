@@ -14,12 +14,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-const MINUTES_IN_DAY = 24 * 60;
-const PIXELS_PER_MINUTE = 0.9;
-const MIN_BLOCK_HEIGHT = 36;
-const MIN_VIEW_RANGE = 6 * 60;
-const DEFAULT_DRAFT_DURATION = 60;
+import {
+  clampRange,
+  DEFAULT_DRAFT_DURATION,
+  MIN_BLOCK_HEIGHT,
+  MINUTES_IN_DAY,
+  MIN_VIEW_RANGE,
+  PIXELS_PER_MINUTE,
+  parseTimeToMinutes,
+} from "./WeeklySchedulePreview.utils";
 
 export interface WeeklyScheduleSession {
   id: string;
@@ -86,13 +89,6 @@ const formatDurationLabel = (
   return parts.join(" ");
 };
 
-const parseTimeToMinutes = (time?: string | null): number | null => {
-  if (!time) return null;
-  const [hours, minutes] = time.split(":").map((part) => Number(part) || 0);
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
-  return hours * 60 + minutes;
-};
-
 const buildDayLayout = (
   sessions: Array<WeeklyScheduleSession & { startMinutes: number; endMinutes: number }>
 ): PositionedSession[] => {
@@ -142,23 +138,6 @@ const buildDayLayout = (
   });
 
   return positioned;
-};
-
-const clampRange = (start: number, end: number): { start: number; end: number } => {
-  let rangeStart = Math.max(0, start);
-  let rangeEnd = Math.min(MINUTES_IN_DAY, end);
-  if (rangeEnd <= rangeStart) {
-    rangeStart = 9 * 60;
-    rangeEnd = rangeStart + MIN_VIEW_RANGE;
-  }
-  if (rangeEnd - rangeStart < MIN_VIEW_RANGE) {
-    const deficit = MIN_VIEW_RANGE - (rangeEnd - rangeStart);
-    const adjustStart = Math.max(0, rangeStart - deficit / 2);
-    const adjustEnd = Math.min(MINUTES_IN_DAY, adjustStart + MIN_VIEW_RANGE);
-    rangeStart = Math.max(0, adjustEnd - MIN_VIEW_RANGE);
-    rangeEnd = adjustEnd;
-  }
-  return { start: rangeStart, end: rangeEnd };
 };
 
 export const WeeklySchedulePreview = ({
@@ -587,11 +566,4 @@ export const WeeklySchedulePreview = ({
     </div>
     </TooltipProvider>
   );
-};
-
-export const __testUtils = {
-  PIXELS_PER_MINUTE,
-  MIN_BLOCK_HEIGHT,
-  clampRange,
-  parseTimeToMinutes,
 };

@@ -20,8 +20,28 @@ export interface DeleteSessionTypeResult {
   message?: string;
 }
 
+interface SessionTypeClient {
+  from(
+    table: string
+  ): {
+    select(
+      columns: string,
+      options?: Record<string, unknown>
+    ): {
+      eq(field: string, value: unknown): Promise<{
+        data: unknown;
+        error: unknown;
+        count?: number | null;
+      }>;
+    };
+    delete(): {
+      eq(field: string, value: unknown): Promise<{ error: unknown }>;
+    };
+  };
+}
+
 export async function deleteSessionTypeWithClient(
-  client: ReturnType<typeof createClient> | any,
+  client: SessionTypeClient,
   sessionTypeId: string | undefined
 ): Promise<DeleteSessionTypeResult> {
   if (!sessionTypeId || typeof sessionTypeId !== "string" || sessionTypeId.trim().length === 0) {
@@ -65,7 +85,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!, {
       auth: { persistSession: false },
-    });
+    }) as unknown as SessionTypeClient;
 
     const result = await deleteSessionTypeWithClient(supabase, sessionTypeId);
 

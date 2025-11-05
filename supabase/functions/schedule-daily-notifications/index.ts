@@ -7,12 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface SupabaseClientLike {
-  from(table: string): any;
-  functions: {
-    invoke(name: string, options: { body: Record<string, unknown> }): Promise<{ data?: unknown; error?: Error | null }>;
-  };
-}
+type SupabaseClientLike = ReturnType<typeof createClient>;
 
 interface HandlerDependencies {
   createClient?: () => SupabaseClientLike;

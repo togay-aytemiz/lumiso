@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react";
 import { SessionSchedulingSheet } from "../SessionSchedulingSheet";
+import { SessionPlanningWizardSheet as SessionPlanningWizardSheetMock } from "@/features/session-planning";
 
 jest.mock("@/features/session-planning", () => {
   const mock = jest.fn(() => <div data-testid="session-planning-wizard" />);
@@ -8,7 +9,7 @@ jest.mock("@/features/session-planning", () => {
   };
 });
 
-const WizardMock = require("@/features/session-planning").SessionPlanningWizardSheet as jest.Mock;
+const WizardMock = SessionPlanningWizardSheetMock as jest.Mock;
 
 describe("SessionSchedulingSheet", () => {
   beforeEach(() => {

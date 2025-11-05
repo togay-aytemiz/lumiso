@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@/utils/testUtils";
 import { CalendarTimePicker } from "../CalendarTimePicker";
+import { supabase } from "@/integrations/supabase/client";
 
 jest.mock("@/components/TimeSlotPicker", () => ({
   TimeSlotPicker: () => <div data-testid="time-slot-picker" />,
@@ -45,11 +46,11 @@ jest.mock("@/integrations/supabase/client", () => {
     Promise.resolve({ data: { user: { id: "user-1" } }, error: null })
   );
 
-const queryChain = {
-  eq(field: string, value: unknown) {
-    eqCalls.push({ field, value });
-    return queryChain;
-  },
+  const queryChain = {
+    eq(field: string, value: unknown) {
+      eqCalls.push({ field, value });
+      return queryChain;
+    },
     gte(field: string, value: unknown) {
       gteCalls.push({ field, value });
       return queryChain;
@@ -93,7 +94,6 @@ const queryChain = {
   };
 });
 
-const { supabase } = require("@/integrations/supabase/client");
 const authGetUserMock = supabase.auth.getUser as jest.Mock;
 
 afterEach(() => {

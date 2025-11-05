@@ -11,9 +11,14 @@ jest.mock("@/hooks/useSessionActions", () => ({
   useSessionActions: jest.fn(),
 }));
 
+type MockStatusBadgeProps = {
+  currentStatus: string;
+  onStatusChange?: (status: string) => void;
+};
+
 jest.mock("@/components/SessionStatusBadge", () => ({
   __esModule: true,
-  default: ({ currentStatus, onStatusChange }: any) => (
+  default: ({ currentStatus, onStatusChange }: MockStatusBadgeProps) => (
     <button
       data-testid="session-status-badge"
       onClick={() => onStatusChange?.("completed")}

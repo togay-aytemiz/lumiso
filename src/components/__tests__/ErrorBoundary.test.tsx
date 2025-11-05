@@ -4,7 +4,7 @@ import ErrorBoundary from "../ErrorBoundary";
 
 jest.mock("react-i18next", () => ({
   withTranslation: () =>
-    (Component: React.ComponentType<any>) =>
+    (Component: React.ComponentType<Record<string, unknown>>) =>
       function WithTranslationWrapper(props: Record<string, unknown>) {
         return (
           <Component

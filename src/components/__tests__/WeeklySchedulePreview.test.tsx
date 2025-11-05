@@ -1,15 +1,16 @@
 import { render, screen } from "@/utils/testUtils";
 import {
   WeeklySchedulePreview,
-  __testUtils,
   WeeklyScheduleSession,
 } from "../WeeklySchedulePreview";
+import {
+  MIN_BLOCK_HEIGHT,
+  PIXELS_PER_MINUTE,
+} from "../WeeklySchedulePreview.utils";
 
 jest.mock("@/hooks/useTypedTranslation", () => ({
   useFormsTranslation: () => ({ t: (key: string) => key }),
 }));
-
-const { PIXELS_PER_MINUTE, MIN_BLOCK_HEIGHT } = __testUtils;
 
 describe("WeeklySchedulePreview", () => {
   const monday = new Date("2024-05-20T09:00:00Z");

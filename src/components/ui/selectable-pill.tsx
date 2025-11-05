@@ -1,4 +1,4 @@
-import { forwardRef, type KeyboardEventHandler } from "react";
+import { forwardRef, type KeyboardEventHandler, type MouseEvent as ReactMouseEvent } from "react";
 import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,7 @@ export const SelectablePill = forwardRef<HTMLButtonElement, SelectablePillProps>
     const handleKeyDown: KeyboardEventHandler<HTMLButtonElement> = (event) => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        onClick?.(event as any);
+        onClick?.(event as unknown as ReactMouseEvent<HTMLButtonElement>);
       }
       onKeyDown?.(event);
     };

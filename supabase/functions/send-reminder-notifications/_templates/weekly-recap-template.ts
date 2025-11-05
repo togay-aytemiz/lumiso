@@ -183,7 +183,7 @@ export function generateWeeklyRecapEmail(stats: WeeklyStats, templateData: Email
   `;
 
   // Weekly Insights
-  let insights = [];
+  const insights: string[] = [];
   if (stats.leadsAdded > stats.leadsConverted && stats.leadsConverted > 0) {
     insights.push("Consider following up with unconverted leads - they might just need a little more nurturing.");
   }

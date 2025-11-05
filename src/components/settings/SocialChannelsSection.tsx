@@ -4,19 +4,30 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { 
-  Globe, 
-  Facebook, 
-  Instagram, 
-  Twitter, 
-  Linkedin, 
-  Youtube, 
-  Plus, 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  Globe,
+  Facebook,
+  Instagram,
+  Twitter,
+  Linkedin,
+  Youtube,
+  Plus,
   Trash2,
   GripVertical,
-  Music
+  Music,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { SocialChannel } from '@/hooks/useOrganizationSettings';
 import { cn } from '@/lib/utils';
@@ -28,7 +39,11 @@ interface SocialChannelsSectionProps {
   isDirty: boolean;
 }
 
-const PREDEFINED_PLATFORMS = [
+const PREDEFINED_PLATFORMS: Array<{
+  key: SocialChannel['platform'];
+  name: string;
+  icon: LucideIcon;
+}> = [
   { key: 'website', name: 'Website', icon: Globe },
   { key: 'facebook', name: 'Facebook', icon: Facebook },
   { key: 'instagram', name: 'Instagram', icon: Instagram },
@@ -50,7 +65,7 @@ export function SocialChannelsSection({ socialChannels, onUpdate, isDirty }: Soc
     const newChannel: SocialChannel = {
       name: platform.name,
       url: '',
-      platform: platformKey as any,
+      platform: platformKey,
       enabled: true,
       order: maxOrder + 1,
     };

@@ -22,10 +22,15 @@ import { useProjectTypes } from "@/hooks/useOrganizationData";
 
 const getTranslation = (key: string): string | undefined => {
   const parts = key.split(".");
-  let current: any = en;
+  let current: unknown = en;
   for (const part of parts) {
-    if (current && typeof current === "object" && part in current) {
-      current = current[part];
+    if (
+      current &&
+      typeof current === "object" &&
+      !Array.isArray(current) &&
+      part in current
+    ) {
+      current = (current as Record<string, unknown>)[part];
     } else {
       return undefined;
     }

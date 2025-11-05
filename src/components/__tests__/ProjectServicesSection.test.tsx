@@ -43,8 +43,16 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
   })
 }));
 
+type MockServicePickerProps = {
+  value: string[];
+  onChange: (value: string[]) => void;
+  isLoading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
+};
+
 jest.mock("@/components/ServicePicker", () => ({
-  ServicePicker: ({ value, onChange, isLoading, error, onRetry }: any) => (
+  ServicePicker: ({ value, onChange, isLoading, error, onRetry }: MockServicePickerProps) => (
     <div data-testid="service-picker">
       <div data-testid="service-picker-value">{value.join(",")}</div>
       {isLoading && <span>Loading services…</span>}
@@ -54,7 +62,7 @@ jest.mock("@/components/ServicePicker", () => ({
           <button onClick={onRetry}>Retry</button>
         </>
       )}
-      <button onClick={() => onChange(["svc-2"]) }>Choose second</button>
+      <button onClick={() => onChange(["svc-2"])}>Choose second</button>
     </div>
   )
 }));

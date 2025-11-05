@@ -88,10 +88,12 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
       try {
         await supabase.auth.signOut();
         navigate('/auth');
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const description =
+          error instanceof Error ? error.message : "Unable to sign out.";
         toast({
           title: "Error signing out",
-          description: error.message,
+          description,
           variant: "destructive"
         });
       }

@@ -20,8 +20,8 @@ export function SettingsStickyFooter({
   onCancel,
   className,
 }: SettingsStickyFooterProps) {
-  if (!show) return null;
   const { t } = useTranslation("common");
+  if (!show) return null;
 
   return (
     <div

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
 export interface ProjectHeaderPaymentSummary {
   totalPaid: number;
@@ -18,6 +19,9 @@ export interface ProjectHeaderServicesSummary {
   names: string[];
   totalValue: number;
 }
+
+type ProjectServiceRow = Database["public"]["Tables"]["project_services"]["Row"];
+type ServiceRow = Database["public"]["Tables"]["services"]["Row"];
 
 interface ProjectHeaderSummaryState {
   payments: ProjectHeaderPaymentSummary;
@@ -83,18 +87,22 @@ export function useProjectHeaderSummary(projectId?: string | null, refreshToken?
 
       const basePrice = Number(projectResponse.data?.base_price) || 0;
 
-      const serviceEntries = (servicesResponse.data || [])
-        .map((entry: any) => {
+      const serviceRows = (servicesResponse.data || []) as Array<
+        ProjectServiceRow & { services: ServiceRow | null }
+      >;
+
+      const serviceEntries = serviceRows
+        .map((entry) => {
           const service = entry.services;
           if (!service) return null;
           return {
             billing_type: entry.billing_type as string,
-            service: service as {
-              id: string;
-              name: string;
-              selling_price?: number | null;
-              price?: number | null;
-            }
+            service: {
+              id: service.id,
+              name: service.name,
+              selling_price: service.selling_price ?? null,
+              price: service.price ?? null,
+            },
           };
         })
         .filter(Boolean) as Array<{
@@ -102,8 +110,8 @@ export function useProjectHeaderSummary(projectId?: string | null, refreshToken?
           service: {
             id: string;
             name: string;
-            selling_price?: number | null;
-            price?: number | null;
+            selling_price: number | null;
+            price: number | null;
           };
         }>;
       const serviceNames = serviceEntries.map(entry => entry.service.name).filter(Boolean);

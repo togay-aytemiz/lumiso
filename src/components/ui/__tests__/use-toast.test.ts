@@ -69,7 +69,7 @@ describe("toast hook", () => {
 
     act(() => {
       const handle = toast({ title: "Initial", description: "Original" });
-      handle.update({ description: "Updated" } as any);
+      handle.update({ id: handle.id, description: "Updated" });
     });
 
     expect(result.current.toasts[0]).toMatchObject({

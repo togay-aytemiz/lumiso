@@ -1,3 +1,4 @@
+import React, { type ChangeEvent, type ReactElement, type ReactNode } from "react";
 import { act, renderHook } from "@testing-library/react";
 import { render, fireEvent } from "@testing-library/react";
 import {
@@ -10,7 +11,7 @@ jest.mock("react-i18next", () => ({
 }));
 
 jest.mock("@/components/ui/button", () => ({
-  Button: ({ children, onClick, ...props }: any) => (
+  Button: ({ children, onClick, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button onClick={onClick} {...props}>
       {children}
     </button>
@@ -18,7 +19,7 @@ jest.mock("@/components/ui/button", () => ({
 }));
 
 jest.mock("@/components/ui/checkbox", () => ({
-  Checkbox: ({ checked, onCheckedChange, ...props }: any) => (
+  Checkbox: ({ checked, onCheckedChange, ...props }: { checked?: boolean; onCheckedChange?: (checked: boolean) => void }) => (
     <input
       type="checkbox"
       checked={checked}
@@ -29,15 +30,15 @@ jest.mock("@/components/ui/checkbox", () => ({
 }));
 
 jest.mock("@/components/ui/accordion", () => ({
-  Accordion: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  AccordionItem: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  AccordionTrigger: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  AccordionContent: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+  Accordion: ({ children, ...props }: { children: ReactNode }) => <div {...props}>{children}</div>,
+  AccordionItem: ({ children, ...props }: { children: ReactNode }) => <div {...props}>{children}</div>,
+  AccordionTrigger: ({ children, ...props }: { children: ReactNode }) => <div {...props}>{children}</div>,
+  AccordionContent: ({ children, ...props }: { children: ReactNode }) => <div {...props}>{children}</div>,
 }));
 
 jest.mock("@/components/ui/toggle-group", () => ({
-  ToggleGroup: ({ children }: any) => <div>{children}</div>,
-  ToggleGroupItem: ({ children, value, onClick }: any) => (
+  ToggleGroup: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  ToggleGroupItem: ({ children, value, onClick }: { children: ReactNode; value: string; onClick?: (value: string) => void }) => (
     <button type="button" onClick={() => onClick?.(value)} data-value={value}>
       {children}
     </button>
@@ -45,7 +46,7 @@ jest.mock("@/components/ui/toggle-group", () => ({
 }));
 
 jest.mock("@/components/ui/input", () => ({
-  Input: ({ value, onChange, ...props }: any) => (
+  Input: ({ value, onChange, ...props }: { value?: string; onChange?: (event: ChangeEvent<HTMLInputElement>) => void }) => (
     <input value={value ?? ""} onChange={(event) => onChange?.(event)} {...props} />
   ),
 }));
@@ -68,7 +69,7 @@ describe("useProjectsListFilters", () => {
 
     expect(result.current.activeCount).toBe(0);
 
-    const { getByLabelText } = render(result.current.filtersConfig.content as any);
+    const { getByLabelText } = render(result.current.filtersConfig.content as ReactElement);
 
     act(() => {
       fireEvent.click(getByLabelText("Wedding"));
@@ -89,7 +90,7 @@ describe("useProjectsArchivedFilters", () => {
       })
     );
 
-    const { getByPlaceholderText, getByText } = render(result.current.filtersConfig.content as any);
+    const { getByPlaceholderText, getByText } = render(result.current.filtersConfig.content as ReactElement);
 
     act(() => {
       fireEvent.change(getByPlaceholderText("projects.filters.balanceMinPlaceholder"), {

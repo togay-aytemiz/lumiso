@@ -1,3 +1,4 @@
+import type { ButtonHTMLAttributes, ReactNode, SVGProps } from "react";
 import React from "react";
 import { act, fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import AllLeads from "../AllLeads";
@@ -28,11 +29,14 @@ jest.mock("@/components/ui/page-header", () => ({
   ),
 }));
 
+type ButtonMockGlobals = { __buttonStates?: boolean[] };
+const buttonGlobals = globalThis as ButtonMockGlobals;
+
 jest.mock("@/components/ui/button", () => {
-  const React = require("react");
-  const states: boolean[] = (globalThis as any).__buttonStates || [];
-  (globalThis as any).__buttonStates = states;
-  const Button = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(
+  const React = jest.requireActual<typeof import("react")>("react");
+  const states: boolean[] = buttonGlobals.__buttonStates ?? [];
+  buttonGlobals.__buttonStates = states;
+  const Button = React.forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement>>(
     ({ children, ...props }, ref) => {
       states.push(Boolean(props.disabled));
       return (
@@ -49,7 +53,44 @@ jest.mock("@/components/ui/button", () => {
     buttonStates: states,
   };
 });
-const buttonStates: boolean[] = (globalThis as any).__buttonStates;
+const buttonStates: boolean[] = buttonGlobals.__buttonStates ?? [];
+
+type KpiCardProps = {
+  title: ReactNode;
+  value: ReactNode;
+  actions?: ReactNode;
+};
+
+type EnhancedAddLeadDialogProps = {
+  onSuccess?: () => void;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+};
+
+type AdvancedDataTableProps<T> = {
+  actions?: ReactNode;
+  data: T[];
+  onRowClick?: (row: T) => void;
+};
+
+type OnboardingTutorialProps = {
+  isVisible: boolean;
+  onComplete: () => void;
+};
+
+type LeadRow = {
+  id: string;
+  name?: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+  status?: string | null;
+  lead_statuses?: { name?: string | null; is_system_final?: boolean | null } | null;
+};
+
+type LeadsDataArgs = {
+  statusIds?: string[];
+  customFieldFilters?: Record<string, unknown>;
+};
 
 jest.mock("@/components/ui/skeleton", () => ({
   Skeleton: ({ children }: { children?: React.ReactNode }) => (
@@ -58,7 +99,7 @@ jest.mock("@/components/ui/skeleton", () => ({
 }));
 
 jest.mock("@/components/ui/kpi-card", () => ({
-  KpiCard: ({ title, value, actions }: any) => (
+  KpiCard: ({ title, value, actions }: KpiCardProps) => (
     <div data-testid="kpi-card">
       <span>{title}</span>
       <span>{value}</span>
@@ -72,7 +113,7 @@ jest.mock("@/components/ui/loading-presets", () => ({
 }));
 
 jest.mock("@/components/EnhancedAddLeadDialog", () => ({
-  EnhancedAddLeadDialog: ({ onSuccess, onOpenChange, open }: any) => (
+  EnhancedAddLeadDialog: ({ onSuccess, onOpenChange, open }: EnhancedAddLeadDialogProps) => (
     <div data-testid="enhanced-add-lead-dialog" data-open={open}>
       <button onClick={() => onOpenChange(false)}>close-dialog</button>
       <button onClick={() => onSuccess?.()}>success-dialog</button>
@@ -81,7 +122,7 @@ jest.mock("@/components/EnhancedAddLeadDialog", () => ({
 }));
 
 jest.mock("@/components/data-table", () => ({
-  AdvancedDataTable: ({ actions, data, onRowClick }: any) => (
+  AdvancedDataTable: ({ actions, data, onRowClick }: AdvancedDataTableProps<LeadRow>) => (
     <div data-testid="advanced-data-table">
       <div data-testid="data-table-actions">{actions}</div>
       <button
@@ -96,7 +137,7 @@ jest.mock("@/components/data-table", () => ({
 }));
 
 jest.mock("@/components/shared/OnboardingTutorial", () => ({
-  OnboardingTutorial: ({ isVisible, onComplete }: any) => (
+  OnboardingTutorial: ({ isVisible, onComplete }: OnboardingTutorialProps) => (
     isVisible ? (
       <button onClick={onComplete}>complete-tutorial</button>
     ) : null
@@ -162,8 +203,13 @@ jest.mock("react-router-dom", () => {
 });
 
 jest.mock("lucide-react", () => {
-  const Icon = ({ name }: { name: string }) => <span data-icon={name} />;
-  const createIcon = (name: string) => (props: any) => <Icon name={name} {...props} />;
+  const React = jest.requireActual<typeof import("react")>("react");
+  const Icon = ({ name, ...props }: { name: string } & SVGProps<SVGSVGElement>) => (
+    <svg {...props} data-icon={name} />
+  );
+  const createIcon = (name: string) => (props: SVGProps<SVGSVGElement>) => (
+    <Icon name={name} {...props} />
+  );
   return {
     Plus: createIcon("Plus"),
     Filter: createIcon("Filter"),
@@ -192,13 +238,13 @@ jest.mock("date-fns", () => ({
   format: () => "2023-05-01_1200",
 }));
 
-const mockUseLeadTableColumns = useLeadTableColumns as jest.Mock;
-const mockUseLeadsFilters = useLeadsFilters as jest.Mock;
-const mockUseLeadsData = useLeadsData as jest.Mock;
-const mockUseOnboarding = useOnboarding as jest.Mock;
-const mockUseOrganization = useOrganization as jest.Mock;
-const mockUseThrottledRefetchOnFocus = useThrottledRefetchOnFocus as jest.Mock;
-const mockToast = toast as jest.Mock;
+const mockUseLeadTableColumns = useLeadTableColumns as jest.MockedFunction<typeof useLeadTableColumns>;
+const mockUseLeadsFilters = useLeadsFilters as jest.MockedFunction<typeof useLeadsFilters>;
+const mockUseLeadsData = useLeadsData as jest.MockedFunction<typeof useLeadsData>;
+const mockUseOnboarding = useOnboarding as jest.MockedFunction<typeof useOnboarding>;
+const mockUseOrganization = useOrganization as jest.MockedFunction<typeof useOrganization>;
+const mockUseThrottledRefetchOnFocus = useThrottledRefetchOnFocus as jest.MockedFunction<typeof useThrottledRefetchOnFocus>;
+const mockToast = toast as jest.MockedFunction<typeof toast>;
 
 describe("AllLeads", () => {
   let fetchLeadsDataMock: jest.Mock;
@@ -225,7 +271,7 @@ describe("AllLeads", () => {
         {
           id: "name",
           label: "Name",
-          accessor: (lead: any) => lead.name,
+          accessor: (lead: LeadRow) => lead.name ?? "",
         },
       ],
       fieldDefinitions: [
@@ -236,7 +282,7 @@ describe("AllLeads", () => {
         },
       ],
       sortAccessors: {
-        updated_at: (lead: any) => lead.updated_at ?? "",
+        updated_at: (lead: LeadRow) => lead.updated_at ?? "",
       },
       loading: false,
     });
@@ -253,7 +299,7 @@ describe("AllLeads", () => {
     fetchLeadsDataMock = jest.fn().mockResolvedValue({ leads: [] });
     refetchMock = jest.fn().mockResolvedValue(undefined);
 
-    mockUseLeadsData.mockImplementation((args) => ({
+    mockUseLeadsData.mockImplementation((args: LeadsDataArgs = {}) => ({
       pageLeads: [
         {
           id: "lead-1",

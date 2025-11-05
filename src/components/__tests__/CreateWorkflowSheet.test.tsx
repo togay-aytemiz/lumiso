@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import { CreateWorkflowSheet } from "../CreateWorkflowSheet";
 import { useTemplates } from "@/hooks/useTemplates";
@@ -13,11 +14,11 @@ jest.mock("@/hooks/useModalNavigation", () => ({
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string, options?: Record<string, any>) => {
+    t: (key: string, options?: Record<string, unknown>) => {
       if (typeof options?.channel === "string") {
         return `${key}:${options.channel}`;
       }
-      if (options?.count !== undefined) {
+      if (typeof options?.count === "number") {
         return `${key}:${options.count}`;
       }
       return key;
@@ -26,14 +27,24 @@ jest.mock("react-i18next", () => ({
 }));
 
 jest.mock("@/components/ui/app-sheet-modal", () => ({
-  AppSheetModal: ({ isOpen, title, footerActions, children }: any) => {
+  AppSheetModal: ({
+    isOpen,
+    title,
+    footerActions,
+    children,
+  }: {
+    isOpen: boolean;
+    title: ReactNode;
+    footerActions?: Array<{ label: ReactNode; disabled?: boolean; onClick?: () => void }>;
+    children: ReactNode;
+  }) => {
     if (!isOpen) return null;
     return (
       <div data-testid="workflow-sheet-modal">
         <h2>{title}</h2>
         <div>{children}</div>
         <div>
-          {footerActions?.map((action: any, index: number) => (
+          {footerActions?.map((action, index) => (
             <button
               key={index}
               disabled={action.disabled}
@@ -49,24 +60,24 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
 }));
 
 jest.mock("@/components/settings/NavigationGuardDialog", () => ({
-  NavigationGuardDialog: ({ open, message }: any) =>
+  NavigationGuardDialog: ({ open, message }: { open: boolean; message: ReactNode }) =>
     open ? <div data-testid="navigation-guard">{message}</div> : null,
 }));
 
 jest.mock("@/components/ui/select", () => ({
-  Select: ({ children }: any) => <div>{children}</div>,
-  SelectTrigger: ({ children, ...props }: any) => (
+  Select: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectTrigger: ({ children, ...props }: { children: ReactNode }) => (
     <button type="button" {...props}>
       {children}
     </button>
   ),
-  SelectValue: ({ placeholder }: any) => <span>{placeholder}</span>,
-  SelectContent: ({ children }: any) => <div>{children}</div>,
-  SelectItem: ({ children }: any) => <div>{children}</div>,
+  SelectValue: ({ placeholder }: { placeholder?: ReactNode }) => <span>{placeholder}</span>,
+  SelectContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectItem: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 jest.mock("@/components/ui/switch", () => ({
-  Switch: ({ checked, onCheckedChange, ...props }: any) => (
+  Switch: ({ checked, onCheckedChange, ...props }: { checked?: boolean; onCheckedChange?: (value: boolean) => void }) => (
     <input
       type="checkbox"
       role="switch"
@@ -78,25 +89,28 @@ jest.mock("@/components/ui/switch", () => ({
 }));
 
 describe("CreateWorkflowSheet", () => {
-  const modalNavigationMock = {
-    showGuard: false,
-    message: "guard-message",
-    handleModalClose: jest.fn(() => true),
-    handleDiscardChanges: jest.fn(),
-    handleStayOnModal: jest.fn(),
-    handleSaveAndExit: jest.fn(),
-  };
+const modalNavigationMock = {
+  showGuard: false,
+  message: "guard-message",
+  handleModalClose: jest.fn(() => true),
+  handleDiscardChanges: jest.fn(),
+  handleStayOnModal: jest.fn(),
+  handleSaveAndExit: jest.fn(),
+};
+
+const useTemplatesMock = useTemplates as jest.MockedFunction<typeof useTemplates>;
+const useModalNavigationMock = useModalNavigation as jest.MockedFunction<typeof useModalNavigation>;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useTemplates as jest.Mock).mockReturnValue({
+    useTemplatesMock.mockReturnValue({
       sessionTemplates: [
         { id: "template-1", name: "Reminder Template" },
         { id: "template-2", name: "Follow-up Template" },
       ],
       loading: false,
     });
-    (useModalNavigation as jest.Mock).mockReturnValue(modalNavigationMock);
+    useModalNavigationMock.mockReturnValue(modalNavigationMock);
   });
 
   it("prepopulates edit workflow data and submits update flow", async () => {
@@ -154,7 +168,7 @@ describe("CreateWorkflowSheet", () => {
   });
 
   it("shows empty template state when no templates are available", () => {
-    (useTemplates as jest.Mock).mockReturnValue({
+    useTemplatesMock.mockReturnValue({
       sessionTemplates: [],
       loading: false,
     });

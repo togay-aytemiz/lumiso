@@ -1,40 +1,8 @@
 {
-  "total": 951,
+  "total": 864,
   "summary": [
     {
-      "filePath": "src/components/template-builder/__tests__/TemplateBuilderPreview.test.tsx",
-      "count": 11
-    },
-    {
-      "filePath": "src/legacy/ProjectDetailLegacy.tsx",
-      "count": 11
-    },
-    {
-      "filePath": "src/pages/AllProjects.tsx",
-      "count": 11
-    },
-    {
-      "filePath": "src/pages/ProjectDetail.tsx",
-      "count": 11
-    },
-    {
-      "filePath": "src/pages/__tests__/AllLeads.test.tsx",
-      "count": 11
-    },
-    {
-      "filePath": "src/pages/__tests__/Analytics.test.tsx",
-      "count": 11
-    },
-    {
-      "filePath": "src/pages/projects/hooks/__tests__/useProjectsFilters.test.tsx",
-      "count": 11
-    },
-    {
       "filePath": "src/components/ViewProjectDialog.tsx",
-      "count": 10
-    },
-    {
-      "filePath": "src/components/__tests__/CreateWorkflowSheet.test.tsx",
       "count": 10
     },
     {

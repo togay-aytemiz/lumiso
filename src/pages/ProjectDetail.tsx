@@ -29,6 +29,9 @@ import { useProjectHeaderSummary } from "@/hooks/useProjectHeaderSummary";
 import { useProjectSessionsSummary } from "@/hooks/useProjectSessionsSummary";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : "Unknown error";
+
 interface Project {
   id: string;
   name: string;
@@ -55,6 +58,14 @@ interface Session extends SessionWithStatus {
   session_time: string;
   notes: string;
 }
+
+type ProjectRow = Project;
+type LeadRow = Lead;
+type ProjectTypeRow = ProjectType;
+type SessionRow = SessionWithStatus & {
+  session_time: string | null;
+  notes: string | null;
+};
 
 interface ProjectType {
   id: string;
@@ -114,7 +125,7 @@ export default function ProjectDetail() {
     }
   };
 
-  const fetchProject = async (): Promise<Project | null> => {
+  const fetchProject = useCallback(async (): Promise<Project | null> => {
     if (!id) return null;
     
     try {
@@ -125,12 +136,17 @@ export default function ProjectDetail() {
         .single();
 
       if (error) throw error;
-      setProject(data);
-      setEditName(data.name);
-      setEditDescription(data.description || "");
-      setEditProjectTypeId(data.project_type_id || "");
-      return data;
-    } catch (error: any) {
+      const projectRow = (data as ProjectRow) ?? null;
+      if (!projectRow) {
+        throw new Error('Project not found');
+      }
+
+      setProject(projectRow);
+      setEditName(projectRow.name);
+      setEditDescription(projectRow.description || "");
+      setEditProjectTypeId(projectRow.project_type_id || "");
+      return projectRow;
+    } catch (error: unknown) {
       console.error('Error fetching project:', error);
       toast({
         title: "Error",
@@ -140,9 +156,9 @@ export default function ProjectDetail() {
       navigate('/projects');
       return null;
     }
-  };
+  }, [id, navigate, toast]);
 
-  const fetchProjectSessions = async () => {
+  const fetchProjectSessions = useCallback(async () => {
     if (!project) return;
     setSessionLoading(true);
     try {
@@ -152,20 +168,26 @@ export default function ProjectDetail() {
         .eq('project_id', project.id);
       
       if (error) throw error;
-      setSessions(data as unknown as Session[]);
-    } catch (error: any) {
+      const sessionRows = (data ?? []) as SessionRow[];
+      const mappedSessions: Session[] = sessionRows.map((row) => ({
+        ...row,
+        session_time: row.session_time ?? '',
+        notes: row.notes ?? '',
+      }));
+      setSessions(mappedSessions);
+    } catch (error: unknown) {
       console.error('Error fetching project sessions:', error);
       toast({
         title: "Error loading sessions",
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     } finally {
       setSessionLoading(false);
     }
-  };
+  }, [project, toast]);
 
-  const fetchLead = async () => {
+  const fetchLead = useCallback(async () => {
     if (!project?.lead_id) return;
     
     try {
@@ -176,13 +198,13 @@ export default function ProjectDetail() {
         .single();
 
       if (error) throw error;
-      setLead(data);
-    } catch (error: any) {
+      setLead((data as LeadRow) ?? null);
+    } catch (error: unknown) {
       console.error('Error fetching lead:', error);
     }
-  };
+  }, [project?.lead_id]);
 
-  const fetchProjectType = async () => {
+  const fetchProjectType = useCallback(async () => {
     if (!project?.project_type_id) return;
     
     try {
@@ -193,13 +215,13 @@ export default function ProjectDetail() {
         .single();
 
       if (error) throw error;
-      setProjectType(data);
-    } catch (error: any) {
+      setProjectType((data as ProjectTypeRow) ?? null);
+    } catch (error: unknown) {
       console.error('Error fetching project type:', error);
     }
-  };
+  }, [project?.project_type_id]);
 
-  const checkArchiveStatus = async (targetProject?: Project | null) => {
+  const checkArchiveStatus = useCallback(async (targetProject?: Project | null) => {
     const source = targetProject ?? project;
     if (!source?.id) {
       setIsArchived(false);
@@ -236,11 +258,11 @@ export default function ProjectDetail() {
       setIsArchived(prev => prev);
       setLocalStatusId(source?.status_id || null);
     }
-  };
+  }, [project]);
 
   useEffect(() => {
     fetchProject();
-  }, [id]);
+  }, [fetchProject]);
 
   useEffect(() => {
     if (project) {
@@ -250,7 +272,7 @@ export default function ProjectDetail() {
       fetchProjectSessions();
       setLoading(false);
     }
-  }, [project]);
+  }, [project, fetchLead, fetchProjectType, checkArchiveStatus, fetchProjectSessions]);
 
   const handleSaveProject = async () => {
     if (!project || !editName.trim() || !editProjectTypeId) return;
@@ -287,17 +309,17 @@ export default function ProjectDetail() {
           if (!typeError) {
             setProjectType(typeData);
           }
-        } catch (typeError: any) {
+        } catch (typeError: unknown) {
           console.error('Error fetching updated project type:', typeError);
         }
       }
 
       setIsEditing(false);
       await fetchProject();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error updating project",
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     } finally {
@@ -353,10 +375,10 @@ export default function ProjectDetail() {
       });
       
       navigate('/projects');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error deleting project",
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     } finally {
@@ -384,10 +406,10 @@ export default function ProjectDetail() {
       });
       
       fetchProjectSessions();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error deleting session",
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     }
@@ -409,10 +431,10 @@ export default function ProjectDetail() {
       const updatedProject = await fetchProject();
       await checkArchiveStatus(updatedProject);
       setArchiveConfirmOpen(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     } finally {

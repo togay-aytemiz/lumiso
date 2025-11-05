@@ -841,6 +841,7 @@ const LeadDetail = () => {
                   lead={lead}
                   createdAt={lead.created_at}
                   showQuickActions={true}
+                  showLeadNameInHeader={false}
                   onLeadUpdated={() => {
                     void refetchAll();
                   }}

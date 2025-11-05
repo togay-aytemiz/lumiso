@@ -51,6 +51,7 @@ interface UnifiedClientDetailsProps {
   createdAt?: string | null; // creation date
   onNavigateToLead?: (leadId: string) => void;
   defaultExpanded?: boolean;
+  showLeadNameInHeader?: boolean;
 }
 
 // Helper functions for validation and phone normalization
@@ -96,6 +97,7 @@ export function UnifiedClientDetails({
   createdAt,
   onNavigateToLead,
   defaultExpanded = true,
+  showLeadNameInHeader = true,
 }: UnifiedClientDetailsProps) {
   const { toast } = useToast();
   const { fieldDefinitions, loading: fieldsLoading } =
@@ -382,6 +384,7 @@ export function UnifiedClientDetails({
   }>;
 
   const hasQuickActions = showQuickActions && quickActions.length > 0;
+  const shouldShowHeaderLeadName = showLeadNameInHeader && !isExpanded;
 
   const renderQuickActionButtons = (options?: { compact?: boolean }) => {
     const compact = options?.compact;
@@ -451,24 +454,32 @@ export function UnifiedClientDetails({
   return (
     <>
       <Card className={className}>
-        <CardHeader className={isExpanded ? "pb-3" : "pb-2"}>
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsExpanded((prev) => !prev)}
-                className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted"
-                aria-expanded={isExpanded}
-                aria-label="Toggle client details"
-              >
-                <ChevronDown
-                  className={cn(
-                    "h-4 w-4 transition-transform",
-                    isExpanded ? "" : "-rotate-90"
-                  )}
-                />
-              </button>
-              <div className="flex flex-1 items-center gap-2 min-w-0">
+        <CardHeader
+          className={cn(
+            isExpanded ? "pb-3" : "pb-2",
+            "pl-2 pr-4 md:pl-4 md:pr-6"
+          )}
+        >
+          <div className="flex items-start gap-1.5">
+            <button
+              type="button"
+              onClick={() => setIsExpanded((prev) => !prev)}
+              className={cn(
+                "flex items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted flex-shrink-0",
+                "h-9 w-7 md:w-8"
+              )}
+              aria-expanded={isExpanded}
+              aria-label="Toggle client details"
+            >
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 transition-transform",
+                  isExpanded ? "" : "-rotate-90"
+                )}
+              />
+            </button>
+            <div className="flex flex-1 flex-col gap-1 min-w-0">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setIsExpanded((prev) => !prev)}
@@ -481,36 +492,43 @@ export function UnifiedClientDetails({
                       : title || tForms("clientDetails.title")}
                   </span>
                 </button>
-                <div className="flex-1 min-w-0 text-left">
-                  {leadNameDisplay}
+                <Button
+                  variant="ghost"
+                  size={isExpanded ? "sm" : "icon"}
+                  onClick={() => setEditOpen(true)}
+                  className={cn(
+                    "ml-auto bg-accent/10 text-accent transition-colors hover:bg-accent/20 flex-shrink-0",
+                    isExpanded ? "h-9 px-3 text-sm font-medium" : "h-9 w-9 rounded-lg"
+                  )}
+                >
+                  {isExpanded ? (
+                    tForms("clientDetails.edit")
+                  ) : (
+                    <>
+                      <Pencil className="h-4 w-4" aria-hidden="true" />
+                      <span className="sr-only">
+                        {tForms("clientDetails.edit")}
+                      </span>
+                    </>
+                  )}
+                </Button>
+              </div>
+              {shouldShowHeaderLeadName && (
+                <div className="min-w-0 text-left">{leadNameDisplay}</div>
+              )}
+              {hasQuickActions && (
+                <div
+                  className={cn(
+                    "flex flex-wrap items-center gap-1.5",
+                    isExpanded ? "pt-2" : "pt-1"
+                  )}
+                >
+                  {isExpanded
+                    ? renderQuickActionButtons()
+                    : renderQuickActionButtons({ compact: true })}
                 </div>
-              </div>
-              <Button
-                variant="ghost"
-                size={isExpanded ? "sm" : "icon"}
-                onClick={() => setEditOpen(true)}
-                className={cn(
-                  "ml-auto bg-accent/10 text-accent transition-colors hover:bg-accent/20 flex-shrink-0",
-                  isExpanded ? "h-9 px-3 text-sm font-medium" : "h-9 w-9 rounded-lg"
-                )}
-              >
-                {isExpanded ? (
-                  tForms("clientDetails.edit")
-                ) : (
-                  <>
-                    <Pencil className="h-4 w-4" aria-hidden="true" />
-                    <span className="sr-only">
-                      {tForms("clientDetails.edit")}
-                    </span>
-                  </>
-                )}
-              </Button>
+              )}
             </div>
-            {!isExpanded && hasQuickActions && (
-              <div className="pl-10 flex flex-wrap items-center gap-1.5">
-                {renderQuickActionButtons({ compact: true })}
-              </div>
-            )}
           </div>
         </CardHeader>
         <div
@@ -586,13 +604,6 @@ export function UnifiedClientDetails({
                     </div>
                   </div>
                 ))}
-              </div>
-            )}
-
-            {/* Quick Actions */}
-            {hasQuickActions && (
-              <div className="flex flex-wrap gap-2 pt-3 border-t sm:flex-row flex-col sm:gap-2 gap-1">
-                {renderQuickActionButtons()}
               </div>
             )}
 

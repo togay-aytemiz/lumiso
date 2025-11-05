@@ -43,15 +43,56 @@ import { startTimer } from "@/lib/debug";
 import { useConnectivity } from "@/contexts/ConnectivityContext";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 
+const VIEW_MODES = ["board", "list", "archived"] as const;
+type ViewMode = (typeof VIEW_MODES)[number];
+
+const parseViewMode = (value?: string | null): ViewMode | null => {
+  if (!value) return null;
+  return VIEW_MODES.includes(value as ViewMode) ? (value as ViewMode) : null;
+};
+
+type StatusOption = {
+  id: string;
+  name: string;
+  color?: string | null;
+  sort_order?: number | null;
+};
+
+const isStatusOption = (value: unknown): value is StatusOption =>
+  typeof value === "object" &&
+  value !== null &&
+  "id" in value &&
+  "name" in value &&
+  typeof (value as { id: unknown }).id === "string" &&
+  typeof (value as { name: unknown }).name === "string";
+
+type NamedOption = { id: string; name: string };
+
+const toNamedOptions = (items: unknown[]): NamedOption[] =>
+  items.flatMap((item) => {
+    if (
+      typeof item === "object" &&
+      item !== null &&
+      "id" in item &&
+      "name" in item &&
+      typeof (item as { id: unknown }).id === "string" &&
+      typeof (item as { name: unknown }).name === "string"
+    ) {
+      const { id, name } = item as { id: string; name: string };
+      return [{ id, name }];
+    }
+    return [];
+  });
+
 const AllProjects = () => {
   const [boardProjects, setBoardProjects] = useState<ProjectListItem[]>([]);
   // Default to list to avoid initial board mount flicker
-  const [viewMode, setViewMode] = useState<'board' | 'list' | 'archived'>(() => {
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window !== 'undefined') {
-      const urlView = new URLSearchParams(window.location.search).get('view');
-      if (urlView === 'board' || urlView === 'list' || urlView === 'archived') return urlView;
-      const stored = localStorage.getItem('projects:viewMode');
-      if (stored === 'board' || stored === 'list' || stored === 'archived') return stored as any;
+      const urlView = parseViewMode(new URLSearchParams(window.location.search).get('view'));
+      if (urlView) return urlView;
+      const stored = parseViewMode(localStorage.getItem('projects:viewMode'));
+      if (stored) return stored;
     }
     return 'list';
   });
@@ -69,6 +110,7 @@ const AllProjects = () => {
   const archivedPageSize = 25;
   const [exporting, setExporting] = useState(false);
   const [boardLoading, setBoardLoading] = useState(false);
+  const refreshAllRef = useRef<() => Promise<void> | void>(() => {});
   const { reportNetworkError, reportRecovery, registerRetry } = useConnectivity();
   const { activeOrganizationId } = useOrganization();
   const navigate = useNavigate();
@@ -82,16 +124,24 @@ const AllProjects = () => {
   const { data: statusOptions = [], isLoading: statusesLoading } = useProjectStatuses();
   const { data: serviceOptions = [] } = useServices();
 
-  const projectStatuses = useMemo<ProjectStatusSummary[]>(
-    () =>
-      (statusOptions ?? []).map((status: any) => ({
-        id: status.id,
-        name: status.name,
-        color: status.color,
-        sort_order: status.sort_order,
-      })),
-    [statusOptions]
-  );
+  const typeOptionItems = useMemo(() => toNamedOptions(typeOptions ?? []), [typeOptions]);
+  const serviceOptionItems = useMemo(() => toNamedOptions(serviceOptions ?? []), [serviceOptions]);
+
+  const projectStatuses = useMemo<ProjectStatusSummary[]>(() => {
+    return (statusOptions ?? []).flatMap((status) => {
+      if (!isStatusOption(status)) {
+        return [];
+      }
+      return [
+        {
+          id: status.id,
+          name: status.name,
+          color: status.color ?? undefined,
+          sort_order: status.sort_order ?? undefined,
+        },
+      ];
+    });
+  }, [statusOptions]);
 
   // Tutorial state
   const [showTutorial, setShowTutorial] = useState(false);
@@ -154,11 +204,11 @@ const AllProjects = () => {
 
   const listFilterOptions = useMemo(
     () => ({
-      types: typeOptions.map((t: any) => ({ id: t.id, name: t.name })),
+      types: typeOptionItems,
       stages: stageOptionsForView,
-      services: serviceOptions.map((s: any) => ({ id: s.id, name: s.name })),
+      services: serviceOptionItems,
     }),
-    [serviceOptions, stageOptionsForView, typeOptions]
+    [serviceOptionItems, stageOptionsForView, typeOptionItems]
   );
 
   const {
@@ -233,10 +283,6 @@ const AllProjects = () => {
   useThrottledRefetchOnFocus(refreshProjectsData, 30_000);
 
   // Derived labels no longer used; header summary now handled by AdvancedDataTable
-
-  // Header summary placeholders; defined after filtered rows below
-  let listHeaderSummary: { text?: string; chips: typeof listSummaryChips };
-  let archivedHeaderSummary: { text?: string; chips: typeof archivedSummaryChips };
 
   // Pagination: reset page when filters change
   useEffect(() => { setListPage(1); }, [listFiltersState]);
@@ -350,16 +396,20 @@ const AllProjects = () => {
     [formatServicesList]
   );
 
-  const formatCurrency = useCallback((amount: string | number | null) => {
-    const value = Number(amount || 0);
-    try {
-      return new Intl.NumberFormat("tr-TR", {
-        style: "currency",
-        currency: "TRY",
-      }).format(value);
-    } catch {
-      return `${value.toFixed(2)} TRY`;
-    }
+const formatCurrency = useCallback((amount: string | number | null) => {
+  const value = Number(amount || 0);
+  try {
+    return new Intl.NumberFormat("tr-TR", {
+      style: "currency",
+      currency: "TRY",
+    }).format(value);
+  } catch {
+    return `${value.toFixed(2)} TRY`;
+  }
+}, []);
+
+  const handleStatusRefresh = useCallback(() => {
+    refreshAllRef.current?.();
   }, []);
 
   const listTableColumns = useMemo<AdvancedTableColumn<ProjectListItem>[]>(
@@ -436,7 +486,7 @@ const AllProjects = () => {
             currentStatusId={row.status_id ?? undefined}
             editable={false}
             size="sm"
-            onStatusChange={refreshAll}
+            onStatusChange={handleStatusRefresh}
             statuses={projectStatuses}
             statusesLoading={statusesLoading}
           />
@@ -479,10 +529,11 @@ const AllProjects = () => {
       formatServicesList,
       handleLeadClick,
       handleQuickView,
+      handleStatusRefresh,
       projectStatuses,
-      statusesLoading,
-      renderServicesChips,
       renderProgressCell,
+      renderServicesChips,
+      statusesLoading,
       t,
       tForms,
     ]
@@ -614,14 +665,14 @@ const AllProjects = () => {
     setArchivedPage((prev) => prev + 1);
   }, [archivedHasMore, archivedLoading, archivedPage, archivedPageSize, archivedTotalCount]);
 
-  listHeaderSummary = useMemo(() => {
+  const listHeaderSummary = useMemo(() => {
     const text = listActiveCount > 0
       ? t('leads.tableSummaryFiltered', { visible: listProjects.length, total: listTotalCount })
       : undefined;
     return { text, chips: listSummaryChips };
   }, [listActiveCount, listProjects.length, listSummaryChips, listTotalCount, t]);
 
-  archivedHeaderSummary = useMemo(() => {
+  const archivedHeaderSummary = useMemo(() => {
     const text = archivedActiveCount > 0
       ? t('leads.tableSummaryFiltered', { visible: archivedProjects.length, total: archivedTotalCount })
       : undefined;
@@ -735,7 +786,6 @@ const AllProjects = () => {
       listTotalCount,
       t,
       tForms,
-      toast,
     ]
   );
 
@@ -903,7 +953,7 @@ const AllProjects = () => {
         boardLoadInFlightRef.current = false;
       }
     },
-    [ERROR_TOAST_DEBOUNCE_MS, BOARD_PAGE_SIZE, fetchProjectsData, getCacheStatus, getCachedProjects, handleNetworkError, handleNetworkRecovery, t, toast]
+    [ERROR_TOAST_DEBOUNCE_MS, BOARD_PAGE_SIZE, fetchProjectsData, getCacheStatus, getCachedProjects, handleNetworkError, handleNetworkRecovery, t]
   );
 
   const boardFilterSignature = useMemo(
@@ -938,6 +988,10 @@ const AllProjects = () => {
     ]);
   }, [loadBoardProjects, refreshProjectsData]);
 
+  useEffect(() => {
+    refreshAllRef.current = refreshAll;
+  }, [refreshAll]);
+
   const loadMoreBoard = useCallback(() => {
     if (!boardHasMore) return;
     loadBoardProjects();
@@ -963,14 +1017,20 @@ const AllProjects = () => {
   }, [navigate, quickViewProject]);
 
   const handleViewChange = useCallback(
-    (view: 'board' | 'list' | 'archived') => {
+    (view: ViewMode) => {
       setViewMode(view);
-      try { localStorage.setItem('projects:viewMode', view); } catch {}
+      try {
+        localStorage.setItem('projects:viewMode', view);
+      } catch (error) {
+        console.warn('Unable to persist projects view mode', error);
+      }
       try {
         const url = new URL(window.location.href);
         url.searchParams.set('view', view);
         window.history.replaceState({}, '', url.toString());
-      } catch {}
+      } catch (error) {
+        console.warn('Unable to update projects view mode in URL', error);
+      }
 
       if (view === 'list') {
         setHasClickedListView(true);

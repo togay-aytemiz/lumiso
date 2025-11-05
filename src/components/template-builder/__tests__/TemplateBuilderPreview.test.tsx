@@ -1,8 +1,12 @@
+import type { ReactElement, ReactNode } from "react";
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@/utils/testUtils";
 import { PlainTextPreview } from "../PlainTextPreview";
 import { TemplatePreview } from "../TemplatePreview";
 import { OptimizedTemplatePreview } from "../OptimizedTemplatePreview";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import type { TemplateBlock } from "@/types/templateBuilder";
 
 const toastMock = jest.fn();
 const emailPreviewMock = jest.fn();
@@ -12,8 +16,14 @@ jest.mock("@/hooks/use-toast", () => ({
   toast: (...args: unknown[]) => toastMock(...args),
 }));
 
+type EmailPreviewProps = {
+  subject?: string;
+  body?: string;
+  [key: string]: unknown;
+};
+
 jest.mock("../previews/EmailPreview", () => ({
-  EmailPreview: (props: any) => {
+  EmailPreview: (props: EmailPreviewProps) => {
     emailPreviewMock(props);
     return <div data-testid="email-preview" />;
   },
@@ -51,7 +61,7 @@ jest.mock("react-i18next", () => ({
   useTranslation: jest.fn(() => ({
     t: (key: string, options?: Record<string, unknown>) =>
       options && "name" in options
-        ? `${key}:${(options as any).name}`
+        ? `${key}:${String(options.name)}`
         : key,
     i18n: { language: "en" },
   })),
@@ -61,33 +71,51 @@ jest.mock("@/lib/utils", () => ({
   cn: (...classes: string[]) => classes.filter(Boolean).join(" "),
 }));
 
-jest.mock("@/components/ui/tabs", () => ({
-  Tabs: ({ value, onValueChange, children }: any) => (
-    <div data-testid="tabs" data-value={value}>
-      {React.Children.map(children, (child: React.ReactElement) =>
-        React.isValidElement(child)
-          ? React.cloneElement(child, { onValueChange })
-          : child
-      )}
-    </div>
-  ),
-  TabsList: ({ children }: any) => <div>{children}</div>,
-  TabsTrigger: ({ value, children, onValueChange }: any) => (
-    <button type="button" onClick={() => onValueChange?.(value)}>
-      {children}
-    </button>
-  ),
-  TabsContent: ({ children }: any) => <div>{children}</div>,
-}));
+jest.mock("@/components/ui/tabs", () => {
+  type TabsProps = {
+    value: string;
+    onValueChange?: (value: string) => void;
+    children: ReactNode;
+  };
 
-const supabase = require("@/integrations/supabase/client").supabase;
-const { useAuth } = require("@/contexts/AuthContext");
+  type TabsTriggerProps = {
+    value: string;
+    children: ReactNode;
+    onValueChange?: (value: string) => void;
+  };
+
+  type TabsChildProps = { children: ReactNode };
+
+  return {
+    Tabs: ({ value, onValueChange, children }: TabsProps) => (
+      <div data-testid="tabs" data-value={value}>
+        {React.Children.map(children, (child: ReactNode) =>
+          React.isValidElement(child)
+            ? React.cloneElement(child as ReactElement, { onValueChange })
+            : child
+        )}
+      </div>
+    ),
+    TabsList: ({ children }: TabsChildProps) => <div>{children}</div>,
+    TabsTrigger: ({ value, children, onValueChange }: TabsTriggerProps) => (
+      <button type="button" onClick={() => onValueChange?.(value)}>
+        {children}
+      </button>
+    ),
+    TabsContent: ({ children }: TabsChildProps) => <div>{children}</div>,
+  };
+});
+
+const clipboardWriteMock = jest.fn().mockResolvedValue(undefined);
+const supabaseInvokeMock = supabase.functions.invoke as jest.MockedFunction<typeof supabase.functions.invoke>;
+const useAuthMock = useAuth as jest.MockedFunction<typeof useAuth>;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  clipboardWriteMock.mockClear();
   Object.defineProperty(navigator, "clipboard", {
     value: {
-      writeText: jest.fn().mockResolvedValue(undefined),
+      writeText: clipboardWriteMock,
     },
     configurable: true,
   });
@@ -96,11 +124,12 @@ beforeEach(() => {
 describe("PlainTextPreview", () => {
 
   it("copies generated plain text to the clipboard", async () => {
+    const blocks: TemplateBlock[] = [
+      { id: "1", type: "text", data: { content: "Hello" }, visible: true, order: 0 },
+    ];
     render(
       <PlainTextPreview
-        blocks={[
-          { id: "1", type: "text", data: { content: "Hello" }, visible: true },
-        ] as any}
+        blocks={blocks}
         mockData={{ customer_name: "Taylor" }}
       />
     );
@@ -110,7 +139,7 @@ describe("PlainTextPreview", () => {
     );
 
     await waitFor(() =>
-      expect(navigator.clipboard.writeText).toHaveBeenCalled()
+      expect(clipboardWriteMock).toHaveBeenCalled()
     );
     expect(toastMock).toHaveBeenCalledWith({
       title: "Copied to clipboard",
@@ -120,7 +149,7 @@ describe("PlainTextPreview", () => {
 });
 
 describe("TemplatePreview", () => {
-  const baseBlocks = [
+  const baseBlocks: TemplateBlock[] = [
     {
       id: "1",
       type: "text",
@@ -136,18 +165,20 @@ describe("TemplatePreview", () => {
         },
       },
       visible: true,
+      order: 0,
     },
     {
       id: "2",
       type: "cta",
       data: { text: "Book Now", variant: "primary", url: "https://example.com" },
       visible: false,
+      order: 1,
     },
-  ] as any;
+  ] as const;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useAuth as jest.Mock).mockReturnValue({ user: { email: "user@example.com" } });
+    useAuthMock.mockReturnValue({ user: { email: "user@example.com" } });
   });
 
   it("renders the active channel and toggles devices for email", () => {
@@ -212,7 +243,7 @@ describe("TemplatePreview", () => {
   });
 
   it("sends a test email and shows success toast", async () => {
-    (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+    supabaseInvokeMock.mockResolvedValue({
       data: {},
       error: null,
     });
@@ -234,8 +265,8 @@ describe("TemplatePreview", () => {
       })
     );
 
-    await waitFor(() => expect(supabase.functions.invoke).toHaveBeenCalled());
-    const [functionName, payload] = (supabase.functions.invoke as jest.Mock).mock.calls[0];
+    await waitFor(() => expect(supabaseInvokeMock).toHaveBeenCalled());
+    const [functionName, payload] = supabaseInvokeMock.mock.calls[0];
     expect(functionName).toBe("send-template-email");
     expect(payload.body.to).toBe("user@example.com");
     expect(payload.body.blocks).toHaveLength(1);
@@ -248,7 +279,7 @@ describe("TemplatePreview", () => {
   });
 
   it("shows an error toast when no user email is available", () => {
-    (useAuth as jest.Mock).mockReturnValue({ user: { email: null } });
+    useAuthMock.mockReturnValue({ user: { email: null } });
 
     render(
       <TemplatePreview
@@ -267,7 +298,7 @@ describe("TemplatePreview", () => {
       })
     );
 
-    expect(supabase.functions.invoke).not.toHaveBeenCalled();
+    expect(supabaseInvokeMock).not.toHaveBeenCalled();
     expect(toastMock).toHaveBeenCalledWith(
       expect.objectContaining({
         description: "templateBuilder.preview.toast.noUserEmail",
@@ -277,7 +308,7 @@ describe("TemplatePreview", () => {
   });
 
   it("surfaces errors from the Supabase invocation", async () => {
-    (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+    supabaseInvokeMock.mockResolvedValue({
       data: null,
       error: { message: "Send failed" },
     });
@@ -312,9 +343,12 @@ describe("TemplatePreview", () => {
 
 describe("OptimizedTemplatePreview", () => {
   it("renders the underlying TemplatePreview with the provided props", () => {
+    const optimizedBlocks: TemplateBlock[] = [
+      { id: "1", type: "text", data: {}, visible: true, order: 0 },
+    ];
     render(
       <OptimizedTemplatePreview
-        blocks={[{ id: "1", type: "text", data: {}, visible: true }] as any}
+        blocks={optimizedBlocks}
         activeChannel="email"
         onChannelChange={jest.fn()}
         emailSubject="Optimized Subject"

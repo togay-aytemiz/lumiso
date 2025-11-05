@@ -64,17 +64,19 @@ export function buildSessionSummaryItems({
     label: labels.dateTime,
     primary: formatLongDate(session.session_date),
     secondary: session.session_time ? formatTime(session.session_time) : undefined,
+    secondaryClassName: "text-sm text-muted-foreground sm:text-sm",
     action:
       onEditSchedule ? (
         <Button
           variant="link"
           size="sm"
-          className="h-auto p-0 text-xs font-medium text-primary hover:text-primary/80"
+          className="h-auto px-0 py-0 text-sm font-medium text-primary hover:text-primary/80 focus-visible:ring-0"
           onClick={onEditSchedule}
         >
           {actions.editSchedule}
         </Button>
       ) : undefined,
+    actionClassName: "mt-1",
   });
 
   const projectName = session.projects?.name;
@@ -89,7 +91,7 @@ export function buildSessionSummaryItems({
         <button
           type="button"
           onClick={onProjectClick}
-          className="line-clamp-2 w-full text-left font-semibold text-primary transition hover:underline"
+          className="line-clamp-2 w-full bg-transparent p-0 text-left font-semibold leading-tight text-primary transition hover:underline focus-visible:outline-none"
         >
           {projectName}
         </button>
@@ -105,12 +107,13 @@ export function buildSessionSummaryItems({
         <Button
           variant="link"
           size="sm"
-          className="h-auto p-0 text-xs font-medium text-primary hover:text-primary/80"
+          className="h-auto px-0 py-0 text-sm font-medium text-primary hover:text-primary/80 focus-visible:ring-0"
           onClick={onConnectProject}
         >
           {actions.connectProject}
         </Button>
       ) : undefined,
+    actionClassName: !projectName ? "mt-1" : undefined,
   });
 
   const notesValue = session.notes?.trim();
@@ -135,7 +138,7 @@ export function buildSessionSummaryItems({
         <Button
           variant="link"
           size="sm"
-          className="h-auto p-0 text-xs font-medium text-primary hover:text-primary/80"
+          className="h-auto p-0 text-sm font-medium text-primary hover:text-primary/80 sm:text-xs"
           onClick={onAddNotes}
         >
           {actions.addNotes}
@@ -165,7 +168,7 @@ export function buildSessionSummaryItems({
         <Button
           variant="link"
           size="sm"
-          className="h-auto p-0 text-xs font-medium text-primary hover:text-primary/80"
+          className="h-auto p-0 text-sm font-medium text-primary hover:text-primary/80 sm:text-xs"
           onClick={onAddLocation}
         >
           {actions.addLocation}

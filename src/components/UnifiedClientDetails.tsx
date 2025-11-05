@@ -440,78 +440,81 @@ export function UnifiedClientDetails({
     <>
       <Card className={className}>
         <CardHeader className={isExpanded ? "pb-3" : "pb-2"}>
-          <div className="flex flex-col gap-2">
-            <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsExpanded((prev) => !prev)}
+              className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted"
+              aria-expanded={isExpanded}
+              aria-label="Toggle client details"
+            >
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 transition-transform",
+                  isExpanded ? "" : "-rotate-90"
+                )}
+              />
+            </button>
+            <div className="flex flex-1 flex-col gap-1">
               <button
                 type="button"
                 onClick={() => setIsExpanded((prev) => !prev)}
-                className="flex flex-1 items-center gap-2 text-left"
+                className="flex flex-col items-start text-left leading-none"
+                aria-expanded={isExpanded}
               >
-                <ChevronDown
-                  className={`h-4 w-4 shrink-0 transition-transform ${
-                    isExpanded ? "" : "-rotate-90"
-                  }`}
-                />
-                <div className="flex flex-col">
-                  <span className="text-lg font-semibold">
-                    {isExpanded
-                      ? "Kişi Detayları"
-                      : title || tForms("clientDetails.title")}
-                  </span>
-                  {!isExpanded && (
-                    showClickableNames ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (onNavigateToLead) {
-                            onNavigateToLead(lead.id);
-                          } else {
-                            navigate(`/leads/${lead.id}`);
-                          }
-                        }}
-                        className="text-sm font-medium text-accent hover:underline text-left"
-                      >
-                        {localLead.name || " - "}
-                      </button>
-                    ) : (
-                      <span className="text-sm font-medium text-accent">
-                        {localLead.name || " - "}
-                      </span>
-                    )
+                <span className="text-lg font-semibold">
+                  {isExpanded
+                    ? "Kişi Detayları"
+                    : title || tForms("clientDetails.title")}
+                </span>
+              </button>
+              {!isExpanded && (
+                <div className="flex flex-col gap-1">
+                  {showClickableNames ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onNavigateToLead) {
+                          onNavigateToLead(lead.id);
+                        } else {
+                          navigate(`/leads/${lead.id}`);
+                        }
+                      }}
+                      className="w-fit text-sm font-medium text-accent underline-offset-2 hover:underline"
+                    >
+                      {localLead.name || " - "}
+                    </button>
+                  ) : (
+                    <span className="text-sm font-medium text-accent">
+                      {localLead.name || " - "}
+                    </span>
+                  )}
+                  {hasQuickActions && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {collapsedQuickActionIcons}
+                    </div>
                   )}
                 </div>
-              </button>
-              <div className="flex items-center gap-2">
-                {!isExpanded && hasQuickActions && (
-                  <div className="flex items-center gap-1.5">
-                    {collapsedQuickActionIcons}
-                  </div>
-                )}
-                {!isExpanded && hasQuickActions && (
-                  <span className="text-muted-foreground" aria-hidden="true">
-                    ·
-                  </span>
-                )}
-                <Button
-                  variant="ghost"
-                  size={isExpanded ? "sm" : "icon"}
-                  onClick={() => setEditOpen(true)}
-                  className={cn(
-                    "h-8 bg-accent/10 text-accent transition-colors hover:bg-accent/20",
-                    isExpanded ? "px-3 text-sm font-medium" : "w-8"
-                  )}
-                >
-                  {isExpanded ? (
-                    tForms("clientDetails.edit")
-                  ) : (
-                    <>
-                      <Pencil className="h-4 w-4" aria-hidden="true" />
-                      <span className="sr-only">{tForms("clientDetails.edit")}</span>
-                    </>
-                  )}
-                </Button>
-              </div>
+              )}
             </div>
+            <Button
+              variant="ghost"
+              size={isExpanded ? "sm" : "icon"}
+              onClick={() => setEditOpen(true)}
+              className={cn(
+                "bg-accent/10 text-accent transition-colors hover:bg-accent/20",
+                isExpanded ? "h-9 px-3 text-sm font-medium" : "h-9 w-9 rounded-lg"
+              )}
+            >
+              {isExpanded ? (
+                tForms("clientDetails.edit")
+              ) : (
+                <>
+                  <Pencil className="h-4 w-4" aria-hidden="true" />
+                  <span className="sr-only">{tForms("clientDetails.edit")}</span>
+                </>
+              )}
+            </Button>
           </div>
         </CardHeader>
         <div

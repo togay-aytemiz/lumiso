@@ -114,13 +114,13 @@ export function EntityHeader({
             return (
               <div
                 key={item.key}
-                className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/40 px-3 py-3"
+                className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/40 px-3 py-3 sm:items-start sm:gap-4"
               >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-background/80 ring-1 ring-border/60">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-background/80 ring-1 ring-border/60 sm:h-9 sm:w-9">
                   <Icon className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div className="min-w-0">
-                  <p className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <p className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-muted-foreground leading-tight sm:mb-1">
                     {item.label}
                     {item.info && (
                       <TooltipProvider delayDuration={150}>
@@ -143,11 +143,11 @@ export function EntityHeader({
                       </TooltipProvider>
                     )}
                   </p>
-                  <p className="text-sm font-semibold text-foreground">{item.primary}</p>
+                  <p className="text-sm font-semibold leading-tight text-foreground">{item.primary}</p>
                   {item.secondary && (
                     <div
                       className={cn(
-                        "text-xs",
+                        "text-xs leading-tight sm:mt-1",
                         typeof item.secondary === "string" || typeof item.secondary === "number" ? "text-muted-foreground" : "",
                         item.secondaryClassName
                       )}
@@ -158,7 +158,7 @@ export function EntityHeader({
                   {item.action && (
                     <div
                       className={cn(
-                        "mt-1 text-xs text-primary",
+                        "mt-2 text-sm font-medium text-primary leading-tight sm:mt-1 sm:text-xs",
                         item.actionClassName
                       )}
                     >

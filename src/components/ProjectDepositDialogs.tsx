@@ -56,6 +56,7 @@ interface DepositPaymentDialogProps {
 }
 
 const DEFAULT_LABEL = "Kapora";
+const DEPOSIT_PERCENT_PRESETS = [5, 10, 25, 50];
 
 const formatCurrency = (amount: number) => {
   try {
@@ -142,13 +143,12 @@ export function ProjectDepositSetupDialog({
   const isEnabled = mode !== "none";
   const isPercentMode = mode === "percent_base" || mode === "percent_total" || mode === "none";
   const uiMode = isEnabled ? (mode === "fixed" ? "fixed" : "percent") : "percent";
-  const percentPresets = [5, 10, 25, 50];
   const activePreset = useMemo(() => {
     if (!isPercentMode) return null;
     const numeric = Number(value);
     if (!Number.isFinite(numeric)) return null;
-    return percentPresets.includes(numeric) ? numeric : null;
-  }, [isPercentMode, percentPresets, value]);
+    return DEPOSIT_PERCENT_PRESETS.includes(numeric) ? numeric : null;
+  }, [isPercentMode, value]);
 
   const computedAmount = useMemo(() => {
     const config: ProjectDepositConfig = {
@@ -379,7 +379,12 @@ export function ProjectDepositSetupDialog({
                     } else {
                       setMode("fixed");
                       setLastEnabledMode("fixed");
-                      setValue((prev) => (prev.trim() && mode === "fixed" ? prev : prev));
+                      setValue((prev) => {
+                        if (mode === "fixed" && prev.trim()) {
+                          return prev;
+                        }
+                        return "";
+                      });
                     }
                   }}
                   segments={[
@@ -404,7 +409,7 @@ export function ProjectDepositSetupDialog({
                     })}
                   </p>
                   <div className="flex flex-wrap items-center gap-2">
-                    {percentPresets.map((preset) => (
+                    {DEPOSIT_PERCENT_PRESETS.map((preset) => (
                       <Button
                         key={preset}
                         type="button"

@@ -6,7 +6,7 @@ DROP CONSTRAINT IF EXISTS payments_type_check;
 
 ALTER TABLE public.payments
 ADD CONSTRAINT payments_type_check
-CHECK (type IN ('base_price', 'manual', 'deposit_due', 'deposit_payment', 'balance_due'));
+CHECK (type IN ('base_price', 'manual', 'deposit_due', 'deposit_payment'));
 
 ALTER TABLE public.payments
 ALTER COLUMN type SET DEFAULT 'manual';

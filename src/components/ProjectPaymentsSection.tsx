@@ -39,12 +39,7 @@ import {
 import type { Database } from "@/integrations/supabase/types";
 
 type PaymentStatus = "paid" | "due";
-type PaymentType =
-  | "manual"
-  | "base_price"
-  | "deposit_due"
-  | "deposit_payment"
-  | "balance_due";
+type PaymentType = "manual" | "base_price" | "deposit_due" | "deposit_payment";
 
 interface Payment {
   id: string;
@@ -1059,7 +1054,7 @@ export function ProjectPaymentsSection({
                       "";
                     const description = getPaymentDescription(payment);
                     const canEdit = !["base_price", "deposit_due"].includes(payment.type);
-                    const canDelete = ["manual", "deposit_payment", "balance_due"].includes(
+                    const canDelete = ["manual", "deposit_payment"].includes(
                       payment.type
                     );
                     return (

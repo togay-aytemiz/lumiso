@@ -832,7 +832,7 @@ export type Database = {
           organization_id: string | null
           project_id: string
           status: string
-          type: "base_price" | "manual" | "deposit_due" | "deposit_payment" | "balance_due"
+          type: "base_price" | "manual" | "deposit_due" | "deposit_payment"
           updated_at: string
           user_id: string
         }
@@ -845,7 +845,7 @@ export type Database = {
           organization_id?: string | null
           project_id: string
           status: string
-          type?: "base_price" | "manual" | "deposit_due" | "deposit_payment" | "balance_due"
+          type?: "base_price" | "manual" | "deposit_due" | "deposit_payment"
           updated_at?: string
           user_id: string
         }
@@ -858,7 +858,7 @@ export type Database = {
           organization_id?: string | null
           project_id?: string
           status?: string
-          type?: "base_price" | "manual" | "deposit_due" | "deposit_payment" | "balance_due"
+          type?: "base_price" | "manual" | "deposit_due" | "deposit_payment"
           updated_at?: string
           user_id?: string
         }

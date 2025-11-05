@@ -452,23 +452,23 @@ export function UnifiedClientDetails({
     <>
       <Card className={className}>
         <CardHeader className={isExpanded ? "pb-3" : "pb-2"}>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setIsExpanded((prev) => !prev)}
-              className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted"
-              aria-expanded={isExpanded}
-              aria-label="Toggle client details"
-            >
-              <ChevronDown
-                className={cn(
-                  "h-4 w-4 transition-transform",
-                  isExpanded ? "" : "-rotate-90"
-                )}
-              />
-            </button>
-            <div className="flex flex-1 items-start gap-2 min-w-0">
-              <div className="flex flex-1 flex-col min-w-0">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsExpanded((prev) => !prev)}
+                className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted"
+                aria-expanded={isExpanded}
+                aria-label="Toggle client details"
+              >
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    isExpanded ? "" : "-rotate-90"
+                  )}
+                />
+              </button>
+              <div className="flex flex-1 items-center gap-2 min-w-0">
                 <button
                   type="button"
                   onClick={() => setIsExpanded((prev) => !prev)}
@@ -481,12 +481,9 @@ export function UnifiedClientDetails({
                       : title || tForms("clientDetails.title")}
                   </span>
                 </button>
-                <div className="mt-1 min-w-0">{leadNameDisplay}</div>
-                {!isExpanded && hasQuickActions && (
-                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                    {renderQuickActionButtons({ compact: true })}
-                  </div>
-                )}
+                <div className="flex-1 min-w-0 text-left">
+                  {leadNameDisplay}
+                </div>
               </div>
               <Button
                 variant="ghost"
@@ -509,6 +506,11 @@ export function UnifiedClientDetails({
                 )}
               </Button>
             </div>
+            {!isExpanded && hasQuickActions && (
+              <div className="pl-10 flex flex-wrap items-center gap-1.5">
+                {renderQuickActionButtons({ compact: true })}
+              </div>
+            )}
           </div>
         </CardHeader>
         <div

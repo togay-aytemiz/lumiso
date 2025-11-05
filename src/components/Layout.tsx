@@ -8,6 +8,7 @@ import { useLocation } from "react-router-dom";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import OfflineBanner from "@/components/OfflineBanner";
 import RoutePrefetcher from "@/components/RoutePrefetcher";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const LAST_NON_SETTINGS_PATH_KEY = "lumiso:last-non-settings-path";
 
@@ -15,6 +16,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { shouldShowWelcomeModal, loading: onboardingLoading, shouldLockNavigation } = useOnboarding();
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -58,12 +60,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
-        <AppSidebar />
+        {!isMobile && <AppSidebar />}
         <main className="flex-1 flex flex-col min-w-0">
           {/* Mobile header */}
-          <div className="flex items-center justify-start p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
-            <SidebarTrigger />
-          </div>
+          {!isMobile && (
+            <div className="flex items-center justify-start p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
+              <SidebarTrigger />
+            </div>
+          )}
           {/* Global connectivity banner */}
           <OfflineBanner />
           {/* Route-aware prefetch for list first pages */}

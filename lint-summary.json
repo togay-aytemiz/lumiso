@@ -1,10 +1,6 @@
 {
-  "total": 1444,
+  "total": 1406,
   "summary": [
-    {
-      "filePath": "src/components/__tests__/ProjectSheetView.test.tsx",
-      "count": 38
-    },
     {
       "filePath": "supabase/functions/send-template-email/index.ts",
       "count": 35

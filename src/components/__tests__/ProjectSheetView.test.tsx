@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import { ProjectSheetView } from "../ProjectSheetView";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,22 +37,42 @@ jest.mock("@/hooks/use-mobile", () => ({
   useIsMobile: jest.fn(),
 }));
 
+type WithChildren = { children?: ReactNode };
+
+interface ProjectStatusBadgeMockProps {
+  onStatusChange?: () => void;
+  editable?: boolean;
+}
+
 jest.mock("@/components/ProjectStatusBadge", () => ({
-  ProjectStatusBadge: ({ onStatusChange, editable }: any) => (
+  ProjectStatusBadge: ({ onStatusChange, editable }: ProjectStatusBadgeMockProps) => (
     <button data-testid="project-status-badge" onClick={onStatusChange} disabled={!editable}>
       status
     </button>
   ),
 }));
 
+interface LayoutSection {
+  id: string;
+  title: ReactNode;
+  content: ReactNode;
+}
+
+interface ProjectDetailsLayoutMockProps {
+  sections?: LayoutSection[];
+  header?: ReactNode;
+  left?: ReactNode;
+  rightFooter?: ReactNode;
+}
+
 jest.mock("@/components/project-details/ProjectDetailsLayout", () => ({
   __esModule: true,
-  default: ({ sections, header, left, rightFooter }: any) => (
+  default: ({ sections, header, left, rightFooter }: ProjectDetailsLayoutMockProps) => (
     <div data-testid="project-details-layout">
       <div data-testid="layout-header">{header}</div>
       <div data-testid="layout-left">{left}</div>
       <div data-testid="layout-sections">
-        {sections?.map((section: any) => (
+        {sections?.map((section) => (
           <section key={section.id} data-testid={`section-${section.id}`}>
             <h2>{section.title}</h2>
             <div>{section.content}</div>
@@ -64,14 +84,18 @@ jest.mock("@/components/project-details/ProjectDetailsLayout", () => ({
   ),
 }));
 
+interface UnifiedClientDetailsMockProps {
+  lead?: { name?: string } | null;
+}
+
 jest.mock("@/components/UnifiedClientDetails", () => ({
-  UnifiedClientDetails: ({ lead }: any) => (
+  UnifiedClientDetails: ({ lead }: UnifiedClientDetailsMockProps) => (
     <div data-testid="unified-client-details">{lead?.name}</div>
   ),
 }));
 
 jest.mock("@/components/ProjectPaymentsSection", () => ({
-  ProjectPaymentsSection: ({ onPaymentsUpdated }: any) => (
+  ProjectPaymentsSection: ({ onPaymentsUpdated }: { onPaymentsUpdated?: () => void }) => (
     <div data-testid="project-payments-section" onClick={onPaymentsUpdated}>
       payments
     </div>
@@ -79,7 +103,7 @@ jest.mock("@/components/ProjectPaymentsSection", () => ({
 }));
 
 jest.mock("@/components/ProjectServicesSection", () => ({
-  ProjectServicesSection: ({ onServicesUpdated }: any) => (
+  ProjectServicesSection: ({ onServicesUpdated }: { onServicesUpdated?: () => void }) => (
     <div data-testid="project-services-section" onClick={() => onServicesUpdated?.()}>
       services
     </div>
@@ -87,7 +111,15 @@ jest.mock("@/components/ProjectServicesSection", () => ({
 }));
 
 jest.mock("@/components/SessionsSection", () => ({
-  SessionsSection: ({ sessions, onDeleteSession, onSessionUpdated }: any) => (
+  SessionsSection: ({
+    sessions,
+    onDeleteSession,
+    onSessionUpdated,
+  }: {
+    sessions: Array<unknown>;
+    onDeleteSession?: (sessionId: string) => void;
+    onSessionUpdated?: () => void;
+  }) => (
     <div>
       <div data-testid="sessions-section-count">{sessions.length}</div>
       <button data-testid="sessions-delete" onClick={() => onDeleteSession?.("session-1")}>delete</button>
@@ -97,7 +129,7 @@ jest.mock("@/components/SessionsSection", () => ({
 }));
 
 jest.mock("@/components/ProjectActivitySection", () => ({
-  ProjectActivitySection: ({ onActivityUpdated }: any) => (
+  ProjectActivitySection: ({ onActivityUpdated }: { onActivityUpdated?: () => void }) => (
     <div data-testid="project-activity-section" onClick={() => onActivityUpdated?.()}>
       activities
     </div>
@@ -105,7 +137,7 @@ jest.mock("@/components/ProjectActivitySection", () => ({
 }));
 
 jest.mock("@/components/ProjectTodoListEnhanced", () => ({
-  ProjectTodoListEnhanced: ({ onTodosUpdated }: any) => (
+  ProjectTodoListEnhanced: ({ onTodosUpdated }: { onTodosUpdated?: () => void }) => (
     <div data-testid="project-todos-section" onClick={() => onTodosUpdated?.()}>
       todos
     </div>
@@ -113,7 +145,7 @@ jest.mock("@/components/ProjectTodoListEnhanced", () => ({
 }));
 
 jest.mock("@/components/SimpleProjectTypeSelect", () => ({
-  SimpleProjectTypeSelect: ({ value, onValueChange, disabled }: any) => (
+  SimpleProjectTypeSelect: ({ value, onValueChange, disabled }: { value: string; onValueChange: (newValue: string) => void; disabled?: boolean }) => (
     <select
       data-testid="project-type-select"
       value={value}
@@ -128,7 +160,7 @@ jest.mock("@/components/SimpleProjectTypeSelect", () => ({
 }));
 
 jest.mock("@/components/EntityHeader", () => ({
-  EntityHeader: ({ title, actions, summaryItems }: any) => (
+  EntityHeader: ({ title, actions, summaryItems }: { title?: ReactNode; actions?: ReactNode; summaryItems?: unknown[] }) => (
     <div data-testid="entity-header">
       <div>{title}</div>
       <div data-testid="entity-summary-count">{summaryItems?.length ?? 0}</div>
@@ -138,10 +170,10 @@ jest.mock("@/components/EntityHeader", () => ({
 }));
 
 jest.mock("@/components/ui/dropdown-menu", () => ({
-  DropdownMenu: ({ children }: any) => <div>{children}</div>,
-  DropdownMenuTrigger: ({ children }: any) => <div>{children}</div>,
-  DropdownMenuContent: ({ children }: any) => <div>{children}</div>,
-  DropdownMenuItem: ({ children, onSelect }: any) => (
+  DropdownMenu: ({ children }: WithChildren) => <div>{children}</div>,
+  DropdownMenuTrigger: ({ children }: WithChildren) => <div>{children}</div>,
+  DropdownMenuContent: ({ children }: WithChildren) => <div>{children}</div>,
+  DropdownMenuItem: ({ children, onSelect }: WithChildren & { onSelect?: () => void }) => (
     <button type="button" onClick={onSelect}>
       {children}
     </button>
@@ -149,30 +181,30 @@ jest.mock("@/components/ui/dropdown-menu", () => ({
 }));
 
 jest.mock("@/components/ui/sheet", () => ({
-  Sheet: ({ children }: any) => <div data-testid="sheet">{children}</div>,
-  SheetContent: ({ children }: any) => <div>{children}</div>,
+  Sheet: ({ children }: WithChildren) => <div data-testid="sheet">{children}</div>,
+  SheetContent: ({ children }: WithChildren) => <div>{children}</div>,
 }));
 
 jest.mock("@/components/ui/dialog", () => ({
-  Dialog: ({ children }: any) => <div>{children}</div>,
-  DialogContent: ({ children }: any) => <div>{children}</div>,
-  DialogHeader: ({ children }: any) => <div>{children}</div>,
-  DialogTitle: ({ children }: any) => <div>{children}</div>,
+  Dialog: ({ children }: WithChildren) => <div>{children}</div>,
+  DialogContent: ({ children }: WithChildren) => <div>{children}</div>,
+  DialogHeader: ({ children }: WithChildren) => <div>{children}</div>,
+  DialogTitle: ({ children }: WithChildren) => <div>{children}</div>,
 }));
 
 jest.mock("@/components/ui/alert-dialog", () => ({
-  AlertDialog: ({ children }: any) => <div>{children}</div>,
-  AlertDialogContent: ({ children }: any) => <div>{children}</div>,
-  AlertDialogHeader: ({ children }: any) => <div>{children}</div>,
-  AlertDialogFooter: ({ children }: any) => <div>{children}</div>,
-  AlertDialogTitle: ({ children }: any) => <div>{children}</div>,
-  AlertDialogDescription: ({ children }: any) => <div>{children}</div>,
-  AlertDialogCancel: ({ children, ...rest }: any) => (
+  AlertDialog: ({ children }: WithChildren) => <div>{children}</div>,
+  AlertDialogContent: ({ children }: WithChildren) => <div>{children}</div>,
+  AlertDialogHeader: ({ children }: WithChildren) => <div>{children}</div>,
+  AlertDialogFooter: ({ children }: WithChildren) => <div>{children}</div>,
+  AlertDialogTitle: ({ children }: WithChildren) => <div>{children}</div>,
+  AlertDialogDescription: ({ children }: WithChildren) => <div>{children}</div>,
+  AlertDialogCancel: ({ children, ...rest }: WithChildren & { onClick?: () => void }) => (
     <button {...rest} type="button">
       {children}
     </button>
   ),
-  AlertDialogAction: ({ children, onClick, disabled }: any) => (
+  AlertDialogAction: ({ children, onClick, disabled }: WithChildren & { onClick?: () => void; disabled?: boolean }) => (
     <button type="button" onClick={onClick} disabled={disabled}>
       {children}
     </button>
@@ -181,11 +213,11 @@ jest.mock("@/components/ui/alert-dialog", () => ({
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string, options?: Record<string, any>) => {
-      if (options?.amount !== undefined) {
+    t: (key: string, options?: Record<string, unknown>) => {
+      if (options && typeof options.amount !== "undefined") {
         return `${key}:${options.amount}`;
       }
-      if (options?.count !== undefined) {
+      if (options && typeof options.count !== "undefined") {
         return `${key}:${options.count}`;
       }
       return key;
@@ -220,34 +252,54 @@ const mockSessionsSummary = {
 (useProjectHeaderSummary as jest.Mock).mockReturnValue({ summary: mockHeaderSummary });
 (useProjectSessionsSummary as jest.Mock).mockReturnValue({ summary: mockSessionsSummary });
 
-const createQueryBuilder = (response: any, overrides: Record<string, any> = {}) => {
-  let current = response;
-  const builder: any = {
-    select: jest.fn(() => builder),
-    eq: jest.fn(() => builder),
-    order: jest.fn(() => builder),
-    maybeSingle: jest.fn(() => Promise.resolve(current)),
-    single: jest.fn(() => Promise.resolve(current)),
-    update: jest.fn(() => builder),
-    insert: jest.fn(() => builder),
-    delete: jest.fn(() => builder),
-    in: jest.fn(() => builder),
-    not: jest.fn(() => builder),
-    is: jest.fn(() => builder),
-    limit: jest.fn(() => builder),
-    then: (resolve: any, reject?: any) => Promise.resolve(current).then(resolve, reject),
-    catch: (reject: any) => Promise.resolve(current).catch(reject),
-    finally: (onFinally: any) => Promise.resolve(current).finally(onFinally),
-  };
+type SupabaseResponse<T> = { data: T; error: unknown };
 
-  Object.entries(overrides).forEach(([key, value]) => {
-    builder[key] = value;
-  });
-
-  return builder;
+type QueryBuilder<T> = {
+  select: jest.Mock<QueryBuilder<T>, [unknown?]>;
+  eq: jest.Mock<QueryBuilder<T>, [string, unknown]>;
+  order: jest.Mock<QueryBuilder<T>, [string, unknown?]>;
+  maybeSingle: jest.Mock<Promise<T>, []>;
+  single: jest.Mock<Promise<T>, []>;
+  update: jest.Mock<QueryBuilder<T>, [unknown]>;
+  insert: jest.Mock<QueryBuilder<T>, [unknown]>;
+  delete: jest.Mock<QueryBuilder<T>, []>;
+  in: jest.Mock<QueryBuilder<T>, [string, unknown[]]>;
+  not: jest.Mock<QueryBuilder<T>, [string, string, unknown]>;
+  is: jest.Mock<QueryBuilder<T>, [string, string]>;
+  limit: jest.Mock<QueryBuilder<T>, [number]>;
+  then: jest.Mock<Promise<T>, [((value: T) => unknown), ((reason: unknown) => unknown)?]>;
+  catch: jest.Mock<Promise<T>, [(reason: unknown) => unknown]>;
+  finally: jest.Mock<Promise<T>, [() => void]>;
 };
 
-const mockSupabaseFrom = supabase.from as jest.Mock;
+function createQueryBuilder<T>(response: T, overrides: Partial<QueryBuilder<T>> = {}): QueryBuilder<T> {
+  const builder = {} as QueryBuilder<T>;
+
+  builder.select = jest.fn(() => builder);
+  builder.eq = jest.fn(() => builder);
+  builder.order = jest.fn(() => builder);
+  builder.maybeSingle = jest.fn(() => Promise.resolve(response));
+  builder.single = jest.fn(() => Promise.resolve(response));
+  builder.update = jest.fn(() => builder);
+  builder.insert = jest.fn(() => builder);
+  builder.delete = jest.fn(() => builder);
+  builder.in = jest.fn(() => builder);
+  builder.not = jest.fn(() => builder);
+  builder.is = jest.fn(() => builder);
+  builder.limit = jest.fn(() => builder);
+  builder.then = jest.fn((onFulfilled, onRejected) =>
+    Promise.resolve(response).then(onFulfilled, onRejected)
+  );
+  builder.catch = jest.fn((onRejected) => Promise.resolve(response).catch(onRejected));
+  builder.finally = jest.fn((onFinally) => Promise.resolve(response).finally(onFinally));
+
+  Object.assign(builder, overrides);
+
+  return builder;
+}
+
+const mockSupabaseFrom = supabase.from as jest.MockedFunction<typeof supabase.from>;
+const mockSupabaseAuthGetUser = supabase.auth.getUser as jest.MockedFunction<typeof supabase.auth.getUser>;
 
 const baseProject = {
   id: "project-1",
@@ -268,9 +320,16 @@ const sessionsResponse = { data: [
     session_time: "10:00",
     session_date: "2025-01-03",
   },
-], error: null };
+], error: null } as SupabaseResponse<Array<{ id: string; status: string; session_time: string; session_date: string }>>;
 
-const leadResponse = {
+const leadResponse: SupabaseResponse<{
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  status: string;
+  notes: string;
+}> = {
   data: {
     id: "lead-1",
     name: "Lead Name",
@@ -282,20 +341,27 @@ const leadResponse = {
   error: null,
 };
 
-const projectTypeResponse = {
+const projectTypeResponse: SupabaseResponse<{ id: string; name: string }> = {
   data: { id: "type-1", name: "Wedding" },
   error: null,
 };
 
-const projectStatusResponse = {
+const projectStatusResponse: SupabaseResponse<{ id: string; name: string }> = {
   data: { id: "status-active", name: "active" },
   error: null,
 };
 
-const projectRowResponse = {
+const projectRowResponse: SupabaseResponse<{ status_id: string; previous_status_id: string | null }> = {
   data: { status_id: "status-active", previous_status_id: "status-archived" },
   error: null,
 };
+
+const emptyResponse: SupabaseResponse<null> = { data: null, error: null };
+
+const authenticatedUserResponse = {
+  data: { user: { id: "user-1" } },
+  error: null,
+} as Awaited<ReturnType<typeof supabase.auth.getUser>>;
 
 const setupSupabaseMocks = () => {
   mockSupabaseFrom.mockImplementation((table: string) => {
@@ -331,18 +397,18 @@ const setupSupabaseMocks = () => {
       case "todos":
       case "activities":
       case "payments": {
-        const builder = createQueryBuilder({ data: null, error: null });
+        const builder = createQueryBuilder(emptyResponse);
         builder.eq.mockImplementation(() => builder);
         builder.delete.mockImplementation(() => builder);
         builder.insert.mockImplementation(() => builder);
         return builder;
       }
       default:
-        return createQueryBuilder({ data: null, error: null });
+        return createQueryBuilder(emptyResponse);
     }
   });
 
-  (supabase.auth.getUser as jest.Mock).mockResolvedValue({ data: { user: { id: "user-1" } } });
+  mockSupabaseAuthGetUser.mockResolvedValue(authenticatedUserResponse);
 };
 
 const renderComponent = (props: Partial<ComponentProps<typeof ProjectSheetView>> = {}) => {
@@ -372,6 +438,7 @@ beforeEach(() => {
   (useIsMobile as jest.Mock).mockReturnValue(false);
   (useProjectHeaderSummary as jest.Mock).mockReturnValue({ summary: mockHeaderSummary });
   (useProjectSessionsSummary as jest.Mock).mockReturnValue({ summary: mockSessionsSummary });
+  mockSupabaseAuthGetUser.mockResolvedValue(authenticatedUserResponse);
 });
 
 describe("ProjectSheetView", () => {

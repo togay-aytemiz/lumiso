@@ -205,6 +205,7 @@ export default function SettingsLayout() {
     return () => {
       if (closeTimeoutRef.current) {
         window.clearTimeout(closeTimeoutRef.current);
+        closeTimeoutRef.current = undefined;
       }
     };
   }, []);
@@ -214,6 +215,7 @@ export default function SettingsLayout() {
     setShowHelp(false);
     setModalState("exit");
     closeTimeoutRef.current = window.setTimeout(() => {
+      closeTimeoutRef.current = undefined;
       exitSettings();
     }, 180);
   }, [exitSettings]);
@@ -456,9 +458,20 @@ export default function SettingsLayout() {
       if (!handleNavigationAttempt(itemHref)) {
         return;
       }
+      const shouldReplace = !isMobile && hasBackgroundLocation;
+      if (shouldReplace) {
+        pushSettingsPath(itemHref, { replace: true });
+        return;
+      }
       pushSettingsPath(itemHref);
     },
-    [handleNavigationAttempt, isItemLocked, pushSettingsPath]
+    [
+      handleNavigationAttempt,
+      hasBackgroundLocation,
+      isItemLocked,
+      isMobile,
+      pushSettingsPath,
+    ]
   );
 
   const headerMeta = useMemo(() => {

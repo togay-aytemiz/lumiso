@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 import { BaseEntityService } from './BaseEntityService';
 
 export interface ProjectWithDetails {
@@ -44,6 +45,33 @@ export interface ProjectWithDetails {
     name: string;
   }>;
 }
+
+type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
+type SessionRow = Database["public"]["Tables"]["sessions"]["Row"];
+type TodoRow = Database["public"]["Tables"]["todos"]["Row"];
+type ProjectServiceRow = Database["public"]["Tables"]["project_services"]["Row"];
+type PaymentRow = Database["public"]["Tables"]["payments"]["Row"];
+type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
+type ProjectStatusRow = Database["public"]["Tables"]["project_statuses"]["Row"];
+type ProjectTypeRow = Database["public"]["Tables"]["project_types"]["Row"];
+type ServiceRow = Database["public"]["Tables"]["services"]["Row"];
+
+type SessionSummary = Pick<SessionRow, "project_id" | "status">;
+type TodoSummary = Pick<TodoRow, "project_id" | "is_completed">;
+type ProjectServiceSummary = ProjectServiceRow & {
+  service: Pick<ServiceRow, "id" | "name"> | null;
+};
+type PaymentSummary = Pick<PaymentRow, "project_id" | "amount" | "status">;
+type LeadSummary = Pick<LeadRow, "id" | "name" | "status" | "email" | "phone">;
+type ProjectStatusSummary = Pick<ProjectStatusRow, "id" | "name" | "color" | "sort_order">;
+type ProjectTypeSummary = Pick<ProjectTypeRow, "id" | "name">;
+
+type ProjectWithRelationsRow = ProjectRow & {
+  lead: LeadSummary | LeadSummary[] | null;
+  project_status: ProjectStatusSummary | ProjectStatusSummary[] | null;
+  project_type: ProjectTypeSummary | ProjectTypeSummary[] | null;
+  previous_status_id?: string | null;
+};
 
 export interface CreateProjectData {
   name: string;
@@ -93,7 +121,7 @@ export class ProjectService extends BaseEntityService {
     if (!organizationId) return { active: [], archived: [] };
 
     const { data: projectsData, error } = await supabase
-      .from('projects')
+      .from<ProjectRow>('projects')
       .select('*')
       .eq('organization_id', organizationId)
       .order('sort_order', { ascending: true })
@@ -101,14 +129,22 @@ export class ProjectService extends BaseEntityService {
 
     if (error) throw error;
 
-    if (!projectsData || projectsData.length === 0) {
+    const projectRows = projectsData ?? [];
+
+    if (projectRows.length === 0) {
       return { active: [], archived: [] };
     }
 
     // Fetch all related data separately
-    const projectIds = projectsData.map(p => p.id);
-    const leadIds = projectsData.map(p => p.lead_id).filter(Boolean);
-    
+    const projectIds = projectRows.map((project) => project.id);
+    const leadIds = Array.from(
+      new Set(
+        projectRows
+          .map((project) => project.lead_id)
+          .filter((id): id is string => Boolean(id))
+      )
+    );
+
     const [
       sessionsData,
       todosData,
@@ -116,45 +152,28 @@ export class ProjectService extends BaseEntityService {
       paymentsData,
       leadsData,
       projectStatusesData,
-      projectTypesData
+      projectTypesData,
     ] = await Promise.all([
-      // Get session counts
-      this.fetchSessionCounts(projectIds),
-      // Get todo counts  
-      this.fetchTodoCounts(projectIds),
-      // Get services
+      this.fetchSessionSummaries(projectIds),
+      this.fetchTodoSummaries(projectIds),
       this.fetchProjectServices(projectIds),
-      // Get payments
       this.fetchProjectPayments(projectIds),
-      // Get leads
-      leadIds.length > 0 ? supabase
-        .from('leads')
-        .select('id, name, status, email, phone')
-        .in('id', leadIds) : Promise.resolve({ data: [] }),
-      // Get project statuses
-      supabase
-        .from('project_statuses')
-        .select('id, name, color, sort_order')
-        .eq('organization_id', organizationId)
-        .order('sort_order', { ascending: true }),
-      // Get project types
-      supabase
-        .from('project_types')
-        .select('id, name')
-        .eq('organization_id', organizationId)
+      this.fetchLeadsByIds(leadIds),
+      this.fetchProjectStatuses(organizationId),
+      this.fetchProjectTypes(organizationId),
     ]);
 
     // Process the data to handle archived projects
-    const archivedStatus = projectStatusesData.data?.find(status => 
-      status.name.toLowerCase() === 'archived'
+    const archivedStatus = projectStatusesData.find(
+      (status) => status.name.toLowerCase() === 'archived'
     );
     const archivedStatusId = archivedStatus?.id;
     
-    const activeProjects = projectsData.filter(project => 
-      project.status_id !== archivedStatusId
+    const activeProjects = projectRows.filter(
+      (project) => project.status_id !== archivedStatusId
     );
-    const archivedProjects = projectsData.filter(project => 
-      project.status_id === archivedStatusId
+    const archivedProjects = projectRows.filter(
+      (project) => project.status_id === archivedStatusId
     );
 
     // Create lookup maps for efficient data merging
@@ -162,26 +181,32 @@ export class ProjectService extends BaseEntityService {
     const todoCounts = this.createTodoCountsMap(todosData);
     const projectServices = this.createProjectServicesMap(servicesData);
     const paymentTotals = this.createPaymentTotalsMap(paymentsData);
-    
-    const leadsMap = this.createLeadsMap(leadsData.data || []);
-    const statusesMap = this.createStatusesMap(projectStatusesData.data || []);
-    const typesMap = this.createTypesMap(projectTypesData.data || []);
+
+    const leadsMap = this.createLeadsMap(leadsData);
+    const statusesMap = this.createStatusesMap(projectStatusesData);
+    const typesMap = this.createTypesMap(projectTypesData);
 
     // Merge all data
-    const mapProjectData = (project: any): ProjectWithDetails => ({
-      ...project,
-      lead: leadsMap[project.lead_id] || null,
-      project_status: statusesMap[project.status_id] || null,
-      project_type: typesMap[project.project_type_id] || null,
-      session_count: sessionCounts[project.id]?.total || 0,
-      upcoming_session_count: sessionCounts[project.id]?.upcoming || 0,
-      planned_session_count: sessionCounts[project.id]?.planned || 0,
-      todo_count: todoCounts[project.id]?.total || 0,
-      completed_todo_count: todoCounts[project.id]?.completed || 0,
-      paid_amount: paymentTotals[project.id]?.paid || 0,
-      remaining_amount: (Number(project.base_price || 0)) - (paymentTotals[project.id]?.paid || 0),
-      services: projectServices[project.id] || []
-    });
+    const mapProjectData = (project: ProjectRow): ProjectWithDetails => {
+      const paymentAggregate = paymentTotals[project.id] ?? { total: 0, paid: 0 };
+      const basePrice = Number(project.base_price ?? 0);
+
+      return {
+        ...project,
+        lead: leadsMap[project.lead_id ?? ""] ?? null,
+        project_status: statusesMap[project.status_id ?? ""] ?? null,
+        project_type: typesMap[project.project_type_id ?? ""] ?? null,
+        session_count: sessionCounts[project.id]?.total ?? 0,
+        upcoming_session_count: sessionCounts[project.id]?.upcoming ?? 0,
+        planned_session_count: sessionCounts[project.id]?.planned ?? 0,
+        todo_count: todoCounts[project.id]?.total ?? 0,
+        completed_todo_count: todoCounts[project.id]?.completed ?? 0,
+        total_payment_amount: paymentAggregate.total,
+        paid_amount: paymentAggregate.paid,
+        remaining_amount: basePrice - paymentAggregate.paid,
+        services: projectServices[project.id] ?? [],
+      };
+    };
 
     return {
       active: activeProjects.map(mapProjectData),
@@ -230,8 +255,8 @@ export class ProjectService extends BaseEntityService {
     // Apply sorting
     if (sort) {
       projects.sort((a, b) => {
-        let aValue: any;
-        let bValue: any;
+        let aValue: string | number | undefined;
+        let bValue: string | number | undefined;
 
         switch (sort.field) {
           case 'name':
@@ -239,33 +264,40 @@ export class ProjectService extends BaseEntityService {
             bValue = b.name;
             break;
           case 'lead_name':
-            aValue = a.lead?.name || '';
-            bValue = b.lead?.name || '';
+            aValue = a.lead?.name ?? '';
+            bValue = b.lead?.name ?? '';
             break;
           case 'project_type':
-            aValue = a.project_type?.name || '';
-            bValue = b.project_type?.name || '';
+            aValue = a.project_type?.name ?? '';
+            bValue = b.project_type?.name ?? '';
             break;
           case 'status':
-            aValue = a.project_status?.name || '';
-            bValue = b.project_status?.name || '';
+            aValue = a.project_status?.name ?? '';
+            bValue = b.project_status?.name ?? '';
             break;
           case 'created_at':
+            aValue = new Date(a.created_at).getTime();
+            bValue = new Date(b.created_at).getTime();
+            break;
           case 'updated_at':
-            aValue = new Date(a[sort.field]).getTime();
-            bValue = new Date(b[sort.field]).getTime();
+            aValue = new Date(a.updated_at).getTime();
+            bValue = new Date(b.updated_at).getTime();
             break;
           default:
             return 0;
         }
 
-        if (typeof aValue === 'string' && typeof bValue === 'string') {
-          aValue = aValue.toLowerCase();
-          bValue = bValue.toLowerCase();
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          if (aValue < bValue) return sort.direction === 'asc' ? -1 : 1;
+          if (aValue > bValue) return sort.direction === 'asc' ? 1 : -1;
+          return 0;
         }
 
-        if (aValue < bValue) return sort.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sort.direction === 'asc' ? 1 : -1;
+        const aString = (aValue ?? '').toString().toLowerCase();
+        const bString = (bValue ?? '').toString().toLowerCase();
+
+        if (aString < bString) return sort.direction === 'asc' ? -1 : 1;
+        if (aString > bString) return sort.direction === 'asc' ? 1 : -1;
         return 0;
       });
     }
@@ -283,7 +315,7 @@ export class ProjectService extends BaseEntityService {
     const user = await this.getAuthenticatedUser();
 
     const { data: projectData, error } = await supabase
-      .from('projects')
+      .from<ProjectRow>('projects')
       .insert({
         ...data,
         organization_id: organizationId,
@@ -308,7 +340,7 @@ export class ProjectService extends BaseEntityService {
    */
   async updateProject(id: string, data: UpdateProjectData): Promise<ProjectWithDetails | null> {
     const { data: result, error } = await supabase
-      .from('projects')
+      .from<ProjectRow>('projects')
       .update(data)
       .eq('id', id)
       .select()
@@ -336,100 +368,170 @@ export class ProjectService extends BaseEntityService {
   }
 
   // Helper methods for data processing
-  private async fetchSessionCounts(projectIds: string[]) {
-    if (projectIds.length === 0) return { data: [] };
-    return supabase
-      .from('sessions')
+  private async fetchSessionSummaries(projectIds: string[]): Promise<SessionSummary[]> {
+    if (projectIds.length === 0) return [];
+    const { data, error } = await supabase
+      .from<SessionRow>('sessions')
       .select('project_id, status')
       .in('project_id', projectIds);
+
+    if (error || !data) {
+      return [];
+    }
+    return data.map(({ project_id, status }) => ({ project_id, status }));
   }
 
-  private async fetchTodoCounts(projectIds: string[]) {
-    if (projectIds.length === 0) return { data: [] };
-    return supabase
-      .from('todos')
+  private async fetchTodoSummaries(projectIds: string[]): Promise<TodoSummary[]> {
+    if (projectIds.length === 0) return [];
+    const { data, error } = await supabase
+      .from<TodoRow>('todos')
       .select('project_id, is_completed')
       .in('project_id', projectIds);
+
+    if (error || !data) {
+      return [];
+    }
+    return data.map(({ project_id, is_completed }) => ({ project_id, is_completed }));
   }
 
-  private async fetchProjectServices(projectIds: string[]) {
-    if (projectIds.length === 0) return { data: [] };
-    return supabase
-      .from('project_services')
-      .select(`
-        project_id,
-        service:services(id, name)
-      `)
+  private async fetchProjectServices(projectIds: string[]): Promise<ProjectServiceSummary[]> {
+    if (projectIds.length === 0) return [];
+    const { data, error } = await supabase
+      .from<ProjectServiceRow>('project_services')
+      .select('project_id, service:services(id, name)')
       .in('project_id', projectIds);
+
+    if (error || !data) {
+      return [];
+    }
+
+    return data.map((row) => {
+      const serviceValue = Array.isArray(row.service) ? row.service[0] : row.service;
+      return {
+        project_id: row.project_id,
+        service: serviceValue ? { id: serviceValue.id, name: serviceValue.name } : null,
+      };
+    });
   }
 
-  private async fetchProjectPayments(projectIds: string[]) {
-    if (projectIds.length === 0) return { data: [] };
-    return supabase
-      .from('payments')
+  private async fetchProjectPayments(projectIds: string[]): Promise<PaymentSummary[]> {
+    if (projectIds.length === 0) return [];
+    const { data, error } = await supabase
+      .from<PaymentRow>('payments')
       .select('project_id, amount, status')
       .in('project_id', projectIds);
+
+    if (error || !data) {
+      return [];
+    }
+
+    return data.map(({ project_id, amount, status }) => ({
+      project_id,
+      amount,
+      status,
+    }));
   }
 
-  private createSessionCountsMap(sessionsData: any) {
-    return (sessionsData.data || []).reduce((acc: any, session: any) => {
-      if (!acc[session.project_id]) {
-        acc[session.project_id] = { total: 0, upcoming: 0, planned: 0 };
-      }
-      acc[session.project_id].total++;
-      if (session.status === 'upcoming') acc[session.project_id].upcoming++;
-      if (session.status === 'planned') acc[session.project_id].planned++;
+  private async fetchLeadsByIds(leadIds: string[]): Promise<LeadSummary[]> {
+    if (leadIds.length === 0) return [];
+    const { data, error } = await supabase
+      .from<LeadRow>('leads')
+      .select('id, name, status, email, phone')
+      .in('id', leadIds);
+
+    if (error || !data) {
+      return [];
+    }
+    return data.map(({ id, name, status, email, phone }) => ({ id, name, status, email, phone }));
+  }
+
+  private async fetchProjectStatuses(organizationId: string): Promise<ProjectStatusSummary[]> {
+    const { data, error } = await supabase
+      .from<ProjectStatusRow>('project_statuses')
+      .select('id, name, color, sort_order')
+      .eq('organization_id', organizationId)
+      .order('sort_order', { ascending: true });
+
+    if (error || !data) {
+      return [];
+    }
+    return data.map(({ id, name, color, sort_order }) => ({ id, name, color, sort_order }));
+  }
+
+  private async fetchProjectTypes(organizationId: string): Promise<ProjectTypeSummary[]> {
+    const { data, error } = await supabase
+      .from<ProjectTypeRow>('project_types')
+      .select('id, name')
+      .eq('organization_id', organizationId);
+
+    if (error || !data) {
+      return [];
+    }
+    return data.map(({ id, name }) => ({ id, name }));
+  }
+
+  private createSessionCountsMap(sessions: SessionSummary[]): Record<string, { total: number; upcoming: number; planned: number }> {
+    return sessions.reduce<Record<string, { total: number; upcoming: number; planned: number }>>((acc, session) => {
+      const bucket = acc[session.project_id] ?? { total: 0, upcoming: 0, planned: 0 };
+      bucket.total += 1;
+      if (session.status === 'upcoming') bucket.upcoming += 1;
+      if (session.status === 'planned') bucket.planned += 1;
+      acc[session.project_id] = bucket;
       return acc;
     }, {});
   }
 
-  private createTodoCountsMap(todosData: any) {
-    return (todosData.data || []).reduce((acc: any, todo: any) => {
-      if (!acc[todo.project_id]) {
-        acc[todo.project_id] = { total: 0, completed: 0 };
-      }
-      acc[todo.project_id].total++;
-      if (todo.is_completed) acc[todo.project_id].completed++;
+  private createTodoCountsMap(todos: TodoSummary[]): Record<string, { total: number; completed: number }> {
+    return todos.reduce<Record<string, { total: number; completed: number }>>((acc, todo) => {
+      const bucket = acc[todo.project_id] ?? { total: 0, completed: 0 };
+      bucket.total += 1;
+      if (todo.is_completed) bucket.completed += 1;
+      acc[todo.project_id] = bucket;
       return acc;
     }, {});
   }
 
-  private createProjectServicesMap(servicesData: any) {
-    return (servicesData.data || []).reduce((acc: any, ps: any) => {
-      if (!acc[ps.project_id]) acc[ps.project_id] = [];
-      if (ps.service) acc[ps.project_id].push(ps.service);
+  private createProjectServicesMap(services: ProjectServiceSummary[]): Record<string, Array<{ id: string; name: string }>> {
+    return services.reduce<Record<string, Array<{ id: string; name: string }>>>((acc, projectService) => {
+      if (!acc[projectService.project_id]) {
+        acc[projectService.project_id] = [];
+      }
+      if (projectService.service) {
+        acc[projectService.project_id].push(projectService.service);
+      }
       return acc;
     }, {});
   }
 
-  private createPaymentTotalsMap(paymentsData: any) {
-    return (paymentsData.data || []).reduce((acc: any, payment: any) => {
-      if (!acc[payment.project_id]) {
-        acc[payment.project_id] = { paid: 0 };
-      }
+  private createPaymentTotalsMap(payments: PaymentSummary[]): Record<string, { total: number; paid: number }> {
+    return payments.reduce<Record<string, { total: number; paid: number }>>((acc, payment) => {
+      const bucket = acc[payment.project_id] ?? { total: 0, paid: 0 };
+      const amount = Number(payment.amount ?? 0);
+      bucket.total += amount;
       if (payment.status === 'paid') {
-        acc[payment.project_id].paid += Number(payment.amount || 0);
+        bucket.paid += amount;
       }
+      acc[payment.project_id] = bucket;
       return acc;
     }, {});
   }
 
-  private createLeadsMap(leadsData: any[]) {
-    return leadsData.reduce((acc: any, lead: any) => {
+  private createLeadsMap(leads: LeadSummary[]): Record<string, LeadSummary> {
+    return leads.reduce<Record<string, LeadSummary>>((acc, lead) => {
       acc[lead.id] = lead;
       return acc;
     }, {});
   }
 
-  private createStatusesMap(statusesData: any[]) {
-    return statusesData.reduce((acc: any, status: any) => {
+  private createStatusesMap(statuses: ProjectStatusSummary[]): Record<string, ProjectStatusSummary> {
+    return statuses.reduce<Record<string, ProjectStatusSummary>>((acc, status) => {
       acc[status.id] = status;
       return acc;
     }, {});
   }
 
-  private createTypesMap(typesData: any[]) {
-    return typesData.reduce((acc: any, type: any) => {
+  private createTypesMap(types: ProjectTypeSummary[]): Record<string, ProjectTypeSummary> {
+    return types.reduce<Record<string, ProjectTypeSummary>>((acc, type) => {
       acc[type.id] = type;
       return acc;
     }, {});
@@ -447,56 +549,40 @@ export class ProjectService extends BaseEntityService {
    * Fetch a single project by ID
    */
   async fetchProjectById(id: string): Promise<ProjectWithDetails> {
-    const { data, error } = await supabase
-      .from('projects')
-      .select(`
-        *,
-        lead:leads(id, name, status, email, phone),
-        project_status:project_statuses!projects_status_id_fkey(id, name, color),
-        project_type:project_types(id, name)
-      `)
-      .eq('id', id)
-      .single();
-
-    if (error || !data) throw new Error('Project not found');
-    
-    // Transform the data to match our interface
-    const transformedProject: ProjectWithDetails = {
-      ...data,
-      lead: Array.isArray(data.lead) ? data.lead[0] : data.lead,
-      project_status: Array.isArray(data.project_status) ? data.project_status[0] : data.project_status,
-      project_type: Array.isArray(data.project_type) ? data.project_type[0] : data.project_type
-    };
-    
-    return transformedProject;
+    const { active, archived } = await this.fetchProjects(true);
+    const project = [...active, ...archived].find((item) => item.id === id);
+    if (!project) {
+      throw new Error('Project not found');
+    }
+    return project;
   }
 
   /**
    * Fetch lead by ID
    */
-  async fetchLeadById(id: string): Promise<any> {
+  async fetchLeadById(id: string): Promise<LeadRow | null> {
     const { data, error } = await supabase
-      .from('leads')
+      .from<LeadRow>('leads')
       .select('id, name, email, phone, status, notes')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
-    return data;
+    return data ?? null;
   }
 
   /**
    * Fetch project type by ID
    */
-  async fetchProjectTypeById(id: string): Promise<any> {
+  async fetchProjectTypeById(id: string): Promise<ProjectTypeSummary | null> {
     const { data, error } = await supabase
-      .from('project_types')
+      .from<ProjectTypeRow>('project_types')
       .select('id, name')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
-    return data;
+    return data ? { id: data.id, name: data.name } : null;
   }
 
   /**
@@ -510,27 +596,27 @@ export class ProjectService extends BaseEntityService {
     }
 
     const { data: archivedStatus, error: archivedStatusError } = await supabase
-      .from('project_statuses')
+      .from<ProjectStatusRow>('project_statuses')
       .select('id')
       .eq('organization_id', organizationId)
       .ilike('name', 'archived')
       .maybeSingle();
 
     if (archivedStatusError) throw archivedStatusError;
-    if (!archivedStatus) throw new Error('Archived status not found');
+    if (!archivedStatus?.id) throw new Error('Archived status not found');
 
     if (currentlyArchived) {
       // Restore: get previous status from project
       const { data: project } = await supabase
-        .from('projects')
+        .from<ProjectRow>('projects')
         .select('previous_status_id')
         .eq('id', projectId)
-        .single();
+        .maybeSingle();
 
       const { error } = await supabase
-        .from('projects')
+        .from<ProjectRow>('projects')
         .update({ 
-          status_id: project?.previous_status_id || null,
+          status_id: project?.previous_status_id ?? null,
           previous_status_id: null
         })
         .eq('id', projectId);
@@ -539,16 +625,16 @@ export class ProjectService extends BaseEntityService {
     } else {
       // Archive: save current status as previous
       const { data: project } = await supabase
-        .from('projects')
+        .from<ProjectRow>('projects')
         .select('status_id')
         .eq('id', projectId)
-        .single();
+        .maybeSingle();
 
       const { error } = await supabase
-        .from('projects')
+        .from<ProjectRow>('projects')
         .update({ 
           status_id: archivedStatus.id,
-          previous_status_id: project?.status_id
+          previous_status_id: project?.status_id ?? null
         })
         .eq('id', projectId);
 

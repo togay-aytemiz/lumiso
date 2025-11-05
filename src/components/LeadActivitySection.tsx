@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
@@ -11,27 +11,118 @@ import { ActivityForm } from "@/components/shared/ActivityForm";
 import { ActivityTimeline } from "@/components/shared/ActivityTimeline";
 import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 import { SegmentedControl } from "@/components/ui/segmented-control";
-interface LeadActivity {
+import type { Database, Json } from "@/integrations/supabase/types";
+type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
+type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
+type AuditLogRow = Database["public"]["Tables"]["audit_log"]["Row"];
+type SessionRow = Database["public"]["Tables"]["sessions"]["Row"];
+
+type TimelineActivity = {
   id: string;
-  type: string;
+  type: ActivityRow["type"];
   content: string;
-  reminder_date?: string;
-  reminder_time?: string;
+  reminder_date: string | null;
+  reminder_time: string | null;
   created_at: string;
-  completed?: boolean;
+  completed: boolean;
   lead_id: string;
   user_id: string;
-}
-interface AuditLog {
+  project_id?: string;
+};
+
+type ProjectSummary = Pick<ProjectRow, "id" | "name">;
+
+type AuditLogValues = Record<string, unknown> | null;
+
+interface AuditLogEntry {
   id: string;
   user_id: string;
   entity_type: string;
   entity_id: string;
   action: string;
-  old_values?: any;
-  new_values?: any;
+  old_values: AuditLogValues;
+  new_values: AuditLogValues;
   created_at: string;
 }
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "An unexpected error occurred";
+};
+
+const jsonToRecord = (value: Json | null): AuditLogValues => {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return null;
+};
+
+const mapActivityRow = (row: ActivityRow): TimelineActivity => ({
+  id: row.id,
+  type: row.type,
+  content: row.content ?? "",
+  reminder_date: row.reminder_date,
+  reminder_time: row.reminder_time,
+  created_at: row.created_at,
+  completed: Boolean(row.completed),
+  lead_id: row.lead_id,
+  user_id: row.user_id,
+  project_id: row.project_id ?? undefined,
+});
+
+const mapProjectRow = (row: ProjectRow): ProjectSummary => ({
+  id: row.id,
+  name: row.name ?? "Untitled Project",
+});
+
+const mapAuditLogRow = (row: AuditLogRow): AuditLogEntry => ({
+  id: row.id,
+  user_id: row.user_id,
+  entity_type: row.entity_type,
+  entity_id: row.entity_id,
+  action: row.action,
+  old_values: jsonToRecord(row.old_values),
+  new_values: jsonToRecord(row.new_values),
+  created_at: row.created_at,
+});
+
+const getRecordValue = <T,>(
+  record: AuditLogValues,
+  key: string,
+  predicate: (value: unknown) => value is T
+): T | undefined => {
+  const value = record?.[key];
+  return predicate(value) ? value : undefined;
+};
+
+const getStringValue = (record: AuditLogValues, key: string): string | undefined =>
+  getRecordValue(record, key, (value): value is string => typeof value === "string");
+
+const getValue = (record: AuditLogValues, key: string): unknown =>
+  record ? record[key] : undefined;
+
+const formatLogValue = (value: unknown): string => {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "number") return value.toString();
+  if (Array.isArray(value)) {
+    return value.map((item) => formatLogValue(item)).join(", ");
+  }
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
 interface LeadActivitySectionProps {
   leadId: string;
   leadName: string;
@@ -43,134 +134,157 @@ export function LeadActivitySection({
   onActivityUpdated
 }: LeadActivitySectionProps) {
   const { t } = useFormsTranslation();
-  const [activities, setActivities] = useState<LeadActivity[]>([]);
-  const [projectActivities, setProjectActivities] = useState<LeadActivity[]>([]);
-  const [projects, setProjects] = useState<{
-    id: string;
-    name: string;
-  }[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [activities, setActivities] = useState<TimelineActivity[]>([]);
+  const [projectActivities, setProjectActivities] = useState<TimelineActivity[]>([]);
+  const [projects, setProjects] = useState<ProjectSummary[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedSegment, setSelectedSegment] = useState<"activity" | "history">("activity");
   
-  useEffect(() => {
-    fetchData();
+  const fetchLeadActivities = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from<ActivityRow>("activities")
+        .select("*")
+        .eq("lead_id", leadId)
+        .is("project_id", null)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      setActivities((data ?? []).map(mapActivityRow));
+    } catch (error) {
+      console.error("Error fetching lead activities:", error);
+      setActivities([]);
+    }
   }, [leadId]);
-  const fetchData = async () => {
+
+  const fetchProjectActivities = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from<ActivityRow>("activities")
+        .select("*")
+        .eq("lead_id", leadId)
+        .not("project_id", "is", null)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      setProjectActivities((data ?? []).map(mapActivityRow));
+    } catch (error) {
+      console.error("Error fetching project activities:", error);
+      setProjectActivities([]);
+    }
+  }, [leadId]);
+
+  const fetchProjects = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from<ProjectRow>("projects")
+        .select("id, name")
+        .eq("lead_id", leadId);
+
+      if (error) {
+        throw error;
+      }
+
+      setProjects((data ?? []).map(mapProjectRow));
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      setProjects([]);
+    }
+  }, [leadId]);
+
+  const fetchAuditLogs = useCallback(async () => {
+    try {
+      const allLogs: AuditLogEntry[] = [];
+
+      const { data: leadLogRows, error: leadLogsError } = await supabase
+        .from<AuditLogRow>("audit_log")
+        .select("*")
+        .eq("entity_id", leadId)
+        .order("created_at", { ascending: false });
+
+      if (leadLogsError) {
+        throw leadLogsError;
+      }
+
+      allLogs.push(...(leadLogRows ?? []).map(mapAuditLogRow));
+
+      const { data: projectRows, error: projectRowsError } = await supabase
+        .from<ProjectRow>("projects")
+        .select("id")
+        .eq("lead_id", leadId);
+
+      if (!projectRowsError && projectRows && projectRows.length > 0) {
+        const projectIds = projectRows.map((row) => row.id);
+        const { data: projectLogRows, error: projectLogsError } = await supabase
+          .from<AuditLogRow>("audit_log")
+          .select("*")
+          .in("entity_id", projectIds)
+          .order("created_at", { ascending: false });
+
+        if (!projectLogsError) {
+          allLogs.push(...(projectLogRows ?? []).map(mapAuditLogRow));
+        }
+      }
+
+      const { data: sessionRows, error: sessionRowsError } = await supabase
+        .from<SessionRow>("sessions")
+        .select("id")
+        .eq("lead_id", leadId);
+
+      if (!sessionRowsError && sessionRows && sessionRows.length > 0) {
+        const sessionIds = sessionRows.map((row) => row.id);
+        const { data: sessionLogRows, error: sessionLogsError } = await supabase
+          .from<AuditLogRow>("audit_log")
+          .select("*")
+          .in("entity_id", sessionIds)
+          .order("created_at", { ascending: false });
+
+        if (!sessionLogsError) {
+          allLogs.push(...(sessionLogRows ?? []).map(mapAuditLogRow));
+        }
+      }
+
+      allLogs.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setAuditLogs(allLogs);
+    } catch (error) {
+      console.error("Error fetching audit logs:", error);
+      setAuditLogs([]);
+    }
+  }, [leadId]);
+
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      await Promise.all([fetchLeadActivities(), fetchProjectActivities(), fetchProjects(), fetchAuditLogs()]);
-    } catch (error) {
-      console.error('Error fetching lead activity data:', error);
+      await Promise.all([
+        fetchLeadActivities(),
+        fetchProjectActivities(),
+        fetchProjects(),
+        fetchAuditLogs(),
+      ]);
     } finally {
       setLoading(false);
     }
-  };
-  const fetchLeadActivities = async () => {
-    try {
-      const {
-        data,
-        error
-      } = await supabase.from('activities').select('id, type, content, reminder_date, reminder_time, created_at, completed, lead_id, user_id').eq('lead_id', leadId).is('project_id', null).order('created_at', {
-        ascending: false
-      });
-      if (error) throw error;
-      setActivities(data || []);
-    } catch (error: any) {
-      console.error('Error fetching lead activities:', error);
-      setActivities([]);
-    }
-  };
-  const fetchProjectActivities = async () => {
-    try {
-      const {
-        data,
-        error
-      } = await supabase.from('activities').select('id, type, content, reminder_date, reminder_time, created_at, completed, lead_id, user_id, project_id').eq('lead_id', leadId).not('project_id', 'is', null).order('created_at', {
-        ascending: false
-      });
-      if (error) throw error;
-      setProjectActivities(data || []);
-    } catch (error: any) {
-      console.error('Error fetching project activities:', error);
-      setProjectActivities([]);
-    }
-  };
-  const fetchProjects = async () => {
-    try {
-      const {
-        data,
-        error
-      } = await supabase.from('projects').select('id, name').eq('lead_id', leadId);
-      if (error) throw error;
-      setProjects(data || []);
-    } catch (error: any) {
-      console.error('Error fetching projects:', error);
-      setProjects([]);
-    }
-  };
-  const fetchAuditLogs = async () => {
-    try {
-      // Fetch audit logs for the lead and all its related entities
-      const {
-        data: leadLogs,
-        error: leadError
-      } = await supabase.from('audit_log').select('*').eq('entity_id', leadId).order('created_at', {
-        ascending: false
-      });
-      if (leadError) throw leadError;
+  }, [fetchAuditLogs, fetchLeadActivities, fetchProjectActivities, fetchProjects]);
 
-      // Fetch audit logs for projects related to this lead
-      const {
-        data: projects
-      } = await supabase.from('projects').select('id').eq('lead_id', leadId);
-      let projectLogs: any[] = [];
-      if (projects && projects.length > 0) {
-        const projectIds = projects.map(p => p.id);
-        const {
-          data,
-          error
-        } = await supabase.from('audit_log').select('*').in('entity_id', projectIds).order('created_at', {
-          ascending: false
-        });
-        if (!error) {
-          projectLogs = data || [];
-        }
-      }
-
-      // Fetch audit logs for sessions related to this lead
-      const {
-        data: sessions
-      } = await supabase.from('sessions').select('id').eq('lead_id', leadId);
-      let sessionLogs: any[] = [];
-      if (sessions && sessions.length > 0) {
-        const sessionIds = sessions.map(s => s.id);
-        const {
-          data,
-          error
-        } = await supabase.from('audit_log').select('*').in('entity_id', sessionIds).order('created_at', {
-          ascending: false
-        });
-        if (!error) {
-          sessionLogs = data || [];
-        }
-      }
-      const allLogs = [...(leadLogs || []), ...projectLogs, ...sessionLogs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      // Collect all user IDs from the logs
-      const allUserIds = new Set<string>();
-      allLogs.forEach(log => {
-        if (log.user_id) {
-          allUserIds.add(log.user_id);
-        }
-      });
-      setAuditLogs(allLogs);
-    } catch (error: any) {
-      console.error('Error fetching audit logs:', error);
-    }
-  };
-  const handleSaveActivity = async (content: string, isReminderMode: boolean, reminderDateTime?: string) => {
+  useEffect(() => {
+    void fetchData();
+  }, [fetchData]);
+  const handleSaveActivity = async (
+    content: string,
+    isReminderMode: boolean,
+    reminderDateTime?: string
+  ) => {
     if (!content.trim()) {
       toast({
         title: "Validation error",
@@ -189,33 +303,33 @@ export function LeadActivitySection({
     }
     setSaving(true);
     try {
-      const {
-        data: userData
-      } = await supabase.auth.getUser();
+      const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error('Not authenticated');
+
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
+        throw new Error("Organization required");
+      }
+
       const activityData = {
         user_id: userData.user.id,
         lead_id: leadId,
         type: isReminderMode ? 'reminder' : 'note',
         content: content.trim(),
-        ...(isReminderMode && reminderDateTime && {
-          reminder_date: reminderDateTime.split('T')[0],
-          reminder_time: reminderDateTime.split('T')[1]
-        })
+        reminder_date: isReminderMode && reminderDateTime ? reminderDateTime.split('T')[0] : null,
+        reminder_time: isReminderMode && reminderDateTime ? reminderDateTime.split('T')[1] : null,
+        organization_id: organizationId,
       };
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) {
-        throw new Error("Organization required");
+
+      const { error } = await supabase
+        .from('activities')
+        .insert(activityData)
+        .select('id')
+        .single();
+
+      if (error) {
+        throw error;
       }
-      const activityDataWithOrg = {
-        ...activityData,
-        organization_id: organizationId
-      };
-      const {
-        data: newActivity,
-        error
-      } = await supabase.from('activities').insert(activityDataWithOrg).select('id').single();
-      if (error) throw error;
 
       toast({
         title: "Success",
@@ -223,12 +337,16 @@ export function LeadActivitySection({
       });
 
       // Refresh data
-      await fetchLeadActivities();
+      await Promise.all([
+        fetchLeadActivities(),
+        fetchProjectActivities(),
+        fetchAuditLogs(),
+      ]);
       onActivityUpdated?.();
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     } finally {
@@ -237,11 +355,10 @@ export function LeadActivitySection({
   };
   const toggleCompletion = async (activityId: string, completed: boolean) => {
     try {
-      const {
-        error
-      } = await supabase.from('activities').update({
-        completed
-      }).eq('id', activityId);
+      const { error } = await supabase
+        .from('activities')
+        .update({ completed })
+        .eq('id', activityId);
       if (error) throw error;
       setActivities(prev => prev.map(activity => activity.id === activityId ? {
         ...activity,
@@ -254,23 +371,15 @@ export function LeadActivitySection({
 
       // Notify parent about activity change
       onActivityUpdated?.();
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error updating task",
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     }
   };
-  const formatValue = (value: any, fieldType?: string): string => {
-    if (value === null || value === undefined) return '';
-    if (typeof value === 'string') return value;
-    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-    if (typeof value === 'number') return value.toString();
-    if (Array.isArray(value)) return value.join(', ');
-    return String(value);
-  };
-  const getActivityDescription = (log: AuditLog): string => {
+  const getActivityDescription = (log: AuditLogEntry): string => {
     if (log.entity_type === 'lead') {
       if (log.action === 'created') return t('activityLogs.lead_created');
       if (log.action === 'archived') return t('activityLogs.lead_archived');
@@ -279,8 +388,8 @@ export function LeadActivitySection({
         const changes: string[] = [];
 
         // Check for status changes
-        const oldStatus = log.old_values?.status;
-        const newStatus = log.new_values?.status;
+        const oldStatus = getStringValue(log.old_values, "status");
+        const newStatus = getStringValue(log.new_values, "status");
         if (oldStatus !== newStatus) {
           changes.push(t('activityLogs.status_changed_from_to', { oldStatus, newStatus }));
         }
@@ -290,29 +399,37 @@ export function LeadActivitySection({
         return t('activityLogs.lead_updated');
       }
     } else if (log.entity_type === 'lead_field_value') {
-      const fieldLabel = log.new_values?.field_label || log.old_values?.field_label || 'Field';
-      const fieldType = log.new_values?.field_type || log.old_values?.field_type;
+      const fieldLabel =
+        getStringValue(log.new_values, 'field_label') ??
+        getStringValue(log.old_values, 'field_label') ??
+        'Field';
       if (log.action === 'created') {
-        const value = formatValue(log.new_values?.value, fieldType);
+        const value = formatLogValue(getValue(log.new_values, 'value'));
         return t('activityLogs.field_added', { field: fieldLabel, value });
       }
       if (log.action === 'updated') {
-        const oldValue = formatValue(log.old_values?.value, fieldType);
-        const newValue = formatValue(log.new_values?.value, fieldType);
+        const oldValue = formatLogValue(getValue(log.old_values, 'value'));
+        const newValue = formatLogValue(getValue(log.new_values, 'value'));
         return `${fieldLabel} changed from "${oldValue}" to "${newValue}"`;
       }
       if (log.action === 'deleted') {
-        const value = formatValue(log.old_values?.value, fieldType);
+        const value = formatLogValue(getValue(log.old_values, 'value'));
         return t('activityLogs.field_removed', { field: fieldLabel, value });
       }
     } else if (log.entity_type === 'project') {
-      const name = log.new_values?.name || log.old_values?.name;
+      const name =
+        getStringValue(log.new_values, 'name') ??
+        getStringValue(log.old_values, 'name') ??
+        null;
       if (log.action === 'created') return name ? `Project "${name}" created` : 'Project created';
       if (log.action === 'updated') return name ? `Project "${name}" updated` : 'Project updated';
       if (log.action === 'archived') return name ? `Project "${name}" archived` : 'Project archived';
       if (log.action === 'restored') return name ? `Project "${name}" restored` : 'Project restored';
     } else if (log.entity_type === 'session') {
-      const name = log.new_values?.session_name || log.old_values?.session_name;
+      const name =
+        getStringValue(log.new_values, 'session_name') ??
+        getStringValue(log.old_values, 'session_name') ??
+        null;
       if (log.action === 'created') return name ? `Session "${name}" created` : 'Session created';
       if (log.action === 'updated') return name ? `Session "${name}" updated` : 'Session updated';
       if (log.action === 'archived') return name ? `Session "${name}" archived` : 'Session archived';

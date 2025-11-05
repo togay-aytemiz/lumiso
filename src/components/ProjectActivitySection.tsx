@@ -1,24 +1,50 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ActivityForm } from "@/components/shared/ActivityForm";
 import { ActivityTimeline } from "@/components/shared/ActivityTimeline";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { toast } from "@/hooks/use-toast";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import type { Database } from "@/integrations/supabase/types";
 
-interface ProjectActivity {
+type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
+
+type ProjectActivity = {
   id: string;
-  type: string;
+  type: ActivityRow["type"];
   content: string;
-  reminder_date?: string;
-  reminder_time?: string;
+  reminder_date: string | null;
+  reminder_time: string | null;
   created_at: string;
-  completed?: boolean;
+  completed: boolean;
   lead_id: string;
   user_id: string;
   project_id?: string;
-}
+};
+
+const mapActivityRow = (row: ActivityRow): ProjectActivity => ({
+  id: row.id,
+  type: row.type,
+  content: row.content ?? "",
+  reminder_date: row.reminder_date,
+  reminder_time: row.reminder_time,
+  created_at: row.created_at,
+  completed: Boolean(row.completed),
+  lead_id: row.lead_id,
+  user_id: row.user_id,
+  project_id: row.project_id ?? undefined,
+});
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "An unexpected error occurred";
+};
 
 interface ProjectActivitySectionProps {
   projectId: string;
@@ -40,35 +66,57 @@ export function ProjectActivitySection({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchProjectActivities();
-  }, [projectId]);
-
-  const fetchProjectActivities = async () => {
+  const fetchProjectActivities = useCallback(async () => {
     try {
       const { data, error } = await supabase
-        .from('activities')
-        .select('id, type, content, reminder_date, reminder_time, created_at, completed, lead_id, project_id, user_id')
-        .eq('lead_id', leadId)
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: false });
-        
-      if (error) throw error;
-      setActivities(data || []);
-    } catch (error: any) {
-      console.error('Error fetching project activities:', error);
-      setActivities([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+        .from<ActivityRow>("activities")
+        .select("*")
+        .eq("lead_id", leadId)
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: false });
 
-  const handleSaveActivity = async (content: string, isReminderMode: boolean, reminderDateTime?: string) => {
+      if (error) {
+        throw error;
+      }
+
+      setActivities((data ?? []).map(mapActivityRow));
+    } catch (error) {
+      console.error("Error fetching project activities:", error);
+      setActivities([]);
+    }
+  }, [leadId, projectId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      try {
+        await fetchProjectActivities();
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchProjectActivities]);
+
+  const handleSaveActivity = async (
+    content: string,
+    isReminderMode: boolean,
+    reminderDateTime?: string
+  ) => {
     if (!content.trim()) {
       toast({
         title: t("validation.required_field"),
         description: t("validation.content_required"),
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -76,43 +124,49 @@ export function ProjectActivitySection({
       toast({
         title: t("validation.required_field"),
         description: t("validation.datetime_required_for_reminders"),
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
-    
+
     setSaving(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error('Not authenticated');
-
-      const activityData = {
-        user_id: userData.user.id,
-        lead_id: leadId,
-        project_id: projectId,
-        type: isReminderMode ? 'reminder' : 'note',
-        content: content.trim(),
-        ...(isReminderMode && reminderDateTime && {
-          reminder_date: reminderDateTime.split('T')[0],
-          reminder_time: reminderDateTime.split('T')[1]
-        })
-      };
 
       const organizationId = await getUserOrganizationId();
       if (!organizationId) {
         throw new Error("Organization required");
       }
 
-      const activityDataWithOrg = {
-        ...activityData,
-        organization_id: organizationId
+      const activityData: Partial<ActivityRow> & {
+        user_id: string;
+        lead_id: string;
+        project_id: string;
+        type: ActivityRow["type"];
+        content: string;
+        organization_id: string;
+        reminder_date: string | null;
+        reminder_time: string | null;
+      } = {
+        user_id: userData.user.id,
+        lead_id,
+        project_id: projectId,
+        type: isReminderMode ? "reminder" : "note",
+        content: content.trim(),
+        reminder_date:
+          isReminderMode && reminderDateTime ? reminderDateTime.split("T")[0] : null,
+        reminder_time:
+          isReminderMode && reminderDateTime ? reminderDateTime.split("T")[1] : null,
+        organization_id: organizationId,
       };
 
-      const { data: newActivity, error } = await supabase
+      const { error } = await supabase
         .from('activities')
-        .insert(activityDataWithOrg)
+        .insert(activityData)
         .select('id')
         .single();
+
       if (error) throw error;
 
       toast({
@@ -123,11 +177,11 @@ export function ProjectActivitySection({
       // Refresh data
       await fetchProjectActivities();
       onActivityUpdated?.();
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: t("error.generic"),
-        description: error.message,
-        variant: "destructive"
+        description: getErrorMessage(error),
+        variant: "destructive",
       });
     } finally {
       setSaving(false);
@@ -152,10 +206,10 @@ export function ProjectActivitySection({
       });
 
       onActivityUpdated?.();
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: t("activity.error_updating_task"),
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     }

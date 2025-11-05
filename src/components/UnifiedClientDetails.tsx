@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Phone, Mail, MessageCircle } from "lucide-react";
+import {
+  Mail,
+  MessageCircle,
+  MessageSquare,
+  ChevronDown,
+  Pencil,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLeadFieldDefinitions } from "@/hooks/useLeadFieldDefinitions";
 import { useLeadFieldValues } from "@/hooks/useLeadFieldValues";
@@ -24,6 +30,7 @@ import { EnhancedEditLeadDialog } from "./EnhancedEditLeadDialog";
 // Permissions removed for single photographer mode
 import { validateFieldValue } from "@/lib/leadFieldValidation";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { cn } from "@/lib/utils";
 
 interface Lead {
   id: string;
@@ -43,6 +50,7 @@ interface UnifiedClientDetailsProps {
   showClickableNames?: boolean;
   createdAt?: string | null; // creation date
   onNavigateToLead?: (leadId: string) => void;
+  defaultExpanded?: boolean;
 }
 
 // Helper functions for validation and phone normalization
@@ -87,6 +95,7 @@ export function UnifiedClientDetails({
   showClickableNames = false,
   createdAt,
   onNavigateToLead,
+  defaultExpanded = true,
 }: UnifiedClientDetailsProps) {
   const { toast } = useToast();
   const { fieldDefinitions, loading: fieldsLoading } =
@@ -113,6 +122,7 @@ export function UnifiedClientDetails({
   });
 
   const loading = fieldsLoading || valuesLoading;
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   useEffect(() => {
     setLocalLead((prev) => {
@@ -337,6 +347,72 @@ export function UnifiedClientDetails({
     ? normalizeTRPhone(phoneField.value)
     : null;
   const validEmail = emailField ? isValidEmail(emailField.value) : false;
+  const quickActions = [
+    normalizedPhone
+      ? {
+          key: "whatsapp",
+          label: tForms("clientDetails.whatsApp"),
+          icon: MessageCircle,
+          href: `https://wa.me/${normalizedPhone.e164NoPlus}`,
+          target: "_blank" as const,
+        }
+      : null,
+    normalizedPhone
+      ? {
+          key: "sms",
+          label: tForms("clientDetails.sms"),
+          icon: MessageSquare,
+          href: `sms:${normalizedPhone.e164}`,
+        }
+      : null,
+    validEmail && emailField
+      ? {
+          key: "email",
+          label: tForms("clientDetails.email"),
+          icon: Mail,
+          href: `mailto:${emailField.value}`,
+        }
+      : null,
+  ].filter(Boolean) as Array<{
+    key: string;
+    label: string;
+    icon: typeof Mail;
+    href: string;
+    target?: "_blank";
+  }>;
+
+  const hasQuickActions = showQuickActions && quickActions.length > 0;
+
+  const quickActionButtons = quickActions.map(({ key, label, icon: Icon, href, target }) => (
+    <Button
+      key={key}
+      variant="outline"
+      size="sm"
+      asChild
+      className="text-xs h-7"
+    >
+      <a href={href} target={target} rel={target ? "noopener noreferrer" : undefined}>
+        <Icon className="h-3 w-3 mr-1" />
+        {label}
+      </a>
+    </Button>
+  ));
+
+  const collapsedQuickActionIcons = quickActions.map(
+    ({ key, label, icon: Icon, href, target }) => (
+      <a
+        key={key}
+        href={href}
+        target={target}
+        rel={target ? "noopener noreferrer" : undefined}
+        aria-label={label}
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <Icon className="h-4 w-4" />
+        <span className="sr-only">{label}</span>
+      </a>
+    )
+  );
 
   if (loading) {
     return (
@@ -363,140 +439,101 @@ export function UnifiedClientDetails({
   return (
     <>
       <Card className={className}>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">
-              {title || tForms("clientDetails.title")}
-            </h3>
-            {/* Single photographer has full edit access */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setEditOpen(true)}
-              className="text-muted-foreground h-8 px-3"
-            >
-              {tForms("clientDetails.edit")}
-            </Button>
+        <CardHeader className={isExpanded ? "pb-3" : "pb-2"}>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-start justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setIsExpanded((prev) => !prev)}
+                className="flex flex-1 items-center gap-2 text-left"
+              >
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 transition-transform ${
+                    isExpanded ? "" : "-rotate-90"
+                  }`}
+                />
+                <div className="flex flex-col">
+                  <span className="text-lg font-semibold">
+                    {isExpanded
+                      ? "Kişi Detayları"
+                      : title || tForms("clientDetails.title")}
+                  </span>
+                  {!isExpanded && (
+                    showClickableNames ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onNavigateToLead) {
+                            onNavigateToLead(lead.id);
+                          } else {
+                            navigate(`/leads/${lead.id}`);
+                          }
+                        }}
+                        className="text-sm font-medium text-accent hover:underline text-left"
+                      >
+                        {localLead.name || " - "}
+                      </button>
+                    ) : (
+                      <span className="text-sm font-medium text-accent">
+                        {localLead.name || " - "}
+                      </span>
+                    )
+                  )}
+                </div>
+              </button>
+              <div className="flex items-center gap-2">
+                {!isExpanded && hasQuickActions && (
+                  <div className="flex items-center gap-1.5">
+                    {collapsedQuickActionIcons}
+                  </div>
+                )}
+                {!isExpanded && hasQuickActions && (
+                  <span className="text-muted-foreground" aria-hidden="true">
+                    ·
+                  </span>
+                )}
+                <Button
+                  variant="ghost"
+                  size={isExpanded ? "sm" : "icon"}
+                  onClick={() => setEditOpen(true)}
+                  className={cn(
+                    "h-8 bg-accent/10 text-accent transition-colors hover:bg-accent/20",
+                    isExpanded ? "px-3 text-sm font-medium" : "w-8"
+                  )}
+                >
+                  {isExpanded ? (
+                    tForms("clientDetails.edit")
+                  ) : (
+                    <>
+                      <Pencil className="h-4 w-4" aria-hidden="true" />
+                      <span className="sr-only">{tForms("clientDetails.edit")}</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {coreFields.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {tForms("clientDetails.noInfoAvailable")}
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {coreFields.map((field) => (
-                <div
-                  key={field.key}
-                  className="grid grid-cols-3 gap-3 items-start"
-                >
-                  <label className="text-sm font-medium text-muted-foreground">
-                    {field.label}
-                  </label>
-                  <div className="col-span-2 text-sm">
-                    <InlineEditField
-                      value={field.value}
-                      isEditing={editingField === field.key}
-                      onStartEdit={() => setEditingField(field.key)}
-                      onSave={(value) =>
-                        handleFieldSave(field.key, value, false)
-                      }
-                      onCancel={() => setEditingField(null)}
-                      disabled={!canEdit}
-                      editComponent={getInlineEditor(field)}
-                    >
-                      {field.key === "name" && showClickableNames ? (
-                        <button
-                          onClick={() => {
-                            if (onNavigateToLead) {
-                              onNavigateToLead(lead.id);
-                            } else {
-                              navigate(`/leads/${lead.id}`);
-                            }
-                          }}
-                          className="text-accent hover:underline font-medium break-words text-left"
-                        >
-                          {field.value || " - "}
-                        </button>
-                      ) : field.key === "notes" ? (
-                        field.value ? (
-                          <FieldTextareaDisplay
-                            value={field.value}
-                            maxLines={2}
-                          />
-                        ) : (
-                          <span className="break-words text-muted-foreground">
-                            {" "}
-                            -{" "}
-                          </span>
-                        )
-                      ) : (
-                        <span className="break-words">
-                          {field.value || " - "}
-                        </span>
-                      )}
-                    </InlineEditField>
-                  </div>
-                </div>
-              ))}
-            </div>
+        <div
+          className={cn(
+            "overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out",
+            isExpanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
           )}
-
-          {/* Quick Actions */}
-          {showQuickActions && (normalizedPhone || validEmail) && (
-            <div className="flex flex-wrap gap-2 pt-3 border-t sm:flex-row flex-col sm:gap-2 gap-1">
-              {normalizedPhone && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    asChild
-                    className="text-xs h-7"
-                  >
-                    <a
-                      href={`https://wa.me/${normalizedPhone.e164NoPlus}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <MessageCircle className="h-3 w-3 mr-1" />
-                      {tForms("clientDetails.whatsApp")}
-                    </a>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    asChild
-                    className="text-xs h-7"
-                  >
-                    <a href={`tel:${normalizedPhone.e164}`}>
-                      <Phone className="h-3 w-3 mr-1" />
-                      {tForms("clientDetails.call")}
-                    </a>
-                  </Button>
-                </>
-              )}
-              {validEmail && emailField && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  className="text-xs h-7"
-                >
-                  <a href={`mailto:${emailField.value}`}>
-                    <Mail className="h-3 w-3 mr-1" />
-                    {tForms("clientDetails.email")}
-                  </a>
-                </Button>
-              )}
-            </div>
-          )}
-
-          {/* Custom Fields Section */}
-          {customFields.length > 0 && (
-            <div className="pt-3 border-t">
+          aria-hidden={!isExpanded}
+        >
+          <CardContent
+            className={cn(
+              "space-y-3 transition-[opacity,padding] duration-300 ease-in-out",
+              isExpanded ? "opacity-100" : "opacity-0 py-0 md:py-0 pointer-events-none"
+            )}
+          >
+            {coreFields.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {tForms("clientDetails.noInfoAvailable")}
+              </p>
+            ) : (
               <div className="space-y-3">
-                {customFields.map((field) => (
+                {coreFields.map((field) => (
                   <div
                     key={field.key}
                     className="grid grid-cols-3 gap-3 items-start"
@@ -510,44 +547,113 @@ export function UnifiedClientDetails({
                         isEditing={editingField === field.key}
                         onStartEdit={() => setEditingField(field.key)}
                         onSave={(value) =>
-                          handleFieldSave(field.key, value, true)
+                          handleFieldSave(field.key, value, false)
                         }
                         onCancel={() => setEditingField(null)}
                         disabled={!canEdit}
-                        disableOutsideCancel={
-                          field.fieldDefinition?.field_type === "select"
-                        }
                         editComponent={getInlineEditor(field)}
                       >
-                        <CustomFieldDisplayWithEmpty
-                          fieldDefinition={field.fieldDefinition!}
-                          value={field.value}
-                          showCopyButtons={false}
-                          allowTruncation={true}
-                          maxLines={2}
-                        />
+                        {field.key === "name" && showClickableNames ? (
+                          <button
+                            onClick={() => {
+                              if (onNavigateToLead) {
+                                onNavigateToLead(lead.id);
+                              } else {
+                                navigate(`/leads/${lead.id}`);
+                              }
+                            }}
+                            className="text-accent hover:underline font-medium break-words text-left"
+                          >
+                            {field.value || " - "}
+                          </button>
+                        ) : field.key === "notes" ? (
+                          field.value ? (
+                            <FieldTextareaDisplay
+                              value={field.value}
+                              maxLines={2}
+                            />
+                          ) : (
+                            <span className="break-words text-muted-foreground">
+                              {" "}
+                              -{" "}
+                            </span>
+                          )
+                        ) : (
+                          <span className="break-words">
+                            {field.value || " - "}
+                          </span>
+                        )}
                       </InlineEditField>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Creation date - subtle and compact */}
-          {createdAt && (
-            <div className="mt-3 text-center">
-              <span className="text-[10px] text-muted-foreground/60 font-normal">
-                {tForms("clientDetails.createdOn")}{" "}
-                {new Date(createdAt).toLocaleDateString("tr-TR", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </span>
-            </div>
-          )}
-        </CardContent>
+            {/* Quick Actions */}
+            {hasQuickActions && (
+              <div className="flex flex-wrap gap-2 pt-3 border-t sm:flex-row flex-col sm:gap-2 gap-1">
+                {quickActionButtons}
+              </div>
+            )}
+
+            {/* Custom Fields Section */}
+            {customFields.length > 0 && (
+              <div className="pt-3 border-t">
+                <div className="space-y-3">
+                  {customFields.map((field) => (
+                    <div
+                      key={field.key}
+                      className="grid grid-cols-3 gap-3 items-start"
+                    >
+                      <label className="text-sm font-medium text-muted-foreground">
+                        {field.label}
+                      </label>
+                      <div className="col-span-2 text-sm">
+                        <InlineEditField
+                          value={field.value}
+                          isEditing={editingField === field.key}
+                          onStartEdit={() => setEditingField(field.key)}
+                          onSave={(value) =>
+                            handleFieldSave(field.key, value, true)
+                          }
+                          onCancel={() => setEditingField(null)}
+                          disabled={!canEdit}
+                          disableOutsideCancel={
+                            field.fieldDefinition?.field_type === "select"
+                          }
+                          editComponent={getInlineEditor(field)}
+                        >
+                          <CustomFieldDisplayWithEmpty
+                            fieldDefinition={field.fieldDefinition!}
+                            value={field.value}
+                            showCopyButtons={false}
+                            allowTruncation={true}
+                            maxLines={2}
+                          />
+                        </InlineEditField>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Creation date - subtle and compact */}
+            {createdAt && (
+              <div className="mt-3 text-center">
+                <span className="text-[10px] text-muted-foreground/60 font-normal">
+                  {tForms("clientDetails.createdOn")}{" "}
+                  {new Date(createdAt).toLocaleDateString("tr-TR", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              </div>
+            )}
+          </CardContent>
+        </div>
       </Card>
 
       {/* Edit Dialog */}

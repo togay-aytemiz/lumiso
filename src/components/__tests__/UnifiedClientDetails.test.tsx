@@ -209,7 +209,7 @@ describe("UnifiedClientDetails", () => {
       />
     );
 
-    expect(screen.getByText("Client")).toBeInTheDocument();
+    expect(screen.getByText("Kişi Detayları")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Test Lead" }));
     expect(navigateToLead).toHaveBeenCalledWith("lead-1");
 
@@ -217,8 +217,8 @@ describe("UnifiedClientDetails", () => {
       screen.getByRole("link", { name: "clientDetails.whatsApp" })
     ).toHaveAttribute("href", "https://wa.me/905551234567");
     expect(
-      screen.getByRole("link", { name: "clientDetails.call" })
-    ).toHaveAttribute("href", "tel:+905551234567");
+      screen.getByRole("link", { name: "clientDetails.sms" })
+    ).toHaveAttribute("href", "sms:+905551234567");
     expect(
       screen.getByRole("link", { name: "clientDetails.email" })
     ).toHaveAttribute("href", "mailto:lead@example.com");
@@ -262,5 +262,40 @@ describe("UnifiedClientDetails", () => {
       })
     );
     expect(updateCustomFieldMock).not.toHaveBeenCalled();
+  });
+
+  it("shows icon-only quick actions and accent clickable name when collapsed by default", () => {
+    const navigateToLead = jest.fn();
+
+    render(
+      <UnifiedClientDetails
+        lead={baseLead}
+        title="Client"
+        showQuickActions
+        showClickableNames
+        defaultExpanded={false}
+        onNavigateToLead={navigateToLead}
+      />
+    );
+
+    const nameButton = screen.getByRole("button", { name: "Test Lead" });
+    expect(nameButton).toHaveClass("text-accent");
+    fireEvent.click(nameButton);
+    expect(navigateToLead).toHaveBeenCalledWith("lead-1");
+
+    expect(
+      screen.getByLabelText("clientDetails.whatsApp")
+    ).toHaveAttribute("href", "https://wa.me/905551234567");
+    expect(
+      screen.getByLabelText("clientDetails.sms")
+    ).toHaveAttribute("href", "sms:+905551234567");
+    expect(
+      screen.getByLabelText("clientDetails.email")
+    ).toHaveAttribute("href", "mailto:lead@example.com");
+
+    const editButton = screen.getByRole("button", {
+      name: "clientDetails.edit",
+    });
+    expect(editButton).toBeInTheDocument();
   });
 });

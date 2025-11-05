@@ -94,9 +94,9 @@ jest.mock("@/components/ProjectTodoListEnhanced", () => ({
   ),
 }));
 
-jest.mock("@/components/ProjectStatusBadge", () => ({
-  ProjectStatusBadge: ({ currentStatusId }: { currentStatusId?: string }) => (
-    <div data-testid="status-badge">{currentStatusId}</div>
+jest.mock("@/components/ProjectStagePipeline", () => ({
+  ProjectStagePipeline: ({ currentStatusId }: { currentStatusId?: string }) => (
+    <div data-testid="stage-pipeline">{currentStatusId}</div>
   ),
 }));
 
@@ -307,7 +307,7 @@ describe("ProjectDetail", () => {
     });
 
     expect(screen.getByTestId("unified-client-details")).toHaveTextContent("Lead Person");
-    expect(screen.getByTestId("status-badge")).toHaveTextContent("status-active");
+    expect(screen.getByTestId("stage-pipeline")).toHaveTextContent("status-active");
     expect(screen.getByTestId("section-sessions")).toBeInTheDocument();
     expect(mockBuildProjectSummaryItems).toHaveBeenCalledWith(
       expect.objectContaining({

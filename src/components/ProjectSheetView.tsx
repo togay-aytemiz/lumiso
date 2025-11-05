@@ -13,7 +13,7 @@ import { ProjectActivitySection } from "./ProjectActivitySection";
 import { ProjectTodoListEnhanced } from "./ProjectTodoListEnhanced";
 import { ProjectServicesSection } from "./ProjectServicesSection";
 import { SessionsSection } from "./SessionsSection";
-import { ProjectStatusBadge } from "./ProjectStatusBadge";
+import { ProjectStagePipeline } from "./ProjectStagePipeline";
 import { SimpleProjectTypeSelect } from "./SimpleProjectTypeSelect";
 import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
@@ -532,18 +532,6 @@ export function LegacyProjectSheetView({
 
   const projectTypeLabel = projectType?.name || tPages('projectDetail.header.defaultType');
   const projectNameDisplay = project?.name || tPages('projectDetail.placeholders.name');
-  const statusBadgeNode = (
-    <ProjectStatusBadge
-      projectId={project.id}
-      currentStatusId={localStatusId || undefined}
-      onStatusChange={() => {
-        onProjectUpdated();
-      }}
-      editable={!isArchived}
-      className="text-xs sm:text-sm"
-    />
-  );
-
   const headerTitle = (
     <span className="flex flex-col">
       <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -551,7 +539,6 @@ export function LegacyProjectSheetView({
       </span>
       <span className="flex items-center gap-2 text-foreground">
         <span className="truncate">{projectNameDisplay}</span>
-        {statusBadgeNode}
       </span>
     </span>
   );
@@ -571,6 +558,24 @@ export function LegacyProjectSheetView({
         </div>
       )
     : undefined;
+
+  const stagePipeline = (
+    <ProjectStagePipeline
+      projectId={project.id}
+      currentStatusId={localStatusId || undefined}
+      onStatusChange={() => {
+        onProjectUpdated();
+      }}
+      editable={!isArchived}
+    />
+  );
+
+  const headerBanner = (
+    <div className="space-y-4">
+      {stagePipeline}
+      {archivedBanner}
+    </div>
+  );
 
   const headerActions = isEditing ? (
     <>
@@ -661,7 +666,7 @@ export function LegacyProjectSheetView({
         name={project.name || ""}
         title={headerTitle}
         subtext={headerSubtext}
-        banner={archivedBanner}
+        banner={headerBanner}
         summaryItems={isEditing ? undefined : summaryItems}
         avatarClassName="bg-gradient-to-br from-indigo-300 via-indigo-400 to-indigo-600 text-white ring-0"
         avatarContent={<FolderOpen className="h-5 w-5" />}

@@ -11,7 +11,7 @@ import { ProjectActivitySection } from "@/components/ProjectActivitySection";
 import { ProjectTodoListEnhanced } from "@/components/ProjectTodoListEnhanced";
 import { ProjectServicesSection } from "@/components/ProjectServicesSection";
 import { SessionsSection } from "@/components/SessionsSection";
-import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
+import { ProjectStagePipeline } from "@/components/ProjectStagePipeline";
 import { SimpleProjectTypeSelect } from "@/components/SimpleProjectTypeSelect";
 import { ProjectPaymentsSection } from "@/components/ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
@@ -477,16 +477,6 @@ export default function ProjectDetail() {
 
   const projectTypeLabel = projectType?.name || tPages("projectDetail.header.defaultType");
   const projectNameDisplay = project?.name || tPages("projectDetail.placeholders.name");
-  const statusBadgeNode = (
-    <ProjectStatusBadge
-      projectId={project.id}
-      currentStatusId={localStatusId || undefined}
-      onStatusChange={handleStatusChange}
-      editable={!isArchived}
-      className="text-xs sm:text-sm"
-    />
-  );
-
   const headerTitle = (
     <span className="flex flex-col">
       <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -494,7 +484,6 @@ export default function ProjectDetail() {
       </span>
       <span className="flex items-center gap-2 text-foreground">
         <span className="truncate">{projectNameDisplay}</span>
-        {statusBadgeNode}
       </span>
     </span>
   );
@@ -572,6 +561,22 @@ export default function ProjectDetail() {
     </DropdownMenu>
   );
 
+  const stagePipeline = (
+    <ProjectStagePipeline
+      projectId={project.id}
+      currentStatusId={localStatusId || undefined}
+      onStatusChange={handleStatusChange}
+      editable={!isArchived}
+    />
+  );
+
+  const headerBanner = (
+    <div className="space-y-4">
+      {stagePipeline}
+      {archivedBanner}
+    </div>
+  );
+
   return (
     <div className="w-full min-h-screen p-6">
       <div className="mb-6">
@@ -582,7 +587,7 @@ export default function ProjectDetail() {
           onBack={() => navigate(-1)}
           backLabel={tPages("projectDetail.header.back")}
           subtext={headerSubtext}
-          banner={archivedBanner}
+          banner={headerBanner}
           summaryItems={isEditing ? undefined : summaryItems}
           avatarClassName="bg-gradient-to-br from-indigo-300 via-indigo-400 to-indigo-600 text-white ring-0"
           avatarContent={<FolderOpen className="h-5 w-5" />}

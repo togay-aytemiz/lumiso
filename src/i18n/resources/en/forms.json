@@ -754,7 +754,12 @@
     "errorUpdatingStatus": "Error updating status",
     "sessionUpdated": "Session Updated",
     "unsupportedStage": "Unsupported stage",
-    "unsupportedStageDesc": "This stage cannot be applied to sessions yet."
+    "unsupportedStageDesc": "This stage cannot be applied to sessions yet.",
+    "pipelineChangeHint": "Click to change stage",
+    "pipelineOnboardingTitle": "Keep your project moving",
+    "pipelineOnboardingDescription": "Select the stage that best represents where this project is in your pipeline.",
+    "pipelineDismiss": "Dismiss onboarding",
+    "pipelineStageLabel": "Move project to stage {{stage}}"
   },
   "lead_field": {
     "allow_multiple_selections": "Allow Multiple Selections",
@@ -935,7 +940,7 @@
     "notes": "Notes",
     "edit": "Edit",
     "whatsApp": "WhatsApp",
-    "call": "Search",
+    "sms": "SMS",
     "createdOn": "Created on",
     "noInfoAvailable": "Lead information unavailable."
   },

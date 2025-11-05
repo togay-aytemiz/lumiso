@@ -39,15 +39,15 @@ jest.mock("@/hooks/use-mobile", () => ({
 
 type WithChildren = { children?: ReactNode };
 
-interface ProjectStatusBadgeMockProps {
+interface ProjectStagePipelineMockProps {
   onStatusChange?: () => void;
   editable?: boolean;
 }
 
-jest.mock("@/components/ProjectStatusBadge", () => ({
-  ProjectStatusBadge: ({ onStatusChange, editable }: ProjectStatusBadgeMockProps) => (
-    <button data-testid="project-status-badge" onClick={onStatusChange} disabled={!editable}>
-      status
+jest.mock("@/components/ProjectStagePipeline", () => ({
+  ProjectStagePipeline: ({ onStatusChange, editable }: ProjectStagePipelineMockProps) => (
+    <button data-testid="project-stage-pipeline" onClick={onStatusChange} disabled={!editable}>
+      pipeline
     </button>
   ),
 }));

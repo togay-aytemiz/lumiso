@@ -445,7 +445,12 @@
     "statusNotFound": "Durum bulunamadı",
     "sessionUpdated": "Seans Güncellendi",
     "unsupportedStage": "Desteklenmeyen aşama",
-    "unsupportedStageDesc": "Bu aşama henüz seanslara uygulanamaz."
+    "unsupportedStageDesc": "Bu aşama henüz seanslara uygulanamaz.",
+    "pipelineChangeHint": "Aşamayı değiştirmek için tıklayın",
+    "pipelineOnboardingTitle": "Projeni ilerletmeye başla",
+    "pipelineOnboardingDescription": "Bu projenin sürecinde nerede olduğunu göstermek için uygun aşamayı seç.",
+    "pipelineDismiss": "Kapat",
+    "pipelineStageLabel": "Projeyi {{stage}} aşamasına taşı"
   },
   "project_stage": {
     "add_title": "AŞAMA EKLE",
@@ -794,6 +799,7 @@
     "notes": "Notlar",
     "edit": "Düzenle",
     "whatsApp": "WhatsApp",
+    "sms": "SMS",
     "call": "Ara",
     "createdOn": "Oluşturulma tarihi",
     "noInfoAvailable": "Kişi mevcut değil."

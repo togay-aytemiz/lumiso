@@ -9,6 +9,22 @@ import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./NavigationGuardDialog";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") {
+      return message;
+    }
+  }
+  return "An unexpected error occurred";
+};
+
 interface AddProjectStageDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -40,7 +56,7 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
         setFormData(prev => ({ ...prev, lifecycle: suggestedLifecycle }));
       }
     }
-  }, [formData.name]);
+  }, [formData.name, formData.lifecycle]);
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
@@ -96,11 +112,11 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
       setFormData({ name: "", color: "#EF4444", lifecycle: "active" });
       onOpenChange(false);
       onStageAdded();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t('project_stage.errors.add_failed'),
-        description: error.message,
-        variant: "destructive"
+        description: getErrorMessage(error),
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -293,11 +309,11 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
 
       onOpenChange(false);
       onStageUpdated();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t('project_stage.errors.update_failed'),
-        description: error.message,
-        variant: "destructive"
+        description: getErrorMessage(error),
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -335,11 +351,11 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
 
       onOpenChange(false);
       onStageUpdated();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t('project_stage.errors.delete_failed'),
-        description: error.message,
-        variant: "destructive"
+        description: getErrorMessage(error),
+        variant: "destructive",
       });
     } finally {
       setLoading(false);

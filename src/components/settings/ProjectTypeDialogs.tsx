@@ -11,6 +11,22 @@ import { useTranslation } from "react-i18next";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./NavigationGuardDialog";
 
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") {
+      return message;
+    }
+  }
+  return "An unexpected error occurred";
+};
+
 interface AddProjectTypeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -26,6 +42,8 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
   });
 
   const handleSubmit = async () => {
+    if (!type) return;
+
     if (!formData.name.trim()) {
       toast({
         title: t('common:errors.validation'),
@@ -81,11 +99,11 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
       setFormData({ name: "", is_default: false });
       onOpenChange(false);
       onTypeAdded();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t('common:errors.save'),
-        description: error.message,
-        variant: "destructive"
+        description: getErrorMessage(error),
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -180,8 +198,15 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
   );
 }
 
+interface ProjectType {
+  id: string;
+  name: string;
+  is_default?: boolean;
+  sort_order?: number;
+}
+
 interface EditProjectTypeDialogProps {
-  type: any;
+  type: ProjectType | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onTypeUpdated: () => void;
@@ -250,11 +275,11 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
 
       onOpenChange(false);
       onTypeUpdated();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t('common:errors.save'),
-        description: error.message,
-        variant: "destructive"
+        description: getErrorMessage(error),
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -293,6 +318,8 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
   };
 
   const handleDelete = async () => {
+    if (!type) return;
+
     // Prevent deleting the default type
     if (type.is_default) {
       toast({
@@ -325,11 +352,11 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
 
       onOpenChange(false);
       onTypeUpdated();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t('common:errors.delete'),
-        description: error.message,
-        variant: "destructive"
+        description: getErrorMessage(error),
+        variant: "destructive",
       });
     } finally {
       setLoading(false);

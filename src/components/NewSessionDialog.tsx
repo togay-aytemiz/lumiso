@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
@@ -32,6 +32,66 @@ interface NewSessionDialogProps {
   onSessionScheduled?: () => void;
   children?: React.ReactNode;
 }
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const getStringProperty = (record: Record<string, unknown>, key: string) => {
+  const value = record[key];
+  return typeof value === "string" ? value : undefined;
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  if (isRecord(error)) {
+    const message = getStringProperty(error, "message");
+    if (message) {
+      return message;
+    }
+  }
+  return "An unexpected error occurred";
+};
+
+type SupabaseErrorDetails = {
+  message: string;
+  code?: string;
+  details?: string;
+  hint?: string;
+  stack?: string;
+};
+
+const getSupabaseErrorDetails = (error: unknown): SupabaseErrorDetails => {
+  if (error instanceof Error) {
+    const record = error as Record<string, unknown>;
+    return {
+      message: error.message,
+      code: getStringProperty(record, "code"),
+      details: getStringProperty(record, "details"),
+      hint: getStringProperty(record, "hint"),
+      stack:
+        typeof error.stack === "string"
+          ? error.stack
+          : getStringProperty(record, "stack"),
+    };
+  }
+
+  if (isRecord(error)) {
+    return {
+      message: getStringProperty(error, "message") ?? "An unexpected error occurred",
+      code: getStringProperty(error, "code"),
+      details: getStringProperty(error, "details"),
+      hint: getStringProperty(error, "hint"),
+      stack: getStringProperty(error, "stack"),
+    };
+  }
+
+  return { message: "An unexpected error occurred" };
+};
 
 const NewSessionDialog = (props: NewSessionDialogProps) => {
   const sessionWizardEnabled = isFeatureEnabled(FEATURE_FLAGS.sessionWizardV1, true);
@@ -100,118 +160,132 @@ const LegacyNewSessionDialog = ({ onSessionScheduled, children }: NewSessionDial
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [projects, setProjects] = useState<{id: string, name: string}[]>([]);
 
-  useEffect(() => {
-    if (open) {
-      fetchLeads();
-    }
-  }, [open]);
-
-  // Fetch projects when a lead is selected
-  useEffect(() => {
-    if (selectedLeadId && !isNewLead) {
-      fetchProjects(selectedLeadId);
-    } else {
-      setProjects([]);
-      setSelectedProjectId("");
-    }
-  }, [selectedLeadId, isNewLead]);
-
-  const fetchLeads = async () => {
+  const fetchLeads = useCallback(async () => {
     setLoadingLeads(true);
     try {
       // First get all leads
       const { data: leadsData, error: leadsError } = await supabase
-        .from('leads')
-        .select('id, name, email, phone')
-        .order('name', { ascending: true });
+        .from("leads")
+        .select("id, name, email, phone")
+        .order("name", { ascending: true });
 
       if (leadsError) throw leadsError;
 
       // Then get sessions for these leads
       const { data: sessionsData, error: sessionsError } = await supabase
-        .from('sessions')
-        .select('lead_id, status');
+        .from("sessions")
+        .select("lead_id, status");
 
       if (sessionsError) throw sessionsError;
 
       // Process leads to determine session status
-      const processedLeads = (leadsData || []).map(lead => {
-        const leadSessions = sessionsData?.filter(session => session.lead_id === lead.id) || [];
-        const hasScheduledSession = leadSessions.some(session => session.status === 'planned');
-        const hasCompletedSession = leadSessions.some(session => session.status === 'completed');
-        
-        let sessionStatus: 'none' | 'planned' | 'completed' = 'none';
+      const processedLeads = (leadsData || []).map((lead) => {
+        const leadSessions =
+          sessionsData?.filter((session) => session.lead_id === lead.id) || [];
+        const hasScheduledSession = leadSessions.some(
+          (session) => session.status === "planned",
+        );
+        const hasCompletedSession = leadSessions.some(
+          (session) => session.status === "completed",
+        );
+
+        let sessionStatus: "none" | "planned" | "completed" = "none";
         if (hasScheduledSession) {
-          sessionStatus = 'planned';
+          sessionStatus = "planned";
         } else if (hasCompletedSession) {
-          sessionStatus = 'completed';
+          sessionStatus = "completed";
         }
-        
+
         return {
           id: lead.id,
           name: lead.name,
           email: lead.email,
           phone: lead.phone,
           sessionStatus,
-          hasScheduledSession
+          hasScheduledSession,
         };
       });
-      
+
       setLeads(processedLeads);
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      console.error("Error fetching leads:", error);
+      toast.error(getErrorMessage(error));
     } finally {
       setLoadingLeads(false);
     }
-  };
+  }, [toast]);
 
-  const fetchProjects = async (leadId: string) => {
+  useEffect(() => {
+    if (open) {
+      void fetchLeads();
+    }
+  }, [open, fetchLeads]);
+
+  const fetchProjects = useCallback(async (leadId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       // Get user's active organization ID
-      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      const { data: organizationId } = await supabase.rpc(
+        "get_user_active_organization_id",
+      );
       if (!organizationId) return;
 
       const { data: projectsData, error } = await supabase
-        .from('projects')
-        .select('id, name')
-        .eq('lead_id', leadId)
-        .eq('organization_id', organizationId)
-        .order('name', { ascending: true });
+        .from("projects")
+        .select("id, name")
+        .eq("lead_id", leadId)
+        .eq("organization_id", organizationId)
+        .order("name", { ascending: true });
 
       if (error) throw error;
       setProjects(projectsData || []);
-    } catch (error: any) {
-      console.error('Error fetching projects:', error);
+    } catch (error: unknown) {
+      console.error("Error fetching projects:", error);
       setProjects([]);
     }
-  };
+  }, []);
+
+  // Fetch projects when a lead is selected
+  useEffect(() => {
+    if (selectedLeadId && !isNewLead) {
+      void fetchProjects(selectedLeadId);
+    } else {
+      setProjects([]);
+      setSelectedProjectId("");
+    }
+  }, [selectedLeadId, isNewLead, fetchProjects]);
 
   const handleSubmit = async () => {
     if (!sessionData.session_date || !sessionData.session_time) {
-      toast.error(tForms('validation.session_date_time_required'));
+      toast.error(tForms("validation.session_date_time_required"));
       return;
     }
 
     if (!isNewLead && !selectedLeadId) {
-      toast.error(tForms('validation.lead_required'));
+      toast.error(tForms("validation.lead_required"));
       return;
     }
 
     if (isNewLead && !newLeadData.name.trim()) {
-      toast.error(tForms('validation.lead_name_required'));
+      toast.error(tForms("validation.lead_name_required"));
       return;
     }
 
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
       // Get user's active organization ID
-      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      const { data: organizationId } = await supabase.rpc(
+        "get_user_active_organization_id",
+      );
 
       if (!organizationId) {
         throw new Error("Organization required");
@@ -222,7 +296,7 @@ const LegacyNewSessionDialog = ({ onSessionScheduled, children }: NewSessionDial
       // Create new lead if needed
       if (isNewLead) {
         const { data: newLead, error: leadError } = await supabase
-          .from('leads')
+          .from("leads")
           .insert({
             user_id: user.id,
             organization_id: organizationId,
@@ -230,9 +304,9 @@ const LegacyNewSessionDialog = ({ onSessionScheduled, children }: NewSessionDial
             email: newLeadData.email.trim() || null,
             phone: newLeadData.phone.trim() || null,
             notes: newLeadData.notes.trim() || null,
-            status: 'booked'
+            status: "booked",
           })
-          .select('id')
+          .select("id")
           .single();
 
         if (leadError) throw leadError;
@@ -240,16 +314,16 @@ const LegacyNewSessionDialog = ({ onSessionScheduled, children }: NewSessionDial
       } else {
         // Update existing lead status to booked
         const { error: updateError } = await supabase
-          .from('leads')
-          .update({ status: 'booked' })
-          .eq('id', selectedLeadId);
+          .from("leads")
+          .update({ status: "booked" })
+          .eq("id", selectedLeadId);
 
         if (updateError) throw updateError;
       }
 
       // Create session
       const { data: newSession, error: sessionError } = await supabase
-        .from('sessions')
+        .from("sessions")
         .insert({
           user_id: user.id,
           organization_id: organizationId,
@@ -258,41 +332,43 @@ const LegacyNewSessionDialog = ({ onSessionScheduled, children }: NewSessionDial
           session_time: sessionData.session_time,
           notes: sessionData.notes.trim() || null,
           location: sessionData.location.trim() || null,
-          project_id: selectedProjectId || null
+          project_id: selectedProjectId || null,
         })
-        .select('id')
+        .select("id")
         .single();
 
       if (sessionError) throw sessionError;
 
       // Get lead name for workflow
-      const leadName = isNewLead ? newLeadData.name : leads.find(l => l.id === leadId)?.name || 'Unknown Client';
+      const leadName = isNewLead
+        ? newLeadData.name
+        : leads.find((l) => l.id === leadId)?.name || "Unknown Client";
 
       // Trigger workflow for session scheduled
       try {
-        const workflowResult = await triggerSessionScheduled(newSession.id, organizationId, {
+        await triggerSessionScheduled(newSession.id, organizationId, {
           session_date: sessionData.session_date,
           session_time: sessionData.session_time,
           location: sessionData.location,
           client_name: leadName,
           lead_id: leadId,
           project_id: selectedProjectId,
-          status: 'planned'
+          status: "planned",
         });
       } catch (workflowError) {
-        console.error('❌ Error triggering session_scheduled workflow:', workflowError);
-        toast.warning(tForms('sessions.sessionCreatedWarning'));
+        console.error("❌ Error triggering session_scheduled workflow:", workflowError);
+        toast.warning(tForms("sessions.sessionCreatedWarning"));
       }
 
       // Schedule session reminders
       try {
         await scheduleSessionReminders(newSession.id);
       } catch (reminderError) {
-        console.error('❌ Error scheduling session reminders:', reminderError);
+        console.error("❌ Error scheduling session reminders:", reminderError);
         // Don't block session creation if reminder scheduling fails
       }
 
-      toast.success(tCommon('messages.success.save'));
+      toast.success(tCommon("messages.success.save"));
 
       // Reset form and close dialog
       setSessionData({
@@ -316,18 +392,18 @@ const LegacyNewSessionDialog = ({ onSessionScheduled, children }: NewSessionDial
       if (onSessionScheduled) {
         onSessionScheduled();
       }
-    } catch (error: any) {
-      console.error('❌ CRITICAL ERROR in session creation:', error);
-      console.error('Error details:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-        stack: error.stack?.substring(0, 500)
+    } catch (error: unknown) {
+      const errorDetails = getSupabaseErrorDetails(error);
+      console.error("❌ CRITICAL ERROR in session creation:", error);
+      console.error("Error details:", {
+        message: errorDetails.message,
+        code: errorDetails.code,
+        details: errorDetails.details,
+        hint: errorDetails.hint,
+        stack: errorDetails.stack?.substring(0, 500),
       });
-      
-      toast.error(error.message);
-    } finally{
+      toast.error(errorDetails.message);
+    } finally {
       setLoading(false);
     }
   };
@@ -362,7 +438,7 @@ const LegacyNewSessionDialog = ({ onSessionScheduled, children }: NewSessionDial
   );
 
   const handleDirtyClose = () => {
-    if (window.confirm(tCommon('messages.confirm.unsaved_changes'))) {
+    if (window.confirm(tCommon("messages.confirm.unsaved_changes"))) {
       setSessionData({
         session_date: "",
         session_time: "",
@@ -384,17 +460,21 @@ const LegacyNewSessionDialog = ({ onSessionScheduled, children }: NewSessionDial
 
   const footerActions = [
     {
-      label: tCommon('buttons.cancel'),
+      label: tCommon("buttons.cancel"),
       onClick: () => setOpen(false),
       variant: "outline" as const,
-      disabled: loading
+      disabled: loading,
     },
     {
-      label: loading ? tCommon('actions.saving') : tCommon('buttons.save'),
+      label: loading ? tCommon("actions.saving") : tCommon("buttons.save"),
       onClick: handleSubmit,
-      disabled: loading || !sessionData.session_date || !sessionData.session_time || (!selectedLeadId && !newLeadData.name.trim()),
-      loading: loading
-    }
+      disabled:
+        loading ||
+        !sessionData.session_date ||
+        !sessionData.session_time ||
+        (!selectedLeadId && !newLeadData.name.trim()),
+      loading,
+    },
   ];
 
   return (

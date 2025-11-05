@@ -12,15 +12,27 @@ describe("PerformanceMonitor", () => {
   let originalRAF: typeof window.requestAnimationFrame;
   let originalCancelRAF: typeof window.cancelAnimationFrame;
   let PerformanceMonitor: React.ComponentType;
-  let onboardingMetrics: any;
+  type OnboardingMetrics = {
+    getRenderCount: () => string | undefined;
+    getPerformanceStats: () => Promise<{
+      message: string;
+      databaseClean: boolean;
+      cacheOptimized: boolean;
+      consoleSpamRemoved: boolean;
+    }>;
+  };
+  type WindowWithOnboardingMetrics = typeof window & {
+    onboardingMetrics?: OnboardingMetrics;
+  };
+  let onboardingMetrics: OnboardingMetrics | undefined;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     const previousEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = "development";
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const module = require("../PerformanceMonitor");
+    jest.resetModules();
+    const module = await import("../PerformanceMonitor");
     PerformanceMonitor = module.PerformanceMonitor;
-    onboardingMetrics = (window as any).onboardingMetrics;
+    onboardingMetrics = (window as WindowWithOnboardingMetrics).onboardingMetrics;
     process.env.NODE_ENV = previousEnv;
   });
 

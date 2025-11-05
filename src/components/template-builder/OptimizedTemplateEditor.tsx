@@ -51,7 +51,7 @@ const MemoizedBlockCard = React.memo(({
   isActive: boolean;
   onActivate: (id: string) => void;
   onToggleVisibility: (id: string) => void;
-  onUpdate: (id: string, data: any) => void;
+  onUpdate: (id: string, data: BlockData) => void;
   onRemove: (id: string) => void;
   onMove: (id: string, direction: "up" | "down") => void;
   canMoveUp: boolean;
@@ -69,7 +69,7 @@ const MemoizedBlockCard = React.memo(({
     onToggleVisibility(block.id);
   }, [block.id, onToggleVisibility]);
 
-  const handleUpdate = useCallback((data: any) => {
+  const handleUpdate = useCallback((data: BlockData) => {
     onUpdate(block.id, data);
   }, [block.id, onUpdate]);
 
@@ -169,7 +169,7 @@ export const OptimizedTemplateEditor = React.memo(({
     setShowAddBlock(false);
   }, [blocks, onBlocksChange]);
 
-  const updateBlock = useCallback((blockId: string, data: any) => {
+  const updateBlock = useCallback((blockId: string, data: BlockData) => {
     const newBlocks = blocks.map(block => 
       block.id === blockId ? { ...block, data } : block
     );
@@ -363,6 +363,6 @@ function getDefaultBlockData(type: TemplateBlock["type"]): BlockData {
         sanitized: false,
       };
     default:
-      return {} as any;
+      return {} as BlockData;
   }
 }

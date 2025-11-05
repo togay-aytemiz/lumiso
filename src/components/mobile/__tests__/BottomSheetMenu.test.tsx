@@ -1,10 +1,26 @@
+import React from "react";
 import { fireEvent, render, screen } from "@/utils/testUtils";
 import { BottomSheetMenu } from "../BottomSheetMenu";
 
 const sheetRenderSpy = jest.fn();
 
+type MockSheetProps = {
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
+
+type MockSheetContentProps = {
+  children?: React.ReactNode;
+  className?: string;
+};
+
+type MockSheetHeaderProps = {
+  children?: React.ReactNode;
+};
+
 jest.mock("@/components/ui/sheet", () => ({
-  Sheet: ({ children, open, onOpenChange }: any) => {
+  Sheet: ({ children, open, onOpenChange }: MockSheetProps) => {
     sheetRenderSpy({ open, onOpenChange });
     return (
       <div data-testid="sheet-root" data-open={open ? "true" : "false"}>
@@ -12,13 +28,15 @@ jest.mock("@/components/ui/sheet", () => ({
       </div>
     );
   },
-  SheetContent: ({ children, className }: any) => (
+  SheetContent: ({ children, className }: MockSheetContentProps) => (
     <div data-testid="sheet-content" data-class={className}>
       {children}
     </div>
   ),
-  SheetHeader: ({ children }: any) => <div data-testid="sheet-header">{children}</div>,
-  SheetTitle: ({ children }: any) => <h2>{children}</h2>,
+  SheetHeader: ({ children }: MockSheetHeaderProps) => (
+    <div data-testid="sheet-header">{children}</div>
+  ),
+  SheetTitle: ({ children }: MockSheetHeaderProps) => <h2>{children}</h2>,
 }));
 
 describe("BottomSheetMenu", () => {

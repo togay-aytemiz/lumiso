@@ -1,5 +1,5 @@
-import React from "react";
 import { render, screen } from "@testing-library/react";
+import type { ComponentType } from "react";
 import {
   PageLoadingSkeleton,
   DashboardLoadingSkeleton,
@@ -15,7 +15,13 @@ import {
 } from "../loading-presets";
 
 jest.mock("../loading-skeleton", () => {
-  const React = require("react");
+  type LoadingSkeletonProps = {
+    variant?: string;
+    rows?: number;
+    showHeader?: boolean;
+    showActions?: boolean;
+    className?: string;
+  };
 
   return {
     __esModule: true,
@@ -25,7 +31,7 @@ jest.mock("../loading-skeleton", () => {
       showHeader,
       showActions,
       className,
-    }: any) => {
+    }: LoadingSkeletonProps) => {
       return (
         <div
           data-testid="loading-skeleton"
@@ -43,8 +49,8 @@ jest.mock("../loading-skeleton", () => {
 describe("loading-presets", () => {
   type SkeletonCase = {
     name: string;
-    Component: React.ComponentType<any>;
-    props?: Record<string, any>;
+    Component: ComponentType<Record<string, unknown>>;
+    props?: Record<string, unknown>;
     expected: {
       variant: string;
       rows?: string;

@@ -2,6 +2,8 @@ import { renderHook, act } from "@testing-library/react";
 import { OnboardingProvider, useOnboarding } from "../OnboardingContext";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { ONBOARDING_STEPS, TOTAL_STEPS } from "@/constants/onboarding";
+import type { ReactNode } from "react";
+import type { UserPreferences } from "@/hooks/useUserPreferences";
 
 jest.mock("@/hooks/useUserPreferences", () => ({
   useUserPreferences: jest.fn(),
@@ -11,7 +13,28 @@ const mockUseUserPreferences = useUserPreferences as jest.MockedFunction<
   typeof useUserPreferences
 >;
 
-const basePreferences = {
+type UseUserPreferencesResult = ReturnType<typeof useUserPreferences>;
+
+const createUpdatePreferencesMock = () =>
+  jest.fn<
+    ReturnType<UseUserPreferencesResult["updatePreferences"]>,
+    Parameters<UseUserPreferencesResult["updatePreferences"]>
+  >(async () => undefined);
+
+const createUserPreferencesResponse = (
+  overrides: Partial<UseUserPreferencesResult> = {}
+): UseUserPreferencesResult => ({
+  data: undefined,
+  isLoading: false,
+  error: null,
+  updatePreferences: createUpdatePreferencesMock(),
+  forceRefresh: jest.fn(),
+  clearCache: jest.fn(),
+  isReady: false,
+  cacheStatus: "fresh",
+  ...overrides,
+});
+const basePreferences: UserPreferences = {
   userId: "user-1",
   activeOrganizationId: "org-1",
   onboardingStage: "not_started" as const,
@@ -31,7 +54,7 @@ const basePreferences = {
 
 const createWrapper =
   () =>
-  ({ children }: { children: React.ReactNode }) =>
+  ({ children }: { children: ReactNode }) =>
     <OnboardingProvider>{children}</OnboardingProvider>;
 
 describe("OnboardingContext", () => {
@@ -40,11 +63,12 @@ describe("OnboardingContext", () => {
   });
 
   it("provides default values while loading preferences", () => {
-    mockUseUserPreferences.mockReturnValue({
-      data: undefined,
-      isLoading: true,
-      updatePreferences: jest.fn(),
-    } as any);
+    mockUseUserPreferences.mockReturnValue(
+      createUserPreferencesResponse({
+        isLoading: true,
+        updatePreferences: createUpdatePreferencesMock(),
+      })
+    );
 
     const { result } = renderHook(() => useOnboarding(), {
       wrapper: createWrapper(),
@@ -56,12 +80,14 @@ describe("OnboardingContext", () => {
   });
 
   it("computes onboarding state and supports guided setup start", async () => {
-    const updatePreferences = jest.fn(() => Promise.resolve());
-    mockUseUserPreferences.mockReturnValue({
-      data: basePreferences,
-      isLoading: false,
-      updatePreferences,
-    } as any);
+    const updatePreferences = createUpdatePreferencesMock();
+
+    mockUseUserPreferences.mockReturnValue(
+      createUserPreferencesResponse({
+        data: basePreferences,
+        updatePreferences,
+      })
+    );
 
     const { result } = renderHook(() => useOnboarding(), {
       wrapper: createWrapper(),
@@ -82,12 +108,19 @@ describe("OnboardingContext", () => {
   });
 
   it("handles step progression and completion guards", async () => {
-    const updatePreferences = jest.fn(() => Promise.resolve());
-    mockUseUserPreferences.mockReturnValue({
-      data: { ...basePreferences, onboardingStage: "in_progress", currentOnboardingStep: 2, welcomeModalShown: true },
-      isLoading: false,
-      updatePreferences,
-    } as any);
+    const updatePreferences = createUpdatePreferencesMock();
+
+    mockUseUserPreferences.mockReturnValue(
+      createUserPreferencesResponse({
+        data: {
+          ...basePreferences,
+          onboardingStage: "in_progress",
+          currentOnboardingStep: 2,
+          welcomeModalShown: true,
+        },
+        updatePreferences,
+      })
+    );
 
     const { result } = renderHook(() => useOnboarding(), {
       wrapper: createWrapper(),
@@ -115,12 +148,19 @@ describe("OnboardingContext", () => {
   });
 
   it("supports completion, skipping, and reset flows", async () => {
-    const updatePreferences = jest.fn(() => Promise.resolve());
-    mockUseUserPreferences.mockReturnValue({
-      data: { ...basePreferences, onboardingStage: "in_progress", currentOnboardingStep: TOTAL_STEPS, welcomeModalShown: true },
-      isLoading: false,
-      updatePreferences,
-    } as any);
+    const updatePreferences = createUpdatePreferencesMock();
+
+    mockUseUserPreferences.mockReturnValue(
+      createUserPreferencesResponse({
+        data: {
+          ...basePreferences,
+          onboardingStage: "in_progress",
+          currentOnboardingStep: TOTAL_STEPS,
+          welcomeModalShown: true,
+        },
+        updatePreferences,
+      })
+    );
 
     const { result } = renderHook(() => useOnboarding(), {
       wrapper: createWrapper(),

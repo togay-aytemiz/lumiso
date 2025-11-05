@@ -5,8 +5,21 @@ import { MemoryRouter } from "react-router-dom";
 const sanitizeTestId = (title: string) =>
   title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
+type SidebarNavItemProps = {
+  title?: React.ReactNode;
+  children?: React.ReactNode;
+  isActive?: boolean;
+  isLocked?: boolean;
+};
+
+type SidebarSubItemProps = {
+  title?: React.ReactNode;
+  isActive?: boolean;
+  isLocked?: boolean;
+};
+
 const sidebarNavItemMock = jest.fn(
-  ({ title, children, isActive, isLocked }: any) => (
+  ({ title, children, isActive, isLocked }: SidebarNavItemProps) => (
     <div
       data-testid={`nav-${sanitizeTestId(String(title))}`}
       data-active={isActive ?? false}
@@ -19,7 +32,7 @@ const sidebarNavItemMock = jest.fn(
 );
 
 const sidebarSubItemMock = jest.fn(
-  ({ title, isActive, isLocked }: any) => (
+  ({ title, isActive, isLocked }: SidebarSubItemProps) => (
     <div
       data-testid={`sub-${sanitizeTestId(String(title))}`}
       data-active={isActive ?? false}
@@ -44,11 +57,11 @@ jest.mock("@/components/sidebar/SidebarCategory", () => ({
 }));
 
 jest.mock("@/components/sidebar/SidebarNavItem", () => ({
-  SidebarNavItem: (props: any) => sidebarNavItemMock(props),
+  SidebarNavItem: (props: SidebarNavItemProps) => sidebarNavItemMock(props),
 }));
 
 jest.mock("@/components/sidebar/SidebarSubItem", () => ({
-  SidebarSubItem: (props: any) => sidebarSubItemMock(props),
+  SidebarSubItem: (props: SidebarSubItemProps) => sidebarSubItemMock(props),
 }));
 
 jest.mock("@/components/modals/HelpModal", () => ({

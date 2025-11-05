@@ -1,6 +1,22 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") {
+      return message;
+    }
+  }
+  return "An unexpected error occurred";
+};
+
 export function useNotificationTriggers() {
   const { toast } = useToast();
 
@@ -43,11 +59,11 @@ export function useNotificationTriggers() {
       console.log(
         `Milestone change recorded for project ${projectId}: ${oldStatus.name} → ${newStatus.name} (organization ${organizationId})`
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error in triggerProjectMilestone:', error);
       toast({
         title: "Notification Error",
-        description: "Failed to send milestone notification",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     }
@@ -73,11 +89,11 @@ export function useNotificationTriggers() {
 
       console.log('Daily summaries scheduled successfully');
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error in scheduleDailySummaries:', error);
       toast({
         title: "Scheduling Error",
-        description: "Failed to schedule daily summaries",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     }
@@ -108,11 +124,11 @@ export function useNotificationTriggers() {
         description: `Processed ${data?.result?.processed || 0} notifications`,
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error in processPendingNotifications:', error);
       toast({
         title: "Processing Error",
-        description: "Failed to process notifications",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     }
@@ -142,11 +158,11 @@ export function useNotificationTriggers() {
         description: `Retried ${data?.result?.retried_count || 0} failed notifications`,
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error in retryFailedNotifications:', error);
       toast({
         title: "Retry Error",
-        description: "Failed to retry notifications",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     }

@@ -29,6 +29,11 @@ export function UnifiedActivityArea({
   projectName, 
   onActivityUpdated 
 }: UnifiedActivityAreaProps) {
+  const reminderTypeOptions = ["call", "email", "task", "follow_up"] as const;
+  type ReminderType = (typeof reminderTypeOptions)[number];
+  const isReminderType = (value: string): value is ReminderType =>
+    reminderTypeOptions.some((option) => option === value);
+
   const [activeTab, setActiveTab] = useState("note");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -41,10 +46,26 @@ export function UnifiedActivityArea({
   const [reminderContent, setReminderContent] = useState("");
   const [reminderDate, setReminderDate] = useState<Date>();
   const [reminderTime, setReminderTime] = useState("");
-  const [reminderType, setReminderType] = useState<"call" | "email" | "task" | "follow_up">("call");
+  const [reminderType, setReminderType] = useState<ReminderType>("call");
 
   // Todo form state
   const [todoContent, setTodoContent] = useState("");
+
+  const getErrorMessage = (error: unknown) => {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (typeof error === "string") {
+      return error;
+    }
+    if (error && typeof error === "object" && "message" in error) {
+      const message = (error as { message?: unknown }).message;
+      if (typeof message === "string") {
+        return message;
+      }
+    }
+    return t("common.errors.unexpected", { defaultValue: "An unexpected error occurred" });
+  };
 
   const handleSubmitNote = async () => {
     if (!noteContent.trim()) return;
@@ -73,11 +94,12 @@ export function UnifiedActivityArea({
 
       setNoteContent("");
       onActivityUpdated?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error("Error creating note activity:", error);
       toast({
         title: t("forms.unified_activity.error_adding_note"),
-        description: error.message,
-        variant: "destructive"
+        description: getErrorMessage(error),
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -115,11 +137,12 @@ export function UnifiedActivityArea({
       setReminderDate(undefined);
       setReminderTime("");
       onActivityUpdated?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error("Error creating reminder activity:", error);
       toast({
         title: t("forms.unified_activity.error_creating_reminder"),
-        description: error.message,
-        variant: "destructive"
+        description: getErrorMessage(error),
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -151,11 +174,12 @@ export function UnifiedActivityArea({
 
       setTodoContent("");
       onActivityUpdated?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error("Error creating todo:", error);
       toast({
         title: t("forms.unified_activity.error_adding_todo"),
-        description: error.message,
-        variant: "destructive"
+        description: getErrorMessage(error),
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -246,7 +270,14 @@ export function UnifiedActivityArea({
                 />
               </div>
 
-              <Select value={reminderType} onValueChange={(value: any) => setReminderType(value)}>
+              <Select
+                value={reminderType}
+                onValueChange={(value) => {
+                  if (isReminderType(value)) {
+                    setReminderType(value);
+                  }
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

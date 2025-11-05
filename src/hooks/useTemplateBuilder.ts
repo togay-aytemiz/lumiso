@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Template, TemplateBuilderData, DatabaseTemplate } from "@/types/template";
+import { Template, TemplateBuilderData, DatabaseTemplate, TemplateChannelView } from "@/types/template";
 import { TemplateBlock } from "@/types/templateBuilder";
 import { blocksToHTML, blocksToPlainText, blocksToMasterContent, htmlToBlocks } from "@/lib/templateBlockUtils";
 
@@ -21,6 +21,24 @@ interface UseTemplateBuilderReturn {
   resetDirtyState: () => void;
 }
 
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") {
+      return message;
+    }
+  }
+  return "An unexpected error occurred";
+};
+
+type TemplateChannels = NonNullable<TemplateBuilderData["channels"]>;
+
 // Extract placeholders from text content
 const extractPlaceholders = (content: string): string[] => {
   const placeholderRegex = /{([^}]+)}/g;
@@ -35,14 +53,16 @@ const extractPlaceholders = (content: string): string[] => {
 };
 
 // Transform database template to builder data
-const transformToBuilderData = (dbTemplate: DatabaseTemplate & { blocks?: any }): TemplateBuilderData => {
+const transformToBuilderData = (
+  dbTemplate: DatabaseTemplate & { blocks?: unknown }
+): TemplateBuilderData => {
   const emailChannel = dbTemplate.template_channel_views?.find(v => v.channel === 'email');
   
   // Load blocks from database or try to parse from HTML content
   let blocks: TemplateBlock[] = [];
   
-  if (dbTemplate.blocks && Array.isArray(dbTemplate.blocks)) {
-    blocks = dbTemplate.blocks;
+  if (Array.isArray(dbTemplate.blocks)) {
+    blocks = dbTemplate.blocks as TemplateBlock[];
   } else if (emailChannel?.html_content) {
     // Try to parse blocks from HTML content (fallback)
     blocks = htmlToBlocks(emailChannel.html_content);
@@ -83,14 +103,16 @@ const transformToBuilderData = (dbTemplate: DatabaseTemplate & { blocks?: any })
     status: dbTemplate.is_active ? 'published' : 'draft',
     published_at: dbTemplate.is_active ? dbTemplate.updated_at : null,
     last_saved_at: dbTemplate.updated_at,
-    channels: dbTemplate.template_channel_views?.reduce((acc: any, view: any) => {
-      acc[view.channel] = {
-        subject: view.subject,
-        content: view.content,
-        html_content: view.html_content
-      };
-      return acc;
-    }, {}) || {}
+    channels:
+      dbTemplate.template_channel_views?.reduce<TemplateChannels>((acc, view) => {
+        const { channel, subject, content, html_content } = view as TemplateChannelView;
+        acc[channel] = {
+          subject: subject ?? undefined,
+          content: content ?? undefined,
+          html_content: html_content ?? undefined
+        };
+        return acc;
+      }, {} as TemplateChannels) || {}
   };
 };
 
@@ -127,11 +149,11 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       const transformedTemplate = transformToBuilderData(data);
       setTemplate(transformedTemplate);
       setIsDirty(false);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error loading template:", error);
       toast({
         title: "Error",
-        description: "Failed to load template",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     } finally {
@@ -231,7 +253,11 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       
       // Add other channels if they exist
       if (mergedData.channels) {
-        Object.entries(mergedData.channels).forEach(([channel, channelData]: [string, any]) => {
+        const channelEntries = Object.entries(mergedData.channels) as Array<
+          [keyof TemplateChannels, TemplateChannels[keyof TemplateChannels]]
+        >;
+
+        channelEntries.forEach(([channel, channelData]) => {
           if (channel !== 'email' && channelData && (channelData.subject || channelData.content || channelData.html_content)) {
             channelViews.push({
               template_id: result.id,
@@ -280,12 +306,12 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       }
 
       return savedTemplate;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error saving template:", error);
       if (showToast) {
         toast({
           title: "Error",
-          description: "Failed to save template",
+          description: getErrorMessage(error),
           variant: "destructive",
         });
       }
@@ -319,11 +345,11 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       }
 
       return publishedTemplate;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error publishing template:", error);
       toast({
         title: "Error",
-        description: "Failed to publish template",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
       return null;
@@ -361,11 +387,11 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       });
 
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error deleting template:", error);
       toast({
         title: "Error",
-        description: "Failed to delete template",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
       return false;

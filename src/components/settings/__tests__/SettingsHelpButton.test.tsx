@@ -1,15 +1,30 @@
 import { fireEvent, render, screen } from "@/utils/testUtils";
+import type { ReactNode, SVGProps } from "react";
 import { SettingsHelpButton } from "../SettingsHelpButton";
 
 const useIsMobileMock = jest.fn();
 const appSheetModalMock = jest.fn();
+
+type MockFooterAction = {
+  label: string;
+  onClick: () => void;
+};
+
+type MockAppSheetModalProps = {
+  title?: ReactNode;
+  children?: ReactNode;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  footerActions?: MockFooterAction[];
+  size?: string;
+};
 
 jest.mock("@/hooks/use-mobile", () => ({
   useIsMobile: () => useIsMobileMock(),
 }));
 
 jest.mock("@/components/ui/app-sheet-modal", () => ({
-  AppSheetModal: (props: any) => {
+  AppSheetModal: (props: MockAppSheetModalProps) => {
     appSheetModalMock(props);
     if (!props.isOpen) {
       return null;
@@ -19,7 +34,7 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
       <div data-testid="help-modal">
         <h2>{props.title}</h2>
         <div>{props.children}</div>
-        {props.footerActions?.map((action: any) => (
+        {props.footerActions?.map((action) => (
           <button key={action.label} onClick={action.onClick}>
             {action.label}
           </button>
@@ -30,19 +45,11 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
   },
 }));
 
-jest.mock("lucide-react", () => {
-  const React = require("react");
-  return new Proxy(
-    {},
-    {
-      get: (_target, property: PropertyKey) => (props: any) =>
-        React.createElement("svg", {
-          "data-icon": String(property),
-          ...props,
-        }),
-    }
-  );
-});
+jest.mock("lucide-react", () => ({
+  HelpCircle: (props: SVGProps<SVGSVGElement>) => (
+    <svg data-icon="HelpCircle" {...props} />
+  ),
+}));
 
 describe("SettingsHelpButton", () => {
   const helpContent = {

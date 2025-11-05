@@ -1,4 +1,5 @@
-import React, { ReactNode, useReducer } from "react";
+import { useReducer } from "react";
+import type { ReactNode } from "react";
 import { fireEvent, render, screen } from "@/utils/testUtils";
 import { PricingStep } from "../PricingStep";
 import {
@@ -33,11 +34,17 @@ type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const isMergeableRecord = (value: unknown): value is Record<string, unknown> =>
+  isRecord(value) && !Array.isArray(value);
+
 const getTranslation = (key: string): string | undefined => {
   const parts = key.split(".");
-  let current: any = en;
+  let current: unknown = en;
   for (const part of parts) {
-    if (current && typeof current === "object" && part in current) {
+    if (isRecord(current) && Object.prototype.hasOwnProperty.call(current, part)) {
       current = current[part];
     } else {
       return undefined;
@@ -59,28 +66,26 @@ const applyInterpolation = (
 
 const mergeState = <T extends object>(target: T, source?: DeepPartial<T>): T => {
   if (!source) return target;
-  const output = Array.isArray(target)
-    ? ([...target] as unknown as T)
-    : ({ ...target } as T);
+  const output: unknown = Array.isArray(target)
+    ? [...(target as unknown[])]
+    : { ...(target as Record<string, unknown>) };
+  const container = output as Record<string, unknown>;
 
-  Object.entries(source).forEach(([key, value]) => {
+  Object.entries(source as Record<string, unknown>).forEach(([key, value]) => {
     if (value === undefined) return;
-    const typedKey = key as keyof T;
-    const originalValue = (output as any)[typedKey];
-    if (
-      originalValue &&
-      typeof originalValue === "object" &&
-      !Array.isArray(originalValue) &&
-      typeof value === "object" &&
-      !Array.isArray(value)
-    ) {
-      (output as any)[typedKey] = mergeState(originalValue, value);
+    const originalValue = container[key];
+
+    if (isMergeableRecord(originalValue) && isMergeableRecord(value)) {
+      container[key] = mergeState<Record<string, unknown>>(
+        originalValue,
+        value as DeepPartial<Record<string, unknown>>
+      );
     } else {
-      (output as any)[typedKey] = value;
+      container[key] = value as unknown;
     }
   });
 
-  return output;
+  return output as T;
 };
 
 interface ProviderProps {

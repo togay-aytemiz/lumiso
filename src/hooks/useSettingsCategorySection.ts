@@ -12,7 +12,7 @@ interface SettingsCategorySectionOptions<T> {
   throttleMs?: number;
 }
 
-export function useSettingsCategorySection<T extends Record<string, any>>(
+export function useSettingsCategorySection<T extends Record<string, unknown>>(
   options: SettingsCategorySectionOptions<T>
 ) {
   const location = useLocation();
@@ -63,7 +63,7 @@ export function useSettingsCategorySection<T extends Record<string, any>>(
         }
       }
     };
-  }, [section.handleSave, section.handleCancel, section.values, section.updateValue]);
+  }, [section]);
 
   // Register this section with the category context - only when path/id changes
   useEffect(() => {
@@ -78,13 +78,13 @@ export function useSettingsCategorySection<T extends Record<string, any>>(
     return () => {
       unregisterSectionHandler(categoryPath, options.sectionId);
     };
-  }, [categoryPath, options.sectionId, options.sectionName]); // Removed handler deps
+  }, [categoryPath, options.sectionId, options.sectionName, registerSectionHandler, unregisterSectionHandler]); // Removed handler deps
 
   // Update dirty state in context
   useEffect(() => {
     console.log(`🔍 Dirty state check for ${options.sectionId}:`, section.isDirty, "logoFile:", !!section.values.logoFile);
     setSectionDirty(categoryPath, options.sectionId, section.isDirty);
-  }, [section.isDirty, categoryPath, options.sectionId, setSectionDirty]);
+  }, [section.isDirty, section.values.logoFile, categoryPath, options.sectionId, setSectionDirty]);
 
   return {
     ...section,

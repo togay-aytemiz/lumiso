@@ -22,12 +22,12 @@ jest.mock("@/integrations/supabase/client", () => {
   };
 });
 
+const toastMock = jest.fn();
+
 jest.mock("@/hooks/use-toast", () => {
-  const toast = jest.fn();
   return {
     __esModule: true,
-    useToast: () => ({ toast }),
-    _toastMock: toast,
+    useToast: () => ({ toast: toastMock }),
   };
 });
 
@@ -47,14 +47,15 @@ import { renderHook, act } from "@testing-library/react";
 
 import { useLeadStatusActions } from "../useLeadStatusActions";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 const authMock = supabase.auth.getUser as jest.Mock;
 const rpcMock = supabase.rpc as jest.Mock;
 const fromMock = supabase.from as jest.Mock;
-const toastMock = (useToast() as { toast: jest.Mock }).toast;
 
-const leadStatusQueue: Array<{ data: any; error: any }> = [];
+type LeadStatusRecord = { id: string; name: string };
+type LeadStatusResponse = { data: LeadStatusRecord | null; error: Error | null };
+
+const leadStatusQueue: LeadStatusResponse[] = [];
 const leadStatusesQuery = {
   select: jest.fn().mockReturnThis(),
   eq: jest.fn().mockReturnThis(),
@@ -63,7 +64,9 @@ const leadStatusesQuery = {
   ),
 };
 
-const leadsUpdateResults: Array<{ error: any }> = [];
+type LeadsUpdateResult = { error: Error | null };
+
+const leadsUpdateResults: LeadsUpdateResult[] = [];
 const leadsQuery = {
   update: jest.fn().mockReturnThis(),
   eq: jest.fn().mockImplementation((_column: string, _value: string) =>

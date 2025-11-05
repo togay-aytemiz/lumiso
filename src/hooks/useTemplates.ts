@@ -1,22 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { getUserOrganizationId } from '@/lib/organizationUtils';
 
-import { Template } from "@/types/template";
+import { Template, TemplateChannelView } from "@/types/template";
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") {
+      return message;
+    }
+  }
+  return "Failed to load templates";
+};
+
+type TemplateChannels = NonNullable<Template["channels"]>;
 
 export function useTemplates() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       setLoading(true);
       const organizationId = await getUserOrganizationId();
-      
+
       console.log('Organization ID for templates:', organizationId);
-      
+
       if (!organizationId) {
         console.warn('No organization ID found, cannot fetch templates');
         setTemplates([]);
@@ -41,35 +59,43 @@ export function useTemplates() {
       console.log('Template query result:', { data, error });
 
       if (error) throw error;
-      
-      // Transform data to include channel views
-      const transformedTemplates = (data || []).map((template: any) => ({
-        ...template,
-        placeholders: Array.isArray(template.placeholders) ? template.placeholders : [],
-        channels: template.template_channel_views?.reduce((acc: any, view: any) => {
-          acc[view.channel] = {
-            subject: view.subject,
-            content: view.content,
-            html_content: view.html_content
-          };
-          return acc;
-        }, {}) || {}
-      }));
-      
-      setTemplates(transformedTemplates as Template[]);
-      console.log('Templates loaded:', transformedTemplates?.length || 0);
+
+      const transformedTemplates: Template[] = (data ?? []).map(template => {
+        const { template_channel_views, placeholders, ...rest } = template as typeof template & {
+          template_channel_views?: TemplateChannelView[];
+        };
+
+        const channels =
+          template_channel_views?.reduce<TemplateChannels>((acc, view) => {
+            acc[view.channel] = {
+              subject: view.subject ?? undefined,
+              content: view.content ?? undefined,
+              html_content: view.html_content ?? undefined,
+            };
+            return acc;
+          }, {} as TemplateChannels) ?? undefined;
+
+        return {
+          ...rest,
+          placeholders: Array.isArray(placeholders) ? placeholders : [],
+          channels,
+        };
+      });
+
+      setTemplates(transformedTemplates);
+      console.log('Templates loaded:', transformedTemplates.length);
     } catch (error) {
       console.error('Error fetching templates:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load templates',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
       setTemplates([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const getSessionTemplates = () => {
     const sessionFiltered = templates.filter(template => 
@@ -101,7 +127,7 @@ export function useTemplates() {
 
   useEffect(() => {
     fetchTemplates();
-  }, []);
+  }, [fetchTemplates]);
 
   return {
     templates,

@@ -38,9 +38,9 @@ const useAuthMock = useAuth as jest.Mock;
 const baseUser = { id: "user-1" } as { id: string };
 const USER_PREFS_KEY = "user-preferences";
 
-type SelectResult = { data: any; error: any };
-type UpdateResult = { error: any };
-type InsertResult = { error: any };
+type SelectResult = { data: Record<string, unknown> | null; error: Error | null };
+type UpdateResult = { error: Error | null };
+type InsertResult = { error: Error | null };
 
 function createSelectTable(result: SelectResult) {
   const maybeSingle = jest.fn().mockResolvedValue(result);

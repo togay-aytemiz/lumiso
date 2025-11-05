@@ -1,12 +1,45 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+type SortableValue = string | number | null | undefined;
+
+const normalizeSortValue = (value: unknown): SortableValue => {
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+
+  if (typeof value === "boolean") {
+    return value ? 1 : 0;
+  }
+
+  if (typeof value === "number") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const parsedDate = new Date(value);
+    if (!Number.isNaN(parsedDate.getTime())) {
+      return parsedDate.getTime();
+    }
+    return value.toLowerCase();
+  }
+
+  if (value == null) {
+    return value;
+  }
+
+  return String(value).toLowerCase();
+};
 
 export interface Column<T> {
   key: keyof T | string;
   header: string;
   sortable?: boolean;
   filterable?: boolean;
-  render?: (item: T, value: any) => React.ReactNode;
-  accessor?: (item: T) => any;
+  render?: (item: T, value: unknown) => React.ReactNode;
+  accessor?: (item: T) => unknown;
 }
 
 export interface UseDataTableProps<T> {
@@ -23,20 +56,25 @@ export function useDataTable<T>({ data, columns, itemsPerPage = 20 }: UseDataTab
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [filters, setFilters] = useState<Record<string, string>>({});
 
-  const getValue = (item: T, column: Column<T>) => {
+  const getValue = useCallback((item: T, column: Column<T>): unknown => {
     if (column.accessor) {
       return column.accessor(item);
     }
     if (typeof column.key === 'string' && column.key.includes('.')) {
       const keys = column.key.split('.');
-      let value: any = item;
+      let value: unknown = item;
       for (const key of keys) {
-        value = value?.[key];
+        if (isRecord(value)) {
+          value = value[key];
+        } else {
+          value = undefined;
+          break;
+        }
       }
       return value;
     }
     return item[column.key as keyof T];
-  };
+  }, []);
 
   const filteredAndSortedData = useMemo(() => {
     let filtered = data;
@@ -59,28 +97,10 @@ export function useDataTable<T>({ data, columns, itemsPerPage = 20 }: UseDataTab
     if (sortField) {
       const column = columns.find(col => col.key === sortField);
       if (column) {
-        filtered.sort((a, b) => {
-          let aValue = getValue(a, column);
-          let bValue = getValue(b, column);
+        const sorted = [...filtered].sort((a, b) => {
+          const aValue = normalizeSortValue(getValue(a, column));
+          const bValue = normalizeSortValue(getValue(b, column));
 
-          // Handle dates
-          if (aValue instanceof Date && bValue instanceof Date) {
-            aValue = aValue.getTime();
-            bValue = bValue.getTime();
-          } else if (typeof aValue === 'string' && typeof bValue === 'string') {
-            // Check if it's a date string
-            const aDate = new Date(aValue);
-            const bDate = new Date(bValue);
-            if (!isNaN(aDate.getTime()) && !isNaN(bDate.getTime())) {
-              aValue = aDate.getTime();
-              bValue = bDate.getTime();
-            } else {
-              aValue = aValue.toLowerCase();
-              bValue = bValue.toLowerCase();
-            }
-          }
-
-          // Handle null/undefined values
           if (aValue == null && bValue == null) return 0;
           if (aValue == null) return 1;
           if (bValue == null) return -1;
@@ -89,11 +109,12 @@ export function useDataTable<T>({ data, columns, itemsPerPage = 20 }: UseDataTab
           if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
           return 0;
         });
+        filtered = sorted;
       }
     }
 
     return filtered;
-  }, [data, filters, sortField, sortDirection, columns]);
+  }, [data, filters, sortField, sortDirection, columns, getValue]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedData.length / itemsPerPage);

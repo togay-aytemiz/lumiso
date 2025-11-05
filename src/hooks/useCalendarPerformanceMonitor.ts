@@ -13,6 +13,23 @@ interface PerformanceMetrics {
   } | null;
 }
 
+type PerformanceMemory = {
+  usedJSHeapSize: number;
+  totalJSHeapSize: number;
+  jsHeapSizeLimit: number;
+};
+
+const hasPerformanceMemory = (
+  target: Performance
+): target is Performance & { memory: PerformanceMemory } => {
+  const potentialMemory = (target as { memory?: PerformanceMemory }).memory;
+  return (
+    typeof potentialMemory?.usedJSHeapSize === 'number' &&
+    typeof potentialMemory.totalJSHeapSize === 'number' &&
+    typeof potentialMemory.jsHeapSizeLimit === 'number'
+  );
+};
+
 /**
  * Performance monitoring hook specifically for calendar operations
  * Tracks render times, query performance, and memory usage
@@ -78,11 +95,14 @@ export function useCalendarPerformanceMonitor() {
   // Update memory usage
   const updateMemoryUsage = () => {
     // Browser-compatible memory usage check
-    const memoryUsage = (performance as any).memory ? {
-      used: Math.round((performance as any).memory.usedJSHeapSize / 1024 / 1024),
-      total: Math.round((performance as any).memory.totalJSHeapSize / 1024 / 1024),
-      limit: Math.round((performance as any).memory.jsHeapSizeLimit / 1024 / 1024)
-    } : null;
+    const memoryUsage =
+      typeof performance !== 'undefined' && hasPerformanceMemory(performance)
+        ? {
+            used: Math.round(performance.memory.usedJSHeapSize / 1024 / 1024),
+            total: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024),
+            limit: Math.round(performance.memory.jsHeapSizeLimit / 1024 / 1024)
+          }
+        : null;
     
     setMetrics(prev => ({
       ...prev,

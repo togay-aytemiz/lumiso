@@ -10,7 +10,23 @@ interface SettingsSectionOptions<T> {
   disableToast?: boolean; // New option to disable section-level toasts
 }
 
-export function useSettingsSection<T extends Record<string, any>>({
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") {
+      return message;
+    }
+  }
+  return "An unexpected error occurred";
+};
+
+export function useSettingsSection<T extends Record<string, unknown>>({
   sectionName,
   initialValues,
   onSave,
@@ -23,8 +39,8 @@ export function useSettingsSection<T extends Record<string, any>>({
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const { toast } = useToast();
-  const throttleRef = useRef<NodeJS.Timeout>();
-  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+  const throttleRef = useRef<ReturnType<typeof setTimeout>>();
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Check if section has unsaved changes
   const isDirty = JSON.stringify(values) !== JSON.stringify(savedValues);
@@ -33,21 +49,7 @@ export function useSettingsSection<T extends Record<string, any>>({
   useEffect(() => {
     setValues(initialValues);
     setSavedValues(initialValues);
-  }, [JSON.stringify(initialValues)]);
-
-  const updateValue = useCallback((key: keyof T, value: T[keyof T]) => {
-    setValues(prev => ({ ...prev, [key]: value }));
-    
-    if (autoSave) {
-      if (throttleRef.current) {
-        clearTimeout(throttleRef.current);
-      }
-      
-      throttleRef.current = setTimeout(() => {
-        handleSave({ ...values, [key]: value });
-      }, throttleMs);
-    }
-  }, [values, autoSave, throttleMs]);
+  }, [initialValues]);
 
   const handleSave = useCallback(async (valuesToSave?: T) => {
     const dataToSave = valuesToSave || values;
@@ -86,11 +88,11 @@ export function useSettingsSection<T extends Record<string, any>>({
           });
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       // Always show error toasts
       toast({
         title: "Error",
-        description: `Failed to save ${sectionName}. Please try again.`,
+        description: getErrorMessage(error),
         variant: "destructive",
         duration: 5000,
       });
@@ -98,6 +100,27 @@ export function useSettingsSection<T extends Record<string, any>>({
       setIsSaving(false);
     }
   }, [values, onSave, sectionName, autoSave, toast, disableToast]);
+
+  const updateValue = useCallback(
+    (key: keyof T, value: T[keyof T]) => {
+      setValues(prev => {
+        const nextValues = { ...prev, [key]: value };
+
+        if (autoSave) {
+          if (throttleRef.current) {
+            clearTimeout(throttleRef.current);
+          }
+
+          throttleRef.current = setTimeout(() => {
+            handleSave(nextValues);
+          }, throttleMs);
+        }
+
+        return nextValues;
+      });
+    },
+    [autoSave, handleSave, throttleMs]
+  );
 
   const handleCancel = useCallback(() => {
     setValues(savedValues);

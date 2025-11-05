@@ -1,12 +1,103 @@
 import React from "react";
+import type { ComponentProps, PropsWithChildren, ReactNode } from "react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import AllSessions from "../UpcomingSessions";
 import { supabase } from "@/integrations/supabase/client";
-import { useSessionStatuses } from "@/hooks/useOrganizationData";
+import type { KpiCardProps } from "@/components/ui/kpi-card";
+import type SessionSheetView from "@/components/SessionSheetView";
+import type { SegmentedControlProps } from "@/components/ui/segmented-control";
+import type { AdvancedTableColumn } from "@/components/data-table";
+
+type TranslationOptions = {
+  returnObjects?: boolean;
+  metric?: string;
+  total?: number;
+  today?: number;
+  upcoming?: number;
+  time?: string;
+  count?: number;
+};
+
+interface SessionRow {
+  id: string;
+  lead_id: string;
+  session_date: string;
+  session_time: string;
+  notes: string;
+  status: string;
+  created_at: string;
+  leads: {
+    id: string;
+    name: string;
+    status: string;
+  };
+  project_id: string | null;
+  projects:
+    | null
+    | {
+        id: string;
+        name: string;
+        status_id?: string | null;
+        project_status?: { id: string; name: string; color: string } | null;
+      };
+}
+
+type SessionRows = SessionRow[];
+
+interface ProjectStatusRecord {
+  id: string;
+  name: string;
+}
+
+type SessionsQueryResult = Promise<{ data: SessionRows; error: null }>;
+
+interface SessionsQuery {
+  select: jest.Mock<SessionsQuery, [string]>;
+  eq: jest.Mock<SessionsQuery, [string, unknown]>;
+  order: jest.Mock<SessionsQuery | SessionsQueryResult, [string, { ascending?: boolean }?]>;
+}
+
+interface MaybeSingleQuery<T> {
+  select: jest.Mock<MaybeSingleQuery<T>, [string]>;
+  eq: jest.Mock<MaybeSingleQuery<T>, [string, unknown]>;
+  ilike: jest.Mock<MaybeSingleQuery<T>, [string, string]>;
+  maybeSingle: jest.Mock<Promise<{ data: T; error: null }>, []>;
+}
+
+interface SingleQuery<T> {
+  select: jest.Mock<SingleQuery<T>, [string]>;
+  eq: jest.Mock<SingleQuery<T>, [string, unknown]>;
+  single: jest.Mock<Promise<{ data: T; error: null }>, []>;
+}
+
+type SessionStatusResult = {
+  id: string;
+  name: string;
+  color?: string;
+  lifecycle?: string | null;
+  is_system_initial?: boolean;
+};
+
+type SessionSheetViewProps = ComponentProps<typeof SessionSheetView>;
+type SessionTableColumn = AdvancedTableColumn<SessionRow>;
+
+const useThrottledRefetchOnFocusMock = jest.fn<
+  void,
+  [() => void | Promise<void>, number?]
+>();
+const useSessionStatusesMock = jest.fn<{ data?: SessionStatusResult[] }, []>();
+interface ViewProjectDialogProps {
+  open: boolean;
+  project?: { id?: string | null } | null;
+}
+const writeFileXLSXMock = jest.fn<void, [unknown, unknown?, unknown?]>();
+const jsonToSheetMock = jest.fn<Record<string, unknown>, [unknown?]>(() => ({}));
+const bookNewMock = jest.fn<Record<string, unknown>, []>(() => ({}));
+const bookAppendSheetMock = jest.fn<void, [unknown, unknown, string?]>();
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string, options?: any) => {
+    t: (key: string, options?: TranslationOptions) => {
       if (options?.returnObjects) {
         return [];
       }
@@ -38,11 +129,11 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
 }));
 
 jest.mock("@/hooks/useThrottledRefetchOnFocus", () => ({
-  useThrottledRefetchOnFocus: jest.fn(),
+  useThrottledRefetchOnFocus: useThrottledRefetchOnFocusMock,
 }));
 
 jest.mock("@/hooks/useOrganizationData", () => ({
-  useSessionStatuses: jest.fn(),
+  useSessionStatuses: useSessionStatusesMock,
 }));
 
 jest.mock("@/hooks/use-toast", () => ({
@@ -50,8 +141,12 @@ jest.mock("@/hooks/use-toast", () => ({
 }));
 
 jest.mock("@/components/ui/button", () => ({
-  Button: ({ children, onClick, ...rest }: any) => (
-    <button type="button" onClick={onClick} {...rest}>
+  Button: ({
+    children,
+    type = "button",
+    ...rest
+  }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button type={type} {...rest}>
       {children}
     </button>
   ),
@@ -60,7 +155,7 @@ jest.mock("@/components/ui/button", () => ({
 const sanitizeTestId = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
 jest.mock("@/components/ui/kpi-card", () => ({
-  KpiCard: ({ title, value, footer }: any) => (
+  KpiCard: ({ title, value, footer }: KpiCardProps) => (
     <div data-testid={`kpi-${sanitizeTestId(String(title))}`}>
       <span data-testid={`kpi-${sanitizeTestId(String(title))}-value`}>{value}</span>
       {footer}
@@ -74,15 +169,20 @@ jest.mock("@/components/ui/kpi-presets", () => ({
 }));
 
 jest.mock("@/components/ui/segmented-control", () => ({
-  SegmentedControl: ({ value, onValueChange, options }: any) => (
+  SegmentedControl: ({ value, onValueChange, options }: SegmentedControlProps) => (
     <div data-testid="segment-control" data-value={value}>
-      {options.map((option: any) => (
+      {options.map((option) => (
         <button
           key={option.value}
           type="button"
           data-testid={`segment-${option.value}`}
           aria-label={option.ariaLabel}
-          onClick={() => onValueChange(option.value)}
+          disabled={option.disabled}
+          onClick={() => {
+            if (!option.disabled) {
+              onValueChange(option.value);
+            }
+          }}
         >
           {option.label}
         </button>
@@ -92,53 +192,58 @@ jest.mock("@/components/ui/segmented-control", () => ({
 }));
 
 jest.mock("@/components/ui/page-header", () => ({
-  PageHeader: ({ title, subtitle, children }: any) => (
+  PageHeader: ({
+    title,
+    subtitle,
+    children,
+  }: PropsWithChildren<{ title?: ReactNode; subtitle?: ReactNode }>) => (
     <div>
       <h1>{title}</h1>
       <p>{subtitle}</p>
       {children}
     </div>
   ),
-  PageHeaderSearch: ({ children }: any) => <div>{children}</div>,
-  PageHeaderActions: ({ children }: any) => <div>{children}</div>,
+  PageHeaderSearch: ({ children }: PropsWithChildren<ReactNode>) => <div>{children}</div>,
+  PageHeaderActions: ({ children }: PropsWithChildren<ReactNode>) => <div>{children}</div>,
 }));
 
 jest.mock("@/components/GlobalSearch", () => () => <div data-testid="global-search" />);
 
 jest.mock("@/components/NewSessionDialog", () => ({
   __esModule: true,
-  default: ({ children }: any) => <div>{children}</div>,
+  default: ({ children }: PropsWithChildren<ReactNode>) => <div>{children}</div>,
 }));
 
 jest.mock("@/components/ViewProjectDialog", () => ({
-  ViewProjectDialog: ({ open, project }: any) =>
+  ViewProjectDialog: ({ open, project }: ViewProjectDialogProps) =>
     open ? <div data-testid="view-project-dialog">{project?.id}</div> : null,
 }));
 
-const sessionSheetMock = jest.fn(({ sessionId, isOpen, onOpenChange }: any) =>
-  isOpen ? (
-    <div data-testid="session-sheet">
-      Session Sheet {sessionId}
-      <button type="button" onClick={() => onOpenChange(false)}>
-        Close
-      </button>
-    </div>
-  ) : null,
+const sessionSheetMock = jest.fn(
+  ({ sessionId, isOpen, onOpenChange }: SessionSheetViewProps) =>
+    isOpen ? (
+      <div data-testid="session-sheet">
+        Session Sheet {sessionId}
+        <button type="button" onClick={() => onOpenChange(false)}>
+          Close
+        </button>
+      </div>
+    ) : null,
 );
 
 jest.mock("@/components/SessionSheetView", () => ({
   __esModule: true,
-  default: (props: any) => sessionSheetMock(props),
+  default: (props: SessionSheetViewProps) => sessionSheetMock(props),
 }));
 
 jest.mock("@/components/ui/popover", () => ({
-  Popover: ({ children }: any) => <div>{children}</div>,
-  PopoverTrigger: ({ children }: any) => <div>{children}</div>,
-  PopoverContent: ({ children }: any) => <div>{children}</div>,
+  Popover: ({ children }: PropsWithChildren<ReactNode>) => <div>{children}</div>,
+  PopoverTrigger: ({ children }: PropsWithChildren<ReactNode>) => <div>{children}</div>,
+  PopoverContent: ({ children }: PropsWithChildren<ReactNode>) => <div>{children}</div>,
 }));
 
 jest.mock("@/components/ui/badge", () => ({
-  Badge: ({ children }: any) => <span>{children}</span>,
+  Badge: ({ children }: PropsWithChildren<ReactNode>) => <span>{children}</span>,
 }));
 
 jest.mock("@/components/data-table", () => ({
@@ -148,23 +253,35 @@ jest.mock("@/components/data-table", () => ({
     onRowClick,
     emptyState,
     actions,
-  }: any) => (
+  }: {
+    data: SessionRow[];
+    columns: SessionTableColumn[];
+    onRowClick?: (row: SessionRow) => void;
+    emptyState?: ReactNode;
+    actions?: ReactNode;
+  }) => (
     <div>
       <div data-testid="table-actions">{actions}</div>
       <div data-testid="table-rows">
         {data.length === 0
           ? emptyState
-          : data.map((row: any) => (
+          : data.map((row) => (
               <div
                 key={row.id}
                 data-testid={`row-${row.id}`}
                 onClick={() => onRowClick?.(row)}
               >
-                {columns.map((column: any) => (
-                  <div key={column.id} data-testid={`cell-${row.id}-${column.id}`}>
-                    {column.render ? column.render(row) : row[column.accessorKey || column.id] || ""}
-                  </div>
-                ))}
+                {columns.map((column) => {
+                  const key = (column.accessorKey ?? column.id) as keyof SessionRow;
+                  const fallbackValue =
+                    key in row ? (row as Record<string, unknown>)[key] ?? "" : "";
+                  const cellContent = column.render ? column.render(row) : fallbackValue;
+                  return (
+                    <div key={column.id} data-testid={`cell-${row.id}-${column.id}`}>
+                      {cellContent as ReactNode}
+                    </div>
+                  );
+                })}
               </div>
             ))}
       </div>
@@ -173,42 +290,91 @@ jest.mock("@/components/data-table", () => ({
 }));
 
 jest.mock("xlsx/xlsx.mjs", () => ({
-  writeFileXLSX: jest.fn(),
+  writeFileXLSX: writeFileXLSXMock,
   utils: {
-    json_to_sheet: jest.fn(() => ({})),
-    book_new: jest.fn(() => ({})),
-    book_append_sheet: jest.fn(),
+    json_to_sheet: jsonToSheetMock,
+    book_new: bookNewMock,
+    book_append_sheet: bookAppendSheetMock,
   },
 }));
 
-const mockSupabaseFrom = supabase.from as jest.Mock;
-const mockUseSessionStatuses = useSessionStatuses as jest.Mock;
+const mockSupabaseFrom = supabase.from as unknown as jest.MockedFunction<
+  typeof supabase["from"]
+>;
 
-const createSessionsQuery = (sessions: any[]) => {
+const createSessionsQuery = (sessions: SessionRows): SessionsQuery => {
   let orderCalls = 0;
-  const query: any = {};
-  query.select = jest.fn(() => query);
-  query.eq = jest.fn(() => query);
-  query.order = jest.fn(() => {
+
+  const selectMock: SessionsQuery["select"] = jest.fn();
+  const eqMock: SessionsQuery["eq"] = jest.fn();
+  const orderMock: SessionsQuery["order"] = jest.fn();
+
+  const query: SessionsQuery = {
+    select: selectMock,
+    eq: eqMock,
+    order: orderMock,
+  };
+
+  selectMock.mockReturnValue(query);
+  eqMock.mockReturnValue(query);
+  orderMock.mockImplementation(() => {
     orderCalls += 1;
     if (orderCalls >= 2) {
       return Promise.resolve({ data: sessions, error: null });
     }
     return query;
   });
+
   return query;
 };
 
-const createMaybeSingleQuery = (data: any) => {
-  const query: any = {};
-  query.select = jest.fn(() => query);
-  query.eq = jest.fn(() => query);
-  query.ilike = jest.fn(() => query);
-  query.maybeSingle = jest.fn(() => Promise.resolve({ data, error: null }));
+const createMaybeSingleQuery = (
+  data: ProjectStatusRecord | null
+): MaybeSingleQuery<ProjectStatusRecord | null> => {
+  const selectMock: MaybeSingleQuery<ProjectStatusRecord | null>["select"] = jest.fn();
+  const eqMock: MaybeSingleQuery<ProjectStatusRecord | null>["eq"] = jest.fn();
+  const ilikeMock: MaybeSingleQuery<ProjectStatusRecord | null>["ilike"] = jest.fn();
+  const maybeSingleMock: MaybeSingleQuery<ProjectStatusRecord | null>["maybeSingle"] =
+    jest.fn().mockResolvedValue({ data, error: null });
+
+  const query: MaybeSingleQuery<ProjectStatusRecord | null> = {
+    select: selectMock,
+    eq: eqMock,
+    ilike: ilikeMock,
+    maybeSingle: maybeSingleMock,
+  };
+
+  selectMock.mockReturnValue(query);
+  eqMock.mockReturnValue(query);
+  ilikeMock.mockReturnValue(query);
+
   return query;
 };
 
-const setSupabaseResponses = (sessions: any[], archivedStatus: any = null) => {
+const createSingleQuery = (): SingleQuery<null> => {
+  const selectMock: SingleQuery<null>["select"] = jest.fn();
+  const eqMock: SingleQuery<null>["eq"] = jest.fn();
+  const singleMock: SingleQuery<null>["single"] = jest.fn().mockResolvedValue({
+    data: null,
+    error: null,
+  });
+
+  const query: SingleQuery<null> = {
+    select: selectMock,
+    eq: eqMock,
+    single: singleMock,
+  };
+
+  selectMock.mockReturnValue(query);
+  eqMock.mockReturnValue(query);
+
+  return query;
+};
+
+const setSupabaseResponses = (
+  sessions: SessionRows,
+  archivedStatus: ProjectStatusRecord | null = null
+) => {
   mockSupabaseFrom.mockImplementation((table: string) => {
     if (table === "sessions") {
       return createSessionsQuery(sessions);
@@ -216,11 +382,7 @@ const setSupabaseResponses = (sessions: any[], archivedStatus: any = null) => {
     if (table === "project_statuses") {
       return createMaybeSingleQuery(archivedStatus);
     }
-    const query: any = {};
-    query.select = jest.fn(() => query);
-    query.eq = jest.fn(() => query);
-    query.single = jest.fn(() => Promise.resolve({ data: null, error: null }));
-    return query;
+    return createSingleQuery();
   });
 };
 
@@ -233,7 +395,7 @@ describe("Upcoming sessions page", () => {
 
   beforeAll(() => {
     class FixedDate extends RealDate {
-      constructor(...args: any[]) {
+      constructor(...args: ConstructorParameters<typeof RealDate>) {
         if (args.length === 0) {
           super(fixedDate.toISOString());
         } else {
@@ -255,10 +417,10 @@ describe("Upcoming sessions page", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseSessionStatuses.mockReturnValue({ data: [] });
+    useSessionStatusesMock.mockReturnValue({ data: [] });
   });
 
-  const buildSessions = () => [
+  const buildSessions = (): SessionRows => [
     {
       id: "session-upcoming",
       lead_id: "lead-1",

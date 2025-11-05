@@ -21,46 +21,75 @@ jest.mock("@/hooks/useTemplateVariables", () => ({
   })),
 }));
 
-jest.mock("@/components/ui/sheet", () => ({
-  Sheet: ({ children }: any) => <div>{children}</div>,
-  SheetContent: ({ children }: any) => <div>{children}</div>,
-  SheetHeader: ({ children }: any) => <div>{children}</div>,
-  SheetTitle: ({ children }: any) => <h2>{children}</h2>,
-  SheetDescription: ({ children }: any) => <p>{children}</p>,
-}));
+jest.mock("@/components/ui/sheet", () => {
+  type MockProps = React.PropsWithChildren<Record<string, unknown>>;
 
-jest.mock("@/components/ui/popover", () => ({
-  Popover: ({ children }: any) => <div>{children}</div>,
-  PopoverTrigger: ({ children, asChild }: any) =>
-    asChild ? (
-      React.cloneElement(children, {
-        onClick: children.props.onClick,
-      })
-    ) : (
-      <button type="button">{children}</button>
-    ),
-  PopoverContent: ({ children }: any) => <div>{children}</div>,
-}));
+  const DivWrapper: React.FC<MockProps> = ({ children }) => <div>{children}</div>;
+  const HeadingWrapper: React.FC<MockProps> = ({ children }) => <h2>{children}</h2>;
+  const ParagraphWrapper: React.FC<MockProps> = ({ children }) => <p>{children}</p>;
 
-jest.mock("@/components/ui/command", () => ({
-  Command: ({ children }: any) => <div>{children}</div>,
-  CommandInput: ({ placeholder }: any) => (
+  return {
+    Sheet: DivWrapper,
+    SheetContent: DivWrapper,
+    SheetHeader: DivWrapper,
+    SheetTitle: HeadingWrapper,
+    SheetDescription: ParagraphWrapper,
+  };
+});
+
+jest.mock("@/components/ui/popover", () => {
+  type PopoverProps = React.PropsWithChildren<Record<string, unknown>>;
+  interface PopoverTriggerProps extends React.PropsWithChildren {
+    asChild?: boolean;
+  }
+
+  const PopoverWrapper: React.FC<PopoverProps> = ({ children }) => <div>{children}</div>;
+  const PopoverContentWrapper: React.FC<PopoverProps> = ({ children }) => <div>{children}</div>;
+
+  const PopoverTrigger: React.FC<PopoverTriggerProps> = ({ children, asChild }) => {
+    if (asChild && React.isValidElement(children)) {
+      return children;
+    }
+    return <button type="button">{children}</button>;
+  };
+
+  return {
+    Popover: PopoverWrapper,
+    PopoverTrigger,
+    PopoverContent: PopoverContentWrapper,
+  };
+});
+
+jest.mock("@/components/ui/command", () => {
+  type CommandProps = React.PropsWithChildren<Record<string, unknown>>;
+
+  const Command: React.FC<CommandProps> = ({ children }) => <div>{children}</div>;
+  const CommandList: React.FC<CommandProps> = ({ children }) => <div>{children}</div>;
+  const CommandEmpty: React.FC<CommandProps> = ({ children }) => <div>{children}</div>;
+
+  const CommandInput: React.FC<{ placeholder?: string }> = ({ placeholder }) => (
     <input placeholder={placeholder} readOnly />
-  ),
-  CommandList: ({ children }: any) => <div>{children}</div>,
-  CommandEmpty: ({ children }: any) => <div>{children}</div>,
-  CommandGroup: ({ heading, children }: any) => (
+  );
+
+  const CommandGroup: React.FC<React.PropsWithChildren<{ heading?: string }>> = ({
+    heading,
+    children,
+  }) => (
     <div>
-      <strong>{heading}</strong>
+      {heading ? <strong>{heading}</strong> : null}
       {children}
     </div>
-  ),
-  CommandItem: ({ children, onSelect }: any) => (
+  );
+
+  const CommandItem: React.FC<React.PropsWithChildren<{ onSelect?: (value?: string) => void }>> = ({
+    children,
+    onSelect,
+  }) => (
     <div
       role="button"
       tabIndex={0}
       onClick={() => onSelect?.()}
-      onKeyDown={(event: React.KeyboardEvent) => {
+      onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => {
         if (event.key === "Enter") {
           onSelect?.();
         }
@@ -68,17 +97,34 @@ jest.mock("@/components/ui/command", () => ({
     >
       {children}
     </div>
-  ),
-}));
+  );
 
-jest.mock("@/components/ui/dialog", () => ({
-  Dialog: ({ children }: any) => <div>{children}</div>,
-  DialogContent: ({ children }: any) => <div>{children}</div>,
-  DialogHeader: ({ children }: any) => <div>{children}</div>,
-  DialogFooter: ({ children }: any) => <div>{children}</div>,
-  DialogTitle: ({ children }: any) => <h2>{children}</h2>,
-  DialogDescription: ({ children }: any) => <p>{children}</p>,
-}));
+  return {
+    Command,
+    CommandInput,
+    CommandList,
+    CommandEmpty,
+    CommandGroup,
+    CommandItem,
+  };
+});
+
+jest.mock("@/components/ui/dialog", () => {
+  type DialogProps = React.PropsWithChildren<Record<string, unknown>>;
+
+  const DivWrapper: React.FC<DialogProps> = ({ children }) => <div>{children}</div>;
+  const HeadingWrapper: React.FC<DialogProps> = ({ children }) => <h2>{children}</h2>;
+  const ParagraphWrapper: React.FC<DialogProps> = ({ children }) => <p>{children}</p>;
+
+  return {
+    Dialog: DivWrapper,
+    DialogContent: DivWrapper,
+    DialogHeader: DivWrapper,
+    DialogFooter: DivWrapper,
+    DialogTitle: HeadingWrapper,
+    DialogDescription: ParagraphWrapper,
+  };
+});
 
 jest.mock("@/hooks/useTypedTranslation", () => ({
   useMessagesTranslation: jest.fn(() => ({

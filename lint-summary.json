@@ -1,5 +1,5 @@
 {
-  "total": 1604,
+  "total": 1487,
   "summary": [
     {
       "filePath": "src/components/__tests__/ProjectSheetView.test.tsx",
@@ -16,10 +16,6 @@
     {
       "filePath": "src/pages/leads/hooks/useLeadsData.ts",
       "count": 34
-    },
-    {
-      "filePath": "src/pages/__tests__/UpcomingSessions.test.tsx",
-      "count": 27
     },
     {
       "filePath": "src/utils/entityUtils.ts",
@@ -39,10 +35,6 @@
     },
     {
       "filePath": "src/components/settings/__tests__/PackageDialogs.test.tsx",
-      "count": 20
-    },
-    {
-      "filePath": "src/components/template-builder/__tests__/TemplateBuilderDialogs.test.tsx",
       "count": 20
     },
     {
@@ -68,18 +60,6 @@
     {
       "filePath": "src/components/settings/__tests__/ProjectTypeDialogs.test.tsx",
       "count": 17
-    },
-    {
-      "filePath": "src/components/template-builder/__tests__/StorageQuotaDisplay.test.tsx",
-      "count": 17
-    },
-    {
-      "filePath": "src/components/template-builder/__tests__/TemplateBuilderEditors.test.tsx",
-      "count": 17
-    },
-    {
-      "filePath": "src/pages/__tests__/Payments.test.tsx",
-      "count": 16
     },
     {
       "filePath": "src/components/__tests__/EnhancedAddLeadDialog.test.tsx",

@@ -1,30 +1,82 @@
 import React from "react";
+import type { ComponentProps } from "react";
 import { act, fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import Payments from "../Payments";
+import type { PaymentsDateControls as PaymentsDateControlsComponent } from "@/pages/payments/components/PaymentsDateControls";
+import type { PaymentsTrendChart as PaymentsTrendChartComponent } from "@/pages/payments/components/PaymentsTrendChart";
+import type { PaymentsMetricsSummary as PaymentsMetricsSummaryComponent } from "@/pages/payments/components/PaymentsMetricsSummary";
+import type { PaymentsTableSection as PaymentsTableSectionComponent } from "@/pages/payments/components/PaymentsTableSection";
+import type { ProjectSheetView as ProjectSheetViewComponent } from "@/components/ProjectSheetView";
+import type { Payment } from "@/pages/payments/types";
+import type {
+  AdvancedDataTableFiltersConfig,
+  AdvancedTableColumn,
+} from "@/components/data-table";
+import type { usePaymentsFilters as usePaymentsFiltersFn } from "@/pages/payments/hooks/usePaymentsFilters";
+import type { usePaymentsData as usePaymentsDataFn } from "@/pages/payments/hooks/usePaymentsData";
+import type { usePaymentsTableColumns as usePaymentsTableColumnsFn } from "@/pages/payments/hooks/usePaymentsTableColumns";
+import type { useThrottledRefetchOnFocus as useThrottledRefetchOnFocusFn } from "@/hooks/useThrottledRefetchOnFocus";
 
-const mockUsePaymentsFilters = jest.fn();
-const mockUsePaymentsData = jest.fn();
-const mockUsePaymentsTableColumns = jest.fn();
-const mockUseThrottledRefetchOnFocus = jest.fn();
-const mockPaymentsDateControls = jest.fn(({ onSelectedFilterChange }: any) => (
-  <div data-testid="payments-date-controls">
-    <button type="button" onClick={() => onSelectedFilterChange("last7days")}>change-filter</button>
-  </div>
-));
-const mockPaymentsTrendChart = jest.fn(() => <div data-testid="payments-trend-chart" />);
-const mockPaymentsMetricsSummary = jest.fn(() => <div data-testid="payments-metrics-summary" />);
-const mockPaymentsTableSection = jest.fn((props: any) => (
-  <div data-testid="payments-table-section">
-    <div data-testid="table-actions">{props.actions}</div>
-  </div>
-));
-const mockProjectSheetView = jest.fn(() => <div data-testid="project-sheet-view" />);
+type PaymentsDateControlsProps = ComponentProps<typeof PaymentsDateControlsComponent>;
+type PaymentsTrendChartProps = ComponentProps<typeof PaymentsTrendChartComponent>;
+type PaymentsMetricsSummaryProps = ComponentProps<typeof PaymentsMetricsSummaryComponent>;
+type PaymentsTableSectionProps = ComponentProps<typeof PaymentsTableSectionComponent>;
+type ProjectSheetViewProps = ComponentProps<typeof ProjectSheetViewComponent>;
 
-const mockToast = jest.fn();
-const mockWriteFileXLSX = jest.fn();
-const mockJsonToSheet = jest.fn(() => ({ sheet: true }));
-const mockBookNew = jest.fn(() => ({ workbook: true }));
-const mockBookAppendSheet = jest.fn();
+type UsePaymentsFiltersArgs = Parameters<typeof usePaymentsFiltersFn>;
+type UsePaymentsFiltersReturn = ReturnType<typeof usePaymentsFiltersFn>;
+
+type UsePaymentsDataArgs = Parameters<typeof usePaymentsDataFn>;
+type UsePaymentsDataReturn = ReturnType<typeof usePaymentsDataFn>;
+
+type UsePaymentsTableColumnsArgs = Parameters<typeof usePaymentsTableColumnsFn>;
+type UsePaymentsTableColumnsReturn = ReturnType<typeof usePaymentsTableColumnsFn>;
+
+type UseThrottledRefetchOnFocusArgs = Parameters<typeof useThrottledRefetchOnFocusFn>;
+
+const mockUsePaymentsFilters = jest.fn<UsePaymentsFiltersReturn, UsePaymentsFiltersArgs>();
+const mockUsePaymentsData = jest.fn<UsePaymentsDataReturn, UsePaymentsDataArgs>();
+const mockUsePaymentsTableColumns = jest.fn<UsePaymentsTableColumnsReturn, UsePaymentsTableColumnsArgs>();
+const mockUseThrottledRefetchOnFocus = jest.fn<void, UseThrottledRefetchOnFocusArgs>();
+
+const mockPaymentsDateControls = jest.fn(
+  (props: PaymentsDateControlsProps) => (
+    <div data-testid="payments-date-controls">
+      <button
+        type="button"
+        onClick={() => props.onSelectedFilterChange("last7days")}
+      >
+        change-filter
+      </button>
+    </div>
+  )
+);
+
+const mockPaymentsTrendChart = jest.fn(
+  (_props: PaymentsTrendChartProps) => <div data-testid="payments-trend-chart" />
+);
+
+const mockPaymentsMetricsSummary = jest.fn(
+  (_props: PaymentsMetricsSummaryProps) => <div data-testid="payments-metrics-summary" />
+);
+
+const mockPaymentsTableSection = jest.fn(
+  (props: PaymentsTableSectionProps) => (
+    <div data-testid="payments-table-section">
+      <div data-testid="table-actions">{props.actions}</div>
+    </div>
+  )
+);
+
+const mockProjectSheetView = jest.fn(
+  (_props: ProjectSheetViewProps) => <div data-testid="project-sheet-view" />
+);
+
+const mockToast = jest.fn<void, unknown[]>();
+const mockWriteFileXLSX = jest.fn<void, unknown[]>();
+const mockJsonToSheet = jest.fn<Record<string, unknown>, [unknown]>(() => ({ sheet: true }));
+const mockBookNew = jest.fn<Record<string, unknown>, []>(() => ({ workbook: true }));
+const mockBookAppendSheet = jest.fn<void, [unknown, unknown, string]>();
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -57,51 +109,59 @@ jest.mock("@/components/ui/button", () => ({
 }));
 
 jest.mock("@/pages/payments/components/PaymentsDateControls", () => ({
-  PaymentsDateControls: (props: any) => mockPaymentsDateControls(props),
+  PaymentsDateControls: (props: PaymentsDateControlsProps) => mockPaymentsDateControls(props),
 }));
 
 jest.mock("@/pages/payments/components/PaymentsTrendChart", () => ({
-  PaymentsTrendChart: (props: any) => mockPaymentsTrendChart(props),
+  PaymentsTrendChart: (props: PaymentsTrendChartProps) => mockPaymentsTrendChart(props),
 }));
 
 jest.mock("@/pages/payments/components/PaymentsMetricsSummary", () => ({
-  PaymentsMetricsSummary: (props: any) => mockPaymentsMetricsSummary(props),
+  PaymentsMetricsSummary: (props: PaymentsMetricsSummaryProps) => mockPaymentsMetricsSummary(props),
 }));
 
 jest.mock("@/pages/payments/components/PaymentsTableSection", () => ({
-  PaymentsTableSection: (props: any) => mockPaymentsTableSection(props),
+  PaymentsTableSection: (props: PaymentsTableSectionProps) => mockPaymentsTableSection(props),
 }));
 
 jest.mock("@/components/ProjectSheetView", () => ({
-  ProjectSheetView: (props: any) => mockProjectSheetView(props),
+  ProjectSheetView: (props: ProjectSheetViewProps) => mockProjectSheetView(props),
 }));
 
 jest.mock("@/hooks/use-toast", () => ({
-  toast: (...args: any[]) => mockToast(...args),
+  toast: (...args: Parameters<typeof mockToast>) => mockToast(...args),
 }));
 
 jest.mock("@/hooks/useThrottledRefetchOnFocus", () => ({
-  useThrottledRefetchOnFocus: (...args: any[]) => mockUseThrottledRefetchOnFocus(...args),
+  useThrottledRefetchOnFocus: (
+    ...args: Parameters<typeof mockUseThrottledRefetchOnFocus>
+  ) => mockUseThrottledRefetchOnFocus(...args),
 }));
 
 jest.mock("@/pages/payments/hooks/usePaymentsFilters", () => ({
-  usePaymentsFilters: (...args: any[]) => mockUsePaymentsFilters(...args),
+  usePaymentsFilters: (...args: Parameters<typeof mockUsePaymentsFilters>) =>
+    mockUsePaymentsFilters(...args),
 }));
 
 jest.mock("@/pages/payments/hooks/usePaymentsData", () => ({
-  usePaymentsData: (...args: any[]) => mockUsePaymentsData(...args),
+  usePaymentsData: (...args: Parameters<typeof mockUsePaymentsData>) =>
+    mockUsePaymentsData(...args),
 }));
 
 jest.mock("@/pages/payments/hooks/usePaymentsTableColumns", () => ({
-  usePaymentsTableColumns: (...args: any[]) => mockUsePaymentsTableColumns(...args),
+  usePaymentsTableColumns: (...args: Parameters<typeof mockUsePaymentsTableColumns>) =>
+    mockUsePaymentsTableColumns(...args),
 }));
 
 jest.mock("xlsx/xlsx.mjs", () => ({
-  writeFileXLSX: (...args: any[]) => mockWriteFileXLSX(...args),
+  writeFileXLSX: (...args: Parameters<typeof mockWriteFileXLSX>) =>
+    mockWriteFileXLSX(...args),
   utils: {
-    json_to_sheet: (...args: any[]) => mockJsonToSheet(...args),
-    book_new: (...args: any[]) => mockBookNew(...args),
-    book_append_sheet: (...args: any[]) => mockBookAppendSheet(...args),
+    json_to_sheet: (...args: Parameters<typeof mockJsonToSheet>) =>
+      mockJsonToSheet(...args),
+    book_new: (...args: Parameters<typeof mockBookNew>) => mockBookNew(...args),
+    book_append_sheet: (...args: Parameters<typeof mockBookAppendSheet>) =>
+      mockBookAppendSheet(...args),
   },
 }));
 
@@ -111,17 +171,39 @@ describe("Payments page", () => {
 
     mockUsePaymentsFilters.mockReturnValue({
       state: { status: [], type: [], amountMin: null, amountMax: null, search: "" },
-      filtersConfig: { groups: [] },
+      filtersConfig: { content: null } satisfies AdvancedDataTableFiltersConfig,
       searchValue: "",
-      onSearchChange: jest.fn(),
-      onSearchClear: jest.fn(),
+      onSearchChange: jest.fn<void, [string]>(),
+      onSearchClear: jest.fn<void, []>(),
       activeFilterCount: 0,
     });
 
     mockUsePaymentsTableColumns.mockReturnValue([
-      { id: "date_paid", label: "Date" },
-      { id: "amount", label: "Amount" },
+      {
+        id: "date_paid",
+        label: "Date",
+        render: () => null,
+      } satisfies AdvancedTableColumn<Payment>,
+      {
+        id: "amount",
+        label: "Amount",
+        render: () => null,
+      } satisfies AdvancedTableColumn<Payment>,
     ]);
+
+    const fetchPayments = jest.fn<
+      ReturnType<UsePaymentsDataReturn["fetchPayments"]>,
+      Parameters<UsePaymentsDataReturn["fetchPayments"]>
+    >().mockResolvedValue(undefined);
+
+    const fetchPaymentsData = jest.fn<
+      ReturnType<UsePaymentsDataReturn["fetchPaymentsData"]>,
+      Parameters<UsePaymentsDataReturn["fetchPaymentsData"]>
+    >().mockResolvedValue({
+      payments: [],
+      count: 0,
+      metricsData: [],
+    });
 
     mockUsePaymentsData.mockReturnValue({
       paginatedPayments: [],
@@ -129,8 +211,8 @@ describe("Payments page", () => {
       totalCount: 0,
       initialLoading: true,
       tableLoading: false,
-      fetchPayments: jest.fn(),
-      fetchPaymentsData: jest.fn().mockResolvedValue({ payments: [], count: 0, metricsData: [] }),
+      fetchPayments,
+      fetchPaymentsData,
     });
   });
 
@@ -142,7 +224,7 @@ describe("Payments page", () => {
   });
 
   it("renders table section and executes export flow", async () => {
-    const paymentRow = {
+    const paymentRow: Payment = {
       id: "payment-1",
       date_paid: "2024-05-10T00:00:00.000Z",
       created_at: "2024-05-09T00:00:00.000Z",
@@ -154,11 +236,16 @@ describe("Payments page", () => {
       projects: {
         id: "project-1",
         name: "Project Alpha",
+        base_price: 1500,
+        lead_id: "lead-1",
         leads: { id: "lead-1", name: "Jane" },
       },
     };
 
-    const fetchPaymentsData = jest.fn().mockResolvedValue({
+    const fetchPaymentsData = jest.fn<
+      ReturnType<UsePaymentsDataReturn["fetchPaymentsData"]>,
+      Parameters<UsePaymentsDataReturn["fetchPaymentsData"]>
+    >().mockResolvedValue({
       payments: [paymentRow],
       count: 1,
       metricsData: [],
@@ -170,7 +257,10 @@ describe("Payments page", () => {
       totalCount: 1,
       initialLoading: false,
       tableLoading: false,
-      fetchPayments: jest.fn(),
+      fetchPayments: jest.fn<
+        ReturnType<UsePaymentsDataReturn["fetchPayments"]>,
+        Parameters<UsePaymentsDataReturn["fetchPayments"]>
+      >().mockResolvedValue(undefined),
       fetchPaymentsData,
     });
 

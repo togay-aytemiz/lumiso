@@ -1,11 +1,22 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor, act } from "@/utils/testUtils";
+import { DropResult } from "@hello-pangea/dnd";
 import { OptimizedTemplateEditor } from "../OptimizedTemplateEditor";
 import { InlineSubjectEditor } from "../InlineSubjectEditor";
 import { InlinePreheaderEditor } from "../InlinePreheaderEditor";
+import { TemplateBlock } from "@/types/templateBuilder";
 
-const dndHooks: { onDragEnd?: (result: any) => void } = {};
-const imageLibraryCalls: any[] = [];
+type DragEndHandler = (result: DropResult) => void;
+
+const dndHooks: { onDragEnd?: DragEndHandler } = {};
+
+interface ImageLibrarySheetMockProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onImageSelect?: (imageUrl: string, altText?: string) => void;
+}
+
+const imageLibraryCalls: ImageLibrarySheetMockProps[] = [];
 
 jest.mock("react-i18next", () => ({
   useTranslation: jest.fn(() => ({
@@ -13,16 +24,46 @@ jest.mock("react-i18next", () => ({
   })),
 }));
 
-jest.mock("../BlockEditor", () => ({
-  BlockEditor: ({
+jest.mock("../BlockEditor", () => {
+  type BlockEditorProps = {
+    block: TemplateBlock;
+    onUpdate: (data: TemplateBlock["data"]) => void;
+    onRemove: () => void;
+    onMoveDown: () => void;
+    onMoveUp: () => void;
+  };
+
+  const MockImageLibrarySheet: React.FC<ImageLibrarySheetMockProps> = (props) => {
+    imageLibraryCalls.push(props);
+    if (!props.open) {
+      return null;
+    }
+
+    return (
+      <div data-testid="mock-image-library">
+        <button
+          type="button"
+          data-testid="mock-library-select"
+          onClick={() =>
+            props.onImageSelect?.(
+              "https://cdn.lumiso.test/library.jpg",
+              "Library Image"
+            )
+          }
+        >
+          select-library-image
+        </button>
+      </div>
+    );
+  };
+
+  const BlockEditor: React.FC<BlockEditorProps> = ({
     block,
     onUpdate,
     onRemove,
     onMoveDown,
     onMoveUp,
-  }: any) => {
-    const React = require("react");
-    const { ImageLibrarySheet } = require("../ImageLibrarySheet");
+  }) => {
     const [isLibraryOpen, setIsLibraryOpen] = React.useState(false);
 
     const handleImageSelect = (src: string, alt?: string) => {
@@ -55,7 +96,7 @@ jest.mock("../BlockEditor", () => ({
             >
               templateBuilder.blockEditor.image.openLibrary
             </button>
-            <ImageLibrarySheet
+            <MockImageLibrarySheet
               open={isLibraryOpen}
               onOpenChange={setIsLibraryOpen}
               onImageSelect={handleImageSelect}
@@ -64,11 +105,19 @@ jest.mock("../BlockEditor", () => ({
         )}
       </div>
     );
-  },
-}));
+  };
 
-jest.mock("../AddBlockSheet", () => ({
-  AddBlockSheet: ({ open, onAddBlock }: any) =>
+  return { BlockEditor };
+});
+
+jest.mock("../AddBlockSheet", () => {
+  interface AddBlockSheetProps {
+    open: boolean;
+    onAddBlock: (type: TemplateBlock["type"]) => void;
+    onOpenChange?: (open: boolean) => void;
+  }
+
+  const AddBlockSheet: React.FC<AddBlockSheetProps> = ({ open, onAddBlock }) =>
     open ? (
       <button
         data-testid="mock-add-block"
@@ -76,11 +125,17 @@ jest.mock("../AddBlockSheet", () => ({
       >
         add-image
       </button>
-    ) : null,
-}));
+    ) : null;
 
-jest.mock("../EmojiPicker", () => ({
-  EmojiPicker: ({ onEmojiSelect }: any) => (
+  return { AddBlockSheet };
+});
+
+jest.mock("../EmojiPicker", () => {
+  interface EmojiPickerProps {
+    onEmojiSelect: (emoji: string) => void;
+  }
+
+  const EmojiPicker: React.FC<EmojiPickerProps> = ({ onEmojiSelect }) => (
     <button
       type="button"
       data-testid="emoji-picker"
@@ -88,69 +143,96 @@ jest.mock("../EmojiPicker", () => ({
     >
       emoji
     </button>
-  ),
-}));
+  );
 
-jest.mock("../VariablePicker", () => ({
-  VariablePicker: ({ onVariableSelect, trigger }: any) =>
-    trigger
-      ? React.cloneElement(trigger, {
-          onClick: () => onVariableSelect("{variable}"),
-        })
-      : (
-        <button
-          type="button"
-          data-testid="variable-picker"
-          onClick={() => onVariableSelect("{variable}")}
-        >
-          variable
-        </button>
-      ),
-}));
+  return { EmojiPicker };
+});
 
-jest.mock("../ImageLibrarySheet", () => ({
-  ImageLibrarySheet: (props: any) => {
-    imageLibraryCalls.push(props);
-    if (!props.open) {
-      return null;
+jest.mock("../VariablePicker", () => {
+  interface VariablePickerProps {
+    onVariableSelect: (variable: string) => void;
+    trigger?: React.ReactElement;
+  }
+
+  const VariablePicker: React.FC<VariablePickerProps> = ({ onVariableSelect, trigger }) => {
+    if (trigger && React.isValidElement(trigger)) {
+      const existingOnClick = trigger.props.onClick as ((event: React.MouseEvent) => void) | undefined;
+
+      return React.cloneElement(trigger, {
+        onClick: (event: React.MouseEvent) => {
+          existingOnClick?.(event);
+          onVariableSelect("{variable}");
+        },
+      });
     }
+
     return (
-      <div data-testid="mock-image-library">
-        <button
-          type="button"
-          data-testid="mock-library-select"
-          onClick={() => props.onImageSelect("https://cdn.lumiso.test/library.jpg", "Library Image")}
-        >
-          select-library-image
-        </button>
-      </div>
+      <button
+        type="button"
+        data-testid="variable-picker"
+        onClick={() => onVariableSelect("{variable}")}
+      >
+        variable
+      </button>
     );
-  },
-}));
+  };
+
+  return { VariablePicker };
+});
 
 jest.mock("@hello-pangea/dnd", () => {
-  const React = require("react");
-  return {
-    DragDropContext: ({ onDragEnd, children }: any) => {
-      dndHooks.onDragEnd = onDragEnd;
-      return <div data-testid="drag-context">{typeof children === "function" ? children() : children}</div>;
-    },
-    Droppable: ({ children }: any) =>
-      children({
-        innerRef: jest.fn(),
-        droppableProps: {},
-        placeholder: null,
-      }),
-    Draggable: ({ children, draggableId }: any) =>
-      children(
-        {
-          innerRef: jest.fn(),
-          draggableProps: { "data-draggable-id": draggableId },
-          dragHandleProps: { "data-drag-handle": draggableId },
-        },
-        { isDragging: false }
-      ),
+  type DragDropContextProps = React.PropsWithChildren<{
+    onDragEnd: DragEndHandler;
+  }>;
+
+  type DroppableRenderProps = {
+    innerRef: (element: HTMLElement | null) => void;
+    droppableProps: Record<string, unknown>;
+    placeholder: React.ReactNode;
   };
+
+  type DroppableProps = {
+    children: (provided: DroppableRenderProps) => React.ReactNode;
+  };
+
+  type DraggableRenderProps = {
+    innerRef: (element: HTMLElement | null) => void;
+    draggableProps: Record<string, unknown>;
+    dragHandleProps: Record<string, unknown>;
+  };
+
+  type DraggableSnapshot = { isDragging: boolean };
+
+  type DraggableProps = {
+    children: (provided: DraggableRenderProps, snapshot: DraggableSnapshot) => React.ReactNode;
+    draggableId: string;
+    index: number;
+  };
+
+  const DragDropContext: React.FC<DragDropContextProps> = ({ onDragEnd, children }) => {
+    dndHooks.onDragEnd = onDragEnd;
+    const content = typeof children === "function" ? (children as () => React.ReactNode)() : children;
+    return <div data-testid="drag-context">{content}</div>;
+  };
+
+  const Droppable: React.FC<DroppableProps> = ({ children }) =>
+    children({
+      innerRef: jest.fn(),
+      droppableProps: {},
+      placeholder: null,
+    });
+
+  const Draggable: React.FC<DraggableProps> = ({ children, draggableId }) =>
+    children(
+      {
+        innerRef: jest.fn(),
+        draggableProps: { "data-draggable-id": draggableId },
+        dragHandleProps: { "data-drag-handle": draggableId },
+      },
+      { isDragging: false }
+    );
+
+  return { DragDropContext, Droppable, Draggable };
 });
 
 describe("OptimizedTemplateEditor", () => {
@@ -158,11 +240,11 @@ describe("OptimizedTemplateEditor", () => {
     imageLibraryCalls.length = 0;
   });
 
-  const baseBlocks = [
+  const baseBlocks: TemplateBlock[] = [
     {
       id: "block-1",
       type: "text" as const,
-      data: { content: "Hi", formatting: {} },
+      data: { content: "Hi", formatting: { fontSize: "p" } },
       visible: true,
       order: 0,
     },
@@ -176,7 +258,7 @@ describe("OptimizedTemplateEditor", () => {
   ];
 
   it("updates block content when the editor emits changes", async () => {
-    const onBlocksChange = jest.fn();
+    const onBlocksChange = jest.fn<(blocks: TemplateBlock[]) => void>();
 
     render(
       <OptimizedTemplateEditor blocks={baseBlocks} onBlocksChange={onBlocksChange} />
@@ -196,7 +278,7 @@ describe("OptimizedTemplateEditor", () => {
   });
 
   it("reorders blocks when move controls are triggered", async () => {
-    const onBlocksChange = jest.fn();
+    const onBlocksChange = jest.fn<(blocks: TemplateBlock[]) => void>();
 
     render(
       <OptimizedTemplateEditor blocks={baseBlocks} onBlocksChange={onBlocksChange} />
@@ -209,14 +291,14 @@ describe("OptimizedTemplateEditor", () => {
 
     await waitFor(() => expect(onBlocksChange).toHaveBeenCalled());
     const reordered = onBlocksChange.mock.calls[0][0];
-    expect(reordered.map((block: any) => block.id)).toEqual([
+    expect(reordered.map((block) => block.id)).toEqual([
       "block-2",
       "block-1",
     ]);
   });
 
   it("reorders blocks when drag and drop completes", async () => {
-    const onBlocksChange = jest.fn();
+    const onBlocksChange = jest.fn<(blocks: TemplateBlock[]) => void>();
 
     render(
       <OptimizedTemplateEditor blocks={baseBlocks} onBlocksChange={onBlocksChange} />
@@ -225,24 +307,28 @@ describe("OptimizedTemplateEditor", () => {
     expect(dndHooks.onDragEnd).toBeDefined();
 
     act(() => {
-      dndHooks.onDragEnd?.({
-        source: { index: 0 },
-        destination: { index: 1 },
+      const dropResult: DropResult = {
         draggableId: "block-1",
         type: "DEFAULT",
-      });
+        source: { droppableId: "templateBlocks", index: 0 },
+        destination: { droppableId: "templateBlocks", index: 1 },
+        reason: "DROP",
+        mode: "FLUID",
+        combine: null,
+      };
+      dndHooks.onDragEnd?.(dropResult);
     });
 
     await waitFor(() => expect(onBlocksChange).toHaveBeenCalled());
     const reordered = onBlocksChange.mock.calls[0][0];
-    expect(reordered.map((block: any) => block.id)).toEqual([
+    expect(reordered.map((block) => block.id)).toEqual([
       "block-2",
       "block-1",
     ]);
   });
 
   it("adds a new block through the add block sheet", async () => {
-    const onBlocksChange = jest.fn();
+    const onBlocksChange = jest.fn<(blocks: TemplateBlock[]) => void>();
 
     render(
       <OptimizedTemplateEditor blocks={baseBlocks} onBlocksChange={onBlocksChange} />
@@ -264,7 +350,7 @@ describe("OptimizedTemplateEditor", () => {
   });
 
   it("opens the image library and applies selected image", async () => {
-    const onBlocksChange = jest.fn();
+    const onBlocksChange = jest.fn<(blocks: TemplateBlock[]) => void>();
 
     const { rerender } = render(
       <OptimizedTemplateEditor blocks={baseBlocks} onBlocksChange={onBlocksChange} />
@@ -279,8 +365,10 @@ describe("OptimizedTemplateEditor", () => {
 
     await waitFor(() => expect(onBlocksChange).toHaveBeenCalled());
     const newBlocks = onBlocksChange.mock.calls[0][0];
-    const imageBlock = newBlocks.find((block: any) => block.type === "image");
-    expect(imageBlock).toBeDefined();
+    const imageBlock = newBlocks.find((block) => block.type === "image");
+    if (!imageBlock) {
+      throw new Error("Image block was not added");
+    }
     onBlocksChange.mockClear();
 
     rerender(
@@ -299,7 +387,10 @@ describe("OptimizedTemplateEditor", () => {
 
     await waitFor(() => expect(onBlocksChange).toHaveBeenCalled());
     const updatedBlocks = onBlocksChange.mock.calls[0][0];
-    const updatedImageBlock = updatedBlocks.find((block: any) => block.id === imageBlock.id);
+    const updatedImageBlock = updatedBlocks.find((block) => block.id === imageBlock.id);
+    if (!updatedImageBlock) {
+      throw new Error("Updated image block not found");
+    }
     expect(updatedImageBlock.data.src).toBe("https://cdn.lumiso.test/library.jpg");
     expect(updatedImageBlock.data.alt).toBe("Library Image");
     expect(updatedImageBlock.data.placeholder).toBe(false);

@@ -53,6 +53,52 @@ interface UseProjectsDataResult {
 
 type FetchSource = "cache" | "prefetch" | "network" | "fallback";
 
+type ProjectRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  lead_id: string | null;
+  user_id: string | null;
+  created_at: string;
+  updated_at: string;
+  status_id: string | null;
+  project_type_id: string | null;
+  base_price: number | null;
+  sort_order: number | null;
+  session_count?: number | null;
+  planned_session_count?: number | null;
+  upcoming_session_count?: number | null;
+  next_session_date?: string | null;
+  todo_count?: number | null;
+  completed_todo_count?: number | null;
+  open_todos?: ProjectTodoSummary[] | null;
+  paid_amount?: number | null;
+  remaining_amount?: number | null;
+  lead?: ProjectListItem["lead"] | null;
+  project_status?: ProjectListItem["project_status"] | null;
+  project_type?: ProjectListItem["project_type"] | null;
+  services?: ProjectServiceSummary[] | null;
+};
+
+type RpcProjectRow = ProjectRow & { total_count?: number | string | null };
+
+type SessionSummaryRow = { project_id: string | null; status: string | null; session_date?: string | null };
+type TodoRow = { id: string; project_id: string; is_completed: boolean; content: string | null };
+type ServiceRow = { project_id: string; service: { id: string; name: string | null } | null };
+type PaymentRow = { project_id: string; amount: number | null; status: string | null };
+type LeadRow = { id: string; name: string; status: string | null; email: string | null; phone: string | null };
+type ProjectStatusRow = { id: string; name: string | null; color: string | null; sort_order: number | null };
+type ProjectTypeRow = { id: string; name: string | null };
+
+interface PrefetchedProjectsPayload {
+  ts?: number;
+  value?: {
+    items?: ProjectRow[];
+    total?: number;
+    ttl?: number;
+  };
+}
+
 type ProjectsCacheEntry = {
   key: string | null;
   items: Map<number, ProjectListItem>;
@@ -86,17 +132,21 @@ type CacheStatus = {
 
 const DEFAULT_PAGE_SIZE = 25;
 
-const sumPaidAmount = (payments: { project_id: string; amount: number; status: string }[]) => {
+const sumPaidAmount = (payments: PaymentRow[]) => {
   return payments.reduce<Record<string, number>>((acc, payment) => {
-    if (!acc[payment.project_id]) acc[payment.project_id] = 0;
+    const projectId = payment.project_id;
+    if (!projectId) {
+      return acc;
+    }
+    if (!acc[projectId]) acc[projectId] = 0;
     if (typeof payment.status === "string" && payment.status.toLowerCase() === "paid") {
-      acc[payment.project_id] += Number(payment.amount || 0);
+      acc[projectId] += Number(payment.amount ?? 0);
     }
     return acc;
   }, {});
 };
 
-const buildTodoSummaries = (todos: { id: string; project_id: string; is_completed: boolean; content: string }[]) => {
+const buildTodoSummaries = (todos: TodoRow[]) => {
   const totals: Record<string, { total: number; completed: number }> = {};
   const open: Record<string, ProjectTodoSummary[]> = {};
 
@@ -106,7 +156,7 @@ const buildTodoSummaries = (todos: { id: string; project_id: string; is_complete
     if (todo.is_completed) {
       stats.completed += 1;
     } else {
-      (open[todo.project_id] ||= []).push({ id: todo.id, content: todo.content });
+      (open[todo.project_id] ||= []).push({ id: todo.id, content: todo.content ?? "" });
     }
   }
 
@@ -114,7 +164,7 @@ const buildTodoSummaries = (todos: { id: string; project_id: string; is_complete
 };
 
 const buildSessionSummaries = (
-  sessions: { project_id: string | null; status: string | null; session_date: string | null }[]
+  sessions: SessionSummaryRow[]
 ) => {
   return sessions.reduce<Record<string, { total: number; planned: number; upcoming: number }>>((acc, session) => {
     if (!session.project_id) return acc;
@@ -127,7 +177,7 @@ const buildSessionSummaries = (
   }, {});
 };
 
-const mapServices = (rows: { project_id: string; service?: { id: string; name: string } | null }[]) => {
+const mapServices = (rows: ServiceRow[]) => {
   return rows.reduce<Record<string, ProjectServiceSummary[]>>((acc, row) => {
     if (!row.project_id) return acc;
     if (!acc[row.project_id]) acc[row.project_id] = [];
@@ -424,18 +474,18 @@ export function useProjectsData({
     [archivedFilters]
   );
 
-  const mapRowToProject = useCallback((row: any): ProjectListItem => ({
+  const mapRowToProject = useCallback((row: ProjectRow): ProjectListItem => ({
     id: row.id,
     name: row.name,
     description: row.description,
-    lead_id: row.lead_id,
-    user_id: row.user_id,
+    lead_id: row.lead_id ?? "",
+    user_id: row.user_id ?? "",
     created_at: row.created_at,
     updated_at: row.updated_at,
     status_id: row.status_id,
     project_type_id: row.project_type_id,
-    base_price: row.base_price,
-    sort_order: row.sort_order,
+    base_price: row.base_price ?? null,
+    sort_order: row.sort_order ?? null,
     lead: row.lead ?? null,
     project_status: row.project_status ?? null,
     project_type: row.project_type ?? null,
@@ -504,15 +554,13 @@ export function useProjectsData({
           if (isDefaultList && typeof window !== "undefined") {
             const raw = localStorage.getItem(`prefetch:projects:first:${organizationId}:active`);
             if (raw) {
-              const parsed = JSON.parse(raw) as {
-                ts?: number;
-                value?: { items?: any[]; total?: number; ttl?: number };
-              };
+              const parsed = JSON.parse(raw) as PrefetchedProjectsPayload;
               const ts = parsed?.ts ?? 0;
               const ttl = parsed?.value?.ttl ?? 60_000;
               if (Date.now() - ts < ttl) {
-                const rows = (parsed?.value?.items ?? []) as any[];
-                const total = rows.length ? Number(parsed?.value?.total ?? rows.length) : 0;
+                const items = parsed.value?.items;
+                const rows: ProjectRow[] = Array.isArray(items) ? items : [];
+                const total = rows.length ? Number(parsed.value?.total ?? rows.length) : 0;
                 const projects = rows.map(mapRowToProject);
                 storeInCache(cacheEntry, cacheKey, range, projects, total, true);
                 cacheEntry.lastFetched = Date.now();
@@ -544,8 +592,8 @@ export function useProjectsData({
           tRpc.end({ error: String(error?.message || error) });
           throw error;
         }
-        const rows = (data as any[]) ?? [];
-        const total = rows.length ? Number(rows[0].total_count ?? rows.length) : 0;
+        const rows: RpcProjectRow[] = Array.isArray(data) ? data : [];
+        const total = rows.length ? Number(rows[0]?.total_count ?? rows.length) : 0;
         const projects = rows.map(mapRowToProject);
         tRpc.end({ rows: rows.length, total });
         return { projects, total, source: "network" };
@@ -560,8 +608,11 @@ export function useProjectsData({
           .order("created_at", { ascending: false });
         if (projectsError) throw projectsError;
 
-        const projectIds = (projectsData ?? []).map((project) => project.id);
-        const leadIds = (projectsData ?? []).map((project) => project.lead_id).filter(Boolean);
+        const projectRows: ProjectRow[] = Array.isArray(projectsData) ? projectsData : [];
+        const projectIds = projectRows.map((project) => project.id);
+        const leadIds = projectRows
+          .map((project) => project.lead_id)
+          .filter((id): id is string => typeof id === "string" && id.length > 0);
 
         const [
           sessionsData,
@@ -574,20 +625,23 @@ export function useProjectsData({
         ] = await Promise.all([
           projectIds.length
             ? supabase.from("sessions").select("project_id, status").in("project_id", projectIds)
-            : Promise.resolve({ data: [] }),
+            : Promise.resolve<{ data: SessionSummaryRow[]; error: null }>({ data: [], error: null }),
           projectIds.length
             ? supabase.from("todos").select("id, project_id, is_completed, content").in("project_id", projectIds)
-            : Promise.resolve({ data: [] }),
+            : Promise.resolve<{ data: TodoRow[]; error: null }>({ data: [], error: null }),
           projectIds.length
             ? supabase.from("project_services").select(`project_id, service:services(id, name)`).in("project_id", projectIds)
-            : Promise.resolve({ data: [] }),
+            : Promise.resolve<{ data: ServiceRow[]; error: null }>({ data: [], error: null }),
           projectIds.length
             ? supabase.from("payments").select("project_id, amount, status").in("project_id", projectIds)
-            : Promise.resolve({ data: [] }),
+            : Promise.resolve<{ data: PaymentRow[]; error: null }>({ data: [], error: null }),
           leadIds.length
             ? supabase.from("leads").select("id, name, status, email, phone").in("id", leadIds)
-            : Promise.resolve({ data: [] }),
-          supabase.from("project_statuses").select("id, name, color, sort_order").eq("organization_id", organizationId),
+            : Promise.resolve<{ data: LeadRow[]; error: null }>({ data: [], error: null }),
+          supabase
+            .from("project_statuses")
+            .select("id, name, color, sort_order")
+            .eq("organization_id", organizationId),
           supabase.from("project_types").select("id, name").eq("organization_id", organizationId),
         ]);
 
@@ -599,56 +653,66 @@ export function useProjectsData({
         if (projectStatusesData.error) throw projectStatusesData.error;
         if (projectTypesData.error) throw projectTypesData.error;
 
-        const sessionCounts = buildSessionSummaries((sessionsData.data ?? []) as any);
-        const { totals: todoTotals, open: openTodos } = buildTodoSummaries((todosData.data ?? []) as any);
-        const paymentTotals = sumPaidAmount((paymentsData.data ?? []) as any);
-        const servicesMap = mapServices((servicesData.data ?? []) as any);
-        const leadMap = (leadsData.data ?? []).reduce<Record<string, ProjectListItem["lead"]>>((acc, lead: any) => {
+        const sessionRows: SessionSummaryRow[] = Array.isArray(sessionsData.data) ? sessionsData.data : [];
+        const todoRows: TodoRow[] = Array.isArray(todosData.data) ? todosData.data : [];
+        const paymentRows: PaymentRow[] = Array.isArray(paymentsData.data) ? paymentsData.data : [];
+        const serviceRows: ServiceRow[] = Array.isArray(servicesData.data) ? servicesData.data : [];
+        const leadRows: LeadRow[] = Array.isArray(leadsData.data) ? leadsData.data : [];
+        const statusRows: ProjectStatusRow[] = Array.isArray(projectStatusesData.data)
+          ? projectStatusesData.data
+          : [];
+        const typeRows: ProjectTypeRow[] = Array.isArray(projectTypesData.data) ? projectTypesData.data : [];
+
+        const sessionCounts = buildSessionSummaries(sessionRows);
+        const { totals: todoTotals, open: openTodos } = buildTodoSummaries(todoRows);
+        const paymentTotals = sumPaidAmount(paymentRows);
+        const servicesMap = mapServices(serviceRows);
+        const leadMap = leadRows.reduce<Record<string, ProjectListItem["lead"]>>((acc, lead) => {
           acc[lead.id] = {
             id: lead.id,
             name: lead.name,
-            status: lead.status,
+            status: lead.status ?? "",
             email: lead.email,
             phone: lead.phone,
           };
           return acc;
         }, {});
-        const statusMap = (projectStatusesData.data ?? []).reduce<Record<string, ProjectListItem["project_status"]>>((acc, status: any) => {
+        const statusMap = statusRows.reduce<Record<string, ProjectListItem["project_status"]>>((acc, status) => {
           acc[status.id] = {
             id: status.id,
-            name: status.name,
-            color: status.color,
-            sort_order: status.sort_order,
+            name: status.name ?? "",
+            color: status.color ?? "",
+            sort_order: status.sort_order ?? undefined,
           };
           return acc;
         }, {});
-        const typeMap = (projectTypesData.data ?? []).reduce<Record<string, ProjectListItem["project_type"]>>((acc, type: any) => {
-          acc[type.id] = { id: type.id, name: type.name };
+        const typeMap = typeRows.reduce<Record<string, ProjectListItem["project_type"]>>((acc, type) => {
+          acc[type.id] = { id: type.id, name: type.name ?? "" };
           return acc;
         }, {});
 
-        const archivedStatus = (projectStatusesData.data ?? []).find(
-          (status: any) => typeof status.name === "string" && status.name.toLowerCase() === "archived"
+        const archivedStatus = statusRows.find(
+          (status) => typeof status.name === "string" && status.name.toLowerCase() === "archived"
         );
         const archivedStatusId = archivedStatus?.id ?? null;
 
-        const enriched = (projectsData ?? []).map((project: any) => {
+        const enriched = projectRows.map((project) => {
           const paidAmount = paymentTotals[project.id] ?? 0;
           const sessionSummary = sessionCounts[project.id] ?? { total: 0, planned: 0, upcoming: 0 };
           const todoSummary = todoTotals[project.id] ?? { total: 0, completed: 0 };
-          return {
+          const enrichedProject: ProjectListItem = {
             id: project.id,
             name: project.name,
             description: project.description,
-            lead_id: project.lead_id,
-            user_id: project.user_id,
+            lead_id: project.lead_id ?? "",
+            user_id: project.user_id ?? "",
             created_at: project.created_at,
             updated_at: project.updated_at,
             status_id: project.status_id,
             project_type_id: project.project_type_id,
-            base_price: project.base_price,
-            sort_order: project.sort_order,
-            lead: leadMap[project.lead_id] ?? null,
+            base_price: project.base_price ?? null,
+            sort_order: project.sort_order ?? null,
+            lead: project.lead_id ? leadMap[project.lead_id] ?? null : null,
             project_status: project.status_id ? statusMap[project.status_id] ?? null : null,
             project_type: project.project_type_id ? typeMap[project.project_type_id] ?? null : null,
             session_count: sessionSummary.total,
@@ -659,9 +723,10 @@ export function useProjectsData({
             completed_todo_count: todoSummary.completed,
             open_todos: openTodos[project.id] ?? [],
             paid_amount: paidAmount,
-            remaining_amount: Number(project.base_price || 0) - paidAmount,
+            remaining_amount: Number(project.base_price ?? 0) - paidAmount,
             services: servicesMap[project.id] ?? [],
-          } as ProjectListItem;
+          };
+          return enrichedProject;
         });
 
         const partitioned = enriched.reduce<{
@@ -698,7 +763,8 @@ export function useProjectsData({
           source: result.source,
         });
       } catch (error) {
-        logInfo("Projects.rpc.fallback", { reason: (error as any)?.message || String(error) });
+        const reason = error instanceof Error ? error.message : String(error);
+        logInfo("Projects.rpc.fallback", { reason });
         const fallbackTimer = startTimer("Projects.fallback.query");
         const fallbackResult = await fetchViaFallback();
         fallbackTimer.end({ rows: fallbackResult.projects.length, total: fallbackResult.total });

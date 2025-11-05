@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { EnhancedEditLeadDialog } from "../EnhancedEditLeadDialog";
 import { useLeadFieldDefinitions } from "@/hooks/useLeadFieldDefinitions";
@@ -7,13 +7,30 @@ import { useI18nToast } from "@/lib/toastHelpers";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { createDynamicLeadSchema } from "@/lib/leadFieldValidation";
+import type { LeadFieldDefinition } from "@/types/leadFields";
+import type { UseFormReturn } from "react-hook-form";
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string, options?: Record<string, any>) =>
+    t: (key: string, options?: { field?: string }) =>
       options?.field ? `${key}:${options.field}` : key
   })
 }));
+
+type MockFooterAction = {
+  label: ReactNode;
+  disabled?: boolean;
+  onClick?: () => Promise<void> | void;
+};
+
+interface AppSheetModalProps {
+  title: ReactNode;
+  isOpen: boolean;
+  dirty: boolean;
+  onDirtyClose?: () => void;
+  footerActions?: MockFooterAction[];
+  children?: ReactNode;
+}
 
 jest.mock("@/components/ui/app-sheet-modal", () => ({
   AppSheetModal: ({
@@ -23,13 +40,13 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
     onDirtyClose,
     footerActions = [],
     children
-  }: any) => (
+  }: AppSheetModalProps) => (
     <div data-testid="app-sheet-modal">
       <span data-testid="modal-title">{title}</span>
       <span data-testid="modal-open">{String(isOpen)}</span>
       <span data-testid="modal-dirty">{dirty ? "dirty" : "clean"}</span>
       <div>
-        {footerActions.map((action: any, index: number) => (
+        {footerActions.map((action, index) => (
           <button
             key={index}
             data-testid={`footer-action-${index}`}
@@ -54,8 +71,15 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
   )
 }));
 
+interface NavigationGuardDialogProps {
+  open: boolean;
+  message: string;
+  onDiscard: () => void;
+  onStay: () => void;
+}
+
 jest.mock("../settings/NavigationGuardDialog", () => ({
-  NavigationGuardDialog: ({ open, message, onDiscard, onStay }: any) =>
+  NavigationGuardDialog: ({ open, message, onDiscard, onStay }: NavigationGuardDialogProps) =>
     open ? (
       <div data-testid="navigation-guard">
         <p data-testid="navigation-guard-message">{message}</p>
@@ -66,24 +90,28 @@ jest.mock("../settings/NavigationGuardDialog", () => ({
 }));
 
 jest.mock("../DynamicLeadFormFields", () => {
-  const React = require("react");
-  const formContextRef = { current: null as any };
+  const React = jest.requireActual("react");
+  const { useFormContext } = jest.requireActual("react-hook-form");
+  const formContextRef: { current: UseFormReturn<Record<string, unknown>> | null } = {
+    current: null,
+  };
 
   return {
     formContextRef,
-    DynamicLeadFormFields: ({ fieldDefinitions }: any) => {
+    DynamicLeadFormFields: ({ fieldDefinitions }: { fieldDefinitions: LeadFieldDefinition[] }) => {
+      const formContext = useFormContext<Record<string, unknown>>();
       const {
         register,
         formState: { errors },
-      } = require("react-hook-form").useFormContext();
+      } = formContext;
 
-      formContextRef.current = require("react-hook-form").useFormContext();
+      formContextRef.current = formContext;
 
       return (
         <div>
           {fieldDefinitions
-            .filter((field: any) => field.is_visible_in_form)
-            .map((field: any) => {
+            .filter(field => field.is_visible_in_form)
+            .map(field => {
               const fieldName = `field_${field.field_key}`;
               const fieldError = errors?.[fieldName]?.message;
               return (
@@ -143,29 +171,36 @@ const toastMock = {
   error: jest.fn(),
 };
 
-const useLeadFieldDefinitionsMock = useLeadFieldDefinitions as jest.Mock;
-const useLeadFieldValuesMock = useLeadFieldValues as jest.Mock;
-const useI18nToastMock = useI18nToast as jest.Mock;
-const getUserOrganizationIdMock = getUserOrganizationId as jest.Mock;
-const supabaseFromMock = supabase.from as jest.Mock;
+const useLeadFieldDefinitionsMock =
+  useLeadFieldDefinitions as jest.MockedFunction<typeof useLeadFieldDefinitions>;
+const useLeadFieldValuesMock =
+  useLeadFieldValues as jest.MockedFunction<typeof useLeadFieldValues>;
+const useI18nToastMock = useI18nToast as jest.MockedFunction<typeof useI18nToast>;
+const getUserOrganizationIdMock =
+  getUserOrganizationId as jest.MockedFunction<typeof getUserOrganizationId>;
+const supabaseFromMock = supabase.from as jest.MockedFunction<typeof supabase.from>;
 
-interface QueryWithPayload {
-  _payload?: any;
-  update?: jest.Mock;
-  eq?: jest.Mock;
-  select?: jest.Mock;
-  maybeSingle?: jest.Mock;
+interface LeadStatusQuery {
+  select: jest.Mock<LeadStatusQuery, [string?]>;
+  eq: jest.Mock<LeadStatusQuery, [string, unknown]>;
+  maybeSingle: jest.Mock<Promise<{ data: { id: string } }>, []>;
 }
 
-const leadStatusQueries: QueryWithPayload[] = [];
-const leadUpdateQueries: QueryWithPayload[] = [];
+interface LeadUpdateQuery {
+  update: jest.Mock<LeadUpdateQuery, [Record<string, unknown>]>;
+  eq: jest.Mock<Promise<{ error: null }>, [string, string]>;
+  _payload?: Record<string, unknown>;
+}
+
+const leadStatusQueries: LeadStatusQuery[] = [];
+const leadUpdateQueries: LeadUpdateQuery[] = [];
 
 const createLeadStatusesQuery = () => {
-  const query: QueryWithPayload = {
-    select: jest.fn(function () {
+  const query: LeadStatusQuery = {
+    select: jest.fn(function select(this: LeadStatusQuery) {
       return query;
     }),
-    eq: jest.fn(function () {
+    eq: jest.fn(function eq(this: LeadStatusQuery) {
       return query;
     }),
     maybeSingle: jest.fn(() => Promise.resolve({ data: { id: "status-1" } }))
@@ -175,8 +210,8 @@ const createLeadStatusesQuery = () => {
 };
 
 const createLeadUpdateQuery = () => {
-  const query: QueryWithPayload = {
-    update: jest.fn(function (payload: any) {
+  const query: LeadUpdateQuery = {
+    update: jest.fn(function update(payload: Record<string, unknown>) {
       query._payload = payload;
       return query;
     }),
@@ -186,7 +221,7 @@ const createLeadUpdateQuery = () => {
   return query;
 };
 
-const fieldDefinitions = [
+const fieldDefinitions: LeadFieldDefinition[] = [
   {
     id: "name",
     organization_id: "org-123",
@@ -198,8 +233,7 @@ const fieldDefinitions = [
     is_visible_in_form: true,
     is_visible_in_table: true,
     sort_order: 1,
-    options: undefined,
-    validation_rules: null,
+    validation_rules: undefined,
     allow_multiple: false,
     created_at: "2024-01-01",
     updated_at: "2024-01-01"
@@ -215,8 +249,7 @@ const fieldDefinitions = [
     is_visible_in_form: true,
     is_visible_in_table: true,
     sort_order: 2,
-    options: undefined,
-    validation_rules: null,
+    validation_rules: undefined,
     allow_multiple: false,
     created_at: "2024-01-01",
     updated_at: "2024-01-01"
@@ -233,7 +266,7 @@ const fieldDefinitions = [
     is_visible_in_table: true,
     sort_order: 3,
     options: { options: ["Active", "New"] },
-    validation_rules: null,
+    validation_rules: undefined,
     allow_multiple: false,
     created_at: "2024-01-01",
     updated_at: "2024-01-01"
@@ -362,7 +395,7 @@ describe("EnhancedEditLeadDialog", () => {
       }
     });
 
-    const schema = createDynamicLeadSchema(fieldDefinitions as any);
+    const schema = createDynamicLeadSchema(fieldDefinitions);
     const validationResult = schema.safeParse({
       field_name: "",
       field_email: "",

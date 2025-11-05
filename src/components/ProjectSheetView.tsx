@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFormsTranslation, useMessagesTranslation } from "@/hooks/useTypedTranslation";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -476,16 +476,17 @@ export function LegacyProjectSheetView({
     setSummaryRefreshToken(prev => prev + 1);
   };
 
-  const summaryItems = useMemo(
-    () => buildProjectSummaryItems({
-      t: tPages,
-      payments: headerSummary.payments,
-      todos: headerSummary.todos,
-      services: headerSummary.services,
-      sessionsSummary
-    }),
-    [headerSummary, sessionsSummary, tPages]
-  );
+  const summaryItems = useMemo(() => buildProjectSummaryItems({
+    t: tPages,
+    payments: headerSummary.payments,
+    todos: headerSummary.todos,
+    services: headerSummary.services,
+    sessionsSummary
+  }), [headerSummary, sessionsSummary, tPages]);
+
+  const handleStatusPreview = useCallback((statusId: string | null) => {
+    setLocalStatusId(statusId);
+  }, []);
 
   if (!project) return null;
 
@@ -568,6 +569,7 @@ export function LegacyProjectSheetView({
         onStatusChange={() => {
           onProjectUpdated();
         }}
+        onStatusSelecting={handleStatusPreview}
         editable={!isArchived}
         size="sm"
         className="h-9 min-w-[160px]"
@@ -579,6 +581,7 @@ export function LegacyProjectSheetView({
           onStatusChange={() => {
             onProjectUpdated();
           }}
+          onStatusSelecting={handleStatusPreview}
           editable={!isArchived}
           className="h-9"
         />
@@ -678,6 +681,7 @@ export function LegacyProjectSheetView({
               onStatusChange={() => {
                 onProjectUpdated();
               }}
+              onStatusSelecting={handleStatusPreview}
               editable={!isArchived}
               size="sm"
               className="w-full justify-center"

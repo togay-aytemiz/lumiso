@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { Edit, AlertTriangle, Calendar as CalendarIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Edit, AlertTriangle, Calendar as CalendarIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,21 +13,25 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import SessionStatusBadge from '@/components/SessionStatusBadge';
-import { isOverdueSession } from '@/lib/dateUtils';
-import EditSessionDialog from '@/components/EditSessionDialog';
-import type { SessionPlanningStepId } from '@/features/session-planning';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { useSessionActions } from '@/hooks/useSessionActions';
-import ProjectDetailsLayout from '@/components/project-details/ProjectDetailsLayout';
-import { UnifiedClientDetails } from '@/components/UnifiedClientDetails';
-import SessionGallery from '@/components/SessionGallery';
-import { getDisplaySessionName } from '@/lib/sessionUtils';
-import { useMessagesTranslation, useCommonTranslation, useFormsTranslation } from '@/hooks/useTypedTranslation';
-import { useTranslation } from 'react-i18next';
-import { EntityHeader } from '@/components/EntityHeader';
-import { buildSessionSummaryItems } from '@/lib/sessions/buildSessionSummaryItems';
+} from "@/components/ui/alert-dialog";
+import SessionStatusBadge from "@/components/SessionStatusBadge";
+import { isOverdueSession } from "@/lib/dateUtils";
+import EditSessionDialog from "@/components/EditSessionDialog";
+import type { SessionPlanningStepId } from "@/features/session-planning";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useSessionActions } from "@/hooks/useSessionActions";
+import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
+import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
+import SessionGallery from "@/components/SessionGallery";
+import { getDisplaySessionName } from "@/lib/sessionUtils";
+import {
+  useMessagesTranslation,
+  useCommonTranslation,
+  useFormsTranslation,
+} from "@/hooks/useTypedTranslation";
+import { useTranslation } from "react-i18next";
+import { EntityHeader } from "@/components/EntityHeader";
+import { buildSessionSummaryItems } from "@/lib/sessions/buildSessionSummaryItems";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
@@ -70,23 +74,26 @@ export default function SessionDetail() {
   const { t: tForms } = useFormsTranslation();
   const { t: tPages } = useTranslation("pages");
   const isMobile = useIsMobile();
-  
+
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editStartStep, setEditStartStep] = useState<SessionPlanningStepId | undefined>(undefined);
+  const [editStartStep, setEditStartStep] = useState<
+    SessionPlanningStepId | undefined
+  >(undefined);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const fetchSession = async () => {
     if (!id) return;
-    
-    console.log('SessionDetail: Starting to fetch session data for ID:', id);
+
+    console.log("SessionDetail: Starting to fetch session data for ID:", id);
     const startTime = performance.now();
-    
+
     try {
       const { data, error } = await supabase
-        .from('sessions')
-        .select(`
+        .from("sessions")
+        .select(
+          `
           *,
           leads:lead_id (
             id,
@@ -102,21 +109,22 @@ export default function SessionDetail() {
               name
             )
           )
-        `)
-        .eq('id', id)
+        `
+        )
+        .eq("id", id)
         .single();
 
       if (error) throw error;
-      
+
       const endTime = performance.now();
       console.log(`SessionDetail: Fetch completed in ${endTime - startTime}ms`);
-      
+
       setSession(data);
     } catch (error: any) {
-      console.error('SessionDetail: Error fetching session:', error);
+      console.error("SessionDetail: Error fetching session:", error);
       toast({
-        title: tCommon('toast.error'),
-        description: tPages('sessionDetail.toast.loadErrorDescription'),
+        title: tCommon("toast.error"),
+        description: tPages("sessionDetail.toast.loadErrorDescription"),
         variant: "destructive",
       });
     } finally {
@@ -125,10 +133,9 @@ export default function SessionDetail() {
   };
 
   useEffect(() => {
-    console.log('SessionDetail: Component mounted, session ID:', id);
+    console.log("SessionDetail: Component mounted, session ID:", id);
     fetchSession();
   }, [id]);
-
 
   const handleEdit = () => {
     setEditStartStep(undefined);
@@ -140,15 +147,15 @@ export default function SessionDetail() {
     if (backTarget) {
       return backTarget;
     }
-    if (typeof window !== 'undefined' && window.history.length > 1) {
+    if (typeof window !== "undefined" && window.history.length > 1) {
       return -1;
     }
-    return '/sessions';
+    return "/sessions";
   }, [backTarget]);
 
   const handleBack = useCallback(() => {
     const fallback = getFallbackRoute();
-    if (typeof fallback === 'number') {
+    if (typeof fallback === "number") {
       navigate(fallback);
     } else {
       navigate(fallback);
@@ -160,7 +167,7 @@ export default function SessionDetail() {
 
     const success = await deleteSession(session.id);
     if (success) {
-      const fallback = backTarget ?? '/sessions';
+      const fallback = backTarget ?? "/sessions";
       navigate(fallback);
     }
   };
@@ -187,8 +194,9 @@ export default function SessionDetail() {
     }
   }, [navigate, session?.project_id]);
 
-  const sessionTypeLabel = session?.projects?.project_types?.name || tForms('sessionBanner.session');
-  const sessionNameDisplay = session ? getDisplaySessionName(session) : '';
+  const sessionTypeLabel =
+    session?.projects?.project_types?.name || tForms("sessionBanner.session");
+  const sessionNameDisplay = session ? getDisplaySessionName(session) : "";
 
   const openEditStep = useCallback(
     (step: SessionPlanningStepId) => {
@@ -204,35 +212,34 @@ export default function SessionDetail() {
         ? buildSessionSummaryItems({
             session,
             labels: {
-              dateTime: tPages('sessionDetail.labels.dateTime'),
-              project: tPages('sessionDetail.labels.project'),
-              notes: tPages('sessionDetail.labels.notes'),
-              location: tPages('sessionDetail.labels.location'),
+              dateTime: tPages("sessionDetail.labels.dateTime"),
+              project: tPages("sessionDetail.labels.project"),
+              notes: tPages("sessionDetail.labels.notes"),
+              location: tPages("sessionDetail.labels.location"),
             },
             placeholders: {
-              project: tPages('sessionDetail.summary.placeholders.project'),
-              notes: tPages('sessionDetail.summary.placeholders.notes'),
-              location: tPages('sessionDetail.summary.placeholders.location'),
+              project: tPages("sessionDetail.summary.placeholders.project"),
+              notes: tPages("sessionDetail.summary.placeholders.notes"),
+              location: tPages("sessionDetail.summary.placeholders.location"),
             },
             actions: {
-              editSchedule: tPages('sessionDetail.summary.actions.editSchedule'),
-              connectProject: tPages('sessionDetail.summary.actions.connectProject'),
-              addNotes: tPages('sessionDetail.summary.actions.addNotes'),
-              addLocation: tPages('sessionDetail.summary.actions.addLocation'),
+              editSchedule: tPages(
+                "sessionDetail.summary.actions.editSchedule"
+              ),
+              connectProject: tPages(
+                "sessionDetail.summary.actions.connectProject"
+              ),
+              addNotes: tPages("sessionDetail.summary.actions.addNotes"),
+              addLocation: tPages("sessionDetail.summary.actions.addLocation"),
             },
             onProjectClick: session.project_id ? handleProjectClick : undefined,
-            onEditSchedule: () => openEditStep('schedule'),
-            onConnectProject: () => openEditStep('project'),
-            onAddNotes: () => openEditStep('notes'),
-            onAddLocation: () => openEditStep('location'),
+            onEditSchedule: () => openEditStep("schedule"),
+            onConnectProject: () => openEditStep("project"),
+            onAddNotes: () => openEditStep("notes"),
+            onAddLocation: () => openEditStep("location"),
           })
         : [],
-    [
-      session,
-      tPages,
-      handleProjectClick,
-      openEditStep,
-    ]
+    [session, tPages, handleProjectClick, openEditStep]
   );
 
   if (loading) {
@@ -260,9 +267,13 @@ export default function SessionDetail() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">{tPages("sessionDetail.emptyState.title")}</h2>
-          <p className="text-muted-foreground mb-4">{tPages("sessionDetail.emptyState.description")}</p>
-          <Button onClick={() => navigate('/sessions')}>
+          <h2 className="text-xl font-semibold mb-2">
+            {tPages("sessionDetail.emptyState.title")}
+          </h2>
+          <p className="text-muted-foreground mb-4">
+            {tPages("sessionDetail.emptyState.description")}
+          </p>
+          <Button onClick={() => navigate("/sessions")}>
             {tPages("sessionDetail.emptyState.cta")}
           </Button>
         </div>
@@ -289,18 +300,20 @@ export default function SessionDetail() {
 
   const sections = [
     {
-      id: 'session-gallery',
+      id: "session-gallery",
       title: tPages("sessionDetail.gallery.title"),
-      content: <SessionGallery sessionId={session.id} />
-    }
+      content: <SessionGallery sessionId={session.id} />,
+    },
   ];
 
   const dangerZone = (
     <div className="border border-destructive/20 bg-destructive/5 rounded-lg p-6">
       <div className="space-y-4">
-        <h3 className="font-medium text-destructive">{tPages("sessionDetail.dangerZone.title")}</h3>
-        <Button 
-          variant="outline" 
+        <h3 className="font-medium text-destructive">
+          {tPages("sessionDetail.dangerZone.title")}
+        </h3>
+        <Button
+          variant="outline"
           onClick={() => setIsDeleteDialogOpen(true)}
           className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
           size="lg"
@@ -314,36 +327,44 @@ export default function SessionDetail() {
     </div>
   );
 
-  const isOverdue = session ? isOverdueSession(session.session_date, session.status) : false;
+  const isOverdue = session
+    ? isOverdueSession(session.session_date, session.status)
+    : false;
 
-  const overdueBanner = isOverdue
-    ? (
-        <div className="space-y-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm leading-relaxed text-orange-800">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="mt-0.5 h-4 w-4 text-orange-600" aria-hidden="true" />
-            <div className="space-y-1">
-              <p className="font-semibold text-orange-900">{tPages('sessionDetail.overdue.title')}</p>
-              <p>{tPages('sessionDetail.overdue.description')}</p>
-            </div>
-          </div>
-          <div className="pl-7">
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-orange-300 text-orange-700 hover:bg-orange-100 hover:text-orange-700"
-              onClick={() => {
-                setEditStartStep("schedule");
-                setIsEditDialogOpen(true);
-              }}
-            >
-              {tPages('sessionDetail.overdue.reschedule')}
-            </Button>
-          </div>
+  const overdueBanner = isOverdue ? (
+    <div className="space-y-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm leading-relaxed text-orange-800">
+      <div className="flex items-start gap-3">
+        <AlertTriangle
+          className="mt-0.5 h-4 w-4 text-orange-600"
+          aria-hidden="true"
+        />
+        <div className="space-y-1">
+          <p className="font-semibold text-orange-900">
+            {tPages("sessionDetail.overdue.title")}
+          </p>
+          <p>{tPages("sessionDetail.overdue.description")}</p>
         </div>
-      )
-    : undefined;
+      </div>
+      <div className="pl-7">
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-orange-300 text-orange-700 hover:bg-orange-100 hover:text-orange-700"
+          onClick={() => {
+            setEditStartStep("schedule");
+            setIsEditDialogOpen(true);
+          }}
+        >
+          {tPages("sessionDetail.overdue.reschedule")}
+        </Button>
+      </div>
+    </div>
+  ) : undefined;
 
-  const renderSessionStatusBadge = (className?: string, size: "sm" | "default" = "default") =>
+  const renderSessionStatusBadge = (
+    className?: string,
+    size: "sm" | "default" = "default"
+  ) =>
     session ? (
       <SessionStatusBadge
         sessionId={session.id}
@@ -363,22 +384,22 @@ export default function SessionDetail() {
       className={cn("gap-2 text-sm font-medium", className)}
     >
       <Edit className="h-4 w-4" />
-      <span>{tForms('sessions.editSession')}</span>
+      <span>{tForms("sessions.editSession")}</span>
     </Button>
   );
 
-  const headerActions = session
-    ? isMobile
-      ? (
-          <div className="flex w-full flex-wrap items-center gap-2">
-            <div className="flex-1 min-w-[160px]">
-              {renderSessionStatusBadge("w-full justify-center", "sm")}
-            </div>
-            {renderEditButton("min-w-[120px] justify-center")}
-          </div>
-        )
-      : renderEditButton()
-    : undefined;
+  const headerActions = session ? (
+    isMobile ? (
+      <div className="flex w-full flex-wrap items-center gap-2">
+        <div className="flex-1 min-w-[160px]">
+          {renderSessionStatusBadge("w-full h-9 justify-center")}
+        </div>
+        {renderEditButton("min-w-[120px] justify-center")}
+      </div>
+    ) : (
+      renderEditButton()
+    )
+  ) : undefined;
 
   const headerTitle = session ? (
     <span className="flex flex-col">
@@ -386,7 +407,9 @@ export default function SessionDetail() {
         {sessionTypeLabel}
       </span>
       <span className="flex flex-wrap items-center gap-2 text-foreground">
-        <span className="break-words text-pretty leading-tight">{sessionNameDisplay}</span>
+        <span className="break-words text-pretty leading-tight">
+          {sessionNameDisplay}
+        </span>
         {!isMobile && renderSessionStatusBadge("text-xs sm:text-sm")}
       </span>
     </span>
@@ -400,12 +423,14 @@ export default function SessionDetail() {
             name={sessionNameDisplay}
             title={headerTitle}
             onBack={handleBack}
-            backLabel={tCommon('buttons.back')}
+            backLabel={tCommon("buttons.back")}
             summaryItems={summaryItems}
             banner={overdueBanner}
             actions={headerActions}
             avatarClassName="bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500 text-white ring-0"
-            avatarContent={<CalendarIcon className="h-5 w-5 text-white" aria-hidden="true" />}
+            avatarContent={
+              <CalendarIcon className="h-5 w-5 text-white" aria-hidden="true" />
+            }
             fallbackInitials="SE"
           />
         )}
@@ -417,16 +442,16 @@ export default function SessionDetail() {
           left={leftContent}
           sections={sections}
           overviewNavId="session-detail-overview"
-          overviewLabel={tForms('project_sheet.overview_tab')}
+          overviewLabel={tForms("project_sheet.overview_tab")}
           rightFooter={dangerZone}
         />
       </div>
 
       {/* Edit Dialog */}
       {isEditDialogOpen && (
-        <ErrorBoundary 
+        <ErrorBoundary
           onError={(error) => {
-            console.error('Error in EditSessionDialog:', error);
+            console.error("Error in EditSessionDialog:", error);
             setIsEditDialogOpen(false);
           }}
         >
@@ -440,13 +465,13 @@ export default function SessionDetail() {
             }}
             sessionId={session.id}
             leadId={session.lead_id}
-            currentSessionName={session.session_name || ''}
+            currentSessionName={session.session_name || ""}
             currentDate={session.session_date}
             currentTime={session.session_time}
-            currentNotes={session.notes || ''}
-            currentLocation={session.location || ''}
+            currentNotes={session.notes || ""}
+            currentLocation={session.location || ""}
             currentProjectId={session.project_id}
-            leadName={session.leads?.name || ''}
+            leadName={session.leads?.name || ""}
             onSessionUpdated={handleSessionUpdated}
             startStep={editStartStep}
           />
@@ -454,16 +479,22 @@ export default function SessionDetail() {
       )}
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{tPages("sessionDetail.modal.deleteTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {tPages("sessionDetail.modal.deleteTitle")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {tMessages('confirm.deleteSession')} {tMessages('confirm.cannotUndo')}
+              {tMessages("confirm.deleteSession")}{" "}
+              {tMessages("confirm.cannotUndo")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{tCommon('buttons.cancel')}</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("buttons.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

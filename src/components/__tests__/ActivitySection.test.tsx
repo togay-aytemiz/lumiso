@@ -1,24 +1,18 @@
+import type { ReactNode } from "react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import ActivitySection from "../ActivitySection";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
 
-jest.mock("@/hooks/use-toast", () => {
-  const toastSpy = jest.fn();
-  const useToastMock = jest.fn(() => ({ toast: toastSpy }));
-  return {
-    __esModule: true,
-    useToast: useToastMock,
-    toast: jest.fn(),
-    __toastSpy: toastSpy,
-    __useToastMock: useToastMock,
-  };
-});
+const toastSpy = jest.fn();
+const useToastMock = jest.fn(() => ({ toast: toastSpy }));
 
-const { __toastSpy, __useToastMock } = jest.requireMock("@/hooks/use-toast");
-const toastSpy = __toastSpy as jest.Mock;
-const useToastMock = __useToastMock as jest.Mock;
+jest.mock("@/hooks/use-toast", () => ({
+  __esModule: true,
+  useToast: useToastMock,
+  toast: toastSpy,
+}));
 
 jest.mock("@/hooks/useTypedTranslation", () => ({
   useFormsTranslation: jest.fn(),
@@ -30,20 +24,33 @@ jest.mock("@/lib/organizationUtils", () => ({
 }));
 
 jest.mock("@/components/ui/select", () => {
-  const React = require("react");
-  const SelectContext = React.createContext<{ onValueChange: (value: string) => void }>({
+  const React = jest.requireActual<typeof import("react")>("react");
+  type SelectContextValue = { onValueChange: (value: string) => void };
+  const SelectContext = React.createContext<SelectContextValue>({
     onValueChange: () => {},
   });
 
+  interface SelectProps {
+    onValueChange: (value: string) => void;
+    children: ReactNode;
+  }
+
+  interface SelectItemProps {
+    value: string;
+    children: ReactNode;
+  }
+
+  type SelectChildProps = { children: ReactNode };
+
   return {
     __esModule: true,
-    Select: ({ onValueChange, children }: any) => (
+    Select: ({ onValueChange, children }: SelectProps) => (
       <SelectContext.Provider value={{ onValueChange }}>{children}</SelectContext.Provider>
     ),
-    SelectTrigger: ({ children }: any) => <button type="button">{children}</button>,
-    SelectContent: ({ children }: any) => <div>{children}</div>,
-    SelectValue: ({ children }: any) => <span>{children}</span>,
-    SelectItem: ({ value, children }: any) => {
+    SelectTrigger: ({ children }: SelectChildProps) => <button type="button">{children}</button>,
+    SelectContent: ({ children }: SelectChildProps) => <div>{children}</div>,
+    SelectValue: ({ children }: SelectChildProps) => <span>{children}</span>,
+    SelectItem: ({ value, children }: SelectItemProps) => {
       const ctx = React.useContext(SelectContext);
       return (
         <button type="button" onClick={() => ctx.onValueChange(value)}>
@@ -55,19 +62,38 @@ jest.mock("@/components/ui/select", () => {
 });
 
 jest.mock("@/components/ui/tabs", () => {
-  const React = require("react");
-  const TabsContext = React.createContext<{ value: string; onValueChange: (value: string) => void }>({
+  const React = jest.requireActual<typeof import("react")>("react");
+  type TabsContextValue = { value: string; onValueChange: (value: string) => void };
+  const TabsContext = React.createContext<TabsContextValue>({
     value: "",
     onValueChange: () => {},
   });
 
+  interface TabsProps {
+    value: string;
+    onValueChange: (value: string) => void;
+    children: ReactNode;
+  }
+
+  type TabsChildProps = { children: ReactNode };
+
+  interface TabsTriggerProps {
+    value: string;
+    children: ReactNode;
+  }
+
+  interface TabsContentProps {
+    value: string;
+    children: ReactNode;
+  }
+
   return {
     __esModule: true,
-    Tabs: ({ value, onValueChange, children }: any) => (
+    Tabs: ({ value, onValueChange, children }: TabsProps) => (
       <TabsContext.Provider value={{ value, onValueChange }}>{children}</TabsContext.Provider>
     ),
-    TabsList: ({ children }: any) => <div>{children}</div>,
-    TabsTrigger: ({ value, children }: any) => {
+    TabsList: ({ children }: TabsChildProps) => <div>{children}</div>,
+    TabsTrigger: ({ value, children }: TabsTriggerProps) => {
       const ctx = React.useContext(TabsContext);
       const isActive = ctx.value === value;
       return (
@@ -76,7 +102,7 @@ jest.mock("@/components/ui/tabs", () => {
         </button>
       );
     },
-    TabsContent: ({ value, children }: any) => {
+    TabsContent: ({ value, children }: TabsContentProps) => {
       const ctx = React.useContext(TabsContext);
       return ctx.value === value ? <div>{children}</div> : null;
     },
@@ -92,12 +118,39 @@ jest.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
+interface ActivityRow {
+  id: string;
+  type: string;
+  content: string;
+  reminder_date: string | null;
+  reminder_time: string | null;
+  organization_id: string;
+  user_id: string;
+  lead_id: string | null;
+  project_id: string | null;
+  completed: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface SessionRow {
+  id: string;
+  session_name: string;
+  session_date: string | null;
+  session_time: string | null;
+  location: string | null;
+  notes: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 describe("ActivitySection", () => {
-  const mockUseFormsTranslation = useFormsTranslation as jest.Mock;
-  const mockUseCommonTranslation = useCommonTranslation as jest.Mock;
-  const mockGetUserOrganizationId = getUserOrganizationId as jest.Mock;
-  const supabaseFromMock = supabase.from as jest.Mock;
-  const supabaseAuthGetUserMock = supabase.auth.getUser as jest.Mock;
+  const mockUseFormsTranslation = useFormsTranslation as jest.MockedFunction<typeof useFormsTranslation>;
+  const mockUseCommonTranslation = useCommonTranslation as jest.MockedFunction<typeof useCommonTranslation>;
+  const mockGetUserOrganizationId = getUserOrganizationId as jest.MockedFunction<typeof getUserOrganizationId>;
+  const supabaseFromMock = supabase.from as jest.MockedFunction<typeof supabase.from>;
+  const supabaseAuthGetUserMock = supabase.auth.getUser as jest.MockedFunction<typeof supabase.auth.getUser>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -114,7 +167,7 @@ describe("ActivitySection", () => {
   });
 
   const setupSupabase = () => {
-    const activities = [
+    const activities: ActivityRow[] = [
       {
         id: "activity-1",
         type: "note",
@@ -145,7 +198,7 @@ describe("ActivitySection", () => {
       },
     ];
 
-    const sessions = [
+    const sessions: SessionRow[] = [
       {
         id: "session-1",
         session_name: "Strategy Session",
@@ -159,61 +212,52 @@ describe("ActivitySection", () => {
       },
     ];
 
-    const activitiesSelectMock = jest.fn(() => ({
-      eq: jest.fn(() => ({
-        order: jest.fn(() => Promise.resolve({ data: activities, error: null })),
-      })),
-    }));
+    const activitiesOrderMock = jest.fn(() => Promise.resolve({ data: activities, error: null as null }));
+    const activitiesEqMock = jest.fn(() => ({ order: activitiesOrderMock }));
+    const activitiesSelectMock = jest.fn(() => ({ eq: activitiesEqMock }));
 
-    const sessionsSelectMock = jest.fn(() => ({
-      eq: jest.fn(() => ({
-        order: jest.fn(() => Promise.resolve({ data: sessions, error: null })),
-      })),
-    }));
+    const sessionsOrderMock = jest.fn(() => Promise.resolve({ data: sessions, error: null as null }));
+    const sessionsEqMock = jest.fn(() => ({ order: sessionsOrderMock }));
+    const sessionsSelectMock = jest.fn(() => ({ eq: sessionsEqMock }));
 
-    const auditSelectMock = jest.fn(() => ({
-      eq: jest.fn(() => ({
-        order: jest.fn(() => ({
-          limit: jest.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-      })),
-    }));
+    const auditLimitMock = jest.fn(() => Promise.resolve({ data: [], error: null as null }));
+    const auditOrderMock = jest.fn(() => ({ limit: auditLimitMock }));
+    const auditEqMock = jest.fn(() => ({ order: auditOrderMock }));
+    const auditSelectMock = jest.fn(() => ({ eq: auditEqMock }));
 
-    const profilesSelectMock = jest.fn(() => ({
-      in: jest.fn(() => Promise.resolve({ data: [], error: null })),
-    }));
+    const profilesInMock = jest.fn(() => Promise.resolve({ data: [], error: null as null }));
+    const profilesSelectMock = jest.fn(() => ({ in: profilesInMock }));
 
-    const insertMock = jest.fn(() => Promise.resolve({ error: null }));
-    const updateEqMock = jest.fn(() => Promise.resolve({ error: null }));
+    const insertMock = jest.fn(() => Promise.resolve({ error: null as null }));
+    const updateEqMock = jest.fn(() => Promise.resolve({ error: null as null }));
     const updateMock = jest.fn(() => ({ eq: updateEqMock }));
-    const deleteEqMock = jest.fn(() => Promise.resolve({ error: null }));
+    const deleteEqMock = jest.fn(() => Promise.resolve({ error: null as null }));
     const deleteMock = jest.fn(() => ({ eq: deleteEqMock }));
 
     supabaseFromMock.mockImplementation((table: string) => {
-      if (table === "activities") {
-        return {
-          select: activitiesSelectMock,
-          insert: insertMock,
-          update: updateMock,
-          delete: deleteMock,
-        };
+      switch (table) {
+        case "activities":
+          return {
+            select: activitiesSelectMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+          };
+        case "sessions":
+          return {
+            select: sessionsSelectMock,
+          };
+        case "audit_log":
+          return {
+            select: auditSelectMock,
+          };
+        case "profiles":
+          return {
+            select: profilesSelectMock,
+          };
+        default:
+          throw new Error(`Unexpected table ${table}`);
       }
-      if (table === "sessions") {
-        return {
-          select: sessionsSelectMock,
-        };
-      }
-      if (table === "audit_log") {
-        return {
-          select: auditSelectMock,
-        };
-      }
-      if (table === "profiles") {
-        return {
-          select: profilesSelectMock,
-        };
-      }
-      return {};
     });
 
     return { activitiesSelectMock, insertMock };

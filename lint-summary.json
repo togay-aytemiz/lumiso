@@ -1,54 +1,6 @@
 {
-  "total": 1108,
+  "total": 951,
   "summary": [
-    {
-      "filePath": "src/components/ui/__tests__/date-time-picker.test.tsx",
-      "count": 15
-    },
-    {
-      "filePath": "src/pages/__tests__/ProjectDetail.test.tsx",
-      "count": 15
-    },
-    {
-      "filePath": "src/components/__tests__/EnhancedEditLeadDialog.test.tsx",
-      "count": 14
-    },
-    {
-      "filePath": "src/components/__tests__/FilterBar.test.tsx",
-      "count": 14
-    },
-    {
-      "filePath": "src/pages/projects/hooks/useProjectsData.ts",
-      "count": 14
-    },
-    {
-      "filePath": "src/components/__tests__/AddPaymentDialog.test.tsx",
-      "count": 13
-    },
-    {
-      "filePath": "src/components/settings/__tests__/ServiceDialogs.test.tsx",
-      "count": 13
-    },
-    {
-      "filePath": "src/lib/leadFieldValidation.ts",
-      "count": 13
-    },
-    {
-      "filePath": "src/pages/UpcomingSessions.tsx",
-      "count": 12
-    },
-    {
-      "filePath": "supabase/functions/tests/workflow-executor.test.ts",
-      "count": 12
-    },
-    {
-      "filePath": "src/components/__tests__/ActivitySection.test.tsx",
-      "count": 11
-    },
-    {
-      "filePath": "src/components/mobile/__tests__/MobileBottomNav.test.tsx",
-      "count": 11
-    },
     {
       "filePath": "src/components/template-builder/__tests__/TemplateBuilderPreview.test.tsx",
       "count": 11

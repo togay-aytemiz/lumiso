@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -459,6 +459,10 @@ export default function ProjectDetail() {
     setSummaryRefreshToken(prev => prev + 1);
   };
 
+  const handleStatusPreview = useCallback((statusId: string | null) => {
+    setLocalStatusId(statusId);
+  }, []);
+
   const summaryItems = useMemo(
     () => buildProjectSummaryItems({
       t: tPages,
@@ -572,6 +576,7 @@ export default function ProjectDetail() {
             projectId={project.id}
             currentStatusId={localStatusId || undefined}
             onStatusChange={handleStatusChange}
+            onStatusSelecting={handleStatusPreview}
             editable={!isArchived}
             size="sm"
             className="w-full justify-center"
@@ -590,6 +595,7 @@ export default function ProjectDetail() {
         projectId={project.id}
         currentStatusId={localStatusId || undefined}
         onStatusChange={handleStatusChange}
+        onStatusSelecting={handleStatusPreview}
         editable={!isArchived}
         size="sm"
         className="h-9 min-w-[160px]"
@@ -599,6 +605,7 @@ export default function ProjectDetail() {
           projectId={project.id}
           currentStatusId={localStatusId || undefined}
           onStatusChange={handleStatusChange}
+          onStatusSelecting={handleStatusPreview}
           editable={!isArchived}
           className="h-9"
         />

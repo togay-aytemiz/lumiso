@@ -383,35 +383,47 @@ export function UnifiedClientDetails({
 
   const hasQuickActions = showQuickActions && quickActions.length > 0;
 
-  const quickActionButtons = quickActions.map(({ key, label, icon: Icon, href, target }) => (
-    <Button
-      key={key}
-      variant="outline"
-      size="sm"
-      asChild
-      className="text-xs h-7"
-    >
-      <a href={href} target={target} rel={target ? "noopener noreferrer" : undefined}>
-        <Icon className="h-3 w-3 mr-1" />
-        {label}
-      </a>
-    </Button>
-  ));
+  const renderQuickActionButtons = (options?: { compact?: boolean }) => {
+    const compact = options?.compact;
 
-  const collapsedQuickActionIcons = quickActions.map(
-    ({ key, label, icon: Icon, href, target }) => (
-      <a
+    return quickActions.map(({ key, label, icon: Icon, href, target }) => (
+      <Button
         key={key}
-        href={href}
-        target={target}
-        rel={target ? "noopener noreferrer" : undefined}
-        aria-label={label}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:text-foreground"
+        variant="outline"
+        size="sm"
+        asChild
+        className={cn("h-7 text-xs px-2", compact ? "px-2" : "px-3")}
       >
-        <Icon className="h-4 w-4" />
-        <span className="sr-only">{label}</span>
-      </a>
-    )
+        <a
+          href={href}
+          target={target}
+          rel={target ? "noopener noreferrer" : undefined}
+        >
+          <Icon className="mr-1 h-3 w-3" />
+          {label}
+        </a>
+      </Button>
+    ));
+  };
+
+  const leadNameDisplay = showClickableNames ? (
+    <button
+      type="button"
+      onClick={() => {
+        if (onNavigateToLead) {
+          onNavigateToLead(lead.id);
+        } else {
+          navigate(`/leads/${lead.id}`);
+        }
+      }}
+      className="block truncate text-sm font-medium text-accent underline-offset-2 hover:underline text-left"
+    >
+      {localLead.name || " - "}
+    </button>
+  ) : (
+    <span className="block truncate text-sm font-medium text-accent">
+      {localLead.name || " - "}
+    </span>
   );
 
   if (loading) {
@@ -455,66 +467,48 @@ export function UnifiedClientDetails({
                 )}
               />
             </button>
-            <div className="flex flex-1 flex-col gap-1">
-              <button
-                type="button"
-                onClick={() => setIsExpanded((prev) => !prev)}
-                className="flex flex-col items-start text-left leading-none"
-                aria-expanded={isExpanded}
+            <div className="flex flex-1 items-start gap-2 min-w-0">
+              <div className="flex flex-1 flex-col min-w-0">
+                <button
+                  type="button"
+                  onClick={() => setIsExpanded((prev) => !prev)}
+                  className="text-left leading-none"
+                  aria-expanded={isExpanded}
+                >
+                  <span className="text-lg font-semibold">
+                    {isExpanded
+                      ? "Kişi Detayları"
+                      : title || tForms("clientDetails.title")}
+                  </span>
+                </button>
+                <div className="mt-1 min-w-0">{leadNameDisplay}</div>
+                {!isExpanded && hasQuickActions && (
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                    {renderQuickActionButtons({ compact: true })}
+                  </div>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size={isExpanded ? "sm" : "icon"}
+                onClick={() => setEditOpen(true)}
+                className={cn(
+                  "ml-auto bg-accent/10 text-accent transition-colors hover:bg-accent/20 flex-shrink-0",
+                  isExpanded ? "h-9 px-3 text-sm font-medium" : "h-9 w-9 rounded-lg"
+                )}
               >
-                <span className="text-lg font-semibold">
-                  {isExpanded
-                    ? "Kişi Detayları"
-                    : title || tForms("clientDetails.title")}
-                </span>
-              </button>
-              {!isExpanded && (
-                <div className="flex flex-col gap-1">
-                  {showClickableNames ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (onNavigateToLead) {
-                          onNavigateToLead(lead.id);
-                        } else {
-                          navigate(`/leads/${lead.id}`);
-                        }
-                      }}
-                      className="w-fit text-sm font-medium text-accent underline-offset-2 hover:underline"
-                    >
-                      {localLead.name || " - "}
-                    </button>
-                  ) : (
-                    <span className="text-sm font-medium text-accent">
-                      {localLead.name || " - "}
+                {isExpanded ? (
+                  tForms("clientDetails.edit")
+                ) : (
+                  <>
+                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                    <span className="sr-only">
+                      {tForms("clientDetails.edit")}
                     </span>
-                  )}
-                  {hasQuickActions && (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {collapsedQuickActionIcons}
-                    </div>
-                  )}
-                </div>
-              )}
+                  </>
+                )}
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size={isExpanded ? "sm" : "icon"}
-              onClick={() => setEditOpen(true)}
-              className={cn(
-                "bg-accent/10 text-accent transition-colors hover:bg-accent/20",
-                isExpanded ? "h-9 px-3 text-sm font-medium" : "h-9 w-9 rounded-lg"
-              )}
-            >
-              {isExpanded ? (
-                tForms("clientDetails.edit")
-              ) : (
-                <>
-                  <Pencil className="h-4 w-4" aria-hidden="true" />
-                  <span className="sr-only">{tForms("clientDetails.edit")}</span>
-                </>
-              )}
-            </Button>
           </div>
         </CardHeader>
         <div
@@ -596,7 +590,7 @@ export function UnifiedClientDetails({
             {/* Quick Actions */}
             {hasQuickActions && (
               <div className="flex flex-wrap gap-2 pt-3 border-t sm:flex-row flex-col sm:gap-2 gap-1">
-                {quickActionButtons}
+                {renderQuickActionButtons()}
               </div>
             )}
 

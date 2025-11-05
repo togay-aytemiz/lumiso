@@ -11,6 +11,7 @@ interface ProjectStagePipelineProps {
   projectId: string;
   currentStatusId?: string | null;
   onStatusChange?: () => void;
+  onStatusSelecting?: (statusId: string | null) => void;
   editable?: boolean;
   className?: string;
   statuses?: ProjectStatus[];
@@ -41,6 +42,7 @@ export function ProjectStagePipeline({
   projectId,
   currentStatusId,
   onStatusChange,
+  onStatusSelecting,
   editable = false,
   className,
   statuses: passedStatuses,
@@ -88,8 +90,12 @@ export function ProjectStagePipeline({
 
   const handleStageClick = (statusId: string) => {
     if (!editable || isUpdating) return;
+    const previousStatusId = currentStatus?.id ?? null;
+    onStatusSelecting?.(statusId);
     dismissOnboarding();
-    void handleStatusChange(statusId);
+    handleStatusChange(statusId).catch(() => {
+      onStatusSelecting?.(previousStatusId);
+    });
   };
 
   if (loading) {

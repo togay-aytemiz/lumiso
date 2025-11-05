@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { act } from "@testing-library/react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import { MobileBottomNav } from "../MobileBottomNav";
@@ -6,6 +7,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 const navigateMock = jest.fn();
 const useNavigateMock = jest.fn(() => navigateMock);
 const useLocationMock = jest.fn(() => ({ pathname: "/" }));
+const useProfileMock = useProfile as jest.MockedFunction<typeof useProfile>;
 
 jest.mock("react-router-dom", () => {
   const actual = jest.requireActual("react-router-dom");
@@ -16,10 +18,33 @@ jest.mock("react-router-dom", () => {
   };
 });
 
-const sheetPropsByTitle: Record<string, any> = {};
+type MockSheetItem = {
+  title: string;
+  onClick: () => Promise<void> | void;
+};
+
+type MockBottomSheetMenuProps = {
+  title: string;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  items: MockSheetItem[];
+  customContent?: ReactNode;
+};
+
+const sheetPropsByTitle: Record<string, MockBottomSheetMenuProps> = {};
+
+type HelpModalProps = {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+type UserMenuProps = {
+  variant?: "sidebar" | "mobile" | "minimal";
+  onNavigate?: () => void;
+};
 
 jest.mock("../BottomSheetMenu", () => ({
-  BottomSheetMenu: (props: any) => {
+  BottomSheetMenu: (props: MockBottomSheetMenuProps) => {
     sheetPropsByTitle[props.title] = props;
     return (
       <div data-testid={`sheet-${props.title}`} data-open={props.isOpen ? "true" : "false"}>
@@ -32,7 +57,7 @@ jest.mock("../BottomSheetMenu", () => ({
 const helpModalMock = jest.fn();
 
 jest.mock("@/components/modals/HelpModal", () => ({
-  HelpModal: (props: any) => {
+  HelpModal: (props: HelpModalProps) => {
     helpModalMock(props);
     return <div data-testid="help-modal" data-open={props.isOpen ? "true" : "false"} />;
   },
@@ -41,7 +66,7 @@ jest.mock("@/components/modals/HelpModal", () => ({
 const userMenuMock = jest.fn();
 
 jest.mock("@/components/UserMenu", () => ({
-  UserMenu: (props: any) => {
+  UserMenu: (props: UserMenuProps) => {
     userMenuMock(props);
     return <div data-testid="user-menu" />;
   },
@@ -70,17 +95,32 @@ jest.mock("@/contexts/ProfileContext", () => ({
 }));
 
 jest.mock("lucide-react", () => {
-  const React = jest.requireActual("react");
+  const React = jest.requireActual<typeof import("react")>("react");
   return new Proxy(
     {},
     {
-      get: (_target, property: PropertyKey) => (props: any) =>
+      get: (_target, property: PropertyKey) => (props: { className?: string }) =>
         React.createElement("svg", {
           ...props,
           "data-icon": String(property),
         }),
     }
   );
+});
+
+const scrollToMock = jest.fn();
+const confirmMock = jest.fn(() => true);
+
+Object.defineProperty(window, "scrollTo", {
+  configurable: true,
+  writable: true,
+  value: scrollToMock,
+});
+
+Object.defineProperty(window, "confirm", {
+  configurable: true,
+  writable: true,
+  value: confirmMock,
 });
 
 describe("MobileBottomNav", () => {
@@ -97,9 +137,10 @@ describe("MobileBottomNav", () => {
     useLocationMock.mockReturnValue({ pathname: "/" });
     getUserMock.mockResolvedValue({ data: { user: { email: "test@example.com" } }, error: null });
     signOutMock.mockResolvedValue(undefined);
-    (useProfile as jest.Mock).mockReturnValue({ profile: { firstName: "Taylor" } });
-    (window as any).scrollTo = jest.fn();
-    (window as any).confirm = jest.fn(() => true);
+    useProfileMock.mockReturnValue({ profile: { firstName: "Taylor" } });
+    scrollToMock.mockReset();
+    confirmMock.mockReset();
+    confirmMock.mockReturnValue(true);
     toastMock.mockReset();
   });
 
@@ -110,7 +151,7 @@ describe("MobileBottomNav", () => {
     fireEvent.click(screen.getByRole("button", { name: "Projects" }));
 
     expect(navigateMock).toHaveBeenCalledWith("/projects");
-    expect((window as any).scrollTo).not.toHaveBeenCalled();
+    expect(scrollToMock).not.toHaveBeenCalled();
   });
 
   it("scrolls to top instead of navigating when the active tab is pressed", async () => {
@@ -120,7 +161,7 @@ describe("MobileBottomNav", () => {
     fireEvent.click(screen.getByRole("button", { name: "Projects" }));
 
     expect(navigateMock).not.toHaveBeenCalledWith("/projects");
-    expect((window as any).scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+    expect(scrollToMock).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
   });
 
   it("opens and closes the More sheet via tab actions and UserMenu callbacks", async () => {
@@ -129,28 +170,35 @@ describe("MobileBottomNav", () => {
     await renderNav();
 
     fireEvent.click(screen.getByRole("button", { name: "More" }));
-    await waitFor(() => expect(sheetPropsByTitle["More"].isOpen).toBe(true));
+    await waitFor(() => {
+      expect(sheetPropsByTitle["More"]?.isOpen).toBe(true);
+    });
     expect(userMenuMock).toHaveBeenCalled();
 
-    const latestMenuProps = userMenuMock.mock.calls[userMenuMock.mock.calls.length - 1][0];
+    const latestMenuProps = userMenuMock.mock.calls.at(-1)?.[0] as UserMenuProps | undefined;
+    expect(latestMenuProps).toBeDefined();
     await act(async () => {
-      latestMenuProps.onNavigate();
+      latestMenuProps?.onNavigate?.();
     });
 
-    await waitFor(() => expect(sheetPropsByTitle["More"].isOpen).toBe(false));
+    await waitFor(() => {
+      expect(sheetPropsByTitle["More"]?.isOpen).toBe(false);
+    });
   });
 
   it("invokes Supabase sign out and navigates to auth when confirmed", async () => {
     await renderNav();
 
-    const moreItems = sheetPropsByTitle["More"].items;
-    const signOutItem = moreItems.find((item: any) => item.title === "Sign Out");
+    const moreSheet = sheetPropsByTitle["More"];
+    expect(moreSheet).toBeDefined();
+    const signOutItem = moreSheet?.items.find((item) => item.title === "Sign Out");
+    expect(signOutItem).toBeDefined();
 
     await act(async () => {
-      await signOutItem.onClick();
+      await signOutItem?.onClick();
     });
 
-    expect(window.confirm).toHaveBeenCalledWith("Are you sure you want to sign out?");
+    expect(confirmMock).toHaveBeenCalledWith("Are you sure you want to sign out?");
     expect(signOutMock).toHaveBeenCalledWith();
     expect(navigateMock).toHaveBeenCalledWith("/auth");
     expect(toastMock).not.toHaveBeenCalled();
@@ -161,10 +209,13 @@ describe("MobileBottomNav", () => {
     signOutMock.mockRejectedValue(error);
 
     await renderNav();
-    const signOutItem = sheetPropsByTitle["More"].items.find((item: any) => item.title === "Sign Out");
+    const moreSheet = sheetPropsByTitle["More"];
+    expect(moreSheet).toBeDefined();
+    const signOutItem = moreSheet?.items.find((item) => item.title === "Sign Out");
+    expect(signOutItem).toBeDefined();
 
     await act(async () => {
-      await signOutItem.onClick();
+      await signOutItem?.onClick();
     });
 
     expect(toastMock).toHaveBeenCalledWith({

@@ -25,6 +25,11 @@ type WorkflowExecutionRow = {
   execution_log?: Array<{ trigger_data?: Record<string, unknown> }>;
 };
 
+type WorkflowExecutionInsert = Omit<WorkflowExecutionRow, "id" | "created_at"> &
+  Partial<Pick<WorkflowExecutionRow, "created_at" | "execution_log" | "status">>;
+
+type NotificationInsert = Record<string, unknown>;
+
 interface SupabaseStubConfig {
   workflows?: WorkflowRow[];
   workflowExecutions?: WorkflowExecutionRow[];
@@ -32,83 +37,90 @@ interface SupabaseStubConfig {
   functionResponses?: Record<string, { data?: unknown; error?: unknown }>;
 }
 
-class SelectBuilder {
-  #rows: any[];
-  #filters: Array<(row: any) => boolean> = [];
+type SelectResult<T> = { data: T[] | T | null; error: null };
+
+class SelectBuilder<T extends Record<string, unknown>> implements PromiseLike<SelectResult<T>> {
+  #rows: T[];
+  #filters: Array<(row: T) => boolean> = [];
   #orderField: string | null = null;
   #limitCount: number | null = null;
   #singleMode: "single" | "maybe" | null = null;
 
-  constructor(rows: any[]) {
+  constructor(rows: T[]) {
     this.#rows = rows;
   }
 
-  select(_columns?: string) {
+  select(_columns?: string): this {
     return this;
   }
 
-  eq(field: string, value: unknown) {
-    this.#filters.push(row => row?.[field] === value);
+  eq(field: string, value: unknown): this {
+    this.#filters.push(row => row?.[field as keyof T] === value);
     return this;
   }
 
-  in(field: string, values: unknown[]) {
-    this.#filters.push(row => values.includes(row?.[field]));
+  in(field: string, values: unknown[]): this {
+    this.#filters.push(row => values.includes(row?.[field as keyof T]));
     return this;
   }
 
-  gte(field: string, value: string) {
+  gte(field: string, value: string): this {
     this.#filters.push(row => {
-      const rowValue = row?.[field];
+      const rowValue = row?.[field as keyof T];
       return typeof rowValue === "string" ? rowValue >= value : false;
     });
     return this;
   }
 
-  lt(field: string, value: string) {
+  lt(field: string, value: string): this {
     this.#filters.push(row => {
-      const rowValue = row?.[field];
+      const rowValue = row?.[field as keyof T];
       return typeof rowValue === "string" ? rowValue < value : false;
     });
     return this;
   }
 
-  order(field: string) {
+  order(field: string): this {
     this.#orderField = field;
     return this;
   }
 
-  limit(count: number) {
+  limit(count: number): Promise<{ data: T[]; error: null }> {
     this.#limitCount = count;
     const { data, error } = this.#build();
-    return Promise.resolve({ data: data.slice(0, count), error });
+    const arrayData = Array.isArray(data)
+      ? (data as T[]).slice(0, count)
+      : (data ? [data] : []);
+    return Promise.resolve({ data: arrayData, error });
   }
 
-  maybeSingle() {
+  maybeSingle(): Promise<{ data: T | null; error: null }> {
     this.#singleMode = "maybe";
-    return this.then(result => result);
+    const { data, error } = this.#build();
+    return Promise.resolve({ data: (data as T | null) ?? null, error });
   }
 
-  single() {
+  single(): Promise<{ data: T | null; error: null }> {
     this.#singleMode = "single";
-    return this.then(result => result);
+    const { data, error } = this.#build();
+    return Promise.resolve({ data: (data as T | null) ?? null, error });
   }
 
-  then<TResult1 = any, TResult2 = never>(
-    onfulfilled?: ((value: { data: any; error: null }) => TResult1 | Promise<TResult1>) | undefined,
-    onrejected?: ((reason: any) => TResult2 | Promise<TResult2>) | undefined
+  then<TResult1 = SelectResult<T>, TResult2 = never>(
+    onfulfilled?: (value: SelectResult<T>) => TResult1 | Promise<TResult1>,
+    onrejected?: (reason: unknown) => TResult2 | Promise<TResult2>
   ): Promise<TResult1 | TResult2> {
     return Promise.resolve(this.#build()).then(onfulfilled, onrejected);
   }
 
-  #build() {
+  #build(): SelectResult<T> {
     let data = this.#rows.filter(row => this.#filters.every(filter => filter(row)));
 
     if (this.#orderField) {
       const orderKey = this.#orderField;
       data = [...data].sort((a, b) => {
-        const av = a?.[orderKey];
-        const bv = b?.[orderKey];
+        const av = a?.[orderKey as keyof T];
+        const bv = b?.[orderKey as keyof T];
         if (typeof av === "number" && typeof bv === "number") {
           return av - bv;
         }
@@ -130,10 +142,10 @@ class SelectBuilder {
 }
 
 function createSupabaseStub(config: SupabaseStubConfig = {}) {
-  const insertedExecutions: any[] = [];
+  const insertedExecutions: WorkflowExecutionRow[] = [];
   const rpcCalls: Array<{ name: string; args: unknown }> = [];
   const functionInvocations: Array<{ name: string; options: unknown }> = [];
-  const notifications: any[] = [];
+  const notifications: NotificationInsert[] = [];
   let executionCounter = 1;
 
   return {
@@ -153,18 +165,27 @@ function createSupabaseStub(config: SupabaseStubConfig = {}) {
     },
     from(table: string) {
       if (table === "workflows") {
-        return new SelectBuilder(config.workflows ?? []);
+        return new SelectBuilder<WorkflowRow>(config.workflows ?? []);
       }
 
       if (table === "workflow_executions") {
         const existing = config.workflowExecutions ?? [];
         return {
           select(_columns?: string) {
-            return new SelectBuilder(existing);
+            return new SelectBuilder<WorkflowExecutionRow>(existing);
           },
-          insert(value: any) {
+          insert(value: WorkflowExecutionInsert | WorkflowExecutionInsert[]) {
             const payload = Array.isArray(value) ? value[0] : value;
-            const record = { id: `exec-${executionCounter++}`, ...payload };
+            const created_at = payload.created_at ?? new Date().toISOString();
+            const record: WorkflowExecutionRow = {
+              id: `exec-${executionCounter++}`,
+              workflow_id: payload.workflow_id,
+              trigger_entity_type: payload.trigger_entity_type,
+              trigger_entity_id: payload.trigger_entity_id,
+              status: payload.status ?? "pending",
+              created_at,
+              execution_log: payload.execution_log,
+            };
             insertedExecutions.push(record);
             return {
               select() {
@@ -176,7 +197,7 @@ function createSupabaseStub(config: SupabaseStubConfig = {}) {
               }
             };
           },
-          update(_value: any) {
+          update(_value: Partial<WorkflowExecutionRow>) {
             return {
               eq(_field: string, _value: unknown) {
                 return Promise.resolve({ data: null, error: null });
@@ -192,12 +213,12 @@ function createSupabaseStub(config: SupabaseStubConfig = {}) {
           date_format: "DD/MM/YYYY",
           time_format: "12-hour"
         }];
-        return new SelectBuilder(rows);
+        return new SelectBuilder<Record<string, unknown>>(rows);
       }
 
       if (table === "notifications") {
         return {
-          insert(value: any) {
+          insert(value: NotificationInsert | NotificationInsert[]) {
             const payload = Array.isArray(value) ? value[0] : value;
             notifications.push(payload);
             return Promise.resolve({ error: null });
@@ -205,7 +226,7 @@ function createSupabaseStub(config: SupabaseStubConfig = {}) {
         };
       }
 
-      return new SelectBuilder([]);
+      return new SelectBuilder<Record<string, unknown>>([]);
     },
     auth: {
       admin: {
@@ -225,6 +246,9 @@ function createSupabaseStub(config: SupabaseStubConfig = {}) {
     }
   };
 }
+
+const createClientStub: WorkflowExecutorDeps["createClient"] = () =>
+  ({} as ReturnType<WorkflowExecutorDeps["createClient"]>);
 
 Deno.test("triggerWorkflows filters to workflow_id and schedules reminders", async () => {
   const supabase = createSupabaseStub({
@@ -363,7 +387,7 @@ Deno.test("createWorkflowExecutor dispatches actions", async () => {
   const executeCalls: unknown[] = [];
 
   const deps: WorkflowExecutorDeps = {
-    createClient: () => ({} as any),
+    createClient: createClientStub,
     triggerWorkflowsImpl: async (_client, payload) => {
       triggerCalls.push(payload);
       return { triggered_workflows: 1 };

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import { AddPaymentDialog } from "../AddPaymentDialog";
 import { mockSupabaseClient } from "@/utils/testUtils";
@@ -5,6 +6,8 @@ import { useI18nToast } from "@/lib/toastHelpers";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ProjectPaymentStatus } from "@/pages/projects/types";
 
 jest.mock("@/integrations/supabase/client", () => ({
   supabase: mockSupabaseClient,
@@ -26,6 +29,12 @@ jest.mock("@/hooks/useModalNavigation", () => ({
   useModalNavigation: jest.fn(),
 }));
 
+type FooterAction = {
+  label: ReactNode;
+  disabled?: boolean;
+  onClick?: () => void | Promise<void>;
+};
+
 jest.mock("@/components/ui/app-sheet-modal", () => ({
   AppSheetModal: ({
     title,
@@ -33,10 +42,16 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
     children,
     footerActions = [],
     onDirtyClose,
-  }: any) => (
+  }: {
+    title: ReactNode;
+    dirty: boolean;
+    children: ReactNode;
+    footerActions?: FooterAction[];
+    onDirtyClose?: () => void;
+  }) => (
     <div data-testid="app-sheet-modal" data-title={title} data-dirty={dirty ? "dirty" : "clean"}>
       {children}
-      {footerActions.map((action: any, index: number) => (
+      {footerActions.map((action, index) => (
         <button
           key={index}
           data-testid={`footer-action-${index}`}
@@ -53,28 +68,52 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
   ),
 }));
 
+type SelectProps = {
+  value: ProjectPaymentStatus;
+  onValueChange: (next: ProjectPaymentStatus) => void;
+  children: ReactNode;
+};
+
+type SelectContentProps = { children: ReactNode };
+
+type SelectItemProps = { value: ProjectPaymentStatus; children: ReactNode };
+
 jest.mock("@/components/ui/select", () => ({
-  Select: ({ value, onValueChange, children }: any) => (
-    <select data-testid="status-select" value={value} onChange={(event) => onValueChange(event.target.value)}>
+  Select: ({ value, onValueChange, children }: SelectProps) => (
+    <select
+      data-testid="status-select"
+      value={value}
+      onChange={(event) => onValueChange(event.target.value as ProjectPaymentStatus)}
+    >
       {children}
     </select>
   ),
   SelectTrigger: () => null,
   SelectValue: () => null,
-  SelectContent: ({ children }: any) => <>{children}</>,
-  SelectItem: ({ value, children }: any) => (
+  SelectContent: ({ children }: SelectContentProps) => <>{children}</>,
+  SelectItem: ({ value, children }: SelectItemProps) => (
     <option value={value}>{typeof children === "string" ? children : value}</option>
   ),
 }));
 
 jest.mock("@/components/ui/popover", () => ({
-  Popover: ({ children }: any) => <div>{children}</div>,
-  PopoverTrigger: ({ children }: any) => <div>{children}</div>,
-  PopoverContent: ({ children }: any) => <div>{children}</div>,
+  Popover: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  PopoverTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  PopoverContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 jest.mock("../settings/NavigationGuardDialog", () => ({
-  NavigationGuardDialog: ({ open, message, onDiscard, onStay }: any) =>
+  NavigationGuardDialog: ({
+    open,
+    message,
+    onDiscard,
+    onStay,
+  }: {
+    open: boolean;
+    message: ReactNode;
+    onDiscard: () => void;
+    onStay: () => void;
+  }) =>
     open ? (
       <div data-testid="navigation-guard">
         <p>{message}</p>
@@ -113,10 +152,13 @@ const mockHandleDiscard = jest.fn();
 const mockHandleStay = jest.fn();
 const mockHandleSaveAndExit = jest.fn();
 
-const mockUseModalNavigation = useModalNavigation as jest.Mock;
-const mockUseI18nToast = useI18nToast as jest.Mock;
-const mockUseFormsTranslation = useFormsTranslation as jest.Mock;
-const mockGetUserOrganizationId = getUserOrganizationId as jest.Mock;
+const mockUseModalNavigation =
+  useModalNavigation as jest.MockedFunction<typeof useModalNavigation>;
+const mockUseI18nToast = useI18nToast as jest.MockedFunction<typeof useI18nToast>;
+const mockUseFormsTranslation =
+  useFormsTranslation as jest.MockedFunction<typeof useFormsTranslation>;
+const mockGetUserOrganizationId =
+  getUserOrganizationId as jest.MockedFunction<typeof getUserOrganizationId>;
 
 const createDefaultFromResponse = () => ({
   select: jest.fn().mockReturnThis(),
@@ -132,7 +174,7 @@ const createDefaultFromResponse = () => ({
 
 const originalFromImplementation = (mockSupabaseClient.from.getMockImplementation() || ((table: string) => createDefaultFromResponse())) as (
   table: string
-) => any;
+) => ReturnType<SupabaseClient["from"]>;
 
 describe("AddPaymentDialog", () => {
   beforeEach(() => {
@@ -175,7 +217,7 @@ describe("AddPaymentDialog", () => {
 
     mockSupabaseClient.from.mockImplementation((table: string) => {
       if (table === "payments") {
-        return { insert: insertMock } as any;
+        return { insert: insertMock } as ReturnType<SupabaseClient["from"]>;
       }
       return originalFromImplementation(table);
     });
@@ -220,9 +262,9 @@ describe("AddPaymentDialog", () => {
 
     mockSupabaseClient.from.mockImplementation((table: string) => {
       if (table === "payments") {
-        return { insert: insertMock } as any;
+        return { insert: insertMock } as ReturnType<SupabaseClient["from"]>;
       }
-      return {} as any;
+      return createDefaultFromResponse() as ReturnType<SupabaseClient["from"]>;
     });
 
     render(<AddPaymentDialog projectId="project-1" onPaymentAdded={jest.fn()} />);

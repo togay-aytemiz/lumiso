@@ -1,109 +1,111 @@
 import { z } from 'zod';
-import { LeadFieldDefinition, LeadFieldType } from '@/types/leadFields';
 
-/**
- * Creates a dynamic validation schema based on field definitions
- */
+import type { LeadFieldDefinition, LeadFieldType } from '@/types/leadFields';
+
+type FieldValidationRules = Record<string, unknown> | null | undefined;
+type FieldSchema = z.ZodTypeAny;
+
+const getNumericRule = (value: unknown): number | undefined =>
+  typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+
 export function createDynamicLeadSchema(fieldDefinitions: LeadFieldDefinition[]) {
-  const schemaFields: Record<string, z.ZodTypeAny> = {};
+  const schemaFields: Record<string, FieldSchema> = {};
 
   fieldDefinitions.forEach(field => {
     let fieldSchema = createFieldSchema(field.field_type, field.validation_rules);
 
-    // Apply required validation
     if (field.is_required) {
       fieldSchema = fieldSchema.refine(
-        (val) => val !== null && val !== undefined && val !== '', 
+        (val) => val !== null && val !== undefined && val !== '',
         { message: `${field.label} is required` }
       );
     } else {
       fieldSchema = fieldSchema.optional().nullable();
     }
 
-    // Use prefixed field name to match form data structure
     schemaFields[`field_${field.field_key}`] = fieldSchema;
   });
 
   return z.object(schemaFields);
 }
 
-/**
- * Creates a validation schema for a specific field type
- */
-function createFieldSchema(fieldType: LeadFieldType, validationRules?: Record<string, any> | null): z.ZodTypeAny {
-  // Handle null validation rules
-  const rules = validationRules || {};
-  
+function createFieldSchema(fieldType: LeadFieldType, validationRules?: FieldValidationRules): FieldSchema {
+  const rules = (validationRules ?? {}) as Record<string, unknown>;
+
   switch (fieldType) {
-    case 'text':
-      let textSchema = z.string().max(rules?.maxLength || 255, `Text is too long`);
-      if (rules?.minLength) {
-        textSchema = textSchema.min(rules.minLength, `Text must be at least ${rules.minLength} characters`);
+    case 'text': {
+      const textRules = rules as Partial<{ maxLength: number; minLength: number }>;
+      let textSchema = z.string().max(getNumericRule(textRules.maxLength) ?? 255, 'Text is too long');
+      if (typeof textRules.minLength === 'number') {
+        textSchema = textSchema.min(textRules.minLength, `Text must be at least ${textRules.minLength} characters`);
       }
       return textSchema;
+    }
 
-    case 'textarea':
-      let textareaSchema = z.string().max(rules?.maxLength || 1000, `Text is too long`);
-      if (rules?.minLength) {
-        textareaSchema = textareaSchema.min(rules.minLength, `Text must be at least ${rules.minLength} characters`);
+    case 'textarea': {
+      const textAreaRules = rules as Partial<{ maxLength: number; minLength: number }>;
+      let textareaSchema = z.string().max(getNumericRule(textAreaRules.maxLength) ?? 1000, 'Text is too long');
+      if (typeof textAreaRules.minLength === 'number') {
+        textareaSchema = textareaSchema.min(
+          textAreaRules.minLength,
+          `Text must be at least ${textAreaRules.minLength} characters`
+        );
       }
       return textareaSchema;
+    }
 
     case 'email':
-      return z.string().refine(
-        (val) => val === '' || z.string().email().safeParse(val).success,
-        'Please enter a valid email address'
-      ).max(254, 'Email address is too long');
+      return z
+        .string()
+        .refine((val) => val === '' || z.string().email().safeParse(val).success, 'Please enter a valid email address')
+        .max(254, 'Email address is too long');
 
     case 'phone':
-      return z.string().refine(
-        (val) => val === '' || /^[\+]?[\d\s\-\(\)]+$/.test(val),
-        'Please enter a valid phone number'
-      ).max(20, 'Phone number is too long');
+      return z
+        .string()
+        .refine((val) => val === '' || /^\+?[\d\s-()]+$/.test(val), 'Please enter a valid phone number')
+        .max(20, 'Phone number is too long');
 
     case 'date':
-      return z.string().refine(
-        (val) => val === '' || /^\d{4}-\d{2}-\d{2}$/.test(val),
-        'Please enter a valid date (YYYY-MM-DD)'
-      );
+      return z
+        .string()
+        .refine((val) => val === '' || /^\d{4}-\d{2}-\d{2}$/.test(val), 'Please enter a valid date (YYYY-MM-DD)');
 
     case 'select':
       return z.string();
 
     case 'checkbox':
-      return z.boolean().or(z.string().transform((val) => val === 'true' || val === '1'));
+      return z.union([z.boolean(), z.string().transform((val) => val === 'true' || val === '1')]);
 
-    case 'number':
-      let numberSchema = z.string().refine(
-        (val) => val === '' || (!isNaN(Number(val)) && val.trim() !== ''),
-        'Please enter a valid number'
-      );
-      
-      if (rules?.min !== undefined) {
+    case 'number': {
+      const numberRules = rules as Partial<{ min: number; max: number }>;
+      let numberSchema = z
+        .string()
+        .refine((val) => val === '' || (!Number.isNaN(Number(val)) && val.trim() !== ''), 'Please enter a valid number');
+
+      if (typeof numberRules.min === 'number') {
         numberSchema = numberSchema.refine(
-          (val) => val === '' || Number(val) >= rules.min,
-          `Number must be at least ${rules.min}`
+          (val) => val === '' || Number(val) >= numberRules.min!,
+          `Number must be at least ${numberRules.min}`
         );
       }
-      
-      if (rules?.max !== undefined) {
+
+      if (typeof numberRules.max === 'number') {
         numberSchema = numberSchema.refine(
-          (val) => val === '' || Number(val) <= rules.max,
-          `Number must be at most ${rules.max}`
+          (val) => val === '' || Number(val) <= numberRules.max!,
+          `Number must be at most ${numberRules.max}`
         );
       }
-      
+
       return numberSchema;
+    }
 
     default:
       return z.string().max(255);
   }
 }
 
-/**
- * Sanitizes field values for storage
- */
-export function sanitizeFieldValue(value: any, fieldType: LeadFieldType): string | null {
+export function sanitizeFieldValue(value: unknown, fieldType: LeadFieldType): string | null {
   if (value === null || value === undefined || value === '') {
     return null;
   }
@@ -111,25 +113,23 @@ export function sanitizeFieldValue(value: any, fieldType: LeadFieldType): string
   switch (fieldType) {
     case 'checkbox':
       return Boolean(value).toString();
-    
-    case 'number':
-      const num = Number(value);
-      return isNaN(num) ? null : num.toString();
-    
-    case 'date':
-      // Ensure proper date format
-      const date = new Date(value);
-      return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
-    
+
+    case 'number': {
+      const numericValue = typeof value === 'number' ? value : Number(value);
+      return Number.isNaN(numericValue) ? null : numericValue.toString();
+    }
+
+    case 'date': {
+      const date = new Date(value as string);
+      return Number.isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
+    }
+
     default:
       return String(value).trim();
   }
 }
 
-/**
- * Parses stored field values for display/editing
- */
-export function parseFieldValue(value: string | null, fieldType: LeadFieldType): any {
+export function parseFieldValue(value: string | null, fieldType: LeadFieldType): string | number | boolean {
   if (value === null || value === undefined) {
     return fieldType === 'checkbox' ? false : '';
   }
@@ -137,43 +137,41 @@ export function parseFieldValue(value: string | null, fieldType: LeadFieldType):
   switch (fieldType) {
     case 'checkbox':
       return value === 'true' || value === '1';
-    
-    case 'number':
-      const num = Number(value);
-      return isNaN(num) ? '' : num;
-    
+
+    case 'number': {
+      const numericValue = Number(value);
+      return Number.isNaN(numericValue) ? '' : numericValue;
+    }
+
     default:
       return value;
   }
 }
 
-/**
- * Validates a single field value
- */
 export function validateFieldValue(
-  value: any, 
+  value: unknown,
   fieldDefinition: LeadFieldDefinition
 ): { isValid: boolean; error?: string } {
   try {
     const schema = createFieldSchema(fieldDefinition.field_type, fieldDefinition.validation_rules);
-    
+
     if (fieldDefinition.is_required) {
       schema.parse(value);
     } else {
       schema.optional().nullable().parse(value);
     }
-    
+
     return { isValid: true };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { 
-        isValid: false, 
-        error: error.issues[0]?.message || 'Invalid value' 
+      return {
+        isValid: false,
+        error: error.issues[0]?.message || 'Invalid value',
       };
     }
-    return { 
-      isValid: false, 
-      error: 'Validation failed' 
+    return {
+      isValid: false,
+      error: 'Validation failed',
     };
   }
 }

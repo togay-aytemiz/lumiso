@@ -1,3 +1,5 @@
+import type { ReactNode, ReactElement, SelectHTMLAttributes } from "react";
+import { Children, isValidElement } from "react";
 import { fireEvent, render, screen } from "@/utils/testUtils";
 import { format } from "date-fns";
 import { getDateFnsLocale } from "@/lib/utils";
@@ -6,30 +8,25 @@ import { DateTimePicker } from "../date-time-picker";
 jest.mock("react-calendar/dist/Calendar.css", () => ({}), { virtual: true });
 jest.mock("@/components/react-calendar.css", () => ({}), { virtual: true });
 
-jest.mock("@/components/ui/popover", () => {
-  const React = require("react");
-  return {
-    Popover: ({ children }: any) => <div data-testid="popover">{children}</div>,
-    PopoverTrigger: ({ children }: any) => <div>{children}</div>,
-    PopoverContent: ({ children }: any) => <div>{children}</div>,
-  };
-});
+jest.mock("@/components/ui/popover", () => ({
+  Popover: ({ children }: { children?: ReactNode }) => <div data-testid="popover">{children}</div>,
+  PopoverTrigger: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  PopoverContent: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+}));
 
 jest.mock("@/components/ui/select", () => {
-  const React = require("react");
-
-  const SelectValue = ({ placeholder }: any) => (
+  const SelectValue = ({ placeholder }: { placeholder?: string }) => (
     <option value="">{placeholder}</option>
   );
 
-  const SelectItem = ({ value, children }: any) => (
+  const SelectItem = ({ value, children }: { value: string; children?: ReactNode }) => (
     <option value={value}>{children}</option>
   );
 
-  const collectOptions = (nodes: any): any[] => {
-    const options: any[] = [];
-    React.Children.forEach(nodes, (child: any) => {
-      if (!React.isValidElement(child)) return;
+  const collectOptions = (nodes: ReactNode): ReactElement[] => {
+    const options: ReactElement[] = [];
+    Children.forEach(nodes, (child) => {
+      if (!isValidElement(child)) return;
       if (child.type === SelectValue || child.type === SelectItem) {
         options.push(child);
         return;
@@ -41,31 +38,31 @@ jest.mock("@/components/ui/select", () => {
     return options;
   };
 
-  const Select = ({ children, value, onValueChange, className, ...rest }: any) => {
+  const Select = ({ children, value, onValueChange, className, ...rest }: SelectHTMLAttributes<HTMLSelectElement> & { onValueChange?: (next: string) => void }) => {
     const options = collectOptions(children);
     return (
       <select
         className={className}
         data-testid={rest["data-testid"]}
         value={value}
-        onChange={event => onValueChange?.(event.target.value)}
+        onChange={(event) => onValueChange?.(event.target.value)}
       >
         {options}
       </select>
     );
   };
 
-  const SelectTrigger = ({ children }: any) => <>{children}</>;
-  const SelectContent = ({ children }: any) => <>{children}</>;
+  const SelectTrigger = ({ children }: { children?: ReactNode }) => <>{children}</>;
+  const SelectContent = ({ children }: { children?: ReactNode }) => <>{children}</>;
 
   return { Select, SelectTrigger, SelectValue, SelectContent, SelectItem };
 });
 
 jest.mock("react-calendar", () => ({
   __esModule: true,
-  default: ({ onChange }: any) => (
+  default: ({ onChange }: { onChange?: (value: Date) => void }) => (
     <div>
-      <button type="button" onClick={() => onChange(new Date(2024, 0, 15))}>
+      <button type="button" onClick={() => onChange?.(new Date(2024, 0, 15))}>
         choose-date
       </button>
     </div>

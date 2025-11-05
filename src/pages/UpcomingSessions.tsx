@@ -42,17 +42,17 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface Session {
   id: string;
   lead_id: string;
-  session_date: string;
-  session_time: string;
-  notes: string;
+  session_date: string | null;
+  session_time: string | null;
+  notes: string | null;
   status: string;
   created_at: string;
-  project_id?: string | null;
+  project_id: string | null;
   project_name?: string;
   project_status_id?: string | null;
   project_status?: { id: string; name: string; color: string } | null;
   lead_name?: string;
-  lead_status?: string;
+  lead_status?: string | null;
 }
 
 type SessionLifecycle = 'active' | 'completed' | 'cancelled' | 'planned' | 'unknown';
@@ -62,7 +62,7 @@ type SessionSegment = 'all' | 'upcoming' | 'in_progress' | 'pending' | 'past' | 
 interface SessionStatusRecord {
   id: string;
   name: string;
-  color: string;
+  color: string | null;
   lifecycle: string | null;
   is_system_initial: boolean;
 }
@@ -78,6 +78,68 @@ interface SessionWithComputed extends Session {
 
 const normalizeStatusName = (value?: string | null) =>
   (value ?? '').trim().toLowerCase();
+
+const firstOrNull = <T,>(value: T | T[] | null | undefined): T | null => {
+  if (Array.isArray(value)) {
+    return value.length > 0 ? value[0] ?? null : null;
+  }
+  return value ?? null;
+};
+
+type SessionStatusResponse = {
+  id: string;
+  name: string;
+  color: string | null;
+  lifecycle: string | null;
+  is_system_initial?: boolean | null;
+};
+
+type LeadRow = {
+  id: string;
+  name: string | null;
+  status: string | null;
+};
+
+type ProjectStatusRow = {
+  id: string;
+  name: string | null;
+  color: string | null;
+};
+
+type ProjectRow = {
+  id: string;
+  name: string | null;
+  status_id: string | null;
+  project_status: ProjectStatusRow | ProjectStatusRow[] | null;
+};
+
+type SessionRow = {
+  id: string;
+  lead_id: string;
+  session_date: string | null;
+  session_time: string | null;
+  notes: string | null;
+  status: string;
+  created_at: string;
+  project_id: string | null;
+  leads: LeadRow | null;
+  projects: ProjectRow | ProjectRow[] | null;
+};
+
+type ProjectDialogRow = {
+  id: string;
+  name: string | null;
+  description: string | null;
+  lead_id: string | null;
+  user_id: string | null;
+  created_at: string;
+  updated_at: string;
+  status_id: string | null;
+  previous_status_id: string | null;
+  project_type_id: string | null;
+};
+
+type ProjectPreview = ProjectDialogRow & { leads: LeadNameRow | null };
 
 const normalizeLifecycle = (value?: string | null): SessionLifecycle => {
   const normalized = normalizeStatusName(value);
@@ -164,7 +226,7 @@ const AllSessions = () => {
   const { data: sessionStatusData = [] } = useSessionStatuses();
   const navigate = useNavigate();
   const location = useLocation();
-  const [viewingProject, setViewingProject] = useState<any>(null);
+  const [viewingProject, setViewingProject] = useState<ProjectPreview | null>(null);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
@@ -174,11 +236,14 @@ const AllSessions = () => {
   const fetchSessions = useCallback(async () => {
     setLoading(true);
     try {
-      // Determine active organization first so we can scope queries properly
       const { getUserOrganizationId } = await import('@/lib/organizationUtils');
       const activeOrganizationId = await getUserOrganizationId();
 
-      // Get sessions with proper validation using inner joins, scoped to org
+      if (!activeOrganizationId) {
+        setSessions([]);
+        return;
+      }
+
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('sessions')
         .select(`
@@ -189,66 +254,76 @@ const AllSessions = () => {
             project_status:project_statuses!projects_status_id_fkey(id, name, color)
           )
         `)
-        .eq('organization_id', activeOrganizationId as any)
+        .eq('organization_id', activeOrganizationId)
         .order('session_date', { ascending: false })
         .order('session_time', { ascending: false });
 
       if (sessionsError) throw sessionsError;
 
-      let filteredSessions = sessionsData || [];
+      const sessionRows: SessionRow[] = (sessionsData ?? []) as SessionRow[];
 
-      // Filter out archived projects from results (based on org's Archived status)
-      if (activeOrganizationId) {
-        const { data: archivedStatus } = await supabase
-          .from('project_statuses')
-          .select('id, name')
-          .eq('organization_id', activeOrganizationId)
-          .ilike('name', 'archived')
-          .maybeSingle();
+      const { data: archivedStatus } = await supabase
+        .from('project_statuses')
+        .select('id, name')
+        .eq('organization_id', activeOrganizationId)
+        .ilike('name', 'archived')
+        .maybeSingle();
 
-        filteredSessions = filteredSessions.filter((session) => {
-          // Must have valid lead (inner join ensures this)
-          if (!(session as any).leads) return false;
+      const filteredSessions = sessionRows.filter((session) => {
+        if (!session.leads) {
+          return false;
+        }
 
-          // If session has a project, check if it's archived
-          const proj = Array.isArray((session as any).projects)
-            ? (session as any).projects[0]
-            : (session as any).projects;
-          if (session.project_id && proj) {
-            if (archivedStatus?.id && proj.status_id === archivedStatus.id) {
-              return false;
-            }
-          }
-
+        if (!session.project_id) {
           return true;
-        });
-      }
+        }
 
-      // Process sessions with enhanced data validation
-      if (filteredSessions.length > 0) {
-        const sessionsWithInfo = filteredSessions.map((session: any) => {
-          const proj = Array.isArray(session.projects) ? session.projects[0] : session.projects;
-          const statusObj = proj?.project_status
-            ? (Array.isArray(proj.project_status) ? proj.project_status[0] : proj.project_status)
-            : null;
-          return {
-            ...session,
-            lead_name: session.leads?.name || 'Unknown Lead',
-            lead_status: session.leads?.status || 'unknown',
-            project_name: proj?.name || undefined,
-            project_status_id: statusObj?.id ?? proj?.status_id ?? null,
-            project_status: statusObj ?? null,
-          } as Session;
-        });
-        setSessions(sessionsWithInfo);
-      } else {
-        setSessions([]);
-      }
-    } catch (error: any) {
+        const project = firstOrNull(session.projects);
+        if (!project) {
+          return true;
+        }
+
+        if (archivedStatus?.id && project.status_id === archivedStatus.id) {
+          return false;
+        }
+
+        return true;
+      });
+
+      const sessionsWithInfo: Session[] = filteredSessions.map((sessionRow) => {
+        const project = firstOrNull(sessionRow.projects);
+        const projectStatus = project ? firstOrNull(project.project_status) : null;
+
+        return {
+          id: sessionRow.id,
+          lead_id: sessionRow.lead_id,
+          session_date: sessionRow.session_date,
+          session_time: sessionRow.session_time,
+          notes: sessionRow.notes,
+          status: sessionRow.status,
+          created_at: sessionRow.created_at,
+          project_id: sessionRow.project_id,
+          lead_name: sessionRow.leads?.name ?? 'Unknown Lead',
+          lead_status: sessionRow.leads?.status ?? 'unknown',
+          project_name: project?.name ?? undefined,
+          project_status_id: projectStatus?.id ?? project?.status_id ?? null,
+          project_status: projectStatus
+            ? {
+                id: projectStatus.id,
+                name: projectStatus.name ?? '',
+                color: projectStatus.color ?? '#A0AEC0',
+              }
+            : null,
+        };
+      });
+
+      setSessions(sessionsWithInfo);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       toast({
-        title: "Error fetching sessions",
-        description: error.message,
-        variant: "destructive"
+        title: 'Error fetching sessions',
+        description: message,
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -263,11 +338,12 @@ const AllSessions = () => {
   useThrottledRefetchOnFocus(fetchSessions, 30_000);
 
   const sessionStatuses = useMemo<SessionStatusRecord[]>(() => {
-    return (sessionStatusData ?? []).map((status: any) => ({
+    const statuses = (sessionStatusData ?? []) as SessionStatusResponse[];
+    return statuses.map((status) => ({
       id: status.id,
       name: status.name,
-      color: status.color,
-      lifecycle: status.lifecycle,
+      color: status.color ?? null,
+      lifecycle: status.lifecycle ?? null,
       is_system_initial: Boolean(status.is_system_initial),
     }));
   }, [sessionStatusData]);
@@ -300,7 +376,7 @@ const AllSessions = () => {
       const color = statusRecord?.color ?? getFallbackColor(lifecycle, isInitial);
       const displayName = statusRecord?.name ?? session.status;
 
-      return {
+      const computed: SessionWithComputed = {
         ...session,
         statusId: statusRecord?.id ?? null,
         statusDisplayName: displayName,
@@ -308,7 +384,9 @@ const AllSessions = () => {
         statusLifecycle: lifecycle,
         statusIsInitial: isInitial,
         segment,
-      } as SessionWithComputed;
+      };
+
+      return computed;
     });
   }, [sessions, statusLookup]);
 
@@ -560,10 +638,13 @@ const AllSessions = () => {
         .single();
       if (leadError) throw leadError;
 
-      setViewingProject({ ...data, leads: leadData });
+      const projectData = data as ProjectDialogRow;
+      const leadNameData = (leadData as LeadNameRow) ?? null;
+      setViewingProject({ ...projectData, leads: leadNameData });
       setShowProjectDialog(true);
-    } catch (err: any) {
-      toast({ title: 'Unable to open project', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      const description = err instanceof Error ? err.message : 'Unknown error';
+      toast({ title: 'Unable to open project', description, variant: 'destructive' });
     }
   }, [isMobile, navigate]);
 
@@ -627,8 +708,14 @@ const AllSessions = () => {
     [t]
   );
 
-  const activeSegmentSummary = segmentSummaries[activeSegment];
-  const activeSegmentBullets = segmentBullets[activeSegment] ?? [];
+  const activeSegmentSummary = useMemo(
+    () => segmentSummaries[activeSegment],
+    [activeSegment, segmentSummaries]
+  );
+  const activeSegmentBullets = useMemo(
+    () => segmentBullets[activeSegment] ?? [],
+    [activeSegment, segmentBullets]
+  );
 
   const segmentOptions = useMemo(
     () => [
@@ -884,16 +971,16 @@ const AllSessions = () => {
       const rows = filteredAndSortedSessions.map((session) => {
         const statusLabel = session.statusDisplayName || session.status || '';
         return {
-        [t('sessions.table.clientName')]: session.lead_name ?? '',
-        [t('sessions.table.date')]: session.session_date
-          ? formatLongDate(session.session_date)
-          : '',
-        [t('sessions.table.time')]: session.session_time
-          ? formatTime(session.session_time)
-          : '',
-        [t('sessions.table.project')]: session.project_name ?? '',
-        [t('sessions.table.status')]: statusLabel,
-        [t('sessions.table.notes')]: session.notes ?? '',
+          [t('sessions.table.clientName')]: session.lead_name ?? '',
+          [t('sessions.table.date')]: session.session_date
+            ? formatLongDate(session.session_date)
+            : '',
+          [t('sessions.table.time')]: session.session_time
+            ? formatTime(session.session_time)
+            : '',
+          [t('sessions.table.project')]: session.project_name ?? '',
+          [t('sessions.table.status')]: statusLabel,
+          [t('sessions.table.notes')]: session.notes ?? '',
         };
       });
 
@@ -925,7 +1012,6 @@ const AllSessions = () => {
     exporting,
     filteredAndSortedSessions,
     t,
-    toast,
   ]);
 
   const exportButton = useMemo(

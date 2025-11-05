@@ -1,3 +1,4 @@
+import type { ChangeEvent, ReactNode } from "react";
 import { render, screen, waitFor } from "@/utils/testUtils";
 import ProjectDetail from "../ProjectDetail";
 import { mockSupabaseClient } from "@/utils/testUtils";
@@ -49,7 +50,15 @@ jest.mock("@/lib/projects/buildProjectSummaryItems", () => ({
 }));
 
 jest.mock("@/components/EntityHeader", () => ({
-  EntityHeader: ({ title, subtitle, actions }: any) => (
+  EntityHeader: ({
+    title,
+    subtitle,
+    actions,
+  }: {
+    title?: ReactNode;
+    subtitle?: ReactNode;
+    actions?: ReactNode;
+  }) => (
     <div data-testid="entity-header">
       <div>{title}</div>
       {subtitle ? <div>{subtitle}</div> : null}
@@ -59,7 +68,7 @@ jest.mock("@/components/EntityHeader", () => ({
 }));
 
 jest.mock("@/components/UnifiedClientDetails", () => ({
-  UnifiedClientDetails: ({ lead }: any) => (
+  UnifiedClientDetails: ({ lead }: { lead?: { name?: ReactNode } }) => (
     <div data-testid="unified-client-details">{lead?.name}</div>
   ),
 }));
@@ -101,11 +110,17 @@ jest.mock("@/components/ProjectStagePipeline", () => ({
 }));
 
 jest.mock("@/components/SimpleProjectTypeSelect", () => ({
-  SimpleProjectTypeSelect: ({ value, onValueChange }: any) => (
+  SimpleProjectTypeSelect: ({
+    value,
+    onValueChange,
+  }: {
+    value: string;
+    onValueChange: (newValue: string) => void;
+  }) => (
     <select
       data-testid="project-type-select"
       value={value}
-      onChange={event => onValueChange(event.target.value)}
+      onChange={(event: ChangeEvent<HTMLSelectElement>) => onValueChange(event.target.value)}
     >
       <option value="">none</option>
       <option value="type-1">type-1</option>
@@ -114,10 +129,10 @@ jest.mock("@/components/SimpleProjectTypeSelect", () => ({
 }));
 
 jest.mock("@/components/ui/dropdown-menu", () => ({
-  DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DropdownMenuItem: ({ children, onSelect }: { children: React.ReactNode; onSelect?: () => void }) => (
+  DropdownMenu: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DropdownMenuTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DropdownMenuContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DropdownMenuItem: ({ children, onSelect }: { children: ReactNode; onSelect?: () => void }) => (
     <div role="menuitem" onClick={onSelect}>
       {children}
     </div>
@@ -125,30 +140,48 @@ jest.mock("@/components/ui/dropdown-menu", () => ({
 }));
 
 jest.mock("@/components/ui/alert-dialog", () => ({
-  AlertDialog: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  AlertDialogAction: ({ children, onClick, disabled }: any) => (
+  AlertDialog: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  AlertDialogAction: ({
+    children,
+    onClick,
+    disabled,
+  }: {
+    children: ReactNode;
+    onClick?: () => void;
+    disabled?: boolean;
+  }) => (
     <button onClick={onClick} disabled={disabled}>
       {children}
     </button>
   ),
-  AlertDialogCancel: ({ children, disabled }: any) => (
+  AlertDialogCancel: ({ children, disabled }: { children: ReactNode; disabled?: boolean }) => (
     <button disabled={disabled}>{children}</button>
   ),
-  AlertDialogContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  AlertDialogDescription: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  AlertDialogFooter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  AlertDialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  AlertDialogTitle: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  AlertDialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  AlertDialogDescription: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  AlertDialogFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  AlertDialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  AlertDialogTitle: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 jest.mock("@/components/project-details/ProjectDetailsLayout", () => ({
   __esModule: true,
-  default: ({ header, left, sections, rightFooter }: any) => (
+  default: ({
+    header,
+    left,
+    sections,
+    rightFooter,
+  }: {
+    header: ReactNode;
+    left: ReactNode;
+    sections: Array<{ id: string; title: ReactNode; content: ReactNode }>;
+    rightFooter?: ReactNode;
+  }) => (
     <div data-testid="project-details-layout">
       <div data-testid="layout-header">{header}</div>
       <div data-testid="layout-left">{left}</div>
       <div data-testid="layout-sections">
-        {sections.map((section: any) => (
+        {sections.map(section => (
           <div key={section.id} data-testid={`section-${section.id}`}>
             <span>{section.title}</span>
             <div>{section.content}</div>
@@ -282,17 +315,17 @@ describe("ProjectDetail", () => {
     mockSupabaseClient.from.mockImplementation((table: string) => {
       switch (table) {
         case "projects":
-          return { select: selectProjects } as any;
+          return { select: selectProjects };
         case "sessions":
-          return { select: selectSessions } as any;
+          return { select: selectSessions };
         case "leads":
-          return { select: selectLeads } as any;
+          return { select: selectLeads };
         case "project_types":
-          return { select: selectProjectTypes } as any;
+          return { select: selectProjectTypes };
         case "project_statuses":
-          return { select: selectStatuses } as any;
+          return { select: selectStatuses };
         default:
-          return { select: jest.fn() } as any;
+          return { select: jest.fn() };
       }
     });
   };
@@ -328,10 +361,10 @@ describe("ProjectDetail", () => {
               single: jest.fn().mockResolvedValue({ data: null, error: new Error("not found") }),
             }),
           }),
-        } as any;
+        };
       }
 
-      return { select: jest.fn() } as any;
+      return { select: jest.fn() };
     });
 
     const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});

@@ -280,7 +280,7 @@ export default function SessionSheetView({
       {isMobile ? (
         <div className="flex w-full flex-wrap items-center gap-2">
           <div className="flex-1 min-w-[160px]">
-            {renderSessionStatusBadge("w-full justify-center", "sm")}
+            {renderSessionStatusBadge("w-full h-9 justify-center", "sm")}
           </div>
           {moreActionsButton}
         </div>

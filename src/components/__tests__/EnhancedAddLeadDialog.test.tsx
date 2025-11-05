@@ -54,7 +54,7 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
     footerActions = [],
     onDirtyClose,
     children,
-  }: import("./__types__/modal").MockAppSheetModalProps) => (
+  }: AppSheetModalProps) => (
     <div data-testid="app-sheet-modal">
       <span data-testid="modal-title">{title}</span>
       <span data-testid="modal-open">{String(isOpen)}</span>
@@ -80,7 +80,7 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
 }));
 
 jest.mock("../settings/NavigationGuardDialog", () => ({
-  NavigationGuardDialog: ({ open, message, onDiscard, onStay, onSaveAndExit }: import("./__types__/modal").MockNavigationGuardProps) =>
+  NavigationGuardDialog: ({ open, message, onDiscard, onStay, onSaveAndExit }: NavigationGuardProps) =>
     open ? (
       <div data-testid="navigation-guard">
         <p data-testid="navigation-guard-message">{message}</p>

@@ -11,6 +11,7 @@ interface ProjectStatusBadgeProps {
   projectId: string;
   currentStatusId?: string | null;
   onStatusChange?: () => void;
+  onStatusSelecting?: (statusId: string | null) => void;
   editable?: boolean;
   className?: string;
   size?: "sm" | "default";
@@ -22,6 +23,7 @@ export function ProjectStatusBadge({
   projectId,
   currentStatusId,
   onStatusChange,
+  onStatusSelecting,
   editable = false,
   className,
   size = "default",
@@ -56,13 +58,17 @@ export function ProjectStatusBadge({
   const selectableStatuses = statuses.filter(status => status.name?.toLowerCase?.() !== "archived");
 
   const isSmall = size === "sm";
-  const dotSize = isSmall ? "w-2 h-2" : "w-2.5 h-2.5";
-  const textSize = isSmall ? "text-xs" : "text-sm";
-  const padding = isSmall ? "px-2 py-1" : "px-4 py-2";
+  const dotSize = isSmall ? "w-2.5 h-2.5" : "w-2.5 h-2.5";
+  const textSize = isSmall ? "text-[13px] leading-tight" : "text-sm";
+  const padding = isSmall ? "px-3 py-1.5" : "px-4 py-2";
 
   const handleSelect = (statusId: string) => {
+    const previousStatusId = currentStatus?.id ?? null;
+    onStatusSelecting?.(statusId);
     setDropdownOpen(false);
-    void handleStatusChange(statusId);
+    handleStatusChange(statusId).catch(() => {
+      onStatusSelecting?.(previousStatusId);
+    });
   };
 
   if (loading) {

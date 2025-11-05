@@ -1,23 +1,35 @@
+import type { ReactElement, ReactNode } from "react";
 import userEvent from "@testing-library/user-event";
 import { render, screen, within } from "@/utils/testUtils";
 import { FilterBar } from "@/components/FilterBar";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
 jest.mock("@/components/ui/select", () => {
-  const React = require("react");
-  const SelectContext = React.createContext<{ onValueChange: (value: string) => void }>({
+  const React = jest.requireActual<typeof import("react")>("react");
+  type SelectContextValue = { onValueChange: (value: string) => void };
+  const SelectContext = React.createContext<SelectContextValue>({
     onValueChange: () => {},
   });
 
+  type SelectProps = {
+    onValueChange?: (value: string) => void;
+    children: ReactNode;
+  };
+
+  type SelectTriggerProps = { children: ReactNode };
+  type SelectContentProps = { children: ReactNode };
+  type SelectValueProps = { children: ReactNode };
+  type SelectItemProps = { value: string; children: ReactNode };
+
   return {
     __esModule: true,
-    Select: ({ onValueChange, children }: any) => (
+    Select: ({ onValueChange = () => {}, children }: SelectProps) => (
       <SelectContext.Provider value={{ onValueChange }}>{children}</SelectContext.Provider>
     ),
-    SelectTrigger: ({ children }: any) => <button type="button">{children}</button>,
-    SelectContent: ({ children }: any) => <div>{children}</div>,
-    SelectValue: ({ children }: any) => <span>{children}</span>,
-    SelectItem: ({ value, children }: any) => {
+    SelectTrigger: ({ children }: SelectTriggerProps) => <button type="button">{children}</button>,
+    SelectContent: ({ children }: SelectContentProps) => <div>{children}</div>,
+    SelectValue: ({ children }: SelectValueProps) => <span>{children}</span>,
+    SelectItem: ({ value, children }: SelectItemProps) => {
       const ctx = React.useContext(SelectContext);
       return (
         <button type="button" onClick={() => ctx.onValueChange(value)}>
@@ -29,35 +41,51 @@ jest.mock("@/components/ui/select", () => {
 });
 
 jest.mock("@/components/ui/sheet", () => {
-  const React = require("react");
-  const SheetContext = React.createContext<{ open: boolean; setOpen: (open: boolean) => void }>({
+  const React = jest.requireActual<typeof import("react")>("react");
+  type SheetContextValue = { open: boolean; setOpen: (open: boolean) => void };
+  const SheetContext = React.createContext<SheetContextValue>({
     open: false,
     setOpen: () => {},
   });
 
+  type SheetProps = {
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+    children: ReactNode;
+  };
+
+  type SheetTriggerProps = {
+    children: ReactElement<{ onClick?: (...args: unknown[]) => void }>;
+  };
+
+  type SheetContentProps = { children: ReactNode };
+  type SheetHeaderProps = { children: ReactNode };
+  type SheetTitleProps = { children: ReactNode };
+  type SheetFooterProps = { children: ReactNode };
+
   return {
     __esModule: true,
-    Sheet: ({ open = false, onOpenChange, children }: any) => (
+    Sheet: ({ open = false, onOpenChange, children }: SheetProps) => (
       <SheetContext.Provider value={{ open, setOpen: (value: boolean) => onOpenChange?.(value) }}>
         {children}
       </SheetContext.Provider>
     ),
-    SheetTrigger: ({ children }: any) => {
+    SheetTrigger: ({ children }: SheetTriggerProps) => {
       const ctx = React.useContext(SheetContext);
       return React.cloneElement(children, {
-        onClick: (...args: any[]) => {
+        onClick: (...args: unknown[]) => {
           children.props?.onClick?.(...args);
           ctx.setOpen(!ctx.open);
         },
       });
     },
-    SheetContent: ({ children }: any) => {
+    SheetContent: ({ children }: SheetContentProps) => {
       const ctx = React.useContext(SheetContext);
       return ctx.open ? <div>{children}</div> : null;
     },
-    SheetHeader: ({ children }: any) => <div>{children}</div>,
-    SheetTitle: ({ children }: any) => <h2>{children}</h2>,
-    SheetFooter: ({ children }: any) => <div>{children}</div>,
+    SheetHeader: ({ children }: SheetHeaderProps) => <div>{children}</div>,
+    SheetTitle: ({ children }: SheetTitleProps) => <h2>{children}</h2>,
+    SheetFooter: ({ children }: SheetFooterProps) => <div>{children}</div>,
   };
 });
 
@@ -83,7 +111,8 @@ jest.mock("react-i18next", () => ({
   }),
 }));
 
-const mockUseFormsTranslation = useFormsTranslation as jest.Mock;
+const mockUseFormsTranslation =
+  useFormsTranslation as jest.MockedFunction<typeof useFormsTranslation>;
 
 describe("FilterBar", () => {
   beforeAll(() => {

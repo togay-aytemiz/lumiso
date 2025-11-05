@@ -1,6 +1,10 @@
+import type { ReactNode } from "react";
 import React from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AddServiceDialog, EditServiceDialog } from "../ServiceDialogs";
+import type { Session, SupabaseClient } from "@supabase/supabase-js";
+import type { ServiceFormValues, ServiceWithRelations } from "../ServiceDialogs.types";
+import type { ProjectServiceCategory } from "@/types/projects";
 
 const supabaseAuthGetUserMock = jest.fn();
 const supabaseFromMock = jest.fn();
@@ -49,14 +53,28 @@ jest.mock("react-router-dom", () => ({
 }));
 
 jest.mock("@/components/ui/app-sheet-modal", () => ({
-  AppSheetModal: ({ title, isOpen, children, footerActions }: any) => {
+  AppSheetModal: ({
+    title,
+    isOpen,
+    children,
+    footerActions,
+  }: {
+    title: ReactNode;
+    isOpen: boolean;
+    children: ReactNode;
+    footerActions?: Array<{
+      label: ReactNode;
+      onClick?: () => void | Promise<void>;
+      disabled?: boolean;
+    }>;
+  }) => {
     if (!isOpen) return null;
     return (
       <div data-testid="app-sheet-modal">
         <h2>{title}</h2>
         <div>{children}</div>
         <div>
-          {footerActions?.map((action: any) => (
+          {footerActions?.map((action) => (
             <button
               key={action.label}
               type="button"
@@ -75,21 +93,28 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
 const SelectContext = React.createContext<{ onValueChange: (value: string) => void } | null>(null);
 
 jest.mock("@/components/ui/select", () => {
-  const React = require("react");
-  const SelectContext = React.createContext<{ onValueChange: (value: string) => void } | null>(null);
+  const React = jest.requireActual<typeof import("react")>("react");
+  type SelectContextValue = { onValueChange: (value: string) => void };
+  const SelectContext = React.createContext<SelectContextValue | null>(null);
 
-  const Select = ({ onValueChange, children }: any) => (
+  const Select = ({
+    onValueChange,
+    children,
+  }: {
+    onValueChange: (value: string) => void;
+    children: React.ReactNode;
+  }) => (
     <SelectContext.Provider value={{ onValueChange }}>
       <div>{children}</div>
     </SelectContext.Provider>
   );
 
-  const SelectTrigger = ({ children }: any) => <div>{children}</div>;
-  const SelectValue = ({ children }: any) => <span>{children}</span>;
-  const SelectContent = ({ children }: any) => <div>{children}</div>;
+  const SelectTrigger = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
+  const SelectValue = ({ children }: { children: React.ReactNode }) => <span>{children}</span>;
+  const SelectContent = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
   const SelectSeparator = () => null;
 
-  const SelectItem = ({ value, children }: any) => {
+  const SelectItem = ({ value, children }: { value: string; children: React.ReactNode }) => {
     const ctx = React.useContext(SelectContext);
     return (
       <button type="button" onClick={() => ctx?.onValueChange(value)}>
@@ -102,7 +127,16 @@ jest.mock("@/components/ui/select", () => {
 });
 
 jest.mock("@/components/ui/switch", () => ({
-  Switch: ({ checked, onCheckedChange, ...props }: any) => (
+  Switch: ({
+    checked,
+    onCheckedChange,
+    ...props
+  }: {
+    checked: boolean;
+    onCheckedChange: (checked: boolean) => void;
+    id?: string;
+    "aria-label"?: string;
+  }) => (
     <input
       type="checkbox"
       role="switch"
@@ -200,8 +234,8 @@ jest.mock("react-i18next", () => ({
 
 const createServicesTable = ({
   categories = [] as Array<{ category: string }>,
-  insertError = null as any,
-  updateError = null as any,
+  insertError = null as unknown,
+  updateError = null as unknown,
 } = {}) => {
   const orderMock = jest.fn(async () => ({ data: categories, error: null }));
   const notMock = jest.fn(async () => ({ data: categories, error: null }));
@@ -234,18 +268,20 @@ describe.skip("ServiceDialogs", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     supabaseAuthGetUserMock.mockResolvedValue({
-      data: { user: { id: "user-1" } },
+      data: { user: { id: "user-1" } as Session["user"] },
       error: null,
     });
     getUserOrganizationIdMock.mockResolvedValue("org-123");
-    useModalNavigationMock.mockImplementation(({ onDiscard, onSaveAndExit }: any = {}) => ({
-      showGuard: false,
-      message: "",
-      handleModalClose: () => true,
-      handleDiscardChanges: () => onDiscard?.(),
-      handleStayOnModal: jest.fn(),
-      handleSaveAndExit: () => onSaveAndExit?.(),
-    }));
+    useModalNavigationMock.mockImplementation(
+      ({ onDiscard, onSaveAndExit }: { onDiscard?: () => void; onSaveAndExit?: () => Promise<void> } = {}) => ({
+        showGuard: false,
+        message: "",
+        handleModalClose: () => true,
+        handleDiscardChanges: () => onDiscard?.(),
+        handleStayOnModal: jest.fn(),
+        handleSaveAndExit: () => onSaveAndExit?.(),
+      })
+    );
   });
 
   it("creates a new service and notifies listeners", async () => {
@@ -368,7 +404,7 @@ describe.skip("ServiceDialogs", () => {
           default_unit: "album",
           vendor_name: "Print Lab",
           is_active: true,
-        } as any}
+        } as ServiceWithRelations}
         onOpenChange={onOpenChange}
         onServiceUpdated={onServiceUpdated}
       />

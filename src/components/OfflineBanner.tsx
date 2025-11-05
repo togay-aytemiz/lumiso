@@ -2,7 +2,7 @@ import React from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { WifiOff, Loader2 } from 'lucide-react';
-import { useConnectivity } from '@/contexts/ConnectivityContext';
+import { useConnectivity } from '@/contexts/useConnectivity';
 import { useTranslation } from 'react-i18next';
 
 export const OfflineBanner: React.FC = () => {
@@ -45,4 +45,3 @@ export const OfflineBanner: React.FC = () => {
 };
 
 export default OfflineBanner;
-

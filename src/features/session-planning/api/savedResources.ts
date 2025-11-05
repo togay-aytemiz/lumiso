@@ -18,7 +18,24 @@ export interface SavedNotePresetRecord {
   updatedAt: string;
 }
 
-const mapLocation = (row: any): SavedLocationRecord => ({
+type SavedLocationRow = {
+  id: string;
+  label: string;
+  address: string;
+  meeting_url: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type SavedNotePresetRow = {
+  id: string;
+  title: string;
+  body: string;
+  created_at: string;
+  updated_at: string;
+};
+
+const mapLocation = (row: SavedLocationRow): SavedLocationRecord => ({
   id: row.id,
   label: row.label,
   address: row.address,
@@ -27,7 +44,7 @@ const mapLocation = (row: any): SavedLocationRecord => ({
   updatedAt: row.updated_at,
 });
 
-const mapNotePreset = (row: any): SavedNotePresetRecord => ({
+const mapNotePreset = (row: SavedNotePresetRow): SavedNotePresetRecord => ({
   id: row.id,
   title: row.title,
   body: row.body,
@@ -52,7 +69,7 @@ export async function fetchSavedLocations(): Promise<SavedLocationRecord[]> {
     .select("id,label,address,meeting_url,created_at,updated_at")
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []).map(mapLocation);
+  return ((data ?? []) as SavedLocationRow[]).map(mapLocation);
 }
 
 export async function createSavedLocation(payload: {
@@ -75,7 +92,7 @@ export async function createSavedLocation(payload: {
     .select("id,label,address,meeting_url,created_at,updated_at")
     .single();
   if (error) throw error;
-  return mapLocation(data);
+  return mapLocation(data as SavedLocationRow);
 }
 
 export async function updateSavedLocation(
@@ -119,7 +136,7 @@ export async function fetchSavedNotePresets(): Promise<
     .select("id,title,body,created_at,updated_at")
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []).map(mapNotePreset);
+  return ((data ?? []) as SavedNotePresetRow[]).map(mapNotePreset);
 }
 
 export async function createSavedNotePreset(payload: {
@@ -139,7 +156,7 @@ export async function createSavedNotePreset(payload: {
     .select("id,title,body,created_at,updated_at")
     .single();
   if (error) throw error;
-  return mapNotePreset(data);
+  return mapNotePreset(data as SavedNotePresetRow);
 }
 
 export async function deleteSavedNotePreset(id: string): Promise<void> {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +38,7 @@ export function ProjectTypeSelector({
   const [searchTerm, setSearchTerm] = useState("");
   const toast = useI18nToast();
 
-  const fetchProjectTypes = async () => {
+  const fetchProjectTypes = useCallback(async () => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -56,25 +56,28 @@ export function ProjectTypeSelector({
 
       if (error) throw error;
 
-      setTypes(data || []);
-
-      // Auto-select default type if no value is set
-      if (!value && data && data.length > 0) {
-        const defaultType = data.find(type => type.is_default);
-        if (defaultType) {
-          onValueChange(defaultType.id, { isAutomatic: true });
-        }
-      }
-    } catch (error: any) {
-      toast.error(error.message);
+      setTypes(data ?? []);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unable to load project types";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchProjectTypes();
-  }, []);
+  }, [fetchProjectTypes]);
+
+  useEffect(() => {
+    if (!value && types.length > 0) {
+      const defaultType = types.find(type => type.is_default);
+      if (defaultType) {
+        onValueChange(defaultType.id, { isAutomatic: true });
+      }
+    }
+  }, [value, types, onValueChange]);
 
   const filteredTypes = types.filter(type =>
     type.name.toLowerCase().includes(searchTerm.toLowerCase())

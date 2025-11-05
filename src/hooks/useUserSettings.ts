@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
@@ -24,7 +24,7 @@ export function useUserSettings() {
   const { toast } = useToast();
 
   // Fetch user settings
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
@@ -67,7 +67,7 @@ export function useUserSettings() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   // Update user settings
   const updateSettings = async (updates: Partial<UserSettings>) => {
@@ -148,14 +148,18 @@ export function useUserSettings() {
       });
 
       return { success: true, url: publicUrl };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to upload logo";
+      const normalizedError =
+        error instanceof Error ? error : new Error(message);
       console.error('Error uploading logo:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to upload logo",
+        description: message,
         variant: "destructive",
       });
-      return { success: false, error };
+      return { success: false, error: normalizedError };
     } finally {
       setUploading(false);
     }
@@ -164,7 +168,7 @@ export function useUserSettings() {
   // Initialize settings on mount
   useEffect(() => {
     fetchSettings();
-  }, []);
+  }, [fetchSettings]);
 
   return {
     settings,

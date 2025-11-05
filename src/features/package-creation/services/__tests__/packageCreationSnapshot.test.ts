@@ -296,11 +296,20 @@ describe("buildPackageHydrationFromRecord", () => {
       ])
     );
 
-    const persisted = insert.line_items as unknown[];
+    type PersistedLineItem = Record<string, unknown> & {
+      serviceId?: string;
+      type?: string;
+    };
+
+    const persisted = Array.isArray(insert.line_items)
+      ? (insert.line_items as PersistedLineItem[])
+      : [];
     expect(Array.isArray(persisted)).toBe(true);
+
     const baseLineItem = persisted.find(
-      (item) => (item as any).serviceId === "svc-1"
-    ) as Record<string, unknown>;
+      (item): item is PersistedLineItem & { serviceId: string } =>
+        item.serviceId === "svc-1"
+    );
     expect(baseLineItem).toMatchObject({
       serviceId: "svc-1",
       quantity: 1,
@@ -310,8 +319,9 @@ describe("buildPackageHydrationFromRecord", () => {
     });
 
     const customLineItem = persisted.find(
-      (item) => (item as any).type === "custom"
-    ) as Record<string, unknown>;
+      (item): item is PersistedLineItem & { type: string } =>
+        item.type === "custom"
+    );
     expect(customLineItem).toMatchObject({
       name: "Drone footage",
       unitPrice: 500,

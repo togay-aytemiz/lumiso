@@ -94,11 +94,13 @@ export const NotesStep = () => {
         title: t("steps.notes.toastDeletedTitle"),
         description: t("steps.notes.toastDeletedDescription"),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to delete note preset", error);
+      const message =
+        error instanceof Error ? error.message : null;
       toast({
         title: t("steps.notes.toastErrorTitle"),
-        description: error?.message ?? t("steps.notes.toastErrorDescription"),
+        description: message ?? t("steps.notes.toastErrorDescription"),
         variant: "destructive",
       });
     }
@@ -124,11 +126,13 @@ export const NotesStep = () => {
         title: t("steps.notes.toastSavedTitle"),
         description: t("steps.notes.toastSavedDescription"),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to save note preset", error);
+      const message =
+        error instanceof Error ? error.message : null;
       toast({
         title: t("steps.notes.toastErrorTitle"),
-        description: error?.message ?? t("steps.notes.toastErrorDescription"),
+        description: message ?? t("steps.notes.toastErrorDescription"),
         variant: "destructive",
       });
     }

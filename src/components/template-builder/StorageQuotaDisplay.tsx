@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Image as ImageIcon, Trash2 } from 'lucide-react';
@@ -15,11 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-
-interface StorageUsage {
-  total_images: number;
-  total_storage_bytes: number;
-}
+import { STORAGE_LIMITS, type StorageUsage } from './storageLimits';
 
 interface TemplateAsset {
   id: string;
@@ -28,11 +24,6 @@ interface TemplateAsset {
   file_size: number;
   created_at: string;
 }
-
-const STORAGE_LIMITS = {
-  MAX_IMAGES: 20,
-  MAX_STORAGE_BYTES: 50 * 1024 * 1024, // 50MB
-};
 
 export function StorageQuotaDisplay() {
   const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
@@ -43,7 +34,7 @@ export function StorageQuotaDisplay() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const fetchStorageUsage = async () => {
+  const fetchStorageUsage = useCallback(async () => {
     if (!activeOrganization?.id) return;
 
     try {
@@ -58,12 +49,13 @@ export function StorageQuotaDisplay() {
       console.error('Error fetching storage usage:', error);
       setStorageUsage({ total_images: 0, total_storage_bytes: 0 });
     }
-  };
+  }, [activeOrganization?.id]);
 
-  const fetchAssets = async () => {
+  const fetchAssets = useCallback(async () => {
     if (!activeOrganization?.id) return;
 
     try {
+      setLoading(true);
       const { data: assetList } = await supabase
         .from('template_assets')
         .select('id, file_name, file_path, file_size, created_at')
@@ -76,7 +68,7 @@ export function StorageQuotaDisplay() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeOrganization?.id]);
 
   const deleteAsset = async (asset: TemplateAsset) => {
     try {
@@ -114,7 +106,7 @@ export function StorageQuotaDisplay() {
       fetchStorageUsage();
       fetchAssets();
     }
-  }, [activeOrganization?.id]);
+  }, [activeOrganization?.id, fetchAssets, fetchStorageUsage]);
 
   if (loading || !storageUsage) {
     return (
@@ -221,26 +213,4 @@ export function StorageQuotaDisplay() {
       </div>
     </div>
   );
-}
-
-export function checkStorageLimits(currentUsage: StorageUsage, newFileSize: number): { 
-  canUpload: boolean; 
-  reason?: string; 
-} {
-  if (currentUsage.total_images >= STORAGE_LIMITS.MAX_IMAGES) {
-    return { 
-      canUpload: false, 
-      reason: `Maximum number of images (${STORAGE_LIMITS.MAX_IMAGES}) reached. Please delete some images first.` 
-    };
-  }
-
-  if (currentUsage.total_storage_bytes + newFileSize > STORAGE_LIMITS.MAX_STORAGE_BYTES) {
-    const remainingMB = (STORAGE_LIMITS.MAX_STORAGE_BYTES - currentUsage.total_storage_bytes) / (1024 * 1024);
-    return { 
-      canUpload: false, 
-      reason: `Not enough storage space. Only ${remainingMB.toFixed(1)}MB remaining.` 
-    };
-  }
-
-  return { canUpload: true };
 }

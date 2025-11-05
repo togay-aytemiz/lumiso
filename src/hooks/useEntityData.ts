@@ -4,7 +4,7 @@ import { toast } from '@/hooks/use-toast';
 export interface UseEntityDataOptions<T> {
   fetchFn: () => Promise<T[]>;
   onError?: (error: Error) => void;
-  dependencies?: any[];
+  dependencies?: ReadonlyArray<unknown>;
 }
 
 export interface EntityDataState<T> {
@@ -15,10 +15,12 @@ export interface EntityDataState<T> {
   refresh: () => void;
 }
 
+const EMPTY_DEPENDENCIES: readonly unknown[] = [];
+
 export function useEntityData<T>({
   fetchFn,
   onError,
-  dependencies = []
+  dependencies = EMPTY_DEPENDENCIES
 }: UseEntityDataOptions<T>): EntityDataState<T> {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +56,7 @@ export function useEntityData<T>({
 
   useEffect(() => {
     fetchData();
-  }, [fetchData, ...dependencies]);
+  }, [fetchData, dependencies]);
 
   return {
     data,

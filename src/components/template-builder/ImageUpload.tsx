@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { checkStorageLimits } from './StorageQuotaDisplay';
+import { checkStorageLimits } from './storageLimits';
 
 interface ImageUploadProps {
   onImageUploaded: (imageUrl: string, altText?: string) => void;

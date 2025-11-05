@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import OfflineBanner from "../OfflineBanner";
-import { useConnectivity } from "@/contexts/ConnectivityContext";
+import { useConnectivity } from "@/contexts/useConnectivity";
 
-jest.mock("@/contexts/ConnectivityContext", () => ({
+jest.mock("@/contexts/useConnectivity", () => ({
   useConnectivity: jest.fn(),
 }));
 

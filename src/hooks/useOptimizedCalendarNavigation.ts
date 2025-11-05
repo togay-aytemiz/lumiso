@@ -56,10 +56,11 @@ export function useOptimizedCalendarNavigation(
     switch (viewMode) {
       case "day":
         return format(currentDate, "EEEE, MMMM d, yyyy", { locale: dateFnsLocale });
-      case "week":
+      case "week": {
         const weekStart = getStartOfWeek(currentDate, userLocale);
         const weekEnd = getEndOfWeek(currentDate, userLocale);
         return `${format(weekStart, "MMM d", { locale: dateFnsLocale })} - ${format(weekEnd, "MMM d, yyyy", { locale: dateFnsLocale })}`;
+      }
       case "month":
         return format(currentDate, "MMMM yyyy", { locale: dateFnsLocale });
       default:

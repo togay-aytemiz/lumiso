@@ -1,5 +1,5 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { useOrganizationSettings } from "../useOrganizationSettings";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useToast } from "@/hooks/use-toast";
@@ -59,18 +59,36 @@ const mockedFetchWithCache = fetchOrganizationSettingsWithCache as jest.Mock;
 const mockedGetFromCache = getOrganizationSettingsFromCache as jest.Mock;
 const mockedSetCache = setOrganizationSettingsCache as jest.Mock;
 const mockedGetUser = supabase.auth.getUser as jest.Mock;
-const mockedUseQueryClient = require("@tanstack/react-query").useQueryClient as jest.Mock;
+const mockedUseQueryClient = useQueryClient as unknown as jest.Mock;
 const mockQueryClient = {
   setQueryData: jest.fn(),
 };
 let consoleErrorSpy: jest.SpyInstance;
 
-const createQueryBuilder = (response: { data: unknown; error: unknown }) => {
-  const builder: any = {
-    eq: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    single: jest.fn().mockResolvedValue(response),
+type QueryBuilder = {
+  eq: jest.Mock<QueryBuilder, [string, unknown]>;
+  select: jest.Mock<QueryBuilder, [string?]>;
+  single: jest.Mock<Promise<SupabaseQueryResult>, []>;
+};
+
+const createQueryBuilder = (
+  response: Partial<SupabaseQueryResult>
+): QueryBuilder => {
+  const resolved: SupabaseQueryResult = {
+    data: null,
+    error: null,
+    status: 200,
+    statusText: "OK",
+    ...response,
   };
+  const builder: QueryBuilder = {
+    eq: jest.fn(),
+    select: jest.fn(),
+    single: jest.fn(),
+  } as unknown as QueryBuilder;
+  builder.eq.mockReturnValue(builder);
+  builder.select.mockReturnValue(builder);
+  builder.single.mockResolvedValue(resolved);
   return builder;
 };
 

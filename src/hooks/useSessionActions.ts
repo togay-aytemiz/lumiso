@@ -39,11 +39,13 @@ export const useSessionActions = () => {
       });
 
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unknown error";
       console.error('Failed to delete session:', { sessionId, error });
       toast({
         title: "Error deleting session",
-        description: error?.message || 'Unknown error',
+        description: message,
         variant: "destructive",
       });
       return false;
@@ -119,10 +121,12 @@ export const useSessionActions = () => {
       });
 
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unable to update session status";
       toast({
         title: "Error updating status",
-        description: error.message,
+        description: message,
         variant: "destructive"
       });
       return false;

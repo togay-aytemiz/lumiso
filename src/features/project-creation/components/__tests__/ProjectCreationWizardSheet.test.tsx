@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { ProjectCreationWizardSheet } from "../ProjectCreationWizardSheet";
+import { useProjectCreationContext } from "../../hooks/useProjectCreationContext";
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -34,18 +35,12 @@ jest.mock("@/lib/organizationUtils", () => ({
   getUserOrganizationId: jest.fn().mockResolvedValue("org-123"),
 }));
 
-jest.mock("../ProjectCreationWizard", () => {
-  const React = require("react");
-  const { useProjectCreationContext } = require("../../hooks/useProjectCreationContext");
-  return {
-    ProjectCreationWizard: jest.fn(() => {
-      const { state } = useProjectCreationContext();
-      return (
-        <div data-testid="wizard-step">{state.meta.currentStep}</div>
-      );
-    }),
-  };
-});
+jest.mock("../ProjectCreationWizard", () => ({
+  ProjectCreationWizard: jest.fn(() => {
+    const { state } = useProjectCreationContext();
+    return <div data-testid="wizard-step">{state.meta.currentStep}</div>;
+  }),
+}));
 
 describe("ProjectCreationWizardSheet initial step selection", () => {
   afterEach(() => {

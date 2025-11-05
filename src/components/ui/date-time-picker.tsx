@@ -81,7 +81,6 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
     setSelectedDate(parsed.date);
     setHours(parsed.hours);
     setMinutes(parsed.minutes);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   const browserLocale = getUserLocale();
@@ -114,11 +113,12 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
               minDetail="month"
               next2Label={null}
               prev2Label={null}
-              onChange={(value: any) => {
-                if (value instanceof Date) {
-                  setSelectedDate(value);
+              onChange={(nextValue: Date | Date[] | null) => {
+                const nextDate = Array.isArray(nextValue) ? nextValue[0] : nextValue;
+                if (nextDate instanceof Date) {
+                  setSelectedDate(nextDate);
                   // Automatically emit the change when date is selected
-                  onChange(toIsoLocal(value, hours, minutes));
+                  onChange(toIsoLocal(nextDate, hours, minutes));
                 }
               }}
               value={selectedDate || null}

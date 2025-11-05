@@ -41,7 +41,7 @@ import {
 import type { ProjectListItem, ProjectStatusSummary } from "@/pages/projects/types";
 import { startTimer } from "@/lib/debug";
 import { promoteProjectToTop } from "@/lib/projects/sortOrder";
-import { useConnectivity } from "@/contexts/ConnectivityContext";
+import { useConnectivity } from "@/contexts/useConnectivity";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 
 const VIEW_MODES = ["board", "list", "archived"] as const;

@@ -1,17 +1,5 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-
-type RetryFn = () => Promise<void> | void;
-
-interface ConnectivityContextValue {
-  isOffline: boolean;
-  isRetrying: boolean;
-  reportNetworkError: (error?: unknown) => void;
-  reportRecovery: () => void;
-  registerRetry: (key: string, fn: RetryFn) => () => void;
-  runRetryAll: () => Promise<void>;
-}
-
-const ConnectivityContext = createContext<ConnectivityContextValue | undefined>(undefined);
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ConnectivityContext, type ConnectivityContextValue, type RetryFn } from './connectivityShared';
 
 export const ConnectivityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Default to online; rely on real network errors or offline events to flip state.
@@ -62,7 +50,6 @@ export const ConnectivityProvider: React.FC<{ children: React.ReactNode }> = ({ 
           // Intentionally swallow individual errors here
           // Offline banner will remain if we are still offline
           // and pages can surface context-specific errors/toasts.
-          // eslint-disable-next-line no-console
           console.error('Retry action failed', err);
         }
       }
@@ -89,10 +76,4 @@ export const ConnectivityProvider: React.FC<{ children: React.ReactNode }> = ({ 
       {children}
     </ConnectivityContext.Provider>
   );
-};
-
-export const useConnectivity = (): ConnectivityContextValue => {
-  const ctx = useContext(ConnectivityContext);
-  if (!ctx) throw new Error('useConnectivity must be used within a ConnectivityProvider');
-  return ctx;
 };

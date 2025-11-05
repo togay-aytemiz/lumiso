@@ -86,10 +86,12 @@ export function useLeadStatusActions({ leadId, onStatusChange }: UseLeadStatusAc
                   title: "Undone",
                   description: `Status reverted to ${previousStatus}`
                 });
-              } catch (error: any) {
+              } catch (error: unknown) {
+                const message =
+                  error instanceof Error ? error.message : "Unable to undo status change";
                 toast({
                   title: "Undo failed",
-                  description: error.message,
+                  description: message,
                   variant: "destructive"
                 });
               }
@@ -100,10 +102,12 @@ export function useLeadStatusActions({ leadId, onStatusChange }: UseLeadStatusAc
         ) : undefined
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unable to update lead status";
       toast({
         title: "Error updating status",
-        description: error.message,
+        description: message,
         variant: "destructive"
       });
     } finally {

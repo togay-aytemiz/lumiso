@@ -281,15 +281,16 @@ const ProjectCreationWizardSheetInner = ({
         name: state.details.name?.trim(),
       });
       forceClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : undefined;
       trackEvent("project_wizard_error", {
-        message: error?.message,
+        message,
         entrySource,
       });
       toast({
         title: tCommon("labels.error"),
         description:
-          error?.message ??
+          message ??
           tCommon("messages.error.generic", {
             defaultValue: "Something went wrong. Please try again.",
           }),
@@ -318,6 +319,7 @@ const ProjectCreationWizardSheetInner = ({
     tForms,
     tProject,
     toast,
+    navigate,
     validateBeforeSubmit,
   ]);
 

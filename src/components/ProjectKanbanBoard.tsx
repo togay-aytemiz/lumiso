@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 // Import namespace form to avoid ESM/CJS interop edge cases that can surface as
 // "Component is not a function" inside DragDropContext's ErrorBoundary.
 import * as DnD from "@hello-pangea/dnd";
+import type { DropResult } from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus } from "lucide-react";
@@ -108,18 +109,7 @@ const ProjectKanbanBoard = ({
   const { activeOrganization } = useOrganization();
   const { settings: kanbanSettings } = useKanbanSettings();
 
-  useEffect(() => {
-    // Only self-fetch if no statuses were provided at all
-    if (typeof projectStatuses === 'undefined') {
-      fetchStatuses();
-      return;
-    }
-    // When provided (even empty initially), use them and avoid duplicate fetches
-    setStatuses((projectStatuses || []).filter(s => s.name?.toLowerCase?.() !== PROJECT_STATUS.ARCHIVED));
-    setLoading(false);
-  }, [projectStatuses]);
-
-  const fetchStatuses = async () => {
+  const fetchStatuses = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -144,7 +134,18 @@ const ProjectKanbanBoard = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast, t]);
+
+  useEffect(() => {
+    // Only self-fetch if no statuses were provided at all
+    if (typeof projectStatuses === 'undefined') {
+      fetchStatuses();
+      return;
+    }
+    // When provided (even empty initially), use them and avoid duplicate fetches
+    setStatuses((projectStatuses || []).filter(s => s.name?.toLowerCase?.() !== PROJECT_STATUS.ARCHIVED));
+    setLoading(false);
+  }, [projectStatuses, fetchStatuses]);
 
   const getProjectsByStatus = (statusId: string) =>
     orderProjects(projects.filter(p => p.status_id === statusId));
@@ -152,7 +153,7 @@ const ProjectKanbanBoard = ({
   const getProjectsWithoutStatus = () =>
     orderProjects(projects.filter(p => !p.status_id));
 
-  const handleDragEnd = async (result: any) => {
+  const handleDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;

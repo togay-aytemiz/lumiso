@@ -8,7 +8,7 @@ import { EmojiPicker } from "../EmojiPicker";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { checkStorageLimits } from "../StorageQuotaDisplay";
+import { checkStorageLimits } from "../storageLimits";
 import { supabase } from "@/integrations/supabase/client";
 
 type TemplateAssetRecord = {
@@ -55,8 +55,12 @@ jest.mock("@/contexts/OrganizationContext", () => ({
   useOrganization: jest.fn(),
 }));
 
-jest.mock("../StorageQuotaDisplay", () => ({
+jest.mock("../storageLimits", () => ({
   checkStorageLimits: jest.fn(() => ({ canUpload: true })),
+  STORAGE_LIMITS: { MAX_IMAGES: 20, MAX_STORAGE_BYTES: 50 * 1024 * 1024 },
+}));
+
+jest.mock("../StorageQuotaDisplay", () => ({
   CompactStorageIndicator: () => <div data-testid="mock-storage-indicator" />,
 }));
 

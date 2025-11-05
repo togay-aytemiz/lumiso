@@ -1,41 +1,33 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import type { WorkflowStep } from "@/types/workflow";
-import type { TriggerType } from "@/types/workflow";
+import {
+  SessionWorkflowContext,
+} from "./sessionWorkflowContext";
+import type {
+  SessionWorkflowCatalog,
+  WorkflowSummary,
+  WorkflowTriggerConditions,
+} from "./sessionWorkflowTypes";
 
-type WorkflowTriggerConditions = Record<string, unknown> | null | undefined;
+type WorkflowRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  trigger_type: TriggerType;
+  is_active: boolean;
+  workflow_steps: WorkflowStep[] | null;
+  trigger_conditions: WorkflowTriggerConditions;
+};
 
 const getReminderType = (conditions: WorkflowTriggerConditions) => {
   if (!conditions || typeof conditions !== "object") return null;
   const raw = (conditions as { reminder_type?: unknown }).reminder_type;
   return typeof raw === "string" ? raw : null;
 };
-
-export interface WorkflowSummary {
-  id: string;
-  name: string;
-  description?: string | null;
-  delayMinutes?: number | null;
-  steps: WorkflowStep[];
-  triggerConditions?: WorkflowTriggerConditions;
-  reminderType?: string | null;
-  triggerType: TriggerType;
-}
-
-export interface SessionWorkflowCatalog {
-  loading: boolean;
-  reminderWorkflows: WorkflowSummary[];
-  summaryEmailWorkflows: WorkflowSummary[];
-  otherWorkflows: WorkflowSummary[];
-  allWorkflows: WorkflowSummary[];
-  workflowMap: Record<string, WorkflowSummary>;
-  reload: () => Promise<void>;
-}
-
-const SessionWorkflowContext = createContext<SessionWorkflowCatalog | undefined>(undefined);
 
 const getDelayMinutes = (steps: WorkflowStep[]): number | null => {
   if (!steps?.length) return null;
@@ -131,9 +123,9 @@ export const SessionWorkflowProvider = ({ children }: { children: ReactNode }) =
       if (error) throw error;
 
       const summaries: WorkflowSummary[] =
-        data?.map((workflow: any) => {
-          const steps: WorkflowStep[] = (workflow.workflow_steps || []).filter(
-            (step: WorkflowStep) => step.is_active !== false
+        ((data ?? []) as WorkflowRow[]).map((workflow) => {
+          const steps = (workflow.workflow_steps ?? []).filter(
+            (step): step is WorkflowStep => step.is_active !== false
           );
 
           const stepReminderType =
@@ -194,12 +186,4 @@ export const SessionWorkflowProvider = ({ children }: { children: ReactNode }) =
       {children}
     </SessionWorkflowContext.Provider>
   );
-};
-
-export const useSessionWorkflowCatalog = () => {
-  const context = useContext(SessionWorkflowContext);
-  if (!context) {
-    throw new Error("useSessionWorkflowCatalog must be used within a SessionWorkflowProvider");
-  }
-  return context;
 };

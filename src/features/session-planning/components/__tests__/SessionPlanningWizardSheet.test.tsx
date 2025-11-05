@@ -13,10 +13,17 @@ jest.mock("@/features/session-planning/context/SessionSavedResourcesProvider", (
 
 jest.mock("@/features/session-planning/context/SessionWorkflowProvider", () => ({
   SessionWorkflowProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
+
+jest.mock("@/features/session-planning/context/sessionWorkflowContext", () => ({
   useSessionWorkflowCatalog: () => ({
     reminderWorkflows: [],
     summaryEmailWorkflows: [],
     otherWorkflows: [],
+    allWorkflows: [],
+    workflowMap: {},
+    loading: false,
+    reload: jest.fn(),
   }),
 }));
 

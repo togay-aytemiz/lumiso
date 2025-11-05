@@ -19,10 +19,12 @@ export const useReminderActions = () => {
       });
 
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unable to delete reminder";
       toast({
         title: "Error deleting reminder",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
       return false;
@@ -54,10 +56,12 @@ export const useReminderActions = () => {
       });
 
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unable to update reminder";
       toast({
         title: "Error updating reminder",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
       return false;

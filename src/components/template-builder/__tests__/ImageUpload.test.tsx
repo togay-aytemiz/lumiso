@@ -10,7 +10,7 @@ const storageFromMock = jest.fn();
 
 const checkStorageLimitsMock = jest.fn();
 
-jest.mock("../StorageQuotaDisplay", () => ({
+jest.mock("../storageLimits", () => ({
   checkStorageLimits: (...args: unknown[]) => checkStorageLimitsMock(...args),
 }));
 

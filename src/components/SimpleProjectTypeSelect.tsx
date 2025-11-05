@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -31,7 +31,7 @@ export function SimpleProjectTypeSelect({
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const fetchProjectTypes = async () => {
+  const fetchProjectTypes = useCallback(async () => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -49,29 +49,32 @@ export function SimpleProjectTypeSelect({
 
       if (error) throw error;
 
-      setTypes(data || []);
-
-      // Auto-select default type if no value is set
-      if (!value && data && data.length > 0) {
-        const defaultType = data.find(type => type.is_default);
-        if (defaultType) {
-          onValueChange(defaultType.id);
-        }
-      }
-    } catch (error: any) {
+      setTypes(data ?? []);
+    } catch (error: unknown) {
+      const description =
+        error instanceof Error ? error.message : "Unable to load project types";
       toast({
         title: "Error loading project types",
-        description: error.message,
-        variant: "destructive"
+        description,
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchProjectTypes();
-  }, []);
+  }, [fetchProjectTypes]);
+
+  useEffect(() => {
+    if (!value && types.length > 0) {
+      const defaultType = types.find(type => type.is_default);
+      if (defaultType) {
+        onValueChange(defaultType.id);
+      }
+    }
+  }, [value, types, onValueChange]);
 
   // Check if user has no project types
   if (!loading && types.length === 0) {

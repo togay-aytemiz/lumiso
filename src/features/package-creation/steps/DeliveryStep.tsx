@@ -240,9 +240,11 @@ export const DeliveryStep = () => {
             })
           : t("steps.delivery.methods.success", { defaultValue: "Delivery method added." }),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to add delivery method", error);
-      setMethodError(error.message ?? "Unable to add delivery method");
+      const message =
+        error instanceof Error ? error.message : "Unable to add delivery method";
+      setMethodError(message);
     } finally {
       setIsSavingMethod(false);
     }
@@ -276,7 +278,7 @@ export const DeliveryStep = () => {
         }),
       });
       setMethodToDelete(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to remove delivery method", error);
       toast({
         variant: "destructive",

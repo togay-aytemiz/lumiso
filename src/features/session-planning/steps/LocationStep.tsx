@@ -168,11 +168,13 @@ export const LocationStep = () => {
         title: t("steps.location.toastDeletedTitle"),
         description: t("steps.location.toastDeletedDescription"),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to delete location", error);
+      const message =
+        error instanceof Error ? error.message : null;
       toast({
         title: t("steps.location.toastErrorTitle"),
-        description: error?.message ?? t("steps.location.toastErrorDescription"),
+        description: message ?? t("steps.location.toastErrorDescription"),
         variant: "destructive",
       });
     }
@@ -230,11 +232,13 @@ export const LocationStep = () => {
             ? t("steps.location.toastUpdatedDescription")
             : t("steps.location.toastSavedDescription"),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to save location", error);
+      const message =
+        error instanceof Error ? error.message : null;
       toast({
         title: t("steps.location.toastErrorTitle"),
-        description: error?.message ?? t("steps.location.toastErrorDescription"),
+        description: message ?? t("steps.location.toastErrorDescription"),
         variant: "destructive",
       });
     }

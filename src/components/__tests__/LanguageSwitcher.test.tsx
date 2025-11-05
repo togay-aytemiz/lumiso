@@ -2,9 +2,9 @@ import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LanguageSwitcher } from "../LanguageSwitcher";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguage } from "@/contexts/useLanguage";
 
-jest.mock("@/contexts/LanguageContext", () => ({
+jest.mock("@/contexts/useLanguage", () => ({
   useLanguage: jest.fn(),
 }));
 

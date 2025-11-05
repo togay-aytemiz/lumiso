@@ -6,7 +6,7 @@ import { useProjectsListFilters, useProjectsArchivedFilters } from "@/pages/proj
 import { useProjectsData } from "@/pages/projects/hooks/useProjectsData";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { useConnectivity } from "@/contexts/ConnectivityContext";
+import { useConnectivity } from "@/contexts/useConnectivity";
 import { useProjectTypes, useProjectStatuses, useServices } from "@/hooks/useOrganizationData";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 
@@ -166,7 +166,7 @@ jest.mock("@/contexts/OrganizationContext", () => ({
   useOrganization: jest.fn(),
 }));
 
-jest.mock("@/contexts/ConnectivityContext", () => ({
+jest.mock("@/contexts/useConnectivity", () => ({
   useConnectivity: jest.fn(),
 }));
 

@@ -1,21 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { useState, useEffect, useCallback, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
-
-interface LanguageContextType {
-  currentLanguage: string;
-  availableLanguages: Array<{
-    code: string;
-    name: string;
-    native_name: string;
-  }>;
-  isLoading: boolean;
-  changeLanguage: (languageCode: string) => Promise<void>;
-}
-
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+import { LanguageContext, type LanguageContextType } from './languageShared';
 
 interface LanguageProviderProps {
   children: ReactNode;
@@ -32,22 +20,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   }>>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load available languages
-  useEffect(() => {
-    loadAvailableLanguages();
-  }, []);
-
-  // Load user's language preference
-  useEffect(() => {
-    if (user) {
-      loadUserLanguagePreference();
-    } else {
-      // For non-authenticated users, use browser detection or default
-      setIsLoading(false);
-    }
-  }, [user]);
-
-  const loadAvailableLanguages = async () => {
+  const loadAvailableLanguages = useCallback(async () => {
     try {
       const { data: languages } = await supabase
         .from('languages')
@@ -61,9 +34,18 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     } catch (error) {
       console.error('Error loading languages:', error);
     }
-  };
+  }, []);
 
-  const loadUserLanguagePreference = async () => {
+  const changeLanguageInternal = useCallback(async (languageCode: string) => {
+    try {
+      await i18n.changeLanguage(languageCode);
+      setCurrentLanguage(languageCode);
+    } catch (error) {
+      console.error('Error changing language:', error);
+    }
+  }, [i18n]);
+
+  const loadUserLanguagePreference = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -82,18 +64,9 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [changeLanguageInternal, user]);
 
-  const changeLanguageInternal = async (languageCode: string) => {
-    try {
-      await i18n.changeLanguage(languageCode);
-      setCurrentLanguage(languageCode);
-    } catch (error) {
-      console.error('Error changing language:', error);
-    }
-  };
-
-  const changeLanguage = async (languageCode: string) => {
+  const changeLanguage = useCallback(async (languageCode: string) => {
     try {
       setIsLoading(true);
       
@@ -135,7 +108,22 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [changeLanguageInternal, user]);
+
+  // Load available languages
+  useEffect(() => {
+    loadAvailableLanguages();
+  }, [loadAvailableLanguages]);
+
+  // Load user's language preference
+  useEffect(() => {
+    if (user) {
+      loadUserLanguagePreference();
+    } else {
+      // For non-authenticated users, use browser detection or default
+      setIsLoading(false);
+    }
+  }, [user, loadUserLanguagePreference]);
 
   const value: LanguageContextType = {
     currentLanguage,
@@ -149,12 +137,4 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       {children}
     </LanguageContext.Provider>
   );
-}
-
-export function useLanguage() {
-  const context = useContext(LanguageContext);
-  if (context === undefined) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
-  }
-  return context;
 }

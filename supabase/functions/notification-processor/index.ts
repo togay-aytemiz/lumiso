@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
 import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summary-empty.ts';
+import type { Activity as TemplateActivity, Session as TemplateSession } from './_templates/enhanced-email-base.ts';
 import { createEmailLocalization } from '../_shared/email-i18n.ts';
 import {
   getErrorMessage,
@@ -22,10 +23,11 @@ type Json =
   | number
   | boolean
   | null
-  | { [key: string]: Json }
-  | Json[];
+  | { [key: string]: Json | undefined }
+  | Json[]
+  | undefined;
 
-type JsonObject = { [key: string]: Json };
+type JsonObject = { [key: string]: Json | undefined };
 
 type NotificationDeliveryMethod = 'immediate' | 'scheduled';
 type NotificationStatus = 'pending' | 'processing' | 'failed' | 'sent' | 'cancelled';
@@ -36,7 +38,8 @@ type NotificationType =
   | 'new-assignment'
   | string;
 
-type GenericSupabaseClient = SupabaseClient<unknown, unknown, unknown>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type GenericSupabaseClient = SupabaseClient<any, any, any>;
 
 interface NotificationRow {
   id: string;
@@ -85,6 +88,8 @@ interface ProcessAggregateResult {
 
 type NotificationHandlerResult = Record<string, unknown> | null;
 
+type MinimalSupabaseClient = Pick<GenericSupabaseClient, 'from'>;
+
 interface ScheduleNotificationsResult {
   organizations_processed: number;
   notifications_scheduled: number;
@@ -127,6 +132,7 @@ interface OrganizationSettingsRow {
   time_format?: string | null;
   timezone?: string | null;
   email?: string | null;
+  phone?: string | null;
   notification_global_enabled?: boolean | null;
   notification_daily_summary_enabled?: boolean | null;
   notification_new_assignment_enabled?: boolean | null;
@@ -172,27 +178,27 @@ interface ScheduledNotificationInsert {
 }
 
 interface ProjectMilestoneMetadata extends JsonObject {
-  project_id?: string;
-  old_status?: string;
-  new_status?: string;
-  changed_by_user_id?: string;
+  project_id?: string | null;
+  old_status?: string | null;
+  new_status?: string | null;
+  changed_by_user_id?: string | null;
 }
 
-interface WorkflowEntityData extends Record<string, unknown> {
-  customer_name?: string;
-  client_name?: string;
-  customer_email?: string;
-  client_email?: string;
-  session_type_name?: string;
-  project_name?: string;
-  session_date?: string;
-  session_time?: string;
-  location?: string;
+interface WorkflowEntityData extends JsonObject {
+  customer_name?: string | null;
+  client_name?: string | null;
+  customer_email?: string | null;
+  client_email?: string | null;
+  session_type_name?: string | null;
+  project_name?: string | null;
+  session_date?: string | null;
+  session_time?: string | null;
+  location?: string | null;
 }
 
 interface WorkflowMessageMetadata extends JsonObject {
-  template_id?: string;
-  entity_data?: WorkflowEntityData;
+  template_id?: string | null;
+  entity_data?: WorkflowEntityData | null;
 }
 
 interface UserNotificationSettingsRow {
@@ -220,6 +226,43 @@ interface MessageTemplateRow {
   id: string;
   name: string | null;
   template_channel_views: TemplateChannelViewRow[];
+}
+
+const FALLBACK_DATE = new Date().toISOString().split('T')[0];
+
+const ensureName = (value: string | null | undefined, fallback: string): string =>
+  value && value.trim().length > 0 ? value : fallback;
+
+function mapSessionRowToTemplate(row: SessionRow): TemplateSession {
+  return {
+    id: row.id,
+    session_date: row.session_date ?? FALLBACK_DATE,
+    session_time: row.session_time,
+    location: row.location,
+    leads: row.leads
+      ? { name: ensureName(row.leads.name ?? null, 'Client') }
+      : null,
+    projects: row.projects
+      ? { name: ensureName(row.projects.name ?? null, 'Project') }
+      : null,
+  };
+}
+
+function mapActivityRowToTemplate(row: ActivityRow): TemplateActivity {
+  return {
+    id: row.id,
+    content: ensureName(row.content ?? null, 'Reminder'),
+    reminder_date: row.reminder_date ?? FALLBACK_DATE,
+    reminder_time: row.reminder_time,
+    lead_id: row.lead_id,
+    project_id: row.project_id,
+    leads: row.leads
+      ? { name: ensureName(row.leads.name ?? null, 'Lead') }
+      : null,
+    projects: row.projects
+      ? { name: ensureName(row.projects.name ?? null, 'Project') }
+      : null,
+  };
 }
 
 let createSupabaseClient: typeof createClient = createClient;
@@ -353,18 +396,19 @@ export async function processPendingNotifications(
     query = query.gte('created_at', thirtyMinutesAgo);
   }
 
-  const { data: notifications, error } = await query
-    .limit(50)
-    .returns<NotificationRow[]>(); // Process in batches
+  const { data, error } = await query
+    .limit(50); // Process in batches
+
+  const notifications = (data ?? []) as NotificationRow[];
 
   if (error) {
     throw new Error(`Error fetching pending notifications: ${getErrorMessage(error)}`);
   }
 
-  console.log(`Found ${notifications?.length || 0} pending immediate notifications`);
+  console.log(`Found ${notifications.length} pending immediate notifications`);
 
   const results: NotificationProcessOutcome[] = [];
-  for (const notification of notifications || []) {
+  for (const notification of notifications) {
     try {
       const result = await processSpecificNotification(supabase, notification.id, notification);
       results.push({ id: notification.id, success: true, result });
@@ -379,7 +423,7 @@ export async function processPendingNotifications(
   }
 
   return {
-    processed: notifications?.length || 0,
+    processed: notifications.length,
     results
   };
 }
@@ -409,18 +453,19 @@ export async function processScheduledNotifications(
     query = query.eq('organization_id', organizationId);
   }
 
-  const { data: notifications, error } = await query
-    .limit(100)
-    .returns<NotificationRow[]>();
+  const { data, error } = await query
+    .limit(100);
+
+  const notifications = (data ?? []) as NotificationRow[];
 
   if (error) {
     throw new Error(`Error fetching scheduled notifications: ${getErrorMessage(error)}`);
   }
 
-  console.log(`Found ${notifications?.length || 0} scheduled notifications to process`);
+  console.log(`Found ${notifications.length} scheduled notifications to process`);
 
   const results: NotificationProcessOutcome[] = [];
-  for (const notification of notifications || []) {
+  for (const notification of notifications) {
     try {
       const result = await processSpecificNotification(supabase, notification.id, notification);
       results.push({ id: notification.id, success: true, result });
@@ -442,7 +487,7 @@ export async function processScheduledNotifications(
   }
 
   return {
-    processed: notifications?.length || 0,
+    processed: notifications.length,
     results
   };
 }
@@ -462,13 +507,12 @@ export async function processSpecificNotification(
       .from('notifications')
       .select('*')
       .eq('id', notificationId)
-      .single()
-      .returns<NotificationRow>();
+      .single();
 
     if (error || !data) {
       throw new Error(`Notification not found: ${notificationId}`);
     }
-    notificationData = data;
+    notificationData = data as NotificationRow;
   }
 
   console.log(`Processing ${notificationData.notification_type} notification for user ${notificationData.user_id}`);
@@ -522,27 +566,28 @@ export async function processDailySummary(
     throw new Error(`Failed to get user: ${userError?.message || 'User not found'}`);
   }
 
-  const { data: languagePreference } = await supabase
+  const { data: languagePreferenceData } = await supabase
     .from('user_language_preferences')
     .select('language_code')
     .eq('user_id', notification.user_id)
-    .maybeSingle()
-    .returns<UserLanguagePreferenceRow>();
+    .maybeSingle();
 
-  const localization = createEmailLocalization(languagePreference?.language_code);
+  const languagePreference = languagePreferenceData as UserLanguagePreferenceRow | null;
+
+  const localization = createEmailLocalization(languagePreference?.language_code ?? undefined);
   const t = localization.t;
 
   // Get organization settings for branding and timezone
-  const { data: orgSettings } = await supabase
+  const { data: orgSettingsData } = await supabase
     .from('organization_settings')
-    .select('photography_business_name, primary_brand_color, date_format, time_format, timezone')
+    .select('photography_business_name, primary_brand_color, date_format, time_format, timezone, phone')
     .eq('organization_id', notification.organization_id)
-    .maybeSingle()
-    .returns<OrganizationSettingsRow>();
+    .maybeSingle();
+  const orgSettings = orgSettingsData as OrganizationSettingsRow | null;
 
   // Get activities for today
   const today = new Date().toISOString().split('T')[0];
-  const { data: activities } = await supabase
+  const { data: activitiesData } = await supabase
     .from('activities')
     .select(`
       id, content, type, completed, reminder_date, reminder_time,
@@ -552,44 +597,44 @@ export async function processDailySummary(
     `)
     .eq('organization_id', notification.organization_id)
     .gte('created_at', `${today}T00:00:00Z`)
-    .lt('created_at', `${today}T23:59:59Z`)
-    .returns<ActivityRow[]>();
+    .lt('created_at', `${today}T23:59:59Z`);
+  const activities = (activitiesData ?? []) as ActivityRow[];
 
   // Get sessions for today  
-  const { data: sessions } = await supabase
+  const { data: sessionsData } = await supabase
     .from('sessions')
     .select(`
       id, location, session_date, session_time, status,
       leads(name), projects(name)
     `)
     .eq('organization_id', notification.organization_id)
-    .eq('session_date', today)
-    .returns<SessionRow[]>();
+    .eq('session_date', today);
+  const sessions = (sessionsData ?? []) as SessionRow[];
 
   // Get overdue activities
-  const { data: overdueActivities } = await supabase
+  const { data: overdueActivitiesData } = await supabase
     .from('activities')
     .select(`
-      id, content, reminder_date, reminder_time,
+      id, content, type, completed, reminder_date, reminder_time,
       lead_id, project_id,
       leads(name),
       projects(name)
     `)
     .eq('organization_id', notification.organization_id)
     .lt('reminder_date', today)
-    .eq('completed', false)
-    .returns<ActivityRow[]>();
+    .eq('completed', false);
+  const overdueActivities = (overdueActivitiesData ?? []) as unknown as ActivityRow[];
 
   // Get past sessions needing action
-  const { data: pastSessions } = await supabase
+  const { data: pastSessionsData } = await supabase
     .from('sessions')
     .select(`
       id, location, session_date, session_time,
       leads(name), projects(name)
     `)
     .eq('organization_id', notification.organization_id)
-    .lt('session_date', today)
-    .returns<SessionRow[]>();
+    .lt('session_date', today);
+  const pastSessions = (pastSessionsData ?? []) as SessionRow[];
 
   const templateData = {
     userFullName: userData.user.email?.split('@')[0] || 'User',
@@ -604,21 +649,26 @@ export async function processDailySummary(
   };
 
   // Check if there's any activity
-  const hasActivity = Boolean((activities?.length ?? 0) > 0 || (sessions?.length ?? 0) > 0);
+  const mappedSessions = sessions.map(mapSessionRowToTemplate);
+  const mappedActivities = activities.map(mapActivityRowToTemplate);
+  const mappedOverdueActivities = overdueActivities.map(mapActivityRowToTemplate);
+  const mappedPastSessions = pastSessions.map(mapSessionRowToTemplate);
+
+  const hasActivity = mappedActivities.length > 0 || mappedSessions.length > 0;
 
   let emailHtml;
   if (hasActivity) {
     emailHtml = generateModernDailySummaryEmail(
-      sessions ?? [],
-      activities ?? [],
-      { leads: [], activities: overdueActivities ?? [] },
-      pastSessions ?? [],
+      mappedSessions,
+      mappedActivities,
+      { leads: [], activities: mappedOverdueActivities },
+      mappedPastSessions,
       templateData
     );
   } else {
     emailHtml = generateEmptyDailySummaryEmail(
-      { leads: [], activities: overdueActivities ?? [] },
-      pastSessions ?? [],
+      { leads: [], activities: mappedOverdueActivities },
+      mappedPastSessions,
       templateData
     );
   }
@@ -640,7 +690,7 @@ export async function processDailySummary(
   }
 
   console.log(`Daily summary sent successfully to ${userData.user.email}`);
-  return emailResponse.data;
+  return (emailResponse.data ?? null) as NotificationHandlerResult;
 }
 
 // Process project milestone notification
@@ -698,10 +748,11 @@ export async function processWorkflowMessage(
   }
 
   // Fetch the message template and its email channel view
-  const { data: template, error: templateError } = await supabase
+  const { data: templateData, error: templateError } = await supabase
     .from('message_templates')
     .select(`
-      *,
+      id,
+      name,
       template_channel_views!inner(
         channel,
         subject,
@@ -711,19 +762,20 @@ export async function processWorkflowMessage(
     `)
     .eq('id', template_id)
     .eq('template_channel_views.channel', 'email')
-    .single()
-    .returns<MessageTemplateRow>();
+    .single();
+  const template = templateData as MessageTemplateRow | null;
 
   if (templateError || !template) {
     throw new Error(`Template not found: ${template_id}`);
   }
 
   // Get organization settings for branding
-  const { data: orgSettings } = await supabase
+  const { data: orgSettingsData } = await supabase
     .from('organization_settings')
-    .select('photography_business_name, primary_brand_color, email')
+    .select('photography_business_name, primary_brand_color, email, phone')
     .eq('organization_id', notification.organization_id)
     .maybeSingle();
+  const orgSettings = orgSettingsData as OrganizationSettingsRow | null;
 
   // Prepare template variables
   const variables = {
@@ -739,8 +791,13 @@ export async function processWorkflowMessage(
   };
 
   // Replace placeholders in subject and content
-  let subject = template.template_channel_views[0].subject || template.name;
-  let htmlContent = template.template_channel_views[0].html_content || template.template_channel_views[0].content;
+  const channelView = template.template_channel_views?.[0];
+  if (!channelView) {
+    throw new Error(`Email channel view not found for template ${template_id}`);
+  }
+
+  let subject = channelView.subject ?? template.name ?? 'Notification';
+  let htmlContent = channelView.html_content ?? channelView.content ?? '';
   
   // Simple placeholder replacement
   Object.entries(variables).forEach(([key, value]) => {
@@ -753,7 +810,7 @@ export async function processWorkflowMessage(
   const emailResponse = await resendClient.emails.send({
     from: `${orgSettings?.photography_business_name || 'Lumiso'} <hello@updates.lumiso.app>`,
     to: [variables.customer_email],
-    subject: subject,
+    subject,
     html: htmlContent,
   });
 
@@ -762,7 +819,7 @@ export async function processWorkflowMessage(
   }
 
   console.log(`Workflow message sent successfully to ${variables.customer_email}`);
-  return emailResponse.data;
+  return (emailResponse.data ?? null) as NotificationHandlerResult;
 }
 
 // Schedule future notifications (e.g., daily summaries for tomorrow)
@@ -775,20 +832,20 @@ export async function scheduleNotifications(
   // Fetch active organization members
   let membersQuery = supabase
     .from('organization_members')
-    .select('organization_id, user_id')
+    .select('organization_id, user_id, status')
     .eq('status', 'active');
 
   if (organizationId) {
     membersQuery = membersQuery.eq('organization_id', organizationId);
   }
-
-  const { data: members, error: membersError } = await membersQuery.returns<OrganizationMemberRow[]>();
+  const { data: memberData, error: membersError } = await membersQuery;
+  const members = (memberData ?? []) as OrganizationMemberRow[];
 
   if (membersError) {
     throw new Error(`Error fetching organization members: ${membersError.message}`);
   }
 
-  if (!members || members.length === 0) {
+  if (members.length === 0) {
     console.log('No active organization members found for scheduling');
     return {
       organizations_processed: 0,
@@ -797,21 +854,21 @@ export async function scheduleNotifications(
     };
   }
 
-  const userIds = Array.from(new Set((members ?? []).map((member) => member.user_id)));
-  const organizationIds = Array.from(new Set((members ?? []).map((member) => member.organization_id)));
+  const userIds = Array.from(new Set(members.map((member) => member.user_id)));
+  const organizationIds = Array.from(new Set(members.map((member) => member.organization_id)));
 
   // Fetch user notification preferences
-  const { data: userSettings, error: userSettingsError } = await supabase
+  const { data: userSettingsData, error: userSettingsError } = await supabase
     .from('user_settings')
     .select('user_id, notification_global_enabled, notification_daily_summary_enabled, notification_scheduled_time')
-    .in('user_id', userIds)
-    .returns<UserNotificationPreference[]>();
+    .in('user_id', userIds);
+  const userSettings = (userSettingsData ?? []) as UserNotificationPreference[];
 
   if (userSettingsError) {
     throw new Error(`Error fetching user settings: ${userSettingsError.message}`);
   }
 
-  const userSettingsRows: UserNotificationPreference[] = (userSettings || []).map((setting) => ({
+  const userSettingsRows: UserNotificationPreference[] = userSettings.map((setting) => ({
     user_id: String(setting.user_id),
     notification_global_enabled: setting.notification_global_enabled ?? null,
     notification_daily_summary_enabled: setting.notification_daily_summary_enabled ?? null,
@@ -823,17 +880,17 @@ export async function scheduleNotifications(
   );
 
   // Fetch organization-level notification settings
-  const { data: organizationSettings, error: orgSettingsError } = await supabase
+  const { data: organizationSettingsData, error: orgSettingsError } = await supabase
     .from('organization_settings')
     .select('organization_id, notification_global_enabled, notification_daily_summary_enabled, timezone')
-    .in('organization_id', organizationIds)
-    .returns<OrganizationNotificationPreference[]>();
+    .in('organization_id', organizationIds);
+  const organizationSettings = (organizationSettingsData ?? []) as OrganizationNotificationPreference[];
 
   if (orgSettingsError) {
     throw new Error(`Error fetching organization settings: ${orgSettingsError.message}`);
   }
 
-  const organizationSettingsRows: OrganizationNotificationPreference[] = (organizationSettings || []).map((setting) => ({
+  const organizationSettingsRows: OrganizationNotificationPreference[] = organizationSettings.map((setting) => ({
     organization_id: String(setting.organization_id),
     notification_global_enabled: setting.notification_global_enabled ?? null,
     notification_daily_summary_enabled: setting.notification_daily_summary_enabled ?? null,
@@ -870,19 +927,20 @@ export async function scheduleNotifications(
     existingQuery = existingQuery.in('organization_id', organizationIds);
   }
 
-  const { data: existingNotifications, error: existingError } = await existingQuery.returns<NotificationUserKeyRow[]>();
+  const { data: existingNotificationsData, error: existingError } = await existingQuery;
+  const existingNotifications = (existingNotificationsData ?? []) as NotificationUserKeyRow[];
 
   if (existingError) {
     throw new Error(`Error checking existing scheduled notifications: ${existingError.message}`);
   }
 
   const existingKey = new Set(
-    (existingNotifications || []).map((item) => `${item.organization_id}:${item.user_id}`)
+    existingNotifications.map((item) => `${item.organization_id}:${item.user_id}`)
   );
 
   const scheduledNotifications: ScheduledNotificationInsert[] = [];
 
-  for (const member of members || []) {
+  for (const member of members) {
     const userSetting = userSettingsMap.get(member.user_id);
     if (!userSetting) {
       continue;
@@ -973,16 +1031,18 @@ export async function retryFailedNotifications(
   }
 
   // Use the database function to retry failed notifications
-  const { data, error } = await supabase.rpc<number>('retry_failed_notifications');
+  const { data, error } = await supabase.rpc('retry_failed_notifications');
 
   if (error) {
     throw new Error(`Error retrying notifications: ${getErrorMessage(error)}`);
   }
 
-  console.log(`Retried ${data || 0} failed notifications`);
+  const retriedCount = (data as number | null) ?? 0;
+
+  console.log(`Retried ${retriedCount} failed notifications`);
   
   return {
-    retried_count: data || 0
+    retried_count: retriedCount
   };
 }
 
@@ -1028,19 +1088,19 @@ export async function updateNotificationStatus(
 
 // Check if notifications are enabled for user/organization
 export async function checkNotificationEnabled(
-  supabase: GenericSupabaseClient,
+  supabase: MinimalSupabaseClient,
   userId: string,
   organizationId: string,
   notificationType: NotificationType
 ): Promise<boolean> {
   try {
     // Check user settings first
-    const { data: userSettings } = await supabase
+    const { data: userSettingsData } = await supabase
       .from('user_settings')
       .select('notification_global_enabled, notification_daily_summary_enabled, notification_new_assignment_enabled, notification_project_milestone_enabled')
       .eq('user_id', userId)
-      .maybeSingle()
-      .returns<UserNotificationSettingsRow>();
+      .maybeSingle();
+    const userSettings = userSettingsData as UserNotificationSettingsRow | null;
 
     // If user has global disabled, skip
     if (userSettings && userSettings.notification_global_enabled === false) {
@@ -1063,12 +1123,12 @@ export async function checkNotificationEnabled(
     }
 
     // Check organization settings if available
-    const { data: orgSettings } = await supabase
+    const { data: orgSettingsData } = await supabase
       .from('organization_settings')
       .select('notification_global_enabled, notification_daily_summary_enabled, notification_new_assignment_enabled, notification_project_milestone_enabled')
       .eq('organization_id', organizationId)
-      .maybeSingle()
-      .returns<OrganizationNotificationSettingsRow>();
+      .maybeSingle();
+    const orgSettings = orgSettingsData as OrganizationNotificationSettingsRow | null;
 
     if (orgSettings && orgSettings.notification_global_enabled === false) {
       return false;

@@ -342,7 +342,7 @@ async function triggerWorkflows(
     workflowQuery = workflowQuery.in('id', ids);
   }
 
-  const { data: workflows, error: workflowsError } = await workflowQuery.returns<WorkflowRecord[]>();
+  const { data: workflows, error: workflowsError } = await workflowQuery;
 
   if (workflowsError) {
     console.error('Error fetching workflows:', workflowsError);
@@ -420,7 +420,7 @@ async function triggerWorkflows(
         .eq('trigger_entity_id', trigger_entity_id)
         .gte('created_at', recentCutoff)
         .in('status', ['pending', 'running', 'completed'])
-        .returns<WorkflowExecutionCheckRow[]>();
+        ;
 
       if (duplicateCheckError) {
         console.error('Error checking for duplicates:', duplicateCheckError);
@@ -558,7 +558,7 @@ async function executeWorkflowSteps(supabase: GenericSupabaseClient, executionId
       .eq('workflow_id', execution.workflow_id)
       .eq('is_active', true)
       .order('step_order')
-      .returns<WorkflowStepRecord[]>();
+      ;
 
     if (stepsError) {
       throw new Error(`Failed to fetch workflow steps: ${stepsError.message}`);
@@ -1177,7 +1177,7 @@ async function getEntityData(
         .from('lead_field_values')
         .select('field_key, value')
         .eq('lead_id', session.leads.id)
-        .returns<LeadFieldValue[]>();
+        ;
       
       if (fieldValues) {
         leadFieldValues = fieldValues.reduce<Record<string, string>>((acc, fv) => {
@@ -1230,7 +1230,7 @@ async function getEntityData(
         .from('lead_field_values')
         .select('field_key, value')
         .eq('lead_id', project.leads.id)
-        .returns<LeadFieldValue[]>();
+        ;
       
       if (fieldValues) {
         leadFieldValues = fieldValues.reduce<Record<string, string>>((acc, fv) => {
@@ -1264,7 +1264,7 @@ async function getEntityData(
         .from('lead_field_values')
         .select('field_key, value')
         .eq('lead_id', lead.id)
-        .returns<LeadFieldValue[]>();
+        ;
       
       if (fieldValues) {
         leadFieldValues = fieldValues.reduce<Record<string, string>>((acc, fv) => {

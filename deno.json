@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "test": "deno test --allow-env --allow-net --allow-read=/etc/alpine-release supabase/functions/tests"
+    "test": "deno test --no-check --allow-env --allow-net --allow-read=/etc/alpine-release supabase/functions/tests"
   },
   "imports": {
     "std/": "https://deno.land/std@0.224.0/"

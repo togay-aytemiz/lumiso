@@ -172,7 +172,8 @@ interface SimpleTemplate {
   master_content?: string | null;
 }
 
-type GenericSupabaseClient = SupabaseClient<unknown, unknown, unknown>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type GenericSupabaseClient = SupabaseClient<any, any, any>;
 
 function mapOrganizationSettings(row: OrganizationSettingsRow | null): OrganizationSettings | null {
   if (!row) {
@@ -963,18 +964,21 @@ const handler = async (req: Request): Promise<Response> => {
         
         if (user) {
           // Get organization settings
-          const { data: userSettings } = await supabaseClient
+          const { data: userSettingsData } = await supabaseClient
             .from('user_settings')
             .select('active_organization_id')
             .eq('user_id', user.id)
-            .single<UserSettingsRow>();
+            .single();
+          const userSettings = userSettingsData as UserSettingsRow | null;
           
           if (userSettings?.active_organization_id) {
-          const { data: orgSettings } = await supabaseClient
+          const { data: orgSettingsData } = await supabaseClient
             .from('organization_settings')
             .select('photography_business_name, primary_brand_color, logo_url, phone, email, social_channels')
             .eq('organization_id', userSettings.active_organization_id)
-            .single<OrganizationSettingsRow>();
+            .single();
+
+            const orgSettings = orgSettingsData as OrganizationSettingsRow | null;
 
             organizationSettings = mapOrganizationSettings(orgSettings);
           }
@@ -1082,7 +1086,7 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
     console.log('Fetching template from message_templates table...');
     
     // Get template with blocks for proper rendering
-    const { data: template, error: templateError } = await supabase
+    const { data: templateData, error: templateError } = await supabase
       .from('message_templates')
       .select(`
         *,
@@ -1094,7 +1098,8 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
       `)
       .eq('id', template_id)
       .eq('template_channel_views.channel', 'email')
-      .single<MessageTemplate>();
+      .single();
+    const template = templateData as MessageTemplate | null;
 
     console.log('Template fetch result:', template ? 'Found' : 'Not found');
     if (templateError) {
@@ -1112,11 +1117,12 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
     console.log('Template found:', template.name);
     
     // Get organization settings including social channels
-    const { data: orgSettings, error: orgError } = await supabase
+    const { data: orgSettingsData, error: orgError } = await supabase
       .from('organization_settings')
       .select('photography_business_name, primary_brand_color, logo_url, phone, email, date_format, time_format, social_channels')
       .eq('organization_id', template.organization_id)
-      .single<OrganizationSettingsRow>();
+      .single();
+    const orgSettings = orgSettingsData as OrganizationSettingsRow | null;
 
     if (orgError) {
       console.warn('Could not fetch organization settings:', orgError);
@@ -1259,11 +1265,13 @@ async function sendSimpleTextEmail(
   console.log('Sending simple text email fallback');
   
   // Get organization settings
-  const { data: orgSettings } = await supabaseClient
+  const { data: orgSettingsData } = await supabaseClient
     .from('organization_settings')
     .select('photography_business_name, email')
     .eq('organization_id', template.organization_id)
-    .single<OrganizationSettingsRow>();
+    .single();
+
+  const orgSettings = orgSettingsData as OrganizationSettingsRow | null;
 
   const organizationSettings = mapOrganizationSettings(orgSettings);
 

@@ -54,7 +54,7 @@ Deno.test("checkNotificationEnabled returns false when user globally disables no
       }
       throw new Error(`Unexpected table ${table}`);
     },
-  };
+  } as unknown as Parameters<typeof checkNotificationEnabled>[0];
 
   const enabled = await checkNotificationEnabled(supabase, "user-1", "org-1", "daily-summary");
   assertEquals(enabled, false);
@@ -81,7 +81,7 @@ Deno.test("checkNotificationEnabled respects organization level overrides", asyn
       }
       throw new Error(`Unexpected table ${table}`);
     },
-  };
+  } as unknown as Parameters<typeof checkNotificationEnabled>[0];
 
   const enabled = await checkNotificationEnabled(supabase, "user-1", "org-2", "daily-summary");
   assertEquals(enabled, false);
@@ -92,7 +92,7 @@ Deno.test("checkNotificationEnabled defaults to true when no overrides present",
     from(_table: string) {
       return new MaybeSingleBuilder({ row: null });
     },
-  };
+  } as unknown as Parameters<typeof checkNotificationEnabled>[0];
 
   const enabled = await checkNotificationEnabled(supabase, "user-1", "org-3", "daily-summary");
   assertEquals(enabled, true);
@@ -115,7 +115,7 @@ Deno.test("updateNotificationStatus persists fields including sent timestamp", a
         },
       };
     },
-  };
+  } as unknown as Parameters<typeof updateNotificationStatus>[0];
 
   await updateNotificationStatus(supabase, "notif-1", "sent", null, 2, "email-123");
   assertEquals(updates.length, 1);
@@ -133,7 +133,7 @@ Deno.test("retryFailedNotifications returns summary data", async () => {
       assertEquals(name, "retry_failed_notifications");
       return Promise.resolve({ data: 4, error: null });
     },
-  };
+  } as unknown as Parameters<typeof retryFailedNotifications>[0];
 
   const result = await retryFailedNotifications(supabase);
   assertEquals(result, { retried_count: 4 });
@@ -144,7 +144,7 @@ Deno.test("retryFailedNotifications throws on rpc error", async () => {
     rpc() {
       return Promise.resolve({ data: null, error: { message: "boom" } });
     },
-  };
+  } as unknown as Parameters<typeof retryFailedNotifications>[0];
 
   await assertRejects(
     () => retryFailedNotifications(supabase),
@@ -162,7 +162,7 @@ Deno.test("processProjectMilestone forwards metadata to reminder function", asyn
         return Promise.resolve({ data: { id: "email-999" }, error: null });
       },
     },
-  };
+  } as unknown as Parameters<typeof processProjectMilestone>[0];
 
   const result = await processProjectMilestone(
     supabase,
@@ -174,7 +174,7 @@ Deno.test("processProjectMilestone forwards metadata to reminder function", asyn
         new_status: "sent",
         changed_by_user_id: "user-77",
       },
-    },
+    } as unknown as Parameters<typeof processProjectMilestone>[1],
   );
 
   assertEquals(result, { id: "email-999" });
@@ -254,7 +254,7 @@ Deno.test("processWorkflowMessage renders template variables before sending", as
 
       throw new Error(`Unexpected table ${table}`);
     },
-  };
+  } as unknown as Parameters<typeof processWorkflowMessage>[0];
 
   const metadata = {
     template_id: "tmpl-1",
@@ -271,7 +271,7 @@ Deno.test("processWorkflowMessage renders template variables before sending", as
       user_id: "user-99",
       organization_id: "org-33",
       metadata,
-    },
+    } as unknown as Parameters<typeof processWorkflowMessage>[1],
   );
 
   assertEquals(result, { id: "email-abc" });

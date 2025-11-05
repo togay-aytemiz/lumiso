@@ -4,6 +4,7 @@ import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0
 import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
 import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summary-empty.ts';
 import { formatDate } from './_templates/enhanced-email-base.ts';
+import type { Session as TemplateSession, Activity as TemplateActivity, Lead } from './_templates/enhanced-email-base.ts';
 import { createEmailLocalization } from '../_shared/email-i18n.ts';
 import {
   getErrorMessage,
@@ -102,9 +103,43 @@ type ActivitySummary = {
 };
 
 type OverdueItems = {
-  leads: unknown[];
+  leads: Lead[];
   activities: ActivitySummary[];
 };
+
+const FALLBACK_DATE = new Date().toISOString().split('T')[0];
+
+const ensureName = (value: string | null | undefined, fallback: string): string =>
+  value && value.trim().length > 0 ? value : fallback;
+
+type ActivityLike = ActivityRecord | ActivityWithNames | ActivitySummary;
+
+function mapSessionToTemplate(session: SessionRecord): TemplateSession {
+  return {
+    id: session.id,
+    session_date: session.session_date ?? FALLBACK_DATE,
+    session_time: session.session_time,
+    location: session.location,
+    leads: session.leads ? { name: ensureName(session.leads.name, 'Client') } : null,
+    projects: session.projects ? { name: ensureName(session.projects.name, 'Project') } : null,
+  };
+}
+
+function mapActivityToTemplate(activity: ActivityLike): TemplateActivity {
+  const leads = 'leads' in activity ? (activity.leads as { name: string } | null | undefined) : null;
+  const projects = 'projects' in activity ? (activity.projects as { name: string } | null | undefined) : null;
+
+  return {
+    id: activity.id,
+    content: ensureName(activity.content ?? null, 'Reminder'),
+    reminder_date: activity.reminder_date ?? FALLBACK_DATE,
+    reminder_time: activity.reminder_time,
+    lead_id: activity.lead_id ?? null,
+    project_id: activity.project_id ?? null,
+    leads: leads ? { name: ensureName(leads.name, 'Lead') } : null,
+    projects: projects ? { name: ensureName(projects.name, 'Project') } : null,
+  };
+}
 
 type SkippedReasons = {
   noOrganization: number;
@@ -153,7 +188,8 @@ export const handler = async (req: Request): Promise<Response> => {
     }
     // For scheduled processing, we'll check timezone conversion for each user
 
-    const { data: users, error: usersError } = await usersQuery.returns<UserSettingsRow[]>();
+    const { data: userRows, error: usersError } = await usersQuery;
+    const users = (userRows ?? []) as UserSettingsRow[];
 
     if (usersError) {
       console.error('Error fetching users:', usersError);
@@ -295,8 +331,7 @@ export const handler = async (req: Request): Promise<Response> => {
           `)
           .eq('session_date', todayStr)
           .eq('organization_id', organizationId)
-          .order('session_time')
-          .returns<SessionRecord[]>();
+          .order('session_time');
 
     // Get past sessions that need action
     const { data: pastSessions, error: pastSessionsError } = await supabaseAdmin
@@ -313,8 +348,7 @@ export const handler = async (req: Request): Promise<Response> => {
           .lt('session_date', todayStr)
           .eq('organization_id', organizationId)
           .order('session_date', { ascending: false })
-          .limit(10)
-          .returns<SessionRecord[]>(); // Limit past sessions
+          .limit(10); // Limit past sessions
 
     // Get overdue activities
     const { data: overdueActivities, error: overdueError } = await supabaseAdmin
@@ -331,8 +365,7 @@ export const handler = async (req: Request): Promise<Response> => {
           .lt('reminder_date::date', todayStr)
           .eq('completed', false)
           .eq('organization_id', organizationId)
-          .order('reminder_date', { ascending: false })
-          .returns<ActivityRecord[]>();
+          .order('reminder_date', { ascending: false });
 
         // Get today's activities/reminders
         console.log(`Searching for today's reminders on date: ${todayStr}`);
@@ -354,8 +387,7 @@ export const handler = async (req: Request): Promise<Response> => {
           .eq('completed', false)
           .gte('reminder_date', `${todayStr}T00:00:00`)
           .lte('reminder_date', `${todayStr}T23:59:59`)
-          .order('reminder_time')
-          .returns<ActivityRecord[]>();
+          .order('reminder_time');
 
         console.log(`Found ${todayActivities?.length || 0} today's activities:`, todayActivities);
 
@@ -466,7 +498,7 @@ export const handler = async (req: Request): Promise<Response> => {
 
         // Transform overdue data (only overdue activities, not today's)
         const overdueItems: OverdueItems = {
-          leads: [], // No overdue leads for now, focus on activities
+          leads: [] as Lead[], // No overdue leads for now, focus on activities
           activities: (overdueActivities ?? []).map((activity) => ({
             id: activity.id,
             content: activity.content,
@@ -475,6 +507,14 @@ export const handler = async (req: Request): Promise<Response> => {
             lead_id: activity.lead_id,
             project_id: activity.project_id
           }))
+        };
+
+        const templateSessions = sessions.map(mapSessionToTemplate);
+        const templatePastSessions = pastSessionsNeedingAction.map(mapSessionToTemplate);
+        const templateTodayReminders = todayReminders.map(mapActivityToTemplate);
+        const templateOverdueItems = {
+          leads: overdueItems.leads,
+          activities: overdueItems.activities.map(mapActivityToTemplate),
         };
 
         // Generate enhanced email content using the same templates as test system
@@ -489,8 +529,8 @@ export const handler = async (req: Request): Promise<Response> => {
         if (sessions.length === 0 && todayReminders.length === 0) {
           // Use empty template when no sessions or reminders
           emailHtml = generateEmptyDailySummaryEmail(
-            overdueItems,
-            pastSessionsNeedingAction,
+            templateOverdueItems,
+            templatePastSessions,
             templateData
           );
           emailSubject = t('dailySummary.subject.brandedEmpty', {
@@ -499,10 +539,10 @@ export const handler = async (req: Request): Promise<Response> => {
         } else {
           // Use regular daily summary template
           emailHtml = generateModernDailySummaryEmail(
-            sessions,
-            todayReminders,
-            overdueItems,
-            pastSessionsNeedingAction,
+            templateSessions,
+            templateTodayReminders,
+            templateOverdueItems,
+            templatePastSessions,
             templateData
           );
           emailSubject = t('dailySummary.subject.brandedWithData', {

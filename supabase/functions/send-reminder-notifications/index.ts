@@ -84,6 +84,7 @@ interface ReminderRequest {
   assignee_name?: string;
   assigner_name?: string;
   assigner_id?: string;
+  assignee_language?: string;
 }
 
 type AssignmentNotificationRequest = {
@@ -122,7 +123,34 @@ export const handler = async (req: Request): Promise<Response> => {
 
     // Handle assignment notifications
     if (requestData.type === 'new-assignment') {
-      return await handleAssignmentNotification(requestData, adminSupabase);
+      if (requestData.entity_type !== 'lead' && requestData.entity_type !== 'project') {
+        return new Response(JSON.stringify({ error: 'entity_type must be "lead" or "project"' }), {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
+      if (!requestData.entity_id || !requestData.organizationId) {
+        return new Response(JSON.stringify({ error: 'entity_id and organizationId are required for assignment notifications' }), {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
+      const assignmentRequest: AssignmentNotificationRequest = {
+        entity_type: requestData.entity_type,
+        entity_id: requestData.entity_id,
+        assignee_id: requestData.assignee_id ?? null,
+        assignee_email: requestData.assignee_email ?? null,
+        assignee_name: requestData.assignee_name ?? null,
+        assigner_name: requestData.assigner_name ?? null,
+        assigner_id: requestData.assigner_id ?? null,
+        organizationId: requestData.organizationId,
+        assignee_language: requestData.assignee_language,
+        isTest: requestData.isTest,
+      };
+
+      return await handleAssignmentNotification(assignmentRequest, adminSupabase);
     }
 
     // Handle daily-summary and daily-summary-empty notifications
@@ -139,6 +167,7 @@ export const handler = async (req: Request): Promise<Response> => {
 
     let user: User;
     let organizationId: string;
+    let userEmail: string;
 
     // Check if this is batch processing mode (called from process-scheduled-notifications)
     if (batchOrgId && batchUserId) {
@@ -150,6 +179,10 @@ export const handler = async (req: Request): Promise<Response> => {
         throw new Error(`Failed to get batch user: ${userError?.message || 'User not found'}`);
       }
       user = userData.user;
+      if (!user.email) {
+        throw new Error('User email is required for assignment notifications');
+      }
+      userEmail = user.email;
       organizationId = batchOrgId;
       
     } else {
@@ -174,6 +207,10 @@ export const handler = async (req: Request): Promise<Response> => {
       }
 
       user = authUser;
+      if (!user.email) {
+        throw new Error('User email is required for assignment notifications');
+      }
+      userEmail = user.email;
 
       // Get user's active organization
       const { data: userSettings } = await adminSupabase
@@ -214,7 +251,7 @@ export const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    console.log(`Authenticated user: ${user.email}`);
+    console.log(`Authenticated user: ${userEmail}`);
     console.log('Organization ID:', organizationId);
 
     // Get user profile for display name
@@ -227,7 +264,7 @@ export const handler = async (req: Request): Promise<Response> => {
     // Extract user's full name - only use full_name since first_name/last_name don't exist
     const userFullName = userProfile?.full_name || 
                          user.user_metadata?.full_name || 
-                         user.email?.split('@')[0] || 'there';
+                         userEmail.split('@')[0] || 'there';
     console.log(`User full name: ${userFullName}`);
 
     const { data: languagePreference } = await adminSupabase
@@ -236,7 +273,7 @@ export const handler = async (req: Request): Promise<Response> => {
       .eq('user_id', user.id)
       .maybeSingle();
 
-    const localization = createEmailLocalization(languagePreference?.language_code);
+    const localization = createEmailLocalization(languagePreference?.language_code ?? undefined);
     const t = localization.t;
 
     const { data: orgSettings } = await adminSupabase
@@ -389,7 +426,7 @@ export const handler = async (req: Request): Promise<Response> => {
 
         const emailResponse = await resend.emails.send({
           from: 'Lumiso <hello@updates.lumiso.app>',
-          to: [user.email],
+          to: [userEmail],
           subject: emailSubject,
           html: emailHtml,
         });
@@ -437,14 +474,14 @@ export const handler = async (req: Request): Promise<Response> => {
           },
           assignee: {
             name: userFullName,
-            email: user.email,
+            email: userEmail,
           },
         };
 
         const emailData: ImmediateNotificationEmailData = {
           user: {
             fullName: userFullName,
-            email: user.email,
+            email: userEmail,
           },
           business: {
             businessName: orgSettings?.photography_business_name || 'Lumiso',
@@ -461,7 +498,7 @@ export const handler = async (req: Request): Promise<Response> => {
 
         const emailResponse = await resend.emails.send({
           from: 'Lumiso <hello@updates.lumiso.app>',
-          to: [user.email],
+          to: [userEmail],
           subject: emailSubject,
           html: emailHtml,
         });
@@ -778,7 +815,7 @@ export const handler = async (req: Request): Promise<Response> => {
     // Send email using Resend
     const emailResult = await resend.emails.send({
       from: 'Lumiso <hello@updates.lumiso.app>',
-      to: [user.email],
+      to: [userEmail],
       subject: emailSubject,
       html: emailHtml
     });
@@ -786,7 +823,7 @@ export const handler = async (req: Request): Promise<Response> => {
     console.log('Email sent successfully:', emailResult);
 
     return new Response(JSON.stringify({
-      message: `Daily summary sent to ${user.email}`,
+      message: `Daily summary sent to ${userEmail}`,
       successful: 1,
       failed: 0,
       total: 1,
@@ -887,7 +924,8 @@ export async function handleAssignmentNotification(
           console.log('Found project:', project.name);
           entityName = project.name || `Unnamed Project`;
           notes = project.description;
-          leadName = project.leads?.name;
+          const projectLead = normalizeFirst(project.leads);
+          leadName = projectLead?.name;
           
           console.log('Project details - Name:', entityName, 'Lead:', leadName);
           

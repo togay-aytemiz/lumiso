@@ -1,25 +1,41 @@
+import type { ReactNode } from "react";
 import { fireEvent, render, screen } from "@/utils/testUtils";
 import { TutorialExitGuardDialog } from "../shared/TutorialExitGuardDialog";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
+type AlertDialogWrapperProps = {
+  open: boolean;
+  children: ReactNode;
+};
+
+type AlertDialogSimpleProps = {
+  children: ReactNode;
+};
+
+type AlertDialogActionProps = {
+  children: ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+};
+
 jest.mock("@/components/ui/alert-dialog", () => ({
   __esModule: true,
-  AlertDialog: ({ children, open }: any) => (
+  AlertDialog: ({ children, open }: AlertDialogWrapperProps) => (
     <div data-testid="alert-dialog" data-open={open}>
       {children}
     </div>
   ),
-  AlertDialogContent: ({ children }: any) => <div>{children}</div>,
-  AlertDialogHeader: ({ children }: any) => <div>{children}</div>,
-  AlertDialogFooter: ({ children }: any) => <div>{children}</div>,
-  AlertDialogTitle: ({ children }: any) => <h2>{children}</h2>,
-  AlertDialogDescription: ({ children }: any) => <p>{children}</p>,
-  AlertDialogCancel: ({ children, onClick }: any) => (
+  AlertDialogContent: ({ children }: AlertDialogSimpleProps) => <div>{children}</div>,
+  AlertDialogHeader: ({ children }: AlertDialogSimpleProps) => <div>{children}</div>,
+  AlertDialogFooter: ({ children }: AlertDialogSimpleProps) => <div>{children}</div>,
+  AlertDialogTitle: ({ children }: AlertDialogSimpleProps) => <h2>{children}</h2>,
+  AlertDialogDescription: ({ children }: AlertDialogSimpleProps) => <p>{children}</p>,
+  AlertDialogCancel: ({ children, onClick }: AlertDialogActionProps) => (
     <button type="button" onClick={onClick}>
       {children}
     </button>
   ),
-  AlertDialogAction: ({ children, onClick, disabled, ...rest }: any) => (
+  AlertDialogAction: ({ children, onClick, disabled, ...rest }: AlertDialogActionProps) => (
     <button type="button" onClick={onClick} disabled={disabled} {...rest}>
       {children}
     </button>

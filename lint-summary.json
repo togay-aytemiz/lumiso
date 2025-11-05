@@ -1,14 +1,6 @@
 {
-  "total": 704,
+  "total": 688,
   "summary": [
-    {
-      "filePath": "src/components/__tests__/TutorialExitGuardDialog.test.tsx",
-      "count": 8
-    },
-    {
-      "filePath": "src/components/__tests__/GlobalSearch.test.tsx",
-      "count": 8
-    },
     {
       "filePath": "supabase/functions/tests/process-session-reminders.test.ts",
       "count": 7

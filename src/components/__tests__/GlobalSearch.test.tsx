@@ -4,41 +4,41 @@ import GlobalSearch from "../GlobalSearch";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 
-type SupabaseResponse = { data: any; error: any };
+type SupabaseResponse<TData> = { data: TData; error: Error | null };
 
-type SupabaseResponses = Record<string, SupabaseResponse>;
+type SupabaseResponses = {
+  lead_statuses: SupabaseResponse<Array<{ id: string; name: string; sort_order: number }>>;
+  project_statuses: SupabaseResponse<Array<{ id: string; name: string; sort_order: number }>>;
+  lead_field_definitions: SupabaseResponse<Array<{ field_key: string; label: string }>>;
+  leads: SupabaseResponse<Array<Record<string, unknown>>>;
+  lead_field_values: SupabaseResponse<Array<Record<string, unknown>>>;
+  activities: SupabaseResponse<Array<Record<string, unknown>>>;
+  sessions: SupabaseResponse<Array<Record<string, unknown>>>;
+  projects: SupabaseResponse<Array<Record<string, unknown>>>;
+  [key: string]: SupabaseResponse<unknown>;
+};
 
 const leadStatusBadgeMock = jest.fn();
 const projectStatusBadgeMock = jest.fn();
 const navigateMock = jest.fn();
 
-jest.mock("@/components/LeadStatusBadge", () => {
-  const React = require("react");
-  return {
-    LeadStatusBadge: (props: any) => {
-      leadStatusBadgeMock(props);
-      return React.createElement("div", { "data-testid": "lead-status-badge" });
-    },
-  };
-});
+jest.mock("@/components/LeadStatusBadge", () => ({
+  LeadStatusBadge: (props: unknown) => {
+    leadStatusBadgeMock(props);
+    return <div data-testid="lead-status-badge" />;
+  },
+}));
 
-jest.mock("@/components/ProjectStatusBadge", () => {
-  const React = require("react");
-  return {
-    ProjectStatusBadge: (props: any) => {
-      projectStatusBadgeMock(props);
-      return React.createElement("div", { "data-testid": "project-status-badge" });
-    },
-  };
-});
+jest.mock("@/components/ProjectStatusBadge", () => ({
+  ProjectStatusBadge: (props: unknown) => {
+    projectStatusBadgeMock(props);
+    return <div data-testid="project-status-badge" />;
+  },
+}));
 
-jest.mock("@/components/ui/loading-presets", () => {
-  const React = require("react");
-  return {
-    SearchLoadingSkeleton: () =>
-      React.createElement("div", { "data-testid": "search-loading" }),
-  };
-});
+jest.mock("@/components/ui/loading-presets", () => ({
+  SearchLoadingSkeleton: () => <div data-testid="search-loading" />,
+}));
 
 jest.mock("@/hooks/use-toast", () => ({
   toast: jest.fn(),
@@ -108,20 +108,21 @@ const baseResponses: SupabaseResponses = {
   projects: { data: [], error: null },
 };
 
-const createQueryBuilder = (table: string, responses: SupabaseResponses) => {
+const createQueryBuilder = (table: keyof SupabaseResponses, responses: SupabaseResponses) => {
   const response = responses[table] ?? { data: [], error: null };
-  const builder: any = {};
-  builder.select = jest.fn(() => builder);
-  builder.eq = jest.fn(() => builder);
-  builder.or = jest.fn(() => Promise.resolve(response));
-  builder.order = jest.fn(() => Promise.resolve(response));
-  builder.ilike = jest.fn(() => Promise.resolve(response));
-  builder.in = jest.fn(() => Promise.resolve(response));
-  builder.limit = jest.fn(() => builder);
-  builder.single = jest.fn(() => Promise.resolve(response));
-  builder.insert = jest.fn(() => Promise.resolve(response));
-  builder.update = jest.fn(() => Promise.resolve(response));
-  builder.delete = jest.fn(() => Promise.resolve(response));
+  const builder = {
+    select: jest.fn(() => builder),
+    eq: jest.fn(() => builder),
+    or: jest.fn(() => Promise.resolve(response)),
+    order: jest.fn(() => Promise.resolve(response)),
+    ilike: jest.fn(() => Promise.resolve(response)),
+    in: jest.fn(() => Promise.resolve(response)),
+    limit: jest.fn(() => builder),
+    single: jest.fn(() => Promise.resolve(response)),
+    insert: jest.fn(() => Promise.resolve(response)),
+    update: jest.fn(() => Promise.resolve(response)),
+    delete: jest.fn(() => Promise.resolve(response)),
+  };
   return builder;
 };
 
@@ -130,7 +131,7 @@ const setupSupabase = (overrides: Partial<SupabaseResponses> = {}) => {
     ...baseResponses,
     ...overrides,
   };
-  supabaseFromMock.mockImplementation((table: string) =>
+  supabaseFromMock.mockImplementation((table: keyof SupabaseResponses) =>
     createQueryBuilder(table, responses)
   );
   return responses;

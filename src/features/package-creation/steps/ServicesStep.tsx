@@ -578,7 +578,7 @@ export const ServicesStep = () => {
         isCustom: item.type === "custom",
       };
     });
-  }, [serviceMap, state.services.items, t]);
+  }, [getUnitLabel, serviceMap, state.services.items]);
 
   const updateItem = (
     itemId: string,

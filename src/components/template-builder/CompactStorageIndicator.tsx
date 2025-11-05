@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, HardDrive } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -25,9 +25,12 @@ export function CompactStorageIndicator({ onManageImages }: CompactStorageIndica
   const [loading, setLoading] = useState(true);
   const { activeOrganization } = useOrganization();
 
-  const fetchStorageUsage = async () => {
-    if (!activeOrganization?.id) return;
-    
+  const fetchStorageUsage = useCallback(async () => {
+    if (!activeOrganization?.id) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('template_image_usage')
@@ -46,11 +49,12 @@ export function CompactStorageIndicator({ onManageImages }: CompactStorageIndica
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeOrganization?.id]);
 
   useEffect(() => {
-    fetchStorageUsage();
-  }, [activeOrganization?.id]);
+    setLoading(true);
+    void fetchStorageUsage();
+  }, [fetchStorageUsage]);
 
   if (loading) {
     return <div className="h-4 w-32 bg-muted animate-pulse rounded" />;

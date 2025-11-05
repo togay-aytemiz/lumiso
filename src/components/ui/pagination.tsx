@@ -3,7 +3,8 @@ import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { cn } from "@/lib/utils"
-import { ButtonProps, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
+import type { ButtonProps } from "@/components/ui/button"
 
 const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
   <nav
@@ -49,7 +50,7 @@ const PaginationLink = ({
   <a
     aria-current={isActive ? "page" : undefined}
     className={cn(
-      buttonVariants({
+      Button.variants({
         variant: isActive ? "outline" : "ghost",
         size,
       }),

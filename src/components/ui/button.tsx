@@ -43,6 +43,12 @@ export interface ButtonProps
   asChild?: boolean
 }
 
+type ButtonComponent = React.ForwardRefExoticComponent<
+  ButtonProps & React.RefAttributes<HTMLButtonElement>
+> & {
+  variants: typeof buttonVariants
+}
+
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
@@ -54,7 +60,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       />
     )
   }
-)
+) as ButtonComponent
 Button.displayName = "Button"
+Button.variants = buttonVariants
 
-export { Button, buttonVariants }
+export { Button }

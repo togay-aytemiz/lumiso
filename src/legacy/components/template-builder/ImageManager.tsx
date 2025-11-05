@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Image as ImageIcon, Trash2, Edit3, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,8 +46,12 @@ export function ImageManager({ onImageSelect, templateId, className }: ImageMana
   const { t } = useTranslation("pages");
   const { t: tCommon } = useTranslation("common");
 
-  const loadAssets = async () => {
-    if (!activeOrganization?.id) return;
+  const loadAssets = useCallback(async () => {
+    if (!activeOrganization?.id) {
+      setAssets([]);
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -69,11 +73,11 @@ export function ImageManager({ onImageSelect, templateId, className }: ImageMana
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeOrganization?.id, t, tCommon, toast]);
 
   useEffect(() => {
-    loadAssets();
-  }, [activeOrganization?.id]);
+    void loadAssets();
+  }, [activeOrganization?.id, loadAssets]);
 
   const deleteAsset = async (asset: TemplateAsset) => {
     try {

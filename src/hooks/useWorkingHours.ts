@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -15,7 +15,7 @@ export function useWorkingHours() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchWorkingHours = async () => {
+  const fetchWorkingHours = useCallback(async () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
@@ -44,7 +44,7 @@ export function useWorkingHours() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const updateWorkingHour = async (dayOfWeek: number, updates: Partial<WorkingHour>) => {
     try {
@@ -81,8 +81,8 @@ export function useWorkingHours() {
   };
 
   useEffect(() => {
-    fetchWorkingHours();
-  }, []);
+    void fetchWorkingHours();
+  }, [fetchWorkingHours]);
 
   return {
     workingHours,

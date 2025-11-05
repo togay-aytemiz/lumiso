@@ -1,7 +1,4 @@
-export {
-  StickySectionNav as default,
-  STICKY_NAV_CLASSES
-} from "@/components/navigation/StickySectionNav";
+export { StickySectionNav as default } from "@/components/navigation/StickySectionNav";
 
 export type {
   StickySectionNavProps,

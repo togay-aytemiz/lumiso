@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PaymentSummary {
@@ -17,8 +17,9 @@ export const useProjectPayments = (projectId: string, refreshTrigger?: number) =
   });
   const [loading, setLoading] = useState(true);
 
-  const fetchPaymentSummary = async () => {
+  const fetchPaymentSummary = useCallback(async () => {
     try {
+      setLoading(true);
       // Get project base price
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
@@ -78,11 +79,11 @@ export const useProjectPayments = (projectId: string, refreshTrigger?: number) =
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId]);
 
   useEffect(() => {
-    fetchPaymentSummary();
-  }, [projectId, refreshTrigger]);
+    void fetchPaymentSummary();
+  }, [fetchPaymentSummary, refreshTrigger]);
 
   return { paymentSummary, loading, refetch: fetchPaymentSummary };
 };

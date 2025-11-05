@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { TemplateVariable } from "@/types/templateBuilder";
@@ -19,13 +19,7 @@ export function useTemplateVariables() {
   const [loading, setLoading] = useState(true);
   const { activeOrganization } = useOrganization();
 
-  useEffect(() => {
-    if (activeOrganization?.id) {
-      fetchVariables();
-    }
-  }, [activeOrganization?.id]);
-
-  const fetchVariables = async () => {
+  const fetchVariables = useCallback(async () => {
     if (!activeOrganization?.id) return;
 
     try {
@@ -160,7 +154,15 @@ export function useTemplateVariables() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeOrganization?.id]);
+
+  useEffect(() => {
+    if (activeOrganization?.id) {
+      void fetchVariables();
+    } else {
+      setLoading(false);
+    }
+  }, [activeOrganization?.id, fetchVariables]);
 
   const getVariableValue = (key: string, mockData?: Record<string, string>): string => {
     // If mock data is provided, use it first

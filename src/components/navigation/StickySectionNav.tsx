@@ -47,12 +47,6 @@ const ACTIVE_NAV_CLASSES = "border-primary/50 bg-primary/10 text-primary shadow-
 const INACTIVE_NAV_CLASSES =
   "border-transparent bg-muted/20 text-muted-foreground hover:bg-muted/30 hover:text-foreground";
 
-export const STICKY_NAV_CLASSES = {
-  baseButton: BASE_NAV_BUTTON_CLASSES,
-  active: ACTIVE_NAV_CLASSES,
-  inactive: INACTIVE_NAV_CLASSES
-};
-
 export function StickySectionNav({
   items,
   stickyTopOffset = 0,

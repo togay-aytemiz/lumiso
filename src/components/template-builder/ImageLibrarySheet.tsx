@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -39,9 +39,13 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
   const { t: tMessages } = useMessagesTranslation();
   const { activeOrganization } = useOrganization();
 
-  const loadAssets = async () => {
-    if (!activeOrganization?.id) return;
-    
+  const loadAssets = useCallback(async () => {
+    if (!activeOrganization?.id) {
+      setAssets([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -62,13 +66,13 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeOrganization?.id, toast]);
 
   useEffect(() => {
     if (open) {
-      loadAssets();
+      void loadAssets();
     }
-  }, [open, activeOrganization?.id]);
+  }, [open, loadAssets]);
 
   const getImageUrl = (filePath: string) => {
     const { data: { publicUrl } } = supabase.storage
@@ -117,7 +121,7 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
       });
 
       // Refresh the list
-      loadAssets();
+      await loadAssets();
     } catch (error) {
       console.error('Error deleting asset:', error);
       toast({

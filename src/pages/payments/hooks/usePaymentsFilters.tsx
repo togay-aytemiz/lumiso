@@ -361,6 +361,7 @@ export function usePaymentsFilters({
       t,
       toggleItemClasses,
       typeFilterOptions,
+      amountDirty,
     ]
   );
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface TodoProgress {
@@ -15,8 +15,9 @@ export const useProjectProgress = (projectId: string, refreshTrigger?: number) =
   });
   const [loading, setLoading] = useState(true);
 
-  const fetchTodoProgress = async () => {
+  const fetchTodoProgress = useCallback(async () => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('todos')
         .select('is_completed')
@@ -36,11 +37,11 @@ export const useProjectProgress = (projectId: string, refreshTrigger?: number) =
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId]);
 
   useEffect(() => {
-    fetchTodoProgress();
-  }, [projectId, refreshTrigger]);
+    void fetchTodoProgress();
+  }, [fetchTodoProgress, refreshTrigger]);
 
   return { progress, loading, refetch: fetchTodoProgress };
 };

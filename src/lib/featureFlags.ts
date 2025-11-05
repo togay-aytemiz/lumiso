@@ -8,7 +8,6 @@ const toEnvKey = (flag: string) => {
 const resolveEnv = (): Record<string, string | undefined> => {
   // Accessing import.meta breaks under Jest (CommonJS). Eval keeps bundlers happy.
   try {
-    // eslint-disable-next-line no-eval
     const meta = (0, eval)("import.meta");
     if (meta && typeof meta === "object" && "env" in meta) {
       return (meta as Record<string, unknown>).env as Record<string, string | undefined>;

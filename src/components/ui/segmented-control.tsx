@@ -72,7 +72,7 @@ export const SegmentedControl = React.forwardRef<
       width,
       left,
     });
-  }, [indicatorInset, value]);
+  }, [value]);
 
   React.useLayoutEffect(() => {
     updateIndicator();

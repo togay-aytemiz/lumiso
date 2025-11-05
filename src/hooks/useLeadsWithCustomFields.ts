@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getUserOrganizationId } from '@/lib/organizationUtils';
 import { useToast } from '@/hooks/use-toast';
@@ -29,7 +29,7 @@ export function useLeadsWithCustomFields() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const fetchLeadsWithCustomFields = async () => {
+  const fetchLeadsWithCustomFields = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -88,11 +88,11 @@ export function useLeadsWithCustomFields() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
-    fetchLeadsWithCustomFields();
-  }, []);
+    void fetchLeadsWithCustomFields();
+  }, [fetchLeadsWithCustomFields]);
 
   return {
     leads,

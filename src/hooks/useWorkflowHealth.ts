@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { getUserOrganizationId } from '@/lib/organizationUtils';
@@ -30,7 +30,7 @@ export function useWorkflowHealth() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchWorkflowHealth = async () => {
+  const fetchWorkflowHealth = useCallback(async () => {
     try {
       setLoading(true);
       const organizationId = await getUserOrganizationId();
@@ -137,9 +137,9 @@ export function useWorkflowHealth() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const cleanupStuckExecutions = async () => {
+  const cleanupStuckExecutions = useCallback(async () => {
     try {
       const { data, error } = await supabase.rpc('cleanup_workflow_executions');
       
@@ -160,7 +160,7 @@ export function useWorkflowHealth() {
         variant: 'destructive',
       });
     }
-  };
+  }, [fetchWorkflowHealth, toast]);
 
   const getHealthStatus = (): 'healthy' | 'warning' | 'critical' => {
     if (!health) return 'warning';
@@ -194,8 +194,8 @@ export function useWorkflowHealth() {
   };
 
   useEffect(() => {
-    fetchWorkflowHealth();
-  }, []);
+    void fetchWorkflowHealth();
+  }, [fetchWorkflowHealth]);
 
   return {
     health,

@@ -52,7 +52,7 @@ export function TemplateEditorWithTest({
     setShowAddBlock(false);
   };
 
-  const updateBlock = (blockId: string, data: any) => {
+  const updateBlock = (blockId: string, data: BlockData) => {
     onBlocksChange(
       blocks.map(block => 
         block.id === blockId ? { ...block, data } : block
@@ -276,6 +276,6 @@ function getDefaultBlockData(type: TemplateBlock["type"]): BlockData {
         sanitized: false,
       };
     default:
-      return {} as any;
+      throw new Error(`Unsupported template block type: ${type}`);
   }
 }

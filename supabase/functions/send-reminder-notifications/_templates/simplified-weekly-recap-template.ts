@@ -3,7 +3,7 @@ import { WeeklyStats } from './weekly-recap-template.ts';
 
 export function generateWeeklyRecapEmailSimplified(
   stats: WeeklyStats,
-  agingProjects: any[],
+  agingProjects: Array<{ id: string; name: string; created_at: string }>,
   templateData: EmailTemplateData
 ): string {
   const weekStart = new Date();
@@ -13,7 +13,7 @@ export function generateWeeklyRecapEmailSimplified(
   const weekRange = `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
   
   // Generate content sections
-  let sections = [];
+  const sections: string[] = [];
 
   // Key metrics section
   sections.push(`

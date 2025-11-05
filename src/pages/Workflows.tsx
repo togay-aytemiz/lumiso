@@ -11,7 +11,7 @@ import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useWorkflows } from "@/hooks/useWorkflows";
 import { CreateWorkflowSheet } from "@/components/CreateWorkflowSheet";
 import { WorkflowDeleteDialog } from "@/components/WorkflowDeleteDialog";
-import { Workflow } from "@/types/workflow";
+import type { WorkflowWithMetadata } from "@/hooks/useWorkflows";
 import { Plus, Zap, CheckCircle, Clock, AlertTriangle, Edit, Trash2, Mail, MessageCircle, Phone } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { formatDistanceToNow } from "date-fns";
@@ -133,8 +133,8 @@ export default function Workflows() {
     }
   }, [page, pageSize, totalCount]);
 
-  const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
-  const [deletingWorkflow, setDeletingWorkflow] = useState<Workflow | null>(null);
+  const [editingWorkflow, setEditingWorkflow] = useState<WorkflowWithMetadata | null>(null);
+  const [deletingWorkflow, setDeletingWorkflow] = useState<WorkflowWithMetadata | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSearchChange = useCallback((value: string) => {
@@ -148,11 +148,11 @@ export default function Workflows() {
     setPage(1);
   }, []);
 
-  const handleEditWorkflow = useCallback((workflow: Workflow) => {
+  const handleEditWorkflow = useCallback((workflow: WorkflowWithMetadata) => {
     setEditingWorkflow(workflow);
   }, []);
 
-  const handleDeleteWorkflow = useCallback((workflow: Workflow) => {
+  const handleDeleteWorkflow = useCallback((workflow: WorkflowWithMetadata) => {
     setDeletingWorkflow(workflow);
   }, []);
 
@@ -201,7 +201,7 @@ export default function Workflows() {
   const iconSky = getKpiIconPreset("sky");
   const iconEmerald = getKpiIconPreset("emerald");
 
-  const workflowColumns: AdvancedTableColumn<Workflow>[] = useMemo(
+  const workflowColumns: AdvancedTableColumn<WorkflowWithMetadata>[] = useMemo(
     () => [
       {
         id: "name",
@@ -241,7 +241,7 @@ export default function Workflows() {
         hideable: true,
         minWidth: "120px",
         render: (workflow) => {
-          const channels = (workflow as any).channels || [];
+          const channels = workflow.channels ?? [];
           const icons = getChannelIcons(channels);
 
           return (
@@ -289,7 +289,7 @@ export default function Workflows() {
         ),
       },
     ],
-    [dateLocale, getTriggerLabel, t]
+    [dateLocale, getChannelIcons, getTriggerLabel, t]
   );
 
   const headerActions = useMemo(

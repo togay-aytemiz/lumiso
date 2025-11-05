@@ -13,9 +13,9 @@ function setCurrentDate(isoDate: string) {
   const fixedDate = new RealDate(isoDate);
 
   class MockDate extends RealDate {
-    constructor(...args: any[]) {
+    constructor(...args: ConstructorParameters<typeof Date>) {
       if (args.length) {
-        super(...(args as [any]));
+        super(...args);
         return;
       }
       super(fixedDate.valueOf());

@@ -1,3 +1,6 @@
+import type { TemplateBlock } from "@/types/templateBuilder";
+import type { Json } from "@/integrations/supabase/types";
+
 // Unified template interface for the entire application
 export interface Template {
   id: string;
@@ -31,7 +34,7 @@ export interface TemplateBuilderData extends Omit<Template, 'channels'> {
   description?: string;
   subject?: string;
   preheader?: string;
-  blocks?: any[]; // For UI editing only, not stored in DB
+  blocks?: TemplateBlock[]; // For UI editing only, not stored in DB
   status: 'draft' | 'published';
   published_at?: string | null;
   last_saved_at?: string | null;
@@ -45,7 +48,7 @@ export interface DatabaseTemplate {
   category: string;
   master_content: string;
   master_subject: string | null;
-  placeholders: any; // Json type from Supabase
+  placeholders: Json | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;

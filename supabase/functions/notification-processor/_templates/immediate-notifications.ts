@@ -276,7 +276,7 @@ export function generateImmediateNotificationEmail(emailData: ImmediateNotificat
       `;
       break;
       
-    case 'project-milestone':
+    case 'project-milestone': {
       const isCompleted = data.project.lifecycle === 'completed';
       content += `
         <div style="
@@ -310,6 +310,7 @@ export function generateImmediateNotificationEmail(emailData: ImmediateNotificat
         </div>
       `;
       break;
+    }
   }
 
   content += generateCallToAction(data, brandColor, t, baseUrl);
@@ -338,7 +339,7 @@ export function generateSubject(data: ImmediateNotificationData, t: TranslateFn)
       return t('immediate.subject.projectAssignment', { name: data.project.name });
     case 'lead-assignment':
       return t('immediate.subject.leadAssignment', { name: data.lead.name });
-    case 'project-milestone':
+    case 'project-milestone': {
       const isCompleted = data.project.lifecycle === 'completed';
       return isCompleted
         ? t('immediate.subject.projectMilestoneCompleted', {
@@ -347,6 +348,7 @@ export function generateSubject(data: ImmediateNotificationData, t: TranslateFn)
         : t('immediate.subject.projectMilestoneCancelled', {
             name: data.project.name,
           });
+    }
     default:
       return t('immediate.header.projectAssignment.title');
   }

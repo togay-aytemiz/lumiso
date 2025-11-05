@@ -9,7 +9,7 @@ import {
   HeaderBlockData,
   RawHTMLBlockData,
 } from "@/types/templateBuilder";
-import { replacePlaceholders } from "./templateUtils";
+import { replacePlaceholders } from "./templatePlaceholders";
 
 // Convert blocks to HTML content for email rendering
 export function blocksToHTML(blocks: TemplateBlock[], previewData: Record<string, string> = {}): string {

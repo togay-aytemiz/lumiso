@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { computeLeadInitials } from "@/components/LeadInitials";
+import { computeLeadInitials } from "@/components/leadInitialsUtils";
 import { Calendar, DollarSign, Package } from "lucide-react";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 

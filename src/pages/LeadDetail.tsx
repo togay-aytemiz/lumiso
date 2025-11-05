@@ -486,10 +486,12 @@ const LeadDetail = () => {
         description: tForms('deleteLeadDialog.successDescription')
       });
       navigate('/leads');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const description =
+        error instanceof Error ? error.message : "Unable to delete lead.";
       toast({
         title: tMessages('error.generic'),
-        description: error.message,
+        description,
         variant: 'destructive'
       });
     } finally {
@@ -757,6 +759,8 @@ const LeadDetail = () => {
       }
     ];
   }, [
+    aggregatedPayments.total,
+    aggregatedPayments.remaining,
     projectPrimary,
     projectSecondary,
     paymentsPrimary,

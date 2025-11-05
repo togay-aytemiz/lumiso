@@ -17,7 +17,7 @@ export const passwordSchema = z
 
 export const phoneSchema = z
   .string()
-  .regex(/^[\+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number")
+  .regex(/^[+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number")
   .max(20, "Phone number is too long")
   .optional();
 
@@ -25,7 +25,7 @@ export const nameSchema = z
   .string()
   .min(1, "Name is required")
   .max(100, "Name is too long")
-  .regex(/^[\p{L}\p{M}\s\-'\.]+$/u, "Name contains invalid characters");
+  .regex(/^[\p{L}\p{M}\s\-'.]+$/u, "Name contains invalid characters");
 
 export const notesSchema = z
   .string()

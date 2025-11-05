@@ -1,6 +1,7 @@
 import { render } from "@/utils/testUtils";
 import { PaymentsTableSection } from "../PaymentsTableSection";
-import type { AdvancedDataTableSortState } from "@/components/data-table";
+import type { AdvancedDataTableSortState, AdvancedTableColumn } from "@/components/data-table";
+import type { Payment } from "../../types";
 
 jest.mock("@/components/data-table", () => {
   const AdvancedDataTable = jest.fn(() => <div data-testid="advanced-data-table" />);
@@ -20,11 +21,27 @@ describe("PaymentsTableSection", () => {
     const handleSortChange = jest.fn();
     const handleRowClick = jest.fn();
 
+    const payment: Payment = {
+      id: "payment-1",
+      amount: 150,
+      date_paid: null,
+      status: "paid",
+      description: null,
+      type: "base_price",
+      project_id: "project-1",
+      created_at: "2024-01-01T00:00:00Z",
+      projects: null,
+    };
+
+    const columns: AdvancedTableColumn<Payment>[] = [
+      { id: "amount", label: "Amount", accessor: (row) => row.amount },
+    ];
+
     render(
       <PaymentsTableSection
         title="Payments"
-        data={[{ id: "payment-1" } as any]}
-        columns={[{ id: "amount", label: "Amount" } as any]}
+        data={[payment]}
+        columns={columns}
         filters={{ groups: [] }}
         toolbar={<div>Toolbar</div>}
         actions={<button type="button">Export</button>}

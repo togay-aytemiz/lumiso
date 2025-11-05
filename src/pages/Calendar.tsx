@@ -58,6 +58,8 @@ interface Activity {
   completed?: boolean;
 }
 
+type CalendarProject = ReturnType<typeof useOptimizedCalendarData>["projects"][number];
+
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
@@ -118,7 +120,7 @@ export default function Calendar() {
   // Use optimized calendar data hook with performance monitoring
   useEffect(() => {
     startQueryTiming();
-  }, []);
+  }, [startQueryTiming]);
 
   const {
     sessions,
@@ -138,7 +140,7 @@ export default function Calendar() {
   }, [isLoading, endQueryTiming]);
 
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<any | null>(null);
+  const [selectedProject, setSelectedProject] = useState<CalendarProject | null>(null);
   const [selectedProjectLeadName, setSelectedProjectLeadName] = useState("");
   const [sessionSheetOpen, setSessionSheetOpen] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(

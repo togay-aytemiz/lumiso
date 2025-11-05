@@ -48,7 +48,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   const templateName = template?.name || t("templateBuilder.untitledTemplate");
   const subject = template?.subject || '';
   const preheader = template?.preheader || '';
-  const blocks = template?.blocks || [];
+  const blocks = useMemo(() => template?.blocks ?? [], [template?.blocks]);
   const isDraft = template?.status === 'draft' || !template;
 
   // Fetch existing template names for validation

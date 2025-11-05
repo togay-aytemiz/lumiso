@@ -106,7 +106,7 @@ export default function General() {
     },
     onSave: async (values) => {
       // Save branding settings (logo uploads automatically on selection)
-      const updates: any = {
+      const updates = {
         photography_business_name: values.companyName,
         email: values.businessEmail,
         phone: values.businessPhone,
@@ -159,7 +159,7 @@ export default function General() {
         timezone: settings.timezone || detectBrowserTimezone()
       });
     }
-  }, [settings]);
+  }, [brandingSection, regionalSection, settings]);
 
   // Remove the old hardcoded tutorial steps - using dynamic ones above
   const handleTutorialComplete = async () => {

@@ -4,8 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from 'next-themes';
 
-// Custom render function for testing components with providers
-const AllTheProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const createProvidersWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -14,21 +13,26 @@ const AllTheProviders: React.FC<{ children: React.ReactNode }> = ({ children }) 
     },
   });
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
-        </ThemeProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
-  );
+  return function ProvidersWrapper({ children }: { children: React.ReactNode }) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            {children}
+          </ThemeProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+  };
 };
 
 const customRender = (
   ui: React.ReactElement,
   options?: Omit<RenderOptions, 'wrapper'>
-) => render(ui, { wrapper: AllTheProviders, ...options });
+) => {
+  const Wrapper = createProvidersWrapper();
+  return render(ui, { wrapper: Wrapper, ...options });
+};
 
 export * from '@testing-library/react';
 export { customRender as render };

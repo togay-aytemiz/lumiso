@@ -201,26 +201,29 @@ export class SessionService extends BaseEntityService {
         }
         
         // For other fields, use regular sorting
-        let aValue: any = a[sort.field];
-        let bValue: any = b[sort.field];
+        const getValue = (session: Session): string | number => {
+          if (sort.field === 'created_at') {
+            return session.created_at ? new Date(session.created_at).getTime() : 0;
+          }
 
-        // Handle date values
-        if (sort.field === 'created_at') {
-          aValue = aValue ? new Date(aValue).getTime() : 0;
-          bValue = bValue ? new Date(bValue).getTime() : 0;
-        }
+          if (sort.field === 'session_time') {
+            return session.session_time?.toLowerCase() ?? '';
+          }
 
-        // Handle time values
-        if (sort.field === 'session_time') {
-          aValue = aValue ? aValue : '';
-          bValue = bValue ? bValue : '';
-        }
+          if (sort.field === 'status') {
+            return session.status.toLowerCase();
+          }
 
-        // Handle string values
-        if (typeof aValue === 'string' && typeof bValue === 'string') {
-          aValue = aValue.toLowerCase();
-          bValue = bValue.toLowerCase();
-        }
+          if (sort.field === 'lead_name') {
+            return session.lead_name?.toLowerCase() ?? '';
+          }
+
+          const raw = session[sort.field];
+          return typeof raw === 'string' ? raw.toLowerCase() : raw ?? '';
+        };
+
+        const aValue = getValue(a);
+        const bValue = getValue(b);
 
         if (aValue < bValue) return sort.direction === 'asc' ? -1 : 1;
         if (aValue > bValue) return sort.direction === 'asc' ? 1 : -1;

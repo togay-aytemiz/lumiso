@@ -35,11 +35,25 @@ export const AccessibleGlobalSearch = React.memo(() => {
   
   // Accessibility hooks
   const { announce } = useScreenReader();
+  const handleResultClick = useCallback((result: SearchResult) => {
+    if (result.type === 'project' && result.leadId) {
+      navigate(`/leads/${result.leadId}`);
+    } else if (result.leadId) {
+      navigate(`/leads/${result.leadId}`);
+    }
+    
+    // Clear search and announce navigation
+    setQuery("");
+    setResults([]);
+    setIsOpen(false);
+    announce(`Navigating to ${result.leadName || result.projectName}`, 'polite');
+  }, [navigate, announce]);
+
   const { activeIndex, handleKeyDown, containerRef } = useKeyboardNavigation(
     results,
     useCallback((result: SearchResult) => {
       handleResultClick(result);
-    }, [])
+    }, [handleResultClick])
   );
 
   // Memoized search function for performance
@@ -76,10 +90,11 @@ export const AccessibleGlobalSearch = React.memo(() => {
         'polite'
       );
       
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unable to complete search";
       toast({
         title: "Search error",
-        description: error.message,
+        description: message,
         variant: "destructive"
       });
       announce("Search failed", 'assertive');
@@ -102,20 +117,6 @@ export const AccessibleGlobalSearch = React.memo(() => {
 
     return () => clearTimeout(delayedSearch);
   }, [query, performSearch]);
-
-  const handleResultClick = useCallback((result: SearchResult) => {
-    if (result.type === 'project' && result.leadId) {
-      navigate(`/leads/${result.leadId}`);
-    } else if (result.leadId) {
-      navigate(`/leads/${result.leadId}`);
-    }
-    
-    // Clear search and announce navigation
-    setQuery("");
-    setResults([]);
-    setIsOpen(false);
-    announce(`Navigating to ${result.leadName || result.projectName}`, 'polite');
-  }, [navigate, announce]);
 
   const handleClearSearch = useCallback(() => {
     setQuery("");

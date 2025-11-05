@@ -144,25 +144,27 @@ export class LeadService extends BaseEntityService {
 
     // Apply sorting
     if (sort) {
-      leads.sort((a, b) => {
-        let aValue: any = a[sort.field];
-        let bValue: any = b[sort.field];
-
-        // Handle special cases
+      const getComparableValue = (lead: LeadWithCustomFields): string | number => {
         if (sort.field === 'status') {
-          aValue = a.lead_statuses?.name || '';
-          bValue = b.lead_statuses?.name || '';
+          return lead.lead_statuses?.name?.toLowerCase() ?? '';
         }
 
-        if (typeof aValue === 'string' && typeof bValue === 'string') {
-          aValue = aValue.toLowerCase();
-          bValue = bValue.toLowerCase();
-        }
+        const rawValue = lead[sort.field];
 
         if (sort.field === 'created_at' || sort.field === 'updated_at' || sort.field === 'due_date') {
-          aValue = aValue ? new Date(aValue).getTime() : 0;
-          bValue = bValue ? new Date(bValue).getTime() : 0;
+          return rawValue ? new Date(rawValue as string).getTime() : 0;
         }
+
+        if (typeof rawValue === 'string') {
+          return rawValue.toLowerCase();
+        }
+
+        return typeof rawValue === 'number' ? rawValue : '';
+      };
+
+      leads.sort((a, b) => {
+        const aValue = getComparableValue(a);
+        const bValue = getComparableValue(b);
 
         if (aValue < bValue) return sort.direction === 'asc' ? -1 : 1;
         if (aValue > bValue) return sort.direction === 'asc' ? 1 : -1;

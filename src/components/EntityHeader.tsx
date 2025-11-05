@@ -5,7 +5,7 @@ import { ArrowLeft, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { computeLeadInitials } from "@/components/LeadInitials";
+import { computeLeadInitials } from "@/components/leadInitialsUtils";
 
 export interface EntitySummaryItem {
   key: string;

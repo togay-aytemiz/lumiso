@@ -21,10 +21,13 @@ import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { PROJECT_STATUS } from "@/constants/entityConstants";
 import { useTranslation } from "react-i18next";
 
+type ProjectLead = Awaited<ReturnType<ProjectService["fetchLeadById"]>>;
+type ProjectTypeSummary = Awaited<ReturnType<ProjectService["fetchProjectTypeById"]>>;
+
 interface ProjectDetailState {
   project: ProjectWithDetails | null;
-  lead: any | null;
-  projectType: any | null;
+  lead: ProjectLead;
+  projectType: ProjectTypeSummary;
   isArchived: boolean;
 }
 

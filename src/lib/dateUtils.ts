@@ -1,7 +1,8 @@
-import { formatDate, formatTime } from "@/lib/utils";
-import { useTranslation } from "react-i18next";
+import { formatDate } from "@/lib/utils";
 
-export const getRelativeDate = (dateString: string, t?: any): string => {
+type TranslationFn = (key: string) => string;
+
+export const getRelativeDate = (dateString: string, t?: TranslationFn): string => {
   const sessionDate = new Date(dateString);
   const today = new Date();
   const tomorrow = new Date(today);
@@ -37,7 +38,7 @@ export const isOverdueSession = (dateString: string, status: string): boolean =>
   return sessionDateOnly < todayOnly && status === 'planned';
 };
 
-export const getDateDisplayClasses = (dateString: string, t?: any): string => {
+export const getDateDisplayClasses = (dateString: string, t?: TranslationFn): string => {
   const relativeDate = getRelativeDate(dateString, t);
   
   const todayText = t ? t('relativeDates.today') : "Today";

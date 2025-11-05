@@ -32,7 +32,7 @@ class UsersQuery {
 
 Deno.test("handler returns success payload when no users require processing", async () => {
   setSupabaseClientFactoryForTests(() => ({
-    from(table: string): any {
+    from(table: string): UsersQuery {
       if (table === "user_settings") {
         return new UsersQuery({ data: [], error: null });
       }
@@ -56,7 +56,7 @@ Deno.test("handler returns success payload when no users require processing", as
 
 Deno.test("handler surfaces fetch errors from user settings query", async () => {
   setSupabaseClientFactoryForTests(() => ({
-    from(table: string): any {
+    from(table: string): UsersQuery {
       if (table === "user_settings") {
         return new UsersQuery({ data: null, error: { message: "failed to fetch" } });
       }

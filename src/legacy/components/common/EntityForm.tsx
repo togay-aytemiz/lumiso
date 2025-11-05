@@ -37,7 +37,7 @@ export interface EntityFormProps<T> {
   validateOnChange?: boolean;
 }
 
-export function EntityForm<T extends Record<string, any>>({
+export function EntityForm<T extends Record<string, unknown>>({
   title,
   fields,
   initialData = {},
@@ -55,8 +55,8 @@ export function EntityForm<T extends Record<string, any>>({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-  const handleFieldChange = useCallback((fieldKey: string, value: any) => {
-    setFormData(prev => ({ ...prev, [fieldKey]: value }));
+  const handleFieldChange = useCallback((fieldKey: string, value: unknown) => {
+    setFormData(prev => ({ ...prev, [fieldKey]: value as T[keyof T] }));
     setTouched(prev => ({ ...prev, [fieldKey]: true }));
 
     // Clear field error when user starts typing

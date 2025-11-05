@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,20 +34,16 @@ export default function AdminLocalization() {
     isProcessing,
   } = useTranslationFiles();
   const { t: tCommon } = useCommonTranslation();
-  const { t, i18n } = useTranslation("pages");
+  const { t } = useTranslation("pages");
   const workflowSteps = useMemo(
     () =>
       t("admin.localization.cards.workflow.steps", {
         returnObjects: true,
       }) as Array<{ title: string; description: string }>,
-    [t, i18n.language]
+    [t]
   );
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       
@@ -67,7 +63,11 @@ export default function AdminLocalization() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [t, tCommon]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   const toggleLanguage = async (languageId: string, isActive: boolean) => {
     try {

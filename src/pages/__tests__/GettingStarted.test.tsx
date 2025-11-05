@@ -19,7 +19,7 @@ jest.mock("@/contexts/OnboardingContext", () => ({
 }));
 
 jest.mock("@/components/SampleDataModal", () => ({
-  SampleDataModal: ({ open, onClose }: any) =>
+  SampleDataModal: ({ open, onClose }: { open: boolean; onClose: () => void }) =>
     open ? (
       <div data-testid="sample-data-modal">
         <button onClick={onClose}>close-sample</button>
@@ -36,7 +36,7 @@ jest.mock("@/components/ExitGuidanceModeButton", () => ({
 }));
 
 jest.mock("@/components/GuidedStepProgress", () => ({
-  GuidedStepProgress: (props: any) => (
+  GuidedStepProgress: (props: Record<string, unknown>) => (
     <div data-testid="guided-progress" data-props={JSON.stringify(props)} />
   ),
 }));

@@ -1,15 +1,10 @@
 // Template utility functions for variable replacement, validation, etc.
 
-export function replacePlaceholders(text: string, data: Record<string, string>, allowFallbacks = true): string {
-  if (!allowFallbacks) {
-    return text.replace(/\{(\w+)\}/g, (match, key) => data[key] || match);
-  }
-  
-  // Support fallback syntax: {variable|fallback}
-  return text.replace(/\{(\w+)(?:\|([^}]*))?\}/g, (match, key, fallback) => {
-    return data[key] || fallback || match;
-  });
-}
+import type { TemplateBlock } from "@/types/templateBuilder";
+import { blocksToPlainText } from "./templateBlockUtils";
+import { replacePlaceholders } from "./templatePlaceholders";
+
+export { replacePlaceholders };
 
 export function getCharacterCount(text: string): number {
   return text.length;
@@ -34,10 +29,12 @@ export function checkSpamWords(text: string): string[] {
 }
 
 // Plain text generation - use blocks if available, fallback to simple text processing
-export function generatePlainText(blocksOrText: any[] | string, mockData: Record<string, string> = {}): string {
+export function generatePlainText(
+  blocksOrText: TemplateBlock[] | string,
+  mockData: Record<string, string> = {}
+): string {
   // If it's an array of blocks, use the new block-to-plaintext converter
   if (Array.isArray(blocksOrText)) {
-    const { blocksToPlainText } = require('./templateBlockUtils');
     return blocksToPlainText(blocksOrText, mockData);
   }
   

@@ -1,8 +1,12 @@
+import type { ChangeEvent } from "react";
 import {
   trimAndNormalizeSpaces,
   createTrimmedInputHandler,
   createTrimmedBlurHandler,
 } from "./inputUtils";
+
+const createInputEvent = (value: string): ChangeEvent<HTMLInputElement> =>
+  ({ target: { value } } as unknown as ChangeEvent<HTMLInputElement>);
 
 describe("inputUtils", () => {
   describe("trimAndNormalizeSpaces", () => {
@@ -17,7 +21,7 @@ describe("inputUtils", () => {
       const setValue = jest.fn();
       const handler = createTrimmedInputHandler(setValue);
 
-      handler({ target: { value: "  keep   spacing  " } } as any);
+      handler(createInputEvent("  keep   spacing  "));
 
       expect(setValue).toHaveBeenCalledWith("  keep   spacing  ");
     });
@@ -26,7 +30,7 @@ describe("inputUtils", () => {
       const setValue = jest.fn();
       const handler = createTrimmedInputHandler(setValue, true);
 
-      handler({ target: { value: "  trim   me  " } } as any);
+      handler(createInputEvent("  trim   me  "));
 
       expect(setValue).toHaveBeenCalledWith("trim me");
     });

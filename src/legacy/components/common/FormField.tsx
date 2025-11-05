@@ -9,10 +9,12 @@ import { HelpCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { EntityFormField } from './EntityForm';
 
+type PrimitiveFieldValue = string | number | boolean | null | undefined;
+
 interface FormFieldProps {
   field: EntityFormField;
-  value: any;
-  onChange: (value: any) => void;
+  value: unknown;
+  onChange: (value: unknown) => void;
   error?: string;
   disabled?: boolean;
 }
@@ -38,9 +40,19 @@ export function FormField({
   };
 
   const renderInput = () => {
+    const normalizedValue = (): PrimitiveFieldValue => {
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        return value;
+      }
+      if (value == null) {
+        return '';
+      }
+      return String(value);
+    };
+
     const baseProps = {
       id: field.key,
-      value: value || '',
+      value: normalizedValue(),
       disabled,
       className: error ? 'border-destructive' : '',
     };
@@ -58,7 +70,11 @@ export function FormField({
 
       case 'select':
         return (
-          <Select value={value || ''} onValueChange={handleSelectChange} disabled={disabled}>
+          <Select
+            value={typeof value === 'string' ? value : ''}
+            onValueChange={handleSelectChange}
+            disabled={disabled}
+          >
             <SelectTrigger className={error ? 'border-destructive' : ''}>
               <SelectValue placeholder={field.placeholder} />
             </SelectTrigger>
@@ -77,7 +93,7 @@ export function FormField({
           <div className="flex items-center space-x-2">
             <Checkbox
               id={field.key}
-              checked={value || false}
+              checked={value === true}
               onCheckedChange={handleCheckboxChange}
               disabled={disabled}
             />

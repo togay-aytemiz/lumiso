@@ -184,9 +184,9 @@ export default function Notifications() {
   const testNotification = async (type: string) => {
     setTestingNotification(type);
     try {
-      let requestBody: any = { 
+      const requestBody: Record<string, unknown> = {
         type,
-        isTest: true 
+        isTest: true,
       };
 
 

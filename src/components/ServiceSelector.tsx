@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Check, ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,7 +35,7 @@ export function ServiceSelector({
   const [loading, setLoading] = useState(true);
   const toast = useI18nToast();
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -59,11 +59,11 @@ export function ServiceSelector({
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
-    fetchServices();
-  }, []);
+    void fetchServices();
+  }, [fetchServices]);
 
   const groupedServices = availableServices.reduce((groups, service) => {
     const category = service.category || "Uncategorized";

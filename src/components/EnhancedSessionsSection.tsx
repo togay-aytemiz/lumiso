@@ -1,18 +1,11 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import DeadSimpleSessionBanner from "@/components/DeadSimpleSessionBanner";
-import { sortSessionsByLifecycle, SessionWithStatus } from "@/lib/sessionSorting";
-import { useFormsTranslation } from '@/hooks/useTypedTranslation';
-
-type SessionStatus = "planned" | "completed" | "cancelled" | "no_show" | "rescheduled" | "in_post_processing" | "delivered";
-
-interface Session extends SessionWithStatus {
-  session_time?: string;
-  notes?: string;
-}
+import DeadSimpleSessionBanner, { type DeadSimpleSession } from "@/components/DeadSimpleSessionBanner";
+import { sortSessionsByLifecycle } from "@/lib/sessionSorting";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
 interface EnhancedSessionsSectionProps {
-  sessions: Session[];
+  sessions: DeadSimpleSession[];
   loading?: boolean;
   onSessionClick: (sessionId: string) => void;
 }
@@ -55,7 +48,7 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
         {sortedSessions.map((session) => (
           <DeadSimpleSessionBanner
             key={session.id}
-            session={session as any}
+            session={session}
             onClick={onSessionClick}
           />
         ))}

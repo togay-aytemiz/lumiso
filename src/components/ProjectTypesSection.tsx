@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -54,10 +54,10 @@ const ProjectTypesSection = () => {
     },
   });
 
-  const createDefaultTypes = async () => {
+  const createDefaultTypes = useCallback(async () => {
     try {
       if (!activeOrganizationId) return;
-      
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -72,14 +72,14 @@ const ProjectTypesSection = () => {
       console.error('Error creating default types:', error);
       toast.error("Failed to create default types");
     }
-  };
+  }, [activeOrganizationId, refetch, toast]);
 
   // Create default types if none exist
   useEffect(() => {
     if (!isLoading && !orgLoading && activeOrganizationId && types.length === 0) {
-      createDefaultTypes();
+      void createDefaultTypes();
     }
-  }, [isLoading, orgLoading, activeOrganizationId, types.length]);
+  }, [activeOrganizationId, createDefaultTypes, isLoading, orgLoading, types.length]);
 
   const onSubmit = async (data: ProjectTypeForm) => {
     if (!activeOrganizationId) {

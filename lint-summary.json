@@ -2,583 +2,583 @@
   "total": 196,
   "summary": [
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ProjectKanbanBoard.tsx",
+      "filePath": "src/components/ProjectKanbanBoard.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ProjectTypeSelector.tsx",
+      "filePath": "src/components/ProjectTypeSelector.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/SimpleProjectTypeSelect.tsx",
+      "filePath": "src/components/SimpleProjectTypeSelect.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/template-builder/StorageQuotaDisplay.tsx",
+      "filePath": "src/components/template-builder/StorageQuotaDisplay.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ui/date-time-picker.tsx",
+      "filePath": "src/components/ui/date-time-picker.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/contexts/ConnectivityContext.tsx",
+      "filePath": "src/contexts/ConnectivityContext.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/contexts/LanguageContext.tsx",
+      "filePath": "src/contexts/LanguageContext.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/package-creation/services/__tests__/packageCreationSnapshot.test.ts",
+      "filePath": "src/features/package-creation/services/__tests__/packageCreationSnapshot.test.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/package-creation/steps/DeliveryStep.tsx",
+      "filePath": "src/features/package-creation/steps/DeliveryStep.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/project-creation/components/__tests__/ProjectCreationWizardSheet.test.tsx",
+      "filePath": "src/features/project-creation/components/ProjectCreationWizardSheet.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/project-creation/components/ProjectCreationWizardSheet.tsx",
+      "filePath": "src/features/project-creation/components/__tests__/ProjectCreationWizardSheet.test.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/session-planning/api/savedResources.ts",
+      "filePath": "src/features/session-planning/api/savedResources.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/session-planning/context/SessionWorkflowProvider.tsx",
+      "filePath": "src/features/session-planning/context/SessionWorkflowProvider.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/session-planning/steps/LocationStep.tsx",
+      "filePath": "src/features/session-planning/steps/LocationStep.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/session-planning/steps/NotesStep.tsx",
+      "filePath": "src/features/session-planning/steps/NotesStep.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/__tests__/useOrganizationSettings.test.tsx",
+      "filePath": "src/hooks/__tests__/useOrganizationSettings.test.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useEntityData.ts",
+      "filePath": "src/hooks/useEntityData.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useLeadStatusActions.tsx",
+      "filePath": "src/hooks/useLeadStatusActions.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useOptimizedCalendarNavigation.ts",
+      "filePath": "src/hooks/useOptimizedCalendarNavigation.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useReminderActions.ts",
+      "filePath": "src/hooks/useReminderActions.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useSessionActions.ts",
+      "filePath": "src/hooks/useSessionActions.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useUserSettings.ts",
+      "filePath": "src/hooks/useUserSettings.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/legacy/components/common/EntityForm.tsx",
+      "filePath": "src/legacy/components/common/EntityForm.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/legacy/components/common/FormField.tsx",
+      "filePath": "src/legacy/components/common/FormField.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/legacy/components/optimized/AccessibleGlobalSearch.tsx",
+      "filePath": "src/legacy/components/optimized/AccessibleGlobalSearch.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/legacy/components/template-builder/TemplateEditor.tsx",
+      "filePath": "src/legacy/components/template-builder/TemplateEditor.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/legacy/components/template-builder/TemplateEditorWithTest.tsx",
+      "filePath": "src/legacy/components/template-builder/TemplateEditorWithTest.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/legacy/pages/ProjectDetailRefactored.tsx",
+      "filePath": "src/legacy/pages/ProjectDetailRefactored.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/lib/dateUtils.test.ts",
+      "filePath": "src/lib/dateUtils.test.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/lib/dateUtils.ts",
+      "filePath": "src/lib/dateUtils.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/lib/inputUtils.test.ts",
+      "filePath": "src/lib/inputUtils.test.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/lib/projects/buildProjectSummaryItems.test.tsx",
+      "filePath": "src/lib/projects/buildProjectSummaryItems.test.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/lib/templateUtils.ts",
+      "filePath": "src/lib/templateUtils.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/lib/validation.ts",
+      "filePath": "src/lib/validation.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/__tests__/GettingStarted.test.tsx",
+      "filePath": "src/pages/Calendar.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/admin/Localization.tsx",
+      "filePath": "src/pages/LeadDetail.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/Calendar.tsx",
+      "filePath": "src/pages/TemplateBuilder.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/LeadDetail.tsx",
+      "filePath": "src/pages/Workflows.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/payments/components/__tests__/PaymentsTableSection.test.tsx",
+      "filePath": "src/pages/__tests__/GettingStarted.test.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/settings/General.tsx",
+      "filePath": "src/pages/admin/Localization.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/settings/Notifications.tsx",
+      "filePath": "src/pages/payments/components/__tests__/PaymentsTableSection.test.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/TemplateBuilder.tsx",
+      "filePath": "src/pages/settings/General.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/Workflows.tsx",
+      "filePath": "src/pages/settings/Notifications.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/services/LeadService.ts",
+      "filePath": "src/services/LeadService.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/services/SessionService.ts",
+      "filePath": "src/services/SessionService.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/types/template.ts",
+      "filePath": "src/types/template.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/utils/onboardingValidation.test.ts",
+      "filePath": "src/utils/onboardingValidation.test.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/utils/testUtils.tsx",
+      "filePath": "src/utils/testUtils.tsx",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/supabase/functions/notification-processor/_templates/immediate-notifications.ts",
+      "filePath": "supabase/functions/notification-processor/_templates/immediate-notifications.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/supabase/functions/send-reminder-notifications/_templates/simplified-weekly-recap-template.ts",
+      "filePath": "supabase/functions/send-reminder-notifications/_templates/simplified-weekly-recap-template.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/supabase/functions/tests/simple-daily-notifications.test.ts",
+      "filePath": "supabase/functions/tests/simple-daily-notifications.test.ts",
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/__tests__/CalendarTimePicker.test.tsx",
+      "filePath": "src/components/DateRangePicker.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/__tests__/ErrorBoundary.test.tsx",
+      "filePath": "src/components/DeadSimpleSessionBanner.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/__tests__/GuidedStepProgress.test.tsx",
+      "filePath": "src/components/EnhancedSessionsSection.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/__tests__/ProjectServicesSection.test.tsx",
+      "filePath": "src/components/LeadFieldsList.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/__tests__/SessionBanner.test.tsx",
+      "filePath": "src/components/LeadInitials.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/__tests__/SessionSchedulingSheet.test.tsx",
+      "filePath": "src/components/ProjectActivitySection.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/__tests__/TimeSlotPicker.test.tsx",
+      "filePath": "src/components/ProjectServicesSection.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/__tests__/TruncatedTextWithTooltip.test.tsx",
+      "filePath": "src/components/ProjectTodoList.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/__tests__/WorkflowHealthDashboard.test.tsx",
+      "filePath": "src/components/ProjectTypesSection.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/DateRangePicker.tsx",
+      "filePath": "src/components/ServiceSelector.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/DeadSimpleSessionBanner.tsx",
+      "filePath": "src/components/SessionsSection.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/EnhancedSessionsSection.tsx",
+      "filePath": "src/components/TruncatedTextWithTooltip.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/LeadFieldsList.tsx",
+      "filePath": "src/components/WeeklySchedulePreview.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/LeadInitials.tsx",
+      "filePath": "src/components/__tests__/CalendarTimePicker.test.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/mobile/MobileBottomNav.tsx",
+      "filePath": "src/components/__tests__/ErrorBoundary.test.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/navigation/StickySectionNav.tsx",
+      "filePath": "src/components/__tests__/GuidedStepProgress.test.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/project-details/StickySectionNav.tsx",
+      "filePath": "src/components/__tests__/ProjectServicesSection.test.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ProjectActivitySection.tsx",
+      "filePath": "src/components/__tests__/SessionBanner.test.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ProjectServicesSection.tsx",
+      "filePath": "src/components/__tests__/SessionSchedulingSheet.test.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ProjectTodoList.tsx",
+      "filePath": "src/components/__tests__/TimeSlotPicker.test.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ProjectTypesSection.tsx",
+      "filePath": "src/components/__tests__/TruncatedTextWithTooltip.test.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ServiceSelector.tsx",
+      "filePath": "src/components/__tests__/WorkflowHealthDashboard.test.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/SessionsSection.tsx",
+      "filePath": "src/components/mobile/MobileBottomNav.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/settings/SettingsStickyFooter.tsx",
+      "filePath": "src/components/navigation/StickySectionNav.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/settings/SocialChannelsSection.tsx",
+      "filePath": "src/components/project-details/StickySectionNav.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/template-builder/__tests__/TemplatePreview.test.tsx",
+      "filePath": "src/components/settings/SettingsStickyFooter.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/template-builder/CompactStorageIndicator.tsx",
+      "filePath": "src/components/settings/SocialChannelsSection.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/template-builder/ImageLibrarySheet.tsx",
+      "filePath": "src/components/template-builder/CompactStorageIndicator.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/template-builder/VariablePicker.tsx",
+      "filePath": "src/components/template-builder/ImageLibrarySheet.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/TruncatedTextWithTooltip.tsx",
+      "filePath": "src/components/template-builder/VariablePicker.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ui/__tests__/use-toast.test.ts",
+      "filePath": "src/components/template-builder/__tests__/TemplatePreview.test.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ui/badge.tsx",
+      "filePath": "src/components/ui/__tests__/use-toast.test.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ui/button.tsx",
+      "filePath": "src/components/ui/badge.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ui/command.tsx",
+      "filePath": "src/components/ui/button.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ui/form.tsx",
+      "filePath": "src/components/ui/command.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ui/navigation-menu.tsx",
+      "filePath": "src/components/ui/form.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ui/segmented-control.tsx",
+      "filePath": "src/components/ui/navigation-menu.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ui/selectable-pill.tsx",
+      "filePath": "src/components/ui/segmented-control.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ui/sidebar.tsx",
+      "filePath": "src/components/ui/selectable-pill.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ui/sonner.tsx",
+      "filePath": "src/components/ui/sidebar.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ui/textarea.tsx",
+      "filePath": "src/components/ui/sonner.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ui/toggle.tsx",
+      "filePath": "src/components/ui/textarea.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/WeeklySchedulePreview.tsx",
+      "filePath": "src/components/ui/toggle.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/contexts/AuthContext.tsx",
+      "filePath": "src/contexts/AuthContext.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/contexts/OnboardingContext.tsx",
+      "filePath": "src/contexts/OnboardingContext.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/contexts/OrganizationContext.tsx",
+      "filePath": "src/contexts/OrganizationContext.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/contexts/PortalResetContext.tsx",
+      "filePath": "src/contexts/PortalResetContext.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/contexts/SettingsContext.tsx",
+      "filePath": "src/contexts/SettingsContext.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/package-creation/context/PackageCreationProvider.tsx",
+      "filePath": "src/features/package-creation/context/PackageCreationProvider.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/package-creation/hooks/usePackageCreationSnapshot.ts",
+      "filePath": "src/features/package-creation/hooks/usePackageCreationSnapshot.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/package-creation/steps/__tests__/SummaryStep.test.tsx",
+      "filePath": "src/features/package-creation/steps/ServicesStep.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/package-creation/steps/ServicesStep.tsx",
+      "filePath": "src/features/package-creation/steps/__tests__/SummaryStep.test.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/project-creation/context/ProjectCreationProvider.tsx",
+      "filePath": "src/features/project-creation/context/ProjectCreationProvider.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/project-creation/steps/LeadStep.tsx",
+      "filePath": "src/features/project-creation/steps/LeadStep.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/session-planning/context/SessionPlanningOriginalStateContext.tsx",
+      "filePath": "src/features/session-planning/context/SessionPlanningOriginalStateContext.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/session-planning/context/SessionPlanningProvider.tsx",
+      "filePath": "src/features/session-planning/context/SessionPlanningProvider.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/session-planning/steps/LeadStep.tsx",
+      "filePath": "src/features/session-planning/steps/LeadStep.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/session-planning/steps/ProjectStep.tsx",
+      "filePath": "src/features/session-planning/steps/ProjectStep.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/__tests__/useMilestoneNotifications.test.ts",
+      "filePath": "src/hooks/__tests__/useMilestoneNotifications.test.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/__tests__/useWorkflowTriggers.test.ts",
+      "filePath": "src/hooks/__tests__/useWorkflowTriggers.test.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useLeadDetailData.ts",
+      "filePath": "src/hooks/useLeadDetailData.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useLeadStatusWorkflows.ts",
+      "filePath": "src/hooks/useLeadStatusWorkflows.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useLeadsWithCustomFields.ts",
+      "filePath": "src/hooks/useLeadUpdate.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useLeadUpdate.ts",
+      "filePath": "src/hooks/useLeadsWithCustomFields.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useOnboardingBulletproofTest.ts",
+      "filePath": "src/hooks/useOnboardingBulletproofTest.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useProjectHeaderSummary.ts",
+      "filePath": "src/hooks/useProjectHeaderSummary.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useProjectPayments.ts",
+      "filePath": "src/hooks/useProjectPayments.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useProjectProgress.ts",
+      "filePath": "src/hooks/useProjectProgress.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useProjectStatusController.ts",
+      "filePath": "src/hooks/useProjectStatusController.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useSessionEditForm.ts",
+      "filePath": "src/hooks/useSessionEditForm.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useSessionForm.ts",
+      "filePath": "src/hooks/useSessionForm.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useSettingsSectionWithContext.ts",
+      "filePath": "src/hooks/useSettingsSectionWithContext.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useTemplateVariables.ts",
+      "filePath": "src/hooks/useTemplateVariables.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useTutorialExit.ts",
+      "filePath": "src/hooks/useTutorialExit.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useUserPreferences.ts",
+      "filePath": "src/hooks/useUserPreferences.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useWorkflowHealth.ts",
+      "filePath": "src/hooks/useWorkflowHealth.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useWorkingHours.ts",
+      "filePath": "src/hooks/useWorkingHours.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/legacy/components/optimized/VirtualizedList.tsx",
+      "filePath": "src/legacy/components/optimized/VirtualizedList.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/legacy/components/template-builder/ImageManager.tsx",
+      "filePath": "src/legacy/components/template-builder/ImageManager.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/legacy/pages/AllProjectsRefactored.tsx",
+      "filePath": "src/legacy/pages/AllProjectsRefactored.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/lib/featureFlags.ts",
+      "filePath": "src/lib/featureFlags.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/lib/sessionUtils.test.ts",
+      "filePath": "src/lib/sessionUtils.test.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/GettingStarted.tsx",
+      "filePath": "src/pages/GettingStarted.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/payments/hooks/__tests__/usePaymentsData.test.ts",
+      "filePath": "src/pages/payments/hooks/__tests__/usePaymentsData.test.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/payments/hooks/usePaymentsFilters.tsx",
+      "filePath": "src/pages/payments/hooks/usePaymentsFilters.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/settings/__tests__/Contracts.test.tsx",
+      "filePath": "src/pages/settings/Billing.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/settings/__tests__/Leads.test.tsx",
+      "filePath": "src/pages/settings/__tests__/Contracts.test.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/settings/__tests__/Projects.test.tsx",
+      "filePath": "src/pages/settings/__tests__/Leads.test.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/settings/Billing.tsx",
+      "filePath": "src/pages/settings/__tests__/Projects.test.tsx",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/supabase/functions/process-session-reminders/index.ts",
+      "filePath": "supabase/functions/process-session-reminders/index.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/supabase/functions/schedule-daily-notifications/index.ts",
+      "filePath": "supabase/functions/schedule-daily-notifications/index.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/supabase/functions/send-reminder-notifications/_templates/weekly-recap-template.ts",
+      "filePath": "supabase/functions/send-reminder-notifications/_templates/weekly-recap-template.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/supabase/functions/session-types-delete/index.ts",
+      "filePath": "supabase/functions/session-types-delete/index.ts",
       "count": 1
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/tailwind.config.ts",
+      "filePath": "tailwind.config.ts",
       "count": 1
     }
   ]

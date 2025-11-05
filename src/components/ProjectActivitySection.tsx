@@ -146,6 +146,39 @@ export function ProjectActivitySection({
     }
   }, [leadId, projectId]);
 
+  const logReferencesProject = useCallback(
+    (values: Json | null): boolean => {
+      const record = jsonToRecord(values);
+      if (!record) return false;
+      const candidateKeys = ["project_id", "projectId", "project"];
+
+      return candidateKeys.some((key) => {
+        const value = record[key];
+        if (typeof value === "string") {
+          return value === projectId;
+        }
+        if (
+          value &&
+          typeof value === "object" &&
+          "id" in (value as Record<string, unknown>)
+        ) {
+          const maybeId = (value as Record<string, unknown>).id;
+          return typeof maybeId === "string" && maybeId === projectId;
+        }
+        return false;
+      });
+    },
+    [projectId]
+  );
+
+  const isRelevantLog = useCallback(
+    (row: AuditLogRow) =>
+      (row.entity_type === "project" && row.entity_id === projectId) ||
+      logReferencesProject(row.new_values) ||
+      logReferencesProject(row.old_values),
+    [projectId, logReferencesProject]
+  );
+
   const fetchHistoryData = useCallback(async () => {
     try {
       const logMap = new Map<string, AuditLogEntry>();
@@ -282,40 +315,7 @@ export function ProjectActivitySection({
       setStatusLookup({});
       setServiceLookup({});
     }
-  }, [projectId]);
-
-  const logReferencesProject = useCallback(
-    (values: Json | null): boolean => {
-      const record = jsonToRecord(values);
-      if (!record) return false;
-      const candidateKeys = ["project_id", "projectId", "project"];
-
-      return candidateKeys.some((key) => {
-        const value = record[key];
-        if (typeof value === "string") {
-          return value === projectId;
-        }
-        if (
-          value &&
-          typeof value === "object" &&
-          "id" in (value as Record<string, unknown>)
-        ) {
-          const maybeId = (value as Record<string, unknown>).id;
-          return typeof maybeId === "string" && maybeId === projectId;
-        }
-        return false;
-      });
-    },
-    [projectId]
-  );
-
-  const isRelevantLog = useCallback(
-    (row: AuditLogRow) =>
-      (row.entity_type === "project" && row.entity_id === projectId) ||
-      logReferencesProject(row.new_values) ||
-      logReferencesProject(row.old_values),
-    [projectId, logReferencesProject]
-  );
+  }, [projectId, isRelevantLog]);
 
   useEffect(() => {
     let cancelled = false;

@@ -5,33 +5,20 @@ import { getRelativeDate, isOverdueSession } from "@/lib/dateUtils";
 import { SessionStatusBadge } from "@/components/SessionStatusBadge";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { getDisplaySessionName } from "@/lib/sessionUtils";
-import { useFormsTranslation } from '@/hooks/useTypedTranslation';
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { TruncatedTextWithTooltip } from "@/components/TruncatedTextWithTooltip";
+import type { SessionWithStatus } from "@/lib/sessionSorting";
 
-type SessionStatus = "planned" | "completed" | "cancelled" | "no_show" | "rescheduled" | "in_post_processing" | "delivered";
-
-interface Session {
-  id: string;
+export type DeadSimpleSession = SessionWithStatus & {
   session_name?: string | null;
-  session_date: string;
-  session_time?: string;
   notes?: string;
-  status: SessionStatus;
-  project_id?: string;
-  lead_id: string;
-  projects?: {
-    name: string;
-    project_types?: {
-      name: string;
-    };
-  };
   leads?: {
     name?: string;
   };
-}
+};
 
 interface DeadSimpleSessionBannerProps {
-  session: Session;
+  session: DeadSimpleSession;
   onClick: (sessionId: string) => void;
 }
 
@@ -57,7 +44,7 @@ const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerPr
     return formatLongDate(dateString, userLocale);
   };
 
-  const getTimeIndicator = (session: Session) => {
+  const getTimeIndicator = (session: DeadSimpleSession) => {
     const relativeDate = getRelativeDate(session.session_date, t);
     const isOverdue = isOverdueSession(session.session_date, session.status);
     
@@ -158,7 +145,7 @@ const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerPr
         <div className="flex items-center gap-3 flex-shrink-0 self-start sm:self-center">
           <SessionStatusBadge
             sessionId={session.id}
-            currentStatus={session.status as any}
+            currentStatus={session.status}
             editable={false}
             onStatusChange={() => {}}
             size="sm"

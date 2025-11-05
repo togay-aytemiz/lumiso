@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import type { DropResult } from "@hello-pangea/dnd";
 import {
   Edit,
   Trash2,
@@ -54,7 +55,7 @@ export function LeadFieldsList({
   const { t } = useTranslation("forms");
   const isMobile = useIsMobile();
 
-  const handleDragEnd = async (result: any) => {
+  const handleDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
 
     const items = Array.from(fields);

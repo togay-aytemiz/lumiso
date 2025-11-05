@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ export function ProjectServicesSection({
   const toast = useI18nToast();
   const { t } = useFormsTranslation();
   const sectionRef = useRef<HTMLDivElement>(null);
-  const fetchProjectServices = async () => {
+  const fetchProjectServices = useCallback(async () => {
     try {
       const {
         data,
@@ -88,8 +88,8 @@ export function ProjectServicesSection({
     } finally {
       setLoading(false);
     }
-  };
-  const fetchAvailableServices = async () => {
+  }, [projectId, t, toast]);
+  const fetchAvailableServices = useCallback(async () => {
     setLoadingAvailable(true);
     setErrorAvailable(null);
     try {
@@ -133,11 +133,11 @@ export function ProjectServicesSection({
     } finally {
       setLoadingAvailable(false);
     }
-  };
+  }, [t]);
   useEffect(() => {
-    fetchProjectServices();
-    fetchAvailableServices();
-  }, [projectId]);
+    void fetchProjectServices();
+    void fetchAvailableServices();
+  }, [fetchAvailableServices, fetchProjectServices]);
   const handleServicePickerChange = (serviceIds: string[]) => {
     const selectedServices = availableServices
       .filter(service => serviceIds.includes(service.id))

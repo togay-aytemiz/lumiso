@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentPropsWithoutRef, ElementType } from "react";
 import {
   Tooltip,
@@ -43,6 +43,9 @@ export function TruncatedTextWithTooltip<T extends SupportedElement = "span">({
 }: TruncatedTextWithTooltipProps<T>) {
   const Component = (as ?? "span") as ElementType;
   const textRef = useRef<HTMLElement | null>(null);
+  const setTextRef = useCallback((node: HTMLElement | null) => {
+    textRef.current = node;
+  }, []);
   const [isTruncated, setIsTruncated] = useState(false);
 
   const clampClass = useMemo(() => {
@@ -98,7 +101,7 @@ export function TruncatedTextWithTooltip<T extends SupportedElement = "span">({
 
   const content = (
     <Component
-      ref={textRef as any}
+      ref={setTextRef}
       className={cn(
         "break-words",
         clampClass,

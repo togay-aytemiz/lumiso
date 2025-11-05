@@ -7,16 +7,12 @@ import EditSessionDialog from "./EditSessionDialog";
 import SessionSheetView from "./SessionSheetView";
 import { NewSessionDialogForProject } from "./NewSessionDialogForProject";
 import { useNavigate, useLocation } from "react-router-dom";
-import { sortSessionsByLifecycle, SessionWithStatus } from "@/lib/sessionSorting";
+import { sortSessionsByLifecycle } from "@/lib/sessionSorting";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useIsMobile } from "@/hooks/use-mobile";
-interface Session extends SessionWithStatus {
-  session_name?: string | null;
-  session_time: string;
-  notes: string;
-}
+import type { DeadSimpleSession } from "./DeadSimpleSessionBanner";
 interface SessionsSectionProps {
-  sessions: Session[];
+  sessions: DeadSimpleSession[];
   loading: boolean;
   leadId: string;
   projectId: string;
@@ -118,9 +114,9 @@ export function SessionsSection({
                   }
                 </p>}
               {sortSessionsByLifecycle(sessions).map(session => (
-                <DeadSimpleSessionBanner 
-                  key={session.id} 
-                  session={session as any}
+                <DeadSimpleSessionBanner
+                  key={session.id}
+                  session={session}
                   onClick={() => handleSessionClick(session.id)}
                 />
               ))}

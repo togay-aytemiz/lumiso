@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -30,11 +30,7 @@ export const ProjectTodoList: React.FC<ProjectTodoListProps> = ({ projectId }) =
   const { toast } = useToast();
   const { t } = useFormsTranslation();
 
-  useEffect(() => {
-    fetchTodos();
-  }, [projectId]);
-
-  const fetchTodos = async () => {
+  const fetchTodos = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('todos')
@@ -54,7 +50,11 @@ export const ProjectTodoList: React.FC<ProjectTodoListProps> = ({ projectId }) =
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId, t, toast]);
+
+  useEffect(() => {
+    void fetchTodos();
+  }, [fetchTodos]);
 
   const addTodo = async () => {
     if (!newTodoContent.trim()) return;

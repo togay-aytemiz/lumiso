@@ -10,6 +10,8 @@ import "react-calendar/dist/Calendar.css";
 import "@/components/react-calendar.css";
 import { useTranslation } from "react-i18next";
 
+type CalendarValue = Date | [Date | null, Date | null] | null;
+
 interface DateRangePickerProps {
   dateRange?: DateRange;
   onDateRangeChange: (range: DateRange | undefined) => void;
@@ -55,14 +57,16 @@ export const DateRangePicker = ({ dateRange, onDateRangeChange, className }: Dat
           selectRange
           next2Label={null}
           prev2Label={null}
-          onChange={(value: any) => {
+          onChange={(value: CalendarValue) => {
             if (Array.isArray(value)) {
-              const [from, to] = value as [Date | null, Date | null];
+              const [from, to] = value;
               const range: DateRange | undefined = from
-                ? { from: from as Date, to: (to as Date) || undefined }
+                ? { from, to: to ?? undefined }
                 : undefined;
               onDateRangeChange(range);
-              if (from && to) setIsOpen(false);
+              if (from && to) {
+                setIsOpen(false);
+              }
             }
           }}
           value={dateRange?.from ? [dateRange.from, dateRange.to || dateRange.from] : null}

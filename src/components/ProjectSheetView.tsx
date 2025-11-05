@@ -22,7 +22,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 // AssigneesList removed - single user organization
 import { SessionWithStatus } from "@/lib/sessionSorting";
-import { onArchiveToggle } from "@/components/ViewProjectDialog";
+import { onArchiveToggle } from "@/components/projectArchiveToggle";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from "react-i18next";
 import { EntityHeader } from "@/components/EntityHeader";
@@ -67,6 +67,8 @@ interface ProjectSheetViewProps {
   mode?: 'sheet' | 'fullscreen'; // New prop to control display mode
   onViewFullDetails?: () => void; // Callback to switch to full page
 }
+
+const getErrorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 /**
  * @deprecated Legacy project sheet experience. Prefer the new project creation wizard and detail flows.
@@ -134,60 +136,64 @@ export function LegacyProjectSheetView({
     }
   };
 
-  const fetchProjectSessions = async () => {
-    if (!project) return;
+  const fetchProjectSessions = useCallback(async () => {
+    const projectId = project?.id;
+    if (!projectId) return;
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('sessions')
         .select('*')
-        .eq('project_id', project.id);
+        .eq('project_id', projectId);
       
       if (error) throw error;
       setSessions(data as unknown as Session[]);
-    } catch (error: any) {
+    } catch (error) {
+      const message = getErrorMessage(error);
       console.error('Error fetching project sessions:', error);
       toast({
         title: "Error loading sessions",
-        description: error.message,
+        description: message,
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [project?.id, toast]);
 
-  const fetchProjectType = async () => {
-    if (!project?.project_type_id) return;
+  const fetchProjectType = useCallback(async () => {
+    const projectTypeId = project?.project_type_id;
+    if (!projectTypeId) return;
     try {
       const { data, error } = await supabase
         .from('project_types')
         .select('id, name')
-        .eq('id', project.project_type_id)
+        .eq('id', projectTypeId)
         .single();
       
       if (error) throw error;
       setProjectType(data);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching project type:', error);
     }
-  };
+  }, [project?.project_type_id]);
 
-  const fetchLead = async () => {
-    if (!project?.lead_id) return;
+  const fetchLead = useCallback(async () => {
+    const leadId = project?.lead_id;
+    if (!leadId) return;
     try {
       const { data, error } = await supabase
         .from('leads')
         .select('id, name, email, phone, status, notes')
-        .eq('id', project.lead_id)
+        .eq('id', leadId)
         .single();
       
       if (error) throw error;
       setLead(data);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching lead:', error);
     }
-  };
+  }, [project?.lead_id]);
 
   const handleAssigneesUpdate = () => {
     onProjectUpdated();
@@ -195,9 +201,9 @@ export function LegacyProjectSheetView({
 
   useEffect(() => {
     if (project && open) {
-      fetchProjectSessions();
-      fetchProjectType();
-      fetchLead();
+      void fetchProjectSessions();
+      void fetchProjectType();
+      void fetchLead();
       setEditName(project.name);
       setEditDescription(project.description || "");
       setEditProjectTypeId(project.project_type_id || "");
@@ -212,7 +218,7 @@ export function LegacyProjectSheetView({
       
       setLocalStatusId(project.status_id || null);
     }
-  }, [project, open, mode, isMobile]);
+  }, [fetchLead, fetchProjectSessions, fetchProjectType, isMobile, mode, open, project]);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -307,17 +313,18 @@ export function LegacyProjectSheetView({
           if (!typeError) {
             setProjectType(typeData);
           }
-        } catch (typeError: any) {
+        } catch (typeError) {
           console.error('Error fetching updated project type:', typeError);
         }
       }
 
       setIsEditing(false);
       onProjectUpdated();
-    } catch (error: any) {
+    } catch (error) {
+      const message = getErrorMessage(error);
       toast({
         title: "Error updating project",
-        description: error.message,
+        description: message,
         variant: "destructive"
       });
     } finally {
@@ -373,10 +380,11 @@ export function LegacyProjectSheetView({
 
       onOpenChange(false);
       onProjectUpdated();
-    } catch (error: any) {
+    } catch (error) {
+      const message = getErrorMessage(error);
       toast({
         title: "Error deleting project",
-        description: error.message,
+        description: message,
         variant: "destructive"
       });
     } finally {
@@ -407,10 +415,11 @@ export function LegacyProjectSheetView({
       
       fetchProjectSessions();
       onProjectUpdated();
-    } catch (error: any) {
+    } catch (error) {
+      const message = getErrorMessage(error);
       toast({
         title: tMessages('error.deletingSession'),
-        description: error.message,
+        description: message,
         variant: "destructive"
       });
     }
@@ -436,10 +445,11 @@ export function LegacyProjectSheetView({
       onProjectUpdated();
       onActivityUpdated?.();
       setArchiveConfirmOpen(false);
-    } catch (e: any) {
+    } catch (e) {
+      const message = getErrorMessage(e);
       toast({
         title: tMessages('error.actionFailed'),
-        description: e.message || tMessages('error.archiveUpdateFailed'),
+        description: message || tMessages('error.archiveUpdateFailed'),
         variant: 'destructive'
       });
     } finally {

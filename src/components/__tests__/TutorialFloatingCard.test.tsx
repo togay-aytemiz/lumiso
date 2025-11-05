@@ -1,10 +1,36 @@
+import type { ReactNode } from "react";
 import { fireEvent, render, screen } from "@/utils/testUtils";
 import { TutorialFloatingCard } from "../shared/TutorialFloatingCard";
 
 const longPressMock = jest.fn();
 
+type ButtonMockProps = {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+};
+
+type WithChildren = {
+  children: ReactNode;
+  className?: string;
+};
+
+type TooltipContentProps = {
+  children: ReactNode;
+};
+
+type LongPressButtonProps = {
+  onConfirm?: () => void;
+  label: string;
+  holdingLabel: string;
+  completeLabel: string;
+  className?: string;
+  [key: string]: unknown;
+};
+
 jest.mock("@/components/ui/button", () => ({
-  Button: ({ children, onClick, disabled, className }: any) => (
+  Button: ({ children, onClick, disabled, className }: ButtonMockProps) => (
     <button type="button" onClick={onClick} disabled={disabled} className={className}>
       {children}
     </button>
@@ -12,21 +38,21 @@ jest.mock("@/components/ui/button", () => ({
 }));
 
 jest.mock("@/components/ui/card", () => ({
-  Card: ({ children, className }: any) => <div className={className}>{children}</div>,
-  CardHeader: ({ children }: any) => <div>{children}</div>,
-  CardTitle: ({ children }: any) => <h3>{children}</h3>,
-  CardContent: ({ children }: any) => <div>{children}</div>,
+  Card: ({ children, className }: WithChildren) => <div className={className}>{children}</div>,
+  CardHeader: ({ children }: WithChildren) => <div>{children}</div>,
+  CardTitle: ({ children }: WithChildren) => <h3>{children}</h3>,
+  CardContent: ({ children }: WithChildren) => <div>{children}</div>,
 }));
 
 jest.mock("@/components/ui/tooltip", () => ({
-  TooltipProvider: ({ children }: any) => <>{children}</>,
-  Tooltip: ({ children }: any) => <>{children}</>,
-  TooltipTrigger: ({ children }: any) => <>{children}</>,
-  TooltipContent: ({ children }: any) => <div data-testid="tooltip-content">{children}</div>,
+  TooltipProvider: ({ children }: WithChildren) => <>{children}</>,
+  Tooltip: ({ children }: WithChildren) => <>{children}</>,
+  TooltipTrigger: ({ children }: WithChildren) => <>{children}</>,
+  TooltipContent: ({ children }: TooltipContentProps) => <div data-testid="tooltip-content">{children}</div>,
 }));
 
 jest.mock("@/components/ui/long-press-button", () => ({
-  LongPressButton: (props: any) => {
+  LongPressButton: (props: LongPressButtonProps) => {
     longPressMock(props);
     return (
       <button

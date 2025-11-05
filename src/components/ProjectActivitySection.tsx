@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActivityForm } from "@/components/shared/ActivityForm";
 import { ActivityTimeline } from "@/components/shared/ActivityTimeline";
 import { useState, useEffect, useCallback } from "react";
@@ -7,6 +7,7 @@ import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { toast } from "@/hooks/use-toast";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import type { Database } from "@/integrations/supabase/types";
+import { MessageSquareText } from "lucide-react";
 
 type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
 
@@ -218,8 +219,11 @@ export function ProjectActivitySection({
   if (loading) {
     return (
       <Card>
-        <CardHeader>
-          <div className="h-6 w-48 bg-muted animate-pulse rounded" />
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg font-medium text-muted-foreground">
+            <MessageSquareText className="h-4 w-4 animate-pulse" />
+            {t("projectDetails.activities.title")}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="h-24 w-full bg-muted animate-pulse rounded" />
@@ -231,10 +235,11 @@ export function ProjectActivitySection({
 
   return (
     <Card>
-      <CardHeader>
-        <h3 className="text-lg font-semibold">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-xl font-semibold">
+          <MessageSquareText className="h-4 w-4" />
           {t("projectDetails.activities.title")}
-        </h3>
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <ActivityForm 

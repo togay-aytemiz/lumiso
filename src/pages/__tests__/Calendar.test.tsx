@@ -1,4 +1,5 @@
 import React from "react";
+import type { ReactNode } from "react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import Calendar from "../Calendar";
 import { useOptimizedCalendarData } from "@/hooks/useOptimizedCalendarData";
@@ -16,10 +17,48 @@ jest.mock("react-i18next", () => ({
   }),
 }));
 
+type SegmentedControlOption = {
+  value: string;
+  label: ReactNode;
+};
+
+type SegmentedControlMockProps = {
+  value: string;
+  onValueChange: (value: string) => void;
+  options: SegmentedControlOption[];
+};
+
+type CalendarDayViewSession = {
+  id: string;
+  session_date: string;
+  session_time: string;
+  status: string;
+  lead_id: string;
+};
+
+type CalendarDayViewMockProps = {
+  onSessionClick?: (session: CalendarDayViewSession) => void;
+};
+
+type ProjectSheetViewMockProps = {
+  project?: { id?: string };
+  open: boolean;
+};
+
+type SessionSheetMockProps = {
+  sessionId: string;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+type CalendarErrorWrapperProps = {
+  children: ReactNode;
+};
+
 jest.mock("@/components/ui/segmented-control", () => ({
-  SegmentedControl: ({ value, onValueChange, options }: any) => (
+  SegmentedControl: ({ value, onValueChange, options }: SegmentedControlMockProps) => (
     <div data-testid="segmented-control" data-value={value}>
-      {options.map((option: any) => (
+      {options.map(option => (
         <button
           key={option.value}
           type="button"
@@ -41,7 +80,7 @@ jest.mock("@/components/calendar/CalendarSkeleton", () => ({
 
 const monthViewMock = jest.fn(() => <div data-testid="calendar-month-view">Month View</div>);
 const weekViewMock = jest.fn(() => <div data-testid="calendar-week-view">Week View</div>);
-const dayViewMock = jest.fn(({ onSessionClick }: any) => (
+const dayViewMock = jest.fn(({ onSessionClick }: CalendarDayViewMockProps) => (
   <button
     type="button"
     data-testid="calendar-day-view"
@@ -61,23 +100,23 @@ const dayViewMock = jest.fn(({ onSessionClick }: any) => (
 ));
 
 jest.mock("@/components/calendar/CalendarMonthView", () => ({
-  CalendarMonthView: (props: any) => monthViewMock(props),
+  CalendarMonthView: (props: Record<string, unknown>) => monthViewMock(props),
 }));
 
 jest.mock("@/components/calendar/CalendarWeek", () => ({
-  CalendarWeek: (props: any) => weekViewMock(props),
+  CalendarWeek: (props: Record<string, unknown>) => weekViewMock(props),
 }));
 
 jest.mock("@/components/calendar/CalendarDayView", () => ({
-  CalendarDayView: (props: any) => dayViewMock(props),
+  CalendarDayView: (props: CalendarDayViewMockProps) => dayViewMock(props),
 }));
 
 jest.mock("@/components/ProjectSheetView", () => ({
-  ProjectSheetView: ({ project, open }: any) =>
+  ProjectSheetView: ({ project, open }: ProjectSheetViewMockProps) =>
     open ? <div data-testid="project-sheet">{project?.id}</div> : null,
 }));
 
-const sessionSheetMock = jest.fn(({ sessionId, isOpen, onOpenChange }: any) =>
+const sessionSheetMock = jest.fn(({ sessionId, isOpen, onOpenChange }: SessionSheetMockProps) =>
   isOpen ? (
     <div data-testid="session-sheet">
       Session Sheet: {sessionId}
@@ -90,11 +129,11 @@ const sessionSheetMock = jest.fn(({ sessionId, isOpen, onOpenChange }: any) =>
 
 jest.mock("@/components/SessionSheetView", () => ({
   __esModule: true,
-  default: (props: any) => sessionSheetMock(props),
+  default: (props: SessionSheetMockProps) => sessionSheetMock(props),
 }));
 
 jest.mock("@/components/calendar/CalendarErrorBoundary", () => ({
-  CalendarErrorWrapper: ({ children }: any) => <>{children}</>,
+  CalendarErrorWrapper: ({ children }: CalendarErrorWrapperProps) => <>{children}</>,
 }));
 
 jest.mock("@/hooks/useOptimizedCalendarData");

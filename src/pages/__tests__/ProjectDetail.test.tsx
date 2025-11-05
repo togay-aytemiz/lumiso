@@ -193,7 +193,7 @@ jest.mock("@/components/project-details/ProjectDetailsLayout", () => ({
   ),
 }));
 
-jest.mock("@/components/ViewProjectDialog", () => ({
+jest.mock("@/components/projectArchiveToggle", () => ({
   onArchiveToggle: jest.fn().mockResolvedValue({ isArchived: false }),
 }));
 

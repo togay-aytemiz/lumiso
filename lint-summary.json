@@ -1,104 +1,16 @@
 {
-  "total": 864,
+  "total": 704,
   "summary": [
     {
-      "filePath": "src/components/ViewProjectDialog.tsx",
-      "count": 10
-    },
-    {
-      "filePath": "src/components/__tests__/EditLeadDialog.test.tsx",
-      "count": 10
-    },
-    {
-      "filePath": "src/components/__tests__/TutorialFloatingCard.test.tsx",
-      "count": 10
-    },
-    {
-      "filePath": "src/pages/__tests__/Auth.test.tsx",
-      "count": 10
-    },
-    {
-      "filePath": "src/pages/__tests__/Calendar.test.tsx",
-      "count": 10
-    },
-    {
-      "filePath": "src/components/ProjectSheetView.tsx",
-      "count": 9
-    },
-    {
-      "filePath": "src/components/__tests__/WorkflowDeleteDialog.test.tsx",
-      "count": 9
-    },
-    {
-      "filePath": "src/components/settings/__tests__/SessionStatusDialogs.test.tsx",
-      "count": 9
-    },
-    {
-      "filePath": "src/components/settings/__tests__/SessionTypeDialogs.test.tsx",
-      "count": 9
-    },
-    {
-      "filePath": "src/features/session-planning/components/SessionPlanningWizardSheet.tsx",
-      "count": 9
-    },
-    {
-      "filePath": "src/hooks/useWorkflowTriggers.ts",
-      "count": 9
-    },
-    {
-      "filePath": "src/lib/debug.ts",
-      "count": 9
-    },
-    {
-      "filePath": "src/pages/__tests__/LeadDetail.test.tsx",
-      "count": 9
-    },
-    {
-      "filePath": "src/services/__tests__/ProjectService.test.ts",
-      "count": 9
+      "filePath": "src/components/__tests__/TutorialExitGuardDialog.test.tsx",
+      "count": 8
     },
     {
       "filePath": "src/components/__tests__/GlobalSearch.test.tsx",
       "count": 8
     },
     {
-      "filePath": "src/components/__tests__/TutorialExitGuardDialog.test.tsx",
-      "count": 8
-    },
-    {
-      "filePath": "src/components/settings/__tests__/NavigationGuardDialog.test.tsx",
-      "count": 8
-    },
-    {
-      "filePath": "src/components/template-builder/__tests__/TemplateBuilderAssets.test.tsx",
-      "count": 8
-    },
-    {
-      "filePath": "src/features/project-creation/steps/PackagesStep.tsx",
-      "count": 8
-    },
-    {
-      "filePath": "src/hooks/useProjectActions.ts",
-      "count": 8
-    },
-    {
-      "filePath": "src/legacy/utils/validationUtils.ts",
-      "count": 8
-    },
-    {
-      "filePath": "supabase/functions/simple-daily-notifications/index.ts",
-      "count": 8
-    },
-    {
-      "filePath": "src/components/__tests__/BaseOnboardingModal.test.tsx",
-      "count": 7
-    },
-    {
-      "filePath": "src/components/data-table/__tests__/AdvancedDataTable.test.tsx",
-      "count": 7
-    },
-    {
-      "filePath": "src/contexts/OrganizationContext.tsx",
+      "filePath": "supabase/functions/tests/process-session-reminders.test.ts",
       "count": 7
     },
     {
@@ -106,91 +18,19 @@
       "count": 7
     },
     {
-      "filePath": "supabase/functions/tests/process-session-reminders.test.ts",
+      "filePath": "src/contexts/OrganizationContext.tsx",
       "count": 7
     },
     {
-      "filePath": "src/components/ProjectPaymentsSection.tsx",
-      "count": 6
+      "filePath": "src/components/data-table/__tests__/AdvancedDataTable.test.tsx",
+      "count": 7
     },
     {
-      "filePath": "src/components/ProjectTodoListEnhanced.tsx",
-      "count": 6
+      "filePath": "src/components/__tests__/BaseOnboardingModal.test.tsx",
+      "count": 7
     },
     {
-      "filePath": "src/components/RoutePrefetcher.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/components/__tests__/OnboardingModal.test.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/components/__tests__/ProjectSheetPreview.test.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/components/__tests__/SessionFormFields.test.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/components/modals/__tests__/HelpModal.test.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/components/settings/PackageDialogs.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/components/template-builder/BlockEditor.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/components/ui/__tests__/app-sheet-modal.test.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/contexts/ProfileContext.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/features/package-creation/components/__tests__/PackageCreationWizard.test.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/hooks/__tests__/useCalendarPerformanceMonitor.test.ts",
-      "count": 6
-    },
-    {
-      "filePath": "src/hooks/useLeadActions.ts",
-      "count": 6
-    },
-    {
-      "filePath": "src/hooks/useTemplateOperations.ts",
-      "count": 6
-    },
-    {
-      "filePath": "src/pages/__tests__/TemplateBuilder.test.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/pages/__tests__/Workflows.test.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/pages/settings/__tests__/Notifications.test.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/services/__tests__/LeadDetailService.test.ts",
-      "count": 6
-    },
-    {
-      "filePath": "src/types/workflow.ts",
-      "count": 6
-    },
-    {
-      "filePath": "src/utils/performance.test.tsx",
+      "filePath": "supabase/functions/tests/send-reminder-notifications.test.ts",
       "count": 6
     },
     {
@@ -198,67 +38,91 @@
       "count": 6
     },
     {
-      "filePath": "supabase/functions/tests/send-reminder-notifications.test.ts",
+      "filePath": "src/utils/performance.test.tsx",
       "count": 6
     },
     {
-      "filePath": "src/components/__tests__/ActivityTimeline.test.tsx",
-      "count": 5
+      "filePath": "src/types/workflow.ts",
+      "count": 6
     },
     {
-      "filePath": "src/components/__tests__/DeadSimpleSessionBanner.test.tsx",
-      "count": 5
+      "filePath": "src/services/__tests__/LeadDetailService.test.ts",
+      "count": 6
     },
     {
-      "filePath": "src/components/__tests__/LeadActivitySection.test.tsx",
-      "count": 5
+      "filePath": "src/pages/settings/__tests__/Notifications.test.tsx",
+      "count": 6
     },
     {
-      "filePath": "src/components/__tests__/OnboardingTutorial.test.tsx",
-      "count": 5
+      "filePath": "src/pages/__tests__/Workflows.test.tsx",
+      "count": 6
     },
     {
-      "filePath": "src/components/__tests__/ProjectKanbanBoard.test.tsx",
-      "count": 5
+      "filePath": "src/pages/__tests__/TemplateBuilder.test.tsx",
+      "count": 6
     },
     {
-      "filePath": "src/components/__tests__/ScheduleSessionDialog.test.tsx",
-      "count": 5
+      "filePath": "src/hooks/useTemplateOperations.ts",
+      "count": 6
     },
     {
-      "filePath": "src/components/settings/LeadStatusDialogs.tsx",
-      "count": 5
+      "filePath": "src/hooks/useLeadActions.ts",
+      "count": 6
     },
     {
-      "filePath": "src/components/settings/SessionStatusDialogs.tsx",
-      "count": 5
+      "filePath": "src/hooks/__tests__/useCalendarPerformanceMonitor.test.ts",
+      "count": 6
     },
     {
-      "filePath": "src/components/settings/__tests__/LeadStatusDialogs.test.tsx",
-      "count": 5
+      "filePath": "src/features/package-creation/components/__tests__/PackageCreationWizard.test.tsx",
+      "count": 6
     },
     {
-      "filePath": "src/components/settings/__tests__/ProjectStageDialogs.test.tsx",
-      "count": 5
+      "filePath": "src/contexts/ProfileContext.tsx",
+      "count": 6
     },
     {
-      "filePath": "src/components/template-builder/previews/EmailPreview.tsx",
-      "count": 5
+      "filePath": "src/components/ui/__tests__/app-sheet-modal.test.tsx",
+      "count": 6
     },
     {
-      "filePath": "src/components/template-builder/previews/SMSPreview.tsx",
-      "count": 5
+      "filePath": "src/components/template-builder/BlockEditor.tsx",
+      "count": 6
     },
     {
-      "filePath": "src/features/session-planning/components/__tests__/SessionPlanningWizardSheet.test.tsx",
-      "count": 5
+      "filePath": "src/components/settings/PackageDialogs.tsx",
+      "count": 6
     },
     {
-      "filePath": "src/hooks/useWorkflows.ts",
-      "count": 5
+      "filePath": "src/components/modals/__tests__/HelpModal.test.tsx",
+      "count": 6
     },
     {
-      "filePath": "src/pages/ReminderDetails.tsx",
+      "filePath": "src/components/__tests__/SessionFormFields.test.tsx",
+      "count": 6
+    },
+    {
+      "filePath": "src/components/__tests__/ProjectSheetPreview.test.tsx",
+      "count": 6
+    },
+    {
+      "filePath": "src/components/__tests__/OnboardingModal.test.tsx",
+      "count": 6
+    },
+    {
+      "filePath": "src/components/RoutePrefetcher.tsx",
+      "count": 6
+    },
+    {
+      "filePath": "src/components/ProjectTodoListEnhanced.tsx",
+      "count": 6
+    },
+    {
+      "filePath": "src/components/ProjectPaymentsSection.tsx",
+      "count": 6
+    },
+    {
+      "filePath": "src/pages/admin/__tests__/Localization.test.tsx",
       "count": 5
     },
     {
@@ -266,139 +130,67 @@
       "count": 5
     },
     {
-      "filePath": "src/pages/admin/__tests__/Localization.test.tsx",
+      "filePath": "src/pages/ReminderDetails.tsx",
       "count": 5
     },
     {
-      "filePath": "src/components/NewSessionDialog.tsx",
-      "count": 4
+      "filePath": "src/hooks/useWorkflows.ts",
+      "count": 5
     },
     {
-      "filePath": "src/components/ProjectServicesSection.tsx",
-      "count": 4
+      "filePath": "src/features/session-planning/components/__tests__/SessionPlanningWizardSheet.test.tsx",
+      "count": 5
     },
     {
-      "filePath": "src/components/UnifiedActivityArea.tsx",
-      "count": 4
+      "filePath": "src/components/template-builder/previews/SMSPreview.tsx",
+      "count": 5
     },
     {
-      "filePath": "src/components/__tests__/AppSidebar.test.tsx",
-      "count": 4
+      "filePath": "src/components/template-builder/previews/EmailPreview.tsx",
+      "count": 5
     },
     {
-      "filePath": "src/components/__tests__/PerformanceMonitor.test.tsx",
-      "count": 4
+      "filePath": "src/components/settings/__tests__/ProjectStageDialogs.test.tsx",
+      "count": 5
     },
     {
-      "filePath": "src/components/__tests__/ProjectActivitySection.test.tsx",
-      "count": 4
+      "filePath": "src/components/settings/__tests__/LeadStatusDialogs.test.tsx",
+      "count": 5
     },
     {
-      "filePath": "src/components/mobile/__tests__/BottomSheetMenu.test.tsx",
-      "count": 4
+      "filePath": "src/components/settings/SessionStatusDialogs.tsx",
+      "count": 5
     },
     {
-      "filePath": "src/components/settings/ProjectStageDialogs.tsx",
-      "count": 4
+      "filePath": "src/components/settings/LeadStatusDialogs.tsx",
+      "count": 5
     },
     {
-      "filePath": "src/components/settings/ProjectTypeDialogs.tsx",
-      "count": 4
+      "filePath": "src/components/__tests__/ScheduleSessionDialog.test.tsx",
+      "count": 5
     },
     {
-      "filePath": "src/components/settings/__tests__/SettingsHelpButton.test.tsx",
-      "count": 4
+      "filePath": "src/components/__tests__/ProjectKanbanBoard.test.tsx",
+      "count": 5
     },
     {
-      "filePath": "src/components/template-builder/OptimizedTemplateEditor.tsx",
-      "count": 4
+      "filePath": "src/components/__tests__/OnboardingTutorial.test.tsx",
+      "count": 5
     },
     {
-      "filePath": "src/components/ui/__tests__/loading-presets.test.tsx",
-      "count": 4
+      "filePath": "src/components/__tests__/LeadActivitySection.test.tsx",
+      "count": 5
     },
     {
-      "filePath": "src/contexts/__tests__/OnboardingContext.test.tsx",
-      "count": 4
+      "filePath": "src/components/__tests__/DeadSimpleSessionBanner.test.tsx",
+      "count": 5
     },
     {
-      "filePath": "src/features/package-creation/steps/__tests__/PricingStep.test.tsx",
-      "count": 4
+      "filePath": "src/components/__tests__/ActivityTimeline.test.tsx",
+      "count": 5
     },
     {
-      "filePath": "src/hooks/__tests__/useLeadStatusActions.test.tsx",
-      "count": 4
-    },
-    {
-      "filePath": "src/hooks/__tests__/useUserPreferences.test.ts",
-      "count": 4
-    },
-    {
-      "filePath": "src/hooks/useCalendarPerformanceMonitor.ts",
-      "count": 4
-    },
-    {
-      "filePath": "src/hooks/useDataTable.ts",
-      "count": 4
-    },
-    {
-      "filePath": "src/hooks/useNotificationTriggers.ts",
-      "count": 4
-    },
-    {
-      "filePath": "src/hooks/useSettingsCategorySection.ts",
-      "count": 4
-    },
-    {
-      "filePath": "src/hooks/useSettingsSection.ts",
-      "count": 4
-    },
-    {
-      "filePath": "src/hooks/useTemplateBuilder.ts",
-      "count": 4
-    },
-    {
-      "filePath": "src/hooks/useTemplates.ts",
-      "count": 4
-    },
-    {
-      "filePath": "src/hooks/useTranslationFiles.ts",
-      "count": 4
-    },
-    {
-      "filePath": "src/integrations/supabase/__tests__/client.test.ts",
-      "count": 4
-    },
-    {
-      "filePath": "src/integrations/supabase/client.ts",
-      "count": 4
-    },
-    {
-      "filePath": "src/legacy/AllProjectsLegacy.tsx",
-      "count": 4
-    },
-    {
-      "filePath": "src/lib/dateFormatUtils.test.ts",
-      "count": 4
-    },
-    {
-      "filePath": "src/lib/telemetry.ts",
-      "count": 4
-    },
-    {
-      "filePath": "src/pages/AllLeads.tsx",
-      "count": 4
-    },
-    {
-      "filePath": "src/pages/Payments.tsx",
-      "count": 4
-    },
-    {
-      "filePath": "src/pages/__tests__/Index.test.tsx",
-      "count": 4
-    },
-    {
-      "filePath": "src/pages/__tests__/Templates.test.tsx",
+      "filePath": "supabase/functions/send-reminder-notifications/index.ts",
       "count": 4
     },
     {
@@ -406,95 +198,139 @@
       "count": 4
     },
     {
-      "filePath": "supabase/functions/send-reminder-notifications/index.ts",
+      "filePath": "src/pages/__tests__/Templates.test.tsx",
       "count": 4
     },
     {
-      "filePath": "src/components/ProjectSheetPreview.tsx",
-      "count": 3
+      "filePath": "src/pages/__tests__/Index.test.tsx",
+      "count": 4
     },
     {
-      "filePath": "src/components/ProjectsSection.tsx",
-      "count": 3
+      "filePath": "src/pages/Payments.tsx",
+      "count": 4
     },
     {
-      "filePath": "src/components/SessionSheetView.tsx",
-      "count": 3
+      "filePath": "src/pages/AllLeads.tsx",
+      "count": 4
     },
     {
-      "filePath": "src/components/SessionStatusesSection.tsx",
-      "count": 3
+      "filePath": "src/lib/telemetry.ts",
+      "count": 4
     },
     {
-      "filePath": "src/components/UnifiedClientDetails.tsx",
-      "count": 3
+      "filePath": "src/lib/dateFormatUtils.test.ts",
+      "count": 4
     },
     {
-      "filePath": "src/components/__tests__/SampleDataModal.test.tsx",
-      "count": 3
+      "filePath": "src/legacy/AllProjectsLegacy.tsx",
+      "count": 4
     },
     {
-      "filePath": "src/components/settings/ServiceDialogs.tsx",
-      "count": 3
+      "filePath": "src/integrations/supabase/client.ts",
+      "count": 4
     },
     {
-      "filePath": "src/components/template-builder/__tests__/TemplateBuilderStorage.test.tsx",
-      "count": 3
+      "filePath": "src/integrations/supabase/__tests__/client.test.ts",
+      "count": 4
     },
     {
-      "filePath": "src/contexts/__tests__/OrganizationContext.test.tsx",
-      "count": 3
+      "filePath": "src/hooks/useTranslationFiles.ts",
+      "count": 4
     },
     {
-      "filePath": "src/features/package-creation/services/packageCreationSnapshot.ts",
-      "count": 3
+      "filePath": "src/hooks/useTemplates.ts",
+      "count": 4
     },
     {
-      "filePath": "src/features/session-planning/context/SessionSavedResourcesProvider.tsx",
-      "count": 3
+      "filePath": "src/hooks/useTemplateBuilder.ts",
+      "count": 4
     },
     {
-      "filePath": "src/hooks/useOrganizationSettings.ts",
-      "count": 3
+      "filePath": "src/hooks/useSettingsSection.ts",
+      "count": 4
     },
     {
-      "filePath": "src/hooks/useSessionReminderScheduling.ts",
-      "count": 3
+      "filePath": "src/hooks/useSettingsCategorySection.ts",
+      "count": 4
     },
     {
-      "filePath": "src/legacy/pages/AllLeadsRefactored.tsx",
-      "count": 3
+      "filePath": "src/hooks/useNotificationTriggers.ts",
+      "count": 4
     },
     {
-      "filePath": "src/pages/Analytics.tsx",
-      "count": 3
+      "filePath": "src/hooks/useDataTable.ts",
+      "count": 4
     },
     {
-      "filePath": "src/pages/Auth.tsx",
-      "count": 3
+      "filePath": "src/hooks/useCalendarPerformanceMonitor.ts",
+      "count": 4
     },
     {
-      "filePath": "src/pages/SessionDetail.tsx",
-      "count": 3
+      "filePath": "src/hooks/__tests__/useUserPreferences.test.ts",
+      "count": 4
     },
     {
-      "filePath": "src/pages/Templates.tsx",
-      "count": 3
+      "filePath": "src/hooks/__tests__/useLeadStatusActions.test.tsx",
+      "count": 4
     },
     {
-      "filePath": "src/pages/settings/Account_old.tsx",
-      "count": 3
+      "filePath": "src/features/package-creation/steps/__tests__/PricingStep.test.tsx",
+      "count": 4
     },
     {
-      "filePath": "src/pages/settings/Profile.tsx",
-      "count": 3
+      "filePath": "src/contexts/__tests__/OnboardingContext.test.tsx",
+      "count": 4
     },
     {
-      "filePath": "src/pages/settings/__tests__/Services.test.tsx",
-      "count": 3
+      "filePath": "src/components/ui/__tests__/loading-presets.test.tsx",
+      "count": 4
     },
     {
-      "filePath": "src/services/__tests__/LeadService.test.ts",
+      "filePath": "src/components/template-builder/OptimizedTemplateEditor.tsx",
+      "count": 4
+    },
+    {
+      "filePath": "src/components/settings/__tests__/SettingsHelpButton.test.tsx",
+      "count": 4
+    },
+    {
+      "filePath": "src/components/settings/ProjectTypeDialogs.tsx",
+      "count": 4
+    },
+    {
+      "filePath": "src/components/settings/ProjectStageDialogs.tsx",
+      "count": 4
+    },
+    {
+      "filePath": "src/components/mobile/__tests__/BottomSheetMenu.test.tsx",
+      "count": 4
+    },
+    {
+      "filePath": "src/components/__tests__/ProjectActivitySection.test.tsx",
+      "count": 4
+    },
+    {
+      "filePath": "src/components/__tests__/PerformanceMonitor.test.tsx",
+      "count": 4
+    },
+    {
+      "filePath": "src/components/__tests__/AppSidebar.test.tsx",
+      "count": 4
+    },
+    {
+      "filePath": "src/components/UnifiedActivityArea.tsx",
+      "count": 4
+    },
+    {
+      "filePath": "src/components/ProjectServicesSection.tsx",
+      "count": 4
+    },
+    {
+      "filePath": "src/components/NewSessionDialog.tsx",
+      "count": 4
+    },
+    {
+      "filePath": "src/utils/performance.ts",
       "count": 3
     },
     {
@@ -502,259 +338,95 @@
       "count": 3
     },
     {
-      "filePath": "src/utils/performance.ts",
+      "filePath": "src/services/__tests__/LeadService.test.ts",
       "count": 3
     },
     {
-      "filePath": "src/components/LeadFieldDialog.tsx",
-      "count": 2
+      "filePath": "src/pages/settings/__tests__/Services.test.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/components/LeadStatusBadge.tsx",
-      "count": 2
+      "filePath": "src/pages/settings/Profile.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/components/LeadStatusesSection.tsx",
-      "count": 2
+      "filePath": "src/pages/settings/Account_old.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/components/PerformanceMonitor.tsx",
-      "count": 2
+      "filePath": "src/pages/Templates.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/components/ProjectKanbanBoard.tsx",
-      "count": 2
+      "filePath": "src/pages/SessionDetail.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/components/ProjectStatusBadge.tsx",
-      "count": 2
+      "filePath": "src/pages/Auth.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/components/ProjectStatusesSection.tsx",
-      "count": 2
+      "filePath": "src/pages/Analytics.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/components/ProjectTypeSelector.tsx",
-      "count": 2
+      "filePath": "src/legacy/pages/AllLeadsRefactored.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/components/SimpleProjectTypeSelect.tsx",
-      "count": 2
+      "filePath": "src/hooks/useSessionReminderScheduling.ts",
+      "count": 3
     },
     {
-      "filePath": "src/components/__tests__/ActivityForm.test.tsx",
-      "count": 2
+      "filePath": "src/hooks/useOrganizationSettings.ts",
+      "count": 3
     },
     {
-      "filePath": "src/components/layout-primitives/Surface.tsx",
-      "count": 2
+      "filePath": "src/features/session-planning/context/SessionSavedResourcesProvider.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/components/settings/SessionTypeDialogs.tsx",
-      "count": 2
+      "filePath": "src/features/package-creation/services/packageCreationSnapshot.ts",
+      "count": 3
     },
     {
-      "filePath": "src/components/settings/__tests__/SettingsLayout.test.tsx",
-      "count": 2
+      "filePath": "src/contexts/__tests__/OrganizationContext.test.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/components/support/__tests__/HelpOptionCard.test.tsx",
-      "count": 2
+      "filePath": "src/components/template-builder/__tests__/TemplateBuilderStorage.test.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/components/template-builder/StorageQuotaDisplay.tsx",
-      "count": 2
+      "filePath": "src/components/settings/ServiceDialogs.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/components/template-builder/TemplatePreview.tsx",
-      "count": 2
+      "filePath": "src/components/__tests__/SampleDataModal.test.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/components/template-builder/previews/WhatsAppPreview.tsx",
-      "count": 2
+      "filePath": "src/components/UnifiedClientDetails.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/components/ui/date-time-picker.tsx",
-      "count": 2
+      "filePath": "src/components/SessionStatusesSection.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/contexts/ConnectivityContext.tsx",
-      "count": 2
+      "filePath": "src/components/SessionSheetView.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/contexts/LanguageContext.tsx",
-      "count": 2
+      "filePath": "src/components/ProjectsSection.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/contexts/__tests__/AuthContext.test.tsx",
-      "count": 2
+      "filePath": "src/components/ProjectSheetPreview.tsx",
+      "count": 3
     },
     {
-      "filePath": "src/features/package-creation/services/__tests__/packageCreationSnapshot.test.ts",
-      "count": 2
-    },
-    {
-      "filePath": "src/features/package-creation/steps/DeliveryStep.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/features/project-creation/components/ProjectCreationWizardSheet.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/features/project-creation/components/__tests__/ProjectCreationWizardSheet.test.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/features/session-planning/api/savedResources.ts",
-      "count": 2
-    },
-    {
-      "filePath": "src/features/session-planning/context/SessionWorkflowProvider.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/features/session-planning/steps/LocationStep.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/features/session-planning/steps/NotesStep.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/hooks/__tests__/useOrganizationSettings.test.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/hooks/useEntityData.ts",
-      "count": 2
-    },
-    {
-      "filePath": "src/hooks/useLeadStatusActions.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/hooks/useOptimizedCalendarNavigation.ts",
-      "count": 2
-    },
-    {
-      "filePath": "src/hooks/useReminderActions.ts",
-      "count": 2
-    },
-    {
-      "filePath": "src/hooks/useSessionActions.ts",
-      "count": 2
-    },
-    {
-      "filePath": "src/hooks/useUserSettings.ts",
-      "count": 2
-    },
-    {
-      "filePath": "src/legacy/components/common/EntityForm.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/legacy/components/common/FormField.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/legacy/components/optimized/AccessibleGlobalSearch.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/legacy/components/template-builder/TemplateEditor.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/legacy/components/template-builder/TemplateEditorWithTest.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/legacy/pages/ProjectDetailRefactored.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/lib/dateUtils.test.ts",
-      "count": 2
-    },
-    {
-      "filePath": "src/lib/dateUtils.ts",
-      "count": 2
-    },
-    {
-      "filePath": "src/lib/inputUtils.test.ts",
-      "count": 2
-    },
-    {
-      "filePath": "src/lib/projects/buildProjectSummaryItems.test.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/lib/templateUtils.ts",
-      "count": 2
-    },
-    {
-      "filePath": "src/lib/validation.ts",
-      "count": 2
-    },
-    {
-      "filePath": "src/pages/Calendar.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/pages/LeadDetail.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/pages/TemplateBuilder.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/pages/Workflows.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/pages/__tests__/GettingStarted.test.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/pages/admin/Localization.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/pages/payments/components/__tests__/PaymentsTableSection.test.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/pages/settings/General.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/pages/settings/Notifications.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/services/LeadService.ts",
-      "count": 2
-    },
-    {
-      "filePath": "src/services/SessionService.ts",
-      "count": 2
-    },
-    {
-      "filePath": "src/types/template.ts",
-      "count": 2
-    },
-    {
-      "filePath": "src/utils/onboardingValidation.test.ts",
-      "count": 2
-    },
-    {
-      "filePath": "src/utils/testUtils.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "supabase/functions/notification-processor/_templates/immediate-notifications.ts",
+      "filePath": "supabase/functions/tests/simple-daily-notifications.test.ts",
       "count": 2
     },
     {
@@ -762,355 +434,255 @@
       "count": 2
     },
     {
-      "filePath": "supabase/functions/tests/simple-daily-notifications.test.ts",
+      "filePath": "supabase/functions/notification-processor/_templates/immediate-notifications.ts",
       "count": 2
     },
     {
-      "filePath": "src/components/DateRangePicker.tsx",
-      "count": 1
+      "filePath": "src/utils/testUtils.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/DeadSimpleSessionBanner.tsx",
-      "count": 1
+      "filePath": "src/utils/onboardingValidation.test.ts",
+      "count": 2
     },
     {
-      "filePath": "src/components/EnhancedSessionsSection.tsx",
-      "count": 1
+      "filePath": "src/types/template.ts",
+      "count": 2
     },
     {
-      "filePath": "src/components/LeadFieldsList.tsx",
-      "count": 1
+      "filePath": "src/services/SessionService.ts",
+      "count": 2
     },
     {
-      "filePath": "src/components/LeadInitials.tsx",
-      "count": 1
+      "filePath": "src/services/LeadService.ts",
+      "count": 2
     },
     {
-      "filePath": "src/components/ProjectTodoList.tsx",
-      "count": 1
+      "filePath": "src/pages/settings/Notifications.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/ProjectTypesSection.tsx",
-      "count": 1
+      "filePath": "src/pages/settings/General.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/ServiceSelector.tsx",
-      "count": 1
+      "filePath": "src/pages/payments/components/__tests__/PaymentsTableSection.test.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/SessionsSection.tsx",
-      "count": 1
+      "filePath": "src/pages/admin/Localization.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/TruncatedTextWithTooltip.tsx",
-      "count": 1
+      "filePath": "src/pages/__tests__/GettingStarted.test.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/WeeklySchedulePreview.tsx",
-      "count": 1
+      "filePath": "src/pages/Workflows.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/__tests__/CalendarTimePicker.test.tsx",
-      "count": 1
+      "filePath": "src/pages/TemplateBuilder.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/__tests__/ErrorBoundary.test.tsx",
-      "count": 1
+      "filePath": "src/pages/LeadDetail.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/__tests__/GuidedStepProgress.test.tsx",
-      "count": 1
+      "filePath": "src/pages/Calendar.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/__tests__/ProjectServicesSection.test.tsx",
-      "count": 1
+      "filePath": "src/lib/validation.ts",
+      "count": 2
     },
     {
-      "filePath": "src/components/__tests__/SessionBanner.test.tsx",
-      "count": 1
+      "filePath": "src/lib/templateUtils.ts",
+      "count": 2
     },
     {
-      "filePath": "src/components/__tests__/SessionSchedulingSheet.test.tsx",
-      "count": 1
+      "filePath": "src/lib/projects/buildProjectSummaryItems.test.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/__tests__/TimeSlotPicker.test.tsx",
-      "count": 1
+      "filePath": "src/lib/inputUtils.test.ts",
+      "count": 2
     },
     {
-      "filePath": "src/components/__tests__/TruncatedTextWithTooltip.test.tsx",
-      "count": 1
+      "filePath": "src/lib/dateUtils.ts",
+      "count": 2
     },
     {
-      "filePath": "src/components/__tests__/WorkflowHealthDashboard.test.tsx",
-      "count": 1
+      "filePath": "src/lib/dateUtils.test.ts",
+      "count": 2
     },
     {
-      "filePath": "src/components/mobile/MobileBottomNav.tsx",
-      "count": 1
+      "filePath": "src/legacy/pages/ProjectDetailRefactored.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/navigation/StickySectionNav.tsx",
-      "count": 1
+      "filePath": "src/legacy/components/template-builder/TemplateEditorWithTest.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/project-details/StickySectionNav.tsx",
-      "count": 1
+      "filePath": "src/legacy/components/template-builder/TemplateEditor.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/settings/SettingsStickyFooter.tsx",
-      "count": 1
+      "filePath": "src/legacy/components/optimized/AccessibleGlobalSearch.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/settings/SocialChannelsSection.tsx",
-      "count": 1
+      "filePath": "src/legacy/components/common/FormField.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/template-builder/CompactStorageIndicator.tsx",
-      "count": 1
+      "filePath": "src/legacy/components/common/EntityForm.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/template-builder/ImageLibrarySheet.tsx",
-      "count": 1
+      "filePath": "src/hooks/useUserSettings.ts",
+      "count": 2
     },
     {
-      "filePath": "src/components/template-builder/VariablePicker.tsx",
-      "count": 1
+      "filePath": "src/hooks/useSessionActions.ts",
+      "count": 2
     },
     {
-      "filePath": "src/components/template-builder/__tests__/TemplatePreview.test.tsx",
-      "count": 1
+      "filePath": "src/hooks/useReminderActions.ts",
+      "count": 2
     },
     {
-      "filePath": "src/components/ui/__tests__/use-toast.test.ts",
-      "count": 1
+      "filePath": "src/hooks/useOptimizedCalendarNavigation.ts",
+      "count": 2
     },
     {
-      "filePath": "src/components/ui/badge.tsx",
-      "count": 1
+      "filePath": "src/hooks/useLeadStatusActions.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/ui/button.tsx",
-      "count": 1
+      "filePath": "src/hooks/useEntityData.ts",
+      "count": 2
     },
     {
-      "filePath": "src/components/ui/command.tsx",
-      "count": 1
+      "filePath": "src/hooks/__tests__/useOrganizationSettings.test.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/ui/form.tsx",
-      "count": 1
+      "filePath": "src/features/session-planning/steps/NotesStep.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/ui/navigation-menu.tsx",
-      "count": 1
+      "filePath": "src/features/session-planning/steps/LocationStep.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/ui/segmented-control.tsx",
-      "count": 1
+      "filePath": "src/features/session-planning/context/SessionWorkflowProvider.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/ui/selectable-pill.tsx",
-      "count": 1
+      "filePath": "src/features/session-planning/api/savedResources.ts",
+      "count": 2
     },
     {
-      "filePath": "src/components/ui/sidebar.tsx",
-      "count": 1
+      "filePath": "src/features/project-creation/components/__tests__/ProjectCreationWizardSheet.test.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/ui/sonner.tsx",
-      "count": 1
+      "filePath": "src/features/project-creation/components/ProjectCreationWizardSheet.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/ui/textarea.tsx",
-      "count": 1
+      "filePath": "src/features/package-creation/steps/DeliveryStep.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/components/ui/toggle.tsx",
-      "count": 1
+      "filePath": "src/features/package-creation/services/__tests__/packageCreationSnapshot.test.ts",
+      "count": 2
     },
     {
-      "filePath": "src/contexts/AuthContext.tsx",
-      "count": 1
+      "filePath": "src/contexts/__tests__/AuthContext.test.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/contexts/OnboardingContext.tsx",
-      "count": 1
+      "filePath": "src/contexts/LanguageContext.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/contexts/PortalResetContext.tsx",
-      "count": 1
+      "filePath": "src/contexts/ConnectivityContext.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/contexts/SettingsContext.tsx",
-      "count": 1
+      "filePath": "src/components/ui/date-time-picker.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/features/package-creation/context/PackageCreationProvider.tsx",
-      "count": 1
+      "filePath": "src/components/template-builder/previews/WhatsAppPreview.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/features/package-creation/hooks/usePackageCreationSnapshot.ts",
-      "count": 1
+      "filePath": "src/components/template-builder/TemplatePreview.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/features/package-creation/steps/ServicesStep.tsx",
-      "count": 1
+      "filePath": "src/components/template-builder/StorageQuotaDisplay.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/features/package-creation/steps/__tests__/SummaryStep.test.tsx",
-      "count": 1
+      "filePath": "src/components/support/__tests__/HelpOptionCard.test.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/features/project-creation/context/ProjectCreationProvider.tsx",
-      "count": 1
+      "filePath": "src/components/settings/__tests__/SettingsLayout.test.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/features/project-creation/steps/LeadStep.tsx",
-      "count": 1
+      "filePath": "src/components/settings/SessionTypeDialogs.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/features/session-planning/context/SessionPlanningOriginalStateContext.tsx",
-      "count": 1
+      "filePath": "src/components/layout-primitives/Surface.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/features/session-planning/context/SessionPlanningProvider.tsx",
-      "count": 1
+      "filePath": "src/components/__tests__/ActivityForm.test.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/features/session-planning/steps/LeadStep.tsx",
-      "count": 1
+      "filePath": "src/components/SimpleProjectTypeSelect.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/features/session-planning/steps/ProjectStep.tsx",
-      "count": 1
+      "filePath": "src/components/ProjectTypeSelector.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/hooks/__tests__/useMilestoneNotifications.test.ts",
-      "count": 1
+      "filePath": "src/components/ProjectStatusesSection.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/hooks/__tests__/useWorkflowTriggers.test.ts",
-      "count": 1
+      "filePath": "src/components/ProjectKanbanBoard.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/hooks/useLeadDetailData.ts",
-      "count": 1
+      "filePath": "src/components/PerformanceMonitor.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/hooks/useLeadStatusWorkflows.ts",
-      "count": 1
+      "filePath": "src/components/LeadStatusesSection.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/hooks/useLeadUpdate.ts",
-      "count": 1
+      "filePath": "src/components/LeadStatusBadge.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/hooks/useLeadsWithCustomFields.ts",
-      "count": 1
+      "filePath": "src/components/LeadFieldDialog.tsx",
+      "count": 2
     },
     {
-      "filePath": "src/hooks/useOnboardingBulletproofTest.ts",
-      "count": 1
-    },
-    {
-      "filePath": "src/hooks/useProjectPayments.ts",
-      "count": 1
-    },
-    {
-      "filePath": "src/hooks/useProjectProgress.ts",
-      "count": 1
-    },
-    {
-      "filePath": "src/hooks/useSessionEditForm.ts",
-      "count": 1
-    },
-    {
-      "filePath": "src/hooks/useSessionForm.ts",
-      "count": 1
-    },
-    {
-      "filePath": "src/hooks/useSettingsSectionWithContext.ts",
-      "count": 1
-    },
-    {
-      "filePath": "src/hooks/useTemplateVariables.ts",
-      "count": 1
-    },
-    {
-      "filePath": "src/hooks/useTutorialExit.ts",
-      "count": 1
-    },
-    {
-      "filePath": "src/hooks/useUserPreferences.ts",
-      "count": 1
-    },
-    {
-      "filePath": "src/hooks/useWorkflowHealth.ts",
-      "count": 1
-    },
-    {
-      "filePath": "src/hooks/useWorkingHours.ts",
-      "count": 1
-    },
-    {
-      "filePath": "src/legacy/components/optimized/VirtualizedList.tsx",
-      "count": 1
-    },
-    {
-      "filePath": "src/legacy/components/template-builder/ImageManager.tsx",
-      "count": 1
-    },
-    {
-      "filePath": "src/legacy/pages/AllProjectsRefactored.tsx",
-      "count": 1
-    },
-    {
-      "filePath": "src/lib/featureFlags.ts",
-      "count": 1
-    },
-    {
-      "filePath": "src/lib/sessionUtils.test.ts",
-      "count": 1
-    },
-    {
-      "filePath": "src/pages/GettingStarted.tsx",
-      "count": 1
-    },
-    {
-      "filePath": "src/pages/payments/hooks/__tests__/usePaymentsData.test.ts",
-      "count": 1
-    },
-    {
-      "filePath": "src/pages/payments/hooks/usePaymentsFilters.tsx",
-      "count": 1
-    },
-    {
-      "filePath": "src/pages/settings/Billing.tsx",
-      "count": 1
-    },
-    {
-      "filePath": "src/pages/settings/__tests__/Contracts.test.tsx",
-      "count": 1
-    },
-    {
-      "filePath": "src/pages/settings/__tests__/Leads.test.tsx",
-      "count": 1
-    },
-    {
-      "filePath": "src/pages/settings/__tests__/Projects.test.tsx",
-      "count": 1
-    },
-    {
-      "filePath": "supabase/functions/process-session-reminders/index.ts",
-      "count": 1
-    },
-    {
-      "filePath": "supabase/functions/schedule-daily-notifications/index.ts",
-      "count": 1
-    },
-    {
-      "filePath": "supabase/functions/send-reminder-notifications/_templates/weekly-recap-template.ts",
+      "filePath": "tailwind.config.ts",
       "count": 1
     },
     {
@@ -1118,7 +690,355 @@
       "count": 1
     },
     {
-      "filePath": "tailwind.config.ts",
+      "filePath": "supabase/functions/send-reminder-notifications/_templates/weekly-recap-template.ts",
+      "count": 1
+    },
+    {
+      "filePath": "supabase/functions/schedule-daily-notifications/index.ts",
+      "count": 1
+    },
+    {
+      "filePath": "supabase/functions/process-session-reminders/index.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/pages/settings/__tests__/Projects.test.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/pages/settings/__tests__/Leads.test.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/pages/settings/__tests__/Contracts.test.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/pages/settings/Billing.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/pages/payments/hooks/usePaymentsFilters.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/pages/payments/hooks/__tests__/usePaymentsData.test.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/pages/GettingStarted.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/lib/sessionUtils.test.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/lib/featureFlags.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/legacy/pages/AllProjectsRefactored.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/legacy/components/template-builder/ImageManager.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/legacy/components/optimized/VirtualizedList.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/useWorkingHours.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/useWorkflowHealth.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/useUserPreferences.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/useTutorialExit.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/useTemplateVariables.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/useSettingsSectionWithContext.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/useSessionForm.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/useSessionEditForm.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/useProjectStatusController.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/useProjectProgress.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/useProjectPayments.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/useOnboardingBulletproofTest.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/useLeadsWithCustomFields.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/useLeadUpdate.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/useLeadStatusWorkflows.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/useLeadDetailData.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/__tests__/useWorkflowTriggers.test.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/hooks/__tests__/useMilestoneNotifications.test.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/features/session-planning/steps/ProjectStep.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/features/session-planning/steps/LeadStep.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/features/session-planning/context/SessionPlanningProvider.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/features/session-planning/context/SessionPlanningOriginalStateContext.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/features/project-creation/steps/LeadStep.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/features/project-creation/context/ProjectCreationProvider.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/features/package-creation/steps/__tests__/SummaryStep.test.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/features/package-creation/steps/ServicesStep.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/features/package-creation/hooks/usePackageCreationSnapshot.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/features/package-creation/context/PackageCreationProvider.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/contexts/SettingsContext.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/contexts/PortalResetContext.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/contexts/OnboardingContext.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/contexts/AuthContext.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/ui/toggle.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/ui/textarea.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/ui/sonner.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/ui/sidebar.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/ui/selectable-pill.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/ui/segmented-control.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/ui/navigation-menu.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/ui/form.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/ui/command.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/ui/button.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/ui/badge.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/ui/__tests__/use-toast.test.ts",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/template-builder/__tests__/TemplatePreview.test.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/template-builder/VariablePicker.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/template-builder/ImageLibrarySheet.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/template-builder/CompactStorageIndicator.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/settings/SocialChannelsSection.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/settings/SettingsStickyFooter.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/project-details/StickySectionNav.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/navigation/StickySectionNav.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/mobile/MobileBottomNav.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/__tests__/WorkflowHealthDashboard.test.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/__tests__/TruncatedTextWithTooltip.test.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/__tests__/TimeSlotPicker.test.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/__tests__/SessionSchedulingSheet.test.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/__tests__/SessionBanner.test.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/__tests__/ProjectServicesSection.test.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/__tests__/GuidedStepProgress.test.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/__tests__/ErrorBoundary.test.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/__tests__/CalendarTimePicker.test.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/WeeklySchedulePreview.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/TruncatedTextWithTooltip.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/SessionsSection.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/ServiceSelector.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/ProjectTypesSection.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/ProjectTodoList.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/LeadInitials.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/LeadFieldsList.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/EnhancedSessionsSection.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/DeadSimpleSessionBanner.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/DateRangePicker.tsx",
       "count": 1
     }
   ]

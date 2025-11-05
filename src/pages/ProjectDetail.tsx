@@ -20,7 +20,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 // AssigneesList removed - single user organization
 import { SessionWithStatus } from "@/lib/sessionSorting";
-import { onArchiveToggle } from "@/components/ViewProjectDialog";
+import { onArchiveToggle } from "@/components/projectArchiveToggle";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useTranslation } from "react-i18next";
 import { EntityHeader } from "@/components/EntityHeader";

@@ -1,9 +1,25 @@
+import type { ComponentType } from "react";
+import React from "react";
 import { render, screen, fireEvent, waitFor } from "@/utils/testUtils";
 import { ImageUpload } from "../ImageUpload";
 import { ImageLibrarySheet } from "../ImageLibrarySheet";
 import { TemplateErrorBoundary } from "../TemplateErrorBoundary";
 import { EmojiPicker } from "../EmojiPicker";
-import React from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { checkStorageLimits } from "../StorageQuotaDisplay";
+import { supabase } from "@/integrations/supabase/client";
+
+type TemplateAssetRecord = {
+  id: string;
+  file_name: string;
+  file_path: string;
+  file_size: number;
+  content_type: string;
+  alt_text: string | null;
+  created_at: string;
+};
 
 const toastMock = jest.fn();
 const clipboardWriteMock = jest.fn();
@@ -15,9 +31,8 @@ jest.mock("react-i18next", () => ({
     t: (key: string, vars?: Record<string, unknown>) =>
       vars && "name" in vars ? `${key}:${vars.name}` : key,
   })),
-  withTranslation: () => (Component: React.ComponentType<any>) =>
-    (props: Record<string, unknown>) =>
-      <Component t={(key: string) => key} {...props} />,
+  withTranslation: () => <P extends Record<string, unknown>>(Component: ComponentType<P>) =>
+    (props: P) => <Component t={(key: string) => key} {...props} />,
 }));
 
 jest.mock("@/hooks/useTypedTranslation", () => ({
@@ -54,20 +69,18 @@ jest.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
-const { useToast } = require("@/hooks/use-toast") as {
-  useToast: jest.Mock;
+type MockedSupabaseClient = {
+  from: jest.Mock;
+  storage: {
+    from: jest.Mock;
+  };
 };
-const { useAuth } = require("@/contexts/AuthContext") as {
-  useAuth: jest.Mock;
-};
-const { useOrganization } = require("@/contexts/OrganizationContext") as {
-  useOrganization: jest.Mock;
-};
-const { checkStorageLimits } = require("../StorageQuotaDisplay") as {
-  checkStorageLimits: jest.Mock;
-};
-const supabase = require("@/integrations/supabase/client")
-  .supabase as any;
+
+const mockedSupabase = supabase as unknown as MockedSupabaseClient;
+const mockedUseToast = useToast as unknown as jest.Mock;
+const mockedUseAuth = useAuth as unknown as jest.Mock;
+const mockedUseOrganization = useOrganization as unknown as jest.Mock;
+const mockedCheckStorageLimits = checkStorageLimits as unknown as jest.Mock;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -76,12 +89,12 @@ beforeEach(() => {
   uploadMock.mockReset();
   removeMock.mockReset();
 
-  useToast.mockReturnValue({ toast: toastMock });
-  useAuth.mockReturnValue({ user: { id: "user-1" } });
-  useOrganization.mockReturnValue({
+  mockedUseToast.mockReturnValue({ toast: toastMock });
+  mockedUseAuth.mockReturnValue({ user: { id: "user-1" } });
+  mockedUseOrganization.mockReturnValue({
     activeOrganization: { id: "org-1" },
   });
-  checkStorageLimits.mockReturnValue({ canUpload: true });
+  mockedCheckStorageLimits.mockReturnValue({ canUpload: true });
   uploadMock.mockResolvedValue({ error: null });
   removeMock.mockResolvedValue({ error: null });
 
@@ -90,7 +103,7 @@ beforeEach(() => {
     value: { writeText: clipboardWriteMock },
   });
 
-  supabase.storage.from.mockReturnValue({
+  mockedSupabase.storage.from.mockReturnValue({
     upload: uploadMock,
     getPublicUrl: jest.fn(() => ({
       data: { publicUrl: "https://cdn.local/photo.png" },
@@ -98,7 +111,7 @@ beforeEach(() => {
     remove: removeMock,
   });
 
-  supabase.from.mockImplementation(() => ({}));
+  mockedSupabase.from.mockImplementation(() => ({}));
 });
 
 describe("ImageUpload", () => {
@@ -121,7 +134,7 @@ describe("ImageUpload", () => {
     const { selectMock } = mockUsageResponse(usage);
     const insertMock = jest.fn().mockResolvedValue({ error: null });
 
-    supabase.from.mockImplementation((table: string) => {
+    mockedSupabase.from.mockImplementation((table: string) => {
       if (table === "template_image_usage") {
         return { select: selectMock };
       }
@@ -172,7 +185,7 @@ describe("ImageUpload", () => {
   });
 
   it("rejects uploads when no authenticated user is present", () => {
-    useAuth.mockReturnValue({ user: null });
+    mockedUseAuth.mockReturnValue({ user: null });
     const { container } = render(
       <ImageUpload onImageUploaded={jest.fn()} />
     );
@@ -308,7 +321,7 @@ describe("ImageUpload", () => {
 });
 
 describe("ImageLibrarySheet", () => {
-  const assets = [
+  const assets: TemplateAssetRecord[] = [
     {
       id: "asset-1",
       file_name: "hero.png",
@@ -324,7 +337,7 @@ describe("ImageLibrarySheet", () => {
     selectError?: Error | null;
     updateError?: Error | null;
     deleteError?: Error | null;
-    reloadData?: any[];
+    reloadData?: TemplateAssetRecord[];
   }) => {
     const orderMock = jest
       .fn()
@@ -353,7 +366,7 @@ describe("ImageLibrarySheet", () => {
     );
     const deleteMock = jest.fn(() => ({ eq: deleteEqMock }));
 
-    supabase.from.mockImplementation((table: string) => {
+    mockedSupabase.from.mockImplementation((table: string) => {
       if (table === "template_assets") {
         return {
           select: selectMock,
@@ -364,7 +377,7 @@ describe("ImageLibrarySheet", () => {
       return {};
     });
 
-    supabase.storage.from.mockReturnValue({
+    mockedSupabase.storage.from.mockReturnValue({
       upload: uploadMock,
       remove: removeMock,
       getPublicUrl: jest.fn(() => ({

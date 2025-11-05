@@ -2,6 +2,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { TriggerType } from '@/types/workflow';
 
+type TriggerPayload = Record<string, unknown>;
+
+type SessionTriggerData = TriggerPayload & {
+  session_date?: string;
+  session_time?: string;
+  location?: string;
+};
+
+type StatusChangeData = TriggerPayload & {
+  old_status?: string;
+  new_status?: string;
+};
+
+const getErrorMessage = (error: unknown) => (error instanceof Error ? error.message : undefined);
+
 export function useWorkflowTriggers() {
   const { toast } = useToast();
 
@@ -10,7 +25,7 @@ export function useWorkflowTriggers() {
     entityType: string,
     entityId: string,
     organizationId: string,
-    triggerData?: any
+    triggerData?: TriggerPayload
   ) => {
     try {
       // Input validation
@@ -57,14 +72,15 @@ export function useWorkflowTriggers() {
 
       return data?.result;
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error in triggerWorkflow:', error);
       
       // Only show toast for unexpected errors, not for "no workflows found" cases
-      if (error.message && !error.message.includes('No workflows found')) {
+      const message = getErrorMessage(error);
+      if (message && !message.includes('No workflows found')) {
         toast({
           title: 'Workflow Error',
-          description: error.message || 'Failed to trigger workflows',
+          description: message || 'Failed to trigger workflows',
           variant: 'destructive',
         });
       }
@@ -77,7 +93,7 @@ export function useWorkflowTriggers() {
   const triggerSessionScheduled = (
     sessionId: string,
     organizationId: string,
-    sessionData?: any,
+    sessionData?: SessionTriggerData,
     workflowIds?: string[]
   ) => {
     const payload: Record<string, unknown> = {
@@ -94,15 +110,15 @@ export function useWorkflowTriggers() {
     return triggerWorkflow('session_scheduled', 'session', sessionId, organizationId, payload);
   };
 
-  const triggerSessionCompleted = (sessionId: string, organizationId: string, sessionData?: any) => {
+  const triggerSessionCompleted = (sessionId: string, organizationId: string, sessionData?: SessionTriggerData) => {
     return triggerWorkflow('session_completed', 'session', sessionId, organizationId, sessionData);
   };
 
-  const triggerSessionCancelled = (sessionId: string, organizationId: string, sessionData?: any) => {
+  const triggerSessionCancelled = (sessionId: string, organizationId: string, sessionData?: SessionTriggerData) => {
     return triggerWorkflow('session_cancelled', 'session', sessionId, organizationId, sessionData);
   };
 
-  const triggerSessionRescheduled = (sessionId: string, organizationId: string, oldDate: string, newDate: string, sessionData?: any) => {
+  const triggerSessionRescheduled = (sessionId: string, organizationId: string, oldDate: string, newDate: string, sessionData?: SessionTriggerData) => {
     return triggerWorkflow('session_rescheduled', 'session', sessionId, organizationId, {
       old_date: oldDate,
       new_date: newDate,
@@ -110,12 +126,12 @@ export function useWorkflowTriggers() {
     });
   };
 
-  const triggerSessionReminder = (sessionId: string, organizationId: string, sessionData?: any) => {
+  const triggerSessionReminder = (sessionId: string, organizationId: string, sessionData?: SessionTriggerData) => {
     return triggerWorkflow('session_reminder', 'session', sessionId, organizationId, sessionData);
   };
 
   // Project-specific triggers
-  const triggerProjectStatusChange = (projectId: string, organizationId: string, oldStatus: string, newStatus: string, projectData?: any) => {
+  const triggerProjectStatusChange = (projectId: string, organizationId: string, oldStatus: string, newStatus: string, projectData?: StatusChangeData) => {
     return triggerWorkflow('project_status_change', 'project', projectId, organizationId, {
       old_status: oldStatus,
       new_status: newStatus,
@@ -124,7 +140,7 @@ export function useWorkflowTriggers() {
   };
 
   // Lead-specific triggers
-  const triggerLeadStatusChange = (leadId: string, organizationId: string, oldStatus: string, newStatus: string, leadData?: any) => {
+  const triggerLeadStatusChange = (leadId: string, organizationId: string, oldStatus: string, newStatus: string, leadData?: StatusChangeData) => {
     return triggerWorkflow('lead_status_change', 'lead', leadId, organizationId, {
       old_status: oldStatus,
       new_status: newStatus,

@@ -8,8 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore } from "lucide-react";
-import { format } from "date-fns";
-import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectActivitySection } from "./ProjectActivitySection";
 import { ProjectTodoList } from "./ProjectTodoList";
@@ -23,6 +21,7 @@ import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLay
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { useSessionActions } from "@/hooks/useSessionActions";
+import { onArchiveToggle } from "@/components/projectArchiveToggle";
 // AssigneesList removed - single user organization
 interface Project {
   id: string;
@@ -73,168 +72,9 @@ interface ViewProjectDialogProps {
   onActivityUpdated?: () => void;
   leadName: string;
 }
-export async function onArchiveToggle(project: {
-  id: string;
-  status_id?: string | null;
-}) {
-  // Toggle archive/restore for a project using project_statuses
-  const {
-    data: userData,
-    error: userErr
-  } = await supabase.auth.getUser();
-  if (userErr || !userData.user) throw new Error('User not authenticated');
 
-  const organizationId = await getUserOrganizationId();
-  if (!organizationId) {
-    throw new Error("Organization required");
-  }
+const getErrorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
-  // Find or create Archived status
-  let archivedId: string | undefined;
-  
-  // Check for existing Archived status
-  const { data: existingStatuses, error: statusError } = await supabase
-    .from('project_statuses')
-    .select('id, name')
-    .eq('organization_id', organizationId)
-    .ilike('name', 'archived');
-  
-  if (statusError) throw statusError;
-  
-  // Find existing archived status (case-insensitive)
-  const existingArchived = existingStatuses?.find(
-    (status: { id: string; name: string }) => 
-      status.name.toLowerCase() === 'archived'
-  );
-  
-  if (existingArchived) {
-    archivedId = existingArchived.id;
-  } else {
-    // Create new Archived status if it doesn't exist
-    const { data: created, error: createErr } = await supabase
-      .from('project_statuses')
-      .insert({
-        user_id: userData.user.id,
-        organization_id: organizationId,
-        name: 'Archived',
-        color: '#6B7280',
-        sort_order: 9999,
-        lifecycle: 'cancelled'
-      })
-      .select('id')
-      .single();
-    
-    if (createErr) {
-      // Handle race condition - status might have been created by another user
-      if (createErr.code === '23505') { // Unique constraint violation
-        const { data: raceStatuses } = await supabase
-          .from('project_statuses')
-          .select('id')
-          .eq('organization_id', organizationId)
-          .ilike('name', 'archived')
-          .limit(1);
-        
-        if (raceStatuses && raceStatuses.length > 0) {
-          archivedId = raceStatuses[0].id;
-        } else {
-          throw createErr;
-        }
-      } else {
-        throw createErr;
-      }
-    } else {
-      archivedId = created.id;
-    }
-  }
-
-  // Load current project to get existing status and previous_status_id
-  const {
-    data: proj,
-    error: projErr
-  } = await supabase.from('projects').select('id, status_id, previous_status_id, lead_id').eq('id', project.id).single();
-  if (projErr) throw projErr;
-  const currentlyArchived = proj.status_id === archivedId;
-  if (!currentlyArchived) {
-    // Archive: remember previous status and set archived
-    const {
-      error: updErr
-    } = await supabase.from('projects').update({
-      previous_status_id: proj.status_id,
-      status_id: archivedId
-    }).eq('id', project.id).eq('user_id', userData.user.id);
-    if (updErr) throw updErr;
-
-    // Log activity
-    await supabase.from('activities').insert({
-      type: 'status_change',
-      content: `Project archived`,
-      project_id: project.id,
-      lead_id: proj.lead_id,
-      user_id: userData.user.id,
-      organization_id: organizationId
-    });
-    // Log to audit history
-    await supabase.from('audit_log').insert({
-      user_id: userData.user.id,
-      entity_type: 'project',
-      entity_id: project.id,
-      action: 'archived',
-      old_values: {
-        status_id: proj.status_id
-      },
-      new_values: {
-        status_id: archivedId
-      }
-    });
-    return {
-      isArchived: true
-    };
-  }
-
-  // Restore: get target status (previous or default)
-  let targetStatusId: string | null = proj.previous_status_id;
-  if (!targetStatusId) {
-    const {
-      data: def,
-      error: defErr
-    } = await supabase.rpc('get_default_project_status', {
-      user_uuid: userData.user.id
-    });
-    if (defErr) throw defErr;
-    targetStatusId = def as string | null;
-  }
-  const {
-    error: restoreErr
-  } = await supabase.from('projects').update({
-    status_id: targetStatusId,
-    previous_status_id: null
-  }).eq('id', project.id).eq('user_id', userData.user.id);
-  if (restoreErr) throw restoreErr;
-  await supabase.from('activities').insert({
-    type: 'status_change',
-    content: `Project restored`,
-    project_id: project.id,
-    lead_id: proj.lead_id,
-    user_id: userData.user.id,
-    organization_id: organizationId
-  });
-  // Log to audit history
-  await supabase.from('audit_log').insert({
-    user_id: userData.user.id,
-    entity_type: 'project',
-    entity_id: project.id,
-    action: 'restored',
-    old_values: {
-      status_id: archivedId
-    },
-    new_values: {
-      status_id: targetStatusId
-    }
-  });
-  return {
-    isArchived: false
-  };
-}
 export function ViewProjectDialog({
   project,
   open,
@@ -268,27 +108,29 @@ export function ViewProjectDialog({
     toast
   } = useToast();
   const { deleteSession } = useSessionActions();
-  const fetchProjectSessions = async () => {
-    if (!project) return;
+  const fetchProjectSessions = useCallback(async () => {
+    const projectId = project?.id;
+    if (!projectId) return;
     setLoading(true);
     try {
       const {
         data,
         error
-      } = await supabase.from('sessions').select('*').eq('project_id', project.id);
+      } = await supabase.from('sessions').select('*').eq('project_id', projectId);
       if (error) throw error;
       setSessions(data as unknown as Session[]);
-    } catch (error: any) {
+    } catch (error) {
+      const message = getErrorMessage(error);
       console.error('Error fetching project sessions:', error);
       toast({
         title: tForms('viewProject.errorLoadingSessions'),
-        description: error.message,
+        description: message,
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [project?.id, tForms, toast]);
 
   const sectionId = {
     payments: "project-dialog-payments",
@@ -299,41 +141,43 @@ export function ViewProjectDialog({
   } as const;
 
   const dialogNavOffset = 24;
-  const fetchProjectType = async () => {
-    if (!project?.project_type_id) return;
+  const fetchProjectType = useCallback(async () => {
+    const projectTypeId = project?.project_type_id;
+    if (!projectTypeId) return;
     try {
       const {
         data,
         error
-      } = await supabase.from('project_types').select('id, name').eq('id', project.project_type_id).single();
+      } = await supabase.from('project_types').select('id, name').eq('id', projectTypeId).single();
       if (error) throw error;
       setProjectType(data);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching project type:', error);
     }
-  };
-  const fetchLead = async () => {
-    if (!project?.lead_id) return;
+  }, [project?.project_type_id]);
+  const fetchLead = useCallback(async () => {
+    const leadId = project?.lead_id;
+    if (!leadId) return;
     try {
       const {
         data,
         error
-      } = await supabase.from('leads').select('id, name, email, phone, status, notes').eq('id', project.lead_id).single();
+      } = await supabase.from('leads').select('id, name, email, phone, status, notes').eq('id', leadId).single();
       if (error) throw error;
       setLead(data);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching lead:', error);
     }
-  };
+  }, [project?.lead_id]);
   const handleAssigneesUpdate = () => {
     onProjectUpdated();
   };
 
   useEffect(() => {
     if (project && open) {
-      fetchProjectSessions();
-      fetchProjectType();
-      fetchLead();
+      void fetchProjectSessions();
+      void fetchProjectType();
+      void fetchLead();
       setEditName(project.name);
       setEditDescription(project.description || "");
       setEditProjectTypeId(project.project_type_id || "");
@@ -344,7 +188,7 @@ export function ViewProjectDialog({
       setIsFullscreen(isMobile);
       setLocalStatusId(project.status_id || null);
     }
-  }, [project, open]);
+  }, [fetchLead, fetchProjectSessions, fetchProjectType, open, project]);
   useEffect(() => {
     const fetchStatus = async () => {
       if (!project?.id) {
@@ -440,16 +284,17 @@ export function ViewProjectDialog({
           if (!typeError) {
             setProjectType(typeData);
           }
-        } catch (typeError: any) {
+        } catch (typeError) {
           console.error('Error fetching updated project type:', typeError);
         }
       }
       setIsEditing(false);
       onProjectUpdated();
-    } catch (error: any) {
+    } catch (error) {
+      const message = getErrorMessage(error);
       toast({
         title: tForms('viewProject.errorUpdatingProject'),
-        description: error.message,
+        description: message,
         variant: "destructive"
       });
     } finally {
@@ -509,10 +354,11 @@ export function ViewProjectDialog({
       });
       onOpenChange(false);
       onProjectUpdated();
-    } catch (error: any) {
+    } catch (error) {
+      const message = getErrorMessage(error);
       toast({
         title: tForms('viewProject.errorDeletingProject'),
-        description: error.message,
+        description: message,
         variant: "destructive"
       });
     } finally {
@@ -538,10 +384,11 @@ export function ViewProjectDialog({
       });
       fetchProjectSessions();
       onProjectUpdated(); // Notify parent component to refresh sessions
-    } catch (error: any) {
+    } catch (error) {
+      const message = getErrorMessage(error);
       toast({
         title: tForms('viewProject.errorDeletingSession'),
-        description: error.message,
+        description: message,
         variant: "destructive"
       });
     }
@@ -561,10 +408,11 @@ export function ViewProjectDialog({
       } = await supabase.from('projects').select('status_id, previous_status_id').eq('id', project.id).single();
       setLocalStatusId(res.isArchived ? projRow?.previous_status_id || null : projRow?.status_id || null);
       onProjectUpdated();
-    } catch (e: any) {
+    } catch (e) {
+      const message = getErrorMessage(e);
       toast({
         title: 'Action failed',
-        description: e.message || 'Could not update archive state',
+        description: message || 'Could not update archive state',
         variant: 'destructive'
       });
     }

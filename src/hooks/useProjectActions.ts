@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { ProjectService, ProjectWithDetails, CreateProjectData, UpdateProjectData } from '@/services/ProjectService';
 import { useEntityActions } from './useEntityActions';
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '@/constants/entityConstants';
@@ -13,7 +13,14 @@ export interface UseProjectActionsOptions {
 
 export function useProjectActions(options: UseProjectActionsOptions = {}) {
   const { executeAction, getActionState, clearActionState } = useEntityActions();
-  const projectService = new ProjectService();
+  const projectService = useMemo(() => new ProjectService(), []);
+  const {
+    onProjectCreated,
+    onProjectUpdated,
+    onProjectDeleted,
+    onStatusChanged,
+    onArchived
+  } = options;
 
   const createProject = useCallback(async (data: CreateProjectData) => {
     return executeAction(
@@ -21,11 +28,11 @@ export function useProjectActions(options: UseProjectActionsOptions = {}) {
       () => projectService.createProject(data),
       {
         successMessage: SUCCESS_MESSAGES.CREATED('Project'),
-        onSuccess: options.onProjectCreated,
+        onSuccess: onProjectCreated,
         errorMessage: ERROR_MESSAGES.CREATE_FAILED
       }
     );
-  }, [projectService, options.onProjectCreated]);
+  }, [executeAction, onProjectCreated, projectService]);
 
   const updateProject = useCallback(async (id: string, data: UpdateProjectData) => {
     return executeAction(
@@ -33,11 +40,11 @@ export function useProjectActions(options: UseProjectActionsOptions = {}) {
       () => projectService.updateProject(id, data),
       {
         successMessage: SUCCESS_MESSAGES.UPDATED('Project'),
-        onSuccess: options.onProjectUpdated,
+        onSuccess: onProjectUpdated,
         errorMessage: ERROR_MESSAGES.UPDATE_FAILED
       }
     );
-  }, [projectService, options.onProjectUpdated]);
+  }, [executeAction, onProjectUpdated, projectService]);
 
   const deleteProject = useCallback(async (id: string) => {
     return executeAction(
@@ -48,11 +55,11 @@ export function useProjectActions(options: UseProjectActionsOptions = {}) {
       },
       {
         successMessage: SUCCESS_MESSAGES.DELETED('Project'),
-        onSuccess: () => options.onProjectDeleted?.(id),
+        onSuccess: () => onProjectDeleted?.(id),
         errorMessage: ERROR_MESSAGES.DELETE_FAILED
       }
     );
-  }, [projectService, options.onProjectDeleted]);
+  }, [executeAction, onProjectDeleted, projectService]);
 
   const archiveProject = useCallback(async (id: string, currentlyArchived: boolean = false) => {
     return executeAction(
@@ -67,13 +74,13 @@ export function useProjectActions(options: UseProjectActionsOptions = {}) {
         successMessage: currentlyArchived ? 'Project restored successfully' : 'Project archived successfully',
         onSuccess: (result) => {
           if (result?.project) {
-            options.onArchived?.(result.project, result.isArchived);
+            onArchived?.(result.project, result.isArchived);
           }
         },
         errorMessage: currentlyArchived ? 'Failed to restore project' : 'Failed to archive project'
       }
     );
-  }, [projectService, options.onArchived]);
+  }, [executeAction, onArchived, projectService]);
 
   const changeProjectStatus = useCallback(async (
     projectId: string, 
@@ -84,11 +91,11 @@ export function useProjectActions(options: UseProjectActionsOptions = {}) {
       () => projectService.updateProject(projectId, { status_id: statusId }),
       {
         successMessage: 'Project status updated',
-        onSuccess: options.onStatusChanged,
+        onSuccess: onStatusChanged,
         errorMessage: 'Failed to update project status'
       }
     );
-  }, [projectService, options.onStatusChanged]);
+  }, [executeAction, onStatusChanged, projectService]);
 
   const updateProjectBudget = useCallback(async (
     projectId: string, 
@@ -99,11 +106,11 @@ export function useProjectActions(options: UseProjectActionsOptions = {}) {
       () => projectService.updateProject(projectId, { base_price: basePrice }),
       {
         successMessage: 'Project budget updated',
-        onSuccess: options.onProjectUpdated,
+        onSuccess: onProjectUpdated,
         errorMessage: 'Failed to update project budget'
       }
     );
-  }, [projectService, options.onProjectUpdated]);
+  }, [executeAction, onProjectUpdated, projectService]);
 
   const reorderProjects = useCallback(async (
     projectUpdates: Array<{ id: string; sort_order: number }>
@@ -123,7 +130,7 @@ export function useProjectActions(options: UseProjectActionsOptions = {}) {
         errorMessage: 'Failed to reorder projects'
       }
     );
-  }, [projectService]);
+  }, [executeAction, projectService]);
 
   const duplicateProject = useCallback(async (
     originalId: string,
@@ -151,11 +158,11 @@ export function useProjectActions(options: UseProjectActionsOptions = {}) {
       },
       {
         successMessage: 'Project duplicated successfully',
-        onSuccess: options.onProjectCreated,
+        onSuccess: onProjectCreated,
         errorMessage: 'Failed to duplicate project'
       }
     );
-  }, [projectService, options.onProjectCreated]);
+  }, [executeAction, onProjectCreated, projectService]);
 
   // Action state getters
   const isCreating = getActionState('createProject').loading;

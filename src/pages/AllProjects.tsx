@@ -40,6 +40,7 @@ import {
 } from "@/pages/projects/hooks/useProjectsData";
 import type { ProjectListItem, ProjectStatusSummary } from "@/pages/projects/types";
 import { startTimer } from "@/lib/debug";
+import { promoteProjectToTop } from "@/lib/projects/sortOrder";
 import { useConnectivity } from "@/contexts/ConnectivityContext";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 
@@ -992,6 +993,16 @@ const formatCurrency = useCallback((amount: string | number | null) => {
     refreshAllRef.current = refreshAll;
   }, [refreshAll]);
 
+  const handleProjectCreated = useCallback(
+    async (project?: { id: string }) => {
+      if (project?.id) {
+        await promoteProjectToTop(project.id);
+      }
+      await refreshAll();
+    },
+    [refreshAll]
+  );
+
   const loadMoreBoard = useCallback(() => {
     if (!boardHasMore) return;
     loadBoardProjects();
@@ -1171,7 +1182,7 @@ const formatCurrency = useCallback((amount: string | number | null) => {
         isOpen={isProjectWizardOpen}
         onOpenChange={setProjectWizardOpen}
         entrySource="projects"
-        onProjectCreated={refreshAll}
+        onProjectCreated={handleProjectCreated}
       />
 
       <div className="flex flex-col h-screen overflow-x-hidden">

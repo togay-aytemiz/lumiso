@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import React from "react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import LeadDetail from "../LeadDetail";
@@ -24,9 +25,12 @@ jest.mock("@/hooks/useSessionActions", () => ({
   useSessionActions: jest.fn(),
 }));
 
-const createTranslator = () =>
-  jest.fn((key: string, options?: Record<string, unknown>) => {
-    if (options && (options as any).returnObjects) {
+type TranslatorOptions = Record<string, unknown> & { returnObjects?: boolean };
+type TranslatorFn = jest.Mock<string | unknown[] | string[], [string, TranslatorOptions?]>;
+
+const createTranslator = (): TranslatorFn =>
+  jest.fn((key: string, options?: TranslatorOptions) => {
+    if (options?.returnObjects) {
       if (key.includes("intro.sections")) {
         return [
           { title: "Intro One", description: "Intro description" },
@@ -96,14 +100,85 @@ const mockUseParams = useParams as jest.Mock;
 const mockUseNavigate = useNavigate as jest.Mock;
 const mockUseLocation = useLocation as jest.Mock;
 
-const entityHeaderSpy = jest.fn();
-const projectsSectionSpy = jest.fn();
-const leadActivitySpy = jest.fn();
-let markAsCompletedMock: jest.Mock;
-let markAsLostMock: jest.Mock;
+type EntityHeaderMockProps = {
+  actions?: ReactNode;
+  summaryItems: Array<{ primary: string }>;
+};
+
+type ProjectsSectionMockProps = {
+  leadId?: string;
+  leadName?: string;
+  [key: string]: unknown;
+};
+
+type LeadActivitySectionMockProps = {
+  leadId?: string;
+  leadName?: string;
+  [key: string]: unknown;
+};
+
+type ScheduleSessionDialogProps = {
+  onSessionScheduled?: () => void;
+};
+
+type LayoutSection = {
+  id: string;
+  title: ReactNode;
+  content: ReactNode;
+};
+
+type ProjectDetailsLayoutMockProps = {
+  left: ReactNode;
+  sections: LayoutSection[];
+  rightFooter?: ReactNode;
+};
+
+type LeadDetailHookResponse = {
+  lead: {
+    id: string;
+    name: string;
+    status: string;
+    status_id: string;
+    created_at: string;
+  } | null;
+  leadQuery: {
+    isError: boolean;
+    isSuccess: boolean;
+    error: unknown;
+    refetch: jest.Mock<unknown, []>;
+  };
+  sessions: Array<Record<string, unknown>>;
+  sessionsQuery: {
+    refetch: jest.Mock<unknown, []>;
+    data: unknown[];
+    isFetching: boolean;
+  };
+  projectSummary: { count: number; latestUpdate: string | null };
+  aggregatedPayments: { total: number; totalPaid: number; remaining: number; currency: string };
+  summaryQuery: { refetch: jest.Mock<unknown, []> };
+  latestLeadActivity: unknown;
+  latestActivityQuery: { refetch: jest.Mock<unknown, []> };
+  leadStatuses: Array<{ id: string; name: string; is_system_final: boolean }>;
+  sessionMetrics: {
+    todayCount: number;
+    todayNext: unknown;
+    nextUpcoming: unknown;
+    overdueCount: number;
+  };
+  latestSessionUpdate: unknown;
+  hasProjects: boolean;
+  isLoading: boolean;
+  refetchAll: jest.Mock<unknown, []>;
+};
+
+const entityHeaderSpy = jest.fn<void, [EntityHeaderMockProps]>();
+const projectsSectionSpy = jest.fn<void, [ProjectsSectionMockProps]>();
+const leadActivitySpy = jest.fn<void, [LeadActivitySectionMockProps]>();
+let markAsCompletedMock: jest.Mock<void, []>;
+let markAsLostMock: jest.Mock<void, []>;
 
 jest.mock("@/components/EntityHeader", () => ({
-  EntityHeader: (props: any) => {
+  EntityHeader: (props: EntityHeaderMockProps) => {
     entityHeaderSpy(props);
     return (
       <div data-testid="entity-header">
@@ -114,14 +189,14 @@ jest.mock("@/components/EntityHeader", () => ({
 }));
 
 jest.mock("@/components/ProjectsSection", () => ({
-  ProjectsSection: (props: any) => {
+  ProjectsSection: (props: ProjectsSectionMockProps) => {
     projectsSectionSpy(props);
     return <div data-testid="projects-section" />;
   },
 }));
 
 jest.mock("@/components/LeadActivitySection", () => ({
-  LeadActivitySection: (props: any) => {
+  LeadActivitySection: (props: LeadActivitySectionMockProps) => {
     leadActivitySpy(props);
     return <div data-testid="lead-activity" />;
   },
@@ -129,7 +204,7 @@ jest.mock("@/components/LeadActivitySection", () => ({
 
 jest.mock("@/components/ScheduleSessionDialog", () => ({
   __esModule: true,
-  default: (props: any) => {
+  default: (props: ScheduleSessionDialogProps) => {
     return (
       <button
         data-testid="schedule-session"
@@ -156,11 +231,11 @@ jest.mock("@/components/UnifiedClientDetails", () => ({
 
 jest.mock("@/components/project-details/ProjectDetailsLayout", () => ({
   __esModule: true,
-  default: ({ left, sections, rightFooter }: any) => (
+  default: ({ left, sections, rightFooter }: ProjectDetailsLayoutMockProps) => (
     <div data-testid="project-details-layout">
       <div data-testid="layout-left">{left}</div>
       <div data-testid="layout-sections">
-        {sections.map((section: any) => (
+        {sections.map(section => (
           <div key={section.id} data-testid={`section-${section.id}`}>
             <div>{section.title}</div>
             <div>{section.content}</div>
@@ -181,9 +256,9 @@ jest.mock("@/components/ui/loading-presets", () => ({
 }));
 
 function createLeadDetailResponse(
-  overrides: Partial<ReturnType<typeof useLeadDetailData>> = {}
-) {
-  const base = {
+  overrides: Partial<LeadDetailHookResponse> = {}
+): LeadDetailHookResponse {
+  const base: LeadDetailHookResponse = {
     lead: {
       id: "lead-1",
       name: "Test Lead",
@@ -192,7 +267,7 @@ function createLeadDetailResponse(
       created_at: "2024-01-01T00:00:00Z",
     },
     leadQuery: { isError: false, isSuccess: true, error: null, refetch: jest.fn() },
-    sessions: [] as any[],
+    sessions: [],
     sessionsQuery: { refetch: jest.fn(), data: [], isFetching: false },
     projectSummary: { count: 0, latestUpdate: null },
     aggregatedPayments: { total: 0, totalPaid: 0, remaining: 0, currency: "TRY" },
@@ -213,7 +288,7 @@ function createLeadDetailResponse(
     hasProjects: false,
     isLoading: false,
     refetchAll: jest.fn(),
-  } as any;
+  };
 
   return { ...base, ...overrides };
 }

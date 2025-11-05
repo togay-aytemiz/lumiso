@@ -26,6 +26,8 @@ import { useNavigate } from "react-router-dom";
 const DRAFT_STORAGE_PREFIX = "session-wizard-draft";
 const DRAFT_VERSION = 1;
 
+const getErrorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
+
 const buildDraftKey = (userId: string | null, context: SessionPlanningEntryContext) => {
   const parts = [
     userId || "anon",
@@ -91,6 +93,33 @@ interface SessionPlanningWizardSheetProps {
   onSessionScheduled?: () => void;
   onSessionUpdated?: () => void;
 }
+
+type SessionRecord = {
+  id: string;
+  session_name?: string | null;
+  session_date?: string | null;
+  session_time?: string | null;
+  notes?: string | null;
+  location?: string | null;
+  session_type_id?: string | null;
+  lead_id?: string | null;
+  project_id?: string | null;
+  leads?: {
+    id?: string;
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    notes?: string | null;
+  } | null;
+  projects?: {
+    id?: string;
+    name?: string | null;
+  } | null;
+  session_types?: {
+    id?: string;
+    name?: string | null;
+  } | null;
+};
 
 export const SessionPlanningWizardSheet = (props: SessionPlanningWizardSheetProps) => {
   const derivedEntrySource =
@@ -279,7 +308,7 @@ const SessionPlanningWizardSheetInner = ({
 
     const resolveContext = async () => {
       try {
-        let nextContext: SessionPlanningEntryContext = { ...entryContext };
+        const nextContext: SessionPlanningEntryContext = { ...entryContext };
         let leadIdForLookup = nextContext.leadId;
 
         if (needsProjectLookup && entryContext.projectId) {
@@ -353,6 +382,7 @@ const SessionPlanningWizardSheetInner = ({
     resolveContext();
   }, [
     isOpen,
+    entryContext,
     entryContext.entrySource,
     entryContext.leadId,
     entryContext.leadName,
@@ -414,7 +444,7 @@ const SessionPlanningWizardSheetInner = ({
           return;
         }
 
-        const record = data as any;
+        const record = data as SessionRecord;
         const resolvedLeadId: string | undefined = record.lead_id ?? entryContext.leadId ?? undefined;
         const resolvedLeadName: string = record.leads?.name ?? entryContext.leadName ?? "";
         const resolvedProjectId: string | undefined = record.project_id ?? entryContext.projectId ?? undefined;
@@ -482,15 +512,16 @@ const SessionPlanningWizardSheetInner = ({
         initialSessionSnapshotRef.current = nextState;
         applyState(nextState);
         contextHydratedRef.current = true;
-      } catch (error: any) {
+      } catch (error) {
         if (!isMountedRef.current || sessionHydrationRequestIdRef.current !== requestId) {
           return;
         }
         console.error("Failed to load session for editing", error);
         contextHydratedRef.current = true;
+        const message = getErrorMessage(error);
         toast({
           title: t("toast.sessionLoadFailedTitle"),
-          description: error?.message || t("toast.sessionLoadFailedDescription"),
+          description: message || t("toast.sessionLoadFailedDescription"),
           variant: "destructive"
         });
         onOpenChange(false);
@@ -506,6 +537,7 @@ const SessionPlanningWizardSheetInner = ({
   }, [
     isOpen,
     isEditing,
+    entryContext,
     entryContext.sessionId,
     entryContext.entrySource,
     entryContext.leadId,
@@ -653,10 +685,11 @@ const SessionPlanningWizardSheetInner = ({
         });
         leadId = newLead.id;
         leadName = newLead.name;
-      } catch (error: any) {
+      } catch (error) {
+        const message = getErrorMessage(error);
         toast({
           title: t("steps.lead.createErrorTitle"),
-          description: error.message,
+          description: message,
           variant: "destructive",
         });
         return;
@@ -691,10 +724,11 @@ const SessionPlanningWizardSheetInner = ({
         });
         projectId = newProject.id;
         projectName = state.project.name ?? projectName;
-      } catch (error: any) {
+      } catch (error) {
+        const message = getErrorMessage(error);
         toast({
           title: t("steps.project.createErrorTitle"),
-          description: error.message,
+          description: message,
           variant: "destructive",
         });
         return;
@@ -808,11 +842,12 @@ const SessionPlanningWizardSheetInner = ({
         reset(entryContext);
         setCompletionSummary(null);
         onOpenChange(false);
-      } catch (error: any) {
+      } catch (error) {
+        const message = getErrorMessage(error);
         console.error("Error updating session via wizard", error);
         toast({
           title: t("toast.sessionUpdateFailedTitle"),
-          description: error.message || t("toast.sessionUpdateFailedDescription"),
+          description: message || t("toast.sessionUpdateFailedDescription"),
           variant: "destructive",
         });
       } finally {
@@ -951,11 +986,12 @@ const SessionPlanningWizardSheetInner = ({
         localStorage.removeItem(draftKeyRef.current);
       }
       reset(entryContext);
-    } catch (error: any) {
+    } catch (error) {
+      const message = getErrorMessage(error);
       console.error("Error creating session via wizard", error);
       toast({
         title: t("toast.sessionCreationFailedTitle"),
-        description: error.message || t("toast.sessionCreationFailedDescription"),
+        description: message || t("toast.sessionCreationFailedDescription"),
         variant: "destructive",
       });
     } finally {

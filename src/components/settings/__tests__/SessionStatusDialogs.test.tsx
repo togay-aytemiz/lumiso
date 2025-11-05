@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { act, fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import { AddSessionStatusDialog, EditSessionStatusDialog } from "../SessionStatusDialogs";
 
@@ -6,6 +7,35 @@ const supabaseFromMock = jest.fn();
 const getUserOrganizationIdMock = jest.fn();
 const toastMock = jest.fn();
 const useModalNavigationMock = jest.fn();
+
+type FooterActionMock = {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+};
+
+type AppSheetModalMockProps = {
+  title: string;
+  isOpen: boolean;
+  children: ReactNode;
+  footerActions?: FooterActionMock[];
+};
+
+type SegmentedControlOption = {
+  value: string;
+  label: ReactNode;
+};
+
+type SegmentedControlMockProps = {
+  value: string;
+  onValueChange: (value: string) => void;
+  options?: SegmentedControlOption[];
+};
+
+type ModalNavigationArgs = {
+  onDiscard?: () => void;
+  onSaveAndExit?: () => void;
+};
 
 jest.mock("@/integrations/supabase/client", () => ({
   supabase: {
@@ -29,14 +59,14 @@ jest.mock("@/hooks/useModalNavigation", () => ({
 }));
 
 jest.mock("@/components/ui/app-sheet-modal", () => ({
-  AppSheetModal: ({ title, isOpen, children, footerActions }: any) => {
+  AppSheetModal: ({ title, isOpen, children, footerActions }: AppSheetModalMockProps) => {
     if (!isOpen) return null;
     return (
       <div data-testid="app-sheet-modal">
         <h2>{title}</h2>
         <div>{children}</div>
         <div>
-          {footerActions?.map((action: any) => (
+          {footerActions?.map(action => (
             <button
               key={action.label}
               type="button"
@@ -53,10 +83,10 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
 }));
 
 jest.mock("@/components/ui/segmented-control", () => ({
-  SegmentedControl: ({ value, onValueChange, options }: any) => (
+  SegmentedControl: ({ value, onValueChange, options }: SegmentedControlMockProps) => (
     <div>
       <div data-testid="lifecycle-value">{value}</div>
-      {options?.map((option: any) => (
+      {options?.map(option => (
         <button
           type="button"
           key={option.value}
@@ -163,22 +193,23 @@ const createSessionStatusTable = ({
   };
 };
 
-let originalWindowStatus: any;
+const globalWindow = globalThis as Window & typeof globalThis;
+let originalWindowStatus: string;
 
 describe("SessionStatusDialogs", () => {
   beforeAll(() => {
-    originalWindowStatus = (globalThis as any).status;
+    originalWindowStatus = globalWindow.status;
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (globalThis as any).status = "ok";
+    globalWindow.status = "ok";
     supabaseAuthGetUserMock.mockResolvedValue({
       data: { user: { id: "user-1" } },
       error: null,
     });
     getUserOrganizationIdMock.mockResolvedValue("org-123");
-    useModalNavigationMock.mockImplementation(({ onDiscard, onSaveAndExit }: any) => ({
+    useModalNavigationMock.mockImplementation(({ onDiscard, onSaveAndExit }: ModalNavigationArgs) => ({
       showGuard: false,
       message: "",
       handleModalClose: () => true,
@@ -190,7 +221,7 @@ describe("SessionStatusDialogs", () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
-    (globalThis as any).status = originalWindowStatus;
+    globalWindow.status = originalWindowStatus;
   });
 
   const renderAddDialog = (overrides: Partial<React.ComponentProps<typeof AddSessionStatusDialog>> = {}) => {

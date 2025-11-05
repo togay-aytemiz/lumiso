@@ -3,15 +3,15 @@ import { EntityFormField } from '@/legacy/components/common/EntityForm';
 
 export interface ValidationRule {
   type: 'required' | 'email' | 'phone' | 'minLength' | 'maxLength' | 'min' | 'max' | 'pattern' | 'custom';
-  value?: any;
+  value?: string | number | RegExp;
   message?: string;
-  validator?: (value: any) => boolean;
+  validator?: (value: unknown) => boolean;
 }
 
 /**
  * Validate a single field value against its validation rules
  */
-export function validateField(value: any, rules: ValidationRule[]): string | null {
+export function validateField(value: unknown, rules: ValidationRule[]): string | null {
   for (const rule of rules) {
     let isValid = true;
     let errorMessage = rule.message;
@@ -25,7 +25,12 @@ export function validateField(value: any, rules: ValidationRule[]): string | nul
         break;
 
       case 'email':
-        if (value) {
+        if (value !== null && value !== undefined && value !== '') {
+          if (typeof value !== 'string') {
+            isValid = false;
+            errorMessage = errorMessage || VALIDATION_MESSAGES.INVALID_EMAIL;
+            break;
+          }
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           isValid = emailRegex.test(value);
           if (!isValid && !errorMessage) {
@@ -35,9 +40,14 @@ export function validateField(value: any, rules: ValidationRule[]): string | nul
         break;
 
       case 'phone':
-        if (value) {
+        if (value !== null && value !== undefined && value !== '') {
+          if (typeof value !== 'string') {
+            isValid = false;
+            errorMessage = errorMessage || VALIDATION_MESSAGES.INVALID_PHONE;
+            break;
+          }
           // Basic phone validation - adjust regex as needed for your locale
-          const phoneRegex = /^[\+]?[\d\s\-\(\)]+$/;
+          const phoneRegex = /^\+?[\d\s()-]+$/;
           isValid = phoneRegex.test(value) && value.replace(/\D/g, '').length >= 10;
           if (!isValid && !errorMessage) {
             errorMessage = VALIDATION_MESSAGES.INVALID_PHONE;
@@ -47,48 +57,65 @@ export function validateField(value: any, rules: ValidationRule[]): string | nul
 
       case 'minLength':
         if (value && typeof value === 'string') {
-          isValid = value.length >= (rule.value || 0);
+          const minLength = typeof rule.value === 'number' ? rule.value : 0;
+          isValid = value.length >= minLength;
           if (!isValid && !errorMessage) {
-            errorMessage = VALIDATION_MESSAGES.MIN_LENGTH(rule.value || 0);
+            errorMessage = VALIDATION_MESSAGES.MIN_LENGTH(minLength);
           }
         }
         break;
 
       case 'maxLength':
         if (value && typeof value === 'string') {
-          isValid = value.length <= (rule.value || 0);
+          const maxLength = typeof rule.value === 'number' ? rule.value : 0;
+          isValid = value.length <= maxLength;
           if (!isValid && !errorMessage) {
-            errorMessage = VALIDATION_MESSAGES.MAX_LENGTH(rule.value || 0);
+            errorMessage = VALIDATION_MESSAGES.MAX_LENGTH(maxLength);
           }
         }
         break;
 
       case 'min':
         if (value !== null && value !== undefined) {
-          const numValue = typeof value === 'string' ? parseFloat(value) : value;
-          isValid = !isNaN(numValue) && numValue >= (rule.value || 0);
+          const numericValue =
+            typeof value === 'number'
+              ? value
+              : typeof value === 'string'
+              ? Number.parseFloat(value)
+              : Number.NaN;
+          const minValue = typeof rule.value === 'number' ? rule.value : 0;
+          isValid = !Number.isNaN(numericValue) && numericValue >= minValue;
           if (!isValid && !errorMessage) {
-            errorMessage = `Value must be at least ${rule.value}`;
+            errorMessage = `Value must be at least ${minValue}`;
           }
         }
         break;
 
       case 'max':
         if (value !== null && value !== undefined) {
-          const numValue = typeof value === 'string' ? parseFloat(value) : value;
-          isValid = !isNaN(numValue) && numValue <= (rule.value || 0);
+          const numericValue =
+            typeof value === 'number'
+              ? value
+              : typeof value === 'string'
+              ? Number.parseFloat(value)
+              : Number.NaN;
+          const maxValue = typeof rule.value === 'number' ? rule.value : 0;
+          isValid = !Number.isNaN(numericValue) && numericValue <= maxValue;
           if (!isValid && !errorMessage) {
-            errorMessage = `Value must be no more than ${rule.value}`;
+            errorMessage = `Value must be no more than ${maxValue}`;
           }
         }
         break;
 
       case 'pattern':
         if (value && typeof value === 'string') {
-          const regex = new RegExp(rule.value);
-          isValid = regex.test(value);
-          if (!isValid && !errorMessage) {
-            errorMessage = 'Invalid format';
+          const pattern = rule.value;
+          if (pattern) {
+            const regex = pattern instanceof RegExp ? pattern : new RegExp(String(pattern));
+            isValid = regex.test(value);
+            if (!isValid && !errorMessage) {
+              errorMessage = 'Invalid format';
+            }
           }
         }
         break;
@@ -114,7 +141,7 @@ export function validateField(value: any, rules: ValidationRule[]): string | nul
 /**
  * Validate an entire form object against field definitions
  */
-export function validateEntityForm<T extends Record<string, any>>(
+export function validateEntityForm<T extends Record<string, unknown>>(
   data: Partial<T>,
   fields: EntityFormField[]
 ): Record<string, string> {
@@ -192,7 +219,7 @@ export const commonValidationRules = {
     message
   }),
   
-  custom: (validator: (value: any) => boolean, message: string): ValidationRule => ({
+  custom: (validator: (value: unknown) => boolean, message: string): ValidationRule => ({
     type: 'custom',
     validator,
     message
@@ -223,8 +250,8 @@ export const commonValidationRules = {
     commonValidationRules.custom(
       (value) => {
         if (!value) return true;
-        const date = new Date(value);
-        return date > new Date();
+        const date = value instanceof Date ? value : new Date(String(value));
+        return !Number.isNaN(date.getTime()) && date > new Date();
       },
       VALIDATION_MESSAGES.FUTURE_DATE
     ),
@@ -233,8 +260,8 @@ export const commonValidationRules = {
     commonValidationRules.custom(
       (value) => {
         if (!value) return true;
-        const date = new Date(value);
-        return date < new Date();
+        const date = value instanceof Date ? value : new Date(String(value));
+        return !Number.isNaN(date.getTime()) && date < new Date();
       },
       VALIDATION_MESSAGES.PAST_DATE
     ),
@@ -243,6 +270,7 @@ export const commonValidationRules = {
     commonValidationRules.custom(
       (value) => {
         if (!value) return true;
+        if (typeof value !== 'string') return false;
         const [hours, minutes] = value.split(':').map(Number);
         const time = hours * 60 + minutes;
         return time >= 8 * 60 && time <= 20 * 60; // 8 AM to 8 PM

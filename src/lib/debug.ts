@@ -12,13 +12,13 @@ export function startTimer(label: string, meta?: Record<string, unknown>): Timer
   if (DEV) {
     try {
       // Use collapsed groups for compact logs
-      // eslint-disable-next-line no-console
       console.groupCollapsed(`⏱️ ${label}`);
       if (meta) {
-        // eslint-disable-next-line no-console
         console.log('meta', meta);
       }
-    } catch {}
+    } catch (error) {
+      void error;
+    }
   }
   return {
     end: (extra?: Record<string, unknown>) => {
@@ -27,14 +27,13 @@ export function startTimer(label: string, meta?: Record<string, unknown>): Timer
       if (DEV) {
         try {
           if (extra) {
-            // eslint-disable-next-line no-console
             console.log('result', extra);
           }
-          // eslint-disable-next-line no-console
           console.log('elapsed_ms', elapsed);
-          // eslint-disable-next-line no-console
           console.groupEnd();
-        } catch {}
+        } catch (error) {
+          void error;
+        }
       }
       return elapsed;
     },
@@ -44,8 +43,8 @@ export function startTimer(label: string, meta?: Record<string, unknown>): Timer
 export function logInfo(label: string, data?: Record<string, unknown>) {
   if (!DEV) return;
   try {
-    // eslint-disable-next-line no-console
     console.log(`🔎 ${label}`, data || '');
-  } catch {}
+  } catch (error) {
+    void error;
+  }
 }
-

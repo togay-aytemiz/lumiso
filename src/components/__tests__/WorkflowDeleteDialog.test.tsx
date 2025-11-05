@@ -1,11 +1,28 @@
+import type { ReactNode, SVGProps } from "react";
 import { act, fireEvent, render, screen } from "@/utils/testUtils";
 import { WorkflowDeleteDialog } from "../WorkflowDeleteDialog";
 import type { Workflow } from "@/types/workflow";
 import * as alertDialogModule from "@/components/ui/alert-dialog";
 import { useMessagesTranslation } from "@/hooks/useTypedTranslation";
 
+type AlertDialogMockProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  children: ReactNode;
+};
+
+type AlertDialogSectionProps = {
+  children: ReactNode;
+};
+
+type AlertDialogButtonProps = {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+};
+
 jest.mock("lucide-react", () => ({
-  AlertTriangle: (props: any) => (
+  AlertTriangle: (props: SVGProps<SVGSVGElement>) => (
     <svg data-testid="alert-triangle" {...props} />
   )
 }));
@@ -14,7 +31,7 @@ let latestOnOpenChange: ((open: boolean) => void) | undefined;
 
 jest.mock("@/components/ui/alert-dialog", () => ({
   __esModule: true,
-  AlertDialog: ({ open, onOpenChange, children }: any) => {
+  AlertDialog: ({ open, onOpenChange, children }: AlertDialogMockProps) => {
     latestOnOpenChange = onOpenChange;
     return (
       <div data-testid="alert-dialog" data-open={open}>
@@ -22,17 +39,17 @@ jest.mock("@/components/ui/alert-dialog", () => ({
       </div>
     );
   },
-  AlertDialogContent: ({ children }: any) => <div>{children}</div>,
-  AlertDialogHeader: ({ children }: any) => <div>{children}</div>,
-  AlertDialogFooter: ({ children }: any) => <div>{children}</div>,
-  AlertDialogTitle: ({ children }: any) => <h2>{children}</h2>,
-  AlertDialogDescription: ({ children }: any) => <p>{children}</p>,
-  AlertDialogCancel: ({ children, onClick, disabled }: any) => (
+  AlertDialogContent: ({ children }: AlertDialogSectionProps) => <div>{children}</div>,
+  AlertDialogHeader: ({ children }: AlertDialogSectionProps) => <div>{children}</div>,
+  AlertDialogFooter: ({ children }: AlertDialogSectionProps) => <div>{children}</div>,
+  AlertDialogTitle: ({ children }: AlertDialogSectionProps) => <h2>{children}</h2>,
+  AlertDialogDescription: ({ children }: AlertDialogSectionProps) => <p>{children}</p>,
+  AlertDialogCancel: ({ children, onClick, disabled }: AlertDialogButtonProps) => (
     <button type="button" onClick={onClick} disabled={disabled}>
       {children}
     </button>
   ),
-  AlertDialogAction: ({ children, onClick, disabled }: any) => (
+  AlertDialogAction: ({ children, onClick, disabled }: AlertDialogButtonProps) => (
     <button type="button" onClick={onClick} disabled={disabled}>
       {children}
     </button>

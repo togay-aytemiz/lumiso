@@ -89,13 +89,22 @@ export const PackagesStep = () => {
   const servicesQuery = useServices();
   const projectTypesQuery = useProjectTypes();
 
-  const packages = (packagesQuery.data as PackageRecord[]) ?? [];
-  const services = (servicesQuery.data as ServiceRecord[]) ?? [];
-  const projectTypes = projectTypesQuery.data ?? [];
+  const packages = useMemo<PackageRecord[]>(
+    () => (Array.isArray(packagesQuery.data) ? (packagesQuery.data as PackageRecord[]) : []),
+    [packagesQuery.data]
+  );
+  const services = useMemo<ServiceRecord[]>(
+    () => (Array.isArray(servicesQuery.data) ? (servicesQuery.data as ServiceRecord[]) : []),
+    [servicesQuery.data]
+  );
+  const projectTypes = useMemo(
+    () => projectTypesQuery.data ?? [],
+    [projectTypesQuery.data]
+  );
   const actionsRef = useRef<HTMLDivElement | null>(null);
 
   const selectedProjectType = useMemo(
-    () => projectTypes.find((type: any) => type.id === state.details.projectTypeId),
+    () => projectTypes.find((type) => type.id === state.details.projectTypeId),
     [projectTypes, state.details.projectTypeId]
   );
 
@@ -296,24 +305,24 @@ export const PackagesStep = () => {
       .map(([rate, amount]) => ({ rate, amount }));
   }, [existingItems]);
 
-  const updateItem = (itemId: string, updates: Partial<ProjectServiceLineItem>) => {
+  const updateItem = useCallback((itemId: string, updates: Partial<ProjectServiceLineItem>) => {
     const nextItems = existingItems.map((item) =>
       item.id === itemId || item.serviceId === itemId ? { ...item, ...updates } : item
     );
     setItems(nextItems);
-  };
+  }, [existingItems, setItems]);
 
-  const removeItem = (itemId: string) => {
+  const removeItem = useCallback((itemId: string) => {
     setItems(existingItems.filter((item) => item.id !== itemId && item.serviceId !== itemId));
-  };
+  }, [existingItems, setItems]);
 
-  const adjustQuantity = (itemId: string, delta: number) => {
+  const adjustQuantity = useCallback((itemId: string, delta: number) => {
     const target = existingItems.find((item) => item.serviceId === itemId || item.id === itemId);
     const next = Math.max(1, (target?.quantity ?? 1) + delta);
     updateItem(itemId, { quantity: next });
-  };
+  }, [existingItems, updateItem]);
 
-  const buildLineItemFromService = (service: ServiceWithMetadata): ProjectServiceLineItem => ({
+  const buildLineItemFromService = useCallback((service: ServiceWithMetadata): ProjectServiceLineItem => ({
     id: service.id,
     type: "existing",
     serviceId: service.id,
@@ -326,9 +335,9 @@ export const PackagesStep = () => {
     vatMode: service.vatMode,
     unit: service.unit,
     source: "catalog",
-  });
+  }), []);
 
-  const handleAddService = (serviceId: string) => {
+  const handleAddService = useCallback((serviceId: string) => {
     const service = serviceMap.get(serviceId);
     if (!service) return;
 
@@ -336,7 +345,7 @@ export const PackagesStep = () => {
     const nextItem = buildLineItemFromService(service);
     setItems([...filtered, nextItem]);
     updateServices({ showCustomSetup: true });
-  };
+  }, [existingItems, buildLineItemFromService, serviceMap, setItems, updateServices]);
 
   const handleIncreaseService = (serviceId: string) => adjustQuantity(serviceId, 1);
   const handleDecreaseService = (serviceId: string) => adjustQuantity(serviceId, -1);
@@ -497,11 +506,11 @@ export const PackagesStep = () => {
     closeVatEditor(lineItem.id);
   };
 
-  const handleVatModeChange = (itemId: string, mode: VatModeOption) => {
+  const handleVatModeChange = useCallback((itemId: string, mode: VatModeOption) => {
     updateItem(itemId, { vatMode: mode });
-  };
+  }, [updateItem]);
 
-  const handleVatRateChange = (itemId: string, value: string) => {
+  const handleVatRateChange = useCallback((itemId: string, value: string) => {
     const trimmed = value.trim();
     if (!trimmed) {
       updateItem(itemId, { vatRate: null });
@@ -515,7 +524,7 @@ export const PackagesStep = () => {
 
     const clamped = Math.min(99.99, Math.max(0, numeric));
     updateItem(itemId, { vatRate: clamped });
-  };
+  }, [updateItem]);
 
   const pendingPricingLineItem = useMemo(() => {
     if (!pendingPricingResetId) {
@@ -690,7 +699,7 @@ export const PackagesStep = () => {
         isCustom: false,
       };
     });
-  }, [existingItems, getUnitLabel, serviceMap, t]);
+  }, [existingItems, getUnitLabel, serviceMap]);
 
   useEffect(() => {
     if (!actionsRef.current) return;

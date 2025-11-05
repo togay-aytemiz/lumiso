@@ -18,6 +18,7 @@ import { LIFECYCLE_STATES, PROJECT_STATUS } from "@/constants/entityConstants";
 import type { ProjectListItem, ProjectStatusSummary } from "@/pages/projects/types";
 import { ProjectCreationWizardSheet } from "@/features/project-creation";
 import { cn } from "@/lib/utils";
+import { promoteProjectToTop, PROJECT_SORT_GAP } from "@/lib/projects/sortOrder";
 
 interface ProjectKanbanBoardProps {
   projects: ProjectListItem[];
@@ -31,7 +32,7 @@ interface ProjectKanbanBoardProps {
   isLoadingMore?: boolean;
 }
 
-const GAP = 1000;
+const GAP = PROJECT_SORT_GAP;
 
 const orderProjects = (list: ProjectListItem[]) =>
   [...list].sort((a, b) => {
@@ -303,51 +304,6 @@ const ProjectKanbanBoard = ({
     }
   };
 
-  const promoteNewProjectToTop = async (projectId: string) => {
-    try {
-      const { data: projectRecord, error: projectFetchError } = await supabase
-        .from("projects")
-        .select("status_id")
-        .eq("id", projectId)
-        .single();
-
-      if (projectFetchError) throw projectFetchError;
-
-      const projectStatusId = projectRecord?.status_id ?? null;
-
-      let query = supabase
-        .from("projects")
-        .select("sort_order")
-        .order("sort_order", { ascending: true })
-        .limit(1);
-
-      if (projectStatusId) {
-        query = query.eq("status_id", projectStatusId);
-      } else {
-        query = query.is("status_id", null);
-      }
-
-      const { data: minSortData, error: minSortError } = await query;
-      if (minSortError) throw minSortError;
-
-      const minSortOrder =
-        typeof minSortData?.[0]?.sort_order === "number"
-          ? minSortData[0].sort_order
-          : null;
-
-      const newSortOrder = (minSortOrder ?? GAP) - GAP;
-
-      const { error: updateError } = await supabase
-        .from("projects")
-        .update({ status_id: projectStatusId, sort_order: newSortOrder })
-        .eq("id", projectId);
-
-      if (updateError) throw updateError;
-    } catch (error) {
-      console.error("Error promoting new project to the top of the kanban column:", error);
-    }
-  };
-
   const renderProjectCard = (project: ProjectListItem, index: number) => (
     <DnD.Draggable key={project.id} draggableId={project.id} index={index}>
       {(provided) => (
@@ -497,7 +453,7 @@ const ProjectKanbanBoard = ({
         entrySource="kanban"
         onProjectCreated={async (createdProject) => {
           if (createdProject?.id) {
-            await promoteNewProjectToTop(createdProject.id);
+            await promoteProjectToTop(createdProject.id);
           }
           onProjectsChange();
           setSelectedStatusId(null);

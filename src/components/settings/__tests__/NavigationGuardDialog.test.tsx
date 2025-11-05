@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { fireEvent, render, screen } from "@/utils/testUtils";
 import { NavigationGuardDialog } from "../NavigationGuardDialog";
 
@@ -27,8 +28,27 @@ jest.mock("react-i18next", () => ({
 
 const alertDialogMock = jest.fn();
 
+type AlertDialogRenderProps = {
+  onOpenChange: (open: boolean) => void;
+};
+
+type AlertDialogWrapperProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  children: ReactNode | ((props: AlertDialogRenderProps) => ReactNode);
+};
+
+type AlertDialogSimpleProps = {
+  children: ReactNode;
+};
+
+type AlertDialogButtonProps = {
+  children: ReactNode;
+  onClick: () => void;
+};
+
 jest.mock("@/components/ui/alert-dialog", () => ({
-  AlertDialog: ({ open, onOpenChange, children }: any) => {
+  AlertDialog: ({ open, onOpenChange, children }: AlertDialogWrapperProps) => {
     alertDialogMock(onOpenChange);
     if (!open) return null;
     return (
@@ -40,15 +60,15 @@ jest.mock("@/components/ui/alert-dialog", () => ({
       </div>
     );
   },
-  AlertDialogContent: ({ children }: any) => <div>{children}</div>,
-  AlertDialogHeader: ({ children }: any) => <div>{children}</div>,
-  AlertDialogTitle: ({ children }: any) => <h2>{children}</h2>,
-  AlertDialogDescription: ({ children }: any) => <p>{children}</p>,
-  AlertDialogFooter: ({ children }: any) => <div>{children}</div>,
-  AlertDialogCancel: ({ children, onClick }: any) => (
+  AlertDialogContent: ({ children }: AlertDialogSimpleProps) => <div>{children}</div>,
+  AlertDialogHeader: ({ children }: AlertDialogSimpleProps) => <div>{children}</div>,
+  AlertDialogTitle: ({ children }: AlertDialogSimpleProps) => <h2>{children}</h2>,
+  AlertDialogDescription: ({ children }: AlertDialogSimpleProps) => <p>{children}</p>,
+  AlertDialogFooter: ({ children }: AlertDialogSimpleProps) => <div>{children}</div>,
+  AlertDialogCancel: ({ children, onClick }: AlertDialogButtonProps) => (
     <button onClick={onClick}>{children}</button>
   ),
-  AlertDialogAction: ({ children, onClick }: any) => (
+  AlertDialogAction: ({ children, onClick }: AlertDialogButtonProps) => (
     <button onClick={onClick}>{children}</button>
   ),
 }));

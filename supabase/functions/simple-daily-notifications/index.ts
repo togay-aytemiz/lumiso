@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
 import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summary-empty.ts';
 import { formatDate } from './_templates/enhanced-email-base.ts';
@@ -13,16 +14,19 @@ import {
   type ResendClient,
 } from '../_shared/resend-utils.ts';
 
-let createSupabaseClient: (...args: unknown[]) => any = createClient as unknown as (...args: unknown[]) => any;
+type SupabaseClientFactory = typeof createClient;
+type SupabaseServerClient = SupabaseClient;
+
+let createSupabaseClient: SupabaseClientFactory = createClient;
 const defaultResendClient: ResendClient = createResendClient(Deno.env.get("RESEND_API_KEY"));
 let resendClient: ResendClient = defaultResendClient;
 
-export function setSupabaseClientFactoryForTests(factory: (...args: unknown[]) => any) {
+export function setSupabaseClientFactoryForTests(factory: SupabaseClientFactory) {
   createSupabaseClient = factory;
 }
 
 export function resetSupabaseClientFactoryForTests() {
-  createSupabaseClient = createClient as unknown as (...args: unknown[]) => any;
+  createSupabaseClient = createClient;
 }
 
 export function setResendClientForTests(client: ResendClient) {
@@ -43,6 +47,73 @@ interface ProcessorRequest {
   user_id?: string;
 }
 
+type UserSettingsRow = {
+  user_id: string;
+  notification_scheduled_time: string | null;
+  notification_daily_summary_enabled: boolean;
+  notification_global_enabled: boolean;
+};
+
+type LeadRelation = {
+  id: string;
+  name: string | null;
+};
+
+type ProjectRelation = {
+  id: string;
+  name: string | null;
+  project_types?: { name: string | null } | null;
+};
+
+type SessionRecord = {
+  id: string;
+  session_date: string | null;
+  session_time: string | null;
+  notes: string | null;
+  location: string | null;
+  leads: LeadRelation | null;
+  projects: ProjectRelation | null;
+};
+
+type ActivityRecord = {
+  id: string;
+  content: string | null;
+  reminder_date: string | null;
+  reminder_time: string | null;
+  lead_id: string | null;
+  project_id: string | null;
+  completed?: boolean;
+  type?: string | null;
+  user_id?: string | null;
+};
+
+type ActivityWithNames = ActivityRecord & {
+  leads: { name: string } | null;
+  projects: { name: string } | null;
+};
+
+type ActivitySummary = {
+  id: string;
+  content: string | null;
+  reminder_date: string | null;
+  reminder_time: string | null;
+  lead_id: string | null;
+  project_id: string | null;
+};
+
+type OverdueItems = {
+  leads: unknown[];
+  activities: ActivitySummary[];
+};
+
+type SkippedReasons = {
+  noOrganization: number;
+  noProfile: number;
+  noEmail: number;
+  wrongTime: number;
+  emailFailed: number;
+};
+
 export const handler = async (req: Request): Promise<Response> => {
   console.log('Simple daily notification processor started');
   
@@ -50,7 +121,7 @@ export const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseAdmin = createSupabaseClient(
+  const supabaseAdmin: SupabaseServerClient = createSupabaseClient(
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
   );
@@ -82,7 +153,7 @@ export const handler = async (req: Request): Promise<Response> => {
     }
     // For scheduled processing, we'll check timezone conversion for each user
 
-    const { data: users, error: usersError } = await usersQuery;
+    const { data: users, error: usersError } = await usersQuery.returns<UserSettingsRow[]>();
 
     if (usersError) {
       console.error('Error fetching users:', usersError);
@@ -105,7 +176,7 @@ export const handler = async (req: Request): Promise<Response> => {
 
     let processed = 0;
     let errors = 0;
-    const skippedReasons: Record<string, number> = {
+    const skippedReasons: SkippedReasons = {
       noOrganization: 0,
       noProfile: 0,
       noEmail: 0,
@@ -211,7 +282,7 @@ export const handler = async (req: Request): Promise<Response> => {
         console.log(`Today's date: ${todayStr}`);
 
         // Get today's sessions with comprehensive data
-        const { data: todaySessions, error: todaySessionsError } = await supabaseAdmin
+    const { data: todaySessions, error: todaySessionsError } = await supabaseAdmin
           .from('sessions')
           .select(`
             id,
@@ -224,10 +295,11 @@ export const handler = async (req: Request): Promise<Response> => {
           `)
           .eq('session_date', todayStr)
           .eq('organization_id', organizationId)
-          .order('session_time');
+          .order('session_time')
+          .returns<SessionRecord[]>();
 
-        // Get past sessions that need action
-        const { data: pastSessions, error: pastSessionsError } = await supabaseAdmin
+    // Get past sessions that need action
+    const { data: pastSessions, error: pastSessionsError } = await supabaseAdmin
           .from('sessions')
           .select(`
             id,
@@ -241,10 +313,11 @@ export const handler = async (req: Request): Promise<Response> => {
           .lt('session_date', todayStr)
           .eq('organization_id', organizationId)
           .order('session_date', { ascending: false })
-          .limit(10); // Limit past sessions
+          .limit(10)
+          .returns<SessionRecord[]>(); // Limit past sessions
 
-        // Get overdue activities
-        const { data: overdueActivities, error: overdueError } = await supabaseAdmin
+    // Get overdue activities
+    const { data: overdueActivities, error: overdueError } = await supabaseAdmin
           .from('activities')
           .select(`
             id,
@@ -258,12 +331,13 @@ export const handler = async (req: Request): Promise<Response> => {
           .lt('reminder_date::date', todayStr)
           .eq('completed', false)
           .eq('organization_id', organizationId)
-          .order('reminder_date', { ascending: false });
+          .order('reminder_date', { ascending: false })
+          .returns<ActivityRecord[]>();
 
         // Get today's activities/reminders
         console.log(`Searching for today's reminders on date: ${todayStr}`);
         
-        const { data: todayActivities, error: todayActivitiesError } = await supabaseAdmin
+    const { data: todayActivities, error: todayActivitiesError } = await supabaseAdmin
           .from('activities')
           .select(`
             id,
@@ -280,12 +354,13 @@ export const handler = async (req: Request): Promise<Response> => {
           .eq('completed', false)
           .gte('reminder_date', `${todayStr}T00:00:00`)
           .lte('reminder_date', `${todayStr}T23:59:59`)
-          .order('reminder_time');
+          .order('reminder_time')
+          .returns<ActivityRecord[]>();
 
         console.log(`Found ${todayActivities?.length || 0} today's activities:`, todayActivities);
 
         // Fetch lead and project names for today's activities
-        const todayActivitiesWithNames = [];
+        const todayActivitiesWithNames: ActivityWithNames[] = [];
         if (todayActivities && todayActivities.length > 0) {
           for (const activity of todayActivities) {
             let leadName = null;
@@ -297,7 +372,7 @@ export const handler = async (req: Request): Promise<Response> => {
                 .from('leads')
                 .select('name')
                 .eq('id', activity.lead_id)
-                .maybeSingle();
+                .maybeSingle<{ name: string | null }>();
               leadName = lead?.name || null;
             }
 
@@ -307,7 +382,7 @@ export const handler = async (req: Request): Promise<Response> => {
                 .from('projects')
                 .select('name')
                 .eq('id', activity.project_id)
-                .maybeSingle();
+                .maybeSingle<{ name: string | null }>();
               projectName = project?.name || null;
             }
 
@@ -356,7 +431,7 @@ export const handler = async (req: Request): Promise<Response> => {
         };
 
         // Transform sessions data
-        const sessions = (todaySessions || []).map((session: any) => ({
+        const sessions: SessionRecord[] = (todaySessions ?? []).map((session) => ({
           id: session.id,
           session_date: session.session_date,
           session_time: session.session_time,
@@ -367,7 +442,7 @@ export const handler = async (req: Request): Promise<Response> => {
         }));
 
         // Transform past sessions that need action
-        const pastSessionsNeedingAction = (pastSessions || []).map((session: any) => ({
+        const pastSessionsNeedingAction: SessionRecord[] = (pastSessions ?? []).map((session) => ({
           id: session.id,
           session_date: session.session_date,
           session_time: session.session_time,
@@ -378,7 +453,7 @@ export const handler = async (req: Request): Promise<Response> => {
         }));
 
         // Transform today's activities separately from overdue
-        const todayReminders = (todayActivitiesWithNames || []).map((activity: any) => ({
+        const todayReminders: ActivityWithNames[] = (todayActivitiesWithNames ?? []).map((activity) => ({
           id: activity.id,
           content: activity.content,
           reminder_date: activity.reminder_date,
@@ -390,9 +465,9 @@ export const handler = async (req: Request): Promise<Response> => {
         }));
 
         // Transform overdue data (only overdue activities, not today's)
-        const overdueItems = {
+        const overdueItems: OverdueItems = {
           leads: [], // No overdue leads for now, focus on activities
-          activities: (overdueActivities || []).map((activity: any) => ({
+          activities: (overdueActivities ?? []).map((activity) => ({
             id: activity.id,
             content: activity.content,
             reminder_date: activity.reminder_date,

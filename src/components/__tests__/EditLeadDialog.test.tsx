@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import type { ChangeEvent, ComponentProps, ReactNode } from "react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import { EditLeadDialog } from "../EditLeadDialog";
 import { mockSupabaseClient } from "@/utils/testUtils";
@@ -17,6 +17,23 @@ jest.mock("@/hooks/useModalNavigation", () => ({
   useModalNavigation: jest.fn(),
 }));
 
+type FooterActionMock = {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  variant?: string;
+};
+
+type AppSheetModalMockProps = {
+  title: string;
+  dirty?: boolean;
+  children: ReactNode;
+  footerActions?: FooterActionMock[];
+  onDirtyClose?: () => void;
+  [key: string]: unknown;
+};
+
 jest.mock("@/components/ui/app-sheet-modal", () => ({
   AppSheetModal: ({
     title,
@@ -24,10 +41,10 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
     children,
     footerActions = [],
     onDirtyClose,
-  }: any) => (
+  }: AppSheetModalMockProps) => (
     <div data-testid="app-sheet-modal" data-title={title} data-dirty={dirty ? "dirty" : "clean"}>
       {children}
-      {footerActions.map((action: any, index: number) => (
+      {footerActions.map((action: FooterActionMock, index: number) => (
         <button
           key={index}
           data-testid={`footer-action-${index}`}
@@ -44,22 +61,44 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
   ),
 }));
 
+type SelectMockProps = {
+  value: string;
+  onValueChange: (value: string) => void;
+  children: ReactNode;
+};
+
+type SelectItemMockProps = {
+  value: string;
+  children: ReactNode;
+};
+
 jest.mock("@/components/ui/select", () => ({
-  Select: ({ value, onValueChange, children }: any) => (
-    <select data-testid="status-select" value={value} onChange={(event) => onValueChange(event.target.value)}>
+  Select: ({ value, onValueChange, children }: SelectMockProps) => (
+    <select
+      data-testid="status-select"
+      value={value}
+      onChange={(event: ChangeEvent<HTMLSelectElement>) => onValueChange(event.target.value)}
+    >
       {children}
     </select>
   ),
   SelectTrigger: () => null,
   SelectValue: () => null,
-  SelectContent: ({ children }: any) => <>{children}</>,
-  SelectItem: ({ value, children }: any) => (
+  SelectContent: ({ children }: { children: ReactNode }) => <>{children}</>,
+  SelectItem: ({ value, children }: SelectItemMockProps) => (
     <option value={value}>{typeof children === "string" ? children : value}</option>
   ),
 }));
 
+type NavigationGuardDialogMockProps = {
+  open: boolean;
+  message: string;
+  onDiscard: () => void;
+  onStay: () => void;
+};
+
 jest.mock("../settings/NavigationGuardDialog", () => ({
-  NavigationGuardDialog: ({ open, message, onDiscard, onStay }: any) =>
+  NavigationGuardDialog: ({ open, message, onDiscard, onStay }: NavigationGuardDialogMockProps) =>
     open ? (
       <div data-testid="navigation-guard">
         <p>{message}</p>
@@ -107,21 +146,24 @@ const createStatusFetch = () => {
   return { select, order };
 };
 
-const createDefaultFromResponse = () => ({
-  select: jest.fn().mockReturnThis(),
-  insert: jest.fn().mockReturnThis(),
-  update: jest.fn().mockReturnThis(),
-  delete: jest.fn().mockReturnThis(),
-  eq: jest.fn().mockReturnThis(),
-  in: jest.fn().mockReturnThis(),
-  order: jest.fn().mockReturnThis(),
-  limit: jest.fn().mockReturnThis(),
-  single: jest.fn(),
-});
+const createDefaultFromResponse = () =>
+  ({
+    select: jest.fn().mockReturnThis(),
+    insert: jest.fn().mockReturnThis(),
+    update: jest.fn().mockReturnThis(),
+    delete: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    in: jest.fn().mockReturnThis(),
+    order: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
+    single: jest.fn(),
+  }) as Record<string, unknown>;
 
-const originalFromImplementation = (mockSupabaseClient.from.getMockImplementation() || ((table: string) => createDefaultFromResponse())) as (
-  table: string
-) => any;
+type SupabaseFromMock = (table: string) => Record<string, unknown>;
+
+const fallbackFrom: SupabaseFromMock = () => createDefaultFromResponse();
+const existingFromImplementation = mockSupabaseClient.from.getMockImplementation() as SupabaseFromMock | undefined;
+const originalFromImplementation: SupabaseFromMock = existingFromImplementation ?? fallbackFrom;
 
 describe("EditLeadDialog", () => {
   beforeEach(() => {
@@ -176,12 +218,12 @@ describe("EditLeadDialog", () => {
 
     mockSupabaseClient.from.mockImplementation((table: string) => {
       if (table === "lead_statuses") {
-        return { select } as any;
+        return { select } as Record<string, unknown>;
       }
       if (table === "leads") {
-        return { update: updateMock } as any;
+        return { update: updateMock } as Record<string, unknown>;
       }
-      return originalFromImplementation ? originalFromImplementation(table) : ({} as any);
+      return originalFromImplementation(table);
     });
 
     return { select, updateMock };

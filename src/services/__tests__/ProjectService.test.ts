@@ -12,41 +12,63 @@ jest.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
-const createProjectsChain = (projectsData: any[]) => {
-  const chain: any = {
-    select: jest.fn(() => chain),
-    eq: jest.fn(() => chain),
-    order: jest.fn((_: string, __?: unknown) => {
-      chain.__orderCalls = (chain.__orderCalls || 0) + 1;
-      if (chain.__orderCalls >= 2) {
-        return Promise.resolve({ data: projectsData, error: null });
-      }
-      return chain;
-    }),
-  };
-  return chain;
+type QueryResult<TData> = {
+  data: TData;
+  error: unknown | null;
 };
 
-const createSelectEqOrderChain = (result: { data: any; error: any }, requiredOrders = 1) => {
-  const chain: any = {
-    select: jest.fn(() => chain),
-    eq: jest.fn(() => chain),
-    order: jest.fn(() => {
-      chain.__orderCalls = (chain.__orderCalls || 0) + 1;
-      if (chain.__orderCalls >= requiredOrders) {
-        return Promise.resolve(result);
-      }
-      return chain;
-    }),
-  };
-  return chain;
+type OrderChain<TData> = {
+  select: jest.Mock<OrderChain<TData>, []>;
+  eq: jest.Mock<OrderChain<TData>, [string, unknown]>;
+  order: jest.Mock<OrderChain<TData> | Promise<QueryResult<TData>>, [string, unknown?]>;
+  __orderCalls?: number;
 };
 
-const createSelectInChain = (result: { data: any; error: any }) => ({
+const createOrderChain = <TData>(result: QueryResult<TData>, requiredOrders = 1): OrderChain<TData> => {
+  const chain: Partial<OrderChain<TData>> & { __orderCalls?: number } = {};
+
+  chain.select = jest.fn(() => chain as OrderChain<TData>);
+  chain.eq = jest.fn(() => chain as OrderChain<TData>);
+  chain.order = jest.fn(() => {
+    chain.__orderCalls = (chain.__orderCalls || 0) + 1;
+    if (chain.__orderCalls >= requiredOrders) {
+      return Promise.resolve(result);
+    }
+    return chain as OrderChain<TData>;
+  });
+
+  return chain as OrderChain<TData>;
+};
+
+type ProjectRow = {
+  id: string;
+  name: string;
+  description: string;
+  lead_id: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  status_id: string;
+  project_type_id: string;
+  base_price: number;
+  organization_id: string;
+};
+
+const createProjectsChain = (projectsData: ProjectRow[]) =>
+  createOrderChain<ProjectRow[]>({ data: projectsData, error: null }, 2);
+
+const createSelectEqOrderChain = <TData>(result: QueryResult<TData>, requiredOrders = 1) =>
+  createOrderChain(result, requiredOrders);
+
+const createSelectInChain = <TData>(result: QueryResult<TData>) => ({
   select: jest.fn(() => ({
-    in: jest.fn(() => Promise.resolve(result)),
+    in: jest.fn(async () => result),
   })),
 });
+
+type ProjectServiceWithOrg = ProjectService & {
+  getOrganizationId: jest.Mock<Promise<string | null>, []>;
+};
 
 beforeEach(() => {
   supabaseFromMock.mockReset();
@@ -171,8 +193,8 @@ describe("ProjectService.fetchProjects", () => {
       }
     });
 
-    const service = new ProjectService();
-    (service as any).getOrganizationId = jest.fn().mockResolvedValue("org-1");
+    const service = new ProjectService() as ProjectServiceWithOrg;
+    service.getOrganizationId = jest.fn().mockResolvedValue("org-1");
 
     const result = await service.fetchProjects();
 
@@ -194,8 +216,8 @@ describe("ProjectService.fetchProjects", () => {
   });
 
   it("returns empty arrays when organization is missing", async () => {
-    const service = new ProjectService();
-    (service as any).getOrganizationId = jest.fn().mockResolvedValue(null);
+    const service = new ProjectService() as ProjectServiceWithOrg;
+    service.getOrganizationId = jest.fn().mockResolvedValue(null);
 
     const result = await service.fetchProjects();
     expect(result).toEqual({ active: [], archived: [] });

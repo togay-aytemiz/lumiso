@@ -6,6 +6,8 @@ import { useI18nToast } from "@/lib/toastHelpers";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
+type TranslationFallback = string | { defaultValue?: string };
+
 jest.mock("react-router-dom", () => ({
   ...jest.requireActual("react-router-dom"),
   useNavigate: jest.fn(),
@@ -38,7 +40,7 @@ jest.mock("@/integrations/supabase/client", () => ({
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (_key: string, fallbackOrOptions?: any) => {
+    t: (_key: string, fallbackOrOptions?: TranslationFallback) => {
       if (typeof fallbackOrOptions === "string") {
         return fallbackOrOptions;
       }
@@ -51,11 +53,16 @@ jest.mock("react-i18next", () => ({
 }));
 
 type SupabaseAuthMock = typeof supabase.auth;
+type SignOutResponse = Awaited<ReturnType<SupabaseAuthMock["signOut"]>>;
+type SignInWithPasswordResponse = Awaited<ReturnType<SupabaseAuthMock["signInWithPassword"]>>;
+type SignUpResponse = Awaited<ReturnType<SupabaseAuthMock["signUp"]>>;
+type ResetPasswordResponse = Awaited<ReturnType<SupabaseAuthMock["resetPasswordForEmail"]>>;
+type UpdateUserResponse = Awaited<ReturnType<SupabaseAuthMock["updateUser"]>>;
 
 const navigateMock = jest.fn();
 const toastMock = { success: jest.fn(), error: jest.fn() };
 const formsTranslator = {
-  t: (_key: string, fallbackOrOptions?: any) => {
+  t: (_key: string, fallbackOrOptions?: TranslationFallback) => {
     if (typeof fallbackOrOptions === "string") {
       return fallbackOrOptions;
     }
@@ -66,7 +73,7 @@ const formsTranslator = {
   },
 };
 const messagesTranslator = {
-  t: (_key: string, fallbackOrOptions?: any) => {
+  t: (_key: string, fallbackOrOptions?: TranslationFallback) => {
     if (typeof fallbackOrOptions === "string") {
       return fallbackOrOptions;
     }
@@ -90,7 +97,8 @@ beforeEach(() => {
   (useMessagesTranslation as jest.Mock).mockReturnValue(messagesTranslator);
   (useI18nToast as jest.Mock).mockReturnValue(toastMock);
   const authMock = getAuthMock();
-  authMock.signOut.mockResolvedValue({ error: null } as any);
+  const signOutResponse: SignOutResponse = { error: null };
+  authMock.signOut.mockResolvedValue(signOutResponse);
 });
 
 afterEach(() => {
@@ -104,9 +112,9 @@ describe("Auth page", () => {
     useSafeFakeTimers();
     const authMock = getAuthMock();
     authMock.signInWithPassword.mockResolvedValueOnce({
-      data: { user: { id: "user-123" } },
+      data: { user: { id: "user-123" }, session: null },
       error: null,
-    } as any);
+    } satisfies SignInWithPasswordResponse);
 
     render(<Auth />);
 
@@ -144,9 +152,9 @@ describe("Auth page", () => {
     const authMock = getAuthMock();
     const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => undefined);
     authMock.signInWithPassword.mockResolvedValueOnce({
-      data: {},
+      data: { user: null, session: null },
       error: new Error("Invalid credentials"),
-    } as any);
+    } satisfies SignInWithPasswordResponse);
 
     render(<Auth />);
 
@@ -172,9 +180,9 @@ describe("Auth page", () => {
     useSafeFakeTimers();
     const authMock = getAuthMock();
     authMock.signUp.mockResolvedValueOnce({
-      data: { user: { id: "user-456", email_confirmed_at: null } },
+      data: { user: { id: "user-456", email_confirmed_at: null }, session: null },
       error: null,
-    } as any);
+    } satisfies SignUpResponse);
 
     render(<Auth />);
 
@@ -209,9 +217,9 @@ describe("Auth page", () => {
     useSafeFakeTimers();
     const authMock = getAuthMock();
     authMock.signUp.mockResolvedValueOnce({
-      data: { user: { id: "user-789", email_confirmed_at: "2024-01-01" } },
+      data: { user: { id: "user-789", email_confirmed_at: "2024-01-01" }, session: null },
       error: null,
-    } as any);
+    } satisfies SignUpResponse);
 
     render(<Auth />);
 
@@ -244,7 +252,9 @@ describe("Auth page", () => {
   it("requests a password reset email", async () => {
     useSafeFakeTimers();
     const authMock = getAuthMock();
-    authMock.resetPasswordForEmail.mockResolvedValueOnce({ error: null } as any);
+    authMock.resetPasswordForEmail.mockResolvedValueOnce(
+      { data: {}, error: null } satisfies ResetPasswordResponse
+    );
 
     render(<Auth />);
 
@@ -283,7 +293,9 @@ describe("Auth page", () => {
   it("updates the password during recovery", async () => {
     useSafeFakeTimers();
     const authMock = getAuthMock();
-    authMock.updateUser.mockResolvedValueOnce({ error: null } as any);
+    authMock.updateUser.mockResolvedValueOnce(
+      { data: { user: { id: "user-123" } }, error: null } satisfies UpdateUserResponse
+    );
     window.location.hash = "#type=recovery";
 
     render(<Auth />);

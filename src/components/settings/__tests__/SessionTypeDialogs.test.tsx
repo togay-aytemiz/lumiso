@@ -1,3 +1,4 @@
+import type { ChangeEvent, ReactNode } from "react";
 import { act, fireEvent, render, screen } from "@/utils/testUtils";
 import { AddSessionTypeDialog } from "../SessionTypeDialogs";
 
@@ -5,6 +6,39 @@ const supabaseAuthGetUserMock = jest.fn();
 const supabaseFromMock = jest.fn();
 const getUserOrganizationIdMock = jest.fn();
 const toastMock = jest.fn();
+
+type FooterActionMock = {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+};
+
+type AppSheetModalMockProps = {
+  title: string;
+  isOpen: boolean;
+  children: ReactNode;
+  footerActions?: FooterActionMock[];
+};
+
+type SelectMockProps = {
+  value: string;
+  onValueChange: (value: string) => void;
+  children: ReactNode;
+};
+
+type SelectContentProps = {
+  children: ReactNode;
+};
+
+type SelectItemProps = {
+  value: string;
+  children: ReactNode;
+};
+
+type SwitchMockProps = {
+  checked: boolean;
+  onCheckedChange: (value: boolean) => void;
+};
 
 const createInsertChain = () => {
   const singleMock = jest.fn();
@@ -34,14 +68,14 @@ jest.mock("@/hooks/use-toast", () => ({
 }));
 
 jest.mock("@/components/ui/app-sheet-modal", () => ({
-  AppSheetModal: ({ title, isOpen, children, footerActions }: any) => {
+  AppSheetModal: ({ title, isOpen, children, footerActions }: AppSheetModalMockProps) => {
     if (!isOpen) return null;
     return (
       <div data-testid="app-sheet-modal">
         <h2>{title}</h2>
         <div>{children}</div>
         <div>
-          {footerActions?.map((action: any) => (
+          {footerActions?.map(action => (
             <button
               key={action.label}
               onClick={action.onClick}
@@ -57,25 +91,25 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
 }));
 
 jest.mock("@/components/ui/select", () => ({
-  Select: ({ value, onValueChange, children }: any) => (
+  Select: ({ value, onValueChange, children }: SelectMockProps) => (
     <select
       data-testid="duration-select"
       value={value}
-      onChange={(event) => onValueChange(event.target.value)}
+      onChange={(event: ChangeEvent<HTMLSelectElement>) => onValueChange(event.target.value)}
     >
       {children}
     </select>
   ),
-  SelectTrigger: ({ children }: any) => <>{children}</>,
-  SelectValue: ({ children }: any) => <>{children}</>,
-  SelectContent: ({ children }: any) => <>{children}</>,
-  SelectItem: ({ value, children }: any) => (
+  SelectTrigger: ({ children }: SelectContentProps) => <>{children}</>,
+  SelectValue: ({ children }: SelectContentProps) => <>{children}</>,
+  SelectContent: ({ children }: SelectContentProps) => <>{children}</>,
+  SelectItem: ({ value, children }: SelectItemProps) => (
     <option value={value}>{children}</option>
   ),
 }));
 
 jest.mock("@/components/ui/switch", () => ({
-  Switch: ({ checked, onCheckedChange }: any) => (
+  Switch: ({ checked, onCheckedChange }: SwitchMockProps) => (
     <input
       type="checkbox"
       role="switch"
@@ -140,7 +174,7 @@ describe("AddSessionTypeDialog", () => {
     const createdSessionType = {
       id: "session-type-1",
       name: "Portrait",
-    } as any;
+    };
 
     singleMock.mockResolvedValue({ data: createdSessionType, error: null });
 

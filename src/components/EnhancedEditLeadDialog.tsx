@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
@@ -13,6 +13,7 @@ import { useLeadFieldValues } from "@/hooks/useLeadFieldValues";
 import { createDynamicLeadSchema } from "@/lib/leadFieldValidation";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadFieldDefinition } from "@/types/leadFields";
+import type { Database } from "@/integrations/supabase/types";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
@@ -45,19 +46,10 @@ const normalizeValueForComparison = (
   return value ?? "";
 };
 
-interface Lead {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  notes?: string;
-  [key: string]: any;
-}
-
 interface EnhancedEditLeadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  lead: Lead | null;
+  lead: Database["public"]["Tables"]["leads"]["Row"] | null;
   onClose: () => void;
   onSuccess?: () => void;
 }
@@ -69,6 +61,10 @@ export function EnhancedEditLeadDialog({
   onClose, 
   onSuccess 
 }: EnhancedEditLeadDialogProps) {
+  type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
+  type LeadStatusRow = Database["public"]["Tables"]["lead_statuses"]["Row"];
+  type LeadFormValues = Record<string, unknown>;
+
   const { t } = useTranslation('forms');
   const { fieldDefinitions, loading: fieldsLoading } = useLeadFieldDefinitions();
   const { fieldValues, loading: valuesLoading, upsertFieldValues } = useLeadFieldValues(lead?.id || "");
@@ -79,10 +75,39 @@ export function EnhancedEditLeadDialog({
   // Create dynamic schema based on field definitions
   const schema = createDynamicLeadSchema(fieldDefinitions);
   
-  const form = useForm({
+  const form = useForm<LeadFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {},
   });
+
+  const initialFormValuesRef = useRef<LeadFormValues>({});
+
+  const getStringValue = useCallback((values: LeadFormValues, key: string): string | undefined => {
+    const raw = values[key];
+    if (typeof raw === "string" && raw.trim().length > 0) {
+      return raw.trim();
+    }
+    return undefined;
+  }, []);
+
+  const toNullableString = useCallback((value: unknown): string | null => {
+    if (value === undefined || value === null) {
+      return null;
+    }
+    if (value === "") {
+      return null;
+    }
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+    if (typeof value === "boolean") {
+      return value ? "true" : "false";
+    }
+    if (Array.isArray(value)) {
+      return value.map((item) => (item == null ? "" : String(item))).join(",");
+    }
+    return String(value);
+  }, []);
 
   const getFallbackValue = useCallback(
     (fieldKey: string) => {
@@ -136,7 +161,7 @@ export function EnhancedEditLeadDialog({
     [fieldValues, getFallbackValue]
   );
 
-  const formValues = form.watch();
+  const formValues = form.watch() as LeadFormValues;
   
   // Track form dirty state by comparing with original values
   useEffect(() => {
@@ -174,7 +199,7 @@ export function EnhancedEditLeadDialog({
   // Load existing field values when dialog opens
   useEffect(() => {
     if (open && lead && !fieldsLoading && !valuesLoading) {
-      const formData: Record<string, any> = {};
+      const formData: LeadFormValues = {};
       
       fieldDefinitions.forEach((field) => {
         const fieldName = `field_${field.field_key}`;
@@ -182,6 +207,7 @@ export function EnhancedEditLeadDialog({
       });
       
       form.reset(formData);
+      initialFormValuesRef.current = { ...formData };
     }
   }, [
     open,
@@ -193,50 +219,54 @@ export function EnhancedEditLeadDialog({
     form,
   ]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: LeadFormValues) => {
     if (!lead) return;
-    
+
     try {
       setLoading(true);
-      console.log('📝 Form submission data:', data);
 
-      // Get status_id if status field is provided
-      let statusId = null;
-      if (data.field_status) {
+      let statusId: string | null = null;
+      const statusValue = getStringValue(data, 'field_status');
+
+      if (statusValue) {
         const organizationId = await getUserOrganizationId();
-        const { data: statusData } = await supabase
-          .from('lead_statuses')
-          .select('id')
-          .eq('organization_id', organizationId)
-          .eq('name', data.field_status)
-          .maybeSingle();
-        statusId = statusData?.id;
+        if (organizationId) {
+          const { data: statusData } = await supabase
+            .from<LeadStatusRow>('lead_statuses')
+            .select('id')
+            .eq('organization_id', organizationId)
+            .eq('name', statusValue)
+            .maybeSingle();
+          statusId = statusData?.id ?? null;
+        }
       }
 
-      // Update the main lead record
+      const nameValue = getStringValue(data, 'field_name') ?? lead.name;
+      const emailValue = getStringValue(data, 'field_email');
+      const phoneValue = getStringValue(data, 'field_phone');
+      const notesValue = getStringValue(data, 'field_notes');
+
       const { error: leadError } = await supabase
-        .from('leads')
+        .from<LeadRow>('leads')
         .update({
-          name: data.field_name || lead.name,
-          email: data.field_email || null,
-          phone: data.field_phone || null,
-          notes: data.field_notes || null,
-          ...(statusId && { status_id: statusId }),
+          name: nameValue,
+          email: emailValue ?? null,
+          phone: phoneValue ?? null,
+          notes: notesValue ?? null,
+          ...(statusId ? { status_id: statusId } : {}),
         })
         .eq('id', lead.id);
 
       if (leadError) throw leadError;
 
-      // Extract field values from form data
       const fieldValuesData: Record<string, string | null> = {};
       Object.entries(data).forEach(([key, value]) => {
         if (key.startsWith('field_')) {
           const fieldKey = key.replace('field_', '');
-          fieldValuesData[fieldKey] = value ? String(value) : null;
+          fieldValuesData[fieldKey] = toNullableString(value);
         }
       });
 
-      // Save field values
       await upsertFieldValues(lead.id, fieldValuesData);
 
       toast.success(t('leadDialog.successUpdated'));
@@ -254,6 +284,7 @@ export function EnhancedEditLeadDialog({
   const navigation = useModalNavigation({
     isDirty,
     onDiscard: () => {
+      form.reset(initialFormValuesRef.current);
       onClose();
     },
   });
@@ -261,6 +292,7 @@ export function EnhancedEditLeadDialog({
   const handleDirtyClose = () => {
     const canClose = navigation.handleModalClose();
     if (canClose) {
+      form.reset(initialFormValuesRef.current);
       onClose();
     }
   };
@@ -268,7 +300,7 @@ export function EnhancedEditLeadDialog({
   const footerActions = [
     {
       label: t('leadDialog.cancel'),
-      onClick: onClose,
+      onClick: handleDirtyClose,
       variant: "outline" as const,
     },
     {
@@ -284,7 +316,13 @@ export function EnhancedEditLeadDialog({
       <AppSheetModal
         title={t('leadDialog.editTitle')}
         isOpen={open}
-        onOpenChange={onOpenChange}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            handleDirtyClose();
+          } else {
+            onOpenChange(true);
+          }
+        }}
         size="lg"
         footerActions={[]}
       >
@@ -298,7 +336,13 @@ export function EnhancedEditLeadDialog({
       <AppSheetModal
         title={t('leadDialog.editTitle')}
         isOpen={open}
-        onOpenChange={onOpenChange}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            handleDirtyClose();
+          } else {
+            onOpenChange(true);
+          }
+        }}
         size="lg"
         dirty={isDirty}
         onDirtyClose={handleDirtyClose}

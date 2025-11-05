@@ -56,8 +56,11 @@ export default function SettingsLayout() {
   const navigate = useNavigate();
   const locationState =
     (location.state as SettingsLocationState | null) ?? null;
-  const backgroundLocationFromState =
-    locationState?.backgroundLocation ?? null;
+  const isMobile = useIsMobile();
+  const shouldUseOverlay = !isMobile;
+  const backgroundLocationFromState = shouldUseOverlay
+    ? locationState?.backgroundLocation ?? null
+    : null;
   const {
     hasCategoryChanges,
     cancelCategoryChanges,
@@ -71,7 +74,6 @@ export default function SettingsLayout() {
   const { toast } = useToast();
 
   const currentPath = location.pathname;
-  const isMobile = useIsMobile();
   const isSettingsRoot = currentPath === "/settings";
   const showMobileBackButton = isMobile && !isSettingsRoot;
   const hasChanges = hasCategoryChanges(currentPath);
@@ -80,12 +82,19 @@ export default function SettingsLayout() {
     backgroundLocationFromState
   );
   useEffect(() => {
+    if (!shouldUseOverlay) {
+      backgroundLocationRef.current = null;
+      return;
+    }
     if (backgroundLocationFromState) {
       backgroundLocationRef.current = backgroundLocationFromState;
     }
-  }, [backgroundLocationFromState]);
+  }, [backgroundLocationFromState, shouldUseOverlay]);
 
   useEffect(() => {
+    if (!shouldUseOverlay) {
+      return;
+    }
     if (
       backgroundLocationRef.current &&
       !backgroundLocationFromState
@@ -99,6 +108,7 @@ export default function SettingsLayout() {
       );
     }
   }, [
+    shouldUseOverlay,
     backgroundLocationFromState,
     location.pathname,
     location.search,
@@ -107,17 +117,32 @@ export default function SettingsLayout() {
   ]);
 
   const stableBackgroundLocation =
-    backgroundLocationFromState ?? backgroundLocationRef.current;
+    shouldUseOverlay
+      ? backgroundLocationFromState ?? backgroundLocationRef.current
+      : null;
 
-  const settingsNavigationState = useMemo(
-    () =>
-      stableBackgroundLocation
-        ? { backgroundLocation: stableBackgroundLocation }
-        : undefined,
-    [stableBackgroundLocation]
+  const settingsNavigationState = useMemo(() => {
+    if (!shouldUseOverlay || !stableBackgroundLocation) {
+      return undefined;
+    }
+    return { backgroundLocation: stableBackgroundLocation };
+  }, [shouldUseOverlay, stableBackgroundLocation]);
+
+  const pushSettingsPath = useCallback(
+    (target: string, options?: { replace?: boolean }) => {
+      if (settingsNavigationState) {
+        navigate(target, { ...options, state: settingsNavigationState });
+      } else if (options) {
+        navigate(target, options);
+      } else {
+        navigate(target);
+      }
+    },
+    [navigate, settingsNavigationState]
   );
 
-  const hasBackgroundLocation = Boolean(stableBackgroundLocation);
+  const hasBackgroundLocation =
+    shouldUseOverlay && Boolean(stableBackgroundLocation);
 
   const lastPathRef = useRef<string | null>(null);
 
@@ -360,10 +385,7 @@ export default function SettingsLayout() {
         return;
       }
       if (target) {
-        navigate(target, {
-          replace: true,
-          state: settingsNavigationState,
-        });
+        pushSettingsPath(target, { replace: true });
       }
     },
   });
@@ -423,8 +445,8 @@ export default function SettingsLayout() {
     if (!handleNavigationAttempt(target)) {
       return;
     }
-    navigate(target, { replace: true, state: settingsNavigationState });
-  }, [handleNavigationAttempt, navigate, settingsNavigationState]);
+    pushSettingsPath(target, { replace: true });
+  }, [handleNavigationAttempt, pushSettingsPath]);
 
   const handleMobileNavClick = useCallback(
     (itemHref: string) => {
@@ -434,9 +456,9 @@ export default function SettingsLayout() {
       if (!handleNavigationAttempt(itemHref)) {
         return;
       }
-      navigate(itemHref, { state: settingsNavigationState });
+      pushSettingsPath(itemHref);
     },
-    [handleNavigationAttempt, isItemLocked, navigate, settingsNavigationState]
+    [handleNavigationAttempt, isItemLocked, pushSettingsPath]
   );
 
   const headerMeta = useMemo(() => {
@@ -897,7 +919,9 @@ export default function SettingsLayout() {
           key={item.href}
           to={item.href}
           replace
-          state={settingsNavigationState}
+          {...(settingsNavigationState
+            ? { state: settingsNavigationState }
+            : {})}
           data-walkthrough={item.testId}
           onClick={(event) => handleNavItemInteraction(event, item.href)}
         >
@@ -905,7 +929,14 @@ export default function SettingsLayout() {
         </NavLink>
       );
     },
-    [currentPath, handleNavItemInteraction, hasCategoryChanges, isItemLocked, t]
+    [
+      currentPath,
+      handleNavItemInteraction,
+      hasCategoryChanges,
+      isItemLocked,
+      settingsNavigationState,
+      t,
+    ]
   );
 
   const containerStyle: CSSProperties = {

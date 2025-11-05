@@ -1,4 +1,8 @@
-import { Control } from "react-hook-form";
+import type {
+  Control,
+  ControllerRenderProps,
+  FieldValues,
+} from "react-hook-form";
 import {
   FormControl,
   FormField,
@@ -29,21 +33,36 @@ import { format } from "date-fns";
 import { cn, getDateFnsLocale } from "@/lib/utils";
 import { LeadFieldDefinition } from "@/types/leadFields";
 
+type DynamicLeadFormValues = Record<string, unknown>;
+
 interface DynamicLeadFormFieldsProps {
   fieldDefinitions: LeadFieldDefinition[];
-  control: Control<any>;
+  control: Control<DynamicLeadFormValues>;
   visibleOnly?: boolean;
 }
 
-export function DynamicLeadFormFields({ 
-  fieldDefinitions, 
-  control, 
-  visibleOnly = true 
+export function DynamicLeadFormFields({
+  fieldDefinitions,
+  control,
+  visibleOnly = true,
 }: DynamicLeadFormFieldsProps) {
   const { t } = useTranslation('forms');
   const fieldsToRender = visibleOnly 
     ? fieldDefinitions.filter(field => field.is_visible_in_form)
     : fieldDefinitions;
+
+  const toInputString = (value: unknown): string => {
+    if (typeof value === "string") {
+      return value;
+    }
+    if (typeof value === "number") {
+      return Number.isFinite(value) ? String(value) : "";
+    }
+    if (value === undefined || value === null) {
+      return "";
+    }
+    return String(value);
+  };
 
   const getFieldLabel = (field: LeadFieldDefinition) => {
     // Use translated labels for core fields
@@ -71,7 +90,7 @@ export function DynamicLeadFormFields({
       <FormField
         key={field.id}
         control={control}
-        name={fieldName}
+        name={fieldName as keyof DynamicLeadFormValues}
         rules={{
           required: field.is_required ? `${fieldLabel} ${t('dynamicFields.required')}` : false,
         }}
@@ -82,7 +101,10 @@ export function DynamicLeadFormFields({
               {field.is_required && <span className="text-destructive ml-1">*</span>}
             </FormLabel>
             <FormControl>
-              {renderFieldInput(field, formField)}
+              {renderFieldInput(
+                field,
+                formField as ControllerRenderProps<DynamicLeadFormValues, string>
+              )}
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -91,15 +113,25 @@ export function DynamicLeadFormFields({
     );
   };
 
-  const renderFieldInput = (fieldDef: LeadFieldDefinition, formField: any) => {
+  const renderFieldInput = (
+    fieldDef: LeadFieldDefinition,
+    formField: ControllerRenderProps<DynamicLeadFormValues, string>
+  ) => {
     const translatedLabel = getFieldLabel(fieldDef);
+    const commonInputProps = {
+      name: formField.name,
+      onBlur: formField.onBlur,
+      ref: formField.ref,
+    } as const;
     
     switch (fieldDef.field_type) {
       case 'text':
         return (
           <Input
             placeholder={t('dynamicFields.enterField', { field: translatedLabel.toLowerCase() })}
-            {...formField}
+            value={toInputString(formField.value)}
+            onChange={(event) => formField.onChange(event.target.value)}
+            {...commonInputProps}
           />
         );
 
@@ -108,7 +140,9 @@ export function DynamicLeadFormFields({
           <Textarea
             placeholder={t('dynamicFields.enterField', { field: translatedLabel.toLowerCase() })}
             rows={3}
-            {...formField}
+            value={toInputString(formField.value)}
+            onChange={(event) => formField.onChange(event.target.value)}
+            {...commonInputProps}
           />
         );
 
@@ -117,7 +151,9 @@ export function DynamicLeadFormFields({
           <Input
             type="email"
             placeholder={t('dynamicFields.enterField', { field: translatedLabel.toLowerCase() })}
-            {...formField}
+            value={toInputString(formField.value)}
+            onChange={(event) => formField.onChange(event.target.value)}
+            {...commonInputProps}
           />
         );
 
@@ -126,7 +162,9 @@ export function DynamicLeadFormFields({
           <Input
             type="tel"
             placeholder={t('dynamicFields.enterField', { field: translatedLabel.toLowerCase() })}
-            {...formField}
+            value={toInputString(formField.value)}
+            onChange={(event) => formField.onChange(event.target.value)}
+            {...commonInputProps}
           />
         );
 
@@ -135,12 +173,22 @@ export function DynamicLeadFormFields({
           <Input
             type="number"
             placeholder={t('dynamicFields.enterField', { field: translatedLabel.toLowerCase() })}
-            {...formField}
-            onChange={(e) => formField.onChange(e.target.value ? Number(e.target.value) : '')}
+            value={toInputString(formField.value)}
+            onChange={(event) => {
+              const { value } = event.target;
+              formField.onChange(value === "" ? "" : Number(value));
+            }}
+            {...commonInputProps}
           />
         );
 
       case 'date':
+        {
+          const dateValue =
+            typeof formField.value === "string" && formField.value
+              ? formField.value
+              : undefined;
+
         return (
           <Popover>
             <PopoverTrigger asChild>
@@ -152,8 +200,8 @@ export function DynamicLeadFormFields({
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {formField.value ? (
-                  format(new Date(formField.value), "PPP", { locale: getDateFnsLocale() })
+                {dateValue ? (
+                  format(new Date(dateValue), "PPP", { locale: getDateFnsLocale() })
                 ) : (
                   <span>{t('dynamicFields.pickDate')}</span>
                 )}
@@ -162,19 +210,25 @@ export function DynamicLeadFormFields({
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={formField.value ? new Date(formField.value) : undefined}
-                onSelect={(date) => formField.onChange(date?.toISOString().split('T')[0])}
+                selected={dateValue ? new Date(dateValue) : undefined}
+                onSelect={(date) =>
+                  formField.onChange(date ? date.toISOString().split('T')[0] : "")
+                }
                 initialFocus
                 className="p-3 pointer-events-auto"
               />
             </PopoverContent>
           </Popover>
         );
+        }
 
-      case 'select':
+      case 'select': {
         const options = fieldDef.options?.options || [];
         return (
-          <Select onValueChange={formField.onChange} value={formField.value}>
+          <Select
+            onValueChange={(value) => formField.onChange(value)}
+            value={typeof formField.value === "string" ? formField.value : undefined}
+          >
             <SelectTrigger>
               <SelectValue placeholder={t('dynamicFields.selectField', { field: translatedLabel.toLowerCase() })} />
             </SelectTrigger>
@@ -187,13 +241,14 @@ export function DynamicLeadFormFields({
             </SelectContent>
           </Select>
         );
+      }
 
       case 'checkbox':
         return (
           <div className="flex items-center space-x-2">
             <Checkbox
-              checked={formField.value}
-              onCheckedChange={formField.onChange}
+              checked={Boolean(formField.value)}
+              onCheckedChange={(checked) => formField.onChange(Boolean(checked))}
             />
             <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
               {translatedLabel}
@@ -205,7 +260,9 @@ export function DynamicLeadFormFields({
         return (
           <Input
             placeholder={t('dynamicFields.enterField', { field: translatedLabel.toLowerCase() })}
-            {...formField}
+            value={toInputString(formField.value)}
+            onChange={(event) => formField.onChange(event.target.value)}
+            {...commonInputProps}
           />
         );
     }

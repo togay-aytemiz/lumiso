@@ -74,7 +74,7 @@ export function AppSidebar() {
   const { isAdminOrSupport } = useUserRole();
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const { t } = useNavigationTranslation();
-  const settingsLinkState = !currentPath.startsWith("/settings")
+  const settingsLinkState = !isMobile && !currentPath.startsWith("/settings")
     ? { backgroundLocation: location }
     : undefined;
 

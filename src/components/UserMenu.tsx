@@ -33,7 +33,8 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
   };
 
   const handleSettings = () => {
-    const shouldAttachBackground = !location.pathname.startsWith("/settings");
+    const shouldAttachBackground =
+      variant !== "mobile" && !location.pathname.startsWith("/settings");
     const state = shouldAttachBackground
       ? { backgroundLocation: location }
       : undefined;

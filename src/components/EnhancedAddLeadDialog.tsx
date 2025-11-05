@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
@@ -20,6 +20,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 import { useNavigate } from "react-router-dom";
+import type { Database } from "@/integrations/supabase/types";
 
 interface EnhancedAddLeadDialogProps {
   open: boolean;
@@ -34,6 +35,12 @@ export function EnhancedAddLeadDialog({
   onClose, 
   onSuccess 
 }: EnhancedAddLeadDialogProps) {
+  type LeadStatusRow = Database["public"]["Tables"]["lead_statuses"]["Row"];
+  type LeadInsert = Database["public"]["Tables"]["leads"]["Insert"];
+  type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
+
+  type LeadFormValues = Record<string, unknown>;
+
   const { t } = useTranslation('forms');
   const { t: tCommon } = useTranslation('common');
   const { fieldDefinitions, loading: fieldsLoading } = useLeadFieldDefinitions();
@@ -47,57 +54,88 @@ export function EnhancedAddLeadDialog({
   // Create dynamic schema based on field definitions
   const schema = createDynamicLeadSchema(fieldDefinitions);
   
-  const form = useForm({
+  const form = useForm<LeadFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {},
   });
 
   const [defaultsReady, setDefaultsReady] = useState(false);
-  const initialValuesRef = useRef<Record<string, any>>({});
-  const watchedValues = form.watch();
+  const initialValuesRef = useRef<LeadFormValues>({});
+  const watchedValues = form.watch() as LeadFormValues;
+
+  const getStringValue = useCallback(
+    (values: LeadFormValues, key: string): string | undefined => {
+      const raw = values[key];
+      if (typeof raw === "string" && raw.trim().length > 0) {
+        return raw.trim();
+      }
+      return undefined;
+    },
+    []
+  );
+
+  const toNullableString = useCallback((value: unknown): string | null => {
+    if (value === undefined || value === null) {
+      return null;
+    }
+    if (value === "") {
+      return null;
+    }
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+    if (typeof value === "boolean") {
+      return value ? "true" : "false";
+    }
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => (item == null ? "" : String(item)))
+        .join(",");
+    }
+    return String(value);
+  }, []);
 
   useEffect(() => {
     if (open && !fieldsLoading) {
       setDefaultsReady(false);
       // Reset form when dialog opens
       const setDefaultValues = async () => {
-        const defaultValues: Record<string, any> = {};
-        
+        const defaultValues: LeadFormValues = {};
+
         // Get organization ID for status lookup
         const organizationId = await getUserOrganizationId();
-        
+
         for (const field of fieldDefinitions) {
           const fieldName = `field_${field.field_key}`;
-          
-          if (field.field_key === 'status' && organizationId) {
-            // Set default status to "New" or the default status
+
+          if (field.field_key === "status" && organizationId) {
             try {
               const { data: defaultStatus } = await supabase
-                .from('lead_statuses')
-                .select('name')
-                .eq('organization_id', organizationId)
-                .eq('is_default', true)
+                .from<LeadStatusRow>("lead_statuses")
+                .select("name")
+                .eq("organization_id", organizationId)
+                .eq("is_default", true)
                 .maybeSingle();
-              
-              defaultValues[fieldName] = defaultStatus?.name || 'New';
+
+              defaultValues[fieldName] = defaultStatus?.name ?? "New";
             } catch (error) {
-              console.error('Error fetching default status:', error);
-              defaultValues[fieldName] = 'New';
+              console.error("Error fetching default status:", error);
+              defaultValues[fieldName] = "New";
             }
           } else {
             switch (field.field_type) {
-              case 'checkbox':
+              case "checkbox":
                 defaultValues[fieldName] = false;
                 break;
-              case 'number':
-                defaultValues[fieldName] = '';
+              case "number":
+                defaultValues[fieldName] = "";
                 break;
               default:
-                defaultValues[fieldName] = '';
+                defaultValues[fieldName] = "";
             }
           }
         }
-        
+
         initialValuesRef.current = { ...defaultValues };
         form.reset(defaultValues);
         setDefaultsReady(true);
@@ -116,17 +154,18 @@ export function EnhancedAddLeadDialog({
 
     const initialValues = initialValuesRef.current ?? {};
     const currentValues = watchedValues ?? {};
-    const keys = new Set([
+    const keys = new Set<string>([
       ...Object.keys(initialValues),
       ...Object.keys(currentValues),
     ]);
 
-    const valuesEqual = (a: any, b: any): boolean => {
+    const isEmpty = (value: unknown) =>
+      value === "" || value === null || typeof value === "undefined";
+
+    const valuesEqual = (a: unknown, b: unknown): boolean => {
       if (a === b) {
         return true;
       }
-      const isEmpty = (value: any) =>
-        value === "" || value === null || typeof value === "undefined";
       if (isEmpty(a) && isEmpty(b)) {
         return true;
       }
@@ -145,7 +184,11 @@ export function EnhancedAddLeadDialog({
         typeof b === "object" &&
         b !== null
       ) {
-        return JSON.stringify(a) === JSON.stringify(b);
+        try {
+          return JSON.stringify(a) === JSON.stringify(b);
+        } catch {
+          return false;
+        }
       }
       return false;
     };
@@ -162,7 +205,7 @@ export function EnhancedAddLeadDialog({
     return false;
   }, [defaultsReady, watchedValues]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: LeadFormValues) => {
     try {
       setLoading(true);
 
@@ -171,55 +214,64 @@ export function EnhancedAddLeadDialog({
         throw new Error(t('leadDialog.errorNoOrganization'));
       }
 
-      // Get status_id based on selected status or default
-      let statusId = null;
-      if (data.field_status) {
+      const authResponse = await supabase.auth.getUser();
+      const userId = authResponse.data.user?.id;
+      if (!userId) {
+        throw new Error(t('leadDialog.errorCreated'));
+      }
+
+      let statusName = getStringValue(data, 'field_status');
+      let statusId: string | null = null;
+
+      if (statusName) {
         const { data: statusData } = await supabase
-          .from('lead_statuses')
-          .select('id')
+          .from<LeadStatusRow>('lead_statuses')
+          .select('id, name')
           .eq('organization_id', organizationId)
-          .eq('name', data.field_status)
+          .eq('name', statusName)
           .maybeSingle();
-        statusId = statusData?.id;
+
+        statusId = statusData?.id ?? null;
+        statusName = statusData?.name ?? statusName;
       } else {
-        // Get default lead status
         const { data: defaultStatus } = await supabase
-          .from('lead_statuses')
-          .select('id')
+          .from<LeadStatusRow>('lead_statuses')
+          .select('id, name')
           .eq('organization_id', organizationId)
           .eq('is_default', true)
           .maybeSingle();
-        statusId = defaultStatus?.id;
+
+        statusId = defaultStatus?.id ?? null;
+        statusName = defaultStatus?.name ?? 'New';
       }
 
-      // Create the lead record
+      const leadInsert: LeadInsert = {
+        organization_id: organizationId,
+        user_id: userId,
+        name: getStringValue(data, 'field_name') ?? 'Unnamed Lead',
+        email: getStringValue(data, 'field_email') ?? null,
+        phone: getStringValue(data, 'field_phone') ?? null,
+        notes: getStringValue(data, 'field_notes') ?? null,
+        status: statusName ?? 'New',
+        status_id: statusId,
+      };
+
       const { data: newLead, error: leadError } = await supabase
-        .from('leads')
-        .insert({
-          organization_id: organizationId,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          name: data.field_name || 'Unnamed Lead',
-          email: data.field_email || null,
-          phone: data.field_phone || null,
-          notes: data.field_notes || null,
-          status_id: statusId,
-          // assignees removed - single user organization
-        })
+        .from<LeadRow>('leads')
+        .insert(leadInsert)
         .select()
         .single();
 
-      if (leadError) throw leadError;
+      if (leadError || !newLead) throw leadError ?? new Error('Failed to create lead');
 
-      // Extract field values from form data
       const fieldValues: Record<string, string | null> = {};
       Object.entries(data).forEach(([key, value]) => {
         if (key.startsWith('field_')) {
           const fieldKey = key.replace('field_', '');
-          fieldValues[fieldKey] = value ? String(value) : null;
+          fieldValues[fieldKey] = toNullableString(value);
         }
       });
 
-      // Save field values
       await upsertFieldValues(newLead.id, fieldValues);
 
       toast.success(
@@ -256,6 +308,7 @@ export function EnhancedAddLeadDialog({
   const navigation = useModalNavigation({
     isDirty: hasDirtyValue,
     onDiscard: () => {
+      form.reset(initialValuesRef.current);
       onClose();
     },
     onSaveAndExit: async () => {
@@ -266,6 +319,7 @@ export function EnhancedAddLeadDialog({
   const handleDirtyClose = () => {
     const canClose = navigation.handleModalClose();
     if (canClose) {
+      form.reset(initialValuesRef.current);
       onClose();
     }
   };
@@ -273,7 +327,7 @@ export function EnhancedAddLeadDialog({
   const footerActions = [
     {
       label: t('leadDialog.cancel'),
-      onClick: onClose,
+      onClick: handleDirtyClose,
       variant: "outline" as const,
     },
     {
@@ -289,7 +343,13 @@ export function EnhancedAddLeadDialog({
       <AppSheetModal
         title={t('leadDialog.addTitle')}
         isOpen={open}
-        onOpenChange={onOpenChange}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            handleDirtyClose();
+          } else {
+            onOpenChange(true);
+          }
+        }}
         size="lg"
         footerActions={[]}
       >
@@ -303,7 +363,13 @@ export function EnhancedAddLeadDialog({
       <AppSheetModal
         title={t('leadDialog.addTitle')}
         isOpen={open}
-        onOpenChange={onOpenChange}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            handleDirtyClose();
+          } else {
+            onOpenChange(true);
+          }
+        }}
         size="lg"
         dirty={hasDirtyValue}
         onDirtyClose={handleDirtyClose}

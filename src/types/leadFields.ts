@@ -22,7 +22,7 @@ export interface LeadFieldDefinition {
   is_visible_in_table: boolean;
   sort_order: number;
   options?: { options: string[] };
-  validation_rules?: Record<string, any>;
+  validation_rules?: Record<string, unknown>;
   allow_multiple?: boolean;
   created_at: string;
   updated_at: string;
@@ -46,7 +46,7 @@ export interface CreateLeadFieldDefinition {
   is_visible_in_table?: boolean;
   sort_order?: number;
   options?: { options: string[] };
-  validation_rules?: Record<string, any>;
+  validation_rules?: Record<string, unknown>;
   allow_multiple?: boolean;
 }
 
@@ -57,7 +57,7 @@ export interface UpdateLeadFieldDefinition {
   is_visible_in_table?: boolean;
   sort_order?: number;
   options?: { options: string[] };
-  validation_rules?: Record<string, any>;
+  validation_rules?: Record<string, unknown>;
   allow_multiple?: boolean;
 }
 
@@ -80,7 +80,7 @@ export const FIELD_TYPE_CONFIG: Record<LeadFieldType, {
   label: string;
   supportsOptions: boolean;
   supportsValidation: boolean;
-  defaultValidation?: Record<string, any>;
+  defaultValidation?: Record<string, unknown>;
 }> = {
   text: {
     label: 'Single Line Text',

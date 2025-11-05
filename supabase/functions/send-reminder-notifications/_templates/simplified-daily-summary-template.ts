@@ -1,17 +1,36 @@
 import { createEmailTemplate, EmailTemplateData, formatDate, formatTime } from './enhanced-email-base.ts';
 
+type SessionSummary = {
+  leads?: { name?: string | null; email?: string | null; phone?: string | null } | null;
+  projects?: { name?: string | null } | null;
+  session_date?: string | null;
+  session_time?: string | null;
+};
+
+type ReminderSummary = {
+  content: string;
+  reminder_date: string;
+  leads?: { name?: string | null; email?: string | null; phone?: string | null } | null;
+  projects?: { name?: string | null } | null;
+};
+
+type TodoSummary = {
+  content: string;
+  projects?: { name?: string | null } | null;
+};
+
 export function generateDailySummaryEmailSimplified(
-  upcomingSessions: any[],
-  overdueSessions: any[],
-  overdueReminders: any[],
-  upcomingReminders: any[],
-  pendingTodos: any[],  
+  upcomingSessions: SessionSummary[],
+  overdueSessions: SessionSummary[],
+  overdueReminders: ReminderSummary[],
+  upcomingReminders: ReminderSummary[],
+  pendingTodos: TodoSummary[],
   templateData: EmailTemplateData
 ): string {
   const today = formatDate(new Date().toISOString(), templateData.dateFormat);
   
   // Generate sections
-  let sections = [];
+  const sections: string[] = [];
   
   // Today's upcoming Sessions section
   if (upcomingSessions.length > 0) {

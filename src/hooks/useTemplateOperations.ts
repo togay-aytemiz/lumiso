@@ -48,14 +48,14 @@ const transformDatabaseTemplate = (dbTemplate: DatabaseTemplate): Template => {
     updated_at: dbTemplate.updated_at,
     user_id: dbTemplate.user_id,
     organization_id: dbTemplate.organization_id,
-    channels: dbTemplate.template_channel_views?.reduce((acc: any, view: any) => {
+    channels: dbTemplate.template_channel_views?.reduce<Record<string, { subject: string | null; content: string | null; html_content: string | null }>>((acc, view) => {
       acc[view.channel] = {
         subject: view.subject,
         content: view.content,
         html_content: view.html_content
       };
       return acc;
-    }, {}) || {}
+    }, {} as Record<string, { subject: string | null; content: string | null; html_content: string | null }>) || {}
   };
 };
 
@@ -111,12 +111,12 @@ export function useTemplateOperations(): UseTemplateOperationsReturn {
       
       const transformedTemplates = (data || []).map(transformDatabaseTemplate);
       setTemplates(transformedTemplates);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error fetching templates:', err);
-      setError(err.message || 'Failed to fetch templates');
+      setError(err instanceof Error ? err.message : 'Failed to fetch templates');
       toast({
         title: "Error loading templates",
-        description: err.message || 'Failed to fetch templates',
+        description: err instanceof Error ? err.message : 'Failed to fetch templates',
         variant: "destructive"
       });
     } finally {
@@ -157,7 +157,7 @@ export function useTemplateOperations(): UseTemplateOperationsReturn {
       });
       
       return true;
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error deleting template:', err);
       toast({
         title: "Error deleting template",
@@ -204,7 +204,7 @@ export function useTemplateOperations(): UseTemplateOperationsReturn {
 
       // Create channel views if the original template has them
       if (template.channels && Object.keys(template.channels).length > 0) {
-        const channelInserts = Object.entries(template.channels).map(([channel, channelData]: [string, any]) => ({
+        const channelInserts = Object.entries(template.channels).map(([channel, channelData]: [string, { subject?: string | null; content?: string | null; html_content?: string | null }]) => ({
           template_id: data.id,
           channel,
           subject: channelData?.subject || null,
@@ -238,7 +238,7 @@ export function useTemplateOperations(): UseTemplateOperationsReturn {
       });
       
       return true;
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error duplicating template:', err);
       toast({
         title: "Error duplicating template",

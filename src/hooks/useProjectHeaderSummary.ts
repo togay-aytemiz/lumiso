@@ -60,6 +60,7 @@ export function useProjectHeaderSummary(projectId?: string | null, refreshToken?
         supabase
           .from("project_services")
           .select(`
+            billing_type,
             services!inner (
               id,
               name,
@@ -83,16 +84,34 @@ export function useProjectHeaderSummary(projectId?: string | null, refreshToken?
       const basePrice = Number(projectResponse.data?.base_price) || 0;
 
       const serviceEntries = (servicesResponse.data || [])
-        .map(entry => entry.services)
+        .map((entry: any) => {
+          const service = entry.services;
+          if (!service) return null;
+          return {
+            billing_type: entry.billing_type as string,
+            service: service as {
+              id: string;
+              name: string;
+              selling_price?: number | null;
+              price?: number | null;
+            }
+          };
+        })
         .filter(Boolean) as Array<{
-          id: string;
-          name: string;
-          selling_price?: number | null;
-          price?: number | null;
+          billing_type: string;
+          service: {
+            id: string;
+            name: string;
+            selling_price?: number | null;
+            price?: number | null;
+          };
         }>;
-      const serviceNames = serviceEntries.map(service => service.name).filter(Boolean);
-      const servicesTotal = serviceEntries.reduce((total, service) => {
-        const value = service.selling_price ?? service.price ?? 0;
+      const serviceNames = serviceEntries.map(entry => entry.service.name).filter(Boolean);
+      const servicesTotal = serviceEntries.reduce((total, entry) => {
+        if (entry.billing_type !== "extra") {
+          return total;
+        }
+        const value = entry.service.selling_price ?? entry.service.price ?? 0;
         return total + Number(value) || total;
       }, 0);
 

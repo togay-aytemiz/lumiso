@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Upload, Loader2, X, User, Settings, CheckCircle } from "lucide-react";
-import { useProfile } from "@/contexts/ProfileContext";
+import { useProfile } from "@/hooks/useProfile";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useWorkingHours } from "@/hooks/useWorkingHours";
 import { useToast } from "@/hooks/use-toast";

@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@/utils/testUtils";
+import * as reactRouterDom from "react-router-dom";
 import General from "../General";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
@@ -106,8 +107,8 @@ const renderGeneral = () => render(<General />);
 
 describe("General settings page", () => {
   beforeEach(() => {
-    jest.spyOn(require("react-router-dom"), "useSearchParams").mockReturnValue([new URLSearchParams(), jest.fn()]);
-    jest.spyOn(require("react-router-dom"), "useNavigate").mockReturnValue(jest.fn());
+    jest.spyOn(reactRouterDom, "useSearchParams").mockReturnValue([new URLSearchParams(), jest.fn()]);
+    jest.spyOn(reactRouterDom, "useNavigate").mockReturnValue(jest.fn());
 
     const brandingSectionMock = createSectionMock();
     const regionalSectionMock = createSectionMock();
@@ -156,9 +157,9 @@ describe("General settings page", () => {
   });
 
   it("starts the onboarding tutorial when the tutorial query parameter is present", async () => {
-    jest.spyOn(require("react-router-dom"), "useSearchParams").mockReturnValue([new URLSearchParams("tutorial=true"), jest.fn()]);
+    jest.spyOn(reactRouterDom, "useSearchParams").mockReturnValue([new URLSearchParams("tutorial=true"), jest.fn()]);
     const mockNavigate = jest.fn();
-    jest.spyOn(require("react-router-dom"), "useNavigate").mockReturnValue(mockNavigate);
+    jest.spyOn(reactRouterDom, "useNavigate").mockReturnValue(mockNavigate);
 
     renderGeneral();
 

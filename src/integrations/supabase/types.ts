@@ -832,7 +832,7 @@ export type Database = {
           organization_id: string | null
           project_id: string
           status: string
-          type: string
+          type: "base_price" | "manual" | "deposit_due" | "deposit_payment" | "balance_due"
           updated_at: string
           user_id: string
         }
@@ -845,7 +845,7 @@ export type Database = {
           organization_id?: string | null
           project_id: string
           status: string
-          type?: string
+          type?: "base_price" | "manual" | "deposit_due" | "deposit_payment" | "balance_due"
           updated_at?: string
           user_id: string
         }
@@ -858,7 +858,7 @@ export type Database = {
           organization_id?: string | null
           project_id?: string
           status?: string
-          type?: string
+          type?: "base_price" | "manual" | "deposit_due" | "deposit_payment" | "balance_due"
           updated_at?: string
           user_id?: string
         }
@@ -900,6 +900,7 @@ export type Database = {
           id: string
           project_id: string
           service_id: string
+          billing_type: "included" | "extra"
           user_id: string
         }
         Insert: {
@@ -907,6 +908,7 @@ export type Database = {
           id?: string
           project_id: string
           service_id: string
+          billing_type?: "included" | "extra"
           user_id: string
         }
         Update: {
@@ -914,6 +916,7 @@ export type Database = {
           id?: string
           project_id?: string
           service_id?: string
+          billing_type?: "included" | "extra"
           user_id?: string
         }
         Relationships: [
@@ -1010,6 +1013,7 @@ export type Database = {
           base_price: number | null
           created_at: string
           description: string | null
+          deposit_config: Json | null
           id: string
           lead_id: string
           name: string
@@ -1025,6 +1029,7 @@ export type Database = {
           base_price?: number | null
           created_at?: string
           description?: string | null
+          deposit_config?: Json | null
           id?: string
           lead_id: string
           name: string
@@ -1040,6 +1045,7 @@ export type Database = {
           base_price?: number | null
           created_at?: string
           description?: string | null
+          deposit_config?: Json | null
           id?: string
           lead_id?: string
           name?: string

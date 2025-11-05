@@ -3,22 +3,30 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { AppSheetModal } from "../app-sheet-modal";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+type MockWithChildren = {
+  children?: React.ReactNode;
+};
+
+type MockSheetContentProps = MockWithChildren & {
+  side?: "top" | "right" | "bottom" | "left";
+};
+
 jest.mock("@/hooks/use-mobile", () => ({
   useIsMobile: jest.fn(),
 }));
 
-const sheetContentMock = jest.fn(({ side, children }: any) => (
+const sheetContentMock = jest.fn(({ side, children }: MockSheetContentProps) => (
   <div data-testid="sheet-content" data-side={side}>
     {children}
   </div>
 ));
 
 jest.mock("@/components/ui/sheet", () => ({
-  Sheet: ({ children }: any) => <div data-testid="sheet-root">{children}</div>,
-  SheetContent: (props: any) => sheetContentMock(props),
-  SheetHeader: ({ children }: any) => <div data-testid="sheet-header">{children}</div>,
-  SheetTitle: ({ children }: any) => <div data-testid="sheet-title">{children}</div>,
-  SheetFooter: ({ children }: any) => <div data-testid="sheet-footer">{children}</div>,
+  Sheet: ({ children }: MockWithChildren) => <div data-testid="sheet-root">{children}</div>,
+  SheetContent: (props: MockSheetContentProps) => sheetContentMock(props),
+  SheetHeader: ({ children }: MockWithChildren) => <div data-testid="sheet-header">{children}</div>,
+  SheetTitle: ({ children }: MockWithChildren) => <div data-testid="sheet-title">{children}</div>,
+  SheetFooter: ({ children }: MockWithChildren) => <div data-testid="sheet-footer">{children}</div>,
 }));
 
 describe("AppSheetModal", () => {

@@ -12,7 +12,9 @@ function setLS(key: string, value: unknown) {
   try {
     const payload = { ts: Date.now(), value };
     localStorage.setItem(key, JSON.stringify(payload));
-  } catch {}
+  } catch (error) {
+    console.debug('RoutePrefetcher: failed to persist cache entry', error);
+  }
 }
 
 export default function RoutePrefetcher() {
@@ -55,10 +57,14 @@ export default function RoutePrefetcher() {
           p_filters: {},
         });
         if (!error && Array.isArray(data)) {
-          const total = data.length ? Number((data as any[])[0].total_count ?? 0) : 0;
+          const total = data.length
+            ? Number((data[0] as { total_count?: number | string }).total_count ?? 0)
+            : 0;
           setLS(k, { items: data, total, ttl: TTL_MS });
         }
-      } catch {}
+      } catch (error) {
+        console.debug('RoutePrefetcher: failed to prefetch projects', error);
+      }
       finally {
         inFlightRef.current.delete(k);
       }
@@ -79,10 +85,14 @@ export default function RoutePrefetcher() {
           p_filters: {},
         });
         if (!error && Array.isArray(data)) {
-          const total = data.length ? Number((data as any[])[0].total_count ?? 0) : 0;
+          const total = data.length
+            ? Number((data[0] as { total_count?: number | string }).total_count ?? 0)
+            : 0;
           setLS(k, { items: data, total, ttl: TTL_MS });
         }
-      } catch {}
+      } catch (error) {
+        console.debug('RoutePrefetcher: failed to prefetch leads', error);
+      }
       finally {
         inFlightRef.current.delete(k);
       }
@@ -103,7 +113,9 @@ export default function RoutePrefetcher() {
         if (!error && Array.isArray(data)) {
           setLS(k, { items: data, ttl: TTL_MS });
         }
-      } catch {}
+      } catch (error) {
+        console.debug('RoutePrefetcher: failed to prefetch lead metrics', error);
+      }
       finally {
         inFlightRef.current.delete(k);
       }

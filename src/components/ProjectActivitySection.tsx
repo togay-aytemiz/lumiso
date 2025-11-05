@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { toast } from "@/hooks/use-toast";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
-import { formatLongDate } from "@/lib/utils";
+import { formatLongDate, formatTime } from "@/lib/utils";
 import type { Database, Json } from "@/integrations/supabase/types";
 import type { PostgrestError } from "@supabase/supabase-js";
 
@@ -99,6 +99,9 @@ const getStringValue = (record: AuditLogValues, key: string): string | undefined
 const getNumberValue = (record: AuditLogValues, key: string): number | undefined =>
   getRecordValue(record, key, (value): value is number => typeof value === "number");
 
+const getBooleanValue = (record: AuditLogValues, key: string): boolean | undefined =>
+  getRecordValue(record, key, (value): value is boolean => typeof value === "boolean");
+
 interface ProjectActivitySectionProps {
   projectId: string;
   leadId: string;
@@ -148,10 +151,12 @@ export function ProjectActivitySection({
       const logMap = new Map<string, AuditLogEntry>();
       const statusIds = new Set<string>();
       const serviceIds = new Set<string>();
-      const projectFilter = { project_id: projectId } as Json;
 
       const collect = (rows: AuditLogRow[] | null | undefined) => {
         (rows ?? []).forEach((row) => {
+          if (!isRelevantLog(row)) {
+            return;
+          }
           const mapped = mapAuditLogRow(row);
           logMap.set(mapped.id, mapped);
 
@@ -189,6 +194,7 @@ export function ProjectActivitySection({
           .eq("entity_type", "project")
           .eq("entity_id", projectId)
           .order("created_at", { ascending: false })
+          .limit(200)
       );
 
       const entityTypes: Array<AuditLogRow["entity_type"]> = [
@@ -206,16 +212,8 @@ export function ProjectActivitySection({
             .from<AuditLogRow>("audit_log")
             .select("*")
             .eq("entity_type", type)
-            .contains("new_values", projectFilter)
             .order("created_at", { ascending: false })
-        );
-        await runQuery(
-          supabase
-            .from<AuditLogRow>("audit_log")
-            .select("*")
-            .eq("entity_type", type)
-            .contains("old_values", projectFilter)
-            .order("created_at", { ascending: false })
+            .limit(200)
         );
       }
 
@@ -286,6 +284,39 @@ export function ProjectActivitySection({
     }
   }, [projectId]);
 
+  const logReferencesProject = useCallback(
+    (values: Json | null): boolean => {
+      const record = jsonToRecord(values);
+      if (!record) return false;
+      const candidateKeys = ["project_id", "projectId", "project"];
+
+      return candidateKeys.some((key) => {
+        const value = record[key];
+        if (typeof value === "string") {
+          return value === projectId;
+        }
+        if (
+          value &&
+          typeof value === "object" &&
+          "id" in (value as Record<string, unknown>)
+        ) {
+          const maybeId = (value as Record<string, unknown>).id;
+          return typeof maybeId === "string" && maybeId === projectId;
+        }
+        return false;
+      });
+    },
+    [projectId]
+  );
+
+  const isRelevantLog = useCallback(
+    (row: AuditLogRow) =>
+      (row.entity_type === "project" && row.entity_id === projectId) ||
+      logReferencesProject(row.new_values) ||
+      logReferencesProject(row.old_values),
+    [projectId, logReferencesProject]
+  );
+
   useEffect(() => {
     let cancelled = false;
 
@@ -306,6 +337,30 @@ export function ProjectActivitySection({
       cancelled = true;
     };
   }, [fetchProjectActivities, fetchHistoryData]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`project-history-${projectId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "audit_log",
+        },
+        (payload) => {
+          const row = payload.new as AuditLogRow | null;
+          if (row && isRelevantLog(row)) {
+            void fetchHistoryData();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [projectId, fetchHistoryData, isRelevantLog]);
 
   const handleSaveActivity = async (
     content: string,
@@ -444,20 +499,60 @@ export function ProjectActivitySection({
   };
 
   const getHistoryDescription = (log: AuditLogEntry): string => {
+    const notSet = t("activitiesHistory.historyMessages.notSet");
+
+    const formatChange = (
+      label: string,
+      oldValue?: string | null,
+      newValue?: string | null
+    ) => {
+      const safeOld =
+        oldValue && oldValue.length > 0 ? oldValue : notSet;
+      const safeNew =
+        newValue && newValue.length > 0 ? newValue : notSet;
+      return t("activitiesHistory.historyMessages.changeTemplate", {
+        label,
+        oldValue: safeOld,
+        newValue: safeNew,
+      });
+    };
+
+    const joinChanges = (changes: string[]) => changes.join("; ");
+
+    const formatSessionTimeValue = (value?: string | null) => {
+      if (!value) return undefined;
+      const timePart = value.slice(0, 5);
+      try {
+        return formatTime(timePart);
+      } catch {
+        return value;
+      }
+    };
+
+    const formatSessionDateValue = (value?: string | null) =>
+      value ? formatLongDate(value) : undefined;
+
     if (log.entity_type === "project") {
       const name =
         getStringValue(log.new_values, "name") ??
         getStringValue(log.old_values, "name") ??
-        projectName;
+        projectName ??
+        t("activitiesHistory.historyMessages.projectUnnamed");
 
       if (log.action === "created") {
-        return name ? `Project "${name}" created` : "Project created";
+        return name
+          ? t("activitiesHistory.historyMessages.projectCreated", { name })
+          : t("activitiesHistory.historyMessages.projectCreatedUnnamed");
       }
       if (log.action === "archived") {
-        return name ? `Project "${name}" archived` : "Project archived";
+        return name
+          ? t("activitiesHistory.historyMessages.projectArchived", { name })
+          : t("activitiesHistory.historyMessages.projectArchivedUnnamed");
       }
       if (log.action === "restored") {
-        return name ? `Project "${name}" restored` : "Project restored";
+        return name
+          ? t("activitiesHistory.historyMessages.projectRestored", { name })
+          : t("activitiesHistory.historyMessages.projectRestoredUnnamed");
       }
       if (log.action === "updated") {
         const changes: string[] = [];
@@ -465,10 +560,10 @@ export function ProjectActivitySection({
         const newStatusId = getStringValue(log.new_values, "status_id");
 
         if (oldStatusId !== newStatusId) {
-          const oldStatus = getStatusName(oldStatusId) ?? "Unspecified";
-          const newStatus = getStatusName(newStatusId) ?? "Unspecified";
+          const oldStatus = getStatusName(oldStatusId) ?? notSet;
+          const newStatus = getStatusName(newStatusId) ?? notSet;
           changes.push(
-            t("activityLogs.status_changed_from_to", {
+            t("activitiesHistory.historyMessages.projectStageChanged", {
               oldStatus,
               newStatus,
             })
@@ -478,7 +573,12 @@ export function ProjectActivitySection({
         const oldName = getStringValue(log.old_values, "name");
         const newName = getStringValue(log.new_values, "name");
         if (oldName && newName && oldName !== newName) {
-          changes.push(`Project renamed from "${oldName}" to "${newName}"`);
+          changes.push(
+            t("activitiesHistory.historyMessages.projectRenamed", {
+              oldName,
+              newName,
+            })
+          );
         }
 
         const oldPrice = getNumberValue(log.old_values, "base_price");
@@ -491,14 +591,38 @@ export function ProjectActivitySection({
           const formattedOld = formatAmount(oldPrice) ?? oldPrice.toString();
           const formattedNew = formatAmount(newPrice) ?? newPrice.toString();
           changes.push(
-            `Base price changed from ${formattedOld} to ${formattedNew}`
+            t("activitiesHistory.historyMessages.projectBasePriceChanged", {
+              oldPrice: formattedOld,
+              newPrice: formattedNew,
+            })
+          );
+        }
+
+        const oldDescription = getStringValue(log.old_values, "description");
+        const newDescription = getStringValue(log.new_values, "description");
+        if (oldDescription !== newDescription) {
+          changes.push(
+            t("activitiesHistory.historyMessages.projectDescriptionUpdated")
+          );
+        }
+
+        const oldProjectType = getStringValue(log.old_values, "project_type_id");
+        const newProjectType = getStringValue(log.new_values, "project_type_id");
+        if (oldProjectType !== newProjectType) {
+          changes.push(
+            t("activitiesHistory.historyMessages.projectTypeChanged")
           );
         }
 
         if (changes.length > 0) {
-          return `Project updated: ${changes.join(", ")}`;
+          return t(
+            "activitiesHistory.historyMessages.projectUpdatedWithChanges",
+            {
+              changes: joinChanges(changes),
+            }
+          );
         }
-        return "Project updated";
+        return t("activitiesHistory.historyMessages.projectUpdated");
       }
     }
 
@@ -506,15 +630,118 @@ export function ProjectActivitySection({
       const sessionName =
         getStringValue(log.new_values, "session_name") ??
         getStringValue(log.old_values, "session_name") ??
-        "Session";
+        t("activitiesHistory.historyMessages.sessionUntitled");
+
       if (log.action === "created") {
-        return `Session "${sessionName}" created`;
-      }
-      if (log.action === "updated") {
-        return `Session "${sessionName}" updated`;
+        return t("activitiesHistory.historyMessages.sessionCreated", {
+          name: sessionName,
+        });
       }
       if (log.action === "deleted") {
-        return `Session "${sessionName}" deleted`;
+        return t("activitiesHistory.historyMessages.sessionDeleted", {
+          name: sessionName,
+        });
+      }
+      if (log.action === "updated") {
+        const sessionChanges: string[] = [];
+        const sessionFieldLabels: Record<string, string> = {
+          session_date: t(
+            "activitiesHistory.historyMessages.sessionFieldLabels.session_date"
+          ),
+          session_time: t(
+            "activitiesHistory.historyMessages.sessionFieldLabels.session_time"
+          ),
+          session_name: t(
+            "activitiesHistory.historyMessages.sessionFieldLabels.session_name"
+          ),
+          location: t(
+            "activitiesHistory.historyMessages.sessionFieldLabels.location"
+          ),
+          status: t(
+            "activitiesHistory.historyMessages.sessionFieldLabels.status"
+          ),
+          notes: t(
+            "activitiesHistory.historyMessages.sessionFieldLabels.notes"
+          ),
+        };
+
+        const oldDate = getStringValue(log.old_values, "session_date");
+        const newDate = getStringValue(log.new_values, "session_date");
+        if (oldDate !== newDate) {
+          sessionChanges.push(
+            formatChange(
+              sessionFieldLabels.session_date,
+              formatSessionDateValue(oldDate),
+              formatSessionDateValue(newDate)
+            )
+          );
+        }
+
+        const oldTime = getStringValue(log.old_values, "session_time");
+        const newTime = getStringValue(log.new_values, "session_time");
+        if (oldTime !== newTime) {
+          sessionChanges.push(
+            formatChange(
+              sessionFieldLabels.session_time,
+              formatSessionTimeValue(oldTime),
+              formatSessionTimeValue(newTime)
+            )
+          );
+        }
+
+        const oldLocation = getStringValue(log.old_values, "location");
+        const newLocation = getStringValue(log.new_values, "location");
+        if (oldLocation !== newLocation) {
+          sessionChanges.push(
+            formatChange(
+              sessionFieldLabels.location,
+              oldLocation,
+              newLocation
+            )
+          );
+        }
+
+        const oldStatus = getStringValue(log.old_values, "status");
+        const newStatus = getStringValue(log.new_values, "status");
+        if (oldStatus !== newStatus) {
+          sessionChanges.push(
+            formatChange(
+              sessionFieldLabels.status,
+              toSentenceCase(oldStatus),
+              toSentenceCase(newStatus)
+            )
+          );
+        }
+
+        const oldSessionName = getStringValue(log.old_values, "session_name");
+        const newSessionName = getStringValue(log.new_values, "session_name");
+        if (oldSessionName && newSessionName && oldSessionName !== newSessionName) {
+          sessionChanges.push(
+            formatChange(
+              sessionFieldLabels.session_name,
+              oldSessionName,
+              newSessionName
+            )
+          );
+        }
+
+        const oldNotes = getStringValue(log.old_values, "notes");
+        const newNotes = getStringValue(log.new_values, "notes");
+        if (oldNotes !== newNotes) {
+          sessionChanges.push(
+            t("activitiesHistory.historyMessages.sessionNotesUpdated")
+          );
+        }
+
+        if (sessionChanges.length > 0) {
+          return t("activitiesHistory.historyMessages.sessionUpdated", {
+            name: sessionName,
+            changes: joinChanges(sessionChanges),
+          });
+        }
+        return t("activitiesHistory.historyMessages.sessionUpdatedSimple", {
+          name: sessionName,
+        });
       }
     }
 
@@ -528,24 +755,42 @@ export function ProjectActivitySection({
       const description =
         getStringValue(log.new_values, "description") ??
         getStringValue(log.old_values, "description");
+
       const amountText =
-        amount !== undefined ? formatAmount(amount) ?? `${amount}` : undefined;
-      const statusText = toSentenceCase(status);
+        amount !== undefined
+          ? formatAmount(amount) ?? `${amount}`
+          : t("activitiesHistory.historyMessages.paymentUnknownAmount");
+
+      const statusSuffix = status
+        ? t("activitiesHistory.historyMessages.paymentStatusSuffix", {
+            status: toSentenceCase(status) ?? status,
+          })
+        : "";
+
+      const detailsSuffix = description
+        ? t("activitiesHistory.historyMessages.paymentDetailsSuffix", {
+            details: description,
+          })
+        : "";
 
       if (log.action === "created") {
-        return `Payment${
-          amountText ? ` ${amountText}` : ""
-        } recorded${description ? ` – ${description}` : ""}`;
+        return t("activitiesHistory.historyMessages.paymentRecorded", {
+          amount: amountText,
+          detailsSuffix,
+        });
       }
       if (log.action === "updated") {
-        return `Payment${
-          amountText ? ` ${amountText}` : ""
-        } updated${statusText ? ` (Status: ${statusText})` : ""}`;
+        return t("activitiesHistory.historyMessages.paymentUpdated", {
+          amount: amountText,
+          statusSuffix,
+          detailsSuffix,
+        });
       }
       if (log.action === "deleted") {
-        return `Payment${
-          amountText ? ` ${amountText}` : ""
-        } removed${description ? ` – ${description}` : ""}`;
+        return t("activitiesHistory.historyMessages.paymentRemoved", {
+          amount: amountText,
+          detailsSuffix,
+        });
       }
     }
 
@@ -553,25 +798,46 @@ export function ProjectActivitySection({
       const content =
         getStringValue(log.new_values, "content") ??
         getStringValue(log.old_values, "content") ??
-        "To-do item";
+        t("activitiesHistory.historyMessages.todoUnnamed");
+
       if (log.action === "created") {
-        return `To-do "${content}" added`;
-      }
-      if (log.action === "updated") {
-        const completed = getRecordValue(
-          log.new_values,
-          "is_completed",
-          (value): value is boolean => typeof value === "boolean"
-        );
-        if (completed !== undefined) {
-          return `To-do "${content}" marked as ${
-            completed ? "completed" : "incomplete"
-          }`;
-        }
-        return `To-do "${content}" updated`;
+        return t("activitiesHistory.historyMessages.todoAdded", { content });
       }
       if (log.action === "deleted") {
-        return `To-do "${content}" removed`;
+        return t("activitiesHistory.historyMessages.todoRemoved", { content });
+      }
+      if (log.action === "updated") {
+        const oldCompleted = getBooleanValue(log.old_values, "is_completed");
+        const newCompleted = getBooleanValue(log.new_values, "is_completed");
+        if (
+          oldCompleted !== undefined &&
+          newCompleted !== undefined &&
+          oldCompleted !== newCompleted
+        ) {
+          return t("activitiesHistory.historyMessages.todoToggled", {
+            content,
+            state: t(
+              newCompleted
+                ? "activitiesHistory.historyMessages.todoStateCompleted"
+                : "activitiesHistory.historyMessages.todoStateIncomplete"
+            ),
+          });
+        }
+
+        const oldTodoContent = getStringValue(log.old_values, "content");
+        const newTodoContent = getStringValue(log.new_values, "content");
+        if (
+          oldTodoContent &&
+          newTodoContent &&
+          oldTodoContent !== newTodoContent
+        ) {
+          return t("activitiesHistory.historyMessages.todoContentUpdated", {
+            oldContent: oldTodoContent,
+            newContent: newTodoContent,
+          });
+        }
+
+        return t("activitiesHistory.historyMessages.todoUpdated", { content });
       }
     }
 
@@ -579,21 +845,41 @@ export function ProjectActivitySection({
       const activityType =
         getStringValue(log.new_values, "type") ??
         getStringValue(log.old_values, "type") ??
-        "note";
+        "activity";
+      const defaultLabel =
+        toSentenceCase(activityType) ??
+        t("activitiesHistory.historyMessages.activityLabels.activity");
+      const label = t(
+        `activitiesHistory.historyMessages.activityLabels.${activityType}`,
+        { defaultValue: defaultLabel }
+      );
       const content =
         getStringValue(log.new_values, "content") ??
         getStringValue(log.old_values, "content") ??
         "";
-      const label = toSentenceCase(activityType) ?? "Activity";
+      const contentSuffix = content
+        ? t("activitiesHistory.historyMessages.activityContentSuffix", {
+            content,
+          })
+        : "";
 
       if (log.action === "created") {
-        return `${label} added${content ? `: ${content}` : ""}`;
+        return t("activitiesHistory.historyMessages.activityAdded", {
+          label,
+          content: contentSuffix,
+        });
       }
       if (log.action === "updated") {
-        return `${label} updated${content ? `: ${content}` : ""}`;
+        return t("activitiesHistory.historyMessages.activityUpdated", {
+          label,
+          content: contentSuffix,
+        });
       }
       if (log.action === "deleted") {
-        return `${label} removed${content ? `: ${content}` : ""}`;
+        return t("activitiesHistory.historyMessages.activityRemoved", {
+          label,
+          content: contentSuffix,
+        });
       }
     }
 
@@ -608,21 +894,23 @@ export function ProjectActivitySection({
         getStringValue(log.old_values, "package_id");
       const label =
         getServiceName(identifier) ??
-        (identifier ? `Service ${identifier}` : "Service");
+        t("activitiesHistory.historyMessages.serviceFallbackLabel");
 
       if (log.action === "created") {
-        return `${label} added to project`;
+        return t("activitiesHistory.historyMessages.serviceAdded", { label });
       }
       if (log.action === "updated") {
-        return `${label} updated`;
+        return t("activitiesHistory.historyMessages.serviceUpdated", { label });
       }
       if (log.action === "deleted") {
-        return `${label} removed from project`;
+        return t("activitiesHistory.historyMessages.serviceRemoved", { label });
       }
     }
 
-    const fallbackLabel = toSentenceCase(log.entity_type) ?? log.entity_type;
-    return `${fallbackLabel} ${log.action}`;
+    return t("activitiesHistory.historyMessages.genericChange", {
+      entity: toSentenceCase(log.entity_type) ?? log.entity_type,
+      action: log.action,
+    });
   };
 
   if (loading) {

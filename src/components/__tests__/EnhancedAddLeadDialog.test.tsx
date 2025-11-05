@@ -139,7 +139,7 @@ jest.mock("@/lib/toastHelpers", () => ({
   useI18nToast: jest.fn(() => toastMock)
 }));
 
-jest.mock("@/contexts/ProfileContext", () => ({
+jest.mock("@/hooks/useProfile", () => ({
   useProfile: () => ({ profile: { id: "profile-1" } })
 }));
 

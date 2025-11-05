@@ -2,12 +2,12 @@ import React from "react";
 import { render, act } from "@testing-library/react";
 import { performanceMonitor, measurePerformance, useMeasureRender, checkMemoryUsage } from "./performance";
 
-const withFreshMonitor = (fn: (monitor: any) => void) => {
-  jest.isolateModules(() => {
-    const { performanceMonitor: isolatedMonitor } = require("./performance");
-    const MonitorClass = (isolatedMonitor as any).constructor;
+const withFreshMonitor = (fn: (monitor: typeof performanceMonitor) => void) => {
+  jest.isolateModules(async () => {
+    const module = await import("./performance");
+    const MonitorClass = (module.performanceMonitor as typeof performanceMonitor).constructor;
     const monitor = new MonitorClass();
-    fn(monitor);
+    fn(monitor as typeof performanceMonitor);
   });
 };
 
@@ -26,7 +26,7 @@ describe("performanceMonitor", () => {
 
   it("records timing metrics and returns duration", () => {
     let recordedDuration = 0;
-    let metrics: any[] = [];
+    let metrics: Array<{ name: string; value: number; timestamp: number }> = [];
     let currentTime = 150;
     jest.spyOn(performance, "now").mockImplementation(() => currentTime);
     jest.spyOn(Date, "now").mockReturnValue(1_700_000);
@@ -204,12 +204,12 @@ describe("checkMemoryUsage", () => {
     if (originalDescriptor) {
       Object.defineProperty(window.performance, "memory", originalDescriptor);
     } else {
-      delete (window.performance as any).memory;
+      delete (window.performance as typeof window.performance & { memory?: unknown }).memory;
     }
   });
 
   it("returns null when memory information is unavailable", () => {
-    delete (window.performance as any).memory;
+    delete (window.performance as typeof window.performance & { memory?: unknown }).memory;
     expect(checkMemoryUsage()).toBeNull();
   });
 

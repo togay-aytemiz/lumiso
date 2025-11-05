@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient, type User, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
 import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summary-empty.ts';
 import { formatDate, type Session } from './_templates/enhanced-email-base.ts';
@@ -86,6 +86,19 @@ interface ReminderRequest {
   assigner_id?: string;
 }
 
+type AssignmentNotificationRequest = {
+  entity_type: "lead" | "project";
+  entity_id: string;
+  assignee_id?: string | null;
+  assignee_email?: string | null;
+  assignee_name?: string | null;
+  assigner_name?: string | null;
+  assigner_id?: string | null;
+  organizationId: string;
+  assignee_language?: string;
+  isTest?: boolean;
+};
+
 export const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -124,7 +137,7 @@ export const handler = async (req: Request): Promise<Response> => {
     console.log(`Proceeding with type: ${requestData.type}`);
     const { type, isTest = false, organizationId: batchOrgId, userId: batchUserId } = requestData;
 
-    let user: any;
+    let user: User;
     let organizationId: string;
 
     // Check if this is batch processing mode (called from process-scheduled-notifications)
@@ -804,7 +817,10 @@ export const handler = async (req: Request): Promise<Response> => {
 };
 
 // Handler for assignment notifications (lead or project assignments)
-export async function handleAssignmentNotification(requestData: any, adminSupabase: any): Promise<Response> {
+export async function handleAssignmentNotification(
+  requestData: AssignmentNotificationRequest,
+  adminSupabase: SupabaseClient
+): Promise<Response> {
   console.log('Handling assignment notification:', requestData);
   
   try {
@@ -1136,7 +1152,10 @@ export async function handleAssignmentNotification(requestData: any, adminSupaba
 }
 
 // Handler for project milestone notifications
-export async function handleProjectMilestoneNotification(requestData: ReminderRequest, adminSupabase: any): Promise<Response> {
+export async function handleProjectMilestoneNotification(
+  requestData: ReminderRequest,
+  adminSupabase: SupabaseClient
+): Promise<Response> {
   console.log('Handling project milestone notification:', requestData);
   
   try {

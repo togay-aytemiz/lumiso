@@ -1,5 +1,5 @@
 // @deprecated Use `AllProjectsRefactored` instead. Kept for historical reference.
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -78,6 +78,11 @@ interface Project {
 
 type SortField = 'name' | 'lead_name' | 'project_type' | 'status' | 'created_at' | 'updated_at';
 type SortDirection = 'asc' | 'desc';
+type SearchResult = {
+  type: 'project' | 'lead';
+  id: string;
+  [key: string]: unknown;
+};
 
 const AllProjects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -122,8 +127,8 @@ const AllProjects = () => {
   }, [viewMode]);
 
   useEffect(() => {
-    fetchProjects();
-  }, []);
+    void fetchProjects();
+  }, [fetchProjects]);
 
   // Handle tutorial launch
   useEffect(() => {
@@ -170,8 +175,8 @@ const AllProjects = () => {
   };
 
   const sortedProjects = (viewMode === 'archived' ? archivedProjects : projects).sort((a, b) => {
-    let aValue: any;
-    let bValue: any;
+    let aValue: string | number = '';
+    let bValue: string | number = '';
 
     switch (sortField) {
       case 'name':
@@ -212,7 +217,7 @@ const AllProjects = () => {
     return 0;
   });
 
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
       setProjectStatusesLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
@@ -391,7 +396,7 @@ const AllProjects = () => {
       setLoading(false);
       setIsInitialLoad(false);
     }
-  };
+  }, [t]);
 
   const handleProjectClick = (project: Project) => {
     // Navigate to full project page instead of showing dialog
@@ -414,7 +419,7 @@ const AllProjects = () => {
     navigate(`/leads/${leadId}`);
   };
 
-  const handleSearchResult = (result: any) => {
+  const handleSearchResult = (result: SearchResult) => {
     if (result.type === 'project') {
       navigate(`/projects/${result.id}`);
     } else if (result.type === 'lead') {

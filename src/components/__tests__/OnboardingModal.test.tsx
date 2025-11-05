@@ -5,6 +5,28 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { toast } from "@/hooks/use-toast";
+import type { ReactNode } from "react";
+
+type BaseModalAction = {
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+};
+
+type BaseModalProps = {
+  open?: boolean;
+  title?: ReactNode;
+  description?: ReactNode;
+  actions?: BaseModalAction[];
+  onClose?: () => void;
+  children?: ReactNode;
+};
+
+type SampleDataModalProps = {
+  open?: boolean;
+  onClose?: () => void;
+  onCloseAll?: () => void;
+};
 
 jest.mock("react-router-dom", () => ({
   ...jest.requireActual("react-router-dom"),
@@ -29,7 +51,7 @@ jest.mock("@/hooks/use-toast", () => ({
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string, options?: Record<string, any>) => {
+    t: (key: string, options?: Record<string, unknown>) => {
       if (options?.channel) {
         return `${key}:${options.channel}`;
       }
@@ -42,7 +64,7 @@ jest.mock("react-i18next", () => ({
 }));
 
 const baseModalRender = jest.fn(
-  ({ open, title, description, actions, onClose, children }: any) => {
+  ({ open, title, description, actions = [], onClose, children }: BaseModalProps) => {
     if (!open) return null;
     return (
       <div data-testid="base-onboarding-modal">
@@ -50,7 +72,7 @@ const baseModalRender = jest.fn(
         <p>{description}</p>
         <div>{children}</div>
         <div>
-          {actions?.map((action: any, index: number) => (
+          {actions.map((action, index) => (
             <button
               key={index}
               disabled={action.disabled}
@@ -67,11 +89,11 @@ const baseModalRender = jest.fn(
 );
 
 jest.mock("../shared/BaseOnboardingModal", () => ({
-  BaseOnboardingModal: (props: any) => baseModalRender(props),
+  BaseOnboardingModal: (props: BaseModalProps) => baseModalRender(props),
 }));
 
 const sampleDataModalRender = jest.fn(
-  ({ open, onClose, onCloseAll }: any) => {
+  ({ open, onClose, onCloseAll }: SampleDataModalProps) => {
     if (!open) return null;
     return (
       <div data-testid="sample-data-modal">
@@ -83,7 +105,7 @@ const sampleDataModalRender = jest.fn(
 );
 
 jest.mock("../SampleDataModal", () => ({
-  SampleDataModal: (props: any) => sampleDataModalRender(props),
+  SampleDataModal: (props: SampleDataModalProps) => sampleDataModalRender(props),
 }));
 
 describe("OnboardingModal", () => {

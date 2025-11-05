@@ -22,7 +22,7 @@ import { BottomSheetMenu } from './BottomSheetMenu';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { useProfile } from '@/contexts/ProfileContext';
+import { useProfile } from '@/hooks/useProfile';
 import { HelpModal } from '@/components/modals/HelpModal';
 import { UserMenu } from '@/components/UserMenu';
 

@@ -1,4 +1,4 @@
-import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
+import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData, DividerBlockData, SocialLinksBlockData, HeaderBlockData, RawHTMLBlockData } from "@/types/templateBuilder";
 import { cn } from "@/lib/utils";
 import { SocialChannel, useOrganizationSettings, OrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useTranslation } from 'react-i18next';
@@ -96,11 +96,12 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
 
 function TextBlockPreview({ data, replacePlaceholders }: { data: TextBlockData; replacePlaceholders: (text: string) => string }) {
   const getTextStyles = () => {
+    const alignment: React.CSSProperties['textAlign'] = data.formatting.alignment ?? 'left';
     const baseStyles: React.CSSProperties = {
       fontFamily: data.formatting.fontFamily || 'Arial',
       fontWeight: data.formatting.bold ? 'bold' : 'normal',
       fontStyle: data.formatting.italic ? 'italic' : 'normal',
-      textAlign: data.formatting.alignment as any || 'left',
+      textAlign: alignment,
     };
 
     // Add font size based on semantic type
@@ -346,7 +347,7 @@ function FooterBlockPreview({
 }
 
 // New block preview components
-function DividerBlockPreview({ data }: { data: any }) {
+function DividerBlockPreview({ data }: { data: DividerBlockData }) {
   if (data.style === "line") {
     return <hr style={{ borderColor: data.color || "#e5e5e5", margin: "20px 0" }} />;
   } else {
@@ -358,7 +359,7 @@ function SocialLinksBlockPreview({
   data,
   organizationSettings,
 }: {
-  data: any;
+  data: SocialLinksBlockData;
   organizationSettings?: OrganizationSettings | null;
 }) {
   const socialChannelsArray = organizationSettings?.socialChannels
@@ -402,7 +403,7 @@ function HeaderBlockPreview({
   replacePlaceholders,
   organizationSettings,
 }: {
-  data: any;
+  data: HeaderBlockData;
   replacePlaceholders: (text: string) => string;
   organizationSettings?: OrganizationSettings | null;
 }) {
@@ -469,7 +470,7 @@ function HeaderBlockPreview({
   );
 }
 
-function RawHTMLBlockPreview({ data }: { data: any }) {
+function RawHTMLBlockPreview({ data }: { data: RawHTMLBlockData }) {
   return (
     <div className="border-2 border-dashed border-amber-300 bg-amber-50 p-4">
       <div className="text-sm text-amber-700 mb-2">⚠️ Raw HTML Block (sanitized in production)</div>

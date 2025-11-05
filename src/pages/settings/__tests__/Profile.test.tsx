@@ -8,7 +8,7 @@ import type {
 import * as RouterDom from "react-router-dom";
 import { render, screen, fireEvent, waitFor } from "@/utils/testUtils";
 import Profile from "../Profile";
-import { useProfile } from "@/contexts/ProfileContext";
+import { useProfile } from "@/hooks/useProfile";
 import { useWorkingHours } from "@/hooks/useWorkingHours";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { useToast } from "@/hooks/use-toast";

@@ -18,12 +18,24 @@ beforeEach(() => {
 });
 
 const createSelectEqMaybeSingleChain = (result: { data: unknown; error: unknown }) => {
-  const chain: any = {
-    select: jest.fn(() => chain),
-    eq: jest.fn(() => chain),
-    maybeSingle: jest.fn(() => Promise.resolve(result)),
-  };
-  return chain;
+  class SelectEqMaybeSingleChain {
+  private readonly chain = this;
+  constructor(private readonly response: { data: unknown; error: unknown }) {}
+
+  select() {
+    return this.chain;
+  }
+
+  eq() {
+    return this.chain;
+  }
+
+  maybeSingle() {
+    return Promise.resolve(this.response);
+  }
+}
+
+const createSelectEqMaybeSingleChain = (result: { data: unknown; error: unknown }) => new SelectEqMaybeSingleChain(result);
 };
 
 describe("fetchLeadById", () => {
@@ -62,23 +74,29 @@ describe("fetchLeadById", () => {
 });
 
 const createSessionsChain = (result: { data: unknown; error: unknown }) => {
-  const chain: any = {
-    select: jest.fn(() => chain),
-    eq: jest.fn(() => chain),
-    order: jest.fn(() => Promise.resolve(result)),
-  };
-  return chain;
+  class SessionsChain {
+  private readonly chain = this;
+  constructor(private readonly response: { data: unknown; error: unknown }) {}
+  select() { return this.chain; }
+  eq() { return this.chain; }
+  order() { return Promise.resolve(this.response); }
+}
+
+const createSessionsChain = (result: { data: unknown; error: unknown }) => new SessionsChain(result);
 };
 
 const createProjectStatusesChain = (result: { data: unknown; error: unknown }) => {
-  const chain: any = {
-    select: jest.fn(() => chain),
-    eq: jest.fn(() => chain),
-    ilike: jest.fn(() => chain),
-    limit: jest.fn(() => chain),
-    maybeSingle: jest.fn(() => Promise.resolve(result)),
-  };
-  return chain;
+  class ProjectStatusesChain {
+  private readonly chain = this;
+  constructor(private readonly response: { data: unknown; error: unknown }) {}
+  select() { return this.chain; }
+  eq() { return this.chain; }
+  ilike() { return this.chain; }
+  limit() { return this.chain; }
+  maybeSingle() { return Promise.resolve(this.response); }
+}
+
+const createProjectStatusesChain = (result: { data: unknown; error: unknown }) => new ProjectStatusesChain(result);
 };
 
 describe("fetchLeadSessions", () => {
@@ -150,30 +168,38 @@ describe("fetchLeadSessions", () => {
   });
 });
 
-const createProjectsChain = (result: { data: unknown; error: unknown }) => {
-  const chain: any = {
-    select: jest.fn(() => chain),
-    eq: jest.fn(() => {
-      chain.__eqCalls = (chain.__eqCalls || 0) + 1;
-      if (chain.__eqCalls >= 2) {
-        return Promise.resolve(result);
-      }
-      return chain;
-    }),
-  };
-  return chain;
-};
+class ProjectsChain {
+  private eqCalls = 0;
+  private readonly chain = this;
 
-const createTodosChain = (result: { data: unknown; error: unknown }) => {
-  const chain: any = {
-    select: jest.fn(() => chain),
-    in: jest.fn(() => chain),
-    order: jest.fn(() => chain),
-    limit: jest.fn(() => chain),
-    maybeSingle: jest.fn(() => Promise.resolve(result)),
-  };
-  return chain;
-};
+  constructor(private readonly response: { data: unknown; error: unknown }) {}
+
+  select() {
+    return this.chain;
+  }
+
+  eq() {
+    this.eqCalls += 1;
+    if (this.eqCalls >= 2) {
+      return Promise.resolve(this.response);
+    }
+    return this.chain;
+  }
+}
+
+const createProjectsChain = (result: { data: unknown; error: unknown }) => new ProjectsChain(result);
+
+class TodosChain {
+  private readonly chain = this;
+  constructor(private readonly response: { data: unknown; error: unknown }) {}
+  select() { return this.chain; }
+  in() { return this.chain; }
+  order() { return this.chain; }
+  limit() { return this.chain; }
+  maybeSingle() { return Promise.resolve(this.response); }
+}
+
+const createTodosChain = (result: { data: unknown; error: unknown }) => new TodosChain(result);
 
 const createPaymentsChain = (result: { data: unknown; error: unknown }) => ({
   select: jest.fn(() => ({
@@ -276,13 +302,16 @@ describe("fetchLeadProjectSummary", () => {
 });
 
 const createActivitiesChain = (result: { data: unknown; error: unknown }) => {
-  const chain: any = {
-    select: jest.fn(() => chain),
-    eq: jest.fn(() => chain),
-    order: jest.fn(() => chain),
-    limit: jest.fn(() => Promise.resolve(result)),
-  };
-  return chain;
+  class ActivitiesChain {
+  private readonly chain = this;
+  constructor(private readonly response: { data: unknown; error: unknown }) {}
+  select() { return this.chain; }
+  eq() { return this.chain; }
+  order() { return this.chain; }
+  limit() { return Promise.resolve(this.response); }
+}
+
+const createActivitiesChain = (result: { data: unknown; error: unknown }) => new ActivitiesChain(result);
 };
 
 describe("fetchLatestLeadActivity", () => {

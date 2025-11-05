@@ -20,12 +20,13 @@ export function SMSPreview({ blocks, mockData }: SMSPreviewProps) {
       if (index > 0) smsContent += "\n\n";
 
       switch (block.type) {
-        case "text":
+        case "text": {
           const textData = block.data as TextBlockData;
           smsContent += replacePlaceholders(textData.content);
           break;
+        }
 
-        case "session-details":
+        case "session-details": {
           const sessionData = block.data as SessionDetailsBlockData;
           smsContent += sessionData.customLabel || t('templateBuilder.preview.sessionDetails.defaultLabel');
           smsContent += "\n";
@@ -34,16 +35,18 @@ export function SMSPreview({ blocks, mockData }: SMSPreviewProps) {
           if (sessionData.showLocation) smsContent += `${t('templateBuilder.preview.sessionDetails.location')} ${mockData.session_location}\n`;
           if (sessionData.showNotes) smsContent += t('templateBuilder.preview.sessionDetails.defaultNote');
           break;
+        }
 
-        case "cta":
+        case "cta": {
           const ctaData = block.data as CTABlockData;
           smsContent += replacePlaceholders(ctaData.text);
           if (ctaData.link) {
             smsContent += `\n${ctaData.link}`;
           }
           break;
+        }
 
-        case "image":
+        case "image": {
           const imageData = block.data as ImageBlockData;
           smsContent += "[Image]";
           if (imageData.caption) {
@@ -53,8 +56,9 @@ export function SMSPreview({ blocks, mockData }: SMSPreviewProps) {
             smsContent += `\n${imageData.link}`;
           }
           break;
+        }
 
-        case "footer":
+        case "footer": {
           const footerData = block.data as FooterBlockData;
           if (footerData.showStudioName) {
             smsContent += mockData.business_name;
@@ -68,6 +72,7 @@ export function SMSPreview({ blocks, mockData }: SMSPreviewProps) {
             smsContent += footerData.customText;
           }
           break;
+        }
       }
     });
 

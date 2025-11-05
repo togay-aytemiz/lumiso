@@ -1,6 +1,8 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { BaseEntityService } from './BaseEntityService';
+import { logAuditEvent } from '@/lib/auditLog';
+import type { Json } from "@/integrations/supabase/types";
 
 export interface ProjectWithDetails {
   id: string;
@@ -339,6 +341,18 @@ export class ProjectService extends BaseEntityService {
    * Update an existing project
    */
   async updateProject(id: string, data: UpdateProjectData): Promise<ProjectWithDetails | null> {
+    let previousRow: ProjectRow | null = null;
+    try {
+      const { data: currentRow } = await supabase
+        .from<ProjectRow>("projects")
+        .select("*")
+        .eq("id", id)
+        .single();
+      previousRow = currentRow ?? null;
+    } catch (error) {
+      console.warn("Unable to fetch previous project state for audit log:", error);
+    }
+
     const { data: result, error } = await supabase
       .from<ProjectRow>('projects')
       .update(data)
@@ -347,6 +361,16 @@ export class ProjectService extends BaseEntityService {
       .single();
 
     if (error || !result) return null;
+
+    if (previousRow) {
+      void logAuditEvent({
+        entityType: "project",
+        entityId: id,
+        action: "updated",
+        oldValues: previousRow as unknown as Json,
+        newValues: result as unknown as Json,
+      });
+    }
 
     // Fetch and return updated project with all related data
     const { active, archived } = await this.fetchProjects(true);

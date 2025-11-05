@@ -30,7 +30,7 @@ jest.mock("@/hooks/useWorkflows", () => ({
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string, options?: Record<string, any>) => {
+    t: (key: string, options?: Record<string, unknown>) => {
       if (key === "workflows.stats.summary") {
         return `summary ${options?.active ?? 0}/${options?.paused ?? 0}`;
       }
@@ -56,9 +56,8 @@ jest.mock("@/components/ui/page-header", () => ({
   ),
 }));
 
-jest.mock("@/components/ui/button", () => {
-  const React = require("react");
-  const Button = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(
+jest.mock("@/components/ui/button", () => ({
+  Button: React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(
     ({ children, ...props }, ref) => {
       const childArray = React.Children.toArray(children);
       const iconChild = childArray.find((child) =>
@@ -73,10 +72,8 @@ jest.mock("@/components/ui/button", () => {
         </button>
       );
     }
-  );
-  Button.displayName = "Button";
-  return { Button };
-});
+  ),
+}));
 
 jest.mock("@/components/ui/badge", () => ({
   Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
@@ -171,7 +168,17 @@ jest.mock("@/components/data-table", () => ({
     hasMore,
     rowActions,
     emptyState,
-  }: any) => (
+  }: {
+    title: string;
+    data: Array<{ id: string; name: string }>;
+    actions?: React.ReactNode;
+    searchValue: string;
+    onSearchChange?: (value: string) => void;
+    onLoadMore?: () => void;
+    hasMore?: boolean;
+    rowActions?: (row: { id: string; name: string }) => React.ReactNode;
+    emptyState?: React.ReactNode;
+  }) => (
     <div data-testid="advanced-data-table">
       <h2>{title}</h2>
       <div data-testid="table-actions">{actions}</div>
@@ -182,7 +189,7 @@ jest.mock("@/components/data-table", () => ({
       />
       <div>
         {data.length > 0 ? (
-          data.map((row: any) => (
+          data.map((row) => (
             <div data-testid={`workflow-row-${row.id}`} key={row.id}>
               <span>{row.name}</span>
               <div data-testid={`row-actions-${row.id}`}>
@@ -255,24 +262,18 @@ jest.mock("@/components/ui/loading-presets", () => ({
   PageLoadingSkeleton: () => <div data-testid="loading-skeleton" />,
 }));
 
-jest.mock("lucide-react", () => {
-  const React = require("react");
-  const createIcon = (name: string) => (props: any) => (
-    <svg data-icon={name.toLowerCase()} {...props} />
-  );
-  return {
-    Plus: createIcon("Plus"),
-    Zap: createIcon("Zap"),
-    CheckCircle: createIcon("CheckCircle"),
-    Clock: createIcon("Clock"),
-    AlertTriangle: createIcon("AlertTriangle"),
-    Edit: createIcon("Edit"),
-    Trash2: createIcon("Trash2"),
-    Mail: createIcon("Mail"),
-    MessageCircle: createIcon("MessageCircle"),
-    Phone: createIcon("Phone"),
-  };
-});
+jest.mock("lucide-react", () => ({
+  Plus: (props: React.SVGProps<SVGSVGElement>) => <svg data-icon="plus" {...props} />,
+  Zap: (props: React.SVGProps<SVGSVGElement>) => <svg data-icon="zap" {...props} />,
+  CheckCircle: (props: React.SVGProps<SVGSVGElement>) => <svg data-icon="checkcircle" {...props} />,
+  Clock: (props: React.SVGProps<SVGSVGElement>) => <svg data-icon="clock" {...props} />,
+  AlertTriangle: (props: React.SVGProps<SVGSVGElement>) => <svg data-icon="alerttriangle" {...props} />,
+  Edit: (props: React.SVGProps<SVGSVGElement>) => <svg data-icon="edit" {...props} />,
+  Trash2: (props: React.SVGProps<SVGSVGElement>) => <svg data-icon="trash2" {...props} />,
+  Mail: (props: React.SVGProps<SVGSVGElement>) => <svg data-icon="mail" {...props} />,
+  MessageCircle: (props: React.SVGProps<SVGSVGElement>) => <svg data-icon="messagecircle" {...props} />,
+  Phone: (props: React.SVGProps<SVGSVGElement>) => <svg data-icon="phone" {...props} />,
+}));
 
 const mockUseWorkflows = useWorkflows as jest.Mock;
 

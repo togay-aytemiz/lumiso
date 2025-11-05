@@ -4,6 +4,34 @@ import { useNavigate } from "react-router-dom";
 import { useProjectProgress } from "@/hooks/useProjectProgress";
 import { useProjectPayments } from "@/hooks/useProjectPayments";
 import { supabase } from "@/integrations/supabase/client";
+import type { ReactNode } from "react";
+
+type MockFooterAction = {
+  label: string;
+  onClick?: () => void;
+};
+
+type MockAppSheetModalProps = {
+  isOpen?: boolean;
+  title?: ReactNode;
+  footerActions?: MockFooterAction[];
+  children?: ReactNode;
+};
+
+type ProjectStatusBadgeProps = {
+  onStatusChange?: () => void;
+};
+
+type ClientDetailsCardProps = {
+  name: string;
+};
+
+type QueryBuilderMock = {
+  select: jest.Mock<QueryBuilderMock, [string?]>;
+  eq: jest.Mock<QueryBuilderMock, [string, unknown]>;
+  single: jest.Mock;
+  maybeSingle: jest.Mock;
+};
 
 jest.mock("react-router-dom", () => ({
   ...jest.requireActual("react-router-dom"),
@@ -20,7 +48,7 @@ jest.mock("@/hooks/useProjectPayments", () => ({
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string, options?: Record<string, any>) => {
+    t: (key: string, options?: Record<string, unknown>) => {
       if (options?.channel) {
         return `${key}:${options.channel}`;
       }
@@ -33,14 +61,14 @@ jest.mock("react-i18next", () => ({
 }));
 
 jest.mock("@/components/ui/app-sheet-modal", () => ({
-  AppSheetModal: ({ isOpen, title, footerActions, children }: any) => {
+  AppSheetModal: ({ isOpen, title, footerActions = [], children }: MockAppSheetModalProps) => {
     if (!isOpen) return null;
     return (
       <div data-testid="project-sheet-preview">
         <h2>{title}</h2>
         <div>{children}</div>
         <div>
-          {footerActions?.map((action: any, index: number) => (
+          {footerActions.map((action, index) => (
             <button key={index} onClick={() => action.onClick?.()}>
               {action.label}
             </button>
@@ -53,7 +81,7 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
 
 jest.mock("@/components/ProjectStatusBadge", () => ({
   __esModule: true,
-  ProjectStatusBadge: ({ onStatusChange }: any) => (
+  ProjectStatusBadge: ({ onStatusChange }: ProjectStatusBadgeProps) => (
     <button data-testid="project-status-badge" onClick={() => onStatusChange?.()}>
       status-badge
     </button>
@@ -62,7 +90,7 @@ jest.mock("@/components/ProjectStatusBadge", () => ({
 
 jest.mock("@/components/ClientDetailsCard", () => ({
   __esModule: true,
-  default: ({ name }: any) => <div data-testid="client-details">{name}</div>,
+  default: ({ name }: ClientDetailsCardProps) => <div data-testid="client-details">{name}</div>,
 }));
 
 const leadsSingleMock = jest.fn();
@@ -78,13 +106,12 @@ const createBuilder = ({
 }: {
   single?: jest.Mock;
   maybeSingle?: jest.Mock;
-}) => {
-  const builder: any = {
-    select: jest.fn(() => builder),
-    eq: jest.fn(() => builder),
-    single: single ?? jest.fn(),
-    maybeSingle: maybeSingle ?? jest.fn(),
-  };
+}): QueryBuilderMock => {
+  const builder = {} as QueryBuilderMock;
+  builder.select = jest.fn(() => builder) as QueryBuilderMock["select"];
+  builder.eq = jest.fn(() => builder) as QueryBuilderMock["eq"];
+  builder.single = (single ?? jest.fn()) as QueryBuilderMock["single"];
+  builder.maybeSingle = (maybeSingle ?? jest.fn()) as QueryBuilderMock["maybeSingle"];
   return builder;
 };
 

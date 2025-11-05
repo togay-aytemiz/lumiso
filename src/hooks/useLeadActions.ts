@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo, useRef, useEffect } from 'react';
 import { LeadService, LeadWithCustomFields, CreateLeadData, UpdateLeadData } from '@/services/LeadService';
 import { useEntityActions } from './useEntityActions';
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '@/constants/entityConstants';
@@ -12,7 +12,12 @@ export interface UseLeadActionsOptions {
 
 export function useLeadActions(options: UseLeadActionsOptions = {}) {
   const { executeAction, getActionState, clearActionState } = useEntityActions();
-  const leadService = new LeadService();
+  const leadService = useMemo(() => new LeadService(), []);
+  const optionsRef = useRef(options);
+
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
 
   const createLead = useCallback(async (data: CreateLeadData) => {
     return executeAction(
@@ -20,11 +25,11 @@ export function useLeadActions(options: UseLeadActionsOptions = {}) {
       () => leadService.createLead(data),
       {
         successMessage: SUCCESS_MESSAGES.CREATED('Lead'),
-        onSuccess: options.onLeadCreated,
+        onSuccess: optionsRef.current.onLeadCreated,
         errorMessage: ERROR_MESSAGES.CREATE_FAILED
       }
     );
-  }, [leadService, options.onLeadCreated]);
+  }, [executeAction, leadService]);
 
   const updateLead = useCallback(async (id: string, data: UpdateLeadData) => {
     return executeAction(
@@ -32,11 +37,11 @@ export function useLeadActions(options: UseLeadActionsOptions = {}) {
       () => leadService.updateLead(id, data),
       {
         successMessage: SUCCESS_MESSAGES.UPDATED('Lead'),
-        onSuccess: options.onLeadUpdated,
+        onSuccess: optionsRef.current.onLeadUpdated,
         errorMessage: ERROR_MESSAGES.UPDATE_FAILED
       }
     );
-  }, [leadService, options.onLeadUpdated]);
+  }, [executeAction, leadService]);
 
   const deleteLead = useCallback(async (id: string) => {
     return executeAction(
@@ -44,11 +49,11 @@ export function useLeadActions(options: UseLeadActionsOptions = {}) {
       () => leadService.deleteLead(id),
       {
         successMessage: SUCCESS_MESSAGES.DELETED('Lead'),
-        onSuccess: () => options.onLeadDeleted?.(id),
+        onSuccess: () => optionsRef.current.onLeadDeleted?.(id),
         errorMessage: ERROR_MESSAGES.DELETE_FAILED
       }
     );
-  }, [leadService, options.onLeadDeleted]);
+  }, [executeAction, leadService]);
 
   const updateCustomField = useCallback(async (
     leadId: string, 
@@ -63,7 +68,7 @@ export function useLeadActions(options: UseLeadActionsOptions = {}) {
         errorMessage: 'Failed to update field'
       }
     );
-  }, [leadService]);
+  }, [executeAction, leadService]);
 
   const changeLeadStatus = useCallback(async (
     leadId: string, 
@@ -74,12 +79,12 @@ export function useLeadActions(options: UseLeadActionsOptions = {}) {
       () => leadService.updateLead(leadId, { status_id: statusId }),
       {
         successMessage: 'Lead status updated',
-        onSuccess: options.onStatusChanged,
+        onSuccess: optionsRef.current.onStatusChanged,
         errorMessage: 'Failed to update lead status'
       }
     );
     return result;
-  }, [leadService, options.onStatusChanged]);
+  }, [executeAction, leadService]);
 
   const bulkUpdateLeads = useCallback(async (
     leadIds: string[], 
@@ -98,7 +103,7 @@ export function useLeadActions(options: UseLeadActionsOptions = {}) {
         errorMessage: 'Failed to update some leads'
       }
     );
-  }, [leadService]);
+  }, [executeAction, leadService]);
 
   // Action state getters
   const isCreating = getActionState('createLead').loading;

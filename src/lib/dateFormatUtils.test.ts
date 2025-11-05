@@ -75,10 +75,12 @@ describe("detectBrowserTimezone", () => {
   it("returns the timezone reported by Intl APIs", () => {
     const mock = jest
       .spyOn(Intl, "DateTimeFormat")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .mockImplementation(() => ({
-        resolvedOptions: () => ({ timeZone: "America/New_York" }),
-      }) as any);
+      .mockImplementation(
+        () =>
+          ({
+            resolvedOptions: () => ({ timeZone: "America/New_York" }),
+          } as unknown as Intl.DateTimeFormat)
+      );
 
     expect(detectBrowserTimezone()).toBe("America/New_York");
     mock.mockRestore();
@@ -87,10 +89,9 @@ describe("detectBrowserTimezone", () => {
   it("falls back to UTC when detection fails", () => {
     const mock = jest
       .spyOn(Intl, "DateTimeFormat")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .mockImplementation(() => {
         throw new Error("Intl not available");
-      }) as any;
+      });
 
     expect(detectBrowserTimezone()).toBe("UTC");
     mock.mockRestore();

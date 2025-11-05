@@ -2,7 +2,7 @@ import userEvent from "@testing-library/user-event";
 import { render, screen, waitFor } from "@/utils/testUtils";
 import { UserMenu } from "../UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
-import { useProfile } from "@/contexts/ProfileContext";
+import { useProfile } from "@/hooks/useProfile";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useNavigate } from "react-router-dom";
 
@@ -14,7 +14,7 @@ jest.mock("@/contexts/AuthContext", () => ({
   useAuth: jest.fn(),
 }));
 
-jest.mock("@/contexts/ProfileContext", () => ({
+jest.mock("@/hooks/useProfile", () => ({
   useProfile: jest.fn(),
 }));
 

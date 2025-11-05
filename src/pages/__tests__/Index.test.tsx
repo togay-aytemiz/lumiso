@@ -37,10 +37,15 @@ jest.mock("react-i18next", () => ({
   }),
 }));
 
+type SupabaseSession = { user: { id: string } } | null;
+type SupabaseSessionResponse = { data: { session: SupabaseSession } };
+type AuthChangeSubscription = { data: { subscription: { unsubscribe: () => void } } };
+type AuthStateChangeHandler = (event: string, session: SupabaseSession) => void;
+
 const mockUseNavigate = useNavigate as jest.Mock;
 const mockAuth = supabase.auth as unknown as {
-  onAuthStateChange: jest.Mock;
-  getSession: jest.Mock;
+  onAuthStateChange: jest.Mock<AuthChangeSubscription, [AuthStateChangeHandler]>;
+  getSession: jest.Mock<Promise<SupabaseSessionResponse>, []>;
 };
 
 describe("Index page", () => {
@@ -52,8 +57,8 @@ describe("Index page", () => {
   });
 
   it("shows loading skeleton while session is resolving", async () => {
-    let resolveSession: (value: any) => void = () => {};
-    mockAuth.onAuthStateChange.mockImplementation((_handler: any) => ({
+    let resolveSession: (value: SupabaseSessionResponse) => void = () => {};
+    mockAuth.onAuthStateChange.mockImplementation((_handler: AuthStateChangeHandler) => ({
       data: { subscription: { unsubscribe: jest.fn() } },
     }));
     mockAuth.getSession.mockReturnValue(
@@ -68,11 +73,11 @@ describe("Index page", () => {
 
     await act(async () => {
       resolveSession({ data: { session: null } });
-    });
+  });
   });
 
   it("renders dashboard when a user session exists", async () => {
-    mockAuth.onAuthStateChange.mockImplementation((_handler: any) => ({
+    mockAuth.onAuthStateChange.mockImplementation((_handler: AuthStateChangeHandler) => ({
       data: { subscription: { unsubscribe: jest.fn() } },
     }));
     mockAuth.getSession.mockResolvedValue({
@@ -89,7 +94,7 @@ describe("Index page", () => {
   });
 
   it("renders marketing hero and navigates to auth when CTA clicked", async () => {
-    mockAuth.onAuthStateChange.mockImplementation((handler: any) => {
+    mockAuth.onAuthStateChange.mockImplementation((handler: AuthStateChangeHandler) => {
       handler("SIGNED_OUT", null);
       return { data: { subscription: { unsubscribe: jest.fn() } } };
     });

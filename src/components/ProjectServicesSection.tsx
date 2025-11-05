@@ -7,6 +7,7 @@ import { Edit2, Save, X, Plus } from "lucide-react";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { ServicePicker, type PickerService } from "./ServicePicker";
 import { useFormsTranslation } from '@/hooks/useTypedTranslation';
+import type { Database } from "@/integrations/supabase/types";
 interface Service {
   id: string;
   name: string;
@@ -14,6 +15,8 @@ interface Service {
   cost_price?: number;
   selling_price?: number;
   price?: number;
+  extra?: boolean | null;
+  billing_type?: "included" | "extra";
 }
 interface ProjectServicesSectionProps {
   projectId: string;
@@ -38,22 +41,50 @@ export function ProjectServicesSection({
       const {
         data,
         error
-      } = await supabase.from('project_services').select(`
+      } = await supabase
+        .from<{
+          id: string;
+          billing_type: "included" | "extra";
+          services: Database["public"]["Tables"]["services"]["Row"] | null;
+        }>('project_services')
+        .select(`
+          id,
+          billing_type,
           services!inner (
             id,
             name,
             category,
             cost_price,
             selling_price,
-            price
+            price,
+            extra
           )
-        `).eq('project_id', projectId);
+        `)
+        .eq('project_id', projectId);
       if (error) throw error;
-      const fetchedServices = data?.map(ps => ps.services).filter(Boolean) as Service[] || [];
+      const fetchedServices =
+        data
+          ?.map((ps) => {
+            const svc = ps.services;
+            if (!svc) return null;
+            const record: Service = {
+              id: svc.id,
+              name: svc.name,
+              category: svc.category,
+              cost_price: svc.cost_price ?? undefined,
+              selling_price: svc.selling_price ?? undefined,
+              price: svc.price ?? undefined,
+              extra: svc.extra,
+              billing_type: ps.billing_type
+            };
+            return record;
+          })
+          .filter((record): record is Service => Boolean(record)) ?? [];
       setServices(fetchedServices);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching project services:', error);
-      toast.error(error.message);
+      const message = error instanceof Error ? error.message : t('payments.error_loading', { defaultValue: 'Unable to load payments' });
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -76,16 +107,29 @@ export function ProjectServicesSection({
       const {
         data,
         error
-      } = await supabase.from("services").select("id, name, category, cost_price, selling_price, price").eq("organization_id", organizationId).order("category", {
+      } = await supabase
+        .from<Database["public"]["Tables"]["services"]["Row"]>("services")
+        .select("id, name, category, cost_price, selling_price, price, extra")
+        .eq("organization_id", organizationId)
+        .order("category", {
         ascending: true
       }).order("name", {
         ascending: true
       });
       if (error) throw error;
-      setAvailableServices(data || []);
-    } catch (err: any) {
+      setAvailableServices((data ?? []).map((svc) => ({
+        id: svc.id,
+        name: svc.name,
+        category: svc.category,
+        cost_price: svc.cost_price ?? undefined,
+        selling_price: svc.selling_price ?? undefined,
+        price: svc.price ?? undefined,
+        extra: svc.extra
+      })));
+    } catch (err) {
       console.error("Error fetching available services:", err);
-      setErrorAvailable(err.message || "Failed to load services");
+      const message = err instanceof Error ? err.message : t('payments.services.load_error', { defaultValue: 'Unable to load services.' });
+      setErrorAvailable(message);
     } finally {
       setLoadingAvailable(false);
     }
@@ -95,7 +139,15 @@ export function ProjectServicesSection({
     fetchAvailableServices();
   }, [projectId]);
   const handleServicePickerChange = (serviceIds: string[]) => {
-    const selectedServices = availableServices.filter(service => serviceIds.includes(service.id));
+    const selectedServices = availableServices
+      .filter(service => serviceIds.includes(service.id))
+      .map(service => {
+        const existing = services.find(s => s.id === service.id);
+        const billingType =
+          existing?.billing_type ??
+          (service.extra ? "extra" : "included");
+        return { ...service, billing_type: billingType };
+      });
     setServices(selectedServices);
   };
   const handleSaveServices = async (selectedServices: Service[]) => {
@@ -119,7 +171,10 @@ export function ProjectServicesSection({
         const serviceInserts = selectedServices.map(service => ({
           project_id: projectId,
           service_id: service.id,
-          user_id: user.id
+          user_id: user.id,
+          billing_type:
+            service.billing_type ??
+            (service.extra ? "extra" : "included")
         }));
         const {
           error: insertError
@@ -138,8 +193,9 @@ export function ProjectServicesSection({
         });
       }, 50);
       toast.success(t('services.services_updated'));
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(message);
     } finally {
       setSaving(false);
     }

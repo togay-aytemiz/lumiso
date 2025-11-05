@@ -22,7 +22,7 @@ jest.mock("@/contexts/OnboardingContext", () => ({
   }),
 }));
 
-jest.mock("@/contexts/ProfileContext", () => ({
+jest.mock("@/hooks/useProfile", () => ({
   useProfile: () => ({ profile: { id: "profile-1" } }),
 }));
 

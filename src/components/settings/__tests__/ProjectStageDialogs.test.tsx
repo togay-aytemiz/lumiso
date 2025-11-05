@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from "@/utils/testUtils";
+import type { ReactNode } from "react";
 import {
   AddProjectStageDialog,
   EditProjectStageDialog,
@@ -34,15 +35,44 @@ jest.mock("@/hooks/useModalNavigation", () => ({
   useModalNavigation: (...args: unknown[]) => useModalNavigationMock(...args),
 }));
 
+type FooterActionMock = {
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+};
+
+type AppSheetModalProps = {
+  title: string;
+  isOpen: boolean;
+  children?: ReactNode;
+  footerActions?: FooterActionMock[];
+};
+
+type SegmentedOption = {
+  value: string;
+  label: string;
+};
+
+type SegmentedControlProps = {
+  value: string;
+  onValueChange: (value: string) => void;
+  options?: SegmentedOption[];
+};
+
+type ModalNavigationMockArgs = Partial<{
+  onDiscard: () => void;
+  onSaveAndExit: () => Promise<void>;
+}>;
+
 jest.mock("@/components/ui/app-sheet-modal", () => ({
-  AppSheetModal: ({ title, isOpen, children, footerActions }: any) => {
+  AppSheetModal: ({ title, isOpen, children, footerActions }: AppSheetModalProps) => {
     if (!isOpen) return null;
     return (
       <div data-testid="app-sheet-modal">
         <h2>{title}</h2>
         <div>{children}</div>
         <div>
-          {footerActions?.map((action: any) => (
+          {footerActions?.map((action) => (
             <button
               key={action.label}
               type="button"
@@ -59,10 +89,10 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
 }));
 
 jest.mock("@/components/ui/segmented-control", () => ({
-  SegmentedControl: ({ value, onValueChange, options }: any) => (
+  SegmentedControl: ({ value, onValueChange, options }: SegmentedControlProps) => (
     <div>
       <div data-testid="lifecycle-value">{value}</div>
-      {options?.map((option: any) => (
+      {options?.map((option) => (
         <button
           key={option.value}
           type="button"
@@ -189,7 +219,7 @@ describe("ProjectStageDialogs", () => {
       error: null,
     });
     getUserOrganizationIdMock.mockResolvedValue("org-123");
-    useModalNavigationMock.mockImplementation(({ onDiscard, onSaveAndExit }: any = {}) => ({
+    useModalNavigationMock.mockImplementation(({ onDiscard, onSaveAndExit }: ModalNavigationMockArgs = {}) => ({
       showGuard: false,
       message: "",
       handleModalClose: () => true,

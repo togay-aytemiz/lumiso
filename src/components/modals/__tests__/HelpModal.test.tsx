@@ -1,35 +1,57 @@
 import { fireEvent, render, screen } from "@/utils/testUtils";
 import { HelpModal } from "../HelpModal";
 import { useIsMobile } from "@/hooks/use-mobile";
+import type { ReactNode } from "react";
+
+type DialogRenderProps = {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
+
+type DialogComponentProps = DialogRenderProps & {
+  children?: ReactNode | ((props: DialogRenderProps) => ReactNode);
+};
+
+type DialogSectionProps = {
+  children?: ReactNode;
+  className?: string;
+};
 
 jest.mock("@/hooks/use-mobile", () => ({
   useIsMobile: jest.fn(),
 }));
 
 jest.mock("@/components/ui/dialog", () => {
-  const React = require("react");
+  const renderDialogChildren = (
+    children: DialogComponentProps["children"],
+    props: DialogRenderProps
+  ): ReactNode =>
+    typeof children === "function"
+      ? (children as (args: DialogRenderProps) => ReactNode)(props)
+      : children;
+
   return {
-    Dialog: ({ open, onOpenChange, children }: any) => (
+    Dialog: ({ open, onOpenChange, children }: DialogComponentProps) => (
       <div
         data-testid="dialog-root"
         data-open={open ? "true" : "false"}
         data-has-handler={typeof onOpenChange === "function" ? "true" : "false"}
       >
-        {typeof children === "function" ? children({ open, onOpenChange }) : children}
+        {renderDialogChildren(children, { open, onOpenChange })}
       </div>
     ),
-    DialogContent: ({ children, className }: any) => (
+    DialogContent: ({ children, className }: DialogSectionProps) => (
       <div data-testid="dialog-content" data-class={className}>
         {children}
       </div>
     ),
-    DialogHeader: ({ children, className }: any) => (
+    DialogHeader: ({ children, className }: DialogSectionProps) => (
       <div data-testid="dialog-header" data-class={className}>
         {children}
       </div>
     ),
-    DialogTitle: ({ children }: any) => <h2>{children}</h2>,
-    DialogDescription: ({ children }: any) => <p>{children}</p>,
+    DialogTitle: ({ children }: DialogSectionProps) => <h2>{children}</h2>,
+    DialogDescription: ({ children }: DialogSectionProps) => <p>{children}</p>,
   };
 });
 

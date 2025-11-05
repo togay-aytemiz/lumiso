@@ -9,9 +9,40 @@ jest.mock("react-i18next", () => ({
   }),
 }));
 
+type DragDropContextProps = {
+  children?: React.ReactNode;
+};
+
+type DroppableRenderProps = {
+  innerRef: () => void;
+  droppableProps: Record<string, unknown>;
+  placeholder: React.ReactNode;
+};
+
+type DroppableProps = {
+  droppableId: string;
+  children: (provided: DroppableRenderProps, snapshot: { isDraggingOver: boolean }) => React.ReactNode;
+};
+
+type DraggableRenderProps = {
+  innerRef: () => void;
+  draggableProps: Record<string, unknown>;
+  dragHandleProps: Record<string, unknown>;
+};
+
+type DraggableProps = {
+  draggableId: string;
+  children: (provided: DraggableRenderProps) => React.ReactNode;
+};
+
+type ProfessionalCardProps = {
+  project: ProjectListItem;
+  onClick?: () => void;
+};
+
 jest.mock("@hello-pangea/dnd", () => ({
-  DragDropContext: ({ children }: any) => <div data-testid="drag-drop-context">{children}</div>,
-  Droppable: ({ droppableId, children }: any) => (
+  DragDropContext: ({ children }: DragDropContextProps) => <div data-testid="drag-drop-context">{children}</div>,
+  Droppable: ({ droppableId, children }: DroppableProps) => (
     <div data-testid={`droppable-${droppableId}`}>
       {children(
         {
@@ -23,7 +54,7 @@ jest.mock("@hello-pangea/dnd", () => ({
       )}
     </div>
   ),
-  Draggable: ({ draggableId, children }: any) => (
+  Draggable: ({ draggableId, children }: DraggableProps) => (
     <div data-testid={`draggable-${draggableId}`}>
       {children({
         innerRef: jest.fn(),
@@ -34,14 +65,14 @@ jest.mock("@hello-pangea/dnd", () => ({
   ),
 }));
 
-const professionalCardMock = jest.fn(({ project, onClick }: any) => (
+const professionalCardMock = jest.fn(({ project, onClick }: ProfessionalCardProps) => (
   <button data-testid={`project-card-${project.id}`} onClick={onClick}>
     {project.name}
   </button>
 ));
 
 jest.mock("@/components/ProfessionalKanbanCard", () => ({
-  ProfessionalKanbanCard: (props: any) => professionalCardMock(props),
+  ProfessionalKanbanCard: (props: ProfessionalCardProps) => professionalCardMock(props),
 }));
 
 jest.mock("@/features/project-creation", () => ({

@@ -10,7 +10,7 @@ import { useI18nToast } from "@/lib/toastHelpers";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
-import { useProfile } from "@/contexts/ProfileContext";
+import { useProfile } from "@/hooks/useProfile";
 import { leadSchema, sanitizeHtml, sanitizeInput } from "@/lib/validation";
 import { ZodError } from "zod";
 import type { Database } from "@/integrations/supabase/types";
@@ -66,7 +66,7 @@ jest.mock("@/hooks/useOrganizationQuickSettings", () => ({
   useOrganizationQuickSettings: jest.fn(() => ({ settings: { show_quick_status_buttons: true } })),
 }));
 
-jest.mock("@/contexts/ProfileContext", () => ({
+jest.mock("@/hooks/useProfile", () => ({
   useProfile: jest.fn(() => ({ profile: { id: "profile-1" } })),
 }));
 

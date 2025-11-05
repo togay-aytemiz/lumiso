@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import ScheduleSessionDialog from "../ScheduleSessionDialog";
 import { useSessionForm } from "@/hooks/useSessionForm";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
@@ -10,14 +11,24 @@ jest.mock("@/hooks/useWorkflowTriggers");
 jest.mock("@/hooks/useTypedTranslation", () => ({
   useFormsTranslation: () => ({ t: (key: string) => key }),
 }));
+type TooltipMockProps = {
+  children?: ReactNode;
+};
+
+type SessionSchedulingSheetProps = {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSessionScheduled?: () => void;
+};
+
 jest.mock("@/components/ui/tooltip", () => ({
-  TooltipProvider: ({ children }: any) => <div>{children}</div>,
-  Tooltip: ({ children }: any) => <div>{children}</div>,
-  TooltipTrigger: ({ children }: any) => <div>{children}</div>,
-  TooltipContent: ({ children }: any) => <div>{children}</div>,
+  TooltipProvider: ({ children }: TooltipMockProps) => <div>{children}</div>,
+  Tooltip: ({ children }: TooltipMockProps) => <div>{children}</div>,
+  TooltipTrigger: ({ children }: TooltipMockProps) => <div>{children}</div>,
+  TooltipContent: ({ children }: TooltipMockProps) => <div>{children}</div>,
 }));
 jest.mock("@/components/SessionSchedulingSheet", () => ({
-  SessionSchedulingSheet: ({ isOpen, onOpenChange, onSessionScheduled }: any) => (
+  SessionSchedulingSheet: ({ isOpen, onOpenChange, onSessionScheduled }: SessionSchedulingSheetProps) => (
     <div data-testid="sheet">
       <span>{isOpen ? "sheet-open" : "sheet-closed"}</span>
       <button onClick={() => onOpenChange(false)}>close</button>

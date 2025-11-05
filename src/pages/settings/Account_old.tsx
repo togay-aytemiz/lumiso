@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Upload, ChevronDown, Loader2, X, Copy, Check } from "lucide-react";
-import { useProfile } from "@/contexts/ProfileContext";
+import { useProfile } from "@/hooks/useProfile";
 import { useWorkingHours } from "@/hooks/useWorkingHours";
 import { useTranslation } from "react-i18next";
 import { useMessagesTranslation } from "@/hooks/useTypedTranslation";

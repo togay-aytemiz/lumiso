@@ -18,7 +18,11 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./NavigationGuardDialog";
-import { createLineItem } from "@/types/serviceLineItems";
+import { createLineItem, type ServiceLineItem } from "@/types/serviceLineItems";
+import type { Database } from "@/integrations/supabase/types";
+
+type ServiceRow = Database["public"]["Tables"]["services"]["Row"];
+type ProjectTypeRow = Database["public"]["Tables"]["project_types"]["Row"];
 
 interface Package {
   id: string;
@@ -28,7 +32,7 @@ interface Package {
   applicable_types: string[];
   default_add_ons: string[];
   is_active: boolean;
-  line_items?: any;
+  line_items?: ServiceLineItem[];
 }
 
 interface AddPackageDialogProps {
@@ -47,7 +51,7 @@ interface EditPackageDialogProps {
 const extractAddonIds = (pkg?: Partial<Package> & { line_items?: unknown }): string[] =>
   Array.isArray(pkg?.default_add_ons) ? pkg!.default_add_ons : [];
 
-const getServiceUnitPrice = (service: any): number =>
+const getServiceUnitPrice = (service: ServiceRow): number =>
   service?.selling_price ?? service?.price ?? 0;
 
 const formatCurrency = (value: number) =>
@@ -59,7 +63,7 @@ const formatCurrency = (value: number) =>
 
 // Service picker component for default add-ons
 const ServiceAddOnsPicker = ({ services, value, onChange, navigate, disabledServiceIds = [] }: {
-  services: any[];
+  services: ServiceRow[];
   value: string[];
   onChange: (addons: string[]) => void;
   navigate: (path: string) => void;
@@ -71,7 +75,7 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate, disabledServ
   const [openItems, setOpenItems] = useState<string[]>([]);
 
   const groupedServices = useMemo(() => {
-    const groups: Record<string, any[]> = {};
+    const groups: Record<string, ServiceRow[]> = {};
     services.forEach((service) => {
       const key = service.category || "Uncategorized";
       if (!groups[key]) groups[key] = [];
@@ -297,7 +301,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
   const navigate = useNavigate();
 
   // Fetch project types
-  const { data: projectTypes = [] } = useQuery({
+  const { data: projectTypes = [] } = useQuery<ProjectTypeRow[]>({
     queryKey: ['project_types'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -316,11 +320,11 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
         .order('name', { ascending: true });
       
       if (error) throw error;
-      return data || [];
+      return (data ?? []) as ProjectTypeRow[];
     },
   });
   // Fetch services
-  const { data: services = [] } = useQuery({
+  const { data: services = [] } = useQuery<ServiceRow[]>({
     queryKey: ['services'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -339,7 +343,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
         .order('name', { ascending: true });
       
       if (error) throw error;
-      return data || [];
+      return (data ?? []) as ServiceRow[];
     },
   });
 
@@ -621,7 +625,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {projectTypes.map((type: any) => (
+              {projectTypes.map((type) => (
                 <Badge
                   key={type.id}
                   variant={packageData.applicable_types.includes(type.name) ? "default" : "outline"}
@@ -686,7 +690,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
   const originalAddOns = useMemo(() => extractAddonIds(pkg), [pkg]);
 
   // Fetch project types
-  const { data: projectTypes = [] } = useQuery({
+  const { data: projectTypes = [] } = useQuery<ProjectTypeRow[]>({
     queryKey: ['project_types'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -707,12 +711,12 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
         .order('name', { ascending: true });
       
       if (error) throw error;
-      return data || [];
+      return (data ?? []) as ProjectTypeRow[];
     },
   });
 
   // Fetch services
-  const { data: services = [] } = useQuery({
+  const { data: services = [] } = useQuery<ServiceRow[]>({
     queryKey: ['services'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -733,7 +737,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
         .order('name', { ascending: true });
       
       if (error) throw error;
-      return data || [];
+      return (data ?? []) as ServiceRow[];
     },
   });
 
@@ -1016,7 +1020,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {projectTypes.map((type: any) => (
+              {projectTypes.map((type) => (
                 <Badge
                   key={type.id}
                   variant={packageData.applicable_types.includes(type.name) ? "default" : "outline"}

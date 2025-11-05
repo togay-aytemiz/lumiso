@@ -62,7 +62,7 @@ describe("useCalendarPerformanceMonitor", () => {
       globalThis.performance,
       "memory"
     );
-    Object.defineProperty(globalThis.performance as any, "memory", {
+    Object.defineProperty(globalThis.performance as typeof globalThis.performance & { memory?: PerformanceMemory }, "memory", {
       value: {
         usedJSHeapSize: 150 * 1024 * 1024,
         totalJSHeapSize: 300 * 1024 * 1024,
@@ -85,12 +85,12 @@ describe("useCalendarPerformanceMonitor", () => {
 
     if (originalDescriptor) {
       Object.defineProperty(
-        globalThis.performance as any,
+        globalThis.performance as typeof globalThis.performance & { memory?: PerformanceMemory },
         "memory",
         originalDescriptor
       );
     } else {
-      delete (globalThis.performance as any).memory;
+      delete (globalThis.performance as typeof globalThis.performance & { memory?: PerformanceMemory }).memory;
     }
   });
 
@@ -101,7 +101,7 @@ describe("useCalendarPerformanceMonitor", () => {
     const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => undefined);
     const setIntervalSpy = jest
       .spyOn(global, "setInterval")
-      .mockImplementation(() => 0 as unknown as NodeJS.Timeout);
+      .mockImplementation(() => 0 as ReturnType<typeof setInterval>);
     const clearIntervalSpy = jest
       .spyOn(global, "clearInterval")
       .mockImplementation(() => undefined);
@@ -110,7 +110,7 @@ describe("useCalendarPerformanceMonitor", () => {
       globalThis.performance,
       "memory"
     );
-    Object.defineProperty(globalThis.performance as any, "memory", {
+    Object.defineProperty(globalThis.performance as typeof globalThis.performance & { memory?: PerformanceMemory }, "memory", {
       value: {
         usedJSHeapSize: 190 * 1024 * 1024,
         totalJSHeapSize: 250 * 1024 * 1024,
@@ -146,12 +146,12 @@ describe("useCalendarPerformanceMonitor", () => {
     clearIntervalSpy.mockRestore();
     if (originalDescriptor) {
       Object.defineProperty(
-        globalThis.performance as any,
+        globalThis.performance as typeof globalThis.performance & { memory?: PerformanceMemory },
         "memory",
         originalDescriptor
       );
     } else {
-      delete (globalThis.performance as any).memory;
+      delete (globalThis.performance as typeof globalThis.performance & { memory?: PerformanceMemory }).memory;
     }
   });
 });

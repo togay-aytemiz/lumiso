@@ -28,21 +28,16 @@ jest.mock("@/components/settings/CategorySettingsSection", () => ({
   ),
 }));
 
-jest.mock("@/components/ui/button", () => {
-  const React = require("react");
-  const Button = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(
+jest.mock("@/components/ui/button", () => ({
+  __esModule: true,
+  Button: React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(
     ({ children, ...props }, ref) => (
       <button ref={ref} {...props}>
         {children}
       </button>
     )
-  );
-  Button.displayName = "Button";
-  return {
-    __esModule: true,
-    Button,
-  };
-});
+  ),
+}));
 
 jest.mock("@/components/ui/label", () => ({
   Label: ({ htmlFor, children }: { htmlFor?: string; children: React.ReactNode }) => (
@@ -51,7 +46,7 @@ jest.mock("@/components/ui/label", () => ({
 }));
 
 jest.mock("@/components/ui/select", () => ({
-  Select: ({ children, onValueChange, value, disabled }: any) => (
+  Select: ({ children, onValueChange, value, disabled }: { children: React.ReactNode; onValueChange?: (value: string) => void; value: string; disabled?: boolean }) => (
     <select
       data-testid="notification-select"
       value={value}
@@ -70,7 +65,7 @@ jest.mock("@/components/ui/select", () => ({
 }));
 
 jest.mock("@/components/ui/switch", () => ({
-  Switch: ({ checked, onCheckedChange, disabled, id }: any) => (
+  Switch: ({ checked, onCheckedChange, disabled, id }: { checked: boolean; onCheckedChange?: (value: boolean) => void; disabled?: boolean; id: string }) => (
     <button
       data-testid={`switch-${id}`}
       disabled={disabled}
@@ -108,14 +103,20 @@ const supabaseMock = mockSupabaseClient as unknown as {
 };
 
 const createFromMock = () => {
-  const chain: any = {
+  const chain = {
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
     update: jest.fn(),
     maybeSingle: jest.fn(),
     order: jest.fn().mockReturnThis(),
   };
-  return chain;
+  return chain as {
+    select: jest.Mock;
+    eq: jest.Mock;
+    update: jest.Mock;
+    maybeSingle: jest.Mock;
+    order: jest.Mock;
+  };
 };
 
 describe("Notifications settings page", () => {
@@ -144,7 +145,7 @@ describe("Notifications settings page", () => {
 
     supabaseMock.functions = {
       invoke: jest.fn().mockResolvedValue({ data: { success: true } }),
-    } as any;
+    } as { invoke: jest.Mock };
   });
 
   afterEach(() => {
@@ -171,7 +172,7 @@ describe("Notifications settings page", () => {
     await waitFor(() => {
       const updateResult = (supabaseMock.from as jest.Mock).mock.results
         .map((result) => result.value)
-        .find((value: any) => value?.update?.mock?.calls?.length);
+        .find((value: { update?: { mock?: { calls?: unknown[] } } }) => value?.update?.mock?.calls?.length);
 
       expect(updateResult?.update).toHaveBeenCalledWith({
         notification_global_enabled: false,

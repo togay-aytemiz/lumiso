@@ -16,17 +16,40 @@ interface AddLeadStatusDialogProps {
   onStatusAdded: () => void;
 }
 
+type LeadLifecycle = "active" | "completed" | "cancelled";
+
+type LeadStatusRecord = {
+  id: string;
+  name: string;
+  color: string;
+  lifecycle?: LeadLifecycle | null;
+  sort_order?: number | null;
+  is_system_final?: boolean | null;
+  is_system_required?: boolean | null;
+  is_default?: boolean | null;
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "An unexpected error occurred";
+};
+
 export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLeadStatusDialogProps) {
   const { t } = useTranslation(['forms', 'common']);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{ name: string; color: string; lifecycle: LeadLifecycle }>({
     name: "",
     color: "#3B82F6",
-    lifecycle: "active" as "active" | "completed" | "cancelled", // No "archived" for leads
+    lifecycle: "active",
   });
 
   // Smart default based on name (no "archived" for leads)
-  const getSmartLifecycleDefault = (name: string): "active" | "completed" | "cancelled" => {
+  const getSmartLifecycleDefault = (name: string): LeadLifecycle => {
     const lowerName = name.toLowerCase();
     if (lowerName.includes("cancel")) return "cancelled";
     if (lowerName.includes("complete") || lowerName.includes("deliver") || lowerName.includes("done")) return "completed";
@@ -41,7 +64,7 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
         setFormData(prev => ({ ...prev, lifecycle: suggestedLifecycle }));
       }
     }
-  }, [formData.name]);
+  }, [formData.name, formData.lifecycle]);
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
@@ -94,10 +117,10 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
       setFormData({ name: "", color: "#3B82F6", lifecycle: "active" });
       onOpenChange(false);
       onStatusAdded();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t('lead_status.errors.add_failed'),
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     } finally {
@@ -227,7 +250,7 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
 }
 
 interface EditLeadStatusDialogProps {
-  status: any;
+  status: LeadStatusRecord | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStatusUpdated: () => void;
@@ -236,10 +259,10 @@ interface EditLeadStatusDialogProps {
 export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdated }: EditLeadStatusDialogProps) {
   const { t } = useTranslation(['forms', 'common']);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{ name: string; color: string; lifecycle: LeadLifecycle }>({
     name: "",
     color: "#3B82F6",
-    lifecycle: "active" as "active" | "completed" | "cancelled", // No "archived" for leads
+    lifecycle: "active",
   });
 
   useEffect(() => {
@@ -287,10 +310,10 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
 
       onOpenChange(false);
       onStatusUpdated();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t('lead_status.errors.update_failed'),
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     } finally {
@@ -358,10 +381,10 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
 
       onOpenChange(false);
       onStatusUpdated();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t('lead_status.errors.delete_failed'),
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     } finally {

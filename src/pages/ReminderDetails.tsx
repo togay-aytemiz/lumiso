@@ -53,6 +53,19 @@ interface Lead {
   status: string;
 }
 
+type ReminderProject = {
+  id: string;
+  name: string;
+  description: string | null;
+  lead_id: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  status_id?: string | null;
+  previous_status_id?: string | null;
+  project_type_id?: string | null;
+};
+
 type FilterType = "all" | "overdue" | "today" | "tomorrow" | "thisWeek" | "nextWeek" | "thisMonth";
 
 
@@ -93,6 +106,16 @@ const filterPillBadgeActiveClasses =
   "border-primary/30 bg-primary/15 text-primary";
 
 // Legacy summary card removed in favor of shared <KpiCard /> component used across the app
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "An unexpected error occurred";
+};
 
 const parseTimeValue = (time?: string | null, direction: "asc" | "desc" = "asc") => {
   if (!time) {
@@ -306,15 +329,8 @@ const ReminderDetails = () => {
   const [showCompleted, setShowCompleted] = useState(false);
   const [hideOverdue, setHideOverdue] = useState(false);
   const navigate = useNavigate();
-  const [viewingProject, setViewingProject] = useState<any>(null);
+  const [viewingProject, setViewingProject] = useState<ReminderProject | null>(null);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
-
-  useEffect(() => {
-    void fetchReminders();
-  }, []);
-
-  // Throttled refresh on focus/visibility
-  useThrottledRefetchOnFocus(() => { void fetchReminders(); }, 30_000);
 
   const fetchReminders = useCallback(async () => {
     setLoading(true);
@@ -342,16 +358,25 @@ const ReminderDetails = () => {
       }
 
       setActivities(activitiesData || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error fetching reminders",
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    void fetchReminders();
+  }, [fetchReminders]);
+
+  // Throttled refresh on focus/visibility
+  useThrottledRefetchOnFocus(() => {
+    void fetchReminders();
+  }, 30_000);
 
   const getLeadName = useCallback(
     (leadId: string) => {
@@ -621,10 +646,10 @@ const ReminderDetails = () => {
         title: completed ? "Reminder marked as completed" : "Reminder marked as not completed",
         description: "Reminder status updated successfully."
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error updating reminder",
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     }
@@ -651,15 +676,15 @@ const ReminderDetails = () => {
         .single();
       if (leadError) throw leadError;
 
-      setViewingProject(data);
+      setViewingProject(data as ReminderProject);
       setShowProjectDialog(true);
       // Ensure leads map has the project's lead name for the dialog
       setLeads((prev) => {
         const exists = prev.some((l) => l.id === data.lead_id);
         return exists ? prev : [...prev, { id: data.lead_id, name: leadData?.name || 'Unknown Lead', status: leadData?.status || '' }];
       });
-    } catch (err: any) {
-      toast({ title: 'Unable to open project', description: err.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: 'Unable to open project', description: getErrorMessage(error), variant: 'destructive' });
     }
   }, []);
 

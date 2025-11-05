@@ -1,201 +1,432 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { format } from "date-fns";
+import { CreditCard, PiggyBank, Plus, Edit2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Edit2, Trash2, Lock, CreditCard } from "lucide-react";
-import { format } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
-import { AddPaymentDialog } from "./AddPaymentDialog";
-import { EditPaymentDialog } from "./EditPaymentDialog";
-import { useFormsTranslation } from '@/hooks/useTypedTranslation';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 import { PAYMENT_COLORS } from "@/lib/paymentColors";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { AddPaymentDialog } from "./AddPaymentDialog";
+import { EditPaymentDialog } from "./EditPaymentDialog";
+import {
+  ProjectDepositSetupDialog,
+  ProjectDepositPaymentDialog
+} from "./ProjectDepositDialogs";
+import {
+  ProjectServicesQuickEditDialog,
+  type QuickServiceRecord
+} from "./ProjectServicesQuickEditDialog";
+import {
+  computeDepositAmount,
+  parseDepositConfig,
+  DEFAULT_DEPOSIT_CONFIG,
+  type ProjectDepositConfig
+} from "@/lib/payments/depositUtils";
+import type { Database } from "@/integrations/supabase/types";
+
+type PaymentStatus = "paid" | "due";
+type PaymentType =
+  | "manual"
+  | "base_price"
+  | "deposit_due"
+  | "deposit_payment"
+  | "balance_due";
+
 interface Payment {
   id: string;
   project_id: string;
   amount: number;
   description: string | null;
-  status: 'paid' | 'due';
+  status: PaymentStatus;
   date_paid: string | null;
   created_at: string;
-  type: 'base_price' | 'manual';
+  updated_at: string;
+  type: PaymentType;
 }
-interface Service {
+
+interface ServiceRecord {
+  projectServiceId: string;
+  billingType: "included" | "extra";
+  service: {
+    id: string;
+    name: string;
+    extra: boolean;
+    selling_price?: number | null;
+    price?: number | null;
+    vat_rate?: number | null;
+    price_includes_vat?: boolean | null;
+    cost_price?: number | null;
+    category?: string | null;
+    service_type?: "coverage" | "deliverable" | null;
+  };
+}
+
+interface ProjectDetails {
   id: string;
-  name: string;
-  price: number; // Deprecated - keeping for backward compatibility
-  extra: boolean;
-  cost_price?: number;
-  selling_price?: number;
+  basePrice: number;
+  depositConfig: ProjectDepositConfig;
 }
-interface Project {
-  id: string;
-  base_price: number;
+
+interface VatTotals {
+  net: number;
+  vat: number;
+  gross: number;
 }
+
+interface FinancialSummary {
+  basePrice: number;
+  includedServices: ServiceRecord[];
+  extraServices: ServiceRecord[];
+  includedTotals: VatTotals;
+  extraTotals: VatTotals;
+  contractTotal: number;
+  depositAmount: number;
+  depositPaid: number;
+  depositRemaining: number;
+  depositStatus: "none" | "due" | "partial" | "paid";
+  depositLastPaymentDate: string | null;
+  totalPaid: number;
+  remaining: number;
+}
+
+const DEFAULT_VAT_TOTALS: VatTotals = { net: 0, vat: 0, gross: 0 };
+const CURRENCY = "TRY";
+
+const formatCurrency = (amount: number) => {
+  try {
+    return new Intl.NumberFormat("tr-TR", {
+      style: "currency",
+      currency: CURRENCY,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    }).format(Number.isFinite(amount) ? amount : 0);
+  } catch {
+    return `${Math.round(amount)} ${CURRENCY}`;
+  }
+};
+
+const computeServicePricing = (service: ServiceRecord["service"]): VatTotals => {
+  const rawAmount = Number(service.selling_price ?? service.price ?? 0);
+  if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
+    return DEFAULT_VAT_TOTALS;
+  }
+
+  const vatRate =
+    typeof service.vat_rate === "number" && service.vat_rate > 0 ? service.vat_rate : 0;
+  const mode = service.price_includes_vat === false ? "exclusive" : "inclusive";
+
+  if (vatRate <= 0) {
+    return {
+      net: rawAmount,
+      vat: 0,
+      gross: rawAmount
+    };
+  }
+
+  const fraction = vatRate / 100;
+  if (mode === "inclusive") {
+    const vatPortion = rawAmount - rawAmount / (1 + fraction);
+    const net = rawAmount - vatPortion;
+    return {
+      net,
+      vat: vatPortion,
+      gross: rawAmount
+    };
+  }
+
+  const vatPortion = rawAmount * fraction;
+  return {
+    net: rawAmount,
+    vat: vatPortion,
+    gross: rawAmount + vatPortion
+  };
+};
+
+const aggregatePricing = (records: ServiceRecord[]): VatTotals =>
+  records.reduce<VatTotals>(
+    (totals, record) => {
+      const pricing = computeServicePricing(record.service);
+      return {
+        net: totals.net + pricing.net,
+        vat: totals.vat + pricing.vat,
+        gross: totals.gross + pricing.gross
+      };
+    },
+    { ...DEFAULT_VAT_TOTALS }
+  );
+
+const findLatestDate = (payments: Payment[]): string | null => {
+  if (!payments.length) return null;
+  const sorted = [...payments].sort((a, b) => {
+    const dateA = new Date(a.date_paid ?? a.created_at).getTime();
+    const dateB = new Date(b.date_paid ?? b.created_at).getTime();
+    return dateB - dateA;
+  });
+  const latest = sorted[0];
+  return latest.date_paid ?? latest.created_at ?? null;
+};
+
 interface ProjectPaymentsSectionProps {
   projectId: string;
   onPaymentsUpdated?: () => void;
   refreshToken?: number;
 }
+
 export function ProjectPaymentsSection({
   projectId,
   onPaymentsUpdated,
   refreshToken
 }: ProjectPaymentsSectionProps) {
+  const { toast } = useToast();
+  const { t } = useFormsTranslation();
+
+  const [project, setProject] = useState<ProjectDetails | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
-  const [project, setProject] = useState<Project | null>(null);
-  const [basePrice, setBasePrice] = useState("");
-  const [isUpdatingBasePrice, setIsUpdatingBasePrice] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [serviceRecords, setServiceRecords] = useState<ServiceRecord[]>([]);
+  const [availableServices, setAvailableServices] = useState<QuickServiceRecord[]>([]);
+  const [availableServicesLoading, setAvailableServicesLoading] = useState(false);
+  const [availableServicesError, setAvailableServicesError] = useState<string | null>(null);
+
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const {
-    toast
-  } = useToast();
-  const { t } = useFormsTranslation();
-  const fetchProject = async () => {
+
+  const [depositSetupOpen, setDepositSetupOpen] = useState(false);
+  const [depositPaymentOpen, setDepositPaymentOpen] = useState(false);
+  const [serviceDialogState, setServiceDialogState] = useState<{
+    open: boolean;
+    mode: "included" | "extra";
+  }>({ open: false, mode: "included" });
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchProject = useCallback(async () => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('projects').select('id, base_price').eq('id', projectId).single();
+      const { data, error } = await supabase
+        .from<Database["public"]["Tables"]["projects"]["Row"]>("projects")
+        .select("id, base_price, deposit_config")
+        .eq("id", projectId)
+        .single();
       if (error) throw error;
-      setProject(data);
-      setBasePrice(data.base_price?.toString() || "0");
-    } catch (error: any) {
-      console.error('Error fetching project:', error);
-    }
-  };
-  const fetchPayments = async () => {
-    setLoading(true);
-    try {
-      const {
-        data,
-        error
-      } = await supabase.from('payments').select('*').eq('project_id', projectId).order('type', {
-        ascending: false
-      }) // base_price first
-      .order('created_at', {
-        ascending: false
+      if (!data) return;
+      const parsed = parseDepositConfig(data.deposit_config ?? null);
+      setProject({
+        id: data.id,
+        basePrice: Number(data.base_price ?? 0),
+        depositConfig: parsed
       });
+    } catch (error) {
+      console.error("Error fetching project:", error);
+    }
+  }, [projectId]);
+
+  const fetchPayments = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from<Payment>("payments")
+        .select("*")
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: false });
       if (error) throw error;
-      setPayments(data as Payment[] || []);
-    } catch (error: any) {
-      console.error('Error fetching payments:', error);
+      setPayments(data ?? []);
+    } catch (error) {
+      console.error("Error fetching payments:", error);
       toast({
-        title: t('payments.error_loading'),
-        description: error.message,
+        title: t("payments.error_loading", { defaultValue: "Error loading payments" }),
+        description:
+          error instanceof Error ? error.message : t("payments.error_loading", { defaultValue: "Unable to load payments." }),
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
-  };
-  const fetchProjectServices = async () => {
+  }, [projectId, t, toast]);
+
+  const fetchProjectServices = useCallback(async () => {
+    type ProjectServiceJoin = {
+      id: string;
+      billing_type: "included" | "extra";
+      services: {
+        id: string;
+        name: string;
+        extra: boolean | null;
+        selling_price?: number | null;
+        price?: number | null;
+        vat_rate?: number | null;
+        price_includes_vat?: boolean | null;
+        cost_price?: number | null;
+        category?: string | null;
+      } | null;
+    };
+
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('project_services').select(`
+      const { data, error } = await supabase
+        .from<ProjectServiceJoin>("project_services")
+        .select(
+          `
+          id,
+          billing_type,
           services (
             id,
             name,
-            price,
             extra,
+            selling_price,
+            price,
+            vat_rate,
+            price_includes_vat,
             cost_price,
-            selling_price
+            category,
+            service_type
           )
-        `).eq('project_id', projectId);
+        `
+        )
+        .eq("project_id", projectId);
       if (error) throw error;
-      const servicesList = data?.map(ps => ps.services).filter(Boolean) || [];
-      setServices(servicesList as Service[]);
-    } catch (error: any) {
-      console.error('Error fetching project services:', error);
-    }
-  };
-  useEffect(() => {
-    fetchProject();
-    fetchPayments();
-    fetchProjectServices();
-  }, [projectId, refreshToken]);
-
-  // Ensure base price payment exists
-  useEffect(() => {
-    const ensureBasePricePayment = async () => {
-      if (!project) return;
-      const existingBasePricePayment = payments.find(p => p.type === 'base_price');
-      if (!existingBasePricePayment) {
-        try {
-          const {
-            data: {
-              user
+      const mapped =
+        data?.map((entry) => {
+          const service = entry.services;
+          if (!service) return null;
+          return {
+            projectServiceId: entry.id,
+            billingType: entry.billing_type,
+            service: {
+              id: service.id,
+              name: service.name,
+              extra: Boolean(service.extra),
+              selling_price: service.selling_price,
+              price: service.price,
+              vat_rate: service.vat_rate ?? undefined,
+              price_includes_vat: service.price_includes_vat ?? undefined,
+              cost_price: service.cost_price ?? undefined,
+              category: service.category ?? undefined,
+              service_type: service.service_type ?? undefined
             }
-          } = await supabase.auth.getUser();
-          if (!user) return;
-          // Get user's active organization
-          const organizationId = await getUserOrganizationId();
-          if (!organizationId) {
-            throw new Error("Organization required");
-          }
-
-          const {
-            error
-          } = await supabase.from('payments').insert({
-            project_id: projectId,
-            user_id: user.id,
-            organization_id: organizationId,
-            amount: project.base_price || 0,
-            description: t('payments.base_price'),
-            status: 'due',
-            type: 'base_price'
-          });
-          if (!error) {
-            fetchPayments();
-          }
-        } catch (error) {
-          console.error('Error creating base price payment:', error);
-        }
-      }
-    };
-    if (project && payments.length > 0) {
-      ensureBasePricePayment();
+          } satisfies ServiceRecord;
+        }) ?? [];
+      setServiceRecords(mapped.filter((record): record is ServiceRecord => Boolean(record)));
+    } catch (error) {
+      console.error("Error fetching project services:", error);
     }
-  }, [project, payments, projectId]);
-  const handlePaymentUpdated = () => {
-    fetchPayments();
+  }, [projectId]);
+
+  const fetchAvailableServices = useCallback(async () => {
+    if (availableServices.length > 0 || availableServicesLoading) return;
+    setAvailableServicesLoading(true);
+    setAvailableServicesError(null);
+    try {
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
+        throw new Error(
+          t("payments.organization_required", { defaultValue: "Organization required" })
+        );
+      }
+      const { data, error } = await supabase
+        .from<Database["public"]["Tables"]["services"]["Row"]>("services")
+        .select(
+          "id, name, category, extra, selling_price, price, cost_price, vat_rate, price_includes_vat, service_type"
+        )
+        .eq("organization_id", organizationId)
+        .eq("is_active", true)
+        .order("category", { ascending: true })
+        .order("name", { ascending: true });
+      if (error) throw error;
+      const records =
+        data?.map(
+          (service): QuickServiceRecord => ({
+            id: service.id,
+            name: service.name,
+            category: service.category,
+            extra: Boolean(service.extra),
+            selling_price: service.selling_price,
+            price: service.price,
+            cost_price: service.cost_price,
+            vat_rate: service.vat_rate,
+            price_includes_vat: service.price_includes_vat,
+            service_type: service.service_type
+          })
+        ) ?? [];
+      setAvailableServices(records);
+    } catch (error) {
+      console.error("Error fetching available services:", error);
+      setAvailableServicesError(
+        error instanceof Error
+          ? error.message
+          : t("payments.services.load_error", { defaultValue: "Unable to load services." })
+      );
+    } finally {
+      setAvailableServicesLoading(false);
+    }
+  }, [availableServices.length, availableServicesLoading, t]);
+
+  useEffect(() => {
+    let active = true;
+    setIsLoading(true);
+    (async () => {
+      await Promise.allSettled([fetchProject(), fetchPayments(), fetchProjectServices()]);
+      if (active) {
+        setIsLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [fetchPayments, fetchProject, fetchProjectServices, refreshToken]);
+
+  const handlePaymentsRefresh = useCallback(async () => {
+    await fetchPayments();
     onPaymentsUpdated?.();
-  };
+  }, [fetchPayments, onPaymentsUpdated]);
+
   const handleEditPayment = (payment: Payment) => {
+    if (payment.type === "base_price" || payment.type === "deposit_due") {
+      toast({
+        title: t("payments.edit_disabled_title", { defaultValue: "Editing disabled" }),
+        description: t("payments.edit_disabled_description", {
+          defaultValue: "Adjust base price or deposit settings from the payment summary."
+        }),
+        variant: "destructive"
+      });
+      return;
+    }
     setEditingPayment(payment);
     setShowEditDialog(true);
   };
+
   const handleDeletePayment = async () => {
     if (!paymentToDelete) return;
     setIsDeleting(true);
     try {
-      const {
-        error
-      } = await supabase.from('payments').delete().eq('id', paymentToDelete.id);
+      const { error } = await supabase
+        .from("payments")
+        .delete()
+        .eq("id", paymentToDelete.id);
       if (error) throw error;
       toast({
-        title: t('messages.success.deleted'),
-        description: t('payments.payment_deleted')
+        title: t("messages.success.deleted", { defaultValue: "Deleted" }),
+        description: t("payments.payment_deleted", {
+          defaultValue: "Payment deleted successfully"
+        })
       });
-      fetchPayments();
-      onPaymentsUpdated?.();
-    } catch (error: any) {
+      await handlePaymentsRefresh();
+    } catch (error) {
       toast({
-        title: t('payments.error_deleting'),
-        description: error.message,
+        title: t("payments.error_deleting", { defaultValue: "Error deleting payment" }),
+        description:
+          error instanceof Error ? error.message : t("payments.error_deleting", { defaultValue: "Unable to delete payment." }),
         variant: "destructive"
       });
     } finally {
@@ -205,176 +436,869 @@ export function ProjectPaymentsSection({
     }
   };
 
-  // Calculate totals
-  const totalPaid = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
-  const totalDue = payments.filter(p => p.status === 'due').reduce((sum, p) => sum + p.amount, 0);
-  const extraServices = services.reduce((sum, s) => sum + (s.selling_price || s.price || 0), 0);
-  const getPaymentDescription = (payment: Payment) => {
-    if (payment.type === 'base_price') {
-      return t('payments.base_price_label');
+  const depositPayments = useMemo(
+    () => payments.filter((payment) => payment.type === "deposit_payment"),
+    [payments]
+  );
+  const depositDueRecord = useMemo(
+    () => payments.find((payment) => payment.type === "deposit_due") ?? null,
+    [payments]
+  );
+  const financialSummary = useMemo<FinancialSummary>(() => {
+    if (!project) {
+      return {
+        basePrice: 0,
+        includedServices: [],
+        extraServices: [],
+        includedTotals: DEFAULT_VAT_TOTALS,
+        extraTotals: DEFAULT_VAT_TOTALS,
+        contractTotal: 0,
+        depositAmount: 0,
+        depositPaid: 0,
+        depositRemaining: 0,
+        depositStatus: "none",
+        depositLastPaymentDate: null,
+        totalPaid: 0,
+        remaining: 0
+      };
     }
-    return payment.description?.trim() || t('payments.no_description');
+
+    const includedServices = serviceRecords.filter(
+      (record) => record.billingType === "included"
+    );
+    const extraServices = serviceRecords.filter((record) => record.billingType === "extra");
+
+    const includedTotals = aggregatePricing(includedServices);
+    const extraTotals = aggregatePricing(extraServices);
+
+    const contractTotal = project.basePrice + extraTotals.gross;
+
+    const depositAmount = computeDepositAmount(project.depositConfig ?? DEFAULT_DEPOSIT_CONFIG, {
+      basePrice: project.basePrice,
+      extrasTotal: extraTotals.gross,
+      contractTotal
+    });
+
+    const depositPaid = depositPayments
+      .filter((payment) => payment.status === "paid")
+      .reduce((sum, payment) => sum + payment.amount, 0);
+
+    const depositRemaining = Math.max(depositAmount - depositPaid, 0);
+    let depositStatus: FinancialSummary["depositStatus"] = "none";
+    if (depositAmount > 0) {
+      if (depositRemaining <= 0) {
+        depositStatus = "paid";
+      } else if (depositPaid > 0) {
+        depositStatus = "partial";
+      } else {
+        depositStatus = "due";
+      }
+    }
+
+    const totalPaid = payments
+      .filter((payment) => payment.status === "paid")
+      .reduce((sum, payment) => sum + payment.amount, 0);
+
+    const remaining = Math.max(contractTotal - totalPaid, 0);
+
+    return {
+      basePrice: project.basePrice,
+      includedServices,
+      extraServices,
+      includedTotals,
+      extraTotals,
+      contractTotal,
+      depositAmount,
+      depositPaid,
+      depositRemaining,
+      depositStatus,
+      depositLastPaymentDate: findLatestDate(depositPayments),
+      totalPaid,
+      remaining
+    };
+  }, [project, serviceRecords, depositPayments, payments]);
+
+  const handleDepositConfigSaved = useCallback(
+    async (config: ProjectDepositConfig) => {
+      if (!project) return;
+      setProject({ ...project, depositConfig: config });
+
+      const amount = computeDepositAmount(config, {
+        basePrice: financialSummary.basePrice,
+        extrasTotal: financialSummary.extraTotals.gross,
+        contractTotal: financialSummary.contractTotal
+      });
+
+      const depositPaid = depositPayments
+        .filter((payment) => payment.status === "paid")
+        .reduce((sum, payment) => sum + payment.amount, 0);
+
+      const label = config.due_label ?? t("payments.types.deposit_due", { defaultValue: "Deposit" });
+      const newStatus = depositPaid >= amount && amount > 0 ? "paid" : "due";
+      const latestPaymentDate = findLatestDate(depositPayments);
+
+      try {
+        if (amount <= 0 && depositDueRecord) {
+          await supabase.from("payments").delete().eq("id", depositDueRecord.id);
+        } else if (amount > 0 && depositDueRecord) {
+          await supabase
+            .from("payments")
+            .update({
+              amount,
+              description: config.description ?? label,
+              status: newStatus,
+              date_paid: newStatus === "paid" ? latestPaymentDate : null,
+              type: "deposit_due"
+            })
+            .eq("id", depositDueRecord.id);
+        } else if (amount > 0 && !depositDueRecord) {
+          const {
+            data: { user }
+          } = await supabase.auth.getUser();
+          if (!user) {
+            throw new Error(
+              t("payments.user_not_authenticated", { defaultValue: "User not authenticated" })
+            );
+          }
+          const organizationId = await getUserOrganizationId();
+          if (!organizationId) {
+            throw new Error(
+              t("payments.organization_required", { defaultValue: "Organization required" })
+            );
+          }
+          await supabase.from("payments").insert({
+            project_id: projectId,
+            user_id: user.id,
+            organization_id: organizationId,
+            amount,
+            description: config.description ?? label,
+            status: newStatus,
+            date_paid: newStatus === "paid" ? latestPaymentDate : null,
+            type: "deposit_due"
+          });
+        }
+      } catch (error) {
+        console.error("Error syncing deposit schedule:", error);
+        toast({
+          title: t("payments.deposit.sync_error", {
+            defaultValue: "Unable to sync deposit schedule"
+          }),
+          description: error instanceof Error ? error.message : undefined,
+          variant: "destructive"
+        });
+      } finally {
+        await fetchPayments();
+        onPaymentsUpdated?.();
+      }
+    },
+    [
+      depositDueRecord,
+      depositPayments,
+      fetchPayments,
+      financialSummary.basePrice,
+      financialSummary.contractTotal,
+      financialSummary.extraTotals.gross,
+      onPaymentsUpdated,
+      project,
+      projectId,
+      t,
+      toast
+    ]
+  );
+
+  const handleServiceDialogOpen = async (mode: "included" | "extra") => {
+    setServiceDialogState({ open: true, mode });
+    await fetchAvailableServices();
   };
 
-  // Remaining Balance = Base Price + Due Payments + Extra Services - Paid Payments
-  const remainingBalance = totalDue + extraServices - totalPaid;
-  return <>
+  const handleServiceQuickEditSubmit = useCallback(
+    async (mode: "included" | "extra", selectedIds: string[]) => {
+      try {
+        const existingByServiceId = new Map(
+          serviceRecords.map((record) => [record.service.id, record])
+        );
+        const selectedSet = new Set(selectedIds);
+
+        const toDelete = serviceRecords
+          .filter(
+            (record) => record.billingType === mode && !selectedSet.has(record.service.id)
+          )
+          .map((record) => record.projectServiceId);
+
+        const toReclassify = serviceRecords.filter(
+          (record) =>
+            record.billingType !== mode && selectedSet.has(record.service.id)
+        );
+
+        const toInsertIds = selectedIds.filter(
+          (serviceId) => !existingByServiceId.has(serviceId)
+        );
+
+        if (toDelete.length > 0) {
+          await supabase
+            .from("project_services")
+            .delete()
+            .in("id", toDelete);
+        }
+
+        for (const record of toReclassify) {
+          await supabase
+            .from("project_services")
+            .update({ billing_type: mode })
+            .eq("id", record.projectServiceId);
+        }
+
+        if (toInsertIds.length > 0) {
+          const {
+            data: { user }
+          } = await supabase.auth.getUser();
+          if (!user) {
+            throw new Error(
+              t("payments.user_not_authenticated", { defaultValue: "User not authenticated" })
+            );
+          }
+          const organizationId = await getUserOrganizationId();
+          if (!organizationId) {
+            throw new Error(
+              t("payments.organization_required", { defaultValue: "Organization required" })
+            );
+          }
+          const inserts = toInsertIds.map((serviceId) => ({
+            project_id: projectId,
+            service_id: serviceId,
+            user_id: user.id,
+            billing_type: mode
+          }));
+          await supabase.from("project_services").insert(inserts);
+        }
+
+        await fetchProjectServices();
+        onPaymentsUpdated?.();
+      } catch (error) {
+        console.error("Error updating services:", error);
+        toast({
+          title: t("payments.services.quick_edit_error", {
+            defaultValue: "Unable to update services"
+          }),
+          description: error instanceof Error ? error.message : undefined,
+          variant: "destructive"
+        });
+      }
+    },
+    [fetchProjectServices, onPaymentsUpdated, projectId, serviceRecords, t, toast]
+  );
+
+  const renderPaymentTypeLabel = useCallback(
+    (payment: Payment) => {
+      switch (payment.type) {
+        case "deposit_due":
+          return t("payments.types.deposit_due", { defaultValue: "Deposit (due)" });
+        case "deposit_payment":
+          return t("payments.types.deposit_payment", { defaultValue: "Deposit payment" });
+        case "base_price":
+          return t("payments.types.base_price", { defaultValue: "Base price" });
+        default:
+          return t("payments.types.manual", { defaultValue: "Manual" });
+      }
+    },
+    [t]
+  );
+
+  const getPaymentDescription = useCallback(
+    (payment: Payment) => {
+      switch (payment.type) {
+        case "deposit_due":
+          return (
+            payment.description ??
+            t("payments.descriptions.deposit_due", { defaultValue: "Scheduled deposit" })
+          );
+        case "deposit_payment":
+          return (
+            payment.description ??
+            t("payments.descriptions.deposit_payment", { defaultValue: "Deposit payment" })
+          );
+        case "base_price":
+          return t("payments.base_price_label", { defaultValue: "Base Price" });
+        default:
+          return payment.description?.trim() || t("payments.no_description", { defaultValue: "No description provided" });
+      }
+    },
+    [t]
+  );
+
+  const formatDateSafely = useCallback((value?: string | null) => {
+    if (!value) return null;
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return format(parsed, "PPP");
+  }, []);
+
+  const includedServiceIds = useMemo(
+    () =>
+      serviceRecords
+        .filter((record) => record.billingType === "included")
+        .map((record) => record.service.id),
+    [serviceRecords]
+  );
+
+  const extraServiceIds = useMemo(
+    () =>
+      serviceRecords
+        .filter((record) => record.billingType === "extra")
+        .map((record) => record.service.id),
+    [serviceRecords]
+  );
+
+  const conflictingIncluded = useMemo(
+    () => new Set(extraServiceIds),
+    [extraServiceIds]
+  );
+  const conflictingExtra = useMemo(
+    () => new Set(includedServiceIds),
+    [includedServiceIds]
+  );
+
+  return (
+    <>
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-xl font-semibold"><CreditCard className="h-4 w-4" />{t('payments.title')}</CardTitle>
-            <AddPaymentDialog projectId={projectId} onPaymentAdded={handlePaymentUpdated} />
+            <CardTitle className="flex items-center gap-2 text-xl font-semibold">
+              <CreditCard className="h-4 w-4" />
+              {t("payments.title", { defaultValue: "Payments" })}
+            </CardTitle>
+            <AddPaymentDialog projectId={projectId} onPaymentAdded={handlePaymentsRefresh} />
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Summary Metrics */}
-          <div className="grid grid-cols-3 gap-4 md:grid-cols-3">
-            {/* Mobile: Single column stack, Desktop: 3 columns */}
-            <div className="md:text-center col-span-3 md:col-span-1">
-              <div className="flex items-center gap-2 mb-1 md:justify-center">
-                <div className="w-2 h-2 rounded-full bg-green-500 shrink-0"></div>
-                <span className="text-sm font-medium text-muted-foreground flex-1 md:flex-none">{t('payments.total_paid')}</span>
-                <div className="text-lg font-semibold md:hidden">TRY {Math.round(totalPaid)}</div>
+          {isLoading ? (
+            <div className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {[1, 2, 3, 4].map((item) => (
+                  <div key={item} className="h-24 rounded-xl border bg-muted animate-pulse" />
+                ))}
               </div>
-              <div className="text-xl font-semibold hidden md:block">TRY {Math.round(totalPaid)}</div>
-            </div>
-            <div className="md:text-center col-span-3 md:col-span-1">
-              <div className="flex items-center gap-2 mb-1 md:justify-center">
-                <div className="w-2 h-2 rounded-full bg-gray-500 shrink-0"></div>
-                <span className="text-sm font-medium text-muted-foreground flex-1 md:flex-none">{t('payments.extra_services')}</span>
-                <div className="text-lg font-semibold md:hidden">TRY {Math.round(extraServices)}</div>
+              <div className="h-32 rounded-xl border bg-muted animate-pulse" />
+              <div className="space-y-3">
+                {[1, 2, 3].map((item) => (
+                  <div key={item} className="h-14 rounded-lg border bg-muted animate-pulse" />
+                ))}
               </div>
-              <div className="text-xl font-semibold hidden md:block">TRY {Math.round(extraServices)}</div>
             </div>
-            <div className="md:text-center col-span-3 md:col-span-1">
-              <div className="flex items-center gap-2 mb-1 md:justify-center">
-                <div className="w-2 h-2 rounded-full bg-yellow-500 shrink-0"></div>
-                <span className="text-sm font-medium text-muted-foreground flex-1 md:flex-none">{t('payments.remaining_balance')}</span>
-                <div className="text-lg font-semibold md:hidden">TRY {Math.round(remainingBalance)}</div>
-              </div>
-              <div className="text-xl font-semibold hidden md:block">TRY {Math.round(remainingBalance)}</div>
-            </div>
-          </div>
+          ) : (
+            <>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-xl border bg-muted/30 p-4">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                    {t("payments.summary.contract_total", { defaultValue: "Project total" })}
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold">
+                    {formatCurrency(financialSummary.contractTotal)}
+                  </div>
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    {t("payments.summary.contract_helper", {
+                      base: formatCurrency(financialSummary.basePrice),
+                      extras: formatCurrency(financialSummary.extraTotals.gross),
+                      defaultValue: "Base {{base}} + extras {{extras}}"
+                    })}
+                  </div>
+                </div>
 
-          {/* Payments Table */}
-          {loading ? <div className="space-y-3">
-              {[1, 2, 3].map(i => <div key={i} className="h-12 bg-muted rounded-md animate-pulse" />)}
-            </div> : payments.length === 0 && (project?.base_price || 0) === 0 ? <div className="text-center py-8 text-muted-foreground">
-              {t('payments.no_payments')}
-            </div> : <div className="space-y-3">
-              {payments.map(payment => {
-                const isPaid = payment.status === 'paid';
+                <div className="rounded-xl border bg-muted/30 p-4">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                    {t("payments.summary.collected", { defaultValue: "Collected" })}
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold">
+                    {formatCurrency(financialSummary.totalPaid)}
+                  </div>
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    {t("payments.summary.collected_helper", {
+                      defaultValue: "All recorded payments"
+                    })}
+                  </div>
+                </div>
 
-                return (
-                  <div key={payment.id} className={`border rounded-lg transition-colors ${payment.type === 'base_price' ? 'bg-muted/30 border-muted-foreground/20' : 'hover:bg-muted/50'}`}>
-                  {/* Desktop Layout */}
-                  <div className="hidden md:flex items-center justify-between p-3">
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="min-w-0">
-                        <div className="font-medium">
-                          {payment.date_paid ? format(new Date(payment.date_paid), "MMM d, yyyy") : format(new Date(payment.created_at), "MMM d, yyyy")}
-                        </div>
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-semibold">TRY {Math.round(payment.amount)}</div>
-                      </div>
-                      <div className="flex-1 min-w-0 flex items-center gap-2">
-                        <div className="text-sm text-muted-foreground truncate">
-                          {getPaymentDescription(payment)}
-                        </div>
-                      </div>
-                      <div>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "px-2 py-0.5 text-xs font-semibold",
-                            isPaid ? PAYMENT_COLORS.paid.badgeClass : PAYMENT_COLORS.due.badgeClass
-                          )}
-                        >
-                          {isPaid ? t('payments.paid') : t('payments.due')}
+                <div className="rounded-xl border bg-muted/30 p-4">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                    {t("payments.summary.remaining", { defaultValue: "Outstanding" })}
+                  </div>
+                  <div
+                    className={cn(
+                      "mt-2 text-2xl font-semibold",
+                      financialSummary.remaining > 0 ? "text-orange-600" : "text-emerald-600"
+                    )}
+                  >
+                    {formatCurrency(financialSummary.remaining)}
+                  </div>
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    {t("payments.summary.remaining_helper", {
+                      defaultValue: "Contract total minus collected"
+                    })}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border bg-muted/30 p-4">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                    {t("payments.summary.vat", { defaultValue: "Estimated VAT" })}
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold">
+                    {formatCurrency(
+                      financialSummary.includedTotals.vat + financialSummary.extraTotals.vat
+                    )}
+                  </div>
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    {t("payments.summary.vat_helper", {
+                      defaultValue: "Based on service VAT settings"
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border p-5">
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
+                  <div className="rounded-md bg-amber-100 p-2 text-amber-700">
+                    <PiggyBank className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-base font-semibold">
+                        {t("payments.deposit.title", { defaultValue: "Deposit overview" })}
+                      </h3>
+                      {financialSummary.depositStatus !== "none" && (
+                        <Badge variant="outline">
+                          {t("payments.types.deposit", { defaultValue: "Deposit" })}
                         </Badge>
-                      </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-1 ml-4">
-                      <Button variant="ghost" size="sm" onClick={() => handleEditPayment(payment)} className="h-8 w-8 p-0">
-                        <Edit2 className="h-4 w-4" />
+                    <p className="text-sm text-muted-foreground">
+                      {financialSummary.depositStatus === "none" &&
+                        t("payments.deposit.not_configured", {
+                          defaultValue: "No deposit configured for this project."
+                        })}
+                      {financialSummary.depositStatus === "due" &&
+                        t("payments.deposit.due", {
+                          amount: formatCurrency(financialSummary.depositAmount),
+                          defaultValue: "{{amount}} deposit outstanding."
+                        })}
+                      {financialSummary.depositStatus === "partial" &&
+                        t("payments.deposit.partial", {
+                          paid: formatCurrency(financialSummary.depositPaid),
+                          required: formatCurrency(financialSummary.depositAmount),
+                          remaining: formatCurrency(financialSummary.depositRemaining),
+                          defaultValue: "{{paid}} of {{required}} collected ({{remaining}} remaining)."
+                        })}
+                      {financialSummary.depositStatus === "paid" &&
+                        t("payments.deposit.paid", {
+                          amount: formatCurrency(financialSummary.depositAmount),
+                          defaultValue: "Deposit collected ({{amount}})."
+                        })}
+                    </p>
+                    {financialSummary.depositLastPaymentDate && (
+                      <p className="text-xs text-muted-foreground">
+                        {t("payments.deposit.last_payment", {
+                          date:
+                            formatDateSafely(financialSummary.depositLastPaymentDate) ??
+                            financialSummary.depositLastPaymentDate,
+                          defaultValue: "Last deposit payment on {{date}}."
+                        })}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="default"
+                        onClick={() => setDepositSetupOpen(true)}
+                      >
+                        {t("payments.deposit.actions.configure", {
+                          defaultValue: "Configure deposit"
+                        })}
                       </Button>
-                      {payment.type === 'manual' && <Button variant="ghost" size="sm" onClick={() => {
-                  setPaymentToDelete(payment);
-                  setShowDeleteDialog(true);
-                }} className="h-8 w-8 p-0 text-destructive hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>}
+                      {financialSummary.depositStatus !== "none" && financialSummary.depositRemaining > 0 && (
+                        <Button size="sm" variant="outline" onClick={() => setDepositPaymentOpen(true)}>
+                          {t("payments.deposit.actions.record_payment", {
+                            defaultValue: "Record deposit payment"
+                          })}
+                        </Button>
+                      )}
                     </div>
                   </div>
+                </div>
+              </div>
 
-                  {/* Mobile Layout */}
-                  <div className="md:hidden p-2.5 space-y-2.5">
-                    {/* Row 1: Date + Amount */}
-                    <div className="flex items-center justify-between">
-                      <div className="font-medium text-sm">
-                        {payment.date_paid ? format(new Date(payment.date_paid), "MMM d, yyyy") : format(new Date(payment.created_at), "MMM d, yyyy")}
-                      </div>
-                      <div className="font-semibold">TRY {Math.round(payment.amount)}</div>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="rounded-xl border p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-semibold">
+                        {t("payments.services.included_title", {
+                          defaultValue: "Included in package"
+                        })}
+                      </h3>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {t("payments.services.included_helper", {
+                          total: formatCurrency(financialSummary.basePrice),
+                          defaultValue: "Covered by the base package."
+                        })}
+                      </p>
                     </div>
-                    
-                    {/* Row 2: Description (if exists) */}
-                    {getPaymentDescription(payment) && (
-                      <div className="text-sm text-muted-foreground truncate">
-                        {getPaymentDescription(payment)}
-                      </div>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="px-0"
+                      onClick={() => handleServiceDialogOpen("included")}
+                    >
+                      <Plus className="mr-1 h-4 w-4" />
+                      {t("payments.services.add_button", { defaultValue: "Add service" })}
+                    </Button>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {financialSummary.includedServices.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        {t("payments.services.none", { defaultValue: "No services linked yet." })}
+                      </p>
+                    ) : (
+                      financialSummary.includedServices.map((record) => {
+                        const pricing = computeServicePricing(record.service);
+                        return (
+                          <div
+                            key={record.projectServiceId}
+                            className="flex items-start justify-between text-sm"
+                          >
+                            <div>
+                              <div className="font-medium">{record.service.name}</div>
+                              {pricing.vat > 0 && (
+                                <div className="text-xs text-muted-foreground">
+                                  {t("payments.services.vat_line", {
+                                    rate: record.service.vat_rate ?? 0,
+                                    amount: formatCurrency(pricing.vat),
+                                    defaultValue: "VAT {{rate}}% • {{amount}}"
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {t("payments.services.included_badge", { defaultValue: "Included" })}
+                            </div>
+                          </div>
+                        );
+                      })
                     )}
-                    
-                    {/* Row 3: Status + Actions */}
-                    <div className="flex items-center justify-between">
-                      <Badge
-                        variant="outline"
+                  </div>
+                </div>
+
+                <div className="rounded-xl border p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-semibold">
+                        {t("payments.services.addons_title", {
+                          defaultValue: "Add-on services"
+                        })}
+                      </h3>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {t("payments.services.addons_helper", {
+                          total: formatCurrency(financialSummary.extraTotals.gross),
+                          defaultValue: "Billed on top of the base package."
+                        })}
+                      </p>
+                    </div>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="px-0"
+                      onClick={() => handleServiceDialogOpen("extra")}
+                    >
+                      <Plus className="mr-1 h-4 w-4" />
+                      {t("payments.services.add_button", { defaultValue: "Add service" })}
+                    </Button>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {financialSummary.extraServices.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        {t("payments.services.none", { defaultValue: "No services linked yet." })}
+                      </p>
+                    ) : (
+                      financialSummary.extraServices.map((record) => {
+                        const pricing = computeServicePricing(record.service);
+                        return (
+                          <div
+                            key={record.projectServiceId}
+                            className="flex items-start justify-between text-sm"
+                          >
+                            <div>
+                              <div className="font-medium">{record.service.name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {t("payments.services.vat_line", {
+                                  rate: record.service.vat_rate ?? 0,
+                                  amount: formatCurrency(pricing.vat),
+                                  defaultValue: "VAT {{rate}}% • {{amount}}"
+                                })}
+                              </div>
+                            </div>
+                            <div className="font-medium text-muted-foreground">
+                              {formatCurrency(pricing.gross)}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {payments.length === 0 ? (
+                <div className="py-10 text-center text-muted-foreground">
+                  {t("payments.no_records", { defaultValue: "No payment records yet." })}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {payments.map((payment) => {
+                    const isPaid = payment.status === "paid";
+                    const displayDate =
+                      formatDateSafely(payment.date_paid) ??
+                      formatDateSafely(payment.created_at) ??
+                      "";
+                    const description = getPaymentDescription(payment);
+                    const canEdit = !["base_price", "deposit_due"].includes(payment.type);
+                    const canDelete = ["manual", "deposit_payment", "balance_due"].includes(
+                      payment.type
+                    );
+                    return (
+                      <div
+                        key={payment.id}
                         className={cn(
-                          "px-2 py-0.5 text-xs font-semibold",
-                          isPaid ? PAYMENT_COLORS.paid.badgeClass : PAYMENT_COLORS.due.badgeClass
+                          "rounded-lg border transition-colors",
+                          payment.type === "deposit_due"
+                            ? "border-amber-300/70 bg-amber-50/50"
+                            : payment.type === "base_price"
+                            ? "bg-muted/30 border-muted-foreground/20"
+                            : "hover:bg-muted/50"
                         )}
                       >
-                        {isPaid ? t('payments.paid') : t('payments.due')}
-                      </Badge>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => handleEditPayment(payment)} className="h-8 w-8 p-0">
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        {payment.type === 'manual' && <Button variant="ghost" size="sm" onClick={() => {
-                    setPaymentToDelete(payment);
-                    setShowDeleteDialog(true);
-                  }} className="h-8 w-8 p-0 text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>}
+                        <div className="hidden items-center justify-between p-4 md:flex">
+                          <div className="flex flex-1 items-center gap-4">
+                            <div className="min-w-[130px]">
+                              <div className="font-medium">{displayDate}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {renderPaymentTypeLabel(payment)}
+                              </div>
+                            </div>
+                            <div className="min-w-[120px]">
+                              <div className="text-lg font-semibold">
+                                {formatCurrency(payment.amount)}
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm text-muted-foreground truncate">
+                                {description}
+                              </div>
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "px-2 py-0.5 text-xs font-semibold",
+                                isPaid
+                                  ? PAYMENT_COLORS.paid.badgeClass
+                                  : PAYMENT_COLORS.due.badgeClass
+                              )}
+                            >
+                              {isPaid
+                                ? t("payments.paid", { defaultValue: "Paid" })
+                                : t("payments.due", { defaultValue: "Due" })}
+                            </Badge>
+                          </div>
+                          <div className="ml-4 flex items-center gap-1">
+                            {canEdit && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditPayment(payment)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {canDelete && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setPaymentToDelete(payment);
+                                  setShowDeleteDialog(true);
+                                }}
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 p-3 md:hidden">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">{displayDate}</span>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "px-2 py-0.5 text-xs font-semibold",
+                                isPaid
+                                  ? PAYMENT_COLORS.paid.badgeClass
+                                  : PAYMENT_COLORS.due.badgeClass
+                              )}
+                            >
+                              {isPaid
+                                ? t("payments.paid", { defaultValue: "Paid" })
+                                : t("payments.due", { defaultValue: "Due" })}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">
+                              {renderPaymentTypeLabel(payment)}
+                            </span>
+                            <span className="font-semibold">
+                              {formatCurrency(payment.amount)}
+                            </span>
+                          </div>
+                          {description && (
+                            <div className="text-sm text-muted-foreground">{description}</div>
+                          )}
+                          <div className="flex items-center gap-1">
+                            {canEdit && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditPayment(payment)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {canDelete && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setPaymentToDelete(payment);
+                                  setShowDeleteDialog(true);
+                                }}
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  </div>
-                );
-              })}
-            </div>}
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
 
-      {/* Edit Payment Dialog */}
-      <EditPaymentDialog payment={editingPayment} open={showEditDialog} onOpenChange={setShowEditDialog} onPaymentUpdated={handlePaymentUpdated} />
+      <EditPaymentDialog
+        payment={editingPayment}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onPaymentUpdated={handlePaymentsRefresh}
+      />
 
-      {/* Delete Confirmation Dialog */}
+      <ProjectDepositSetupDialog
+        projectId={projectId}
+        open={depositSetupOpen}
+        onOpenChange={setDepositSetupOpen}
+        config={project?.depositConfig ?? DEFAULT_DEPOSIT_CONFIG}
+        basePrice={financialSummary.basePrice}
+        extrasTotal={financialSummary.extraTotals.gross}
+        contractTotal={financialSummary.contractTotal}
+        onConfigSaved={handleDepositConfigSaved}
+      />
+
+      <ProjectDepositPaymentDialog
+        projectId={projectId}
+        open={depositPaymentOpen}
+        onOpenChange={setDepositPaymentOpen}
+        depositDue={
+          depositDueRecord
+            ? {
+                id: depositDueRecord.id,
+                amount: depositDueRecord.amount,
+                status: depositDueRecord.status,
+                date_paid: depositDueRecord.date_paid,
+                description: depositDueRecord.description
+              }
+            : null
+        }
+        depositAmount={financialSummary.depositAmount}
+        depositPaid={financialSummary.depositPaid}
+        onCompleted={handlePaymentsRefresh}
+      />
+
+      <ProjectServicesQuickEditDialog
+        open={serviceDialogState.open && serviceDialogState.mode === "included"}
+        onOpenChange={(open) =>
+          setServiceDialogState({ open, mode: "included" })
+        }
+        mode="included"
+        services={availableServices}
+        selectedIds={includedServiceIds}
+        conflictingIds={conflictingIncluded}
+        isLoading={availableServicesLoading}
+        error={availableServicesError}
+        onRetry={fetchAvailableServices}
+        onSubmit={async (ids) => {
+          await handleServiceQuickEditSubmit("included", ids);
+          await fetchProject();
+        }}
+      />
+
+      <ProjectServicesQuickEditDialog
+        open={serviceDialogState.open && serviceDialogState.mode === "extra"}
+        onOpenChange={(open) =>
+          setServiceDialogState({ open, mode: "extra" })
+        }
+        mode="extra"
+        services={availableServices}
+        selectedIds={extraServiceIds}
+        conflictingIds={conflictingExtra}
+        isLoading={availableServicesLoading}
+        error={availableServicesError}
+        onRetry={fetchAvailableServices}
+        onSubmit={async (ids) => {
+          await handleServiceQuickEditSubmit("extra", ids);
+          await fetchProject();
+        }}
+      />
+
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('payments.delete_payment')}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("payments.delete_payment", { defaultValue: "Delete Payment" })}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('payments.delete_payment_confirm')}
+              {t("payments.delete_payment_confirm", {
+                defaultValue: "Are you sure you want to delete this payment?"
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>{t('buttons.cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeletePayment} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {isDeleting ? t('payments.deleting') : t('payments.delete_payment')}
+            <AlertDialogCancel disabled={isDeleting}>
+              {t("buttons.cancel", { defaultValue: "Cancel" })}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePayment}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting
+                ? t("payments.deleting", { defaultValue: "Deleting..." })
+                : t("payments.delete_payment", { defaultValue: "Delete Payment" })}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>;
+    </>
+  );
 }

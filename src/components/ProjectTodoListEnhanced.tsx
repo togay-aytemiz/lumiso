@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { CheckSquare, Trash2, Plus, Edit, Check, X } from "lucide-react";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { useFormsTranslation, useCommonTranslation } from '@/hooks/useTypedTranslation';
+import { logAuditEvent } from "@/lib/auditLog";
+import type { Json } from "@/integrations/supabase/types";
 
 interface Todo {
   id: string;
@@ -37,10 +39,18 @@ export function ProjectTodoListEnhanced({
   const { t: tForms } = useFormsTranslation();
   const { t: tCommon } = useCommonTranslation();
 
-  useEffect(() => {
-    fetchTodos();
-  }, [projectId]);
-  const fetchTodos = async () => {
+  const getErrorMessage = useCallback((error: unknown) => {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (typeof error === "string") {
+      return error;
+    }
+    return "An unexpected error occurred";
+  }, []);
+
+  const fetchTodos = useCallback(async () => {
+    setLoading(true);
     try {
       const {
         data,
@@ -50,23 +60,25 @@ export function ProjectTodoListEnhanced({
       });
       if (error) throw error;
       setTodos(data || []);
-      onTodosUpdated?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching todos:', error);
       toast({
         title: tForms('todos.error_loading'),
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId, toast, tForms, getErrorMessage]);
+
+  useEffect(() => {
+    void fetchTodos();
+  }, [fetchTodos]);
   const handleToggleComplete = async (todoId: string, isCompleted: boolean) => {
     try {
-      const {
-        error
-      } = await supabase.from('todos').update({
+      const existing = todos.find(todo => todo.id === todoId);
+      const { error } = await supabase.from('todos').update({
         is_completed: !isCompleted
       }).eq('id', todoId);
       if (error) throw error;
@@ -74,15 +86,24 @@ export function ProjectTodoListEnhanced({
         ...todo,
         is_completed: !isCompleted
       } : todo));
+      if (existing) {
+        void logAuditEvent({
+          entityType: "todo",
+          entityId: existing.id,
+          action: "updated",
+          oldValues: existing as unknown as Json,
+          newValues: { ...existing, is_completed: !isCompleted } as unknown as Json
+        });
+      }
       onTodosUpdated?.();
       toast({
-         title: tCommon('success'),
-         description: `${tForms('todos.todo')} ${!isCompleted ? tForms('todos.completed') : tForms('todos.reopened')}.`
+        title: tCommon('success'),
+        description: `${tForms('todos.todo')} ${!isCompleted ? tForms('todos.completed') : tForms('todos.reopened')}.`
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
-         title: tForms('todos.error_updating'),
-        description: error.message,
+        title: tForms('todos.error_updating'),
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     }
@@ -108,15 +129,21 @@ export function ProjectTodoListEnhanced({
       if (error) throw error;
       setTodos([data, ...todos]);
       setNewTodoContent("");
+      void logAuditEvent({
+        entityType: "todo",
+        entityId: data.id,
+        action: "created",
+        newValues: data as unknown as Json
+      });
       onTodosUpdated?.();
       toast({
-         title: tCommon('success'),
-         description: tForms('todos.todo_added')
+        title: tCommon('success'),
+        description: tForms('todos.todo_added')
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: tForms('todos.error_adding'),
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     } finally {
@@ -126,6 +153,7 @@ export function ProjectTodoListEnhanced({
   const handleEditTodo = async (todoId: string, newContent: string) => {
     if (!newContent.trim()) return;
     try {
+      const existing = todos.find(todo => todo.id === todoId);
       const {
         error
       } = await supabase.from('todos').update({
@@ -138,15 +166,24 @@ export function ProjectTodoListEnhanced({
       } : todo));
       setEditingId(null);
       setEditContent("");
+      if (existing) {
+        void logAuditEvent({
+          entityType: "todo",
+          entityId: existing.id,
+          action: "updated",
+          oldValues: existing as unknown as Json,
+          newValues: { ...existing, content: newContent.trim() } as unknown as Json
+        });
+      }
       onTodosUpdated?.();
       toast({
-         title: tCommon('success'),
-         description: tForms('todos.todo_updated')
+        title: tCommon('success'),
+        description: tForms('todos.todo_updated')
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: tForms('todos.error_updating'),
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     }
@@ -161,20 +198,29 @@ export function ProjectTodoListEnhanced({
   };
   const handleDeleteTodo = async (todoId: string) => {
     try {
+      const existing = todos.find(todo => todo.id === todoId);
       const {
         error
       } = await supabase.from('todos').delete().eq('id', todoId);
       if (error) throw error;
       setTodos(todos.filter(todo => todo.id !== todoId));
+      if (existing) {
+        void logAuditEvent({
+          entityType: "todo",
+          entityId: existing.id,
+          action: "deleted",
+          oldValues: existing as unknown as Json
+        });
+      }
       onTodosUpdated?.();
       toast({
-         title: tCommon('success'),
-         description: tForms('todos.todo_deleted')
+        title: tCommon('success'),
+        description: tForms('todos.todo_deleted')
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: tForms('todos.error_deleting'),
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     }

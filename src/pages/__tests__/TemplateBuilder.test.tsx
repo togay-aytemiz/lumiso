@@ -9,7 +9,7 @@ jest.mock("@/integrations/supabase/client", () => ({
 }));
 
 jest.mock("@/components/template-builder/OptimizedTemplateEditor", () => ({
-  OptimizedTemplateEditor: ({ onBlocksChange }: { onBlocksChange: (blocks: any[]) => void }) => (
+  OptimizedTemplateEditor: ({ onBlocksChange }: { onBlocksChange: (blocks: Array<{ id: string }>) => void }) => (
     <div>
       <button type="button" onClick={() => onBlocksChange([{ id: "block-1" }])}>
         update-blocks
@@ -46,24 +46,19 @@ jest.mock("@/components/template-builder/TemplateErrorBoundary", () => ({
   TemplateErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-jest.mock("@/components/ui/button", () => {
-  const React = require("react");
-  const Button = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(
+jest.mock("@/components/ui/button", () => ({
+  __esModule: true,
+  Button: React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(
     ({ children, ...props }, ref) => (
       <button ref={ref} {...props}>
         {children}
       </button>
     )
-  );
-  Button.displayName = "Button";
-  return {
-    __esModule: true,
-    Button,
-  };
-});
+  ),
+}));
 
 jest.mock("@/components/ui/input", () => ({
-  Input: ({ value, onChange, onBlur, onKeyDown }: any) => (
+  Input: ({ value, onChange, onBlur, onKeyDown }: { value: string; onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void; onBlur?: () => void; onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void; }) => (
     <input
       value={value}
       onChange={(event) => onChange?.(event)}
@@ -105,7 +100,7 @@ jest.mock("@/hooks/useSettingsNavigation", () => ({
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string, options?: any) =>
+    t: (key: string, options?: Record<string, unknown>) =>
       options?.time ? `${key}-${options.time}` : key,
     i18n: { language: "en" },
   }),
@@ -125,8 +120,10 @@ const baseTemplate = {
 
 describe("TemplateBuilder page", () => {
   beforeEach(() => {
-    jest.spyOn(require("react-router-dom"), "useNavigate").mockReturnValue(jest.fn());
-    jest.spyOn(require("react-router-dom"), "useSearchParams").mockReturnValue([new URLSearchParams("id=template-1"), jest.fn()]);
+    const navigateMock = jest.fn();
+    import * as ReactRouterDom from "react-router-dom";
+    jest.spyOn(ReactRouterDom, "useNavigate").mockReturnValue(navigateMock);
+        jest.spyOn(ReactRouterDom, "useSearchParams").mockReturnValue([new URLSearchParams("id=template-1"), jest.fn()]);
 
     mockSupabaseClient.from = jest.fn(() => ({
       select: jest.fn().mockReturnThis(),

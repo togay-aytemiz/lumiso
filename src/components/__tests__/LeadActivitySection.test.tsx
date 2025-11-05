@@ -18,8 +18,34 @@ jest.mock("@/lib/organizationUtils", () => ({
   getUserOrganizationId: jest.fn(),
 }));
 
+type ActivityFormProps = {
+  onSubmit: (content: string, isReminder: boolean) => void;
+};
+
+type ActivityRecord = {
+  id: string;
+  content: string;
+  completed: boolean;
+} & Record<string, unknown>;
+
+type ActivityTimelineProps = {
+  activities: ActivityRecord[];
+  onToggleCompletion?: (id: string, completed: boolean) => void;
+};
+
+type SegmentedOption = {
+  value: string;
+  label: string;
+};
+
+type SegmentedControlProps = {
+  value: string;
+  onValueChange: (value: string) => void;
+  options: SegmentedOption[];
+};
+
 jest.mock("@/components/shared/ActivityForm", () => ({
-  ActivityForm: ({ onSubmit }: any) => (
+  ActivityForm: ({ onSubmit }: ActivityFormProps) => (
     <div>
       <button type="button" data-testid="submit-activity" onClick={() => onSubmit("Mock activity", false)}>
         submit-activity
@@ -29,9 +55,9 @@ jest.mock("@/components/shared/ActivityForm", () => ({
 }));
 
 jest.mock("@/components/shared/ActivityTimeline", () => ({
-  ActivityTimeline: ({ activities, onToggleCompletion }: any) => (
+  ActivityTimeline: ({ activities, onToggleCompletion }: ActivityTimelineProps) => (
     <div>
-      {activities.map((activity: any) => (
+      {activities.map((activity) => (
         <div key={activity.id}>
           <span>{activity.content}</span>
           {onToggleCompletion && (
@@ -50,9 +76,9 @@ jest.mock("@/components/shared/ActivityTimeline", () => ({
 }));
 
 jest.mock("@/components/ui/segmented-control", () => ({
-  SegmentedControl: ({ value, onValueChange, options }: any) => (
+  SegmentedControl: ({ value, onValueChange, options }: SegmentedControlProps) => (
     <div>
-      {options.map((option: any) => (
+      {options.map((option) => (
         <button
           key={option.value}
           type="button"

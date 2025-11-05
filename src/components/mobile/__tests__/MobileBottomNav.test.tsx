@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { act } from "@testing-library/react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import { MobileBottomNav } from "../MobileBottomNav";
-import { useProfile } from "@/contexts/ProfileContext";
+import { useProfile } from "@/hooks/useProfile";
 
 const navigateMock = jest.fn();
 const useNavigateMock = jest.fn(() => navigateMock);
@@ -90,7 +90,7 @@ jest.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
-jest.mock("@/contexts/ProfileContext", () => ({
+jest.mock("@/hooks/useProfile", () => ({
   useProfile: jest.fn(),
 }));
 

@@ -40,10 +40,10 @@ const applyInterpolation = (
 
 const getTranslation = (key: string): string | undefined => {
   const segments = key.split(".");
-  let current: any = en;
+  let current: unknown = en;
   for (const part of segments) {
     if (current && typeof current === "object" && part in current) {
-      current = current[part];
+      current = (current as Record<string, unknown>)[part];
     } else {
       return undefined;
     }
@@ -51,25 +51,40 @@ const getTranslation = (key: string): string | undefined => {
   return typeof current === "string" ? current : undefined;
 };
 
-const mergeState = <T extends object>(base: T, overrides?: DeepPartial<T>): T => {
-  if (!overrides) return base;
-  const result: any = Array.isArray(base) ? [...(base as any[])] : { ...base };
-  for (const [key, value] of Object.entries(overrides)) {
-    if (value === undefined) continue;
-    const original = (result as any)[key];
-    if (
-      original &&
-      typeof original === "object" &&
-      !Array.isArray(original) &&
-      typeof value === "object" &&
-      !Array.isArray(value)
-    ) {
-      (result as any)[key] = mergeState(original, value);
-    } else {
-      (result as any)[key] = value;
-    }
+const cloneDeep = <V,>(value: V): V => {
+  if (typeof structuredClone === "function") {
+    return structuredClone(value);
   }
-  return result;
+  return JSON.parse(JSON.stringify(value)) as V;
+};
+
+const mergeState = <T,>(base: T, overrides?: DeepPartial<T>): T => {
+  const result = cloneDeep(base);
+  if (!overrides) {
+    return result;
+  }
+
+  const apply = (target: unknown, source: DeepPartial<T>): unknown => {
+    if (!source || typeof source !== "object") {
+      return source === undefined ? target : cloneDeep(source);
+    }
+
+    if (Array.isArray(target) && Array.isArray(source)) {
+      return source.map((item, index) => apply(target[index], item as DeepPartial<T>));
+    }
+
+    if (target && typeof target === "object") {
+      const targetRecord = target as Record<string, unknown>;
+      Object.entries(source as Record<string, unknown>).forEach(([key, value]) => {
+        targetRecord[key] = apply(targetRecord[key], value as DeepPartial<T>);
+      });
+      return targetRecord;
+    }
+
+    return cloneDeep(source);
+  };
+
+  return apply(result, overrides) as T;
 };
 
 const TestProvider = ({ initial, children }: { initial: PackageCreationState; children: ReactNode }) => {

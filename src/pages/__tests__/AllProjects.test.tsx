@@ -60,7 +60,6 @@ jest.mock("@/components/ui/page-header", () => ({
 }));
 
 jest.mock("@/components/ui/button", () => {
-  const React = require("react");
   const Button = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(
     ({ children, ...props }, ref) => (
       <button ref={ref} {...props}>
@@ -81,16 +80,40 @@ jest.mock("@/components/ProjectStatusBadge", () => ({
   ),
 }));
 
+type MockProject = {
+  id: string;
+  name: string;
+  description: string;
+  status_id: string;
+  lead: { id: string; name: string };
+  project_type: { id: string; name: string };
+  project_status: { id: string; name: string };
+  session_count: number;
+  services: Array<{ id: string; name: string }>;
+  completed_todo_count: number;
+  todo_count: number;
+  open_todos: unknown[];
+  created_at: string;
+  updated_at: string;
+  paid_amount: number;
+  remaining_amount: number;
+} & Record<string, unknown>;
+
+type AdvancedDataTableProps = {
+  data: MockProject[];
+  actions?: React.ReactNode;
+};
+
 jest.mock("@/components/KanbanSettingsSheet", () => ({
   KanbanSettingsSheet: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 jest.mock("@/components/data-table", () => ({
-  AdvancedDataTable: ({ data, actions }: any) => (
+  AdvancedDataTable: ({ data, actions }: AdvancedDataTableProps) => (
     <div data-testid="advanced-data-table">
       <div data-testid="data-table-actions">{actions}</div>
       <div>
-        {data.map((row: any) => (
+        {data.map((row) => (
           <div key={row.id}>{row.name}</div>
         ))}
       </div>
@@ -209,7 +232,7 @@ jest.mock("react-router-dom", () => {
   };
 });
 
-const createProject = (overrides: Partial<Record<string, any>> = {}) => ({
+const createProject = (overrides: Partial<MockProject> = {}): MockProject => ({
   id: "project-1",
   name: "Sample Project",
   description: "Description",
@@ -292,15 +315,17 @@ const setupDefaults = (overrides?: {
 };
 
 const renderAllProjects = async () => {
-  let renderResult: ReturnType<typeof render>;
+  let renderResult: ReturnType<typeof render> | null = null;
   await act(async () => {
     renderResult = render(<AllProjects />);
   });
   await act(async () => {
     await Promise.resolve();
   });
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  return renderResult!;
+  if (!renderResult) {
+    throw new Error("Failed to render AllProjects");
+  }
+  return renderResult;
 };
 
 beforeEach(() => {

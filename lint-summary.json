@@ -1,58 +1,6 @@
 {
-  "total": 661,
+  "total": 573,
   "summary": [
-    {
-      "filePath": "src/components/__tests__/BaseOnboardingModal.test.tsx",
-      "count": 7
-    },
-    {
-      "filePath": "supabase/functions/tests/send-reminder-notifications.test.ts",
-      "count": 6
-    },
-    {
-      "filePath": "supabase/functions/send-reminder-notifications/_templates/simplified-daily-summary-template.ts",
-      "count": 6
-    },
-    {
-      "filePath": "src/utils/performance.test.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/types/workflow.ts",
-      "count": 6
-    },
-    {
-      "filePath": "src/services/__tests__/LeadDetailService.test.ts",
-      "count": 6
-    },
-    {
-      "filePath": "src/pages/settings/__tests__/Notifications.test.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/pages/__tests__/Workflows.test.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/pages/__tests__/TemplateBuilder.test.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/hooks/useTemplateOperations.ts",
-      "count": 6
-    },
-    {
-      "filePath": "src/hooks/useLeadActions.ts",
-      "count": 6
-    },
-    {
-      "filePath": "src/hooks/__tests__/useCalendarPerformanceMonitor.test.ts",
-      "count": 6
-    },
-    {
-      "filePath": "src/features/package-creation/components/__tests__/PackageCreationWizard.test.tsx",
-      "count": 6
-    },
     {
       "filePath": "src/contexts/ProfileContext.tsx",
       "count": 6
@@ -91,10 +39,6 @@
     },
     {
       "filePath": "src/components/ProjectTodoListEnhanced.tsx",
-      "count": 6
-    },
-    {
-      "filePath": "src/components/ProjectPaymentsSection.tsx",
       "count": 6
     },
     {
@@ -279,10 +223,6 @@
     },
     {
       "filePath": "src/components/mobile/__tests__/BottomSheetMenu.test.tsx",
-      "count": 4
-    },
-    {
-      "filePath": "src/components/__tests__/ProjectActivitySection.test.tsx",
       "count": 4
     },
     {
@@ -999,6 +939,10 @@
     },
     {
       "filePath": "src/components/ProjectTodoList.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/components/ProjectActivitySection.tsx",
       "count": 1
     },
     {

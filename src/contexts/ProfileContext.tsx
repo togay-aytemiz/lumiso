@@ -1,32 +1,24 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from './AuthContext';
-
-interface Profile {
-  id?: string;
-  user_id?: string;
-  full_name?: string;
-  phone_number?: string;
-  profile_photo_url?: string;
-}
-
-interface ProfileContextType {
-  profile: Profile | null;
-  loading: boolean;
-  uploading: boolean;
-  updateProfile: (updates: Partial<Profile>) => Promise<{ success: boolean; error?: any }>;
-  uploadProfilePhoto: (file: File) => Promise<{ success: boolean; url?: string; error?: any }>;
-  deleteProfilePhoto: () => Promise<{ success: boolean; error?: any }>;
-  refreshProfile: () => Promise<void>;
-}
-
-const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
+import { ProfileContext } from './profile-context';
+import type { Profile } from './profile-context';
 
 // Global cache to prevent duplicate requests
 let profileCache: { profile: Profile | null; timestamp: number; userId: string } | null = null;
 let ongoingProfileFetch: Promise<Profile | null> | null = null;
 const PROFILE_CACHE_DURATION = 30000; // 30 seconds
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  return 'An unexpected error occurred';
+};
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -136,7 +128,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         userId: user.id 
       };
       return { success: true };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error updating profile:', error);
       return { success: false, error };
     }
@@ -195,11 +187,11 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       });
 
       return { success: true, url: publicUrl };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error uploading profile photo:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to upload profile photo",
+        description: getErrorMessage(error) || "Failed to upload profile photo",
         variant: "destructive",
       });
       return { success: false, error };
@@ -240,11 +232,11 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       }
 
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting profile photo:', error);
       toast({
         title: "Error", 
-        description: error.message || "Failed to delete profile photo",
+        description: getErrorMessage(error) || "Failed to delete profile photo",
         variant: "destructive",
       });
       return { success: false, error };
@@ -280,12 +272,4 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       {children}
     </ProfileContext.Provider>
   );
-}
-
-export function useProfile() {
-  const context = useContext(ProfileContext);
-  if (context === undefined) {
-    throw new Error('useProfile must be used within a ProfileProvider');
-  }
-  return context;
 }

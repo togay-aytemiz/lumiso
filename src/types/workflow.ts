@@ -5,7 +5,7 @@ export interface Workflow {
   name: string;
   description?: string | null;
   trigger_type: string;
-  trigger_conditions?: Record<string, any> | null;
+  trigger_conditions?: Record<string, unknown> | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -20,11 +20,11 @@ export interface WorkflowStep {
     template_id?: string;
     channels?: ('email' | 'sms' | 'whatsapp')[];
     delay_minutes?: number;
-    conditions?: Record<string, any>;
-    [key: string]: any;
+    conditions?: Record<string, unknown>;
+    [key: string]: unknown;
   };
   delay_minutes?: number;
-  conditions?: Record<string, any>;
+  conditions?: Record<string, unknown>;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -38,7 +38,7 @@ export interface WorkflowExecution {
   status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
   started_at?: string;
   completed_at?: string;
-  execution_log?: any[];
+  execution_log?: Array<Record<string, unknown>>;
   error_message?: string;
   created_at: string;
 }
@@ -49,7 +49,7 @@ export interface WorkflowFormData {
   name: string;
   description?: string;
   trigger_type: TriggerType;
-  trigger_conditions?: Record<string, any>;
+  trigger_conditions?: Record<string, unknown>;
   is_active: boolean;
   steps: Omit<WorkflowStep, 'id' | 'workflow_id' | 'created_at' | 'updated_at'>[];
 }

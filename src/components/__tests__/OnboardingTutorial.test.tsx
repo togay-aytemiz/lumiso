@@ -4,6 +4,23 @@ import { useTutorialExit } from "@/hooks/useTutorialExit";
 import { useTranslation } from "react-i18next";
 import React from "react";
 
+type ModalActionMock = {
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+};
+
+type BaseOnboardingModalProps = {
+  actions: ModalActionMock[];
+  children?: React.ReactNode;
+} & Record<string, unknown>;
+
+type FloatingCardProps = {
+  onNext: () => void;
+  onExit: () => void;
+  children?: React.ReactNode;
+} & Record<string, unknown>;
+
 jest.mock("react-i18next", () => ({
   useTranslation: jest.fn(),
 }));
@@ -20,14 +37,14 @@ jest.mock("@/hooks/useTutorialExit", () => ({
   useTutorialExit: jest.fn(),
 }));
 
-let latestModalProps: any;
+let latestModalProps: BaseOnboardingModalProps | undefined;
 jest.mock("../shared/BaseOnboardingModal", () => ({
   __esModule: true,
-  BaseOnboardingModal: (props: any) => {
+  BaseOnboardingModal: (props: BaseOnboardingModalProps) => {
     latestModalProps = props;
     return (
       <div data-testid="base-onboarding-modal">
-        {props.actions.map((action: any, index: number) => (
+        {props.actions.map((action, index: number) => (
           <button
             key={index}
             data-testid={`modal-action-${index}`}
@@ -43,10 +60,10 @@ jest.mock("../shared/BaseOnboardingModal", () => ({
   },
 }));
 
-let latestFloatingProps: any;
+let latestFloatingProps: FloatingCardProps | undefined;
 jest.mock("../shared/TutorialFloatingCard", () => ({
   __esModule: true,
-  TutorialFloatingCard: (props: any) => {
+  TutorialFloatingCard: (props: FloatingCardProps) => {
     latestFloatingProps = props;
     return (
       <div data-testid="floating-card">

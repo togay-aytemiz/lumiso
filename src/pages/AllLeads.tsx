@@ -235,7 +235,7 @@ const AllLeadsNew = () => {
     page,
     pageSize,
     sortField: sortFieldForServer,
-    sortDirection: sortState.direction as any,
+    sortDirection: (sortState.direction ?? "asc") as SortDirection,
     statusIds: selectedStatusIds,
     customFieldFilters: filtersState.customFields,
   });
@@ -610,8 +610,9 @@ const AllLeadsNew = () => {
   // All custom-field filtering is applied server-side; no client fallback
   const filteredLeads = useMemo(() => pageLeads, [pageLeads]);
 
+  const { columnId, direction } = sortState;
+
   const sortedLeads = useMemo(() => {
-    const { columnId, direction } = sortState;
     if (!columnId) {
       return filteredLeads;
     }
@@ -652,7 +653,7 @@ const AllLeadsNew = () => {
     }
 
     return sorted;
-  }, [filteredLeads, sortAccessors, sortState.columnId, sortState.direction]);
+  }, [columnId, direction, filteredLeads, sortAccessors]);
 
   useEffect(() => {
     const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -709,7 +710,7 @@ const AllLeadsNew = () => {
             typeof column.label === "string" ? column.label : String(column.label);
           let value: unknown = "";
           if (column.accessor) {
-            value = column.accessor(lead as any);
+            value = column.accessor(lead);
           } else if (typeof column.accessorKey === "string") {
             value = (lead as Record<string, unknown>)[column.accessorKey];
           }
@@ -749,7 +750,7 @@ const AllLeadsNew = () => {
     } finally {
       setExporting(false);
     }
-  }, [advancedColumns, exporting, fetchLeadsData, t, tCommon, totalCount]);
+  }, [exportColumns, exporting, fetchLeadsData, t, totalCount]);
 
   const exportActions = useMemo(
     () => (

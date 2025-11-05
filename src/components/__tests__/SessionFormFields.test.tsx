@@ -1,28 +1,41 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { SessionFormFields } from "../SessionFormFields";
+import type { ReactNode } from "react";
 
-jest.mock("@/components/ui/select", () => {
-  const React = require("react");
-  return {
-    Select: ({ value, onValueChange, children }: any) => (
-      <select
-        data-testid="session-select"
-        value={value}
-        onChange={(event) => onValueChange(event.target.value)}
-      >
-        {children}
-      </select>
-    ),
-    SelectTrigger: ({ children }: any) => <>{children}</>,
-    SelectValue: ({ placeholder }: any) => (
-      <option value="">{placeholder}</option>
-    ),
-    SelectContent: ({ children }: any) => <>{children}</>,
-    SelectItem: ({ value, children }: any) => (
-      <option value={value}>{children}</option>
-    ),
-  };
-});
+type MockSelectProps = {
+  value?: string;
+  onValueChange?: (value: string) => void;
+  children?: ReactNode;
+};
+
+type MockSelectValueProps = {
+  placeholder?: string;
+};
+
+type MockSelectItemProps = {
+  value: string;
+  children?: ReactNode;
+};
+
+jest.mock("@/components/ui/select", () => ({
+  Select: ({ value = "", onValueChange, children }: MockSelectProps) => (
+    <select
+      data-testid="session-select"
+      value={value}
+      onChange={(event) => onValueChange?.(event.target.value)}
+    >
+      {children}
+    </select>
+  ),
+  SelectTrigger: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  SelectValue: ({ placeholder }: MockSelectValueProps) => (
+    <option value="">{placeholder}</option>
+  ),
+  SelectContent: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  SelectItem: ({ value, children }: MockSelectItemProps) => (
+    <option value={value}>{children}</option>
+  ),
+}));
 
 jest.mock("@/hooks/useTypedTranslation", () => ({
   useFormsTranslation: () => ({

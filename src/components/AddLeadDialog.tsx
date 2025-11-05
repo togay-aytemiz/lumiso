@@ -13,7 +13,7 @@ import { leadSchema, sanitizeInput, sanitizeHtml } from "@/lib/validation";
 import { ZodError } from "zod";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 // Assignee components removed - single user organization
-import { useProfile } from "@/contexts/ProfileContext";
+import { useProfile } from "@/hooks/useProfile";
 // Permissions removed for single photographer mode
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";

@@ -145,7 +145,7 @@ Deno.test("skips assignment notification when notifications are disabled", withM
       assigner_name: "Assigner",
       organizationId: "org-1",
     },
-    supabase as unknown as any,
+    supabase as unknown as ReturnType<typeof createSupabaseStub>,
   );
 
   const body = await response.json();
@@ -184,7 +184,7 @@ Deno.test("sends assignment notification when enabled", withMockedResend(async (
       assigner_name: "Assigner",
       organizationId: "org-1",
     },
-    supabase as unknown as any,
+    supabase as unknown as ReturnType<typeof createSupabaseStub>,
   );
 
   const body = await response.json();
@@ -212,8 +212,8 @@ Deno.test("skips milestone notification when lifecycle is not milestone", withMo
       organizationId: "org-1",
       old_status: "Editing",
       new_status: "Editing",
-    } as any,
-    supabase as unknown as any,
+    },
+    supabase as unknown as ReturnType<typeof createSupabaseStub>,
   );
 
   const body = await response.json();
@@ -238,8 +238,8 @@ Deno.test("returns skip response for milestone notifications in single photograp
       organizationId: "org-1",
       old_status: "Editing",
       new_status: "Completed",
-    } as any,
-    supabase as unknown as any,
+    },
+    supabase as unknown as ReturnType<typeof createSupabaseStub>,
   );
 
   const body = await response.json();

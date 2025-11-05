@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronUp, ChevronDown, Trash2, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Upload, Smile } from "lucide-react";
-import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
+import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData, DividerBlockData, SocialLinksBlockData, HeaderBlockData, RawHTMLBlockData } from "@/types/templateBuilder";
 import { VariablePicker } from "./VariablePicker";
 import { EmojiPicker } from "./EmojiPicker";
 import { ImageUpload } from "./ImageUpload";
@@ -20,7 +20,7 @@ import { useTranslation } from "react-i18next";
 
 interface BlockEditorProps {
   block: TemplateBlock;
-  onUpdate: (data: any) => void;
+  onUpdate: (data: TemplateBlock["data"]) => void;
   onRemove: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
@@ -43,13 +43,13 @@ export function BlockEditor({ block, onUpdate, onRemove, onMoveUp, onMoveDown, c
       case "footer":
         return <FooterBlockEditor data={block.data as FooterBlockData} onUpdate={onUpdate} />;
       case "divider":
-        return <DividerBlockEditor data={block.data as any} onUpdate={onUpdate} />;
+        return <DividerBlockEditor data={block.data as DividerBlockData} onUpdate={(updated) => onUpdate(updated)} />;
       case "social-links":
-        return <SocialLinksBlockEditor data={block.data as any} onUpdate={onUpdate} />;
+        return <SocialLinksBlockEditor data={block.data as SocialLinksBlockData} onUpdate={(updated) => onUpdate(updated)} />;
       case "header":
-        return <HeaderBlockEditor data={block.data as any} onUpdate={onUpdate} />;
+        return <HeaderBlockEditor data={block.data as HeaderBlockData} onUpdate={(updated) => onUpdate(updated)} />;
       case "raw-html":
-        return <RawHTMLBlockEditor data={block.data as any} onUpdate={onUpdate} />;
+        return <RawHTMLBlockEditor data={block.data as RawHTMLBlockData} onUpdate={(updated) => onUpdate(updated)} />;
       default:
         return <div>{t("templateBuilder.blockEditor.unknownBlock")}</div>;
     }
@@ -84,7 +84,10 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { t } = useTranslation("pages");
   
-  const updateFormatting = (key: keyof TextBlockData["formatting"], value: any) => {
+  const updateFormatting = <K extends keyof TextBlockData["formatting"]>(
+    key: K,
+    value: TextBlockData["formatting"][K]
+  ) => {
     onUpdate({
       ...data,
       formatting: { ...data.formatting, [key]: value }
@@ -178,7 +181,12 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
         <div className="grid grid-cols-2 gap-2">
           <div>
             <Label className="text-xs">{t("templateBuilder.blockEditor.text.fontSize")}</Label>
-            <Select value={data.formatting.fontSize} onValueChange={(value) => updateFormatting("fontSize", value)}>
+            <Select
+              value={data.formatting.fontSize}
+              onValueChange={(value) =>
+                updateFormatting("fontSize", value as TextBlockData["formatting"]["fontSize"])
+              }
+            >
               <SelectTrigger className="h-8">
                 <SelectValue />
               </SelectTrigger>
@@ -193,7 +201,12 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
           
           <div>
             <Label className="text-xs">{t("templateBuilder.blockEditor.text.fontFamily")}</Label>
-            <Select value={data.formatting.fontFamily} onValueChange={(value) => updateFormatting("fontFamily", value)}>
+            <Select
+              value={data.formatting.fontFamily}
+              onValueChange={(value) =>
+                updateFormatting("fontFamily", value as TextBlockData["formatting"]["fontFamily"])
+              }
+            >
               <SelectTrigger className="h-8">
                 <SelectValue />
               </SelectTrigger>

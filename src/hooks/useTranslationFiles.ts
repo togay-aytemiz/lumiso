@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
 
-type TranslationRecord = Record<string, Record<string, any>>;
+type TranslationNode = string | number | boolean | null | TranslationNode[] | { [key: string]: TranslationNode };
+type TranslationJSON = { [key: string]: TranslationNode };
+type TranslationRecord = Record<string, Record<string, TranslationJSON>>;
 
 const DOWNLOAD_THROTTLE_MS = 5500;
 const recentDownloads = new Map<string, number>();
@@ -65,7 +67,7 @@ const triggerDownload = (blob: Blob, fileName: string) => {
   }
 };
 
-const translationModules = import.meta.glob<{ default: any }>(
+const translationModules = import.meta.glob<{ default: TranslationJSON }>(
   '@/i18n/resources/*/*.json',
   { eager: true }
 );
@@ -80,7 +82,7 @@ const buildTranslations = () => {
     }
 
     const [, language, namespace] = match;
-    const data = 'default' in module ? module.default : module;
+    const data = module.default;
 
     if (!result[language]) {
       result[language] = {};
@@ -159,7 +161,7 @@ export const useTranslationFiles = () => {
       }
 
       // Create a zip-like structure with multiple files
-      const files: { [key: string]: any } = {};
+      const files: Record<string, TranslationJSON> = {};
       Object.entries(languageData).forEach(([namespace, data]) => {
         files[`${namespace}.json`] = data;
       });
@@ -354,16 +356,17 @@ export const useTranslationFiles = () => {
     return stats;
   };
 
-  const countKeys = (obj: any): number => {
-    let count = 0;
-    for (const key in obj) {
-      if (typeof obj[key] === 'object' && obj[key] !== null) {
-        count += countKeys(obj[key]);
-      } else {
-        count++;
-      }
+  const countKeys = (node: TranslationNode): number => {
+    if (node === null) {
+      return 1;
     }
-    return count;
+    if (Array.isArray(node)) {
+      return node.reduce((sum, value) => sum + countKeys(value), 0);
+    }
+    if (typeof node === 'object') {
+      return Object.values(node).reduce((sum, value) => sum + countKeys(value), 0);
+    }
+    return 1;
   };
 
   return {

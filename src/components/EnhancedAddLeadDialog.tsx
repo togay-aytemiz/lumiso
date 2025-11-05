@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useI18nToast } from "@/lib/toastHelpers";
 // Assignee components removed - single user organization
-import { useProfile } from "@/contexts/ProfileContext";
+import { useProfile } from "@/hooks/useProfile";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 import { useNavigate } from "react-router-dom";

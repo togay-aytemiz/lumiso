@@ -171,12 +171,13 @@ const pageSize = PAGE_SIZE;
         return { start: startOfDay(startOfQuarter(now)), end: endToday };
       case 'yearToDate':
         return { start: startOfDay(startOfYear(now)), end: endToday };
-      case 'lastMonth':
+      case 'lastMonth': {
         const lastMonth = subMonths(now, 1);
         return {
           start: startOfDay(startOfMonth(lastMonth)),
           end: endOfDay(endOfMonth(lastMonth)),
         };
+      }
       case 'allTime':
       case 'custom':
         if (customDateRange?.from) {
@@ -330,8 +331,10 @@ const pageSize = PAGE_SIZE;
               : payment.type === "extra"
                 ? t("payments.type.extra")
                 : t("payments.type.manual");
-          default:
-            return (payment as any)[columnId] ?? "";
+          default: {
+            const fallbackValue = (payment as Record<string, unknown>)[columnId];
+            return fallbackValue ?? "";
+          }
         }
       };
 
@@ -340,11 +343,15 @@ const pageSize = PAGE_SIZE;
       );
 
       const rows = exportPayments.map((payment) => {
-        const obj: Record<string, any> = {};
+        const row: Record<string, string | number | boolean | null> = {};
         visibleOrderedColumns.forEach((col, index) => {
-          obj[columnLabels[index]] = valueForColumn(payment, col.id);
+          row[columnLabels[index]] = valueForColumn(payment, col.id) as
+            | string
+            | number
+            | boolean
+            | null;
         });
-        return obj;
+        return row;
       });
 
       const worksheet = XLSXUtils.json_to_sheet(rows);
@@ -358,10 +365,13 @@ const pageSize = PAGE_SIZE;
         title: t("payments.export.successTitle"),
         description: t("payments.export.successDescription"),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t("payments.export.errorTitle"),
-        description: error.message ?? t("payments.export.errorDescription"),
+        description:
+          error instanceof Error
+            ? error.message
+            : t("payments.export.errorDescription"),
         variant: "destructive",
       });
     } finally {

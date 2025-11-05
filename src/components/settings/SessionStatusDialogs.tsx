@@ -16,17 +16,38 @@ interface AddSessionStatusDialogProps {
   onStatusAdded: () => void;
 }
 
+type SessionLifecycle = "active" | "completed" | "cancelled";
+
+type SessionStatusRecord = {
+  id: string;
+  name: string;
+  color: string;
+  lifecycle?: SessionLifecycle | null;
+  sort_order?: number | null;
+  is_system_required?: boolean | null;
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "An unexpected error occurred";
+};
+
 export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: AddSessionStatusDialogProps) {
   const { t } = useTranslation('forms');
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{ name: string; color: string; lifecycle: SessionLifecycle }>({
     name: "",
     color: "#3B82F6",
-    lifecycle: "active" as "active" | "completed" | "cancelled", // No "archived" for sessions
+    lifecycle: "active",
   });
 
   // Smart default based on name (no "archived" for sessions)
-  const getSmartLifecycleDefault = (name: string): "active" | "completed" | "cancelled" => {
+  const getSmartLifecycleDefault = (name: string): SessionLifecycle => {
     const lowerName = name.toLowerCase();
     if (lowerName.includes("cancel")) return "cancelled";
     if (lowerName.includes("deliver") || lowerName.includes("complete")) return "completed";
@@ -41,7 +62,7 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
         setFormData(prev => ({ ...prev, lifecycle: suggestedLifecycle }));
       }
     }
-  }, [formData.name]);
+  }, [formData.name, formData.lifecycle]);
 
   const handleSubmit = async () => {
     if (!status) return;
@@ -97,10 +118,10 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
       setFormData({ name: "", color: "#3B82F6", lifecycle: "active" });
       onOpenChange(false);
       onStatusAdded();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t('common:errors.save'),
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     } finally {
@@ -230,7 +251,7 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
 }
 
 interface EditSessionStatusDialogProps {
-  status: any;
+  status: SessionStatusRecord | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStatusUpdated: () => void;
@@ -239,10 +260,10 @@ interface EditSessionStatusDialogProps {
 export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUpdated }: EditSessionStatusDialogProps) {
   const { t } = useTranslation('forms');
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{ name: string; color: string; lifecycle: SessionLifecycle }>({
     name: "",
     color: "#3B82F6",
-    lifecycle: "active" as "active" | "completed" | "cancelled", // No "archived" for sessions
+    lifecycle: "active",
   });
 
   useEffect(() => {
@@ -286,10 +307,10 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
 
       onOpenChange(false);
       onStatusUpdated();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t('common:errors.save'),
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     } finally {
@@ -353,10 +374,10 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
 
       onOpenChange(false);
       onStatusUpdated();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t('common:errors.delete'),
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     } finally {

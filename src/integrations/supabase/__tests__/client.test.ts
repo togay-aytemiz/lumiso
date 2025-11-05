@@ -7,9 +7,12 @@ type LoadOptions = {
   onAuthStateChange?: jest.Mock;
 };
 
-const path = require("path");
-const fs = require("fs");
-const { transformSync } = require("@swc/core");
+import * as path from "path";
+import * as fs from "fs";
+import { transformSync } from "@swc/core";
+import { createRequire } from "module";
+
+const requireModule = createRequire(__filename);
 
 const CLIENT_PATH = path.resolve(__dirname, "..", "client.ts");
 
@@ -59,7 +62,7 @@ const loadClient = async (options: LoadOptions = {}) => {
     if (id === "./types") {
       return {};
     }
-    return require(id);
+    return requireModule(id);
   };
 
   const wrapped = new Function("require", "module", "exports", "__filename", "__dirname", code);

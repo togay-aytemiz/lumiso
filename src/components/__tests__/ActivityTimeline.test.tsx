@@ -8,8 +8,38 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
   useFormsTranslation: jest.fn(),
 }));
 
+type ActivityItem = {
+  id: string;
+  type: "reminder" | "note";
+  content: string;
+  reminder_date?: string;
+  reminder_time?: string;
+  created_at: string;
+  completed?: boolean;
+  lead_id: string;
+  user_id: string;
+  project_id?: string;
+};
+
+type ReminderCardProps = {
+  activity: ActivityItem;
+  projectName?: string;
+  leadName: string;
+  onToggleCompletion: (id: string, completed: boolean) => void;
+  hideStatusBadge?: boolean;
+  showCompletedBadge?: boolean;
+};
+
+type ActivityTimelineItemProps = {
+  id: string;
+  content: string;
+  projectName?: string;
+  onToggleCompletion?: (id: string, completed: boolean) => void;
+  completed?: boolean;
+};
+
 const mockReminderCard = jest.fn(
-  ({ activity, projectName, onToggleCompletion }: any) => (
+  ({ activity, projectName, onToggleCompletion }: ReminderCardProps) => (
     <div data-testid={`reminder-${activity.id}`}>
       <span>{activity.content}</span>
       {projectName && (
@@ -26,7 +56,7 @@ const mockReminderCard = jest.fn(
 );
 
 const mockActivityTimelineItem = jest.fn(
-  ({ id, content, projectName, onToggleCompletion, completed }: any) => (
+  ({ id, content, projectName, onToggleCompletion, completed }: ActivityTimelineItemProps) => (
     <div data-testid={`timeline-item-${id}`}>
       <span>{content}</span>
       {projectName && (
@@ -46,12 +76,12 @@ const mockActivityTimelineItem = jest.fn(
 
 jest.mock("@/components/ReminderCard", () => ({
   __esModule: true,
-  default: (props: any) => mockReminderCard(props),
+  default: (props: ReminderCardProps) => mockReminderCard(props),
 }));
 
 jest.mock("@/components/shared/ActivityTimelineItem", () => ({
   __esModule: true,
-  ActivityTimelineItem: (props: any) => mockActivityTimelineItem(props),
+  ActivityTimelineItem: (props: ActivityTimelineItemProps) => mockActivityTimelineItem(props),
 }));
 
 describe("ActivityTimeline", () => {
@@ -81,7 +111,7 @@ describe("ActivityTimeline", () => {
   it("renders reminders and notes with project context and forwards completion toggles", async () => {
     const user = userEvent.setup();
     const toggleCompletion = jest.fn();
-    const activities = [
+    const activities: ActivityItem[] = [
       {
         id: "reminder-1",
         type: "reminder",
@@ -108,7 +138,7 @@ describe("ActivityTimeline", () => {
 
     render(
       <ActivityTimeline
-        activities={activities as any}
+        activities={activities}
         projects={[
           { id: "project-1", name: "Project Phoenix" },
           { id: "project-2", name: "Project Atlas" },

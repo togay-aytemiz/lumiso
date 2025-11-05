@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import AdminLocalization from "../Localization";
 import { useTranslationFiles } from "@/hooks/useTranslationFiles";
 import { mockSupabaseClient } from "@/utils/testUtils";
+import type { ReactNode } from "react";
 
 jest.mock("@/integrations/supabase/client", () => ({
   supabase: mockSupabaseClient,
@@ -43,7 +44,6 @@ jest.mock("@/components/ui/badge", () => ({
 }));
 
 jest.mock("@/components/ui/button", () => {
-  const React = require("react");
   const Button = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(
     ({ children, ...props }, ref) => (
       <button ref={ref} {...props}>
@@ -57,6 +57,17 @@ jest.mock("@/components/ui/button", () => {
     Button,
   };
 });
+
+type SegmentedControlOption = {
+  label: string;
+  value: string;
+};
+
+type SegmentedControlProps = {
+  value: string;
+  onValueChange: (value: string) => void;
+  options: SegmentedControlOption[];
+};
 
 jest.mock("@/components/ui/dialog", () => ({
   Dialog: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -75,9 +86,9 @@ jest.mock("@/components/ui/switch", () => ({
 }));
 
 jest.mock("@/components/ui/segmented-control", () => ({
-  SegmentedControl: ({ value, onValueChange, options }: any) => (
+  SegmentedControl: ({ value, onValueChange, options }: SegmentedControlProps) => (
     <div>
-      {options.map((option: any) => (
+      {options.map((option) => (
         <button
           key={option.value}
           data-testid={`segment-${option.value}`}
@@ -114,8 +125,19 @@ jest.mock("lucide-react", () => ({
   Package: () => <span>package</span>,
 }));
 
+type SupabaseQueryChain = {
+  select: jest.Mock<SupabaseQueryChain, [string?]>;
+  order: jest.Mock<Promise<{ data: unknown[] }> | SupabaseQueryChain, [unknown?]>;
+  eq: jest.Mock<SupabaseQueryChain, [string, unknown]>;
+  update: jest.Mock;
+  maybeSingle: jest.Mock;
+  insert: jest.Mock;
+};
+
+type SupabaseFromMock = jest.Mock<SupabaseQueryChain, [string]>;
+
 const supabaseMock = mockSupabaseClient as unknown as {
-  from: jest.Mock;
+  from: SupabaseFromMock;
 };
 
 const mockUseTranslationFiles = useTranslationFiles as jest.MockedFunction<typeof useTranslationFiles>;
@@ -139,15 +161,19 @@ const translationsData = [
   { id: "t1", key_id: "key1", language_code: "en", value: "Welcome" },
 ];
 
-const createQueryChain = (table: string) => {
-  const chain: any = {
-    select: jest.fn().mockReturnThis(),
-    order: jest.fn(),
-    eq: jest.fn().mockReturnThis(),
+const createQueryChain = (table: string): SupabaseQueryChain => {
+  const chain: SupabaseQueryChain = {
+    select: jest.fn<SupabaseQueryChain, [string?]>(),
+    order: jest.fn<Promise<{ data: unknown[] }> | SupabaseQueryChain, [unknown?]>(),
+    eq: jest.fn<SupabaseQueryChain, [string, unknown]>(),
     update: jest.fn(),
     maybeSingle: jest.fn(),
     insert: jest.fn(),
   };
+
+  chain.select.mockReturnValue(chain);
+  chain.order.mockReturnValue(chain);
+  chain.eq.mockReturnValue(chain);
 
   if (table === "languages") {
     chain.order.mockResolvedValue({ data: languagesData });
@@ -212,11 +238,15 @@ describe("Admin Localization page", () => {
     await screen.findAllByText("English");
 
     const toggleButtons = screen.getAllByTestId("language-toggle");
-    fireEvent.click(toggleButtons[1]);
+   fireEvent.click(toggleButtons[1]);
 
-    const languagesQuery = (supabaseMock.from as jest.Mock).mock.results
+    const fromMock = supabaseMock.from;
+    const languagesQuery = fromMock.mock.results
       .map((result) => result.value)
-      .find((value: any) => value?.update?.mock?.calls?.length);
+      .find(
+        (value): value is SupabaseQueryChain =>
+          Boolean(value?.update.mock.calls.length)
+      );
 
     await waitFor(() => {
       expect(languagesQuery?.update).toHaveBeenCalledWith({ is_active: true });

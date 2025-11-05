@@ -33,9 +33,16 @@ type SupabaseBuilder = {
   select: jest.Mock<SupabaseBuilder, [string?]>;
   eq: jest.Mock<SupabaseBuilder, [string, unknown]>;
   limit: jest.Mock<SupabaseBuilder, [number]>;
-  maybeSingle: jest.Mock<Promise<any>, []>;
-  single: jest.Mock<Promise<any>, []>;
+  maybeSingle: jest.Mock<Promise<SupabaseQueryResult>, []>;
+  single: jest.Mock<Promise<SupabaseQueryResult>, []>;
   order: jest.Mock<SupabaseBuilder, [string, { ascending?: boolean }?]>;
+};
+
+type SupabaseQueryResult<T = unknown> = {
+  data: T;
+  error: unknown;
+  status: number;
+  statusText: string;
 };
 
 function createBuilder() {
@@ -45,17 +52,24 @@ function createBuilder() {
   builder.eq = jest.fn(() => chain());
   builder.limit = jest.fn(() => chain());
   builder.order = jest.fn(() => chain());
-  builder.maybeSingle = jest.fn(() =>
-    Promise.resolve({ data: null, error: null, status: 200, statusText: "OK" })
-  );
-  builder.single = jest.fn(() =>
-    Promise.resolve({ data: null, error: null, status: 200, statusText: "OK" })
-  );
+  const defaultResponse: SupabaseQueryResult = {
+    data: null,
+    error: null,
+    status: 200,
+    statusText: "OK",
+  };
+  builder.maybeSingle = jest.fn(() => Promise.resolve(defaultResponse));
+  builder.single = jest.fn(() => Promise.resolve(defaultResponse));
   return builder as SupabaseBuilder;
 }
 
 function createSupabaseStub() {
-  let sessionResponse = { data: null, error: null, status: 200, statusText: "OK" };
+  let sessionResponse: SupabaseQueryResult = {
+    data: null,
+    error: null,
+    status: 200,
+    statusText: "OK",
+  };
   const sessionBuilder = createBuilder();
   sessionBuilder.maybeSingle = jest.fn(() => Promise.resolve(sessionResponse));
   sessionBuilder.single = jest.fn(() => Promise.resolve(sessionResponse));
@@ -83,7 +97,7 @@ function createSupabaseStub() {
 
   return {
     supabase,
-    setSessionResponse: (response: any) => {
+    setSessionResponse: (response: Partial<SupabaseQueryResult>) => {
       sessionResponse = {
         status: 200,
         statusText: "OK",
@@ -92,7 +106,12 @@ function createSupabaseStub() {
       };
     },
     reset: () => {
-      sessionResponse = { data: null, error: null, status: 200, statusText: "OK" };
+      sessionResponse = {
+        data: null,
+        error: null,
+        status: 200,
+        statusText: "OK",
+      };
       sessionBuilder.select.mockClear();
       sessionBuilder.eq.mockClear();
       sessionBuilder.limit.mockClear();
@@ -124,16 +143,12 @@ jest.mock("@/integrations/supabase/client", () => {
   };
 });
 
-jest.mock("../SessionPlanningWizard", () => {
-  const React = require("react");
-  const { useSessionPlanningContext } = require("../../hooks/useSessionPlanningContext");
-  return {
-    SessionPlanningWizard: jest.fn(() => {
-      const { state } = useSessionPlanningContext();
-      return <div data-testid="wizard-step">{state.meta.currentStep}</div>;
-    }),
-  };
-});
+jest.mock("../SessionPlanningWizard", () => ({
+  SessionPlanningWizard: jest.fn(() => {
+    const { state } = useSessionPlanningContext();
+    return <div data-testid="wizard-step">{state.meta.currentStep}</div>;
+  }),
+}));
 
 const getSupabaseStub = () =>
   (jest.requireMock("@/integrations/supabase/client") as unknown as {

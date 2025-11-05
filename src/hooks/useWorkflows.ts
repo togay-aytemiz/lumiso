@@ -1,15 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Workflow, WorkflowStep, WorkflowFormData } from '@/types/workflow';
 import { getUserOrganizationId } from '@/lib/organizationUtils';
 
+type NotificationChannel = NonNullable<WorkflowStep['action_config']['channels']>[number];
+
+type WorkflowWithSteps = Workflow & {
+  workflow_steps?: Array<Pick<WorkflowStep, 'action_config' | 'delay_minutes'>>;
+};
+
+export type WorkflowWithMetadata = WorkflowWithSteps & {
+  template_id: string;
+  channels: NotificationChannel[];
+  reminder_delay_minutes: number;
+  email_enabled: boolean;
+  whatsapp_enabled: boolean;
+  sms_enabled: boolean;
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  return 'An unexpected error occurred';
+};
+
 export function useWorkflows() {
-  const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  const [workflows, setWorkflows] = useState<WorkflowWithMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchWorkflows = async () => {
+  const fetchWorkflows = useCallback(async () => {
     try {
       setLoading(true);
       const organizationId = await getUserOrganizationId();
@@ -34,22 +59,24 @@ export function useWorkflows() {
       if (error) throw error;
       
       // Transform workflows to include template data from steps
-      const transformedWorkflows = (workflowsData || []).map((workflow: any) => {
-        const firstStep = workflow.workflow_steps?.[0];
-        const actionConfig = firstStep?.action_config || {};
-        
+      const transformedWorkflows: WorkflowWithMetadata[] = (workflowsData || []).map((workflow) => {
+        const workflowWithSteps = workflow as WorkflowWithSteps;
+        const firstStep = workflowWithSteps.workflow_steps?.[0];
+        const actionConfig = firstStep?.action_config ?? {};
+        const channels = actionConfig.channels ?? ['email'];
+
         return {
-          ...workflow,
-          template_id: actionConfig.template_id || '',
-          channels: actionConfig.channels || ['email'],
-          reminder_delay_minutes: firstStep?.delay_minutes || 0,
-          email_enabled: actionConfig.channels?.includes('email') ?? true,
-          whatsapp_enabled: actionConfig.channels?.includes('whatsapp') ?? true,
-          sms_enabled: actionConfig.channels?.includes('sms') ?? true
+          ...workflowWithSteps,
+          template_id: actionConfig.template_id ?? '',
+          channels,
+          reminder_delay_minutes: firstStep?.delay_minutes ?? 0,
+          email_enabled: channels.includes('email'),
+          whatsapp_enabled: channels.includes('whatsapp'),
+          sms_enabled: channels.includes('sms')
         };
       });
       
-      setWorkflows(transformedWorkflows as Workflow[]);
+      setWorkflows(transformedWorkflows);
     } catch (error) {
       console.error('Error fetching workflows:', error);
       toast({
@@ -60,7 +87,7 @@ export function useWorkflows() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const createWorkflow = async (formData: WorkflowFormData): Promise<void> => {
     try {
@@ -135,11 +162,11 @@ export function useWorkflows() {
       });
 
       await fetchWorkflows();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating workflow:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create workflow',
+        description: getErrorMessage(error) || 'Failed to create workflow',
         variant: 'destructive',
       });
       throw error;
@@ -173,7 +200,7 @@ export function useWorkflows() {
       }
 
       // Update the main workflow
-      const updateData: any = { updated_at: new Date().toISOString() };
+      const updateData: Partial<Workflow> = { updated_at: new Date().toISOString() };
       if (updates.name !== undefined) updateData.name = updates.name.trim();
       if (updates.description !== undefined) updateData.description = updates.description?.trim() || null;
       if (updates.trigger_type !== undefined) updateData.trigger_type = updates.trigger_type;
@@ -223,11 +250,11 @@ export function useWorkflows() {
       });
 
       await fetchWorkflows();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating workflow:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update workflow',
+        description: getErrorMessage(error) || 'Failed to update workflow',
         variant: 'destructive',
       });
     }
@@ -248,11 +275,11 @@ export function useWorkflows() {
       });
 
       await fetchWorkflows();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error deleting workflow:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete workflow',
+        description: getErrorMessage(error) || 'Failed to delete workflow',
         variant: 'destructive',
       });
     }
@@ -273,19 +300,19 @@ export function useWorkflows() {
       });
 
       await fetchWorkflows();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error toggling workflow:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update workflow status',
+        description: getErrorMessage(error) || 'Failed to update workflow status',
         variant: 'destructive',
       });
     }
   };
 
   useEffect(() => {
-    fetchWorkflows();
-  }, []);
+    void fetchWorkflows();
+  }, [fetchWorkflows]);
 
   return {
     workflows,

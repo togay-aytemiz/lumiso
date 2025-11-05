@@ -5,8 +5,6 @@ import { getRelativeDate, isOverdueSession } from "@/lib/dateUtils";
 import { getDisplaySessionName } from "@/lib/sessionUtils";
 import { useFormsTranslation, useMessagesTranslation } from "@/hooks/useTypedTranslation";
 
-type Mocked<T> = T extends (...args: infer P) => infer R ? jest.Mock<R, P> : never;
-
 jest.mock("@/hooks/useOrganizationSettings", () => ({
   useOrganizationSettings: jest.fn(),
 }));
@@ -36,12 +34,12 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
 }));
 
 describe("DeadSimpleSessionBanner", () => {
-  const organizationSettingsMock = useOrganizationSettings as unknown as jest.Mock;
-  const getRelativeDateMock: Mocked<typeof getRelativeDate> = getRelativeDate as any;
-  const isOverdueSessionMock: Mocked<typeof isOverdueSession> = isOverdueSession as any;
-  const getDisplaySessionNameMock: Mocked<typeof getDisplaySessionName> = getDisplaySessionName as any;
-  const useFormsTranslationMock: jest.MockedFunction<typeof useFormsTranslation> = useFormsTranslation as any;
-  const useMessagesTranslationMock: jest.MockedFunction<typeof useMessagesTranslation> = useMessagesTranslation as any;
+  const organizationSettingsMock = useOrganizationSettings as jest.MockedFunction<typeof useOrganizationSettings>;
+  const getRelativeDateMock = getRelativeDate as jest.MockedFunction<typeof getRelativeDate>;
+  const isOverdueSessionMock = isOverdueSession as jest.MockedFunction<typeof isOverdueSession>;
+  const getDisplaySessionNameMock = getDisplaySessionName as jest.MockedFunction<typeof getDisplaySessionName>;
+  const useFormsTranslationMock = useFormsTranslation as jest.MockedFunction<typeof useFormsTranslation>;
+  const useMessagesTranslationMock = useMessagesTranslation as jest.MockedFunction<typeof useMessagesTranslation>;
 
   const translations = {
     "relativeDates.today": "Today",

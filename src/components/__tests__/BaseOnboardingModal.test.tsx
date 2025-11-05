@@ -1,28 +1,43 @@
+import type { ReactNode } from "react";
 import { fireEvent, render, screen } from "@/utils/testUtils";
 import { BaseOnboardingModal, OnboardingAction } from "../shared/BaseOnboardingModal";
 import React from "react";
 
 const longPressSpy = jest.fn();
 
+type DialogProps = {
+  children: ReactNode;
+};
+
 jest.mock("@/components/ui/dialog", () => ({
   __esModule: true,
-  Dialog: ({ children }: any) => <div data-testid="dialog-root">{children}</div>,
-  DialogContent: ({ children }: any) => <div data-testid="dialog-content">{children}</div>,
-  DialogHeader: ({ children }: any) => <div data-testid="dialog-header">{children}</div>,
-  DialogTitle: ({ children }: any) => <h2>{children}</h2>,
-  DialogDescription: ({ children }: any) => <p>{children}</p>,
+  Dialog: ({ children }: DialogProps) => <div data-testid="dialog-root">{children}</div>,
+  DialogContent: ({ children }: DialogProps) => <div data-testid="dialog-content">{children}</div>,
+  DialogHeader: ({ children }: DialogProps) => <div data-testid="dialog-header">{children}</div>,
+  DialogTitle: ({ children }: DialogProps) => <h2>{children}</h2>,
+  DialogDescription: ({ children }: DialogProps) => <p>{children}</p>,
 }));
 
 jest.mock("@/components/ui/button", () => ({
-  Button: ({ children, onClick, disabled, className }: any) => (
+  Button: ({ children, onClick, disabled, className }: { children: ReactNode; onClick?: () => void; disabled?: boolean; className?: string }) => (
     <button type="button" onClick={onClick} disabled={disabled} className={className}>
       {children}
     </button>
   ),
 }));
 
+type LongPressButtonProps = {
+  onConfirm?: () => void;
+  label: string;
+  duration?: number;
+  holdingLabel?: string;
+  completeLabel?: string;
+  disabled?: boolean;
+  className?: string;
+};
+
 jest.mock("@/components/ui/long-press-button", () => ({
-  LongPressButton: (props: any) => {
+  LongPressButton: (props: LongPressButtonProps) => {
     longPressSpy(props);
     return (
       <button

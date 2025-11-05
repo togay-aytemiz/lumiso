@@ -48,7 +48,6 @@ jest.mock("@/components/ui/page-header", () => ({
 }));
 
 jest.mock("@/components/ui/button", () => {
-  const React = require("react");
   const Button = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(
     ({ children, ...props }, ref) => (
       <button ref={ref} {...props}>
@@ -69,6 +68,24 @@ jest.mock("@/components/ui/badge", () => ({
   ),
 }));
 
+type AdvancedTableColumnMock<T> = {
+  id: string;
+  render?: (row: T) => React.ReactNode;
+};
+
+type AdvancedDataTableProps<T> = {
+  data: T[];
+  columns?: AdvancedTableColumnMock<T>[];
+  actions?: React.ReactNode;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
+  emptyState?: React.ReactNode;
+  onRowClick?: (row: T) => void;
+  rowActions?: (row: T) => React.ReactNode;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+};
+
 jest.mock("@/components/data-table", () => ({
   AdvancedDataTable: ({
     data,
@@ -81,7 +98,7 @@ jest.mock("@/components/data-table", () => ({
     rowActions,
     onLoadMore,
     hasMore,
-  }: any) => (
+  }: AdvancedDataTableProps<Template>) => (
     <div data-testid="advanced-data-table">
       <div data-testid="table-actions">{actions}</div>
       <input
@@ -90,13 +107,13 @@ jest.mock("@/components/data-table", () => ({
         onChange={(event) => onSearchChange?.(event.target.value)}
       />
       {data.length ? (
-        data.map((row: any) => (
+        data.map((row) => (
           <div
             key={row.id}
             data-testid={`template-row-${row.id}`}
             onClick={() => onRowClick?.(row)}
           >
-            {columns?.map((column: any) => (
+            {columns?.map((column) => (
               <div key={column.id} data-testid={`template-${row.id}-${column.id}`}>
                 {column.render?.(row)}
               </div>

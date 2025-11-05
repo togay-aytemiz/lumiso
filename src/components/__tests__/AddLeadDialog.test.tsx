@@ -1,4 +1,8 @@
-import type { ComponentProps } from "react";
+import type {
+  ComponentProps,
+  ReactNode,
+  SelectHTMLAttributes,
+} from "react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import AddLeadDialog from "../AddLeadDialog";
 import { mockSupabaseClient } from "@/utils/testUtils";
@@ -9,6 +13,42 @@ import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { useProfile } from "@/contexts/ProfileContext";
 import { leadSchema, sanitizeHtml, sanitizeInput } from "@/lib/validation";
 import { ZodError } from "zod";
+import type { Database } from "@/integrations/supabase/types";
+
+interface FooterActionMock {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}
+
+interface AppSheetModalProps {
+  title: string;
+  dirty?: boolean;
+  children?: ReactNode;
+  footerActions?: FooterActionMock[];
+  onDirtyClose?: () => void;
+}
+
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  onValueChange?: (next: string) => void;
+  children?: ReactNode;
+}
+
+interface SelectItemProps {
+  value: string;
+  children?: ReactNode;
+}
+
+interface NavigationGuardDialogProps {
+  open: boolean;
+  message?: string;
+  onDiscard: () => void;
+  onStay: () => void;
+  onSaveAndExit?: () => void;
+}
+
+type LeadStatusRow = Database["public"]["Tables"]["lead_statuses"]["Row"];
+type LeadInsertPayload = Database["public"]["Tables"]["leads"]["Insert"];
 
 jest.mock("@/integrations/supabase/client", () => ({
   supabase: mockSupabaseClient,
@@ -41,10 +81,10 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
     children,
     footerActions = [],
     onDirtyClose,
-  }: any) => (
+  }: AppSheetModalProps) => (
     <div data-testid="app-sheet-modal" data-title={title} data-dirty={dirty ? "dirty" : "clean"}>
       {children}
-      {footerActions.map((action: any, index: number) => (
+      {footerActions.map((action, index) => (
         <button
           key={index}
           data-testid={`footer-action-${index}`}
@@ -62,21 +102,26 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
 }));
 
 jest.mock("@/components/ui/select", () => ({
-  Select: ({ value, onValueChange, children }: any) => (
-    <select data-testid="status-select" value={value} onChange={(event) => onValueChange(event.target.value)}>
+  Select: ({ value, onValueChange, children, ...rest }: SelectProps) => (
+    <select
+      data-testid="status-select"
+      value={value}
+      onChange={(event) => onValueChange?.(event.target.value)}
+      {...rest}
+    >
       {children}
     </select>
   ),
   SelectTrigger: () => null,
   SelectValue: () => null,
-  SelectContent: ({ children }: any) => <>{children}</>,
-  SelectItem: ({ value, children }: any) => (
+  SelectContent: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  SelectItem: ({ value, children }: SelectItemProps) => (
     <option value={value}>{typeof children === "string" ? children : value}</option>
   ),
 }));
 
 jest.mock("../settings/NavigationGuardDialog", () => ({
-  NavigationGuardDialog: ({ open, message, onDiscard, onStay, onSaveAndExit }: any) =>
+  NavigationGuardDialog: ({ open, message, onDiscard, onStay, onSaveAndExit }: NavigationGuardDialogProps) =>
     open ? (
       <div data-testid="navigation-guard">
         <p>{message}</p>
@@ -104,60 +149,128 @@ jest.mock("@/lib/validation", () => {
   };
 });
 
-const toastMock = {
+type I18nToastMock = ReturnType<typeof useI18nToast>;
+
+const toastMock: I18nToastMock = {
   success: jest.fn(),
   error: jest.fn(),
+  warning: jest.fn(),
+  info: jest.fn(),
 };
 
 const mockHandleModalClose = jest.fn();
 const mockHandleDiscard = jest.fn();
 const mockHandleStay = jest.fn();
-const mockHandleSaveAndExit = jest.fn();
+const mockHandleSaveAndExit = jest.fn(async () => {});
 
-const mockUseModalNavigation = useModalNavigation as jest.Mock;
-const mockUseI18nToast = useI18nToast as jest.Mock;
-const mockGetUserOrganizationId = getUserOrganizationId as jest.Mock;
-const mockUseOrganizationQuickSettings = useOrganizationQuickSettings as jest.Mock;
-const mockUseProfile = useProfile as jest.Mock;
+const mockUseModalNavigation = useModalNavigation as jest.MockedFunction<typeof useModalNavigation>;
+const mockUseI18nToast = useI18nToast as jest.MockedFunction<typeof useI18nToast>;
+const mockGetUserOrganizationId = getUserOrganizationId as jest.MockedFunction<typeof getUserOrganizationId>;
+const mockUseOrganizationQuickSettings = useOrganizationQuickSettings as jest.MockedFunction<typeof useOrganizationQuickSettings>;
+const mockUseProfile = useProfile as jest.MockedFunction<typeof useProfile>;
 
-const mockLeadSchemaParseAsync = (leadSchema as unknown as { parseAsync: jest.Mock }).parseAsync;
-const mockSanitizeInput = sanitizeInput as jest.Mock;
-const mockSanitizeHtml = sanitizeHtml as jest.Mock;
+type LeadSchemaMock = { parseAsync: jest.Mock<Promise<unknown>, [unknown]> };
+const mockLeadSchemaParseAsync = (leadSchema as unknown as LeadSchemaMock).parseAsync;
+const mockSanitizeInput = sanitizeInput as jest.MockedFunction<typeof sanitizeInput>;
+const mockSanitizeHtml = sanitizeHtml as jest.MockedFunction<typeof sanitizeHtml>;
 
-const createStatusFetch = (statuses: any[]) => {
-  const order = jest.fn().mockResolvedValue({ data: statuses, error: null });
-  const select = jest.fn().mockReturnValue({ order });
+const supabaseFromMock = mockSupabaseClient.from as jest.Mock<unknown, [string]>;
+
+type StatusOrderMock = jest.Mock<
+  Promise<{ data: LeadStatusRow[]; error: null }>,
+  [string, { ascending?: boolean }?]
+>;
+
+type StatusSelectMock = jest.Mock<{ order: StatusOrderMock }, [string?]>;
+
+interface LeadStatusTableMock {
+  select: StatusSelectMock;
+}
+
+interface LeadsTableMock {
+  insert: jest.Mock<Promise<{ error: { message: string } | null }>, [LeadInsertPayload[]]>;
+}
+
+interface DefaultTableMock {
+  select: jest.Mock<DefaultTableMock, [string?]>;
+  insert: jest.Mock<DefaultTableMock, [unknown]>;
+  update: jest.Mock<DefaultTableMock, [unknown]>;
+  delete: jest.Mock<DefaultTableMock, []>;
+  eq: jest.Mock<DefaultTableMock, [string, unknown]>;
+  in: jest.Mock<DefaultTableMock, [string, unknown[]]>;
+  order: jest.Mock<DefaultTableMock, [string, { ascending?: boolean }?]>;
+  limit: jest.Mock<DefaultTableMock, [number]>;
+  single: jest.Mock<Promise<unknown>, []>;
+}
+
+const createStatusFetch = (statuses: LeadStatusRow[]) => {
+  const order: StatusOrderMock = jest.fn(async () => ({ data: statuses, error: null }));
+  const select: StatusSelectMock = jest.fn(() => ({ order }));
   return { select, order };
 };
 
-const createDefaultFromResponse = () => ({
-  select: jest.fn().mockReturnThis(),
-  insert: jest.fn().mockReturnThis(),
-  update: jest.fn().mockReturnThis(),
-  delete: jest.fn().mockReturnThis(),
-  eq: jest.fn().mockReturnThis(),
-  in: jest.fn().mockReturnThis(),
-  order: jest.fn().mockReturnThis(),
-  limit: jest.fn().mockReturnThis(),
-  single: jest.fn(),
+const createLeadsTableMock = (
+  insertMock: LeadsTableMock["insert"],
+): LeadsTableMock => ({
+  insert: insertMock,
 });
 
-const originalFromImplementation = (mockSupabaseClient.from.getMockImplementation() || ((table: string) => createDefaultFromResponse())) as (
-  table: string
-) => any;
+const createDefaultFromResponse = (): DefaultTableMock => {
+  const table: Partial<DefaultTableMock> = {};
+  table.select = jest.fn(() => table as DefaultTableMock);
+  table.insert = jest.fn(() => table as DefaultTableMock);
+  table.update = jest.fn(() => table as DefaultTableMock);
+  table.delete = jest.fn(() => table as DefaultTableMock);
+  table.eq = jest.fn(() => table as DefaultTableMock);
+  table.in = jest.fn(() => table as DefaultTableMock);
+  table.order = jest.fn(() => table as DefaultTableMock);
+  table.limit = jest.fn(() => table as DefaultTableMock);
+  table.single = jest.fn(async () => undefined);
+  return table as DefaultTableMock;
+};
+
+type SupabaseFromImplementation = (table: string) => unknown;
+
+const originalFromImplementation: SupabaseFromImplementation =
+  (mockSupabaseClient.from.getMockImplementation() as SupabaseFromImplementation | undefined) ??
+  ((table: string) => createDefaultFromResponse());
+
+type ProfileHookReturn = ReturnType<typeof useProfile>;
+type QuickSettingsReturn = ReturnType<typeof useOrganizationQuickSettings>;
+
+const createProfileHookValue = (
+  overrides: Partial<ProfileHookReturn> = {},
+): ProfileHookReturn => ({
+  profile: { id: "profile-1" },
+  loading: false,
+  uploading: false,
+  updateProfile: jest.fn(),
+  uploadProfilePhoto: jest.fn(),
+  deleteProfilePhoto: jest.fn(),
+  refreshProfile: jest.fn(async () => {}),
+  ...overrides,
+});
+
+const createQuickSettingsValue = (
+  showQuickStatusButtons = true,
+  overrides: Partial<QuickSettingsReturn> = {},
+): QuickSettingsReturn => ({
+  settings: { show_quick_status_buttons: showQuickStatusButtons },
+  loading: false,
+  refetch: jest.fn(async () => {}),
+  ...overrides,
+});
 
 describe("AddLeadDialog", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    if (originalFromImplementation) {
-      mockSupabaseClient.from.mockImplementation(originalFromImplementation);
-    }
-    mockSupabaseClient.from.mockClear();
+    supabaseFromMock.mockReset();
+    supabaseFromMock.mockImplementation(originalFromImplementation);
     mockSupabaseClient.auth.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
     mockUseI18nToast.mockReturnValue(toastMock);
     mockGetUserOrganizationId.mockResolvedValue("org-1");
-    mockUseOrganizationQuickSettings.mockReturnValue({ settings: { show_quick_status_buttons: true } });
-    mockUseProfile.mockReturnValue({ profile: { id: "profile-1" } });
+    mockUseOrganizationQuickSettings.mockReturnValue(createQuickSettingsValue());
+    mockUseProfile.mockReturnValue(createProfileHookValue());
 
     mockHandleModalClose.mockReturnValue(true);
     mockHandleDiscard.mockImplementation(() => {});
@@ -179,9 +292,7 @@ describe("AddLeadDialog", () => {
   });
 
   afterEach(() => {
-    if (originalFromImplementation) {
-      mockSupabaseClient.from.mockImplementation(originalFromImplementation);
-    }
+    supabaseFromMock.mockImplementation(originalFromImplementation);
   });
 
   const renderDialog = (props: Partial<ComponentProps<typeof AddLeadDialog>> = {}) => {
@@ -201,14 +312,17 @@ describe("AddLeadDialog", () => {
 
     const { select } = createStatusFetch(statuses);
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    const leadStatusesTable: LeadStatusTableMock = { select };
+    const leadsTable = createLeadsTableMock(jest.fn(async () => ({ error: null })));
+
+    supabaseFromMock.mockImplementation((table: string) => {
       if (table === "lead_statuses") {
-        return { select } as any;
+        return leadStatusesTable;
       }
       if (table === "leads") {
-        return { insert: jest.fn() } as any;
+        return leadsTable;
       }
-      return originalFromImplementation ? originalFromImplementation(table) : ({} as any);
+      return originalFromImplementation(table);
     });
 
     renderDialog();
@@ -226,7 +340,7 @@ describe("AddLeadDialog", () => {
   });
 
   it("creates a lead with sanitized payload and resets the form", async () => {
-    const insertMock = jest.fn().mockResolvedValue({ error: null });
+    const insertMock: LeadsTableMock["insert"] = jest.fn(async () => ({ error: null }));
 
     mockSanitizeHtml.mockResolvedValue("sanitized notes");
 
@@ -236,16 +350,17 @@ describe("AddLeadDialog", () => {
 
     const { select } = createStatusFetch(statuses);
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    const leadStatusesTable: LeadStatusTableMock = { select };
+    const leadsTable = createLeadsTableMock(insertMock);
+
+    supabaseFromMock.mockImplementation((table: string) => {
       if (table === "lead_statuses") {
-        return { select } as any;
+        return leadStatusesTable;
       }
       if (table === "leads") {
-        return {
-          insert: insertMock,
-        } as any;
+        return leadsTable;
       }
-      return {} as any;
+      return originalFromImplementation(table);
     });
 
     const onLeadAdded = jest.fn();
@@ -303,13 +418,19 @@ describe("AddLeadDialog", () => {
 
     const { select } = createStatusFetch(statuses);
 
-    mockUseOrganizationQuickSettings.mockReturnValue({ settings: { show_quick_status_buttons: false } });
+    mockUseOrganizationQuickSettings.mockReturnValue(createQuickSettingsValue(false));
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    const leadStatusesTable: LeadStatusTableMock = { select };
+    const leadsTable = createLeadsTableMock(jest.fn(async () => ({ error: null })));
+
+    supabaseFromMock.mockImplementation((table: string) => {
       if (table === "lead_statuses") {
-        return { select } as any;
+        return leadStatusesTable;
       }
-      return { insert: jest.fn() } as any;
+      if (table === "leads") {
+        return leadsTable;
+      }
+      return originalFromImplementation(table);
     });
 
     renderDialog();
@@ -329,11 +450,17 @@ describe("AddLeadDialog", () => {
 
     const { select } = createStatusFetch(statuses);
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    const leadStatusesTable: LeadStatusTableMock = { select };
+    const leadsTable = createLeadsTableMock(jest.fn(async () => ({ error: null })));
+
+    supabaseFromMock.mockImplementation((table: string) => {
       if (table === "lead_statuses") {
-        return { select } as any;
+        return leadStatusesTable;
       }
-      return { insert: jest.fn() } as any;
+      if (table === "leads") {
+        return leadsTable;
+      }
+      return originalFromImplementation(table);
     });
 
     renderDialog();

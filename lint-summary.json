@@ -1,58 +1,6 @@
 {
-  "total": 1406,
+  "total": 1108,
   "summary": [
-    {
-      "filePath": "supabase/functions/send-template-email/index.ts",
-      "count": 35
-    },
-    {
-      "filePath": "supabase/functions/workflow-executor/index.ts",
-      "count": 35
-    },
-    {
-      "filePath": "src/pages/leads/hooks/useLeadsData.ts",
-      "count": 34
-    },
-    {
-      "filePath": "src/utils/entityUtils.ts",
-      "count": 26
-    },
-    {
-      "filePath": "supabase/functions/notification-processor/index.ts",
-      "count": 23
-    },
-    {
-      "filePath": "src/components/settings/__tests__/PackageDialogs.test.tsx",
-      "count": 20
-    },
-    {
-      "filePath": "src/pages/settings/__tests__/Profile.test.tsx",
-      "count": 20
-    },
-    {
-      "filePath": "src/pages/settings/__tests__/Account_old.test.tsx",
-      "count": 19
-    },
-    {
-      "filePath": "src/components/__tests__/AddLeadDialog.test.tsx",
-      "count": 18
-    },
-    {
-      "filePath": "src/components/__tests__/EditPaymentDialog.test.tsx",
-      "count": 18
-    },
-    {
-      "filePath": "src/pages/leads/hooks/__tests__/useLeadsFilters.test.tsx",
-      "count": 18
-    },
-    {
-      "filePath": "src/components/settings/__tests__/ProjectTypeDialogs.test.tsx",
-      "count": 17
-    },
-    {
-      "filePath": "src/components/__tests__/EnhancedAddLeadDialog.test.tsx",
-      "count": 15
-    },
     {
       "filePath": "src/components/ui/__tests__/date-time-picker.test.tsx",
       "count": 15

@@ -1,5 +1,10 @@
-import { act, renderHook } from "@testing-library/react";
-import { render, fireEvent } from "@testing-library/react";
+import type {
+  ReactNode,
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  ChangeEvent,
+} from "react";
+import { act, renderHook, render, fireEvent } from "@testing-library/react";
 import { useLeadsFilters } from "../useLeadsFilters";
 import type { LeadFieldDefinition } from "@/types/leadFields";
 
@@ -10,15 +15,15 @@ jest.mock("react-i18next", () => ({
 }));
 
 jest.mock("@/components/ui/button", () => ({
-  Button: ({ children, onClick, ...props }: any) => (
-    <button onClick={onClick} {...props}>
+  Button: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button type="button" {...props}>
       {children}
     </button>
   ),
 }));
 
 jest.mock("@/components/ui/checkbox", () => ({
-  Checkbox: ({ checked, onCheckedChange, ...props }: any) => (
+  Checkbox: ({ checked, onCheckedChange, ...props }: { checked?: boolean; onCheckedChange?: (next: boolean) => void }) => (
     <input
       type="checkbox"
       checked={checked}
@@ -29,35 +34,39 @@ jest.mock("@/components/ui/checkbox", () => ({
 }));
 
 jest.mock("@/components/ui/accordion", () => ({
-  Accordion: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  AccordionItem: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  AccordionTrigger: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-  AccordionContent: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+  Accordion: ({ children, ...props }: { children?: ReactNode }) => <div {...props}>{children}</div>,
+  AccordionItem: ({ children, ...props }: { children?: ReactNode }) => <div {...props}>{children}</div>,
+  AccordionTrigger: ({ children, ...props }: { children?: ReactNode }) => <div {...props}>{children}</div>,
+  AccordionContent: ({ children, ...props }: { children?: ReactNode }) => <div {...props}>{children}</div>,
 }));
 
 jest.mock("@/components/ui/select", () => ({
-  Select: ({ children }: any) => <div>{children}</div>,
-  SelectContent: ({ children }: any) => <div>{children}</div>,
-  SelectItem: ({ children, value, onSelect }: any) => (
+  Select: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  SelectContent: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  SelectItem: ({ children, value, onSelect }: { children?: ReactNode; value: string; onSelect?: (value: string) => void }) => (
     <div onClick={() => onSelect?.(value)}>{children}</div>
   ),
-  SelectTrigger: ({ children }: any) => <div>{children}</div>,
-  SelectValue: ({ children }: any) => <span>{children}</span>,
+  SelectTrigger: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  SelectValue: ({ children }: { children?: ReactNode }) => <span>{children}</span>,
 }));
 
 jest.mock("@/components/ui/input", () => ({
-  Input: ({ value, onChange, ...props }: any) => (
-    <input value={value ?? ""} onChange={(event) => onChange?.(event)} {...props} />
+  Input: ({ value, onChange, ...props }: InputHTMLAttributes<HTMLInputElement>) => (
+    <input
+      value={value ?? ""}
+      onChange={(event: ChangeEvent<HTMLInputElement>) => onChange?.(event)}
+      {...props}
+    />
   ),
 }));
 
 jest.mock("@/components/ui/segmented-control", () => ({
-  SegmentedControl: ({ children }: any) => <div>{children}</div>,
+  SegmentedControl: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
 }));
 
 jest.mock("@/components/ui/radio-group", () => ({
-  RadioGroup: ({ children }: any) => <div>{children}</div>,
-  RadioGroupItem: ({ children }: any) => <div>{children}</div>,
+  RadioGroup: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  RadioGroupItem: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
 }));
 
 const nowIso = new Date().toISOString();
@@ -80,7 +89,16 @@ const fieldDefinitions: LeadFieldDefinition[] = [
   },
 ];
 
-const statuses = [{ id: "status-1", name: "Open", color: "blue" }];
+interface LeadStatusOptionMock {
+  id: string;
+  name: string;
+  color: string;
+  is_system_final?: boolean;
+}
+
+const statuses: LeadStatusOptionMock[] = [{ id: "status-1", name: "Open", color: "blue" }];
+
+const renderConfigNode = (node: ReactNode) => render(<>{node}</>);
 
 describe("useLeadsFilters", () => {
   it("auto applies status selections and updates active count", () => {
@@ -94,7 +112,7 @@ describe("useLeadsFilters", () => {
     expect(result.current.state.status).toEqual([]);
     expect(result.current.activeCount).toBe(0);
 
-    const { getByLabelText } = render(result.current.filtersConfig.content as any);
+    const { getByLabelText } = renderConfigNode(result.current.filtersConfig.content);
 
     act(() => {
       fireEvent.click(getByLabelText("Open"));
@@ -113,7 +131,7 @@ describe("useLeadsFilters", () => {
       })
     );
 
-    const statusRender = render(result.current.filtersConfig.content as any);
+    const statusRender = renderConfigNode(result.current.filtersConfig.content);
 
     act(() => {
       fireEvent.click(statusRender.getByLabelText("Open"));
@@ -122,7 +140,7 @@ describe("useLeadsFilters", () => {
     expect(result.current.state.status).toEqual(["Open"]);
     statusRender.unmount();
 
-    const footerRender = render(result.current.filtersConfig.footer as any);
+    const footerRender = renderConfigNode(result.current.filtersConfig.footer);
 
     act(() => {
       fireEvent.click(footerRender.getByRole("button", { name: "buttons.clearAll" }));

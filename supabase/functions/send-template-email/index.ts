@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.53.0';
+import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.53.0';
 import {
   getErrorMessage,
   getErrorStack,
@@ -18,11 +18,188 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface TemplateBlock {
+type AlignmentOption = "left" | "center" | "right";
+type FontSizeOption = "h1" | "h2" | "h3" | "p";
+type CtaVariant = "primary" | "secondary" | "text";
+
+interface TextBlockFormatting {
+  alignment?: AlignmentOption;
+  fontFamily?: string;
+  bold?: boolean;
+  italic?: boolean;
+  bullets?: boolean;
+  fontSize?: FontSizeOption;
+}
+
+interface TextBlockData {
+  content?: string;
+  formatting?: TextBlockFormatting;
+}
+
+interface HeaderBlockData {
+  title?: string;
+  tagline?: string;
+  backgroundColor?: string;
+  showLogo?: boolean;
+}
+
+interface CtaBlockData {
+  text?: string;
+  link?: string;
+  url?: string;
+  variant?: CtaVariant;
+}
+
+interface ImageBlockData {
+  imageUrl?: string;
+  placeholderUrl?: string;
+  src?: string;
+  caption?: string;
+  alt?: string;
+  placeholder?: boolean;
+}
+
+interface SessionDetailsBlockData {
+  customLabel?: string;
+  customNotes?: string;
+  showDate?: boolean;
+  showTime?: boolean;
+  showLocation?: boolean;
+  showNotes?: boolean;
+}
+
+interface DividerBlockData {
+  style?: "line" | "space";
+  color?: string;
+  height?: number;
+}
+
+interface SocialLinksBlockData {
+  channelVisibility?: Record<string, boolean>;
+}
+
+interface FooterBlockData {
+  showLogo?: boolean;
+  showStudioName?: boolean;
+  showContactInfo?: boolean;
+  customText?: string;
+}
+
+interface RawHtmlBlockData {
+  html?: string;
+}
+
+interface BaseTemplateBlock<Type extends string, Data> {
   id: string;
-  type: string;
-  data: any;
+  type: Type;
+  data: Data;
   order: number;
+}
+
+type TextTemplateBlock = BaseTemplateBlock<"text", TextBlockData>;
+type HeaderTemplateBlock = BaseTemplateBlock<"header", HeaderBlockData>;
+type CtaTemplateBlock = BaseTemplateBlock<"cta", CtaBlockData>;
+type ImageTemplateBlock = BaseTemplateBlock<"image", ImageBlockData>;
+type SessionDetailsTemplateBlock = BaseTemplateBlock<"session-details", SessionDetailsBlockData>;
+type DividerTemplateBlock = BaseTemplateBlock<"divider", DividerBlockData>;
+type SocialLinksTemplateBlock = BaseTemplateBlock<"social-links", SocialLinksBlockData>;
+type FooterTemplateBlock = BaseTemplateBlock<"footer", FooterBlockData>;
+type RawHtmlTemplateBlock = BaseTemplateBlock<"raw-html", RawHtmlBlockData>;
+
+type TemplateBlock =
+  | TextTemplateBlock
+  | HeaderTemplateBlock
+  | CtaTemplateBlock
+  | ImageTemplateBlock
+  | SessionDetailsTemplateBlock
+  | DividerTemplateBlock
+  | SocialLinksTemplateBlock
+  | FooterTemplateBlock
+  | RawHtmlTemplateBlock;
+
+interface SocialChannel {
+  name: string;
+  url?: string | null;
+  order?: number | null;
+}
+
+interface OrganizationSettings {
+  photography_business_name?: string | null;
+  primary_brand_color?: string | null;
+  logo_url?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  date_format?: string | null;
+  time_format?: string | null;
+  socialChannels?: Record<string, SocialChannel>;
+}
+
+interface OrganizationSettingsRow {
+  photography_business_name?: string | null;
+  primary_brand_color?: string | null;
+  logo_url?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  date_format?: string | null;
+  time_format?: string | null;
+  social_channels?: Record<string, SocialChannel>;
+}
+
+interface UserSettingsRow {
+  active_organization_id?: string | null;
+}
+
+interface TemplateChannelView {
+  channel: string;
+  subject?: string | null;
+  content?: string | null;
+}
+
+interface MessageTemplate {
+  id: string;
+  name?: string | null;
+  organization_id: string;
+  user_id: string;
+  master_subject?: string | null;
+  master_content?: string | null;
+  blocks?: TemplateBlock[] | null;
+  template_channel_views?: TemplateChannelView[] | null;
+}
+
+interface SimpleTemplate {
+  organization_id: string;
+  name?: string | null;
+  master_content?: string | null;
+}
+
+type GenericSupabaseClient = SupabaseClient<unknown, unknown, unknown>;
+
+function mapOrganizationSettings(row: OrganizationSettingsRow | null): OrganizationSettings | null {
+  if (!row) {
+    return null;
+  }
+
+  const {
+    photography_business_name,
+    primary_brand_color,
+    logo_url,
+    phone,
+    email,
+    date_format,
+    time_format,
+    social_channels,
+  } = row;
+
+  return {
+    photography_business_name: photography_business_name ?? null,
+    primary_brand_color: primary_brand_color ?? null,
+    logo_url: logo_url ?? null,
+    phone: phone ?? null,
+    email: email ?? null,
+    date_format: date_format ?? null,
+    time_format: time_format ?? null,
+    socialChannels: social_channels ?? {},
+  };
 }
 
 interface SendEmailRequest {
@@ -71,7 +248,7 @@ export function generateHTMLContent(
   mockData: Record<string, string>,
   subject: string,
   preheader?: string,
-  organizationSettings?: any,
+  organizationSettings?: OrganizationSettings | null,
   isPreview: boolean = false
 ): string {
   const baseStyles = `
@@ -402,21 +579,22 @@ export function generateHTMLContent(
     .sort((a, b) => a.order - b.order)
     .forEach(block => {
       switch (block.type) {
-        case 'text':
-          const textContent = replacePlaceholders(block.data.content || '', mockData);
-          const alignment = block.data.formatting?.alignment || 'left';
-          const fontFamily = block.data.formatting?.fontFamily || 'Arial';
-          const bold = block.data.formatting?.bold ? 'font-weight: bold;' : '';
-          const italic = block.data.formatting?.italic ? 'font-style: italic;' : '';
-          const bullets = block.data.formatting?.bullets;
-          
-          // Get font size based on semantic type
+        case 'text': {
+          const { data } = block;
+          const formatting = data.formatting ?? {};
+          const textContent = replacePlaceholders(data.content ?? '', mockData);
+          const alignment = formatting.alignment ?? 'left';
+          const fontFamily = (formatting.fontFamily ?? 'Arial').toLowerCase();
+          const boldStyle = formatting.bold ? 'font-weight: bold;' : '';
+          const italicStyle = formatting.italic ? 'font-style: italic;' : '';
+          const bullets = formatting.bullets;
+
           let fontSize = '16px';
           let fontWeight = 'normal';
           let lineHeight = '1.6';
           let marginBottom = '16px';
-          
-          switch (block.data.formatting?.fontSize) {
+
+          switch (formatting.fontSize) {
             case 'h1':
               fontSize = '32px';
               fontWeight = 'bold';
@@ -442,19 +620,19 @@ export function generateHTMLContent(
               marginBottom = '16px';
               break;
           }
-          
+
           const textStyles = `
             text-align: ${alignment}; 
             font-size: ${fontSize}; 
             font-weight: ${fontWeight};
             line-height: ${lineHeight};
             margin-bottom: ${marginBottom};
-            ${bold} 
-            ${italic}
+            ${boldStyle}
+            ${italicStyle}
           `;
-          
-          htmlContent += `<div class="text-block font-${fontFamily.toLowerCase()}" style="${textStyles}">`;
-          
+
+          htmlContent += `<div class="text-block font-${fontFamily}" style="${textStyles}">`;
+
           if (bullets) {
             htmlContent += `<ul class="bullet-list">`;
             textContent.split('\n').filter(line => line.trim()).forEach(line => {
@@ -466,42 +644,49 @@ export function generateHTMLContent(
               htmlContent += `<div>${line}</div>`;
             });
           }
-          
+
           htmlContent += `</div>`;
           break;
+        }
 
-        case 'header':
-          const headerTitle = replacePlaceholders(block.data.title || '', mockData);
-          const tagline = block.data.tagline ? replacePlaceholders(block.data.tagline, mockData) : '';
-          const bgColor = block.data.backgroundColor || '#ffffff';
-          
+        case 'header': {
+          const { data } = block;
+          const headerTitle = replacePlaceholders(data.title ?? '', mockData);
+          const tagline = data.tagline ? replacePlaceholders(data.tagline, mockData) : '';
+          const bgColor = data.backgroundColor ?? '#ffffff';
+
           htmlContent += `
             <div class="email-header-block" style="background-color: ${bgColor};">
-              ${block.data.showLogo ? `<div class="header-logo">🏢</div>` : ''}
+              ${data.showLogo ? `<div class="header-logo">🏢</div>` : ''}
               ${tagline ? `<p class="header-tagline">${tagline}</p>` : ''}
             </div>
           `;
           break;
+        }
 
-        case 'cta':
-          const buttonText = replacePlaceholders(block.data.text || 'Click Here', mockData);
-          const buttonUrl = replacePlaceholders(block.data.link || '#', mockData);
-          const variant = block.data.variant || 'primary';
-          
+        case 'cta': {
+          const { data } = block;
+          const buttonText = replacePlaceholders(data.text ?? 'Click Here', mockData);
+          const linkTarget = data.link ?? data.url ?? '#';
+          const buttonUrl = replacePlaceholders(linkTarget, mockData);
+          const variant = data.variant ?? 'primary';
+
           htmlContent += `
             <div style="text-align: center; margin: 30px 0;">
               <a href="${buttonUrl}" class="cta-button cta-${variant}">${buttonText}</a>
             </div>
           `;
           break;
+        }
 
-        case 'image':
-          if (block.data.imageUrl || block.data.placeholderUrl || block.data.src) {
-            const imageUrl = block.data.imageUrl || block.data.src || block.data.placeholderUrl;
-            const caption = block.data.caption ? replacePlaceholders(block.data.caption, mockData) : '';
-            const altText = block.data.alt || caption || 'Image';
-            
-            if (block.data.placeholder && !block.data.src) {
+        case 'image': {
+          const { data } = block;
+          if (data.imageUrl || data.placeholderUrl || data.src) {
+            const imageUrl = data.imageUrl || data.src || data.placeholderUrl;
+            const caption = data.caption ? replacePlaceholders(data.caption, mockData) : '';
+            const altText = data.alt || caption || 'Image';
+
+            if (data.placeholder && !data.src) {
               htmlContent += `
                 <div class="image-block">
                   <div style="width: 100%; height: 192px; background-color: #f3f4f6; border: 2px dashed #d1d5db; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
@@ -511,7 +696,7 @@ export function generateHTMLContent(
                   ${caption ? `<div class="image-caption">${caption}</div>` : ''}
                 </div>
               `;
-            } else {
+            } else if (imageUrl) {
               htmlContent += `
                 <div class="image-block">
                   <img src="${imageUrl}" alt="${altText}" style="width: 100%; height: auto; border-radius: 8px;">
@@ -521,16 +706,17 @@ export function generateHTMLContent(
             }
           }
           break;
+        }
 
-        case 'session-details':
+        case 'session-details': {
           const sessionData = block.data;
           const customLabel = sessionData.customLabel || "Session Details";
-          
+
           htmlContent += `
             <div class="session-details">
               <h3>${customLabel}</h3>
           `;
-          
+
           if (sessionData.showDate) {
             htmlContent += `
               <div class="session-detail-item">
@@ -565,11 +751,12 @@ export function generateHTMLContent(
               </div>
             `;
           }
-          
+
           htmlContent += `</div>`;
           break;
+        }
 
-        case 'divider':
+        case 'divider': {
           if (block.data.style === 'line') {
             const color = block.data.color || '#e5e7eb';
             htmlContent += `<hr class="divider-line" style="border-color: ${color};">`;
@@ -578,40 +765,45 @@ export function generateHTMLContent(
             htmlContent += `<div class="divider-space" style="height: ${height}px;"></div>`;
           }
           break;
+        }
 
-        case 'social-links':
+        case 'social-links': {
           // Handle new format: get social channels from organization settings
           if (organizationSettings?.socialChannels) {
             const channelVisibility = block.data.channelVisibility || {};
             const socialChannelsArray = Object.entries(organizationSettings.socialChannels)
-              .sort(([, a], [, b]) => ((a as any).order || 0) - ((b as any).order || 0))
-              .filter(([key, channel]: [string, any]) => {
-                const hasUrl = channel.url?.trim();
+              .sort(([, a], [, b]) => (a?.order ?? 0) - (b?.order ?? 0))
+              .filter(([key, channel]) => {
+                const hasUrl = typeof channel?.url === 'string' && channel.url.trim().length > 0;
                 const isVisible = channelVisibility[key] !== false;
                 return hasUrl && isVisible;
               });
             
             if (socialChannelsArray.length > 0) {
               htmlContent += `<div class="social-links">`;
-              socialChannelsArray.forEach(([key, channel]: [string, any]) => {
-                htmlContent += `<a href="${channel.url}">${channel.name}</a>`;
+              socialChannelsArray.forEach(([key, channel]) => {
+                if (!channel?.url) {
+                  return;
+                }
+                const label = channel.name || key;
+                htmlContent += `<a href="${channel.url}">${label}</a>`;
               });
               htmlContent += `</div>`;
             }
           }
           break;
+        }
 
-        case 'footer':
+        case 'footer': {
           const footerData = block.data;
-          
-          // Use real organization data if available
+
           const businessName = organizationSettings?.photography_business_name || mockData.business_name || 'Your Business';
           const businessPhone = organizationSettings?.phone || mockData.business_phone || '+1 (555) 123-4567';
           const businessEmail = organizationSettings?.email || mockData.business_email || `hello@${businessName.toLowerCase().replace(/\s+/g, '')}.com`;
           const logoUrl = organizationSettings?.logo_url;
-          
+
           htmlContent += `<div class="email-footer">`;
-          
+
           if (footerData.showLogo) {
             if (logoUrl) {
               htmlContent += `
@@ -627,13 +819,13 @@ export function generateHTMLContent(
               `;
             }
           }
-          
+
           if (footerData.showStudioName && businessName) {
             htmlContent += `
               <div class="footer-business-name">${businessName}</div>
             `;
           }
-          
+
           if (footerData.showContactInfo) {
             if (businessPhone) {
               htmlContent += `<div class="footer-contact">${businessPhone}</div>`;
@@ -642,18 +834,20 @@ export function generateHTMLContent(
               htmlContent += `<div class="footer-contact">${businessEmail}</div>`;
             }
           }
-          
+
           if (footerData.customText) {
             htmlContent += `<div class="footer-custom-text">${replacePlaceholders(footerData.customText, mockData)}</div>`;
           }
-          
+
           htmlContent += `</div>`;
           break;
+        }
 
-        case 'raw-html':
+        case 'raw-html': {
           // Note: In production, this should be sanitized
           htmlContent += block.data.html || '';
           break;
+        }
       }
     });
 
@@ -677,10 +871,11 @@ function generatePlainText(blocks: TemplateBlock[], mockData: Record<string, str
     .sort((a, b) => a.order - b.order)
     .forEach(block => {
       switch (block.type) {
-        case 'text':
+        case 'text': {
           plainText += replacePlaceholders(block.data.content || '', mockData) + '\n\n';
           break;
-        case 'header':
+        }
+        case 'header': {
           const headerText = replacePlaceholders(block.data.title || '', mockData);
           plainText += headerText.toUpperCase() + '\n';
           if (block.data.tagline) {
@@ -688,12 +883,14 @@ function generatePlainText(blocks: TemplateBlock[], mockData: Record<string, str
           }
           plainText += '='.repeat(headerText.length) + '\n\n';
           break;
-        case 'cta':
+        }
+        case 'cta': {
           const buttonText = replacePlaceholders(block.data.text || 'Click Here', mockData);
-          const buttonUrl = replacePlaceholders(block.data.url || '#', mockData);
+          const buttonUrl = replacePlaceholders(block.data.url || block.data.link || '#', mockData);
           plainText += `${buttonText}: ${buttonUrl}\n\n`;
           break;
-        case 'session-details':
+        }
+        case 'session-details': {
           plainText += 'SESSION DETAILS\n';
           plainText += '---------------\n';
           if (block.data.showDate) plainText += `Date: ${mockData.session_date || 'TBD'}\n`;
@@ -702,19 +899,23 @@ function generatePlainText(blocks: TemplateBlock[], mockData: Record<string, str
           if (block.data.showNotes) plainText += `Notes: Please arrive 10 minutes early. Bring comfortable outfits!\n`;
           plainText += '\n';
           break;
-        case 'footer':
+        }
+        case 'footer': {
           plainText += '\n---\n';
           if (block.data.showStudioName) {
             plainText += `${mockData.business_name || 'Your Business'}\n`;
           }
           if (block.data.showContactInfo) {
-            if (mockData.business_phone) plainText += `Phone: ${mockData.business_phone}\n`;
+            if (mockData.business_phone) {
+              plainText += `Phone: ${mockData.business_phone}\n`;
+            }
             plainText += `Email: hello@${(mockData.business_name || 'business').toLowerCase().replace(/\s+/g, '')}.com\n`;
           }
           if (block.data.customText) {
             plainText += replacePlaceholders(block.data.customText, mockData) + '\n';
           }
           break;
+        }
       }
     });
 
@@ -750,35 +951,32 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Get organization settings for dynamic footer
-    let organizationSettings = null;
+    let organizationSettings: OrganizationSettings | null = null;
     try {
-      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      const supabaseClient = createClient(supabaseUrl, supabaseServiceKey) as GenericSupabaseClient;
       
       // Get user from auth header
       const authHeader = req.headers.get('authorization');
       if (authHeader) {
         const token = authHeader.replace('Bearer ', '');
-        const { data: { user } } = await supabase.auth.getUser(token);
+        const { data: { user } } = await supabaseClient.auth.getUser(token);
         
         if (user) {
           // Get organization settings
-          const { data: userSettings } = await supabase
+          const { data: userSettings } = await supabaseClient
             .from('user_settings')
             .select('active_organization_id')
             .eq('user_id', user.id)
-            .single();
+            .single<UserSettingsRow>();
           
           if (userSettings?.active_organization_id) {
-          const { data: orgSettings } = await supabase
+          const { data: orgSettings } = await supabaseClient
             .from('organization_settings')
             .select('photography_business_name, primary_brand_color, logo_url, phone, email, social_channels')
             .eq('organization_id', userSettings.active_organization_id)
-            .single();
-            
-            organizationSettings = {
-              ...orgSettings,
-              socialChannels: orgSettings?.social_channels || {}
-            };
+            .single<OrganizationSettingsRow>();
+
+            organizationSettings = mapOrganizationSettings(orgSettings);
           }
         }
       }
@@ -825,8 +1023,8 @@ const handler = async (req: Request): Promise<Response> => {
     // Log the email send (optional)
     if (!isTest) {
       try {
-        const supabase = createClient(supabaseUrl, supabaseServiceKey);
-        await supabase.from('email_logs').insert({
+        const supabaseClient = createClient(supabaseUrl, supabaseServiceKey) as GenericSupabaseClient;
+        await supabaseClient.from('email_logs').insert({
           recipient: to,
           subject: emailData.subject,
           status: 'sent',
@@ -879,7 +1077,7 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
     }
 
     // Get template data from message_templates
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as GenericSupabaseClient;
     
     console.log('Fetching template from message_templates table...');
     
@@ -896,7 +1094,7 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
       `)
       .eq('id', template_id)
       .eq('template_channel_views.channel', 'email')
-      .single();
+      .single<MessageTemplate>();
 
     console.log('Template fetch result:', template ? 'Found' : 'Not found');
     if (templateError) {
@@ -918,7 +1116,7 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
       .from('organization_settings')
       .select('photography_business_name, primary_brand_color, logo_url, phone, email, date_format, time_format, social_channels')
       .eq('organization_id', template.organization_id)
-      .single();
+      .single<OrganizationSettingsRow>();
 
     if (orgError) {
       console.warn('Could not fetch organization settings:', orgError);
@@ -940,7 +1138,7 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
     console.log('Email subject before replacement:', emailSubject);
 
     // Use existing template blocks for consistent rendering with template builder tests
-    const blocks: TemplateBlock[] = template.blocks && Array.isArray(template.blocks) ? template.blocks : [];
+    const blocks = (template.blocks ?? []) as TemplateBlock[];
     
     if (blocks.length === 0) {
       console.warn('No template blocks found - template may not be properly configured');
@@ -953,14 +1151,11 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
     console.log('Using template blocks for workflow email:', blocks.length);
 
     // Format organization settings to match what the social-links block expects
-    const organizationSettings = orgSettings ? {
-      ...orgSettings,
-      socialChannels: orgSettings.social_channels || {}
-    } : null;
+    const organizationSettings = mapOrganizationSettings(orgSettings);
 
     // Use the same HTML generation function as template builder tests
     const finalHtmlContent = generateHTMLContent(
-      blocks, 
+      blocks,
       mockData || {}, 
       emailSubject, 
       undefined, // no preheader
@@ -1054,23 +1249,25 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
 
 // Fallback function for templates without blocks
 async function sendSimpleTextEmail(
-  template: any, 
-  recipient_email: string, 
-  recipient_name: string | undefined, 
+  template: SimpleTemplate, 
+  recipientEmail: string, 
+  _recipientName: string | undefined, 
   mockData: Record<string, string> | undefined,
-  workflow_execution_id: string | undefined,
-  supabase: any
+  _workflowExecutionId: string | undefined,
+  supabaseClient: GenericSupabaseClient
 ): Promise<Response> {
   console.log('Sending simple text email fallback');
   
   // Get organization settings
-  const { data: orgSettings } = await supabase
+  const { data: orgSettings } = await supabaseClient
     .from('organization_settings')
     .select('photography_business_name, email')
     .eq('organization_id', template.organization_id)
-    .single();
+    .single<OrganizationSettingsRow>();
 
-  const businessName = orgSettings?.photography_business_name || 'Your Business';
+  const organizationSettings = mapOrganizationSettings(orgSettings);
+
+  const businessName = organizationSettings?.photography_business_name || 'Your Business';
   const content = replacePlaceholders(template.master_content || 'No content available', mockData || {});
   
   // Create simple HTML structure
@@ -1093,8 +1290,8 @@ async function sendSimpleTextEmail(
 
   const emailData = {
     from: `${businessName} <hello@updates.lumiso.app>`,
-    reply_to: orgSettings?.email || 'hello@updates.lumiso.app',
-    to: [recipient_email],
+    reply_to: organizationSettings?.email || 'hello@updates.lumiso.app',
+    to: [recipientEmail],
     subject: template.name || 'Notification',
     html: htmlContent,
     text: content,

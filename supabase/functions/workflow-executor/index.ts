@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import {
   ensureError,
   getErrorMessage,
@@ -62,12 +62,158 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+type JsonRecord = Record<string, unknown>;
+
+type GenericSupabaseClient = SupabaseClient<unknown, unknown, unknown>;
+
+const isJsonRecord = (value: unknown): value is JsonRecord => typeof value === 'object' && value !== null && !Array.isArray(value);
+
+interface WorkflowTriggerInput {
+  trigger_type: string;
+  trigger_entity_type: string;
+  trigger_entity_id: string;
+  trigger_data?: JsonRecord;
+  organization_id: string;
+}
+
+interface WorkflowRecord {
+  id: string;
+  trigger_conditions?: JsonRecord | null;
+  organization_id: string;
+  user_id: string;
+  name?: string | null;
+}
+
+interface WorkflowExecutionLogEntry extends JsonRecord {
+  timestamp: string;
+  action: string;
+}
+
+interface WorkflowExecutionRecord {
+  id: string;
+  workflow_id: string;
+  trigger_entity_type: string;
+  trigger_entity_id: string;
+  status: string;
+  execution_log?: WorkflowExecutionLogEntry[] | null;
+  workflows: WorkflowRecord;
+}
+
+interface WorkflowExecutionInsertResult {
+  id: string;
+  execution_log?: WorkflowExecutionLogEntry[] | null;
+}
+
+interface WorkflowExecutionLogRow extends JsonRecord {
+  trigger_data?: JsonRecord;
+}
+
+interface WorkflowExecutionCheckRow {
+  id: string;
+  execution_log?: WorkflowExecutionLogRow[] | null;
+}
+
+interface WorkflowStepRecord {
+  id: string;
+  workflow_id: string;
+  step_order: number;
+  action_type: string;
+  action_config: JsonRecord;
+  delay_minutes?: number | null;
+  conditions?: JsonRecord | null;
+}
+
+interface OrganizationPreferences {
+  photography_business_name?: string | null;
+  date_format?: string | null;
+  time_format?: string | null;
+  primary_brand_color?: string | null;
+}
+
+interface LeadFieldValue {
+  field_key: string;
+  value: string | null;
+}
+
+interface LeadRecord {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  organization_id?: string | null;
+  [key: string]: unknown;
+}
+
+interface SessionRecord {
+  id: string;
+  session_date?: string | null;
+  session_time?: string | null;
+  location?: string | null;
+  notes?: string | null;
+  leads?: LeadRecord | null;
+  projects?: {
+    name?: string | null;
+    description?: string | null;
+    project_types?: {
+      name?: string | null;
+    } | null;
+  } | null;
+  [key: string]: unknown;
+}
+
+interface ProjectRecord {
+  id: string;
+  name?: string | null;
+  description?: string | null;
+  project_types?: {
+    name?: string | null;
+  } | null;
+  leads?: LeadRecord | null;
+  [key: string]: unknown;
+}
+
+type EntityData = JsonRecord & {
+  client_email?: string;
+  customer_email?: string;
+  customer_name?: string;
+  name?: string;
+  location?: string;
+  notes?: string;
+  session_date?: string;
+  session_time?: string;
+  project_name?: string;
+  project_type?: string;
+  leads?: {
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+  } | null;
+  projects?: {
+    name?: string | null;
+  } | null;
+};
+
+const getString = (record: JsonRecord, key: string): string | undefined => {
+  const value = record[key];
+  return typeof value === 'string' ? value : undefined;
+};
+
+const getNumber = (record: JsonRecord, key: string): number | undefined => {
+  const value = record[key];
+  return typeof value === 'number' ? value : undefined;
+};
+
+const getBoolean = (record: JsonRecord, key: string): boolean | undefined => {
+  const value = record[key];
+  return typeof value === 'boolean' ? value : undefined;
+};
+
 interface WorkflowTriggerRequest {
   action: 'trigger' | 'execute';
   trigger_type: string;
   trigger_entity_type: string;
   trigger_entity_id: string;
-  trigger_data?: any;
+  trigger_data?: JsonRecord;
   organization_id: string;
   workflow_execution_id?: string;
 }
@@ -99,7 +245,7 @@ export function createWorkflowExecutor({
     const adminSupabase = createClientFn(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    ) as GenericSupabaseClient;
 
     try {
       const { action, trigger_type, trigger_entity_type, trigger_entity_id, trigger_data, organization_id, workflow_execution_id }: WorkflowTriggerRequest = await req.json();
@@ -157,21 +303,20 @@ export function createWorkflowExecutor({
 }
 
 // Find and trigger matching workflows with enhanced duplicate prevention
-async function triggerWorkflows(supabase: any, triggerData: {
-  trigger_type: string;
-  trigger_entity_type: string;
-  trigger_entity_id: string;
-  trigger_data: any;
-  organization_id: string;
-}, executeStepsRunner: ExecuteWorkflowStepsWithTimeoutFn = executeWorkflowStepsWithTimeout) {
+async function triggerWorkflows(
+  supabase: GenericSupabaseClient,
+  triggerData: WorkflowTriggerInput,
+  executeStepsRunner: ExecuteWorkflowStepsWithTimeoutFn = executeWorkflowStepsWithTimeout
+) {
   const { trigger_type, trigger_entity_type, trigger_entity_id, trigger_data, organization_id } = triggerData;
+  const triggerPayload = trigger_data ?? {};
   
   console.log(`Looking for workflows with trigger: ${trigger_type} in org: ${organization_id}`);
   console.log(`Trigger data:`, JSON.stringify(trigger_data));
 
   let workflowQuery = supabase
     .from('workflows')
-    .select('*')
+    .select('id, trigger_conditions, organization_id, user_id, name')
     .eq('trigger_type', trigger_type)
     .eq('organization_id', organization_id)
     .eq('is_active', true);
@@ -183,9 +328,10 @@ async function triggerWorkflows(supabase: any, triggerData: {
     }
   };
 
-  registerWorkflowId(trigger_data?.workflow_id);
-  if (Array.isArray(trigger_data?.workflow_ids)) {
-    for (const value of trigger_data.workflow_ids) {
+  registerWorkflowId(triggerPayload.workflow_id);
+  const workflowIdsValue = triggerPayload.workflow_ids;
+  if (Array.isArray(workflowIdsValue)) {
+    for (const value of workflowIdsValue) {
       registerWorkflowId(value);
     }
   }
@@ -196,7 +342,7 @@ async function triggerWorkflows(supabase: any, triggerData: {
     workflowQuery = workflowQuery.in('id', ids);
   }
 
-  const { data: workflows, error: workflowsError } = await workflowQuery;
+  const { data: workflows, error: workflowsError } = await workflowQuery.returns<WorkflowRecord[]>();
 
   if (workflowsError) {
     console.error('Error fetching workflows:', workflowsError);
@@ -213,7 +359,7 @@ async function triggerWorkflows(supabase: any, triggerData: {
   const shouldHandleSessionScheduling = trigger_type === 'session_scheduled' && trigger_entity_type === 'session';
   const skipReminders =
     shouldHandleSessionScheduling &&
-    (trigger_data?.skip_reminders === true || trigger_data?.notifications?.sendReminder === false);
+    (triggerPayload.skip_reminders === true || (isJsonRecord(triggerPayload.notifications) && triggerPayload.notifications.sendReminder === false));
 
   // Special handling for session_scheduled trigger - schedule future reminders
   if (shouldHandleSessionScheduling && !skipReminders) {
@@ -237,8 +383,8 @@ async function triggerWorkflows(supabase: any, triggerData: {
     console.log(`Skipping reminder scheduling for session ${trigger_entity_id} due to client preference.`);
   }
 
-  const executions = [];
-  const duplicateFingerprints = new Set();
+  const executions: WorkflowExecutionInsertResult[] = [];
+  const duplicateFingerprints = new Set<string>();
   const forceTriggerExecution = targetedWorkflowIds.size > 0;
 
   // Create workflow executions for matching workflows
@@ -273,37 +419,27 @@ async function triggerWorkflows(supabase: any, triggerData: {
         .eq('trigger_entity_type', trigger_entity_type)
         .eq('trigger_entity_id', trigger_entity_id)
         .gte('created_at', recentCutoff)
-        .in('status', ['pending', 'running', 'completed']);
+        .in('status', ['pending', 'running', 'completed'])
+        .returns<WorkflowExecutionCheckRow[]>();
 
       if (duplicateCheckError) {
         console.error('Error checking for duplicates:', duplicateCheckError);
       } else if (!forceTriggerExecution && recentExecutions && recentExecutions.length > 0) {
-        // Check if any recent execution has the same trigger data
-        const recentExecutionRecords = (recentExecutions as Array<{
-          execution_log?: Array<{
-            trigger_data?: {
-              status_change?: unknown;
-              date_change?: unknown;
-              reminder_type?: unknown;
-            };
-          }>;
-        }>);
-        const triggerDataRecord = trigger_data as {
-          status_change?: unknown;
-          date_change?: unknown;
-          reminder_type?: unknown;
-        } | undefined;
+        const serialize = (value: unknown) => JSON.stringify(value ?? null);
+        const triggerStatusChange = triggerPayload['status_change'];
+        const triggerDateChange = triggerPayload['date_change'];
+        const triggerReminderType = triggerPayload['reminder_type'];
 
-        const isDuplicate = recentExecutionRecords.some((execution) => {
-          const execTriggerData = execution.execution_log?.[0]?.trigger_data;
-          if (!execTriggerData && !triggerDataRecord) return true;
-          if (!execTriggerData || !triggerDataRecord) return false;
+        const isDuplicate = recentExecutions.some((executionRow) => {
+          const execTriggerData = executionRow.execution_log?.[0]?.trigger_data ?? {};
+          if (!isJsonRecord(execTriggerData)) {
+            return false;
+          }
 
-          // Compare relevant trigger data fields
           return (
-            execTriggerData.status_change === triggerDataRecord.status_change &&
-            execTriggerData.date_change === triggerDataRecord.date_change &&
-            execTriggerData.reminder_type === triggerDataRecord.reminder_type
+            serialize(execTriggerData.status_change) === serialize(triggerStatusChange) &&
+            serialize(execTriggerData.date_change) === serialize(triggerDateChange) &&
+            serialize(execTriggerData.reminder_type) === serialize(triggerReminderType)
           );
         });
         
@@ -330,14 +466,16 @@ async function triggerWorkflows(supabase: any, triggerData: {
           }]
         })
         .select()
-        .single();
+        .single<WorkflowExecutionInsertResult>();
 
       if (executionError) {
         console.error(`Error creating execution for workflow ${workflow.id}:`, executionError);
         continue;
       }
 
-      executions.push(execution);
+      if (execution) {
+        executions.push(execution);
+      }
       console.log(`Created execution ${execution.id} for workflow ${workflow.id}`);
 
       // Execute workflow steps asynchronously with timeout monitoring
@@ -354,7 +492,7 @@ async function triggerWorkflows(supabase: any, triggerData: {
 }
 
 // Enhanced workflow execution with timeout monitoring
-async function executeWorkflowStepsWithTimeout(supabase: any, executionId: string) {
+async function executeWorkflowStepsWithTimeout(supabase: GenericSupabaseClient, executionId: string) {
   const EXECUTION_TIMEOUT = 5 * 60 * 1000; // 5 minutes
   
   const timeoutPromise = new Promise((_, reject) => {
@@ -377,7 +515,7 @@ async function executeWorkflowStepsWithTimeout(supabase: any, executionId: strin
 }
 
 // Execute workflow steps with enhanced error handling and retry logic
-async function executeWorkflowSteps(supabase: any, executionId: string) {
+async function executeWorkflowSteps(supabase: GenericSupabaseClient, executionId: string) {
   console.log(`Executing workflow steps for execution: ${executionId}`);
 
   // Get execution and workflow details
@@ -388,7 +526,7 @@ async function executeWorkflowSteps(supabase: any, executionId: string) {
       workflows:workflow_id (*)
     `)
     .eq('id', executionId)
-    .single();
+    .single<WorkflowExecutionRecord>();
 
   if (executionError || !execution) {
     throw new Error(`Failed to fetch workflow execution: ${executionError?.message}`);
@@ -419,7 +557,8 @@ async function executeWorkflowSteps(supabase: any, executionId: string) {
       .select('*')
       .eq('workflow_id', execution.workflow_id)
       .eq('is_active', true)
-      .order('step_order');
+      .order('step_order')
+      .returns<WorkflowStepRecord[]>();
 
     if (stepsError) {
       throw new Error(`Failed to fetch workflow steps: ${stepsError.message}`);
@@ -545,7 +684,13 @@ async function executeWorkflowSteps(supabase: any, executionId: string) {
 }
 
 // Execute individual workflow step with retry logic
-async function executeWorkflowStepWithRetry(supabase: any, executionId: string, step: any, execution: any, maxRetries: number = 2) {
+async function executeWorkflowStepWithRetry(
+  supabase: GenericSupabaseClient,
+  executionId: string,
+  step: WorkflowStepRecord,
+  execution: WorkflowExecutionRecord,
+  maxRetries: number = 2
+) {
   let lastError: Error | undefined;
   
   for (let retry = 0; retry <= maxRetries; retry++) {
@@ -589,7 +734,12 @@ async function executeWorkflowStepWithRetry(supabase: any, executionId: string, 
 }
 
 // Execute individual workflow step
-async function executeWorkflowStep(supabase: any, executionId: string, step: any, execution: any) {
+async function executeWorkflowStep(
+  supabase: GenericSupabaseClient,
+  executionId: string,
+  step: WorkflowStepRecord,
+  execution: WorkflowExecutionRecord
+) {
   console.log(`Executing step ${step.id}: ${step.action_type}`);
 
   const { action_type, action_config } = step;
@@ -616,16 +766,24 @@ async function executeWorkflowStep(supabase: any, executionId: string, step: any
 }
 
   // Execute send message step
-async function executeSendMessageStep(supabase: any, step: any, execution: any) {
-  const { action_config } = step;
-  const { template_id, channels = ['email'] } = action_config;
+async function executeSendMessageStep(
+  supabase: GenericSupabaseClient,
+  step: WorkflowStepRecord,
+  execution: WorkflowExecutionRecord
+) {
+  const config = step.action_config;
+  const templateId = getString(config, 'template_id');
+  const channelsValue = config['channels'];
+  const channels = Array.isArray(channelsValue)
+    ? channelsValue.filter((channel): channel is string => typeof channel === 'string')
+    : ['email'];
 
-  if (!template_id) {
+  if (!templateId) {
     console.warn('No template_id specified for send message step');
     return;
   }
 
-  console.log(`Executing send message step with template ${template_id}`);
+  console.log(`Executing send message step with template ${templateId}`);
 
   // Get trigger entity data for template variables - pass trigger_data for consistency
   const triggerData = execution.execution_log?.[0]?.trigger_data;
@@ -634,7 +792,11 @@ async function executeSendMessageStep(supabase: any, step: any, execution: any) 
   console.log('Entity data for workflow:', entityData);
 
   // Check if we have a client email to send to
-  const clientEmail = entityData.client_email || entityData.customer_email;
+  const clientEmail = typeof entityData.client_email === 'string'
+    ? entityData.client_email
+    : typeof entityData.customer_email === 'string'
+      ? entityData.customer_email
+      : undefined;
   if (!clientEmail) {
     console.log('No client email found, skipping workflow execution');
     return; // Skip if no client email
@@ -647,7 +809,7 @@ async function executeSendMessageStep(supabase: any, step: any, execution: any) 
     .from('organization_settings')
     .select('photography_business_name, date_format, time_format, primary_brand_color')
     .eq('organization_id', execution.workflows.organization_id)
-    .single();
+    .single<OrganizationPreferences>();
 
   // Format dates according to organization preferences
   const formatDate = (dateStr: string) => {
@@ -686,30 +848,63 @@ async function executeSendMessageStep(supabase: any, step: any, execution: any) 
   };
 
   console.log('Workflow email - Mock data keys:', Object.keys(entityData));
+  const resolvedCustomerName = typeof entityData.customer_name === 'string'
+    ? entityData.customer_name
+    : typeof entityData.name === 'string'
+      ? entityData.name
+      : typeof entityData.leads?.name === 'string'
+        ? entityData.leads.name
+        : 'Client';
+  const resolvedCustomerEmail = typeof entityData.customer_email === 'string'
+    ? entityData.customer_email
+    : typeof entityData.email === 'string'
+      ? entityData.email
+      : typeof entityData.leads?.email === 'string'
+        ? entityData.leads.email
+        : clientEmail;
+  const resolvedCustomerPhone = typeof entityData.customer_phone === 'string'
+    ? entityData.customer_phone
+    : typeof entityData.phone === 'string'
+      ? entityData.phone
+      : typeof entityData.leads?.phone === 'string'
+        ? entityData.leads.phone
+        : '-';
+
   console.log('Workflow email - Mock data values:', {
-    customer_name: entityData.customer_name || entityData.name || entityData.leads?.name || 'Client',
-    lead_name: entityData.customer_name || entityData.name || entityData.leads?.name || 'Client',
-    lead_email: entityData.customer_email || entityData.email || entityData.leads?.email || clientEmail,
-    lead_phone: entityData.customer_phone || entityData.phone || entityData.leads?.phone || '-',
+    customer_name: resolvedCustomerName,
+    lead_name: resolvedCustomerName,
+    lead_email: resolvedCustomerEmail,
+    lead_phone: resolvedCustomerPhone,
     
     // Session info with proper formatting using org settings
-    session_date: formatDate(entityData.session_date || entityData.date),
-    session_time: formatTime(entityData.session_time || entityData.time),
-    session_location: (entityData.location && entityData.location.trim() !== '' && entityData.location !== 'Studio') ? entityData.location : '-', // Use dash for empty/null/Studio location
-    session_notes: entityData.notes || entityData.session_notes || '',
+    session_date: formatDate(typeof entityData.session_date === 'string' ? entityData.session_date : (typeof entityData.date === 'string' ? entityData.date : '')),
+    session_time: formatTime(typeof entityData.session_time === 'string' ? entityData.session_time : (typeof entityData.time === 'string' ? entityData.time : '')),
+    session_location: (() => {
+      const locationValue = typeof entityData.location === 'string' ? entityData.location : '';
+      return locationValue && locationValue.trim() !== '' && locationValue !== 'Studio' ? locationValue : '-';
+    })(),
+    session_notes: typeof entityData.notes === 'string'
+      ? entityData.notes
+      : typeof entityData.session_notes === 'string'
+        ? entityData.session_notes
+        : '',
     
     // Project info
-    project_name: entityData.project_name || entityData.projects?.name || '',
-    project_type: entityData.project_type || '',
+    project_name: typeof entityData.project_name === 'string'
+      ? entityData.project_name
+      : typeof entityData.projects?.name === 'string'
+        ? entityData.projects.name
+        : '',
+    project_type: typeof entityData.project_type === 'string' ? entityData.project_type : '',
     
     // Business info from organization settings
     business_name: orgSettings?.photography_business_name || 'Your Business',
     studio_name: orgSettings?.photography_business_name || 'Your Business',
     
     // Additional fallback mappings for common template variables
-    client_name: entityData.customer_name || entityData.name || entityData.leads?.name || 'Client',
-    client_email: entityData.customer_email || entityData.email || entityData.leads?.email || clientEmail,
-    customer_email: entityData.customer_email || entityData.email || entityData.leads?.email || clientEmail,
+    client_name: resolvedCustomerName,
+    client_email: resolvedCustomerEmail,
+    customer_email: resolvedCustomerEmail,
     
     // Add all entity data for template flexibility (but don't override above mappings)
     ...entityData
@@ -719,34 +914,45 @@ async function executeSendMessageStep(supabase: any, step: any, execution: any) 
   try {
     const { data, error } = await supabase.functions.invoke('send-template-email', {
       body: {
-        template_id,
+        template_id: templateId,
         recipient_email: clientEmail,
-        recipient_name: entityData.customer_name || 'Client',
+        recipient_name: resolvedCustomerName,
         mockData: {
           // Customer/Lead info - Use fallback properties to ensure {lead_name} gets replaced
-          customer_name: entityData.customer_name || entityData.name || entityData.leads?.name || 'Client',
-          lead_name: entityData.customer_name || entityData.name || entityData.leads?.name || 'Client',
-          lead_email: entityData.customer_email || entityData.email || entityData.leads?.email || clientEmail,
-          lead_phone: entityData.customer_phone || entityData.phone || entityData.leads?.phone || '-',
+          customer_name: resolvedCustomerName,
+          lead_name: resolvedCustomerName,
+          lead_email: resolvedCustomerEmail,
+          lead_phone: resolvedCustomerPhone,
           
           // Session info with proper formatting using org settings
-          session_date: formatDate(entityData.session_date || entityData.date),
-          session_time: formatTime(entityData.session_time || entityData.time),
-          session_location: (entityData.location && entityData.location.trim() !== '' && entityData.location !== 'Studio') ? entityData.location : '-', // Use dash for empty/null/Studio location
-          session_notes: entityData.notes || entityData.session_notes || '',
+          session_date: formatDate(typeof entityData.session_date === 'string' ? entityData.session_date : (typeof entityData.date === 'string' ? entityData.date : '')),
+          session_time: formatTime(typeof entityData.session_time === 'string' ? entityData.session_time : (typeof entityData.time === 'string' ? entityData.time : '')),
+          session_location: (() => {
+            const locationValue = typeof entityData.location === 'string' ? entityData.location : '';
+            return locationValue && locationValue.trim() !== '' && locationValue !== 'Studio' ? locationValue : '-';
+          })(),
+          session_notes: typeof entityData.notes === 'string'
+            ? entityData.notes
+            : typeof entityData.session_notes === 'string'
+              ? entityData.session_notes
+              : '',
           
           // Project info
-          project_name: entityData.project_name || entityData.projects?.name || '',
-          project_type: entityData.project_type || '',
+          project_name: typeof entityData.project_name === 'string'
+            ? entityData.project_name
+            : typeof entityData.projects?.name === 'string'
+              ? entityData.projects.name
+              : '',
+          project_type: typeof entityData.project_type === 'string' ? entityData.project_type : '',
           
           // Business info from organization settings
           business_name: orgSettings?.photography_business_name || 'Your Business',
           studio_name: orgSettings?.photography_business_name || 'Your Business',
           
           // Additional fallback mappings for common template variables
-          client_name: entityData.customer_name || entityData.name || entityData.leads?.name || 'Client',
-          client_email: entityData.customer_email || entityData.email || entityData.leads?.email || clientEmail,
-          customer_email: entityData.customer_email || entityData.email || entityData.leads?.email || clientEmail,
+          client_name: resolvedCustomerName,
+          client_email: resolvedCustomerEmail,
+          customer_email: resolvedCustomerEmail,
           
           // Add all entity data for template flexibility (but don't override above mappings)
           ...entityData
@@ -809,13 +1015,18 @@ async function executeSendMessageStep(supabase: any, step: any, execution: any) 
 }
 
 // Execute create reminder step
-async function executeCreateReminderStep(supabase: any, step: any, execution: any) {
-  const { action_config } = step;
-  const { delay_minutes = 60, content = 'Workflow reminder' } = action_config;
+async function executeCreateReminderStep(
+  supabase: GenericSupabaseClient,
+  step: WorkflowStepRecord,
+  execution: WorkflowExecutionRecord
+) {
+  const config = step.action_config;
+  const delayMinutes = getNumber(config, 'delay_minutes') ?? 60;
+  const content = getString(config, 'content') ?? 'Workflow reminder';
 
   // Calculate reminder date/time
   const reminderDate = new Date();
-  reminderDate.setMinutes(reminderDate.getMinutes() + delay_minutes);
+  reminderDate.setMinutes(reminderDate.getMinutes() + delayMinutes);
 
   // Get entity data
   const triggerData = execution.execution_log?.[0]?.trigger_data;
@@ -842,11 +1053,14 @@ async function executeCreateReminderStep(supabase: any, step: any, execution: an
 }
 
 // Execute update status step
-async function executeUpdateStatusStep(supabase: any, step: any, execution: any) {
-  const { action_config } = step;
-  const { new_status_id } = action_config;
+async function executeUpdateStatusStep(
+  supabase: GenericSupabaseClient,
+  step: WorkflowStepRecord,
+  execution: WorkflowExecutionRecord
+) {
+  const newStatusId = getString(step.action_config, 'new_status_id');
 
-  if (!new_status_id) {
+  if (!newStatusId) {
     console.warn('No new_status_id specified for update status step');
     return;
   }
@@ -857,60 +1071,69 @@ async function executeUpdateStatusStep(supabase: any, step: any, execution: any)
 
   const { error } = await supabase
     .from(table)
-    .update({ [statusField]: new_status_id })
+    .update({ [statusField]: newStatusId })
     .eq('id', execution.trigger_entity_id);
 
   if (error) {
     throw new Error(`Failed to update status: ${getErrorMessage(error)}`);
   }
 
-  console.log(`Updated ${execution.trigger_entity_type} status to ${new_status_id}`);
+  console.log(`Updated ${execution.trigger_entity_type} status to ${newStatusId}`);
 }
 
 // Get entity data for template variables
-async function getEntityData(supabase: any, entityType: string, entityId: string, triggerData?: any) {
-  let entityData: any = {};
+async function getEntityData(
+  supabase: GenericSupabaseClient,
+  entityType: string,
+  entityId: string,
+  triggerData?: JsonRecord
+): Promise<EntityData> {
+  let entityData: EntityData = {};
   
   if (entityType === 'session') {
+    const sessionDataRecord = triggerData && isJsonRecord(triggerData.session_data) ? triggerData.session_data : undefined;
+    const leadDataRecord = triggerData && isJsonRecord(triggerData.lead_data) ? triggerData.lead_data : undefined;
+
     // If we have session data from trigger (e.g., from reminder processing), use it first for consistency
-    if (triggerData?.session_data && triggerData?.lead_data) {
+    if (sessionDataRecord && leadDataRecord) {
       console.log('Using session data from trigger_data to ensure consistency');
-      console.log('Trigger session data:', triggerData.session_data);
-      console.log('Trigger lead data:', triggerData.lead_data);
+      console.log('Trigger session data:', sessionDataRecord);
+      console.log('Trigger lead data:', leadDataRecord);
       
       // Validate that the session ID matches what we expect
-      if (triggerData.debug_session_validation) {
-        console.log('Session validation:', triggerData.debug_session_validation);
-        if (triggerData.debug_session_validation.expected_session_id !== entityId) {
+      const validationRecord = triggerData && isJsonRecord(triggerData.debug_session_validation) ? triggerData.debug_session_validation : undefined;
+      if (validationRecord) {
+        console.log('Session validation:', validationRecord);
+        if (validationRecord.expected_session_id !== entityId) {
           console.error(`❌ CRITICAL SESSION ID MISMATCH!`);
-          console.error(`Expected session: ${triggerData.debug_session_validation.expected_session_id}`);
+          console.error(`Expected session: ${validationRecord.expected_session_id}`);
           console.error(`Received entity: ${entityId}`);  
-          console.error(`Reminder type: ${triggerData.debug_session_validation.reminder_type}`);
+          console.error(`Reminder type: ${validationRecord.reminder_type}`);
           console.error(`This would cause wrong session notifications!`);
-          throw new Error(`Session ID mismatch: Expected ${triggerData.debug_session_validation.expected_session_id} but got ${entityId} for ${triggerData.debug_session_validation.reminder_type}`);
+          throw new Error(`Session ID mismatch: Expected ${validationRecord.expected_session_id} but got ${entityId} for ${validationRecord.reminder_type}`);
         }
         
-        console.log(`✅ Session validation passed for ${triggerData.debug_session_validation.reminder_type}`);
-        console.log(`Processing session: ${entityId} (${triggerData.session_data.session_date} ${triggerData.session_data.session_time})`);
+        console.log(`✅ Session validation passed for ${validationRecord.reminder_type}`);
+        console.log(`Processing session: ${entityId} (${sessionDataRecord.session_date} ${sessionDataRecord.session_time})`);
       }
       
       entityData = {
-        session_date: triggerData.session_data.session_date,
-        session_time: triggerData.session_data.session_time,
-        location: triggerData.session_data.location,
-        notes: triggerData.session_data.notes,
-        customer_name: triggerData.lead_data.name,
-        customer_email: triggerData.lead_data.email,
-        customer_phone: triggerData.lead_data.phone || '-',
-        client_email: triggerData.lead_data.email,
+        session_date: getString(sessionDataRecord, 'session_date'),
+        session_time: getString(sessionDataRecord, 'session_time'),
+        location: getString(sessionDataRecord, 'location'),
+        notes: getString(sessionDataRecord, 'notes'),
+        customer_name: getString(leadDataRecord, 'name'),
+        customer_email: getString(leadDataRecord, 'email'),
+        customer_phone: getString(leadDataRecord, 'phone') || '-',
+        client_email: getString(leadDataRecord, 'email'),
         // Add all trigger data
-        ...triggerData.session_data,
-        ...triggerData.lead_data,
+        ...sessionDataRecord,
+        ...leadDataRecord,
         // Map lead data to expected field names
         leads: {
-          name: triggerData.lead_data.name,
-          email: triggerData.lead_data.email,
-          phone: triggerData.lead_data.phone
+          name: getString(leadDataRecord, 'name'),
+          email: getString(leadDataRecord, 'email'),
+          phone: getString(leadDataRecord, 'phone')
         }
       };
       
@@ -945,19 +1168,20 @@ async function getEntityData(supabase: any, entityType: string, entityId: string
         )
       `)
       .eq('id', entityId)
-      .single();
+      .single<SessionRecord>();
 
     // Get lead field values if we have a lead
-    let leadFieldValues = {};
+    let leadFieldValues: Record<string, string> = {};
     if (session?.leads?.id) {
       const { data: fieldValues } = await supabase
         .from('lead_field_values')
         .select('field_key, value')
-        .eq('lead_id', session.leads.id);
+        .eq('lead_id', session.leads.id)
+        .returns<LeadFieldValue[]>();
       
       if (fieldValues) {
-        leadFieldValues = fieldValues.reduce((acc: any, fv: any) => {
-          acc[`lead_${fv.field_key}`] = fv.value || '-';
+        leadFieldValues = fieldValues.reduce<Record<string, string>>((acc, fv) => {
+          acc[`lead_${fv.field_key}`] = fv.value ?? '-';
           return acc;
         }, {});
       }
@@ -997,19 +1221,20 @@ async function getEntityData(supabase: any, entityType: string, entityId: string
         )
       `)
       .eq('id', entityId)
-      .single();
+      .single<ProjectRecord>();
 
     // Get lead field values if we have a lead
-    let leadFieldValues = {};
+    let leadFieldValues: Record<string, string> = {};
     if (project?.leads?.id) {
       const { data: fieldValues } = await supabase
         .from('lead_field_values')
         .select('field_key, value')
-        .eq('lead_id', project.leads.id);
+        .eq('lead_id', project.leads.id)
+        .returns<LeadFieldValue[]>();
       
       if (fieldValues) {
-        leadFieldValues = fieldValues.reduce((acc: any, fv: any) => {
-          acc[`lead_${fv.field_key}`] = fv.value || '-';
+        leadFieldValues = fieldValues.reduce<Record<string, string>>((acc, fv) => {
+          acc[`lead_${fv.field_key}`] = fv.value ?? '-';
           return acc;
         }, {});
       }
@@ -1030,19 +1255,20 @@ async function getEntityData(supabase: any, entityType: string, entityId: string
       .from('leads')
       .select('*')
       .eq('id', entityId)
-      .single();
+      .single<LeadRecord>();
 
     // Get lead field values
-    let leadFieldValues = {};
+    let leadFieldValues: Record<string, string> = {};
     if (lead?.id) {
       const { data: fieldValues } = await supabase
         .from('lead_field_values')
         .select('field_key, value')
-        .eq('lead_id', lead.id);
+        .eq('lead_id', lead.id)
+        .returns<LeadFieldValue[]>();
       
       if (fieldValues) {
-        leadFieldValues = fieldValues.reduce((acc: any, fv: any) => {
-          acc[`lead_${fv.field_key}`] = fv.value || '-';
+        leadFieldValues = fieldValues.reduce<Record<string, string>>((acc, fv) => {
+          acc[`lead_${fv.field_key}`] = fv.value ?? '-';
           return acc;
         }, {});
       }
@@ -1062,39 +1288,53 @@ async function getEntityData(supabase: any, entityType: string, entityId: string
 }
 
 // Evaluate trigger conditions
-function evaluateTriggerConditions(conditions: any, triggerData: any): boolean {
+function evaluateTriggerConditions(
+  conditions: JsonRecord | null | undefined,
+  triggerData: JsonRecord | undefined
+): boolean {
   console.log(`Evaluating conditions:`, JSON.stringify(conditions));
   console.log(`Against trigger data:`, JSON.stringify(triggerData));
-  
+  if (!conditions) {
+    console.log(`No specific conditions found, defaulting to true`);
+    return true;
+  }
+
+  const payload = triggerData ?? {};
+
   // Simple condition evaluation - can be extended
-  if (conditions.status_changed_to) {
-    const result = triggerData.new_status === conditions.status_changed_to;
+  const statusChangedTo = getString(conditions, 'status_changed_to');
+  if (statusChangedTo) {
+    const result = getString(payload, 'new_status') === statusChangedTo;
     console.log(`Status changed to condition: ${result}`);
     return result;
   }
   
-  if (conditions.status_changed_from) {
-    const result = triggerData.old_status === conditions.status_changed_from;
+  const statusChangedFrom = getString(conditions, 'status_changed_from');
+  if (statusChangedFrom) {
+    const result = getString(payload, 'old_status') === statusChangedFrom;
     console.log(`Status changed from condition: ${result}`);
     return result;
   }
 
   // Session reminder conditions - CRITICAL FIX: Strict matching
-  if (conditions.reminder_type) {
-    const result = triggerData.reminder_type === conditions.reminder_type;
-    console.log(`Reminder type condition (${conditions.reminder_type} === ${triggerData.reminder_type}): ${result}`);
+  const reminderType = getString(conditions, 'reminder_type');
+  if (reminderType) {
+    const result = getString(payload, 'reminder_type') === reminderType;
+    console.log(`Reminder type condition (${reminderType} === ${getString(payload, 'reminder_type')}): ${result}`);
     return result;
   }
 
-  if (conditions.reminder_days !== undefined) {
-    const result = triggerData.reminder_days === conditions.reminder_days;
-    console.log(`Reminder days condition (${conditions.reminder_days} === ${triggerData.reminder_days}): ${result}`);
+  const reminderDays = getNumber(conditions, 'reminder_days');
+  if (typeof reminderDays === 'number') {
+    const result = getNumber(payload, 'reminder_days') === reminderDays;
+    console.log(`Reminder days condition (${reminderDays} === ${getNumber(payload, 'reminder_days')}): ${result}`);
     return result;
   }
 
-  if (conditions.reminder_hours !== undefined) {
-    const result = triggerData.reminder_hours === conditions.reminder_hours;
-    console.log(`Reminder hours condition (${conditions.reminder_hours} === ${triggerData.reminder_hours}): ${result}`);
+  const reminderHours = getNumber(conditions, 'reminder_hours');
+  if (typeof reminderHours === 'number') {
+    const result = getNumber(payload, 'reminder_hours') === reminderHours;
+    console.log(`Reminder hours condition (${reminderHours} === ${getNumber(payload, 'reminder_hours')}): ${result}`);
     return result;
   }
 
@@ -1104,15 +1344,20 @@ function evaluateTriggerConditions(conditions: any, triggerData: any): boolean {
 }
 
 // Evaluate step conditions
-function evaluateStepConditions(conditions: any, execution: any): boolean {
+function evaluateStepConditions(conditions: JsonRecord | null | undefined, execution: WorkflowExecutionRecord): boolean {
   // Simple condition evaluation - can be extended
   // For now, just return true
   return true;
 }
 
 // Update execution status
-async function updateExecutionStatus(supabase: any, executionId: string, status: string, message?: string) {
-  const updates: any = { status };
+async function updateExecutionStatus(
+  supabase: GenericSupabaseClient,
+  executionId: string,
+  status: string,
+  message?: string
+) {
+  const updates: JsonRecord = { status };
   
   if (status === 'completed' || status === 'failed') {
     updates.completed_at = new Date().toISOString();

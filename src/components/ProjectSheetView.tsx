@@ -14,6 +14,7 @@ import { ProjectTodoListEnhanced } from "./ProjectTodoListEnhanced";
 import { ProjectServicesSection } from "./ProjectServicesSection";
 import { SessionsSection } from "./SessionsSection";
 import { ProjectStagePipeline } from "./ProjectStagePipeline";
+import { ProjectStatusBadge } from "./ProjectStatusBadge";
 import { SimpleProjectTypeSelect } from "./SimpleProjectTypeSelect";
 import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
@@ -537,8 +538,8 @@ export function LegacyProjectSheetView({
       <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {projectTypeLabel}
       </span>
-      <span className="flex items-center gap-2 text-foreground">
-        <span className="truncate">{projectNameDisplay}</span>
+      <span className="flex flex-wrap items-center gap-2 text-foreground">
+        <span className="break-words text-pretty leading-tight">{projectNameDisplay}</span>
       </span>
     </span>
   );
@@ -559,22 +560,73 @@ export function LegacyProjectSheetView({
       )
     : undefined;
 
-  const stagePipeline = (
-    <ProjectStagePipeline
-      projectId={project.id}
-      currentStatusId={localStatusId || undefined}
-      onStatusChange={() => {
-        onProjectUpdated();
-      }}
-      editable={!isArchived}
-    />
+  const desktopStatusControls = (
+    <div className="hidden w-full items-center gap-3 sm:flex">
+      <ProjectStatusBadge
+        projectId={project.id}
+        currentStatusId={localStatusId || undefined}
+        onStatusChange={() => {
+          onProjectUpdated();
+        }}
+        editable={!isArchived}
+        size="sm"
+        className="h-9 min-w-[160px]"
+      />
+      <div className="flex-1">
+        <ProjectStagePipeline
+          projectId={project.id}
+          currentStatusId={localStatusId || undefined}
+          onStatusChange={() => {
+            onProjectUpdated();
+          }}
+          editable={!isArchived}
+          className="h-9"
+        />
+      </div>
+    </div>
   );
 
-  const headerBanner = (
-    <div className="space-y-4">
-      {stagePipeline}
-      {archivedBanner}
-    </div>
+  const headerBanner = !isMobile
+    ? (
+        <div className="space-y-4">
+          {desktopStatusControls}
+          {archivedBanner}
+        </div>
+      )
+    : archivedBanner;
+
+  const moreActionsButton = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="min-w-[120px] justify-center gap-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:px-3"
+        >
+          <span>{tForms('project_sheet.more')}</span>
+          <ChevronDown className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
+        <DropdownMenuItem role="menuitem" onSelect={() => setIsEditing(true)}>
+          <Pencil className="mr-2 h-4 w-4" />
+          <span>{tForms('project_sheet.edit_project')}</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem role="menuitem" onSelect={handleArchiveAction}>
+          {isArchived ? (
+            <>
+              <ArchiveRestore className="mr-2 h-4 w-4" />
+              <span>{tForms('project_sheet.restore_project')}</span>
+            </>
+          ) : (
+            <>
+              <Archive className="mr-2 h-4 w-4" />
+              <span>{tForms('project_sheet.archive_project')}</span>
+            </>
+          )}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 
   const headerActions = isEditing ? (
@@ -617,37 +669,25 @@ export function LegacyProjectSheetView({
           <span className="text-sm">{tForms('project_sheet.full_details')}</span>
         </Button>
       )}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-center gap-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:w-auto sm:px-3"
-          >
-            <span>{tForms('project_sheet.more')}</span>
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
-          <DropdownMenuItem role="menuitem" onSelect={() => setIsEditing(true)}>
-            <Pencil className="mr-2 h-4 w-4" />
-            <span>{tForms('project_sheet.edit_project')}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem role="menuitem" onSelect={handleArchiveAction}>
-            {isArchived ? (
-              <>
-                <ArchiveRestore className="mr-2 h-4 w-4" />
-                <span>{tForms('project_sheet.restore_project')}</span>
-              </>
-            ) : (
-              <>
-                <Archive className="mr-2 h-4 w-4" />
-                <span>{tForms('project_sheet.archive_project')}</span>
-              </>
-            )}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {isMobile ? (
+        <div className="flex w-full flex-wrap items-center gap-2">
+          <div className="flex-1 min-w-[160px]">
+            <ProjectStatusBadge
+              projectId={project.id}
+              currentStatusId={localStatusId || undefined}
+              onStatusChange={() => {
+                onProjectUpdated();
+              }}
+              editable={!isArchived}
+              size="sm"
+              className="w-full justify-center"
+            />
+          </div>
+          {moreActionsButton}
+        </div>
+      ) : (
+        moreActionsButton
+      )}
       <Button
         variant="ghost"
         size="sm"
@@ -722,6 +762,7 @@ export function LegacyProjectSheetView({
                 <UnifiedClientDetails 
                   lead={lead} 
                   showClickableNames={true}
+                  defaultExpanded={false}
                   onLeadUpdated={() => {
                     fetchLead();
                     onProjectUpdated();

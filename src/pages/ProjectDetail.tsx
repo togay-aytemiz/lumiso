@@ -12,6 +12,7 @@ import { ProjectTodoListEnhanced } from "@/components/ProjectTodoListEnhanced";
 import { ProjectServicesSection } from "@/components/ProjectServicesSection";
 import { SessionsSection } from "@/components/SessionsSection";
 import { ProjectStagePipeline } from "@/components/ProjectStagePipeline";
+import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { SimpleProjectTypeSelect } from "@/components/SimpleProjectTypeSelect";
 import { ProjectPaymentsSection } from "@/components/ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
@@ -26,6 +27,7 @@ import { EntityHeader } from "@/components/EntityHeader";
 import { buildProjectSummaryItems } from "@/lib/projects/buildProjectSummaryItems";
 import { useProjectHeaderSummary } from "@/hooks/useProjectHeaderSummary";
 import { useProjectSessionsSummary } from "@/hooks/useProjectSessionsSummary";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Project {
   id: string;
@@ -65,6 +67,7 @@ export default function ProjectDetail() {
   const { toast } = useToast();
   const { t } = useFormsTranslation();
   const { t: tPages } = useTranslation("pages");
+  const isMobile = useIsMobile();
 
   const [project, setProject] = useState<Project | null>(null);
   const [lead, setLead] = useState<Lead | null>(null);
@@ -482,8 +485,8 @@ export default function ProjectDetail() {
       <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {projectTypeLabel}
       </span>
-      <span className="flex items-center gap-2 text-foreground">
-        <span className="truncate">{projectNameDisplay}</span>
+      <span className="flex flex-wrap items-center gap-2 text-foreground">
+        <span className="break-words text-pretty leading-tight">{projectNameDisplay}</span>
       </span>
     </span>
   );
@@ -503,6 +506,36 @@ export default function ProjectDetail() {
         </div>
       )
     : undefined;
+
+  const moreActionsButton = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="min-w-[120px] justify-center gap-2">
+          <span>{t("project_sheet.more")}</span>
+          <ChevronDown className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" side="bottom">
+        <DropdownMenuItem onSelect={() => setIsEditing(true)}>
+          <Pencil className="mr-2 h-4 w-4" />
+          <span>{t("project_sheet.edit_project")}</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={handleArchiveAction}>
+          {isArchived ? (
+            <>
+              <ArchiveRestore className="mr-2 h-4 w-4" />
+              <span>{t("project_sheet.restore_project")}</span>
+            </>
+          ) : (
+            <>
+              <Archive className="mr-2 h-4 w-4" />
+              <span>{t("project_sheet.archive_project")}</span>
+            </>
+          )}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   const headerActions = isEditing ? (
     <>
@@ -532,50 +565,55 @@ export default function ProjectDetail() {
       </Button>
     </>
   ) : (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <span>{t("project_sheet.more")}</span>
-          <ChevronDown className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" side="bottom">
-        <DropdownMenuItem onSelect={() => setIsEditing(true)}>
-          <Pencil className="mr-2 h-4 w-4" />
-          <span>{t("project_sheet.edit_project")}</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={handleArchiveAction}>
-          {isArchived ? (
-            <>
-              <ArchiveRestore className="mr-2 h-4 w-4" />
-              <span>{t("project_sheet.restore_project")}</span>
-            </>
-          ) : (
-            <>
-              <Archive className="mr-2 h-4 w-4" />
-              <span>{t("project_sheet.archive_project")}</span>
-            </>
-          )}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    isMobile ? (
+      <div className="flex w-full flex-wrap items-center gap-2">
+        <div className="flex-1 min-w-[160px]">
+          <ProjectStatusBadge
+            projectId={project.id}
+            currentStatusId={localStatusId || undefined}
+            onStatusChange={handleStatusChange}
+            editable={!isArchived}
+            size="sm"
+            className="w-full justify-center"
+          />
+        </div>
+        {moreActionsButton}
+      </div>
+    ) : (
+      moreActionsButton
+    )
   );
 
-  const stagePipeline = (
-    <ProjectStagePipeline
-      projectId={project.id}
-      currentStatusId={localStatusId || undefined}
-      onStatusChange={handleStatusChange}
-      editable={!isArchived}
-    />
-  );
-
-  const headerBanner = (
-    <div className="space-y-4">
-      {stagePipeline}
-      {archivedBanner}
+  const desktopStatusControls = (
+    <div className="hidden w-full items-center gap-3 sm:flex">
+      <ProjectStatusBadge
+        projectId={project.id}
+        currentStatusId={localStatusId || undefined}
+        onStatusChange={handleStatusChange}
+        editable={!isArchived}
+        size="sm"
+        className="h-9 min-w-[160px]"
+      />
+      <div className="flex-1">
+        <ProjectStagePipeline
+          projectId={project.id}
+          currentStatusId={localStatusId || undefined}
+          onStatusChange={handleStatusChange}
+          editable={!isArchived}
+          className="h-9"
+        />
+      </div>
     </div>
   );
+
+  const headerBanner = !isMobile
+    ? (
+        <div className="space-y-4">
+          {desktopStatusControls}
+          {archivedBanner}
+        </div>
+      )
+    : archivedBanner;
 
   return (
     <div className="w-full min-h-screen p-6">
@@ -633,6 +671,7 @@ export default function ProjectDetail() {
                 <UnifiedClientDetails 
                   lead={lead} 
                   showClickableNames={true}
+                  defaultExpanded={false}
                   onLeadUpdated={() => {
                     fetchLead();
                   }} 

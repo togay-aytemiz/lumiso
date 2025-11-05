@@ -91,7 +91,7 @@ export function EntityHeader({
                 <h1
                   className={cn(
                     "text-xl font-semibold leading-tight text-foreground sm:text-2xl",
-                    isTitleString && "truncate"
+                    isTitleString && "break-words text-pretty"
                   )}
                 >
                   {title}

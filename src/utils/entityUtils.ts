@@ -7,72 +7,89 @@ import { VALIDATION_MESSAGES, DATE_FILTER_OPTIONS } from '@/constants/entityCons
 /**
  * Generic sorting function for entity lists
  */
-export function sortEntities<T extends Record<string, any>>(
-  entities: T[],
+export function sortEntities<T extends Record<string, unknown>>(
+  entities: readonly T[],
   field: keyof T,
   direction: 'asc' | 'desc',
   customComparator?: (a: T[keyof T], b: T[keyof T]) => number
 ): T[] {
-  return [...entities].sort((a, b) => {
-    let aValue = a[field];
-    let bValue = b[field];
+  const multiplier = direction === 'asc' ? 1 : -1;
 
-    // Use custom comparator if provided
+  const applyDirection = (value: number) => {
+    if (value === 0) {
+      return 0;
+    }
+    return value > 0 ? multiplier : -multiplier;
+  };
+
+  const compareNumbers = (first: number, second: number) =>
+    applyDirection(first - second);
+
+  return [...entities].sort((entityA, entityB) => {
+    const aValue = entityA[field];
+    const bValue = entityB[field];
+
     if (customComparator) {
       const result = customComparator(aValue, bValue);
-      return direction === 'asc' ? result : -result;
+      if (result === 0) {
+        return 0;
+      }
+      return multiplier * (result > 0 ? 1 : -1);
     }
 
-    // Handle null/undefined values
-    if (aValue == null && bValue == null) return 0;
-    if (aValue == null) return direction === 'asc' ? -1 : 1;
-    if (bValue == null) return direction === 'asc' ? 1 : -1;
+    if (aValue == null && bValue == null) {
+      return 0;
+    }
+    if (aValue == null) {
+      return -multiplier;
+    }
+    if (bValue == null) {
+      return multiplier;
+    }
 
-    // Handle date strings
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return compareNumbers(aValue, bValue);
+    }
+
     if (typeof aValue === 'string' && typeof bValue === 'string') {
       const aDate = new Date(aValue);
       const bDate = new Date(bValue);
-      
+
       if (isValid(aDate) && isValid(bDate)) {
-        aValue = aDate.getTime() as any;
-        bValue = bDate.getTime() as any;
-      } else {
-        // Handle as strings
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
+        return compareNumbers(aDate.getTime(), bDate.getTime());
       }
+
+      const stringComparison = aValue.localeCompare(bValue);
+      return multiplier * stringComparison;
     }
 
-    // Handle numbers
-    if (typeof aValue === 'number' && typeof bValue === 'number') {
-      return direction === 'asc' ? aValue - bValue : bValue - aValue;
+    if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
+      return compareNumbers(Number(aValue), Number(bValue));
     }
 
-    // Handle strings
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      const result = aValue.localeCompare(bValue);
-      return direction === 'asc' ? result : -result;
-    }
-
-    // Fallback comparison
-    if (aValue < bValue) return direction === 'asc' ? -1 : 1;
-    if (aValue > bValue) return direction === 'asc' ? 1 : -1;
-    return 0;
+    const aString = String(aValue);
+    const bString = String(bValue);
+    const fallbackComparison = aString.localeCompare(bString);
+    return multiplier * fallbackComparison;
   });
 }
 
 /**
  * Generic filtering function for entity lists
  */
-export function filterEntities<T extends Record<string, any>>(
-  entities: T[],
-  filters: Record<string, any>,
+export function filterEntities<T extends Record<string, unknown>>(
+  entities: readonly T[],
+  filters: Partial<Record<string, unknown>>,
   searchableFields: (keyof T)[] = []
 ): T[] {
   return entities.filter(entity => {
     // Apply specific field filters
     for (const [key, value] of Object.entries(filters)) {
-      if (value === undefined || value === null || value === '' || value === 'all') {
+      if (
+        value === undefined ||
+        value === null ||
+        (typeof value === 'string' && (value === '' || value === 'all'))
+      ) {
         continue;
       }
 
@@ -80,7 +97,10 @@ export function filterEntities<T extends Record<string, any>>(
         const searchTerm = String(value).toLowerCase();
         const matchesSearch = searchableFields.some(field => {
           const fieldValue = entity[field];
-          return fieldValue && String(fieldValue).toLowerCase().includes(searchTerm);
+          if (fieldValue === undefined || fieldValue === null) {
+            return false;
+          }
+          return String(fieldValue).toLowerCase().includes(searchTerm);
         });
         if (!matchesSearch) return false;
       } else if (entity[key] !== value) {
@@ -105,26 +125,30 @@ export function getDateRangeForFilter(filter: string): { start: Date; end: Date 
       return { start: new Date(0), end: startOfToday };
     case 'today':
       return { start: startOfToday, end: endOfToday };
-    case 'tomorrow':
+    case 'tomorrow': {
       const tomorrow = new Date(today);
       tomorrow.setDate(today.getDate() + 1);
       const startOfTomorrow = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate());
       const endOfTomorrow = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate() + 1);
       return { start: startOfTomorrow, end: endOfTomorrow };
+    }
     case 'thisweek':
       return getWeekRange(today);
-    case 'nextweek':
+    case 'nextweek': {
       const nextWeekDate = new Date(today);
       nextWeekDate.setDate(today.getDate() + 7);
       return getWeekRange(nextWeekDate);
-    case 'thismonth':
+    }
+    case 'thismonth': {
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
       return { start: startOfMonth, end: endOfMonth };
-    case 'nextmonth':
+    }
+    case 'nextmonth': {
       const nextMonthStart = new Date(today.getFullYear(), today.getMonth() + 1, 1);
       const nextMonthEnd = new Date(today.getFullYear(), today.getMonth() + 2, 1);
       return { start: nextMonthStart, end: nextMonthEnd };
+    }
     default:
       return null;
   }
@@ -151,7 +175,7 @@ function getWeekRange(date: Date): { start: Date; end: Date } {
  * Validate form data
  */
 export function validateEntityData(
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   rules: Record<string, ValidationRule[]>
 ): Record<string, string> {
   const errors: Record<string, string> = {};
@@ -174,63 +198,70 @@ export function validateEntityData(
 /**
  * Validation rule type
  */
-export type ValidationRule = (value: any) => string | null;
+export type ValidationRule = (value: unknown) => string | null;
 
 /**
  * Common validation rules
  */
 export const ValidationRules = {
-  required: (value: any): string | null => {
-    if (value === undefined || value === null || value === '') {
+  required: (value: unknown): string | null => {
+    if (
+      value === undefined ||
+      value === null ||
+      (typeof value === 'string' && value.trim() === '')
+    ) {
       return VALIDATION_MESSAGES.REQUIRED;
     }
     return null;
   },
 
-  email: (value: string): string | null => {
-    if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+  email: (value: unknown): string | null => {
+    if (typeof value === 'string' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
       return VALIDATION_MESSAGES.INVALID_EMAIL;
     }
     return null;
   },
 
-  phone: (value: string): string | null => {
-    if (value && !/^[\+]?[\s\-\(\)]?[\d\s\-\(\)]{10,}$/.test(value)) {
+  phone: (value: unknown): string | null => {
+    if (typeof value === 'string' && value && !/^[+]?[\s()-]?[\d\s()-]{10,}$/.test(value)) {
       return VALIDATION_MESSAGES.INVALID_PHONE;
     }
     return null;
   },
 
-  date: (value: string): string | null => {
-    if (value && !isValid(new Date(value))) {
+  date: (value: unknown): string | null => {
+    if (
+      (typeof value === 'string' || value instanceof Date || typeof value === 'number') &&
+      !isValid(new Date(value))
+    ) {
       return VALIDATION_MESSAGES.INVALID_DATE;
     }
     return null;
   },
 
-  time: (value: string): string | null => {
-    if (value && !/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
+  time: (value: unknown): string | null => {
+    if (typeof value === 'string' && value && !/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
       return VALIDATION_MESSAGES.INVALID_TIME;
     }
     return null;
   },
 
-  minLength: (min: number) => (value: string): string | null => {
-    if (value && value.length < min) {
+  minLength: (min: number) => (value: unknown): string | null => {
+    if (typeof value === 'string' && value.length < min) {
       return VALIDATION_MESSAGES.MIN_LENGTH(min);
     }
     return null;
   },
 
-  maxLength: (max: number) => (value: string): string | null => {
-    if (value && value.length > max) {
+  maxLength: (max: number) => (value: unknown): string | null => {
+    if (typeof value === 'string' && value.length > max) {
       return VALIDATION_MESSAGES.MAX_LENGTH(max);
     }
     return null;
   },
 
-  futureDate: (value: string): string | null => {
-    if (value) {
+  futureDate: (value: unknown): string | null => {
+    if (typeof value === 'string' || value instanceof Date || typeof value === 'number') {
       const date = new Date(value);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -241,8 +272,8 @@ export const ValidationRules = {
     return null;
   },
 
-  pastDate: (value: string): string | null => {
-    if (value) {
+  pastDate: (value: unknown): string | null => {
+    if (typeof value === 'string' || value instanceof Date || typeof value === 'number') {
       const date = new Date(value);
       const today = new Date();
       today.setHours(23, 59, 59, 999);
@@ -257,33 +288,50 @@ export const ValidationRules = {
 /**
  * Format entity data for display
  */
-export function formatEntityValue(value: any, type: 'date' | 'time' | 'currency' | 'phone' | 'email' | 'text'): string {
-  if (value == null || value === '') return '-';
+export function formatEntityValue(
+  value: unknown,
+  type: 'date' | 'time' | 'currency' | 'phone' | 'email' | 'text'
+): string {
+  if (value === null || value === undefined) return '-';
+  if (typeof value === 'string' && value === '') return '-';
 
   switch (type) {
-    case 'date':
+    case 'date': {
       try {
-        const date = typeof value === 'string' ? parseISO(value) : value;
-        return isValid(date) ? format(date, 'MMM dd, yyyy') : '-';
+        if (typeof value === 'string') {
+          const parsed = parseISO(value);
+          return isValid(parsed) ? format(parsed, 'MMM dd, yyyy') : '-';
+        }
+        if (value instanceof Date) {
+          return isValid(value) ? format(value, 'MMM dd, yyyy') : '-';
+        }
+        return '-';
+      }
+      catch {
+        return '-';
+      }
+    }
+
+    case 'time': {
+      try {
+        if (typeof value !== 'string') {
+          return '-';
+        }
+        return format(new Date(`2000-01-01T${value}`), 'h:mm a');
       } catch {
         return '-';
       }
+    }
 
-    case 'time':
-      try {
-        return format(new Date(`2000-01-01T${value}`), 'h:mm a');
-      } catch {
-        return value;
-      }
-
-    case 'currency':
-      const num = Number(value);
+    case 'currency': {
+      const num = typeof value === 'number' ? value : Number(value);
       return isNaN(num) ? '-' : new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
       }).format(num);
+    }
 
-    case 'phone':
+    case 'phone': {
       if (typeof value === 'string' && value.length >= 10) {
         // Simple phone formatting for US numbers
         const digits = value.replace(/\D/g, '');
@@ -294,10 +342,11 @@ export function formatEntityValue(value: any, type: 'date' | 'time' | 'currency'
           return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
         }
       }
-      return value;
+      return typeof value === 'string' ? value : String(value);
+    }
 
     case 'email':
-      return value.toLowerCase();
+      return typeof value === 'string' ? value.toLowerCase() : '-';
 
     case 'text':
     default:
@@ -308,13 +357,15 @@ export function formatEntityValue(value: any, type: 'date' | 'time' | 'currency'
 /**
  * Debounce function for search inputs
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
   return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
+    if (timeout) {
+      clearTimeout(timeout);
+    }
     timeout = setTimeout(() => func(...args), wait);
   };
 }
@@ -322,9 +373,9 @@ export function debounce<T extends (...args: any[]) => any>(
 /**
  * Get entity count with filters
  */
-export function getEntityCountForFilter<T extends Record<string, any>>(
-  entities: T[],
-  filterKey: string,
+export function getEntityCountForFilter<T extends Record<string, unknown>>(
+  entities: readonly T[],
+  filterKey: keyof T | string,
   filterValue: string,
   dateField?: keyof T
 ): number {
@@ -335,12 +386,23 @@ export function getEntityCountForFilter<T extends Record<string, any>>(
     if (!dateRange) return 0;
 
     return entities.filter(entity => {
-      const entityDate = new Date(entity[dateField]);
-      return entityDate >= dateRange.start && entityDate < dateRange.end;
+      const rawValue = entity[dateField];
+      if (
+        typeof rawValue !== 'string' &&
+        typeof rawValue !== 'number' &&
+        !(rawValue instanceof Date)
+      ) {
+        return false;
+      }
+      const entityDate = new Date(rawValue);
+      return isValid(entityDate) && entityDate >= dateRange.start && entityDate < dateRange.end;
     }).length;
   }
 
-  return entities.filter(entity => entity[filterKey] === filterValue).length;
+  return entities.filter(entity => {
+    const entityValue = entity[filterKey as keyof T];
+    return entityValue === filterValue;
+  }).length;
 }
 
 /**

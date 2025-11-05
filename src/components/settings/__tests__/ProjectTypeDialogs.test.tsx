@@ -1,12 +1,13 @@
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode, ButtonHTMLAttributes } from "react";
 import { act, fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import { AddProjectTypeDialog, EditProjectTypeDialog } from "../ProjectTypeDialogs";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
+import type { Database } from "@/integrations/supabase/types";
 
 const supabaseAuthGetUserMock = jest.fn();
-const supabaseFromMock = jest.fn();
+const supabaseFromMock = jest.fn<unknown, [string]>();
 const getUserOrganizationIdMock = jest.fn();
 const toastMock = jest.fn();
-const useModalNavigationMock = jest.fn();
 
 jest.mock("@/integrations/supabase/client", () => ({
   supabase: {
@@ -26,18 +27,18 @@ jest.mock("@/hooks/use-toast", () => ({
 }));
 
 jest.mock("@/hooks/useModalNavigation", () => ({
-  useModalNavigation: (...args: unknown[]) => useModalNavigationMock(...args),
+  useModalNavigation: jest.fn(),
 }));
 
 jest.mock("@/components/ui/app-sheet-modal", () => ({
-  AppSheetModal: ({ title, isOpen, children, footerActions }: any) => {
+  AppSheetModal: ({ title, isOpen, children, footerActions }: AppSheetModalProps) => {
     if (!isOpen) return null;
     return (
       <div data-testid="app-sheet-modal">
         <h2>{title}</h2>
         <div>{children}</div>
         <div>
-          {footerActions?.map((action: any) => (
+          {footerActions?.map((action) => (
             <button
               key={action.label}
               type="button"
@@ -54,8 +55,8 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
 }));
 
 jest.mock("@/components/ui/button", () => ({
-  Button: ({ children, onClick, type = "button" }: any) => (
-    <button type={type} onClick={onClick}>
+  Button: ({ children, type = "button", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button type={type} {...props}>
       {children}
     </button>
   ),
@@ -109,23 +110,77 @@ jest.mock("react-i18next", () => ({
   }),
 }));
 
-type FilterRecord = { method: string; args: any[] };
+interface FooterActionMock {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}
 
-const createThenableBuilder = (result: any) => {
-  const builder: any = {
-    filters: [] as FilterRecord[],
-    eq: jest.fn((...args: any[]) => {
-      builder.filters.push({ method: "eq", args });
-      return builder;
-    }),
-    neq: jest.fn((...args: any[]) => {
-      builder.filters.push({ method: "neq", args });
-      return builder;
-    }),
-    then: (resolve: (value: any) => any) => resolve(result),
+interface AppSheetModalProps {
+  title: string;
+  isOpen: boolean;
+  children?: ReactNode;
+  footerActions?: FooterActionMock[];
+}
+
+interface ModalNavigationMockArgs {
+  onDiscard?: () => void;
+  onSaveAndExit?: () => Promise<void>;
+}
+
+interface ModalNavigationMockReturn {
+  showGuard: boolean;
+  message: string;
+  handleModalClose: () => boolean;
+  handleDiscardChanges: () => void;
+  handleStayOnModal: () => void;
+  handleSaveAndExit: () => void;
+}
+
+type FilterRecord = { method: "eq" | "neq"; args: [string, unknown] };
+
+interface FilterableBuilder<T> {
+  filters: FilterRecord[];
+  eq: jest.Mock<FilterableBuilder<T>, [string, unknown]>;
+  neq: jest.Mock<FilterableBuilder<T>, [string, unknown]>;
+  then: (resolve: (value: T) => unknown) => unknown;
+}
+
+const createThenableBuilder = <T,>(result: T): FilterableBuilder<T> => {
+  const builder: Partial<FilterableBuilder<T>> = {
+    filters: [],
   };
-  return builder;
+
+  builder.eq = jest.fn((field: string, value: unknown) => {
+    builder.filters!.push({ method: "eq", args: [field, value] });
+    return builder as FilterableBuilder<T>;
+  });
+
+  builder.neq = jest.fn((field: string, value: unknown) => {
+    builder.filters!.push({ method: "neq", args: [field, value] });
+    return builder as FilterableBuilder<T>;
+  });
+
+  builder.then = (resolve: (value: T) => unknown) => resolve(result);
+
+  return builder as FilterableBuilder<T>;
 };
+
+type ProjectTypeRow = Database["public"]["Tables"]["project_types"]["Row"];
+type ProjectTypeInsert = Database["public"]["Tables"]["project_types"]["Insert"];
+type ProjectTypeUpdate = Database["public"]["Tables"]["project_types"]["Update"];
+
+type LimitMock = jest.Mock<Promise<{ data: ProjectTypeRow[]; error: null }>, [number]>;
+type OrderMock = jest.Mock<{ limit: LimitMock }, [string, { ascending?: boolean }?]>;
+type SelectEqMock = jest.Mock<{ order: OrderMock }, [string, unknown]>;
+type SelectMock = jest.Mock<{ eq: SelectEqMock }, [string?]>;
+
+interface ProjectTypesTableMock {
+  select: SelectMock;
+  insert: jest.Mock<Promise<{ error: unknown }>, [ProjectTypeInsert]>;
+  update: jest.Mock<FilterableBuilder<{ error: unknown }>, [ProjectTypeUpdate]>;
+  delete: jest.Mock<FilterableBuilder<{ error: unknown }>, []>;
+}
 
 const createProjectTypesTable = ({
   existingSort = 2,
@@ -135,35 +190,44 @@ const createProjectTypesTable = ({
 }: {
   existingSort?: number | null;
   insertError?: unknown;
-  updateResult?: any;
-  deleteResult?: any;
+  updateResult?: { error: unknown };
+  deleteResult?: { error: unknown };
 }) => {
-  const limitMock = jest.fn(async () => ({
+  const limitMock: LimitMock = jest.fn(async () => ({
     data: existingSort === null ? [] : [{ sort_order: existingSort }],
     error: null,
   }));
-  const orderMock = jest.fn(() => ({ limit: limitMock }));
-  const selectEqMock = jest.fn(() => ({ order: orderMock }));
-  const selectMock = jest.fn(() => ({ eq: selectEqMock }));
+  const orderMock: OrderMock = jest.fn(() => ({ limit: limitMock }));
+  const selectEqMock: SelectEqMock = jest.fn(() => ({ order: orderMock }));
+  const selectMock: SelectMock = jest.fn(() => ({ eq: selectEqMock }));
 
-  const insertMock = jest.fn(async () => ({ error: insertError }));
+  const insertMock: ProjectTypesTableMock["insert"] = jest.fn(async (payload) => ({
+    error: insertError,
+  }));
 
-  const updateCalls: Array<{ payload: any; builder: any }> = [];
-  const updateMock = jest.fn((payload: any) => {
-    const builder = createThenableBuilder(updateResult);
+  const updateCalls: Array<{ payload: ProjectTypeUpdate; builder: FilterableBuilder<{ error: unknown }> }> = [];
+  const updateMock: ProjectTypesTableMock["update"] = jest.fn((payload) => {
+    const builder = createThenableBuilder(updateResult ?? { error: null });
     updateCalls.push({ payload, builder });
     return builder;
   });
 
-  const deleteCalls: Array<{ builder: any }> = [];
-  const deleteMock = jest.fn(() => {
-    const builder = createThenableBuilder(deleteResult);
+  const deleteCalls: Array<{ builder: FilterableBuilder<{ error: unknown }> }> = [];
+  const deleteMock: ProjectTypesTableMock["delete"] = jest.fn(() => {
+    const builder = createThenableBuilder(deleteResult ?? { error: null });
     deleteCalls.push({ builder });
     return builder;
   });
 
+  const builder = {
+    select: selectMock,
+    insert: insertMock,
+    update: updateMock,
+    delete: deleteMock,
+  } as ProjectTypesTableMock;
+
   return {
-    builder: { select: selectMock, insert: insertMock, update: updateMock, delete: deleteMock },
+    builder,
     selectMock,
     selectEqMock,
     orderMock,
@@ -184,13 +248,17 @@ describe("ProjectTypeDialogs", () => {
       error: null,
     });
     getUserOrganizationIdMock.mockResolvedValue("org-123");
-    useModalNavigationMock.mockImplementation(({ onDiscard, onSaveAndExit }: any) => ({
+    mockUseModalNavigation.mockImplementation(({ onDiscard, onSaveAndExit }: ModalNavigationMockArgs = {}) => ({
       showGuard: false,
       message: "",
       handleModalClose: () => true,
-      handleDiscardChanges: () => onDiscard?.(),
-      handleStayOnModal: jest.fn(),
-      handleSaveAndExit: () => onSaveAndExit?.(),
+      handleDiscardChanges: () => {
+        onDiscard?.();
+      },
+      handleStayOnModal: () => {},
+      handleSaveAndExit: () => {
+        void onSaveAndExit?.();
+      },
     }));
   });
 
@@ -388,3 +456,5 @@ describe("ProjectTypeDialogs", () => {
     );
   });
 });
+
+const mockUseModalNavigation = useModalNavigation as jest.MockedFunction<typeof useModalNavigation>;

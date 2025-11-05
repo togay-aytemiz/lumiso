@@ -1,9 +1,46 @@
+import type { ComponentProps, ReactNode, SelectHTMLAttributes } from "react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import { EditPaymentDialog } from "../EditPaymentDialog";
 import { mockSupabaseClient } from "@/utils/testUtils";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
+import type { Database } from "@/integrations/supabase/types";
+
+interface FooterActionMock {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}
+
+interface AppSheetModalProps {
+  title: string;
+  dirty?: boolean;
+  children?: ReactNode;
+  footerActions?: FooterActionMock[];
+  onDirtyClose?: () => void;
+}
+
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  onValueChange?: (value: string) => void;
+  children?: ReactNode;
+}
+
+interface SelectItemProps {
+  value: string;
+  children?: ReactNode;
+}
+
+interface NavigationGuardDialogProps {
+  open: boolean;
+  message?: string;
+  onDiscard: () => void;
+  onStay: () => void;
+  onSaveAndExit?: () => void;
+}
+
+type PaymentRow = Database["public"]["Tables"]["payments"]["Row"];
+type PaymentUpdatePayload = Database["public"]["Tables"]["payments"]["Update"];
 
 jest.mock("@/integrations/supabase/client", () => ({
   supabase: mockSupabaseClient,
@@ -28,10 +65,10 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
     children,
     footerActions = [],
     onDirtyClose,
-  }: any) => (
+  }: AppSheetModalProps) => (
     <div data-testid="app-sheet-modal" data-title={title} data-dirty={dirty ? "dirty" : "clean"}>
       {children}
-      {footerActions.map((action: any, index: number) => (
+      {footerActions.map((action, index) => (
         <button
           key={index}
           data-testid={`footer-action-${index}`}
@@ -49,39 +86,45 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
 }));
 
 jest.mock("@/components/ui/select", () => ({
-  Select: ({ value, onValueChange, children }: any) => (
-    <select data-testid="status-select" value={value} onChange={(event) => onValueChange(event.target.value)}>
+  Select: ({ value, onValueChange, children, ...rest }: SelectProps) => (
+    <select
+      data-testid="status-select"
+      value={value}
+      onChange={(event) => onValueChange?.(event.target.value)}
+      {...rest}
+    >
       {children}
     </select>
   ),
   SelectTrigger: () => null,
   SelectValue: () => null,
-  SelectContent: ({ children }: any) => <>{children}</>,
-  SelectItem: ({ value, children }: any) => (
+  SelectContent: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  SelectItem: ({ value, children }: SelectItemProps) => (
     <option value={value}>{typeof children === "string" ? children : value}</option>
   ),
 }));
 
 jest.mock("@/components/ui/popover", () => ({
-  Popover: ({ children }: any) => <div>{children}</div>,
-  PopoverTrigger: ({ children }: any) => <div>{children}</div>,
-  PopoverContent: ({ children }: any) => <div>{children}</div>,
+  Popover: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  PopoverTrigger: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  PopoverContent: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
 }));
 
 jest.mock("../settings/NavigationGuardDialog", () => ({
-  NavigationGuardDialog: ({ open, message, onDiscard, onStay }: any) =>
+  NavigationGuardDialog: ({ open, message, onDiscard, onStay, onSaveAndExit }: NavigationGuardDialogProps) =>
     open ? (
       <div data-testid="navigation-guard">
         <p>{message}</p>
         <button onClick={onStay}>stay</button>
+        {onSaveAndExit && <button onClick={onSaveAndExit}>save-exit</button>}
         <button onClick={onDiscard}>discard</button>
       </div>
     ) : null,
 }));
 
 jest.mock("@/components/ui/calendar", () => ({
-  Calendar: ({ onSelect }: any) => (
-    <button data-testid="calendar" onClick={() => onSelect(new Date("2024-01-05T00:00:00Z"))}>
+  Calendar: ({ onSelect }: { onSelect?: (date: Date) => void }) => (
+    <button data-testid="calendar" onClick={() => onSelect?.(new Date("2024-01-05T00:00:00Z"))}>
       pick-date
     </button>
   ),
@@ -96,56 +139,80 @@ jest.mock("@/lib/utils", () => ({
 const toastMock = {
   success: jest.fn(),
   error: jest.fn(),
+  warning: jest.fn(),
+  info: jest.fn(),
 };
 
 const mockHandleModalClose = jest.fn();
 const mockHandleDiscard = jest.fn();
 const mockHandleStay = jest.fn();
+const mockHandleSaveAndExit = jest.fn(async () => {});
 
-const mockUseModalNavigation = useModalNavigation as jest.Mock;
-const mockUseI18nToast = useI18nToast as jest.Mock;
-const mockUseFormsTranslation = useFormsTranslation as jest.Mock;
+const mockUseModalNavigation = useModalNavigation as jest.MockedFunction<typeof useModalNavigation>;
+const mockUseI18nToast = useI18nToast as jest.MockedFunction<typeof useI18nToast>;
+const mockUseFormsTranslation = useFormsTranslation as jest.MockedFunction<typeof useFormsTranslation>;
 
-const basePayment = {
+const basePayment: PaymentRow = {
   id: "payment-1",
   project_id: "project-9",
   amount: 100,
   description: "Deposit",
-  status: "paid" as const,
+  status: "paid",
   date_paid: "2024-01-01",
   created_at: "2024-01-01T00:00:00Z",
-  type: "manual" as const,
+  type: "manual",
 };
 
-const createDefaultFromResponse = () => ({
-  select: jest.fn().mockReturnThis(),
-  insert: jest.fn().mockReturnThis(),
-  update: jest.fn().mockReturnThis(),
-  delete: jest.fn().mockReturnThis(),
-  eq: jest.fn().mockReturnThis(),
-  in: jest.fn().mockReturnThis(),
-  order: jest.fn().mockReturnThis(),
-  limit: jest.fn().mockReturnThis(),
-  single: jest.fn(),
-});
+type SupabaseFromMock = jest.Mock<unknown, [string]>;
 
-const originalFromImplementation = (mockSupabaseClient.from.getMockImplementation() || ((table: string) => createDefaultFromResponse())) as (
-  table: string
-) => any;
+interface PaymentTableMock {
+  update: jest.Mock<{ eq: jest.Mock<Promise<{ error: null | { message: string } }>, [string, string]> }, [PaymentUpdatePayload]>;
+}
+
+interface DefaultTableMock {
+  select: jest.Mock<DefaultTableMock, [string?]>;
+  insert: jest.Mock<DefaultTableMock, [unknown]>;
+  update: jest.Mock<DefaultTableMock, [unknown]>;
+  delete: jest.Mock<DefaultTableMock, [unknown]>;
+  eq: jest.Mock<DefaultTableMock, [string, unknown]>;
+  in: jest.Mock<DefaultTableMock, [string, unknown[]]>;
+  order: jest.Mock<DefaultTableMock, [string, { ascending?: boolean }?]>;
+  limit: jest.Mock<DefaultTableMock, [number]>;
+  single: jest.Mock<Promise<unknown>, []>;
+}
+
+const createDefaultFromResponse = (): DefaultTableMock => {
+  const table: Partial<DefaultTableMock> = {};
+  table.select = jest.fn(() => table as DefaultTableMock);
+  table.insert = jest.fn(() => table as DefaultTableMock);
+  table.update = jest.fn(() => table as DefaultTableMock);
+  table.delete = jest.fn(() => table as DefaultTableMock);
+  table.eq = jest.fn(() => table as DefaultTableMock);
+  table.in = jest.fn(() => table as DefaultTableMock);
+  table.order = jest.fn(() => table as DefaultTableMock);
+  table.limit = jest.fn(() => table as DefaultTableMock);
+  table.single = jest.fn(async () => undefined);
+  return table as DefaultTableMock;
+};
+
+const supabaseFromMock = mockSupabaseClient.from as SupabaseFromMock;
+
+const originalFromImplementation: SupabaseFromMock =
+  (mockSupabaseClient.from.getMockImplementation() as SupabaseFromMock | undefined) ??
+  ((table: string) => createDefaultFromResponse());
 
 describe("EditPaymentDialog", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    if (originalFromImplementation) {
-      mockSupabaseClient.from.mockImplementation(originalFromImplementation);
-    }
-    mockSupabaseClient.from.mockClear();
+    supabaseFromMock.mockReset();
+    supabaseFromMock.mockImplementation(originalFromImplementation);
     mockUseI18nToast.mockReturnValue(toastMock);
     mockUseFormsTranslation.mockReturnValue({ t: (key: string) => key });
 
     mockHandleModalClose.mockReturnValue(true);
     mockHandleDiscard.mockImplementation(() => {});
     mockHandleStay.mockImplementation(() => {});
+    mockHandleSaveAndExit.mockImplementation(async () => {});
 
     mockUseModalNavigation.mockImplementation(() => ({
       showGuard: false,
@@ -153,13 +220,12 @@ describe("EditPaymentDialog", () => {
       handleModalClose: mockHandleModalClose,
       handleDiscardChanges: mockHandleDiscard,
       handleStayOnModal: mockHandleStay,
+      handleSaveAndExit: mockHandleSaveAndExit,
     }));
   });
 
   afterEach(() => {
-    if (originalFromImplementation) {
-      mockSupabaseClient.from.mockImplementation(originalFromImplementation);
-    }
+    supabaseFromMock.mockImplementation(originalFromImplementation);
   });
 
   it("returns null when no payment is provided", () => {
@@ -186,12 +252,14 @@ describe("EditPaymentDialog", () => {
   });
 
   it("updates a manual payment and closes when submission succeeds", async () => {
-    const updateMock = jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) });
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    const eqMock = jest.fn(async () => ({ error: null }));
+    const updateMock: PaymentTableMock["update"] = jest.fn(() => ({ eq: eqMock }));
+
+    supabaseFromMock.mockImplementation((table: string) => {
       if (table === "payments") {
-        return { update: updateMock } as any;
+        return { update: updateMock } satisfies PaymentTableMock;
       }
-      return originalFromImplementation ? originalFromImplementation(table) : ({} as any);
+      return originalFromImplementation(table);
     });
 
     const onOpenChange = jest.fn();
@@ -224,28 +292,32 @@ describe("EditPaymentDialog", () => {
       })
     );
 
+    expect(eqMock).toHaveBeenCalledWith("id", "payment-1");
+
     expect(toastMock.success).toHaveBeenCalledWith("edit_payment.payment_updated");
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(onPaymentUpdated).toHaveBeenCalled();
   });
 
   it("updates base price on related project when editing a base payment", async () => {
-    const updatePaymentMock = jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) });
-    const updateProjectMock = jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) });
+    const paymentEqMock = jest.fn(async () => ({ error: null }));
+    const projectEqMock = jest.fn(async () => ({ error: null }));
+    const updatePaymentMock: PaymentTableMock["update"] = jest.fn(() => ({ eq: paymentEqMock }));
+    const updateProjectMock = jest.fn(() => ({ eq: projectEqMock }));
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    supabaseFromMock.mockImplementation((table: string) => {
       if (table === "payments") {
-        return { update: updatePaymentMock } as any;
+        return { update: updatePaymentMock } satisfies PaymentTableMock;
       }
       if (table === "projects") {
-        return { update: updateProjectMock } as any;
+        return { update: updateProjectMock };
       }
-      return {} as any;
+      return originalFromImplementation(table);
     });
 
     render(
       <EditPaymentDialog
-        payment={{ ...basePayment, type: "base_price" as const }}
+        payment={{ ...basePayment, type: "base_price" }}
         open={true}
         onOpenChange={jest.fn()}
         onPaymentUpdated={jest.fn()}
@@ -259,19 +331,20 @@ describe("EditPaymentDialog", () => {
       expect(updatePaymentMock).toHaveBeenCalled();
     });
 
-    expect(updateProjectMock).toHaveBeenCalledWith(
-      expect.objectContaining({ base_price: 250 })
-    );
+    expect(updateProjectMock).toHaveBeenCalledWith(expect.objectContaining({ base_price: 250 }));
+    expect(paymentEqMock).toHaveBeenCalledWith("id", "payment-1");
+    expect(projectEqMock).toHaveBeenCalledWith("id", "project-9");
   });
 
   it("switches to due status, removes the paid date, and respects dirty close flow", async () => {
-    const updateMock = jest.fn().mockReturnValue({ eq: jest.fn().mockResolvedValue({ error: null }) });
+    const eqMock = jest.fn(async () => ({ error: null }));
+    const updateMock: PaymentTableMock["update"] = jest.fn(() => ({ eq: eqMock }));
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    supabaseFromMock.mockImplementation((table: string) => {
       if (table === "payments") {
-        return { update: updateMock } as any;
+        return { update: updateMock } satisfies PaymentTableMock;
       }
-      return {} as any;
+      return originalFromImplementation(table);
     });
 
     render(

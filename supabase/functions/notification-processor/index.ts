@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
 import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summary-empty.ts';
 import { createEmailLocalization } from '../_shared/email-i18n.ts';
@@ -17,7 +17,212 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-let createSupabaseClient = createClient;
+type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json }
+  | Json[];
+
+type JsonObject = { [key: string]: Json };
+
+type NotificationDeliveryMethod = 'immediate' | 'scheduled';
+type NotificationStatus = 'pending' | 'processing' | 'failed' | 'sent' | 'cancelled';
+type NotificationType =
+  | 'daily-summary'
+  | 'project-milestone'
+  | 'workflow-message'
+  | 'new-assignment'
+  | string;
+
+type GenericSupabaseClient = SupabaseClient<unknown, unknown, unknown>;
+
+interface NotificationRow {
+  id: string;
+  notification_type: NotificationType;
+  delivery_method: NotificationDeliveryMethod;
+  status: NotificationStatus;
+  organization_id: string;
+  user_id: string;
+  retry_count: number;
+  metadata: Json | null;
+  scheduled_for: string | null;
+  created_at: string;
+  error_message?: string | null;
+  email_id?: string | null;
+}
+
+type NotificationMetadata = JsonObject;
+
+interface NotificationUpdatePayload {
+  status: NotificationStatus;
+  updated_at: string;
+  sent_at?: string;
+  error_message?: string | null;
+  retry_count?: number;
+  email_id?: string | null;
+}
+
+interface NotificationProcessSuccess {
+  id: string;
+  success: true;
+  result: NotificationHandlerResult;
+}
+
+interface NotificationProcessFailure {
+  id: string;
+  success: false;
+  error: string;
+}
+
+type NotificationProcessOutcome = NotificationProcessSuccess | NotificationProcessFailure;
+
+interface ProcessAggregateResult {
+  processed: number;
+  results: NotificationProcessOutcome[];
+}
+
+type NotificationHandlerResult = Record<string, unknown> | null;
+
+interface ScheduleNotificationsResult {
+  organizations_processed: number;
+  notifications_scheduled: number;
+  scheduled_for_date: string;
+}
+
+interface RetryFailedResult {
+  retried_count: number;
+}
+
+interface OrganizationMemberRow {
+  organization_id: string;
+  user_id: string;
+  status: string | null;
+}
+
+interface UserNotificationPreference {
+  user_id: string;
+  notification_global_enabled: boolean | null;
+  notification_daily_summary_enabled: boolean | null;
+  notification_scheduled_time: string | null;
+}
+
+interface OrganizationNotificationPreference {
+  organization_id: string;
+  notification_global_enabled: boolean | null;
+  notification_daily_summary_enabled: boolean | null;
+  timezone: string | null;
+}
+
+interface UserLanguagePreferenceRow {
+  language_code: string | null;
+}
+
+interface OrganizationSettingsRow {
+  organization_id?: string;
+  photography_business_name?: string | null;
+  primary_brand_color?: string | null;
+  date_format?: string | null;
+  time_format?: string | null;
+  timezone?: string | null;
+  email?: string | null;
+  notification_global_enabled?: boolean | null;
+  notification_daily_summary_enabled?: boolean | null;
+  notification_new_assignment_enabled?: boolean | null;
+  notification_project_milestone_enabled?: boolean | null;
+}
+
+interface ActivityRow {
+  id: string;
+  content: string | null;
+  type: string | null;
+  completed: boolean | null;
+  reminder_date: string | null;
+  reminder_time: string | null;
+  lead_id: string | null;
+  project_id: string | null;
+  leads: { name?: string | null } | null;
+  projects: { name?: string | null } | null;
+}
+
+interface SessionRow {
+  id: string;
+  location: string | null;
+  session_date: string | null;
+  session_time: string | null;
+  status?: string | null;
+  leads: { name?: string | null } | null;
+  projects: { name?: string | null } | null;
+}
+
+interface NotificationUserKeyRow {
+  organization_id: string;
+  user_id: string;
+}
+
+interface ScheduledNotificationInsert {
+  organization_id: string;
+  user_id: string;
+  notification_type: 'daily-summary';
+  delivery_method: NotificationDeliveryMethod;
+  status: NotificationStatus;
+  scheduled_for: string;
+  metadata: NotificationMetadata;
+}
+
+interface ProjectMilestoneMetadata extends JsonObject {
+  project_id?: string;
+  old_status?: string;
+  new_status?: string;
+  changed_by_user_id?: string;
+}
+
+interface WorkflowEntityData extends Record<string, unknown> {
+  customer_name?: string;
+  client_name?: string;
+  customer_email?: string;
+  client_email?: string;
+  session_type_name?: string;
+  project_name?: string;
+  session_date?: string;
+  session_time?: string;
+  location?: string;
+}
+
+interface WorkflowMessageMetadata extends JsonObject {
+  template_id?: string;
+  entity_data?: WorkflowEntityData;
+}
+
+interface UserNotificationSettingsRow {
+  notification_global_enabled: boolean | null;
+  notification_daily_summary_enabled: boolean | null;
+  notification_new_assignment_enabled: boolean | null;
+  notification_project_milestone_enabled: boolean | null;
+}
+
+interface OrganizationNotificationSettingsRow {
+  notification_global_enabled: boolean | null;
+  notification_daily_summary_enabled: boolean | null;
+  notification_new_assignment_enabled: boolean | null;
+  notification_project_milestone_enabled: boolean | null;
+}
+
+interface TemplateChannelViewRow {
+  channel: string;
+  subject: string | null;
+  content: string | null;
+  html_content: string | null;
+}
+
+interface MessageTemplateRow {
+  id: string;
+  name: string | null;
+  template_channel_views: TemplateChannelViewRow[];
+}
+
+let createSupabaseClient: typeof createClient = createClient;
 const defaultResendClient: ResendClient = createResendClient(Deno.env.get("RESEND_API_KEY"));
 let resendClient: ResendClient = defaultResendClient;
 
@@ -42,7 +247,7 @@ interface ProcessorRequest {
   notification_id?: string;
   organizationId?: string;
   notification_type?: string;
-  metadata?: any;
+  metadata?: NotificationMetadata;
   scheduled_for?: string;
   user_id?: string;
   force?: boolean;
@@ -58,13 +263,19 @@ export const handler = async (req: Request): Promise<Response> => {
   const adminSupabase = createSupabaseClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-  );
+  ) as GenericSupabaseClient;
 
   try {
     const { action, notification_id, organizationId, force = false }: ProcessorRequest = await req.json();
     console.log(`Processing action: ${action}`);
 
-    let result;
+    type HandlerResult =
+      | ProcessAggregateResult
+      | NotificationHandlerResult
+      | ScheduleNotificationsResult
+      | RetryFailedResult;
+
+    let result: HandlerResult;
 
     switch (action) {
       case 'process-pending':
@@ -118,7 +329,11 @@ export const handler = async (req: Request): Promise<Response> => {
 };
 
 // Process all pending immediate notifications
-export async function processPendingNotifications(supabase: any, organizationId?: string, force = false) {
+export async function processPendingNotifications(
+  supabase: GenericSupabaseClient,
+  organizationId?: string,
+  force = false
+): Promise<ProcessAggregateResult> {
   console.log('Processing pending immediate notifications...');
 
   let query = supabase
@@ -138,7 +353,9 @@ export async function processPendingNotifications(supabase: any, organizationId?
     query = query.gte('created_at', thirtyMinutesAgo);
   }
 
-  const { data: notifications, error } = await query.limit(50); // Process in batches
+  const { data: notifications, error } = await query
+    .limit(50)
+    .returns<NotificationRow[]>(); // Process in batches
 
   if (error) {
     throw new Error(`Error fetching pending notifications: ${getErrorMessage(error)}`);
@@ -146,7 +363,7 @@ export async function processPendingNotifications(supabase: any, organizationId?
 
   console.log(`Found ${notifications?.length || 0} pending immediate notifications`);
 
-  const results = [];
+  const results: NotificationProcessOutcome[] = [];
   for (const notification of notifications || []) {
     try {
       const result = await processSpecificNotification(supabase, notification.id, notification);
@@ -168,7 +385,11 @@ export async function processPendingNotifications(supabase: any, organizationId?
 }
 
 // Process scheduled notifications that are due
-export async function processScheduledNotifications(supabase: any, organizationId?: string, force = false) {
+export async function processScheduledNotifications(
+  supabase: GenericSupabaseClient,
+  organizationId?: string,
+  force = false
+): Promise<ProcessAggregateResult> {
   console.log('Processing scheduled notifications...');
 
   const now = new Date();
@@ -188,7 +409,9 @@ export async function processScheduledNotifications(supabase: any, organizationI
     query = query.eq('organization_id', organizationId);
   }
 
-  const { data: notifications, error } = await query.limit(100);
+  const { data: notifications, error } = await query
+    .limit(100)
+    .returns<NotificationRow[]>();
 
   if (error) {
     throw new Error(`Error fetching scheduled notifications: ${getErrorMessage(error)}`);
@@ -196,7 +419,7 @@ export async function processScheduledNotifications(supabase: any, organizationI
 
   console.log(`Found ${notifications?.length || 0} scheduled notifications to process`);
 
-  const results = [];
+  const results: NotificationProcessOutcome[] = [];
   for (const notification of notifications || []) {
     try {
       const result = await processSpecificNotification(supabase, notification.id, notification);
@@ -207,12 +430,13 @@ export async function processScheduledNotifications(supabase: any, organizationI
       results.push({ id: notification.id, success: false, error: errorMessage });
       
       // Update notification status to failed with retry logic
+      const nextRetryCount = (notification.retry_count ?? 0) + 1;
       await updateNotificationStatus(
         supabase,
         notification.id,
         'failed',
         errorMessage,
-        notification.retry_count + 1,
+        nextRetryCount,
       );
     }
   }
@@ -224,7 +448,11 @@ export async function processScheduledNotifications(supabase: any, organizationI
 }
 
 // Process a specific notification
-export async function processSpecificNotification(supabase: any, notificationId: string, notificationData?: any) {
+export async function processSpecificNotification(
+  supabase: GenericSupabaseClient,
+  notificationId: string,
+  notificationData?: NotificationRow
+): Promise<NotificationHandlerResult> {
   // Mark as processing
   await updateNotificationStatus(supabase, notificationId, 'processing');
 
@@ -234,7 +462,8 @@ export async function processSpecificNotification(supabase: any, notificationId:
       .from('notifications')
       .select('*')
       .eq('id', notificationId)
-      .single();
+      .single()
+      .returns<NotificationRow>();
 
     if (error || !data) {
       throw new Error(`Notification not found: ${notificationId}`);
@@ -253,7 +482,7 @@ export async function processSpecificNotification(supabase: any, notificationId:
   }
 
   // Route to appropriate processor based on type
-  let result;
+  let result: NotificationHandlerResult;
   
   switch (notificationData.notification_type) {
     case 'daily-summary':
@@ -270,13 +499,21 @@ export async function processSpecificNotification(supabase: any, notificationId:
   }
 
   // Mark as sent on success
-  await updateNotificationStatus(supabase, notificationId, 'sent', null, 0, result?.id);
+  const emailId =
+    result && typeof result === 'object' && 'id' in result && typeof (result as { id?: unknown }).id === 'string'
+      ? (result as { id: string }).id
+      : null;
+
+  await updateNotificationStatus(supabase, notificationId, 'sent', null, 0, emailId);
   
   return result;
 }
 
 // Process daily summary notification
-export async function processDailySummary(supabase: any, notification: any) {
+export async function processDailySummary(
+  supabase: GenericSupabaseClient,
+  notification: NotificationRow
+): Promise<NotificationHandlerResult> {
   console.log(`Processing daily summary for user ${notification.user_id}`);
 
   // Get user data
@@ -289,24 +526,19 @@ export async function processDailySummary(supabase: any, notification: any) {
     .from('user_language_preferences')
     .select('language_code')
     .eq('user_id', notification.user_id)
-    .maybeSingle();
+    .maybeSingle()
+    .returns<UserLanguagePreferenceRow>();
 
   const localization = createEmailLocalization(languagePreference?.language_code);
   const t = localization.t;
-
-  // Get user settings and organization settings
-  const { data: userSettings } = await supabase
-    .from('user_settings')
-    .select('*')
-    .eq('user_id', notification.user_id)
-    .maybeSingle();
 
   // Get organization settings for branding and timezone
   const { data: orgSettings } = await supabase
     .from('organization_settings')
     .select('photography_business_name, primary_brand_color, date_format, time_format, timezone')
     .eq('organization_id', notification.organization_id)
-    .maybeSingle();
+    .maybeSingle()
+    .returns<OrganizationSettingsRow>();
 
   // Get activities for today
   const today = new Date().toISOString().split('T')[0];
@@ -320,7 +552,8 @@ export async function processDailySummary(supabase: any, notification: any) {
     `)
     .eq('organization_id', notification.organization_id)
     .gte('created_at', `${today}T00:00:00Z`)
-    .lt('created_at', `${today}T23:59:59Z`);
+    .lt('created_at', `${today}T23:59:59Z`)
+    .returns<ActivityRow[]>();
 
   // Get sessions for today  
   const { data: sessions } = await supabase
@@ -330,7 +563,8 @@ export async function processDailySummary(supabase: any, notification: any) {
       leads(name), projects(name)
     `)
     .eq('organization_id', notification.organization_id)
-    .eq('session_date', today);
+    .eq('session_date', today)
+    .returns<SessionRow[]>();
 
   // Get overdue activities
   const { data: overdueActivities } = await supabase
@@ -343,7 +577,8 @@ export async function processDailySummary(supabase: any, notification: any) {
     `)
     .eq('organization_id', notification.organization_id)
     .lt('reminder_date', today)
-    .eq('completed', false);
+    .eq('completed', false)
+    .returns<ActivityRow[]>();
 
   // Get past sessions needing action
   const { data: pastSessions } = await supabase
@@ -353,7 +588,8 @@ export async function processDailySummary(supabase: any, notification: any) {
       leads(name), projects(name)
     `)
     .eq('organization_id', notification.organization_id)
-    .lt('session_date', today);
+    .lt('session_date', today)
+    .returns<SessionRow[]>();
 
   const templateData = {
     userFullName: userData.user.email?.split('@')[0] || 'User',
@@ -368,21 +604,21 @@ export async function processDailySummary(supabase: any, notification: any) {
   };
 
   // Check if there's any activity
-  const hasActivity = (activities && activities.length > 0) || (sessions && sessions.length > 0);
-  
+  const hasActivity = Boolean((activities?.length ?? 0) > 0 || (sessions?.length ?? 0) > 0);
+
   let emailHtml;
   if (hasActivity) {
     emailHtml = generateModernDailySummaryEmail(
-      sessions || [], 
-      activities || [], 
-      { leads: [], activities: overdueActivities || [] }, 
-      pastSessions || [],
+      sessions ?? [],
+      activities ?? [],
+      { leads: [], activities: overdueActivities ?? [] },
+      pastSessions ?? [],
       templateData
     );
   } else {
     emailHtml = generateEmptyDailySummaryEmail(
-      { leads: [], activities: overdueActivities || [] }, 
-      pastSessions || [],
+      { leads: [], activities: overdueActivities ?? [] },
+      pastSessions ?? [],
       templateData
     );
   }
@@ -408,8 +644,11 @@ export async function processDailySummary(supabase: any, notification: any) {
 }
 
 // Process project milestone notification
-export async function processProjectMilestone(supabase: any, notification: any) {
-  const metadata = notification.metadata || {};
+export async function processProjectMilestone(
+  supabase: GenericSupabaseClient,
+  notification: NotificationRow
+): Promise<NotificationHandlerResult> {
+  const metadata = (notification.metadata ?? {}) as ProjectMilestoneMetadata;
   const { project_id, old_status, new_status, changed_by_user_id } = metadata;
 
   if (!project_id) {
@@ -439,8 +678,11 @@ export async function processProjectMilestone(supabase: any, notification: any) 
 
 
 // Process workflow message notification
-export async function processWorkflowMessage(supabase: any, notification: any) {
-  const metadata = notification.metadata || {};
+export async function processWorkflowMessage(
+  supabase: GenericSupabaseClient,
+  notification: NotificationRow
+): Promise<NotificationHandlerResult> {
+  const metadata = (notification.metadata ?? {}) as WorkflowMessageMetadata;
   const { template_id, entity_data } = metadata;
 
   if (!template_id) {
@@ -469,7 +711,8 @@ export async function processWorkflowMessage(supabase: any, notification: any) {
     `)
     .eq('id', template_id)
     .eq('template_channel_views.channel', 'email')
-    .single();
+    .single()
+    .returns<MessageTemplateRow>();
 
   if (templateError || !template) {
     throw new Error(`Template not found: ${template_id}`);
@@ -523,7 +766,10 @@ export async function processWorkflowMessage(supabase: any, notification: any) {
 }
 
 // Schedule future notifications (e.g., daily summaries for tomorrow)
-export async function scheduleNotifications(supabase: any, organizationId?: string) {
+export async function scheduleNotifications(
+  supabase: GenericSupabaseClient,
+  organizationId?: string
+): Promise<ScheduleNotificationsResult> {
   console.log('Scheduling future notifications...');
 
   // Fetch active organization members
@@ -536,7 +782,7 @@ export async function scheduleNotifications(supabase: any, organizationId?: stri
     membersQuery = membersQuery.eq('organization_id', organizationId);
   }
 
-  const { data: members, error: membersError } = await membersQuery;
+  const { data: members, error: membersError } = await membersQuery.returns<OrganizationMemberRow[]>();
 
   if (membersError) {
     throw new Error(`Error fetching organization members: ${membersError.message}`);
@@ -551,36 +797,26 @@ export async function scheduleNotifications(supabase: any, organizationId?: stri
     };
   }
 
-  const userIds = Array.from(new Set(members.map((member: any) => member.user_id)));
-  const organizationIds = Array.from(new Set(members.map((member: any) => member.organization_id)));
+  const userIds = Array.from(new Set((members ?? []).map((member) => member.user_id)));
+  const organizationIds = Array.from(new Set((members ?? []).map((member) => member.organization_id)));
 
   // Fetch user notification preferences
   const { data: userSettings, error: userSettingsError } = await supabase
     .from('user_settings')
     .select('user_id, notification_global_enabled, notification_daily_summary_enabled, notification_scheduled_time')
-    .in('user_id', userIds);
+    .in('user_id', userIds)
+    .returns<UserNotificationPreference[]>();
 
   if (userSettingsError) {
     throw new Error(`Error fetching user settings: ${userSettingsError.message}`);
   }
 
-  type UserNotificationPreference = {
-    user_id: string;
-    notification_global_enabled: boolean | null;
-    notification_daily_summary_enabled: boolean | null;
-    notification_scheduled_time: string | null;
-  };
-
-  const userSettingsRows: UserNotificationPreference[] = (userSettings || []).map(
-    (setting: any) => ({
-      user_id: String(setting.user_id),
-      notification_global_enabled:
-        setting.notification_global_enabled ?? null,
-      notification_daily_summary_enabled:
-        setting.notification_daily_summary_enabled ?? null,
-      notification_scheduled_time: setting.notification_scheduled_time ?? null,
-    }),
-  );
+  const userSettingsRows: UserNotificationPreference[] = (userSettings || []).map((setting) => ({
+    user_id: String(setting.user_id),
+    notification_global_enabled: setting.notification_global_enabled ?? null,
+    notification_daily_summary_enabled: setting.notification_daily_summary_enabled ?? null,
+    notification_scheduled_time: setting.notification_scheduled_time ?? null,
+  }));
 
   const userSettingsMap = new Map(
     userSettingsRows.map((setting) => [setting.user_id, setting]),
@@ -590,27 +826,17 @@ export async function scheduleNotifications(supabase: any, organizationId?: stri
   const { data: organizationSettings, error: orgSettingsError } = await supabase
     .from('organization_settings')
     .select('organization_id, notification_global_enabled, notification_daily_summary_enabled, timezone')
-    .in('organization_id', organizationIds);
+    .in('organization_id', organizationIds)
+    .returns<OrganizationNotificationPreference[]>();
 
   if (orgSettingsError) {
     throw new Error(`Error fetching organization settings: ${orgSettingsError.message}`);
   }
 
-  type OrganizationNotificationPreference = {
-    organization_id: string;
-    notification_global_enabled: boolean | null;
-    notification_daily_summary_enabled: boolean | null;
-    timezone: string | null;
-  };
-
-  const organizationSettingsRows: OrganizationNotificationPreference[] = (
-    organizationSettings || []
-  ).map((setting: any) => ({
+  const organizationSettingsRows: OrganizationNotificationPreference[] = (organizationSettings || []).map((setting) => ({
     organization_id: String(setting.organization_id),
-    notification_global_enabled:
-      setting.notification_global_enabled ?? null,
-    notification_daily_summary_enabled:
-      setting.notification_daily_summary_enabled ?? null,
+    notification_global_enabled: setting.notification_global_enabled ?? null,
+    notification_daily_summary_enabled: setting.notification_daily_summary_enabled ?? null,
     timezone: setting.timezone ?? null,
   }));
 
@@ -644,17 +870,17 @@ export async function scheduleNotifications(supabase: any, organizationId?: stri
     existingQuery = existingQuery.in('organization_id', organizationIds);
   }
 
-  const { data: existingNotifications, error: existingError } = await existingQuery;
+  const { data: existingNotifications, error: existingError } = await existingQuery.returns<NotificationUserKeyRow[]>();
 
   if (existingError) {
     throw new Error(`Error checking existing scheduled notifications: ${existingError.message}`);
   }
 
   const existingKey = new Set(
-    (existingNotifications || []).map((item: any) => `${item.organization_id}:${item.user_id}`)
+    (existingNotifications || []).map((item) => `${item.organization_id}:${item.user_id}`)
   );
 
-  const scheduledNotifications: any[] = [];
+  const scheduledNotifications: ScheduledNotificationInsert[] = [];
 
   for (const member of members || []) {
     const userSetting = userSettingsMap.get(member.user_id);
@@ -714,7 +940,7 @@ export async function scheduleNotifications(supabase: any, organizationId?: stri
       delivery_method: 'scheduled',
       status: 'pending',
       scheduled_for: scheduledFor.toISOString(),
-      metadata: {}
+      metadata: {} as NotificationMetadata,
     });
   }
 
@@ -736,11 +962,18 @@ export async function scheduleNotifications(supabase: any, organizationId?: stri
 }
 
 // Retry failed notifications with exponential backoff
-export async function retryFailedNotifications(supabase: any, organizationId?: string) {
+export async function retryFailedNotifications(
+  supabase: GenericSupabaseClient,
+  organizationId?: string
+): Promise<RetryFailedResult> {
   console.log('Retrying failed notifications...');
 
+  if (organizationId) {
+    console.log('Note: retry operates globally; organizationId provided:', organizationId);
+  }
+
   // Use the database function to retry failed notifications
-  const { data, error } = await supabase.rpc('retry_failed_notifications');
+  const { data, error } = await supabase.rpc<number>('retry_failed_notifications');
 
   if (error) {
     throw new Error(`Error retrying notifications: ${getErrorMessage(error)}`);
@@ -755,14 +988,14 @@ export async function retryFailedNotifications(supabase: any, organizationId?: s
 
 // Helper function to update notification status
 export async function updateNotificationStatus(
-  supabase: any, 
+  supabase: GenericSupabaseClient, 
   notificationId: string, 
-  status: string, 
+  status: NotificationStatus, 
   errorMessage?: string | null, 
   retryCount?: number, 
   emailId?: string | null
 ) {
-  const updates: any = { 
+  const updates: NotificationUpdatePayload = { 
     status,
     updated_at: new Date().toISOString()
   };
@@ -794,14 +1027,20 @@ export async function updateNotificationStatus(
 }
 
 // Check if notifications are enabled for user/organization
-export async function checkNotificationEnabled(supabase: any, userId: string, organizationId: string, notificationType: string): Promise<boolean> {
+export async function checkNotificationEnabled(
+  supabase: GenericSupabaseClient,
+  userId: string,
+  organizationId: string,
+  notificationType: NotificationType
+): Promise<boolean> {
   try {
     // Check user settings first
     const { data: userSettings } = await supabase
       .from('user_settings')
       .select('notification_global_enabled, notification_daily_summary_enabled, notification_new_assignment_enabled, notification_project_milestone_enabled')
       .eq('user_id', userId)
-      .maybeSingle();
+      .maybeSingle()
+      .returns<UserNotificationSettingsRow>();
 
     // If user has global disabled, skip
     if (userSettings && userSettings.notification_global_enabled === false) {
@@ -828,7 +1067,8 @@ export async function checkNotificationEnabled(supabase: any, userId: string, or
       .from('organization_settings')
       .select('notification_global_enabled, notification_daily_summary_enabled, notification_new_assignment_enabled, notification_project_milestone_enabled')
       .eq('organization_id', organizationId)
-      .maybeSingle();
+      .maybeSingle()
+      .returns<OrganizationNotificationSettingsRow>();
 
     if (orgSettings && orgSettings.notification_global_enabled === false) {
       return false;
@@ -850,7 +1090,7 @@ export async function checkNotificationEnabled(supabase: any, userId: string, or
     }
 
     return true;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error checking notification settings:', error);
     // Default to enabled on error to avoid blocking notifications
     return true;

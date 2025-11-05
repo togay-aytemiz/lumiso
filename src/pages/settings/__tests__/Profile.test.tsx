@@ -1,4 +1,11 @@
-import type { ReactNode } from "react";
+import type {
+  ReactNode,
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  LabelHTMLAttributes,
+  SelectHTMLAttributes,
+} from "react";
+import * as RouterDom from "react-router-dom";
 import { render, screen, fireEvent, waitFor } from "@/utils/testUtils";
 import Profile from "../Profile";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -10,11 +17,21 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 
 const mockHeader = jest.fn();
 
-const mockCategorySection = jest.fn(({ title, children }: any) => (
+interface CategorySectionProps {
+  title: string;
+  children?: ReactNode;
+}
+
+const mockCategorySection = jest.fn(({ title, children }: CategorySectionProps) => (
   <section data-testid={`category-${title}`}>{children}</section>
 ));
 
-const mockOnboardingTutorial = jest.fn(({ onComplete, onExit }: any) => (
+interface OnboardingTutorialProps {
+  onComplete: () => void;
+  onExit: () => void;
+}
+
+const mockOnboardingTutorial = jest.fn(({ onComplete, onExit }: OnboardingTutorialProps) => (
   <div data-testid="onboarding-tutorial">
     <button type="button" onClick={onComplete}>
       complete tutorial
@@ -38,18 +55,18 @@ jest.mock("@/components/settings/SettingsPageWrapper", () => ({
 
 jest.mock("@/components/settings/SettingsHeader", () => ({
   __esModule: true,
-  default: (props: any) => {
+  default: (props: Record<string, unknown>) => {
     mockHeader(props);
     return null;
   },
 }));
 
 jest.mock("@/components/settings/CategorySettingsSection", () => ({
-  CategorySettingsSection: (props: any) => mockCategorySection(props),
+  CategorySettingsSection: (props: CategorySectionProps) => mockCategorySection(props),
 }));
 
 jest.mock("@/components/shared/OnboardingTutorial", () => ({
-  OnboardingTutorial: (props: any) => mockOnboardingTutorial(props),
+  OnboardingTutorial: (props: OnboardingTutorialProps) => mockOnboardingTutorial(props),
 }));
 
 jest.mock("@/components/ui/loading-presets", () => ({
@@ -66,7 +83,7 @@ jest.mock("@/components/ui/dialog", () => ({
 }));
 
 jest.mock("@/components/ui/button", () => ({
-  Button: ({ children, ...rest }: any) => (
+  Button: ({ children, ...rest }: ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button type="button" {...rest}>
       {children}
     </button>
@@ -74,13 +91,13 @@ jest.mock("@/components/ui/button", () => ({
 }));
 
 jest.mock("@/components/ui/input", () => ({
-  Input: ({ value, onChange, ...rest }: any) => (
+  Input: ({ value, onChange, ...rest }: InputHTMLAttributes<HTMLInputElement>) => (
     <input value={value} onChange={onChange} {...rest} />
   ),
 }));
 
 jest.mock("@/components/ui/label", () => ({
-  Label: ({ children, ...rest }: any) => (
+  Label: ({ children, ...rest }: LabelHTMLAttributes<HTMLLabelElement>) => (
     <label {...rest}>{children}</label>
   ),
 }));
@@ -98,11 +115,17 @@ jest.mock("@/components/ui/switch", () => ({
 }));
 
 jest.mock("@/components/ui/select", () => ({
-  Select: ({ value, onValueChange, children }: any) => (
+  Select: ({
+    value,
+    onValueChange,
+    children,
+    ...rest
+  }: SelectHTMLAttributes<HTMLSelectElement> & { onValueChange?: (next: string) => void }) => (
     <select
       data-testid={`working-hours-select-${value}`}
       value={value}
-      onChange={(event) => onValueChange(event.target.value)}
+      onChange={(event) => onValueChange?.(event.target.value)}
+      {...rest}
     >
       {children}
     </select>
@@ -110,7 +133,9 @@ jest.mock("@/components/ui/select", () => ({
   SelectTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
   SelectValue: () => null,
   SelectContent: ({ children }: { children: ReactNode }) => <>{children}</>,
-  SelectItem: ({ value, children }: any) => <option value={value}>{children}</option>,
+  SelectItem: ({ value, children }: { value: string; children?: ReactNode }) => (
+    <option value={value}>{children}</option>
+  ),
 }));
 
 jest.mock("@/components/ui/avatar", () => ({
@@ -152,6 +177,78 @@ jest.mock("react-i18next", () => ({
   }),
 }));
 
+interface WorkingHour {
+  day_of_week: number;
+  start_time: string | null;
+  end_time: string | null;
+  enabled: boolean;
+}
+
+interface ProfileData {
+  full_name?: string;
+  phone_number?: string;
+  profile_photo_url?: string | null;
+}
+
+interface ProfileHookValue {
+  profile: ProfileData | null;
+  loading: boolean;
+  uploading: boolean;
+  updateProfile: jest.Mock<Promise<{ success: boolean; error?: unknown }>, [Partial<ProfileData>]>;
+  uploadProfilePhoto: jest.Mock<Promise<{ success: boolean; url?: string; error?: unknown }>, [File]>;
+  deleteProfilePhoto: jest.Mock<Promise<{ success: boolean; error?: unknown }>, []>;
+  refreshProfile: jest.Mock<Promise<void>, []>;
+}
+
+interface WorkingHoursHookValue {
+  workingHours: WorkingHour[];
+  loading: boolean;
+  updateWorkingHour: jest.Mock<Promise<{ success: boolean; error?: unknown }>, [number, Partial<WorkingHour>]>;
+  refetch: jest.Mock<Promise<void>, []>;
+}
+
+interface SettingsCategorySectionArgs {
+  sectionId: string;
+}
+
+interface SectionController<T extends Record<string, unknown>> {
+  values: T;
+  setValues: jest.Mock<void, [T]>;
+  updateValue: jest.Mock<void, [string, unknown]>;
+  handleSave: jest.Mock<Promise<void>, []>;
+  handleCancel: jest.Mock<void, []>;
+  isDirty: boolean;
+}
+
+interface OnboardingHookValue {
+  stage: string;
+  currentStep: number;
+  loading: boolean;
+  shouldShowWelcomeModal: boolean;
+  isInGuidedSetup: boolean;
+  isOnboardingComplete: boolean;
+  shouldLockNavigation: boolean;
+  currentStepInfo: unknown;
+  nextStepInfo: unknown;
+  completedSteps: unknown[];
+  isAllStepsComplete: boolean;
+  totalSteps: number;
+  startGuidedSetup: jest.Mock<Promise<void>, []>;
+  completeCurrentStep: jest.Mock<Promise<void>, []>;
+  completeMultipleSteps: jest.Mock<Promise<void>, [number]>;
+  completeOnboarding: jest.Mock<Promise<void>, []>;
+  skipOnboarding: jest.Mock<Promise<void>, []>;
+  resetOnboarding: jest.Mock<Promise<void>, []>;
+}
+
+interface OrganizationHookValue {
+  activeOrganizationId: string | null;
+  activeOrganization: { name?: string } | null;
+  loading: boolean;
+  refreshOrganization: jest.Mock<Promise<void>, []>;
+  setActiveOrganization: jest.Mock<Promise<void>, [string]>;
+}
+
 const mockUseProfile = useProfile as jest.MockedFunction<typeof useProfile>;
 const mockUseWorkingHours = useWorkingHours as jest.MockedFunction<typeof useWorkingHours>;
 const mockUseSettingsCategorySection = useSettingsCategorySection as jest.MockedFunction<typeof useSettingsCategorySection>;
@@ -159,13 +256,34 @@ const mockUseToast = useToast as jest.MockedFunction<typeof useToast>;
 const mockUseOnboarding = useOnboarding as jest.MockedFunction<typeof useOnboarding>;
 const mockUseOrganization = useOrganization as jest.MockedFunction<typeof useOrganization>;
 
-const createSectionMock = (initialValues: Record<string, unknown>) => ({
+const createSectionMock = <T extends Record<string, unknown>>(initialValues: T): SectionController<T> => ({
   values: initialValues,
   setValues: jest.fn(),
   updateValue: jest.fn(),
   handleSave: jest.fn(),
   handleCancel: jest.fn(),
   isDirty: false,
+});
+
+const createProfileHookValue = (overrides: Partial<ProfileHookValue> = {}): ProfileHookValue => ({
+  profile: null,
+  loading: false,
+  uploading: false,
+  updateProfile: jest.fn(async () => ({ success: true })),
+  uploadProfilePhoto: jest.fn(async () => ({ success: true })),
+  deleteProfilePhoto: jest.fn(async () => ({ success: true })),
+  refreshProfile: jest.fn(async () => {}),
+  ...overrides,
+});
+
+const createWorkingHoursHookValue = (
+  overrides: Partial<WorkingHoursHookValue> = {}
+): WorkingHoursHookValue => ({
+  workingHours: [],
+  loading: false,
+  updateWorkingHour: jest.fn(async () => ({ success: true })),
+  refetch: jest.fn(async () => {}),
+  ...overrides,
 });
 
 describe("Profile settings page", () => {
@@ -177,9 +295,38 @@ describe("Profile settings page", () => {
     mockCompleteStep.mockClear();
     mockGetUser.mockClear();
 
-    mockUseToast.mockReturnValue({ toast: mockToast });
-    mockUseOnboarding.mockReturnValue({ completeCurrentStep: mockCompleteStep });
-    mockUseOrganization.mockReturnValue({ activeOrganization: { name: "Studio" } });
+    mockUseToast.mockReturnValue({
+      toasts: [],
+      toast: mockToast,
+      dismiss: jest.fn(),
+    });
+    mockUseOnboarding.mockReturnValue({
+      stage: "in_progress",
+      currentStep: 1,
+      loading: false,
+      shouldShowWelcomeModal: false,
+      isInGuidedSetup: false,
+      isOnboardingComplete: false,
+      shouldLockNavigation: false,
+      currentStepInfo: null,
+      nextStepInfo: null,
+      completedSteps: [],
+      isAllStepsComplete: false,
+      totalSteps: 3,
+      startGuidedSetup: jest.fn(async () => {}),
+      completeCurrentStep: mockCompleteStep,
+      completeMultipleSteps: jest.fn(async () => {}),
+      completeOnboarding: jest.fn(async () => {}),
+      skipOnboarding: jest.fn(async () => {}),
+      resetOnboarding: jest.fn(async () => {}),
+    });
+    mockUseOrganization.mockReturnValue({
+      activeOrganizationId: "org-123",
+      activeOrganization: { name: "Studio" },
+      loading: false,
+      refreshOrganization: jest.fn(async () => {}),
+      setActiveOrganization: jest.fn(async () => {}),
+    });
     mockGetUser.mockResolvedValue({ data: { user: { email: "owner@example.com" } } });
   });
 
@@ -194,24 +341,24 @@ describe("Profile settings page", () => {
     });
     const workingHoursSectionMock = createSectionMock({ workingHours: [] });
 
-    mockUseSettingsCategorySection.mockImplementation(({ sectionId }) =>
+    mockUseSettingsCategorySection.mockImplementation(({ sectionId }: SettingsCategorySectionArgs) =>
       sectionId === "profile" ? profileSectionMock : workingHoursSectionMock
     );
 
-    mockUseProfile.mockReturnValue({
-      profile: null,
-      loading: true,
-      uploading: false,
-      updateProfile: jest.fn(),
-      uploadProfilePhoto: jest.fn(),
-      deleteProfilePhoto: jest.fn(),
-    } as any);
+    mockUseProfile.mockReturnValue(
+      createProfileHookValue({
+        profile: null,
+        loading: true,
+        uploading: false,
+      })
+    );
 
-    mockUseWorkingHours.mockReturnValue({
-      workingHours: [],
-      loading: false,
-      updateWorkingHour: jest.fn(),
-    } as any);
+    mockUseWorkingHours.mockReturnValue(
+      createWorkingHoursHookValue({
+        workingHours: [],
+        loading: false,
+      })
+    );
 
     render(<Profile />);
 
@@ -230,30 +377,31 @@ describe("Profile settings page", () => {
     });
     const workingHoursSectionMock = createSectionMock({ workingHours: [] });
 
-    mockUseSettingsCategorySection.mockImplementation(({ sectionId }) =>
+    mockUseSettingsCategorySection.mockImplementation(({ sectionId }: SettingsCategorySectionArgs) =>
       sectionId === "profile" ? profileSectionMock : workingHoursSectionMock
     );
 
-    mockUseProfile.mockReturnValue({
-      profile: {
-        full_name: "Jane Doe",
-        phone_number: "+1 555 0100",
-        profile_photo_url: null,
-      },
-      loading: false,
-      uploading: false,
-      updateProfile: jest.fn(),
-      uploadProfilePhoto: jest.fn(),
-      deleteProfilePhoto: jest.fn(),
-    } as any);
+    mockUseProfile.mockReturnValue(
+      createProfileHookValue({
+        profile: {
+          full_name: "Jane Doe",
+          phone_number: "+1 555 0100",
+          profile_photo_url: null,
+        },
+        loading: false,
+        uploading: false,
+      })
+    );
 
-    mockUseWorkingHours.mockReturnValue({
-      workingHours: [
-        { day_of_week: 1, start_time: "09:00:00", end_time: "17:00:00", enabled: true },
-      ],
-      loading: false,
-      updateWorkingHour: jest.fn().mockResolvedValue({ success: true }),
-    } as any);
+    mockUseWorkingHours.mockReturnValue(
+      createWorkingHoursHookValue({
+        workingHours: [
+          { day_of_week: 1, start_time: "09:00:00", end_time: "17:00:00", enabled: true },
+        ],
+        loading: false,
+        updateWorkingHour: jest.fn(async () => ({ success: true })),
+      })
+    );
 
     render(<Profile />);
 
@@ -281,30 +429,34 @@ describe("Profile settings page", () => {
     const profileSectionMock = createSectionMock({ fullName: "", phoneNumber: "" });
     const workingHoursSectionMock = createSectionMock({ workingHours: [] });
 
-    mockUseSettingsCategorySection.mockImplementation(({ sectionId }) =>
+    mockUseSettingsCategorySection.mockImplementation(({ sectionId }: SettingsCategorySectionArgs) =>
       sectionId === "profile" ? profileSectionMock : workingHoursSectionMock
     );
 
-    mockUseProfile.mockReturnValue({
-      profile: null,
-      loading: false,
-      uploading: false,
-      updateProfile: jest.fn(),
-      uploadProfilePhoto: jest.fn(),
-      deleteProfilePhoto: jest.fn(),
-    } as any);
+    mockUseProfile.mockReturnValue(
+      createProfileHookValue({
+        profile: null,
+        loading: false,
+        uploading: false,
+      })
+    );
 
-    mockUseWorkingHours.mockReturnValue({
-      workingHours: [],
-      loading: false,
-      updateWorkingHour: jest.fn(),
-    } as any);
+    mockUseWorkingHours.mockReturnValue(
+      createWorkingHoursHookValue({
+        workingHours: [],
+        loading: false,
+      })
+    );
 
     const mockNavigate = jest.fn();
     const searchParamsSpy = jest
-      .spyOn(require("react-router-dom"), "useSearchParams")
-      .mockReturnValue([new URLSearchParams("tutorial=true&step=2"), jest.fn()]);
-    const navigateSpy = jest.spyOn(require("react-router-dom"), "useNavigate").mockReturnValue(mockNavigate);
+      .spyOn(RouterDom, "useSearchParams")
+      .mockReturnValue(
+        [new URLSearchParams("tutorial=true&step=2"), jest.fn()] as ReturnType<typeof RouterDom.useSearchParams>
+      );
+    const navigateSpy = jest
+      .spyOn(RouterDom, "useNavigate")
+      .mockReturnValue(mockNavigate as ReturnType<typeof RouterDom.useNavigate>);
 
     render(<Profile />);
 
@@ -328,32 +480,35 @@ describe("Profile settings page", () => {
     const profileSectionMock = createSectionMock({ fullName: "Jane", phoneNumber: "" });
     const workingHoursSectionMock = createSectionMock({ workingHours: [] });
 
-    mockUseSettingsCategorySection.mockImplementation(({ sectionId }) =>
+    mockUseSettingsCategorySection.mockImplementation(({ sectionId }: SettingsCategorySectionArgs) =>
       sectionId === "profile" ? profileSectionMock : workingHoursSectionMock
     );
 
-    const updateWorkingHour = jest.fn().mockResolvedValue({ success: true });
+    const updateWorkingHour: WorkingHoursHookValue["updateWorkingHour"] = jest.fn(
+      async () => ({ success: true })
+    );
 
-    mockUseProfile.mockReturnValue({
-      profile: {
-        full_name: "Jane",
-        phone_number: "",
-        profile_photo_url: null,
-      },
-      loading: false,
-      uploading: false,
-      updateProfile: jest.fn(),
-      uploadProfilePhoto: jest.fn(),
-      deleteProfilePhoto: jest.fn(),
-    } as any);
+    mockUseProfile.mockReturnValue(
+      createProfileHookValue({
+        profile: {
+          full_name: "Jane",
+          phone_number: "",
+          profile_photo_url: null,
+        },
+        loading: false,
+        uploading: false,
+      })
+    );
 
-    mockUseWorkingHours.mockReturnValue({
-      workingHours: [
-        { day_of_week: 1, start_time: "09:00:00", end_time: "17:00:00", enabled: false },
-      ],
-      loading: false,
-      updateWorkingHour,
-    } as any);
+    mockUseWorkingHours.mockReturnValue(
+      createWorkingHoursHookValue({
+        workingHours: [
+          { day_of_week: 1, start_time: "09:00:00", end_time: "17:00:00", enabled: false },
+        ],
+        loading: false,
+        updateWorkingHour,
+      })
+    );
 
     render(<Profile />);
 

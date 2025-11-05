@@ -1,16 +1,48 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { Children, isValidElement } from "react";
+import {
+  Children,
+  isValidElement,
+  type ReactNode,
+  type ReactElement,
+} from "react";
 import { EnhancedAddLeadDialog } from "../EnhancedAddLeadDialog";
 import { useLeadFieldDefinitions } from "@/hooks/useLeadFieldDefinitions";
 import { useLeadFieldValues } from "@/hooks/useLeadFieldValues";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+import { useFormContext } from "react-hook-form";
+import type { LeadFieldDefinition } from "@/types/leadFields";
+
+interface FooterActionMock {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}
+
+interface AppSheetModalProps {
+  title: string;
+  isOpen: boolean;
+  dirty?: boolean;
+  footerActions?: FooterActionMock[];
+  onDirtyClose?: () => void;
+  children?: ReactNode;
+}
+
+interface NavigationGuardProps {
+  open: boolean;
+  message?: string;
+  onDiscard: () => void;
+  onStay: () => void;
+  onSaveAndExit?: () => void;
+}
+
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string, options?: Record<string, any>) =>
-      options?.field ? `${key}:${options.field}` : key
+    t: (key: string, options?: Record<string, unknown>) =>
+      typeof options?.field === "string" ? `${key}:${options.field}` : key,
   })
 }));
 
@@ -21,14 +53,14 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
     dirty,
     footerActions = [],
     onDirtyClose,
-    children
-  }: any) => (
+    children,
+  }: import("./__types__/modal").MockAppSheetModalProps) => (
     <div data-testid="app-sheet-modal">
       <span data-testid="modal-title">{title}</span>
       <span data-testid="modal-open">{String(isOpen)}</span>
       <span data-testid="modal-dirty">{dirty ? "dirty" : "clean"}</span>
       <div>
-        {footerActions.map((action: any, index: number) => (
+        {footerActions.map((action, index) => (
           <button
             key={index}
             data-testid={`footer-action-${index}`}
@@ -48,7 +80,7 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
 }));
 
 jest.mock("../settings/NavigationGuardDialog", () => ({
-  NavigationGuardDialog: ({ open, message, onDiscard, onStay, onSaveAndExit }: any) =>
+  NavigationGuardDialog: ({ open, message, onDiscard, onStay, onSaveAndExit }: import("./__types__/modal").MockNavigationGuardProps) =>
     open ? (
       <div data-testid="navigation-guard">
         <p data-testid="navigation-guard-message">{message}</p>
@@ -64,13 +96,13 @@ jest.mock("@/components/ui/loading-presets", () => ({
 }));
 
 jest.mock("../DynamicLeadFormFields", () => ({
-  DynamicLeadFormFields: ({ fieldDefinitions }: any) => {
-    const { register } = require("react-hook-form").useFormContext();
+  DynamicLeadFormFields: ({ fieldDefinitions }: { fieldDefinitions: LeadFieldDefinition[] }) => {
+    const { register } = useFormContext();
     return (
       <div>
         {fieldDefinitions
-          .filter((field: any) => field.is_visible_in_form)
-          .map((field: any) => (
+          .filter((field) => field.is_visible_in_form)
+          .map((field) => (
             <label key={field.id}>
               {field.label}
               <input
@@ -99,6 +131,8 @@ jest.mock("@/lib/organizationUtils", () => ({
 const toastMock = {
   success: jest.fn(),
   error: jest.fn(),
+  warning: jest.fn(),
+  info: jest.fn(),
 };
 
 jest.mock("@/lib/toastHelpers", () => ({
@@ -118,53 +152,88 @@ jest.mock("@/integrations/supabase/client", () => ({
   }
 }));
 
-const leadStatusQueries: any[] = [];
-const leadsQueries: any[] = [];
+interface LeadStatusQueryMock {
+  _selectFields: string;
+  select: jest.Mock<LeadStatusQueryMock, [string]>;
+  eq: jest.Mock<LeadStatusQueryMock, [string, unknown]>;
+  maybeSingle: jest.Mock<Promise<{ data: { id?: string; name?: string } | null }>, []>;
+}
 
-const createLeadStatusesQuery = () => {
-  const query: any = {
+interface LeadsQueryMock {
+  _payload: LeadInsert | null;
+  insert: jest.Mock<LeadsQueryMock, [LeadInsert]>;
+  select: jest.Mock<LeadsQueryMock, [string?]>;
+  single: jest.Mock<Promise<{ data: LeadRow | null; error: unknown }>, []>;
+}
+
+const leadStatusQueries: LeadStatusQueryMock[] = [];
+const leadsQueries: LeadsQueryMock[] = [];
+
+const createLeadStatusesQuery = (): LeadStatusQueryMock => {
+  const query: LeadStatusQueryMock = {
     _selectFields: "",
-    select: jest.fn(function (fields: string) {
+    select: jest.fn((fields: string) => {
       query._selectFields = fields;
       return query;
     }),
     eq: jest.fn(() => query),
-    maybeSingle: jest.fn(() => {
+    maybeSingle: jest.fn(async () => {
       if (query._selectFields === "name") {
-        return Promise.resolve({ data: { name: "New" } });
+        return { data: { name: "New" } };
       }
       if (query._selectFields === "id") {
-        return Promise.resolve({ data: { id: "status-1" } });
+        return { data: { id: "status-1" } };
       }
-      return Promise.resolve({ data: null });
-    })
+      return { data: null };
+    }),
   };
   leadStatusQueries.push(query);
   return query;
 };
 
-const createLeadsQuery = () => {
-  const query: any = {
+const createLeadsQuery = (): LeadsQueryMock => {
+  const query: LeadsQueryMock = {
     _payload: null,
-    insert: jest.fn(function (payload: any) {
+    insert: jest.fn((payload: LeadInsert) => {
       query._payload = payload;
       return query;
     }),
     select: jest.fn(() => query),
-    single: jest.fn(() => Promise.resolve({ data: { id: "lead-123" }, error: null }))
+    single: jest.fn(async () => ({
+      data: {
+        id: "lead-123",
+        organization_id: "org-123",
+        user_id: "user-1",
+        name: "Alice",
+        email: null,
+        phone: null,
+        status: "New",
+        status_id: "status-1",
+        notes: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        source: null,
+        archived_at: null,
+        lead_owner_id: null,
+        referral_source: null,
+        project_id: null,
+        is_archived: false,
+      } as LeadRow,
+      error: null,
+    })),
   };
   leadsQueries.push(query);
   return query;
 };
 
-const useLeadFieldDefinitionsMock = useLeadFieldDefinitions as jest.Mock;
-const useLeadFieldValuesMock = useLeadFieldValues as jest.Mock;
-const getUserOrganizationIdMock = getUserOrganizationId as jest.Mock;
-const useI18nToastMock = useI18nToast as jest.Mock;
-const supabaseFromMock = supabase.from as jest.Mock;
-const supabaseAuthGetUserMock = supabase.auth.getUser as jest.Mock;
+const useLeadFieldDefinitionsMock = useLeadFieldDefinitions as jest.MockedFunction<typeof useLeadFieldDefinitions>;
+const useLeadFieldValuesMock = useLeadFieldValues as jest.MockedFunction<typeof useLeadFieldValues>;
+const getUserOrganizationIdMock = getUserOrganizationId as jest.MockedFunction<typeof getUserOrganizationId>;
+const useI18nToastMock = useI18nToast as jest.MockedFunction<typeof useI18nToast>;
+const supabaseFromMock = supabase.from as jest.Mock<LeadStatusQueryMock | LeadsQueryMock, [string]>;
+const supabaseAuthGetUserMock = supabase.auth.getUser as jest.MockedFunction<typeof supabase.auth.getUser>;
 
-const fieldDefinitions = [
+const fieldDefinitions: LeadFieldDefinition[] = [
   {
     id: "name",
     organization_id: "org-123",
@@ -210,7 +279,7 @@ const fieldDefinitions = [
     is_visible_in_form: false,
     is_visible_in_table: true,
     sort_order: 3,
-    options: { options: ["New", "Contacted"] },
+    options: { options: ["New", "Contacted"] } as unknown as LeadFieldDefinition["options"],
     validation_rules: null,
     allow_multiple: false,
     created_at: "2024-01-01",
@@ -235,11 +304,29 @@ describe("EnhancedAddLeadDialog", () => {
     supabaseAuthGetUserMock.mockResolvedValue({ data: { user: { id: "user-1" } } });
     getUserOrganizationIdMock.mockResolvedValue("org-123");
     useI18nToastMock.mockReturnValue(toastMock);
+    useLeadFieldDefinitionsMock.mockReturnValue({ fieldDefinitions: [], loading: false, refetch: jest.fn() });
+    useLeadFieldValuesMock.mockReturnValue({
+      upsertFieldValues: jest.fn(async () => {}),
+      loading: false,
+      error: null,
+      fieldValues: [],
+      refetch: jest.fn(),
+      getFieldValue: jest.fn(),
+      getFieldValuesAsRecord: jest.fn(() => ({})),
+    });
   });
 
   it("renders loading skeleton while field definitions load", () => {
-    useLeadFieldDefinitionsMock.mockReturnValue({ fieldDefinitions: [], loading: true });
-    useLeadFieldValuesMock.mockReturnValue({ upsertFieldValues: jest.fn() });
+    useLeadFieldDefinitionsMock.mockReturnValue({ fieldDefinitions: [], loading: true, refetch: jest.fn() });
+    useLeadFieldValuesMock.mockReturnValue({
+      upsertFieldValues: jest.fn(async () => {}),
+      loading: false,
+      error: null,
+      fieldValues: [],
+      refetch: jest.fn(),
+      getFieldValue: jest.fn(),
+      getFieldValuesAsRecord: jest.fn(() => ({})),
+    });
 
     render(
       <EnhancedAddLeadDialog open onOpenChange={jest.fn()} onClose={jest.fn()} />
@@ -249,12 +336,20 @@ describe("EnhancedAddLeadDialog", () => {
   });
 
   it("submits a new lead with default status and field values", async () => {
-    const upsertFieldValues = jest.fn();
+    const upsertFieldValues = jest.fn(async () => {});
     const onClose = jest.fn();
     const onSuccess = jest.fn();
 
-    useLeadFieldDefinitionsMock.mockReturnValue({ fieldDefinitions, loading: false });
-    useLeadFieldValuesMock.mockReturnValue({ upsertFieldValues });
+    useLeadFieldDefinitionsMock.mockReturnValue({ fieldDefinitions, loading: false, refetch: jest.fn() });
+    useLeadFieldValuesMock.mockReturnValue({
+      upsertFieldValues,
+      loading: false,
+      error: null,
+      fieldValues: [],
+      refetch: jest.fn(),
+      getFieldValue: jest.fn(),
+      getFieldValuesAsRecord: jest.fn(() => ({})),
+    });
 
     render(
       <EnhancedAddLeadDialog
@@ -301,12 +396,12 @@ describe("EnhancedAddLeadDialog", () => {
     });
 
     expect(toastMock.success).toHaveBeenCalledTimes(1);
-    const [toastContent, toastOptions] = toastMock.success.mock.calls[0];
+    const toastCall = toastMock.success.mock.calls[0] as [ReactElement, { className?: string }?];
+    const [toastContent, toastOptions] = toastCall;
     expect(isValidElement(toastContent)).toBe(true);
-    const childrenArray = Children.toArray(
-      (toastContent as any).props.children
-    );
-    const [messageNode, actionNode] = childrenArray as any[];
+
+    const childrenArray = Children.toArray(toastContent.props.children);
+    const [messageNode, actionNode] = childrenArray as ReactElement[];
     expect(messageNode.props.children).toBe("leadDialog.successCreated");
     expect(actionNode.props.children).toBe("buttons.view_lead");
     expect(typeof actionNode.props.onClick).toBe("function");
@@ -318,11 +413,19 @@ describe("EnhancedAddLeadDialog", () => {
   });
 
   it("shows a navigation guard when attempting to close with dirty changes", async () => {
-    const upsertFieldValues = jest.fn();
+    const upsertFieldValues = jest.fn(async () => {});
     const onClose = jest.fn();
 
-    useLeadFieldDefinitionsMock.mockReturnValue({ fieldDefinitions, loading: false });
-    useLeadFieldValuesMock.mockReturnValue({ upsertFieldValues });
+    useLeadFieldDefinitionsMock.mockReturnValue({ fieldDefinitions, loading: false, refetch: jest.fn() });
+    useLeadFieldValuesMock.mockReturnValue({
+      upsertFieldValues,
+      loading: false,
+      error: null,
+      fieldValues: [],
+      refetch: jest.fn(),
+      getFieldValue: jest.fn(),
+      getFieldValuesAsRecord: jest.fn(() => ({})),
+    });
 
     render(
       <EnhancedAddLeadDialog
@@ -355,3 +458,7 @@ describe("EnhancedAddLeadDialog", () => {
     });
   });
 });
+// type aliases sourced from Supabase generated types
+type LeadStatusRow = Database["public"]["Tables"]["lead_statuses"]["Row"];
+type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
+type LeadInsert = Database["public"]["Tables"]["leads"]["Insert"];

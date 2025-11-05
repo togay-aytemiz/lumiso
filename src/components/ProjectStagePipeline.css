@@ -1,0 +1,97 @@
+.pipeline-wrapper {
+  --pipeline-arrow: 28px;
+  --pipeline-gap-color: hsl(var(--background));
+  --pipeline-stage-height: 36px;
+  --pipeline-stage-min-width: 100px;
+  --pipeline-stage-padding: 16px;
+}
+
+.pipeline-stage {
+  --stage-bg: hsl(var(--muted) / 0.25);
+  --stage-fg: hsl(var(--muted-foreground));
+  --stage-border: hsl(var(--border));
+  --stage-weight: 500;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--pipeline-stage-min-width);
+  height: var(--pipeline-stage-height);
+  padding: 0 var(--pipeline-stage-padding);
+  border: 1px solid var(--stage-border);
+  background: var(--stage-bg);
+  color: var(--stage-fg);
+  font-size: 0.75rem;
+  font-weight: var(--stage-weight);
+  line-height: 1;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease,
+    font-weight 150ms ease;
+}
+
+.pipeline-stage > span {
+  position: relative;
+  z-index: 3;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.pipeline-stage::after,
+.pipeline-stage::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  width: var(--pipeline-arrow);
+  height: calc(100% + 2px);
+  pointer-events: none;
+  transition: inherit;
+}
+
+.pipeline-stage::after {
+  right: calc(-1 * var(--pipeline-arrow));
+  background: var(--stage-bg);
+  border-top: 1px solid var(--stage-border);
+  border-right: 1px solid var(--stage-border);
+  border-bottom: 1px solid var(--stage-border);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  z-index: 1;
+}
+
+.pipeline-stage::before {
+  left: calc(-1 * var(--pipeline-arrow));
+  background: var(--stage-gap-color, var(--pipeline-gap-color));
+  border-top: 1px solid var(--stage-gap-border, var(--stage-border));
+  border-bottom: 1px solid var(--stage-gap-border, var(--stage-border));
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
+  z-index: 2;
+}
+
+.pipeline-stage:first-child {
+  border-radius: 999px 0 0 999px;
+  margin-left: 0;
+}
+
+.pipeline-stage:first-child::before {
+  display: none;
+}
+
+.pipeline-stage:last-child {
+  border-radius: 0 999px 999px 0;
+}
+
+.pipeline-stage:last-child::after {
+  display: none;
+}
+
+.pipeline-stage:not(:first-child) {
+  margin-left: calc(-1 * var(--pipeline-arrow));
+  border-left: 0;
+}
+
+.pipeline-stage--active {
+  --stage-weight: 600;
+}
+
+.pipeline-stage--clickable {
+  cursor: pointer;
+}

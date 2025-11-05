@@ -1,4 +1,4 @@
-import React from "react";
+import React, { type ReactNode } from "react";
 import { act, fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import { AddPackageDialog, EditPackageDialog } from "../PackageDialogs";
 
@@ -38,15 +38,28 @@ jest.mock("react-router-dom", () => ({
   useNavigate: () => navigateMock,
 }));
 
+interface MockFooterAction {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}
+
+interface MockAppSheetModalProps {
+  title: string;
+  isOpen: boolean;
+  children?: ReactNode;
+  footerActions?: MockFooterAction[];
+}
+
 jest.mock("@/components/ui/app-sheet-modal", () => ({
-  AppSheetModal: ({ title, isOpen, children, footerActions }: any) => {
+  AppSheetModal: ({ title, isOpen, children, footerActions }: MockAppSheetModalProps) => {
     if (!isOpen) return null;
     return (
       <div data-testid="app-sheet-modal">
         <h2>{title}</h2>
         <div>{children}</div>
         <div>
-          {footerActions?.map((action: any) => (
+          {footerActions?.map((action) => (
             <button
               key={action.label}
               type="button"
@@ -63,18 +76,18 @@ jest.mock("@/components/ui/app-sheet-modal", () => ({
 }));
 
 jest.mock("@/components/ui/switch", () => ({
-  Switch: ({ checked, onCheckedChange }: any) => (
+  Switch: ({ checked = false, onCheckedChange }: { checked?: boolean; onCheckedChange?: (checked: boolean) => void }) => (
     <input
       type="checkbox"
       role="switch"
       checked={checked}
-      onChange={(event) => onCheckedChange(event.target.checked)}
+      onChange={(event) => onCheckedChange?.(event.target.checked)}
     />
   ),
 }));
 
 jest.mock("@/components/ui/badge", () => ({
-  Badge: ({ children, onClick }: any) => (
+  Badge: ({ children, onClick }: { children?: ReactNode; onClick?: () => void }) => (
     <button type="button" onClick={onClick}>
       {children}
     </button>
@@ -82,22 +95,22 @@ jest.mock("@/components/ui/badge", () => ({
 }));
 
 jest.mock("@/components/ui/accordion", () => ({
-  Accordion: ({ children }: any) => <div>{children}</div>,
-  AccordionItem: ({ children }: any) => <div>{children}</div>,
-  AccordionTrigger: ({ children }: any) => <div>{children}</div>,
-  AccordionContent: ({ children }: any) => <div>{children}</div>,
+  Accordion: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  AccordionItem: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  AccordionTrigger: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  AccordionContent: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
 }));
 
 jest.mock("@/components/ui/select", () => ({
-  Select: ({ value, onValueChange, children }: any) => (
-    <select value={value || ""} onChange={(event) => onValueChange?.(event.target.value)}>
+  Select: ({ value, onValueChange, children }: { value?: string; onValueChange?: (next: string) => void; children?: ReactNode }) => (
+    <select value={value ?? ""} onChange={(event) => onValueChange?.(event.target.value)}>
       {children}
     </select>
   ),
-  SelectTrigger: ({ children }: any) => <>{children}</>,
-  SelectContent: ({ children }: any) => <>{children}</>,
-  SelectItem: ({ value, children }: any) => <option value={value}>{children}</option>,
-  SelectValue: ({ placeholder, children }: any) => (
+  SelectTrigger: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  SelectContent: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  SelectItem: ({ value, children }: { value: string; children?: ReactNode }) => <option value={value}>{children}</option>,
+  SelectValue: ({ placeholder, children }: { placeholder?: string; children?: ReactNode }) => (
     <>
       {children}
       {placeholder ? <option value="">{placeholder}</option> : null}
@@ -167,6 +180,47 @@ const resolveNamespace = (namespace?: string | string[], override?: string) => {
   return namespace;
 };
 
+interface ProjectTypeRow {
+  id: string;
+  name: string;
+}
+
+interface ServiceRow {
+  id: string;
+  name: string;
+  category?: string | null;
+  cost_price?: number | null;
+  selling_price?: number | null;
+  price?: number | null;
+}
+
+interface PackageRecord {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  applicable_types: string[];
+  default_add_ons: string[];
+  line_items: unknown[];
+  is_active: boolean;
+}
+
+interface ModalNavigationArgs {
+  onDiscard?: () => void;
+  onSaveAndExit?: () => void;
+}
+
+interface SupabaseQueryResult<T> {
+  data: T[];
+  error: null;
+}
+
+type OrderFunction<T> = (column: string, options?: { ascending?: boolean }) => Promise<SupabaseQueryResult<T>>;
+type EqReturn<T> = { order: OrderFunction<T> };
+type EqFunction<T> = (column: string, value: unknown) => EqReturn<T>;
+type SelectReturn<T> = { eq: EqFunction<T>; order: OrderFunction<T> };
+type SelectFunction<T> = (columns: string) => SelectReturn<T>;
+
 jest.mock("react-i18next", () => ({
   useTranslation: (namespace?: string | string[]) => ({
     t: (key: string, options?: { ns?: string; count?: number }) => {
@@ -181,16 +235,18 @@ jest.mock("react-i18next", () => ({
 }));
 
 interface SelectBuilderResult<T> {
-  builder: { select: (columns: string) => any };
-  selectMock: jest.Mock;
-  eqMock: jest.Mock;
-  orderMock: jest.Mock;
+  builder: { select: SelectFunction<T> };
+  selectMock: jest.Mock<SelectReturn<T>, [string]>;
+  eqMock: jest.Mock<EqReturn<T>, [string, unknown]>;
+  orderMock: jest.Mock<Promise<SupabaseQueryResult<T>>, [string, { ascending?: boolean }?]>;
 }
 
 const createSelectBuilder = <T,>(rows: T[]): SelectBuilderResult<T> => {
-  const orderMock = jest.fn(async () => ({ data: rows, error: null }));
-  const eqMock = jest.fn(() => ({ order: orderMock }));
-  const selectMock = jest.fn(() => ({ eq: eqMock, order: orderMock }));
+  const orderMock = jest.fn<Promise<SupabaseQueryResult<T>>, [string, { ascending?: boolean }?]>(
+    async () => ({ data: rows, error: null })
+  );
+  const eqMock = jest.fn<EqReturn<T>, [string, unknown]>(() => ({ order: orderMock }));
+  const selectMock = jest.fn<SelectReturn<T>, [string]>(() => ({ eq: eqMock, order: orderMock }));
   return {
     builder: { select: selectMock },
     selectMock,
@@ -207,19 +263,23 @@ describe("PackageDialogs", () => {
       error: null,
     });
     getUserOrganizationIdMock.mockResolvedValue("org-123");
-    useModalNavigationMock.mockImplementation(({ onDiscard, onSaveAndExit }: any = {}) => ({
+    useModalNavigationMock.mockImplementation(({ onDiscard, onSaveAndExit }: ModalNavigationArgs = {}) => ({
       showGuard: false,
       message: "",
       handleModalClose: () => true,
-      handleDiscardChanges: () => onDiscard?.(),
+      handleDiscardChanges: () => {
+        onDiscard?.();
+      },
       handleStayOnModal: jest.fn(),
-      handleSaveAndExit: () => onSaveAndExit?.(),
+      handleSaveAndExit: () => {
+        onSaveAndExit?.();
+      },
     }));
   });
 
   it("creates a package and emits success callbacks", async () => {
-    const projectTypes = createSelectBuilder([{ id: "type-1", name: "Wedding" }]);
-    const services = createSelectBuilder<any>([]);
+    const projectTypes = createSelectBuilder<ProjectTypeRow>([{ id: "type-1", name: "Wedding" }]);
+    const services = createSelectBuilder<ServiceRow>([]);
     const insertMock = jest.fn(async () => ({ error: null }));
 
     supabaseFromMock.mockImplementation((table: string) => {
@@ -282,8 +342,8 @@ describe("PackageDialogs", () => {
   });
 
   it("shows validation errors when required fields are empty", async () => {
-    const projectTypes = createSelectBuilder<any>([]);
-    const services = createSelectBuilder<any>([]);
+    const projectTypes = createSelectBuilder<ProjectTypeRow>([]);
+    const services = createSelectBuilder<ServiceRow>([]);
     const insertMock = jest.fn(async () => ({ error: null }));
 
     supabaseFromMock.mockImplementation((table: string) => {
@@ -313,8 +373,8 @@ describe("PackageDialogs", () => {
   });
 
   it("updates a package and reports success", async () => {
-    const projectTypes = createSelectBuilder([{ id: "type-1", name: "Wedding" }]);
-    const services = createSelectBuilder<any>([]);
+    const projectTypes = createSelectBuilder<ProjectTypeRow>([{ id: "type-1", name: "Wedding" }]);
+    const services = createSelectBuilder<ServiceRow>([]);
     const updateEqMock = jest.fn(async () => ({ error: null }));
     const updateMock = jest.fn(() => ({ eq: updateEqMock }));
 
@@ -327,19 +387,21 @@ describe("PackageDialogs", () => {
 
     const onPackageUpdated = jest.fn();
 
+    const existingPackage: PackageRecord = {
+      id: "pkg-1",
+      name: "Starter Package",
+      description: "Base package",
+      price: 400,
+      applicable_types: ["Wedding"],
+      default_add_ons: [],
+      line_items: [],
+      is_active: true,
+    };
+
     render(
       <EditPackageDialog
         open
-        package={{
-          id: "pkg-1",
-          name: "Starter Package",
-          description: "Base package",
-          price: 400,
-          applicable_types: ["Wedding"],
-          default_add_ons: [],
-          line_items: [],
-          is_active: true,
-        } as any}
+        package={existingPackage}
         onOpenChange={jest.fn()}
         onPackageUpdated={onPackageUpdated}
       />

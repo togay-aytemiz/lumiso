@@ -28,6 +28,8 @@ import { useMessagesTranslation, useCommonTranslation, useFormsTranslation } fro
 import { useTranslation } from 'react-i18next';
 import { EntityHeader } from '@/components/EntityHeader';
 import { buildSessionSummaryItems } from '@/lib/sessions/buildSessionSummaryItems';
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface SessionData {
   id: string;
@@ -67,6 +69,7 @@ export default function SessionDetail() {
   const { t: tCommon } = useCommonTranslation();
   const { t: tForms } = useFormsTranslation();
   const { t: tPages } = useTranslation("pages");
+  const isMobile = useIsMobile();
   
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -279,6 +282,7 @@ export default function SessionDetail() {
       title={tPages("sessionDetail.cards.clientDetails")}
       showQuickActions={true}
       showClickableNames={true}
+      defaultExpanded={false}
       onNavigateToLead={handleLeadClick}
     />
   );
@@ -339,27 +343,51 @@ export default function SessionDetail() {
       )
     : undefined;
 
-  const headerActions = session ? (
-          <Button variant="outline" size="sm" onClick={handleEdit} className="gap-2 text-sm font-medium">
-            <Edit className="h-4 w-4" />
-            <span>{tForms('sessions.editSession')}</span>
-          </Button>
-  ) : undefined;
+  const renderSessionStatusBadge = (className?: string, size: "sm" | "default" = "default") =>
+    session ? (
+      <SessionStatusBadge
+        sessionId={session.id}
+        currentStatus={session.status as any}
+        editable={true}
+        onStatusChange={handleStatusChange}
+        size={size}
+        className={className}
+      />
+    ) : null;
+
+  const renderEditButton = (className?: string) => (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleEdit}
+      className={cn("gap-2 text-sm font-medium", className)}
+    >
+      <Edit className="h-4 w-4" />
+      <span>{tForms('sessions.editSession')}</span>
+    </Button>
+  );
+
+  const headerActions = session
+    ? isMobile
+      ? (
+          <div className="flex w-full flex-wrap items-center gap-2">
+            <div className="flex-1 min-w-[160px]">
+              {renderSessionStatusBadge("w-full justify-center", "sm")}
+            </div>
+            {renderEditButton("min-w-[120px] justify-center")}
+          </div>
+        )
+      : renderEditButton()
+    : undefined;
 
   const headerTitle = session ? (
     <span className="flex flex-col">
       <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {sessionTypeLabel}
       </span>
-      <span className="flex items-center gap-2 text-foreground">
-        <span className="truncate">{sessionNameDisplay}</span>
-        <SessionStatusBadge
-          sessionId={session.id}
-          currentStatus={session.status as any}
-          editable={true}
-          onStatusChange={handleStatusChange}
-          className="text-xs sm:text-sm"
-        />
+      <span className="flex flex-wrap items-center gap-2 text-foreground">
+        <span className="break-words text-pretty leading-tight">{sessionNameDisplay}</span>
+        {!isMobile && renderSessionStatusBadge("text-xs sm:text-sm")}
       </span>
     </span>
   ) : undefined;

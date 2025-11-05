@@ -1,4 +1,10 @@
-import type { ReactNode } from "react";
+import type {
+  ReactNode,
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  LabelHTMLAttributes,
+  SelectHTMLAttributes,
+} from "react";
 import { render, screen, fireEvent, waitFor } from "@/utils/testUtils";
 import Account from "../Account_old";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -7,18 +13,89 @@ import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { useToast } from "@/hooks/use-toast";
 import { useMessagesTranslation } from "@/hooks/useTypedTranslation";
 
-const mockHeader = jest.fn(({ title, description }: any) => (
+interface SettingsHeaderProps {
+  title: string;
+  description?: string;
+  actions?: ReactNode;
+  children?: ReactNode;
+}
+
+interface CategorySectionProps {
+  title: string;
+  description?: string;
+  children?: ReactNode;
+}
+
+interface EnhancedSectionProps {
+  title: string;
+  description?: string;
+  children?: ReactNode;
+}
+
+interface DropdownMenuItemProps {
+  children?: ReactNode;
+  onSelect?: () => void;
+}
+
+interface WorkingHour {
+  day_of_week: number;
+  start_time: string | null;
+  end_time: string | null;
+  enabled: boolean;
+}
+
+interface ProfileData {
+  full_name?: string;
+  phone_number?: string;
+  profile_photo_url?: string | null;
+}
+
+interface ProfileHookValue {
+  profile: ProfileData | null;
+  loading: boolean;
+  uploading: boolean;
+  updateProfile: jest.Mock<Promise<{ success: boolean; error?: unknown }>, [Partial<ProfileData>]>;
+  uploadProfilePhoto: jest.Mock<Promise<{ success: boolean; url?: string; error?: unknown }>, [File]>;
+  deleteProfilePhoto: jest.Mock<Promise<{ success: boolean; error?: unknown }>, []>;
+  refreshProfile: jest.Mock<Promise<void>, []>;
+}
+
+interface WorkingHoursHookValue {
+  workingHours: WorkingHour[];
+  loading: boolean;
+  updateWorkingHour: jest.Mock<Promise<{ success: boolean; error?: unknown }>, [number, Partial<WorkingHour>]>;
+  refetch: jest.Mock<Promise<void>, []>;
+}
+
+interface SettingsCategorySectionArgs {
+  sectionId: string;
+}
+
+interface SectionController<T extends Record<string, unknown>> {
+  values: T;
+  setValues: jest.Mock<void, [T]>;
+  updateValue: jest.Mock<void, [string, unknown]>;
+  handleSave: jest.Mock<Promise<void>, []>;
+  handleCancel: jest.Mock<void, []>;
+  isDirty: boolean;
+}
+
+interface MessagesTranslationHookValue {
+  t: jest.Mock<string, [string, Record<string, unknown>?]>;
+}
+
+const mockHeader = jest.fn(({ title, description }: SettingsHeaderProps) => (
   <header data-testid="settings-header">
     <h1>{title}</h1>
     <p>{description}</p>
   </header>
 ));
 
-const mockCategorySection = jest.fn(({ title, children }: any) => (
+const mockCategorySection = jest.fn(({ title, children }: CategorySectionProps) => (
   <section data-testid={`category-${title}`}>{children}</section>
 ));
 
-const mockEnhancedSection = jest.fn(({ title, children }: any) => (
+const mockEnhancedSection = jest.fn(({ title, children }: EnhancedSectionProps) => (
   <section data-testid={`enhanced-${title}`}>{children}</section>
 ));
 
@@ -34,16 +111,16 @@ jest.mock("@/components/settings/SettingsPageWrapper", () => ({
 
 jest.mock("@/components/settings/SettingsHeader", () => ({
   __esModule: true,
-  default: (props: any) => mockHeader(props),
+  default: (props: SettingsHeaderProps) => mockHeader(props),
 }));
 
 jest.mock("@/components/settings/CategorySettingsSection", () => ({
-  CategorySettingsSection: (props: any) => mockCategorySection(props),
+  CategorySettingsSection: (props: CategorySectionProps) => mockCategorySection(props),
 }));
 
 jest.mock("@/components/settings/EnhancedSettingsSection", () => ({
   __esModule: true,
-  default: (props: any) => mockEnhancedSection(props),
+  default: (props: EnhancedSectionProps) => mockEnhancedSection(props),
 }));
 
 jest.mock("@/components/ui/dialog", () => ({
@@ -54,7 +131,7 @@ jest.mock("@/components/ui/dialog", () => ({
 }));
 
 jest.mock("@/components/ui/button", () => ({
-  Button: ({ children, ...rest }: any) => (
+  Button: ({ children, ...rest }: ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button type="button" {...rest}>
       {children}
     </button>
@@ -62,13 +139,13 @@ jest.mock("@/components/ui/button", () => ({
 }));
 
 jest.mock("@/components/ui/input", () => ({
-  Input: ({ value, onChange, ...rest }: any) => (
+  Input: ({ value, onChange, ...rest }: InputHTMLAttributes<HTMLInputElement>) => (
     <input value={value} onChange={onChange} {...rest} />
   ),
 }));
 
 jest.mock("@/components/ui/label", () => ({
-  Label: ({ children, ...rest }: any) => (
+  Label: ({ children, ...rest }: LabelHTMLAttributes<HTMLLabelElement>) => (
     <label {...rest}>{children}</label>
   ),
 }));
@@ -86,11 +163,17 @@ jest.mock("@/components/ui/switch", () => ({
 }));
 
 jest.mock("@/components/ui/select", () => ({
-  Select: ({ value, onValueChange, children }: any) => (
+  Select: ({
+    value,
+    onValueChange,
+    children,
+    ...rest
+  }: SelectHTMLAttributes<HTMLSelectElement> & { onValueChange?: (next: string) => void }) => (
     <select
       data-testid={`working-hours-select-${value}`}
       value={value}
-      onChange={(event) => onValueChange(event.target.value)}
+      onChange={(event) => onValueChange?.(event.target.value)}
+      {...rest}
     >
       {children}
     </select>
@@ -98,7 +181,9 @@ jest.mock("@/components/ui/select", () => ({
   SelectTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
   SelectValue: () => null,
   SelectContent: ({ children }: { children: ReactNode }) => <>{children}</>,
-  SelectItem: ({ value, children }: any) => <option value={value}>{children}</option>,
+  SelectItem: ({ value, children }: { value: string; children?: ReactNode }) => (
+    <option value={value}>{children}</option>
+  ),
 }));
 
 jest.mock("@/components/ui/avatar", () => ({
@@ -126,7 +211,7 @@ jest.mock("@/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DropdownMenuTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DropdownMenuContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DropdownMenuItem: ({ children, onSelect }: any) => (
+  DropdownMenuItem: ({ children, onSelect }: DropdownMenuItemProps) => (
     <button type="button" onClick={onSelect}>
       {children}
     </button>
@@ -171,13 +256,34 @@ const mockUseSettingsCategorySection = useSettingsCategorySection as jest.Mocked
 const mockUseToast = useToast as jest.MockedFunction<typeof useToast>;
 const mockUseMessagesTranslation = useMessagesTranslation as jest.MockedFunction<typeof useMessagesTranslation>;
 
-const createSectionMock = (initialValues: Record<string, unknown>) => ({
+const createSectionMock = <T extends Record<string, unknown>>(initialValues: T): SectionController<T> => ({
   values: initialValues,
   setValues: jest.fn(),
   updateValue: jest.fn(),
   handleSave: jest.fn(),
   handleCancel: jest.fn(),
   isDirty: false,
+});
+
+const createProfileHookValue = (overrides: Partial<ProfileHookValue> = {}): ProfileHookValue => ({
+  profile: null,
+  loading: false,
+  uploading: false,
+  updateProfile: jest.fn(async () => ({ success: true })),
+  uploadProfilePhoto: jest.fn(async () => ({ success: true })),
+  deleteProfilePhoto: jest.fn(async () => ({ success: true })),
+  refreshProfile: jest.fn(async () => {}),
+  ...overrides,
+});
+
+const createWorkingHoursHookValue = (
+  overrides: Partial<WorkingHoursHookValue> = {}
+): WorkingHoursHookValue => ({
+  workingHours: [],
+  loading: false,
+  updateWorkingHour: jest.fn(async () => ({ success: true })),
+  refetch: jest.fn(async () => {}),
+  ...overrides,
 });
 
 describe("Legacy account settings page", () => {
@@ -188,8 +294,14 @@ describe("Legacy account settings page", () => {
     mockToast.mockClear();
     mockGetUser.mockClear();
 
-    mockUseToast.mockReturnValue({ toast: mockToast });
-    mockUseMessagesTranslation.mockReturnValue({ t: (key: string) => key } as any);
+    mockUseToast.mockReturnValue({
+      toasts: [],
+      toast: mockToast,
+      dismiss: jest.fn(),
+    });
+    mockUseMessagesTranslation.mockReturnValue({
+      t: jest.fn((key: string) => key),
+    } as MessagesTranslationHookValue);
     mockGetUser.mockResolvedValue({ data: { user: { email: "owner@example.com", id: "user-1" } } });
   });
 
@@ -201,24 +313,24 @@ describe("Legacy account settings page", () => {
     const profileSectionMock = createSectionMock({ fullName: "", phoneNumber: "" });
     const workingHoursSectionMock = createSectionMock({ workingHours: [] });
 
-    mockUseSettingsCategorySection.mockImplementation(({ sectionId }) =>
+    mockUseSettingsCategorySection.mockImplementation(({ sectionId }: SettingsCategorySectionArgs) =>
       sectionId === "profile" ? profileSectionMock : workingHoursSectionMock
     );
 
-    mockUseProfile.mockReturnValue({
-      profile: null,
-      loading: true,
-      uploading: false,
-      updateProfile: jest.fn(),
-      uploadProfilePhoto: jest.fn(),
-      deleteProfilePhoto: jest.fn(),
-    } as any);
+    mockUseProfile.mockReturnValue(
+      createProfileHookValue({
+        profile: null,
+        loading: true,
+        uploading: false,
+      })
+    );
 
-    mockUseWorkingHours.mockReturnValue({
-      workingHours: [],
-      loading: false,
-      updateWorkingHour: jest.fn(),
-    } as any);
+    mockUseWorkingHours.mockReturnValue(
+      createWorkingHoursHookValue({
+        workingHours: [],
+        loading: false,
+      })
+    );
 
     render(<Account />);
 
@@ -234,30 +346,30 @@ describe("Legacy account settings page", () => {
     const profileSectionMock = createSectionMock({ fullName: "", phoneNumber: "" });
     const workingHoursSectionMock = createSectionMock({ workingHours: [] });
 
-    mockUseSettingsCategorySection.mockImplementation(({ sectionId }) =>
+    mockUseSettingsCategorySection.mockImplementation(({ sectionId }: SettingsCategorySectionArgs) =>
       sectionId === "profile" ? profileSectionMock : workingHoursSectionMock
     );
 
-    mockUseProfile.mockReturnValue({
-      profile: {
-        full_name: "Jane Doe",
-        phone_number: "+1 555 0100",
-        profile_photo_url: null,
-      },
-      loading: false,
-      uploading: false,
-      updateProfile: jest.fn(),
-      uploadProfilePhoto: jest.fn(),
-      deleteProfilePhoto: jest.fn(),
-    } as any);
+    mockUseProfile.mockReturnValue(
+      createProfileHookValue({
+        profile: {
+          full_name: "Jane Doe",
+          phone_number: "+1 555 0100",
+          profile_photo_url: null,
+        },
+        loading: false,
+        uploading: false,
+      })
+    );
 
-    mockUseWorkingHours.mockReturnValue({
-      workingHours: [
-        { day_of_week: 1, start_time: "09:00:00", end_time: "17:00:00", enabled: true },
-      ],
-      loading: false,
-      updateWorkingHour: jest.fn().mockResolvedValue({ success: true }),
-    } as any);
+    mockUseWorkingHours.mockReturnValue(
+      createWorkingHoursHookValue({
+        workingHours: [
+          { day_of_week: 1, start_time: "09:00:00", end_time: "17:00:00", enabled: true },
+        ],
+        loading: false,
+      })
+    );
 
     render(<Account />);
 
@@ -285,32 +397,35 @@ describe("Legacy account settings page", () => {
     const profileSectionMock = createSectionMock({ fullName: "Jane", phoneNumber: "" });
     const workingHoursSectionMock = createSectionMock({ workingHours: [] });
 
-    mockUseSettingsCategorySection.mockImplementation(({ sectionId }) =>
+    mockUseSettingsCategorySection.mockImplementation(({ sectionId }: SettingsCategorySectionArgs) =>
       sectionId === "profile" ? profileSectionMock : workingHoursSectionMock
     );
 
-    const updateWorkingHour = jest.fn().mockResolvedValue({ success: true });
+    const updateWorkingHour: WorkingHoursHookValue["updateWorkingHour"] = jest.fn(
+      async () => ({ success: true })
+    );
 
-    mockUseProfile.mockReturnValue({
-      profile: {
-        full_name: "Jane",
-        phone_number: "",
-        profile_photo_url: null,
-      },
-      loading: false,
-      uploading: false,
-      updateProfile: jest.fn(),
-      uploadProfilePhoto: jest.fn(),
-      deleteProfilePhoto: jest.fn(),
-    } as any);
+    mockUseProfile.mockReturnValue(
+      createProfileHookValue({
+        profile: {
+          full_name: "Jane",
+          phone_number: "",
+          profile_photo_url: null,
+        },
+        loading: false,
+        uploading: false,
+      })
+    );
 
-    mockUseWorkingHours.mockReturnValue({
-      workingHours: [
-        { day_of_week: 1, start_time: "09:00:00", end_time: "17:00:00", enabled: false },
-      ],
-      loading: false,
-      updateWorkingHour,
-    } as any);
+    mockUseWorkingHours.mockReturnValue(
+      createWorkingHoursHookValue({
+        workingHours: [
+          { day_of_week: 1, start_time: "09:00:00", end_time: "17:00:00", enabled: false },
+        ],
+        loading: false,
+        updateWorkingHour,
+      })
+    );
 
     render(<Account />);
 

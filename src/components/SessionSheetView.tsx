@@ -17,6 +17,7 @@ import { getDisplaySessionName } from '@/lib/sessionUtils';
 import { useFormsTranslation, useMessagesTranslation } from '@/hooks/useTypedTranslation';
 import { EntityHeader } from '@/components/EntityHeader';
 import { buildSessionSummaryItems } from '@/lib/sessions/buildSessionSummaryItems';
+import { useIsMobile } from "@/hooks/use-mobile";
 interface SessionData {
   id: string;
   session_name?: string | null;
@@ -74,6 +75,7 @@ export default function SessionSheetView({
   const {
     t: tMessages
   } = useMessagesTranslation();
+  const isMobile = useIsMobile();
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -223,6 +225,47 @@ export default function SessionSheetView({
       </div>
     ) : undefined;
 
+  const renderSessionStatusBadge = (className?: string, size: "sm" | "default" = "default") =>
+    session ? (
+      <SessionStatusBadge
+        sessionId={session.id}
+        currentStatus={session.status as any}
+        editable={true}
+        onStatusChange={handleStatusChange}
+        size={size}
+        className={className}
+      />
+    ) : null;
+
+  const moreActionsButton = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="min-w-[120px] justify-center gap-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:px-3"
+        >
+          <span>{tForms('sessionSheet.more')}</span>
+          <ChevronDown className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
+        <DropdownMenuItem role="menuitem" onSelect={handleEdit}>
+          <Pencil className="mr-2 h-4 w-4" />
+          <span>{tForms('sessionSheet.edit')}</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          role="menuitem"
+          onSelect={() => setIsDeleteDialogOpen(true)}
+          className="hover:text-destructive focus:text-destructive"
+        >
+          <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+          <span className="text-destructive">{tForms('sessionSheet.deleteSession')}</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   const headerActions = session ? (
     <>
       <Button
@@ -234,32 +277,16 @@ export default function SessionSheetView({
         <ExternalLink className="h-4 w-4" />
         <span className="text-sm">{tForms('sessionSheet.fullDetails')}</span>
       </Button>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-center gap-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:w-auto sm:px-3"
-          >
-            <span>{tForms('sessionSheet.more')}</span>
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
-          <DropdownMenuItem role="menuitem" onSelect={handleEdit}>
-            <Pencil className="mr-2 h-4 w-4" />
-            <span>{tForms('sessionSheet.edit')}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            role="menuitem"
-            onSelect={() => setIsDeleteDialogOpen(true)}
-            className="hover:text-destructive focus:text-destructive"
-          >
-            <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-            <span className="text-destructive">{tForms('sessionSheet.deleteSession')}</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {isMobile ? (
+        <div className="flex w-full flex-wrap items-center gap-2">
+          <div className="flex-1 min-w-[160px]">
+            {renderSessionStatusBadge("w-full justify-center", "sm")}
+          </div>
+          {moreActionsButton}
+        </div>
+      ) : (
+        moreActionsButton
+      )}
       <Button
         variant="ghost"
         size="sm"
@@ -276,15 +303,9 @@ export default function SessionSheetView({
       <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {sessionTypeLabel}
       </span>
-      <span className="flex items-center gap-2 text-foreground">
-        <span className="truncate">{sessionNameDisplay}</span>
-        <SessionStatusBadge
-          sessionId={session.id}
-          currentStatus={session.status as any}
-          editable={true}
-          onStatusChange={handleStatusChange}
-          className="text-xs sm:text-sm"
-        />
+      <span className="flex flex-wrap items-center gap-2 text-foreground">
+        <span className="break-words text-pretty leading-tight">{sessionNameDisplay}</span>
+        {!isMobile && renderSessionStatusBadge("text-xs sm:text-sm")}
       </span>
     </span>
   ) : undefined;
@@ -327,6 +348,7 @@ export default function SessionSheetView({
                           title={tForms('sessionSheet.clientDetails')}
                           showQuickActions={true}
                           showClickableNames={true}
+                          defaultExpanded={false}
                           onNavigateToLead={handleLeadClick}
                         />
                       )}

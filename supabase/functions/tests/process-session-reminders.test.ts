@@ -1,6 +1,31 @@
 import { assertEquals, assertRejects } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 import { processScheduledReminders } from "../process-session-reminders/index.ts";
 
+type ReminderSession = {
+  id: string;
+  session_date: string;
+  session_time: string;
+  session_type_id: string | null;
+  session_types: {
+    id: string;
+    name: string;
+    duration_minutes: number | null;
+  } | null;
+  location: string | null;
+  notes: string | null;
+  leads: {
+    id: string;
+    name: string;
+    email: string | null;
+    phone: string | null;
+  } | null;
+};
+
+type ReminderWorkflow = {
+  id: string;
+  name: string;
+} | null;
+
 type Reminder = {
   id: string;
   session_id: string;
@@ -8,8 +33,8 @@ type Reminder = {
   scheduled_for: string;
   organization_id: string;
   workflow_id: string | null;
-  sessions: any;
-  workflows?: any;
+  sessions: ReminderSession | null;
+  workflows?: ReminderWorkflow;
 };
 
 type StubOptions = {
@@ -156,14 +181,14 @@ Deno.test("throws when fetching due reminders fails", async () => {
   const fetchError = new Error("unable to load reminders");
   const supabase = createSupabaseStub({ fetchError });
 
-  await assertRejects(() => processScheduledReminders(supabase as unknown as any), Error, "unable to load reminders");
+  await assertRejects(() => processScheduledReminders(supabase as unknown as ReturnType<typeof createSupabaseStub>), Error, "unable to load reminders");
   assertEquals(supabase.invokeCalls.length, 0);
 });
 
 Deno.test("returns zero counts when no reminders are due", async () => {
   const supabase = createSupabaseStub({ dueReminders: [] });
 
-  const result = await processScheduledReminders(supabase as unknown as any);
+  const result = await processScheduledReminders(supabase as unknown as ReturnType<typeof createSupabaseStub>);
 
   assertEquals(result, { processed: 0, triggered: 0, failed: 0 });
   assertEquals(supabase.invokeCalls.length, 0);
@@ -175,7 +200,7 @@ Deno.test("marks reminders with missing session data as failed", async () => {
   (reminder as unknown as { sessions: Reminder["sessions"] | null }).sessions = null;
   const supabase = createSupabaseStub({ dueReminders: [reminder] });
 
-  const result = await processScheduledReminders(supabase as unknown as any);
+  const result = await processScheduledReminders(supabase as unknown as ReturnType<typeof createSupabaseStub>);
 
   assertEquals(result, { processed: 1, triggered: 0, failed: 1 });
   assertEquals(supabase.updateCalls.length, 1);
@@ -187,7 +212,7 @@ Deno.test("records failures when workflow trigger errors occur", async () => {
   const reminder = buildReminder();
   const supabase = createSupabaseStub({ dueReminders: [reminder], triggerError: "workflow failed" });
 
-  const result = await processScheduledReminders(supabase as unknown as any);
+  const result = await processScheduledReminders(supabase as unknown as ReturnType<typeof createSupabaseStub>);
 
   assertEquals(result, { processed: 1, triggered: 0, failed: 1 });
   assertEquals(supabase.invokeCalls.length, 1);
@@ -201,7 +226,7 @@ Deno.test("successfully triggers workflows for valid reminders", async () => {
   const reminder = buildReminder();
   const supabase = createSupabaseStub({ dueReminders: [reminder], cleanupResult: 2 });
 
-  const result = await processScheduledReminders(supabase as unknown as any);
+  const result = await processScheduledReminders(supabase as unknown as ReturnType<typeof createSupabaseStub>);
 
   assertEquals(result, { processed: 1, triggered: 1, failed: 0 });
   assertEquals(supabase.invokeCalls.length, 1);

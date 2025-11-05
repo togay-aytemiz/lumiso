@@ -98,7 +98,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
 
   // Set up simplified presence tracking for single-photographer
   useEffect(() => {
-    let presenceInterval: any = null;
+    let presenceInterval: ReturnType<typeof setInterval> | null = null;
 
     const setupPresence = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -272,7 +272,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
         queryKey: ['packages', orgId],
         queryFn: async () => {
           const { data: user } = await supabase.auth.getUser();
-          if (!user.user) return [] as any[];
+          if (!user.user) return [];
           await supabase.rpc('ensure_default_packages_for_org', {
             user_uuid: user.user.id,
             org_id: orgId,
@@ -295,7 +295,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
         queryKey: ['session_types', orgId],
         queryFn: async () => {
           const { data: user } = await supabase.auth.getUser();
-          if (!user.user) return [] as any[];
+          if (!user.user) return [];
           await supabase.rpc('ensure_default_session_types_for_org', {
             user_uuid: user.user.id,
             org_id: orgId,
@@ -316,8 +316,11 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     // Lead field definitions — not on React Query, seed localStorage for fast bootstrap
     tasks.push((async () => {
       try {
-        await supabase.rpc('ensure_default_lead_field_definitions', { org_id: orgId, user_uuid: (await supabase.auth.getUser()).data.user?.id });
-      } catch {}
+        const { data: authUser } = await supabase.auth.getUser();
+        await supabase.rpc('ensure_default_lead_field_definitions', { org_id: orgId, user_uuid: authUser.user?.id });
+      } catch (error) {
+        console.warn('Failed to ensure default lead field definitions', error);
+      }
       try {
         const { data, error } = await supabase
           .from('lead_field_definitions')
@@ -325,9 +328,15 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
           .eq('organization_id', orgId)
           .order('sort_order', { ascending: true });
         if (!error && data && typeof window !== 'undefined') {
-          try { localStorage.setItem(`lead_field_definitions:${orgId}`, JSON.stringify(data)); } catch {}
+          try {
+            localStorage.setItem(`lead_field_definitions:${orgId}`, JSON.stringify(data));
+          } catch (storageError) {
+            console.warn('Failed to cache lead field definitions', storageError);
+          }
         }
-      } catch {}
+      } catch (error) {
+        console.warn('Failed to preload lead field definitions', error);
+      }
     })());
 
     await Promise.allSettled(tasks);

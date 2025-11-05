@@ -20,7 +20,7 @@ const translations: Record<string, string> = {
 
 jest.mock("react-i18next", () => ({
   useTranslation: (namespace?: string | string[]) => ({
-    t: (key: string, options: Record<string, any> = {}) => {
+    t: (key: string, options: Record<string, unknown> = {}) => {
       const resolvedNamespace = Array.isArray(namespace) ? namespace[0] : namespace;
       const compositeKey = resolvedNamespace ? `${resolvedNamespace}:${key}` : key;
       const template = translations[compositeKey] ?? translations[key] ?? compositeKey;
@@ -36,7 +36,18 @@ jest.mock("@/hooks/use-mobile", () => ({
 }));
 
 jest.mock("@/components/ui/select", () => {
-  const Select = ({ value, onValueChange, children }: any) => (
+  type SelectProps = {
+    value: number;
+    onValueChange?: (value: number) => void;
+    children: React.ReactNode;
+  };
+
+  type SelectItemProps = {
+    value: number;
+    children: React.ReactNode;
+  };
+
+  const Select = ({ value, onValueChange, children }: SelectProps) => (
     <select
       data-testid="rows-per-page-select"
       value={value}
@@ -45,10 +56,10 @@ jest.mock("@/components/ui/select", () => {
       {children}
     </select>
   );
-  const SelectTrigger = ({ children }: any) => <>{children}</>;
-  const SelectValue = ({ children }: any) => <>{children}</>;
-  const SelectContent = ({ children }: any) => <>{children}</>;
-  const SelectItem = ({ value, children }: any) => (
+  const SelectTrigger = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+  const SelectValue = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+  const SelectContent = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+  const SelectItem = ({ value, children }: SelectItemProps) => (
     <option value={value}>{children}</option>
   );
 
@@ -62,7 +73,9 @@ jest.mock("@/components/ui/select", () => {
 });
 
 jest.mock("@/components/ui/data-table-container", () => ({
-  DataTableContainer: ({ children }: any) => <div data-testid="data-table-container">{children}</div>,
+  DataTableContainer: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="data-table-container">{children}</div>
+  ),
 }));
 
 const rows = [

@@ -351,11 +351,11 @@ export function usePaymentsData({
       const searchFilters =
         globalSearchTerm.length > 0
           ? (() => {
-              const sanitized = globalSearchTerm.replace(/\"/g, '""');
+              const sanitized = globalSearchTerm.replace(/"/g, '""');
               const filters = [
-                `description.ilike.\"%${sanitized}%\"`,
-                `status.ilike.\"%${sanitized}%\"`,
-                `type.ilike.\"%${sanitized}%\"`,
+                `description.ilike.%${sanitized}%`,
+                `status.ilike.%${sanitized}%`,
+                `type.ilike.%${sanitized}%`,
               ];
               if (context.searchProjectIds.size) {
                 filters.push(`project_id.in.(${Array.from(context.searchProjectIds).join(",")})`);

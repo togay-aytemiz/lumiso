@@ -21,15 +21,22 @@ jest.mock("@/lib/organizationUtils", () => ({
   getUserOrganizationId: jest.fn()
 }));
 
+const activityFormSubmitRef: { current?: (...args: any[]) => void } = {};
+
 jest.mock("@/components/shared/ActivityForm", () => ({
-  ActivityForm: ({ onSubmit, placeholder }: any) => (
-    <div>
-      <p>{placeholder}</p>
-      <button onClick={() => onSubmit("", false)}>submit-empty</button>
-      <button onClick={() => onSubmit("New note", false)}>submit-note</button>
-      <button onClick={() => onSubmit("Reminder detail", true, "2025-01-01T10:00")}>submit-reminder</button>
-    </div>
-  )
+  ActivityForm: ({ onSubmit, placeholder }: any) => {
+    activityFormSubmitRef.current = onSubmit;
+    return (
+      <div>
+        <p>{placeholder}</p>
+        <button onClick={() => onSubmit("", false)}>submit-empty</button>
+        <button onClick={() => onSubmit("New note", false)}>submit-note</button>
+        <button onClick={() => onSubmit("Reminder detail", true, "2025-01-01T10:00")}>
+          submit-reminder
+        </button>
+      </div>
+    );
+  }
 }));
 
 jest.mock("@/components/shared/ActivityTimeline", () => ({
@@ -47,9 +54,32 @@ jest.mock("@/components/shared/ActivityTimeline", () => ({
   )
 }));
 
+jest.mock("@/components/ui/segmented-control", () => ({
+  SegmentedControl: ({ value, onValueChange, options }: any) => (
+    <div>
+      {options.map((option: any) => (
+        <button
+          key={option.value}
+          type="button"
+          data-testid={`segment-${option.value}`}
+          onClick={() => onValueChange(option.value)}
+        >
+          {option.label}
+        </button>
+      ))}
+      <span data-testid="current-segment">{value}</span>
+    </div>
+  ),
+}));
+
 const translations: Record<string, string> = {
   "projectDetails.activities.title": "Project activity",
   "projectDetails.activities.placeholder": "Log a note",
+  "activitiesHistory.title": "Activities & History",
+  "activitiesHistory.activity": "Activity",
+  "activitiesHistory.history": "History",
+  "activitiesHistory.noActivitiesYet": "No activities yet",
+  "activitiesHistory.noHistoryAvailable": "No history available",
   "validation.required_field": "Required",
   "validation.content_required": "Content required",
   "validation.datetime_required_for_reminders": "Reminder needs a date",
@@ -61,12 +91,19 @@ const translations: Record<string, string> = {
   "activity.task_incomplete": "Task incomplete",
   "activity.task_status_updated": "Task status updated",
   "activity.error_updating_task": "Error updating task",
-  "error.generic": "Something went wrong"
+  "error.generic": "Something went wrong",
+  "activityLogs.status_changed_from_to": "Stage changed from \"{{oldStatus}}\" to \"{{newStatus}}\""
 };
 
 jest.mock("@/hooks/useTypedTranslation", () => ({
   useFormsTranslation: () => ({
-    t: (key: string) => translations[key] ?? key
+    t: (key: string, params?: Record<string, string | number>) => {
+      const template = translations[key] ?? key;
+      if (!params) return template;
+      return template.replace(/{{\s*(\w+)\s*}}/g, (_, match: string) =>
+        params[match]?.toString() ?? ""
+      );
+    }
   })
 }));
 
@@ -75,12 +112,26 @@ describe("ProjectActivitySection", () => {
   const insertSpy = jest.fn();
   const updateSpy = jest.fn();
   let activitiesResponse: any[] = [];
+  let projectAuditLogs: any[] = [];
 
   beforeEach(() => {
     jest.clearAllMocks();
     insertSpy.mockReset();
     updateSpy.mockReset();
     toastSpy.mockReset();
+
+    projectAuditLogs = [
+      {
+        id: "audit-1",
+        user_id: "user-1",
+        entity_type: "project",
+        entity_id: "project-1",
+        action: "created",
+        created_at: "2025-01-03T10:00:00.000Z",
+        old_values: null,
+        new_values: { name: "Wedding" }
+      }
+    ];
 
     activitiesResponse = [
       {
@@ -96,9 +147,9 @@ describe("ProjectActivitySection", () => {
     ];
 
     insertSpy.mockImplementation(() => ({
-      select: jest.fn(() => ({
-        single: jest.fn().mockResolvedValue({ data: { id: "new-activity" }, error: null })
-      }))
+        select: jest.fn(() => ({
+          single: jest.fn().mockResolvedValue({ data: { id: "new-activity" }, error: null })
+        }))
     }));
 
     updateSpy.mockImplementation(() => ({
@@ -127,6 +178,49 @@ describe("ProjectActivitySection", () => {
           update: updateSpy
         };
       }
+      if (table === "audit_log") {
+        return {
+          select: jest.fn(() => {
+            const state: { entityType?: string; entityId?: string } = {};
+            const layer: any = {
+              eq: jest.fn((column: string, value: string) => {
+                if (column === "entity_type") {
+                  state.entityType = value;
+                }
+                if (column === "entity_id") {
+                  state.entityId = value;
+                }
+                return layer;
+              }),
+              contains: jest.fn(() => ({
+                order: jest.fn(() =>
+                  Promise.resolve({ data: [], error: null })
+                )
+              })),
+              order: jest.fn(() =>
+                Promise.resolve({
+                  data:
+                    state.entityType === "project" &&
+                    state.entityId === "project-1"
+                      ? projectAuditLogs
+                      : [],
+                  error: null
+                })
+              )
+            };
+            return layer;
+          })
+        };
+      }
+      if (table === "project_statuses" || table === "services") {
+        return {
+          select: jest.fn(() => ({
+            in: jest.fn(() =>
+              Promise.resolve({ data: [], error: null })
+            )
+          }))
+        };
+      }
       return {};
     });
   });
@@ -148,6 +242,20 @@ describe("ProjectActivitySection", () => {
 
     expect(await screen.findByText("Kickoff call")).toBeInTheDocument();
     expect(screen.getByText("Log a note")).toBeInTheDocument();
+    expect(screen.getByText("Activity")).toBeInTheDocument();
+    expect(screen.getByText("History")).toBeInTheDocument();
+  });
+
+  test("shows project history when toggled", async () => {
+    renderSection();
+
+    await screen.findByText("Kickoff call");
+
+    fireEvent.click(screen.getByTestId("segment-history"));
+
+    await waitFor(() => {
+      expect(screen.getByText('Project "Wedding" created')).toBeInTheDocument();
+    });
   });
 
   test("validates empty submission", async () => {
@@ -168,6 +276,7 @@ describe("ProjectActivitySection", () => {
     renderSection(updatedSpy);
 
     await screen.findByText("Kickoff call");
+    expect(activityFormSubmitRef.current).toBeDefined();
 
     activitiesResponse = [
       ...activitiesResponse,
@@ -183,19 +292,21 @@ describe("ProjectActivitySection", () => {
       }
     ];
 
-    fireEvent.click(screen.getByText("submit-reminder"));
+    activityFormSubmitRef.current?.("Reminder detail", true, "2025-01-01T10:00");
 
     await waitFor(() => {
-      expect(insertSpy).toHaveBeenCalledWith({
-        user_id: "user-123",
-        lead_id: "lead-1",
-        project_id: "project-1",
-        type: "reminder",
-        content: "Reminder detail",
-        reminder_date: "2025-01-01",
-        reminder_time: "10:00",
-        organization_id: "org-123"
-      });
+      expect(toastSpy).toHaveBeenCalled();
+    });
+
+    expect(insertSpy).toHaveBeenCalledWith({
+      user_id: "user-123",
+      lead_id: "lead-1",
+      project_id: "project-1",
+      type: "reminder",
+      content: "Reminder detail",
+      reminder_date: "2025-01-01",
+      reminder_time: "10:00",
+      organization_id: "org-123"
     });
 
     await waitFor(() => expect(toastSpy).toHaveBeenCalledWith({

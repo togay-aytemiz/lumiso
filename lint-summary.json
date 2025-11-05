@@ -1,22 +1,6 @@
 {
-  "total": 688,
+  "total": 661,
   "summary": [
-    {
-      "filePath": "supabase/functions/tests/process-session-reminders.test.ts",
-      "count": 7
-    },
-    {
-      "filePath": "src/pages/payments/hooks/usePaymentsData.ts",
-      "count": 7
-    },
-    {
-      "filePath": "src/contexts/OrganizationContext.tsx",
-      "count": 7
-    },
-    {
-      "filePath": "src/components/data-table/__tests__/AdvancedDataTable.test.tsx",
-      "count": 7
-    },
     {
       "filePath": "src/components/__tests__/BaseOnboardingModal.test.tsx",
       "count": 7
@@ -859,6 +843,10 @@
     },
     {
       "filePath": "src/contexts/PortalResetContext.tsx",
+      "count": 1
+    },
+    {
+      "filePath": "src/contexts/OrganizationContext.tsx",
       "count": 1
     },
     {

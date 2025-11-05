@@ -81,7 +81,7 @@ export default function SessionSheetView({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editStartStep, setEditStartStep] = useState<SessionPlanningStepId | undefined>(undefined);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const fetchSession = async () => {
+  const fetchSession = useCallback(async () => {
     if (!sessionId) return;
     try {
       const {
@@ -106,22 +106,23 @@ export default function SessionSheetView({
         `).eq('id', sessionId).single();
       if (error) throw error;
       setSession(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching session:', error);
       toast({
         title: "Error",
-        description: "Failed to load session details",
+        description:
+          error instanceof Error ? error.message : "Failed to load session details",
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [sessionId, toast]);
   useEffect(() => {
     if (isOpen && sessionId) {
       fetchSession();
     }
-  }, [isOpen, sessionId]);
+  }, [fetchSession, isOpen, sessionId]);
   const handleEdit = () => {
     setEditStartStep(undefined);
     setIsEditDialogOpen(true);
@@ -229,7 +230,7 @@ export default function SessionSheetView({
     session ? (
       <SessionStatusBadge
         sessionId={session.id}
-        currentStatus={session.status as any}
+        currentStatus={session.status}
         editable={true}
         onStatusChange={handleStatusChange}
         size={size}

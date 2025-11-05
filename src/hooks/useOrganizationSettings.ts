@@ -149,14 +149,20 @@ export const useOrganizationSettings = () => {
         );
 
         return { success: true, data: normalizeSettings(updated) };
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Error updating organization settings:", error);
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to update settings";
+        const normalizedError =
+          error instanceof Error ? error : new Error(message);
         toast({
           title: "Error",
-          description: error.message || "Failed to update settings",
+          description: message,
           variant: "destructive",
         });
-        return { success: false, error };
+        return { success: false, error: normalizedError };
       }
     },
     [activeOrganizationId, queryClient, settings?.id, toast]
@@ -241,14 +247,20 @@ export const useOrganizationSettings = () => {
         }
 
         return result;
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Error uploading logo:", error);
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to upload logo";
+        const normalizedError =
+          error instanceof Error ? error : new Error(message);
         toast({
           title: "Error",
-          description: error.message || "Failed to upload logo",
+          description: message,
           variant: "destructive",
         });
-        return { success: false, error };
+        return { success: false, error: normalizedError };
       } finally {
         setUploading(false);
       }
@@ -288,14 +300,18 @@ export const useOrganizationSettings = () => {
       }
 
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deleting logo:", error);
+      const message =
+        error instanceof Error ? error.message : "Failed to delete logo";
+      const normalizedError =
+        error instanceof Error ? error : new Error(message);
       toast({
         title: "Error",
-        description: error.message || "Failed to delete logo",
+        description: message,
         variant: "destructive",
       });
-      return { success: false, error };
+      return { success: false, error: normalizedError };
     }
   }, [activeOrganizationId, settings?.logo_url, toast, updateSettings]);
 

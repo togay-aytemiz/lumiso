@@ -33,7 +33,7 @@ export function useSessionReminderScheduling() {
         ));
       }
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Failed to schedule session reminders:', error);
       toast({
         title: 'Warning',
@@ -63,7 +63,7 @@ export function useSessionReminderScheduling() {
       }
 
       console.log(`Successfully cancelled reminders for session: ${sessionId}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to cancel session reminders:', error);
       // Don't show toast for this as it's usually called during deletion
       // and shouldn't block the main action
@@ -81,7 +81,7 @@ export function useSessionReminderScheduling() {
       await scheduleSessionReminders(sessionId);
 
       console.log(`Successfully rescheduled reminders for session: ${sessionId}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to reschedule session reminders:', error);
       toast({
         title: 'Warning', 

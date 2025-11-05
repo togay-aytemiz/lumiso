@@ -185,9 +185,13 @@ const Auth = () => {
         // Navigate to home
         setTimeout(() => navigate("/"), 1000);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Auth error:", error);
-      toast.error(error.message || tMsg('auth.auth_error'));
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : tMsg('auth.auth_error');
+      toast.error(message);
       setLoading(false);
     }
   };
@@ -209,9 +213,13 @@ const Auth = () => {
       if (error) throw error;
 
       toast.success(tMsg('auth.reset_email_sent'));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Reset password error:", error);
-      toast.error(error.message || tMsg('auth.reset_email_error'));
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : tMsg('auth.reset_email_error');
+      toast.error(message);
     } finally {
       setResettingPassword(false);
     }
@@ -241,9 +249,13 @@ const Auth = () => {
       setConfirmPassword("");
       setPassword("");
       setTimeout(() => navigate("/"), 1000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Password update error:", error);
-      toast.error(error.message || tMsg('auth.password_update_error'));
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : tMsg('auth.password_update_error');
+      toast.error(message);
     } finally {
       setUpdatingPassword(false);
     }

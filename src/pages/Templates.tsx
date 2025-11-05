@@ -34,13 +34,13 @@ const OptimizedTemplatesContent = React.memo(() => {
 
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
-    template: any | null;
+    template: Template | null;
   }>({ open: false, template: null });
   const [deleting, setDeleting] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 25;
 
-  const handleDeleteTemplate = React.useCallback((template: any) => {
+  const handleDeleteTemplate = React.useCallback((template: Template) => {
     setDeleteDialog({ open: true, template });
   }, []);
 
@@ -65,7 +65,7 @@ const OptimizedTemplatesContent = React.memo(() => {
     setDeleteDialog({ open: false, template: null });
   }, []);
 
-  const handleDuplicateTemplate = React.useCallback(async (template: any) => {
+  const handleDuplicateTemplate = React.useCallback(async (template: Template) => {
     await duplicateTemplate(template);
   }, [duplicateTemplate]);
 

@@ -24,10 +24,10 @@ export interface SurfaceProps extends HTMLAttributes<HTMLElement> {
 
 export const Surface = forwardRef<HTMLElement, SurfaceProps>(
   ({ as = "section", padding = "md", radius = "xl", className, children, ...props }, ref) => {
-    const Component = as as any;
+    const Component: keyof JSX.IntrinsicElements = as;
     return (
       <Component
-        ref={ref as any}
+        ref={ref}
         className={cn(
           radiusClasses[radius],
           "border border-border/70 bg-white/80 shadow-sm",

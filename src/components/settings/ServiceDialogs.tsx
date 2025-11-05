@@ -44,6 +44,22 @@ interface ServiceVatDefaults {
   priceIncludesVat?: boolean | null;
 }
 
+interface ServiceRecord {
+  id: string;
+  name?: string | null;
+  description?: string | null;
+  category?: string | null;
+  price?: number | null;
+  cost_price?: number | null;
+  selling_price?: number | null;
+  vat_rate?: number | null;
+  price_includes_vat?: boolean | null;
+  extra?: boolean | null;
+  service_type?: ServiceType | null;
+  vendor_name?: string | null;
+  is_active?: boolean | null;
+  is_people_based?: boolean | null;
+}
 const formatVatRate = (value?: number | null) => {
   if (value == null || Number.isNaN(value)) return "";
   return String(value);
@@ -483,10 +499,12 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
       setNewCategoryName("");
       onOpenChange(false);
       onServiceAdded();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const description =
+        error instanceof Error ? error.message : "An unexpected error occurred";
       toast({
         title: t("toast.error", { ns: "common" }),
-        description: error.message,
+        description,
         variant: "destructive",
       });
     } finally {
@@ -804,7 +822,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
   );
 }
 interface EditServiceDialogProps {
-  service: any;
+  service: ServiceRecord | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onServiceUpdated: () => void;
@@ -985,10 +1003,12 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
 
       onServiceUpdated();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const description =
+        error instanceof Error ? error.message : "An unexpected error occurred";
       toast({
         title: t("toast.error", { ns: "common" }),
-        description: error.message,
+        description,
         variant: "destructive",
       });
     } finally {

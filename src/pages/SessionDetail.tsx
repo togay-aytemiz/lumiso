@@ -83,7 +83,7 @@ export default function SessionDetail() {
   >(undefined);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const fetchSession = async () => {
+  const fetchSession = useCallback(async () => {
     if (!id) return;
 
     console.log("SessionDetail: Starting to fetch session data for ID:", id);
@@ -120,7 +120,7 @@ export default function SessionDetail() {
       console.log(`SessionDetail: Fetch completed in ${endTime - startTime}ms`);
 
       setSession(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("SessionDetail: Error fetching session:", error);
       toast({
         title: tCommon("toast.error"),
@@ -130,12 +130,12 @@ export default function SessionDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, tCommon, tPages, toast]);
 
   useEffect(() => {
     console.log("SessionDetail: Component mounted, session ID:", id);
     fetchSession();
-  }, [id]);
+  }, [fetchSession, id]);
 
   const handleEdit = () => {
     setEditStartStep(undefined);
@@ -368,7 +368,7 @@ export default function SessionDetail() {
     session ? (
       <SessionStatusBadge
         sessionId={session.id}
-        currentStatus={session.status as any}
+        currentStatus={session.status}
         editable={true}
         onStatusChange={handleStatusChange}
         size={size}

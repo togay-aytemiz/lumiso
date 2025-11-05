@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import type { DropResult } from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -157,9 +158,10 @@ const SessionStatusesSection = () => {
       form.reset({ name: "", color: PREDEFINED_COLORS[0] });
       setEditingStatus(null);
       await refetch();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving session status:', error);
-      toast.error(error?.message || 'Failed to save session stage');
+      const message = error instanceof Error ? error.message : 'Failed to save session stage';
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -195,13 +197,14 @@ const SessionStatusesSection = () => {
       if (error) throw error;
       toast.success("Session stage deleted");
       await refetch();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting session status:', error);
-      toast.error(error?.message || 'Failed to delete session stage');
+      const message = error instanceof Error ? error.message : 'Failed to delete session stage';
+      toast.error(message);
     }
   };
 
-  const handleDragEnd = async (result: any) => {
+  const handleDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
     // For drag and drop with cached data, we need to update the server directly
     // The refetch will update the local state
@@ -225,7 +228,7 @@ const SessionStatusesSection = () => {
       }
       toast.success("Stage order updated");
       await refetch();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error updating order:', error);
       toast.error('Failed to update order');
     }

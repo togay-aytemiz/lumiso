@@ -75,7 +75,7 @@ export const SessionSavedResourcesProvider = ({ children }: { children: ReactNod
         error: null,
         hasLoaded: true,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load saved locations", error);
       const message =
         error instanceof Error
@@ -108,7 +108,7 @@ export const SessionSavedResourcesProvider = ({ children }: { children: ReactNod
         error: null,
         hasLoaded: true,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load saved note presets", error);
       const message =
         error instanceof Error
@@ -203,6 +203,7 @@ export const SessionSavedResourcesProvider = ({ children }: { children: ReactNod
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSessionSavedResources = () => {
   const context = useContext(SessionSavedResourcesContext);
   if (!context) {

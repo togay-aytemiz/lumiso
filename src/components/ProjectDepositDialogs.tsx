@@ -143,6 +143,7 @@ export function ProjectDepositSetupDialog({
   const isEnabled = mode !== "none";
   const isPercentMode = mode === "percent_base" || mode === "percent_total" || mode === "none";
   const uiMode = isEnabled ? (mode === "fixed" ? "fixed" : "percent") : "percent";
+  const percentTarget = mode === "percent_base" ? "base" : "total";
   const activePreset = useMemo(() => {
     if (!isPercentMode) return null;
     const numeric = Number(value);
@@ -387,7 +388,7 @@ export function ProjectDepositSetupDialog({
                       });
                     }
                   }}
-                  segments={[
+                  options={[
                     {
                       value: "percent",
                       label: t("payments.deposit.mode_percent_button", { defaultValue: "Percentage" })
@@ -434,6 +435,36 @@ export function ProjectDepositSetupDialog({
                         className="h-8 w-24"
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold text-muted-foreground">
+                      {t("payments.deposit.percent_target_label", {
+                        defaultValue: "Apply percentage to"
+                      })}
+                    </Label>
+                    <SegmentedControl
+                      value={percentTarget}
+                      onValueChange={(next) => {
+                        const targetMode = next === "base" ? "percent_base" : "percent_total";
+                        setMode(targetMode);
+                        setLastEnabledMode(targetMode);
+                      }}
+                      options={[
+                        {
+                          value: "total",
+                          label: t("payments.deposit.percent_target_total", {
+                            defaultValue: "Package + services total"
+                          })
+                        },
+                        {
+                          value: "base",
+                          label: t("payments.deposit.percent_target_base", {
+                            defaultValue: "Base package only"
+                          })
+                        }
+                      ]}
+                    />
                   </div>
                 </div>
               ) : (

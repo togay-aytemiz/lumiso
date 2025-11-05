@@ -8,7 +8,18 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
   useFormsTranslation: jest.fn(),
 }));
 
-const DateTimePickerMock = ({ value, onChange, placeholder }: any) => (
+interface DateTimePickerMockProps {
+  value?: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  [key: string]: unknown;
+}
+
+const DateTimePickerMock = ({
+  value,
+  onChange,
+  placeholder,
+}: DateTimePickerMockProps) => (
   <div>
     <label htmlFor="mock-date">{placeholder}</label>
     <input
@@ -22,7 +33,7 @@ const DateTimePickerMock = ({ value, onChange, placeholder }: any) => (
 
 jest.mock("@/components/ui/date-time-picker", () => ({
   __esModule: true,
-  default: (props: any) => <DateTimePickerMock {...props} />,
+  default: (props: DateTimePickerMockProps) => <DateTimePickerMock {...props} />,
 }));
 
 jest.mock("@/components/ui/switch", () => ({

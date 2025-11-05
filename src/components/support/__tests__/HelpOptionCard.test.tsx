@@ -1,9 +1,10 @@
 import { fireEvent, render, screen } from "@/utils/testUtils";
 import { HelpOptionCard } from "../HelpOptionCard";
+import type { Icon } from "lucide-react";
 
 describe("HelpOptionCard", () => {
-  const icon = ({ className }: { className?: string }) => (
-    <svg data-testid="help-icon" className={className} />
+  const icon: Icon = ({ className, ...rest }) => (
+    <svg data-testid="help-icon" className={className} {...rest} />
   );
 
   it("renders title, description, and icon while invoking onSelect", () => {
@@ -11,7 +12,7 @@ describe("HelpOptionCard", () => {
 
     render(
       <HelpOptionCard
-        icon={icon as any}
+        icon={icon}
         title="Documentation"
         description="Agent handbook"
         onSelect={onSelect}
@@ -31,7 +32,7 @@ describe("HelpOptionCard", () => {
 
     render(
       <HelpOptionCard
-        icon={icon as any}
+        icon={icon}
         title="Contact Support"
         description="Drop us a line"
         onSelect={onSelect}

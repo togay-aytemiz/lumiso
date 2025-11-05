@@ -1,132 +1,8 @@
 {
-  "total": 294,
+  "total": 196,
   "summary": [
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/__tests__/SampleDataModal.test.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ProjectSheetPreview.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ProjectsSection.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/SessionSheetView.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/SessionStatusesSection.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/settings/ServiceDialogs.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/template-builder/__tests__/TemplateBuilderStorage.test.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/UnifiedClientDetails.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/contexts/__tests__/OrganizationContext.test.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/package-creation/services/packageCreationSnapshot.ts",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/features/session-planning/context/SessionSavedResourcesProvider.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useOrganizationSettings.ts",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/hooks/useSessionReminderScheduling.ts",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/legacy/pages/AllLeadsRefactored.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/Analytics.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/Auth.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/SessionDetail.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/settings/__tests__/Services.test.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/settings/Account_old.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/settings/Profile.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/pages/Templates.tsx",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/services/__tests__/LeadService.test.ts",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/services/__tests__/SessionService.test.ts",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/utils/performance.ts",
-      "count": 3
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/__tests__/ActivityForm.test.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/layout-primitives/Surface.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/LeadFieldDialog.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/LeadStatusBadge.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/LeadStatusesSection.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/PerformanceMonitor.tsx",
-      "count": 2
-    },
-    {
       "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ProjectKanbanBoard.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ProjectStatusesSection.tsx",
       "count": 2
     },
     {
@@ -134,23 +10,7 @@
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/settings/__tests__/SettingsLayout.test.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/settings/SessionTypeDialogs.tsx",
-      "count": 2
-    },
-    {
       "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/SimpleProjectTypeSelect.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/support/__tests__/HelpOptionCard.test.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/template-builder/previews/WhatsAppPreview.tsx",
       "count": 2
     },
     {
@@ -158,15 +18,7 @@
       "count": 2
     },
     {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/template-builder/TemplatePreview.tsx",
-      "count": 2
-    },
-    {
       "filePath": "/Users/taytemiz/Desktop/Lumiso/src/components/ui/date-time-picker.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "/Users/taytemiz/Desktop/Lumiso/src/contexts/__tests__/AuthContext.test.tsx",
       "count": 2
     },
     {

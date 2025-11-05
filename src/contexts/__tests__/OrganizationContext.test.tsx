@@ -55,26 +55,35 @@ const mockSupabaseAuthGetUser = supabase.auth.getUser as jest.Mock;
 const mockSupabaseAuthOnChange = supabase.auth.onAuthStateChange as jest.Mock;
 
 const createOrganizationChain = () => {
-  const chain: any = {};
-  chain.select = jest.fn(() => chain);
-  chain.eq = jest.fn(() => chain);
-  chain.single = jest.fn(() =>
-    Promise.resolve({
-      data: { id: "org-1", name: "Primary Org", owner_id: "user-1" },
-      error: null,
-    })
-  );
+  const chain = {
+    select: jest.fn(),
+    eq: jest.fn(),
+    single: jest.fn(),
+  };
+
+  chain.select.mockReturnValue(chain);
+  chain.eq.mockReturnValue(chain);
+  chain.single.mockResolvedValue({
+    data: { id: "org-1", name: "Primary Org", owner_id: "user-1" },
+    error: null,
+  });
+
   return chain;
 };
 
 const createGenericChain = () => {
-  const chain: any = {};
-  chain.select = jest.fn(() => chain);
-  chain.eq = jest.fn(() => chain);
-  chain.order = jest.fn(() => Promise.resolve({ data: [], error: null }));
-  chain.single = jest.fn(() =>
-    Promise.resolve({ data: null, error: null })
-  );
+  const chain = {
+    select: jest.fn(),
+    eq: jest.fn(),
+    order: jest.fn(),
+    single: jest.fn(),
+  };
+
+  chain.select.mockReturnValue(chain);
+  chain.eq.mockReturnValue(chain);
+  chain.order.mockReturnValue(Promise.resolve({ data: [], error: null }));
+  chain.single.mockResolvedValue({ data: null, error: null });
+
   return chain;
 };
 
@@ -107,7 +116,8 @@ describe("OrganizationContext", () => {
       error: null,
     });
 
-    mockSupabaseAuthOnChange.mockImplementation((callback: any) => ({
+    type AuthChangeCallback = (event: unknown, session: unknown) => void;
+    mockSupabaseAuthOnChange.mockImplementation((_callback: AuthChangeCallback) => ({
       data: { subscription: { unsubscribe: jest.fn() } },
     }));
 

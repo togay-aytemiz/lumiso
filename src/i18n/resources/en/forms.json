@@ -671,6 +671,9 @@
       "mode_percent_button": "Percentage",
       "percent_helper": "When services are included in the package, the deposit is calculated from the package price.",
       "custom_percent_label": "Custom %",
+      "percent_target_label": "Apply percentage to",
+      "percent_target_total": "Package + services total",
+      "percent_target_base": "Base package only",
       "label": "Deposit label",
       "description_label": "Internal note (optional)",
       "preview": {

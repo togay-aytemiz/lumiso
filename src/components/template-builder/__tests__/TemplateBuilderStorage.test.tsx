@@ -1,5 +1,6 @@
 import { render, screen, waitFor, fireEvent } from "@/utils/testUtils";
 import { CompactStorageIndicator } from "../CompactStorageIndicator";
+import { supabase } from "@/integrations/supabase/client";
 
 jest.mock("@/contexts/OrganizationContext", () => ({
   useOrganization: jest.fn(() => ({ activeOrganization: { id: "org-1" } })),
@@ -17,9 +18,12 @@ jest.mock("react-i18next", () => ({
   })),
 }));
 
-const supabase = require("@/integrations/supabase/client").supabase;
+interface StorageUsageData {
+  total_images: number;
+  total_storage_bytes: number;
+}
 
-function mockStorageUsageResponse(data: any, error: any = null) {
+function mockStorageUsageResponse(data: StorageUsageData | null, error: unknown = null) {
   (supabase.from as jest.Mock).mockImplementation(() => ({
     select: jest.fn().mockReturnValue({
       eq: jest.fn().mockReturnValue({

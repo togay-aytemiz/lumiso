@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,7 @@ export default function ProjectSheetPreview({
   const { progress, loading: progressLoading } = useProjectProgress(project?.id || "", refreshTrigger);
   const { paymentSummary, loading: paymentsLoading } = useProjectPayments(project?.id || "", refreshTrigger);
 
-  const fetchLead = async () => {
+  const fetchLead = useCallback(async () => {
     if (!project?.lead_id) return;
     
     try {
@@ -78,12 +78,12 @@ export default function ProjectSheetPreview({
 
       if (error) throw error;
       setLead(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching lead:', error);
     }
-  };
+  }, [project?.lead_id]);
 
-  const fetchProjectType = async () => {
+  const fetchProjectType = useCallback(async () => {
     if (!project?.project_type_id) return;
     
     try {
@@ -95,12 +95,12 @@ export default function ProjectSheetPreview({
 
       if (error) throw error;
       setProjectType(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching project type:', error);
     }
-  };
+  }, [project?.project_type_id]);
 
-  const checkArchiveStatus = async () => {
+  const checkArchiveStatus = useCallback(async () => {
     if (!project?.status_id) {
       setIsArchived(false);
       return;
@@ -117,7 +117,7 @@ export default function ProjectSheetPreview({
     } catch {
       setIsArchived(false);
     }
-  };
+  }, [project?.status_id]);
 
   useEffect(() => {
     if (project && open) {
@@ -125,7 +125,7 @@ export default function ProjectSheetPreview({
       fetchProjectType();
       checkArchiveStatus();
     }
-  }, [project, open]);
+  }, [project, open, fetchLead, fetchProjectType, checkArchiveStatus]);
 
   const handleStatusChange = () => {
     checkArchiveStatus();

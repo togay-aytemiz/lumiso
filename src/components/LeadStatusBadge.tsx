@@ -129,7 +129,7 @@ export function LeadStatusBadge({
 
       if (error) throw error;
       setStatuses(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching lead statuses:', error);
     } finally {
       setLoading(false);
@@ -213,10 +213,13 @@ export function LeadStatusBadge({
           // Don't block status change if workflow fails
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const description =
+        error instanceof Error ? error.message : String(error);
+
       toast({
         title: tForms('status.errorUpdatingStatus'),
-        description: error.message,
+        description,
         variant: "destructive"
       });
     } finally {

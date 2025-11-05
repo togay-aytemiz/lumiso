@@ -598,11 +598,13 @@ const parseServiceLineItems = (value: Json): PackageCreationLineItem[] => {
       rawVatMode === "inclusive" || rawVatMode === "exclusive"
         ? rawVatMode
         : "exclusive";
+    const unitCandidate = item.unit;
+    const defaultUnitCandidate = item.defaultUnit;
     const unit =
-      typeof item.unit === "string" && item.unit.trim().length
-        ? item.unit
-        : typeof (item as any).defaultUnit === "string" && (item as any).defaultUnit.trim().length
-        ? ((item as any).defaultUnit as string)
+      typeof unitCandidate === "string" && unitCandidate.trim().length
+        ? unitCandidate
+        : typeof defaultUnitCandidate === "string" && defaultUnitCandidate.trim().length
+        ? defaultUnitCandidate
         : null;
 
     return {

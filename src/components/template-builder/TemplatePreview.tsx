@@ -13,10 +13,35 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
+type TemplateChannel = "email" | "whatsapp" | "sms" | "plaintext";
+
+const isTemplateChannel = (value: string): value is TemplateChannel =>
+  value === "email" ||
+  value === "whatsapp" ||
+  value === "sms" ||
+  value === "plaintext";
+
+const getErrorMessage = (error: unknown): string | undefined => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as { message?: unknown }).message === "string"
+  ) {
+    return (error as { message: string }).message;
+  }
+
+  return undefined;
+};
+
 interface TemplatePreviewProps {
   blocks: TemplateBlock[];
-  activeChannel: "email" | "whatsapp" | "sms" | "plaintext";
-  onChannelChange: (channel: "email" | "whatsapp" | "sms" | "plaintext") => void;
+  activeChannel: TemplateChannel;
+  onChannelChange: (channel: TemplateChannel) => void;
   emailSubject?: string;
   preheader?: string;
   previewData?: Record<string, string>;
@@ -38,6 +63,12 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
   };
 
   const mockData = previewData || defaultMockData;
+
+  const handleChannelChange = (value: string) => {
+    if (isTemplateChannel(value)) {
+      onChannelChange(value);
+    }
+  };
 
   const sendTestEmail = async () => {
     if (!user?.email) {
@@ -80,11 +111,13 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
         title: t('templateBuilder.preview.toast.successTitle'),
         description: t('templateBuilder.preview.toast.testEmailSent', { email: user.email }),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending test email:', error);
       toast({
         title: t('templateBuilder.preview.toast.errorTitle'),
-        description: error.message || t('templateBuilder.preview.toast.sendFailed'),
+        description:
+          getErrorMessage(error) ??
+          t('templateBuilder.preview.toast.sendFailed'),
         variant: "destructive",
       });
     } finally {
@@ -138,7 +171,7 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
 
       {/* Channel Tabs */}
       <div className="border-b px-6 py-2">
-        <Tabs value={activeChannel} onValueChange={(value) => onChannelChange(value as any)}>
+        <Tabs value={activeChannel} onValueChange={handleChannelChange}>
           <TabsList className="grid grid-cols-4 w-full max-w-lg">
             <TabsTrigger value="email" className="flex items-center gap-2">
               📧 {t('templateBuilder.preview.channels.email')}

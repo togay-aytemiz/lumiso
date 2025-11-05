@@ -1145,6 +1145,9 @@
       "mode_percent_button": "Yüzde",
       "percent_helper": "Hizmetleri paket fiyatına dahil ettiğinizde kapora paket fiyatı üzerinden hesaplanır.",
       "custom_percent_label": "Özel %",
+      "percent_target_label": "Yüzdeyi uygula",
+      "percent_target_total": "Paket + hizmetler toplamı",
+      "percent_target_base": "Sadece paket fiyatı",
       "label": "Kapora etiketi",
       "description_label": "Dahili not (isteğe bağlı)",
       "preview": {

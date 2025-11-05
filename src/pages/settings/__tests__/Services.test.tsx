@@ -5,6 +5,14 @@ const mockSettingsHeader = jest.fn();
 const mockUseOnboarding = jest.fn();
 const mockNavigate = jest.fn();
 
+type SettingsHeaderMockProps = Record<string, unknown>;
+
+interface TutorialMockProps {
+  isVisible: boolean;
+  onComplete: () => void;
+  onExit: () => void;
+}
+
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string) => key,
@@ -22,7 +30,7 @@ jest.mock("react-router-dom", () => ({
 
 jest.mock("@/components/settings/SettingsHeader", () => ({
   __esModule: true,
-  default: (props: any) => {
+  default: (props: SettingsHeaderMockProps) => {
     mockSettingsHeader(props);
     return null;
   },
@@ -51,7 +59,7 @@ jest.mock("@/components/ServicesSection", () => ({
 }));
 
 const mockOnboardingTutorial = jest.fn(
-  ({ isVisible, onComplete, onExit }: any) => (
+  ({ isVisible, onComplete, onExit }: TutorialMockProps) => (
     <div data-testid="onboarding-tutorial" data-visible={isVisible}>
       <button type="button" data-testid="complete-tutorial" onClick={onComplete}>
         complete
@@ -64,7 +72,7 @@ const mockOnboardingTutorial = jest.fn(
 );
 
 jest.mock("@/components/shared/OnboardingTutorial", () => ({
-  OnboardingTutorial: (props: any) => mockOnboardingTutorial(props),
+  OnboardingTutorial: (props: TutorialMockProps) => mockOnboardingTutorial(props),
 }));
 
 describe("Services settings page", () => {

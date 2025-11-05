@@ -13,7 +13,10 @@ export function WhatsAppPreview({ blocks, mockData }: WhatsAppPreviewProps) {
     return text.replace(/\{(\w+)\}/g, (match, key) => mockData[key] || match);
   };
 
-  const formatWhatsAppText = (text: string, formatting: any) => {
+  const formatWhatsAppText = (
+    text: string,
+    formatting?: TextBlockData["formatting"]
+  ) => {
     let formatted = text;
     if (formatting?.bold) formatted = `*${formatted}*`;
     if (formatting?.italic) formatted = `_${formatted}_`;
@@ -79,14 +82,17 @@ export function WhatsAppPreview({ blocks, mockData }: WhatsAppPreviewProps) {
   );
 }
 
-function WhatsAppTextBlock({ 
-  data, 
-  replacePlaceholders, 
-  formatText 
-}: { 
-  data: TextBlockData; 
+function WhatsAppTextBlock({
+  data,
+  replacePlaceholders,
+  formatText,
+}: {
+  data: TextBlockData;
   replacePlaceholders: (text: string) => string;
-  formatText: (text: string, formatting: any) => string;
+  formatText: (
+    text: string,
+    formatting?: TextBlockData["formatting"]
+  ) => string;
 }) {
   const content = replacePlaceholders(data.content);
   const formatted = formatText(content, data.formatting);

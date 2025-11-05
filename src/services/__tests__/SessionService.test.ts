@@ -1,4 +1,4 @@
-import { SessionService } from "../SessionService";
+import { SessionService, type Session } from "../SessionService";
 
 const supabaseFromMock = jest.fn();
 const supabaseAuthGetUserMock = jest.fn();
@@ -81,7 +81,9 @@ describe("SessionService.fetchSessions", () => {
     supabaseAuthGetUserMock.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
 
     const service = new SessionService();
-    (service as any).getOrganizationId = jest.fn().mockResolvedValue("org-1");
+    const getOrganizationIdSpy = jest
+      .spyOn(service as unknown as { getOrganizationId: () => Promise<string | null> }, "getOrganizationId")
+      .mockResolvedValue("org-1");
 
     const sessions = await service.fetchSessions();
 
@@ -89,22 +91,28 @@ describe("SessionService.fetchSessions", () => {
     expect(sessions[0].id).toBe("session-1");
     expect(sessions[0].lead_name).toBe("Alice");
     expect(sessions[0].project_name).toBe("Main Project");
+
+    getOrganizationIdSpy.mockRestore();
   });
 
   it("returns empty array when organization missing", async () => {
     const service = new SessionService();
-    (service as any).getOrganizationId = jest.fn().mockResolvedValue(null);
+    const getOrganizationIdSpy = jest
+      .spyOn(service as unknown as { getOrganizationId: () => Promise<string | null> }, "getOrganizationId")
+      .mockResolvedValue(null);
 
     const sessions = await service.fetchSessions();
     expect(sessions).toEqual([]);
     expect(supabaseFromMock).not.toHaveBeenCalled();
+
+    getOrganizationIdSpy.mockRestore();
   });
 });
 
 describe("SessionService.fetchFilteredSessions", () => {
   it("applies filters and sorts", async () => {
     const service = new SessionService();
-    jest.spyOn(service, "fetchSessions").mockResolvedValue([
+    const mockSessions: Session[] = [
       {
         id: "session-1",
         lead_id: "lead-1",
@@ -113,9 +121,11 @@ describe("SessionService.fetchFilteredSessions", () => {
         session_time: "09:00",
         notes: "Morning",
         status: "planned",
-        lead_name: "Alice",
-        project_name: "Wedding",
         created_at: "2024-04-01",
+        organization_id: "org-1",
+        user_id: "user-1",
+        project_name: "Wedding",
+        lead_name: "Alice",
       },
       {
         id: "session-2",
@@ -125,11 +135,15 @@ describe("SessionService.fetchFilteredSessions", () => {
         session_time: "11:00",
         notes: "Lunch",
         status: "completed",
-        lead_name: "Bob",
-        project_name: "Portrait",
         created_at: "2024-04-02",
+        organization_id: "org-1",
+        user_id: "user-1",
+        project_name: "Portrait",
+        lead_name: "Bob",
       },
-    ] as any);
+    ];
+
+    jest.spyOn(service, "fetchSessions").mockResolvedValue(mockSessions);
 
     const filtered = await service.fetchFilteredSessions({ status: "planned", leadId: "lead-1" });
     expect(filtered).toHaveLength(1);

@@ -31,6 +31,7 @@ import { EnhancedEditLeadDialog } from "./EnhancedEditLeadDialog";
 import { validateFieldValue } from "@/lib/leadFieldValidation";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { cn } from "@/lib/utils";
+import type { LeadFieldDefinition } from "@/types/leadFields";
 
 interface Lead {
   id: string;
@@ -38,7 +39,7 @@ interface Lead {
   email?: string | null;
   phone?: string | null;
   notes?: string | null;
-  [key: string]: any;
+  [key: string]: string | null | undefined;
 }
 
 interface UnifiedClientDetailsProps {
@@ -161,13 +162,15 @@ export function UnifiedClientDetails({
   }, [lead]);
 
   // Combine core fields with custom fields
-  const allFields: Array<{
+  type FieldEntry = {
     key: string;
     label: string;
     value: string | null;
     type: "core" | "custom";
-    fieldDefinition?: any;
-  }> = [
+    fieldDefinition?: LeadFieldDefinition;
+  };
+
+  const allFields: FieldEntry[] = [
     {
       key: "name",
       label: tForms("clientDetails.fullName"),
@@ -257,7 +260,7 @@ export function UnifiedClientDetails({
     setEditingField(null);
   };
 
-  const getInlineEditor = (field: any) => {
+  const getInlineEditor = (field: FieldEntry) => {
     const fieldType =
       field.type === "custom" ? field.fieldDefinition?.field_type : field.key;
     const options = field.fieldDefinition?.options?.options || [];

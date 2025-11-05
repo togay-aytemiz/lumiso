@@ -110,7 +110,7 @@ export default function Profile() {
         phoneNumber: profile.phone_number || "",
       });
     }
-  }, [profile, profileLoading]);
+  }, [profile, profileLoading, profileSection]);
 
   // Update working hours form when data loads
   useEffect(() => {
@@ -119,9 +119,13 @@ export default function Profile() {
         workingHours: workingHours
       });
     }
-  }, [workingHours]);
+  }, [workingHours, workingHoursSection]);
 
-  const handleWorkingHourUpdate = async (dayOfWeek: number, field: string, value: any) => {
+  const handleWorkingHourUpdate = async (
+    dayOfWeek: number,
+    field: string,
+    value: string | boolean | null
+  ) => {
     const workingHour = workingHours.find(wh => wh.day_of_week === dayOfWeek);
     if (workingHour) {
       const result = await updateWorkingHour(dayOfWeek, { [field]: value });

@@ -66,10 +66,18 @@ export const performanceMonitor = new PerformanceMonitor();
 /**
  * Decorator for measuring function execution time
  */
-export function measurePerformance(target: any, propertyName: string, descriptor: PropertyDescriptor) {
-  const method = descriptor.value;
+export function measurePerformance(
+  target: object,
+  propertyName: string,
+  descriptor: PropertyDescriptor
+) {
+  const method = descriptor.value as ((...args: unknown[]) => unknown) | undefined;
 
-  descriptor.value = function (...args: any[]) {
+  if (typeof method !== "function") {
+    return descriptor;
+  }
+
+  descriptor.value = function (...args: unknown[]) {
     const methodName = `${target.constructor.name}.${propertyName}`;
     performanceMonitor.startTiming(methodName);
     
@@ -85,11 +93,13 @@ export function measurePerformance(target: any, propertyName: string, descriptor
       
       performanceMonitor.endTiming(methodName);
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       performanceMonitor.endTiming(methodName);
       throw error;
     }
   };
+
+  return descriptor;
 }
 
 /**
@@ -108,14 +118,31 @@ export function useMeasureRender(componentName: string) {
 /**
  * Utility for detecting memory leaks
  */
+interface PerformanceMemoryInfo {
+  usedJSHeapSize: number;
+  totalJSHeapSize: number;
+  jsHeapSizeLimit: number;
+}
+
 export function checkMemoryUsage() {
-  if (typeof window !== 'undefined' && 'performance' in window && 'memory' in window.performance) {
-    const memory = (window.performance as any).memory;
-    return {
-      used: Math.round(memory.usedJSHeapSize / 1048576 * 100) / 100,
-      total: Math.round(memory.totalJSHeapSize / 1048576 * 100) / 100,
-      limit: Math.round(memory.jsHeapSizeLimit / 1048576 * 100) / 100
-    };
+  if (typeof window === 'undefined' || !('performance' in window)) {
+    return null;
   }
-  return null;
+
+  const performanceWithMemory = window.performance as Performance & {
+    memory?: PerformanceMemoryInfo;
+  };
+
+  const memory = performanceWithMemory.memory;
+  if (!memory) {
+    return null;
+  }
+
+  const toMegabytes = (value: number) => Math.round((value / 1048576) * 100) / 100;
+
+  return {
+    used: toMegabytes(memory.usedJSHeapSize),
+    total: toMegabytes(memory.totalJSHeapSize),
+    limit: toMegabytes(memory.jsHeapSizeLimit),
+  };
 }

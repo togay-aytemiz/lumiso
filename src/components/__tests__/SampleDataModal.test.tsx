@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import userEvent from "@testing-library/user-event";
 import { render, screen, waitFor } from "@/utils/testUtils";
 import { SampleDataModal } from "../SampleDataModal";
@@ -29,8 +30,22 @@ jest.mock("react-i18next", () => ({
   }),
 }));
 
+interface ModalAction {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}
+
+interface ModalProps {
+  open: boolean;
+  title: string;
+  description: string;
+  actions?: ModalAction[];
+  children?: ReactNode;
+}
+
 const baseModalRender = jest.fn(
-  ({ open, title, description, actions, children }: any) => {
+  ({ open, title, description, actions, children }: ModalProps) => {
     if (!open) return null;
     return (
       <div data-testid="sample-modal-root">
@@ -38,7 +53,7 @@ const baseModalRender = jest.fn(
         <p>{description}</p>
         <div>{children}</div>
         <div>
-          {actions?.map((action: any, index: number) => (
+          {actions?.map((action, index) => (
             <button
               key={index}
               disabled={action.disabled}
@@ -54,7 +69,7 @@ const baseModalRender = jest.fn(
 );
 
 jest.mock("../shared/BaseOnboardingModal", () => ({
-  BaseOnboardingModal: (props: any) => baseModalRender(props),
+  BaseOnboardingModal: (props: ModalProps) => baseModalRender(props),
 }));
 
 const mockUseAuth = useAuth as jest.Mock;

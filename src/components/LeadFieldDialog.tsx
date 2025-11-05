@@ -79,6 +79,31 @@ const fieldSchema = z.object({
 
 type FieldFormData = z.infer<typeof fieldSchema>;
 
+const toFieldValidationRules = (
+  rules: Record<string, unknown> | null | undefined
+): FieldFormData["validation_rules"] => {
+  if (!rules) {
+    return undefined;
+  }
+
+  const parsed: NonNullable<FieldFormData["validation_rules"]> = {};
+  const minLength = rules["min_length"];
+  const maxLength = rules["max_length"];
+  const pattern = rules["pattern"];
+
+  if (typeof minLength === "number") {
+    parsed.min_length = minLength;
+  }
+  if (typeof maxLength === "number") {
+    parsed.max_length = maxLength;
+  }
+  if (typeof pattern === "string") {
+    parsed.pattern = pattern;
+  }
+
+  return Object.keys(parsed).length > 0 ? parsed : undefined;
+};
+
 interface LeadFieldDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -129,8 +154,10 @@ export function LeadFieldDialog({
         case "is_visible_in_form":
           return currentValue !== field.is_visible_in_form;
         case "options":
-          const fieldOptions = field.options?.options?.join(", ") || "";
-          return currentValue !== fieldOptions;
+          {
+            const fieldOptions = field.options?.options?.join(", ") || "";
+            return currentValue !== fieldOptions;
+          }
         default:
           return false;
       }
@@ -150,7 +177,7 @@ export function LeadFieldDialog({
         is_visible_in_form: field.is_visible_in_form,
         options: field.options?.options ? field.options.options.join(", ") : "",
         allow_multiple: field.allow_multiple || false,
-        validation_rules: field.validation_rules as any,
+        validation_rules: toFieldValidationRules(field.validation_rules),
       };
     }
 

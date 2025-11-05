@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  type DropResult,
+} from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -190,13 +195,11 @@ const ProjectStatusesSection = () => {
     }
   };
 
-  const handleEdit = (status: any) => {
-    // Cast to proper type for dialog
-    const typedStatus: ProjectStatus = {
+  const handleEdit = (status: ProjectStatus) => {
+    setEditingStatus({
       ...status,
-      lifecycle: (status.lifecycle as 'active' | 'completed' | 'cancelled') || 'active'
-    };
-    setEditingStatus(typedStatus);
+      lifecycle: status.lifecycle ?? "active",
+    });
     form.reset({ name: status.name, color: status.color });
     setIsEditDialogOpen(true);
   };
@@ -241,7 +244,7 @@ const ProjectStatusesSection = () => {
     }
   };
 
-  const handleDragEnd = async (result: any) => {
+  const handleDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
 
     try {

@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import SettingsLayout from "../SettingsLayout";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { createElement, type SVGProps } from "react";
 
 const useSettingsContextMock = jest.fn();
 const useOnboardingMock = jest.fn();
@@ -71,19 +72,20 @@ jest.mock("@/hooks/useSettingsNavigation", () => ({
   }),
 }));
 
-jest.mock("lucide-react", () => {
-  const React = require("react");
-  return new Proxy(
+jest.mock("lucide-react", () =>
+  new Proxy(
     {},
     {
-      get: (_target, property: PropertyKey) => (props: any) =>
-        React.createElement("svg", {
-          "data-icon": String(property),
-          ...props,
-        }),
+      get:
+        (_target, property: PropertyKey) =>
+        (props: SVGProps<SVGSVGElement>) =>
+          createElement("svg", {
+            "data-icon": String(property),
+            ...props,
+          }),
     }
-  );
-});
+  )
+);
 
 const renderLayout = (initialPath: string = "/settings/projects") => {
   return render(

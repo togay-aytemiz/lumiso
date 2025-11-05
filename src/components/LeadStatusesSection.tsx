@@ -2,7 +2,12 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  type DropResult,
+} from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -40,6 +45,23 @@ interface LeadStatus {
   is_system_final?: boolean;
   lifecycle?: string;
 }
+
+const getErrorMessage = (error: unknown): string | undefined => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as { message?: unknown }).message === "string"
+  ) {
+    return (error as { message: string }).message;
+  }
+
+  return undefined;
+};
 
 // Predefined color palette
 const PREDEFINED_COLORS = [
@@ -109,13 +131,10 @@ const LeadStatusesSection = () => {
       if (result.success) {
         toast.success(t('lead_statuses.preferences_updated'));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating setting:', error);
-      if (error?.message) {
-        toast.error(error.message);
-      } else {
-        toast.error("Failed to update preferences");
-      }
+      const message = getErrorMessage(error);
+      toast.error(message ?? "Failed to update preferences");
     } finally {
       setSaving(false);
     }
@@ -172,7 +191,7 @@ const LeadStatusesSection = () => {
     }
   };
 
-  const handleCustomDragEnd = async (result: any) => {
+  const handleCustomDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
 
     const customStatuses = statuses.filter(status => !status.is_system_final);

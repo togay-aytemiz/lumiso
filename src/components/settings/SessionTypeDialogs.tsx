@@ -55,6 +55,23 @@ const DEFAULT_FORM_STATE = {
   setAsDefault: false,
 };
 
+const getErrorMessage = (error: unknown): string | undefined => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as { message?: unknown }).message === "string"
+  ) {
+    return (error as { message: string }).message;
+  }
+
+  return undefined;
+};
+
 interface BaseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -174,11 +191,13 @@ export function AddSessionTypeDialog({
         setAsDefault: formData.setAsDefault,
       });
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating session type:", error);
       toast({
         title: t("common.toast.error"),
-        description: error.message || t("sessionTypes.errors.add_failed", { ns: "forms" }),
+        description:
+          getErrorMessage(error) ??
+          t("sessionTypes.errors.add_failed", { ns: "forms" }),
         variant: "destructive",
       });
     } finally {
@@ -464,11 +483,13 @@ export function EditSessionTypeDialog({
         wasDefault: sessionType.id === defaultSessionTypeId,
       });
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating session type:", error);
       toast({
         title: t("common.toast.error"),
-        description: error.message || t("sessionTypes.errors.update_failed", { ns: "forms" }),
+        description:
+          getErrorMessage(error) ??
+          t("sessionTypes.errors.update_failed", { ns: "forms" }),
         variant: "destructive",
       });
     } finally {

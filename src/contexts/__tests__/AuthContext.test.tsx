@@ -1,6 +1,7 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { AuthProvider, useAuth } from "../AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 jest.mock("@/integrations/supabase/client", () => {
   const unsubscribe = jest.fn();
@@ -61,8 +62,10 @@ describe("AuthContext", () => {
   });
 
   it("initializes auth state and fetches user roles", async () => {
-    const listeners: Array<(event: string, session: any) => void> = [];
-    mockOnAuthStateChange.mockImplementation((callback: any) => {
+    const listeners: Array<(event: AuthChangeEvent, session: Session | null) => void> = [];
+    mockOnAuthStateChange.mockImplementation((
+      callback: (event: AuthChangeEvent, session: Session | null) => void
+    ) => {
       listeners.push(callback);
       return { data: { subscription: { unsubscribe: jest.fn() } } };
     });

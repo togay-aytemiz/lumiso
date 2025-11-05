@@ -15,9 +15,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
+interface LeadStatusRecord {
+  id: string;
+  name: string;
+  color?: string | null;
+  sort_order?: number | null;
+  lifecycle?: string | null;
+}
+
+type LeadDetailState = {
+  from: "all-leads";
+  continueTutorial?: boolean;
+  tutorialType?: "scheduling";
+  tutorialStep?: number;
+};
+
 const AllLeadsRefactored = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
+  const [leadStatuses, setLeadStatuses] = useState<LeadStatusRecord[]>([]);
   const [leadStatusesLoading, setLeadStatusesLoading] = useState(true);
   const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -224,8 +239,8 @@ const AllLeadsRefactored = () => {
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      setLeadStatuses(data || []);
-    } catch (error: any) {
+      setLeadStatuses((data ?? []) as LeadStatusRecord[]);
+    } catch (error: unknown) {
       console.error('Error fetching lead statuses:', error);
     } finally {
       setLeadStatusesLoading(false);
@@ -253,7 +268,7 @@ const AllLeadsRefactored = () => {
   };
 
   const handleRowClick = (lead: LeadWithCustomFields) => {
-    const state: any = { from: 'all-leads' };
+    const state: LeadDetailState = { from: 'all-leads' };
     
     if (showTutorial) {
       if (isSchedulingTutorial && currentTutorialStep === 1) {

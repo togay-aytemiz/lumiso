@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
@@ -55,34 +55,36 @@ const Analytics = () => {
   const [sessionDateMode, setSessionDateMode] = useState<'scheduled' | 'created'>('scheduled');
 
   useEffect(() => {
-    fetchAnalyticsData();
-  }, []);
+    void fetchAnalyticsData();
+  }, [fetchAnalyticsData]);
 
   useEffect(() => {
     if (!loading) {
-      fetchSessionsPerDay();
+      void fetchSessionsPerDay();
     }
-  }, [sessionDateMode]);
+  }, [fetchSessionsPerDay, loading]);
 
-  const fetchAnalyticsData = async () => {
+  const fetchAnalyticsData = useCallback(async () => {
     try {
       await Promise.all([
         fetchSessionsPerDay(),
         fetchSessionsByStatus(),
         fetchLeadsByMonth(),
       ]);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Something went wrong";
       toast({
         title: t("analytics.errorFetching"),
-        description: error.message,
+        description: message,
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchLeadsByMonth, fetchSessionsByStatus, fetchSessionsPerDay, t]);
 
-  const fetchSessionsPerDay = async () => {
+  const fetchSessionsPerDay = useCallback(async () => {
     const today = new Date();
     
     if (sessionDateMode === 'scheduled') {
@@ -146,9 +148,9 @@ const Analytics = () => {
 
       setSessionsPerDay(sessionCounts);
     }
-  };
+  }, [sessionDateMode]);
 
-  const fetchSessionsByStatus = async () => {
+  const fetchSessionsByStatus = useCallback(async () => {
     const { data, error } = await supabase
       .from('sessions')
       .select('status');
@@ -176,9 +178,9 @@ const Analytics = () => {
     }));
 
     setSessionsByStatus(statusData);
-  };
+  }, []);
 
-  const fetchLeadsByMonth = async () => {
+  const fetchLeadsByMonth = useCallback(async () => {
     const endDate = new Date();
     const startDate = subMonths(endDate, 5); // Last 6 months
 
@@ -210,7 +212,7 @@ const Analytics = () => {
     });
 
     setLeadsByMonth(leadCounts);
-  };
+  }, []);
 
   const chartConfig = {
     sessions: {

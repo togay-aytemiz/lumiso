@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,7 +61,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   const [isProjectWizardOpen, setProjectWizardOpen] = useState(false);
   const { toast } = useToast();
 
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -90,11 +90,11 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      const all = data || [];
-      const hasArch = archivedId ? all.some((p: any) => p.status_id === archivedId) : false;
+      const all: Project[] = (data ?? []) as Project[];
+      const hasArch = archivedId ? all.some((p) => p.status_id === archivedId) : false;
       setHasArchived(hasArch);
       setProjects(all);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error fetching projects:", error);
       toast({
         variant: "destructive",
@@ -104,11 +104,11 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [leadId, t, toast]);
 
   useEffect(() => {
     fetchProjects();
-  }, [leadId]);
+  }, [fetchProjects]);
 
   // Persist "Show archived" preference per user
   useEffect(() => {
@@ -175,10 +175,11 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
       });
 
       fetchProjects();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
       toast({
         title: t('pages:projects.errorDeletingProject'),
-        description: error.message,
+        description: message,
         variant: "destructive"
       });
     } finally {

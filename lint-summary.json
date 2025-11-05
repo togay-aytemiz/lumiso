@@ -1,5 +1,5 @@
 {
-  "total": 1487,
+  "total": 1444,
   "summary": [
     {
       "filePath": "src/components/__tests__/ProjectSheetView.test.tsx",
@@ -24,14 +24,6 @@
     {
       "filePath": "supabase/functions/notification-processor/index.ts",
       "count": 23
-    },
-    {
-      "filePath": "src/pages/__tests__/SessionDetail.test.tsx",
-      "count": 22
-    },
-    {
-      "filePath": "src/pages/__tests__/ReminderDetails.test.tsx",
-      "count": 21
     },
     {
       "filePath": "src/components/settings/__tests__/PackageDialogs.test.tsx",

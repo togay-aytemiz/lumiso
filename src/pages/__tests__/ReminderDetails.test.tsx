@@ -1,8 +1,24 @@
 import React from "react";
+import type { ComponentProps, PropsWithChildren, ReactNode } from "react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import ReminderDetails from "../ReminderDetails";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import type { KpiCardProps } from "@/components/ui/kpi-card";
+import type FilterBar from "@/components/FilterBar";
+import type { ViewProjectDialog as ViewProjectDialogComponent } from "@/components/ViewProjectDialog";
+
+type TranslationOptions = {
+  returnObjects?: boolean;
+  count?: number;
+  tomorrow?: number;
+  later?: number;
+  today?: number;
+  allTime?: number;
+} & Record<string, unknown>;
+
+type FilterBarProps = ComponentProps<typeof FilterBar>;
+type ViewProjectDialogProps = ComponentProps<typeof ViewProjectDialogComponent>;
 
 const mockNavigate = jest.fn();
 
@@ -11,8 +27,6 @@ jest.mock("@/integrations/supabase/client", () => ({
     from: jest.fn(),
   },
 }));
-
-type TranslationOptions = { [key: string]: any };
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -62,7 +76,7 @@ jest.mock("@/hooks/use-toast", () => ({
 const sanitizeTestId = (value: string) => value.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
 
 jest.mock("@/components/ui/kpi-card", () => ({
-  KpiCard: ({ title, value, info }: any) => (
+  KpiCard: ({ title, value, info }: KpiCardProps) => (
     <div data-testid={`kpi-${sanitizeTestId(String(title))}`}>
       <span data-testid={`kpi-${sanitizeTestId(String(title))}-value`}>{value}</span>
       {info?.content ? <span>{info.content}</span> : null}
@@ -75,19 +89,29 @@ jest.mock("@/components/ui/kpi-presets", () => ({
 }));
 
 jest.mock("@/components/ui/button", () => ({
-  Button: ({ children, onClick, ...rest }: any) => (
-    <button type="button" onClick={onClick} {...rest}>
+  Button: ({
+    children,
+    type = "button",
+    ...rest
+  }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button type={type} {...rest}>
       {children}
     </button>
   ),
 }));
 
 jest.mock("@/components/ui/switch", () => ({
-  Switch: ({ checked, onCheckedChange }: any) => (
+  Switch: ({
+    checked = false,
+    onCheckedChange,
+  }: {
+    checked?: boolean;
+    onCheckedChange?: (value: boolean) => void;
+  }) => (
     <button
       type="button"
       aria-pressed={checked}
-      onClick={() => onCheckedChange(!checked)}
+      onClick={() => onCheckedChange?.(!checked)}
     >
       {checked ? "on" : "off"}
     </button>
@@ -95,28 +119,39 @@ jest.mock("@/components/ui/switch", () => ({
 }));
 
 jest.mock("@/components/ui/badge", () => ({
-  Badge: ({ children, ...rest }: any) => (
+  Badge: ({ children, ...rest }: PropsWithChildren<{ className?: string }>) => (
     <span {...rest}>{children}</span>
   ),
 }));
 
 jest.mock("@/components/ui/page-header", () => ({
-  PageHeader: ({ title, subtitle, children }: any) => (
+  PageHeader: ({
+    title,
+    subtitle,
+    children,
+  }: PropsWithChildren<{ title?: ReactNode; subtitle?: ReactNode }>) => (
     <div>
       <h1>{title}</h1>
       <p>{subtitle}</p>
       {children}
     </div>
   ),
-  PageHeaderSearch: ({ children }: any) => <div>{children}</div>,
+  PageHeaderSearch: ({ children }: PropsWithChildren<ReactNode>) => <div>{children}</div>,
 }));
 
 jest.mock("@/components/GlobalSearch", () => () => <div data-testid="global-search" />);
 
 jest.mock("@/components/FilterBar", () => ({
-  FilterBar: ({ quickFilters = [], onQuickFilterChange = () => {}, showCompleted, onShowCompletedChange = () => {}, hideOverdue, onHideOverdueChange = () => {} }: any) => (
+  FilterBar: ({
+    quickFilters,
+    onQuickFilterChange,
+    showCompleted,
+    onShowCompletedChange,
+    hideOverdue,
+    onHideOverdueChange,
+  }: FilterBarProps) => (
     <div data-testid="filter-bar">
-      {quickFilters.map((filter: any) => (
+      {quickFilters.map((filter) => (
         <button
           key={filter.key}
           type="button"
@@ -125,10 +160,16 @@ jest.mock("@/components/FilterBar", () => ({
           {filter.label}:{filter.count}
         </button>
       ))}
-      <button type="button" onClick={() => onShowCompletedChange(!showCompleted)}>
+      <button
+        type="button"
+        onClick={() => onShowCompletedChange?.(!showCompleted)}
+      >
         toggle-completed
       </button>
-      <button type="button" onClick={() => onHideOverdueChange(!hideOverdue)}>
+      <button
+        type="button"
+        onClick={() => onHideOverdueChange?.(!hideOverdue)}
+      >
         toggle-overdue
       </button>
     </div>
@@ -140,7 +181,7 @@ jest.mock("@/components/ui/loading-presets", () => ({
 }));
 
 jest.mock("@/components/ViewProjectDialog", () => ({
-  ViewProjectDialog: ({ open, project, leadName }: any) =>
+  ViewProjectDialog: ({ open, project, leadName }: ViewProjectDialogProps) =>
     open ? (
       <div data-testid="view-project-dialog">
         {project?.name} - {leadName}
@@ -149,18 +190,18 @@ jest.mock("@/components/ViewProjectDialog", () => ({
 }));
 
 jest.mock("@/components/ui/accordion", () => ({
-  Accordion: ({ children }: any) => <div>{children}</div>,
-  AccordionItem: ({ children }: any) => <div>{children}</div>,
-  AccordionTrigger: ({ children, onClick }: any) => (
+  Accordion: ({ children }: PropsWithChildren<ReactNode>) => <div>{children}</div>,
+  AccordionItem: ({ children }: PropsWithChildren<ReactNode>) => <div>{children}</div>,
+  AccordionTrigger: ({ children, onClick }: PropsWithChildren<{ onClick?: () => void }>) => (
     <button type="button" onClick={onClick}>
       {children}
     </button>
   ),
-  AccordionContent: ({ children }: any) => <div>{children}</div>,
+  AccordionContent: ({ children }: PropsWithChildren<ReactNode>) => <div>{children}</div>,
 }));
 
-const mockToast = toast as jest.Mock;
-const mockSupabaseFrom = supabase.from as jest.Mock;
+const mockToast = toast as jest.MockedFunction<typeof toast>;
+const mockSupabaseFrom = supabase.from as jest.MockedFunction<typeof supabase.from>;
 
 interface Activity {
   id: string;
@@ -181,12 +222,64 @@ interface Lead {
   status: string;
 }
 
+interface Project {
+  id: string;
+  name: string;
+  [key: string]: unknown;
+}
+
+type SupabaseListResult<T> = Promise<{ data: T; error: unknown }>;
+type SupabaseSingleResult<T> = Promise<{ data: T; error: unknown }>;
+type SupabaseExecResult = Promise<{ error: unknown }>;
+
+interface ActivitiesQueryMock {
+  select: jest.Mock<ActivitiesQueryMock, [string]>;
+  not: jest.Mock<ActivitiesQueryMock, [string, string, unknown?]>;
+  order: jest.Mock<ActivitiesQueryMock | SupabaseListResult<Activity[] | null>, [string, { ascending?: boolean }?]>;
+}
+
+interface LeadsQueryMock {
+  select: jest.Mock<LeadsQueryMock, [string]>;
+  in: jest.Mock<SupabaseListResult<Lead[] | null>, [string, string[]]>;
+  eq: jest.Mock<LeadsQueryMock, [string, unknown]>;
+  single: jest.Mock<SupabaseSingleResult<Lead | null>, []>;
+}
+
+interface UpdateActivityQueryMock {
+  update: jest.Mock<UpdateActivityQueryMock, [Record<string, unknown>]>;
+  eq: jest.Mock<SupabaseExecResult, [string, unknown]>;
+}
+
+interface ProjectQueryMock {
+  select: jest.Mock<ProjectQueryMock, [string]>;
+  eq: jest.Mock<ProjectQueryMock, [string, unknown]>;
+  single: jest.Mock<SupabaseSingleResult<Project | null>, []>;
+}
+
+interface LeadSingleQueryMock {
+  select: jest.Mock<LeadSingleQueryMock, [string]>;
+  eq: jest.Mock<LeadSingleQueryMock, [string, unknown]>;
+  single: jest.Mock<SupabaseSingleResult<Lead | null>, []>;
+}
+
 const createActivitiesQuery = (activities: Activity[], error?: Error) => {
-  const query: any = {};
   let orderCalls = 0;
-  query.select = jest.fn(() => query);
-  query.not = jest.fn(() => query);
-  query.order = jest.fn(() => {
+  const selectMock = jest.fn<ActivitiesQueryMock, [string]>();
+  const notMock = jest.fn<ActivitiesQueryMock, [string, string, unknown?]>();
+  const orderMock = jest.fn<
+    ActivitiesQueryMock | SupabaseListResult<Activity[] | null>,
+    [string, { ascending?: boolean }?]
+  >();
+
+  const query: ActivitiesQueryMock = {
+    select: selectMock,
+    not: notMock,
+    order: orderMock,
+  };
+
+  selectMock.mockReturnValue(query);
+  notMock.mockReturnValue(query);
+  orderMock.mockImplementation(() => {
     orderCalls += 1;
     if (orderCalls >= 2) {
       if (error) {
@@ -196,39 +289,82 @@ const createActivitiesQuery = (activities: Activity[], error?: Error) => {
     }
     return query;
   });
-  return query;
+
+  return query as unknown as ReturnType<typeof supabase.from>;
 };
 
 const createLeadsQuery = (leads: Lead[], error?: Error) => {
-  const query: any = {};
-  query.select = jest.fn(() => query);
-  query.in = jest.fn(() => Promise.resolve({ data: error ? null : leads, error: error ?? null }));
-  query.eq = jest.fn(() => query);
-  query.single = jest.fn(() => Promise.resolve({ data: error ? null : leads[0], error: error ?? null }));
-  return query;
+  const selectMock = jest.fn<LeadsQueryMock, [string]>();
+  const inMock = jest.fn<SupabaseListResult<Lead[] | null>, [string, string[]]>();
+  const eqMock = jest.fn<LeadsQueryMock, [string, unknown]>();
+  const singleMock = jest.fn<SupabaseSingleResult<Lead | null>, []>();
+
+  const query: LeadsQueryMock = {
+    select: selectMock,
+    in: inMock,
+    eq: eqMock,
+    single: singleMock,
+  };
+
+  selectMock.mockReturnValue(query);
+  eqMock.mockReturnValue(query);
+  inMock.mockImplementation(() =>
+    Promise.resolve({ data: error ? null : leads, error: error ?? null })
+  );
+  singleMock.mockResolvedValue({ data: error ? null : leads[0], error: error ?? null });
+
+  return query as unknown as ReturnType<typeof supabase.from>;
 };
 
 const createUpdateActivityQuery = (error?: Error) => {
-  const query: any = {};
-  query.update = jest.fn(() => query);
-  query.eq = jest.fn(() => Promise.resolve({ error: error ?? null }));
-  return query;
+  const updateMock = jest.fn<UpdateActivityQueryMock, [Record<string, unknown>]>();
+  const eqMock = jest.fn<SupabaseExecResult, [string, unknown]>();
+
+  const query: UpdateActivityQueryMock = {
+    update: updateMock,
+    eq: eqMock,
+  };
+
+  updateMock.mockReturnValue(query);
+  eqMock.mockImplementation(() => Promise.resolve({ error: error ?? null }));
+
+  return query as unknown as ReturnType<typeof supabase.from>;
 };
 
-const createProjectQuery = (project: any, error?: Error) => {
-  const query: any = {};
-  query.select = jest.fn(() => query);
-  query.eq = jest.fn(() => query);
-  query.single = jest.fn(() => Promise.resolve({ data: error ? null : project, error: error ?? null }));
-  return query;
+const createProjectQuery = (project: Project | null, error?: Error) => {
+  const selectMock = jest.fn<ProjectQueryMock, [string]>();
+  const eqMock = jest.fn<ProjectQueryMock, [string, unknown]>();
+  const singleMock = jest.fn<SupabaseSingleResult<Project | null>, []>();
+
+  const query: ProjectQueryMock = {
+    select: selectMock,
+    eq: eqMock,
+    single: singleMock,
+  };
+
+  selectMock.mockReturnValue(query);
+  eqMock.mockReturnValue(query);
+  singleMock.mockResolvedValue({ data: error ? null : project, error: error ?? null });
+
+  return query as unknown as ReturnType<typeof supabase.from>;
 };
 
-const createLeadSingleQuery = (lead: Lead, error?: Error) => {
-  const query: any = {};
-  query.select = jest.fn(() => query);
-  query.eq = jest.fn(() => query);
-  query.single = jest.fn(() => Promise.resolve({ data: error ? null : lead, error: error ?? null }));
-  return query;
+const createLeadSingleQuery = (lead: Lead | null, error?: Error) => {
+  const selectMock = jest.fn<LeadSingleQueryMock, [string]>();
+  const eqMock = jest.fn<LeadSingleQueryMock, [string, unknown]>();
+  const singleMock = jest.fn<SupabaseSingleResult<Lead | null>, []>();
+
+  const query: LeadSingleQueryMock = {
+    select: selectMock,
+    eq: eqMock,
+    single: singleMock,
+  };
+
+  selectMock.mockReturnValue(query);
+  eqMock.mockReturnValue(query);
+  singleMock.mockResolvedValue({ data: error ? null : lead, error: error ?? null });
+
+  return query as unknown as ReturnType<typeof supabase.from>;
 };
 
 const iso = (value: string) => new Date(value).toISOString();
@@ -239,7 +375,7 @@ describe("ReminderDetails page", () => {
 
   beforeAll(() => {
     class FixedDate extends RealDate {
-      constructor(...args: any[]) {
+      constructor(...args: ConstructorParameters<typeof RealDate>) {
         if (args.length === 0) {
           super(fixedDate.toISOString());
         } else {

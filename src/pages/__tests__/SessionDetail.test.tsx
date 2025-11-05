@@ -1,3 +1,4 @@
+import type { ComponentProps, PropsWithChildren, ReactNode } from "react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import { mockSupabaseClient } from "@/utils/testUtils";
 import SessionDetail from "../SessionDetail";
@@ -8,6 +9,18 @@ import {
   useFormsTranslation,
 } from "@/hooks/useTypedTranslation";
 import { useSessionActions } from "@/hooks/useSessionActions";
+import type SessionStatusBadge from "@/components/SessionStatusBadge";
+import type SessionSheetView from "@/components/SessionSheetView";
+import type SessionGallery from "@/components/SessionGallery";
+import type { EntitySummaryItem } from "@/components/EntityHeader";
+import type ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
+import type { UnifiedClientDetails as UnifiedClientDetailsComponent } from "@/components/UnifiedClientDetails";
+
+type SessionStatusBadgeProps = ComponentProps<typeof SessionStatusBadge>;
+type SessionGalleryProps = ComponentProps<typeof SessionGallery>;
+type ProjectDetailsLayoutProps = ComponentProps<typeof ProjectDetailsLayout>;
+type UnifiedClientDetailsProps = ComponentProps<typeof UnifiedClientDetailsComponent>;
+type SessionSheetViewProps = ComponentProps<typeof SessionSheetView>;
 
 jest.mock("@/integrations/supabase/client", () => ({
   supabase: mockSupabaseClient,
@@ -48,7 +61,7 @@ jest.mock("@/hooks/useSessionActions", () => ({
 
 jest.mock("@/components/SessionStatusBadge", () => ({
   __esModule: true,
-  default: ({ currentStatus, onStatusChange }: any) => (
+  default: ({ currentStatus, onStatusChange }: SessionStatusBadgeProps) => (
     <button
       type="button"
       data-testid="session-status-badge"
@@ -67,25 +80,55 @@ jest.mock("@/components/EditSessionDialog", () => ({
 
 jest.mock("@/components/ErrorBoundary", () => ({
   __esModule: true,
-  ErrorBoundary: ({ children }: any) => <>{children}</>,
-  default: ({ children }: any) => <>{children}</>,
+  ErrorBoundary: ({ children }: PropsWithChildren<unknown>) => <>{children}</>,
+  default: ({ children }: PropsWithChildren<unknown>) => <>{children}</>,
 }));
 
 jest.mock("@/components/UnifiedClientDetails", () => ({
-  UnifiedClientDetails: ({ lead }: any) => (
+  UnifiedClientDetails: ({ lead }: UnifiedClientDetailsProps) => (
     <div data-testid="unified-client-details">lead-{lead?.name}</div>
   ),
 }));
 
+const sessionSheetMock = jest.fn((props: SessionSheetViewProps) =>
+  props.isOpen ? (
+    <div data-testid="session-sheet">
+      session-{props.sessionId}
+      <button type="button" onClick={() => props.onOpenChange(false)}>
+        close
+      </button>
+    </div>
+  ) : null
+);
+
+jest.mock("@/components/SessionSheetView", () => ({
+  __esModule: true,
+  default: (props: SessionSheetViewProps) => sessionSheetMock(props),
+}));
+
 jest.mock("@/components/SessionGallery", () => ({
   __esModule: true,
-  default: ({ sessionId }: any) => (
+  default: ({ sessionId }: SessionGalleryProps) => (
     <div data-testid="session-gallery">gallery-{sessionId}</div>
   ),
 }));
 
 jest.mock("@/components/EntityHeader", () => ({
-  EntityHeader: ({ name, title, onBack, actions, banner, summaryItems }: any) => (
+  EntityHeader: ({
+    name,
+    title,
+    onBack,
+    actions,
+    banner,
+    summaryItems,
+  }: {
+    name: string;
+    title: ReactNode;
+    onBack?: () => void;
+    actions?: ReactNode;
+    banner?: ReactNode;
+    summaryItems?: EntitySummaryItem[];
+  }) => (
     <div data-testid="entity-header">
       <h1>{name}</h1>
       <button type="button" onClick={onBack}>
@@ -101,11 +144,11 @@ jest.mock("@/components/EntityHeader", () => ({
 
 jest.mock("@/components/project-details/ProjectDetailsLayout", () => ({
   __esModule: true,
-  default: ({ left, sections, rightFooter }: any) => (
+  default: ({ left, sections, rightFooter }: ProjectDetailsLayoutProps) => (
     <div data-testid="project-details-layout">
       <div data-testid="layout-left">{left}</div>
       <div data-testid="layout-sections">
-        {sections?.map((section: any) => (
+        {sections?.map((section) => (
           <div key={section.id} data-testid={`section-${section.id}`}>
             <span>{section.title}</span>
             <div>{section.content}</div>
@@ -118,34 +161,70 @@ jest.mock("@/components/project-details/ProjectDetailsLayout", () => ({
 }));
 
 jest.mock("@/components/ui/alert-dialog", () => ({
-  AlertDialog: ({ children, open }: any) => (open ? <div>{children}</div> : null),
-  AlertDialogAction: ({ children, onClick }: any) => (
+  AlertDialog: ({ children, open }: { children: ReactNode; open?: boolean }) =>
+    open ? <div>{children}</div> : null,
+  AlertDialogAction: ({
+    children,
+    onClick,
+  }: PropsWithChildren<{
+    onClick?: () => void;
+  }>) => (
     <button type="button" onClick={onClick}>
       {children}
     </button>
   ),
-  AlertDialogCancel: ({ children }: any) => <button type="button">{children}</button>,
-  AlertDialogContent: ({ children }: any) => <div>{children}</div>,
-  AlertDialogDescription: ({ children }: any) => <div>{children}</div>,
-  AlertDialogFooter: ({ children }: any) => <div>{children}</div>,
-  AlertDialogHeader: ({ children }: any) => <div>{children}</div>,
-  AlertDialogTitle: ({ children }: any) => <div>{children}</div>,
+  AlertDialogCancel: ({ children }: PropsWithChildren<ReactNode>) => (
+    <button type="button">{children}</button>
+  ),
+  AlertDialogContent: ({ children }: PropsWithChildren<ReactNode>) => <div>{children}</div>,
+  AlertDialogDescription: ({ children }: PropsWithChildren<ReactNode>) => <div>{children}</div>,
+  AlertDialogFooter: ({ children }: PropsWithChildren<ReactNode>) => <div>{children}</div>,
+  AlertDialogHeader: ({ children }: PropsWithChildren<ReactNode>) => <div>{children}</div>,
+  AlertDialogTitle: ({ children }: PropsWithChildren<ReactNode>) => <div>{children}</div>,
 }));
 
-const mockUseToast = useToast as jest.Mock;
-const mockUseMessagesTranslation = useMessagesTranslation as jest.Mock;
-const mockUseCommonTranslation = useCommonTranslation as jest.Mock;
-const mockUseFormsTranslation = useFormsTranslation as jest.Mock;
-const mockUseSessionActions = useSessionActions as jest.Mock;
+type SupabaseSingleResult<T> = Promise<{ data: T; error: unknown }>;
+
+interface SessionQuery<T> {
+  select: jest.Mock<SessionQuery<T>, [string]>;
+  eq: jest.Mock<SessionQuery<T>, [string, unknown]>;
+  single: jest.Mock<SupabaseSingleResult<T>, []>;
+}
+
+const supabaseFromMock = mockSupabaseClient.from as jest.MockedFunction<
+  typeof mockSupabaseClient.from
+>;
+const mockUseToast = useToast as jest.MockedFunction<typeof useToast>;
+const mockUseMessagesTranslation = useMessagesTranslation as jest.MockedFunction<
+  typeof useMessagesTranslation
+>;
+const mockUseCommonTranslation = useCommonTranslation as jest.MockedFunction<
+  typeof useCommonTranslation
+>;
+const mockUseFormsTranslation = useFormsTranslation as jest.MockedFunction<
+  typeof useFormsTranslation
+>;
+const mockUseSessionActions = useSessionActions as jest.MockedFunction<
+  typeof useSessionActions
+>;
 
 const mockToast = jest.fn();
 const mockDeleteSession = jest.fn();
 
-const buildQueryMock = (singleResponse: any) => {
-  const query: any = {};
-  query.select = jest.fn(() => query);
-  query.eq = jest.fn(() => query);
-  query.single = jest.fn().mockResolvedValue(singleResponse);
+const buildQueryMock = <T,>(singleResponse: Awaited<SupabaseSingleResult<T>>) => {
+  const selectMock = jest.fn<SessionQuery<T>, [string]>();
+  const eqMock = jest.fn<SessionQuery<T>, [string, unknown]>();
+  const singleMock = jest.fn<SupabaseSingleResult<T>, []>().mockResolvedValue(singleResponse);
+
+  const query: SessionQuery<T> = {
+    select: selectMock,
+    eq: eqMock,
+    single: singleMock,
+  };
+
+  selectMock.mockReturnValue(query);
+  eqMock.mockReturnValue(query);
+
   return query;
 };
 
@@ -154,7 +233,7 @@ describe("SessionDetail", () => {
     jest.clearAllMocks();
     mockLocationState = {};
     mockNavigate.mockReset();
-    (mockSupabaseClient.from as jest.Mock).mockReset();
+    supabaseFromMock.mockReset();
     mockToast.mockReset();
     mockDeleteSession.mockReset();
     mockUseToast.mockReturnValue({ toast: mockToast });
@@ -201,12 +280,12 @@ describe("SessionDetail", () => {
 
   it("shows loading skeleton before rendering fetched session details", async () => {
     const query = buildQueryMock({ data: mockSessionData, error: null });
-    (mockSupabaseClient.from as jest.Mock).mockImplementation(() => query);
+    supabaseFromMock.mockImplementation(() => query as ReturnType<typeof mockSupabaseClient.from>);
 
     const { container } = render(<SessionDetail />);
 
     expect(
-      container.querySelectorAll('[class*=\"animate-pulse\"]').length
+      container.querySelectorAll('[class*="animate-pulse"]').length
     ).toBeGreaterThan(0);
 
     const statusBadge = await screen.findByTestId("session-status-badge");
@@ -215,7 +294,7 @@ describe("SessionDetail", () => {
     expect(query.eq).toHaveBeenCalledWith("id", "session-123");
 
     await waitFor(() => {
-      expect(container.querySelectorAll('[class*=\"animate-pulse\"]').length).toBe(0);
+      expect(container.querySelectorAll('[class*="animate-pulse"]').length).toBe(0);
     });
 
     expect(screen.getByTestId("entity-header")).toBeInTheDocument();
@@ -239,7 +318,7 @@ describe("SessionDetail", () => {
       data: null,
       error: new Error("Failed to load"),
     });
-    (mockSupabaseClient.from as jest.Mock).mockImplementation(() => query);
+    supabaseFromMock.mockImplementation(() => query as ReturnType<typeof mockSupabaseClient.from>);
 
     render(<SessionDetail />);
 
@@ -270,7 +349,7 @@ describe("SessionDetail", () => {
     mockLocationState = { from: "/calendar" };
     mockDeleteSession.mockResolvedValueOnce(true);
     const query = buildQueryMock({ data: mockSessionData, error: null });
-    (mockSupabaseClient.from as jest.Mock).mockImplementation(() => query);
+    supabaseFromMock.mockImplementation(() => query as ReturnType<typeof mockSupabaseClient.from>);
 
     render(<SessionDetail />);
 

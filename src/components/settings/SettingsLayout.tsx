@@ -545,7 +545,9 @@ export default function SettingsLayout() {
         metadata?.descriptionKey ? tPages(metadata.descriptionKey) : undefined;
 
       const baseButtonClasses =
-        "group flex w-full items-center gap-4 px-4 py-3 text-left transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2";
+        variant === "mobile"
+          ? "group flex w-full items-center gap-4 px-4 py-3 text-left transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2"
+          : "group flex w-full items-center justify-between gap-6 rounded-3xl border border-border/60 bg-card px-6 py-5 text-left shadow-sm transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2";
 
       const isDangerVariant = item.variant === "danger";
       const isDangerMobile = isDangerVariant && variant === "mobile";
@@ -555,12 +557,46 @@ export default function SettingsLayout() {
           ? isDangerMobile
             ? "border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/15 active:translate-x-[1px]"
             : "hover:bg-muted/40 active:translate-x-[1px]"
-          : "rounded-2xl border border-border/60 bg-card shadow-sm hover:border-[hsl(var(--accent-300))] hover:shadow-md hover:-translate-y-[1px]";
+          : "hover:-translate-y-1 hover:border-[hsl(var(--accent-300))] hover:shadow-[0_26px_45px_-30px_rgba(15,23,42,0.55)]";
 
       const disabledClasses =
         variant === "mobile"
           ? "cursor-not-allowed opacity-50"
           : "cursor-not-allowed opacity-40";
+
+      const iconWrapperClasses = cn(
+        "flex items-center justify-center rounded-2xl transition-all duration-200",
+        variant === "desktop" && "h-12 w-12 rounded-3xl",
+        variant === "mobile" && "h-11 w-11",
+        isDangerMobile
+          ? "bg-destructive/20 text-destructive"
+          : cn(
+              "bg-muted text-[hsl(var(--accent-600))]",
+              variant === "desktop" &&
+                "group-hover:bg-[hsl(var(--accent-100))] group-hover:text-[hsl(var(--accent-800))]"
+            )
+      );
+
+      const iconClasses = cn(
+        variant === "desktop" ? "h-6 w-6" : "h-5 w-5",
+        "transition-transform duration-200",
+        variant === "desktop" && "group-hover:scale-110"
+      );
+
+      const textWrapperClasses = cn(
+        "flex min-w-0 flex-1 flex-col gap-1",
+        variant === "desktop" && "w-full"
+      );
+
+      const titleClasses = cn(
+        "truncate text-sm font-semibold",
+        isDangerMobile ? "text-destructive" : "text-foreground"
+      );
+
+      const descriptionClasses = cn(
+        "truncate text-xs",
+        isDangerMobile ? "text-destructive/80" : "text-muted-foreground"
+      );
 
       return (
         <button
@@ -574,54 +610,45 @@ export default function SettingsLayout() {
             locked ? disabledClasses : enabledClasses
           )}
         >
-          <span
+          <div
             className={cn(
-              "flex h-11 w-11 items-center justify-center rounded-2xl",
-              isDangerMobile
-                ? "bg-destructive/20 text-destructive"
-                : "bg-muted text-[hsl(var(--accent-600))]"
+              "flex min-w-0 flex-1 items-center gap-4",
+              variant === "desktop" && "flex-col items-start gap-3"
             )}
           >
-            <Icon className="h-5 w-5" />
-          </span>
-          <span className="flex min-w-0 flex-1 flex-col gap-1">
-            <span
-              className={cn(
-                "truncate text-sm font-semibold",
-                isDangerMobile ? "text-destructive" : "text-foreground"
-              )}
-            >
-              {t(`settings.${item.title}`)}
+            <span className={iconWrapperClasses}>
+              <Icon className={iconClasses} />
             </span>
-            {description && (
-              <span
+            <span className={textWrapperClasses}>
+              <span className={titleClasses}>{t(`settings.${item.title}`)}</span>
+              {description && (
+                <span className={descriptionClasses}>{description}</span>
+              )}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {itemHasChanges && (
+              <span className="h-2 w-2 shrink-0 rounded-full bg-orange-500" />
+            )}
+            {locked ? (
+              <Lock
                 className={cn(
-                  "truncate text-xs",
+                  "h-4 w-4",
                   isDangerMobile ? "text-destructive/80" : "text-muted-foreground"
                 )}
-              >
-                {description}
-              </span>
+              />
+            ) : (
+              <ChevronRight
+                className={cn(
+                  "h-4 w-4 transition-transform duration-200",
+                  variant === "desktop" &&
+                    "group-hover:translate-x-1 group-hover:scale-110",
+                  variant === "mobile" && "group-hover:translate-x-0.5",
+                  isDangerMobile ? "text-destructive" : "text-muted-foreground"
+                )}
+              />
             )}
-          </span>
-          {itemHasChanges && (
-            <span className="mr-2 h-2 w-2 shrink-0 rounded-full bg-orange-500" />
-          )}
-          {locked ? (
-            <Lock
-              className={cn(
-                "h-4 w-4",
-                isDangerMobile ? "text-destructive/80" : "text-muted-foreground"
-              )}
-            />
-          ) : (
-            <ChevronRight
-              className={cn(
-                "h-4 w-4 transition-transform group-hover:translate-x-0.5",
-                isDangerMobile ? "text-destructive" : "text-muted-foreground"
-              )}
-            />
-          )}
+          </div>
         </button>
       );
     },
@@ -877,10 +904,11 @@ export default function SettingsLayout() {
           <Icon
             className={cn(
               "h-4 w-4 flex-shrink-0 transition-colors",
-              isActive &&
-                item.variant !== "danger" &&
-                "text-[hsl(var(--accent-700))]",
-              !isActive && "text-muted-foreground/80"
+              item.variant === "danger"
+                ? "text-destructive"
+                : isActive
+                  ? "text-[hsl(var(--accent-700))]"
+                  : "text-muted-foreground/80"
             )}
           />
           <span className="hidden truncate text-sm font-medium md:flex md:items-center md:gap-2">
@@ -943,6 +971,13 @@ export default function SettingsLayout() {
     "--settings-rail-width": settingsTokens.railWidth,
     "--settings-overlay-shadow": settingsTokens.overlayShadow,
   } as CSSProperties;
+
+  const shouldShowDesktopSidebar = !isMobile && !isSettingsRoot;
+  const desktopSidebarStyle = !isMobile
+    ? {
+        width: shouldShowDesktopSidebar ? "var(--settings-rail-width)" : "0px",
+      }
+    : undefined;
 
   useEffect(() => {
     if (isMobile) {
@@ -1042,39 +1077,47 @@ export default function SettingsLayout() {
         >
           <div className="flex h-full w-full">
             <aside
-              className="hidden h-full shrink-0 flex-col border-r border-border/70 bg-muted/10 backdrop-blur-sm md:flex"
-              style={{ width: "var(--settings-rail-width)" }}
+              className={cn(
+                "hidden h-full shrink-0 flex-col overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:flex",
+                shouldShowDesktopSidebar
+                  ? "md:border-r md:border-border/70 md:bg-muted/10 md:backdrop-blur-sm md:opacity-100"
+                  : "md:-translate-x-6 md:border-transparent md:bg-transparent md:opacity-0"
+              )}
+              style={desktopSidebarStyle}
+              aria-hidden={!shouldShowDesktopSidebar}
             >
-              <div className="flex-1 overflow-y-auto px-3 py-6">
-                <div className="space-y-6">
-                  <section>
-                    <p
-                      className={cn(
-                        settingsClasses.railSectionLabel,
-                        "px-2 text-muted-foreground/70"
-                      )}
-                    >
-                      {t("settings.personalSettings")}
-                    </p>
-                    <nav className="mt-3 space-y-1.5">
-                      {personalSettingsItems.map(renderNavLink)}
-                    </nav>
-                  </section>
-                  <section>
-                    <p
-                      className={cn(
-                        settingsClasses.railSectionLabel,
-                        "px-2 text-muted-foreground/70"
-                      )}
-                    >
-                      {t("settings.organizationSettings")}
-                    </p>
-                    <nav className="mt-3 space-y-1.5">
-                      {organizationSettingsItems.map(renderNavLink)}
-                    </nav>
-                  </section>
+              {shouldShowDesktopSidebar && (
+                <div className="flex-1 overflow-y-auto px-3 py-6">
+                  <div className="space-y-6">
+                    <section>
+                      <p
+                        className={cn(
+                          settingsClasses.railSectionLabel,
+                          "px-2 text-muted-foreground/70"
+                        )}
+                      >
+                        {t("settings.personalSettings")}
+                      </p>
+                      <nav className="mt-3 space-y-1.5">
+                        {personalSettingsItems.map(renderNavLink)}
+                      </nav>
+                    </section>
+                    <section>
+                      <p
+                        className={cn(
+                          settingsClasses.railSectionLabel,
+                          "px-2 text-muted-foreground/70"
+                        )}
+                      >
+                        {t("settings.organizationSettings")}
+                      </p>
+                      <nav className="mt-3 space-y-1.5">
+                        {organizationSettingsItems.map(renderNavLink)}
+                      </nav>
+                    </section>
+                  </div>
                 </div>
-              </div>
+              )}
             </aside>
 
             <div className="flex min-h-0 flex-1 flex-col bg-[hsl(var(--background))]">

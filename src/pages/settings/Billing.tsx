@@ -134,10 +134,13 @@ export default function Billing() {
           variant: "destructive",
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error
+        ? error.message
+        : t("taxBilling.notifications.saveFailed", { ns: "forms" });
       toast({
         title: t("toast.error", { ns: "common" }),
-        description: error?.message ?? t("taxBilling.notifications.saveFailed", { ns: "forms" }),
+        description: message,
         variant: "destructive",
       });
     } finally {

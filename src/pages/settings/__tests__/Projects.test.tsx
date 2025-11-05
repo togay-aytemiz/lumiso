@@ -11,7 +11,7 @@ jest.mock("react-i18next", () => ({
 
 jest.mock("@/components/settings/SettingsHeader", () => ({
   __esModule: true,
-  default: (props: any) => {
+  default: (props: Record<string, unknown>) => {
     mockSettingsHeader(props);
     return null;
   },

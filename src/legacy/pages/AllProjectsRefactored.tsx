@@ -20,6 +20,11 @@ import { ProjectCreationWizardSheet } from "@/features/project-creation";
 
 type ViewMode = 'board' | 'list' | 'archived';
 
+type SearchResult = {
+  id: string;
+  type: 'project' | 'lead';
+};
+
 const AllProjectsRefactored = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('board');
   const [viewingProject, setViewingProject] = useState<ProjectWithDetails | null>(null);
@@ -92,7 +97,7 @@ const AllProjectsRefactored = () => {
     }
   };
 
-  const handleSearchResult = (result: any) => {
+  const handleSearchResult = (result: SearchResult) => {
     if (result.type === 'project') {
       navigate(`/projects/${result.id}`);
     } else if (result.type === 'lead') {

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import {
   getErrorMessage,
   getErrorStack,
@@ -47,7 +48,7 @@ export const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-export async function processScheduledReminders(supabase: any) {
+export async function processScheduledReminders(supabase: SupabaseClient) {
   console.log('Processing scheduled session reminders');
 
   // Get reminders that are due to be sent (exact timing, no early processing buffer)

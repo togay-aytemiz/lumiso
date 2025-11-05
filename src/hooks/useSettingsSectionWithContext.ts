@@ -11,7 +11,7 @@ interface SettingsSectionWithContextOptions<T> {
   throttleMs?: number;
 }
 
-export function useSettingsSectionWithContext<T extends Record<string, any>>(
+export function useSettingsSectionWithContext<T extends Record<string, unknown>>(
   options: SettingsSectionWithContextOptions<T>
 ) {
   const { addDirtySection, removeDirtySection } = useSettingsContext();

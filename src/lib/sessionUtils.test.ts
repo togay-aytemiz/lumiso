@@ -34,7 +34,11 @@ describe("sessionUtils", () => {
 
     it("returns generic fallback when no contextual data present", () => {
       expect(getDisplaySessionName({})).toBe("Session");
-      expect(getDisplaySessionName(undefined as any)).toBe("Session");
+      expect(
+        getDisplaySessionName(
+          undefined as unknown as Parameters<typeof getDisplaySessionName>[0]
+        )
+      ).toBe("Session");
     });
   });
 

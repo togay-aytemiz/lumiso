@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useTranslation } from "react-i18next";
+import { ONBOARDING_STEPS } from "@/constants/onboarding";
 
 // Remove duplicate step definitions - now using centralized ones from hook
 
@@ -58,7 +59,7 @@ const GettingStarted = () => {
     }
   }, [currentStep, loading]);
 
-  const handleStepAction = (step: any) => {
+  const handleStepAction = (step: (typeof ONBOARDING_STEPS)[number]) => {
     if (step.id === 1 || step.id === 4 || step.id === 5) {
       navigate(`${step.route}${step.route.includes('?') ? '' : '?tutorial=true'}`);
     } else {

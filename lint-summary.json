@@ -1,19 +1,4 @@
 {
-  "total": 47,
-  "summary": [
-    { "filePath": "src/hooks/useSessionEditForm.ts", "count": 1 },
-    { "filePath": "src/hooks/useSessionForm.ts", "count": 1 },
-    { "filePath": "src/hooks/useSettingsSectionWithContext.ts", "count": 1 },
-    { "filePath": "src/hooks/useTutorialExit.ts", "count": 1 },
-    { "filePath": "src/hooks/useUserPreferences.ts", "count": 1 },
-    { "filePath": "src/legacy/pages/AllProjectsRefactored.tsx", "count": 1 },
-    { "filePath": "src/lib/sessionUtils.test.ts", "count": 1 },
-    { "filePath": "src/pages/GettingStarted.tsx", "count": 1 },
-    { "filePath": "src/pages/payments/hooks/__tests__/usePaymentsData.test.ts", "count": 1 },
-    { "filePath": "src/pages/settings/Billing.tsx", "count": 1 },
-    { "filePath": "src/pages/settings/__tests__/Contracts.test.tsx", "count": 1 },
-    { "filePath": "src/pages/settings/__tests__/Leads.test.tsx", "count": 1 },
-    { "filePath": "src/pages/settings/__tests__/Projects.test.tsx", "count": 1 },
-    { "filePath": "supabase/functions/process-session-reminders/index.ts", "count": 1 }
-  ]
+  "total": 0,
+  "summary": []
 }

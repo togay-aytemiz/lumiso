@@ -231,10 +231,11 @@ export function useSessionEditForm({
 
       onSuccess?.();
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "An unexpected error occurred.";
       toast({
         title: "Error updating session",
-        description: error.message,
+        description: message,
         variant: "destructive"
       });
       return false;

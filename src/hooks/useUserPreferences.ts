@@ -154,7 +154,11 @@ export function useUserPreferences() {
 
     try {
       // Update database (only onboarding-related columns for now)
-      const updateData: any = {};
+      const updateData: {
+        onboarding_stage?: OnboardingStage;
+        current_onboarding_step?: number;
+        welcome_modal_shown?: boolean;
+      } = {};
       
       if (updates.onboardingStage !== undefined) updateData.onboarding_stage = updates.onboardingStage;
       if (updates.currentOnboardingStep !== undefined) updateData.current_onboarding_step = updates.currentOnboardingStep;

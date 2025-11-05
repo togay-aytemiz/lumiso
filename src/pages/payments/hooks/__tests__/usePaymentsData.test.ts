@@ -34,8 +34,22 @@ type QueryResult = {
   count?: number | null;
 };
 
-const createQueryBuilder = <T extends QueryResult>(result: T) => {
-  const builder: any = {
+type QueryBuilder<T extends QueryResult> = PromiseLike<T> & {
+  select: jest.Mock<QueryBuilder<T>, [string?]>;
+  ilike: jest.Mock<QueryBuilder<T>, [string, string]>;
+  in: jest.Mock<QueryBuilder<T>, [string, unknown[]]>;
+  or: jest.Mock<QueryBuilder<T>, [string]>;
+  gte: jest.Mock<QueryBuilder<T>, [string, unknown]>;
+  lte: jest.Mock<QueryBuilder<T>, [string, unknown]>;
+  order: jest.Mock<QueryBuilder<T>, [string, { ascending?: boolean }?]>;
+  range: jest.Mock<QueryBuilder<T>, [number, number]>;
+  eq: jest.Mock<QueryBuilder<T>, [string, unknown]>;
+  catch: (onRejected?: (reason: unknown) => unknown) => Promise<unknown>;
+  [Symbol.toStringTag]: string;
+};
+
+const createQueryBuilder = <T extends QueryResult>(result: T): QueryBuilder<T> => {
+  const builder = {
     select: jest.fn(() => builder),
     ilike: jest.fn(() => builder),
     in: jest.fn(() => builder),
@@ -45,19 +59,17 @@ const createQueryBuilder = <T extends QueryResult>(result: T) => {
     order: jest.fn(() => builder),
     range: jest.fn(() => builder),
     eq: jest.fn(() => builder),
-  };
+    then: (onFulfilled?: (value: T) => unknown, onRejected?: (reason: unknown) => unknown) =>
+      Promise.resolve(result).then(onFulfilled, onRejected),
+    catch: (onRejected?: (reason: unknown) => unknown) =>
+      Promise.resolve(result).catch(onRejected),
+    [Symbol.toStringTag]: "Promise" as const,
+  } satisfies QueryBuilder<T>;
 
-  builder.then = (onFulfilled?: (value: T) => unknown, onRejected?: (reason: unknown) => unknown) =>
-    Promise.resolve(result).then(onFulfilled, onRejected);
-  builder.catch = (onRejected?: (reason: unknown) => unknown) =>
-    Promise.resolve(result).catch(onRejected);
-  builder[Symbol.toStringTag] = "Promise";
   return builder;
 };
 
-type QueryBuilder = ReturnType<typeof createQueryBuilder>;
-
-type QueueMap = Record<"payments" | "projects" | "leads", QueryBuilder[]>;
+type QueueMap = Record<"payments" | "projects" | "leads", QueryBuilder<QueryResult>[]>;
 
 describe("usePaymentsData", () => {
   const baseProps = {
@@ -76,7 +88,7 @@ describe("usePaymentsData", () => {
   let queues: QueueMap;
   let onError: jest.Mock;
 
-  const enqueue = (table: keyof QueueMap, builder: QueryBuilder) => {
+  const enqueue = (table: keyof QueueMap, builder: QueryBuilder<QueryResult>) => {
     queues[table].push(builder);
     return builder;
   };

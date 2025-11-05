@@ -20,7 +20,11 @@ export function useTutorialExit({ currentStepTitle, onExitComplete }: UseTutoria
     try {
       onExitComplete?.();
     } finally {
-      try { reset(); } catch {}
+      try {
+        reset();
+      } catch (resetError) {
+        console.error("[useTutorialExit] Failed to reset portal state", resetError);
+      }
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           if (location.pathname !== "/getting-started") {

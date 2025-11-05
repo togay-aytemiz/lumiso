@@ -135,10 +135,11 @@ export function useSessionForm({ leadId, leadName, projectId, onSuccess }: UseSe
       resetForm();
       onSuccess?.();
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "An unexpected error occurred.";
       toast({
         title: "Error scheduling session",
-        description: error.message,
+        description: message,
         variant: "destructive"
       });
       return false;

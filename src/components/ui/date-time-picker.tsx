@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { CalendarIcon, Clock } from "lucide-react";
 
@@ -33,6 +33,8 @@ interface DateTimePickerProps {
   doneLabel?: string;
 }
 
+type CalendarValue = Date | Date[] | null;
+
 function toIsoLocal(date: Date, hours: number, minutes: number) {
   const d = new Date(date);
   d.setHours(hours, minutes, 0, 0);
@@ -55,7 +57,7 @@ const displayFormat = (date?: Date, h?: number, m?: number) => {
   return format(withTime, "PP p", { locale: getDateFnsLocale() });
 };
 
-export const DateTimePicker: React.FC<DateTimePickerProps> = ({
+export function DateTimePicker({
   value,
   onChange,
   className,
@@ -65,7 +67,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
   todayLabel = "Today",
   clearLabel = "Clear",
   doneLabel = "Done",
-}) => {
+}: DateTimePickerProps) {
   const { date: initialDate, hours: initialHours, minutes: initialMinutes } = useMemo(
     () => parseIsoLocal(value),
     [value]
@@ -113,7 +115,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
               minDetail="month"
               next2Label={null}
               prev2Label={null}
-              onChange={(nextValue: Date | Date[] | null) => {
+              onChange={(nextValue: CalendarValue) => {
                 const nextDate = Array.isArray(nextValue) ? nextValue[0] : nextValue;
                 if (nextDate instanceof Date) {
                   setSelectedDate(nextDate);
@@ -212,6 +214,6 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
       </Popover>
     </div>
   );
-};
+}
 
 export default DateTimePicker;

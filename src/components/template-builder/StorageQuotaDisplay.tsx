@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Image as ImageIcon, Trash2 } from 'lucide-react';
@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { useAuth } from '@/contexts/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -31,8 +30,12 @@ export function StorageQuotaDisplay() {
   const [loading, setLoading] = useState(true);
   const [isImageLibraryOpen, setIsImageLibraryOpen] = useState(false);
   const { activeOrganization } = useOrganization();
-  const { user } = useAuth();
   const { toast } = useToast();
+  const isMountedRef = useRef(true);
+
+  useEffect(() => () => {
+    isMountedRef.current = false;
+  }, []);
 
   const fetchStorageUsage = useCallback(async () => {
     if (!activeOrganization?.id) return;
@@ -44,10 +47,13 @@ export function StorageQuotaDisplay() {
         .eq('organization_id', activeOrganization.id)
         .single();
 
+      if (!isMountedRef.current) return;
       setStorageUsage(usage || { total_images: 0, total_storage_bytes: 0 });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching storage usage:', error);
-      setStorageUsage({ total_images: 0, total_storage_bytes: 0 });
+      if (isMountedRef.current) {
+        setStorageUsage({ total_images: 0, total_storage_bytes: 0 });
+      }
     }
   }, [activeOrganization?.id]);
 
@@ -55,18 +61,24 @@ export function StorageQuotaDisplay() {
     if (!activeOrganization?.id) return;
 
     try {
-      setLoading(true);
+      if (isMountedRef.current) {
+        setLoading(true);
+      }
       const { data: assetList } = await supabase
         .from('template_assets')
         .select('id, file_name, file_path, file_size, created_at')
         .eq('organization_id', activeOrganization.id)
         .order('created_at', { ascending: false });
 
-      setAssets(assetList || []);
-    } catch (error) {
+      if (isMountedRef.current) {
+        setAssets(assetList || []);
+      }
+    } catch (error: unknown) {
       console.error('Error fetching assets:', error);
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   }, [activeOrganization?.id]);
 
@@ -91,7 +103,7 @@ export function StorageQuotaDisplay() {
         title: 'Success',
         description: 'Image deleted successfully',
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error deleting asset:', error);
       toast({
         title: 'Error',
@@ -103,8 +115,8 @@ export function StorageQuotaDisplay() {
 
   useEffect(() => {
     if (activeOrganization?.id) {
-      fetchStorageUsage();
-      fetchAssets();
+      void fetchStorageUsage();
+      void fetchAssets();
     }
   }, [activeOrganization?.id, fetchAssets, fetchStorageUsage]);
 
@@ -214,3 +226,5 @@ export function StorageQuotaDisplay() {
     </div>
   );
 }
+
+export default StorageQuotaDisplay;

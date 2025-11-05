@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 // Import namespace form to avoid ESM/CJS interop edge cases that can surface as
 // "Component is not a function" inside DragDropContext's ErrorBoundary.
 import * as DnD from "@hello-pangea/dnd";
@@ -109,43 +109,53 @@ const ProjectKanbanBoard = ({
   const { activeOrganization } = useOrganization();
   const { settings: kanbanSettings } = useKanbanSettings();
 
-  const fetchStatuses = useCallback(async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Use shared org util instead of RPC to avoid flaky errors
-      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) return;
-
-      const { data, error } = await supabase
-        .from("project_statuses")
-        .select("*")
-        .eq("organization_id", organizationId)
-        .order("sort_order", { ascending: true });
-
-      if (error) throw error;
-      setStatuses(((data || []) as ProjectStatusSummary[]).filter(s => s.name?.toLowerCase?.() !== PROJECT_STATUS.ARCHIVED));
-    } catch (error) {
-      console.error("Error fetching project statuses:", error);
-      // Avoid noisy toasts when board is not visible
-      toast.error(t('forms:projects.toasts.statuses_load_failed'));
-    } finally {
-      setLoading(false);
-    }
-  }, [toast, t]);
-
   useEffect(() => {
     // Only self-fetch if no statuses were provided at all
     if (typeof projectStatuses === 'undefined') {
-      fetchStatuses();
-      return;
+      let isMounted = true;
+
+      const fetchStatuses = async () => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
+
+          // Use shared org util instead of RPC to avoid flaky errors
+          const { getUserOrganizationId } = await import('@/lib/organizationUtils');
+          const organizationId = await getUserOrganizationId();
+          if (!organizationId || !isMounted) return;
+
+          const { data, error } = await supabase
+            .from("project_statuses")
+            .select("*")
+            .eq("organization_id", organizationId)
+            .order("sort_order", { ascending: true });
+
+          if (error) throw error;
+          if (!isMounted) return;
+          setStatuses(((data || []) as ProjectStatusSummary[]).filter(s => s.name?.toLowerCase?.() !== PROJECT_STATUS.ARCHIVED));
+        } catch (error: unknown) {
+          console.error("Error fetching project statuses:", error);
+          if (isMounted) {
+            // Avoid noisy toasts when board is not visible
+            toast.error(t('forms:projects.toasts.statuses_load_failed'));
+          }
+        } finally {
+          if (isMounted) {
+            setLoading(false);
+          }
+        }
+      };
+
+      void fetchStatuses();
+      return () => {
+        isMounted = false;
+      };
     }
     // When provided (even empty initially), use them and avoid duplicate fetches
     setStatuses((projectStatuses || []).filter(s => s.name?.toLowerCase?.() !== PROJECT_STATUS.ARCHIVED));
     setLoading(false);
-  }, [projectStatuses, fetchStatuses]);
+    return undefined;
+  }, [projectStatuses, toast, t]);
 
   const getProjectsByStatus = (statusId: string) =>
     orderProjects(projects.filter(p => p.status_id === statusId));
@@ -281,8 +291,8 @@ const ProjectKanbanBoard = ({
         if (shouldForceRefresh && onProjectsChange) {
           onProjectsChange();
         }
-      } catch (error) {
-        console.error("Error in background database operations:", error);
+    } catch (error: unknown) {
+      console.error("Error in background database operations:", error);
         // Sync with server to reflect actual state
         if (onProjectsChange) {
           onProjectsChange();

@@ -1,34 +1,6 @@
 {
-  "total": 196,
+  "total": 182,
   "summary": [
-    {
-      "filePath": "src/components/ProjectKanbanBoard.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/components/ProjectTypeSelector.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/components/SimpleProjectTypeSelect.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/components/template-builder/StorageQuotaDisplay.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/components/ui/date-time-picker.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/contexts/ConnectivityContext.tsx",
-      "count": 2
-    },
-    {
-      "filePath": "src/contexts/LanguageContext.tsx",
-      "count": 2
-    },
     {
       "filePath": "src/features/package-creation/services/__tests__/packageCreationSnapshot.test.ts",
       "count": 2

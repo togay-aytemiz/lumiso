@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,7 +31,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       if (languages) {
         setAvailableLanguages(languages);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error loading languages:', error);
     }
   }, []);
@@ -40,7 +40,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     try {
       await i18n.changeLanguage(languageCode);
       setCurrentLanguage(languageCode);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error changing language:', error);
     }
   }, [i18n]);
@@ -58,9 +58,9 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       if (preference?.language_code) {
         await changeLanguageInternal(preference.language_code);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       // No preference found, use browser detection or default
-      console.log('No user language preference found');
+      console.info('No user language preference found');
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +98,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
         title: "Language Changed",
         description: `Interface language changed to ${languageCode.toUpperCase()}`,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error changing language:', error);
       toast({
         title: "Error",
@@ -138,3 +138,5 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     </LanguageContext.Provider>
   );
 }
+
+export default LanguageProvider;

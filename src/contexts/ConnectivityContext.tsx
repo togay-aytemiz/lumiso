@@ -1,7 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ConnectivityContext, type ConnectivityContextValue, type RetryFn } from './connectivityShared';
 
-export const ConnectivityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface ConnectivityProviderProps {
+  children: ReactNode;
+}
+
+export function ConnectivityProvider({ children }: ConnectivityProviderProps) {
   // Default to online; rely on real network errors or offline events to flip state.
   // navigator.onLine can be unreliable on some platforms at startup.
   const [isOffline, setIsOffline] = useState<boolean>(false);
@@ -76,4 +80,6 @@ export const ConnectivityProvider: React.FC<{ children: React.ReactNode }> = ({ 
       {children}
     </ConnectivityContext.Provider>
   );
-};
+}
+
+export default ConnectivityProvider;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -31,41 +31,54 @@ export function SimpleProjectTypeSelect({
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const fetchProjectTypes = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) return;
-
-      const { data, error } = await supabase
-        .from('project_types')
-        .select('id, name, is_default')
-        .eq('organization_id', organizationId)
-        .order('is_default', { ascending: false }) // Default types first
-        .order('name', { ascending: true });
-
-      if (error) throw error;
-
-      setTypes(data ?? []);
-    } catch (error: unknown) {
-      const description =
-        error instanceof Error ? error.message : "Unable to load project types";
-      toast({
-        title: "Error loading project types",
-        description,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
-
   useEffect(() => {
-    fetchProjectTypes();
-  }, [fetchProjectTypes]);
+    let isMounted = true;
+
+    const fetchProjectTypes = async () => {
+      if (!isMounted) return;
+      setLoading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const organizationId = await getUserOrganizationId();
+        if (!organizationId || !isMounted) return;
+
+        const { data, error } = await supabase
+          .from('project_types')
+          .select('id, name, is_default')
+          .eq('organization_id', organizationId)
+          .order('is_default', { ascending: false }) // Default types first
+          .order('name', { ascending: true });
+
+        if (error) throw error;
+
+        if (isMounted) {
+          setTypes((data ?? []) as ProjectType[]);
+        }
+      } catch (error: unknown) {
+        const description =
+          error instanceof Error ? error.message : "Unable to load project types";
+        if (isMounted) {
+          toast({
+            title: "Error loading project types",
+            description,
+            variant: "destructive",
+          });
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void fetchProjectTypes();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [toast]);
 
   useEffect(() => {
     if (!value && types.length > 0) {

@@ -130,7 +130,26 @@
             "title": "Diğer hizmetler",
             "subtitle": "Henüz türü belirlenmemiş kalemler"
           }
+        },
+        "segmented": {
+          "deliverable": "Ürünler & teslimatlar ({{selected}}/{{total}})",
+          "coverage": "Ekip & çekim kapsamı ({{selected}}/{{total}})",
+          "unknown": "Diğer hizmetler ({{selected}}/{{total}})"
         }
+      },
+      "actions": {
+        "editPricing": "Fiyatı düzenle",
+        "resetPricing": "Varsayılan fiyata dön",
+        "resetPricingConfirmTitle": "Fiyatları varsayılana döndür?",
+        "resetPricingConfirmDescription": "Fiyat düzenlemesini kapattığında hizmetin varsayılan maliyet ve satış fiyatı geri yüklenecek. Devam etmek ister misin?",
+        "resetPricingConfirmCancel": "Değişiklikleri koru",
+        "resetPricingConfirmConfirm": "Fiyatı sıfırla",
+        "editVat": "KDV’yi düzenle",
+        "resetVat": "Varsayılan KDV’ye dön",
+        "resetVatConfirmTitle": "KDV ayarlarını sıfırla?",
+        "resetVatConfirmDescription": "KDV düzenlemesini kapattığında hizmetin varsayılan KDV ayarları geri yüklenecek. Devam etmek ister misin?",
+        "resetVatConfirmCancel": "Değişiklikleri koru",
+        "resetVatConfirmConfirm": "KDV’yi sıfırla"
       },
       "units": {
         "label": "Birim",

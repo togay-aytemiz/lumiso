@@ -166,6 +166,11 @@
             "subtitle": "Türü henüz belirlenmemiş kalemler."
           }
         },
+        "segmented": {
+          "deliverable": "Ürünler & teslimatlar ({{selected}}/{{total}})",
+          "coverage": "Ekip & çekim kapsamı ({{selected}}/{{total}})",
+          "unknown": "Diğer hizmetler ({{selected}}/{{total}})"
+        },
         "add": "Ekle",
         "uncategorized": "Diğer",
         "inactive": "Pasif",

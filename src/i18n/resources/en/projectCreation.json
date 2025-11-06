@@ -165,11 +165,16 @@
             "title": "Other services",
             "subtitle": "Items without a service type yet."
           }
-      },
-      "add": "Add",
-      "uncategorized": "Other",
-      "inactive": "Inactive",
-      "empty": "No services in your catalog yet. Create services to add them here.",
+        },
+        "segmented": {
+          "deliverable": "Products & deliverables ({{selected}}/{{total}})",
+          "coverage": "Team & coverage ({{selected}}/{{total}})",
+          "unknown": "Other services ({{selected}}/{{total}})"
+        },
+        "add": "Add",
+        "uncategorized": "Other",
+        "inactive": "Inactive",
+        "empty": "No services in your catalog yet. Create services to add them here.",
       "selectedTag": "{{selected}}/{{total}} selected",
       "quantityTag": "Quantity: {{count}}"
     },

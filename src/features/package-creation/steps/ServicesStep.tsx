@@ -5,6 +5,16 @@ import {
   type ServiceInventoryItem,
   type ServiceInventoryType,
 } from "@/components/ServiceInventorySelector";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   ServicesTableCard,
   type ServicesTableRow,
@@ -81,6 +91,18 @@ const formatCurrency = (amount: number) =>
     minimumFractionDigits: 0,
   }).format(amount);
 
+const isSameNumber = (
+  a: number | null | undefined,
+  b: number | null | undefined
+) => {
+  if (a == null && b == null) return true;
+  if (a == null || b == null) return false;
+  if (Number.isFinite(a) && Number.isFinite(b)) {
+    return Number(a) === Number(b);
+  }
+  return a === b;
+};
+
 export const ServicesStep = () => {
   const { t } = useTranslation("packageCreation");
   const { t: tForms } = useTranslation("forms");
@@ -148,6 +170,16 @@ export const ServicesStep = () => {
   }, [state.services.items, defaultVatRate, defaultVatMode]);
   const [showVatControls, setShowVatControls] = useState(false);
   const [showVatResetPrompt, setShowVatResetPrompt] = useState(false);
+  const [existingEditors, setExistingEditors] = useState<
+    Record<string, { pricing: boolean; vat: boolean }>
+  >({});
+  const [pendingInventoryReset, setPendingInventoryReset] = useState<
+    | {
+        serviceId: string;
+        type: "pricing" | "vat";
+      }
+    | null
+  >(null);
 
   useEffect(() => {
     if (!state.services.showQuickAdd) {
@@ -194,6 +226,28 @@ export const ServicesStep = () => {
     return new Map(entries);
   }, [services]);
 
+  const getExistingDefaults = useCallback(
+    (serviceId: string) => {
+      const service = serviceMap.get(serviceId);
+      const unitCost = service?.unitCost ?? null;
+      const unitPrice = service?.unitPrice ?? null;
+      const vatRate =
+        typeof service?.vatRate === "number" && Number.isFinite(service.vatRate)
+          ? Number(service.vatRate)
+          : defaultVatRate;
+      const vatMode: PackageVatMode =
+        service?.vatMode === "exclusive" ? "exclusive" : defaultVatMode;
+
+      return {
+        unitCost,
+        unitPrice,
+        vatRate,
+        vatMode,
+      };
+    },
+    [defaultVatMode, defaultVatRate, serviceMap]
+  );
+
   const inventoryServices = useMemo<ServiceInventoryItem[]>(
     () =>
       services
@@ -220,12 +274,62 @@ export const ServicesStep = () => {
     [services]
   );
 
+  const existingHasPricingOverrides = useCallback(
+    (item: PackageCreationLineItem) => {
+      if (item.type !== "existing" || !item.serviceId) return false;
+      const defaults = getExistingDefaults(item.serviceId);
+      return (
+        !isSameNumber(item.unitCost, defaults.unitCost) ||
+        !isSameNumber(item.unitPrice, defaults.unitPrice)
+      );
+    },
+    [getExistingDefaults]
+  );
+
+  const existingHasVatOverrides = useCallback(
+    (item: PackageCreationLineItem) => {
+      if (item.type !== "existing" || !item.serviceId) return false;
+      const defaults = getExistingDefaults(item.serviceId);
+      const vatMode = item.vatMode ?? defaults.vatMode;
+      const vatRate =
+        typeof item.vatRate === "number" && Number.isFinite(item.vatRate)
+          ? item.vatRate
+          : defaults.vatRate;
+      return (
+        vatMode !== defaults.vatMode ||
+        !isSameNumber(vatRate ?? null, defaults.vatRate ?? null)
+      );
+    },
+    [getExistingDefaults]
+  );
+
   const existingItems = state.services.items.filter(
     (item) => item.type === "existing"
   );
   const customItems = state.services.items.filter(
     (item) => item.type === "custom"
   );
+
+  useEffect(() => {
+    setExistingEditors((previous) => {
+      const next: Record<string, { pricing: boolean; vat: boolean }> = {};
+      existingItems.forEach((item) => {
+        if (!item.serviceId) return;
+        next[item.serviceId] = previous[item.serviceId] ?? {
+          pricing: false,
+          vat: false,
+        };
+      });
+      return next;
+    });
+    setPendingInventoryReset((current) => {
+      if (!current) return current;
+      const stillExists = existingItems.some(
+        (item) => item.serviceId === current.serviceId
+      );
+      return stillExists ? current : null;
+    });
+  }, [existingItems]);
 
   const selectedQuantities = useMemo(
     () =>
@@ -354,6 +458,116 @@ export const ServicesStep = () => {
     });
   };
 
+  const toggleExistingPricing = (serviceId: string) => {
+    const item = existingItems.find(
+      (existing) => existing.serviceId === serviceId
+    );
+    if (!item) return;
+    const editorState = existingEditors[serviceId] ?? {
+      pricing: false,
+      vat: false,
+    };
+    if (!editorState.pricing) {
+      setExistingEditors((previous) => ({
+        ...previous,
+        [serviceId]: { ...editorState, pricing: true },
+      }));
+      return;
+    }
+
+    if (existingHasPricingOverrides(item)) {
+      setPendingInventoryReset({ serviceId, type: "pricing" });
+      return;
+    }
+
+    const defaults = getExistingDefaults(serviceId);
+    updateItem(item.id, {
+      unitCost: defaults.unitCost ?? null,
+      unitPrice: defaults.unitPrice ?? null,
+    });
+    setExistingEditors((previous) => ({
+      ...previous,
+      [serviceId]: { pricing: false, vat: false },
+    }));
+  };
+
+  const toggleExistingVat = (serviceId: string) => {
+    const item = existingItems.find(
+      (existing) => existing.serviceId === serviceId
+    );
+    if (!item) return;
+    const editorState = existingEditors[serviceId] ?? {
+      pricing: false,
+      vat: false,
+    };
+
+    if (!editorState.vat) {
+      setExistingEditors((previous) => ({
+        ...previous,
+        [serviceId]: { ...editorState, vat: true },
+      }));
+      return;
+    }
+
+    if (existingHasVatOverrides(item)) {
+      setPendingInventoryReset({ serviceId, type: "vat" });
+      return;
+    }
+
+    const defaults = getExistingDefaults(serviceId);
+    updateItem(item.id, {
+      vatMode: defaults.vatMode,
+      vatRate: defaults.vatRate ?? null,
+    });
+    setExistingEditors((previous) => ({
+      ...previous,
+      [serviceId]: { ...editorState, vat: false },
+    }));
+  };
+
+  const handleConfirmInventoryReset = () => {
+    if (!pendingInventoryReset) return;
+    const { serviceId, type } = pendingInventoryReset;
+    const item = existingItems.find(
+      (existing) => existing.serviceId === serviceId
+    );
+    if (!item) {
+      setPendingInventoryReset(null);
+      return;
+    }
+
+    const defaults = getExistingDefaults(serviceId);
+
+    if (type === "pricing") {
+      updateItem(item.id, {
+        unitCost: defaults.unitCost ?? null,
+        unitPrice: defaults.unitPrice ?? null,
+      });
+      setExistingEditors((previous) => ({
+        ...previous,
+        [serviceId]: { pricing: false, vat: false },
+      }));
+    } else {
+      updateItem(item.id, {
+        vatMode: defaults.vatMode,
+        vatRate: defaults.vatRate ?? null,
+      });
+      setExistingEditors((previous) => {
+        const current = previous[serviceId] ?? { pricing: false, vat: false };
+        return {
+          ...previous,
+          [serviceId]: { ...current, vat: false },
+        };
+      });
+    }
+
+    setPendingInventoryReset(null);
+  };
+
+  const handleCancelInventoryReset = () => {
+    setPendingInventoryReset(null);
+  };
+
   const inventoryLabels = useMemo(
     () => ({
       typeMeta: {
@@ -372,6 +586,12 @@ export const ServicesStep = () => {
           icon: PackageIcon,
           iconBackgroundClassName: "bg-emerald-50",
           iconClassName: "text-emerald-600",
+          segmentedLabel: ({ selectedServices, totalServices }) =>
+            t("steps.services.inventory.segmented.deliverable", {
+              defaultValue: "Products & deliverables ({{selected}}/{{total}})",
+              selected: selectedServices,
+              total: totalServices,
+            }),
         },
         coverage: {
           title: tForms("services.types.coverage", {
@@ -391,6 +611,12 @@ export const ServicesStep = () => {
           icon: Users,
           iconBackgroundClassName: "bg-emerald-50",
           iconClassName: "text-emerald-600",
+          segmentedLabel: ({ selectedServices, totalServices }) =>
+            t("steps.services.inventory.segmented.coverage", {
+              defaultValue: "Team & coverage ({{selected}}/{{total}})",
+              selected: selectedServices,
+              total: totalServices,
+            }),
         },
         unknown: {
           title: t("steps.services.inventory.types.unknown.title", {
@@ -402,6 +628,12 @@ export const ServicesStep = () => {
           icon: Layers,
           iconBackgroundClassName: "bg-emerald-50",
           iconClassName: "text-emerald-600",
+          segmentedLabel: ({ selectedServices, totalServices }) =>
+            t("steps.services.inventory.segmented.unknown", {
+              defaultValue: "Other services ({{selected}}/{{total}})",
+              selected: selectedServices,
+              total: totalServices,
+            }),
         },
       },
       add: t("steps.services.inventory.add", { defaultValue: "Add" }),
@@ -594,6 +826,25 @@ export const ServicesStep = () => {
     updateItem(itemId, { vatMode: mode });
   };
 
+  const handleExistingPricingChange = (
+    itemId: string,
+    field: "unitCost" | "unitPrice",
+    value: string
+  ) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      updateItem(itemId, { [field]: null } as Partial<PackageCreationLineItem>);
+      return;
+    }
+
+    const numeric = Number(trimmed.replace(/,/g, "."));
+    if (Number.isNaN(numeric)) {
+      return;
+    }
+
+    updateItem(itemId, { [field]: numeric } as Partial<PackageCreationLineItem>);
+  };
+
   const handleVatRateChange = (itemId: string, value: string) => {
     const trimmed = value.trim();
     if (!trimmed) {
@@ -738,6 +989,42 @@ export const ServicesStep = () => {
       }),
     };
   }, [t, defaultVatRate, defaultVatMode]);
+
+  const inventoryResetStrings = useMemo(() => {
+    if (!pendingInventoryReset) return null;
+    if (pendingInventoryReset.type === "pricing") {
+      return {
+        title: t("steps.services.actions.resetPricingConfirmTitle", {
+          defaultValue: "Reset price overrides?",
+        }),
+        description: t("steps.services.actions.resetPricingConfirmDescription", {
+          defaultValue:
+            "Closing pricing will restore the default cost and price for this service. Do you want to continue?",
+        }),
+        cancel: t("steps.services.actions.resetPricingConfirmCancel", {
+          defaultValue: "Keep changes",
+        }),
+        confirm: t("steps.services.actions.resetPricingConfirmConfirm", {
+          defaultValue: "Reset price",
+        }),
+      } as const;
+    }
+    return {
+      title: t("steps.services.actions.resetVatConfirmTitle", {
+        defaultValue: "Reset VAT overrides?",
+      }),
+      description: t("steps.services.actions.resetVatConfirmDescription", {
+        defaultValue:
+          "Closing VAT editing will restore the default VAT configuration for this service. Do you want to continue?",
+      }),
+      cancel: t("steps.services.actions.resetVatConfirmCancel", {
+        defaultValue: "Keep changes",
+      }),
+      confirm: t("steps.services.actions.resetVatConfirmConfirm", {
+        defaultValue: "Reset VAT",
+      }),
+    } as const;
+  }, [pendingInventoryReset, t]);
 
   const handleToggleVatControls = () => {
     if (showVatControls) {
@@ -981,6 +1268,163 @@ export const ServicesStep = () => {
         onRetry={
           servicesQuery.error ? () => servicesQuery.refetch() : undefined
         }
+        renderSelectedActions={({ service }) => {
+          const item = existingItems.find(
+            (existing) => existing.serviceId === service.id
+          );
+          if (!item) return null;
+          const editorState = existingEditors[service.id] ?? {
+            pricing: false,
+            vat: false,
+          };
+          const pricingDirty = existingHasPricingOverrides(item);
+          const vatDirty = existingHasVatOverrides(item);
+          const showVatButton = editorState.pricing || editorState.vat;
+          return (
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="link"
+                size="sm"
+                className="px-0 text-emerald-600"
+                onClick={() => toggleExistingPricing(service.id)}
+              >
+                {editorState.pricing || pricingDirty
+                  ? t("steps.services.actions.resetPricing")
+                  : t("steps.services.actions.editPricing")}
+              </Button>
+              {showVatButton ? (
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="px-0 text-emerald-600"
+                  onClick={() => toggleExistingVat(service.id)}
+                >
+                  {editorState.vat || vatDirty
+                    ? t("steps.services.actions.resetVat")
+                    : t("steps.services.actions.editVat")}
+                </Button>
+              ) : null}
+            </div>
+          );
+        }}
+        renderSelectedContent={({ service }) => {
+          const item = existingItems.find(
+            (existing) => existing.serviceId === service.id
+          );
+          if (!item) return null;
+          const editorState = existingEditors[service.id] ?? {
+            pricing: false,
+            vat: false,
+          };
+          if (!editorState.pricing && !editorState.vat) {
+            return null;
+          }
+
+          return (
+            <div className="space-y-4 rounded-xl border border-emerald-100 bg-white/90 p-4 shadow-sm">
+              {editorState.pricing ? (
+                <div className="grid gap-3 sm:grid-cols-[repeat(2,minmax(0,200px))]">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {t("steps.services.list.unitCost")}
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={
+                        typeof item.unitCost === "number"
+                          ? item.unitCost
+                          : ""
+                      }
+                      onChange={(event) =>
+                        handleExistingPricingChange(
+                          item.id,
+                          "unitCost",
+                          event.target.value
+                        )
+                      }
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {t("steps.services.list.unitPrice")}
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={
+                        typeof item.unitPrice === "number"
+                          ? item.unitPrice
+                          : ""
+                      }
+                      onChange={(event) =>
+                        handleExistingPricingChange(
+                          item.id,
+                          "unitPrice",
+                          event.target.value
+                        )
+                      }
+                      className="h-9"
+                    />
+                  </div>
+                </div>
+              ) : null}
+
+              {editorState.vat ? (
+                <div className="grid gap-3 sm:grid-cols-[repeat(2,minmax(0,200px))]">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {t("steps.services.vatControls.modeLabel")}
+                    </Label>
+                    <Select
+                      value={(item.vatMode ?? defaultVatMode) as PackageVatMode}
+                      onValueChange={(value) =>
+                        handleVatModeChange(
+                          item.id,
+                          value as PackageVatMode
+                        )
+                      }
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {vatModeOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {t("steps.services.vatControls.rateLabel")}
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={99.99}
+                      step="0.01"
+                      value={
+                        typeof item.vatRate === "number"
+                          ? item.vatRate
+                          : ""
+                      }
+                      onChange={(event) =>
+                        handleVatRateChange(item.id, event.target.value)
+                      }
+                      className="h-9"
+                    />
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          );
+        }}
       />
       {state.services.items.length > 0 ? (
         <ServiceVatOverridesSection
@@ -1119,6 +1563,39 @@ export const ServicesStep = () => {
           </div>
         ) : null}
       </div>
+
+      <AlertDialog
+        open={pendingInventoryReset !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCancelInventoryReset();
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {inventoryResetStrings?.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {inventoryResetStrings?.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelInventoryReset}>
+              {inventoryResetStrings?.cancel ??
+                t("steps.services.actions.resetPricingConfirmCancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmInventoryReset}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {inventoryResetStrings?.confirm ??
+                t("steps.services.actions.resetPricingConfirmConfirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={showVatResetPrompt}

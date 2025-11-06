@@ -26,6 +26,12 @@ export interface ServiceInventoryItem {
   priceIncludesVat?: boolean | null;
 }
 
+type ServiceInventoryTypeStats = {
+  totalServices: number;
+  selectedServices: number;
+  totalQuantity: number;
+};
+
 export interface ServiceInventoryLabels {
   typeMeta: Record<
     ServiceInventoryType,
@@ -36,6 +42,7 @@ export interface ServiceInventoryLabels {
       iconClassName?: string;
       iconBackgroundClassName?: string;
       borderClassName?: string;
+      segmentedLabel?: (stats: ServiceInventoryTypeStats) => string;
     }
   >;
   add: string;
@@ -138,9 +145,7 @@ export function ServiceInventorySelector({
 
   const typeStats = useMemo(
     () =>
-      typeOrder.reduce<
-        Record<ServiceInventoryType, { totalServices: number; selectedServices: number; totalQuantity: number }>
-      >((acc, type) => {
+      typeOrder.reduce<Record<ServiceInventoryType, ServiceInventoryTypeStats>>((acc, type) => {
         const categories = Object.values(groupedByType[type] ?? {});
         const totals = categories.reduce(
           (stats, items) => {
@@ -159,7 +164,7 @@ export function ServiceInventorySelector({
 
         acc[type] = totals;
         return acc;
-      }, {} as Record<ServiceInventoryType, { totalServices: number; selectedServices: number; totalQuantity: number }>),
+      }, {} as Record<ServiceInventoryType, ServiceInventoryTypeStats>),
     [groupedByType, selectedMap]
   );
 
@@ -281,9 +286,10 @@ export function ServiceInventorySelector({
           onValueChange={(next) => setActiveType(next as ServiceInventoryType)}
           options={availableTypes.map((type) => {
             const meta = labels.typeMeta[type];
-            const stats = typeStats[type] ?? { totalServices: 0, selectedServices: 0 };
+            const stats = typeStats[type] ?? { totalServices: 0, selectedServices: 0, totalQuantity: 0 };
+            const defaultLabel = `${meta?.title ?? type} (${stats.selectedServices}/${stats.totalServices})`;
             return {
-              label: `${meta?.title ?? type} (${stats.selectedServices}/${stats.totalServices})`,
+              label: meta?.segmentedLabel ? meta.segmentedLabel(stats) : defaultLabel,
               value: type,
             };
           })}

@@ -130,7 +130,26 @@
             "title": "Other services",
             "subtitle": "Items without a service type yet"
           }
+        },
+        "segmented": {
+          "deliverable": "Products & deliverables ({{selected}}/{{total}})",
+          "coverage": "Team & coverage ({{selected}}/{{total}})",
+          "unknown": "Other services ({{selected}}/{{total}})"
         }
+      },
+      "actions": {
+        "editPricing": "Edit prices",
+        "resetPricing": "Revert to default price",
+        "resetPricingConfirmTitle": "Reset price overrides?",
+        "resetPricingConfirmDescription": "Closing the pricing panel will restore the default cost and sales price for this service. Do you want to continue?",
+        "resetPricingConfirmCancel": "Keep changes",
+        "resetPricingConfirmConfirm": "Reset price",
+        "editVat": "Adjust VAT",
+        "resetVat": "Revert to default VAT",
+        "resetVatConfirmTitle": "Reset VAT overrides?",
+        "resetVatConfirmDescription": "Closing VAT editing will restore the default VAT configuration for this service. Do you want to continue?",
+        "resetVatConfirmCancel": "Keep changes",
+        "resetVatConfirmConfirm": "Reset VAT"
       },
       "units": {
         "label": "Unit",

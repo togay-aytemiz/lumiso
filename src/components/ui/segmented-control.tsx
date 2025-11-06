@@ -89,7 +89,7 @@ export const SegmentedControl = React.forwardRef<
         ref={mergedRef}
         role="group"
         className={cn(
-          "relative inline-flex items-center rounded-full bg-muted/80 shadow-inner",
+          "relative inline-flex items-center rounded-full border border-border/50 bg-muted/60 shadow-inner",
           sizeStyle.container,
           className,
         )}

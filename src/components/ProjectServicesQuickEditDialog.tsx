@@ -18,6 +18,16 @@ import {
   type ServiceInventoryType,
 } from "./ServiceInventorySelector";
 import { useTranslation } from "react-i18next";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export interface QuickServiceRecord {
   id: string;
@@ -126,6 +136,13 @@ export function ProjectServicesQuickEditDialog({
 
   const [selectionMap, setSelectionMap] = useState<Map<string, SelectedServiceEntry>>(new Map());
   const [isSaving, setIsSaving] = useState(false);
+  const [pendingReset, setPendingReset] = useState<
+    | {
+        serviceId: string;
+        type: "pricing" | "vat";
+      }
+    | null
+  >(null);
 
   const serviceMap = useMemo(() => new Map(services.map((service) => [service.id, service])), [services]);
 
@@ -205,6 +222,12 @@ export function ProjectServicesQuickEditDialog({
         subtitle: tProject("steps.packages.inventory.types.coverage.subtitle", {
           defaultValue: "On-site coverage like photographers or videographers",
         }),
+        segmentedLabel: ({ selectedServices, totalServices }) =>
+          tProject("steps.packages.inventory.segmented.coverage", {
+            defaultValue: "Team & coverage ({{selected}}/{{total}})",
+            selected: selectedServices,
+            total: totalServices,
+          }),
       },
       deliverable: {
         title: tProject("steps.packages.inventory.types.deliverable.title", {
@@ -213,6 +236,12 @@ export function ProjectServicesQuickEditDialog({
         subtitle: tProject("steps.packages.inventory.types.deliverable.subtitle", {
           defaultValue: "Products delivered after the shoot",
         }),
+        segmentedLabel: ({ selectedServices, totalServices }) =>
+          tProject("steps.packages.inventory.segmented.deliverable", {
+            defaultValue: "Products & deliverables ({{selected}}/{{total}})",
+            selected: selectedServices,
+            total: totalServices,
+          }),
       },
       unknown: {
         title: tProject("steps.packages.inventory.types.unknown.title", {
@@ -221,6 +250,12 @@ export function ProjectServicesQuickEditDialog({
         subtitle: tProject("steps.packages.inventory.types.unknown.subtitle", {
           defaultValue: "Items without a service type yet",
         }),
+        segmentedLabel: ({ selectedServices, totalServices }) =>
+          tProject("steps.packages.inventory.segmented.unknown", {
+            defaultValue: "Other services ({{selected}}/{{total}})",
+            selected: selectedServices,
+            total: totalServices,
+          }),
       },
     },
     add: tProject("steps.packages.inventory.add", { defaultValue: "Add" }),
@@ -278,6 +313,40 @@ export function ProjectServicesQuickEditDialog({
       defaultValue: "Add-on services are billed on top of the package price.",
     });
   }, [mode, t]);
+
+  const resetDialogStrings = useMemo(() => {
+    if (!pendingReset) return null;
+    if (pendingReset.type === "pricing") {
+      return {
+        title: tProject("steps.packages.actions.resetPricingConfirmTitle", {
+          defaultValue: "Reset price overrides?",
+        }),
+        description: tProject("steps.packages.actions.resetPricingConfirm", {
+          defaultValue: "This will restore the original price and VAT values for this service. Do you want to continue?",
+        }),
+        cancel: tProject("steps.packages.actions.resetPricingConfirmCancel", {
+          defaultValue: "Keep changes",
+        }),
+        confirm: tProject("steps.packages.actions.resetPricingConfirmConfirm", {
+          defaultValue: "Reset price",
+        }),
+      } as const;
+    }
+    return {
+      title: tProject("steps.packages.actions.resetVatConfirmTitle", {
+        defaultValue: "Reset VAT overrides?",
+      }),
+      description: tProject("steps.packages.actions.resetVatConfirm", {
+        defaultValue: "This will restore the original VAT configuration for this service. Do you want to continue?",
+      }),
+      cancel: tProject("steps.packages.actions.resetVatConfirmCancel", {
+        defaultValue: "Keep changes",
+      }),
+      confirm: tProject("steps.packages.actions.resetVatConfirmConfirm", {
+        defaultValue: "Reset VAT",
+      }),
+    } as const;
+  }, [pendingReset, tProject]);
 
   const selectedQuantities = useMemo(() => {
     const next: Record<string, number> = {};
@@ -369,6 +438,7 @@ export function ProjectServicesQuickEditDialog({
 
   const togglePricing = useCallback(
     (serviceId: string) => {
+      let shouldPrompt = false;
       updateEntry(serviceId, (entry) => {
         if (!entry.openPricing) {
           return {
@@ -378,30 +448,32 @@ export function ProjectServicesQuickEditDialog({
         }
 
         if (isPricingDirty(entry)) {
-          return {
-            ...entry,
-            values: {
-              ...entry.values,
-              unitCost: entry.defaults.unitCost ?? null,
-              unitPrice: entry.defaults.unitPrice ?? null,
-            },
-            openPricing: false,
-            openVat: false,
-          };
+          shouldPrompt = true;
+          return entry;
         }
 
         return {
           ...entry,
+          values: {
+            ...entry.values,
+            unitCost: entry.defaults.unitCost ?? null,
+            unitPrice: entry.defaults.unitPrice ?? null,
+          },
           openPricing: false,
           openVat: false,
         };
       });
+
+      if (shouldPrompt) {
+        setPendingReset({ serviceId, type: "pricing" });
+      }
     },
-    [updateEntry],
+    [setPendingReset, updateEntry],
   );
 
   const toggleVat = useCallback(
     (serviceId: string) => {
+      let shouldPrompt = false;
       updateEntry(serviceId, (entry) => {
         if (!entry.openVat) {
           return {
@@ -411,25 +483,64 @@ export function ProjectServicesQuickEditDialog({
         }
 
         if (isVatDirty(entry)) {
-          return {
-            ...entry,
-            values: {
-              ...entry.values,
-              vatMode: entry.defaults.vatMode,
-              vatRate: entry.defaults.vatRate ?? null,
-            },
-            openVat: false,
-          };
+          shouldPrompt = true;
+          return entry;
         }
 
         return {
           ...entry,
+          values: {
+            ...entry.values,
+            vatMode: entry.defaults.vatMode,
+            vatRate: entry.defaults.vatRate ?? null,
+          },
           openVat: false,
         };
       });
+
+      if (shouldPrompt) {
+        setPendingReset({ serviceId, type: "vat" });
+      }
     },
-    [updateEntry],
+    [setPendingReset, updateEntry],
   );
+
+  const handleConfirmReset = useCallback(() => {
+    if (!pendingReset) return;
+    setSelectionMap((previous) => {
+      const current = previous.get(pendingReset.serviceId);
+      if (!current) return previous;
+      const next = new Map(previous);
+      if (pendingReset.type === "pricing") {
+        next.set(pendingReset.serviceId, {
+          ...current,
+          values: {
+            ...current.values,
+            unitCost: current.defaults.unitCost ?? null,
+            unitPrice: current.defaults.unitPrice ?? null,
+          },
+          openPricing: false,
+          openVat: false,
+        });
+      } else {
+        next.set(pendingReset.serviceId, {
+          ...current,
+          values: {
+            ...current.values,
+            vatMode: current.defaults.vatMode,
+            vatRate: current.defaults.vatRate ?? null,
+          },
+          openVat: false,
+        });
+      }
+      return next;
+    });
+    setPendingReset(null);
+  }, [pendingReset]);
+
+  const handleCancelReset = useCallback(() => {
+    setPendingReset(null);
+  }, []);
 
   const handleNumericChange = useCallback(
     (serviceId: string, field: keyof SelectionValues, raw: string) => {
@@ -530,7 +641,8 @@ export function ProjectServicesQuickEditDialog({
   }, [mode, onOpenChange, onSubmit, selectionMap]);
 
   return (
-    <AppSheetModal
+    <>
+      <AppSheetModal
       title={
         mode === "included"
           ? t("payments.services.quick_edit_included_title", {
@@ -732,6 +844,35 @@ export function ProjectServicesQuickEditDialog({
           </div>
         )}
       </div>
-    </AppSheetModal>
+      </AppSheetModal>
+      <AlertDialog
+        open={pendingReset !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCancelReset();
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{resetDialogStrings?.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {resetDialogStrings?.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelReset}>
+              {resetDialogStrings?.cancel ?? t("buttons.cancel", { defaultValue: "Cancel" })}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmReset}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {resetDialogStrings?.confirm ?? t("buttons.confirm", { defaultValue: "Confirm" })}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

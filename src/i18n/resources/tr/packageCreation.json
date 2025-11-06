@@ -377,9 +377,9 @@
       "finalSummary": {
         "title": "Paket fiyatı özeti",
         "tooltip": "Seçilen hizmetleri nasıl fiyatlandırdığına göre net, KDV ve KDV dahil toplamları gösterir.",
-        "net": "Paket fiyatı (KDV hariç)",
+        "net": "Toplam tutar (KDV hariç)",
         "vat": "KDV tutarı",
-        "gross": "Paket fiyatı (KDV dahil)",
+        "gross": "Toplam tutar (KDV dahil)",
         "inclusiveHelper": "Seçilen hizmetler paket fiyatının içinde kabul edilir.",
         "addOnsHelper": "Müşteri toplamı = paket fiyatı + seçilen hizmetler.",
         "servicesLine": "Hizmet toplamı: {{amount}} (iç takip)."
@@ -408,11 +408,11 @@
         "title": "Hizmetleri nasıl fiyatlandırıyorsun?",
         "description": "Paketlerini nasıl açıkladığına göre fiyatlama tarzını seç.",
         "optionInclusive": {
-          "title": "Hizmetleri paket fiyatının içine dahil et",
+          "title": "Fiyatın içerisinde",
           "description": "Müşteri tek bir toplam fiyat görür. Hizmetler iç takip için kalır."
         },
         "optionAddOns": {
-          "title": "Hizmetleri paket fiyatına ek olarak göster",
+          "title": "Fiyata ek olarak",
           "description": "Bir paket fiyatı belirt, hizmetleri ayrıca ücretlendir."
         },
         "helperInclusive": "Müşteriye sunulan toplam paket fiyatıyla aynıdır.",

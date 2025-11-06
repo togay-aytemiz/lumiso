@@ -1,4 +1,5 @@
-import { ReactNode } from 'react';
+import { ReactNode, useCallback } from 'react';
+import type { FocusOutsideEvent, PointerDownOutsideEvent } from '@radix-ui/react-dismissable-layer';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
@@ -24,6 +25,30 @@ interface AppSheetModalProps {
   onDirtyClose?: () => void;
 }
 
+const getDismissableEventTarget = (
+  event: PointerDownOutsideEvent | FocusOutsideEvent,
+): HTMLElement | null => {
+  const originalEvent = event.detail?.originalEvent as Event | undefined;
+  if (!originalEvent) return null;
+
+  if ('target' in originalEvent && originalEvent.target instanceof HTMLElement) {
+    return originalEvent.target;
+  }
+
+  if ('relatedTarget' in originalEvent && originalEvent.relatedTarget instanceof HTMLElement) {
+    return originalEvent.relatedTarget;
+  }
+
+  if (typeof originalEvent.composedPath === 'function') {
+    const [first] = originalEvent.composedPath();
+    if (first instanceof HTMLElement) {
+      return first;
+    }
+  }
+
+  return null;
+};
+
 export function AppSheetModal({
   title,
   isOpen,
@@ -36,24 +61,52 @@ export function AppSheetModal({
 }: AppSheetModalProps) {
   const isMobile = useIsMobile();
 
-  const handleOpenChange = (open: boolean) => {
+  const handleOpenChange = useCallback((open: boolean) => {
     if (!open && dirty && onDirtyClose) {
       onDirtyClose();
       return;
     }
     onOpenChange(open);
-  };
+  }, [dirty, onDirtyClose, onOpenChange]);
 
-  const handleOutsideInteraction = () => {
-    if (dirty && onDirtyClose) {
-      onDirtyClose();
-    } else {
-      onOpenChange(false);
-    }
-  };
+  const handleOutsideInteraction = useCallback(
+    (event: PointerDownOutsideEvent | FocusOutsideEvent) => {
+      const target = getDismissableEventTarget(event);
+      if (target?.closest('[role="dialog"],[role="alertdialog"]')) {
+        event.preventDefault();
+        return;
+      }
+
+      if (dirty && onDirtyClose) {
+        event.preventDefault();
+        onDirtyClose();
+      } else {
+        onOpenChange(false);
+      }
+    },
+    [dirty, onDirtyClose, onOpenChange],
+  );
+
+  const handlePointerDownOutside = useCallback(
+    (event: PointerDownOutsideEvent) => {
+      handleOutsideInteraction(event);
+    },
+    [handleOutsideInteraction],
+  );
+
+  const handleInteractOutside = useCallback(
+    (event: PointerDownOutsideEvent | FocusOutsideEvent) => {
+      handleOutsideInteraction(event);
+    },
+    [handleOutsideInteraction],
+  );
+
+  const handleCloseClick = useCallback(() => {
+    handleOpenChange(false);
+  }, [handleOpenChange]);
 
   const sideVariant = isMobile ? 'bottom' : 'right';
-  
+
   const sheetContentClass = cn(
     "flex flex-col overflow-visible",
     !isMobile && "sm:max-w-6xl w-full",
@@ -68,8 +121,8 @@ export function AppSheetModal({
       <SheetContent 
         side={sideVariant} 
         className={cn(sheetContentClass, "[&>button]:hidden")}
-        onPointerDownOutside={handleOutsideInteraction}
-        onInteractOutside={handleOutsideInteraction}
+        onPointerDownOutside={handlePointerDownOutside}
+        onInteractOutside={handleInteractOutside}
       >
         <SheetHeader className="border-b pb-4">
           <div className="flex items-center justify-between">
@@ -77,7 +130,7 @@ export function AppSheetModal({
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => handleOpenChange(false)} 
+              onClick={handleCloseClick} 
               className="h-8 w-8 p-0 rounded-full"
             >
               <X className="h-4 w-4" />

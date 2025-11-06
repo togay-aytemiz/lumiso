@@ -901,6 +901,11 @@ export type Database = {
           project_id: string
           service_id: string
           billing_type: "included" | "extra"
+          quantity: number
+          unit_cost_override: number | null
+          unit_price_override: number | null
+          vat_mode_override: "inclusive" | "exclusive" | null
+          vat_rate_override: number | null
           user_id: string
         }
         Insert: {
@@ -909,6 +914,11 @@ export type Database = {
           project_id: string
           service_id: string
           billing_type?: "included" | "extra"
+          quantity?: number
+          unit_cost_override?: number | null
+          unit_price_override?: number | null
+          vat_mode_override?: "inclusive" | "exclusive" | null
+          vat_rate_override?: number | null
           user_id: string
         }
         Update: {
@@ -917,6 +927,11 @@ export type Database = {
           project_id?: string
           service_id?: string
           billing_type?: "included" | "extra"
+          quantity?: number
+          unit_cost_override?: number | null
+          unit_price_override?: number | null
+          vat_mode_override?: "inclusive" | "exclusive" | null
+          vat_rate_override?: number | null
           user_id?: string
         }
         Relationships: [

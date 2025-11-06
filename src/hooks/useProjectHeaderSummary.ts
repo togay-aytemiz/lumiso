@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { computeServiceTotals } from "@/lib/payments/servicePricing";
 
 export interface ProjectHeaderPaymentSummary {
   totalPaid: number;
@@ -65,11 +66,17 @@ export function useProjectHeaderSummary(projectId?: string | null, refreshToken?
           .from("project_services")
           .select(`
             billing_type,
+            quantity,
+            unit_price_override,
+            vat_rate_override,
+            vat_mode_override,
             services!inner (
               id,
               name,
               selling_price,
-              price
+              price,
+              vat_rate,
+              price_includes_vat
             )
           `)
           .eq("project_id", projectId),
@@ -91,37 +98,23 @@ export function useProjectHeaderSummary(projectId?: string | null, refreshToken?
         ProjectServiceRow & { services: ServiceRow | null }
       >;
 
-      const serviceEntries = serviceRows
-        .map((entry) => {
-          const service = entry.services;
-          if (!service) return null;
-          return {
-            billing_type: entry.billing_type as string,
-            service: {
-              id: service.id,
-              name: service.name,
-              selling_price: service.selling_price ?? null,
-              price: service.price ?? null,
-            },
-          };
-        })
-        .filter(Boolean) as Array<{
-          billing_type: string;
-          service: {
-            id: string;
-            name: string;
-            selling_price: number | null;
-            price: number | null;
-          };
-        }>;
-      const serviceNames = serviceEntries.map(entry => entry.service.name).filter(Boolean);
-      const servicesTotal = serviceEntries.reduce((total, entry) => {
-        if (entry.billing_type !== "extra") {
-          return total;
-        }
-        const value = entry.service.selling_price ?? entry.service.price ?? 0;
-        return total + Number(value) || total;
-      }, 0);
+      let servicesTotal = 0;
+      const serviceNames: string[] = [];
+      serviceRows.forEach((entry) => {
+        const service = entry.services;
+        if (!service) return;
+        serviceNames.push(service.name);
+        if (entry.billing_type !== "extra") return;
+        const pricing = computeServiceTotals({
+          unitPrice: entry.unit_price_override ?? service.selling_price ?? service.price ?? null,
+          quantity: entry.quantity ?? 1,
+          vatRate: entry.vat_rate_override ?? service.vat_rate ?? null,
+          vatMode:
+            entry.vat_mode_override ??
+            (service.price_includes_vat === false ? "exclusive" : "inclusive"),
+        });
+        servicesTotal += pricing.gross;
+      });
 
       const paymentRows = paymentsResponse.data || [];
       const totalPaid = paymentRows.reduce((total, payment) => {

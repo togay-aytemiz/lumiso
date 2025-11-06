@@ -1174,6 +1174,7 @@
       "add_button": "Hizmet ekle",
       "retry": "Tekrar dene",
       "included_badge": "Dahil",
+      "addons_badge": "Ek hizmet",
       "quick_edit_included_title": "Dahil hizmetleri yönet",
       "quick_edit_extra_title": "Ek hizmetleri yönet",
       "quick_edit_included_helper": "Dahil hizmetler paket fiyatına dahildir.",
@@ -1183,7 +1184,8 @@
       "quick_edit_save": "Hizmetleri kaydet",
       "quick_edit_extra_notice": "Yeni ek hizmetler için fiyatı kontrol etmeyi unutmayın.",
       "quick_edit_error": "Hizmetler güncellenemedi",
-      "load_error": "Hizmetler yüklenemedi."
+      "load_error": "Hizmetler yüklenemedi.",
+      "quantity_short": "x{{count}}"
     },
     "types": {
       "deposit": "Kapora",

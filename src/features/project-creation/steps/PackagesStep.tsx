@@ -473,9 +473,8 @@ export const PackagesStep = () => {
   );
 
   const serviceCardItems = useMemo<ProjectServicesCardItem[]>(() => {
-    return existingItems.map((item) => {
+    return sheetItems.map((item) => {
       const quantity = Math.max(1, item.quantity ?? 1);
-      const pricing = calculateLineItemPricing(item);
       const quantityLabel =
         quantity > 1
           ? t("steps.packages.servicesCard.quantity", {
@@ -490,15 +489,9 @@ export const PackagesStep = () => {
         left: (
           <div>
             <div className="font-medium">{item.name}</div>
-            <div className="text-xs text-muted-foreground">
-              {quantityLabel ? (
-                <>
-                  {quantityLabel}
-                  <span className="mx-1">•</span>
-                </>
-              ) : null}
-              {formatCurrency(pricing.gross)}
-            </div>
+            {quantityLabel ? (
+              <div className="text-xs text-muted-foreground">{quantityLabel}</div>
+            ) : null}
           </div>
         ),
         right: (
@@ -525,7 +518,7 @@ export const PackagesStep = () => {
         ),
       };
     });
-  }, [existingItems, formatCurrency, t, billingIncludedLabel, billingAddOnLabel, handleBillingTypeChange]);
+  }, [sheetItems, t, billingIncludedLabel, billingAddOnLabel, handleBillingTypeChange]);
 
   const servicesCardHelperText = hasServices
     ? t("steps.packages.servicesCard.helperWithCount", {
@@ -1456,7 +1449,7 @@ export const PackagesStep = () => {
               </>
             }
             addButtonLabel={hasServices ? servicesCardManageLabel : servicesCardAddLabel}
-            itemAlign="start"
+            itemAlign="center"
             itemRightAlign="start"
           />
 
@@ -1481,12 +1474,9 @@ export const PackagesStep = () => {
                 />
               ) : null}
             </div>
-            <div className={cn("flex", hasBillableServices ? "justify-end" : "justify-stretch")}>
+            <div className="flex justify-end">
               <SummaryTotalsCard
-                className={cn(
-                  "bg-white/95",
-                  hasBillableServices ? "sm:w-auto sm:min-w-[320px]" : "w-full max-w-none"
-                )}
+                className={cn("bg-white/95 w-full max-w-[420px] sm:w-auto sm:min-w-[320px]")}
               >
                 {hasBillableServices ? (
                   <>

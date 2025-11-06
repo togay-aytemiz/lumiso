@@ -37,6 +37,7 @@ export type VatModeOption = "inclusive" | "exclusive";
 export interface ProjectServiceQuickEditSelection {
   serviceId: string;
   projectServiceId?: string;
+  quantity: number;
   unitCost: number | null;
   unitPrice: number | null;
   vatMode: VatModeOption;
@@ -47,6 +48,7 @@ export interface ProjectServiceQuickEditResult {
   serviceId: string;
   projectServiceId?: string;
   billingType: "included" | "extra";
+  quantity: number;
   overrides: {
     unitCost?: number | null;
     unitPrice?: number | null;
@@ -156,7 +158,7 @@ export function ProjectServicesQuickEditDialog({
         });
         next.set(selection.serviceId, {
           projectServiceId: selection.projectServiceId,
-          quantity: 1,
+          quantity: Math.max(1, selection.quantity ?? 1),
           values: {
             unitCost: selection.unitCost ?? defaults.unitCost ?? null,
             unitPrice: selection.unitPrice ?? defaults.unitPrice ?? null,
@@ -506,6 +508,7 @@ export function ProjectServicesQuickEditDialog({
           serviceId,
           projectServiceId: entry.projectServiceId,
           billingType: mode,
+          quantity: entry.quantity,
           overrides,
         });
       });

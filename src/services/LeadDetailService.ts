@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { computeServiceTotals } from "@/lib/payments/servicePricing";
 
 export interface LeadDetailRecord {
   id: string;
@@ -155,9 +156,15 @@ export async function fetchLeadProjectSummary(
         base_price,
         status_id,
         project_services (
+          quantity,
+          unit_price_override,
+          vat_rate_override,
+          vat_mode_override,
           services (
             selling_price,
-            price
+            price,
+            vat_rate,
+            price_includes_vat
           )
         )
       `
@@ -177,10 +184,16 @@ export async function fetchLeadProjectSummary(
       status_id: string | null;
       project_services?:
         | Array<{
+            quantity?: number | null;
+            unit_price_override?: number | null;
+            vat_rate_override?: number | null;
+            vat_mode_override?: "inclusive" | "exclusive" | null;
             services?:
               | {
                   selling_price?: number | null;
                   price?: number | null;
+                  vat_rate?: number | null;
+                  price_includes_vat?: boolean | null;
                 }
               | null;
           }>
@@ -235,8 +248,15 @@ export async function fetchLeadProjectSummary(
     const servicesTotal = (project.project_services || []).reduce((sum, entry) => {
       const service = entry?.services;
       if (!service) return sum;
-      const priceValue = Number(service.selling_price ?? service.price ?? 0);
-      return Number.isFinite(priceValue) ? sum + priceValue : sum;
+      const pricing = computeServiceTotals({
+        unitPrice: entry?.unit_price_override ?? service.selling_price ?? service.price ?? null,
+        quantity: entry?.quantity ?? 1,
+        vatRate: entry?.vat_rate_override ?? service.vat_rate ?? null,
+        vatMode:
+          entry?.vat_mode_override ??
+          (service.price_includes_vat === false ? "exclusive" : "inclusive"),
+      });
+      return sum + pricing.gross;
     }, 0);
     totalBooked += basePrice + servicesTotal;
   });

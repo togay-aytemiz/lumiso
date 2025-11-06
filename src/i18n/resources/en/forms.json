@@ -700,6 +700,7 @@
       "add_button": "Add service",
       "retry": "Retry",
       "included_badge": "Included",
+      "addons_badge": "Add-on",
       "quick_edit_included_title": "Manage included services",
       "quick_edit_extra_title": "Manage add-on services",
       "quick_edit_included_helper": "Included services are covered by your package price.",
@@ -709,7 +710,8 @@
       "quick_edit_save": "Save services",
       "quick_edit_extra_notice": "Remember to review pricing for new add-on services.",
       "quick_edit_error": "Unable to update services",
-      "load_error": "Unable to load services."
+      "load_error": "Unable to load services.",
+      "quantity_short": "x{{count}}"
     },
     "types": {
       "deposit": "Deposit",

@@ -193,8 +193,30 @@ describe("fetchLeadProjectSummary", () => {
         base_price: 1000,
         status_id: "status-active",
         project_services: [
-          { services: { selling_price: 400, price: 300 } },
-          { services: { selling_price: null, price: 200 } },
+          {
+            quantity: 1,
+            unit_price_override: null,
+            vat_rate_override: null,
+            vat_mode_override: null,
+            services: {
+              selling_price: 400,
+              price: 300,
+              vat_rate: 0,
+              price_includes_vat: true,
+            },
+          },
+          {
+            quantity: 1,
+            unit_price_override: null,
+            vat_rate_override: null,
+            vat_mode_override: null,
+            services: {
+              selling_price: null,
+              price: 200,
+              vat_rate: 0,
+              price_includes_vat: true,
+            },
+          },
         ],
       },
       {

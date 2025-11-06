@@ -154,10 +154,19 @@ describe("ProjectPaymentsSection", () => {
       payments,
       services: [
         {
+          id: "ps-1",
+          billing_type: "extra",
+          quantity: 1,
+          unit_price_override: null,
+          vat_rate_override: null,
+          vat_mode_override: null,
           services: {
             id: "service-1",
             name: "Album",
             selling_price: 150,
+            price: 150,
+            vat_rate: 18,
+            price_includes_vat: true,
             extra: true,
           },
         },
@@ -172,7 +181,7 @@ describe("ProjectPaymentsSection", () => {
 
     expect(screen.getAllByText(/₺/).length).toBeGreaterThan(0);
     expect(screen.getAllByText("payments.summary.remaining").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("payments.services.none").length).toBeGreaterThan(0);
+    expect(screen.getByText("Album")).toBeInTheDocument();
   });
 
   it("shows empty state when project has no payments and no base price", async () => {

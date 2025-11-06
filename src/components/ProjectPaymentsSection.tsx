@@ -41,6 +41,11 @@ import {
   DEFAULT_DEPOSIT_CONFIG,
   type ProjectDepositConfig
 } from "@/lib/payments/depositUtils";
+import {
+  computeServiceTotals,
+  DEFAULT_VAT_TOTALS,
+  type VatTotals
+} from "@/lib/payments/servicePricing";
 import type { Database } from "@/integrations/supabase/types";
 
 type PaymentStatus = "paid" | "due";
@@ -61,6 +66,13 @@ interface Payment {
 interface ServiceRecord {
   projectServiceId: string;
   billingType: "included" | "extra";
+  quantity: number;
+  overrides: {
+    unitCost: number | null;
+    unitPrice: number | null;
+    vatMode: VatModeOption | null;
+    vatRate: number | null;
+  };
   service: {
     id: string;
     name: string;
@@ -75,26 +87,10 @@ interface ServiceRecord {
   };
 }
 
-type ServiceOverride = {
-  unitCost?: number | null;
-  unitPrice?: number | null;
-  vatMode?: VatModeOption;
-  vatRate?: number | null;
-};
-
-const buildOverrideKey = (billingType: "included" | "extra", serviceId: string) =>
-  `${billingType}:${serviceId}`;
-
 interface ProjectDetails {
   id: string;
   basePrice: number;
   depositConfig: ProjectDepositConfig;
-}
-
-interface VatTotals {
-  net: number;
-  vat: number;
-  gross: number;
 }
 
 interface FinancialSummary {
@@ -113,7 +109,6 @@ interface FinancialSummary {
   remaining: number;
 }
 
-const DEFAULT_VAT_TOTALS: VatTotals = { net: 0, vat: 0, gross: 0 };
 const CURRENCY = "TRY";
 
 const formatCurrency = (amount: number) => {
@@ -129,47 +124,18 @@ const formatCurrency = (amount: number) => {
   }
 };
 
-const computeServicePricing = (service: ServiceRecord["service"]): VatTotals => {
-  const rawAmount = Number(service.selling_price ?? service.price ?? 0);
-  if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
-    return DEFAULT_VAT_TOTALS;
-  }
-
-  const vatRate =
-    typeof service.vat_rate === "number" && service.vat_rate > 0 ? service.vat_rate : 0;
-  const mode = service.price_includes_vat === false ? "exclusive" : "inclusive";
-
-  if (vatRate <= 0) {
-    return {
-      net: rawAmount,
-      vat: 0,
-      gross: rawAmount
-    };
-  }
-
-  const fraction = vatRate / 100;
-  if (mode === "inclusive") {
-    const vatPortion = rawAmount - rawAmount / (1 + fraction);
-    const net = rawAmount - vatPortion;
-    return {
-      net,
-      vat: vatPortion,
-      gross: rawAmount
-    };
-  }
-
-  const vatPortion = rawAmount * fraction;
-  return {
-    net: rawAmount,
-    vat: vatPortion,
-    gross: rawAmount + vatPortion
-  };
-};
+const joinMeta = (...parts: Array<string | null>): string =>
+  parts.filter((part): part is string => Boolean(part)).join(" • ");
 
 const aggregatePricing = (records: ServiceRecord[]): VatTotals =>
   records.reduce<VatTotals>(
     (totals, record) => {
-      const pricing = computeServicePricing(record.service);
+      const pricing = computeServiceTotals({
+        unitPrice: record.service.selling_price ?? record.service.price ?? null,
+        quantity: record.quantity,
+        vatRate: record.service.vat_rate ?? null,
+        vatMode: record.service.price_includes_vat === false ? "exclusive" : "inclusive"
+      });
       return {
         net: totals.net + pricing.net,
         vat: totals.vat + pricing.vat,
@@ -206,53 +172,10 @@ export function ProjectPaymentsSection({
 
   const [project, setProject] = useState<ProjectDetails | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [rawServiceRecords, setRawServiceRecords] = useState<ServiceRecord[]>([]);
-  const [serviceOverrides, setServiceOverrides] = useState<Record<string, ServiceOverride>>({});
+  const [serviceRecords, setServiceRecords] = useState<ServiceRecord[]>([]);
   const [availableServices, setAvailableServices] = useState<QuickServiceRecord[]>([]);
   const [availableServicesLoading, setAvailableServicesLoading] = useState(false);
   const [availableServicesError, setAvailableServicesError] = useState<string | null>(null);
-
-  const applyOverrides = useCallback(
-    (records: ServiceRecord[], overrides: Record<string, ServiceOverride>) => {
-      if (records.length === 0 || Object.keys(overrides).length === 0) {
-        return records;
-      }
-
-      return records.map((record) => {
-        const override = overrides[buildOverrideKey(record.billingType, record.service.id)];
-        if (!override || Object.keys(override).length === 0) {
-          return record;
-        }
-
-        const updatedService = { ...record.service };
-
-        if (override.unitCost !== undefined) {
-          updatedService.cost_price = override.unitCost ?? null;
-        }
-        if (override.unitPrice !== undefined) {
-          updatedService.selling_price = override.unitPrice ?? null;
-          updatedService.price = override.unitPrice ?? null;
-        }
-        if (override.vatMode !== undefined) {
-          updatedService.price_includes_vat = override.vatMode === "inclusive";
-        }
-        if (override.vatRate !== undefined) {
-          updatedService.vat_rate = override.vatRate ?? null;
-        }
-
-        return {
-          ...record,
-          service: updatedService,
-        };
-      });
-    },
-    [],
-  );
-
-  const serviceRecords = useMemo(
-    () => applyOverrides(rawServiceRecords, serviceOverrides),
-    [applyOverrides, rawServiceRecords, serviceOverrides],
-  );
 
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -313,6 +236,11 @@ export function ProjectPaymentsSection({
     type ProjectServiceJoin = {
       id: string;
       billing_type: "included" | "extra";
+      quantity: number | null;
+      unit_cost_override: number | null;
+      unit_price_override: number | null;
+      vat_mode_override: "inclusive" | "exclusive" | null;
+      vat_rate_override: number | null;
       services: {
         id: string;
         name: string;
@@ -333,6 +261,11 @@ export function ProjectPaymentsSection({
           `
           id,
           billing_type,
+          quantity,
+          unit_cost_override,
+          unit_price_override,
+          vat_mode_override,
+          vat_rate_override,
           services (
             id,
             name,
@@ -353,40 +286,43 @@ export function ProjectPaymentsSection({
         data?.map((entry) => {
           const service = entry.services;
           if (!service) return null;
+          const quantity = Math.max(1, Number(entry.quantity ?? 1));
+          const overrides = {
+            unitCost: entry.unit_cost_override ?? null,
+            unitPrice: entry.unit_price_override ?? null,
+            vatMode: entry.vat_mode_override ?? null,
+            vatRate: entry.vat_rate_override ?? null
+          };
+          const resolvedUnitCost =
+            overrides.unitCost ?? (service.cost_price ?? null);
+          const resolvedUnitPrice =
+            overrides.unitPrice ?? service.selling_price ?? service.price ?? null;
+          const resolvedVatRate =
+            overrides.vatRate ?? (service.vat_rate ?? null);
+          const resolvedVatMode: VatModeOption =
+            overrides.vatMode ?? (service.price_includes_vat === false ? "exclusive" : "inclusive");
+
           return {
             projectServiceId: entry.id,
             billingType: entry.billing_type,
+            quantity,
+            overrides,
             service: {
               id: service.id,
               name: service.name,
               extra: Boolean(service.extra),
-              selling_price: service.selling_price,
-              price: service.price,
-              vat_rate: service.vat_rate ?? undefined,
-              price_includes_vat: service.price_includes_vat ?? undefined,
-              cost_price: service.cost_price ?? undefined,
+              selling_price: resolvedUnitPrice,
+              price: resolvedUnitPrice,
+              vat_rate: resolvedVatRate ?? undefined,
+              price_includes_vat: resolvedVatMode === "inclusive",
+              cost_price: resolvedUnitCost ?? undefined,
               category: service.category ?? undefined,
               service_type: service.service_type ?? undefined
             }
           } satisfies ServiceRecord;
         }) ?? [];
       const filtered = mapped.filter((record): record is ServiceRecord => Boolean(record));
-      setRawServiceRecords(filtered);
-      setServiceOverrides((previous) => {
-        if (!previous || Object.keys(previous).length === 0) {
-          return previous;
-        }
-        const validKeys = new Set(
-          filtered.map((record) => buildOverrideKey(record.billingType, record.service.id))
-        );
-        const next: Record<string, ServiceOverride> = {};
-        Object.entries(previous).forEach(([key, override]) => {
-          if (validKeys.has(key)) {
-            next[key] = override;
-          }
-        });
-        return Object.keys(next).length === Object.keys(previous).length ? previous : next;
-      });
+      setServiceRecords(filtered);
     } catch (error) {
       console.error("Error fetching project services:", error);
     }
@@ -683,7 +619,7 @@ export function ProjectPaymentsSection({
   const handleServiceQuickEditSubmit = useCallback(
     async (mode: "included" | "extra", results: ProjectServiceQuickEditResult[]) => {
       try {
-        const existingRecords = rawServiceRecords.filter((record) => record.billingType === mode);
+        const existingRecords = serviceRecords.filter((record) => record.billingType === mode);
         const existingByServiceId = new Map(
           existingRecords.map((record) => [record.service.id, record])
         );
@@ -697,11 +633,7 @@ export function ProjectPaymentsSection({
           await supabase.from("project_services").delete().in("id", toDelete);
         }
 
-        const toInsert = results.filter(
-          (result) => !existingByServiceId.has(result.serviceId)
-        );
-
-        if (toInsert.length > 0) {
+        if (results.length > 0) {
           const {
             data: { user }
           } = await supabase.auth.getUser();
@@ -716,36 +648,29 @@ export function ProjectPaymentsSection({
               t("payments.organization_required", { defaultValue: "Organization required" })
             );
           }
-          const inserts = toInsert.map((result) => ({
-            project_id: projectId,
-            service_id: result.serviceId,
-            user_id: user.id,
-            billing_type: mode
-          }));
-          await supabase.from("project_services").insert(inserts);
+          const upsertPayload = results.map((result) => {
+            const existing = existingByServiceId.get(result.serviceId);
+            const quantity = Math.max(1, Number(result.quantity ?? 1));
+            return {
+              ...(existing ? { id: existing.projectServiceId } : {}),
+              project_id: projectId,
+              service_id: result.serviceId,
+              user_id: user.id,
+              billing_type: mode,
+              quantity,
+              unit_cost_override: result.overrides.unitCost ?? null,
+              unit_price_override: result.overrides.unitPrice ?? null,
+              vat_mode_override: result.overrides.vatMode ?? null,
+              vat_rate_override: result.overrides.vatRate ?? null
+            };
+          });
+
+          if (upsertPayload.length > 0) {
+            await supabase
+              .from("project_services")
+              .upsert(upsertPayload, { onConflict: "project_id,service_id" });
+          }
         }
-
-        setServiceOverrides((previous) => {
-          const next: Record<string, ServiceOverride> = { ...previous };
-
-          existingRecords.forEach((record) => {
-            if (!selectedIds.has(record.service.id)) {
-              delete next[buildOverrideKey(mode, record.service.id)];
-            }
-          });
-
-          results.forEach((result) => {
-            const overrideKeys = Object.keys(result.overrides ?? {});
-            const key = buildOverrideKey(mode, result.serviceId);
-            if (overrideKeys.length > 0) {
-              next[key] = result.overrides;
-            } else {
-              delete next[key];
-            }
-          });
-
-          return next;
-        });
 
         await fetchProjectServices();
         onPaymentsUpdated?.();
@@ -760,7 +685,7 @@ export function ProjectPaymentsSection({
         });
       }
     },
-    [fetchProjectServices, onPaymentsUpdated, projectId, rawServiceRecords, t, toast]
+    [fetchProjectServices, onPaymentsUpdated, projectId, serviceRecords, t, toast]
   );
 
   const renderPaymentTypeLabel = useCallback(
@@ -815,6 +740,7 @@ export function ProjectPaymentsSection({
         .map((record) => ({
           serviceId: record.service.id,
           projectServiceId: record.projectServiceId,
+          quantity: record.quantity,
           unitCost: record.service.cost_price ?? null,
           unitPrice: record.service.selling_price ?? record.service.price ?? null,
           vatMode: record.service.price_includes_vat === false ? "exclusive" : "inclusive",
@@ -830,6 +756,7 @@ export function ProjectPaymentsSection({
         .map((record) => ({
           serviceId: record.service.id,
           projectServiceId: record.projectServiceId,
+          quantity: record.quantity,
           unitCost: record.service.cost_price ?? null,
           unitPrice: record.service.selling_price ?? record.service.price ?? null,
           vatMode: record.service.price_includes_vat === false ? "exclusive" : "inclusive",
@@ -841,10 +768,20 @@ export function ProjectPaymentsSection({
   const includedCardItems: ProjectServicesCardItem[] = financialSummary.includedServices.map(
     (record) => ({
       key: record.projectServiceId,
-      left: <div className="font-medium">{record.service.name}</div>,
-      right: (
-        <div className="text-xs text-muted-foreground">
-          {t("payments.services.included_badge", { defaultValue: "Included" })}
+      left: (
+        <div>
+          <div className="font-medium">{record.service.name}</div>
+          <div className="text-xs text-muted-foreground">
+            {joinMeta(
+              t("payments.services.included_badge", { defaultValue: "Included" }),
+              record.quantity > 1
+                ? t("payments.services.quantity_short", {
+                    count: record.quantity,
+                    defaultValue: "x{{count}}"
+                  })
+                : null
+            )}
+          </div>
         </div>
       )
     })
@@ -852,7 +789,12 @@ export function ProjectPaymentsSection({
 
   const extraCardItems: ProjectServicesCardItem[] = financialSummary.extraServices.map(
     (record) => {
-      const pricing = computeServicePricing(record.service);
+      const pricing = computeServiceTotals({
+        unitPrice: record.service.selling_price ?? record.service.price ?? null,
+        quantity: record.quantity,
+        vatRate: record.service.vat_rate ?? null,
+        vatMode: record.service.price_includes_vat === false ? "exclusive" : "inclusive"
+      });
 
       return {
         key: record.projectServiceId,
@@ -860,11 +802,19 @@ export function ProjectPaymentsSection({
           <div>
             <div className="font-medium">{record.service.name}</div>
             <div className="text-xs text-muted-foreground">
-              {t("payments.services.vat_line", {
-                rate: record.service.vat_rate ?? 0,
-                amount: formatCurrency(pricing.vat),
-                defaultValue: "VAT {{rate}}% • {{amount}}"
-              })}
+              {joinMeta(
+                record.quantity > 1
+                  ? t("payments.services.quantity_short", {
+                      count: record.quantity,
+                      defaultValue: "x{{count}}"
+                    })
+                  : null,
+                t("payments.services.vat_line", {
+                  rate: record.service.vat_rate ?? 0,
+                  amount: formatCurrency(pricing.vat),
+                  defaultValue: "VAT {{rate}}% • {{amount}}"
+                })
+              )}
             </div>
           </div>
         ),

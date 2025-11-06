@@ -59,8 +59,30 @@ describe("useProjectPayments", () => {
               eq: jest.fn(() =>
                 Promise.resolve({
                   data: [
-                    { services: { selling_price: 400, price: 350 } },
-                    { services: { selling_price: null, price: 100 } },
+                    {
+                      quantity: 1,
+                      unit_price_override: null,
+                      vat_rate_override: null,
+                      vat_mode_override: null,
+                      services: {
+                        selling_price: 400,
+                        price: 350,
+                        vat_rate: 0,
+                        price_includes_vat: true,
+                      },
+                    },
+                    {
+                      quantity: 1,
+                      unit_price_override: null,
+                      vat_rate_override: null,
+                      vat_mode_override: null,
+                      services: {
+                        selling_price: null,
+                        price: 100,
+                        vat_rate: 0,
+                        price_includes_vat: true,
+                      },
+                    },
                   ],
                   error: null,
                 })

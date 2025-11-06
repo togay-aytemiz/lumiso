@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { computeServiceTotals } from '@/lib/payments/servicePricing';
 
 interface PaymentSummary {
   totalPaid: number;
@@ -33,9 +34,15 @@ export const useProjectPayments = (projectId: string, refreshTrigger?: number) =
       const { data: servicesData, error: servicesError } = await supabase
         .from('project_services')
         .select(`
+          quantity,
+          unit_price_override,
+          vat_rate_override,
+          vat_mode_override,
           services!inner (
             selling_price,
-            price
+            price,
+            vat_rate,
+            price_includes_vat
           )
         `)
         .eq('project_id', projectId);
@@ -52,11 +59,20 @@ export const useProjectPayments = (projectId: string, refreshTrigger?: number) =
       if (paymentsError) throw paymentsError;
 
       const basePrice = projectData?.base_price || 0;
-      const servicesCost = servicesData?.reduce((sum, ps) => {
-        const service = ps.services;
-        const price = service.selling_price || service.price || 0;
-        return sum + Number(price);
-      }, 0) || 0;
+      const servicesCost =
+        servicesData?.reduce((sum, entry) => {
+          const service = entry?.services;
+          if (!service) return sum;
+          const pricing = computeServiceTotals({
+            unitPrice: entry?.unit_price_override ?? service.selling_price ?? service.price ?? null,
+            quantity: entry?.quantity ?? 1,
+            vatRate: entry?.vat_rate_override ?? service.vat_rate ?? null,
+            vatMode:
+              entry?.vat_mode_override ??
+              (service.price_includes_vat === false ? "exclusive" : "inclusive"),
+          });
+          return sum + pricing.gross;
+        }, 0) || 0;
       
       const totalProject = basePrice + servicesCost;
       const totalPaid = paymentsData?.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0;

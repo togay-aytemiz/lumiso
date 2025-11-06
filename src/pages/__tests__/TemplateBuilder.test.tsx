@@ -1,5 +1,6 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
+import * as ReactRouterDom from "react-router-dom";
 import TemplateBuilder from "../TemplateBuilder";
 import { mockSupabaseClient } from "@/utils/testUtils";
 import { useTemplateBuilder } from "@/hooks/useTemplateBuilder";
@@ -121,9 +122,10 @@ const baseTemplate = {
 describe("TemplateBuilder page", () => {
   beforeEach(() => {
     const navigateMock = jest.fn();
-    import * as ReactRouterDom from "react-router-dom";
     jest.spyOn(ReactRouterDom, "useNavigate").mockReturnValue(navigateMock);
-        jest.spyOn(ReactRouterDom, "useSearchParams").mockReturnValue([new URLSearchParams("id=template-1"), jest.fn()]);
+    jest
+      .spyOn(ReactRouterDom, "useSearchParams")
+      .mockReturnValue([new URLSearchParams("id=template-1"), jest.fn()]);
 
     mockSupabaseClient.from = jest.fn(() => ({
       select: jest.fn().mockReturnThis(),

@@ -1189,7 +1189,7 @@
       "quick_edit_extra_notice": "Yeni ek hizmetler için fiyatı kontrol etmeyi unutmayın.",
       "quick_edit_error": "Hizmetler güncellenemedi",
       "load_error": "Hizmetler yüklenemedi.",
-      "quantity_short": "x{{count}}"
+      "quantity_short": "x {{count}}"
     },
     "types": {
       "deposit": "Kapora",

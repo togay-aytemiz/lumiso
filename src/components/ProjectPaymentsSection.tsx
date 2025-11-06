@@ -819,16 +819,11 @@ export function ProjectPaymentsSection({
       key: record.projectServiceId,
       left: <div className="font-medium">{record.service.name}</div>,
       right: (
-        <div className="flex flex-col items-end text-xs text-muted-foreground">
-          <span>{t("payments.services.included_badge", { defaultValue: "Included" })}</span>
-          {record.quantity > 1 && (
-            <span>
-              {t("payments.services.quantity_short", {
-                count: record.quantity,
-                defaultValue: "x{{count}}"
-              })}
-            </span>
-          )}
+        <div className="font-medium text-muted-foreground">
+          {t("payments.services.quantity_short", {
+            count: record.quantity,
+            defaultValue: "x {{count}}"
+          })}
         </div>
       )
     })

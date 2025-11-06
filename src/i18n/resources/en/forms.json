@@ -715,7 +715,7 @@
       "quick_edit_extra_notice": "Remember to review pricing for new add-on services.",
       "quick_edit_error": "Unable to update services",
       "load_error": "Unable to load services.",
-      "quantity_short": "x{{count}}"
+      "quantity_short": "x {{count}}"
     },
     "types": {
       "deposit": "Deposit",

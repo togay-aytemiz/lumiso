@@ -2,6 +2,7 @@ export default {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
   moduleNameMapper: {
+    '^@/components/react-calendar\\.css$': '<rootDir>/src/__mocks__/styleMock.cjs',
     '^@/(.*)$': '<rootDir>/src/$1',
     '\\.(css|less|scss|sass)$': '<rootDir>/src/__mocks__/styleMock.cjs',
     '\\.(svg|png|jpg|jpeg|gif|webp|avif)$': '<rootDir>/src/__mocks__/fileMock.cjs',

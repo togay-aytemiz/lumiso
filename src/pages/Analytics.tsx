@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
@@ -53,36 +53,6 @@ const Analytics = () => {
   const [leadsByMonth, setLeadsByMonth] = useState<LeadsByMonthData[]>([]);
   const [loading, setLoading] = useState(true);
   const [sessionDateMode, setSessionDateMode] = useState<'scheduled' | 'created'>('scheduled');
-
-  useEffect(() => {
-    void fetchAnalyticsData();
-  }, [fetchAnalyticsData]);
-
-  useEffect(() => {
-    if (!loading) {
-      void fetchSessionsPerDay();
-    }
-  }, [fetchSessionsPerDay, loading]);
-
-  const fetchAnalyticsData = useCallback(async () => {
-    try {
-      await Promise.all([
-        fetchSessionsPerDay(),
-        fetchSessionsByStatus(),
-        fetchLeadsByMonth(),
-      ]);
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Something went wrong";
-      toast({
-        title: t("analytics.errorFetching"),
-        description: message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchLeadsByMonth, fetchSessionsByStatus, fetchSessionsPerDay, t]);
 
   const fetchSessionsPerDay = useCallback(async () => {
     const today = new Date();
@@ -213,6 +183,58 @@ const Analytics = () => {
 
     setLeadsByMonth(leadCounts);
   }, []);
+
+  const translationRef = useRef(t);
+
+  useEffect(() => {
+    translationRef.current = t;
+  }, [t]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadAnalytics = async () => {
+      try {
+        await Promise.all([
+          fetchSessionsByStatus(),
+          fetchLeadsByMonth(),
+        ]);
+      } catch (error: unknown) {
+        let message = "Something went wrong";
+        if (error instanceof Error) {
+          message = error.message;
+        } else if (
+          typeof error === "object" &&
+          error !== null &&
+          "message" in error &&
+          typeof (error as { message?: unknown }).message === "string"
+        ) {
+          message = (error as { message: string }).message;
+        }
+        toast({
+          title: translationRef.current("analytics.errorFetching"),
+          description: message,
+          variant: "destructive"
+        });
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadAnalytics();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchLeadsByMonth, fetchSessionsByStatus]);
+
+  useEffect(() => {
+    if (!loading) {
+      void fetchSessionsPerDay();
+    }
+  }, [fetchSessionsPerDay, loading]);
 
   const chartConfig = {
     sessions: {

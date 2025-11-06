@@ -45,6 +45,7 @@ describe("performanceMonitor", () => {
       value: expect.any(Number),
       timestamp: 1_700_000,
     });
+    expect(metrics[0].value).toBeCloseTo(recordedDuration);
   });
 
   it("warns when endTiming is called without a start", () => {

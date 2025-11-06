@@ -24,6 +24,16 @@ jest.mock("@/lib/organizationSettingsCache", () => ({
   getOrganizationSettingsFromCache: jest.fn(),
   setOrganizationSettingsCache: jest.fn(),
   ORGANIZATION_SETTINGS_CACHE_TTL: 12345,
+  DEFAULT_ORGANIZATION_TAX_PROFILE: {
+    legalEntityType: "individual",
+    companyName: null,
+    taxOffice: null,
+    taxNumber: null,
+    billingAddress: null,
+    defaultVatRate: 20,
+    defaultVatMode: "inclusive",
+    pricesIncludeVat: true,
+  },
 }));
 
 jest.mock("@tanstack/react-query", () => {

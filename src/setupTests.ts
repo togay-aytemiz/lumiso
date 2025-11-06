@@ -1,26 +1,104 @@
 import '@testing-library/jest-dom';
 
 // Mock Supabase client
-jest.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    from: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      delete: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      in: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
-    })),
+type SupabaseQueryResult = { data: unknown; error: unknown };
+
+const createQueryResult = (overrides?: Partial<SupabaseQueryResult>): SupabaseQueryResult => ({
+  data: null,
+  error: null,
+  ...overrides,
+});
+
+const createQueryBuilder = (initialResult?: Partial<SupabaseQueryResult>) => {
+  let resolved = createQueryResult(initialResult);
+
+  const resolveWith = (result: Partial<SupabaseQueryResult>) => {
+    resolved = createQueryResult(result);
+    return builder;
+  };
+
+  const asPromise = () => Promise.resolve(resolved);
+
+  const builder: any = {
+    __setResponse: resolveWith,
+    then: (onFulfilled: (value: SupabaseQueryResult) => unknown, onRejected?: (reason: unknown) => unknown) =>
+      asPromise().then(onFulfilled, onRejected),
+    catch: (onRejected: (reason: unknown) => unknown) => asPromise().catch(onRejected),
+    finally: (onFinally: () => void) => asPromise().finally(onFinally),
+  };
+
+  const chainableMethods = [
+    'select',
+    'insert',
+    'upsert',
+    'update',
+    'delete',
+    'eq',
+    'neq',
+    'gte',
+    'lte',
+    'gt',
+    'lt',
+    'ilike',
+    'like',
+    'in',
+    'not',
+    'or',
+    'contains',
+    'filter',
+    'match',
+    'order',
+    'limit',
+    'range',
+    'overlaps',
+    'textSearch',
+    'throwOnError',
+  ] as const;
+
+  chainableMethods.forEach((method) => {
+    builder[method] = jest.fn().mockImplementation(() => builder);
+  });
+
+  builder.single = jest.fn().mockImplementation(() => asPromise());
+  builder.maybeSingle = jest.fn().mockImplementation(() => asPromise());
+  builder.returns = jest.fn().mockImplementation((result: Partial<SupabaseQueryResult>) => resolveWith(result));
+  builder.clone = jest.fn().mockImplementation(() => createQueryBuilder(resolved));
+  builder.execute = jest.fn().mockImplementation(() => asPromise());
+
+  return builder;
+};
+
+const createStorageBucket = () => ({
+  upload: jest.fn().mockResolvedValue(createQueryResult()),
+  remove: jest.fn().mockResolvedValue(createQueryResult()),
+  list: jest.fn().mockResolvedValue(createQueryResult({ data: [] })),
+  download: jest.fn().mockResolvedValue(createQueryResult()),
+});
+
+const createSupabaseMock = () => {
+  const mock: any = {
+    from: jest.fn(() => createQueryBuilder()),
     auth: {
       getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
       signIn: jest.fn(),
       signOut: jest.fn(),
+      onAuthStateChange: jest.fn(() => ({ data: { subscription: { unsubscribe: jest.fn() } } })),
     },
-    rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
-  }
+    rpc: jest.fn().mockResolvedValue(createQueryResult()),
+    storage: {
+      from: jest.fn(() => createStorageBucket()),
+    },
+    functions: {
+      invoke: jest.fn().mockResolvedValue(createQueryResult()),
+    },
+    __createQueryBuilder: createQueryBuilder,
+  };
+
+  return mock;
+};
+
+jest.mock('@/integrations/supabase/client', () => ({
+  supabase: createSupabaseMock(),
 }));
 
 // Mock React Router

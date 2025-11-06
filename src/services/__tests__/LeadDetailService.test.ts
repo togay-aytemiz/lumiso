@@ -18,24 +18,13 @@ beforeEach(() => {
 });
 
 const createSelectEqMaybeSingleChain = (result: { data: unknown; error: unknown }) => {
-  class SelectEqMaybeSingleChain {
-  private readonly chain = this;
-  constructor(private readonly response: { data: unknown; error: unknown }) {}
+  const chain: any = {
+    select: jest.fn().mockImplementation(() => chain),
+    eq: jest.fn().mockImplementation(() => chain),
+    maybeSingle: jest.fn().mockResolvedValue(result),
+  };
 
-  select() {
-    return this.chain;
-  }
-
-  eq() {
-    return this.chain;
-  }
-
-  maybeSingle() {
-    return Promise.resolve(this.response);
-  }
-}
-
-const createSelectEqMaybeSingleChain = (result: { data: unknown; error: unknown }) => new SelectEqMaybeSingleChain(result);
+  return chain;
 };
 
 describe("fetchLeadById", () => {
@@ -74,29 +63,25 @@ describe("fetchLeadById", () => {
 });
 
 const createSessionsChain = (result: { data: unknown; error: unknown }) => {
-  class SessionsChain {
-  private readonly chain = this;
-  constructor(private readonly response: { data: unknown; error: unknown }) {}
-  select() { return this.chain; }
-  eq() { return this.chain; }
-  order() { return Promise.resolve(this.response); }
-}
+  const chain: any = {
+    select: jest.fn().mockImplementation(() => chain),
+    eq: jest.fn().mockImplementation(() => chain),
+    order: jest.fn().mockResolvedValue(result),
+  };
 
-const createSessionsChain = (result: { data: unknown; error: unknown }) => new SessionsChain(result);
+  return chain;
 };
 
 const createProjectStatusesChain = (result: { data: unknown; error: unknown }) => {
-  class ProjectStatusesChain {
-  private readonly chain = this;
-  constructor(private readonly response: { data: unknown; error: unknown }) {}
-  select() { return this.chain; }
-  eq() { return this.chain; }
-  ilike() { return this.chain; }
-  limit() { return this.chain; }
-  maybeSingle() { return Promise.resolve(this.response); }
-}
+  const chain: any = {
+    select: jest.fn().mockImplementation(() => chain),
+    eq: jest.fn().mockImplementation(() => chain),
+    ilike: jest.fn().mockImplementation(() => chain),
+    limit: jest.fn().mockImplementation(() => chain),
+    maybeSingle: jest.fn().mockResolvedValue(result),
+  };
 
-const createProjectStatusesChain = (result: { data: unknown; error: unknown }) => new ProjectStatusesChain(result);
+  return chain;
 };
 
 describe("fetchLeadSessions", () => {
@@ -168,38 +153,30 @@ describe("fetchLeadSessions", () => {
   });
 });
 
-class ProjectsChain {
-  private eqCalls = 0;
-  private readonly chain = this;
+const createProjectsChain = (result: { data: unknown; error: unknown }) => {
+  let eqCalls = 0;
+  const chain: any = {
+    select: jest.fn().mockImplementation(() => chain),
+    eq: jest.fn().mockImplementation(() => {
+      eqCalls += 1;
+      return eqCalls >= 2 ? Promise.resolve(result) : chain;
+    }),
+  };
 
-  constructor(private readonly response: { data: unknown; error: unknown }) {}
+  return chain;
+};
 
-  select() {
-    return this.chain;
-  }
+const createTodosChain = (result: { data: unknown; error: unknown }) => {
+  const chain: any = {
+    select: jest.fn().mockImplementation(() => chain),
+    in: jest.fn().mockImplementation(() => chain),
+    order: jest.fn().mockImplementation(() => chain),
+    limit: jest.fn().mockImplementation(() => chain),
+    maybeSingle: jest.fn().mockResolvedValue(result),
+  };
 
-  eq() {
-    this.eqCalls += 1;
-    if (this.eqCalls >= 2) {
-      return Promise.resolve(this.response);
-    }
-    return this.chain;
-  }
-}
-
-const createProjectsChain = (result: { data: unknown; error: unknown }) => new ProjectsChain(result);
-
-class TodosChain {
-  private readonly chain = this;
-  constructor(private readonly response: { data: unknown; error: unknown }) {}
-  select() { return this.chain; }
-  in() { return this.chain; }
-  order() { return this.chain; }
-  limit() { return this.chain; }
-  maybeSingle() { return Promise.resolve(this.response); }
-}
-
-const createTodosChain = (result: { data: unknown; error: unknown }) => new TodosChain(result);
+  return chain;
+};
 
 const createPaymentsChain = (result: { data: unknown; error: unknown }) => ({
   select: jest.fn(() => ({
@@ -302,16 +279,14 @@ describe("fetchLeadProjectSummary", () => {
 });
 
 const createActivitiesChain = (result: { data: unknown; error: unknown }) => {
-  class ActivitiesChain {
-  private readonly chain = this;
-  constructor(private readonly response: { data: unknown; error: unknown }) {}
-  select() { return this.chain; }
-  eq() { return this.chain; }
-  order() { return this.chain; }
-  limit() { return Promise.resolve(this.response); }
-}
+  const chain: any = {
+    select: jest.fn().mockImplementation(() => chain),
+    eq: jest.fn().mockImplementation(() => chain),
+    order: jest.fn().mockImplementation(() => chain),
+    limit: jest.fn().mockResolvedValue(result),
+  };
 
-const createActivitiesChain = (result: { data: unknown; error: unknown }) => new ActivitiesChain(result);
+  return chain;
 };
 
 describe("fetchLatestLeadActivity", () => {

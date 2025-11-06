@@ -83,6 +83,13 @@ const setupSupabaseFrom = ({
   const selectServices = jest.fn().mockReturnValue({
     eq: jest.fn().mockResolvedValue({ data: services, error: null }),
   });
+  const deleteServices = jest.fn().mockReturnValue({
+    in: jest.fn().mockResolvedValue({ error: null }),
+  });
+  const insertServices = jest.fn().mockResolvedValue({ error: null });
+  const updateServices = jest.fn().mockReturnValue({
+    eq: jest.fn().mockResolvedValue({ error: null }),
+  });
 
   mockSupabaseClient.from.mockImplementation((table: string) => {
     switch (table) {
@@ -91,7 +98,12 @@ const setupSupabaseFrom = ({
       case "payments":
         return { select: selectPayments };
       case "project_services":
-        return { select: selectServices };
+        return {
+          select: selectServices,
+          delete: deleteServices,
+          insert: insertServices,
+          update: updateServices,
+        };
       default:
         return { select: jest.fn() };
     }

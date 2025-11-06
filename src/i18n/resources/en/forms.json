@@ -701,6 +701,7 @@
       "retry": "Retry",
       "included_badge": "Included",
       "addons_badge": "Add-on",
+      "unit_price_line": "{{quantity}} × {{amount}}",
       "quick_edit_included_title": "Manage included services",
       "quick_edit_extra_title": "Manage add-on services",
       "quick_edit_included_helper": "Included services are covered by your package price.",

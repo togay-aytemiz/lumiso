@@ -124,9 +124,6 @@ const formatCurrency = (amount: number) => {
   }
 };
 
-const joinMeta = (...parts: Array<string | null>): string =>
-  parts.filter((part): part is string => Boolean(part)).join(" • ");
-
 const aggregatePricing = (records: ServiceRecord[]): VatTotals =>
   records.reduce<VatTotals>(
     (totals, record) => {
@@ -619,18 +616,24 @@ export function ProjectPaymentsSection({
   const handleServiceQuickEditSubmit = useCallback(
     async (mode: "included" | "extra", results: ProjectServiceQuickEditResult[]) => {
       try {
-        const existingRecords = serviceRecords.filter((record) => record.billingType === mode);
-        const existingByServiceId = new Map(
-          existingRecords.map((record) => [record.service.id, record])
+        const existingRecordsSameMode = serviceRecords.filter(
+          (record) => record.billingType === mode
+        );
+        const existingByServiceIdSameMode = new Map(
+          existingRecordsSameMode.map((record) => [record.service.id, record])
+        );
+        const existingByServiceIdAnyMode = new Map(
+          serviceRecords.map((record) => [record.service.id, record])
         );
         const selectedIds = new Set(results.map((result) => result.serviceId));
 
-        const toDelete = existingRecords
+        const toDelete = existingRecordsSameMode
           .filter((record) => !selectedIds.has(record.service.id))
           .map((record) => record.projectServiceId);
 
         if (toDelete.length > 0) {
-          await supabase.from("project_services").delete().in("id", toDelete);
+          const { error } = await supabase.from("project_services").delete().in("id", toDelete);
+          if (error) throw error;
         }
 
         if (results.length > 0) {
@@ -642,33 +645,54 @@ export function ProjectPaymentsSection({
               t("payments.user_not_authenticated", { defaultValue: "User not authenticated" })
             );
           }
-          const organizationId = await getUserOrganizationId();
-          if (!organizationId) {
-            throw new Error(
-              t("payments.organization_required", { defaultValue: "Organization required" })
-            );
-          }
-          const upsertPayload = results.map((result) => {
-            const existing = existingByServiceId.get(result.serviceId);
-            const quantity = Math.max(1, Number(result.quantity ?? 1));
-            return {
-              ...(existing ? { id: existing.projectServiceId } : {}),
-              project_id: projectId,
-              service_id: result.serviceId,
-              user_id: user.id,
-              billing_type: mode,
-              quantity,
-              unit_cost_override: result.overrides.unitCost ?? null,
-              unit_price_override: result.overrides.unitPrice ?? null,
-              vat_mode_override: result.overrides.vatMode ?? null,
-              vat_rate_override: result.overrides.vatRate ?? null
-            };
-          });
+          const inserts = results
+            .filter((result) => !existingByServiceIdAnyMode.has(result.serviceId))
+            .map((result) => {
+              const quantity = Math.max(1, Number(result.quantity ?? 1));
+              return {
+                project_id: projectId,
+                service_id: result.serviceId,
+                user_id: user.id,
+                billing_type: mode,
+                quantity,
+                unit_cost_override: result.overrides.unitCost ?? null,
+                unit_price_override: result.overrides.unitPrice ?? null,
+                vat_mode_override: result.overrides.vatMode ?? null,
+                vat_rate_override: result.overrides.vatRate ?? null
+              };
+            });
 
-          if (upsertPayload.length > 0) {
-            await supabase
+          if (inserts.length > 0) {
+            const organizationId = await getUserOrganizationId();
+            if (!organizationId) {
+              throw new Error(
+                t("payments.organization_required", { defaultValue: "Organization required" })
+              );
+            }
+            const { error } = await supabase.from("project_services").insert(inserts);
+              if (error) throw error;
+            }
+
+          const toUpdate = results.filter((result) =>
+            existingByServiceIdAnyMode.has(result.serviceId)
+          );
+
+          for (const result of toUpdate) {
+            const existing = existingByServiceIdAnyMode.get(result.serviceId);
+            if (!existing) continue;
+            const quantity = Math.max(1, Number(result.quantity ?? 1));
+            const { error } = await supabase
               .from("project_services")
-              .upsert(upsertPayload, { onConflict: "project_id,service_id" });
+              .update({
+                billing_type: mode,
+                quantity,
+                unit_cost_override: result.overrides.unitCost ?? null,
+                unit_price_override: result.overrides.unitPrice ?? null,
+                vat_mode_override: result.overrides.vatMode ?? null,
+                vat_rate_override: result.overrides.vatRate ?? null
+              })
+              .eq("id", existing.projectServiceId);
+            if (error) throw error;
           }
         }
 
@@ -768,20 +792,18 @@ export function ProjectPaymentsSection({
   const includedCardItems: ProjectServicesCardItem[] = financialSummary.includedServices.map(
     (record) => ({
       key: record.projectServiceId,
-      left: (
-        <div>
-          <div className="font-medium">{record.service.name}</div>
-          <div className="text-xs text-muted-foreground">
-            {joinMeta(
-              t("payments.services.included_badge", { defaultValue: "Included" }),
-              record.quantity > 1
-                ? t("payments.services.quantity_short", {
-                    count: record.quantity,
-                    defaultValue: "x{{count}}"
-                  })
-                : null
-            )}
-          </div>
+      left: <div className="font-medium">{record.service.name}</div>,
+      right: (
+        <div className="flex flex-col items-end text-xs text-muted-foreground">
+          <span>{t("payments.services.included_badge", { defaultValue: "Included" })}</span>
+          {record.quantity > 1 && (
+            <span>
+              {t("payments.services.quantity_short", {
+                count: record.quantity,
+                defaultValue: "x{{count}}"
+              })}
+            </span>
+          )}
         </div>
       )
     })
@@ -798,29 +820,19 @@ export function ProjectPaymentsSection({
 
       return {
         key: record.projectServiceId,
-        left: (
-          <div>
-            <div className="font-medium">{record.service.name}</div>
-            <div className="text-xs text-muted-foreground">
-              {joinMeta(
-                record.quantity > 1
-                  ? t("payments.services.quantity_short", {
-                      count: record.quantity,
-                      defaultValue: "x{{count}}"
-                    })
-                  : null,
-                t("payments.services.vat_line", {
-                  rate: record.service.vat_rate ?? 0,
-                  amount: formatCurrency(pricing.vat),
-                  defaultValue: "VAT {{rate}}% • {{amount}}"
-                })
-              )}
-            </div>
-          </div>
-        ),
+        left: <div className="font-medium">{record.service.name}</div>,
         right: (
-          <div className="font-medium text-muted-foreground">
-            {formatCurrency(pricing.gross)}
+          <div className="text-right">
+            <div className="font-medium text-muted-foreground">
+              {formatCurrency(pricing.gross)}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {t("payments.services.unit_price_line", {
+                quantity: record.quantity,
+                amount: formatCurrency(record.service.selling_price ?? record.service.price ?? 0),
+                defaultValue: "{{quantity}} × {{amount}}"
+              })}
+            </div>
           </div>
         )
       };

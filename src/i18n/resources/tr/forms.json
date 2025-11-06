@@ -1175,6 +1175,7 @@
       "retry": "Tekrar dene",
       "included_badge": "Dahil",
       "addons_badge": "Ek hizmet",
+      "unit_price_line": "{{quantity}} × {{amount}}",
       "quick_edit_included_title": "Dahil hizmetleri yönet",
       "quick_edit_extra_title": "Ek hizmetleri yönet",
       "quick_edit_included_helper": "Dahil hizmetler paket fiyatına dahildir.",

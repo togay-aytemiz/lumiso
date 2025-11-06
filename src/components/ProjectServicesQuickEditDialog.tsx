@@ -156,7 +156,7 @@ export function ProjectServicesQuickEditDialog({
           vatMode: selection.vatMode,
           vatRate: selection.vatRate,
         });
-        next.set(selection.serviceId, {
+        const entry: SelectedServiceEntry = {
           projectServiceId: selection.projectServiceId,
           quantity: Math.max(1, selection.quantity ?? 1),
           values: {
@@ -168,6 +168,13 @@ export function ProjectServicesQuickEditDialog({
           defaults,
           openPricing: false,
           openVat: false,
+        };
+        const pricingDirty = isPricingDirty(entry);
+        const vatDirty = isVatDirty(entry);
+        next.set(selection.serviceId, {
+          ...entry,
+          openPricing: pricingDirty,
+          openVat: vatDirty,
         });
       });
       return next;

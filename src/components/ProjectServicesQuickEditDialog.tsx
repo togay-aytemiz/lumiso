@@ -386,12 +386,14 @@ export function ProjectServicesQuickEditDialog({
               unitPrice: entry.defaults.unitPrice ?? null,
             },
             openPricing: false,
+            openVat: false,
           };
         }
 
         return {
           ...entry,
           openPricing: false,
+          openVat: false,
         };
       });
     },
@@ -605,6 +607,7 @@ export function ProjectServicesQuickEditDialog({
             if (!entry) return null;
             const pricingDirty = isPricingDirty(entry);
             const vatDirty = isVatDirty(entry);
+            const showVatButton = entry.openPricing || entry.openVat;
             return (
               <div className="flex flex-wrap items-center gap-2">
                 <Button
@@ -621,20 +624,22 @@ export function ProjectServicesQuickEditDialog({
                         defaultValue: "Edit prices",
                       })}
                 </Button>
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="px-0 text-emerald-600"
-                  onClick={() => toggleVat(service.id)}
-                >
-                  {entry.openVat || vatDirty
-                    ? tProject("steps.packages.actions.resetVat", {
-                        defaultValue: "Reset VAT",
-                      })
-                    : tProject("steps.packages.actions.editVat", {
-                        defaultValue: "Adjust VAT",
-                      })}
-                </Button>
+                {showVatButton ? (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="px-0 text-emerald-600"
+                    onClick={() => toggleVat(service.id)}
+                  >
+                    {entry.openVat || vatDirty
+                      ? tProject("steps.packages.actions.resetVat", {
+                          defaultValue: "Reset VAT",
+                        })
+                      : tProject("steps.packages.actions.editVat", {
+                          defaultValue: "Adjust VAT",
+                        })}
+                  </Button>
+                ) : null}
               </div>
             );
           }}

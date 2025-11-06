@@ -88,7 +88,19 @@ describe("projectCreationReducer mutations", () => {
     const withServices = reduce(base, {
       type: "UPDATE_SERVICES",
       payload: {
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
+        includedItems: [
+=======
         items: [
+>>>>>>> theirs
+=======
+        items: [
+>>>>>>> theirs
+=======
+        items: [
+>>>>>>> theirs
           {
             id: "svc-1",
             type: "existing",
@@ -112,8 +124,23 @@ describe("projectCreationReducer mutations", () => {
       },
     });
 
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
+    expect(toggled.services.includedItems).toHaveLength(1);
+    expect(toggled.services.includedItems[0]?.name).toBe("Timeline planning");
+=======
     expect(toggled.services.items).toHaveLength(1);
     expect(toggled.services.items[0]?.name).toBe("Timeline planning");
+>>>>>>> theirs
+=======
+    expect(toggled.services.items).toHaveLength(1);
+    expect(toggled.services.items[0]?.name).toBe("Timeline planning");
+>>>>>>> theirs
+=======
+    expect(toggled.services.items).toHaveLength(1);
+    expect(toggled.services.items[0]?.name).toBe("Timeline planning");
+>>>>>>> theirs
     expect(toggled.services.packageLabel).toBe("Basic package");
     expect(toggled.meta.isDirty).toBe(true);
   });

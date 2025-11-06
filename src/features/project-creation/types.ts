@@ -38,13 +38,13 @@ export interface ProjectServiceLineItem {
   vatMode?: VatMode;
   unit?: ServiceUnit | string | null;
   source?: "catalog" | "adhoc";
-  billingType?: "included" | "add_on";
 }
 
 export interface ProjectCreationServices {
   packageId?: string;
   packageLabel?: string;
-  items: ProjectServiceLineItem[];
+  includedItems: ProjectServiceLineItem[];
+  extraItems: ProjectServiceLineItem[];
   showCustomSetup?: boolean;
 }
 

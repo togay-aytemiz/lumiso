@@ -123,7 +123,7 @@ export const ProjectCreationWizard = ({
     const hasDetails = Boolean(projectName && state.details.projectTypeId);
     const detailsSummary = projectName ?? projectTypeLabel;
 
-    const lineItemCount = state.services.items.length;
+    const lineItemCount = state.services.includedItems.length + state.services.extraItems.length;
 
     const packageSummary = state.services.packageLabel
       ? state.services.packageLabel

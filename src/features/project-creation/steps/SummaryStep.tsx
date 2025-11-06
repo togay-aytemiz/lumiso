@@ -73,7 +73,10 @@ export const SummaryStep = () => {
     ? packages.find((pkg) => pkg.id === state.services.packageId)
     : undefined;
 
-  const existingItems = state.services.items;
+  const existingItems = useMemo(
+    () => [...state.services.includedItems, ...state.services.extraItems],
+    [state.services.includedItems, state.services.extraItems]
+  );
   const hasServices = existingItems.length > 0;
 
   const totals = useMemo(() => {

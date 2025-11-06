@@ -59,7 +59,8 @@ export const createInitialProjectCreationState = (
   services: {
     packageId: undefined,
     packageLabel: undefined,
-    items: [],
+    includedItems: [],
+    extraItems: [],
     showCustomSetup: false,
   },
   meta: deriveInitialMeta(entryContext),
@@ -134,8 +135,11 @@ export const projectCreationReducer = (
         ...state.services,
         ...action.payload,
       };
-      if (!nextServices.items) {
-        nextServices.items = state.services.items;
+      if (!("includedItems" in action.payload)) {
+        nextServices.includedItems = state.services.includedItems;
+      }
+      if (!("extraItems" in action.payload)) {
+        nextServices.extraItems = state.services.extraItems;
       }
       if (shallowEqual(state.services, nextServices)) {
         return state;

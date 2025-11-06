@@ -4,24 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { SegmentedControl } from "@/components/ui/segmented-control";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  ServiceInventorySelector,
-  type ServiceInventoryItem,
-  type ServiceInventoryType,
-} from "@/components/ServiceInventorySelector";
+import type { ServiceInventoryType } from "@/components/ServiceInventorySelector";
 import {
   ServicesTableCard,
   SummaryTotalRow,
@@ -31,6 +14,13 @@ import {
   type ServicesTableRow,
 } from "@/components/services";
 import { ProjectServicesCard, type ProjectServicesCardItem } from "@/components/ProjectServicesCard";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import {
+  ProjectServicesQuickEditDialog,
+  type ProjectServiceQuickEditResult,
+  type ProjectServiceQuickEditSelection,
+  type QuickServiceRecord,
+} from "@/components/ProjectServicesQuickEditDialog";
 import { usePackages, useProjectTypes, useServices } from "@/hooks/useOrganizationData";
 import { useProjectCreationContext } from "../hooks/useProjectCreationContext";
 import { useProjectCreationActions } from "../hooks/useProjectCreationActions";
@@ -85,6 +75,7 @@ type VatModeOption = "inclusive" | "exclusive";
 export const PackagesStep = () => {
   const { t } = useTranslation("projectCreation");
   const { t: tPackages } = useTranslation("packageCreation");
+  const { t: tForms } = useTranslation("forms");
   const { state } = useProjectCreationContext();
   const { updateServices, updateDetails } = useProjectCreationActions();
 
@@ -130,7 +121,8 @@ export const PackagesStep = () => {
   const showCustomSetup =
     Boolean(state.services.packageId) ||
     state.services.showCustomSetup ||
-    state.services.items.length > 0;
+    state.services.includedItems.length > 0 ||
+    state.services.extraItems.length > 0;
 
   const serviceMap = useMemo<Map<string, ServiceWithMetadata>>(
     () =>
@@ -161,54 +153,38 @@ export const PackagesStep = () => {
     [services]
   );
 
-  const inventoryServices = useMemo<ServiceInventoryItem[]>(
-    () =>
-      services
-        .filter((service) => service.is_active !== false)
-        .map((service) => ({
-        id: service.id,
-        name: service.name,
-        category: service.category,
-        serviceType: (service.service_type ?? "unknown") as ServiceInventoryType,
-        vendorName: service.vendor_name ?? null,
-        unitCost: service.cost_price ?? null,
-        unitPrice: service.selling_price ?? service.price ?? null,
-        unit: normalizeServiceUnit(service.default_unit),
-        defaultUnit: service.default_unit ?? null,
-        isActive: service.is_active !== false,
-        vatRate:
-          typeof service.vat_rate === "number" && Number.isFinite(service.vat_rate)
-            ? Number(service.vat_rate)
-            : null,
-        priceIncludesVat: service.price_includes_vat ?? false,
-      })),
-    [services]
+  const buildLineItemFromService = useCallback(
+    (service: ServiceWithMetadata): ProjectServiceLineItem => ({
+      id: service.id,
+      type: "existing",
+      serviceId: service.id,
+      name: service.name,
+      quantity: 1,
+      unitCost: service.unitCost,
+      unitPrice: service.unitPrice,
+      vendorName: service.vendor_name ?? null,
+      vatRate: service.vatRate ?? null,
+      vatMode: service.vatMode,
+      unit: service.unit,
+      source: "catalog",
+    }),
+    []
   );
 
-  const existingItems = state.services.items;
+  const includedItems = state.services.includedItems;
+  const extraItems = state.services.extraItems;
+  const existingItems = useMemo(
+    () => [...includedItems, ...extraItems],
+    [includedItems, extraItems]
+  );
   const hasServices = existingItems.length > 0;
-  const [servicesSheetOpen, setServicesSheetOpen] = useState(false);
-  const [servicesSheetDraft, setServicesSheetDraft] = useState<ProjectServiceLineItem[] | null>(null);
-  const [isSavingServices, setIsSavingServices] = useState(false);
-
-  const isEditingServicesSheet = servicesSheetDraft !== null;
-  const sheetItems = servicesSheetDraft ?? existingItems;
-
-  const includedItems = useMemo(
-    () =>
-      existingItems.filter(
-        (item) => (item.billingType ?? "add_on") === "included"
-      ),
-    [existingItems]
-  );
-
-  const addOnItems = useMemo(
-    () =>
-      existingItems.filter(
-        (item) => (item.billingType ?? "add_on") === "add_on"
-      ),
-    [existingItems]
-  );
+  const [serviceDialogState, setServiceDialogState] = useState<{
+    open: boolean;
+    mode: "included" | "extra";
+  }>({
+    open: false,
+    mode: "included",
+  });
 
   const aggregateLineItems = useCallback(
     (items: ProjectServiceLineItem[]) =>
@@ -236,156 +212,24 @@ export const PackagesStep = () => {
     [aggregateLineItems, includedItems]
   );
 
-  const addOnTotals = useMemo(
-    () => aggregateLineItems(addOnItems),
-    [aggregateLineItems, addOnItems]
+  const extraTotals = useMemo(
+    () => aggregateLineItems(extraItems),
+    [aggregateLineItems, extraItems]
   );
 
   const combinedTotals = useMemo(
     () => ({
-      cost: includedTotals.cost + addOnTotals.cost,
-      net: includedTotals.net + addOnTotals.net,
-      vat: includedTotals.vat + addOnTotals.vat,
-      total: includedTotals.total + addOnTotals.total,
+      cost: includedTotals.cost + extraTotals.cost,
+      net: includedTotals.net + extraTotals.net,
+      vat: includedTotals.vat + extraTotals.vat,
+      total: includedTotals.total + extraTotals.total,
     }),
-    [includedTotals, addOnTotals]
+    [includedTotals, extraTotals]
   );
 
   const includedCount = includedItems.length;
-  const addOnCount = addOnItems.length;
-  const [openPricingIds, setOpenPricingIds] = useState<Set<string>>(() => new Set());
-  const [openVatIds, setOpenVatIds] = useState<Set<string>>(() => new Set());
-  const [pendingPricingResetId, setPendingPricingResetId] = useState<string | null>(null);
-  const [pendingVatResetId, setPendingVatResetId] = useState<string | null>(null);
-  const sheetItemsByServiceId = useMemo(() => {
-    const map = new Map<string, ProjectServiceLineItem>();
-    sheetItems.forEach((item) => {
-      if (item.serviceId) {
-        map.set(item.serviceId, item);
-      } else {
-        map.set(item.id, item);
-      }
-    });
-    return map;
-  }, [sheetItems]);
-
-  const sheetSelectedQuantities = useMemo(
-    () =>
-      sheetItems.reduce<Record<string, number>>((acc, item) => {
-        if (item.serviceId) {
-          acc[item.serviceId] = Math.max(1, item.quantity ?? 1);
-        }
-        return acc;
-      }, {}),
-    [sheetItems]
-  );
-
-  useEffect(() => {
-    const validIds = new Set(existingItems.map((item) => item.id));
-    setOpenPricingIds((previous) => {
-      let changed = false;
-      const next = new Set<string>();
-      previous.forEach((id) => {
-        if (validIds.has(id)) {
-          next.add(id);
-        } else {
-          changed = true;
-        }
-      });
-      return changed ? next : previous;
-    });
-    setOpenVatIds((previous) => {
-      let changed = false;
-      const next = new Set<string>();
-      previous.forEach((id) => {
-        if (validIds.has(id)) {
-          next.add(id);
-        } else {
-          changed = true;
-        }
-      });
-      return changed ? next : previous;
-    });
-  }, [existingItems]);
-
-  const setItems = useCallback(
-    (items: ProjectServiceLineItem[]) => {
-      updateServices({ items });
-    },
-    [updateServices]
-  );
-
-  const mutateItems = useCallback(
-    (modifier: (items: ProjectServiceLineItem[]) => ProjectServiceLineItem[]) => {
-      if (isEditingServicesSheet) {
-        setServicesSheetDraft((previous) => {
-          const base = previous ?? existingItems;
-          return modifier(base);
-        });
-        return;
-      }
-      setItems(modifier(existingItems));
-    },
-    [existingItems, isEditingServicesSheet, setItems]
-  );
-
-  const resetServicesSheetState = useCallback(() => {
-    setServicesSheetDraft(null);
-    setIsSavingServices(false);
-    setOpenPricingIds(new Set());
-    setOpenVatIds(new Set());
-    setPendingPricingResetId(null);
-    setPendingVatResetId(null);
-  }, []);
-
-  const handleServicesSheetOpenChange = useCallback(
-    (open: boolean) => {
-      if (open) {
-        setServicesSheetDraft(existingItems.map((item) => ({ ...item })));
-        setIsSavingServices(false);
-        setOpenPricingIds(new Set());
-        setOpenVatIds(new Set());
-        setPendingPricingResetId(null);
-        setPendingVatResetId(null);
-        setServicesSheetOpen(true);
-        return;
-      }
-      resetServicesSheetState();
-      setServicesSheetOpen(false);
-    },
-    [existingItems, resetServicesSheetState]
-  );
-
-  const handleServicesSheetOpen = useCallback(() => {
-    handleServicesSheetOpenChange(true);
-  }, [handleServicesSheetOpenChange]);
-
-  const handleServicesSheetCancel = useCallback(() => {
-    resetServicesSheetState();
-    setServicesSheetOpen(false);
-  }, [resetServicesSheetState]);
-
-  const handleServicesSheetSave = useCallback(() => {
-    if (!servicesSheetDraft) {
-      resetServicesSheetState();
-      setServicesSheetOpen(false);
-      return;
-    }
-
-    setIsSavingServices(true);
-    try {
-      updateServices({
-        items: servicesSheetDraft,
-        showCustomSetup: state.services.showCustomSetup || servicesSheetDraft.length > 0,
-      });
-    } finally {
-      setIsSavingServices(false);
-      resetServicesSheetState();
-      setServicesSheetOpen(false);
-    }
-  }, [resetServicesSheetState, servicesSheetDraft, state.services.showCustomSetup, updateServices]);
-
-  const servicesMargin = addOnTotals.net - addOnTotals.cost;
+  const addOnCount = extraItems.length;
+  const servicesMargin = extraTotals.net - extraTotals.cost;
   const formatCurrency = useCallback(
     (value: number) =>
       new Intl.NumberFormat("tr-TR", {
@@ -403,15 +247,6 @@ export const PackagesStep = () => {
       }).format(value),
     []
   );
-  const totalQuantity = useMemo(
-    () =>
-      addOnItems.reduce(
-        (acc, item) => acc + Math.max(1, item.quantity ?? 1),
-        0
-      ),
-    [addOnItems]
-  );
-
   const buildVatBreakdown = useCallback(
     (items: ProjectServiceLineItem[]) => {
       const buckets = new Map<number, number>();
@@ -437,9 +272,9 @@ export const PackagesStep = () => {
     [buildVatBreakdown, existingItems]
   );
 
-  const addOnVatBreakdown = useMemo(
-    () => buildVatBreakdown(addOnItems),
-    [buildVatBreakdown, addOnItems]
+  const extraVatBreakdown = useMemo(
+    () => buildVatBreakdown(extraItems),
+    [buildVatBreakdown, extraItems]
   );
 
   const includedVatBreakdown = useMemo(
@@ -447,470 +282,235 @@ export const PackagesStep = () => {
     [buildVatBreakdown, includedItems]
   );
 
-  const billingToggleLabel = t("steps.packages.servicesCard.toggleLabel", {
-    defaultValue: "Service billing mode",
-  });
-  const billingIncludedLabel = t("steps.packages.servicesCard.toggleIncluded", {
-    defaultValue: "Included",
-  });
-  const billingAddOnLabel = t("steps.packages.servicesCard.toggleAddon", {
-    defaultValue: "Add-on",
-  });
-
-  const updateItem = useCallback((itemId: string, updates: Partial<ProjectServiceLineItem>) => {
-    mutateItems((items) =>
-      items.map((item) =>
-        item.id === itemId || item.serviceId === itemId ? { ...item, ...updates } : item
-      )
-    );
-  }, [mutateItems]);
-
-  const handleBillingTypeChange = useCallback(
-    (itemId: string, billingType: "included" | "add_on") => {
-      updateItem(itemId, { billingType });
-    },
-    [updateItem]
+  const quickEditServices = useMemo<QuickServiceRecord[]>(
+    () =>
+      services.map((service) => {
+        const serviceType =
+          service.service_type === "coverage" || service.service_type === "deliverable"
+            ? (service.service_type as "coverage" | "deliverable")
+            : null;
+        return {
+          id: service.id,
+          name: service.name,
+          category: service.category,
+          selling_price: service.selling_price ?? service.price ?? null,
+          price: service.price ?? null,
+          cost_price: service.cost_price ?? null,
+          vat_rate: service.vat_rate ?? null,
+          price_includes_vat: service.price_includes_vat ?? null,
+          service_type: serviceType,
+          extra: false,
+        };
+      }),
+    [services]
   );
 
-  const serviceCardItems = useMemo<ProjectServicesCardItem[]>(() => {
-    return sheetItems.map((item) => {
-      const quantity = Math.max(1, item.quantity ?? 1);
-      const quantityLabel =
-        quantity > 1
-          ? t("steps.packages.servicesCard.quantity", {
-              count: quantity,
-              defaultValue: "{{count}} adet",
-            })
-          : null;
-      const billingType = (item.billingType ?? "add_on") as "included" | "add_on";
-
-      return {
-        key: item.id,
-        left: (
-          <div>
-            <div className="font-medium">{item.name}</div>
-            {quantityLabel ? (
-              <div className="text-xs text-muted-foreground">{quantityLabel}</div>
-            ) : null}
-          </div>
-        ),
-        right: (
-          <SegmentedControl
-            size="sm"
-            value={billingType}
-            onValueChange={(value) => {
-              if (!value) return;
-              handleBillingTypeChange(item.id, value as "included" | "add_on");
-            }}
-            options={[
-              {
-                value: "included",
-                label: billingIncludedLabel,
-                ariaLabel: billingIncludedLabel,
-              },
-              {
-                value: "add_on",
-                label: billingAddOnLabel,
-                ariaLabel: billingAddOnLabel,
-              },
-            ]}
-          />
-        ),
-      };
+  const existingItemsByServiceId = useMemo(() => {
+    const map = new Map<string, ProjectServiceLineItem>();
+    existingItems.forEach((item) => {
+      map.set(item.id, item);
+      if (item.serviceId) {
+        map.set(item.serviceId, item);
+      }
     });
-  }, [sheetItems, t, billingIncludedLabel, billingAddOnLabel, handleBillingTypeChange]);
+    return map;
+  }, [existingItems]);
 
-  const servicesCardHelperText = hasServices
-    ? t("steps.packages.servicesCard.helperWithCount", {
-        included: includedCount,
-        addOn: addOnCount,
-        defaultValue: "Included: {{included}} • Add-ons: {{addOn}}",
-      })
-    : t("steps.packages.servicesCard.helperEmpty", {
-        defaultValue: "Pakete uygun hizmetleri ekleyin.",
-      });
-
-  const servicesCardEmptyCta = t("steps.packages.servicesCard.emptyCta", {
-    defaultValue: "Hizmet ekle",
-  });
-  const servicesCardAddLabel = t("steps.packages.servicesCard.add", {
-    defaultValue: "Hizmet ekle",
-  });
-  const servicesCardManageLabel = t("steps.packages.servicesCard.manage", {
-    defaultValue: "Hizmetleri düzenle",
-  });
-  const servicesCardTitle = t("steps.packages.servicesCard.title", {
-    defaultValue: "Proje hizmetleri",
-  });
-  const servicesCardTooltipTitle = t("steps.packages.servicesCard.tooltipTitle", {
-    defaultValue: "Proje hizmetleri",
-  });
-  const servicesCardTooltipLines = [
-    t("steps.packages.servicesCard.tooltipLine1", {
-      defaultValue: "Paket seçince varsayılan hizmetler otomatik eklenir.",
-    }),
-    t("steps.packages.servicesCard.tooltipLine2", {
-      defaultValue: "Düzenle diyerek paket içi ve ek hizmetleri güncelleyebilirsiniz.",
-    }),
-    t("steps.packages.servicesCard.tooltipLine3", {
-      defaultValue: "Yaptığınız değişiklikler fiyatlara ve sözleşmeye yansır.",
-    }),
-  ];
-  const servicesCardAriaLabel = t("steps.packages.servicesCard.ariaLabel", {
-    defaultValue: "Proje hizmetleri bilgisi",
-  });
-  const hasBillableServices = addOnCount > 0;
-
-  const removeItem = useCallback((itemId: string) => {
-    mutateItems((items) => items.filter((item) => item.id !== itemId && item.serviceId !== itemId));
-  }, [mutateItems]);
-
-  const adjustQuantity = useCallback((itemId: string, delta: number) => {
-    const target = sheetItems.find((item) => item.serviceId === itemId || item.id === itemId);
-    const next = Math.max(1, (target?.quantity ?? 1) + delta);
-    updateItem(itemId, { quantity: next });
-  }, [sheetItems, updateItem]);
-
-  const buildLineItemFromService = useCallback(
-    (
-      service: ServiceWithMetadata,
-      billingType: "included" | "add_on" = "add_on"
-    ): ProjectServiceLineItem => ({
-      id: service.id,
-      type: "existing",
-      serviceId: service.id,
-      name: service.name,
-      quantity: 1,
-      unitCost: service.unitCost,
-      unitPrice: service.unitPrice,
-      vendorName: service.vendor_name ?? null,
-      vatRate: service.vatRate ?? undefined,
-      vatMode: service.vatMode,
-      unit: service.unit,
-      source: "catalog",
-      billingType,
-    }),
+  const resolveOverride = useCallback(
+    <K extends keyof ProjectServiceQuickEditResult["overrides"]>(
+      overrides: ProjectServiceQuickEditResult["overrides"],
+      key: K,
+      fallback: () => ProjectServiceQuickEditResult["overrides"][K]
+    ) => {
+      if (Object.prototype.hasOwnProperty.call(overrides, key)) {
+        return overrides[key];
+      }
+      return fallback();
+    },
     []
   );
 
-  const handleAddService = useCallback((serviceId: string) => {
-    const service = serviceMap.get(serviceId);
-    if (!service) return;
+  const buildLineItemFromSelection = useCallback(
+    (result: ProjectServiceQuickEditResult): ProjectServiceLineItem => {
+      const lookupKey = result.serviceId ?? result.projectServiceId ?? null;
+      const existing = lookupKey ? existingItemsByServiceId.get(lookupKey) ?? null : null;
+      const resolvedServiceId = result.serviceId ?? existing?.serviceId ?? null;
+      const serviceMeta = resolvedServiceId ? serviceMap.get(resolvedServiceId) : undefined;
+      const quantity = Math.max(1, result.quantity ?? 1);
 
-    mutateItems((items) => {
-      const filtered = items.filter((item) => item.serviceId !== serviceId);
-      const nextItem = buildLineItemFromService(service);
-      return [...filtered, nextItem];
-    });
+      const resolvedUnitCost = resolveOverride(
+        result.overrides,
+        "unitCost",
+        () => existing?.unitCost ?? serviceMeta?.unitCost ?? null
+      );
+      const resolvedUnitPrice = resolveOverride(
+        result.overrides,
+        "unitPrice",
+        () => existing?.unitPrice ?? serviceMeta?.unitPrice ?? null
+      );
+      const resolvedVatMode = resolveOverride(
+        result.overrides,
+        "vatMode",
+        () => existing?.vatMode ?? serviceMeta?.vatMode ?? "inclusive"
+      );
+      const resolvedVatRate = resolveOverride(
+        result.overrides,
+        "vatRate",
+        () => existing?.vatRate ?? serviceMeta?.vatRate ?? null
+      );
 
-    if (!isEditingServicesSheet) {
-      updateServices({ showCustomSetup: true });
-    }
-  }, [buildLineItemFromService, mutateItems, serviceMap, isEditingServicesSheet, updateServices]);
-
-  const handleIncreaseService = (serviceId: string) => adjustQuantity(serviceId, 1);
-  const handleDecreaseService = (serviceId: string) => adjustQuantity(serviceId, -1);
-
-  const handleSetServiceQuantity = (serviceId: string, quantity: number) => {
-    updateItem(serviceId, { quantity: Math.max(1, quantity) });
-  };
-
-  const handleRemoveService = (serviceId: string) => {
-    removeItem(serviceId);
-  };
-
-  const closePricingAndVatEditors = useCallback((itemId: string) => {
-    setOpenPricingIds((previous) => {
-      if (!previous.has(itemId)) {
-        return previous;
-      }
-      const next = new Set(previous);
-      next.delete(itemId);
-      return next;
-    });
-    setOpenVatIds((previous) => {
-      if (!previous.has(itemId)) {
-        return previous;
-      }
-      const next = new Set(previous);
-      next.delete(itemId);
-      return next;
-    });
-  }, []);
-
-  const closeVatEditor = useCallback((itemId: string) => {
-    setOpenVatIds((previous) => {
-      if (!previous.has(itemId)) {
-        return previous;
-      }
-      const next = new Set(previous);
-      next.delete(itemId);
-      return next;
-    });
-  }, []);
-
-  const getLineItemDefaults = useCallback(
-    (lineItem: ProjectServiceLineItem) => {
-      const serviceMeta = serviceMap.get(lineItem.serviceId ?? lineItem.id);
-      const toFiniteNumber = (value: number | null | undefined) =>
-        typeof value === "number" && Number.isFinite(value) ? value : null;
+      const fallbackId =
+        existing?.id ??
+        result.projectServiceId ??
+        resolvedServiceId ??
+        `svc-${Math.random().toString(36).slice(2, 10)}`;
 
       return {
-        serviceMeta,
-        unitCost: serviceMeta?.unitCost ?? toFiniteNumber(lineItem.unitCost),
-        unitPrice: serviceMeta?.unitPrice ?? toFiniteNumber(lineItem.unitPrice),
-        vatMode: serviceMeta?.vatMode ?? (lineItem.vatMode ?? "exclusive"),
-        vatRate: serviceMeta ? toFiniteNumber(serviceMeta.vatRate) : toFiniteNumber(lineItem.vatRate),
+        id: fallbackId,
+        type: existing?.type ?? "existing",
+        serviceId: resolvedServiceId ?? undefined,
+        name: serviceMeta?.name ?? existing?.name ?? resolvedServiceId ?? fallbackId,
+        quantity,
+        unitCost: typeof resolvedUnitCost === "number" ? resolvedUnitCost : null,
+        unitPrice: typeof resolvedUnitPrice === "number" ? resolvedUnitPrice : null,
+        vendorName: serviceMeta?.vendor_name ?? existing?.vendorName ?? null,
+        vatMode: resolvedVatMode ?? "inclusive",
+        vatRate: typeof resolvedVatRate === "number" ? resolvedVatRate : null,
+        unit: existing?.unit ?? serviceMeta?.unit ?? DEFAULT_SERVICE_UNIT,
+        source: existing?.source ?? "catalog",
+      };
+    },
+    [existingItemsByServiceId, resolveOverride, serviceMap]
+  );
+
+  const toSelection = useCallback(
+    (item: ProjectServiceLineItem): ProjectServiceQuickEditSelection | null => {
+      if (!item.serviceId) return null;
+      const serviceMeta = serviceMap.get(item.serviceId);
+      const quantity = Math.max(1, item.quantity ?? 1);
+      const vatMode = item.vatMode ?? serviceMeta?.vatMode ?? "inclusive";
+      const vatRate =
+        typeof item.vatRate === "number" && Number.isFinite(item.vatRate)
+          ? item.vatRate
+          : serviceMeta?.vatRate ?? null;
+      const unitCost =
+        typeof item.unitCost === "number" && Number.isFinite(item.unitCost)
+          ? item.unitCost
+          : serviceMeta?.unitCost ?? null;
+      const unitPrice =
+        typeof item.unitPrice === "number" && Number.isFinite(item.unitPrice)
+          ? item.unitPrice
+          : serviceMeta?.unitPrice ?? null;
+
+      return {
+        serviceId: item.serviceId,
+        projectServiceId: item.id,
+        quantity,
+        unitCost,
+        unitPrice,
+        vatMode: vatMode as VatModeOption,
+        vatRate,
       };
     },
     [serviceMap]
   );
 
-  const isPricingDirty = useCallback(
-    (lineItem: ProjectServiceLineItem) => {
-      const defaults = getLineItemDefaults(lineItem);
-      const toFiniteNumber = (value: number | null | undefined) =>
-        typeof value === "number" && Number.isFinite(value) ? value : null;
+  const includedSelections = useMemo<ProjectServiceQuickEditSelection[]>(() => {
+    return includedItems
+      .map(toSelection)
+      .filter((selection): selection is ProjectServiceQuickEditSelection => Boolean(selection));
+  }, [includedItems, toSelection]);
 
-      const currentUnitCost = toFiniteNumber(lineItem.unitCost);
-      const currentUnitPrice = toFiniteNumber(lineItem.unitPrice);
-      const currentVatMode = lineItem.vatMode ?? defaults.vatMode;
-      const currentVatRate = toFiniteNumber(lineItem.vatRate);
+  const extraSelections = useMemo<ProjectServiceQuickEditSelection[]>(() => {
+    return extraItems
+      .map(toSelection)
+      .filter((selection): selection is ProjectServiceQuickEditSelection => Boolean(selection));
+  }, [extraItems, toSelection]);
 
-      return (
-        currentUnitCost !== defaults.unitCost ||
-        currentUnitPrice !== defaults.unitPrice ||
-        currentVatMode !== defaults.vatMode ||
-        currentVatRate !== defaults.vatRate
+  const handleServiceDialogOpen = useCallback((mode: "included" | "extra") => {
+    setServiceDialogState({ open: true, mode });
+  }, []);
+
+  const handleServiceQuickEditSubmit = useCallback(
+    (mode: "included" | "extra", results: ProjectServiceQuickEditResult[]) => {
+      const builtItems = results.map(buildLineItemFromSelection);
+      const builtKeys = new Set(
+        builtItems
+          .map((item) => item.serviceId ?? item.id)
+          .filter((key): key is string => Boolean(key))
       );
-    },
-    [getLineItemDefaults]
-  );
 
-  const isVatDirty = useCallback(
-    (lineItem: ProjectServiceLineItem) => {
-      const defaults = getLineItemDefaults(lineItem);
-      const toFiniteNumber = (value: number | null | undefined) =>
-        typeof value === "number" && Number.isFinite(value) ? value : null;
+      const filterByKeys = (items: ProjectServiceLineItem[]) =>
+        items.filter((item) => !builtKeys.has(item.serviceId ?? item.id));
 
-      const currentVatMode = lineItem.vatMode ?? defaults.vatMode;
-      const currentVatRate = toFiniteNumber(lineItem.vatRate);
+      const nextIncluded = mode === "included" ? builtItems : filterByKeys(includedItems);
+      const nextExtra = mode === "extra" ? builtItems : filterByKeys(extraItems);
 
-      return currentVatMode !== defaults.vatMode || currentVatRate !== defaults.vatRate;
-    },
-    [getLineItemDefaults]
-  );
-
-  const resetLineItemPricing = useCallback(
-    (lineItem: ProjectServiceLineItem) => {
-      const defaults = getLineItemDefaults(lineItem);
-      updateItem(lineItem.id, {
-        unitCost: defaults.unitCost,
-        unitPrice: defaults.unitPrice,
-        vatMode: defaults.vatMode,
-        vatRate: defaults.vatRate ?? null,
+      updateServices({
+        includedItems: nextIncluded,
+        extraItems: nextExtra,
+        showCustomSetup:
+          state.services.showCustomSetup || nextIncluded.length + nextExtra.length > 0,
       });
     },
-    [getLineItemDefaults, updateItem]
+    [buildLineItemFromSelection, includedItems, extraItems, state.services.showCustomSetup, updateServices]
   );
 
-  const resetLineItemVat = useCallback(
-    (lineItem: ProjectServiceLineItem) => {
-      const defaults = getLineItemDefaults(lineItem);
-      updateItem(lineItem.id, {
-        vatMode: defaults.vatMode,
-        vatRate: defaults.vatRate ?? null,
-      });
-    },
-    [getLineItemDefaults, updateItem]
-  );
+  const includedCardItems = useMemo<ProjectServicesCardItem[]>(() => {
+    return includedItems.map((item) => {
+      const quantity = Math.max(1, item.quantity ?? 1);
+      return {
+        key: item.id,
+        left: <div className="font-medium">{item.name}</div>,
+        right: (
+          <div className="font-medium text-muted-foreground">
+            {tForms("services.quantity_short", {
+              count: quantity,
+              defaultValue: "x {{count}}",
+            })}
+          </div>
+        ),
+      };
+    });
+  }, [includedItems, tForms]);
 
-  const handlePricingButtonClick = (lineItem: ProjectServiceLineItem) => {
-    const isOpen = openPricingIds.has(lineItem.id);
-    if (!isOpen) {
-      setOpenPricingIds((previous) => {
-        const next = new Set(previous);
-        next.add(lineItem.id);
-        return next;
-      });
-      return;
-    }
+  const extraCardItems = useMemo<ProjectServicesCardItem[]>(() => {
+    return extraItems.map((item) => {
+      const quantity = Math.max(1, item.quantity ?? 1);
+      const pricing = calculateLineItemPricing(item);
+      const unitPrice =
+        typeof item.unitPrice === "number" && Number.isFinite(item.unitPrice)
+          ? item.unitPrice
+          : serviceMap.get(item.serviceId ?? item.id)?.unitPrice ?? 0;
 
-    const dirty = isPricingDirty(lineItem);
-    if (dirty) {
-      setPendingPricingResetId(lineItem.id);
-      return;
-    }
+      return {
+        key: item.id,
+        left: <div className="font-medium">{item.name}</div>,
+        right: (
+          <div className="text-right">
+            <div className="font-medium text-muted-foreground">
+              {formatCurrency(pricing.gross)}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {tForms("services.unit_price_line", {
+                quantity,
+                amount: formatCurrency(unitPrice),
+                defaultValue: "{{quantity}} × {{amount}}",
+              })}
+            </div>
+          </div>
+        ),
+      };
+    });
+  }, [extraItems, formatCurrency, serviceMap, tForms]);
 
-    resetLineItemPricing(lineItem);
-    closePricingAndVatEditors(lineItem.id);
-  };
-
-  const handleVatButtonClick = (lineItem: ProjectServiceLineItem) => {
-    const isOpen = openVatIds.has(lineItem.id);
-    if (!isOpen) {
-      setOpenVatIds((previous) => {
-        const next = new Set(previous);
-        next.add(lineItem.id);
-        return next;
-      });
-      return;
-    }
-
-    const dirty = isVatDirty(lineItem);
-    if (dirty) {
-      setPendingVatResetId(lineItem.id);
-      return;
-    }
-
-    resetLineItemVat(lineItem);
-    closeVatEditor(lineItem.id);
-  };
-
-  const handleVatModeChange = useCallback((itemId: string, mode: VatModeOption) => {
-    updateItem(itemId, { vatMode: mode });
-  }, [updateItem]);
-
-  const handleVatRateChange = useCallback((itemId: string, value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      updateItem(itemId, { vatRate: null });
-      return;
-    }
-
-    const numeric = Number(trimmed.replace(/,/g, "."));
-    if (Number.isNaN(numeric)) {
-      return;
-    }
-
-    const clamped = Math.min(99.99, Math.max(0, numeric));
-    updateItem(itemId, { vatRate: clamped });
-  }, [updateItem]);
-
-  const pendingPricingLineItem = useMemo(() => {
-    if (!pendingPricingResetId) {
-      return null;
-    }
-    return (
-      sheetItems.find(
-        (item) => item.id === pendingPricingResetId || item.serviceId === pendingPricingResetId
-      ) ?? null
-    );
-  }, [pendingPricingResetId, sheetItems]);
-
-  const pendingVatLineItem = useMemo(() => {
-    if (!pendingVatResetId) {
-      return null;
-    }
-    return (
-      sheetItems.find(
-        (item) => item.id === pendingVatResetId || item.serviceId === pendingVatResetId
-      ) ?? null
-    );
-  }, [pendingVatResetId, sheetItems]);
-
-  useEffect(() => {
-    if (pendingPricingResetId && !pendingPricingLineItem) {
-      setPendingPricingResetId(null);
-    }
-  }, [pendingPricingLineItem, pendingPricingResetId]);
-
-  useEffect(() => {
-    if (pendingVatResetId && !pendingVatLineItem) {
-      setPendingVatResetId(null);
-    }
-  }, [pendingVatLineItem, pendingVatResetId]);
-
-  const confirmPricingReset = useCallback(() => {
-    if (!pendingPricingLineItem) {
-      setPendingPricingResetId(null);
-      return;
-    }
-    resetLineItemPricing(pendingPricingLineItem);
-    closePricingAndVatEditors(pendingPricingLineItem.id);
-    setPendingPricingResetId(null);
-  }, [pendingPricingLineItem, resetLineItemPricing, closePricingAndVatEditors]);
-
-  const confirmVatReset = useCallback(() => {
-    if (!pendingVatLineItem) {
-      setPendingVatResetId(null);
-      return;
-    }
-    resetLineItemVat(pendingVatLineItem);
-    closeVatEditor(pendingVatLineItem.id);
-    setPendingVatResetId(null);
-  }, [pendingVatLineItem, resetLineItemVat, closeVatEditor]);
-
-  const inventoryLabels = useMemo(
-    () => ({
-      typeMeta: {
-        coverage: {
-          title: t("steps.packages.inventory.types.coverage.title", { defaultValue: "Crew services" }),
-          subtitle: t("steps.packages.inventory.types.coverage.subtitle", {
-            defaultValue: "On-site coverage like photographers or videographers",
-          }),
-        },
-        deliverable: {
-          title: t("steps.packages.inventory.types.deliverable.title", { defaultValue: "Deliverables" }),
-          subtitle: t("steps.packages.inventory.types.deliverable.subtitle", {
-            defaultValue: "Products delivered after the shoot",
-          }),
-        },
-        unknown: {
-          title: t("steps.packages.inventory.types.unknown.title", { defaultValue: "Other services" }),
-          subtitle: t("steps.packages.inventory.types.unknown.subtitle", {
-            defaultValue: "Items without a service type yet",
-          }),
-        },
-      },
-      add: t("steps.packages.inventory.add", { defaultValue: "Add" }),
-      decrease: t("common:actions.decrease", { defaultValue: "Decrease" }),
-      increase: t("common:actions.increase", { defaultValue: "Increase" }),
-      remove: t("steps.packages.list.remove", { defaultValue: "Remove" }),
-      vendor: t("steps.packages.list.vendor", { defaultValue: "Vendor" }),
-      unitCost: t("steps.packages.list.unitCost", { defaultValue: "Unit cost" }),
-      unitPrice: t("steps.packages.list.unitPrice", { defaultValue: "Unit price" }),
-      uncategorized: t("steps.packages.inventory.uncategorized", { defaultValue: "Other" }),
-      inactive: t("steps.packages.inventory.inactive", { defaultValue: "Inactive" }),
-      empty: t("steps.packages.inventory.empty", {
-        defaultValue: "No services in your catalog yet. Create services to add them here.",
-      }),
-      quantity: t("steps.packages.list.quantity", { defaultValue: "Quantity" }),
-      selectedTag: (selected: number, total: number) =>
-        t("steps.packages.inventory.selectedTag", {
-          defaultValue: "{{selected}} of {{total}} selected",
-          selected,
-          total,
-        }),
-      quantityTag: (count: number) =>
-        t("steps.packages.inventory.quantityTag", {
-          defaultValue: "{{count}} items",
-          count,
-        }),
-      retry: t("common:actions.retry", { defaultValue: "Retry" }),
-    }),
-    [t]
-  );
+  const hasBillableServices = extraItems.length > 0;
 
   const getUnitLabel = useCallback(
     (unit?: string | null) =>
       t(`steps.packages.units.short.${normalizeServiceUnit(unit)}`, {
         defaultValue: t(`steps.packages.units.options.${normalizeServiceUnit(unit)}`),
       }),
-    [t]
-  );
-
-  const vatModeOptions = useMemo(
-    () => [
-      {
-        value: "inclusive" as VatModeOption,
-        label: t("steps.packages.vatControls.mode.inclusive"),
-      },
-      {
-        value: "exclusive" as VatModeOption,
-        label: t("steps.packages.vatControls.mode.exclusive"),
-      },
-    ],
     [t]
   );
 
@@ -936,6 +536,8 @@ export const PackagesStep = () => {
     [t]
   );
 
+  const includedItemIds = useMemo(() => new Set(includedItems.map((item) => item.id)), [includedItems]);
+
   const summaryTableRows = useMemo<ServicesTableRow[]>(() => {
     return existingItems.map((item) => {
       const service = serviceMap.get(item.serviceId);
@@ -947,14 +549,14 @@ export const PackagesStep = () => {
           : service?.unitCost
           ? Math.round(service.unitCost * quantity * 100) / 100
           : null;
-      const billingType = (item.billingType ?? "add_on") as "included" | "add_on";
+      const isIncluded = includedItemIds.has(item.id);
       const billingLabel =
-        billingType === "included"
-          ? t("steps.packages.summary.badges.included", {
-              defaultValue: "Included in package",
+        isIncluded
+          ? tForms("services.included_badge", {
+              defaultValue: "Included",
             })
-          : t("steps.packages.summary.badges.addOn", {
-              defaultValue: "Billable add-on",
+          : tForms("services.addons_badge", {
+              defaultValue: "Add-on",
             });
       const vendorLabel = service?.vendor_name ?? item.vendorName ?? null;
       const metaLabel = vendorLabel
@@ -972,7 +574,7 @@ export const PackagesStep = () => {
         isCustom: false,
       };
     });
-  }, [existingItems, getUnitLabel, serviceMap, t]);
+  }, [existingItems, getUnitLabel, includedItemIds, serviceMap, t, tForms]);
 
   useEffect(() => {
     if (!actionsRef.current) return;
@@ -1049,7 +651,7 @@ export const PackagesStep = () => {
       return depositAmount != null && depositAmount > 0 ? roundCurrency(depositAmount) : 0;
     }
     const targetKey = depositTarget === "base" ? "base" : "subtotal";
-    const subtotal = Math.max(0, basePriceValue + addOnTotals.total);
+    const subtotal = Math.max(0, basePriceValue + extraTotals.total);
     const clientTotal = includeAddOnsInPrice ? basePriceValue : subtotal;
     const targetAmount =
       targetKey === "base"
@@ -1066,7 +668,7 @@ export const PackagesStep = () => {
       return rounded;
     }
     return depositAmount != null && depositAmount > 0 ? roundCurrency(depositAmount) : 0;
-  }, [packageDepositConfig, basePriceValue, addOnTotals.total, includeAddOnsInPrice]);
+  }, [packageDepositConfig, basePriceValue, extraTotals.total, includeAddOnsInPrice]);
 
   const depositInputValue =
     state.details.depositAmount !== undefined
@@ -1153,17 +755,17 @@ export const PackagesStep = () => {
 
   const clientTotals = useMemo(
     () => ({
-      net: packageDerived.packageNet + addOnTotals.net,
-      vat: packageDerived.packageVat + addOnTotals.vat,
-      total: packageDerived.packageGross + addOnTotals.total,
+      net: packageDerived.packageNet + extraTotals.net,
+      vat: packageDerived.packageVat + extraTotals.vat,
+      total: packageDerived.packageGross + extraTotals.total,
     }),
     [
       packageDerived.packageNet,
       packageDerived.packageVat,
       packageDerived.packageGross,
-      addOnTotals.net,
-      addOnTotals.vat,
-      addOnTotals.total,
+      extraTotals.net,
+      extraTotals.vat,
+      extraTotals.total,
     ]
   );
 
@@ -1171,6 +773,98 @@ export const PackagesStep = () => {
   const clientTax = clientTotals.vat;
   const clientTotal = clientTotals.total;
   const depositValue = depositNumeric;
+
+  const includedHelperText = tForms("services.included_helper", {
+    total: formatCurrency(
+      basePriceValue > 0 ? basePriceValue : packageDerived.packageGross - extraTotals.total
+    ),
+    defaultValue: "Paket fiyatına dahil edilmiştir.",
+  });
+
+  const extraHelperText = tForms("services.addons_helper", {
+    total: formatCurrency(extraTotals.total),
+    defaultValue: "Billed on top of the base package.",
+  });
+
+  const includedTooltipContent = (
+    <>
+      <p className="font-medium">
+        {tForms("services.included_tooltip.title", {
+          defaultValue: "Pakete dahil hizmetler",
+        })}
+      </p>
+      <ul className="list-disc space-y-1 pl-4">
+        <li>
+          {tForms("services.included_tooltip.point1", {
+            defaultValue: "Müşteriye ek fatura oluşturmaz; paket fiyatına dahildir.",
+          })}
+        </li>
+        <li>
+          {tForms("services.included_tooltip.point2", {
+            defaultValue: "KDV paket toplamında hesaplanır, satır bazında gösterilmez.",
+          })}
+        </li>
+        <li>
+          {tForms("services.included_tooltip.point3", {
+            defaultValue: "Bu liste paket kapsamını ve teslimatlarını netleştirir.",
+          })}
+        </li>
+      </ul>
+    </>
+  );
+
+  const extraTooltipContent = (
+    <>
+      <p className="font-medium">
+        {tForms("services.addons_tooltip.title", {
+          defaultValue: "Ek hizmetler",
+        })}
+      </p>
+      <ul className="list-disc space-y-1 pl-4">
+        <li>
+          {tForms("services.addons_tooltip.point1", {
+            defaultValue: "Müşteriye paket fiyatına ek olarak faturalandırılır.",
+          })}
+        </li>
+        <li>
+          {tForms("services.addons_tooltip.point2", {
+            defaultValue: "KDV ve fiyatlandırma her hizmetin moduna göre hesaplanır.",
+          })}
+        </li>
+        <li>
+          {tForms("services.addons_tooltip.point3", {
+            defaultValue: "Sözleşme ve ödeme toplamına otomatik yansır.",
+          })}
+        </li>
+      </ul>
+    </>
+  );
+
+  const includedCardTitle = tForms("services.included_title", {
+    defaultValue: "Included in package",
+  });
+  const extraCardTitle = tForms("services.addons_title", {
+    defaultValue: "Add-on services",
+  });
+  const includedEmptyCta = tForms("services.add_included_cta", {
+    defaultValue: "Pakete dahil hizmet ekle",
+  });
+  const extraEmptyCta = tForms("services.add_extra_cta", {
+    defaultValue: "Ücrete ek hizmet ekle",
+  });
+  const manageButtonLabel = t("steps.packages.servicesCard.manage", {
+    defaultValue: "Hizmetleri düzenle",
+  });
+  const addButtonLabel = t("steps.packages.servicesCard.add", {
+    defaultValue: "Hizmet ekle",
+  });
+  const includedTooltipAria = tForms("services.included_info", {
+    defaultValue: "Included services info",
+  });
+  const extraTooltipAria = tForms("services.addons_info", {
+    defaultValue: "Add-on services info",
+  });
+
   const depositHelperText = useMemo(() => {
     if (!(depositValue > 0)) {
       return t("steps.packages.summary.depositHelperNone");
@@ -1231,12 +925,13 @@ export const PackagesStep = () => {
     const defaultItems = defaultServiceIds
       .map((serviceId) => serviceMap.get(serviceId))
       .filter((service): service is ServiceWithMetadata => Boolean(service))
-      .map((service) => buildLineItemFromService(service, "included"));
+      .map((service) => buildLineItemFromService(service));
 
     updateServices({
       packageId: pkg.id,
       packageLabel: pkg.name,
-      items: defaultItems,
+      includedItems: defaultItems,
+      extraItems: [],
       showCustomSetup: true,
     });
 
@@ -1247,7 +942,7 @@ export const PackagesStep = () => {
   };
 
   const handleClearPackage = () => {
-    const hasItems = state.services.items.length > 0;
+    const hasItems = state.services.includedItems.length + state.services.extraItems.length > 0;
     updateServices({
       packageId: undefined,
       packageLabel: hasItems ? t("summary.values.customServices") : undefined,
@@ -1266,7 +961,8 @@ export const PackagesStep = () => {
       showCustomSetup: false,
       packageId: undefined,
       packageLabel: undefined,
-      items: [],
+      includedItems: [],
+      extraItems: [],
     });
     updateDetails({
       basePrice: "",
@@ -1275,7 +971,6 @@ export const PackagesStep = () => {
   };
 
   const packagesLoading = packagesQuery.isLoading;
-  const servicesLoading = servicesQuery.isLoading;
   const packagesError = packagesQuery.error as Error | null;
   const servicesError = servicesQuery.error as Error | null;
 
@@ -1431,27 +1126,35 @@ export const PackagesStep = () => {
             </div>
           </div>
 
-          <ProjectServicesCard
-            items={serviceCardItems}
-            emptyCtaLabel={servicesCardEmptyCta}
-            onAdd={handleServicesSheetOpen}
-            title={servicesCardTitle}
-            helperText={servicesCardHelperText}
-            tooltipAriaLabel={servicesCardAriaLabel}
-            tooltipContent={
-              <>
-                <p className="font-medium">{servicesCardTooltipTitle}</p>
-                <ul className="list-disc space-y-1 pl-4">
-                  {servicesCardTooltipLines.filter(Boolean).map((line, index) => (
-                    <li key={index}>{line}</li>
-                  ))}
-                </ul>
-              </>
-            }
-            addButtonLabel={hasServices ? servicesCardManageLabel : servicesCardAddLabel}
-            itemAlign="center"
-            itemRightAlign="start"
-          />
+          <TooltipProvider delayDuration={150}>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <ProjectServicesCard
+                items={includedCardItems}
+                emptyCtaLabel={includedEmptyCta}
+                onAdd={() => handleServiceDialogOpen("included")}
+                title={includedCardTitle}
+                helperText={includedHelperText}
+                tooltipAriaLabel={includedTooltipAria}
+                tooltipContent={includedTooltipContent}
+                addButtonLabel={
+                  includedCardItems.length > 0 ? manageButtonLabel : addButtonLabel
+                }
+              />
+              <ProjectServicesCard
+                items={extraCardItems}
+                emptyCtaLabel={extraEmptyCta}
+                onAdd={() => handleServiceDialogOpen("extra")}
+                title={extraCardTitle}
+                helperText={extraHelperText}
+                tooltipAriaLabel={extraTooltipAria}
+                tooltipContent={extraTooltipContent}
+                addButtonLabel={
+                  extraCardItems.length > 0 ? manageButtonLabel : addButtonLabel
+                }
+                itemAlign="start"
+              />
+            </div>
+          </TooltipProvider>
 
           <div className="space-y-6">
             <div className="space-y-4">
@@ -1487,28 +1190,28 @@ export const PackagesStep = () => {
                       />
                       <SummaryTotalRow
                         label={
-                          addOnVatBreakdown.length === 1
+                          extraVatBreakdown.length === 1
                             ? t("steps.packages.summary.servicesVatWithRate", {
-                                rate: formatPercent(addOnVatBreakdown[0].rate),
+                                rate: formatPercent(extraVatBreakdown[0].rate),
                               })
                             : t("steps.packages.summary.servicesVat")
                         }
-                        value={formatCurrency(addOnTotals.vat)}
+                        value={formatCurrency(extraTotals.vat)}
                       />
                       <SummaryTotalRow
                         label={t("steps.packages.summary.servicesCost")}
-                        value={formatCurrency(addOnTotals.cost)}
+                        value={formatCurrency(extraTotals.cost)}
                       />
                       <SummaryTotalRow
                         label={t("steps.packages.summary.servicesPrice")}
-                        value={formatCurrency(addOnTotals.net)}
+                        value={formatCurrency(extraTotals.net)}
                       />
                     </SummaryTotalsSection>
                     <SummaryTotalsDivider />
                     <SummaryTotalsSection className="pt-3">
                       <SummaryTotalRow
                         label={t("steps.packages.summary.servicesGross")}
-                        value={formatCurrency(addOnTotals.total)}
+                        value={formatCurrency(extraTotals.total)}
                         emphasizeLabel
                       />
                       <SummaryTotalRow
@@ -1564,7 +1267,7 @@ export const PackagesStep = () => {
                     tone="positive"
                     emphasizeLabel
                     helper={
-                      addOnTotals.total > 0
+                      extraTotals.total > 0
                         ? t("steps.packages.summary.clientTotalHelperExtras", {
                             defaultValue: "Add-ons are billed on top of the package.",
                           })
@@ -1595,288 +1298,19 @@ export const PackagesStep = () => {
       )}
       </div>
 
-      <Sheet open={servicesSheetOpen} onOpenChange={handleServicesSheetOpenChange}>
-        <SheetContent side="right" className="flex w-full max-w-4xl flex-col overflow-hidden sm:max-w-3xl">
-          <SheetHeader className="shrink-0 space-y-2">
-            <SheetTitle>
-              {t("steps.packages.servicesSheet.title", {
-                defaultValue: "Hizmetleri düzenle",
-              })}
-            </SheetTitle>
-            <SheetDescription>
-              {t("steps.packages.servicesSheet.description", {
-                defaultValue: "Pakete dahil veya ek hizmetleri seçin, fiyat ve KDV ayarlarını güncelleyin.",
-              })}
-            </SheetDescription>
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto pr-2">
-            <div className="space-y-6 pb-8">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>{t("steps.packages.servicesLabel")}</Label>
-                  {sheetItems.length > 0 ? (
-                    <Badge variant="secondary">
-                      {t("steps.packages.servicesBadge", {
-                        count: sheetItems.length,
-                      })}
-                    </Badge>
-                  ) : null}
-                </div>
-                <ServiceInventorySelector
-                  services={inventoryServices}
-                  selected={sheetSelectedQuantities}
-                  labels={inventoryLabels}
-                  onAdd={handleAddService}
-                  onIncrease={handleIncreaseService}
-                  onDecrease={handleDecreaseService}
-                  onSetQuantity={handleSetServiceQuantity}
-                  onRemove={handleRemoveService}
-                  isLoading={servicesLoading}
-                  error={servicesError ? t("steps.packages.servicesError") : null}
-                  onRetry={servicesError ? () => servicesQuery.refetch() : undefined}
-                  renderSelectedActions={({ service }) => {
-                    const lineItem = sheetItemsByServiceId.get(service.id);
-                    if (!lineItem) return null;
-                    const isPricingOpen = openPricingIds.has(lineItem.id);
-                    const billingType = (lineItem.billingType ?? "add_on") as "included" | "add_on";
-                    return (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <SegmentedControl
-                          size="sm"
-                          value={billingType}
-                          onValueChange={(value) => {
-                            if (!value) return;
-                            handleBillingTypeChange(lineItem.id, value as "included" | "add_on");
-                          }}
-                          options={[
-                            {
-                              value: "included",
-                              label: billingIncludedLabel,
-                              ariaLabel: billingIncludedLabel,
-                            },
-                            {
-                              value: "add_on",
-                              label: billingAddOnLabel,
-                              ariaLabel: billingAddOnLabel,
-                            },
-                          ]}
-                        />
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="px-0 text-emerald-600"
-                          onClick={() => handlePricingButtonClick(lineItem)}
-                        >
-                          {isPricingOpen
-                            ? t("steps.packages.actions.resetPricing")
-                            : t("steps.packages.actions.editPricing")}
-                        </Button>
-                      </div>
-                    );
-                  }}
-                  renderSelectedContent={({ service }) => {
-                    const lineItem = sheetItemsByServiceId.get(service.id);
-                    if (!lineItem) return null;
-                    const isPricingOpen = openPricingIds.has(lineItem.id);
-                    if (!isPricingOpen) {
-                      return null;
-                    }
-                    const serviceMeta = serviceMap.get(lineItem.serviceId ?? service.id);
-                    const isVatOpen = openVatIds.has(lineItem.id);
-                    const vatModeDefault: VatModeOption =
-                      lineItem.vatMode === "inclusive" || lineItem.vatMode === "exclusive"
-                        ? lineItem.vatMode
-                        : serviceMeta?.vatMode === "inclusive"
-                        ? "inclusive"
-                        : "exclusive";
-                    const vatRateValue =
-                      typeof lineItem.vatRate === "number" && Number.isFinite(lineItem.vatRate)
-                        ? String(lineItem.vatRate)
-                        : serviceMeta?.vatRate != null
-                        ? String(serviceMeta.vatRate)
-                        : "";
-
-                    return (
-                      <div className="animate-in fade-in slide-in-from-top-2 space-y-3 rounded-xl border border-emerald-100 bg-white/90 p-4 shadow-sm transition-all duration-200">
-                        <div className="grid gap-3 sm:grid-cols-[repeat(2,minmax(0,200px))]">
-                          <div className="space-y-1">
-                            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                              {t("steps.packages.list.unitCost")}
-                            </Label>
-                            <Input
-                              type="number"
-                              min={0}
-                              step="0.01"
-                              value={lineItem.unitCost ?? ""}
-                              onChange={(event) =>
-                                updateItem(lineItem.id, {
-                                  unitCost: event.target.value === "" ? null : Number(event.target.value),
-                                })
-                              }
-                              className="h-9"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                              {t("steps.packages.list.unitPrice")}
-                            </Label>
-                            <Input
-                              type="number"
-                              min={0}
-                              step="0.01"
-                              value={lineItem.unitPrice ?? ""}
-                              onChange={(event) =>
-                                updateItem(lineItem.id, {
-                                  unitPrice: event.target.value === "" ? null : Number(event.target.value),
-                                })
-                              }
-                              className="h-9"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                          <Button
-                            variant="link"
-                            size="sm"
-                            className="w-fit px-0 text-emerald-600"
-                            onClick={() => handleVatButtonClick(lineItem)}
-                          >
-                            {isVatOpen
-                              ? t("steps.packages.actions.resetVat")
-                              : t("steps.packages.actions.editVat")}
-                          </Button>
-                          {isVatOpen ? (
-                            <div className="animate-in fade-in slide-in-from-top-2 grid gap-3 sm:max-w-[420px] sm:grid-cols-2 transition-all duration-200">
-                              <div className="space-y-1">
-                                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                  {t("steps.packages.vatControls.modeLabel")}
-                                </Label>
-                                <Select
-                                  value={vatModeDefault}
-                                  onValueChange={(value) => handleVatModeChange(lineItem.id, value as VatModeOption)}
-                                >
-                                  <SelectTrigger className="h-9">
-                                    <SelectValue placeholder={t("steps.packages.vatControls.modeLabel")} />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {vatModeOptions.map((option) => (
-                                      <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                  {t("steps.packages.vatControls.rateLabel")}
-                                </Label>
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  max={99.99}
-                                  step="0.01"
-                                  value={vatRateValue}
-                                  onChange={(event) => handleVatRateChange(lineItem.id, event.target.value)}
-                                  className="h-9"
-                                />
-                              </div>
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                    );
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="shrink-0 border-t bg-white/95 px-6 py-4">
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={handleServicesSheetCancel} disabled={isSavingServices}>
-                {t("buttons.cancel", { defaultValue: "Cancel" })}
-              </Button>
-              <Button onClick={handleServicesSheetSave} disabled={isSavingServices}>
-                {isSavingServices ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    {t("steps.packages.servicesSheet.saving", {
-                      defaultValue: "Saving...",
-                    })}
-                  </>
-                ) : (
-                  t("steps.packages.servicesSheet.save", {
-                    defaultValue: "Save services",
-                  })
-                )}
-              </Button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {pendingPricingLineItem ? (
-        <AlertDialog
-          open
-          onOpenChange={(open) => {
-            if (!open) {
-              setPendingPricingResetId(null);
-            }
-          }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("steps.packages.actions.resetPricingConfirmTitle")}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("steps.packages.actions.resetPricingConfirm")}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setPendingPricingResetId(null)}>
-                {t("steps.packages.actions.resetPricingConfirmCancel")}
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={confirmPricingReset}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {t("steps.packages.actions.resetPricingConfirmConfirm")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      ) : null}
-
-      {pendingVatLineItem ? (
-        <AlertDialog
-          open
-          onOpenChange={(open) => {
-            if (!open) {
-              setPendingVatResetId(null);
-            }
-          }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("steps.packages.actions.resetVatConfirmTitle")}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("steps.packages.actions.resetVatConfirm")}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setPendingVatResetId(null)}>
-                {t("steps.packages.actions.resetVatConfirmCancel")}
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={confirmVatReset}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {t("steps.packages.actions.resetVatConfirmConfirm")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      ) : null}
+      <ProjectServicesQuickEditDialog
+        open={serviceDialogState.open}
+        onOpenChange={(open) =>
+          setServiceDialogState((previous) => ({ ...previous, open }))
+        }
+        mode={serviceDialogState.mode}
+        services={quickEditServices}
+        selections={serviceDialogState.mode === "included" ? includedSelections : extraSelections}
+        isLoading={servicesQuery.isLoading}
+        error={servicesError ? t("steps.packages.servicesError") : null}
+        onRetry={servicesError ? () => servicesQuery.refetch() : undefined}
+        onSubmit={(results) => handleServiceQuickEditSubmit(serviceDialogState.mode, results)}
+      />
     </>
   );
 };

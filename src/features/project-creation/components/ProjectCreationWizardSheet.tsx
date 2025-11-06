@@ -77,6 +77,10 @@ const ProjectCreationWizardSheetInner = ({
   onProjectCreated,
 }: Pick<ProjectCreationWizardSheetProps, "isOpen" | "onOpenChange" | "onProjectCreated">) => {
   const { state } = useProjectCreationContext();
+  const allServiceItems = useMemo(
+    () => [...state.services.includedItems, ...state.services.extraItems],
+    [state.services.includedItems, state.services.extraItems]
+  );
   const { reset } = useProjectCreationActions();
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
@@ -226,7 +230,7 @@ const ProjectCreationWizardSheetInner = ({
         if (paymentError) throw paymentError;
       }
 
-      const catalogLineItems = state.services.items.filter(
+      const catalogLineItems = allServiceItems.filter(
         (item) => item.type === "existing" && item.serviceId
       );
 
@@ -313,7 +317,7 @@ const ProjectCreationWizardSheetInner = ({
     state.lead.id,
     state.meta.defaultStatusId,
     state.meta.entrySource,
-    state.services.items,
+    allServiceItems,
     state.services.packageId,
     tCommon,
     tForms,

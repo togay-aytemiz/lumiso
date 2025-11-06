@@ -30,20 +30,10 @@ This document outlines proposed fixes for each test suite currently failing or b
 - **Status**: ✅ Fixed — stabilized the loading state guard so the gallery renders once assets arrive and enforced explicit button types so all controls, including “Delete image”, respond inside the tests.
 
 ## `src/utils/performance.test.tsx`
-- **Issues**: Duration metrics remain zero and warning logs never triggered.
-- **Plan**:
-  1. Populate mock timing data to simulate meaningful durations.
-  2. Trigger warning paths by configuring thresholds.
-  3. Adjust expectations to assert on the populated metrics and log calls.
+- **Status**: ✅ Fixed — populated deterministic timing data for the monitor and now assert that the captured metric values match the computed duration, ensuring we exercise the warning path and prevent regressions where durations stay at zero.
 
 ## `src/components/__tests__/UnifiedClientDetails.test.tsx`
-- **Issue**: Missing accessible label for the WhatsApp button.
-- **Plan**:
-  1. Confirm the component renders an accessible label or title attribute.
-  2. Update the test to match the actual accessible name.
-  3. If necessary, modify the component to include the expected label.
-
-- **Status**: ✅ Fixed — mapped `@/components/react-calendar.css` to the shared style mock and aligned the assertions with the component’s current summary output so the suite loads and passes.
+- **Status**: ✅ Verified — quick action links expose the translated accessibility labels in both expanded and compact modes, so the suite’s assertions align with the component output and pass consistently.
 
 ## Follow-up
 - Once individual suites pass locally, run `npm test` to confirm the overall test suite succeeds.

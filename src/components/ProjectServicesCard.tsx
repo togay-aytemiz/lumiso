@@ -19,6 +19,7 @@ interface ProjectServicesCardProps {
   tooltipContent: ReactNode;
   addButtonLabel: string;
   itemAlign?: "start" | "center";
+  itemRightAlign?: "start" | "end";
 }
 
 export function ProjectServicesCard({
@@ -30,12 +31,14 @@ export function ProjectServicesCard({
   tooltipAriaLabel,
   tooltipContent,
   addButtonLabel,
-  itemAlign = "center"
+  itemAlign = "center",
+  itemRightAlign = "end"
 }: ProjectServicesCardProps) {
   const hasItems = items.length > 0;
   const alignmentClass = itemAlign === "start" ? "items-start" : "items-center";
   const paddingClass = hasItems ? "p-4" : "px-3 py-2";
   const headerGapClass = hasItems ? "gap-2" : "gap-1";
+  const rightAlignmentClass = itemRightAlign === "start" ? "shrink-0" : "shrink-0 text-right";
 
   return (
     <div className={`rounded-xl border ${paddingClass}`}>
@@ -82,7 +85,7 @@ export function ProjectServicesCard({
                 className={`flex ${alignmentClass} justify-between gap-3 text-sm`}
               >
                 <div className="min-w-0">{left}</div>
-                {right ? <div className="shrink-0 text-right">{right}</div> : null}
+                {right ? <div className={rightAlignmentClass}>{right}</div> : null}
               </div>
             ))}
           </div>

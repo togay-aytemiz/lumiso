@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { HelpCircle, Plus } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 
 export interface ProjectServicesCardItem {
   key: string;
@@ -34,10 +34,12 @@ export function ProjectServicesCard({
 }: ProjectServicesCardProps) {
   const hasItems = items.length > 0;
   const alignmentClass = itemAlign === "start" ? "items-start" : "items-center";
+  const paddingClass = hasItems ? "p-4" : "px-3 py-2";
+  const headerGapClass = hasItems ? "gap-2" : "gap-1";
 
   return (
-    <div className="rounded-xl border p-4">
-      <div className="flex items-start justify-between gap-2">
+    <div className={`rounded-xl border ${paddingClass}`}>
+      <div className={`flex items-start justify-between ${headerGapClass}`}>
         {hasItems ? (
           <div>
             <h3 className="text-sm font-semibold">{title}</h3>
@@ -80,13 +82,12 @@ export function ProjectServicesCard({
                 className={`flex ${alignmentClass} justify-between gap-3 text-sm`}
               >
                 <div className="min-w-0">{left}</div>
-                {right ? <div className="shrink-0">{right}</div> : null}
+                {right ? <div className="shrink-0 text-right">{right}</div> : null}
               </div>
             ))}
           </div>
           <div className="mt-4">
             <Button variant="link" className="h-auto px-0 text-sm font-semibold" onClick={onAdd}>
-              <Plus className="mr-1 h-4 w-4" />
               {addButtonLabel}
             </Button>
           </div>

@@ -974,7 +974,7 @@ export function ProjectPaymentsSection({
                     })}
                     helperText={t("payments.services.included_helper", {
                       total: formatCurrency(financialSummary.basePrice),
-                      defaultValue: "Covered by the base package."
+                      defaultValue: "Paket fiyatına dahil edilmiştir."
                     })}
                     tooltipAriaLabel={t("payments.services.included_info", {
                       defaultValue: "Included services info"
@@ -1005,9 +1005,15 @@ export function ProjectPaymentsSection({
                         </ul>
                       </>
                     }
-                    addButtonLabel={t("payments.services.add_button", {
-                      defaultValue: "Add service"
-                    })}
+                    addButtonLabel={
+                      includedCardItems.length > 0
+                        ? t("payments.services.manage_button", {
+                            defaultValue: "Hizmetleri düzenle"
+                          })
+                        : t("payments.services.add_button", {
+                            defaultValue: "Add service"
+                          })
+                    }
                   />
                   <ProjectServicesCard
                     items={extraCardItems}
@@ -1051,9 +1057,15 @@ export function ProjectPaymentsSection({
                         </ul>
                       </>
                     }
-                    addButtonLabel={t("payments.services.add_button", {
-                      defaultValue: "Add service"
-                    })}
+                    addButtonLabel={
+                      extraCardItems.length > 0
+                        ? t("payments.services.manage_button", {
+                            defaultValue: "Hizmetleri düzenle"
+                          })
+                        : t("payments.services.add_button", {
+                            defaultValue: "Add service"
+                          })
+                    }
                     itemAlign="start"
                   />
                 </div>

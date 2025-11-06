@@ -226,13 +226,12 @@ export function EnhancedAddLeadDialog({
       if (statusName) {
         const { data: statusData } = await supabase
           .from<LeadStatusRow>('lead_statuses')
-          .select('id, name')
+          .select('id')
           .eq('organization_id', organizationId)
           .eq('name', statusName)
           .maybeSingle();
 
         statusId = statusData?.id ?? null;
-        statusName = statusData?.name ?? statusName;
       } else {
         const { data: defaultStatus } = await supabase
           .from<LeadStatusRow>('lead_statuses')

@@ -35,7 +35,19 @@ This document outlines proposed fixes for each test suite currently failing or b
 ## `src/components/__tests__/UnifiedClientDetails.test.tsx`
 - **Status**: ✅ Verified — quick action links expose the translated accessibility labels in both expanded and compact modes, so the suite’s assertions align with the component output and pass consistently.
 
+## `src/components/__tests__/ProjectSheetView.test.tsx`
+- **Status**: ✅ Passing — re-running the suite now exercises the archive toggle path successfully with the mocked outstanding payments scenario.
+- **Notes**: `npx jest --runInBand src/components/__tests__/ProjectSheetView.test.tsx`
+
+## `src/pages/payments/hooks/__tests__/usePaymentsData.test.ts`
+- **Status**: ✅ Passing — the composed filter string now matches the expected search, type, and amount clauses, so the Supabase builder mock assertions succeed.
+- **Notes**: `npx jest --runInBand src/pages/payments/hooks/__tests__/usePaymentsData.test.ts`
+
+## `src/components/__tests__/EnhancedAddLeadDialog.test.tsx`
+- **Status**: ✅ Passing — the dialog now hydrates the default status before saving, and the mocked insert path confirms the expected `status_id`.
+- **Notes**: `npx jest --runInBand src/components/__tests__/EnhancedAddLeadDialog.test.tsx`
+
 ## Follow-up
-- Once individual suites pass locally, run `npm test` to confirm the overall test suite succeeds.
+- A full `npm test` run currently completes the majority of suites but needs additional time ( >5 minutes) to finish; the latest attempt was interrupted after observing only passing suites. Re-run when more time is available to confirm completion.
 - Consider adding regression coverage for recurring issues to prevent future breakages.
 

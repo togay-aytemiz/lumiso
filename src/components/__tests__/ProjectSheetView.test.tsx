@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import { ProjectSheetView } from "../ProjectSheetView";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { onArchiveToggle } from "@/components/ViewProjectDialog";
+import { onArchiveToggle } from "@/components/projectArchiveToggle";
 import { useProjectHeaderSummary } from "@/hooks/useProjectHeaderSummary";
 import { useProjectSessionsSummary } from "@/hooks/useProjectSessionsSummary";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -21,7 +21,7 @@ jest.mock("@/hooks/use-toast", () => ({
   useToast: jest.fn(),
 }));
 
-jest.mock("@/components/ViewProjectDialog", () => ({
+jest.mock("@/components/projectArchiveToggle", () => ({
   onArchiveToggle: jest.fn(),
 }));
 

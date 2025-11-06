@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
+import { act, render, screen, waitFor } from "@/utils/testUtils";
 import AdminLocalization from "../Localization";
 import { useTranslationFiles } from "@/hooks/useTranslationFiles";
 import { mockSupabaseClient } from "@/utils/testUtils";
@@ -69,6 +69,9 @@ type SegmentedControlProps = {
   options: SegmentedControlOption[];
 };
 
+let setSegmentValue: ((value: string) => void) | undefined;
+const switchHandlers: Array<(value: boolean) => void> = [];
+
 jest.mock("@/components/ui/dialog", () => ({
   Dialog: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DialogTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -79,27 +82,34 @@ jest.mock("@/components/ui/dialog", () => ({
 
 jest.mock("@/components/ui/switch", () => ({
   Switch: ({ checked, onCheckedChange }: { checked: boolean; onCheckedChange: (value: boolean) => void }) => (
-    <button onClick={() => onCheckedChange(!checked)} data-testid="language-toggle">
+    <button
+      onClick={() => onCheckedChange(!checked)}
+      data-testid="language-toggle"
+      data-handler-index={`${switchHandlers.push(onCheckedChange) - 1}`}
+    >
       {checked ? "on" : "off"}
     </button>
   ),
 }));
 
 jest.mock("@/components/ui/segmented-control", () => ({
-  SegmentedControl: ({ value, onValueChange, options }: SegmentedControlProps) => (
-    <div>
-      {options.map((option) => (
-        <button
-          key={option.value}
-          data-testid={`segment-${option.value}`}
-          aria-pressed={option.value === value}
-          onClick={() => onValueChange(option.value)}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  ),
+  SegmentedControl: ({ value, onValueChange, options }: SegmentedControlProps) => {
+    setSegmentValue = onValueChange;
+    return (
+      <div>
+        {options.map((option) => (
+          <button
+            key={option.value}
+            data-testid={`segment-${option.value}`}
+            aria-pressed={option.value === value}
+            onClick={() => onValueChange(option.value)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    );
+  },
 }));
 
 jest.mock("@/components/ui/table", () => ({
@@ -125,21 +135,6 @@ jest.mock("lucide-react", () => ({
   Package: () => <span>package</span>,
 }));
 
-type SupabaseQueryChain = {
-  select: jest.Mock<SupabaseQueryChain, [string?]>;
-  order: jest.Mock<Promise<{ data: unknown[] }> | SupabaseQueryChain, [unknown?]>;
-  eq: jest.Mock<SupabaseQueryChain, [string, unknown]>;
-  update: jest.Mock;
-  maybeSingle: jest.Mock;
-  insert: jest.Mock;
-};
-
-type SupabaseFromMock = jest.Mock<SupabaseQueryChain, [string]>;
-
-const supabaseMock = mockSupabaseClient as unknown as {
-  from: SupabaseFromMock;
-};
-
 const mockUseTranslationFiles = useTranslationFiles as jest.MockedFunction<typeof useTranslationFiles>;
 
 const languagesData = [
@@ -152,47 +147,35 @@ const namespacesData = [
   { id: "common", name: "common" },
 ];
 
-const translationKeysData = [
-  { id: "key1", namespace_id: "pages", key_name: "welcome" },
-  { id: "key2", namespace_id: "common", key_name: "hello" },
-];
+type LanguagesQuery = ReturnType<typeof createLanguagesQuery>;
 
-const translationsData = [
-  { id: "t1", key_id: "key1", language_code: "en", value: "Welcome" },
-];
+let languagesQuery: LanguagesQuery;
 
-const createQueryChain = (table: string): SupabaseQueryChain => {
-  const chain: SupabaseQueryChain = {
-    select: jest.fn<SupabaseQueryChain, [string?]>(),
-    order: jest.fn<Promise<{ data: unknown[] }> | SupabaseQueryChain, [unknown?]>(),
-    eq: jest.fn<SupabaseQueryChain, [string, unknown]>(),
-    update: jest.fn(),
-    maybeSingle: jest.fn(),
-    insert: jest.fn(),
+function createLanguagesQuery() {
+  const order = jest.fn().mockResolvedValue({ data: languagesData, error: null });
+  const updateEq = jest.fn().mockResolvedValue({ error: null });
+
+  return {
+    select: jest.fn(() => ({ order })),
+    order,
+    update: jest.fn(() => ({ eq: updateEq })),
+    updateEq,
   };
+}
 
-  chain.select.mockReturnValue(chain);
-  chain.order.mockReturnValue(chain);
-  chain.eq.mockReturnValue(chain);
-
-  if (table === "languages") {
-    chain.order.mockResolvedValue({ data: languagesData });
-    chain.update.mockImplementation(() => ({
-      eq: jest.fn().mockResolvedValue({ error: null }),
-    }));
-  } else if (table === "translation_namespaces") {
-    chain.order.mockResolvedValue({ data: namespacesData });
-  } else if (table === "translation_keys") {
-    chain.order.mockResolvedValue({ data: translationKeysData });
-  } else if (table === "translations") {
-    chain.select.mockResolvedValue({ data: translationsData });
-  }
-
-  return chain;
-};
+function createDefaultQuery() {
+  const order = jest.fn().mockResolvedValue({ data: [], error: null });
+  return {
+    select: jest.fn(() => ({ order })),
+    order,
+    update: jest.fn(() => ({ eq: jest.fn().mockResolvedValue({ error: null }) })),
+  };
+}
 
 describe("Admin Localization page", () => {
   beforeEach(() => {
+    setSegmentValue = undefined;
+    switchHandlers.length = 0;
     mockUseTranslationFiles.mockReturnValue({
       downloadLanguageFile: jest.fn(),
       downloadLanguagePack: jest.fn(),
@@ -208,7 +191,18 @@ describe("Admin Localization page", () => {
       isProcessing: false,
     });
 
-    supabaseMock.from = jest.fn((table: string) => createQueryChain(table));
+    const fromMock = mockSupabaseClient.from as jest.Mock;
+    fromMock.mockReset();
+
+    languagesQuery = createLanguagesQuery();
+
+    fromMock.mockImplementation((table: string) => {
+      if (table === "languages") {
+        return languagesQuery;
+      }
+
+      return createDefaultQuery();
+    });
   });
 
   afterEach(() => {
@@ -218,11 +212,19 @@ describe("Admin Localization page", () => {
   it("loads languages when the languages segment is selected", async () => {
     render(<AdminLocalization />);
 
-    const languagesSegment = await screen.findByTestId("segment-languages");
-    fireEvent.click(languagesSegment);
+    await waitFor(() => {
+      expect(screen.queryByText("admin.localization.loading")).not.toBeInTheDocument();
+    });
+
+    await screen.findByTestId("segment-languages");
+
+    act(() => {
+      setSegmentValue?.("languages");
+    });
 
     await waitFor(() => {
-      expect(supabaseMock.from).toHaveBeenCalledWith("languages");
+      expect(mockSupabaseClient.from).toHaveBeenCalledWith("languages");
+      expect(languagesQuery.order).toHaveBeenCalledWith("sort_order");
     });
 
     expect(await screen.findAllByText("English")).not.toHaveLength(0);
@@ -232,24 +234,33 @@ describe("Admin Localization page", () => {
   it("updates a language when toggled", async () => {
     render(<AdminLocalization />);
 
-    const languagesSegment = await screen.findByTestId("segment-languages");
-    fireEvent.click(languagesSegment);
+    await waitFor(() => {
+      expect(screen.queryByText("admin.localization.loading")).not.toBeInTheDocument();
+    });
+
+    await screen.findByTestId("segment-languages");
+
+    act(() => {
+      setSegmentValue?.("languages");
+    });
+
+    await waitFor(() => {
+      expect(languagesQuery.order).toHaveBeenCalledWith("sort_order");
+    });
 
     await screen.findAllByText("English");
 
-    const toggleButtons = screen.getAllByTestId("language-toggle");
-   fireEvent.click(toggleButtons[1]);
+    const toggleButtons = await screen.findAllByTestId("language-toggle");
 
-    const fromMock = supabaseMock.from;
-    const languagesQuery = fromMock.mock.results
-      .map((result) => result.value)
-      .find(
-        (value): value is SupabaseQueryChain =>
-          Boolean(value?.update.mock.calls.length)
-      );
+    const handlerIndex = Number(toggleButtons[1].getAttribute("data-handler-index"));
+
+    act(() => {
+      switchHandlers[handlerIndex]?.(true);
+    });
 
     await waitFor(() => {
-      expect(languagesQuery?.update).toHaveBeenCalledWith({ is_active: true });
+      expect(languagesQuery.update).toHaveBeenCalledWith({ is_active: true });
+      expect(languagesQuery.updateEq).toHaveBeenCalledWith("id", "tr");
     });
   });
 });

@@ -30,12 +30,18 @@ jest.mock("@/components/ui/page-header", () => ({
 }));
 
 type ButtonMockGlobals = { __buttonStates?: boolean[] };
-const buttonGlobals = globalThis as ButtonMockGlobals;
+
+function getButtonStates(): boolean[] {
+  const globals = globalThis as ButtonMockGlobals;
+  if (!globals.__buttonStates) {
+    globals.__buttonStates = [];
+  }
+  return globals.__buttonStates;
+}
 
 jest.mock("@/components/ui/button", () => {
   const React = jest.requireActual<typeof import("react")>("react");
-  const states: boolean[] = buttonGlobals.__buttonStates ?? [];
-  buttonGlobals.__buttonStates = states;
+  const states = getButtonStates();
   const Button = React.forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement>>(
     ({ children, ...props }, ref) => {
       states.push(Boolean(props.disabled));
@@ -53,7 +59,7 @@ jest.mock("@/components/ui/button", () => {
     buttonStates: states,
   };
 });
-const buttonStates: boolean[] = buttonGlobals.__buttonStates ?? [];
+const buttonStates = getButtonStates();
 
 type KpiCardProps = {
   title: ReactNode;

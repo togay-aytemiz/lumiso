@@ -16,6 +16,8 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
   useFormsTranslation: jest.fn(),
 }));
 
+jest.mock("react-calendar/dist/Calendar.css", () => ({}));
+
 jest.mock("../AddPaymentDialog", () => ({
   AddPaymentDialog: ({ onPaymentAdded }: { onPaymentAdded?: () => void }) => (
     <button onClick={() => onPaymentAdded?.()} aria-label="trigger-add-payment">

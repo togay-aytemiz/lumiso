@@ -42,8 +42,6 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
   });
 
   const handleSubmit = async () => {
-    if (!type) return;
-
     if (!formData.name.trim()) {
       toast({
         title: t('common:errors.validation'),

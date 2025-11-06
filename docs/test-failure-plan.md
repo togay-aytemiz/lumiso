@@ -45,11 +45,7 @@ This document outlines proposed fixes for each test suite currently failing or b
   3. Add assertions that validate key behavior without over-constraining call counts.
 
 ## `src/pages/admin/__tests__/Localization.test.tsx`
-- **Issue**: Fails to locate expected “English” language rows.
-- **Plan**:
-  1. Inspect fixture data to ensure an English entry is provided.
-  2. Adjust selectors or wait for asynchronous data loading.
-  3. Confirm table rendering produces the expected row text.
+- **Status**: ✅ Fixed — ensured Supabase mocks return language data and invoked the segment/toggle callbacks directly in tests so the table populates and updates correctly.
 
 ## `src/pages/__tests__/Analytics.test.tsx`
 - **Issue**: `fetchAnalyticsData` is undefined, causing a ReferenceError.

@@ -248,7 +248,7 @@ describe("ProjectTypeDialogs", () => {
       error: null,
     });
     getUserOrganizationIdMock.mockResolvedValue("org-123");
-    mockUseModalNavigation.mockImplementation(({ onDiscard, onSaveAndExit }: ModalNavigationMockArgs = {}) => ({
+    useModalNavigationMock.mockImplementation(({ onDiscard, onSaveAndExit }: ModalNavigationMockArgs = {}) => ({
       showGuard: false,
       message: "",
       handleModalClose: () => true,
@@ -457,4 +457,4 @@ describe("ProjectTypeDialogs", () => {
   });
 });
 
-const mockUseModalNavigation = useModalNavigation as jest.MockedFunction<typeof useModalNavigation>;
+const useModalNavigationMock = useModalNavigation as jest.MockedFunction<typeof useModalNavigation>;

@@ -104,8 +104,15 @@ jest.mock("@/hooks/useKanbanSettings", () => ({
   useKanbanSettings: () => ({ settings: {} }),
 }));
 
+const toastMock = {
+  success: jest.fn(),
+  error: jest.fn(),
+  warning: jest.fn(),
+  info: jest.fn(),
+};
+
 jest.mock("@/lib/toastHelpers", () => ({
-  useI18nToast: () => ({ success: jest.fn(), error: jest.fn() }),
+  useI18nToast: () => toastMock,
 }));
 
 jest.mock("@/components/ui/loading-presets", () => ({
@@ -152,6 +159,7 @@ describe("ProjectKanbanBoard", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    Object.values(toastMock).forEach(fn => fn.mockReset());
   });
 
   const renderBoard = (props: Partial<React.ComponentProps<typeof ProjectKanbanBoard>> = {}) =>

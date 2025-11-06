@@ -5,6 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +30,7 @@ import {
   SummaryTotalsSection,
   type ServicesTableRow,
 } from "@/components/services";
+import { ProjectServicesCard, type ProjectServicesCardItem } from "@/components/ProjectServicesCard";
 import { usePackages, useProjectTypes, useServices } from "@/hooks/useOrganizationData";
 import { useProjectCreationContext } from "../hooks/useProjectCreationContext";
 import { useProjectCreationActions } from "../hooks/useProjectCreationActions";
@@ -184,6 +187,67 @@ export const PackagesStep = () => {
 
   const existingItems = state.services.items;
   const hasServices = existingItems.length > 0;
+  const [servicesSheetOpen, setServicesSheetOpen] = useState(false);
+
+  const includedItems = useMemo(
+    () =>
+      existingItems.filter(
+        (item) => (item.billingType ?? "add_on") === "included"
+      ),
+    [existingItems]
+  );
+
+  const addOnItems = useMemo(
+    () =>
+      existingItems.filter(
+        (item) => (item.billingType ?? "add_on") === "add_on"
+      ),
+    [existingItems]
+  );
+
+  const aggregateLineItems = useCallback(
+    (items: ProjectServiceLineItem[]) =>
+      items.reduce(
+        (acc, item) => {
+          const quantity = Math.max(1, item.quantity ?? 1);
+          const unitCost =
+            typeof item.unitCost === "number" && Number.isFinite(item.unitCost)
+              ? item.unitCost
+              : 0;
+          const pricing = calculateLineItemPricing(item);
+          acc.cost += unitCost * quantity;
+          acc.net += pricing.net;
+          acc.vat += pricing.vat;
+          acc.total += pricing.gross;
+          return acc;
+        },
+        { cost: 0, net: 0, vat: 0, total: 0 }
+      ),
+    []
+  );
+
+  const includedTotals = useMemo(
+    () => aggregateLineItems(includedItems),
+    [aggregateLineItems, includedItems]
+  );
+
+  const addOnTotals = useMemo(
+    () => aggregateLineItems(addOnItems),
+    [aggregateLineItems, addOnItems]
+  );
+
+  const combinedTotals = useMemo(
+    () => ({
+      cost: includedTotals.cost + addOnTotals.cost,
+      net: includedTotals.net + addOnTotals.net,
+      vat: includedTotals.vat + addOnTotals.vat,
+      total: includedTotals.total + addOnTotals.total,
+    }),
+    [includedTotals, addOnTotals]
+  );
+
+  const includedCount = includedItems.length;
+  const addOnCount = addOnItems.length;
   const [openPricingIds, setOpenPricingIds] = useState<Set<string>>(() => new Set());
   const [openVatIds, setOpenVatIds] = useState<Set<string>>(() => new Set());
   const [pendingPricingResetId, setPendingPricingResetId] = useState<string | null>(null);
@@ -239,22 +303,6 @@ export const PackagesStep = () => {
     });
   }, [existingItems]);
 
-  const totals = useMemo(() => {
-    return existingItems.reduce(
-      (acc, item) => {
-        const quantity = Math.max(1, item.quantity ?? 1);
-        const unitCost = Number(item.unitCost ?? 0);
-        const pricing = calculateLineItemPricing(item);
-        acc.cost += unitCost * quantity;
-        acc.net += pricing.net;
-        acc.vat += pricing.vat;
-        acc.total += pricing.gross;
-        return acc;
-      },
-      { cost: 0, net: 0, vat: 0, total: 0 }
-    );
-  }, [existingItems]);
-
   const setItems = useCallback(
     (items: ProjectServiceLineItem[]) => {
       updateServices({ items });
@@ -262,7 +310,7 @@ export const PackagesStep = () => {
     [updateServices]
   );
 
-  const servicesMargin = totals.net - totals.cost;
+  const servicesMargin = addOnTotals.net - addOnTotals.cost;
   const formatCurrency = useCallback(
     (value: number) =>
       new Intl.NumberFormat("tr-TR", {
@@ -282,28 +330,57 @@ export const PackagesStep = () => {
   );
   const totalQuantity = useMemo(
     () =>
-      existingItems.reduce(
+      addOnItems.reduce(
         (acc, item) => acc + Math.max(1, item.quantity ?? 1),
         0
       ),
-    [existingItems]
+    [addOnItems]
   );
-  const vatBreakdown = useMemo(() => {
-    const buckets = new Map<number, number>();
-    existingItems.forEach((item) => {
-      const pricing = calculateLineItemPricing(item);
-      if (!(pricing.vat > 0)) return;
-      const rate =
-        typeof item.vatRate === "number" && Number.isFinite(item.vatRate)
-          ? item.vatRate
-          : 0;
-      const current = buckets.get(rate) ?? 0;
-      buckets.set(rate, current + pricing.vat);
-    });
-    return Array.from(buckets.entries())
-      .sort((a, b) => b[0] - a[0])
-      .map(([rate, amount]) => ({ rate, amount }));
-  }, [existingItems]);
+
+  const buildVatBreakdown = useCallback(
+    (items: ProjectServiceLineItem[]) => {
+      const buckets = new Map<number, number>();
+      items.forEach((item) => {
+        const pricing = calculateLineItemPricing(item);
+        if (!(pricing.vat > 0)) return;
+        const rate =
+          typeof item.vatRate === "number" && Number.isFinite(item.vatRate)
+            ? item.vatRate
+            : 0;
+        const current = buckets.get(rate) ?? 0;
+        buckets.set(rate, current + pricing.vat);
+      });
+      return Array.from(buckets.entries())
+        .sort((a, b) => b[0] - a[0])
+        .map(([rate, amount]) => ({ rate, amount }));
+    },
+    []
+  );
+
+  const overallVatBreakdown = useMemo(
+    () => buildVatBreakdown(existingItems),
+    [buildVatBreakdown, existingItems]
+  );
+
+  const addOnVatBreakdown = useMemo(
+    () => buildVatBreakdown(addOnItems),
+    [buildVatBreakdown, addOnItems]
+  );
+
+  const includedVatBreakdown = useMemo(
+    () => buildVatBreakdown(includedItems),
+    [buildVatBreakdown, includedItems]
+  );
+
+  const billingToggleLabel = t("steps.packages.servicesCard.toggleLabel", {
+    defaultValue: "Service billing mode",
+  });
+  const billingIncludedLabel = t("steps.packages.servicesCard.toggleIncluded", {
+    defaultValue: "Included",
+  });
+  const billingAddOnLabel = t("steps.packages.servicesCard.toggleAddon", {
+    defaultValue: "Add-on",
+  });
 
   const updateItem = useCallback((itemId: string, updates: Partial<ProjectServiceLineItem>) => {
     const nextItems = existingItems.map((item) =>
@@ -311,6 +388,109 @@ export const PackagesStep = () => {
     );
     setItems(nextItems);
   }, [existingItems, setItems]);
+
+  const handleBillingTypeChange = useCallback(
+    (itemId: string, billingType: "included" | "add_on") => {
+      updateItem(itemId, { billingType });
+    },
+    [updateItem]
+  );
+
+  const serviceCardItems = useMemo<ProjectServicesCardItem[]>(() => {
+    return existingItems.map((item) => {
+      const quantity = Math.max(1, item.quantity ?? 1);
+      const pricing = calculateLineItemPricing(item);
+      const quantityLabel =
+        quantity > 1
+          ? t("steps.packages.servicesCard.quantity", {
+              count: quantity,
+              defaultValue: "{{count}} adet",
+            })
+          : null;
+      const billingType = (item.billingType ?? "add_on") as "included" | "add_on";
+
+      return {
+        key: item.id,
+        left: (
+          <div>
+            <div className="font-medium">{item.name}</div>
+            <div className="text-xs text-muted-foreground">
+              {quantityLabel ? (
+                <>
+                  {quantityLabel}
+                  <span className="mx-1">•</span>
+                </>
+              ) : null}
+              {formatCurrency(pricing.gross)}
+            </div>
+          </div>
+        ),
+        right: (
+          <SegmentedControl
+            size="sm"
+            value={billingType}
+            onValueChange={(value) => {
+              if (!value) return;
+              handleBillingTypeChange(item.id, value as "included" | "add_on");
+            }}
+            options={[
+              {
+                value: "included",
+                label: billingIncludedLabel,
+                ariaLabel: billingIncludedLabel,
+              },
+              {
+                value: "add_on",
+                label: billingAddOnLabel,
+                ariaLabel: billingAddOnLabel,
+              },
+            ]}
+          />
+        ),
+      };
+    });
+  }, [existingItems, formatCurrency, t, billingIncludedLabel, billingAddOnLabel, handleBillingTypeChange]);
+
+  const servicesCardHelperText = hasServices
+    ? t("steps.packages.servicesCard.helperWithCount", {
+        included: includedCount,
+        addOn: addOnCount,
+        defaultValue: "Included: {{included}} • Add-ons: {{addOn}}",
+      })
+    : t("steps.packages.servicesCard.helperEmpty", {
+        defaultValue: "Pakete uygun hizmetleri ekleyin.",
+      });
+
+  const servicesCardEmptyCta = t("steps.packages.servicesCard.emptyCta", {
+    defaultValue: "Hizmet ekle",
+  });
+  const servicesCardAddLabel = t("steps.packages.servicesCard.add", {
+    defaultValue: "Hizmet ekle",
+  });
+  const servicesCardManageLabel = t("steps.packages.servicesCard.manage", {
+    defaultValue: "Hizmetleri düzenle",
+  });
+  const servicesCardTitle = t("steps.packages.servicesCard.title", {
+    defaultValue: "Proje hizmetleri",
+  });
+  const servicesCardTooltipTitle = t("steps.packages.servicesCard.tooltipTitle", {
+    defaultValue: "Proje hizmetleri",
+  });
+  const servicesCardTooltipLines = [
+    t("steps.packages.servicesCard.tooltipLine1", {
+      defaultValue: "Paket seçince varsayılan hizmetler otomatik eklenir.",
+    }),
+    t("steps.packages.servicesCard.tooltipLine2", {
+      defaultValue: "Düzenle diyerek paket içi ve ek hizmetleri güncelleyebilirsiniz.",
+    }),
+    t("steps.packages.servicesCard.tooltipLine3", {
+      defaultValue: "Yaptığınız değişiklikler fiyatlara ve sözleşmeye yansır.",
+    }),
+  ];
+  const servicesCardAriaLabel = t("steps.packages.servicesCard.ariaLabel", {
+    defaultValue: "Proje hizmetleri bilgisi",
+  });
+  const hasBillableServices = addOnCount > 0;
 
   const removeItem = useCallback((itemId: string) => {
     setItems(existingItems.filter((item) => item.id !== itemId && item.serviceId !== itemId));
@@ -322,20 +502,27 @@ export const PackagesStep = () => {
     updateItem(itemId, { quantity: next });
   }, [existingItems, updateItem]);
 
-  const buildLineItemFromService = useCallback((service: ServiceWithMetadata): ProjectServiceLineItem => ({
-    id: service.id,
-    type: "existing",
-    serviceId: service.id,
-    name: service.name,
-    quantity: 1,
-    unitCost: service.unitCost,
-    unitPrice: service.unitPrice,
-    vendorName: service.vendor_name ?? null,
-    vatRate: service.vatRate ?? undefined,
-    vatMode: service.vatMode,
-    unit: service.unit,
-    source: "catalog",
-  }), []);
+  const buildLineItemFromService = useCallback(
+    (
+      service: ServiceWithMetadata,
+      billingType: "included" | "add_on" = "add_on"
+    ): ProjectServiceLineItem => ({
+      id: service.id,
+      type: "existing",
+      serviceId: service.id,
+      name: service.name,
+      quantity: 1,
+      unitCost: service.unitCost,
+      unitPrice: service.unitPrice,
+      vendorName: service.vendor_name ?? null,
+      vatRate: service.vatRate ?? undefined,
+      vatMode: service.vatMode,
+      unit: service.unit,
+      source: "catalog",
+      billingType,
+    }),
+    []
+  );
 
   const handleAddService = useCallback((serviceId: string) => {
     const service = serviceMap.get(serviceId);
@@ -686,11 +873,23 @@ export const PackagesStep = () => {
           : service?.unitCost
           ? Math.round(service.unitCost * quantity * 100) / 100
           : null;
-      const vendorLabel = service?.vendor_name ?? item.vendorName ?? undefined;
+      const billingType = (item.billingType ?? "add_on") as "included" | "add_on";
+      const billingLabel =
+        billingType === "included"
+          ? t("steps.packages.summary.badges.included", {
+              defaultValue: "Included in package",
+            })
+          : t("steps.packages.summary.badges.addOn", {
+              defaultValue: "Billable add-on",
+            });
+      const vendorLabel = service?.vendor_name ?? item.vendorName ?? null;
+      const metaLabel = vendorLabel
+        ? `${vendorLabel} • ${billingLabel}`
+        : billingLabel;
       return {
         id: item.id,
         name: item.name,
-        vendor: vendorLabel,
+        vendor: metaLabel,
         quantity,
         unitLabel: getUnitLabel(item.unit ?? service?.unit ?? DEFAULT_SERVICE_UNIT),
         lineCost,
@@ -699,7 +898,7 @@ export const PackagesStep = () => {
         isCustom: false,
       };
     });
-  }, [existingItems, getUnitLabel, serviceMap]);
+  }, [existingItems, getUnitLabel, serviceMap, t]);
 
   useEffect(() => {
     if (!actionsRef.current) return;
@@ -776,7 +975,7 @@ export const PackagesStep = () => {
       return depositAmount != null && depositAmount > 0 ? roundCurrency(depositAmount) : 0;
     }
     const targetKey = depositTarget === "base" ? "base" : "subtotal";
-    const subtotal = Math.max(0, basePriceValue + totals.total);
+    const subtotal = Math.max(0, basePriceValue + addOnTotals.total);
     const clientTotal = includeAddOnsInPrice ? basePriceValue : subtotal;
     const targetAmount =
       targetKey === "base"
@@ -793,7 +992,7 @@ export const PackagesStep = () => {
       return rounded;
     }
     return depositAmount != null && depositAmount > 0 ? roundCurrency(depositAmount) : 0;
-  }, [packageDepositConfig, basePriceValue, totals.total, includeAddOnsInPrice]);
+  }, [packageDepositConfig, basePriceValue, addOnTotals.total, includeAddOnsInPrice]);
 
   const depositInputValue =
     state.details.depositAmount !== undefined
@@ -820,44 +1019,83 @@ export const PackagesStep = () => {
 
   const packageDerived = useMemo(() => {
     const round = (value: number) => Math.round(value * 100) / 100;
-    const singleVatRate =
-      vatBreakdown.length === 1 && Number.isFinite(vatBreakdown[0].rate)
-        ? vatBreakdown[0].rate
+    const baseVatRate =
+      overallVatBreakdown.length === 1 &&
+      Number.isFinite(overallVatBreakdown[0].rate)
+        ? overallVatBreakdown[0].rate
+        : null;
+    const includedVatRate =
+      includedVatBreakdown.length === 1 &&
+      Number.isFinite(includedVatBreakdown[0].rate)
+        ? includedVatBreakdown[0].rate
         : null;
 
     if (basePriceValue > 0) {
-      if (singleVatRate != null) {
-        const divisor = 1 + singleVatRate / 100;
+      if (baseVatRate != null) {
+        const divisor = 1 + baseVatRate / 100;
         const net = round(basePriceValue / divisor);
         const vat = round(basePriceValue - net);
         return {
           packageNet: net,
           packageVat: vat,
           packageGross: round(basePriceValue),
-          packageVatRate: singleVatRate,
+          packageVatRate: baseVatRate,
         };
       }
-      const vatPortion = Math.min(totals.vat, basePriceValue);
+      const vatPortion = Math.min(combinedTotals.vat, basePriceValue);
       const netPortion = round(Math.max(basePriceValue - vatPortion, 0));
       return {
         packageNet: netPortion,
         packageVat: round(vatPortion),
         packageGross: round(basePriceValue),
-        packageVatRate: singleVatRate,
+        packageVatRate: baseVatRate,
+      };
+    }
+
+    if (includedTotals.total > 0) {
+      return {
+        packageNet: round(includedTotals.net),
+        packageVat: round(includedTotals.vat),
+        packageGross: round(includedTotals.total),
+        packageVatRate: includedVatRate,
       };
     }
 
     return {
-      packageNet: round(totals.net),
-      packageVat: round(totals.vat),
-      packageGross: round(totals.total),
-      packageVatRate: singleVatRate,
+      packageNet: 0,
+      packageVat: 0,
+      packageGross: 0,
+      packageVatRate: null,
     };
-  }, [basePriceValue, totals, vatBreakdown]);
+  }, [
+    basePriceValue,
+    combinedTotals.vat,
+    includedTotals.net,
+    includedTotals.total,
+    includedTotals.vat,
+    includedVatBreakdown,
+    overallVatBreakdown,
+  ]);
 
-  const clientNet = packageDerived.packageNet;
-  const clientTax = packageDerived.packageVat;
-  const clientTotal = packageDerived.packageGross;
+  const clientTotals = useMemo(
+    () => ({
+      net: packageDerived.packageNet + addOnTotals.net,
+      vat: packageDerived.packageVat + addOnTotals.vat,
+      total: packageDerived.packageGross + addOnTotals.total,
+    }),
+    [
+      packageDerived.packageNet,
+      packageDerived.packageVat,
+      packageDerived.packageGross,
+      addOnTotals.net,
+      addOnTotals.vat,
+      addOnTotals.total,
+    ]
+  );
+
+  const clientNet = clientTotals.net;
+  const clientTax = clientTotals.vat;
+  const clientTotal = clientTotals.total;
   const depositValue = depositNumeric;
   const depositHelperText = useMemo(() => {
     if (!(depositValue > 0)) {
@@ -919,7 +1157,7 @@ export const PackagesStep = () => {
     const defaultItems = defaultServiceIds
       .map((serviceId) => serviceMap.get(serviceId))
       .filter((service): service is ServiceWithMetadata => Boolean(service))
-      .map((service) => buildLineItemFromService(service));
+      .map((service) => buildLineItemFromService(service, "included"));
 
     updateServices({
       packageId: pkg.id,
@@ -1119,6 +1357,28 @@ export const PackagesStep = () => {
             </div>
           </div>
 
+          <ProjectServicesCard
+            items={serviceCardItems}
+            emptyCtaLabel={servicesCardEmptyCta}
+            onAdd={() => setServicesSheetOpen(true)}
+            title={servicesCardTitle}
+            helperText={servicesCardHelperText}
+            tooltipAriaLabel={servicesCardAriaLabel}
+            tooltipContent={
+              <>
+                <p className="font-medium">{servicesCardTooltipTitle}</p>
+                <ul className="list-disc space-y-1 pl-4">
+                  {servicesCardTooltipLines.filter(Boolean).map((line, index) => (
+                    <li key={index}>{line}</li>
+                  ))}
+                </ul>
+              </>
+            }
+            addButtonLabel={hasServices ? servicesCardManageLabel : servicesCardAddLabel}
+            itemAlign="start"
+            itemRightAlign="start"
+          />
+
           <div className="space-y-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -1131,201 +1391,53 @@ export const PackagesStep = () => {
                   </Badge>
                 ) : null}
               </div>
-              <ServiceInventorySelector
-                services={inventoryServices}
-                selected={selectedQuantities}
-                labels={inventoryLabels}
-                onAdd={handleAddService}
-                onIncrease={handleIncreaseService}
-                onDecrease={handleDecreaseService}
-                onSetQuantity={handleSetServiceQuantity}
-                onRemove={handleRemoveService}
-                isLoading={servicesLoading}
-                error={servicesError ? t("steps.packages.servicesError") : null}
-                onRetry={servicesError ? () => servicesQuery.refetch() : undefined}
-                renderSelectedActions={({ service }) => {
-                  const lineItem = selectedItemsByServiceId.get(service.id);
-                  if (!lineItem) return null;
-                  const isPricingOpen = openPricingIds.has(lineItem.id);
-                  const isVatOpen = openVatIds.has(lineItem.id);
-                  return (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="px-0 text-emerald-600"
-                        onClick={() => handlePricingButtonClick(lineItem)}
-                      >
-                        {isPricingOpen
-                          ? t("steps.packages.actions.resetPricing")
-                          : t("steps.packages.actions.editPricing")}
-                      </Button>
-                    </div>
-                  );
-                }}
-                renderSelectedContent={({ service }) => {
-                  const lineItem = selectedItemsByServiceId.get(service.id);
-                  if (!lineItem) return null;
-                  const isPricingOpen = openPricingIds.has(lineItem.id);
-                  if (!isPricingOpen) {
-                    return null;
-                  }
-                  const serviceMeta = serviceMap.get(lineItem.serviceId ?? service.id);
-                  const isVatOpen = openVatIds.has(lineItem.id);
-                  const vatModeDefault: VatModeOption =
-                    lineItem.vatMode === "inclusive" || lineItem.vatMode === "exclusive"
-                      ? lineItem.vatMode
-                      : serviceMeta?.vatMode === "inclusive"
-                      ? "inclusive"
-                      : "exclusive";
-                  const vatRateValue =
-                    typeof lineItem.vatRate === "number" && Number.isFinite(lineItem.vatRate)
-                      ? String(lineItem.vatRate)
-                      : serviceMeta?.vatRate != null
-                      ? String(serviceMeta.vatRate)
-                      : "";
-
-                  return (
-                    <div className="animate-in fade-in slide-in-from-top-2 space-y-3 rounded-xl border border-emerald-100 bg-white/90 p-4 shadow-sm transition-all duration-200">
-                      <div className="grid gap-3 sm:grid-cols-[repeat(2,minmax(0,200px))]">
-                        <div className="space-y-1">
-                          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            {t("steps.packages.list.unitCost")}
-                          </Label>
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            value={lineItem.unitCost ?? ""}
-                            onChange={(event) =>
-                              updateItem(lineItem.id, {
-                                unitCost: event.target.value === "" ? null : Number(event.target.value),
-                              })
-                            }
-                            className="h-9"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            {t("steps.packages.list.unitPrice")}
-                          </Label>
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            value={lineItem.unitPrice ?? ""}
-                            onChange={(event) =>
-                              updateItem(lineItem.id, {
-                                unitPrice: event.target.value === "" ? null : Number(event.target.value),
-                              })
-                            }
-                            className="h-9"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-3">
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="w-fit px-0 text-emerald-600"
-                          onClick={() => handleVatButtonClick(lineItem)}
-                        >
-                          {isVatOpen
-                            ? t("steps.packages.actions.resetVat")
-                            : t("steps.packages.actions.editVat")}
-                        </Button>
-                        {isVatOpen ? (
-                          <div className="animate-in fade-in slide-in-from-top-2 grid gap-3 sm:max-w-[420px] sm:grid-cols-2 transition-all duration-200">
-                            <div className="space-y-1">
-                              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                {t("steps.packages.vatControls.modeLabel")}
-                              </Label>
-                              <Select
-                                value={vatModeDefault}
-                                onValueChange={(value) => handleVatModeChange(lineItem.id, value as VatModeOption)}
-                              >
-                                <SelectTrigger className="h-9">
-                                  <SelectValue placeholder={t("steps.packages.vatControls.modeLabel")} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {vatModeOptions.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                {t("steps.packages.vatControls.rateLabel")}
-                              </Label>
-                              <Input
-                                type="number"
-                                min={0}
-                                max={99.99}
-                                step="0.01"
-                                value={vatRateValue}
-                                onChange={(event) => handleVatRateChange(lineItem.id, event.target.value)}
-                                className="h-9"
-                              />
-                            </div>
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  );
-                }}
-              />
+              {hasServices ? (
+                <ServicesTableCard
+                  rows={summaryTableRows}
+                  labels={serviceTableLabels}
+                  emptyMessage={t("steps.packages.summary.empty")}
+                  formatCurrency={formatCurrency}
+                />
+              ) : null}
             </div>
-
-            {hasServices ? (
-              <ServicesTableCard
-                rows={summaryTableRows}
-                labels={serviceTableLabels}
-                emptyMessage={t("steps.packages.summary.empty")}
-                formatCurrency={formatCurrency}
-              />
-            ) : null}
-            <div className={cn("flex", hasServices ? "justify-end" : "justify-stretch")}>
+            <div className={cn("flex", hasBillableServices ? "justify-end" : "justify-stretch")}>
               <SummaryTotalsCard
                 className={cn(
                   "bg-white/95",
-                  hasServices ? "sm:w-auto sm:min-w-[320px]" : "w-full max-w-none"
+                  hasBillableServices ? "sm:w-auto sm:min-w-[320px]" : "w-full max-w-none"
                 )}
               >
-                {hasServices ? (
+                {hasBillableServices ? (
                   <>
                     <SummaryTotalsSection>
                       <SummaryTotalRow
                         label={t("steps.packages.summary.servicesCount")}
-                        value={String(existingItems.length)}
+                        value={String(addOnCount)}
                       />
                       <SummaryTotalRow
                         label={
-                          vatBreakdown.length === 1
+                          addOnVatBreakdown.length === 1
                             ? t("steps.packages.summary.servicesVatWithRate", {
-                                rate: formatPercent(vatBreakdown[0].rate),
+                                rate: formatPercent(addOnVatBreakdown[0].rate),
                               })
                             : t("steps.packages.summary.servicesVat")
                         }
-                        value={formatCurrency(totals.vat)}
+                        value={formatCurrency(addOnTotals.vat)}
                       />
                       <SummaryTotalRow
                         label={t("steps.packages.summary.servicesCost")}
-                        value={formatCurrency(totals.cost)}
+                        value={formatCurrency(addOnTotals.cost)}
                       />
                       <SummaryTotalRow
                         label={t("steps.packages.summary.servicesPrice")}
-                        value={formatCurrency(totals.net)}
+                        value={formatCurrency(addOnTotals.net)}
                       />
                     </SummaryTotalsSection>
                     <SummaryTotalsDivider />
                     <SummaryTotalsSection className="pt-3">
                       <SummaryTotalRow
                         label={t("steps.packages.summary.servicesGross")}
-                        value={formatCurrency(totals.total)}
+                        value={formatCurrency(addOnTotals.total)}
                         emphasizeLabel
                       />
                       <SummaryTotalRow
@@ -1338,7 +1450,7 @@ export const PackagesStep = () => {
                     <SummaryTotalsDivider />
                   </>
                 ) : null}
-                <SummaryTotalsSection className={cn("space-y-3", hasServices ? "pt-3" : undefined)}>
+                <SummaryTotalsSection className={cn("space-y-3", hasBillableServices ? "pt-3" : undefined)}>
                   <SummaryTotalRow
                     label={t("steps.packages.summary.packageNet")}
                     value={formatCurrency(packageDerived.packageNet)}
@@ -1366,7 +1478,7 @@ export const PackagesStep = () => {
                   />
                 </SummaryTotalsSection>
                 <SummaryTotalsDivider />
-                <SummaryTotalsSection className={cn("space-y-3", hasServices ? "pt-3" : undefined)}>
+                <SummaryTotalsSection className={cn("space-y-3", hasBillableServices ? "pt-3" : undefined)}>
                   <SummaryTotalRow
                     label={t("steps.packages.summary.clientNet")}
                     value={formatCurrency(clientNet)}
@@ -1381,14 +1493,18 @@ export const PackagesStep = () => {
                     tone="positive"
                     emphasizeLabel
                     helper={
-                      basePriceValue > 0
+                      addOnTotals.total > 0
+                        ? t("steps.packages.summary.clientTotalHelperExtras", {
+                            defaultValue: "Add-ons are billed on top of the package.",
+                          })
+                        : basePriceValue > 0
                         ? t("steps.packages.summary.clientTotalHelperInclusive")
                         : undefined
                     }
                   />
                 </SummaryTotalsSection>
                 <SummaryTotalsDivider />
-                <SummaryTotalsSection className={cn("space-y-3", hasServices ? "pt-3" : undefined)}>
+                <SummaryTotalsSection className={cn("space-y-3", hasBillableServices ? "pt-3" : undefined)}>
                   <SummaryTotalRow
                     label={t("steps.packages.summary.deposit")}
                     value={formatCurrency(depositValue)}
@@ -1407,6 +1523,206 @@ export const PackagesStep = () => {
         </div>
       )}
       </div>
+
+      <Sheet open={servicesSheetOpen} onOpenChange={setServicesSheetOpen}>
+        <SheetContent side="right" className="flex w-full max-w-4xl flex-col overflow-hidden sm:max-w-3xl">
+          <SheetHeader className="shrink-0 space-y-2">
+            <SheetTitle>
+              {t("steps.packages.servicesSheet.title", {
+                defaultValue: "Hizmetleri düzenle",
+              })}
+            </SheetTitle>
+            <SheetDescription>
+              {t("steps.packages.servicesSheet.description", {
+                defaultValue: "Pakete dahil veya ek hizmetleri seçin, fiyat ve KDV ayarlarını güncelleyin.",
+              })}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto pr-2">
+            <div className="space-y-6 pb-8">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label>{t("steps.packages.servicesLabel")}</Label>
+                  {existingItems.length > 0 ? (
+                    <Badge variant="secondary">
+                      {t("steps.packages.servicesBadge", {
+                        count: existingItems.length,
+                      })}
+                    </Badge>
+                  ) : null}
+                </div>
+                <ServiceInventorySelector
+                  services={inventoryServices}
+                  selected={selectedQuantities}
+                  labels={inventoryLabels}
+                  onAdd={handleAddService}
+                  onIncrease={handleIncreaseService}
+                  onDecrease={handleDecreaseService}
+                  onSetQuantity={handleSetServiceQuantity}
+                  onRemove={handleRemoveService}
+                  isLoading={servicesLoading}
+                  error={servicesError ? t("steps.packages.servicesError") : null}
+                  onRetry={servicesError ? () => servicesQuery.refetch() : undefined}
+                  renderSelectedActions={({ service }) => {
+                    const lineItem = selectedItemsByServiceId.get(service.id);
+                    if (!lineItem) return null;
+                    const isPricingOpen = openPricingIds.has(lineItem.id);
+                    const billingType = (lineItem.billingType ?? "add_on") as "included" | "add_on";
+                    return (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <SegmentedControl
+                          size="sm"
+                          value={billingType}
+                          onValueChange={(value) => {
+                            if (!value) return;
+                            handleBillingTypeChange(lineItem.id, value as "included" | "add_on");
+                          }}
+                          options={[
+                            {
+                              value: "included",
+                              label: billingIncludedLabel,
+                              ariaLabel: billingIncludedLabel,
+                            },
+                            {
+                              value: "add_on",
+                              label: billingAddOnLabel,
+                              ariaLabel: billingAddOnLabel,
+                            },
+                          ]}
+                        />
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="px-0 text-emerald-600"
+                          onClick={() => handlePricingButtonClick(lineItem)}
+                        >
+                          {isPricingOpen
+                            ? t("steps.packages.actions.resetPricing")
+                            : t("steps.packages.actions.editPricing")}
+                        </Button>
+                      </div>
+                    );
+                  }}
+                  renderSelectedContent={({ service }) => {
+                    const lineItem = selectedItemsByServiceId.get(service.id);
+                    if (!lineItem) return null;
+                    const isPricingOpen = openPricingIds.has(lineItem.id);
+                    if (!isPricingOpen) {
+                      return null;
+                    }
+                    const serviceMeta = serviceMap.get(lineItem.serviceId ?? service.id);
+                    const isVatOpen = openVatIds.has(lineItem.id);
+                    const vatModeDefault: VatModeOption =
+                      lineItem.vatMode === "inclusive" || lineItem.vatMode === "exclusive"
+                        ? lineItem.vatMode
+                        : serviceMeta?.vatMode === "inclusive"
+                        ? "inclusive"
+                        : "exclusive";
+                    const vatRateValue =
+                      typeof lineItem.vatRate === "number" && Number.isFinite(lineItem.vatRate)
+                        ? String(lineItem.vatRate)
+                        : serviceMeta?.vatRate != null
+                        ? String(serviceMeta.vatRate)
+                        : "";
+
+                    return (
+                      <div className="animate-in fade-in slide-in-from-top-2 space-y-3 rounded-xl border border-emerald-100 bg-white/90 p-4 shadow-sm transition-all duration-200">
+                        <div className="grid gap-3 sm:grid-cols-[repeat(2,minmax(0,200px))]">
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              {t("steps.packages.list.unitCost")}
+                            </Label>
+                            <Input
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              value={lineItem.unitCost ?? ""}
+                              onChange={(event) =>
+                                updateItem(lineItem.id, {
+                                  unitCost: event.target.value === "" ? null : Number(event.target.value),
+                                })
+                              }
+                              className="h-9"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              {t("steps.packages.list.unitPrice")}
+                            </Label>
+                            <Input
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              value={lineItem.unitPrice ?? ""}
+                              onChange={(event) =>
+                                updateItem(lineItem.id, {
+                                  unitPrice: event.target.value === "" ? null : Number(event.target.value),
+                                })
+                              }
+                              className="h-9"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-3">
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="w-fit px-0 text-emerald-600"
+                            onClick={() => handleVatButtonClick(lineItem)}
+                          >
+                            {isVatOpen
+                              ? t("steps.packages.actions.resetVat")
+                              : t("steps.packages.actions.editVat")}
+                          </Button>
+                          {isVatOpen ? (
+                            <div className="animate-in fade-in slide-in-from-top-2 grid gap-3 sm:max-w-[420px] sm:grid-cols-2 transition-all duration-200">
+                              <div className="space-y-1">
+                                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                  {t("steps.packages.vatControls.modeLabel")}
+                                </Label>
+                                <Select
+                                  value={vatModeDefault}
+                                  onValueChange={(value) => handleVatModeChange(lineItem.id, value as VatModeOption)}
+                                >
+                                  <SelectTrigger className="h-9">
+                                    <SelectValue placeholder={t("steps.packages.vatControls.modeLabel")} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {vatModeOptions.map((option) => (
+                                      <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                  {t("steps.packages.vatControls.rateLabel")}
+                                </Label>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  max={99.99}
+                                  step="0.01"
+                                  value={vatRateValue}
+                                  onChange={(event) => handleVatRateChange(lineItem.id, event.target.value)}
+                                  className="h-9"
+                                />
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {pendingPricingLineItem ? (
         <AlertDialog

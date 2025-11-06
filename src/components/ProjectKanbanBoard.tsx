@@ -152,7 +152,31 @@ const ProjectKanbanBoard = ({
       };
     }
     // When provided (even empty initially), use them and avoid duplicate fetches
-    setStatuses((projectStatuses || []).filter(s => s.name?.toLowerCase?.() !== PROJECT_STATUS.ARCHIVED));
+    const filteredStatuses = (projectStatuses || []).filter(
+      status => status.name?.toLowerCase?.() !== PROJECT_STATUS.ARCHIVED
+    );
+
+    setStatuses(previous => {
+      if (previous.length === filteredStatuses.length) {
+        const hasDifference = previous.some((status, index) => {
+          const next = filteredStatuses[index];
+          if (!next) return true;
+          return (
+            status.id !== next.id ||
+            status.name !== next.name ||
+            status.color !== next.color ||
+            status.lifecycle !== next.lifecycle ||
+            status.sort_order !== next.sort_order
+          );
+        });
+
+        if (!hasDifference) {
+          return previous;
+        }
+      }
+
+      return filteredStatuses;
+    });
     setLoading(false);
     return undefined;
   }, [projectStatuses, toast, t]);

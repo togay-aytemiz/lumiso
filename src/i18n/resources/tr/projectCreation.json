@@ -126,6 +126,27 @@
       "servicesLabel": "Hizmetler ve ekler",
       "servicesBadge": "{{count}} adet seçildi",
       "servicesError": "Hizmetler yüklenemedi. Lütfen birazdan tekrar deneyin.",
+      "servicesCard": {
+        "title": "Proje hizmetleri",
+        "helperWithCount": "Pakete dahil: {{included}} • Ücrete ek: {{addOn}}",
+        "helperEmpty": "Pakete uygun hizmetleri ekleyin.",
+        "emptyCta": "Hizmet ekle",
+        "add": "Hizmet ekle",
+        "manage": "Hizmetleri düzenle",
+        "quantity": "{{count}} adet",
+        "tooltipTitle": "Proje hizmetleri",
+        "tooltipLine1": "Paket seçince varsayılan hizmetler otomatik eklenir.",
+        "tooltipLine2": "Düzenle diyerek paket içi ve ek hizmetleri güncelleyebilirsiniz.",
+        "tooltipLine3": "Yaptığınız değişiklikler fiyatlara ve sözleşmeye yansır.",
+        "ariaLabel": "Proje hizmetleri bilgisi",
+        "toggleIncluded": "Pakete dahil",
+        "toggleAddon": "Ücrete ek",
+        "toggleLabel": "Hizmet faturalama tipi"
+      },
+      "servicesSheet": {
+        "title": "Hizmetleri düzenle",
+        "description": "Pakete dahil veya ek hizmetleri seçin, fiyat ve KDV ayarlarını güncelleyin."
+      },
       "selectedIndicator": "Seçili",
       "selectedSummary": "Seçilen paket: {{name}}",
       "inventory": {
@@ -245,8 +266,13 @@
         "clientTax": "Toplam vergi",
         "clientTotal": "Genel toplam",
         "clientTotalHelperInclusive": "Paket fiyatı seçilen hizmetleri kapsıyor.",
+        "clientTotalHelperExtras": "Ek hizmetler paket fiyatına eklenir.",
         "deposit": "Kapora",
         "depositHelperNone": "Kapora alınmıyor"
+      },
+      "badges": {
+        "included": "Pakete dahil",
+        "addOn": "Ücrete ek"
       }
     },
     "summary": {

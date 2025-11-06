@@ -126,6 +126,27 @@
       "servicesLabel": "Services & add-ons",
       "servicesBadge": "{{count}} selected",
       "servicesError": "Unable to load services. Try again in a moment.",
+      "servicesCard": {
+        "title": "Project services",
+        "helperWithCount": "Included: {{included}} • Add-ons: {{addOn}}",
+        "helperEmpty": "Add the services that belong to this package.",
+        "emptyCta": "Add service",
+        "add": "Add service",
+        "manage": "Edit services",
+        "quantity": "{{count}} units",
+        "tooltipTitle": "Project services",
+        "tooltipLine1": "Package defaults show up here automatically.",
+        "tooltipLine2": "Use edit to adjust included and add-on services.",
+        "tooltipLine3": "Changes sync to pricing and handoff instantly.",
+        "ariaLabel": "Project services info",
+        "toggleIncluded": "Included",
+        "toggleAddon": "Add-on",
+        "toggleLabel": "Service billing mode"
+      },
+      "servicesSheet": {
+        "title": "Edit services",
+        "description": "Pick included or extra services and adjust pricing or VAT."
+      },
       "selectedIndicator": "Selected",
       "selectedSummary": "Selected package: {{name}}",
       "inventory": {
@@ -245,8 +266,13 @@
         "clientTax": "Total tax",
         "clientTotal": "Grand total",
         "clientTotalHelperInclusive": "Package price covers selected services.",
+        "clientTotalHelperExtras": "Add-ons are billed on top of the package.",
         "deposit": "Deposit",
         "depositHelperNone": "No deposit collected"
+      },
+      "badges": {
+        "included": "Included in package",
+        "addOn": "Billable add-on"
       }
     },
     "summary": {

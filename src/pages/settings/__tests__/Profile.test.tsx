@@ -157,11 +157,24 @@ jest.mock("@/components/ui/alert-dialog", () => ({
 }));
 
 jest.mock("@/contexts/ProfileContext");
-jest.mock("@/hooks/useWorkingHours");
-jest.mock("@/hooks/useSettingsCategorySection");
-jest.mock("@/hooks/use-toast");
-jest.mock("@/contexts/OnboardingContext");
-jest.mock("@/contexts/OrganizationContext");
+jest.mock("@/hooks/useProfile", () => ({
+  useProfile: jest.fn(),
+}));
+jest.mock("@/hooks/useWorkingHours", () => ({
+  useWorkingHours: jest.fn(),
+}));
+jest.mock("@/hooks/useSettingsCategorySection", () => ({
+  useSettingsCategorySection: jest.fn(),
+}));
+jest.mock("@/hooks/use-toast", () => ({
+  useToast: jest.fn(),
+}));
+jest.mock("@/contexts/OnboardingContext", () => ({
+  useOnboarding: jest.fn(),
+}));
+jest.mock("@/contexts/OrganizationContext", () => ({
+  useOrganization: jest.fn(),
+}));
 
 jest.mock("@/integrations/supabase/client", () => ({
   supabase: {
@@ -294,6 +307,12 @@ describe("Profile settings page", () => {
     mockToast.mockClear();
     mockCompleteStep.mockClear();
     mockGetUser.mockClear();
+
+    (RouterDom.useSearchParams as jest.MockedFunction<typeof RouterDom.useSearchParams>).mockReturnValue([
+      new URLSearchParams(),
+      jest.fn(),
+    ] as ReturnType<typeof RouterDom.useSearchParams>);
+    (RouterDom.useNavigate as jest.MockedFunction<typeof RouterDom.useNavigate>).mockReturnValue(jest.fn());
 
     mockUseToast.mockReturnValue({
       toasts: [],
@@ -449,14 +468,15 @@ describe("Profile settings page", () => {
     );
 
     const mockNavigate = jest.fn();
-    const searchParamsSpy = jest
-      .spyOn(RouterDom, "useSearchParams")
-      .mockReturnValue(
-        [new URLSearchParams("tutorial=true&step=2"), jest.fn()] as ReturnType<typeof RouterDom.useSearchParams>
-      );
-    const navigateSpy = jest
-      .spyOn(RouterDom, "useNavigate")
-      .mockReturnValue(mockNavigate as ReturnType<typeof RouterDom.useNavigate>);
+    const searchParamsMock = RouterDom.useSearchParams as jest.MockedFunction<
+      typeof RouterDom.useSearchParams
+    >;
+    searchParamsMock.mockReturnValue([
+      new URLSearchParams("tutorial=true&step=2"),
+      jest.fn(),
+    ] as ReturnType<typeof RouterDom.useSearchParams>);
+    const navigateMock = RouterDom.useNavigate as jest.MockedFunction<typeof RouterDom.useNavigate>;
+    navigateMock.mockReturnValue(mockNavigate as ReturnType<typeof RouterDom.useNavigate>);
 
     render(<Profile />);
 
@@ -472,8 +492,11 @@ describe("Profile settings page", () => {
       expect(mockNavigate).toHaveBeenCalledWith("/settings/general?tutorial=true");
     });
 
-    searchParamsSpy.mockRestore();
-    navigateSpy.mockRestore();
+    searchParamsMock.mockReturnValue([
+      new URLSearchParams(),
+      jest.fn(),
+    ] as ReturnType<typeof RouterDom.useSearchParams>);
+    navigateMock.mockReturnValue(jest.fn());
   });
 
   it("updates working hours and surfaces a success toast", async () => {

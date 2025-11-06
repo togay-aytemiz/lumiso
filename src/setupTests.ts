@@ -102,12 +102,16 @@ jest.mock('@/integrations/supabase/client', () => ({
 }));
 
 // Mock React Router
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useNavigate: () => jest.fn(),
-  useParams: () => ({}),
-  useSearchParams: () => [new URLSearchParams(), jest.fn()],
-}));
+jest.mock('react-router-dom', () => {
+  const actual = jest.requireActual('react-router-dom');
+
+  return {
+    ...actual,
+    useNavigate: jest.fn(() => jest.fn()),
+    useParams: jest.fn(() => ({})),
+    useSearchParams: jest.fn(() => [new URLSearchParams(), jest.fn()] as const),
+  };
+});
 
 // Mock performance API
 Object.defineProperty(window, 'performance', {

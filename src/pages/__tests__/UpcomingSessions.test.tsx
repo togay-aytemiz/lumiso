@@ -3,6 +3,7 @@ import type { ComponentProps, PropsWithChildren, ReactNode } from "react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import AllSessions from "../UpcomingSessions";
 import { supabase } from "@/integrations/supabase/client";
+import { mockSupabaseClient } from "@/utils/testUtils";
 import type { KpiCardProps } from "@/components/ui/kpi-card";
 import type SessionSheetView from "@/components/SessionSheetView";
 import type { SegmentedControlProps } from "@/components/ui/segmented-control";
@@ -81,20 +82,13 @@ type SessionStatusResult = {
 type SessionSheetViewProps = ComponentProps<typeof SessionSheetView>;
 type SessionTableColumn = AdvancedTableColumn<SessionRow>;
 
-const useThrottledRefetchOnFocusMock = jest.fn<
-  void,
-  [() => void | Promise<void>, number?]
->();
-const useSessionStatusesMock = jest.fn<{ data?: SessionStatusResult[] }, []>();
 interface ViewProjectDialogProps {
   open: boolean;
   project?: { id?: string | null } | null;
 }
-const writeFileXLSXMock = jest.fn<void, [unknown, unknown?, unknown?]>();
-const jsonToSheetMock = jest.fn<Record<string, unknown>, [unknown?]>(() => ({}));
-const bookNewMock = jest.fn<Record<string, unknown>, []>(() => ({}));
-const bookAppendSheetMock = jest.fn<void, [unknown, unknown, string?]>();
-
+jest.mock("@/integrations/supabase/client", () => ({
+  supabase: mockSupabaseClient,
+}));
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string, options?: TranslationOptions) => {
@@ -129,12 +123,39 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
 }));
 
 jest.mock("@/hooks/useThrottledRefetchOnFocus", () => ({
-  useThrottledRefetchOnFocus: useThrottledRefetchOnFocusMock,
+  useThrottledRefetchOnFocus: jest.fn<
+    void,
+    [() => void | Promise<void>, number?]
+  >(),
 }));
 
 jest.mock("@/hooks/useOrganizationData", () => ({
-  useSessionStatuses: useSessionStatusesMock,
+  useSessionStatuses: jest.fn<{ data?: SessionStatusResult[] }, []>(),
 }));
+
+jest.mock("@/lib/organizationUtils", () => ({
+  getUserOrganizationId: jest.fn<Promise<string | null>, []>(),
+}));
+
+const { useThrottledRefetchOnFocus: useThrottledRefetchOnFocusMock } =
+  jest.requireMock("@/hooks/useThrottledRefetchOnFocus") as {
+    useThrottledRefetchOnFocus: jest.Mock<
+      void,
+      [() => void | Promise<void>, number?]
+    >;
+  };
+
+const { useSessionStatuses: useSessionStatusesMock } = jest.requireMock(
+  "@/hooks/useOrganizationData"
+) as {
+  useSessionStatuses: jest.Mock<{ data?: SessionStatusResult[] }, []>;
+};
+
+const { getUserOrganizationId: getUserOrganizationIdMock } = jest.requireMock(
+  "@/lib/organizationUtils"
+) as {
+  getUserOrganizationId: jest.Mock<Promise<string | null>, []>;
+};
 
 jest.mock("@/hooks/use-toast", () => ({
   toast: jest.fn(),
@@ -290,11 +311,11 @@ jest.mock("@/components/data-table", () => ({
 }));
 
 jest.mock("xlsx/xlsx.mjs", () => ({
-  writeFileXLSX: writeFileXLSXMock,
+  writeFileXLSX: jest.fn<void, [unknown, unknown?, unknown?]>(),
   utils: {
-    json_to_sheet: jsonToSheetMock,
-    book_new: bookNewMock,
-    book_append_sheet: bookAppendSheetMock,
+    json_to_sheet: jest.fn<Record<string, unknown>, [unknown?]>(() => ({})),
+    book_new: jest.fn<Record<string, unknown>, []>(() => ({})),
+    book_append_sheet: jest.fn<void, [unknown, unknown, string?]>(),
   },
 }));
 
@@ -418,6 +439,7 @@ describe("Upcoming sessions page", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useSessionStatusesMock.mockReturnValue({ data: [] });
+    getUserOrganizationIdMock.mockResolvedValue("org-123");
   });
 
   const buildSessions = (): SessionRows => [

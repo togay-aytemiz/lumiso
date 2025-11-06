@@ -344,7 +344,9 @@ it("persists view mode selection to localStorage and url", async () => {
   await renderAllProjects();
 
   const boardButton = screen.getByRole("button", { name: "projects.board" });
-  fireEvent.click(boardButton);
+  await act(async () => {
+    fireEvent.click(boardButton);
+  });
 
   expect(window.localStorage.getItem("projects:viewMode")).toBe("board");
   expect(window.location.search).toBe("?view=board");
@@ -390,7 +392,9 @@ it("loads board projects and keeps list view data in sync when toggling views", 
   expect(fetchProjectsData).toHaveBeenCalledWith("active", expect.objectContaining({ includeCount: true }));
 
   const listButton = screen.getByRole("button", { name: "projects.list" });
-  fireEvent.click(listButton);
+  await act(async () => {
+    fireEvent.click(listButton);
+  });
 
   await waitFor(() => {
     expect(screen.getByTestId("advanced-data-table")).toHaveTextContent("Board Project");
@@ -398,6 +402,9 @@ it("loads board projects and keeps list view data in sync when toggling views", 
 });
 
 it("shows an error toast when exporting projects fails", async () => {
+  const consoleErrorSpy = jest
+    .spyOn(console, "error")
+    .mockImplementation(() => {});
   const projects = [createProject({ id: "project-3", name: "Export Project" })];
   const fetchProjectsData = jest.fn().mockRejectedValue(new Error("export failed"));
 
@@ -438,4 +445,7 @@ it("shows an error toast when exporting projects fails", async () => {
       description: "export failed",
     }));
   });
+
+  expect(consoleErrorSpy).toHaveBeenCalled();
+  consoleErrorSpy.mockRestore();
 });

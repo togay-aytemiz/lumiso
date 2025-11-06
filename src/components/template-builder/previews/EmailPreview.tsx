@@ -131,22 +131,32 @@ function TextBlockPreview({ data, replacePlaceholders }: { data: TextBlockData; 
     }
   };
 
+  const lines = content.split('\n');
+
+  if (data.formatting.bullets) {
+    const bulletLines = lines.filter(line => line.trim());
+    return (
+      <div style={getTextStyles()}>
+        <ul className="list-disc ml-6">
+          {bulletLines.map((line, index) => (
+            <li key={index}>{line.trim()}</li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
   const Tag = getElementTag() as keyof JSX.IntrinsicElements;
 
   return (
     <div>
       <Tag style={getTextStyles()}>
-        {data.formatting.bullets ? (
-          <ul className="list-disc ml-6">
-            {content.split('\n').filter(line => line.trim()).map((line, index) => (
-              <li key={index}>{line.trim()}</li>
-            ))}
-          </ul>
-        ) : (
-          content.split('\n').map((line, index) => (
-            <div key={index}>{line}</div>
-          ))
-        )}
+        {lines.map((line, index) => (
+          <span key={index}>
+            {line}
+            {index < lines.length - 1 && <br />}
+          </span>
+        ))}
       </Tag>
     </div>
   );

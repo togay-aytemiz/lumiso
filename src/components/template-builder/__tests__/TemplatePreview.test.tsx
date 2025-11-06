@@ -230,6 +230,10 @@ describe("TemplatePreview", () => {
   });
 
   it("surfaces Supabase errors from sendTestEmail", async () => {
+    const consoleErrorSpy = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
     invokeMock.mockResolvedValueOnce({ data: null, error: { message: "Send failed" } });
 
     render(
@@ -250,6 +254,9 @@ describe("TemplatePreview", () => {
         variant: "destructive",
       });
     });
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 
   it("switches email preview device between desktop and mobile", () => {

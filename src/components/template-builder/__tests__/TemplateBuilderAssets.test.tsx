@@ -60,7 +60,7 @@ jest.mock("../storageLimits", () => ({
   STORAGE_LIMITS: { MAX_IMAGES: 20, MAX_STORAGE_BYTES: 50 * 1024 * 1024 },
 }));
 
-jest.mock("../StorageQuotaDisplay", () => ({
+jest.mock("../CompactStorageIndicator", () => ({
   CompactStorageIndicator: () => <div data-testid="mock-storage-indicator" />,
 }));
 
@@ -85,6 +85,9 @@ const mockedUseToast = useToast as unknown as jest.Mock;
 const mockedUseAuth = useAuth as unknown as jest.Mock;
 const mockedUseOrganization = useOrganization as unknown as jest.Mock;
 const mockedCheckStorageLimits = checkStorageLimits as unknown as jest.Mock;
+
+const suppressConsoleError = () =>
+  jest.spyOn(console, "error").mockImplementation(() => {});
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -294,6 +297,7 @@ describe("ImageUpload", () => {
   });
 
   it("handles upload failures gracefully", async () => {
+    const consoleErrorSpy = suppressConsoleError();
     setUsageMocks({
       total_images: 5,
       total_storage_bytes: 1024,
@@ -321,6 +325,9 @@ describe("ImageUpload", () => {
         })
       )
     );
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 });
 
@@ -508,6 +515,7 @@ describe("ImageLibrarySheet", () => {
   });
 
   it("shows an error toast when asset loading fails", async () => {
+    const consoleErrorSpy = suppressConsoleError();
     setupSupabaseAssets({ selectError: new Error("boom") });
 
     render(<ImageLibrarySheet open onOpenChange={jest.fn()} />);
@@ -520,9 +528,13 @@ describe("ImageLibrarySheet", () => {
         })
       )
     );
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 
   it("surfaces errors when deleting an asset fails", async () => {
+    const consoleErrorSpy = suppressConsoleError();
     setupSupabaseAssets({ deleteError: new Error("remove failed") });
 
     render(<ImageLibrarySheet open onOpenChange={jest.fn()} />);
@@ -544,6 +556,9 @@ describe("ImageLibrarySheet", () => {
         })
       )
     );
+
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 });
 

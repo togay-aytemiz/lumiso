@@ -48,6 +48,10 @@ This document outlines proposed fixes for each test suite currently failing or b
 - **Notes**: `npx jest --runInBand src/components/__tests__/EnhancedAddLeadDialog.test.tsx`
 
 ## Follow-up
-- A full `npm test` run currently completes the majority of suites but needs additional time ( >5 minutes) to finish; the latest attempt was interrupted after observing only passing suites. Re-run when more time is available to confirm completion.
+- Stabilized the previously noisy suites:
+  - `TemplateBuilderAssets.test.tsx` now mocks the `CompactStorageIndicator` module instead of the unused `StorageQuotaDisplay` stub and silences expected error logs when simulating failed Supabase calls, eliminating the infinite loop of `select is not a function` messages.
+  - `TemplatePreview.test.tsx` exercises the error path without emitting invalid DOM warnings by rendering bullet lists with proper markup and capturing the expected console error when the Supabase function rejects.
+  - `AllProjects.test.tsx` wraps view toggles in `act(...)` and suppresses the intentional export failure log so the suite no longer triggers React's act warnings.
+- A fresh `npm test -- --runInBand --passWithNoTests` run advances past these suites but still required a manual cancel after the runner stopped reporting progress. Remaining noise comes from unrelated suites (for example `TemplateBuilder.test.tsx` and `SessionTypesSection.test.tsx`) that emit `act(...)` and DOM nesting warnings, which should be the next targets to keep Jest from hanging.
 - Consider adding regression coverage for recurring issues to prevent future breakages.
 

@@ -39,6 +39,8 @@ export function ProjectServicesCard({
   const paddingClass = hasItems ? "p-4" : "px-3 py-2";
   const headerGapClass = hasItems ? "gap-2" : "gap-1";
   const rightAlignmentClass = itemRightAlign === "start" ? "shrink-0" : "shrink-0 text-right";
+  const iconButtonClass =
+    "inline-flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted/70 focus:outline-none focus:ring-1 focus:ring-muted-foreground/40";
 
   return (
     <div className={`rounded-xl border ${paddingClass}`}>
@@ -61,15 +63,9 @@ export function ProjectServicesCard({
         )}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 rounded-full text-muted-foreground"
-              aria-label={tooltipAriaLabel}
-            >
-              <HelpCircle className="h-4 w-4" />
-            </Button>
+            <button type="button" className={iconButtonClass} aria-label={tooltipAriaLabel}>
+              <HelpCircle className="h-3.5 w-3.5" />
+            </button>
           </TooltipTrigger>
           <TooltipContent className="max-w-xs space-y-2 text-sm leading-relaxed">
             {tooltipContent}

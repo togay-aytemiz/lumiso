@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { format } from "date-fns";
-import { CreditCard, PiggyBank, Edit2, Trash2 } from "lucide-react";
+import { CreditCard, PiggyBank, Edit2, Trash2, HelpCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -141,6 +141,9 @@ const aggregatePricing = (records: ServiceRecord[]): VatTotals =>
     },
     { ...DEFAULT_VAT_TOTALS }
   );
+
+const iconButtonClass =
+  "inline-flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted/70 focus:outline-none focus:ring-1 focus:ring-muted-foreground/40";
 
 const findLatestDate = (payments: Payment[]): string | null => {
   if (!payments.length) return null;
@@ -789,6 +792,28 @@ export function ProjectPaymentsSection({
     [serviceRecords]
   );
 
+  const vatBreakdown = useMemo(
+    () =>
+      serviceRecords
+        .map((record) => {
+          const totals = computeServiceTotals({
+            unitPrice: record.service.selling_price ?? record.service.price ?? null,
+            quantity: record.quantity,
+            vatRate: record.service.vat_rate ?? null,
+            vatMode: record.service.price_includes_vat === false ? "exclusive" : "inclusive"
+          });
+          return {
+            key: record.projectServiceId,
+            name: record.service.name,
+            vat: totals.vat,
+            billingType: record.billingType
+          };
+        })
+        .filter((entry) => entry.vat > 0)
+        .sort((a, b) => b.vat - a.vat),
+    [serviceRecords]
+  );
+
   const includedCardItems: ProjectServicesCardItem[] = financialSummary.includedServices.map(
     (record) => ({
       key: record.projectServiceId,
@@ -919,13 +944,71 @@ export function ProjectPaymentsSection({
                 </div>
 
                 <div className="rounded-xl border bg-muted/30 p-4">
-                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {t("payments.summary.vat", { defaultValue: "Estimated VAT" })}
-                  </div>
-                  <div className="mt-2 text-2xl font-semibold">
-                    {formatCurrency(
-                      financialSummary.includedTotals.vat + financialSummary.extraTotals.vat
-                    )}
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                        {t("payments.summary.vat", { defaultValue: "Estimated VAT" })}
+                      </div>
+                      <div className="mt-2 text-2xl font-semibold">
+                        {formatCurrency(
+                          financialSummary.includedTotals.vat + financialSummary.extraTotals.vat
+                        )}
+                      </div>
+                    </div>
+                    <TooltipProvider delayDuration={200}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className={iconButtonClass}
+                            aria-label={t("payments.summary.vat_breakdown_aria", {
+                              defaultValue: "Show VAT breakdown"
+                            })}
+                          >
+                            <HelpCircle className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs space-y-2 text-sm leading-relaxed">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            {t("payments.summary.vat_breakdown_title", {
+                              defaultValue: "VAT breakdown"
+                            })}
+                          </p>
+                          {vatBreakdown.length > 0 ? (
+                            <ul className="space-y-1">
+                              {vatBreakdown.map((entry) => (
+                                <li
+                                  key={entry.key}
+                                  className="flex items-start justify-between gap-3 text-xs"
+                                >
+                                  <div className="min-w-0">
+                                    <div className="truncate font-medium">{entry.name}</div>
+                                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                      {entry.billingType === "included"
+                                        ? t("payments.services.included_badge", {
+                                            defaultValue: "Included"
+                                          })
+                                        : t("payments.services.addons_badge", {
+                                            defaultValue: "Add-on"
+                                          })}
+                                    </div>
+                                  </div>
+                                  <div className="shrink-0 font-semibold">
+                                    {formatCurrency(entry.vat)}
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">
+                              {t("payments.summary.vat_breakdown_empty", {
+                                defaultValue: "No VAT calculated yet."
+                              })}
+                            </p>
+                          )}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                   <div className="mt-2 text-sm text-muted-foreground">
                     {t("payments.summary.vat_helper", {

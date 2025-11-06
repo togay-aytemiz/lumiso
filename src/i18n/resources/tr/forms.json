@@ -1107,7 +1107,10 @@
       "remaining": "Kalan tutar",
       "remaining_helper": "Toplam tutar eksi tahsilat",
       "vat": "Tahmini KDV",
-      "vat_helper": "Hizmet KDV ayarlarına göre"
+      "vat_helper": "Hizmet KDV ayarlarına göre",
+      "vat_breakdown_title": "KDV dağılımı",
+      "vat_breakdown_empty": "Hizmetlerde KDV hesaplanmadı.",
+      "vat_breakdown_aria": "KDV dağılımını göster"
     },
     "deposit": {
       "title": "Kapora özeti",

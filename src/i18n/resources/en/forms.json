@@ -633,7 +633,10 @@
       "remaining": "Outstanding",
       "remaining_helper": "Contract total minus collected",
       "vat": "Estimated VAT",
-      "vat_helper": "Based on service VAT settings"
+      "vat_helper": "Based on service VAT settings",
+      "vat_breakdown_title": "VAT breakdown",
+      "vat_breakdown_empty": "No VAT calculated yet.",
+      "vat_breakdown_aria": "Show VAT breakdown"
     },
     "deposit": {
       "title": "Deposit overview",

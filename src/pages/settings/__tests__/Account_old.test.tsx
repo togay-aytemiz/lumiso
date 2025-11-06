@@ -231,10 +231,21 @@ jest.mock("@/components/ui/alert-dialog", () => ({
 }));
 
 jest.mock("@/contexts/ProfileContext");
-jest.mock("@/hooks/useWorkingHours");
-jest.mock("@/hooks/useSettingsCategorySection");
-jest.mock("@/hooks/use-toast");
-jest.mock("@/hooks/useTypedTranslation");
+jest.mock("@/hooks/useProfile", () => ({
+  useProfile: jest.fn(),
+}));
+jest.mock("@/hooks/useWorkingHours", () => ({
+  useWorkingHours: jest.fn(),
+}));
+jest.mock("@/hooks/useSettingsCategorySection", () => ({
+  useSettingsCategorySection: jest.fn(),
+}));
+jest.mock("@/hooks/use-toast", () => ({
+  useToast: jest.fn(),
+}));
+jest.mock("@/hooks/useTypedTranslation", () => ({
+  useMessagesTranslation: jest.fn(),
+}));
 
 jest.mock("@/integrations/supabase/client", () => ({
   supabase: {

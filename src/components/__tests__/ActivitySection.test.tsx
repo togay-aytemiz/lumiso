@@ -5,14 +5,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
 
-const toastSpy = jest.fn();
-const useToastMock = jest.fn(() => ({ toast: toastSpy }));
+jest.mock("@/hooks/use-toast", () => {
+  const toastMock = jest.fn();
+  const useToastMock = jest.fn(() => ({ toast: toastMock }));
+  return {
+    __esModule: true,
+    useToast: useToastMock,
+    toast: toastMock,
+  };
+});
 
-jest.mock("@/hooks/use-toast", () => ({
-  __esModule: true,
-  useToast: useToastMock,
-  toast: toastSpy,
-}));
+const { toast: toastSpy, useToast: useToastMock } = jest.requireMock("@/hooks/use-toast") as {
+  toast: jest.Mock;
+  useToast: jest.Mock;
+};
 
 jest.mock("@/hooks/useTypedTranslation", () => ({
   useFormsTranslation: jest.fn(),

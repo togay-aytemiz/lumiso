@@ -164,25 +164,6 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
 
   const [activityType, setActivityType] = useState('note');
 
-  useEffect(() => {
-    void fetchData();
-  }, [fetchData]);
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      await Promise.all([
-        fetchActivities(),
-        fetchSessions(),
-        fetchAuditLogs()
-      ]);
-    } catch (error) {
-      console.error('Error fetching activity data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchActivities, fetchSessions, fetchAuditLogs]);
-
   const fetchActivities = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -273,6 +254,25 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
       setLoading(false);
     }
   }, [entityId, fetchUserProfiles]);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      await Promise.all([
+        fetchActivities(),
+        fetchSessions(),
+        fetchAuditLogs()
+      ]);
+    } catch (error) {
+      console.error('Error fetching activity data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchActivities, fetchSessions, fetchAuditLogs]);
+
+  useEffect(() => {
+    void fetchData();
+  }, [fetchData]);
 
   const handleSaveActivity = async () => {
     if (!content.trim()) {

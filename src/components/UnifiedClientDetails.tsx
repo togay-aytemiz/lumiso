@@ -404,6 +404,7 @@ export function UnifiedClientDetails({
           href={href}
           target={target}
           rel={target ? "noopener noreferrer" : undefined}
+          aria-label={label}
         >
           <Icon className="mr-1 h-3 w-3" />
           {label}

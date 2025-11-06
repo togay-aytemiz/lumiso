@@ -191,21 +191,22 @@ describe("LeadActivitySection", () => {
 
     let activitiesSelectCall = 0;
     const activitiesSelectMock = jest.fn(() => {
-      activitiesSelectCall += 1;
-      if (activitiesSelectCall === 1 || activitiesSelectCall >= 3) {
-        return {
-          eq: jest.fn(() => ({
-            is: jest.fn(() => ({
-              order: jest.fn(() => Promise.resolve({ data: leadActivities, error: null })),
-            })),
-          })),
-        };
-      }
+      const callIndex = activitiesSelectCall++;
+      const leadResponse = { data: leadActivities, error: null };
+      const projectResponse = { data: projectActivities, error: null };
+
+      const createOrderMock = (response: typeof leadResponse) =>
+        jest.fn(async () => response);
+
       return {
         eq: jest.fn(() => ({
-          not: jest.fn(() => ({
-            order: jest.fn(() => Promise.resolve({ data: projectActivities, error: null })),
+          is: jest.fn(() => ({
+            order: createOrderMock(callIndex === 1 ? projectResponse : leadResponse),
           })),
+          not: jest.fn(() => ({
+            order: createOrderMock(projectResponse),
+          })),
+          order: createOrderMock(callIndex === 1 ? projectResponse : leadResponse),
         })),
       };
     });
@@ -338,7 +339,7 @@ describe("LeadActivitySection", () => {
     });
 
     expect(onActivityUpdated).toHaveBeenCalledTimes(1);
-    expect(activitiesSelectMock).toHaveBeenCalledTimes(3);
+    expect(activitiesSelectMock).toHaveBeenCalledTimes(4);
 
     fireEvent.click(screen.getByTestId("toggle-activity-lead-activity-1"));
 

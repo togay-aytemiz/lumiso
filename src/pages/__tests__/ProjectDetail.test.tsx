@@ -54,15 +54,18 @@ jest.mock("@/components/EntityHeader", () => ({
     title,
     subtitle,
     actions,
+    banner,
   }: {
     title?: ReactNode;
     subtitle?: ReactNode;
     actions?: ReactNode;
+    banner?: ReactNode;
   }) => (
     <div data-testid="entity-header">
       <div>{title}</div>
       {subtitle ? <div>{subtitle}</div> : null}
       {actions}
+      {banner}
     </div>
   ),
 }));
@@ -197,6 +200,32 @@ jest.mock("@/components/projectArchiveToggle", () => ({
   onArchiveToggle: jest.fn().mockResolvedValue({ isArchived: false }),
 }));
 
+jest.mock("@/hooks/use-mobile", () => ({
+  useIsMobile: () => false,
+}));
+
+jest.mock("@/contexts/OrganizationContext", () => ({
+  useOrganization: () => ({
+    activeOrganizationId: "org-123",
+    activeOrganization: { id: "org-123", name: "Mock Org", owner_id: "user-1" },
+    loading: false,
+    refreshOrganization: jest.fn(),
+    setActiveOrganization: jest.fn(),
+  }),
+}));
+
+jest.mock("@/hooks/useNotificationTriggers", () => ({
+  useNotificationTriggers: () => ({
+    triggerProjectMilestone: jest.fn(),
+  }),
+}));
+
+jest.mock("@/hooks/useWorkflowTriggers", () => ({
+  useWorkflowTriggers: () => ({
+    triggerProjectStatusChange: jest.fn(),
+  }),
+}));
+
 const mockUseToast = useToast as jest.Mock;
 const mockUseFormsTranslation = useFormsTranslation as jest.Mock;
 const mockUseProjectHeaderSummary = useProjectHeaderSummary as jest.Mock;
@@ -246,6 +275,11 @@ describe("ProjectDetail", () => {
         notes: "",
       },
     ];
+
+    mockSupabaseClient.auth.getUser.mockResolvedValue({
+      data: { user: { id: "user-1" } },
+      error: null,
+    });
 
     const selectProjects = jest.fn().mockImplementation((columns: string) => {
       if (columns === "*") {
@@ -303,13 +337,27 @@ describe("ProjectDetail", () => {
       }),
     });
 
-    const selectStatuses = jest.fn().mockReturnValue({
-      eq: jest.fn().mockReturnValue({
-        maybeSingle: jest.fn().mockResolvedValue({
-          data: { id: "status-active", name: "Active" },
-          error: null,
+    const selectStatuses = jest.fn((columns?: string) => {
+      if (columns === "*") {
+        return {
+          order: jest.fn().mockResolvedValue({
+            data: [
+              { id: "status-active", name: "Active", color: "#00ff00" },
+              { id: "status-archived", name: "Archived", color: "#ff0000" },
+            ],
+            error: null,
+          }),
+        };
+      }
+
+      return {
+        eq: jest.fn().mockReturnValue({
+          maybeSingle: jest.fn().mockResolvedValue({
+            data: { id: "status-active", name: "Active" },
+            error: null,
+          }),
         }),
-      }),
+      };
     });
 
     mockSupabaseClient.from.mockImplementation((table: string) => {
@@ -340,7 +388,9 @@ describe("ProjectDetail", () => {
     });
 
     expect(screen.getByTestId("unified-client-details")).toHaveTextContent("Lead Person");
-    expect(screen.getByTestId("stage-pipeline")).toHaveTextContent("status-active");
+    await waitFor(() => {
+      expect(screen.getByTestId("stage-pipeline")).toHaveTextContent("status-active");
+    });
     expect(screen.getByTestId("section-sessions")).toBeInTheDocument();
     expect(mockBuildProjectSummaryItems).toHaveBeenCalledWith(
       expect.objectContaining({

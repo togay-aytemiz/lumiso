@@ -188,6 +188,11 @@ export const PackagesStep = () => {
   const existingItems = state.services.items;
   const hasServices = existingItems.length > 0;
   const [servicesSheetOpen, setServicesSheetOpen] = useState(false);
+  const [servicesSheetDraft, setServicesSheetDraft] = useState<ProjectServiceLineItem[] | null>(null);
+  const [isSavingServices, setIsSavingServices] = useState(false);
+
+  const isEditingServicesSheet = servicesSheetDraft !== null;
+  const sheetItems = servicesSheetDraft ?? existingItems;
 
   const includedItems = useMemo(
     () =>
@@ -252,9 +257,9 @@ export const PackagesStep = () => {
   const [openVatIds, setOpenVatIds] = useState<Set<string>>(() => new Set());
   const [pendingPricingResetId, setPendingPricingResetId] = useState<string | null>(null);
   const [pendingVatResetId, setPendingVatResetId] = useState<string | null>(null);
-  const selectedItemsByServiceId = useMemo(() => {
+  const sheetItemsByServiceId = useMemo(() => {
     const map = new Map<string, ProjectServiceLineItem>();
-    existingItems.forEach((item) => {
+    sheetItems.forEach((item) => {
       if (item.serviceId) {
         map.set(item.serviceId, item);
       } else {
@@ -262,17 +267,17 @@ export const PackagesStep = () => {
       }
     });
     return map;
-  }, [existingItems]);
+  }, [sheetItems]);
 
-  const selectedQuantities = useMemo(
+  const sheetSelectedQuantities = useMemo(
     () =>
-      existingItems.reduce<Record<string, number>>((acc, item) => {
+      sheetItems.reduce<Record<string, number>>((acc, item) => {
         if (item.serviceId) {
           acc[item.serviceId] = Math.max(1, item.quantity ?? 1);
         }
         return acc;
       }, {}),
-    [existingItems]
+    [sheetItems]
   );
 
   useEffect(() => {
@@ -309,6 +314,76 @@ export const PackagesStep = () => {
     },
     [updateServices]
   );
+
+  const mutateItems = useCallback(
+    (modifier: (items: ProjectServiceLineItem[]) => ProjectServiceLineItem[]) => {
+      if (isEditingServicesSheet) {
+        setServicesSheetDraft((previous) => {
+          const base = previous ?? existingItems;
+          return modifier(base);
+        });
+        return;
+      }
+      setItems(modifier(existingItems));
+    },
+    [existingItems, isEditingServicesSheet, setItems]
+  );
+
+  const resetServicesSheetState = useCallback(() => {
+    setServicesSheetDraft(null);
+    setIsSavingServices(false);
+    setOpenPricingIds(new Set());
+    setOpenVatIds(new Set());
+    setPendingPricingResetId(null);
+    setPendingVatResetId(null);
+  }, []);
+
+  const handleServicesSheetOpenChange = useCallback(
+    (open: boolean) => {
+      if (open) {
+        setServicesSheetDraft(existingItems.map((item) => ({ ...item })));
+        setIsSavingServices(false);
+        setOpenPricingIds(new Set());
+        setOpenVatIds(new Set());
+        setPendingPricingResetId(null);
+        setPendingVatResetId(null);
+        setServicesSheetOpen(true);
+        return;
+      }
+      resetServicesSheetState();
+      setServicesSheetOpen(false);
+    },
+    [existingItems, resetServicesSheetState]
+  );
+
+  const handleServicesSheetOpen = useCallback(() => {
+    handleServicesSheetOpenChange(true);
+  }, [handleServicesSheetOpenChange]);
+
+  const handleServicesSheetCancel = useCallback(() => {
+    resetServicesSheetState();
+    setServicesSheetOpen(false);
+  }, [resetServicesSheetState]);
+
+  const handleServicesSheetSave = useCallback(() => {
+    if (!servicesSheetDraft) {
+      resetServicesSheetState();
+      setServicesSheetOpen(false);
+      return;
+    }
+
+    setIsSavingServices(true);
+    try {
+      updateServices({
+        items: servicesSheetDraft,
+        showCustomSetup: state.services.showCustomSetup || servicesSheetDraft.length > 0,
+      });
+    } finally {
+      setIsSavingServices(false);
+      resetServicesSheetState();
+      setServicesSheetOpen(false);
+    }
+  }, [resetServicesSheetState, servicesSheetDraft, state.services.showCustomSetup, updateServices]);
 
   const servicesMargin = addOnTotals.net - addOnTotals.cost;
   const formatCurrency = useCallback(
@@ -383,11 +458,12 @@ export const PackagesStep = () => {
   });
 
   const updateItem = useCallback((itemId: string, updates: Partial<ProjectServiceLineItem>) => {
-    const nextItems = existingItems.map((item) =>
-      item.id === itemId || item.serviceId === itemId ? { ...item, ...updates } : item
+    mutateItems((items) =>
+      items.map((item) =>
+        item.id === itemId || item.serviceId === itemId ? { ...item, ...updates } : item
+      )
     );
-    setItems(nextItems);
-  }, [existingItems, setItems]);
+  }, [mutateItems]);
 
   const handleBillingTypeChange = useCallback(
     (itemId: string, billingType: "included" | "add_on") => {
@@ -493,14 +569,14 @@ export const PackagesStep = () => {
   const hasBillableServices = addOnCount > 0;
 
   const removeItem = useCallback((itemId: string) => {
-    setItems(existingItems.filter((item) => item.id !== itemId && item.serviceId !== itemId));
-  }, [existingItems, setItems]);
+    mutateItems((items) => items.filter((item) => item.id !== itemId && item.serviceId !== itemId));
+  }, [mutateItems]);
 
   const adjustQuantity = useCallback((itemId: string, delta: number) => {
-    const target = existingItems.find((item) => item.serviceId === itemId || item.id === itemId);
+    const target = sheetItems.find((item) => item.serviceId === itemId || item.id === itemId);
     const next = Math.max(1, (target?.quantity ?? 1) + delta);
     updateItem(itemId, { quantity: next });
-  }, [existingItems, updateItem]);
+  }, [sheetItems, updateItem]);
 
   const buildLineItemFromService = useCallback(
     (
@@ -528,11 +604,16 @@ export const PackagesStep = () => {
     const service = serviceMap.get(serviceId);
     if (!service) return;
 
-    const filtered = existingItems.filter((item) => item.serviceId !== serviceId);
-    const nextItem = buildLineItemFromService(service);
-    setItems([...filtered, nextItem]);
-    updateServices({ showCustomSetup: true });
-  }, [existingItems, buildLineItemFromService, serviceMap, setItems, updateServices]);
+    mutateItems((items) => {
+      const filtered = items.filter((item) => item.serviceId !== serviceId);
+      const nextItem = buildLineItemFromService(service);
+      return [...filtered, nextItem];
+    });
+
+    if (!isEditingServicesSheet) {
+      updateServices({ showCustomSetup: true });
+    }
+  }, [buildLineItemFromService, mutateItems, serviceMap, isEditingServicesSheet, updateServices]);
 
   const handleIncreaseService = (serviceId: string) => adjustQuantity(serviceId, 1);
   const handleDecreaseService = (serviceId: string) => adjustQuantity(serviceId, -1);
@@ -718,22 +799,22 @@ export const PackagesStep = () => {
       return null;
     }
     return (
-      existingItems.find(
+      sheetItems.find(
         (item) => item.id === pendingPricingResetId || item.serviceId === pendingPricingResetId
       ) ?? null
     );
-  }, [existingItems, pendingPricingResetId]);
+  }, [pendingPricingResetId, sheetItems]);
 
   const pendingVatLineItem = useMemo(() => {
     if (!pendingVatResetId) {
       return null;
     }
     return (
-      existingItems.find(
+      sheetItems.find(
         (item) => item.id === pendingVatResetId || item.serviceId === pendingVatResetId
       ) ?? null
     );
-  }, [existingItems, pendingVatResetId]);
+  }, [pendingVatResetId, sheetItems]);
 
   useEffect(() => {
     if (pendingPricingResetId && !pendingPricingLineItem) {
@@ -1360,7 +1441,7 @@ export const PackagesStep = () => {
           <ProjectServicesCard
             items={serviceCardItems}
             emptyCtaLabel={servicesCardEmptyCta}
-            onAdd={() => setServicesSheetOpen(true)}
+            onAdd={handleServicesSheetOpen}
             title={servicesCardTitle}
             helperText={servicesCardHelperText}
             tooltipAriaLabel={servicesCardAriaLabel}
@@ -1524,7 +1605,7 @@ export const PackagesStep = () => {
       )}
       </div>
 
-      <Sheet open={servicesSheetOpen} onOpenChange={setServicesSheetOpen}>
+      <Sheet open={servicesSheetOpen} onOpenChange={handleServicesSheetOpenChange}>
         <SheetContent side="right" className="flex w-full max-w-4xl flex-col overflow-hidden sm:max-w-3xl">
           <SheetHeader className="shrink-0 space-y-2">
             <SheetTitle>
@@ -1543,17 +1624,17 @@ export const PackagesStep = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label>{t("steps.packages.servicesLabel")}</Label>
-                  {existingItems.length > 0 ? (
+                  {sheetItems.length > 0 ? (
                     <Badge variant="secondary">
                       {t("steps.packages.servicesBadge", {
-                        count: existingItems.length,
+                        count: sheetItems.length,
                       })}
                     </Badge>
                   ) : null}
                 </div>
                 <ServiceInventorySelector
                   services={inventoryServices}
-                  selected={selectedQuantities}
+                  selected={sheetSelectedQuantities}
                   labels={inventoryLabels}
                   onAdd={handleAddService}
                   onIncrease={handleIncreaseService}
@@ -1564,7 +1645,7 @@ export const PackagesStep = () => {
                   error={servicesError ? t("steps.packages.servicesError") : null}
                   onRetry={servicesError ? () => servicesQuery.refetch() : undefined}
                   renderSelectedActions={({ service }) => {
-                    const lineItem = selectedItemsByServiceId.get(service.id);
+                    const lineItem = sheetItemsByServiceId.get(service.id);
                     if (!lineItem) return null;
                     const isPricingOpen = openPricingIds.has(lineItem.id);
                     const billingType = (lineItem.billingType ?? "add_on") as "included" | "add_on";
@@ -1604,7 +1685,7 @@ export const PackagesStep = () => {
                     );
                   }}
                   renderSelectedContent={({ service }) => {
-                    const lineItem = selectedItemsByServiceId.get(service.id);
+                    const lineItem = sheetItemsByServiceId.get(service.id);
                     if (!lineItem) return null;
                     const isPricingOpen = openPricingIds.has(lineItem.id);
                     if (!isPricingOpen) {
@@ -1719,6 +1800,27 @@ export const PackagesStep = () => {
                   }}
                 />
               </div>
+            </div>
+          </div>
+          <div className="shrink-0 border-t bg-white/95 px-6 py-4">
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={handleServicesSheetCancel} disabled={isSavingServices}>
+                {t("buttons.cancel", { defaultValue: "Cancel" })}
+              </Button>
+              <Button onClick={handleServicesSheetSave} disabled={isSavingServices}>
+                {isSavingServices ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t("steps.packages.servicesSheet.saving", {
+                      defaultValue: "Saving...",
+                    })}
+                  </>
+                ) : (
+                  t("steps.packages.servicesSheet.save", {
+                    defaultValue: "Save services",
+                  })
+                )}
+              </Button>
             </div>
           </div>
         </SheetContent>

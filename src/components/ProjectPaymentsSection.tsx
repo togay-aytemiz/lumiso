@@ -29,7 +29,10 @@ import {
 } from "./ProjectDepositDialogs";
 import {
   ProjectServicesQuickEditDialog,
-  type QuickServiceRecord
+  type ProjectServiceQuickEditResult,
+  type ProjectServiceQuickEditSelection,
+  type QuickServiceRecord,
+  type VatModeOption
 } from "./ProjectServicesQuickEditDialog";
 import { ProjectServicesCard, type ProjectServicesCardItem } from "./ProjectServicesCard";
 import {
@@ -71,6 +74,16 @@ interface ServiceRecord {
     service_type?: "coverage" | "deliverable" | null;
   };
 }
+
+type ServiceOverride = {
+  unitCost?: number | null;
+  unitPrice?: number | null;
+  vatMode?: VatModeOption;
+  vatRate?: number | null;
+};
+
+const buildOverrideKey = (billingType: "included" | "extra", serviceId: string) =>
+  `${billingType}:${serviceId}`;
 
 interface ProjectDetails {
   id: string;
@@ -193,10 +206,53 @@ export function ProjectPaymentsSection({
 
   const [project, setProject] = useState<ProjectDetails | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [serviceRecords, setServiceRecords] = useState<ServiceRecord[]>([]);
+  const [rawServiceRecords, setRawServiceRecords] = useState<ServiceRecord[]>([]);
+  const [serviceOverrides, setServiceOverrides] = useState<Record<string, ServiceOverride>>({});
   const [availableServices, setAvailableServices] = useState<QuickServiceRecord[]>([]);
   const [availableServicesLoading, setAvailableServicesLoading] = useState(false);
   const [availableServicesError, setAvailableServicesError] = useState<string | null>(null);
+
+  const applyOverrides = useCallback(
+    (records: ServiceRecord[], overrides: Record<string, ServiceOverride>) => {
+      if (records.length === 0 || Object.keys(overrides).length === 0) {
+        return records;
+      }
+
+      return records.map((record) => {
+        const override = overrides[buildOverrideKey(record.billingType, record.service.id)];
+        if (!override || Object.keys(override).length === 0) {
+          return record;
+        }
+
+        const updatedService = { ...record.service };
+
+        if (override.unitCost !== undefined) {
+          updatedService.cost_price = override.unitCost ?? null;
+        }
+        if (override.unitPrice !== undefined) {
+          updatedService.selling_price = override.unitPrice ?? null;
+          updatedService.price = override.unitPrice ?? null;
+        }
+        if (override.vatMode !== undefined) {
+          updatedService.price_includes_vat = override.vatMode === "inclusive";
+        }
+        if (override.vatRate !== undefined) {
+          updatedService.vat_rate = override.vatRate ?? null;
+        }
+
+        return {
+          ...record,
+          service: updatedService,
+        };
+      });
+    },
+    [],
+  );
+
+  const serviceRecords = useMemo(
+    () => applyOverrides(rawServiceRecords, serviceOverrides),
+    [applyOverrides, rawServiceRecords, serviceOverrides],
+  );
 
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -314,7 +370,23 @@ export function ProjectPaymentsSection({
             }
           } satisfies ServiceRecord;
         }) ?? [];
-      setServiceRecords(mapped.filter((record): record is ServiceRecord => Boolean(record)));
+      const filtered = mapped.filter((record): record is ServiceRecord => Boolean(record));
+      setRawServiceRecords(filtered);
+      setServiceOverrides((previous) => {
+        if (!previous || Object.keys(previous).length === 0) {
+          return previous;
+        }
+        const validKeys = new Set(
+          filtered.map((record) => buildOverrideKey(record.billingType, record.service.id))
+        );
+        const next: Record<string, ServiceOverride> = {};
+        Object.entries(previous).forEach(([key, override]) => {
+          if (validKeys.has(key)) {
+            next[key] = override;
+          }
+        });
+        return Object.keys(next).length === Object.keys(previous).length ? previous : next;
+      });
     } catch (error) {
       console.error("Error fetching project services:", error);
     }
@@ -609,43 +681,27 @@ export function ProjectPaymentsSection({
   };
 
   const handleServiceQuickEditSubmit = useCallback(
-    async (mode: "included" | "extra", selectedIds: string[]) => {
+    async (mode: "included" | "extra", results: ProjectServiceQuickEditResult[]) => {
       try {
+        const existingRecords = rawServiceRecords.filter((record) => record.billingType === mode);
         const existingByServiceId = new Map(
-          serviceRecords.map((record) => [record.service.id, record])
+          existingRecords.map((record) => [record.service.id, record])
         );
-        const selectedSet = new Set(selectedIds);
+        const selectedIds = new Set(results.map((result) => result.serviceId));
 
-        const toDelete = serviceRecords
-          .filter(
-            (record) => record.billingType === mode && !selectedSet.has(record.service.id)
-          )
+        const toDelete = existingRecords
+          .filter((record) => !selectedIds.has(record.service.id))
           .map((record) => record.projectServiceId);
 
-        const toReclassify = serviceRecords.filter(
-          (record) =>
-            record.billingType !== mode && selectedSet.has(record.service.id)
-        );
-
-        const toInsertIds = selectedIds.filter(
-          (serviceId) => !existingByServiceId.has(serviceId)
-        );
-
         if (toDelete.length > 0) {
-          await supabase
-            .from("project_services")
-            .delete()
-            .in("id", toDelete);
+          await supabase.from("project_services").delete().in("id", toDelete);
         }
 
-        for (const record of toReclassify) {
-          await supabase
-            .from("project_services")
-            .update({ billing_type: mode })
-            .eq("id", record.projectServiceId);
-        }
+        const toInsert = results.filter(
+          (result) => !existingByServiceId.has(result.serviceId)
+        );
 
-        if (toInsertIds.length > 0) {
+        if (toInsert.length > 0) {
           const {
             data: { user }
           } = await supabase.auth.getUser();
@@ -660,14 +716,36 @@ export function ProjectPaymentsSection({
               t("payments.organization_required", { defaultValue: "Organization required" })
             );
           }
-          const inserts = toInsertIds.map((serviceId) => ({
+          const inserts = toInsert.map((result) => ({
             project_id: projectId,
-            service_id: serviceId,
+            service_id: result.serviceId,
             user_id: user.id,
             billing_type: mode
           }));
           await supabase.from("project_services").insert(inserts);
         }
+
+        setServiceOverrides((previous) => {
+          const next: Record<string, ServiceOverride> = { ...previous };
+
+          existingRecords.forEach((record) => {
+            if (!selectedIds.has(record.service.id)) {
+              delete next[buildOverrideKey(mode, record.service.id)];
+            }
+          });
+
+          results.forEach((result) => {
+            const overrideKeys = Object.keys(result.overrides ?? {});
+            const key = buildOverrideKey(mode, result.serviceId);
+            if (overrideKeys.length > 0) {
+              next[key] = result.overrides;
+            } else {
+              delete next[key];
+            }
+          });
+
+          return next;
+        });
 
         await fetchProjectServices();
         onPaymentsUpdated?.();
@@ -682,7 +760,7 @@ export function ProjectPaymentsSection({
         });
       }
     },
-    [fetchProjectServices, onPaymentsUpdated, projectId, serviceRecords, t, toast]
+    [fetchProjectServices, onPaymentsUpdated, projectId, rawServiceRecords, t, toast]
   );
 
   const renderPaymentTypeLabel = useCallback(
@@ -730,29 +808,34 @@ export function ProjectPaymentsSection({
     return format(parsed, "PPP");
   }, []);
 
-  const includedServiceIds = useMemo(
+  const includedSelections = useMemo<ProjectServiceQuickEditSelection[]>(
     () =>
       serviceRecords
         .filter((record) => record.billingType === "included")
-        .map((record) => record.service.id),
+        .map((record) => ({
+          serviceId: record.service.id,
+          projectServiceId: record.projectServiceId,
+          unitCost: record.service.cost_price ?? null,
+          unitPrice: record.service.selling_price ?? record.service.price ?? null,
+          vatMode: record.service.price_includes_vat === false ? "exclusive" : "inclusive",
+          vatRate: record.service.vat_rate ?? null,
+        })),
     [serviceRecords]
   );
 
-  const extraServiceIds = useMemo(
+  const extraSelections = useMemo<ProjectServiceQuickEditSelection[]>(
     () =>
       serviceRecords
         .filter((record) => record.billingType === "extra")
-        .map((record) => record.service.id),
+        .map((record) => ({
+          serviceId: record.service.id,
+          projectServiceId: record.projectServiceId,
+          unitCost: record.service.cost_price ?? null,
+          unitPrice: record.service.selling_price ?? record.service.price ?? null,
+          vatMode: record.service.price_includes_vat === false ? "exclusive" : "inclusive",
+          vatRate: record.service.vat_rate ?? null,
+        })),
     [serviceRecords]
-  );
-
-  const conflictingIncluded = useMemo(
-    () => new Set(extraServiceIds),
-    [extraServiceIds]
-  );
-  const conflictingExtra = useMemo(
-    () => new Set(includedServiceIds),
-    [includedServiceIds]
   );
 
   const includedCardItems: ProjectServicesCardItem[] = financialSummary.includedServices.map(
@@ -1262,37 +1345,21 @@ export function ProjectPaymentsSection({
       />
 
       <ProjectServicesQuickEditDialog
-        open={serviceDialogState.open && serviceDialogState.mode === "included"}
+        open={serviceDialogState.open}
         onOpenChange={(open) =>
-          setServiceDialogState({ open, mode: "included" })
+          setServiceDialogState((previous) => ({
+            ...previous,
+            open,
+          }))
         }
-        mode="included"
+        mode={serviceDialogState.mode}
         services={availableServices}
-        selectedIds={includedServiceIds}
-        conflictingIds={conflictingIncluded}
+        selections={serviceDialogState.mode === "included" ? includedSelections : extraSelections}
         isLoading={availableServicesLoading}
         error={availableServicesError}
         onRetry={fetchAvailableServices}
-        onSubmit={async (ids) => {
-          await handleServiceQuickEditSubmit("included", ids);
-          await fetchProject();
-        }}
-      />
-
-      <ProjectServicesQuickEditDialog
-        open={serviceDialogState.open && serviceDialogState.mode === "extra"}
-        onOpenChange={(open) =>
-          setServiceDialogState({ open, mode: "extra" })
-        }
-        mode="extra"
-        services={availableServices}
-        selectedIds={extraServiceIds}
-        conflictingIds={conflictingExtra}
-        isLoading={availableServicesLoading}
-        error={availableServicesError}
-        onRetry={fetchAvailableServices}
-        onSubmit={async (ids) => {
-          await handleServiceQuickEditSubmit("extra", ids);
+        onSubmit={async (result) => {
+          await handleServiceQuickEditSubmit(serviceDialogState.mode, result);
           await fetchProject();
         }}
       />

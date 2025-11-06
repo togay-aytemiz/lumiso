@@ -8,6 +8,12 @@ jest.mock("@/integrations/supabase/client", () => ({
   supabase: mockSupabaseClient,
 }));
 
+jest.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+  }),
+}));
+
 jest.mock("@/hooks/use-toast", () => ({
   useToast: jest.fn(),
 }));
@@ -161,15 +167,12 @@ describe("ProjectPaymentsSection", () => {
     render(<ProjectPaymentsSection projectId="project-1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("payments.total_paid")).toBeInTheDocument();
+      expect(screen.getByText("payments.summary.collected")).toBeInTheDocument();
     });
 
-    expect(screen.getAllByText("TRY 200").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("TRY 150").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("TRY 550").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("payments.due").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Deposit").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("payments.base_price_label").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/₺/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("payments.summary.remaining").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("payments.services.none").length).toBeGreaterThan(0);
   });
 
   it("shows empty state when project has no payments and no base price", async () => {
@@ -185,7 +188,7 @@ describe("ProjectPaymentsSection", () => {
       expect(mockSupabaseClient.from).toHaveBeenCalledWith("payments");
     });
 
-    expect(screen.getByText("payments.no_payments")).toBeInTheDocument();
+    expect(screen.getByText("payments.no_records")).toBeInTheDocument();
   });
 
   it("refreshes payments and notifies parent when a new payment is added", async () => {

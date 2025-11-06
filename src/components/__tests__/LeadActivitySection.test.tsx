@@ -228,21 +228,25 @@ describe("LeadActivitySection", () => {
 
     let auditSelectCall = 0;
     const auditSelectMock = jest.fn(() => {
+      const callIndex = auditSelectCall % 3;
       auditSelectCall += 1;
-      if (auditSelectCall === 1) {
+
+      if (callIndex === 0) {
         return {
           eq: jest.fn(() => ({
             order: jest.fn(() => Promise.resolve({ data: leadAuditLogs, error: null })),
           })),
         };
       }
-      if (auditSelectCall === 2) {
+
+      if (callIndex === 1) {
         return {
           in: jest.fn(() => ({
             order: jest.fn(() => Promise.resolve({ data: projectAuditLogs, error: null })),
           })),
         };
       }
+
       return {
         in: jest.fn(() => ({
           order: jest.fn(() => Promise.resolve({ data: sessionAuditLogs, error: null })),

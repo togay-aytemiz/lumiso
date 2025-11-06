@@ -198,7 +198,7 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
         </div>
 
         <div className="flex-1 overflow-y-auto mt-6">
-          {loading ? (
+          {loading && assets.length === 0 ? (
             <div className="grid grid-cols-2 gap-4">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="aspect-video bg-muted animate-pulse rounded-lg" />
@@ -232,6 +232,7 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
                       <Button
                         size="sm"
                         variant="secondary"
+                        type="button"
                         onClick={() => copyImageUrl(asset.file_path)}
                         className="h-8 w-8 p-0"
                         aria-label="Copy image URL"
@@ -243,6 +244,7 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
                           <Button
                             size="sm"
                             variant="destructive"
+                            type="button"
                             className="h-8 w-8 p-0"
                             aria-label="Delete image"
                           >
@@ -290,6 +292,7 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
                           <Button
                             size="sm"
                             variant="ghost"
+                            type="button"
                             onClick={() => handleSaveAltText(asset.id)}
                             className="h-7 w-7 p-0"
                             aria-label="Confirm alt text"
@@ -299,6 +302,7 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
                           <Button
                             size="sm"
                             variant="ghost"
+                            type="button"
                             onClick={handleCancelEditAltText}
                             className="h-7 w-7 p-0"
                             aria-label="Cancel alt text edit"
@@ -314,6 +318,7 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
                           <Button
                             size="sm"
                             variant="ghost"
+                            type="button"
                             onClick={() => handleEditAltText(asset.id, asset.alt_text || '')}
                             className="h-7 w-7 p-0"
                             aria-label="Edit alt text"
@@ -328,6 +333,7 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
                       <Button
                         size="sm"
                         variant="outline"
+                        type="button"
                         className="w-full h-7 text-xs"
                         onClick={() => {
                           onImageSelect(getImageUrl(asset.file_path), asset.alt_text);

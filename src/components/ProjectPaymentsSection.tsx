@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { format } from "date-fns";
-import { CreditCard, PiggyBank, Plus, Edit2, Trash2, HelpCircle } from "lucide-react";
+import { CreditCard, PiggyBank, Edit2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +31,7 @@ import {
   ProjectServicesQuickEditDialog,
   type QuickServiceRecord
 } from "./ProjectServicesQuickEditDialog";
+import { ProjectServicesCard, type ProjectServicesCardItem } from "./ProjectServicesCard";
 import {
   computeDepositAmount,
   parseDepositConfig,
@@ -754,6 +755,45 @@ export function ProjectPaymentsSection({
     [includedServiceIds]
   );
 
+  const includedCardItems: ProjectServicesCardItem[] = financialSummary.includedServices.map(
+    (record) => ({
+      key: record.projectServiceId,
+      left: <div className="font-medium">{record.service.name}</div>,
+      right: (
+        <div className="text-xs text-muted-foreground">
+          {t("payments.services.included_badge", { defaultValue: "Included" })}
+        </div>
+      )
+    })
+  );
+
+  const extraCardItems: ProjectServicesCardItem[] = financialSummary.extraServices.map(
+    (record) => {
+      const pricing = computeServicePricing(record.service);
+
+      return {
+        key: record.projectServiceId,
+        left: (
+          <div>
+            <div className="font-medium">{record.service.name}</div>
+            <div className="text-xs text-muted-foreground">
+              {t("payments.services.vat_line", {
+                rate: record.service.vat_rate ?? 0,
+                amount: formatCurrency(pricing.vat),
+                defaultValue: "VAT {{rate}}% • {{amount}}"
+              })}
+            </div>
+          </div>
+        ),
+        right: (
+          <div className="font-medium text-muted-foreground">
+            {formatCurrency(pricing.gross)}
+          </div>
+        )
+      };
+    }
+  );
+
   return (
     <>
       <Card>
@@ -923,209 +963,99 @@ export function ProjectPaymentsSection({
 
               <TooltipProvider delayDuration={150}>
                 <div className="grid gap-4 lg:grid-cols-2">
-                  <div className="rounded-xl border p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      {financialSummary.includedServices.length === 0 ? (
-                        <Button
-                          variant="link"
-                          className="h-auto px-0 text-left text-sm font-semibold"
-                          onClick={() => handleServiceDialogOpen("included")}
-                        >
-                          {t("payments.services.add_included_cta", {
-                            defaultValue: "Pakete dahil hizmet ekle"
+                  <ProjectServicesCard
+                    items={includedCardItems}
+                    emptyCtaLabel={t("payments.services.add_included_cta", {
+                      defaultValue: "Pakete dahil hizmet ekle"
+                    })}
+                    onAdd={() => handleServiceDialogOpen("included")}
+                    title={t("payments.services.included_title", {
+                      defaultValue: "Included in package"
+                    })}
+                    helperText={t("payments.services.included_helper", {
+                      total: formatCurrency(financialSummary.basePrice),
+                      defaultValue: "Covered by the base package."
+                    })}
+                    tooltipAriaLabel={t("payments.services.included_info", {
+                      defaultValue: "Included services info"
+                    })}
+                    tooltipContent={
+                      <>
+                        <p className="font-medium">
+                          {t("payments.services.included_tooltip.title", {
+                            defaultValue: "Pakete dahil hizmetler"
                           })}
-                        </Button>
-                      ) : (
-                        <div>
-                          <h3 className="text-sm font-semibold">
-                            {t("payments.services.included_title", {
-                              defaultValue: "Included in package"
+                        </p>
+                        <ul className="list-disc space-y-1 pl-4">
+                          <li>
+                            {t("payments.services.included_tooltip.point1", {
+                              defaultValue: "Müşteriye ek fatura oluşturmaz; paket fiyatına dahildir."
                             })}
-                          </h3>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {t("payments.services.included_helper", {
-                              total: formatCurrency(financialSummary.basePrice),
-                              defaultValue: "Covered by the base package."
+                          </li>
+                          <li>
+                            {t("payments.services.included_tooltip.point2", {
+                              defaultValue: "KDV paket toplamında hesaplanır, satır bazında gösterilmez."
                             })}
-                          </p>
-                        </div>
-                      )}
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 rounded-full text-muted-foreground"
-                            aria-label={t("payments.services.included_info", {
-                              defaultValue: "Included services info"
+                          </li>
+                          <li>
+                            {t("payments.services.included_tooltip.point3", {
+                              defaultValue: "Bu liste paket kapsamını ve teslimatlarını netleştirir."
                             })}
-                          >
-                            <HelpCircle className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs space-y-2 text-sm leading-relaxed">
-                          <p className="font-medium">
-                            {t("payments.services.included_tooltip.title", {
-                              defaultValue: "Pakete dahil hizmetler"
-                            })}
-                          </p>
-                          <ul className="list-disc space-y-1 pl-4">
-                            <li>
-                              {t("payments.services.included_tooltip.point1", {
-                                defaultValue: "Müşteriye ek fatura oluşturmaz; paket fiyatına dahildir."
-                              })}
-                            </li>
-                            <li>
-                              {t("payments.services.included_tooltip.point2", {
-                                defaultValue: "KDV paket toplamında hesaplanır, satır bazında gösterilmez."
-                              })}
-                            </li>
-                            <li>
-                              {t("payments.services.included_tooltip.point3", {
-                                defaultValue: "Bu liste paket kapsamını ve teslimatlarını netleştirir."
-                              })}
-                            </li>
-                          </ul>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                    {financialSummary.includedServices.length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        {financialSummary.includedServices.map((record) => (
-                          <div
-                            key={record.projectServiceId}
-                            className="flex items-center justify-between gap-3 text-sm"
-                          >
-                            <div className="font-medium">{record.service.name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {t("payments.services.included_badge", { defaultValue: "Included" })}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {financialSummary.includedServices.length > 0 && (
-                      <div className="mt-4">
-                        <Button
-                          variant="link"
-                          className="h-auto px-0 text-sm font-semibold"
-                          onClick={() => handleServiceDialogOpen("included")}
-                        >
-                          <Plus className="mr-1 h-4 w-4" />
-                          {t("payments.services.add_button", { defaultValue: "Add service" })}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="rounded-xl border p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      {financialSummary.extraServices.length === 0 ? (
-                        <Button
-                          variant="link"
-                          className="h-auto px-0 text-left text-sm font-semibold"
-                          onClick={() => handleServiceDialogOpen("extra")}
-                        >
-                          {t("payments.services.add_extra_cta", {
-                            defaultValue: "Ücrete ek hizmet ekle"
+                          </li>
+                        </ul>
+                      </>
+                    }
+                    addButtonLabel={t("payments.services.add_button", {
+                      defaultValue: "Add service"
+                    })}
+                  />
+                  <ProjectServicesCard
+                    items={extraCardItems}
+                    emptyCtaLabel={t("payments.services.add_extra_cta", {
+                      defaultValue: "Ücrete ek hizmet ekle"
+                    })}
+                    onAdd={() => handleServiceDialogOpen("extra")}
+                    title={t("payments.services.addons_title", {
+                      defaultValue: "Add-on services"
+                    })}
+                    helperText={t("payments.services.addons_helper", {
+                      total: formatCurrency(financialSummary.extraTotals.gross),
+                      defaultValue: "Billed on top of the base package."
+                    })}
+                    tooltipAriaLabel={t("payments.services.addons_info", {
+                      defaultValue: "Add-on services info"
+                    })}
+                    tooltipContent={
+                      <>
+                        <p className="font-medium">
+                          {t("payments.services.addons_tooltip.title", {
+                            defaultValue: "Ek hizmetler"
                           })}
-                        </Button>
-                      ) : (
-                        <div>
-                          <h3 className="text-sm font-semibold">
-                            {t("payments.services.addons_title", {
-                              defaultValue: "Add-on services"
+                        </p>
+                        <ul className="list-disc space-y-1 pl-4">
+                          <li>
+                            {t("payments.services.addons_tooltip.point1", {
+                              defaultValue: "Müşteriye paket fiyatına ek olarak faturalandırılır."
                             })}
-                          </h3>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {t("payments.services.addons_helper", {
-                              total: formatCurrency(financialSummary.extraTotals.gross),
-                              defaultValue: "Billed on top of the base package."
+                          </li>
+                          <li>
+                            {t("payments.services.addons_tooltip.point2", {
+                              defaultValue: "KDV ve fiyatlandırma her hizmetin moduna göre hesaplanır."
                             })}
-                          </p>
-                        </div>
-                      )}
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 rounded-full text-muted-foreground"
-                            aria-label={t("payments.services.addons_info", {
-                              defaultValue: "Add-on services info"
+                          </li>
+                          <li>
+                            {t("payments.services.addons_tooltip.point3", {
+                              defaultValue: "Sözleşme ve ödeme toplamına otomatik yansır."
                             })}
-                          >
-                            <HelpCircle className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs space-y-2 text-sm leading-relaxed">
-                          <p className="font-medium">
-                            {t("payments.services.addons_tooltip.title", {
-                              defaultValue: "Ek hizmetler"
-                            })}
-                          </p>
-                          <ul className="list-disc space-y-1 pl-4">
-                            <li>
-                              {t("payments.services.addons_tooltip.point1", {
-                                defaultValue: "Müşteriye paket fiyatına ek olarak faturalandırılır."
-                              })}
-                            </li>
-                            <li>
-                              {t("payments.services.addons_tooltip.point2", {
-                                defaultValue: "KDV ve fiyatlandırma her hizmetin moduna göre hesaplanır."
-                              })}
-                            </li>
-                            <li>
-                              {t("payments.services.addons_tooltip.point3", {
-                                defaultValue: "Sözleşme ve ödeme toplamına otomatik yansır."
-                              })}
-                            </li>
-                          </ul>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                    {financialSummary.extraServices.length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        {financialSummary.extraServices.map((record) => {
-                          const pricing = computeServicePricing(record.service);
-                          return (
-                            <div
-                              key={record.projectServiceId}
-                              className="flex items-start justify-between gap-3 text-sm"
-                            >
-                              <div>
-                                <div className="font-medium">{record.service.name}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {t("payments.services.vat_line", {
-                                    rate: record.service.vat_rate ?? 0,
-                                    amount: formatCurrency(pricing.vat),
-                                    defaultValue: "VAT {{rate}}% • {{amount}}"
-                                  })}
-                                </div>
-                              </div>
-                              <div className="font-medium text-muted-foreground">
-                                {formatCurrency(pricing.gross)}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {financialSummary.extraServices.length > 0 && (
-                      <div className="mt-4">
-                        <Button
-                          variant="link"
-                          className="h-auto px-0 text-sm font-semibold"
-                          onClick={() => handleServiceDialogOpen("extra")}
-                        >
-                          <Plus className="mr-1 h-4 w-4" />
-                          {t("payments.services.add_button", { defaultValue: "Add service" })}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                          </li>
+                        </ul>
+                      </>
+                    }
+                    addButtonLabel={t("payments.services.add_button", {
+                      defaultValue: "Add service"
+                    })}
+                    itemAlign="start"
+                  />
                 </div>
               </TooltipProvider>
 

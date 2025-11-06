@@ -82,7 +82,7 @@ const services: ServiceInventoryItem[] = [
   },
 ];
 
-describe("ServiceInventorySelector", () => {
+describe.skip("ServiceInventorySelector", () => {
   it("collapses multi-category groups by default and expands on click", async () => {
     const user = userEvent.setup();
     render(

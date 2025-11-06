@@ -417,13 +417,15 @@ const SessionTypesSection = () => {
             <AlertDialogTitle>
               {tForms("sessionTypes.delete_title")}
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2 text-sm text-muted-foreground">
-              <p className="text-foreground">
-                {tForms("sessionTypes.delete_description", {
-                  name: sessionTypeToDelete?.name ?? "",
-                })}
-              </p>
-              <p>{tForms("sessionTypes.delete_consider_inactive")}</p>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p className="text-foreground">
+                  {tForms("sessionTypes.delete_description", {
+                    name: sessionTypeToDelete?.name ?? "",
+                  })}
+                </p>
+                <p>{tForms("sessionTypes.delete_consider_inactive")}</p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

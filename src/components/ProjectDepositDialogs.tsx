@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 import { CalendarIcon } from "lucide-react";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useI18nToast } from "@/lib/toastHelpers";
@@ -90,8 +91,6 @@ export function ProjectDepositSetupDialog({
   const [value, setValue] = useState<string>(
     parsedConfig.value != null ? String(parsedConfig.value) : ""
   );
-  const [label, setLabel] = useState<string>(parsedConfig.due_label ?? DEFAULT_LABEL);
-  const [description, setDescription] = useState<string>(parsedConfig.description ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [lastEnabledMode, setLastEnabledMode] = useState<Exclude<DepositMode, "none">>(
     parsedConfig.mode === "none"
@@ -100,6 +99,11 @@ export function ProjectDepositSetupDialog({
       ? "fixed"
       : parsedConfig.mode
   );
+  const preservedLabel = parsedConfig.due_label?.trim() || DEFAULT_LABEL;
+  const preservedDescription =
+    parsedConfig.description != null && parsedConfig.description.trim().length > 0
+      ? parsedConfig.description.trim()
+      : undefined;
 
   useEffect(() => {
     if (!open) return;
@@ -113,8 +117,6 @@ export function ProjectDepositSetupDialog({
         ? ""
         : "25"
     );
-    setLabel(parsedConfig.due_label ?? DEFAULT_LABEL);
-    setDescription(parsedConfig.description ?? "");
     setLastEnabledMode(
       parsedConfig.mode === "none"
         ? "percent_total"
@@ -155,51 +157,41 @@ export function ProjectDepositSetupDialog({
     const config: ProjectDepositConfig = {
       mode,
       value: numericValue,
-      description,
-      due_label: label
+      due_label: preservedLabel,
+      ...(preservedDescription ? { description: preservedDescription } : {})
     };
     return computeDepositAmount(config, context);
-  }, [context, description, label, mode, numericValue]);
+  }, [context, mode, numericValue, preservedDescription, preservedLabel]);
 
   const hasChanges = useMemo(() => {
-    const normalizedInitial = {
-      mode: parsedConfig.mode,
-      value:
-        parsedConfig.mode === "none"
-          ? null
-          : parsedConfig.value != null
-          ? Number(parsedConfig.value)
-          : null,
-      label: parsedConfig.due_label ?? DEFAULT_LABEL,
-      description: parsedConfig.description ?? ""
-    };
-    const normalizedCurrent = {
-      mode,
-      value: mode === "none" ? null : numericValue ?? null,
-      label,
-      description
-    };
-    return (
-      normalizedInitial.mode !== normalizedCurrent.mode ||
-      normalizedInitial.value !== normalizedCurrent.value ||
-      normalizedInitial.label !== normalizedCurrent.label ||
-      normalizedInitial.description !== normalizedCurrent.description
-    );
-  }, [parsedConfig, mode, numericValue, label, description]);
+    const initialValue =
+      parsedConfig.mode === "none"
+        ? null
+        : parsedConfig.value != null
+        ? Number(parsedConfig.value)
+        : null;
+    const currentValue = mode === "none" ? null : numericValue ?? null;
+    return parsedConfig.mode !== mode || initialValue !== currentValue;
+  }, [parsedConfig, mode, numericValue]);
 
   const navigation = useModalNavigation({
     isDirty: hasChanges,
     onDiscard: () => {
       setMode(parsedConfig.mode);
-      setValue(parsedConfig.value != null ? String(parsedConfig.value) : "");
-      setLabel(parsedConfig.due_label ?? DEFAULT_LABEL);
-      setDescription(parsedConfig.description ?? "");
+      setValue(
+        parsedConfig.mode === "none"
+          ? ""
+          : parsedConfig.value != null
+          ? String(parsedConfig.value)
+          : parsedConfig.mode === "fixed"
+          ? ""
+          : "25"
+      );
       onOpenChange(false);
     }
   });
 
   const handleSave = async () => {
-    const trimmedLabel = label.trim() || DEFAULT_LABEL;
     if (mode !== "none") {
       if (numericValue == null) {
         toast.error(
@@ -223,15 +215,15 @@ export function ProjectDepositSetupDialog({
       }
     }
 
-    const payload: ProjectDepositConfig =
-      mode === "none"
-        ? { ...DEFAULT_DEPOSIT_CONFIG, mode: "none", value: null, due_label: trimmedLabel }
-        : {
-            mode,
-            value: numericValue ?? 0,
-            due_label: trimmedLabel,
-            description: description.trim() || undefined
-          };
+    const basePayload: ProjectDepositConfig = {
+      mode: mode === "none" ? "none" : mode,
+      value: mode === "none" ? null : numericValue ?? 0,
+      due_label: preservedLabel
+    };
+    const payload =
+      preservedDescription != null
+        ? { ...basePayload, description: preservedDescription }
+        : basePayload;
 
     setIsSaving(true);
 
@@ -287,22 +279,41 @@ export function ProjectDepositSetupDialog({
     }
   };
 
-  const previewLabel = useMemo(() => {
-    if (mode === "none") {
-      return t("payments.deposit.preview.none", {
-        defaultValue: "Deposit disabled for this project."
-      });
+  const previewDetails = useMemo(() => {
+    if (!isEnabled) {
+      return {
+        state: "disabled" as const,
+        message: t("payments.deposit.preview.none", {
+          defaultValue: "Deposit disabled for this project."
+        })
+      };
     }
-    if (!computedAmount) {
-      return t("payments.deposit.preview.zero", {
-        defaultValue: "Deposit will be calculated when totals are available."
-      });
+    if (!(computedAmount > 0)) {
+      return {
+        state: "pending" as const,
+        message: t("payments.deposit.preview.zero", {
+          defaultValue: "Deposit will be calculated when totals are available."
+        })
+      };
     }
-    return t("payments.deposit.preview.amount", {
-      amount: formatCurrency(computedAmount),
+    const formatted = formatCurrency(computedAmount);
+    const messageTemplate = t("payments.deposit.preview.amount", {
+      amount: formatted,
       defaultValue: "Calculated deposit: {{amount}}"
     });
-  }, [computedAmount, mode, t]);
+    const labelText = messageTemplate.replace(formatted, "").replace(/\s+/g, " ").trim();
+    const fallbackLabel = t("payments.deposit.preview.amount", {
+      amount: "",
+      defaultValue: "Calculated deposit"
+    })
+      .replace(/\s+/g, " ")
+      .trim();
+    return {
+      state: "ready" as const,
+      formatted,
+      label: labelText || fallbackLabel
+    };
+  }, [computedAmount, isEnabled, t]);
 
   return (
     <>
@@ -359,9 +370,12 @@ export function ProjectDepositSetupDialog({
 
           {isEnabled && (
             <>
-              <div className="space-y-2">
-                <Label>{t("payments.deposit.mode_label", { defaultValue: "Deposit type" })}</Label>
+              <div className="space-y-1.5">
+                <Label className="block text-sm font-semibold text-slate-900">
+                  {t("payments.deposit.mode_label", { defaultValue: "Deposit type" })}
+                </Label>
                 <SegmentedControl
+                  className="mt-1"
                   value={uiMode}
                   onValueChange={(next) => {
                     if (next === "percent") {
@@ -391,11 +405,19 @@ export function ProjectDepositSetupDialog({
                   options={[
                     {
                       value: "percent",
-                      label: t("payments.deposit.mode_percent_button", { defaultValue: "Percentage" })
+                      label: (
+                        <span className="whitespace-nowrap">
+                          {t("payments.deposit.mode_percent_button", { defaultValue: "Percentage" })}
+                        </span>
+                      )
                     },
                     {
                       value: "fixed",
-                      label: t("payments.deposit.mode.fixed", { defaultValue: "Fixed amount" })
+                      label: (
+                        <span className="whitespace-nowrap">
+                          {t("payments.deposit.mode.fixed", { defaultValue: "Fixed amount" })}
+                        </span>
+                      )
                     }
                   ]}
                 />
@@ -437,13 +459,14 @@ export function ProjectDepositSetupDialog({
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-muted-foreground">
+                  <div className="space-y-1.5">
+                    <Label className="block text-sm font-semibold text-slate-900">
                       {t("payments.deposit.percent_target_label", {
                         defaultValue: "Apply percentage to"
                       })}
                     </Label>
                     <SegmentedControl
+                      className="mt-1"
                       value={percentTarget}
                       onValueChange={(next) => {
                         const targetMode = next === "base" ? "percent_base" : "percent_total";
@@ -453,15 +476,23 @@ export function ProjectDepositSetupDialog({
                       options={[
                         {
                           value: "total",
-                          label: t("payments.deposit.percent_target_total", {
-                            defaultValue: "Package + services total"
-                          })
+                          label: (
+                            <span className="whitespace-nowrap">
+                              {t("payments.deposit.percent_target_total", {
+                                defaultValue: "Package + services total"
+                              })}
+                            </span>
+                          )
                         },
                         {
                           value: "base",
-                          label: t("payments.deposit.percent_target_base", {
-                            defaultValue: "Base package only"
-                          })
+                          label: (
+                            <span className="whitespace-nowrap">
+                              {t("payments.deposit.percent_target_base", {
+                                defaultValue: "Base package only"
+                              })}
+                            </span>
+                          )
                         }
                       ]}
                     />
@@ -480,33 +511,24 @@ export function ProjectDepositSetupDialog({
                   />
                 </div>
               )}
-
-              <div className="space-y-2">
-                <Label>{t("payments.deposit.label", { defaultValue: "Deposit label" })}</Label>
-                <Input value={label} onChange={(event) => setLabel(event.target.value)} />
-              </div>
-
-              <div className="space-y-2">
-                <Label>
-                  {t("payments.deposit.description_label", {
-                    defaultValue: "Internal note (optional)"
-                  })}
-                </Label>
-                <Textarea
-                  rows={3}
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  placeholder={t("payments.deposit.description_placeholder", {
-                    defaultValue: "Add context that will appear on the scheduled deposit."
-                  })}
-                />
-              </div>
             </>
           )}
 
-          <div className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
-            {previewLabel}
-          </div>
+          {previewDetails.state === "ready" ? (
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              <span className="font-medium">{previewDetails.label}</span>
+              <Badge
+                variant="outline"
+                className="ml-auto border-emerald-200 bg-white/80 text-base font-semibold text-emerald-700"
+              >
+                {previewDetails.formatted}
+              </Badge>
+            </div>
+          ) : (
+            <div className="rounded-lg border bg-muted/40 p-3 text-sm text-muted-foreground">
+              {previewDetails.message}
+            </div>
+          )}
         </div>
       </AppSheetModal>
 

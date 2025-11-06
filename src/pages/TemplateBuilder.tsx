@@ -327,21 +327,18 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
                   <Label className="text-sm text-muted-foreground w-20 flex-shrink-0">
                     {t("templateBuilder.email.subject")}
                   </Label>
-                  <button
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setIsEditingSubject(true)}
-                    className="flex-1 flex items-center gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 cursor-pointer group"
+                    className="flex h-auto w-full flex-1 items-center justify-between gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 group"
                   >
                     <span className={`text-sm flex-1 ${!subject ? 'text-muted-foreground' : 'text-foreground'}`}>
                       {subject || t("templateBuilder.email.addSubject")}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 opacity-100"
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                  </button>
+                    <Edit className="h-3 w-3 opacity-70 group-hover:opacity-100" />
+                  </Button>
                 </div>
               )}
               
@@ -391,21 +388,18 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
                   <Label className="text-sm text-muted-foreground w-20 flex-shrink-0">
                     {t("templateBuilder.email.preheader")}
                   </Label>
-                  <button
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setIsEditingPreheader(true)}
-                    className="flex-1 flex items-center gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 cursor-pointer group"
+                    className="flex h-auto w-full flex-1 items-center justify-between gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 group"
                   >
                     <span className={`text-sm flex-1 ${!preheader ? 'text-muted-foreground' : 'text-foreground'}`}>
                       {preheader || t("templateBuilder.email.addPreheader")}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 opacity-100"
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                  </button>
+                    <Edit className="h-3 w-3 opacity-70 group-hover:opacity-100" />
+                  </Button>
                 </div>
               )}
             </div>

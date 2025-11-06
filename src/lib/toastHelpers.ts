@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { ToastActionElement } from "@/components/ui/toast";
@@ -42,42 +43,45 @@ const showToast = (
 export const useI18nToast = () => {
   const { t } = useTranslation("common");
 
-  return {
-    success: (description: ReactNode, options?: ToastOptions) =>
-      showToast(
-        {
-          title: t("toast.success"),
-          description,
-        },
-        options
-      ),
+  return useMemo(
+    () => ({
+      success: (description: ReactNode, options?: ToastOptions) =>
+        showToast(
+          {
+            title: t("toast.success"),
+            description,
+          },
+          options
+        ),
 
-    error: (description: ReactNode, options?: ToastOptions) =>
-      showToast(
-        {
-          title: t("toast.error"),
-          description,
-          variant: "destructive",
-        },
-        options
-      ),
+      error: (description: ReactNode, options?: ToastOptions) =>
+        showToast(
+          {
+            title: t("toast.error"),
+            description,
+            variant: "destructive",
+          },
+          options
+        ),
 
-    warning: (description: ReactNode, options?: ToastOptions) =>
-      showToast(
-        {
-          title: t("toast.warning"),
-          description,
-        },
-        options
-      ),
+      warning: (description: ReactNode, options?: ToastOptions) =>
+        showToast(
+          {
+            title: t("toast.warning"),
+            description,
+          },
+          options
+        ),
 
-    info: (description: ReactNode, options?: ToastOptions) =>
-      showToast(
-        {
-          title: t("toast.info"),
-          description,
-        },
-        options
-      ),
-  };
+      info: (description: ReactNode, options?: ToastOptions) =>
+        showToast(
+          {
+            title: t("toast.info"),
+            description,
+          },
+          options
+        ),
+    }),
+    [t]
+  );
 };

@@ -141,7 +141,13 @@ describe("TemplateBuilder page", () => {
     jest.restoreAllMocks();
   });
 
-  it("renders a loading indicator while template data is loading", () => {
+  const renderTemplateBuilder = async () => {
+    const utils = render(<TemplateBuilder />);
+    await waitFor(() => expect(mockSupabaseClient.from).toHaveBeenCalled());
+    return utils;
+  };
+
+  it("renders a loading indicator while template data is loading", async () => {
     mockUseTemplateBuilder.mockReturnValue({
       template: null,
       loading: true,
@@ -154,7 +160,7 @@ describe("TemplateBuilder page", () => {
       resetDirtyState: jest.fn(),
     });
 
-    render(<TemplateBuilder />);
+    await renderTemplateBuilder();
 
     expect(screen.getByText("templateBuilder.loading")).toBeInTheDocument();
   });
@@ -175,7 +181,7 @@ describe("TemplateBuilder page", () => {
       resetDirtyState: jest.fn(),
     });
 
-    render(<TemplateBuilder />);
+    await renderTemplateBuilder();
 
     fireEvent.click(screen.getByText("templateBuilder.buttons.saveDraft"));
 
@@ -205,7 +211,7 @@ describe("TemplateBuilder page", () => {
       resetDirtyState: jest.fn(),
     });
 
-    render(<TemplateBuilder />);
+    await renderTemplateBuilder();
 
     fireEvent.click(screen.getByText("update-blocks"));
 

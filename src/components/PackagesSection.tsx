@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { supabase } from "@/integrations/supabase/client";
-import SettingsSection from "./SettingsSection";
+import { SettingsCollectionSection } from "@/components/settings/SettingsSectionVariants";
 import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 // Permissions removed for single photographer mode
 import { usePackages, useServices } from "@/hooks/useOrganizationData";
@@ -262,25 +262,29 @@ const PackagesSection = () => {
 
   if (isLoading) {
     return (
-      <SettingsSection 
-        title={t('packages.title')} 
-        description={t('packages.description')}
+      <SettingsCollectionSection
+        sectionId="packages"
+        title={t("packages.title")}
+        description={t("packages.description")}
+        bodyClassName="p-6"
       >
         <FormLoadingSkeleton rows={2} />
-      </SettingsSection>
+      </SettingsCollectionSection>
     );
   }
 
   if (error) {
     return (
-      <SettingsSection 
-        title={t('packages.title')} 
-        description={t('packages.description')}
+      <SettingsCollectionSection
+        sectionId="packages"
+        title={t("packages.title")}
+        description={t("packages.description")}
+        bodyClassName="p-6"
       >
-        <div className="text-center py-8">
-          <p className="text-destructive">{t('packages.failed_to_load')}</p>
+        <div className="py-8 text-center">
+          <p className="text-destructive">{t("packages.failed_to_load")}</p>
         </div>
-      </SettingsSection>
+      </SettingsCollectionSection>
     );
   }
 
@@ -367,11 +371,12 @@ const PackagesSection = () => {
 
   return (
     <>
-      <SettingsSection 
-        title={t('packages.title')} 
+      <SettingsCollectionSection
+        sectionId="packages"
+        title={t('packages.title')}
         description={t('packages.description')}
-        actions={
-          <div className="flex items-center gap-3">
+        headerAside={
+          <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:gap-4">
             <label htmlFor="packages-show-inactive" className="flex items-center gap-2 text-sm text-muted-foreground">
               <Switch
                 id="packages-show-inactive"
@@ -385,6 +390,8 @@ const PackagesSection = () => {
                 onClick={openCreatePackage}
                 className="flex items-center gap-2 whitespace-nowrap"
                 data-testid="add-package-button"
+                variant="pill"
+                size="sm"
               >
                 <Plus className="h-4 w-4" />
                 {t('packages.add_package')}
@@ -392,6 +399,8 @@ const PackagesSection = () => {
             )}
           </div>
         }
+        contentClassName="space-y-4"
+        unstyledBody
       >
         {filteredPackages.length === 0 ? (
           <div className="text-center py-8">
@@ -584,7 +593,8 @@ const PackagesSection = () => {
             })}
           </div>
         )}
-      </SettingsSection>
+        </div>
+      </SettingsCollectionSection>
 
       {canManagePackages && (
         <>

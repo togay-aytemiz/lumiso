@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import SettingsSection from "./SettingsSection";
+import { SettingsCollectionSection } from "@/components/settings/SettingsSectionVariants";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -253,41 +253,63 @@ const SessionTypesSection = () => {
     [sessionTypes, showInactive]
   );
 
-  const emptyState = !isLoading && filteredSessionTypes.length === 0;
+  if (isLoading) {
+    return (
+      <SettingsCollectionSection
+        sectionId="session-types"
+        title={tForms("sessionTypes.title")}
+        description={tForms("sessionTypes.description")}
+        bodyClassName="p-6"
+      >
+        <div className="space-y-3">
+          <div className="h-12 animate-pulse rounded-md bg-muted" />
+          <div className="h-12 animate-pulse rounded-md bg-muted" />
+        </div>
+      </SettingsCollectionSection>
+    );
+  }
+
+  const emptyState = filteredSessionTypes.length === 0;
+
+  const headerActions = (
+    <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:gap-4">
+      <label
+        htmlFor="session-types-show-inactive"
+        className="flex items-center gap-2 text-muted-foreground"
+      >
+        <Switch
+          id="session-types-show-inactive"
+          checked={showInactive}
+          onCheckedChange={setShowInactive}
+        />
+        <span>{tCommon("labels.show_inactive")}</span>
+      </label>
+      {canManageSessionTypes && (
+        <Button
+          type="button"
+          size="sm"
+          variant="pill"
+          className="flex items-center gap-2 whitespace-nowrap"
+          onClick={() => setShowAddDialog(true)}
+        >
+          <Plus className="h-4 w-4" />
+          {tForms("sessionTypes.add_session_type")}
+        </Button>
+      )}
+    </div>
+  );
 
   return (
     <>
-      <SettingsSection
+      <SettingsCollectionSection
+        sectionId="session-types"
         title={tForms("sessionTypes.title")}
         description={tForms("sessionTypes.description")}
-        actions={
-          <div className="flex items-center gap-3">
-            <label htmlFor="session-types-show-inactive" className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Switch
-                id="session-types-show-inactive"
-                checked={showInactive}
-                onCheckedChange={setShowInactive}
-              />
-              <span>{tCommon("labels.show_inactive")}</span>
-            </label>
-            {canManageSessionTypes && (
-              <Button
-                onClick={() => setShowAddDialog(true)}
-                className="flex items-center gap-2 whitespace-nowrap"
-              >
-                <Plus className="h-4 w-4" />
-                {tForms("sessionTypes.add_session_type")}
-              </Button>
-            )}
-          </div>
-        }
+        headerAside={headerActions}
+        contentClassName="space-y-4"
+        unstyledBody
       >
-        {isLoading ? (
-          <div className="space-y-3">
-            <div className="h-12 animate-pulse rounded-md bg-muted" />
-            <div className="h-12 animate-pulse rounded-md bg-muted" />
-          </div>
-        ) : emptyState ? (
+        {emptyState ? (
           <div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
             <p className="text-muted-foreground">
               {tForms("sessionTypes.no_session_types")}
@@ -302,99 +324,106 @@ const SessionTypesSection = () => {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {filteredSessionTypes.map((sessionType) => {
-              const isDefault = sessionType.id === defaultSessionTypeId;
-              const isInactive = !sessionType.is_active;
+                const isDefault = sessionType.id === defaultSessionTypeId;
+                const isInactive = !sessionType.is_active;
 
-              return (
-                <div
-                  key={sessionType.id}
-                  className={cn(
-                    "rounded-lg border bg-card p-3 shadow-sm transition-colors",
-                    isDefault && "border-primary/70 bg-primary/15",
-                    isInactive && "opacity-70"
-                  )}
-                >
-                  <div className="flex h-full flex-col gap-3">
-                    <div className="flex flex-1 flex-col gap-2">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex min-w-0 flex-col gap-1.5">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-base font-semibold leading-none">
-                              {sessionType.name}
-                            </h3>
-                            {isInactive && (
-                              <Badge variant="outline">{passiveBadgeLabel}</Badge>
+                return (
+                  <div
+                    key={sessionType.id}
+                    className={cn(
+                      "rounded-lg border bg-card p-3 shadow-sm transition-colors",
+                      isDefault && "border-primary/70 bg-primary/15",
+                      isInactive && "opacity-70"
+                    )}
+                  >
+                    <div className="flex h-full flex-col gap-3">
+                      <div className="flex flex-1 flex-col gap-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex min-w-0 flex-col gap-1.5">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="text-base font-semibold leading-none">
+                                {sessionType.name}
+                              </h3>
+                              {isInactive && (
+                                <Badge variant="outline">
+                                  {passiveBadgeLabel}
+                                </Badge>
+                              )}
+                            </div>
+                            {sessionType.description && (
+                              <p className="text-xs leading-snug text-muted-foreground">
+                                {sessionType.description}
+                              </p>
                             )}
                           </div>
-                          {sessionType.description && (
-                            <p className="text-xs leading-snug text-muted-foreground">
-                              {sessionType.description}
-                            </p>
+                          {(isDefault || canManageSessionTypes) && (
+                            <div className="flex items-start">
+                              {isDefault ? (
+                                <Badge className="bg-primary text-primary-foreground">
+                                  {tForms("sessionTypes.default_badge")}
+                                </Badge>
+                              ) : (
+                                canManageSessionTypes && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 whitespace-nowrap rounded-full px-3 text-xs font-semibold text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                                    onClick={() => handleSetDefault(sessionType)}
+                                    disabled={settingDefaultId === sessionType.id}
+                                  >
+                                    {tForms("sessionTypes.set_default")}
+                                  </Button>
+                                )
+                              )}
+                            </div>
                           )}
                         </div>
-                        {(isDefault || canManageSessionTypes) && (
-                          <div className="flex items-start">
-                            {isDefault ? (
-                              <Badge variant="default" className="bg-primary text-primary-foreground">
-                                {tForms("sessionTypes.default_badge")}
-                              </Badge>
-                            ) : canManageSessionTypes ? (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-7 whitespace-nowrap rounded-full px-3 text-xs font-semibold text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                                onClick={() => handleSetDefault(sessionType)}
-                                disabled={settingDefaultId === sessionType.id}
-                              >
-                                {tForms("sessionTypes.set_default")}
-                              </Button>
-                            ) : null}
-                          </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-3 text-sm">
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <span className="sr-only">
+                            {tForms("sessionTypes.table.duration")}
+                          </span>
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+                            <Clock className="h-3 w-3" />
+                          </span>
+                          <span className="font-medium text-foreground">
+                            {formatDuration(
+                              sessionType.duration_minutes,
+                              tForms
+                            )}
+                          </span>
+                        </div>
+
+                        {canManageSessionTypes && (
+                          <IconActionButtonGroup>
+                            <IconActionButton
+                              onClick={() => handleOpenEdit(sessionType)}
+                              aria-label={tForms("sessionTypes.actions.edit")}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </IconActionButton>
+                            <IconActionButton
+                              onClick={() => {
+                                setSessionTypeToDelete(sessionType);
+                                setDeleteConfirmOpen(true);
+                              }}
+                              aria-label={tForms("sessionTypes.actions.delete")}
+                              variant="danger"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </IconActionButton>
+                          </IconActionButtonGroup>
                         )}
                       </div>
                     </div>
-
-                    <div className="flex items-center justify-between gap-3 text-sm">
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <span className="sr-only">
-                          {tForms("sessionTypes.table.duration")}
-                        </span>
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
-                          <Clock className="h-3 w-3" />
-                        </span>
-                        <span className="font-medium text-foreground">
-                          {formatDuration(sessionType.duration_minutes, tForms)}
-                        </span>
-                      </div>
-
-                      {canManageSessionTypes && (
-                        <IconActionButtonGroup>
-                          <IconActionButton
-                            onClick={() => handleOpenEdit(sessionType)}
-                            aria-label={tForms("sessionTypes.actions.edit")}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </IconActionButton>
-                          <IconActionButton
-                            onClick={() => {
-                              setSessionTypeToDelete(sessionType);
-                              setDeleteConfirmOpen(true);
-                            }}
-                            aria-label={tForms("sessionTypes.actions.delete")}
-                            variant="danger"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </IconActionButton>
-                        </IconActionButtonGroup>
-                      )}
-                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </SettingsSection>
+                );
+              })}
+            </div>
+          )}
+      </SettingsCollectionSection>
 
       <AddSessionTypeDialog
         open={showAddDialog}

@@ -129,6 +129,11 @@
       "unsaved_changes": "Discard changes?"
     }
   },
+  "errors": {
+    "validation": "Validation error",
+    "save": "Save error",
+    "delete": "Delete error"
+  },
   "success": "Success",
   "client": {
     "title": "Client Details",

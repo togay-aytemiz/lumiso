@@ -20,10 +20,10 @@ import { AddProjectStageDialog, EditProjectStageDialog } from "./settings/Projec
 import { useProjectStatuses } from "@/hooks/useOrganizationData";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { cn } from "@/lib/utils";
-import SettingsSection from "./SettingsSection";
 import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useTranslation } from "react-i18next";
 import { useMessagesTranslation } from "@/hooks/useTypedTranslation";
+import { SettingsTwoColumnSection } from "@/components/settings/SettingsSections";
 // Permissions removed for single photographer mode
 
 const projectStatusSchema = z.object({
@@ -419,124 +419,156 @@ const ProjectStatusesSection = () => {
     createDefaultStatuses();
   }
 
+  const canManageProjectStatuses = true; // Always allow in single photographer mode
+
+  const sectionAction = canManageProjectStatuses
+    ? {
+        label: t("project_stages.add_stage"),
+        onClick: handleAdd,
+        icon: Plus,
+        variant: "pill" as const,
+        size: "sm" as const,
+      }
+    : undefined;
+
   if (isLoading) {
     return (
-      <SettingsSection 
-        title={t('project_stages.title')}
-        description={t('project_stages.description')}
+      <SettingsTwoColumnSection
+        sectionId="project-statuses"
+        title={t("project_stages.title")}
+        description={t("project_stages.description")}
+        action={sectionAction}
+        contentClassName="space-y-6"
       >
-        <FormLoadingSkeleton rows={3} />
-      </SettingsSection>
+        <div className="rounded-2xl border border-border/60 bg-card p-6">
+          <FormLoadingSkeleton rows={3} />
+        </div>
+      </SettingsTwoColumnSection>
     );
   }
 
-  // Always show project statuses in single photographer mode
-  // if (!hasPermission('view_project_statuses')) {
-  //   return null;
-  // }
-
-  const canManageProjectStatuses = true; // Always allow in single photographer mode
-
   return (
     <>
-    <SettingsSection 
-      title={t('project_stages.title')}
-      description={t('project_stages.description')}
-      action={canManageProjectStatuses ? {
-        label: t('project_stages.add_stage'),
-        onClick: handleAdd,
-        icon: <Plus className="h-4 w-4" />
-      } : undefined}
-    >
-      <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {t('project_stages.drag_instructions')}
-        </p>
-      </div>
+      <SettingsTwoColumnSection
+        sectionId="project-statuses"
+        title={t("project_stages.title")}
+        description={t("project_stages.description")}
+        action={sectionAction}
+        contentClassName="space-y-6"
+      >
+        <div className="space-y-4 rounded-2xl border border-border/60 bg-card p-6">
+          <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/30 p-3">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {t("project_stages.drag_instructions")}
+            </p>
+          </div>
 
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="statuses" direction="horizontal">
-            {(provided, snapshot) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className={cn(
-                  "flex flex-wrap gap-3 min-h-[48px] transition-colors rounded-lg p-2",
-                  snapshot.isDraggingOver && "bg-accent/20"
-                )}
-              >
-                {statuses.filter(status => status.lifecycle !== 'archived' && status.name.toLowerCase() !== 'archived').map((status, index) => (
-                  <Draggable key={status.id} draggableId={status.id} index={index}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={cn(
-                          "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all select-none",
-                          snapshot.isDragging ? "opacity-80 shadow-xl scale-105 z-50" : "hover:opacity-80 cursor-pointer",
-                          !snapshot.isDragging && "hover:scale-[1.02]"
-                        )}
-                        style={{ 
-                          backgroundColor: status.color + '20',
-                          color: status.color,
-                          border: `1px solid ${status.color}40`,
-                          ...provided.draggableProps.style
-                        }}
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="statuses" direction="horizontal">
+              {(provided, snapshot) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className={cn(
+                    "flex min-h-[48px] flex-wrap gap-3 rounded-lg p-2 transition-colors",
+                    snapshot.isDraggingOver && "bg-accent/20"
+                  )}
+                >
+                  {statuses
+                    .filter(
+                      (status) =>
+                        status.lifecycle !== "archived" &&
+                        status.name.toLowerCase() !== "archived"
+                    )
+                    .map((status, index) => (
+                      <Draggable
+                        key={status.id}
+                        draggableId={status.id}
+                        index={index}
                       >
-                        <div 
-                          {...provided.dragHandleProps}
-                          className="flex items-center cursor-grab active:cursor-grabbing hover:opacity-70 transition-opacity"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <GripVertical className="w-3 h-3 text-current opacity-60" />
-                        </div>
-                        <div 
-                          className="w-2 h-2 rounded-full flex-shrink-0" 
-                          style={{ backgroundColor: status.color }}
-                        />
-                         <span 
-                           className={`uppercase tracking-wide font-semibold ${canManageProjectStatuses ? 'cursor-pointer' : 'cursor-default'}`}
-                           onClick={canManageProjectStatuses ? (e) => {
-                             e.stopPropagation();
-                             handleEdit(status);
-                           } : undefined}
-                         >
-                           {status.name}
-                         </span>
-                         {status.lifecycle && status.lifecycle !== 'active' && (
-                           <span className="text-xs opacity-60 font-normal capitalize">
-                             · {t(`project_stage.lifecycle.${status.lifecycle}`)}
-                           </span>
-                         )}
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className={cn(
+                              "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-all select-none",
+                              snapshot.isDragging
+                                ? "z-50 scale-105 opacity-80 shadow-xl"
+                                : "cursor-pointer hover:opacity-80",
+                              !snapshot.isDragging && "hover:scale-[1.02]"
+                            )}
+                            style={{
+                              backgroundColor: `${status.color}20`,
+                              color: status.color,
+                              border: `1px solid ${status.color}40`,
+                              ...provided.draggableProps.style,
+                            }}
+                          >
+                            <div
+                              {...provided.dragHandleProps}
+                              className="flex items-center cursor-grab active:cursor-grabbing hover:opacity-70 transition-opacity"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <GripVertical className="h-3 w-3 text-current opacity-60" />
+                            </div>
+                            <div
+                              className="h-2 w-2 flex-shrink-0 rounded-full"
+                              style={{ backgroundColor: status.color }}
+                            />
+                            <span
+                              className={`uppercase tracking-wide font-semibold ${
+                                canManageProjectStatuses
+                                  ? "cursor-pointer"
+                                  : "cursor-default"
+                              }`}
+                              onClick={
+                                canManageProjectStatuses
+                                  ? (e) => {
+                                      e.stopPropagation();
+                                      handleEdit(status);
+                                    }
+                                  : undefined
+                              }
+                            >
+                              {status.name}
+                            </span>
+                            {status.lifecycle &&
+                              status.lifecycle !== "active" && (
+                                <span className="text-xs font-normal capitalize opacity-60">
+                                  ·{" "}
+                                  {t(
+                                    `project_stage.lifecycle.${status.lifecycle}`
+                                  )}
+                                </span>
+                              )}
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </div>
+      </SettingsTwoColumnSection>
 
-        {/* Add Dialog */}
-        {canManageProjectStatuses && (
-          <>
-            <AddProjectStageDialog
-              open={isAddDialogOpen}
-              onOpenChange={setIsAddDialogOpen}
-              onStageAdded={refetch}
-            />
+      {canManageProjectStatuses && (
+        <>
+          <AddProjectStageDialog
+            open={isAddDialogOpen}
+            onOpenChange={setIsAddDialogOpen}
+            onStageAdded={refetch}
+          />
 
-            {/* Edit Dialog */}
-            <EditProjectStageDialog
-              stage={editingStatus}
-              open={isEditDialogOpen}
-              onOpenChange={setIsEditDialogOpen}
-              onStageUpdated={refetch}
-            />
-          </>
-        )}
-      </SettingsSection>
+          <EditProjectStageDialog
+            stage={editingStatus}
+            open={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            onStageUpdated={refetch}
+          />
+        </>
+      )}
     </>
   );
 };

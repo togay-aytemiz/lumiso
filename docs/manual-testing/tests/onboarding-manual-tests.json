@@ -1,0 +1,49 @@
+[
+  {
+    "suite": "Onboarding (TBD)",
+    "cases": [
+      {
+        "external_id": "CRM-ONBOARDING-TBD-001",
+        "title": "Onboarding testleri daha sonra beslenecek",
+        "description": "Onboarding akışı güncellendikten sonra gerçek test senaryoları bu dosyada yer alacak.",
+        "steps": [],
+        "expected_result": "TBD"
+      },
+      {
+        "external_id": "CRM-ONBOARDING-TBD-002",
+        "title": "TBD - İlk girişte örnek paketlerin yüklenmesi",
+        "description": "Yeni kullanıcı oluşturulduğunda başlangıç paketlerinin hesabı doldurması beklenen akış.",
+        "steps": [],
+        "expected_result": "TBD"
+      },
+      {
+        "external_id": "CRM-ONBOARDING-TBD-003",
+        "title": "TBD - İlk girişte örnek seans türleri",
+        "description": "Initial session type seeding tamamlandığında doğrulanacak.",
+        "steps": [],
+        "expected_result": "TBD"
+      },
+      {
+        "external_id": "CRM-ONBOARDING-TBD-004",
+        "title": "TBD - İlk girişte örnek servis/hizmet kartları",
+        "description": "Katalogun default hizmetlerle dolduğunu gösterecek senaryo.",
+        "steps": [],
+        "expected_result": "TBD"
+      },
+      {
+        "external_id": "CRM-ONBOARDING-TBD-005",
+        "title": "TBD - İlk girişte KDV ayarlarının set edilmesi",
+        "description": "Varsayılan vergi profili/kdv oranı tohumlama akışı için placeholder.",
+        "steps": [],
+        "expected_result": "TBD"
+      },
+      {
+        "external_id": "CRM-ONBOARDING-TBD-006",
+        "title": "TBD - İlk girişte bölge/para birimi ayarları",
+        "description": "Regional settings (para birimi, tarih formatı vb.) varsayılanlarının doğrulanması için placeholder.",
+        "steps": [],
+        "expected_result": "TBD"
+      }
+    ]
+  }
+]

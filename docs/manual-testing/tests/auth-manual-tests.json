@@ -1,0 +1,14 @@
+[
+  {
+    "suite": "Auth (TBD)",
+    "cases": [
+      {
+        "external_id": "CRM-AUTH-TBD-001",
+        "title": "Auth testleri daha sonra beslenecek",
+        "description": "Kimlik doğrulama akışında planlanan değişiklikler tamamlandıktan sonra gerçek test senaryoları eklenecektir.",
+        "steps": [],
+        "expected_result": "TBD"
+      }
+    ]
+  }
+]

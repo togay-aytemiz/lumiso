@@ -138,23 +138,34 @@ export default function Profile() {
   }, []);
 
   // Update form fields when profile loads
+  const setProfileValues = profileSection.setValues;
+  const setWorkingHoursValues = workingHoursSection.setValues;
+  const profileFullName = profile?.full_name ?? "";
+  const profilePhone = profile?.phone_number ?? "";
+
   useEffect(() => {
-    if (profile && !profileLoading) {
-      profileSection.setValues({
-        fullName: profile.full_name || "",
-        phoneNumber: profile.phone_number || "",
-      });
-    }
-  }, [profile, profileLoading, profileSection]);
+    if (!profile || profileLoading) return;
+
+    setProfileValues({
+      fullName: profileFullName,
+      phoneNumber: profilePhone,
+    });
+  }, [profile, profileLoading, profileFullName, profilePhone, setProfileValues]);
 
   // Update working hours form when data loads
+  const workingHoursSignature = useMemo(
+    () => JSON.stringify(workingHours),
+    [workingHours]
+  );
+
   useEffect(() => {
-    if (workingHours.length > 0) {
-      workingHoursSection.setValues({
-        workingHours: workingHours
-      });
+    if (workingHours.length === 0) {
+      return;
     }
-  }, [workingHours, workingHoursSection]);
+    setWorkingHoursValues({
+      workingHours,
+    });
+  }, [workingHoursSignature, setWorkingHoursValues]);
 
   useEffect(() => {
     if (!profileLoading && !workingHoursLoading && !lastSyncedAt) {

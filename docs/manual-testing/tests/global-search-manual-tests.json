@@ -1,0 +1,119 @@
+[
+  {
+    "suite": "Global Search - Genel Davranış",
+    "cases": [
+      {
+        "external_id": "CRM-GLOBALSEARCH-001",
+        "title": "Lead adı/e-posta/telefon araması ve durum rozetleri",
+        "description": "Header’daki arama çubuğunun lead sistem alanlarını (ad, e-posta, telefon) taradığını ve sonuçlarda LeadStatusBadge gösterdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Herhangi bir ana sayfada (ör. /projects) üst header’daki arama alanına fokuslanın.",
+            "expected_result": "Alan placeholder olarak “Hızlı ara…” (search.placeholder) metnini gösterir."
+          },
+          {
+            "action": "Var olan bir lead’in adından en az üç harf yazın (örn. “eli”).",
+            "expected_result": "300 ms debounce sonrası dropdown açılır; üstte “LEADS (n)” başlığı ve eşleşen kayıtlar sıralanır."
+          },
+          {
+            "action": "Aynı lead için e-posta veya telefon değerinin benzersiz kısmını yazın.",
+            "expected_result": "Sonuç satırında “email match” veya “phone match” metni görünür; satırın sağındaki LeadStatusBadge mevcut durum rengini gösterir."
+          },
+          {
+            "action": "Sonucu tıklayın.",
+            "expected_result": "Uygulama `/leads/:id` rotasına gider ve arama alanı otomatik temizlenir."
+          }
+        ],
+        "expected_result": "3+ karakter aranan lead’leri isim/e-posta/telefon alanlarından bulur, dropdown’da lead statüsü ve eşleşen alan açıklaması gösterir."
+      },
+      {
+        "external_id": "CRM-GLOBALSEARCH-002",
+        "title": "Lead custom field eşleşmesini etiket adıyla gösterme",
+        "description": "lead_field_definitions tablosundan çekilen etiketlerin custom field sonuçlarında kullanıldığını doğrular.",
+        "steps": [
+          {
+            "action": "Ayarlar → Potansiyel Müşteriler bölümünde 'Favori Mekan' gibi özel bir seçim alanı oluşturup bir lead’de doldurun.",
+            "expected_result": "Lead Field Definitions içinde bu alan için `field_key` ve etiket kaydedilir."
+          },
+          {
+            "action": "Header aramasına ilgili değerin üç harfinden fazlasını yazın.",
+            "expected_result": "Dropdown’da LEADS grubunda yeni satır belirir ve ikinci satırda “Favori Mekan: …” metni görünür."
+          },
+          {
+            "action": "Sonucun sağındaki rozet ve ikonları kontrol edin.",
+            "expected_result": "LeadStatusBadge pasif, ikonu kullanıcı simgesi olur; matchedContent 80 karakterden uzun ise otomatik kısaltılır."
+          }
+        ],
+        "expected_result": "Custom field sonuçları lead_field_labels map’i sayesinde insan okunur etiketle listelenir."
+      },
+      {
+        "external_id": "CRM-GLOBALSEARCH-003",
+        "title": "Session notlarında arama ve takvim ikonu",
+        "description": "sessions tablosundaki `notes` alanı ve notsuz kayıtlar için özel metni doğrular.",
+        "steps": [
+          {
+            "action": "Bir lead için not içeren ve not içermeyen en az iki seans planlayın.",
+            "expected_result": "Sessions tablosunda `notes` kolonunda ilgili değerler oluşur."
+          },
+          {
+            "action": "Arama çubuğunda notta geçen özgün kelimeyi yazın.",
+            "expected_result": "Dropdown’da “SESSIONS (1)” bölümü açılır; satır ikonunda takvim simgesi vardır ve notun ilk 80 karakteri gösterilir."
+          },
+          {
+            "action": "Sonra “no notes” ifadesini yazın.",
+            "expected_result": "Notu olmayan seans için “Not girilmemiş seans – {tarih}” formatlı matchedContent görünür."
+          },
+          {
+            "action": "Sonucu seçin.",
+            "expected_result": "Lead detay sayfası açılır; header araması temizlenir."
+          }
+        ],
+        "expected_result": "Session sonuçları notlara göre filtrelenir, ikon takvimdir ve not olmayan kayıtlar `sessionNoNotes` metnini gösterir."
+      },
+      {
+        "external_id": "CRM-GLOBALSEARCH-004",
+        "title": "Proje adı/açıklaması araması ve durum rozetleri",
+        "description": "projects tablosundaki isim/açıklama eşleşmelerinin ProjectStatusBadge ile listelendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Açıklamasında belirgin bir kelime olan bir proje kaydı oluşturun.",
+            "expected_result": "Project detayında status_id atanmış olur."
+          },
+          {
+            "action": "Header aramasına açıklamadaki kelimenin üç harfini yazın.",
+            "expected_result": "Dropdown’da PROJECTS grubu görünür; satırda proje adı, matchedContent’de açıklamanın kısaltılmış versiyonu listelenir."
+          },
+          {
+            "action": "Aynı listede Archived statülü bir proje de olsun.",
+            "expected_result": "Sıralama Archived projeleri listenin en altına iter ve rozet gri görünür."
+          }
+        ],
+        "expected_result": "Proje sonuçları lead adını alt satırda gösterir, ProjectStatusBadge statüyü yansıtır ve archived kayıtlar listenin sonunda kalır."
+      },
+      {
+        "external_id": "CRM-GLOBALSEARCH-005",
+        "title": "Load more ve klavye ile gezinme",
+        "description": "10’dan fazla sonuç olduğunda yükleme mantığını ve ok tuşları ile seçim davranışını doğrular.",
+        "steps": [
+          {
+            "action": "Arama sorgusunu çok sayıda kayda eşleşecek şekilde girin (örn. “test”).",
+            "expected_result": "Dropdown’da birden fazla grup oluşur ve alt kısımda 'Load more' butonu görünür."
+          },
+          {
+            "action": "Aşağı ok ile sonuçlar arasında gezinip Enter’a basmadan Space’e kadar ilerleyin.",
+            "expected_result": "Aktif satır gri arka plan alır; `activeIndex` döngüsel olarak en alta indiğinde başa döner."
+          },
+          {
+            "action": "'Load more' butonuna tıklayın.",
+            "expected_result": "Buton kısa süreli spinner gösterir ve ek 10 kayıt listeye eklenir; tüm sonuçlar gösterilince 'Showing all n results' mesajı çıkar."
+          },
+          {
+            "action": "Escape tuşuna basın.",
+            "expected_result": "Dropdown kapanır ve aktif index -1'e döner."
+          }
+        ],
+        "expected_result": "Klavye navigasyonu ve yükleme davranışı GlobalSearch komponentinin `activeIndex` ve `displayedCount` mantığıyla uyumlu çalışır."
+      }
+    ]
+  }
+]

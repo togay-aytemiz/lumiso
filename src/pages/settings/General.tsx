@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import {
@@ -176,22 +176,45 @@ export default function General() {
   });
 
   // Update form values when settings load
-  useEffect(() => {
-    if (settings) {
-      brandingSection.setValues({
-        companyName: settings.photography_business_name || "",
-        businessEmail: settings.email || "",
-        businessPhone: settings.phone || "",
-        brandColor: settings.primary_brand_color || "#1EB29F"
-      });
+  const browserTimezone = useMemo(() => detectBrowserTimezone(), []);
+  const setBrandingValues = brandingSection.setValues;
+  const setRegionalValues = regionalSection.setValues;
 
-      regionalSection.setValues({
-        dateFormat: settings.date_format || "DD/MM/YYYY",
-        timeFormat: settings.time_format || "12-hour",
-        timezone: settings.timezone || detectBrowserTimezone()
-      });
-    }
-  }, [brandingSection, regionalSection, settings]);
+  const companyNameSetting = settings?.photography_business_name ?? "";
+  const businessEmailSetting = settings?.email ?? "";
+  const businessPhoneSetting = settings?.phone ?? "";
+  const brandColorSetting = settings?.primary_brand_color ?? "#1EB29F";
+  const dateFormatSetting = settings?.date_format ?? "DD/MM/YYYY";
+  const timeFormatSetting = settings?.time_format ?? "12-hour";
+  const timezoneSetting = settings?.timezone ?? browserTimezone;
+
+  useEffect(() => {
+    if (!settings) return;
+
+    setBrandingValues({
+      companyName: companyNameSetting,
+      businessEmail: businessEmailSetting,
+      businessPhone: businessPhoneSetting,
+      brandColor: brandColorSetting,
+    });
+
+    setRegionalValues({
+      dateFormat: dateFormatSetting,
+      timeFormat: timeFormatSetting,
+      timezone: timezoneSetting,
+    });
+  }, [
+    settings,
+    companyNameSetting,
+    businessEmailSetting,
+    businessPhoneSetting,
+    brandColorSetting,
+    dateFormatSetting,
+    timeFormatSetting,
+    timezoneSetting,
+    setBrandingValues,
+    setRegionalValues,
+  ]);
 
   useEffect(() => {
     if (!settings) return;

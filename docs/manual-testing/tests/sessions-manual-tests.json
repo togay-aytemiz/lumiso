@@ -911,6 +911,50 @@
           }
         ],
         "expected_result": "Tamamlanan akordeonu, geçmiş hatırlatmaları ihtiyaç halinde inceleyip tekrar aktif hale getirmeye izin verir."
+      },
+      {
+        "external_id": "CRM-SESSIONS-450",
+        "title": "Tarih grubu hızlı filtreleri",
+        "description": "Quick filter çiplerinin zaman çizelgesini ilgili tarih gruplarıyla sınırladığını doğrular.",
+        "steps": [
+          {
+            "action": "Hatırlatmalar sayfasında üstteki hızlı filtrelerden 'Bugün' çipine tıklayın.",
+            "expected_result": "Çip vurgulanır ve zaman çizelgesinde sadece 'Bugün' etiketli grup görünür; başlıkta \"Bugün\" rozetli kart kalır."
+          },
+          {
+            "action": "Ardından 'Yarın' çipini seçin.",
+            "expected_result": "Bugüne ait grup gizlenir, yalnızca 'Yarın' etiketli grup ve sayaçlar gösterilir."
+          },
+          {
+            "action": "Tekrar 'Tümü' çipine dönün.",
+            "expected_result": "Bugün, Yarın ve diğer tarih grupları kronolojik sırayla geri gelir; her grupta rozetler doğru etiketleri gösterir."
+          }
+        ],
+        "expected_result": "Hızlı filtreler yalnız seçilen tarih gruplarını gösterir ve 'Tümü' seçildiğinde tüm gruplar eski haline döner."
+      },
+      {
+        "external_id": "CRM-SESSIONS-451",
+        "title": "Gecikmiş filtresiyle tamamlananları birlikte kullanma",
+        "description": "Pill filtrelerinden 'Gecikmiş'i seçip aynı anda 'Tamamlananları Göster' ve 'Gecikmişleri gizle' anahtarlarını değiştirmenin beklenen görünümü sağladığını doğrular.",
+        "steps": [
+          {
+            "action": "Masaüstü filtre satırından 'Gecikmiş' çipini seçin.",
+            "expected_result": "Zaman çizelgesinde yalnızca geçmiş tarihli hatırlatmalar görünür ve grup başlıklarında 'Gecikmiş' etiketi gösterilir."
+          },
+          {
+            "action": "'Tamamlananları Göster' anahtarını açın.",
+            "expected_result": "Alt kısımda 'Tamamlanan hatırlatmalar' akordeonu açılır ve tamamlanmış gecikmiş öğeler burada listelenir."
+          },
+          {
+            "action": "Aynı satırdaki 'Gecikmişleri gizle' anahtarını açın.",
+            "expected_result": "Aktif listede gecikmiş satırlar gizlenir; yalnızca tamamlanan akordeonunda görünürler."
+          },
+          {
+            "action": "Her iki anahtarı tekrar kapatın.",
+            "expected_result": "Gecikmiş aktif liste eski haline döner ve tamamlanan akordeonu yalnızca 'Tamamlananları Göster' açıkken görünür."
+          }
+        ],
+        "expected_result": "Filtre ve anahtar kombinasyonları birlikte çalışır; gecikmiş, tamamlanan ve gizleme kontrolleri karışmadan uygulanır."
       }
     ]
   }

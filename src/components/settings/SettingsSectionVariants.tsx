@@ -52,6 +52,8 @@ export interface SettingsCollectionSectionProps extends BaseSingleColumnProps {
   bodyClassName?: string;
   footer?: ReactNode;
   headerAside?: ReactNode;
+  unstyledBody?: boolean;
+  surfaceClassName?: string;
 }
 
 export function SettingsCollectionSection({
@@ -61,20 +63,22 @@ export function SettingsCollectionSection({
   children,
   ...sectionProps
 }: SettingsCollectionSectionProps) {
+  const surfaceClasses = cn(
+    "overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm",
+    sectionProps.surfaceClassName
+  );
+
   return (
     <SettingsSingleColumnSection
       {...sectionProps}
       headerAside={headerAside ?? sectionProps.headerAside}
       contentClassName={cn("space-y-6", sectionProps.contentClassName)}
     >
-      <div
-        className={cn(
-          "overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm",
-          bodyClassName
-        )}
-      >
-        {children}
-      </div>
+      {sectionProps.unstyledBody ? (
+        children
+      ) : (
+        <div className={cn(surfaceClasses, bodyClassName)}>{children}</div>
+      )}
       {footer}
     </SettingsSingleColumnSection>
   );

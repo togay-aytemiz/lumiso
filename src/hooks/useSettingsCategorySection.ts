@@ -18,10 +18,18 @@ export function useSettingsCategorySection<T extends Record<string, unknown>>(
   const location = useLocation();
   const categoryPath = location.pathname;
   const { registerSectionHandler, unregisterSectionHandler, setSectionDirty } = useSettingsContext();
+  const serializedInitialValues = JSON.stringify(options.initialValues);
+  const stableInitialValuesRef = useRef(options.initialValues);
+  const serializedRef = useRef(serializedInitialValues);
+
+  if (serializedRef.current !== serializedInitialValues) {
+    serializedRef.current = serializedInitialValues;
+    stableInitialValuesRef.current = options.initialValues;
+  }
   
   const section = useSettingsSection({
     sectionName: options.sectionName,
-    initialValues: options.initialValues,
+    initialValues: stableInitialValuesRef.current,
     onSave: options.onSave,
     autoSave: options.autoSave,
     throttleMs: options.throttleMs,

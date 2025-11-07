@@ -465,6 +465,66 @@
           }
         ],
         "expected_result": "Merkezi aşama sıralaması güncellendiğinde tüm proje menüleri aynı sıralamayı takip eder."
+      },
+      {
+        "external_id": "CRM-PROJECTS-322",
+        "title": "Projeler listesindeki lazy load",
+        "description": "/projects sayfasında 25’ten fazla kayıt bulunduğunda liste sonuna gelince yeni kayıtların otomatik yüklendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Projeler listesinde filtreleri temizleyip aşağı doğru kaydırın.",
+            "expected_result": "Tablonun altında \"Load more\" alanı ve dönen ikon için ayrılmış boşluk görünür."
+          },
+          {
+            "action": "Liste sonuna ulaşın veya Page Down ile birkaç kez ilerleyin.",
+            "expected_result": "Yükleme ikonu kısa süre görünür ve ardından yeni proje kartları tabloya eklenir."
+          },
+          {
+            "action": "Toplam satır sayısı arttıktan sonra yeniden alta kaydırın.",
+            "expected_result": "Her seferinde aynı davranış tekrarlar; sayfa yenilenmeden tüm kayıtlar sırayla yüklenir."
+          }
+        ],
+        "expected_result": "Projeler sayfası sonsuz kaydırma ile yeni kayıtları gerektiğinde arka planda getirir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-323",
+        "title": "Aktif projeleri Excel’e aktarma",
+        "description": "Projeler sayfasındaki 'Excel'e aktar' butonunun yalnızca veri olduğunda aktif olduğunu ve başarıyla dosya indirdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Aktif projeler sekmesinde filtreleri temizleyip en az bir satır olduğundan emin olun.",
+            "expected_result": "Üst çubuktaki 'Excel'e aktar' butonu aktif görünür."
+          },
+          {
+            "action": "Butona tıklayın.",
+            "expected_result": "Butonda dönen ikon görünür ve tarayıcı `projects-YYYY-MM-DD_HHmm.xlsx` dosyasını indirir."
+          },
+          {
+            "action": "Sağ alt köşedeki bildirimi kontrol edin.",
+            "expected_result": "Yeşil toast 'Dışa aktarma hazır' metnini gösterir."
+          }
+        ],
+        "expected_result": "Aktif projeler listesi Excel’e aktarıldığında kullanıcıya başarı mesajı verilir ve dosya indirilir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-324",
+        "title": "Arşivli projeler sekmesini dışa aktarma",
+        "description": "Arşiv sekmesindeki ayrı export butonunun yalnızca arşivde veri olduğunda çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "Arşivli projeler sekmesini açın ve en az bir kayıt olduğundan emin olun.",
+            "expected_result": "Sekmenin sağ üstünde ayrı bir 'Excel'e aktar' butonu görünür."
+          },
+          {
+            "action": "Butona tıklayın.",
+            "expected_result": "Buton kısa süre 'Loading' ikonuna döner ve arşiv projelerini içeren Excel dosyası indirilir."
+          },
+          {
+            "action": "Butonu arşivde hiç kayıt yokken tekrar deneyin.",
+            "expected_result": "Buton disabled kalır ve tıklanamaz; export işlemi tetiklenmez."
+          }
+        ],
+        "expected_result": "Arşiv sekmesindeki export yalnızca veri varsa çalışır ve aktif sekmeden bağımsızdır."
       }
     ]
   }

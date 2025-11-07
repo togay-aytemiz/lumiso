@@ -1,0 +1,394 @@
+[
+  {
+    "suite": "Şablonlar - Liste ve Yönetim",
+    "cases": [
+      {
+        "external_id": "CRM-TEMPLATES-001",
+        "title": "Şablonları arama ve daha fazla kayıt yükleme",
+        "description": "Templates tablosundaki arama alanının sonuçları anında filtrelediğini ve alt kısma inince yeni sayfanın otomatik yüklendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Sol menüden 'Şablonlar' sayfasını açın ve arama alanına en az üç karakter (örn. \"düğ\") yazın.",
+            "expected_result": "Yükleme animasyonu kısa süre görünür ve tablo yalnızca yazdığınız kelimeyi içeren şablon adlarını gösterir."
+          },
+          {
+            "action": "Arama alanındaki X ikonuna tıklayarak filtreyi temizleyin.",
+            "expected_result": "Liste tüm şablonları tekrar gösterir."
+          },
+          {
+            "action": "Sayfanın en altına kaydırın.",
+            "expected_result": "Alt kısımda gri bir alan ve dönen yükleme ikonu belirir, ardından yeni şablon satırları listeye eklenir."
+          }
+        ],
+        "expected_result": "Arama kutusu listeyi anında filtreler ve 25’ten fazla kayıt olduğunda kaydırmayla yeni sonuçlar otomatik yüklenir."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-002",
+        "title": "Şablonu çoğaltma ve durum rozetinin taslak olması",
+        "description": "Satır aksiyonlarındaki kopyalama butonunun şablonu \"(Copy)\" adıyla taslak olarak eklediğini doğrular.",
+        "steps": [
+          {
+            "action": "Listeden herhangi bir şablon satırında 'Çoğalt' ikonuna (iki kağıt) basın.",
+            "expected_result": "Kısa süreli yükleme olur ve yeşil toast \"Template duplicated\" mesajını gösterir."
+          },
+          {
+            "action": "Tablonun üstünde yeni bir satırın belirdiğini kontrol edin.",
+            "expected_result": "Yeni satır adı '… (Copy)' şeklindedir ve 'Durum' sütununda gri 'Taslak' rozeti görünür."
+          },
+          {
+            "action": "Yeni satıra tıklayın.",
+            "expected_result": "Template Builder sayfası `?id=` parametresiyle açılır ve blok içeriği orijinal şablonla aynıdır."
+          }
+        ],
+        "expected_result": "Çoğaltma işlemi yeni bir taslak üretir, listeye ekler ve kullanıcıyı düzenleme akışına alabilir."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-003",
+        "title": "Şablonu silme diyaloğu",
+        "description": "Sil butonunun kırmızı uyarı içeren diyaloğu açtığını ve onaylandığında satırı listeden kaldırdığını doğrular.",
+        "steps": [
+          {
+            "action": "Herhangi bir satırdaki kırmızı çöp kutusu butonuna basın.",
+            "expected_result": "\"Delete Template\" başlıklı diyalog açılır, metinde şablon adının kalın yazıldığını ve silmenin geri alınamayacağı anlatılır."
+          },
+          {
+            "action": "Diyalogdaki kırmızı 'Delete Template' butonuna tıklayın.",
+            "expected_result": "Buton \"Deleting...\" durumuna geçer ve kapanınca yeşil toast başarı mesajını gösterir."
+          },
+          {
+            "action": "Tabloya geri bakın.",
+            "expected_result": "Silinen şablon satırı listede görünmez."
+          }
+        ],
+        "expected_result": "Silme akışı kullanıcıyı uyaran bir diyalog içinde gerçekleşir ve onay sonrası satır kalıcı olarak kaldırılır."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-004",
+        "title": "Satıra tıklayıp builder’a geçiş ve geri dönüş",
+        "description": "Listeden herhangi bir satıra tıklayınca Template Builder’ın ilgili ID ile açıldığını ve geri dönüldüğünde filtre/arama durumu korunduğunu doğrular.",
+        "steps": [
+          {
+            "action": "Listeden bir satıra tıklayın.",
+            "expected_result": "URL `/template-builder?id=...` olarak değişir ve editör yüklenir."
+          },
+          {
+            "action": "Tarayıcı geri butonu veya üstteki ok ile şablon listesine dönün.",
+            "expected_result": "Önceki arama ve sayfalama durumu korunur; aynı satır listede seçili değildir ancak konum değişmez."
+          }
+        ],
+        "expected_result": "Satır tıklaması builder’a yönlendirir; geri geldiğinizde liste durumu kaybolmaz."
+      }
+    ]
+  },
+  {
+    "suite": "Template Builder - Taslak ve Yayınlama",
+    "cases": [
+      {
+        "external_id": "CRM-TEMPLATES-101",
+        "title": "Adsız şablonu kaydederken isim diyaloğu",
+        "description": "Varsayılan 'Untitled' adla kaydetmeye çalışıldığında isim diyaloğunun açıldığını ve benzersiz ad girilene kadar kayda izin verilmediğini doğrular.",
+        "steps": [
+          {
+            "action": "Yeni şablon oluştur butonundan builder’ı açın ve herhangi bir blok ekleyin.",
+            "expected_result": "Üstte badge 'Taslak' yazar ve değişiklik yapıldığı için 'Unsaved changes' rozeti görünür."
+          },
+          {
+            "action": "'Taslak olarak kaydet' butonuna basın.",
+            "expected_result": "Template Name dialog açılır ve isim alanı boş halde gelir."
+          },
+          {
+            "action": "Alanı boş bırakıp 'Kaydet' demeyi deneyin.",
+            "expected_result": "Kırmızı uyarı 'İsim gerekli' mesajını gösterir ve buton pasif kalır."
+          },
+          {
+            "action": "Benzersiz bir ad yazıp 'Kaydet' butonuna basın.",
+            "expected_result": "Dialog kapanır, üstteki 'Son kaydetme' metni güncellenir ve 'Unsaved changes' rozeti kaybolur."
+          }
+        ],
+        "expected_result": "Adsız şablonlar isim verilmeden kaydedilemez; geçerli ad girilince taslak kaydedilir."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-102",
+        "title": "Şablonu yayınlama ve durum rozetinin değişmesi",
+        "description": "Yayınla butonuna basıldığında verinin kaydedilip rozetin 'Published' değerine döndüğünü doğrular.",
+        "steps": [
+          {
+            "action": "Başlığı düzenleyip bir blok ekledikten sonra 'Yayınla' butonuna basın.",
+            "expected_result": "Eğer isim hâlâ geçerli değilse aynı isim diyaloğu açılır; aksi halde yayın işlemi başlar."
+          },
+          {
+            "action": "Yayınlama tamamlanınca üstteki badge’leri inceleyin.",
+            "expected_result": "'Taslak' rozeti 'Published' olarak değişir ve yayınlama butonunda 'Published' etiketi görülür."
+          },
+          {
+            "action": "'Şablonlar' listesine dönün.",
+            "expected_result": "Yeni yayınlanan şablon listede görünür ve durum sütununda 'Yayınlandı' rozeti vardır."
+          }
+        ],
+        "expected_result": "Yayın akışı kayıtları kalıcı hale getirir ve hem builder hem liste tarafındaki durum rozetlerini yeşile çevirir."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-103",
+        "title": "Kaydedilmemiş değişikliklerde gezinme koruması",
+        "description": "Blok düzenledikten sonra çıkmaya çalışıldığında NavigationGuard diyaloğunun seçenekleri doğru çalışır.",
+        "steps": [
+          {
+            "action": "Var olan bir şablonu açıp blok içeriğini değiştirin.",
+            "expected_result": "Üstte 'Unsaved changes' rozeti görünür."
+          },
+          {
+            "action": "Sol üstteki ok ikonuna basarak listelere dönmeyi deneyin.",
+            "expected_result": "'Kaydedilmemiş değişiklikler var' uyarısı olan üç seçenekli diyalog açılır."
+          },
+          {
+            "action": "'Vazgeç' seçeneğiyle kalmayı seçin.",
+            "expected_result": "Builder ekranda kalır ve değişiklikler kaybolmaz."
+          },
+          {
+            "action": "Tekrar çıkmayı deneyip bu defa 'Kaydet ve Çık' butonunu seçin.",
+            "expected_result": "Değişiklikler kaydedildikten sonra Templates listesine yönlendirilirsiniz."
+          }
+        ],
+        "expected_result": "Gezinme koruması kullanıcıya kalma, kaydetme veya iptal etme seçenekleri sunar ve seçilen seçeneğe göre hareket eder."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-104",
+        "title": "Konu satırında emoji ve değişken ekleme, uyarıları görme",
+        "description": "Inline Subject Editor’daki emoji ve değişken picker’ının değer eklediğini; 60 karakteri veya spam kelimelerini aşınca uyarıların çıktığını doğrular.",
+        "steps": [
+          {
+            "action": "Konu satırını düzenlemeye alın ve metne birkaç emoji ekleyin.",
+            "expected_result": "Konu alanında emoji karakterleri görünür; sayaç artar."
+          },
+          {
+            "action": "Yanındaki `{…}` butonundan bir lead değişkeni (ör. `{lead_name}`) seçin.",
+            "expected_result": "Seçilen değişken imlecin bulunduğu yere eklenir."
+          },
+          {
+            "action": "Metni 60 karakteri aşacak şekilde uzatın veya 'free' gibi spam kelimeleri yazın.",
+            "expected_result": "Girdi alanının altında sarı uyarı satırı çıkar; hangi sebepten (karakter/spam) olduğu belirtilir."
+          },
+          {
+            "action": "Check ikonuna basarak kaydedin.",
+            "expected_result": "Editor kapanır ve yeni konu satırı üstteki özet satırında görünür."
+          }
+        ],
+        "expected_result": "Emoji ve değişkenler konu satırına eklenebilir; limitler aşıldığında kullanıcı görsel uyarı alır."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-105",
+        "title": "Preheader ve isim düzenleme kısayolları",
+        "description": "Preheader satırının inline editor ile kaydedildiğini ve şablon adının kalem ikonu ile değiştirildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Preheader satırındaki kalem ikonuna tıklayın ve kısa bir metin yazın.",
+            "expected_result": "Inline editör açılır; kaydettiğinizde buton kapanır ve yeni preheader metni listelenir."
+          },
+          {
+            "action": "Şablon adının yanındaki kalem ikonuna tıklayın.",
+            "expected_result": "Ad alanı inputa dönüşür; yeni ad yazıp Enter’a bastığınızda ad güncellenir."
+          }
+        ],
+        "expected_result": "Hem preheader hem de şablon adı inline editorlerle hızlıca güncellenebilir."
+      }
+    ]
+  },
+  {
+    "suite": "Template Builder - Bloklar ve Önizleme",
+    "cases": [
+      {
+        "external_id": "CRM-TEMPLATES-201",
+        "title": "Blok ekleme, sıralama ve görünürlük kontrolü",
+        "description": "Add Block Sheet’ten yeni blok seçildiğinde editör kartının belirdiğini ve sürükleyerek ya da göz ikonu ile kontrol edilebildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Editor sol tarafında '+ Blok ekle' butonunu açın ve 'Session Details' blok tipini seçin.",
+            "expected_result": "Yeni blok kartı listede en alta eklenir ve form alanları görünür."
+          },
+          {
+            "action": "Kartın solundaki tutamacı sürükleyerek blok sırayı değiştirin.",
+            "expected_result": "Kart yeni konuma taşınır ve sağdaki önizleme de yeni sırayla render edilir."
+          },
+          {
+            "action": "Aynı kartın göz ikonuna basarak blok görünürlüğünü kapatın.",
+            "expected_result": "Kart yarı saydam olur, önizlemede ilgili bölüm gizlenir."
+          }
+        ],
+        "expected_result": "Bloklar kolayca eklenir, sürüklenir ve tek tıkla görünür/gizli hale getirilebilir."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-202",
+        "title": "Metin bloğunda değişken ve biçimlendirme kullanma",
+        "description": "Text block editöründeki VariablePicker’ın placeholder eklediğini ve biçimlendirme butonlarının (kalın, italik, hizalama) içeriğe uygulandığını doğrular.",
+        "steps": [
+          {
+            "action": "Bir metin bloğunun içerik alanına tıklayıp `{…}` butonundan `{session_date}` değişkenini seçin.",
+            "expected_result": "Seçilen placeholder metin alanına eklenir ve imleç onun sonuna taşınır."
+          },
+          {
+            "action": "Kalın ve İtalik butonlarını açın.",
+            "expected_result": "Formatlama rozetleri aktif görünür ve blok verisinde `formatting.bold/italic` değerleri `true` olur (önizlemede kalın/italik gösterilir)."
+          },
+          {
+            "action": "Hizalama seçeneklerinden 'Ortala'yı seçin.",
+            "expected_result": "Metin önizlemede ortalanır."
+          }
+        ],
+        "expected_result": "Metin blokları değişken alabilir ve toolbar’daki tüm biçimlendirme seçenekleri önizlemeye yansır."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-203",
+        "title": "Görsel yükleme kontrolleri",
+        "description": "Image block içindeki yükleyicinin yalnızca görsel dosyaları kabul ettiğini, 5 MB üzerindeki dosyalarda uyarı verdiğini ve başarılı yüklemede Supabase URL’sini kullandığını doğrular.",
+        "steps": [
+          {
+            "action": "Görsel bloğunda drag-drop alanına 6 MB’lık rastgele bir dosya bırakın.",
+            "expected_result": "Kırmızı toast 'Image must be smaller than 5MB' mesajını gösterir ve yükleme başlamaz."
+          },
+          {
+            "action": "Geçerli bir JPG dosyası seçin.",
+            "expected_result": "Yükleme animasyonu döner; tamamlanınca yeşil toast başarı mesajını gösterir ve blokta önizleme görseli görünür."
+          }
+        ],
+        "expected_result": "Görsel yükleme boyut ve tür kontrollerini uygular, başarılı yükleme public URL’yi blokta gösterir."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-204",
+        "title": "Çok kanallı önizleme ve cihaz görünümü",
+        "description": "Preview panelindeki kanal sekmeleri ve email’e özel mobil/desktop düğmelerinin maketi değiştirdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Önizleme üstündeki sekmelerden 'WhatsApp' ve 'SMS' seçeneklerini sırayla seçin.",
+            "expected_result": "Preview kartı ilgili kanala göre kompakt metne dönüşür; e-posta tasarımı gizlenir."
+          },
+          {
+            "action": "Tekrar 'E-posta' sekmesine dönüp 'Masaüstü/Mobil' düğmelerini değiştirin.",
+            "expected_result": "Masaüstünde geniş şablon, mobilde dar sütunlu maket gösterilir."
+          }
+        ],
+        "expected_result": "Her kanal sekmesi kendi görselini sunar; email kanalında cihaz düğmeleri tasarım genişliğini değiştirir."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-205",
+        "title": "Test e-postası gönderme ve hata senaryoları",
+        "description": "Önizleme alanındaki 'Test e-postası gönder' butonunun kullanıcı e-postası varsa çalıştığını, blok yoksa veya kullanıcı e-postası yoksa hata verdiğini doğrular.",
+        "steps": [
+          {
+            "action": "En az bir blok varken 'Test e-postası gönder' butonuna tıklayın.",
+            "expected_result": "Buton 'Gönderiliyor...' durumuna geçer; Supabase fonksiyon çağrısı tamamlanınca yeşil toast \"Test email sent\" mesajını gösterir."
+          },
+          {
+            "action": "Tüm blokları silin ve aynı butona tekrar basın.",
+            "expected_result": "Buton pasif veya hata verir; kırmızı toast 'no blocks' uyarısını gösterir."
+          }
+        ],
+        "expected_result": "Test e-postası yalnızca içerik varken gönderilir ve Supabase fonksiyonundan gelen sonuçlara göre toast mesajı gösterir."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-206",
+        "title": "Test e-postasında değişkenlerin çözümlenmesi ve gerçek cihaz kontrolü",
+        "description": "Test gönderimi sonrasında gelen kutusundaki mesajda konu, preheader ve blok içindeki tüm değişkenlerin mock verilerle doğru doldurulduğunu ve e-posta istemcilerinde (masaüstü & mobil) hizalamanın korunduğunu doğrular.",
+        "steps": [
+          {
+            "action": "Önizleme panelinden 'Test e-postası gönder' butonuna basarak mesajı kendi e-posta adresinize gönderin.",
+            "expected_result": "Yeşil toast test e-postasının gönderildiğini belirtir."
+          },
+          {
+            "action": "Masaüstü e-posta istemcinizi açıp gelen mesajı görüntüleyin.",
+            "expected_result": "Konu satırı, preheader ve gövde içindeki `{customer_name}`, `{session_date}` gibi değişkenler mock veri setindeki değerlerle değiştirilmiş görünür; köşeler ve blok hizalamaları builder’dakiyla aynıdır."
+          },
+          {
+            "action": "Aynı e-postayı mobil cihazınızda açın.",
+            "expected_result": "Mobil istemcide satır sonları bozulmaz, CTA butonu genişlik kuralına uygun görünür ve görseller responsive şekilde küçülür."
+          }
+        ],
+        "expected_result": "Gerçek e-posta istemcileri test mesajını builder’daki gibi render eder ve tüm değişkenler çözümlenmiş şekilde görünür."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-207",
+        "title": "Önizleme veri setleri arasında geçiş ve eksik alan geri dönüşleri",
+        "description": "Template Builder’daki preview data selector’ünün farklı mock veri setlerini (Tam Veri, Eksik Alanlar vb.) seçtiğinizde önizlemeyi güncellediğini ve eksik alanlarda blokların fallback metin gösterdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Preview panelindeki veri seti açılır listesinden 'Tam Veri' seçeneğiyle başlayın.",
+            "expected_result": "Önizlemede isim, tarih, lokasyon gibi tüm alanlar dolu görünür."
+          },
+          {
+            "action": "Aynı listeden 'Eksik Alanlar' setini seçin.",
+            "expected_result": "Önizlemede eksik alanlar tire veya placeholder ile gösterilir; CTA metni yine aynı kalır."
+          },
+          {
+            "action": "'Uzun İsimler' setini seçip tekrar kontrol edin.",
+            "expected_result": "Uzun isimler satır içinde sarılır fakat layout bozulmaz; kanal sekmeleri arasında geçiş yaptığınızda da aynı veriler kullanılır."
+          }
+        ],
+        "expected_result": "Preview data setleri arasındaki geçişler anlık çalışır ve eksik alanlarda fallback metinleri göstererek gerçek senaryoları simüle eder."
+      }
+    ]
+  },
+  {
+    "suite": "Template Builder - Görsel Havuzu",
+    "cases": [
+      {
+        "external_id": "CRM-TEMPLATES-301",
+        "title": "Görsel havuzunda sayaç ve Manage butonu",
+        "description": "CompactStorageIndicator bileşeninin upload edilen görsel sayısını ve toplam boyutu doğru gösterdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Template Builder’da herhangi bir Image block ekleyip 'Resim Yükle' alanından bir görsel yükleyin.",
+            "expected_result": "Yükleme başarıyla tamamlanır ve toast 'Image uploaded successfully' mesajını gösterir."
+          },
+          {
+            "action": "Aynı Image block’taki 'Görsel Kütüphanesi' (Manage) butonuna basın.",
+            "expected_result": "Image Library sheet açılır ve üstte CompactStorageIndicator, `x/50 images` şeklinde güncel sayacı gösterir."
+          },
+          {
+            "action": "Sheet’te yeni yüklenen görsel kartını bulun.",
+            "expected_result": "Kartta dosya adı, boyut badgeti ve 'Insert' / 'Copy URL' gibi aksiyonlar görünür."
+          }
+        ],
+        "expected_result": "Her yüklemeden sonra görüntü sayacı artar ve Manage butonu kullanıcıyı görsel havuzuna yönlendirir."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-302",
+        "title": "50 görsel limitine ulaşıldığında uyarı",
+        "description": "ImageUpload bileşeninin `checkStorageLimits` kontrolüyle 50 görselden fazlasına izin vermediğini ve kullanıcıya uyarı verdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Görsel havuzundaki sayaç 50’ye ulaşana kadar (veya mock veriyle doldurarak) ardışık yüklemeler yapın.",
+            "expected_result": "Indicator `50/50 images` durumuna gelir ve üzerinde kırmızı 'Limit Reached' badgeti görünür."
+          },
+          {
+            "action": "51. görseli yüklemeyi deneyin.",
+            "expected_result": "Yükleme başlamaz, toast 'Upload Limit Reached' mesajını ve limit açıklamasını gösterir."
+          },
+          {
+            "action": "Sheet’i açarak yeni görselin eklenmediğini doğrulayın.",
+            "expected_result": "Görsel listesi değişmez ve sayacı 50’de kalır."
+          }
+        ],
+        "expected_result": "50 görsel limiti aşılamaz; kullanıcıya hatırlatıcı toast ve kırmızı indikator gösterilir."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-303",
+        "title": "Görsel silme ve sayaç güncellemesi",
+        "description": "Image Library içinde bir görsel silindiğinde Supabase kaydının kalktığını ve sayaçtan düştüğünü doğrular.",
+        "steps": [
+          {
+            "action": "Image Library sheet’te herhangi bir görsel kartındaki çöp kutusu butonuna basın ve açılan diyalogda 'Delete' seçin.",
+            "expected_result": "Toast 'Image deleted successfully' mesajını gösterir ve kart listeden çıkar."
+          },
+          {
+            "action": "Sheet kapandığında CompactStorageIndicator değerini kontrol edin.",
+            "expected_result": "Toplam görsel sayısı bir azalır ve 'Limit Reached' badgeti varsa otomatik kaybolur."
+          },
+          {
+            "action": "Aynı görsel URL’sini tekrar kullanmayı deneyin (Insert).",
+            "expected_result": "Silinen görselin URL’si artık liste olmadığı için seçilemez."
+          }
+        ],
+        "expected_result": "Silme işlemleri Supabase Storage ve template_assets tablosuyla senkron çalışır; sayaçlar anında güncellenir."
+      }
+    ]
+  }
+]

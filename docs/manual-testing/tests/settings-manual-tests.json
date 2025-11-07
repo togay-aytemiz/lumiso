@@ -608,6 +608,58 @@
           }
         ],
         "expected_result": "Sistem alanları yanlışlıkla değiştirilemez veya silinemez."
+      },
+      {
+        "external_id": "CRM-LEADS-008",
+        "title": "Lead durumu sheet'inde kirli kapanış koruması",
+        "description": "Yeni durum eklerken formda değişiklik varken paneli kapatmaya çalıştığınızda NavigationGuard diyaloğunun çıktığını doğrular.",
+        "steps": [
+          {
+            "action": "'Durum ekle' butonuna basarak alt sayfayı açın.",
+            "expected_result": "İsim ve renk alanları boş gelen sheet görünür."
+          },
+          {
+            "action": "İsim alanına bir metin yazın ve farklı bir renk seçin.",
+            "expected_result": "Sheet kirli hale gelir ve footer butonları aktifleşir."
+          },
+          {
+            "action": "Paneli kapatmak için çarpı ikonuna veya 'İptal' butonuna tıklayın.",
+            "expected_result": "Üç seçenekli 'Kaydedilmemiş değişiklikleriniz var' uyarısı açılır; seçeneklerde 'Kal', 'Kaydet ve Çık', 'Değişiklikleri İptal Et' görünür."
+          },
+          {
+            "action": "'Kal' seçeneğini tıklayın.",
+            "expected_result": "Sheet kapanmaz ve girdiğiniz değerler alanlarda kalır."
+          },
+          {
+            "action": "Paneli tekrar kapatmayı deneyin ve bu kez 'Değişiklikleri İptal Et' seçeneğini seçin.",
+            "expected_result": "Sheet kapanır, tekrar açtığınızda alanlar varsayılan boş haline dönmüştür."
+          }
+        ],
+        "expected_result": "Lead durumu modali kirli kapatılmaya çalışıldığında kullanıcıyı uyarır ve seçimlerine göre kalma ya da değişiklikleri silme adımlarını uygular."
+      },
+      {
+        "external_id": "CRM-LEADS-009",
+        "title": "Özel alan modalinde 'Kaydet ve Çık' seçeneği",
+        "description": "Özel alan formu kirliyken guard diyaloğundaki 'Kaydet ve Çık' aksiyonunun alanı kaydedip paneli kapattığını doğrular.",
+        "steps": [
+          {
+            "action": "'Alan ekle' butonuna tıklayın.",
+            "expected_result": "\"Yeni alan\" modali açılır ve zorunlu alanlar boş görünür."
+          },
+          {
+            "action": "Etikete metin yazın, alan tipini 'Seçim' yapın ve en az iki seçenek girin.",
+            "expected_result": "Modal kirlenir ve 'Kaydet' butonu aktifleşir."
+          },
+          {
+            "action": "Modalı kapatmak için üstteki çarpıya tıklayın.",
+            "expected_result": "NavigationGuard uyarısı açılır; üçüncü butonda 'Kaydet ve Çık' etiketi görünür."
+          },
+          {
+            "action": "'Kaydet ve Çık' butonuna basın.",
+            "expected_result": "Modal kapanır, yeşil toast yeni alanın kaydedildiğini söyler ve listeye yeni satır eklenir."
+          }
+        ],
+        "expected_result": "Özel alan diyaloğu kaydetmeden kapanmak istendiğinde kullanıcıya değişiklikleri koruma veya iptal etme seçenekleri sunar."
       }
     ]
   },
@@ -773,6 +825,82 @@
           }
         ],
         "expected_result": "Kullanıcı durumları önce pasif hale getirebilir, gerekirse tamamen silebilir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-009",
+        "title": "Aşama rengi kanban ve rozetlerde aynen görünür",
+        "description": "Proje aşamasında seçilen hex rengin Projects ekranındaki sütun butonları ve ProjectStatusBadge bileşenine aktarıldığını doğrular.",
+        "steps": [
+          {
+            "action": "Ayarlar → Projeler sekmesinde 'Aşama ekle' diyaloğunu açıp benzersiz bir isim (örn. 'Albüm Teslim') ve fark edilir bir renk (#0EA5E9 gibi) seçin, kaydedin.",
+            "expected_result": "Yeni rozet listede seçtiğiniz renk ve yaşam döngüsü etiketiyle görünür."
+          },
+          {
+            "action": "/projects sayfasını açıp Kanban görünümünü seçin.",
+            "expected_result": "Yeni aşamaya ait sütunun başındaki rozet, seçtiğiniz renkle aynı arka plan/kenar renklerini kullanır."
+          },
+          {
+            "action": "Herhangi bir projeyi açıp durum rozetindeki açılır menüden bu yeni aşamayı seçin.",
+            "expected_result": "ProjectStatusBadge bileşeni (proje başlığının yanındaki rozet) aynı renk tonuna döner ve küçük nokta da aynı hex koduyla dolar."
+          },
+          {
+            "action": "Projeyi listede bulun ve satırın hızlı görünüm panelini açın.",
+            "expected_result": "Paneldeki durum rozetleri ve kart başlığındaki renkli nokta yine aynı renk ile güncellenmiştir."
+          }
+        ],
+        "expected_result": "Aşama rengi settings ekranında seçildiği haliyle Kanban sütunlarında, proje detay rozetlerinde ve hızlı görünüm panelinde tutarlı biçimde gösterilir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-010",
+        "title": "Varsayılan proje türünü silememe uyarısı",
+        "description": "Varsayılan olarak işaretlenmiş proje türünün silinmek istendiğinde `project_type.errors.cannot_delete_default` tostunu gösterdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Ayarlar → Projeler → 'Proje türleri' kartında bir türü seçip 'Varsayılan yap' kutusunu işaretleyin ve kaydedin.",
+            "expected_result": "Seçtiğiniz çipte 'Varsayılan' işareti görünür."
+          },
+          {
+            "action": "Aynı türün kalem ikonuna tıklayarak düzenleme modalini açın.",
+            "expected_result": "Modal mevcut isim ve varsayılan anahtarı açık şekilde yüklenir."
+          },
+          {
+            "action": "Modaldeki kırmızı 'Sil' butonuna basın.",
+            "expected_result": "İşlem başlamadan kırmızı toast \"Varsayılan tür silinemez\" mesajını gösterir ve kayıt olduğu gibi kalır."
+          },
+          {
+            "action": "Varsayılan rozetinin hâlâ aynı türde olduğunu doğrulayın.",
+            "expected_result": "Liste yenilense bile varsayılan tür silinmemiştir."
+          }
+        ],
+        "expected_result": "Default olarak işaretlenen türler silinmeye karşı korunur ve kullanıcıya nedenini anlatan uyarı gösterilir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-011",
+        "title": "Proje aşaması eklerken NavigationGuard seçenekleri",
+        "description": "AddProjectStageDialog bileşeninin kirli halde kapatılmak istendiğinde Kal / Kaydet ve Çık / Değişiklikleri İptal Et seçeneklerini sunduğunu doğrular.",
+        "steps": [
+          {
+            "action": "'Aşama ekle' butonuna basıp diyalogu açın.",
+            "expected_result": "İsim, renk paleti ve yaşam döngüsü alanları boş gelir."
+          },
+          {
+            "action": "İsim alanına bir değer yazın ve farklı bir renk seçin.",
+            "expected_result": "Footer butonları aktifleşir, sheet kirli kabul edilir."
+          },
+          {
+            "action": "'İptal' butonuna basın.",
+            "expected_result": "NavigationGuard diyaloğu açılır ve üç seçenek gösterir."
+          },
+          {
+            "action": "'Kal' seçeneğini test edin.",
+            "expected_result": "Ana modal kapanmaz, girdiğiniz değerler korunur."
+          },
+          {
+            "action": "Tekrar 'İptal' butonuna basın ve bu kez 'Kaydet ve Çık' butonunu seçin.",
+            "expected_result": "Yeni aşama kaydedilir, modal kapanır ve listeye başarı tostu eşliğinde eklenir."
+          }
+        ],
+        "expected_result": "Aşama ekleme diyaloğu kirli kapatmayı engeller ve kullanıcıya değişiklikleri koruma, kaydedip çıkma veya iptal etme seçenekleri sağlar."
       }
     ]
   },
@@ -914,6 +1042,54 @@
           }
         ],
         "expected_result": "Hizmetler gerektiğinde pasifleştirilebilir veya kalıcı olarak silinebilir."
+      },
+      {
+        "external_id": "CRM-SERVICES-008",
+        "title": "Seans türü sheet'inde kirli form koruması",
+        "description": "Seans türü oluşturma paneli kapatılmadan önce NavigationGuard diyaloğu ile kullanıcıdan onay alındığını doğrular.",
+        "steps": [
+          {
+            "action": "'Seans türü ekle' butonuna tıklayın ve panelde isim ile süre alanlarını doldurun.",
+            "expected_result": "Panel kirlenir, 'Kaydet' butonu aktif olur."
+          },
+          {
+            "action": "Paneli kapatmak için 'İptal' veya kaydırma kapatma hareketini kullanın.",
+            "expected_result": "'Kaydedilmemiş değişiklikleriniz var' başlıklı uyarı diyalogu çıkar ve üç buton gösterir."
+          },
+          {
+            "action": "'Kal' seçeneğini seçin.",
+            "expected_result": "Panel açık kalır ve form alanlarındaki değerler korunur."
+          },
+          {
+            "action": "Tekrar kapatmayı deneyin ve bu kez 'Değişiklikleri İptal Et' seçeneğini seçin.",
+            "expected_result": "Panel kapanır; yeniden açıldığında alanlar varsayılan (boş) durumdadır."
+          }
+        ],
+        "expected_result": "Seans türü paneli kazara kapanmaz; kullanıcı istediğinde değişiklikleri koruyup kalabilir veya tamamen iptal edebilir."
+      },
+      {
+        "external_id": "CRM-SERVICES-009",
+        "title": "Paket oluşturma sihirbazında NavigationGuard",
+        "description": "PackageCreationWizardSheet kirli iken kapatılmak istendiğinde yalnızca 'Düzenlemeye Devam Et' veya 'Değişiklikleri İptal Et' seçenekleriyle kapanabildiğini doğrular.",
+        "steps": [
+          {
+            "action": "'Paket ekle' butonuna basıp wizard'ı açın ve Temeller adımında paket adına birkaç karakter yazın.",
+            "expected_result": "Sihirbaz kirlenir ve adım göstergesinde değişiklikler kaydedilmemiş halde kalır."
+          },
+          {
+            "action": "Sheet'i kapatmak için sağ üst kapatma ikonuna tıklayın.",
+            "expected_result": "'Düzenlemeye Devam Et' ve 'Değişiklikleri İptal Et' butonları olan NavigationGuard uyarısı açılır."
+          },
+          {
+            "action": "'Düzenlemeye Devam Et' seçeneğini tıklayın.",
+            "expected_result": "Wizard olduğu gibi açık kalır ve girdiğiniz ad alanı korunur."
+          },
+          {
+            "action": "Sheet'i tekrar kapatmayı deneyin ve bu defa 'Değişiklikleri İptal Et' butonuna basın.",
+            "expected_result": "Wizard kapanır; yeniden açtığınızda tüm adımlar varsayılan boş haliyle gelir."
+          }
+        ],
+        "expected_result": "Paket sihirbazı kirli kapatılmaya çalışıldığında kullanıcıya düzenlemeye devam etme veya tüm değişiklikleri silme seçenekleri sunar."
       }
     ]
   },

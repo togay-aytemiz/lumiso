@@ -204,15 +204,18 @@ Cross-cutting components:
 - ✅ Added `SettingsImageUploadCard` so Profile + General share the refreshed uploader affordance + tokens.
 - ▫️ Ship translation updates and ensure tutorials overlay the refreshed layout.
 - ▫️ Routing & breakpoints: route `/settings` to the mobile dashboard below `md`, ensure back navigation + compact spacing tokens apply across Profile/General/Notifications.
+- ✅ Restored category-level dirty tracking so the sticky save footer and sidebar dirty indicators light up immediately when Profile/General edits occur, even inside the overlay shell.
 
 ### Phase 3 — Page Wave B (Data Collections)
 
 - ✅ Leads: refactor statuses & fields into collection sections, add keyboard reorder, align modals.
   - ✅ Annotated legacy sections so the refreshed sticky navigation renders across the page.
-- ▫️ Projects: same pattern as leads; ensure statuses/types share components.
+- ✅ Projects: same pattern as leads; ensure statuses/types share components and hook into the refreshed section primitives so anchor nav + dirty pills stay consistent.
   - ✅ Added anchor metadata to existing sections to participate in the sticky navigation.
-- ▫️ Services: standardize cards for session types/packages/services; consolidate onboarding surfaces.
+  - ✅ Project types now live in the two-column shell shared by statuses/session stages so actions + helper copy feel consistent.
+- ✅ Services: standardize cards for session types/packages/services; consolidate onboarding surfaces and actions with the compact collection shell.
   - ✅ Enabled sticky navigation by backfilling section anchors on current components.
+  - ✅ Session type + package cards now render without the redundant inner wrapper so density matches the rest of the compact settings.
 - ▫️ Document data fetch policies (manual refresh vs. auto).
 - ▫️ Extend anchor nav mapping and mobile back pattern to collection-heavy pages (Leads/Projects/Services) with sensible section groupings.
 
@@ -251,8 +254,8 @@ Cross-cutting components:
 | General                       | Branding / Social / Regional                      | ▫️         | Explicit save w/ footer + inline upload                          | Cached, refetch on demand                                                                      | In Progress | Do we enforce brand color/logo constraints aligned with marketing guidelines or permit unrestricted customization?         |
 | Notifications                 | Master / Scheduled / Immediate                    | ▫️         | Auto-save toggles + manual test triggers                         | Batch updates, debounce Supabase writes                                                        | In Progress | Which notification channels (email, SMS, push) need to be represented at launch and what delivery windows are promised?    |
 | Leads                         | Statuses / Fields                                 | ▫️         | Drag reorder + dialog pattern                                    | Normalize queries, reduce background polling                                                   | Not Started | What default pipeline stages must every workspace retain, and can teams delete core stages?                                |
-| Projects                      | Statuses / Types / Session Statuses               | ▫️         | Drag reorder + inline defaults                                   | Shared hook for status entities                                                                | Not Started | Do project status/type templates need to stay synced across teams or can users diverge freely?                             |
-| Services                      | Session Types / Packages / Services               | ▫️         | Multi-step onboarding alignment                                  | Consolidate queries, lazy-load heavy dialogs                                                   | Not Started | Are packages expected to support multi-currency pricing in this release or remain single-currency?                         |
+| Projects                      | Statuses / Types / Session Statuses               | ✅         | Drag reorder + inline defaults                                   | Shared hook for status entities                                                                | In Progress | Do project status/type templates need to stay synced across teams or can users diverge freely?                             |
+| Services                      | Session Types / Packages / Services               | ✅         | Multi-step onboarding alignment                                  | Consolidate queries, lazy-load heavy dialogs                                                   | In Progress | Are packages expected to support multi-currency pricing in this release or remain single-currency?                         |
 | Contracts                     | Placeholder                                       | ▫️         | N/A (display card)                                               | Static copy                                                                                    | Not Started | Should the placeholder point to upcoming in-product templates or route to external contract resources until builder ships? |
 | Billing — Client              | Tax & Billing Profile / Payment Methods           | ▫️         | Modal overlay + shared sticky footer/guard dialog + anchor pills | Persist `taxProfile` jsonb, inclusive defaults cached; payment method vault stub still pending | In Progress | Which e-Fatura provider (if any) are we targeting first, and do we need multi-address support for branches?                |
 | Billing — Lumiso Subscription | Subscription plan, invoices, payment method vault | ▫️         | TBD (spec in progress; likely standalone modal/section)          | Separate data model from client billing; needs Stripe/customer portal integration strategy     | Not Started | What telemetry + plan upgrades do we expose? Do we embed Stripe customer portal or build native UI?                        |
@@ -285,3 +288,6 @@ Cross-cutting components:
 
 - 2025-11-07 — Codex — Ported `/list` page to the refreshed shell/tokens so list management mirrors the new settings experience; manual smoke on desktop + mobile flows.
 - 2025-11-07 — Codex — Phase 2 kickoff: shared `SettingsImageUploadCard` now powers Profile/General, and Notifications sections are tagged for the sticky nav/tutorials; manual checks on `/settings/profile`, `/settings/general`, `/settings/notifications`.
+- 2025-11-07 — Codex — Projects + Services waves refit: statuses/types/session sections now ride the `SettingsCollectionSection`/`SettingsTwoColumnSection` shells with compact header actions, unblocked anchor pills, and refreshed package/service cards; manual skim on `/settings/projects` and `/settings/services`.
+- 2025-11-08 — Codex — Project types adopted the two-column management layout and settings dirty-state tracking was stabilized so the sticky save footer + nav dots reappear on `/settings/projects`, `/settings/profile`, and `/settings/general`.
+- 2025-11-08 — Codex — Removed the extra wrappers around session types/packages cards and fixed the input reset regression so Profile/General fields stay editable while the sticky footer remains visible.

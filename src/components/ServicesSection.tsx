@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AddServiceDialog, EditServiceDialog } from "./settings/ServiceDialogs";
-import SettingsSection from "./SettingsSection";
+import { SettingsCollectionSection } from "@/components/settings/SettingsSectionVariants";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { IconActionButton } from "@/components/ui/icon-action-button";
 import { IconActionButtonGroup } from "@/components/ui/icon-action-button-group";
@@ -424,10 +424,10 @@ const ServicesSection = () => {
   const canManageServices = true; // Always allow in single photographer mode
 
   const sectionActions = (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:gap-4">
       <label
         htmlFor="services-show-inactive"
-        className="flex items-center gap-2 text-sm text-muted-foreground"
+        className="flex items-center gap-2 text-muted-foreground"
       >
         <Switch
           id="services-show-inactive"
@@ -440,6 +440,8 @@ const ServicesSection = () => {
         <Button
           onClick={() => setShowNewServiceDialog(true)}
           className="flex items-center gap-2 whitespace-nowrap"
+          variant="pill"
+          size="sm"
         >
           <Plus className="h-4 w-4" />
           {tForms("services.add_service")}
@@ -450,34 +452,39 @@ const ServicesSection = () => {
 
   if (isLoading) {
     return (
-      <SettingsSection
+      <SettingsCollectionSection
+        sectionId="services"
         title={tForms("services.title")}
         description={tForms("services.description")}
-        actions={sectionActions}
+        headerAside={sectionActions}
+        bodyClassName="p-6"
       >
         <div className="space-y-4">
           {[1, 2].map((i) => (
             <div key={i} className="animate-pulse">
-              <div className="h-12 bg-muted rounded-lg mb-3" />
-              <div className="pl-6 space-y-2">
-                <div className="h-16 bg-muted/50 rounded-lg" />
-                <div className="h-16 bg-muted/50 rounded-lg" />
+              <div className="mb-3 h-12 rounded-lg bg-muted" />
+              <div className="space-y-2 pl-6">
+                <div className="h-16 rounded-lg bg-muted/50" />
+                <div className="h-16 rounded-lg bg-muted/50" />
               </div>
             </div>
           ))}
         </div>
-      </SettingsSection>
+      </SettingsCollectionSection>
     );
   }
 
   return (
     <>
-      <SettingsSection
+      <SettingsCollectionSection
+        sectionId="services"
         title={tForms("services.title")}
         description={tForms("services.description")}
-        actions={sectionActions}
+        headerAside={sectionActions}
+        bodyClassName="p-0"
       >
-        <div className="mb-6 space-y-2">
+        <div className="space-y-6 p-6">
+          <div className="space-y-2">
           <SegmentedControl
             value={activeType}
             onValueChange={(value) => setActiveType(value as ServiceType)}
@@ -582,7 +589,8 @@ const ServicesSection = () => {
             </div>
           </>
         )}
-      </SettingsSection>
+        </div>
+      </SettingsCollectionSection>
 
       {canManageServices && (
         <>

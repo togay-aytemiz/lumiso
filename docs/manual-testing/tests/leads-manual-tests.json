@@ -265,6 +265,82 @@
           }
         ],
         "expected_result": "Lead ayarlarında eklenen statüler kişi detay başlığında seçilebilir ve hem filtrelerde hem listede yeni etiketle görüntülenir."
+      },
+      {
+        "external_id": "CRM-LEADS-213",
+        "title": "Kişi listesindeki lazy load davranışı",
+        "description": "/leads sayfasında 25’ten fazla kayıt olduğunda aşağı kaydırıldıkça yeni sayfanın otomatik yüklendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Kişi liste sayfasını açın ve filtre kullanmadan aşağı kaydırın.",
+            "expected_result": "Tablonun altında gri bir boşluk ve küçük bir yükleme göstergesi alanı görünür."
+          },
+          {
+            "action": "Sayfanın en altına gelmeye devam edin veya Page Down tuşunu birkaç kez basın.",
+            "expected_result": "Yükleme göstergesi döner ve kısa süre sonra tabloya yeni kişi satırları eklenir."
+          },
+          {
+            "action": "Toplam satır sayısını not alın ve yeniden alta kaydırın.",
+            "expected_result": "Her yüklemede satır sayısı artar; aynı davranış tekrarlandıkça veriler sayfa yenilemesi olmadan çekilir."
+          }
+        ],
+        "expected_result": "Kişi listesi sonsuz kaydırma ile veri sayısı arttıkça yeni sayfaları otomatik getirir."
+      },
+      {
+        "external_id": "CRM-LEADS-230",
+        "title": "Kişi Ekle sheet'inde NavigationGuard seçenekleri",
+        "description": "Yeni kişi paneli kirliyken kapanmaya çalışıldığında Kal / Kaydet ve Çık / Değişiklikleri İptal Et akışının çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "Leads listesinde 'Kişi Ekle' butonuna tıklayın.",
+            "expected_result": "'Yeni Kişi Ekle' sheet'i açılır."
+          },
+          {
+            "action": "Ad ve Not alanlarına veri girin fakat kaydetmeyin.",
+            "expected_result": "Footer’daki 'Kişi Oluştur' butonu aktif kalır ve sheet kirlenir."
+          },
+          {
+            "action": "Sheet’i kapatmak için çarpı ikonuna basın.",
+            "expected_result": "'Kaydedilmemiş değişiklikleriniz var' başlıklı NavigationGuard diyalogu üç seçenekle görünür."
+          },
+          {
+            "action": "'Kal' seçeneğini tıklayın.",
+            "expected_result": "Sheet açık kalır ve girdiğiniz veriler silinmez."
+          },
+          {
+            "action": "Tekrar kapatmayı deneyin ve bu defa 'Kaydet ve Çık' butonuna basın.",
+            "expected_result": "Form valid ise kişi kaydedilir, sheet kapanır ve yeşil toast başarı mesajı gösterir."
+          }
+        ],
+        "expected_result": "AddLeadDialog kazara kapanışları engeller; kullanıcı kalabilir, kaydedip çıkabilir veya değişiklikleri iptal edebilir."
+      },
+      {
+        "external_id": "CRM-LEADS-231",
+        "title": "Kişiyi düzenle panelinde kirli kapanış uyarısı",
+        "description": "Mevcut kişiyi düzenlerken değişiklik yapıp çıkmak istediğinizde NavigationGuard’ın Kal / Değişiklikleri İptal Et seçeneklerini sunduğunu doğrular.",
+        "steps": [
+          {
+            "action": "Herhangi bir lead’in satırından veya detay sayfasından 'Kişiyi Düzenle' sheet’ini açın.",
+            "expected_result": "'Kişiyi Düzenle' başlıklı form mevcut değerlerle yüklenir."
+          },
+          {
+            "action": "Ad veya telefon alanını değiştirin.",
+            "expected_result": "Sheet kirlenir; 'Kaydet' butonu aktif kalır."
+          },
+          {
+            "action": "Sheet’i kapatmak için 'İptal' butonuna basın.",
+            "expected_result": "'Kaydedilmemiş değişiklikleriniz var' diyalogu sadece 'Kal' ve 'Değişiklikleri İptal Et' düğmeleriyle görünür (bu panelde 'Kaydet ve Çık' yoktur)."
+          },
+          {
+            "action": "'Kal' butonunu seçin.",
+            "expected_result": "Sheet açık kalır ve yaptığınız değişiklikler korunur."
+          },
+          {
+            "action": "Tekrar kapatın ve bu defa 'Değişiklikleri İptal Et' butonuna basın.",
+            "expected_result": "Sheet kapanır, lead kaydı eski değerleriyle kalır."
+          }
+        ],
+        "expected_result": "EditLeadDialog kullanıcının izni olmadan kapanmaz; sadece net şekilde kalma veya değişiklikleri iptal etme seçenekleriyle sonlandırılır."
       }
     ]
   }

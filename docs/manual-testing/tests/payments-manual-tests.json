@@ -305,5 +305,66 @@
         "expected_result": "Excel aktarımı yalnızca veri mevcutken yapılır ve işlem başarıyla tamamlandığında kullanıcı bilgilendirilir."
       }
     ]
+  },
+  {
+    "suite": "Ödemeler - Formlar",
+    "cases": [
+      {
+        "external_id": "CRM-PAYMENTS-601",
+        "title": "Ödeme Ekle panelinde NavigationGuard",
+        "description": "Proje detayındaki AddPaymentDialog kirliyken kapanmaya çalışıldığında üç seçenekli guard diyaloğunun çıktığını doğrular.",
+        "steps": [
+          {
+            "action": "Herhangi bir projeyi açıp sağ taraftaki \"Ödemeler\" kartından 'Ödeme Ekle' butonuna tıklayın.",
+            "expected_result": "'Ödeme Ekle' sheet'i açılır."
+          },
+          {
+            "action": "Tutar alanına bir değer, açıklama alanına kısa bir metin girin ve durumu 'Ödendi' seçin.",
+            "expected_result": "Sheet kirlenir ve alt kısımdaki 'Ödemeyi Kaydet' butonu aktif olur."
+          },
+          {
+            "action": "Sheet’i kapatmak için 'İptal' veya çarpı ikonuna basın.",
+            "expected_result": "'Kaydedilmemiş değişiklikleriniz var' diyaloğu 'Kal', 'Kaydet ve Çık', 'Değişiklikleri İptal Et' seçenekleriyle görünür."
+          },
+          {
+            "action": "'Kal' seçeneğini kullanın.",
+            "expected_result": "Sheet kapanmaz, girdiğiniz alanlar korunur."
+          },
+          {
+            "action": "Tekrar kapatmayı deneyip bu defa 'Kaydet ve Çık' butonunu seçin.",
+            "expected_result": "Ödeme kaydedilir, sheet kapanır ve Ödemeler kartına yeni satır eklenir."
+          }
+        ],
+        "expected_result": "AddPaymentDialog kullanıcının aksiyonu olmadan kapanmaz; kaydetme, kalma veya iptal etme seçenekleriyle koruma sunar."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-602",
+        "title": "Ödeme düzenleme panelinde kirli kapanış koruması",
+        "description": "EditPaymentDialog yalnızca 'Kal' veya 'Değişiklikleri İptal Et' seçenekleriyle kapanabildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Ödemeler kartındaki herhangi bir satırın kalem ikonuna tıklayarak 'Ödemeyi Düzenle' sheet'ini açın.",
+            "expected_result": "Sheet mevcut tutar, açıklama ve durum bilgileriyle açılır."
+          },
+          {
+            "action": "Açıklamayı veya tutarı değiştirin.",
+            "expected_result": "Sheet kirlenir ve güncelleme butonu aktif kalır."
+          },
+          {
+            "action": "Sheet’i kapatmak için 'İptal' butonuna basın.",
+            "expected_result": "NavigationGuard diyalogu yalnızca 'Kal' ve 'Değişiklikleri İptal Et' butonlarıyla görünür."
+          },
+          {
+            "action": "'Kal' seçeneğini test edin.",
+            "expected_result": "Sheet kapanmaz ve yaptığınız değişiklikler korunur."
+          },
+          {
+            "action": "Tekrar kapatmayı deneyin ve 'Değişiklikleri İptal Et' butonuna tıklayın.",
+            "expected_result": "Sheet kapanır; satırdaki ödeme değerleri değiştirilmeden kalır."
+          }
+        ],
+        "expected_result": "EditPaymentDialog kullanıcıyı açıkça uyarır ve yalnızca seçim yapıldığında kapanır."
+      }
+    ]
   }
 ]

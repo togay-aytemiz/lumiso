@@ -129,6 +129,11 @@
       "unsaved_changes": "Değişiklikler iptal edilsin mi?"
     }
   },
+  "errors": {
+    "validation": "Doğrulama hatası",
+    "save": "Kaydetme hatası",
+    "delete": "Silme hatası"
+  },
   "success": "Başarılı",
   "client": {
     "title": "Kişi Bilgileri",

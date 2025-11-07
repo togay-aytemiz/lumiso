@@ -1,0 +1,397 @@
+[
+  {
+    "suite": "İş Akışları - Liste ve Durum Yönetimi",
+    "cases": [
+      {
+        "external_id": "CRM-WORKFLOWS-001",
+        "title": "Boş durumda ilk iş akışı ekranı",
+        "description": "Hiç iş akışı olmayan bir organizasyonda sayfanın boş durum kartını ve CTA butonunu gösterdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Yeni bir çalışma alanında `/workflows` sayfasını açın.",
+            "expected_result": "Ortada Zap ikonlu kart, \"Henüz iş akışı yok\" başlığı ve açıklama metni görünür."
+          },
+          {
+            "action": "Kart üzerindeki \"İlk İş Akışınızı Oluşturun\" butonuna basın.",
+            "expected_result": "Sağdan CreateWorkflowSheet kaydırması açılır."
+          }
+        ],
+        "expected_result": "Boş durum kartı yalnızca ilk iş akışı oluşturulana kadar görünür ve CTA doğrudan oluşturma sheet’ini açar."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-002",
+        "title": "Arama ve durum filtresi birlikte çalışıyor",
+        "description": "Üstteki arama alanı ve All/Aktif/Duraklatılmış segmentlerinin tabloyu aynı anda daraltabildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Sağ üst arama alanına mevcut bir iş akışı adının ilk üç harfini yazın.",
+            "expected_result": "Tablo yalnızca eşleşen isimleri gösterir."
+          },
+          {
+            "action": "Segmented control’de 'Aktif' sekmesine tıklayın.",
+            "expected_result": "Durum rozeti 'Aktif' olan sonuçlar kalır, diğerleri gizlenir; kontrolün üzerinde badge ve KPI kartları sayıları günceller."
+          },
+          {
+            "action": "Aramayı temizleyip 'Duraklatılmış' sekmesine geçin.",
+            "expected_result": "Tablo yalnızca duraklatılmış iş akışlarını listeler ve üstteki sayım rozeti yeni değeri gösterir."
+          }
+        ],
+        "expected_result": "Arama ve durum filtresi birlikte çalışır; her değişiklik sayfayı ilk sayfaya döndürerek yalnızca seçilen kayıtları gösterir."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-003",
+        "title": "KPI kartlarından hızlı filtreleme",
+        "description": "Üstteki üç KPI kartının altındaki butonların tablo segmentlerini otomatik seçtiğini ve sayıları doğru özetlediğini doğrular.",
+        "steps": [
+          {
+            "action": "\"Aktif\" KPI kartının altındaki \"Aktifleri göster\" düğmesine tıklayın.",
+            "expected_result": "Segmented control otomatik olarak 'Aktif' sekmesine geçer ve tablo sadece aktif iş akışlarını gösterir."
+          },
+          {
+            "action": "\"Duraklatılmış\" kartında aynı işlemi yapın.",
+            "expected_result": "Tablo yalnızca duraklatılmış kayıtları gösterir; kart üstündeki oran yüzdesi sapsa bile değişmez."
+          }
+        ],
+        "expected_result": "KPI kartları filtrelerle senkronize çalışır ve hangi karttan geçiş yaptıysanız segment kontrolü aynı değeri seçer."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-004",
+        "title": "Kanal ikonları ve durum anahtarı",
+        "description": "Her satırdaki kanal ikonlarının seçilen kanalları yansıttığını ve satırdaki Switch’in durumu anında değiştirdiğini doğrular.",
+        "steps": [
+          {
+            "action": "En az iki kanallı (örn. e-posta + WhatsApp) bir iş akışı oluşturun ve listeye dönün.",
+            "expected_result": "Satırın \"Kanallar\" sütununda mail ve mesaj ikonları görünür."
+          },
+          {
+            "action": "Aynı satırdaki Switch’i kapatın.",
+            "expected_result": "Switch kayar, durum rozeti gri 'Duraklatılmış' olur ve toast görünmez (sessiz değişiklik)."
+          },
+          {
+            "action": "Switch’i tekrar açın.",
+            "expected_result": "Rozet yeniden 'Aktif' olur; Workflow tetiklemeleri artık yeniden çalışacaktır."
+          }
+        ],
+        "expected_result": "Kanal ikonları iş akışında tanımlanan kanallarla eşleşir ve Switch durum değişikliğini satırdaki badge’e yansıtır."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-005",
+        "title": "Lazy load ile daha fazla iş akışı yükleme",
+        "description": "25’ten fazla iş akışı olduğunda listenin altına inince yeni sayfanın otomatik eklendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Filtreleri temizleyip sayfanın en altına kaydırın.",
+            "expected_result": "Tablonun altında gri 'Load more' alanı ve dönen yükleme ikonu görünür."
+          },
+          {
+            "action": "Biraz bekleyin.",
+            "expected_result": "İkon kaybolur ve ek iş akışları satırların sonuna eklenir; sayfa numarası artmaz çünkü sonsuz kaydırma kullanılır."
+          }
+        ],
+        "expected_result": "Workflows listesi alt kenara gelindiğinde yeni kayıtları otomatik çeker; kullanıcı manuel sayfa değişimine ihtiyaç duymaz."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-006",
+        "title": "İş akışını silme diyaloğu",
+        "description": "Satırdaki çöp kutusu butonunun kimlik doğrulamalı uyarı açtığını ve onay sonrası satırı kaldırdığını doğrular.",
+        "steps": [
+          {
+            "action": "Silmek istediğiniz satırda çöp kutusu ikonuna tıklayın.",
+            "expected_result": "\"Delete Workflow\" başlıklı kırmızı uyarı dialogu açılır ve iş akışının adı metin içinde yer alır."
+          },
+          {
+            "action": "\"Delete Workflow\" butonuna basın.",
+            "expected_result": "Buton kısa süre \"Deleting...\" durumuna geçer, dialog kapanır ve satır listeden çıkar."
+          }
+        ],
+        "expected_result": "Silme diyaloğu kullanıcıyı uyarır; onaylandığında ilgili iş akışı ve adımları kalıcı olarak kaldırılır."
+      }
+    ]
+  },
+  {
+    "suite": "İş Akışları - Oluşturma ve Düzenleme",
+    "cases": [
+      {
+        "external_id": "CRM-WORKFLOWS-101",
+        "title": "Yayınlanmış şablon olmadan iş akışı oluşturulamaması",
+        "description": "Hiç yayınlanmış mesaj şablonu yokken oluşturma panelinin uyarı gösterdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Templates sayfasında tüm şablonları taslak statüsüne çekin (veya yayınlanmış şablon olmadığından emin olun).",
+            "expected_result": "Templates listesinde durum rozetlerinin 'Taslak' olduğunu görürsünüz."
+          },
+          {
+            "action": "Workflows sayfasında 'İş Akışı Oluştur' butonuna basın.",
+            "expected_result": "Sheet açılır ve 'Mesaj Şablonu' alanının altında \"Yayınlanmış şablon bulunamadı...\" uyarısı görünür; Select yerine gri mesaj gösterilir."
+          }
+        ],
+        "expected_result": "Yeni iş akışı yalnızca yayınlanmış şablon varsa seçilebilir; aksi halde kullanıcı Templates bölümüne yönlendirilir."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-102",
+        "title": "Temel bir iş akışı oluşturma akışı",
+        "description": "İsim, tetikleyici, şablon ve kanal seçimi tamamlandığında kaydetme butonunun aktifleştiğini doğrular.",
+        "steps": [
+          {
+            "action": "Sheet’te ad alanına 'Seans Onayı' yazın ve tetikleyici olarak 'Seans Planlandı'yı seçin.",
+            "expected_result": "Zorunlu alanlar dolunca form kirlenmiş sayılır."
+          },
+          {
+            "action": "Şablon açılır listesinden yayınlanmış bir e-posta şablonu seçin.",
+            "expected_result": "Seçim Select alanında görünür."
+          },
+          {
+            "action": "Kanal kartlarından SMS ve WhatsApp anahtarlarını kapatın, sadece E-posta açık kalsın.",
+            "expected_result": "Kapalı kartlar griye döner; en az bir kanal açık olduğu için hata mesajı görünmez."
+          },
+          {
+            "action": "'İş Akışı Oluştur' butonuna basın.",
+            "expected_result": "Sheet kapanır, tost \"Workflow created\" mesajını gösterir ve tabloya yeni satır eklenir."
+          }
+        ],
+        "expected_result": "Zorunlu alanlar dolduğunda oluşturma butonu aktifleşir, kaydı tamamladığınızda liste otomatik güncellenir."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-103",
+        "title": "Kanal seçimi boş bırakıldığında uyarı",
+        "description": "Tüm kanal anahtarları kapatıldığında uyarı metni ve disabled durumunun geldiğini doğrular.",
+        "steps": [
+          {
+            "action": "Sheet’te herhangi bir iş akışı doldurun ve e-posta dahil tüm kanal anahtarlarını kapatın.",
+            "expected_result": "Kartların altındaki kırmızı metin “Lütfen en az bir bildirim kanalını etkinleştirin” şeklinde görünür."
+          },
+          {
+            "action": "Bu durumda kaydetme butonuna basmayı deneyin.",
+            "expected_result": "Buton disabled olduğu için tıklama çalışmaz."
+          }
+        ],
+        "expected_result": "Kanalsız iş akışı kaydedilemez; kullanıcı hata mesajı görür ve buton devre dışı kalır."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-104",
+        "title": "Hatırlatma tetikleyicisi için zaman seçimi",
+        "description": "'Seans Hatırlatıcısı' tetikleyicisi seçildiğinde ek seçeneğin çıktığını doğrular.",
+        "steps": [
+          {
+            "action": "Trigger listesinden 'Seans Hatırlatması' seçeneğini seçin.",
+            "expected_result": "Altında 'Hatırlatma Zamanlaması' başlıklı Select belirir."
+          },
+          {
+            "action": "Listeden '1 saat önce' seçeneğini seçin.",
+            "expected_result": "Select alanında '1 saat önce' görünür; diğer tetikleyicilere geçerseniz alan kaybolur."
+          }
+        ],
+        "expected_result": "Reminder delay alanı yalnızca hatırlatma tetikleyicisinde görünür ve seçilen değer kaydedilecek workflow adımına aktarılır."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-105",
+        "title": "Sheet’i kirli halde kapatırken uyarı",
+        "description": "Formda değişiklik varken sheet’i kapatmaya çalıştığınızda NavigationGuard diyaloğunun açıldığını doğrular.",
+        "steps": [
+          {
+            "action": "Sheet’i açıp adı değiştirin fakat kaydetmeyin.",
+            "expected_result": "Arkaplanda sheet kirli kabul edilir."
+          },
+          {
+            "action": "Sheet’i kapatma ikonuna basın.",
+            "expected_result": "Üç seçenekli uyarı (Kaydet ve Çık, Değişiklikleri İptal Et, Modalda Kal) görünür."
+          },
+          {
+            "action": "'Modalda Kal'ı seçin.",
+            "expected_result": "Sheet kapanmaz ve formdaki değişiklikler durur."
+          }
+        ],
+        "expected_result": "Kirli sheet kapatılırken kullanıcıdan aksiyon istenmeden kapanmaz."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-106",
+        "title": "Var olan iş akışını düzenleme",
+        "description": "Satırdaki düzenle butonunun sheet’i ilgili verilerle açtığını ve kaydedince satırın güncellendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Listeden bir satırın kalem ikonuna tıklayın.",
+            "expected_result": "Sheet mevcut isim, açıklama, tetikleyici, şablon ve kanal durumlarıyla açılır."
+          },
+          {
+            "action": "Açıklamayı güncelleyin ve 'İş Akışını Güncelle' butonuna tıklayın.",
+            "expected_result": "Sheet kapanır, satırda description özetinde yeni metin görünür."
+          }
+        ],
+        "expected_result": "Düzenleme akışı sheet’i otomatik doldurur ve güncellenen veriyi tabloya yansıtır."
+      }
+    ]
+  },
+  {
+    "suite": "İş Akışları - Tetikleyiciler ve Bildirimler",
+    "cases": [
+      {
+        "external_id": "CRM-WORKFLOWS-201",
+        "title": "Seans planlandığında e-posta otomasyonu",
+        "description": "Seans planlandığında tetiklenen workflow’un şablondaki değişkenleri gerçek verilerle doldurduğunu doğrular.",
+        "steps": [
+          {
+            "action": "Ön hazırlık: Templates bölümünde müşteri adı, seans tarihi ve saate referans veren bir e-posta şablonunu yayınlayın; lead’iniz için gerçek bir test e-posta adresi kullanın.",
+            "expected_result": "Şablon listesinde durum rozeti 'Yayınlandı' olur."
+          },
+          {
+            "action": "Workflows sayfasında tetikleyici olarak 'Seans Planlandı'yı seçip sadece e-posta kanallı yeni bir iş akışı oluşturun.",
+            "expected_result": "Satır listede 'Aktif' görünecek şekilde eklenir."
+          },
+          {
+            "action": "İlgili lead için SessionSchedulingSheet üzerinden yakın tarihte bir seans planlayın.",
+            "expected_result": "Seans başarıyla kaydedilir ve lead’in e-postasına birkaç saniye içinde otomatik mesaj gider."
+          },
+          {
+            "action": "Test e-postasını açıp konu, preheader ve gövde değişkenlerini kontrol edin.",
+            "expected_result": "Şablondaki `{customer_name}`, `{session_date}` gibi değişkenler gerçek değerlerle değiştirilmiştir."
+          }
+        ],
+        "expected_result": "Seans oluşturulduğu anda workflow tetiklenir ve şablondaki tüm değişkenler gerçek seans verileriyle doldurulmuş bir e-posta olarak iletilir."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-202",
+        "title": "İş akışı duraklatıldığında tetikleyici çalışmamalı",
+        "description": "Aynı workflow’u durdurduğunuzda yeni seansların otomasyon göndermediğini, yeniden aktifleştirince tekrar çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "CRM-WORKFLOWS-201’deki workflow’u listede pausa alın (Switch’i kapatın).",
+            "expected_result": "Durum rozeti 'Duraklatılmış' olur."
+          },
+          {
+            "action": "Aynı lead için ikinci bir seans planlayın.",
+            "expected_result": "Test e-postanıza yeni otomasyon gelmez; Activity/Email log boş kalır."
+          },
+          {
+            "action": "Workflow’u tekrar aktif edin ve üçüncü bir seans planlayın.",
+            "expected_result": "Yeni seans için e-posta tekrar ulaşır."
+          }
+        ],
+        "expected_result": "Duraklatılan workflow tetikleyicileri geçersiz kılar; yeniden aktifleştirildiğinde otomasyon kaldığı yerden devam eder."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-203",
+        "title": "Seans yeniden planlandığında bildirim",
+        "description": "‘Seans Yeniden Planlandı’ tetikleyicisinin eski ve yeni tarih bilgisini içeren mesajı gönderdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Yeni bir workflow oluşturup tetikleyiciyi 'Seans Yeniden Planlandı' olarak ayarlayın; e-posta şablonunuzda eski ve yeni tarih alanları bulunsun.",
+            "expected_result": "Workflow listede aktif olur."
+          },
+          {
+            "action": "Test lead’i için bir seans planlayın ve ardından SessionSheet’ten tarihi farklı bir güne güncelleyin.",
+            "expected_result": "Güncellemeden kısa süre sonra test e-postasında eski ve yeni tarih bilgisi bulunan mesaj ulaşır."
+          }
+        ],
+        "expected_result": "Reschedule tetikleyicisi session_date değişikliğini algılar ve şablonda önceki/sonraki tarihleriyle kullanıcıya iletir."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-204",
+        "title": "Seans iptal edildiğinde bildirim",
+        "description": "‘Seans İptal Edildi’ tetikleyicisi çalıştığında ilgili lead’e otomatik e-posta gittiğini doğrular.",
+        "steps": [
+          {
+            "action": "Workflow tetikleyicisini 'Seans İptal Edildi' olarak ayarlayıp sadece e-posta kanalı açık olan bir akış oluşturun.",
+            "expected_result": "Satır listede aktif görünür."
+          },
+          {
+            "action": "Bir seans planlayıp ardından SessionStatusBadge üzerinden durumu 'Cancelled' olarak değiştirin.",
+            "expected_result": "Status değişiminden sonra test e-posta adresine iptal mesajı ulaşır."
+          }
+        ],
+        "expected_result": "Seans durumu iptal edildiğinde workflow tetiklenir ve şablondaki iptal mesajı otomatik gönderilir."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-205",
+        "title": "Seans tamamlandığında teşekkür mesajı",
+        "description": "‘Seans Tamamlandı’ tetikleyicisi müşteri e-postasına teşekkür mesajı gönderdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Workflow tetikleyicisini 'Seans Tamamlandı' seçip yeni bir akış oluşturun.",
+            "expected_result": "Satır listede aktif olur."
+          },
+          {
+            "action": "Bir seans planlayın; çekim bittikten sonra SessionStatusBadge üzerinden durumu 'Completed' olarak değiştirin.",
+            "expected_result": "Müşterinin e-posta adresine teşekkür/teslim mesajı otomatik gelir."
+          }
+        ],
+        "expected_result": "Completed tetikleyicisi seans durumunu yakalar ve ilgili şablon otomatik gönderilir."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-206",
+        "title": "Seans hatırlatması tetikleyicisi (1 saat önce)",
+        "description": "Hatırlatma tetikleyicisinin seçilen gecikmeye göre mesajı zamanında gönderdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Trigger olarak 'Seans Hatırlatması'nı seçip hatırlatma zamanını '1 saat önce' olarak ayarlayın; sadece e-posta kanalı açık kalsın.",
+            "expected_result": "Workflow aktif hale gelir ve reminderDelay Select’te seçilen değer saklanır."
+          },
+          {
+            "action": "Lead için başlangıç zamanı 1 saat sonrasına olan bir seans planlayın.",
+            "expected_result": "Planladıktan hemen sonra otomasyon dönmez."
+          },
+          {
+            "action": "Seans saatinden yaklaşık 1 saat önce gelen kutunuzu kontrol edin.",
+            "expected_result": "Hatırlatma e-postası tam seçilen süre önce ulaşır."
+          }
+        ],
+        "expected_result": "Hatırlatma tetikleyicileri delay değerlerine uyarak mesajı zamanında gönderir."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-207",
+        "title": "Çok kanallı workflow’da WhatsApp/SMS doğrulaması",
+        "description": "Email’e ek olarak WhatsApp veya SMS kanallarını açtığınızda aynı tetikleyicinin iki kanala da içerik göndermesini doğrulama planı (entegrasyon yayımlanana kadar TBD).",
+        "steps": [
+          {
+            "action": "Workflow oluştururken e-posta ve WhatsApp kanallarını aktif edin; mesaj şablonunda kısa metin kullanın.",
+            "expected_result": "Tablonun 'Kanallar' sütununda mail ve mesaj ikonları görünür."
+          },
+          {
+            "action": "Tetikleyiciyi 'Seans Planlandı' bırakıp yeni bir seans oluşturun.",
+            "expected_result": "Lead’in e-posta adresine mesaj gelir; aynı zamanda WhatsApp/SMS test numaranıza Twilio’dan otomatik mesaj düşer."
+          }
+        ],
+        "expected_result": "TBD - WhatsApp/SMS entegrasyonu tamamlandığında her kanal için ayrı mesaj gönderiminin doğrulanması gerekir."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-208",
+        "title": "Kişi durum değişikliğinde workflow tetikleme",
+        "description": "'lead_status_change' tetikleyicili bir workflow’un LeadDetail sayfasındaki durum rozeti üzerinden tetiklendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Workflows sayfasında tetikleyici olarak 'Kişi Durumu Değişti' seçeneğini işaretleyip yalnızca e-posta kanalını açık bırakan yeni bir iş akışı oluşturun.",
+            "expected_result": "Satır listede aktif görünür."
+          },
+          {
+            "action": "LeadDetail sayfasında LeadStatusBadge rozetine tıklayıp iş akışında dinlediğiniz yeni durumu seçin.",
+            "expected_result": "Durum güncellenir ve Activity bölümüne değişiklik kaydı düşer."
+          },
+          {
+            "action": "Workflow’ta bağlı şablondaki değişkenlerin bulunduğu test e-postasını kontrol edin.",
+            "expected_result": "Mesaj birkaç saniye içinde gelir ve yeni durum bilgisi şablonda doğru şekilde görünür."
+          }
+        ],
+        "expected_result": "Lead status rozetinde yapılan değişiklik workflow tetikleyicisini çağırır ve seçilen kanal üzerinden mesaj gönderilir."
+      },
+      {
+        "external_id": "CRM-WORKFLOWS-209",
+        "title": "Proje durum değişikliğinde workflow tetikleme",
+        "description": "'project_status_change' tetikleyicisi ile oluşturulan iş akışının ProjectStatusBadge üzerinden yapılan değişiklikle tetiklendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Workflows sayfasında tetikleyiciyi 'Proje Durumu Değişti' olarak ayarlayıp e-posta kanalını seçin.",
+            "expected_result": "Yeni workflow aktif olarak listede görünür."
+          },
+          {
+            "action": "Herhangi bir projeyi açıp ProjectStatusBadge menüsünden workflow’da dinlenen yeni statüyü seçin.",
+            "expected_result": "ProjectStatusBadge yeni etikete döner ve Activity kayıtlarına durum değişikliği eklenir."
+          },
+          {
+            "action": "Workflow’un bağlı olduğu şablondan gelen test e-postasını kontrol edin.",
+            "expected_result": "Mesajda proje adı ve yeni statü bilgisi şablondaki değişkenlerle doğru şekilde görünür."
+          }
+        ],
+        "expected_result": "ProjectStatusBadge üzerinden yapılan durum değişikliği ilgili workflow tetikleyicisini çalıştırır ve mesaj kanala iletilir."
+      }
+    ]
+  }
+]

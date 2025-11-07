@@ -72,7 +72,7 @@ export function SettingsTwoColumnSection({
       data-walkthrough={dataWalkthrough}
       className={cn(
         settingsClasses.sectionSurface,
-        "scroll-mt-28",
+        "scroll-mt-[22vh] md:scroll-mt-[18vh] lg:scroll-mt-[160px]",
         settingsTokens.section.padding,
         className
       )}
@@ -138,7 +138,7 @@ export function SettingsSingleColumnSection({
       data-walkthrough={dataWalkthrough}
       className={cn(
         settingsClasses.sectionSurface,
-        "scroll-mt-28",
+        "scroll-mt-[22vh] md:scroll-mt-[18vh] lg:scroll-mt-[160px]",
         settingsTokens.section.padding,
         className
       )}

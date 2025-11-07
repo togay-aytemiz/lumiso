@@ -56,11 +56,18 @@ export function LeadFieldsSection() {
         sectionId="lead-fields"
         title={t("lead_fields.title")}
         description={t("lead_fields.description")}
-        action={{
-          label: t("lead_fields.add_field"),
-          onClick: () => setIsDialogOpen(true),
-          icon: Plus,
-        }}
+        headerAside={
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => setIsDialogOpen(true)}
+            className="flex items-center gap-2 rounded-2xl border border-transparent bg-muted px-4 text-sm font-medium text-foreground hover:bg-[hsl(var(--accent-100))] hover:text-[hsl(var(--accent-800))]"
+          >
+            <Plus className="h-4 w-4" />
+            {t("lead_fields.add_field")}
+          </Button>
+        }
         bodyClassName="p-0"
       >
         <div className="p-6">

@@ -8,7 +8,6 @@ import {
   Droppable,
   type DropResult,
 } from "@hello-pangea/dnd";
-import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,9 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AddLeadStatusDialog, EditLeadStatusDialog } from "./settings/LeadStatusDialogs";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import {
-  SettingsCollectionSection,
-} from "@/components/settings/SettingsSectionVariants";
+import { SettingsTwoColumnSection } from "@/components/settings/SettingsSections";
 import { useLeadStatuses, useOrganizationSettings } from "@/hooks/useOrganizationData";
 import { useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -233,26 +230,38 @@ const LeadStatusesSection = () => {
     }
   };
 
+  const sectionAction = {
+    label: t('lead_statuses.add_status'),
+    onClick: handleAdd,
+    icon: Plus,
+    variant: "ghost" as const,
+    className:
+      "rounded-2xl border border-transparent bg-muted px-4 text-sm font-medium text-foreground hover:bg-[hsl(var(--accent-100))] hover:text-[hsl(var(--accent-800))]",
+  };
+
   if (isLoading) {
     return (
-      <SettingsCollectionSection
+      <SettingsTwoColumnSection
         sectionId="lead-statuses"
         title={t('lead_statuses.title')}
         description={t('lead_statuses.description')}
-        bodyClassName="p-6"
+        action={sectionAction}
+        contentClassName="space-y-6"
       >
-        <div className="space-y-4">
-          <div className="h-8 rounded bg-muted animate-pulse" />
-          <div className="flex flex-wrap gap-3">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-8 w-24 rounded-full bg-muted animate-pulse"
-              />
-            ))}
+        <div className="rounded-2xl border border-border/60 bg-card p-6">
+          <div className="space-y-4">
+            <div className="h-8 rounded bg-muted animate-pulse" />
+            <div className="flex flex-wrap gap-3">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-8 w-24 rounded-full bg-muted animate-pulse"
+                />
+              ))}
+            </div>
           </div>
         </div>
-      </SettingsCollectionSection>
+      </SettingsTwoColumnSection>
     );
   }
 
@@ -268,13 +277,14 @@ const LeadStatusesSection = () => {
 
   return (
     <>
-      <SettingsCollectionSection
+      <SettingsTwoColumnSection
         sectionId="lead-statuses"
         title={t('lead_statuses.title')}
         description={t('lead_statuses.description')}
-        bodyClassName="p-6"
+        action={sectionAction}
+        contentClassName="space-y-6"
       >
-        <div className="space-y-6">
+        <div className="space-y-6 rounded-2xl border border-border/60 bg-card p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="quick-status-buttons" className="text-base">
@@ -330,13 +340,7 @@ const LeadStatusesSection = () => {
 
           {/* Custom Statuses Section */}
           <div className="space-y-3">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h4 className="text-sm font-medium">{t('lead_statuses.custom_statuses')}</h4>
-              <Button onClick={handleAdd} size="sm" className="flex w-full items-center justify-center gap-2 sm:w-auto">
-                <Plus className="h-4 w-4" />
-                {t('lead_statuses.add_status')}
-              </Button>
-            </div>
+            <h4 className="text-sm font-medium">{t('lead_statuses.custom_statuses')}</h4>
             
             <div className="p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
               <p className="text-sm text-muted-foreground leading-relaxed">
@@ -428,7 +432,7 @@ const LeadStatusesSection = () => {
             queryClient.invalidateQueries({ queryKey: ['lead_statuses', activeOrganizationId] });
           }}
         />
-      </SettingsCollectionSection>
+      </SettingsTwoColumnSection>
     </>
   );
 };

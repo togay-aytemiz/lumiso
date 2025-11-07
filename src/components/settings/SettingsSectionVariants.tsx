@@ -51,17 +51,20 @@ export function SettingsFormSection({
 export interface SettingsCollectionSectionProps extends BaseSingleColumnProps {
   bodyClassName?: string;
   footer?: ReactNode;
+  headerAside?: ReactNode;
 }
 
 export function SettingsCollectionSection({
   bodyClassName,
   footer,
+  headerAside,
   children,
   ...sectionProps
 }: SettingsCollectionSectionProps) {
   return (
     <SettingsSingleColumnSection
       {...sectionProps}
+      headerAside={headerAside ?? sectionProps.headerAside}
       contentClassName={cn("space-y-6", sectionProps.contentClassName)}
     >
       <div

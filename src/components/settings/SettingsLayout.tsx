@@ -49,8 +49,10 @@ import { settingsClasses, settingsTokens } from "@/theme/settingsTokens";
 
 const CLOSE_TARGET = "__settings_close__";
 const LAST_NON_SETTINGS_PATH_KEY = "lumiso:last-non-settings-path";
-const MOBILE_SECTION_EXTRA_GAP = 10;
+const MOBILE_SECTION_MIN_GAP = 10;
+const MOBILE_SECTION_EXTRA_REDUCTION = 70;
 const DESKTOP_SECTION_MAX_OFFSET = 112;
+const DESKTOP_SECTION_EXTRA_REDUCTION = 60;
 
 type SettingsLocationState = {
   from?: string;
@@ -251,13 +253,19 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
     if (typeof window === "undefined") {
       return;
     }
+
+    if (isMobile) {
+      setScrollTopRightOffset(16);
+      return;
+    }
+
     const container = contentRef.current;
     if (!container) return;
 
     const rect = container.getBoundingClientRect();
     const offset = Math.max(window.innerWidth - rect.right + 24, 16);
     setScrollTopRightOffset(offset);
-  }, []);
+  }, [isMobile]);
 
   const refreshDomSectionNavItems = useCallback(() => {
     const container = contentRef.current;
@@ -816,10 +824,12 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
       }
       const baseOffset = sectionScrollOffsetRef.current ?? 0;
       if (isMobile) {
-        return Math.max(baseOffset + MOBILE_SECTION_EXTRA_GAP, 0);
+        const reduced = baseOffset - MOBILE_SECTION_EXTRA_REDUCTION;
+        return Math.max(reduced, MOBILE_SECTION_MIN_GAP);
       }
       const anchorHeight = anchorNavHeightRef.current ?? 0;
-      const adjusted = baseOffset - anchorHeight;
+      const adjusted =
+        baseOffset - anchorHeight - DESKTOP_SECTION_EXTRA_REDUCTION;
       return Math.max(Math.min(adjusted, DESKTOP_SECTION_MAX_OFFSET), 0);
     },
     [isMobile]

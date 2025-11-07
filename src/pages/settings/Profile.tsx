@@ -7,7 +7,6 @@ import {
   SettingsFormSection,
 } from "@/components/settings/SettingsSectionVariants";
 import { SettingsImageUploadCard } from "@/components/settings/SettingsImageUploadCard";
-import { SettingsRefreshButton } from "@/components/settings/SettingsRefreshButton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -78,8 +77,6 @@ export default function Profile() {
     if (stepParam) return parseInt(stepParam) - 1;
     return 0;
   });
-  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
-  const [isProfileRefreshing, setIsProfileRefreshing] = useState(false);
 
   // Profile section state
   const profileSection = useSettingsCategorySection({
@@ -167,12 +164,6 @@ export default function Profile() {
     });
   }, [workingHoursSignature, setWorkingHoursValues]);
 
-  useEffect(() => {
-    if (!profileLoading && !workingHoursLoading && !lastSyncedAt) {
-      setLastSyncedAt(new Date());
-    }
-  }, [lastSyncedAt, profileLoading, workingHoursLoading]);
-
   const handleWorkingHourUpdate = async (
     dayOfWeek: number,
     field: string,
@@ -227,18 +218,6 @@ export default function Profile() {
   };
 
   const timeOptions = generateTimeOptions();
-
-  const handleProfileRefresh = async () => {
-    try {
-      setIsProfileRefreshing(true);
-      await Promise.all([refreshProfile(), refetchWorkingHours()]);
-      setLastSyncedAt(new Date());
-    } catch (error) {
-      console.error("Failed to refresh profile data", error);
-    } finally {
-      setIsProfileRefreshing(false);
-    }
-  };
 
   // Tutorial steps
   const tutorialSteps: TutorialStep[] = [
@@ -359,13 +338,6 @@ export default function Profile() {
           description={t('settings.profile.profileInfo.description')}
           dataWalkthrough="profile-form"
           fieldColumns={2}
-          leftColumnFooter={
-            <SettingsRefreshButton
-              onRefresh={handleProfileRefresh}
-              isRefreshing={isProfileRefreshing}
-              lastUpdatedAt={lastSyncedAt}
-            />
-          }
         >
           <SettingsImageUploadCard
             className="sm:col-span-2"

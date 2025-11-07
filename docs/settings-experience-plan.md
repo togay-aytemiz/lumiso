@@ -191,7 +191,7 @@ Cross-cutting components:
 - ✅ Create `useSettingsAnchorRegistry` primitive (see `src/contexts/SettingsAnchorRegistryContext.tsx`) so sections can self-register anchors via `SettingsTwoColumnSection`/`SettingsSingleColumnSection`; layout now merges registry items with DOM discovery for sticky pills.
 - ✅ Implement `SettingsHelpSheet` component triggered by the header `Need help?` action; support markdown + media embeds and connect content to the shared i18n pipeline.
 - ✅ Introduce section primitives (`SettingsFormSection`, `SettingsCollectionSection`, `SettingsToggleSection`, `SettingsDangerSection`, `SettingsPlaceholderSection`) powered by `SettingsTwoColumnSection`/`SettingsSingleColumnSection` so teams can drop in consistent layouts without redoing scaffolding (`src/components/settings/SettingsSectionVariants.tsx`).
-- ✅ Create shared uploader hook + refresh button pattern (`useSettingsFileUploader`, `SettingsRefreshButton`) and roll them into Profile + General so manual refresh/output affordances stay consistent.
+- ✅ Create shared uploader hook (`useSettingsFileUploader`) so Profile + General share the refreshed uploader affordance; manual refresh UI is intentionally omitted so data stays live via background fetch + mutation-driven cache updates.
 - ▫️ Add storybook/preview entries (optional) or Chromatic snapshots.
 - ▫️ **Skip this step** Update tests for new primitives (`src/components/settings/__tests__`).
 
@@ -218,8 +218,8 @@ Cross-cutting components:
   - ✅ Enabled sticky navigation by backfilling section anchors on current components.
   - ✅ Session type + package cards now render without the redundant inner wrapper so density matches the rest of the compact settings.
   - ✅ Package cards regain mobile padding so cards no longer touch the viewport edges.
-- ✳️ **Data Fetch Policy Notes** — React-query caches all collection fetches per organization with `staleTime=5m`, window-focus revalidation disabled; every settings page exposes the `SettingsRefreshButton` so ops teams can pull a manual refresh (call to `refetch()` on the underlying hook). Mutations triggered by drag/drop or dialogs keep their existing optimistic updates + background refetch. Free-form inputs never auto-save: they rely on the sticky footer (ensuring explicit intent) while non-form toggles continue to auto-save with inline toast confirmations.
-- ✅ Documented data fetch policies (manual refresh vs. auto): Leads/Projects/Services read from their `useOrganizationData` react-query caches (staleTime 5m) with a shared `SettingsRefreshButton` triggering `refetch()`; only mutation flows auto-save (drag/drop, dialog submits) while text inputs rely on the sticky footer so users explicitly commit batched edits.
+- ✳️ **Data Fetch Policy Notes** — React-query caches all collection fetches per organization with `staleTime=5m`, window-focus revalidation disabled; background refetch runs after every mutation and on focus so teams never need a manual refresh control. Free-form inputs never auto-save: they rely on the sticky footer (explicit intent) while toggles, drag/drop, switches, and dialog actions auto-save immediately with success/fail toasts.
+- ✅ Documented data fetch policies (manual refresh vs. auto): Leads/Projects/Services read from their `useOrganizationData` react-query caches (staleTime 5m) with mutation-driven invalidation; only text-input flows wait for the sticky footer while every other interaction auto-saves with inline feedback.
 - ✅ Extend anchor nav mapping and mobile back pattern to collection-heavy pages (Leads/Projects/Services) with sensible section groupings — sticky pills now appear on mobile detail views for these pages, mirroring the desktop nav and keeping the “Back to settings” affordance one tap away.
 
 ### Phase 3.5 — Compliance & Billing Foundations
@@ -298,4 +298,5 @@ Cross-cutting components:
 - 2025-11-08 — Codex — Extended the anchor nav + mobile back pattern for `/settings/leads`, `/settings/projects`, and `/settings/services` so the chip navigation appears on mobile detail views just like desktop.
 - 2025-11-08 — Codex — Added mobile anchor pills for Profile/General/Notifications and restored gutter padding around Packages cards.
 - 2025-11-09 — Codex — Normalized `/settings/leads` data queries (statuses + fields) onto shared TanStack Query caches so Supabase polling is reduced and background refetches stay consistent across the page.
+- 2025-11-09 — Product — Removed manual refresh buttons from Profile/General and reasserted that non-input controls (toggles, drag/drop, switches) auto-save immediately with success/fail toasts.
 - 2025-11-09 — Codex — `/settings/leads` sections now hook into the sticky footer + anchor registry, staging quick-button preferences + reorder drafts locally, and both sections gained the unified refresh controls for manual cache busting.

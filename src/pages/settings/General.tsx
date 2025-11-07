@@ -6,7 +6,6 @@ import {
   SettingsFormSection,
 } from "@/components/settings/SettingsSectionVariants";
 import { SettingsImageUploadCard } from "@/components/settings/SettingsImageUploadCard";
-import { SettingsRefreshButton } from "@/components/settings/SettingsRefreshButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,7 +36,6 @@ export default function General() {
     updateSettings,
     uploadLogo,
     deleteLogo,
-    refreshSettings,
   } = useOrganizationSettings();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
@@ -66,8 +64,6 @@ export default function General() {
   // Check if we're in tutorial mode from Profile onboarding
   const isInTutorial = searchParams.get('tutorial') === 'true';
   const [showTutorial, setShowTutorial] = useState(isInTutorial);
-  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
-  const [isSettingsRefreshing, setIsSettingsRefreshing] = useState(false);
   
   // Create tutorial steps for General page (steps 3, 4, and 5 from Profile)
   const tutorialSteps: TutorialStep[] = [
@@ -248,18 +244,6 @@ export default function General() {
     ? t('settings.general.branding.logo_set')
     : t('settings.general.branding.logo_formats');
 
-  const handleRefreshSettings = async () => {
-    try {
-      setIsSettingsRefreshing(true);
-      await refreshSettings();
-      setLastSyncedAt(new Date());
-    } catch (error) {
-      console.error("Failed to refresh organization settings", error);
-    } finally {
-      setIsSettingsRefreshing(false);
-    }
-  };
-
   const handleBrandColorChange = (value: string) => {
     // Allow any input while typing, validate only for final color picker sync
     brandingSection.updateValue("brandColor", value);
@@ -295,13 +279,6 @@ export default function General() {
           description={t("settings.general.branding.description")}
           dataWalkthrough="business-form"
           fieldColumns={2}
-          leftColumnFooter={
-            <SettingsRefreshButton
-              onRefresh={handleRefreshSettings}
-              isRefreshing={isSettingsRefreshing}
-              lastUpdatedAt={lastSyncedAt}
-            />
-          }
         >
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="company-name">{t("settings.general.branding.company_name")}</Label>

@@ -22,6 +22,8 @@ const buttonVariants = cva(
         dangerOutline: "border border-destructive text-destructive hover:bg-destructive/10",
         chip:
           "bg-transparent text-current hover:bg-transparent hover:text-current shadow-none",
+        pill:
+          "rounded-2xl border border-transparent bg-muted text-foreground shadow-sm hover:bg-[hsl(var(--accent-100))] hover:text-[hsl(var(--accent-800))]",
       },
       size: {
         default: "h-10 px-4 py-2",

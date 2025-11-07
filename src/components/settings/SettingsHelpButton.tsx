@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { HelpCircle } from "lucide-react";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface SettingsHelpContent {
   title: string;
@@ -20,6 +22,8 @@ interface SettingsHelpButtonProps {
 export function SettingsHelpButton({ helpContent }: SettingsHelpButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { t } = useTranslation("common");
+  const helpLabel = t("buttons.needHelp", { defaultValue: "Help" });
 
   const handleDocumentation = () => {
     window.open('https://docs.lovable.dev/', '_blank');
@@ -47,13 +51,17 @@ export function SettingsHelpButton({ helpContent }: SettingsHelpButtonProps) {
   return (
     <>
       <Button
-        variant="outline"
+        variant={isMobile ? "secondary" : "pill"}
         size={isMobile ? "icon" : "sm"}
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 hover:bg-accent hover:text-accent-foreground"
+        aria-label={helpLabel}
+        className={cn(
+          "flex items-center gap-2",
+          !isMobile && "px-3.5"
+        )}
       >
         <HelpCircle className="h-4 w-4" />
-        {!isMobile && <span>Need Help?</span>}
+        {!isMobile && <span>{helpLabel}</span>}
       </Button>
 
       <AppSheetModal

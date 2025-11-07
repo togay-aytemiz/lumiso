@@ -60,9 +60,9 @@ export function LeadFieldsSection() {
           <Button
             type="button"
             size="sm"
-            variant="ghost"
+            variant="pill"
             onClick={() => setIsDialogOpen(true)}
-            className="flex items-center gap-2 rounded-2xl border border-transparent bg-muted px-4 text-sm font-medium text-foreground hover:bg-[hsl(var(--accent-100))] hover:text-[hsl(var(--accent-800))]"
+            className="flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
             {t("lead_fields.add_field")}

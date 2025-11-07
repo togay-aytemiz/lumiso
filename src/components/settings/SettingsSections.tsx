@@ -1,4 +1,4 @@
-import { ReactNode, useMemo } from "react";
+import { CSSProperties, ReactNode, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { Loader2, type LucideIcon } from "lucide-react";
 import { Button, type ButtonProps } from "@/components/ui/button";
@@ -31,6 +31,7 @@ interface SettingsSectionBaseProps {
   className?: string;
   contentClassName?: string;
   dataWalkthrough?: string;
+  style?: CSSProperties;
 }
 
 interface SettingsTwoColumnSectionProps extends SettingsSectionBaseProps {
@@ -55,6 +56,7 @@ export function SettingsTwoColumnSection({
   contentClassName,
   dataWalkthrough,
   leftColumnFooter,
+  style,
 }: SettingsTwoColumnSectionProps) {
   const { isDirty } = useSettingsSectionMeta(sectionId);
   const anchor = useMemo(
@@ -72,10 +74,13 @@ export function SettingsTwoColumnSection({
       data-walkthrough={dataWalkthrough}
       className={cn(
         settingsClasses.sectionSurface,
-        "scroll-mt-[22vh] md:scroll-mt-[18vh] lg:scroll-mt-[160px]",
         settingsTokens.section.padding,
         className
       )}
+      style={{
+        scrollMarginTop: "var(--settings-section-offset, 140px)",
+        ...style,
+      }}
     >
       <div
         className={cn(
@@ -121,6 +126,7 @@ export function SettingsSingleColumnSection({
   dataWalkthrough,
   headerAside,
   toolbarSlot,
+  style,
 }: SettingsSingleColumnSectionProps) {
   const { isDirty } = useSettingsSectionMeta(sectionId);
   const anchor = useMemo(
@@ -138,10 +144,13 @@ export function SettingsSingleColumnSection({
       data-walkthrough={dataWalkthrough}
       className={cn(
         settingsClasses.sectionSurface,
-        "scroll-mt-[22vh] md:scroll-mt-[18vh] lg:scroll-mt-[160px]",
         settingsTokens.section.padding,
         className
       )}
+      style={{
+        scrollMarginTop: "var(--settings-section-offset, 140px)",
+        ...style,
+      }}
     >
       <div
         className={cn(

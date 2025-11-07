@@ -1,0 +1,309 @@
+[
+  {
+    "suite": "Ödemeler - Tarih ve Trend",
+    "cases": [
+      {
+        "external_id": "CRM-PAYMENTS-501",
+        "title": "Hazır dönem filtrelerinin grafiğe ve tabloya uygulanması",
+        "description": "Üstteki dönem seçiminden farklı hazır aralıklar seçildiğinde tarih etiketi, trend grafiği ve tablo sonuçlarının aynı aralığa göre güncellenmesini doğrular.",
+        "steps": [
+          {
+            "action": "Sol menüden 'Ödemeler' sayfasını açın ve sayfanın üstündeki dönem kartını inceleyin.",
+            "expected_result": "Kartta 'Tarih Aralığı' başlığı ve varsayılan aralığı gösteren kalın metin görünür."
+          },
+          {
+            "action": "Seçenek listesinden 'Son 7 gün' filtresini seçin.",
+            "expected_result": "Aralık etiketi son 7 günü kapsayacak şekilde güncellenir, trend grafiği yalnızca bu tarihlerdeki noktaları gösterir ve tablo ilk sayfaya döner."
+          },
+          {
+            "action": "Aynı listeden 'Bu ay' (Month to Date) filtresini seçin.",
+            "expected_result": "Etiket yeni tarih aralığına döner; grafik ve özet kartları sadece ilgili döneme ait tutarları gösterir."
+          }
+        ],
+        "expected_result": "Dönem seçimindeki her değişiklik hem grafik hem de tablo verilerini anında filtreler."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-502",
+        "title": "Özel tarih aralığı uyarısı ve seçim akışı",
+        "description": "Custom seçeneği seçildiğinde tarih picker kullanılana kadar kullanıcıya uyarı gösterildiğini, tarih seçildiğinde özet kartının güncellendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Dönem açılır listesinden 'Özel aralık' seçeneğini seçin.",
+            "expected_result": "Kartta tarih etiketi gizlenir ve gri yazıyla 'Lütfen bir tarih aralığı seçin' uyarısı görünür; yanında tarih seçici açılır."
+          },
+          {
+            "action": "DateRangePicker bileşeninden başlangıç ve bitiş tarihlerini seçin.",
+            "expected_result": "Üst kartta seçtiğiniz günleri içeren \"DD MMM – DD MMM\" formatında metin belirir."
+          },
+          {
+            "action": "Tablo ve trend grafiğini inceleyin.",
+            "expected_result": "Liste yalnızca bu aralıkta kalan ödemeleri gösterir; grafikte de aynı dönem yer alır."
+          }
+        ],
+        "expected_result": "Özel aralık seçilene kadar kullanıcı bilgilendirilir, tarih seçildiğinde tüm görünümler aynı aralığa bağlanır."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-503",
+        "title": "Trend grafiği 'Görünüm' segment kontrolü",
+        "description": "Gün/Hafta/Ay segmentleri arasında geçiş yapıldığında eksen etiketlerinin ve eğri yoğunluğunun değiştiğini, seçim tercihi sayfayı yenileyince de korunduğunu doğrular.",
+        "steps": [
+          {
+            "action": "Trend kartının sağ üstündeki 'Görünüm' segment kontrolünden 'Gün' seçeneğini seçin.",
+            "expected_result": "X ekseni tek günlük etiketlere döner ve çizgi daha fazla nokta içerir."
+          },
+          {
+            "action": "Aynı kontrolü 'Hafta' ve ardından 'Ay' konumuna getirin.",
+            "expected_result": "Grafik etiketleri sırasıyla hafta aralığı (örn. '01 Ağu – 07 Ağu') ve ay etiketlerine döner; due/paid çizgiler yeni aralığa göre yumuşar."
+          },
+          {
+            "action": "Sayfayı yenileyin.",
+            "expected_result": "Son seçtiğiniz segment (örn. Ay) hatırlanır ve grafik aynı görünümle yüklenir."
+          }
+        ],
+        "expected_result": "Trend grafiği segment kontrolü hem görünümü değiştirir hem de tercihleri kaydeder."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-504",
+        "title": "Grafiğin veri olmadığı dönemlerde boş durum göstermesi",
+        "description": "Seçilen tarih aralığında ödeme yoksa trend kartının gri, kesik çizgili boş durum mesajını göstermesini doğrular.",
+        "steps": [
+          {
+            "action": "Filtreyi veri olmayan bir döneme (ör. geçen yılın boş ayına) alın veya tüm ödemeleri filtrelerle gizleyin.",
+            "expected_result": "Trend kartında çizgi yerine kesik bordürlü kutu ve \"Bu dönem için ödeme kaydı olduğunda trend grafiği görünecek.\" metni görünür."
+          },
+          {
+            "action": "Filtreleri temizleyip veri olan bir döneme geri dönün.",
+            "expected_result": "Çizgiler geri gelir ve boş durum mesajı kaybolur."
+          }
+        ],
+        "expected_result": "Grafik veri olmadığında kullanıcıyı açıkça bilgilendirir."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-505",
+        "title": "Ödeme özeti kartındaki metrikler ve tahsilat oranı",
+        "description": "Toplam Faturalanan, Toplam Ödenen, Bekleyen Bakiye ve Tahsilat Oranı metriklerinin filtrelere göre yeniden hesaplandığını doğrular.",
+        "steps": [
+          {
+            "action": "Ödeme Özeti kartındaki dört satırı inceleyin.",
+            "expected_result": "Her satır TRY formatında tutar veya yüzde gösterir; tahsilat oranı çubuğu aynı yüzdeyi temsil eder."
+          },
+          {
+            "action": "Filtre panelinden 'Ödeme durumu' olarak yalnızca 'Ödendi'yi seçin.",
+            "expected_result": "Bekleyen Bakiye sıfıra yaklaşır, Tahsilat Oranı %100'e çıkar ve progress çubuğu tam dolar."
+          },
+          {
+            "action": "Filtreyi temizleyin.",
+            "expected_result": "Karttaki değerler tüm ödemelere göre yeniden hesaplanır."
+          }
+        ],
+        "expected_result": "Ödeme özeti değerleri aktif filtrelere göre güncellenir ve tahsilat çubuğu doğru yüzdede kalır."
+      }
+    ]
+  },
+  {
+    "suite": "Ödemeler - Filtreler ve Arama",
+    "cases": [
+      {
+        "external_id": "CRM-PAYMENTS-511",
+        "title": "Ödeme durumu filtresi ve özet çipleri",
+        "description": "Filtre panelindeki 'Ödeme durumu' toggle'larının tabloyu kısıtladığını ve üstteki özet çipinde seçilen değerlerin listelendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Tablonun üstündeki 'Filtreler' düğmesine tıklayın.",
+            "expected_result": "Sağ panelde 'Ödeme durumu' başlıklı bölüm ve 'Ödendi / Bekliyor' butonları çıkar."
+          },
+          {
+            "action": "'Ödendi' seçeneğini aktif edip paneli kapatın.",
+            "expected_result": "Filtre düğmesinde sayı badgesi belirir; tablonun üstünde 'Ödeme durumu: Ödendi' çipi görünür ve satırlardaki rozetler yalnızca 'Ödendi' olur."
+          },
+          {
+            "action": "Aynı panelden 'Bekliyor'u da işaretleyin.",
+            "expected_result": "Çipte iki değer virgülle listelenir ve tablo iki durumdaki kayıtları gösterir."
+          }
+        ],
+        "expected_result": "Durum filtresi aktif olduğunda hem çip hem tablo sonuçları seçimle uyumlu kalır."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-512",
+        "title": "Ödeme türü seçenekleri ile sonuçları daraltma",
+        "description": "Temel/Ekstra/Manuel toggle'larının birden fazla seçime izin verdiğini ve tabloyu ilgili tür rozetleriyle sınırladığını doğrular.",
+        "steps": [
+          {
+            "action": "Filtre panelinde 'Ödeme türü' bölümünü bulun.",
+            "expected_result": "Butonlarda 'Temel', 'Ekstra' ve 'Manuel' etiketleri görünür."
+          },
+          {
+            "action": "Sadece 'Temel' ve 'Ekstra' butonlarını aktif edin.",
+            "expected_result": "Panel başlığı altında iki buton vurgulanır."
+          },
+          {
+            "action": "Paneli kapatıp tabloyu kontrol edin.",
+            "expected_result": "Tür sütunundaki rozetler sadece 'Temel' veya 'Ekstra' değerlerini gösterir; 'Manuel' kayıtlar listeden çıkar."
+          }
+        ],
+        "expected_result": "Ödeme türü filtreleri seçilen seçeneklerle eşleşmeyen satırları gizler."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-513",
+        "title": "Tutar aralığı formu ve onay düğmesi",
+        "description": "Min/Max tutar alanları doldurulduğunda onay ikonunun aktifleştiğini ve uygulandığında filtre çipinde aralık bilgisinin göründüğünü doğrular.",
+        "steps": [
+          {
+            "action": "Filtre panelinde 'Tutar' alanlarının minimumuna 1000, maksimumuna 5000 yazın.",
+            "expected_result": "Yanındaki onay düğmesi (tik ikonlu) mavi hale gelir."
+          },
+          {
+            "action": "Onay düğmesine basın.",
+            "expected_result": "Panel kapanmasa bile değerler uygulanır, filtre sayacı artar ve çipte 'Tutar: Min 1.000 TL • Max 5.000 TL' benzeri metin çıkar."
+          },
+          {
+            "action": "Tablodaki tutar sütununu kontrol edin.",
+            "expected_result": "Listelenen ödemelerin tamamı belirlediğiniz aralıkta kalır."
+          }
+        ],
+        "expected_result": "Tutar filtreleri onay butonuyla uygulanır ve sonuçlar yalnız belirlenen aralığı gösterir."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-514",
+        "title": "Arama alanının minimum üç karakter koşulu",
+        "description": "Tablo üstündeki 'Ödemeleri ara' girişinin en az üç karakter yazılmadan sorgu göndermediğini doğrular.",
+        "steps": [
+          {
+            "action": "'Ödemeleri ara' alanına iki harf yazın (örn. \"an\").",
+            "expected_result": "Tablo olduğu gibi kalır, sağ tarafta yükleme animasyonu çalışmaz."
+          },
+          {
+            "action": "Aynı alana üç veya daha fazla karakter yazın (örn. \"anda\").",
+            "expected_result": "Kısa süreli yükleme animasyonu görünür ve tablo sadece yazdığınız değerle eşleşen satırları gösterir."
+          },
+          {
+            "action": "Alan içindeki X ikonuna basarak aramayı temizleyin.",
+            "expected_result": "Liste yeniden tüm ödemeleri gösterir."
+          }
+        ],
+        "expected_result": "Arama en az üç karakterle tetiklenir ve temizleme ikonu listeyi geri getirir."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-515",
+        "title": "Filtreleri tek tıkla sıfırlama",
+        "description": "Aktif filtreler varken paneldeki 'Temizle' / 'Sıfırla' aksiyonunun tüm seçimleri kaldırdığını doğrular.",
+        "steps": [
+          {
+            "action": "Durum ve tutar filtrelerini aktif hale getirin.",
+            "expected_result": "Filtre düğmesinde sayı badgesi görünür."
+          },
+          {
+            "action": "Panelin altındaki 'Temizle' (veya 'Filtreleri sıfırla') butonuna basın.",
+            "expected_result": "Tüm toggle'lar kapanır, miktar alanları boşalır ve filtre sayacı sıfırlanır."
+          },
+          {
+            "action": "Paneli kapatın.",
+            "expected_result": "Üstteki özet çipleri kaybolur ve tablo yeniden tüm ödemeleri gösterir."
+          }
+        ],
+        "expected_result": "Filtre panelindeki sıfırlama aksiyonu tüm kriterleri temizleyip varsayılan görünümü geri getirir."
+      }
+    ]
+  },
+  {
+    "suite": "Ödemeler - Tablo ve Detaylar",
+    "cases": [
+      {
+        "external_id": "CRM-PAYMENTS-521",
+        "title": "Tablo sütunlarını sıralama",
+        "description": "Tarih ve Tutar başlıklarına tıklayınca sıralama yönlerinin değiştiğini ve satırların buna göre yeniden düzenlendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Tabloda 'Tarih' sütun başlığına tıklayın.",
+            "expected_result": "Başlığın yanında yukarı ok ikonu belirir ve satırlar en eski tarihten yeniye sıralanır."
+          },
+          {
+            "action": "Başlığa tekrar tıklayın.",
+            "expected_result": "Ok aşağı döner ve listede en yeni tarih en üstte görünür."
+          },
+          {
+            "action": "Aynı işlemi 'Tutar' sütunu için tekrarlayın.",
+            "expected_result": "Tutarlar küçükten büyüğe, sonra büyükten küçüğe sıralanır ve sıralama yönü ikonu değişir."
+          }
+        ],
+        "expected_result": "Sıralanabilir her sütun kullanıcı etkileşimiyle yön değiştirir ve tabloyu yeniden düzenler."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-522",
+        "title": "Sayfanın altında otomatik olarak daha fazla ödeme yüklenmesi",
+        "description": "Liste 25 kayıt sınırına ulaştığında aşağı kaydırıldığında yeni sayfanın otomatik olarak yüklendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Filtreleri temizleyip listede 25'ten fazla kayıt olduğundan emin olun.",
+            "expected_result": "Tablonun en altında gri bir boşluk ve yükleme göstergesi alanı bulunur."
+          },
+          {
+            "action": "Sayfanın sonuna kaydırın veya Page Down kullanın.",
+            "expected_result": "Alt alanda dönen yükleme animasyonu belirir ve birkaç saniye sonra yeni satırlar tabloya eklenir."
+          },
+          {
+            "action": "Toplam satır sayısını kontrol edin.",
+            "expected_result": "Sayı artmıştır ve son satırlara ilerledikçe aynı davranış tekrarlanır."
+          }
+        ],
+        "expected_result": "Ödemeler tablosu sonsuz kaydırma ile yeni kayıtları arka planda yükler."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-523",
+        "title": "Proje adına tıklayınca sağ panelde detay açılması",
+        "description": "Her satırdaki proje bağlantısının 'Projeyi Gör' panelini açıp tam detaylara gitmeyi teklif ettiğini doğrular.",
+        "steps": [
+          {
+            "action": "Projeye bağlı bir satırda mavi bağlantı şeklindeki proje adına tıklayın.",
+            "expected_result": "Sağdan bir panel kayarak açılır ve proje başlığı ile sekmeleri gösterir."
+          },
+          {
+            "action": "Panelde 'Tam Detaylar' butonuna basın.",
+            "expected_result": "Uygulama sizi `/projects/:id` sayfasına yönlendirir ve panel kapanır."
+          },
+          {
+            "action": "Panel açıkken kapatma ikonunu kullanın.",
+            "expected_result": "Panel kapanır, tablo aynı konumda kalır."
+          }
+        ],
+        "expected_result": "Proje adı bağlantısı paneli açar; panelden hem hızlı görünüm hem tam detaylara geçiş yapılabilir."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-524",
+        "title": "Kişi bağlantısı lead detayına götürür",
+        "description": "Kişi sütunundaki bağlantıya tıklayınca ilgili lead sayfasına yönlendirildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Kişi sütununda isim görünen bir satırı bulun ve ada tıklayın.",
+            "expected_result": "Ödemeler sayfası yerine `/leads/:id` rotası açılır ve kişi detay sayfası yüklenir."
+          },
+          {
+            "action": "Tarayıcı geri butonuyla Ödemeler sayfasına dönün.",
+            "expected_result": "Tablo önceki filtre ve sayfa konumuyla yeniden görünür."
+          }
+        ],
+        "expected_result": "Kişi bağlantısı lead detaylarını açar ve geri geldiğinizde tablo durumunu korur."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-525",
+        "title": "Excel'e aktar butonunun durumu",
+        "description": "Sonuç yokken butonun pasif kalmasını, veri varken dosya indirip başarı toast'ı göstermesini doğrular.",
+        "steps": [
+          {
+            "action": "Filtreleri veri döndürmeyecek şekilde ayarlayın (örn. olmayan bir arama terimi yazın).",
+            "expected_result": "Tablo boş durum mesajını gösterir ve 'Excel'e aktar' butonu pasifleşir."
+          },
+          {
+            "action": "Filtreleri temizleyip butona tıklayın.",
+            "expected_result": "Butonda dönen ikon görünür, tarayıcı `payments-YYYY-MM-DD_HHmm.xlsx` dosyasını indirir."
+          },
+          {
+            "action": "Ekranın sağ altındaki bildirimleri kontrol edin.",
+            "expected_result": "Yeşil toast 'Dışa aktarma hazır' mesajını gösterir."
+          }
+        ],
+        "expected_result": "Excel aktarımı yalnızca veri mevcutken yapılır ve işlem başarıyla tamamlandığında kullanıcı bilgilendirilir."
+      }
+    ]
+  }
+]

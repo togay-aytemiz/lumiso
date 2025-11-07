@@ -821,7 +821,7 @@ function SettingsLayoutInner({
   );
 
   const desktopHeaderElement = (
-    <header className={headerClassName}>
+    <header className={headerClassName} data-settings-header="true">
       <div
         key={currentPath}
         className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between settings-header-motion"
@@ -839,19 +839,17 @@ function SettingsLayoutInner({
           </div>
         </div>
         <div className="flex shrink-0 items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="hidden whitespace-nowrap sm:inline-flex"
-            disabled={!helpContent}
-            onClick={() => {
-              if (!helpContent) return;
-              setShowHelp(true);
-            }}
-          >
-            <LifeBuoy className="mr-2 h-4 w-4" />
-            {tCommon("buttons.needHelp")}
-          </Button>
+          {helpContent && (
+            <Button
+              variant="pill"
+              size="sm"
+              className="hidden whitespace-nowrap px-3.5 sm:inline-flex"
+              onClick={() => setShowHelp(true)}
+            >
+              <LifeBuoy className="mr-2 h-4 w-4" />
+              {tCommon("buttons.needHelp")}
+            </Button>
+          )}
           {shouldUseOverlay && (
             <Button
               variant="ghost"
@@ -887,7 +885,10 @@ function SettingsLayoutInner({
   });
 
   const mobileHeaderElement = (
-    <header className="sticky top-0 z-30 border-b border-border bg-[hsl(var(--background))]">
+    <header
+      className="sticky top-0 z-30 border-b border-border bg-[hsl(var(--background))]"
+      data-settings-header="true"
+    >
       <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
         {showMobileBackButton && (
           <Button
@@ -1042,6 +1043,45 @@ function SettingsLayoutInner({
       contentRef.current = desktopContentScrollRef.current;
     }
   }, [isMobile, isSettingsRoot, currentPath]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const setOffsetVariable = () => {
+      const headerEl = document.querySelector(
+        "[data-settings-header='true']"
+      ) as HTMLElement | null;
+      if (!headerEl) {
+        return;
+      }
+      const offset = Math.ceil(headerEl.getBoundingClientRect().height + 16);
+      document.documentElement.style.setProperty(
+        "--settings-section-offset",
+        `${offset}px`
+      );
+    };
+
+    setOffsetVariable();
+
+    const handleResize = () => setOffsetVariable();
+    window.addEventListener("resize", handleResize);
+
+    let observer: ResizeObserver | null = null;
+    const headerEl = document.querySelector(
+      "[data-settings-header='true']"
+    ) as HTMLElement | null;
+    if (headerEl && "ResizeObserver" in window) {
+      observer = new ResizeObserver(() => setOffsetVariable());
+      observer.observe(headerEl);
+    }
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      observer?.disconnect();
+    };
+  }, [isMobile, isSettingsRoot, shouldUseOverlay, currentPath]);
 
   if (isMobile) {
     return (

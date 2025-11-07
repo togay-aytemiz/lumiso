@@ -406,6 +406,7 @@ export default function Notifications() {
           sectionId="master-controls"
           title={t('settings.notifications.masterControls.title')}
           description={t('settings.notifications.masterControls.description')}
+          dataWalkthrough="notifications-master"
           items={masterToggleItems}
         />
         <SettingsToggleSection
@@ -413,6 +414,7 @@ export default function Notifications() {
           sectionId="scheduled"
           title={t('settings.notifications.scheduled.title')}
           description={`${t('settings.notifications.scheduled.description')} ${settings.scheduledTime}`}
+          dataWalkthrough="notifications-scheduled"
           items={scheduledItems}
         />
         <SettingsToggleSection
@@ -420,6 +422,7 @@ export default function Notifications() {
           sectionId="immediate"
           title={t('settings.notifications.immediate.title')}
           description={t('settings.notifications.immediate.description')}
+          dataWalkthrough="notifications-immediate"
           items={immediateItems}
         />
       </div>

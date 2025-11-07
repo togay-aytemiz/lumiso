@@ -5,16 +5,15 @@ import {
   SettingsCollectionSection,
   SettingsFormSection,
 } from "@/components/settings/SettingsSectionVariants";
+import { SettingsImageUploadCard } from "@/components/settings/SettingsImageUploadCard";
 import { SettingsRefreshButton } from "@/components/settings/SettingsRefreshButton";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Upload, Loader2, X, Building, Settings, CheckCircle } from "lucide-react";
+import { Building, Upload, Settings, CheckCircle } from "lucide-react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -218,6 +217,13 @@ export default function General() {
   };
 
   const logoUploadBusy = uploading || logoUploaderBusy;
+  const hasLogo = Boolean(settings?.logo_url);
+  const logoCardTitle = hasLogo
+    ? t('settings.general.branding.current_logo')
+    : t('settings.general.branding.logo_upload');
+  const logoCardDescription = hasLogo
+    ? t('settings.general.branding.logo_set')
+    : t('settings.general.branding.logo_formats');
 
   const handleRefreshSettings = async () => {
     try {
@@ -328,101 +334,40 @@ export default function General() {
               {t("settings.general.branding.business_phone_help")}
             </p>
           </div>
-          <div className="space-y-4 rounded-2xl border border-border/60 bg-muted/20 p-4 sm:col-span-2">
-            <Label htmlFor="logo-upload">{t("settings.general.branding.logo_upload")}</Label>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              {settings?.logo_url ? (
-                <button
-                  type="button"
-                  onClick={() => setIsLogoModalOpen(true)}
-                  className="rounded-2xl border border-dashed border-border/60 p-2"
-                >
-                  <img
-                    src={settings.logo_url}
-                    alt={t("settings.general.branding.logo_preview_alt")}
-                    className="h-16 w-16 object-contain"
-                  />
-                </button>
-              ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-dashed border-border/60 text-xs text-muted-foreground">
-                  {t('settings.general.branding.noLogoSet')}
-                </div>
-              )}
-              <div>
-                <p className="text-sm font-medium">
-                  {settings?.logo_url
-                    ? t('settings.general.branding.current_logo')
-                    : t('settings.general.branding.logo_upload')}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {settings?.logo_url
-                    ? t('settings.general.branding.logo_set')
-                    : t('settings.general.branding.logo_formats')}
-                </p>
+          <SettingsImageUploadCard
+            className="sm:col-span-2"
+            title={logoCardTitle}
+            description={logoCardDescription}
+            helperText={t("settings.general.branding.logo_formats")}
+            imageUrl={settings?.logo_url ?? undefined}
+            previewAlt={t("settings.general.branding.logo_preview_alt")}
+            placeholder={
+              <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                {t('settings.general.branding.noLogoSet')}
               </div>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={openLogoFilePicker}
-                  disabled={logoUploadBusy}
-                  className="flex items-center gap-2"
-                >
-                  {logoUploadBusy ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Upload className="h-4 w-4" />
-                  )}
-                  {logoUploadBusy
-                    ? t("settings.general.branding.uploading")
-                    : t("settings.general.branding.choose_new_logo")}
-                </Button>
-                {settings?.logo_url && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="flex items-center gap-2 text-destructive hover:text-destructive"
-                      >
-                        <X className="h-4 w-4" />
-                        {t('buttons.delete', { ns: 'common' })}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{t('settings.general.branding.deleteLogo')}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          {t('settings.general.branding.deleteLogoConfirm')}
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>{t('buttons.cancel', { ns: 'common' })}</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleDeleteLogo}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          {t('settings.general.branding.deleteLogoButton')}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  {...logoUploaderInputProps}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t("settings.general.branding.logo_formats")}
-              </p>
-            </div>
-          </div>
+            }
+            previewShape="rounded"
+            previewSize="lg"
+            onPreview={hasLogo ? () => setIsLogoModalOpen(true) : undefined}
+            uploadLabel={t("settings.general.branding.choose_new_logo")}
+            uploadingLabel={t("settings.general.branding.uploading")}
+            uploadBusy={logoUploadBusy}
+            onUploadClick={openLogoFilePicker}
+            inputRef={fileInputRef}
+            inputProps={logoUploaderInputProps}
+            deleteAction={
+              hasLogo
+                ? {
+                    label: t('buttons.delete', { ns: 'common' }),
+                    confirmationTitle: t('settings.general.branding.deleteLogo'),
+                    confirmationDescription: t('settings.general.branding.deleteLogoConfirm'),
+                    confirmationButtonLabel: t('settings.general.branding.deleteLogoButton'),
+                    cancelLabel: t('buttons.cancel', { ns: 'common' }),
+                    onConfirm: handleDeleteLogo,
+                  }
+                : undefined
+            }
+          />
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="brand-color">{t("settings.general.branding.primaryBrandColor")}</Label>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

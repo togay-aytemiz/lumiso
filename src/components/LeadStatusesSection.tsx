@@ -234,9 +234,8 @@ const LeadStatusesSection = () => {
     label: t('lead_statuses.add_status'),
     onClick: handleAdd,
     icon: Plus,
-    variant: "ghost" as const,
-    className:
-      "rounded-2xl border border-transparent bg-muted px-4 text-sm font-medium text-foreground hover:bg-[hsl(var(--accent-100))] hover:text-[hsl(var(--accent-800))]",
+    variant: "pill" as const,
+    size: "sm" as const,
   };
 
   if (isLoading) {

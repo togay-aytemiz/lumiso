@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { RefreshCcw } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface SettingsRefreshButtonProps {
@@ -10,8 +10,8 @@ interface SettingsRefreshButtonProps {
   label?: string;
   lastUpdatedAt?: Date | number | null;
   className?: string;
-  variant?: "outline" | "ghost";
-  size?: "sm" | "default";
+  variant?: ButtonProps["variant"];
+  size?: ButtonProps["size"];
 }
 
 export function SettingsRefreshButton({
@@ -20,7 +20,7 @@ export function SettingsRefreshButton({
   label = "Refresh",
   lastUpdatedAt,
   className,
-  variant = "outline",
+  variant = "pill",
   size = "sm",
 }: SettingsRefreshButtonProps) {
   const [internalRefreshing, setInternalRefreshing] = useState(false);

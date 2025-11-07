@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
@@ -6,16 +6,15 @@ import {
   SettingsCollectionSection,
   SettingsFormSection,
 } from "@/components/settings/SettingsSectionVariants";
+import { SettingsImageUploadCard } from "@/components/settings/SettingsImageUploadCard";
 import { SettingsRefreshButton } from "@/components/settings/SettingsRefreshButton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Upload, Loader2, X, User, Settings, CheckCircle } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { User, Settings, CheckCircle } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useWorkingHours } from "@/hooks/useWorkingHours";
@@ -307,6 +306,29 @@ export default function Profile() {
   };
 
   const uploadBusy = uploading || uploaderBusy;
+  const profileInitials = useMemo(() => {
+    const name = profileSection.values.fullName?.trim();
+    if (!name) {
+      return "U";
+    }
+    return name
+      .split(/\s+/)
+      .map((part) => part[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+  }, [profileSection.values.fullName]);
+  const hasProfilePhoto = Boolean(profile?.profile_photo_url);
+  const profilePhotoTitle = hasProfilePhoto
+    ? t('settings.profile.profileInfo.currentPhoto')
+    : t('settings.profile.profileInfo.defaultAvatar');
+  const profilePhotoDescription = hasProfilePhoto
+    ? t('settings.profile.profileInfo.photoCurrentlySet')
+    : t('settings.profile.profileInfo.defaultAvatarLongHelp');
+  const profileUploadLabel = hasProfilePhoto
+    ? t('settings.profile.profileInfo.chooseNewFile')
+    : t('settings.profile.profileInfo.chooseFile');
 
   // Show loading state until all data is loaded
   if (profileLoading || workingHoursLoading) {
@@ -334,113 +356,42 @@ export default function Profile() {
             />
           }
         >
-          <div className="space-y-4 rounded-2xl border border-border/60 bg-muted/20 p-4 sm:col-span-2">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <div className="flex flex-1 items-center gap-4">
-                {profile?.profile_photo_url ? (
-                  <button
-                    type="button"
-                    onClick={() => setIsProfilePhotoModalOpen(true)}
-                    className="relative rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                  >
-                    <img
-                      src={profile.profile_photo_url}
-                      alt={t('settings.profile.profileInfo.currentPhoto')}
-                      className="h-16 w-16 rounded-full border bg-white object-cover"
-                    />
-                  </button>
-                ) : (
-                  <Avatar className="h-16 w-16">
-                    <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
-                      {profileSection.values.fullName
-                        ? profileSection.values.fullName
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')
-                            .substring(0, 2)
-                            .toUpperCase()
-                        : 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-                <div>
-                  <p className="text-sm font-medium">
-                    {profile?.profile_photo_url
-                      ? t('settings.profile.profileInfo.currentPhoto')
-                      : t('settings.profile.profileInfo.defaultAvatar')}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {profile?.profile_photo_url
-                      ? t('settings.profile.profileInfo.photoCurrentlySet')
-                      : t('settings.profile.profileInfo.defaultAvatarLongHelp')}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex items-center gap-2"
-                  onClick={openProfilePhotoPicker}
-                  disabled={uploadBusy}
-                >
-                  {uploadBusy ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Upload className="h-4 w-4" />
-                  )}
-                  {uploadBusy
-                    ? t('settings.profile.profileInfo.uploading')
-                    : profile?.profile_photo_url
-                      ? t('settings.profile.profileInfo.chooseNewFile')
-                      : t('settings.profile.profileInfo.chooseFile')}
-                </Button>
-                {profile?.profile_photo_url && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="flex items-center gap-2 text-destructive hover:text-destructive"
-                      >
-                        <X className="h-4 w-4" />
-                        {t('common.delete')}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{t('settings.profile.profileInfo.deletePhoto')}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          {t('settings.profile.profileInfo.deletePhotoConfirm')}
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleDeleteProfilePhoto}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          {t('settings.profile.profileInfo.deletePhotoButton')}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  {...profilePhotoInputProps}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t('settings.profile.profileInfo.fileFormatsHelp')}
-              </p>
-            </div>
-          </div>
+          <SettingsImageUploadCard
+            className="sm:col-span-2"
+            title={profilePhotoTitle}
+            description={profilePhotoDescription}
+            helperText={t('settings.profile.profileInfo.fileFormatsHelp')}
+            imageUrl={profile?.profile_photo_url ?? undefined}
+            previewAlt={t('settings.profile.profileInfo.currentPhoto')}
+            placeholder={
+              <Avatar className="h-full w-full rounded-full">
+                <AvatarFallback className="h-full w-full rounded-full bg-primary/10 text-lg font-semibold text-primary">
+                  {profileInitials}
+                </AvatarFallback>
+              </Avatar>
+            }
+            previewShape="circle"
+            previewSize="lg"
+            onPreview={hasProfilePhoto ? () => setIsProfilePhotoModalOpen(true) : undefined}
+            uploadLabel={profileUploadLabel}
+            uploadingLabel={t('settings.profile.profileInfo.uploading')}
+            uploadBusy={uploadBusy}
+            onUploadClick={openProfilePhotoPicker}
+            inputRef={fileInputRef}
+            inputProps={profilePhotoInputProps}
+            deleteAction={
+              hasProfilePhoto
+                ? {
+                    label: t('common.delete'),
+                    confirmationTitle: t('settings.profile.profileInfo.deletePhoto'),
+                    confirmationDescription: t('settings.profile.profileInfo.deletePhotoConfirm'),
+                    confirmationButtonLabel: t('settings.profile.profileInfo.deletePhotoButton'),
+                    cancelLabel: t('common.cancel'),
+                    onConfirm: handleDeleteProfilePhoto,
+                  }
+                : undefined
+            }
+          />
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="full-name">{t('settings.profile.profileInfo.fullName')}</Label>
             <Input

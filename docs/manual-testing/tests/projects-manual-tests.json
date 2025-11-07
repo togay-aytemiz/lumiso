@@ -417,6 +417,54 @@
           }
         ],
         "expected_result": "Kanban sürükle-bırak işlemleri kalıcıdır; yeni projeler ilgili sütunun en üstüne yerleşir ve yeniden yükleme sonrası da aynı sırada kalır."
+      },
+      {
+        "external_id": "CRM-PROJECTS-320",
+        "title": "Ayarlar’da eklenen proje aşamasını panelden kullanma",
+        "description": "Ayarlar > Projeler ekranında oluşturulan yeni aşamanın ProjectStatusBadge menüsüne anında yansıdığını ve seçildiğinde korunmasını doğrular.",
+        "steps": [
+          {
+            "action": "Ayarlar > Projeler sayfasını açıp 'Aşama ekle' butonuna basın.",
+            "expected_result": "Yeni aşama diyaloğu açılır."
+          },
+          {
+            "action": "İsim alanına benzersiz bir metin (ör. 'Retouch Tamamlandı') yazın, bir renk seçip kaydedin.",
+            "expected_result": "Toast başarı mesajı gösterir ve yeni rozet listede görünür."
+          },
+          {
+            "action": "Herhangi bir projeyi açıp başlığın yanındaki durum rozetine tıklayın.",
+            "expected_result": "Açılır menüde az önce eklediğiniz aşama seçeneği listelenir."
+          },
+          {
+            "action": "Yeni aşamayı seçip paneli kapatın.",
+            "expected_result": "Rozet yeni renge döner, Aktivite kartında statü değişikliğine dair kayıt oluşur."
+          },
+          {
+            "action": "Sayfayı yenileyin veya Projeyi Gör panelini tekrar açın.",
+            "expected_result": "Seçilen aşama korunur ve menüde aynı etiket hâlâ mevcuttur."
+          }
+        ],
+        "expected_result": "Ayarlar’dan eklenen aşamalar tüm proje yüzeylerinde seçilebilir ve seçildikten sonra kalıcı olarak saklanır."
+      },
+      {
+        "external_id": "CRM-PROJECTS-321",
+        "title": "Aşama sıralamasındaki değişikliklerin proje menüsüne yansıması",
+        "description": "Drag & drop ile yeniden sıralanan proje aşamalarının ProjectStatusBadge açılır listesinde aynı sırayla göründüğünü doğrular.",
+        "steps": [
+          {
+            "action": "Ayarlar > Projeler sayfasında iki aşamanın tutamacını sürükleyerek yerlerini değiştirin.",
+            "expected_result": "Bilgi mesajı yeni sıralamanın kaydedildiğini söyler."
+          },
+          {
+            "action": "Aynı hesaptaki açık bir proje detay sayfasını yenileyip durum rozetine tıklayın.",
+            "expected_result": "Açılır menüde aşamalar ayarlarda belirlediğiniz yeni sıraya göre dizilmiştir."
+          },
+          {
+            "action": "Farklı bir aşamayı seçin ve paneli kapatın.",
+            "expected_result": "Proje rozeti seçtiğiniz aşamayı gösterir; Aktivite kartı değişikliği kaydeder."
+          }
+        ],
+        "expected_result": "Merkezi aşama sıralaması güncellendiğinde tüm proje menüleri aynı sıralamayı takip eder."
       }
     ]
   }

@@ -237,6 +237,34 @@
           }
         ],
         "expected_result": "Aktivite kartı iki farklı görünümü arasında sorunsuz geçiş yaparak hem manuel notları hem de sistem geçmişini inceleme imkânı verir."
+      },
+      {
+        "external_id": "CRM-LEADS-212",
+        "title": "Ayarlar’da eklenen lead durumunu detay kartından kullanma",
+        "description": "Leads ayarlarında oluşturulan yeni durumun kişi başlığındaki rozet menüsüne ve tablo filtrelerine yansımasını doğrular.",
+        "steps": [
+          {
+            "action": "Ayarlar > Potansiyel Müşteriler sayfasında 'Durum ekle' altlığını açın.",
+            "expected_result": "İsim, renk ve yaşam döngüsü alanları bulunan küçük form görünür."
+          },
+          {
+            "action": "İsim alanına benzersiz bir statü (ör. 'Atölye Bekliyor') yazın, renk seçip kaydedin.",
+            "expected_result": "Toast başarı mesajı gösterir ve yeni durum listede görünür."
+          },
+          {
+            "action": "/leads sayfasına dönüp herhangi bir kişiyi açın.",
+            "expected_result": "Başlığın yanındaki durum rozetine tıkladığınızda açılan menüde yeni statü listelenir."
+          },
+          {
+            "action": "Yeni statüyü seçip onaylayın.",
+            "expected_result": "Rozet yeni renge döner, Aktivite kartına statü değişikliği kaydı eklenir."
+          },
+          {
+            "action": "Kişi listesini tekrar açıp \"Durum\" filtresi panelini kontrol edin.",
+            "expected_result": "Yeni statü seçim listesinde görünür ve tablo ilgili kişiyi bu statü ile gösterir."
+          }
+        ],
+        "expected_result": "Lead ayarlarında eklenen statüler kişi detay başlığında seçilebilir ve hem filtrelerde hem listede yeni etiketle görüntülenir."
       }
     ]
   }

@@ -658,5 +658,131 @@
         "expected_result": "Geçersiz seanslarda kullanıcıya boş durum mesajı ve geri dönüş butonu sunulur."
       }
     ]
+  },
+  {
+    "suite": "Seanslar - Tür ve Süre Yönetimi",
+    "cases": [
+      {
+        "external_id": "CRM-SESSIONS-439",
+        "title": "Ayarlar’da eklenen seans türünün sihirbaza ve takvime yansıması",
+        "description": "Yeni tür oluşturulduğunda planlama sihirbazında seçilebilir olmasını ve seçilen sürenin takvim bloğunda doğru görünmesini doğrular.",
+        "steps": [
+          {
+            "action": "Ayarlar > Hizmetler sayfasında 'Seans türü ekle' panelini açıp isim olarak 'Mini Studio', süre olarak 75 dakika girerek kaydedin.",
+            "expected_result": "Yeni tür kartı listede görünür ve süresi 75 dk olarak gösterilir."
+          },
+          {
+            "action": "Bir lead veya projeden seans planlama sihirbazını açıp 'Seans Türü' adımına gidin.",
+            "expected_result": "Liste 'Mini Studio' seçeneğini içerir ve kartta '1 saat 15 dakika' etiketi görünür."
+          },
+          {
+            "action": "Bu türü seçip seansı planlayın.",
+            "expected_result": "Özet adımı seçtiğiniz tür adını ve aynı süreyi gösterir; seans başarıyla kaydedilir."
+          },
+          {
+            "action": "Takvim sayfasında oluşturduğunuz seansı bulun.",
+            "expected_result": "Takvim kartının saat etiketi başlangıç+75 dakika olacak şekilde (ör. 14:00-15:15) görünür."
+          }
+        ],
+        "expected_result": "Yeni eklenen seans türü sihirbazda seçilip kaydedildiğinde takvimde doğru süreyle görünür."
+      },
+      {
+        "external_id": "CRM-SESSIONS-440",
+        "title": "Varsayılan seans türünü değiştirmenin sihirbaza etkisi",
+        "description": "Ayarlar’da farklı bir tür varsayılan yapıldığında sihirbazın otomatik olarak bu seçimi önermesini doğrular.",
+        "steps": [
+          {
+            "action": "Ayarlar > Hizmetler'de mevcut türlerden birine girip 'Varsayılan yap' anahtarını açın ve kaydedin.",
+            "expected_result": "Kartta 'Varsayılan' rozeti yeni türde görünür; önceki karttan kalkar."
+          },
+          {
+            "action": "Seans planlama sihirbazını yeni bir sekmede açın.",
+            "expected_result": "Seans türü adımı yüklendiğinde yeni varsayılan tür vurgulu ve seçili gelir."
+          },
+          {
+            "action": "Bu varsayılan seçimi değiştirmeden 'Özet' adımına ilerleyin.",
+            "expected_result": "Özet kartı seçili tür olarak yeni varsayılanın adını gösterir."
+          }
+        ],
+        "expected_result": "Varsayılan tür değişikliği sihirbazda ek işlem gerektirmeden uygulanır."
+      },
+      {
+        "external_id": "CRM-SESSIONS-441",
+        "title": "Pasif yapılan seans türünün sihirbazdan gizlenmesi",
+        "description": "Pasif hale getirilen türlerin seans planlama adımında listelenmediğini doğrular.",
+        "steps": [
+          {
+            "action": "Ayarlar > Hizmetler sayfasında bir seans türü kartının çöp kutusu ikonuna tıklayıp 'Pasif yap' seçeneğini onaylayın.",
+            "expected_result": "Kart griye döner ve 'Pasif' rozeti eklenir."
+          },
+          {
+            "action": "Seans planlama sihirbazını açıp 'Seans Türü' adımını kontrol edin.",
+            "expected_result": "Pasif yaptığınız tür listede görünmez."
+          },
+          {
+            "action": "Aynı türü Ayarlar ekranında tekrar aktif hale getirin.",
+            "expected_result": "Kart renkli hale döner ve 'Pasif' rozeti kaybolur."
+          },
+          {
+            "action": "Sihirbaza dönüp listeyi yenileyin.",
+            "expected_result": "Tür yeniden görünür ve seçilebilir olur."
+          }
+        ],
+        "expected_result": "Pasif türler sihirbazda gizlenirken tekrar aktifleştirildiğinde hemen listeye geri döner."
+      }
+    ]
+  },
+  {
+    "suite": "Seanslar - Durum ve Segment Güncellemeleri",
+    "cases": [
+      {
+        "external_id": "CRM-SESSIONS-442",
+        "title": "Yeni seans durumunun badge menülerine ve segmentlere yansıması",
+        "description": "Ayarlar > Projeler > Oturum Durumları kartında eklenen durumun SessionStatusBadge ve segment sayaçlarında kullanıldığını doğrular.",
+        "steps": [
+          {
+            "action": "Ayarlar > Projeler sayfasında 'Oturum Durumları' kartından 'Durum ekle' butonuna tıklayın.",
+            "expected_result": "Durum ekleme diyaloğu açılır."
+          },
+          {
+            "action": "İsim alanına 'Teslim için Hazır' yazın, yaşam döngüsünü 'Tamamlandı' olarak seçin ve kaydedin.",
+            "expected_result": "Yeni durum kartı listede görünür."
+          },
+          {
+            "action": "Herhangi bir seans sheet'ini açıp durum rozetine tıklayın.",
+            "expected_result": "Menüde 'Teslim için Hazır' seçeneği listelenir."
+          },
+          {
+            "action": "Seansı bu duruma alıp sheet'i kapatın.",
+            "expected_result": "Seanslar sayfasındaki segment sayaçlarında 'Tamamlanan' değeri artar; satırda yeni durum etiketi görünür."
+          }
+        ],
+        "expected_result": "Yeni eklenen seans durumu hem badge menülerinde hem segment metriklerinde doğru yaşam döngüsüyle görünür."
+      },
+      {
+        "external_id": "CRM-SESSIONS-443",
+        "title": "Pasif edilen seans durumunun uygulama genelinde gizlenmesi",
+        "description": "Bir seans durumu 'Pasif yap' seçeneğiyle kapatıldığında rozet menülerinden ve filtrelerden kaldırıldığını doğrular.",
+        "steps": [
+          {
+            "action": "Ayarlar > Projeler > Oturum Durumları kartında mevcut bir durumun çöp kutusu ikonuna tıklayın.",
+            "expected_result": "Pasif yap/sil seçenekleri içeren diyalog açılır."
+          },
+          {
+            "action": "'Pasif yap' seçeneğini onaylayın.",
+            "expected_result": "Durum kartı saydamlaşır ve 'Pasif' etiketi eklenir."
+          },
+          {
+            "action": "Bir seans sheet'inde durum rozetini açın.",
+            "expected_result": "Pasif yaptığınız durum menüde görünmez."
+          },
+          {
+            "action": "Seanslar sayfasındaki segment filtre panelini kontrol edin.",
+            "expected_result": "Pasif durum filtre listesinde yer almaz ve sayaçlar değişmez."
+          }
+        ],
+        "expected_result": "Pasif edilen seans durumları kullanıcıya seçim olarak sunulmaz ve raporlardan çıkarılır."
+      }
+    ]
   }
 ]

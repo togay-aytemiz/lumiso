@@ -416,28 +416,6 @@ const formatCurrency = useCallback((amount: string | number | null) => {
   const listTableColumns = useMemo<AdvancedTableColumn<ProjectListItem>[]>(
     () => [
       {
-        id: "lead_name",
-        label: tForms("projects.table_columns.client"),
-        sortable: true,
-        sortId: "lead_name",
-        accessor: (row) => row.lead?.name ?? "",
-        render: (row: ProjectListItem) =>
-          row.lead?.id ? (
-            <Button
-              variant="link"
-              className="p-0 h-auto font-medium"
-              onClick={(event) => {
-                event.stopPropagation();
-                handleLeadClick(row.lead!.id);
-              }}
-            >
-              {row.lead?.name}
-            </Button>
-          ) : (
-            <span className="text-muted-foreground">{t("projects.no_lead")}</span>
-          ),
-      },
-      {
         id: "name",
         label: tForms("projects.table_columns.project_name"),
         sortable: true,
@@ -461,6 +439,28 @@ const formatCurrency = useCallback((amount: string | number | null) => {
             ) : null}
           </div>
         ),
+      },
+      {
+        id: "lead_name",
+        label: tForms("projects.table_columns.client"),
+        sortable: true,
+        sortId: "lead_name",
+        accessor: (row) => row.lead?.name ?? "",
+        render: (row: ProjectListItem) =>
+          row.lead?.id ? (
+            <Button
+              variant="link"
+              className="p-0 h-auto font-medium"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleLeadClick(row.lead!.id);
+              }}
+            >
+              {row.lead?.name}
+            </Button>
+          ) : (
+            <span className="text-muted-foreground">{t("projects.no_lead")}</span>
+          ),
       },
       {
         id: "project_type",
@@ -543,28 +543,6 @@ const formatCurrency = useCallback((amount: string | number | null) => {
   const archivedTableColumns = useMemo<AdvancedTableColumn<ProjectListItem>[]>(
     () => [
       {
-        id: "lead_name",
-        label: tForms("projects.table_columns.client"),
-        sortable: true,
-        sortId: "lead_name",
-        accessor: (row) => row.lead?.name ?? "",
-        render: (row: ProjectListItem) =>
-          row.lead?.id ? (
-            <Button
-              variant="link"
-              className="p-0 h-auto font-medium"
-              onClick={(event) => {
-                event.stopPropagation();
-                handleLeadClick(row.lead!.id);
-              }}
-            >
-              {row.lead?.name}
-            </Button>
-          ) : (
-            <span className="text-muted-foreground">{t("projects.no_lead")}</span>
-          ),
-      },
-      {
         id: "name",
         label: tForms("projects.table_columns.project_name"),
         sortable: true,
@@ -588,6 +566,28 @@ const formatCurrency = useCallback((amount: string | number | null) => {
             ) : null}
           </div>
         ),
+      },
+      {
+        id: "lead_name",
+        label: tForms("projects.table_columns.client"),
+        sortable: true,
+        sortId: "lead_name",
+        accessor: (row) => row.lead?.name ?? "",
+        render: (row: ProjectListItem) =>
+          row.lead?.id ? (
+            <Button
+              variant="link"
+              className="p-0 h-auto font-medium"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleLeadClick(row.lead!.id);
+              }}
+            >
+              {row.lead?.name}
+            </Button>
+          ) : (
+            <span className="text-muted-foreground">{t("projects.no_lead")}</span>
+          ),
       },
       {
         id: "project_type",

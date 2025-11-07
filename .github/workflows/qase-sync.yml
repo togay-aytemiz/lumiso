@@ -20,6 +20,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Compute changed JSON files
+        if: github.event_name == 'push'
         id: diff
         run: |
           BASE="${{ github.event.before }}"
@@ -58,7 +59,7 @@ jobs:
         env:
           QASE_API_TOKEN: ${{ secrets.QASE_API_TOKEN }}
           QASE_PROJECT: LUMISO
-          CHANGED_FILES: ${{ steps.diff.outputs.files }}
+          CHANGED_FILES: ${{ github.event_name == 'push' && steps.diff.outputs.files || '' }}
           RUN_SUITE: ${{ inputs.suite }}
           RETEST_IDS: ${{ inputs.external_ids }}
         run: python scripts/qase_sync.py

@@ -216,7 +216,8 @@ Cross-cutting components:
 - ✅ Services: standardize cards for session types/packages/services; consolidate onboarding surfaces and actions with the compact collection shell.
   - ✅ Enabled sticky navigation by backfilling section anchors on current components.
   - ✅ Session type + package cards now render without the redundant inner wrapper so density matches the rest of the compact settings.
-- ▫️ Document data fetch policies (manual refresh vs. auto).
+- ✳️ **Data Fetch Policy Notes** — React-query caches all collection fetches per organization with `staleTime=5m`, window-focus revalidation disabled; every settings page exposes the `SettingsRefreshButton` so ops teams can pull a manual refresh (call to `refetch()` on the underlying hook). Mutations triggered by drag/drop or dialogs keep their existing optimistic updates + background refetch. Free-form inputs never auto-save: they rely on the sticky footer (ensuring explicit intent) while non-form toggles continue to auto-save with inline toast confirmations.
+- ✅ Documented data fetch policies (manual refresh vs. auto): Leads/Projects/Services read from their `useOrganizationData` react-query caches (staleTime 5m) with a shared `SettingsRefreshButton` triggering `refetch()`; only mutation flows auto-save (drag/drop, dialog submits) while text inputs rely on the sticky footer so users explicitly commit batched edits.
 - ▫️ Extend anchor nav mapping and mobile back pattern to collection-heavy pages (Leads/Projects/Services) with sensible section groupings.
 
 ### Phase 3.5 — Compliance & Billing Foundations

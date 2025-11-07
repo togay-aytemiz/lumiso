@@ -118,3 +118,5 @@ Aşağıdaki bölümler ayarlar modülüne özel kapsam notlarını listeler:
 2. **Çoklu kanal entegrasyonları**: WhatsApp/SMS gönderimleri tamamlandığında workflows/templates testlerine gerçek cihaz doğrulamaları eklenmeli.
 3. **Mobil/Responsive varyantlar**: Header Global Search ve kritik modüllerin mobil davranışları için ek senaryolar yazılmalı.
 4. **Yeni modüller**: Pipeline’da olan onboarding adımları, auth iyileştirmeleri veya henüz kapsanmayan sayfalar için aynı şemayla yeni suite’ler açın.
+5. **Analytics & Dashboard**: CRM Dashboard kartları, grafikler ve Analytics filtreleri için henüz manuel test JSON’u yok; metriklerin doğru hesaplandığını ve mobilde okunabilir kaldığını doğrulayan senaryolar eklenmeli.
+6. **Takvim & Hatırlatıcı sayfaları**: `/calendar` ve `/reminders` sayfalarındaki timeline, hızlı filtreler, yeniden planlama sürükle-bırak akışları ayrı bir suite’te kapsanmalı.

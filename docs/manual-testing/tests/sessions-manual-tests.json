@@ -1,0 +1,662 @@
+[
+  {
+    "suite": "Seans Planlama Sihirbazı",
+    "cases": [
+      {
+        "external_id": "CRM-SESSIONS-401",
+        "title": "Projeden seans planlama akışı",
+        "description": "Proje detay sayfasındaki 'Seanslar' sekmesinden 'Yeni Seans Planla' butonuyla seans oluşturup listenin güncellenmesini doğrular.",
+        "steps": [
+          {
+            "action": "Aktif bir projenin detay sayfasını (`/projects/:id`) açın ve sekmelerden 'Seanslar'ı seçin.",
+            "expected_result": "Kart başlığı 'Seanslar' olarak görünür ve sağ üstte 'Yeni Seans Planla' butonu yer alır."
+          },
+          {
+            "action": "'Yeni Seans Planla' butonuna basın.",
+            "expected_result": "Ekranın sağından 'Seans planla' başlıklı sheet açılır; 'Kişi' adımı proje sahibinin adıyla doludur."
+          },
+          {
+            "action": "Adımları takip ederek 'Tarih ve saat' ekranında gelecekteki bir tarih ve saat seçin.",
+            "expected_result": "Seçilen tarih ve saat üst taraftaki özet satırına eklenir."
+          },
+          {
+            "action": "'Özet' kartında bildirim anahtarlarını kontrol edip 'Seansı onayla' butonuna tıklayın.",
+            "expected_result": "Başarı ekranı 'Seans planlandı!' mesajını ve 'Yeni seans planla' ile 'Kapat' butonlarını gösterir."
+          },
+          {
+            "action": "Sheet kapandığında 'Seanslar' kartındaki listeyi kontrol edin.",
+            "expected_result": "Yeni seans kartı listede görünür ve sayaç 'Bu proje için X seans' olarak güncellenir."
+          }
+        ],
+        "expected_result": "Projeden başlatılan seans sihirbazı tamamlandığında kayıt kart listesine eklenir ve sayaç doğru sayıyı gösterir."
+      },
+      {
+        "external_id": "CRM-SESSIONS-402",
+        "title": "Kişi detayından seans planlama",
+        "description": "Kişi başlığındaki 'Seans Ekle' düğmesinin sihirbazı otomatik olarak kişiyle başlatmasını ve seans sayacını güncellemesini doğrular.",
+        "steps": [
+          {
+            "action": "Planlanmış seansı olmayan bir kişinin detay sayfasını açın; üstteki özet kartları arasından 'Seanslar' satırını bulun.",
+            "expected_result": "Kartta 'Henüz seans yok' veya mevcut sayım metni ve sağda 'Seans Ekle' düğmesi görünür."
+          },
+          {
+            "action": "'Seans Ekle' düğmesine tıklayın.",
+            "expected_result": "'Seans planla' sheet açılır ve 'Kişi' adımı seçtiğiniz kişiyle dolu gelir."
+          },
+          {
+            "action": "'Proje' adımında 'Yeni proje oluştur' seçeneğini seçip zorunlu proje adını yazın, ardından 'İleri'ye basın.",
+            "expected_result": "Yeni proje adı adım özetine düşer ve sonraki adıma geçilir."
+          },
+          {
+            "action": "Tarih ve saati belirleyip sihirbazı tamamlayın.",
+            "expected_result": "Sheet kapanır ve yeşil bildirim 'Seansınız takviminize eklendi...' mesajını gösterir."
+          },
+          {
+            "action": "Kişi başlığındaki 'Seanslar' kartını tekrar inceleyin.",
+            "expected_result": "Sayım '1 seans' olur ve uygun ise 'Bugün HH:MM' şeklinde bir çip görünür."
+          }
+        ],
+        "expected_result": "Kişi detayındaki kısayol seans planlamayı tek tıkla başlatır ve tamamlanınca sayaç ile çipler yeni tarihi gösterir."
+      },
+      {
+        "external_id": "CRM-SESSIONS-403",
+        "title": "Planlı seansı olan kişide Seans Ekle butonunun kilitlenmesi",
+        "description": "Planlı statüde en az bir seansı olan kişide başlıktaki 'Seans Ekle' butonunun devre dışı kalmasını doğrular.",
+        "steps": [
+          {
+            "action": "Planlı durumda seansı olan bir kişinin detay sayfasını açın.",
+            "expected_result": "'Seanslar' sayacı ilgili sayıyı ve gerekirse 'Bugün' ya da 'Gecikmiş' etiketlerini gösterir."
+          },
+          {
+            "action": "Üstteki 'Seans Ekle' butonunun üzerine gelin.",
+            "expected_result": "Buton gri/pasif görünür ve tooltip 'Zaten planlanmış bir seans mevcut.' metnini gösterir."
+          },
+          {
+            "action": "Butona tıklamayı deneyin.",
+            "expected_result": "Planlama sheet'i açılmaz; kullanıcı başka bir seans ekleyemez."
+          }
+        ],
+        "expected_result": "Halihazırda planlı seansı olan kişilerde yeni seans oluşturma kısayolu devre dışıdır ve kullanıcıya nedeni Türkçe olarak açıklanır."
+      },
+      {
+        "external_id": "CRM-SESSIONS-404",
+        "title": "Seanslar sayfasından mevcut kişiye seans ekleme",
+        "description": "/sessions sayfasındaki 'Seans Ekle' butonuyla var olan bir kişi seçilip yeni seansın tabloya eklenmesini doğrular.",
+        "steps": [
+          {
+            "action": "Sol menüden 'Seanslar' sayfasını açın; başlıkta 'Seanslar' ve 'Seans Programı' metinlerini görün.",
+            "expected_result": "Sayfanın üst kısmında artı ikonlu 'Seans Ekle' butonu görünür."
+          },
+          {
+            "action": "'Seans Ekle' butonuna tıklayın.",
+            "expected_result": "'Seans planla' sheet açılır."
+          },
+          {
+            "action": "'Kişi ara' alanına mevcut bir müşteri adı yazıp listeden seçin.",
+            "expected_result": "Seçilen kişi adı adım özetinde kalın şekilde gösterilir."
+          },
+          {
+            "action": "Projeyi seçip tarih ve saat belirledikten sonra 'Seansı onayla' butonuna basın.",
+            "expected_result": "Başarı ekranı kapanır ve sheet otomatik kapanır."
+          },
+          {
+            "action": "Seanslar tablosunun ilk satırını kontrol edin.",
+            "expected_result": "Yeni seans satırı seçtiğiniz kişinin adıyla listenin üstüne gelir; tarih sütununda gerekiyorsa 'Bugün' rozeti görünür."
+          }
+        ],
+        "expected_result": "Seanslar sayfasındaki global buton sorunsuz şekilde seans planlar ve tabloyu anlık günceller."
+      },
+      {
+        "external_id": "CRM-SESSIONS-405",
+        "title": "Kişi seçmeden ilerleme engellenir",
+        "description": "Sihirbazın 'Kişi' adımı boş bırakıldığında doğrulama uyarısı gösterdiğini doğrular.",
+        "steps": [
+          {
+            "action": "'Seans planla' sheet'ini açın ve 'Kişi' adımında kalın.",
+            "expected_result": "Adım başlığı 'Kişi' olarak görünür ve seçim alanı boş durumdadır."
+          },
+          {
+            "action": "Herhangi bir kişi seçmeden alt kısımdaki 'İleri' butonuna tıklayın.",
+            "expected_result": "Buton titreşir ve kırmızı uyarı \"Onaylamadan önce kişi seçin veya yeni kişi oluşturun.\" mesajını gösterir."
+          },
+          {
+            "action": "'Yeni kişi oluştur' seçeneğini açmadan tekrar 'İleri' demeyi deneyin.",
+            "expected_result": "Adım değişmez, uyarı kalır ve kullanıcı kişi seçmeye yönlendirilir."
+          }
+        ],
+        "expected_result": "Kişi adımı zorunludur; kullanıcı bir kişi seçmeden sihirbazda ilerleyemez."
+      },
+      {
+        "external_id": "CRM-SESSIONS-406",
+        "title": "Tarih ve saat alanları zorunludur",
+        "description": "'Tarih ve saat' adımı boş bırakıldığında 'Seans tarihi ve saatini birlikte seçin.' uyarısını doğrular.",
+        "steps": [
+          {
+            "action": "'Kişi' ve 'Proje' adımlarını tamamlayıp 'Tarih ve saat' adımına ilerleyin.",
+            "expected_result": "Adım başlığı 'Tarih ve saat' olarak görünür."
+          },
+          {
+            "action": "Takvimi açmadan veya saat seçmeden 'İleri'ye basın.",
+            "expected_result": "Adım üstünde kırmızı bir bant ve \"Seans tarihi ve saatini birlikte seçin.\" uyarısı çıkar."
+          },
+          {
+            "action": "Yalnızca tarihi seçip saati boş bırakın ve tekrar 'İleri'ye basın.",
+            "expected_result": "Aynı uyarı görünür; her iki alanın zorunlu olduğu belirtilir."
+          }
+        ],
+        "expected_result": "Sihirbaz tarih ve saat alanları doldurulana kadar sonraki adıma geçmez."
+      },
+      {
+        "external_id": "CRM-SESSIONS-407",
+        "title": "Bildirimler kartında Hatırlatıcı ve Özet anahtarları",
+        "description": "'Özet' adımındaki 'Bildirimler' kartının anahtarları ve iş akışı listesinin doğru güncellenmesini doğrular.",
+        "steps": [
+          {
+            "action": "'Özet' adımına gelerek kartın içindeki 'Hatırlatıcılar' ve 'Özet' anahtarlarını bulun.",
+            "expected_result": "Kart, 'Çalışacak iş akışları' başlığı ve ilgili rozetlerle görünür."
+          },
+          {
+            "action": "'Hatırlatıcılar' anahtarını kapatın.",
+            "expected_result": "Anahtar 'Kapalı' olur ve ilgili iş akışı etiketi griye döner veya listeden kaybolur."
+          },
+          {
+            "action": "'Özet' anahtarını açın.",
+            "expected_result": "Anahtar 'Açık' durumuna geçer, 'Özet' etiketi vurgulanır ve rozetler listeye eklenir."
+          }
+        ],
+        "expected_result": "Bildirim anahtarları tek tıklamayla açılıp kapanır ve kullanıcı hangi otomasyonun çalışacağını net şekilde görür."
+      },
+      {
+        "external_id": "CRM-SESSIONS-408",
+        "title": "Kaydetmeden çıkış koruması",
+        "description": "Sheet kapatılırken 'Kaydetmeden çıkılsın mı?' uyarısının görünmesini ve verilerin korunmasını doğrular.",
+        "steps": [
+          {
+            "action": "Sihirbazda en az bir alanı (ör. kişi seçimini) değiştirin.",
+            "expected_result": "Adım özetinde seçiminiz görünür, sheet kirli hale gelir."
+          },
+          {
+            "action": "Sheet'i kapatmak için sağ üstteki kapatma ikonuna tıklayın.",
+            "expected_result": "Bir uyarı penceresi 'Kaydetmeden çıkılsın mı?' başlığıyla açılır."
+          },
+          {
+            "action": "Uyarıdaki 'Düzenlemeye devam et' seçeneğini seçin.",
+            "expected_result": "Sheet yeniden açılır ve yaptığınız seçimler aynen durur."
+          }
+        ],
+        "expected_result": "Kullanıcı yanlışlıkla kapanması durumunda uyarı alır ve isterse taslağa geri dönerek değişiklikleri kaybetmez."
+      },
+      {
+        "external_id": "CRM-SESSIONS-409",
+        "title": "Başarı ekranından ardışık seans planlama",
+        "description": "'Seans planlandı!' ekranındaki aksiyonların yeni planlama başlatabildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Herhangi bir girişten seans planlayıp başarı ekranına ulaşın.",
+            "expected_result": "Ekranda 'Seans planlandı!' başlığı, tarih/saat özeti ve iki buton ('Yeni seans planla', 'Kapat') görünür."
+          },
+          {
+            "action": "'Yeni seans planla' butonuna basın.",
+            "expected_result": "Sihirbaz sıfırlanır ve 'Kişi' adımı tekrar ilk adıma döner."
+          },
+          {
+            "action": "Sheet'i 'Kapat' butonuyla kapatın.",
+            "expected_result": "Sheet kapanır; ebeveyn sayfadaki listede az önce planlanan seans zaten görünür."
+          }
+        ],
+        "expected_result": "Başarı ekranı kullanıcıya ikinci bir seans planlamak veya sheet'i kapatmak için net seçenekler sunar."
+      }
+    ]
+  },
+  {
+    "suite": "Projeler ve Kişilerde Seans Görünümleri",
+    "cases": [
+      {
+        "external_id": "CRM-SESSIONS-410",
+        "title": "Projedeki Seanslar kartının boş durumu",
+        "description": "Henüz seansı olmayan projede kartın doğru boş durum metnini göstermesini doğrular.",
+        "steps": [
+          {
+            "action": "Seansı bulunmayan yeni bir projeyi açıp 'Seanslar' sekmesine geçin.",
+            "expected_result": "Kart ikonunda takvim görünür ve başlık 'Seanslar' yazar."
+          },
+          {
+            "action": "Kart içeriğini inceleyin.",
+            "expected_result": "Metin 'Henüz planlanmış seans yok' ve altında 'Başlamak için ilk seansınızı planlayın' ipucu görünür."
+          },
+          {
+            "action": "'Yeni Seans Planla' butonunun durumunu kontrol edin.",
+            "expected_result": "Buton aktif ve tıklanabilir durumdadır."
+          }
+        ],
+        "expected_result": "Seansı olmayan projelerde kart net bir boş durum mesajı ve planlama çağrısı gösterir."
+      },
+      {
+        "external_id": "CRM-SESSIONS-411",
+        "title": "Proje bazında seans sayacının güncellenmesi",
+        "description": "Karta bağlı seans sayısının ekleme ve silme işlemleriyle anında değiştiğini doğrular.",
+        "steps": [
+          {
+            "action": "Projeye en az iki seans ekleyin ve sayfayı yenileyin.",
+            "expected_result": "Kart üstünde 'Bu proje için 2 seans' benzeri metin görünür."
+          },
+          {
+            "action": "Aynı projeye bir seans daha planlayın.",
+            "expected_result": "Sayaç otomatik olarak yeni toplamı ('3 seans') gösterir."
+          },
+          {
+            "action": "Listeden bir seansı silin.",
+            "expected_result": "Sayaç yeni toplamla güncellenir ve satır listeden kalkar."
+          }
+        ],
+        "expected_result": "Karttaki sayaç gerçek zamanlı olarak proje seanslarının toplamını gösterir."
+      },
+      {
+        "external_id": "CRM-SESSIONS-412",
+        "title": "Gecikmiş seans rozetleri",
+        "description": "Geçmiş tarihli planlı seansların kartta 'Gecikmiş' rozetini göstermesini doğrular.",
+        "steps": [
+          {
+            "action": "Bir seansın tarihini geçmiş bir güne alıp durumunu 'planned' bırakın.",
+            "expected_result": "Seans satırının sol kenarı turuncu olur."
+          },
+          {
+            "action": "Satır üzerindeki küçük rozetlere bakın.",
+            "expected_result": "Rozet 'Gecikmiş' yazar ve yanında turuncu uyarı ikonu görünür."
+          }
+        ],
+        "expected_result": "Geçmişe düşen planlı seanslar kullanıcıyı uyarmak için rozet ve ikonla vurgulanır."
+      },
+      {
+        "external_id": "CRM-SESSIONS-413",
+        "title": "Seans kartına tıklayınca sheet'in açılması",
+        "description": "Proje kartındaki seans satırının SessionSheet bileşenini açtığını doğrular.",
+        "steps": [
+          {
+            "action": "Listeden herhangi bir seans satırının tamamına tıklayın.",
+            "expected_result": "Ekranın sağından seans sheet'i açılır; başlıkta seans adı ve durum rozeti görünür."
+          },
+          {
+            "action": "Sheet içindeki 'Tarih ve Saat', 'Proje' ve 'Notlar' alanlarını kontrol edin.",
+            "expected_result": "Her alan form çevirileriyle etiketlenmiş ve mevcut verilerle doludur."
+          }
+        ],
+        "expected_result": "Seans kartına tıklamak kullanıcıyı hızlı düzenleme/görüntüleme sheet'ine taşır."
+      },
+      {
+        "external_id": "CRM-SESSIONS-414",
+        "title": "Sheet'ten Tam Detaylar sayfasına geçiş",
+        "description": "Sheet üzerindeki 'Tam Detaylar' butonunun `/sessions/:id` sayfasına götürdüğünü doğrular.",
+        "steps": [
+          {
+            "action": "Açık sheet'te üst taraftaki 'Tam Detaylar' butonuna tıklayın.",
+            "expected_result": "Tarayıcı yeni sekmede veya aynı sekmede `/sessions/:id` adresini açar."
+          },
+          {
+            "action": "Yeni sayfadaki üst başlığı inceleyin.",
+            "expected_result": "Başlıkta seans adı, durum rozeti ve 'Seansı Düzenle' butonu görünür."
+          }
+        ],
+        "expected_result": "Sheet'ten tek tıkla tam sayfa seans detayına geçilebilir."
+      },
+      {
+        "external_id": "CRM-SESSIONS-415",
+        "title": "Sheet'teki Tehlike Bölgesi ile seansı silme",
+        "description": "Sheet altındaki kırmızı bölümün seansı kalıcı olarak sildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Sheet'te 'Tehlike Bölgesi' bölümüne kaydırıp 'Seansı Sil' butonuna basın.",
+            "expected_result": "'Seansı Sil' başlıklı bir onay diyaloğu açılır."
+          },
+          {
+            "action": "Diyalogda 'Bu işlem seansı ve ilgili tüm verileri kalıcı olarak silecektir.' metnini okuyup onaylayın.",
+            "expected_result": "Onay sonrası sheet kapanır."
+          },
+          {
+            "action": "Proje kartındaki seans listesine dönün.",
+            "expected_result": "Silinen seans listeden kaldırılmıştır ve sayaç yeni toplamı gösterir."
+          }
+        ],
+        "expected_result": "Tehlike Bölgesi üzerinden yapılan silme işlemi kullanıcıyı uyarır ve proje kartını anında günceller."
+      },
+      {
+        "external_id": "CRM-SESSIONS-416",
+        "title": "Kişi özet kartında seans chip'lerinin güncellenmesi",
+        "description": "Kişi başlığındaki 'Seanslar' özetinin sayıyı ve yaklaşan seans etiketini göstermesini doğrular.",
+        "steps": [
+          {
+            "action": "Yaklaşan seansı olan bir kişiyi açın.",
+            "expected_result": "Özet satırı '1 seans' gibi bir metin ve 'Bugün HH:MM' veya 'Yarın' çipini gösterir."
+          },
+          {
+            "action": "Seansın saatini değiştirip sayfayı yenileyin.",
+            "expected_result": "Çip yeni tarih/saat ile otomatik güncellenir."
+          }
+        ],
+        "expected_result": "Kişi özet kartı yaklaşan seans bilgilerini gerçek zamanlı yansıtır."
+      },
+      {
+        "external_id": "CRM-SESSIONS-417",
+        "title": "Kişide seans kalmayınca özetin sıfırlanması",
+        "description": "Tüm seanslar tamamlandı veya silindiğinde kişi özetinde 'Henüz seans yok' mesajının dönmesini doğrular.",
+        "steps": [
+          {
+            "action": "Kişideki tüm seansları tamamlayın/silin ve listeyi boş bırakın.",
+            "expected_result": "'Seanslar' satırı 'Henüz seans yok' ve alt satır 'İlerlemeniz için bir seans planlayın.' metnini gösterir."
+          },
+          {
+            "action": "'Seans Ekle' butonunun durumunu kontrol edin.",
+            "expected_result": "Buton yeniden aktif hale gelir ve sihirbazı açmaya hazırdır."
+          }
+        ],
+        "expected_result": "Kişide seans kalmadığında özet kartı kullanıcıyı yeni seans planlamaya yönlendirir."
+      }
+    ]
+  },
+  {
+    "suite": "Seanslar Sayfası",
+    "cases": [
+      {
+        "external_id": "CRM-SESSIONS-420",
+        "title": "Segment kontrolüyle listeyi filtreleme",
+        "description": "Segmentli kontrolün (Tüm aktif, Yaklaşan vb.) tabloyu doğru filtrelemesini doğrular.",
+        "steps": [
+          {
+            "action": "Seanslar sayfasını açıp tablonun üzerindeki segment kontrolünü inceleyin.",
+            "expected_result": "Butonlar 'Tüm aktif', 'Yaklaşan', 'Devam eden', 'Beklemede', 'Tamamlanan', 'İptal edilen' olarak görünür ve her biri sayaç etiketi taşır."
+          },
+          {
+            "action": "'Yaklaşan' segmentini seçin.",
+            "expected_result": "Tablo yalnızca gelecekteki seansları gösterir; açıklama '{{total}} seansın tarihi bugün ya da sonrası.' metnine döner."
+          },
+          {
+            "action": "'İptal edilen' segmentine geçin.",
+            "expected_result": "Yalnızca iptal edilen seanslar listede kalır ve sayaç/tooltip buna göre güncellenir."
+          }
+        ],
+        "expected_result": "Segment kontrolü seçilen yaşam döngüsüne göre listeyi güvenilir şekilde filtreler."
+      },
+      {
+        "external_id": "CRM-SESSIONS-421",
+        "title": "'Nasıl hesaplanıyor?' popoverının içeriği",
+        "description": "Segment açıklama popoverının seçilen segmente göre doğru metinleri gösterdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Segment kontrolünün yanındaki 'Nasıl hesaplanıyor?' butonuna tıklayın.",
+            "expected_result": "Popover 'Yaşam döngüsü eşleştirmesi seans durum ayarlarınızdan otomatik alınır.' cümlesini ve aktif segment özetini gösterir."
+          },
+          {
+            "action": "'Beklemede' segmentini seçip popoverı tekrar açın.",
+            "expected_result": "Bullet listesi 'Seans tarihi bugünden önce.' gibi metinlerle güncellenir."
+          }
+        ],
+        "expected_result": "Popover aktif segmente göre açıklamaları değiştirir ve kullanıcıya kuralları anlatır."
+      },
+      {
+        "external_id": "CRM-SESSIONS-422",
+        "title": "KPI kartından filtre uygulama",
+        "description": "KPI altındaki aksiyon butonunun segment ve sıralamayı otomatik ayarladığını doğrular.",
+        "steps": [
+          {
+            "action": "'Bugün ve yaklaşan seanslar' KPI kartını bulun ve altındaki 'Yaklaşanları göster' butonuna tıklayın.",
+            "expected_result": "Segment kontrolü otomatik olarak 'Yaklaşan' değerine geçer."
+          },
+          {
+            "action": "Tablo sıralamasını kontrol edin.",
+            "expected_result": "Sıralama 'Tarih' sütununa göre artan şekilde ayarlanır; en yakın seanslar üstte görünür."
+          }
+        ],
+        "expected_result": "KPI aksiyonları kullanıcıyı ilgili segment ve sıralamaya tek adımda taşır."
+      },
+      {
+        "external_id": "CRM-SESSIONS-423",
+        "title": "Tarih sütununa göre sıralama",
+        "description": "Tablo başlıklarına tıklayarak tarihe göre artan/azalan sıralamayı doğrular.",
+        "steps": [
+          {
+            "action": "Tablodaki 'Tarih' sütun başlığına tıklayın.",
+            "expected_result": "Başlık yanında sıralama oku belirir ve satırlar tarihe göre artan şekilde sıralanır; bugün olanlar üstte kalır."
+          },
+          {
+            "action": "Aynı başlığa tekrar tıklayın.",
+            "expected_result": "Sıralama tersine çevrilir; en uzak tarihler üstte görünür."
+          }
+        ],
+        "expected_result": "Sütun başlıklarına tıklamak tablo düzenini değiştirmekte sorunsuz çalışır."
+      },
+      {
+        "external_id": "CRM-SESSIONS-424",
+        "title": "Seansları Excel'e aktarma",
+        "description": "Excel'e aktar butonunun dosya indirip başarı toast'ı göstermesini doğrular.",
+        "steps": [
+          {
+            "action": "Listede en az bir satır varken 'Excel'e aktar' butonuna tıklayın.",
+            "expected_result": "Buton kısa süreli yükleme ikonuna döner."
+          },
+          {
+            "action": "İndirme tamamlandığında tarayıcıdaki dosya adını kontrol edin.",
+            "expected_result": "Dosya adı 'sessions-YYYY-MM-DD_HHmm.xlsx' formatındadır ve toast 'Dışa aktarma hazır' mesajını gösterir."
+          }
+        ],
+        "expected_result": "Excel aktarımı kullanıcıya dosya indirildiğini ve başarılı olduğunu bildirir."
+      },
+      {
+        "external_id": "CRM-SESSIONS-425",
+        "title": "Boş filtre sonucunda gösterilen mesaj",
+        "description": "Filtreler hiçbir seans bırakmadığında boş durum kartının doğru metni göstermesini doğrular.",
+        "steps": [
+          {
+            "action": "İptal edilmiş seans yokken 'İptal edilen' segmentini seçin veya tüm sonuçları filtreleyin.",
+            "expected_result": "Tabloda takvim ikonlu boş durum kartı görünür."
+          },
+          {
+            "action": "Kart üzerindeki metinleri okuyun.",
+            "expected_result": "Mesaj 'Seans bulunamadı' ve alt satır 'Henüz hiç seansınız yok.' metnini gösterir; ek satır kullanıcıyı planlama yapmaya davet eder."
+          }
+        ],
+        "expected_result": "Sonuç olmayan filtre kombinasyonlarında kullanıcı net bir boş durum mesajı görür."
+      },
+      {
+        "external_id": "CRM-SESSIONS-426",
+        "title": "Tablo satırına tıklayınca sheet açılması",
+        "description": "Seans satırına tıklandığında SessionSheet bileşeninin açılmasını doğrular.",
+        "steps": [
+          {
+            "action": "Tablodan herhangi bir satıra tıklayın.",
+            "expected_result": "Sağdan sheet açılır; üstte 'Tam Detaylar', 'Daha Fazla' ve 'Seansı Sil' kontrolleri görünür."
+          },
+          {
+            "action": "Sheet'i kapatın.",
+            "expected_result": "Liste aynı yerde kalır ve satır seçimini korur."
+          }
+        ],
+        "expected_result": "Tablo satırları hızlı detay sheet'ine bağlanır."
+      },
+      {
+        "external_id": "CRM-SESSIONS-427",
+        "title": "Proje bağlantısını açma",
+        "description": "Tablodaki proje linkinin 'Projeyi Gör' diyaloğunu açmasını doğrular.",
+        "steps": [
+          {
+            "action": "Projeye bağlı bir satırda 'Proje' sütunundaki linke tıklayın.",
+            "expected_result": "'Projeyi Gör' diyaloğu açılır; üstte proje adı ve 'Daha Fazla' menüsü görünür."
+          },
+          {
+            "action": "Diyalogdaki kapatma ikonuna tıklayın.",
+            "expected_result": "Diyalog kapanır ve tabloya geri dönersiniz."
+          }
+        ],
+        "expected_result": "Tablodaki proje adı linki ilgili proje panelini kaydırmalı şekilde açar."
+      },
+      {
+        "external_id": "CRM-SESSIONS-428",
+        "title": "Tablodan seans düzenleme akışı",
+        "description": "Satırdan açılan sheet üzerinden 'Daha Fazla → Düzenle' seçeneğiyle seansın güncellenmesini doğrular.",
+        "steps": [
+          {
+            "action": "Sheet'i açtıktan sonra 'Daha Fazla' menüsüne tıklayıp 'Düzenle' seçeneğini seçin.",
+            "expected_result": "Seans planla sheet'i düzenleme modunda açılır ve alanlar mevcut verilerle doldurulur."
+          },
+          {
+            "action": "Tarihi değiştirip kaydedin.",
+            "expected_result": "Toast 'Seans güncellendi' mesajını gösterir; tablo ve KPI kartları yeni tarih bilgisiyle yenilenir."
+          }
+        ],
+        "expected_result": "Seanslar tablosu içinden düzenleme yapıldığında hem sheet hem liste aynı oturumda güncellenir."
+      }
+    ]
+  },
+  {
+    "suite": "Takvim ve Seans Detayı",
+    "cases": [
+      {
+        "external_id": "CRM-SESSIONS-430",
+        "title": "Takvimde görünüm modlarını değiştirme",
+        "description": "Takvim sayfasındaki 'Gün/Hafta/Ay' seçeneklerinin görünümü değiştirdiğini doğrular.",
+        "steps": [
+          {
+            "action": "/calendar sayfasını açın.",
+            "expected_result": "Başlık 'Takvim' ve alt açıklama 'Planlanmış seanslarınızı ve hatırlatmalarınızı görüntüleyin' olarak görünür."
+          },
+          {
+            "action": "Üstteki görünüm anahtarından sırasıyla 'Gün', 'Hafta' ve 'Ay' seçeneklerini seçin.",
+            "expected_result": "Takvim yerleşimi her seçimde değişir; başlıkta tarih aralığı yeni moda göre güncellenir."
+          }
+        ],
+        "expected_result": "Görünüm anahtarı kullanıcıya üç farklı takvim düzeni arasında hızlı geçiş sağlar."
+      },
+      {
+        "external_id": "CRM-SESSIONS-431",
+        "title": "Seanslar ve Hatırlatmalar filtrelerini kullanma",
+        "description": "Takvimdeki filtre çiplerinin seansları veya hatırlatmaları gizleyip gösterdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Üst çubuktaki 'Seanslar' filtresine tıklayarak kapatın.",
+            "expected_result": "Seans olayları takvimden kaybolur ve boş durumda 'Yukarıdaki filtrelerden seansları veya hatırlatmaları etkinleştirin' mesajı çıkabilir."
+          },
+          {
+            "action": "'Hatırlatmalar' filtresini de kapatıp tekrar açın.",
+            "expected_result": "Hatırlatıcılar gizlenip tekrar görünür; filtre durumları yerel olarak saklanır."
+          }
+        ],
+        "expected_result": "Kullanıcı hangi veri tipini görmek istediğini filtre çipleriyle kolayca yönetebilir."
+      },
+      {
+        "external_id": "CRM-SESSIONS-432",
+        "title": "Takvim navigasyon butonları",
+        "description": "'Önceki', 'Bugün' ve 'Sonraki' butonlarının görünürlüğü değiştirdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Üstteki 'Önceki' okuna tıklayın.",
+            "expected_result": "Görünüm bir önceki gün/hafta/aya gider ve başlık metni yeni tarihi gösterir."
+          },
+          {
+            "action": "'Bugün' butonuna tıklayın.",
+            "expected_result": "Takvim bugünkü tarihe döner ve başlık bugünün tarihini gösterir."
+          },
+          {
+            "action": "'Sonraki' butonuna tıklayın.",
+            "expected_result": "Görünüm bir sonraki döneme kayar."
+          }
+        ],
+        "expected_result": "Navigasyon butonları kullanıcıyı hızla geçmişe veya geleceğe götürür."
+      },
+      {
+        "external_id": "CRM-SESSIONS-433",
+        "title": "Takvimden seans sheet'ini açma",
+        "description": "Takvimdeki seans kutusuna tıklayınca SessionSheet'in açılmasını doğrular.",
+        "steps": [
+          {
+            "action": "Takvimde listelenen herhangi bir seans kartına tıklayın.",
+            "expected_result": "Session sheet açılır ve başlıkta seans adı görünür."
+          },
+          {
+            "action": "Sheet'teki 'Tam Detaylar' butonuna tıklayın.",
+            "expected_result": "Uygulama seansın `/sessions/:id` sayfasına gider."
+          }
+        ],
+        "expected_result": "Takvimdeki seanslar aynı sheet bileşenine bağlanır ve kullanıcı detaylara hızlıca ulaşır."
+      },
+      {
+        "external_id": "CRM-SESSIONS-434",
+        "title": "Takvimden seans düzenlemek",
+        "description": "Sheet içindeki 'Daha Fazla → Düzenle' akışının seansı güncellediğini doğrular.",
+        "steps": [
+          {
+            "action": "Sheet açıkken 'Daha Fazla' menüsünden 'Düzenle'yi seçin.",
+            "expected_result": "Seans planla sheet'i düzenleme modunda açılır."
+          },
+          {
+            "action": "Tarihi veya saati değiştirip kaydedin.",
+            "expected_result": "Toast 'Seans güncellendi' mesajını verir ve takvimdeki kart yeni zamana taşınır."
+          }
+        ],
+        "expected_result": "Takvim üzerinden yapılan düzenlemeler seansın zamanını anında günceller."
+      },
+      {
+        "external_id": "CRM-SESSIONS-435",
+        "title": "Takvim sheet'inde seans durumunu değiştirme",
+        "description": "Sheet'teki durum rozetinin açılır menüsünden yeni statü seçilebildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Sheet'teki durum rozetine (renkli buton) tıklayın.",
+            "expected_result": "Durum seçeneklerini gösteren liste açılır."
+          },
+          {
+            "action": "Farklı bir durum seçin (ör. 'Completed').",
+            "expected_result": "Rozet yeni renk ve etiketle güncellenir; takvimdeki kart da yeni yaşam döngüsü rengine döner."
+          }
+        ],
+        "expected_result": "Seans durumu sheet üzerinden değiştirilebilir ve UI anında güncellenir."
+      },
+      {
+        "external_id": "CRM-SESSIONS-436",
+        "title": "Takvim sheet'inden seansı silme",
+        "description": "Sheet'in Tehlike Bölgesi'nden seansı silince takvim ve liste görünümünün güncellenmesini doğrular.",
+        "steps": [
+          {
+            "action": "Sheet'teki 'Seansı Sil' butonuna basın.",
+            "expected_result": "Onay diyaloğu 'Seansı Sil' başlığı ve uyarı metniyle açılır."
+          },
+          {
+            "action": "Onay verin.",
+            "expected_result": "Sheet kapanır; takvimden olay kaybolur ve Seanslar sayfası yenilendiğinde satır artık görünmez."
+          }
+        ],
+        "expected_result": "Silme işlemi tüm görünümlerden seansı kaldırır ve kullanıcıya onay süreci sunar."
+      },
+      {
+        "external_id": "CRM-SESSIONS-437",
+        "title": "Seans Detayları sayfasını görüntüleme ve düzenleme",
+        "description": "Doğrudan `/sessions/:id` sayfasında bilgilerin yüklendiğini ve 'Seansı Düzenle' butonunun çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "Geçerli bir seans ID'si ile `/sessions/:id` sayfasını açın.",
+            "expected_result": "Üstte seans adı, durum rozeti ve özet alanı; sağda 'Seansı Düzenle' butonu görünür."
+          },
+          {
+            "action": "'Seansı Düzenle' butonuna tıklayıp küçük düzenlemeler yapın.",
+            "expected_result": "Düzenleme dialogu açılır; kaydedince toast 'Seans güncellendi' mesajını verir ve sayfadaki bilgiler yenilenir."
+          }
+        ],
+        "expected_result": "Seans Detayları sayfası tekil seansı gösterir ve düzenleme akışı buradan da çalışır."
+      },
+      {
+        "external_id": "CRM-SESSIONS-438",
+        "title": "Seans Detayları sayfasının boş durumu",
+        "description": "Geçersiz ID ile açıldığında boş durum ekranının göründüğünü doğrular.",
+        "steps": [
+          {
+            "action": "Silinmiş veya hatalı bir seans ID'siyle `/sessions/:id` sayfasını açın.",
+            "expected_result": "Sayfanın ortasında 'Seans bulunamadı' ve 'Aradığınız seans mevcut değil.' metni görünür."
+          },
+          {
+            "action": "'Seanslara Dön' butonuna tıklayın.",
+            "expected_result": "Uygulama sizi /sessions listesine yönlendirir."
+          }
+        ],
+        "expected_result": "Geçersiz seanslarda kullanıcıya boş durum mesajı ve geri dönüş butonu sunulur."
+      }
+    ]
+  }
+]

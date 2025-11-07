@@ -1282,7 +1282,8 @@
         "testFailedDesc": "Test bildirimi gönderilemedi. Lütfen ayarlarınızı kontrol edin.",
         "error": "Hata",
         "errorDesc": "Bildirim ayarları güncellenemedi"
-      }
+      },
+      "moreComing": "Yakında daha fazla bildirim türü eklenecek."
     },
     "dangerZone": {
       "title": "Tehlike Bölgesi",

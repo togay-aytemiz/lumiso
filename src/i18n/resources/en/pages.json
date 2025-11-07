@@ -1282,7 +1282,8 @@
         "testFailedDesc": "Failed to send test notification. Please check your settings.",
         "error": "Error",
         "errorDesc": "Failed to update notification settings"
-      }
+      },
+      "moreComing": "More notification types are on the way."
     },
     "dangerZone": {
       "title": "Danger Zone",

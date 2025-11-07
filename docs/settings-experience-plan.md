@@ -197,9 +197,9 @@ Cross-cutting components:
 
 ### Phase 2 — Page Wave A (Foundation)
 
-- ▫️ Profile: migrate to new sections, refine avatar/work hours layout, hook to shared uploader.
-- ▫️ General: apply form + collection sections, add explicit save for branding/regional, unify social channels card, and wire anchor nav jump links per section.
-- ▫️ Notifications: convert toggles to `SettingsToggleSection`, throttle fetches, add `Test` button alignment.
+- ✅ Profile: migrate to new sections, refine avatar/work hours layout, hook to shared uploader.
+- ✅ General: apply form + collection sections, add explicit save for branding/regional, unify social channels card, and wire anchor nav jump links per section.
+- ✅ Notifications: convert toggles to `SettingsToggleSection`, throttle fetches, add `Test` button alignment.
   - ✅ Surface sticky anchor navigation pills by tagging existing sections without restructuring legacy components.
 - ▫️ Ship translation updates and ensure tutorials overlay the refreshed layout.
 - ▫️ Routing & breakpoints: route `/settings` to the mobile dashboard below `md`, ensure back navigation + compact spacing tokens apply across Profile/General/Notifications.

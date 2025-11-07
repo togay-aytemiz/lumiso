@@ -402,24 +402,32 @@ export default function Notifications() {
     <SettingsPageWrapper>
       <div className="space-y-10">
         <SettingsToggleSection
+          layout="two-column"
           sectionId="master-controls"
           title={t('settings.notifications.masterControls.title')}
           description={t('settings.notifications.masterControls.description')}
           items={masterToggleItems}
         />
         <SettingsToggleSection
+          layout="two-column"
           sectionId="scheduled"
           title={t('settings.notifications.scheduled.title')}
           description={`${t('settings.notifications.scheduled.description')} ${settings.scheduledTime}`}
           items={scheduledItems}
         />
         <SettingsToggleSection
+          layout="two-column"
           sectionId="immediate"
           title={t('settings.notifications.immediate.title')}
           description={t('settings.notifications.immediate.description')}
           items={immediateItems}
         />
       </div>
+      <p className="px-4 pt-6 text-center text-xs text-muted-foreground sm:text-sm">
+        {t('settings.notifications.moreComing', {
+          defaultValue: 'More notification types are on the way.',
+        })}
+      </p>
     </SettingsPageWrapper>
   );
 }

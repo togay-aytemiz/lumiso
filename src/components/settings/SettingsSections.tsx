@@ -144,7 +144,10 @@ export function SettingsSingleColumnSection({
       )}
     >
       <div
-        className={cn("flex flex-col", settingsTokens.section.singleColumnStack)}
+        className={cn(
+          "flex flex-col",
+          settingsTokens.section.singleColumnStack
+        )}
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <SectionHeading
@@ -183,7 +186,7 @@ function SectionHeading({
   isDirty: boolean;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-1">
       {eyebrow && (
         <p className={cn(settingsClasses.eyebrow, "text-muted-foreground/80")}>
           {eyebrow}

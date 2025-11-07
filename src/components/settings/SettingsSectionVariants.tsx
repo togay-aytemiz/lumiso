@@ -86,57 +86,82 @@ export type SettingsToggleItem = {
   meta?: ReactNode;
 };
 
-export interface SettingsToggleSectionProps
-  extends Omit<BaseSingleColumnProps, "children"> {
-  items: SettingsToggleItem[];
-}
+type ToggleSingleColumnProps = Omit<BaseSingleColumnProps, "children">;
+type ToggleTwoColumnProps =
+  Omit<BaseTwoColumnProps, "children"> & { leftColumnFooter?: ReactNode };
+
+export type SettingsToggleSectionProps =
+  | ({
+      layout?: "single";
+      items: SettingsToggleItem[];
+    } & ToggleSingleColumnProps)
+  | ({
+      layout: "two-column";
+      items: SettingsToggleItem[];
+    } & ToggleTwoColumnProps);
 
 export function SettingsToggleSection({
   items,
   ...sectionProps
 }: SettingsToggleSectionProps) {
-  return (
-    <SettingsSingleColumnSection
-      {...sectionProps}
-      contentClassName={cn("space-y-4", sectionProps.contentClassName)}
-    >
-      <div className="divide-y divide-border/70 rounded-2xl border border-border/60 bg-card">
-        {items.map((item) => {
-          const Icon = item.icon;
-          return (
-            <div
-              key={item.id}
-              className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center"
-            >
-              <div className="flex flex-1 items-start gap-3">
-                {Icon && (
-                  <span className="mt-0.5 rounded-xl bg-muted p-2 text-muted-foreground">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                )}
-                <div>
-                  <p className="text-sm font-semibold text-foreground">
-                    {item.title}
+  const content = (
+    <div className="divide-y divide-border/70 rounded-2xl border border-border/60 bg-card">
+      {items.map((item) => {
+        const Icon = item.icon;
+        return (
+          <div
+            key={item.id}
+            className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center"
+          >
+            <div className="flex flex-1 items-start gap-3">
+              {Icon && (
+                <span className="mt-0.5 rounded-xl bg-muted p-2 text-muted-foreground">
+                  <Icon className="h-4 w-4" />
+                </span>
+              )}
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  {item.title}
+                </p>
+                {item.description && (
+                  <p className="text-xs text-muted-foreground">
+                    {item.description}
                   </p>
-                  {item.description && (
-                    <p className="text-xs text-muted-foreground">
-                      {item.description}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center justify-between gap-4 sm:justify-end">
-                {item.meta && (
-                  <span className="text-xs text-muted-foreground">
-                    {item.meta}
-                  </span>
                 )}
-                {item.control}
               </div>
             </div>
-          );
-        })}
-      </div>
+            <div className="flex items-center justify-between gap-4 sm:justify-end">
+              {item.meta && (
+                <span className="text-xs text-muted-foreground">{item.meta}</span>
+              )}
+              {item.control}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  if (sectionProps.layout === "two-column") {
+    const { layout, leftColumnFooter, ...twoColumnProps } = sectionProps;
+    return (
+      <SettingsTwoColumnSection
+        {...(twoColumnProps as ToggleTwoColumnProps)}
+        contentClassName={cn("space-y-4", twoColumnProps.contentClassName)}
+        leftColumnFooter={leftColumnFooter}
+      >
+        {content}
+      </SettingsTwoColumnSection>
+    );
+  }
+
+  const { layout, ...singleColumnProps } = sectionProps;
+  return (
+    <SettingsSingleColumnSection
+      {...(singleColumnProps as ToggleSingleColumnProps)}
+      contentClassName={cn("space-y-4", singleColumnProps.contentClassName)}
+    >
+      {content}
     </SettingsSingleColumnSection>
   );
 }

@@ -51,13 +51,19 @@ type SettingsLocationState = {
   backgroundLocation?: Location;
 };
 
-export default function SettingsLayout() {
+type SettingsLayoutProps = {
+  enableOverlay?: boolean;
+};
+
+export default function SettingsLayout({
+  enableOverlay = true,
+}: SettingsLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const locationState =
     (location.state as SettingsLocationState | null) ?? null;
   const isMobile = useIsMobile();
-  const shouldUseOverlay = !isMobile;
+  const shouldUseOverlay = enableOverlay && !isMobile;
   const backgroundLocationFromState = shouldUseOverlay
     ? locationState?.backgroundLocation ?? null
     : null;
@@ -813,15 +819,17 @@ export default function SettingsLayout() {
             <LifeBuoy className="mr-2 h-4 w-4" />
             {tCommon("buttons.needHelp")}
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleCloseClick}
-            aria-label={tCommon("buttons.close")}
-            className="h-8 w-8 rounded-full"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          {shouldUseOverlay && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCloseClick}
+              aria-label={tCommon("buttons.close")}
+              className="h-8 w-8 rounded-full"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -1061,6 +1069,122 @@ export default function SettingsLayout() {
     );
   }
 
+  const desktopContent = (
+    <div className="flex h-full w-full">
+      <aside
+        className={cn(
+          "hidden h-full shrink-0 flex-col overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:flex",
+          shouldShowDesktopSidebar
+            ? "md:border-r md:border-border/70 md:bg-muted/10 md:backdrop-blur-sm md:opacity-100"
+            : "md:-translate-x-6 md:border-transparent md:bg-transparent md:opacity-0"
+        )}
+        style={desktopSidebarStyle}
+        aria-hidden={!shouldShowDesktopSidebar}
+      >
+        {shouldShowDesktopSidebar && (
+          <div className="flex-1 overflow-y-auto px-3 py-6">
+            <div className="space-y-6">
+              <section>
+                <p
+                  className={cn(
+                    settingsClasses.railSectionLabel,
+                    "px-2 text-muted-foreground/70"
+                  )}
+                >
+                  {t("settings.personalSettings")}
+                </p>
+                <nav className="mt-3 space-y-1.5">
+                  {personalSettingsItems.map(renderNavLink)}
+                </nav>
+              </section>
+              <section>
+                <p
+                  className={cn(
+                    settingsClasses.railSectionLabel,
+                    "px-2 text-muted-foreground/70"
+                  )}
+                >
+                  {t("settings.organizationSettings")}
+                </p>
+                <nav className="mt-3 space-y-1.5">
+                  {organizationSettingsItems.map(renderNavLink)}
+                </nav>
+              </section>
+            </div>
+          </div>
+        )}
+      </aside>
+
+      <div className="flex min-h-0 flex-1 flex-col bg-[hsl(var(--background))]">
+        {desktopHeaderElement}
+
+        <div
+          key={`${currentPath}-content`}
+          ref={handleDesktopContentRef}
+          className="relative flex-1 overflow-y-auto bg-[hsl(var(--background))] settings-content-motion"
+        >
+          {isSettingsRoot ? (
+            renderSettingsDirectory("desktop")
+          ) : (
+            <>
+              <Outlet />
+              {shouldShowScrollTopButton && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={handleScrollToTop}
+                  onMouseDown={(event) => event.stopPropagation()}
+                  className={cn(
+                    "fixed z-[60] h-11 w-11 rounded-full border-transparent bg-[hsl(var(--accent-200))] text-[hsl(var(--accent-900))] shadow-lg transition-all hover:bg-[hsl(var(--accent-300))] hover:shadow-xl focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2",
+                    hasChanges ? "bottom-24 md:bottom-28" : "bottom-5 md:bottom-6"
+                  )}
+                  style={{ right: `${scrollTopRightOffset}px` }}
+                  aria-label={tCommon("buttons.backToTop", {
+                    defaultValue: "Back to top",
+                  })}
+                >
+                  <ArrowUp className="h-5 w-5" />
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const desktopPanel = (
+    <div
+      className={cn(
+        "relative flex h-full w-full max-w-[92rem] overflow-hidden rounded-3xl border border-border/70 bg-[hsl(var(--background))] shadow-[var(--settings-overlay-shadow)]",
+        shouldUseOverlay
+          ? "max-h-[min(960px,calc(100vh-2rem))]"
+          : "min-h-[600px]",
+        shouldUseOverlay && modalState === "enter" && "settings-modal-enter",
+        shouldUseOverlay && modalState === "exit" && "settings-modal-exit"
+      )}
+      style={containerStyle}
+      onMouseDown={
+        shouldUseOverlay ? (event) => event.stopPropagation() : undefined
+      }
+    >
+      {desktopContent}
+    </div>
+  );
+
+  if (!shouldUseOverlay) {
+    return (
+      <>
+        <div className="flex min-h-screen w-full justify-center bg-[hsl(var(--background))] px-3 py-6 sm:px-6 md:py-10">
+          {desktopPanel}
+        </div>
+        {helpSheet}
+        {guardDialog}
+      </>
+    );
+  }
+
   return (
     <>
       <div
@@ -1079,98 +1203,7 @@ export default function SettingsLayout() {
           }
         }}
       >
-        <div
-          className={cn(
-            "relative flex h-full max-h-[min(960px,calc(100vh-2rem))] w-full max-w-[92rem] overflow-hidden rounded-3xl border border-border/70 bg-[hsl(var(--background))] shadow-[var(--settings-overlay-shadow)]",
-            modalState === "enter" && "settings-modal-enter",
-            modalState === "exit" && "settings-modal-exit"
-          )}
-          style={containerStyle}
-          onMouseDown={(event) => event.stopPropagation()}
-        >
-          <div className="flex h-full w-full">
-            <aside
-              className={cn(
-                "hidden h-full shrink-0 flex-col overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:flex",
-                shouldShowDesktopSidebar
-                  ? "md:border-r md:border-border/70 md:bg-muted/10 md:backdrop-blur-sm md:opacity-100"
-                  : "md:-translate-x-6 md:border-transparent md:bg-transparent md:opacity-0"
-              )}
-              style={desktopSidebarStyle}
-              aria-hidden={!shouldShowDesktopSidebar}
-            >
-              {shouldShowDesktopSidebar && (
-                <div className="flex-1 overflow-y-auto px-3 py-6">
-                  <div className="space-y-6">
-                    <section>
-                      <p
-                        className={cn(
-                          settingsClasses.railSectionLabel,
-                          "px-2 text-muted-foreground/70"
-                        )}
-                      >
-                        {t("settings.personalSettings")}
-                      </p>
-                      <nav className="mt-3 space-y-1.5">
-                        {personalSettingsItems.map(renderNavLink)}
-                      </nav>
-                    </section>
-                    <section>
-                      <p
-                        className={cn(
-                          settingsClasses.railSectionLabel,
-                          "px-2 text-muted-foreground/70"
-                        )}
-                      >
-                        {t("settings.organizationSettings")}
-                      </p>
-                      <nav className="mt-3 space-y-1.5">
-                        {organizationSettingsItems.map(renderNavLink)}
-                      </nav>
-                    </section>
-                  </div>
-                </div>
-              )}
-            </aside>
-
-            <div className="flex min-h-0 flex-1 flex-col bg-[hsl(var(--background))]">
-              {desktopHeaderElement}
-
-              <div
-                key={`${currentPath}-content`}
-                ref={handleDesktopContentRef}
-                className="relative flex-1 overflow-y-auto bg-[hsl(var(--background))] settings-content-motion"
-              >
-                {isSettingsRoot ? (
-                  renderSettingsDirectory("desktop")
-                ) : (
-                  <>
-                    <Outlet />
-                    {shouldShowScrollTopButton && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={handleScrollToTop}
-                        onMouseDown={(event) => event.stopPropagation()}
-                        className={cn(
-                          "fixed z-[60] h-11 w-11 rounded-full border-transparent bg-[hsl(var(--accent-200))] text-[hsl(var(--accent-900))] shadow-lg transition-all hover:bg-[hsl(var(--accent-300))] hover:shadow-xl focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2",
-                          hasChanges ? "bottom-24 md:bottom-28" : "bottom-5 md:bottom-6"
-                        )}
-                        style={{ right: `${scrollTopRightOffset}px` }}
-                        aria-label={tCommon("buttons.backToTop", {
-                          defaultValue: "Back to top",
-                        })}
-                      >
-                        <ArrowUp className="h-5 w-5" />
-                      </Button>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        {desktopPanel}
       </div>
 
       {helpSheet}

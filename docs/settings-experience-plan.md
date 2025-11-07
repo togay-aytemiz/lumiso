@@ -1,6 +1,7 @@
 # Settings Experience Refresh Plan
 
 ## Context
+
 - Feedback highlights oversized typography, uneven spacing, and a “prototype” feel across settings pages (`Profile`, `General`, `Notifications`, `Leads`, `Projects`, `Services`, `Billing`, `Contracts`, `DangerZone`).
 - Layout primitives (`SettingsHeader`, `CategorySettingsSection`, legacy `SettingsSection`, bespoke lists) have diverged, creating inconsistent section hierarchy, button placement, and help affordances.
 - Page-level data hooks (e.g., `useOrganizationSettings`, `useProfile`, `useSessionTypes`) refetch eagerly and trigger auto-saves, increasing Supabase traffic and surprising users while editing.
@@ -8,6 +9,7 @@
 - Goal: establish a reusable system that scales as new sub-pages (people/role management, automations) land, while keeping implementation traceable via a checklist-driven roadmap.
 
 ## Goals
+
 - Unify page shells: consistent header stack (title, eyebrow/subtext, actions/help), responsive paddings, and max-width behavior.
 - Introduce a token-driven modal overlay shell that preserves the underlying page, with compact left-rail navigation and sticky anchor pills under the header.
 - Deliver a mobile-first navigation model that feels like a native settings app: dedicated icon + text index screen, near-edge gutters on small viewports, and clear back navigation when drilling into subsections; pair with desktop sticky anchor navigation so dense pages stay scannable.
@@ -18,12 +20,17 @@
 - Deliver a living checklist per settings page and module so progress can be tracked and shared across the team.
 - Ship the refreshed experience behind a dedicated feature flag (`settings_modal_overlay_v1`) so we can toggle it safely until the rollout is final.
 
+## Testing Constraints
+- Automated settings suites (Jest / Playwright) are currently stalled. **Do not run `npm test`, `npx jest`, or related settings test commands during development.** Use the manual coverage in `docs/manual-testing/tests/settings-manual-tests.json` until the harness is repaired.
+
 ## Non-Goals
+
 - Replacing the underlying settings navigation structure or routing.
 - Introducing brand-new feature areas (e.g., subscription upgrades, granular permissions) beyond visual/UX refinements.
 - Rewriting Supabase schemas for settings entities (handled separately when needed).
 
 ## Information Architecture Inventory
+
 ```
 Settings (src/pages/settings)
 ├── Profile
@@ -49,9 +56,11 @@ Settings (src/pages/settings)
 │   ├── Packages (pricing cards + onboarding tutorial)
 │   └── Services Catalog (category cards)
 ├── Contracts (placeholder copy)
-├── Billing
-│   ├── Tax & Billing Profile (organization defaults for KDV + invoice identity)
-│   └── Payment Methods (future state / integrations)
+├── Billing (Client-Facing)
+│   ├── Tax & Billing Profile (organization defaults for KDV + invoice identity used when issuing client invoices / packages)
+│   └── Payment Methods (future state / integrations that underpin invoicing + package pipelines)
+├── Billing (Subscription / Lumiso ↔︎ Customer)
+│   └── TBD — product spec in progress; holds workspace’s Lumiso subscription, invoices, and usage metrics (kept separate from client billing so data + permissions do not collide)
 └── Danger Zone (destructive actions, password confirmation)
 
 Cross-cutting components:
@@ -62,6 +71,7 @@ Cross-cutting components:
 ```
 
 ## Pain Points & Risks
+
 - **Visual consistency**: headings range from `text-xl` to `text-3xl`, card paddings fluctuate (`p-4`, `p-6`, `border-2`), and action buttons jump between inline and stacked layouts.
 - **Information density**: large cards with generous whitespace push key controls below the fold, especially on laptops; drag-and-drop lists stretch full width instead of aligning to a grid.
 - **Mobile UX gap**: horizontal icon-only navigation hides labels, consumes vertical space, and lacks an in-page back control; wide gutters make forms feel zoomed-out instead of app-native.
@@ -72,6 +82,7 @@ Cross-cutting components:
 ## Proposed System
 
 ### 1. Modal Shell Standardization
+
 - Replace the page-level canvas with a feature-flagged `SettingsModalShell` that opens as a lightweight overlay, dimming but not hiding the underlying page so users keep spatial context.
   - Shell sits on top of the app with `backdrop-blur-sm` + 16% scrim, matches the “Lovable” modal vibe, and keeps a 48px margin from viewport edges on desktop while using full bleed on mobile.
   - Left rail lives inside the modal (140px target width) with compact icon + label pills inspired by the reference designs; it remembers the last active category per workspace.
@@ -87,7 +98,10 @@ Cross-cutting components:
 - Sticky footer sticks to the modal’s content column, inherits the compact spacing tokens (`token('settings.footer.padding')` = 16px), shows last-saved timestamp, and broadcasts guard events when users attempt to dismiss with unsaved changes.
 
 ### 2. Section Patterns & Tokens
+
 - Introduce `settingsTokens.ts` (spacing, typography, border radius, shadow, section gap) with explicit exports for header, description, eyebrow, footer, pill, and rail tokens so “compact” sizing stays traceable.
+- ✅ `settingsTokens.section.*` now captures padding, grid, and spacing primitives while `.settings-section-*` utilities in `src/index.css` lock the surface, shadow, and typography for content blocks.
+- ✅ `SettingsTwoColumnSection` and `SettingsSingleColumnSection` (see `src/components/settings/SettingsSections.tsx`) provide the dedicated left-rail/form and full-width table scaffolds with baked-in action slots, dirty indicators, and anchor metadata.
 - Lock reusable section surfaces to a borderless white card (`bg-white`) with `rounded-lg` corners (desktop `rounded-xl`), soft ambient shadow (`shadow-[0_12px_28px_-18px_rgba(15,23,42,0.55)]`), and tighter padding defaults (20px mobile / 24px desktop). Document matching dark mode token (`bg-slate-950/60`, subtle border) for parity.
 - Add a `useSettingsAnchorRegistry` hook that each `CategorySettingsSection` consumes to register its scroll target, dirty-state setter, and metadata; anchors drive the sticky pills, fired events, and analytics breadcrumbs.
 - Add `SettingsAnchorNav` variant (same interaction/rhythm as the sticky anchors already shipping on Project Details, Lead Details, and Sheet Details) that pins under the header on desktop, highlights active subsection, and exposes jump links; collapse into the mobile index/back pattern below `md`. The nav uses `token('settings.anchor.pill')` for padding, radius, and font weight so it remains compact and readable.
@@ -101,6 +115,7 @@ Cross-cutting components:
 - Provide class utilities (via `cva` or helper) to guarantee consistent padding across breakpoints while capping max spacing tokens to avoid oversized gutters.
 
 ### 3. Data & Interaction Strategy
+
 - **Fetch cadence**: set `react-query` options (`staleTime`, `refetchOnWindowFocus: false`), and add manual refresh CTA per page (via `SettingsHeader` action slot).
 - **Edit flows**: adopt explicit save for multi-field sections, auto-save only for idempotent toggles with optimistic UI. Document behavior per section in checklist and surface save CTA in the sticky footer + anchor pill when dirty.
 - **Dirty state**: replace pulse dot with pill badge (“Unsaved changes”) and add a soft brand-accent glow/top stripe so the borderless card still signals state. Dirty sections automatically register with `useSettingsAnchorRegistry`, ensuring pills show an inline “•” badge and the footer aggregates fields.
@@ -111,12 +126,17 @@ Cross-cutting components:
 - **Analytics**: add instrumentation plan (event names: `settings_section_viewed`, `settings_save_submitted`, `settings_help_opened`).
 
 ### 4. Billing Alignment
+- We now treat billing as **two parallel surfaces**:
+  - `Client Billing` (today’s `TaxBillingSection`) powers outbound invoices, package creation, and any client-facing fiscal identity. This lives inside workspace settings and inherits the new section templates documented here.
+  - `Lumiso Subscription Billing` governs how we charge the workspace owner (plans, receipts between Lumiso and the user). Product specs are still in-flight, so this doc only scopes the client-facing experience while reserving real estate for the second surface once requirements land.
+
 - Rewrite `/settings/billing` using the modal shell + section primitives so it no longer ships bespoke buttons/badges.
 - Gate the billing rewrite behind the same `settings_modal_overlay_v1` flag; legacy page stays reachable until rollout is complete.
-- Break the page into `Tax & Billing Profile` and `Payment Methods` sections, each registering anchors, dirty state, and save handlers via the shared hooks. Saved timestamps + events flow through the shared footer.
+- Break the client-billing page into `Tax & Billing Profile` and `Payment Methods` sections, each registering anchors, dirty state, and save handlers via the shared hooks. Saved timestamps + events flow through the shared footer.
 - Ensure helper modals (tax address edit, payment method removal) respect dirty guards, broadcast save events for selective refresh, and reuse the compact tokens so the experience stays consistent.
 
 ### 5. Accessibility & Responsiveness
+
 - Ensure keyboard navigation order (header actions → sections top-to-bottom) and focus outlines align with tokens.
 - Provide reduced-motion variant for transitions (respect `prefers-reduced-motion`).
 - Guarantee drag-and-drop sections expose reorder options for keyboard users (fallback move buttons).
@@ -133,12 +153,14 @@ Cross-cutting components:
   - Maintain 48px outer gutters while allowing sticky nav to lock at 24px from the left content edge.
 
 ### 6. Content & Localization
+
 - Update `settingsHelpContent` to drive the sheet component; trim marketing fluff, map to real troubleshooting steps, and define slots for embedded media callouts.
 - Migrate `SettingsHelpSheet` strings into shared i18n namespaces (EN/TR first), including alt text and captions for videos/charts so localized help experiences stay in sync.
 - Capture the new tax & billing defaults (VAT mode/rate, entity fields) in the same namespaces so UI copy, the new `TaxBillingSection`, and documentation stay synchronized.
 - Document microcopy tone: declarative, concise, professional (avoid exclamation unless destructive).
 
 ### 7. Empty State Illustrations
+
 - Audit every settings empty state (including placeholders, zero-result lists, and onboarding cards) to inventory where visuals are missing or low-fidelity.
 - Partner with the brand/illustration team to source a cohesive illustration set that reflects Lumiso’s tone; document whether we standardize on static SVGs, animated Lottie, or both.
 - Deliver assets in light/dark variants and multiple sizes, stored under `src/assets/settings/empty-states`, with alt text guidance baked into component props.
@@ -148,6 +170,7 @@ Cross-cutting components:
 ## Implementation Roadmap
 
 ### Phase 0 — Audit & Design Foundations
+
 - ▫️ Screenshot and measure current layouts (desktop/tablet/mobile) for each page.
 - ▫️ Map existing mobile navigation journeys (horizontal icon bar, nested routes) and note breakpoints where the experience breaks down.
 - ✅ Define typography & spacing tokens (`settingsTokens.ts`, Tailwind utilities in `src/index.css`).
@@ -156,8 +179,9 @@ Cross-cutting components:
 - Deliverables: token spec, audit notes, before-state assets archived in `/docs/assets/settings/`.
 
 ### Phase 1 — Core Components & Utilities
+
 - ✅ Build `SettingsModalShell` + upgraded `SettingsHeader`.
- - ▫️ Wrap new shell/components in the `settings_modal_overlay_v1` feature flag with runtime switch + fallback to legacy layout.
+- ✅ Wrap new shell/components in the `settings_modal_overlay_v1` feature flag with runtime switch + fallback to legacy layout.
 - ✅ Implement desktop `SettingsAnchorNav` within the modal shell, including scroll-spy integration, DOM discovery for legacy sections, and consistent sticky behavior across Profile, General, Notifications, Projects, Leads, Services, and other pages.
 - ✅ Ship mobile-first navigation baseline: `SettingsMobileDashboard` + in-modal subpage header/back affordance mirroring native settings apps, wired into existing navigation guard + scroll-spy logic.
 - ✅ Route `/settings` index to the new settings directory rather than auto-routing to Profile, preserving desktop + mobile parity.
@@ -169,15 +193,16 @@ Cross-cutting components:
 - ▫️ Update tests for new primitives (`src/components/settings/__tests__`).
 
 ### Phase 2 — Page Wave A (Foundation)
+
 - ▫️ Profile: migrate to new sections, refine avatar/work hours layout, hook to shared uploader.
 - ▫️ General: apply form + collection sections, add explicit save for branding/regional, unify social channels card, and wire anchor nav jump links per section.
-- ▫️ Billing: move `Tax & Billing Profile` + `Payment Methods` into modal sections, wire anchor registry + dirty guard + shared footer events, surface organization defaults (legal entity, company name, tax office, VKN/TCKN, billing address, default KDV mode + rate), and persist updates through `useOrganizationSettings`.
 - ▫️ Notifications: convert toggles to `SettingsToggleSection`, throttle fetches, add `Test` button alignment.
   - ✅ Surface sticky anchor navigation pills by tagging existing sections without restructuring legacy components.
 - ▫️ Ship translation updates and ensure tutorials overlay the refreshed layout.
 - ▫️ Routing & breakpoints: route `/settings` to the mobile dashboard below `md`, ensure back navigation + compact spacing tokens apply across Profile/General/Notifications.
 
 ### Phase 3 — Page Wave B (Data Collections)
+
 - ▫️ Leads: refactor statuses & fields into collection sections, add keyboard reorder, align modals.
   - ✅ Annotated legacy sections so the refreshed sticky navigation renders across the page.
 - ▫️ Projects: same pattern as leads; ensure statuses/types share components.
@@ -188,15 +213,18 @@ Cross-cutting components:
 - ▫️ Extend anchor nav mapping and mobile back pattern to collection-heavy pages (Leads/Projects/Services) with sensible section groupings.
 
 ### Phase 3.5 — Compliance & Billing Foundations
+
 - ✅ Persist organization tax profile via `useOrganizationSettings` with optimistic save + dirty-state pill; ensure partial updates do not clear existing tax identifiers.
-- ✅ Validate the Supabase migration `20251109120000_services_vat_profile.sql` (service VAT columns + tax profile defaults) and document rollout sequencing. *(Applied to prod 2025‑11‑09.)*
+- ✅ Validate the Supabase migration `20251109120000_services_vat_profile.sql` (service VAT columns + tax profile defaults) and document rollout sequencing. _(Applied to prod 2025‑11‑09.)_
 - ▫️ QA + deploy follow-up migration `20251109161000_tax_profile_defaults_include.sql` to align defaults with VAT-inclusive pricing and update seeded sample services.
 - ▫️ Add validation masks for TCKN/VKN (11-digit national ID vs 10-digit tax number) and guard rails for numeric KDV ranges (0–99.99%).
 - ▫️ Surface audit log events (`settings_tax_profile_updated`) so finance tooling can track changes before e-Fatura integrations.
 - ▫️ Store structured invoice address (`street`, `district`, `city`, `country`, `postalCode`) ready for electronic invoice payloads.
 - ▫️ Document API contracts for downstream billing services (e.g., `POST /billing/profile/snapshot`) and expose a "Download billing profile" action for manual compliance exports.
+- ▫️ Finalize requirements for the separate Lumiso subscription billing surface (plans, receipts, upgrade/downgrade flows) to ensure it ships independently from client billing.
 
 ### Phase 4 — Peripheral Pages & Cleanup
+
 - ▫️ Danger Zone: apply danger block pattern, tighten copy, confirm double-confirm flow.
 - ▫️ Billing & Contracts: replace placeholder paragraphs with reusable empty-state card.
 - ▫️ Remove deprecated components (`SettingsSection`, `EnhancedSettingsSection`) once unused.
@@ -204,6 +232,7 @@ Cross-cutting components:
 - ▫️ Ensure analytics + logging in place.
 
 ### Phase 5 — QA, Performance, and Rollout
+
 - ▫️ Cross-browser testing (Chrome, Safari, Firefox) desktop/tablet/mobile.
 - ▫️ Usability pass with sample users (record feedback on density & clarity).
 - ▫️ Measure Supabase call volume pre/post refactor.
@@ -211,27 +240,31 @@ Cross-cutting components:
 - ▫️ Align release messaging and changelog.
 
 ## Page-by-Page Checklist
-| Page | Section(s) | UI Refresh | Interaction Model | Data Strategy | Status | Product Team Questions |
-| --- | --- | --- | --- | --- | --- | --- |
-| Profile | Profile Info / Working Hours | ▫️ | Define save vs. auto-save, tutorial overlay | Cache profile + working hours, manual refresh | Not Started | Should organization admins be allowed to change staff working hours directly, or must owners confirm adjustments? |
-| General | Branding / Social / Regional | ▫️ | Explicit save w/ footer + inline upload | Cached, refetch on demand | Not Started | Do we enforce brand color/logo constraints aligned with marketing guidelines or permit unrestricted customization? |
-| Notifications | Master / Scheduled / Immediate | ▫️ | Auto-save toggles + manual test triggers | Batch updates, debounce Supabase writes | Not Started | Which notification channels (email, SMS, push) need to be represented at launch and what delivery windows are promised? |
-| Leads | Statuses / Fields | ▫️ | Drag reorder + dialog pattern | Normalize queries, reduce background polling | Not Started | What default pipeline stages must every workspace retain, and can teams delete core stages? |
-| Projects | Statuses / Types / Session Statuses | ▫️ | Drag reorder + inline defaults | Shared hook for status entities | Not Started | Do project status/type templates need to stay synced across teams or can users diverge freely? |
-| Services | Session Types / Packages / Services | ▫️ | Multi-step onboarding alignment | Consolidate queries, lazy-load heavy dialogs | Not Started | Are packages expected to support multi-currency pricing in this release or remain single-currency? |
-| Contracts | Placeholder | ▫️ | N/A (display card) | Static copy | Not Started | Should the placeholder point to upcoming in-product templates or route to external contract resources until builder ships? |
-| Billing | Tax & Billing Profile / Payment Methods | ▫️ | Modal overlay + shared sticky footer/guard dialog + anchor pills | Persist `taxProfile` jsonb, inclusive defaults cached; payment method vault stub still pending | In Progress | Which e-Fatura provider (if any) are we targeting first, and do we need multi-address support for branches? |
-| Danger Zone | Delete org | ▫️ | Double confirm + password field | No auto-refetch | Not Started | Does org deletion require a grace period or approval workflow beyond the password confirmation flow? |
+
+| Page          | Section(s)                              | UI Refresh | Interaction Model                                                | Data Strategy                                                                                  | Status      | Product Team Questions                                                                                                     |
+| ------------- | --------------------------------------- | ---------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Profile       | Profile Info / Working Hours            | ▫️         | Define save vs. auto-save, tutorial overlay                      | Cache profile + working hours, manual refresh                                                  | Not Started | Should organization admins be allowed to change staff working hours directly, or must owners confirm adjustments?          |
+| General       | Branding / Social / Regional            | ▫️         | Explicit save w/ footer + inline upload                          | Cached, refetch on demand                                                                      | Not Started | Do we enforce brand color/logo constraints aligned with marketing guidelines or permit unrestricted customization?         |
+| Notifications | Master / Scheduled / Immediate          | ▫️         | Auto-save toggles + manual test triggers                         | Batch updates, debounce Supabase writes                                                        | Not Started | Which notification channels (email, SMS, push) need to be represented at launch and what delivery windows are promised?    |
+| Leads         | Statuses / Fields                       | ▫️         | Drag reorder + dialog pattern                                    | Normalize queries, reduce background polling                                                   | Not Started | What default pipeline stages must every workspace retain, and can teams delete core stages?                                |
+| Projects      | Statuses / Types / Session Statuses     | ▫️         | Drag reorder + inline defaults                                   | Shared hook for status entities                                                                | Not Started | Do project status/type templates need to stay synced across teams or can users diverge freely?                             |
+| Services      | Session Types / Packages / Services     | ▫️         | Multi-step onboarding alignment                                  | Consolidate queries, lazy-load heavy dialogs                                                   | Not Started | Are packages expected to support multi-currency pricing in this release or remain single-currency?                         |
+| Contracts     | Placeholder                             | ▫️         | N/A (display card)                                               | Static copy                                                                                    | Not Started | Should the placeholder point to upcoming in-product templates or route to external contract resources until builder ships? |
+| Billing — Client | Tax & Billing Profile / Payment Methods | ▫️         | Modal overlay + shared sticky footer/guard dialog + anchor pills | Persist `taxProfile` jsonb, inclusive defaults cached; payment method vault stub still pending | In Progress | Which e-Fatura provider (if any) are we targeting first, and do we need multi-address support for branches?                |
+| Billing — Lumiso Subscription | Subscription plan, invoices, payment method vault | ▫️         | TBD (spec in progress; likely standalone modal/section)          | Separate data model from client billing; needs Stripe/customer portal integration strategy     | Not Started | What telemetry + plan upgrades do we expose? Do we embed Stripe customer portal or build native UI?                       |
+| Danger Zone   | Delete org                              | ▫️         | Double confirm + password field                                  | No auto-refetch                                                                                | Not Started | Does org deletion require a grace period or approval workflow beyond the password confirmation flow?                       |
 
 > Update the table as work lands (check items, add Notes column if needed).
 
 ## Technical Follow-Ups
+
 - Consolidate Supabase RPC usage: prefer centralized service modules under `src/services/settings/**`.
 - Introduce API mocks for settings hooks to enable deterministic Jest tests.
 - Evaluate background sync via Supabase realtime (opt-in) vs. scheduled refetch.
 - Create visual regression snapshots for core pages (Playwright + percy-like tool).
 
 ## Testing & QA Strategy
+
 - Unit: cover new section primitives, uploader hooks, and settings context state transitions.
 - Integration: add Cypress/Playwright flows for Profile/General/Notifications save cycles.
 - Visual: run Chromatic or Percy diff on key breakpoints.
@@ -239,9 +272,11 @@ Cross-cutting components:
 - Accessibility: automated (axe) + manual keyboard review for drag-and-drop alternatives.
 
 ## Open Questions
+
 - Should notifications adopt per-channel delivery (email, push) now or later? Impacts layout complexity.
 - Do we need granular role-based visibility before redesign (e.g., per future team accounts)?
 - Where should reusable iconography live (Lucide vs. custom set) to keep consistent sizing?
 
 ## Tracking & Iteration Log
+
 - (Populate when work begins; include date, owner, summary, tests run.)

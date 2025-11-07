@@ -87,11 +87,17 @@ jest.mock("lucide-react", () =>
   )
 );
 
-const renderLayout = (initialPath: string = "/settings/projects") => {
+const renderLayout = (
+  initialPath: string = "/settings/projects",
+  enableOverlay: boolean = true
+) => {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
-        <Route path="/settings/*" element={<SettingsLayout />}>
+        <Route
+          path="/settings/*"
+          element={<SettingsLayout enableOverlay={enableOverlay} />}
+        >
           <Route path="*" element={<div data-testid="settings-content" />} />
         </Route>
       </Routes>

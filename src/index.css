@@ -59,6 +59,12 @@ All colors MUST be HSL.
     --settings-header-title-desktop: 1.25rem; /* 20px */
     --settings-header-line-height: 1.25;
     --settings-header-description-size: 0.9rem; /* 14.4px */
+    --settings-section-radius: 1.25rem;
+    --settings-section-shadow: 0 35px 70px rgba(15, 23, 42, 0.08);
+    --settings-section-title-mobile: 1rem; /* 16px */
+    --settings-section-title-desktop: 1.0625rem; /* ~17px */
+    --settings-section-description-size: 0.9375rem; /* 15px */
+    --settings-section-description-line-height: 1.55;
 
     /* Gradients */
     --gradient-primary-start: 292 84% 60%; /* #D946EF */
@@ -192,6 +198,7 @@ All colors MUST be HSL.
     --sidebar-ring: 172 71% 41%;
 
     --link: 217.2 91.2% 59.8%;
+    --settings-section-shadow: 0 40px 70px rgba(0, 0, 0, 0.5);
 
     /* States (dark) */
     --success: 160 84% 39%;
@@ -464,6 +471,32 @@ All colors MUST be HSL.
     font-weight: 600;
     letter-spacing: 0.18em;
     text-transform: uppercase;
+  }
+
+  .settings-section-surface {
+    background-color: hsl(var(--card));
+    border-radius: var(--settings-section-radius);
+    box-shadow: var(--settings-section-shadow);
+  }
+
+  .settings-section-title {
+    font-size: var(--settings-section-title-mobile);
+    line-height: 1.35;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  @media (min-width: 768px) {
+    .settings-section-title {
+      font-size: var(--settings-section-title-desktop);
+    }
+  }
+
+  .settings-section-description {
+    font-size: var(--settings-section-description-size);
+    line-height: var(--settings-section-description-line-height);
+    color: hsl(var(--muted-foreground));
+    max-width: 36rem;
   }
 
   /* Settings modal animation utilities */

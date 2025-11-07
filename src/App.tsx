@@ -40,9 +40,10 @@ import AdminLayout from "./components/admin/AdminLayout";
 import AdminLocalization from "./pages/admin/Localization";
 import AdminUsers from "./pages/admin/Users";
 import AdminSystem from "./pages/admin/System";
+import { FEATURE_FLAGS, isFeatureEnabled } from "./lib/featureFlags";
 
-const renderSettingsRoutes = () => (
-  <Route path="settings" element={<SettingsLayout />}>
+const renderSettingsRoutes = (enableOverlay: boolean) => (
+  <Route path="settings" element={<SettingsLayout enableOverlay={enableOverlay} />}>
     <Route path="profile" element={<ProfileSettings />} />
     <Route path="general" element={<GeneralSettings />} />
     <Route path="notifications" element={<NotificationsSettings />} />
@@ -58,6 +59,9 @@ const renderSettingsRoutes = () => (
 const AppRoutes = () => {
   const location = useLocation();
   const state = location.state as { backgroundLocation?: Location } | undefined;
+  const settingsOverlayEnabled = isFeatureEnabled(
+    FEATURE_FLAGS.settingsModalOverlayV1
+  );
 
   return (
     <>
@@ -89,15 +93,15 @@ const AppRoutes = () => {
             <Route path="system" element={<AdminSystem />} />
             <Route index element={<Navigate to="/admin/localization" replace />} />
           </Route>
-          {renderSettingsRoutes()}
+          {renderSettingsRoutes(settingsOverlayEnabled)}
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
 
-      {state?.backgroundLocation && (
+      {state?.backgroundLocation && settingsOverlayEnabled && (
         <Routes>
           <Route path="/" element={<ProtectedRoute disableLayout />}>
-            {renderSettingsRoutes()}
+            {renderSettingsRoutes(settingsOverlayEnabled)}
           </Route>
         </Routes>
       )}

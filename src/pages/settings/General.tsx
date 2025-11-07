@@ -212,12 +212,6 @@ export default function General() {
     setRegionalValues,
   ]);
 
-  useEffect(() => {
-    if (!settings) return;
-    const updatedAt = settings.updated_at as string | undefined;
-    setLastSyncedAt(updatedAt ? new Date(updatedAt) : new Date());
-  }, [settings]);
-
   // Remove the old hardcoded tutorial steps - using dynamic ones above
   const handleTutorialComplete = async () => {
     // Settings tutorial completed successfully

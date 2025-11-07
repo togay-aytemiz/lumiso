@@ -3,7 +3,7 @@ import os, json, glob, requests
 from pathlib import Path
 
 API_TOKEN = os.environ["QASE_API_TOKEN"]
-PROJECT   = os.environ.get("QASE_PROJECT", "CRM")
+PROJECT   = os.environ.get("QASE_PROJECT", "LUMISO")
 BASE_URL  = "https://api.qase.io/v1"
 HEADERS   = {"Content-Type": "application/json", "Token": API_TOKEN}
 

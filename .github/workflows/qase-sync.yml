@@ -38,7 +38,7 @@ jobs:
       - name: Sync to Qase and open run
         env:
           QASE_API_TOKEN: ${{ secrets.QASE_API_TOKEN }}
-          QASE_PROJECT: CRM
+          QASE_PROJECT: LUMISO
           CHANGED_FILES: ${{ steps.diff.outputs.files }}
           RUN_SUITE: ${{ inputs.suite }}
           RETEST_IDS: ${{ inputs.external_ids }}

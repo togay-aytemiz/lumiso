@@ -1,9 +1,10 @@
-import { ReactNode } from "react";
+import { ReactNode, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { Loader2, type LucideIcon } from "lucide-react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useSettingsContext } from "@/contexts/SettingsContext";
+import { useSettingsAnchorRegistry } from "@/contexts/SettingsAnchorRegistryContext";
 import { settingsClasses, settingsTokens } from "@/theme/settingsTokens";
 
 export type SettingsSectionAction = {
@@ -56,6 +57,11 @@ export function SettingsTwoColumnSection({
   leftColumnFooter,
 }: SettingsTwoColumnSectionProps) {
   const { isDirty } = useSettingsSectionMeta(sectionId);
+  const anchor = useMemo(
+    () => ({ id: sectionId, label: title }),
+    [sectionId, title]
+  );
+  useSettingsAnchorRegistry(anchor);
 
   return (
     <section
@@ -117,6 +123,11 @@ export function SettingsSingleColumnSection({
   toolbarSlot,
 }: SettingsSingleColumnSectionProps) {
   const { isDirty } = useSettingsSectionMeta(sectionId);
+  const anchor = useMemo(
+    () => ({ id: sectionId, label: title }),
+    [sectionId, title]
+  );
+  useSettingsAnchorRegistry(anchor);
 
   return (
     <section

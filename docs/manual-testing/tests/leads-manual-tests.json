@@ -1,0 +1,183 @@
+[
+  {
+    "suite": "Leads - Ana Akışlar",
+    "cases": [
+      {
+        "external_id": "CRM-LEADS-201",
+        "title": "Kişi Ekle paneliyle yeni kişi oluşturma",
+        "description": "/leads sayfasından yeni bir kişi açmanın, gerekli alanları doldurmanın ve kaydın tabloya yansımasının doğrulanması.",
+        "steps": [
+          {
+            "action": "Kişi Yönetimi sayfasını açın ve sağ üstteki \"Kişi Ekle\" butonuna tıklayın.",
+            "expected_result": "\"Yeni Kişi Ekle\" başlıklı kaydırmalı panel açılır."
+          },
+          {
+            "action": "Ad, e-posta, telefon ve durum gibi zorunlu alanları Türkçe ipuçlarını takip ederek doldurun.",
+            "expected_result": "Alanların altında kırmızı uyarı görünmez ve \"Kişi Oluştur\" butonu aktif hale gelir."
+          },
+          {
+            "action": "\"Kişi Oluştur\" butonuna basın ve panel kapanana kadar bekleyin.",
+            "expected_result": "Yeşil bildirim \"Kişi başarıyla oluşturuldu\" mesajını gösterir ve panel kapanır."
+          },
+          {
+            "action": "Tabloyu üstten yenileyin veya sıralamayı güncelleyin.",
+            "expected_result": "Yeni kişi satırı oluşturulma zamanı sayesinde listenin üstüne gelir ve seçilebilir durumdadır."
+          }
+        ],
+        "expected_result": "Kullanıcı, aynı panelde tüm zorunlu alanları tamamlayarak yeni bir kişiyi listeye ekleyebilir."
+      },
+      {
+        "external_id": "CRM-LEADS-202",
+        "title": "Kişi Detayları kartında temel bilgileri düzenleme",
+        "description": "Kişi detay sayfasındaki \"Kişi Bilgileri\" kartından ad, e-posta veya telefon alanlarının satır içi düzenlenmesi.",
+        "steps": [
+          {
+            "action": "Listenin herhangi bir satırına tıklayarak kişi detay sayfasını açın.",
+            "expected_result": "Sayfanın sol tarafında \"Kişi Bilgileri\" kartı görüntülenir."
+          },
+          {
+            "action": "Kartta \"E-posta\" satırının üzerine gelin ve görünen kalem ikonuna tıklayın.",
+            "expected_result": "Satır düzenleme moduna geçer ve alan içinde metin düzenlenebilir hale gelir."
+          },
+          {
+            "action": "Yeni bir e-posta adresi yazıp Enter tuşuna basın veya küçük onay butonunu seçin.",
+            "expected_result": "Satır normal görünüme döner, alan yeni değerle güncellenir ve kısa süreli bir başarı bildirimi görünür."
+          },
+          {
+            "action": "Sayfayı yenileyin.",
+            "expected_result": "Kişi bilgisi aynı güncel değerle yüklenir; değişiklik kalıcıdır."
+          }
+        ],
+        "expected_result": "Kişi Detayları kartındaki her satır, kalem ikonu aracılığıyla doğrudan düzenlenebilir ve güncellemeler hemen saklanır."
+      },
+      {
+        "external_id": "CRM-LEADS-203",
+        "title": "Kişi durumunu değiştirme",
+        "description": "Kişi başlığının yanındaki durum rozetinden veya hızlı aksiyon butonlarından yeni bir statü seçilmesi.",
+        "steps": [
+          {
+            "action": "Kişi detay sayfasında adın yanında yer alan renkli durum rozetine tıklayın.",
+            "expected_result": "Tüm durumların listelendiği küçük bir seçim menüsü açılır."
+          },
+          {
+            "action": "Listeden farklı bir durum (ör. \"Tamamlandı\") seçin veya üst menüde gösteriliyorsa aynı ada sahip hızlı butona basın.",
+            "expected_result": "Rozet yeni rengi ve etiketiyle güncellenir; üstte kısa bir bilgi mesajı görünür."
+          },
+          {
+            "action": "Aktivite bölümünü kontrol edin.",
+            "expected_result": "Zaman çizelgesine durum değişikliğini anlatan otomatik bir satır eklenmiştir."
+          }
+        ],
+        "expected_result": "Durum değişiklikleri tek tıklamayla yapılabilir, hem rozet hem de aktivite kaydı yeni değeri gösterir."
+      },
+      {
+        "external_id": "CRM-LEADS-204",
+        "title": "Kişiyi projeye dönüştürme",
+        "description": "\"Projeler\" kartındaki \"Proje Ekle\" akışının çalıştığını ve kartta yeni projenin listelendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Kişi detay sayfasında \"Projeler\" kartına gidin ve \"Proje Ekle\" butonuna tıklayın.",
+            "expected_result": "Proje oluşturma sihirbazı (yan panel) açılır."
+          },
+          {
+            "action": "Zorunlu alanlara (proje adı, tür, tarih vb.) uygun değerler girip adımları tamamlayın.",
+            "expected_result": "Sihirbazın her adımı başarıyla geçilir ve son adımda \"Kaydet\" butonu aktif olur."
+          },
+          {
+            "action": "Sihirbazı tamamlayıp kapanmasını bekleyin.",
+            "expected_result": "Yeşil mesaj \"Proje başarıyla oluşturuldu\" ibaresini gösterir."
+          },
+          {
+            "action": "\"Projeler\" kartını yeniden kontrol edin.",
+            "expected_result": "Yeni proje kartları listesine eklenmiş ve varsayılan olarak aktif bölümde görünmektedir."
+          }
+        ],
+        "expected_result": "Kişiden bağımsız yeni proje kaydı açılır ve aynı kart altında hemen görüntülenir."
+      },
+      {
+        "external_id": "CRM-LEADS-205",
+        "title": "Aktif ve arşivli projeleri yönetme",
+        "description": "\"Arşivleri Göster\" anahtarı ile aktif projeler ile geçmiş projeler arasında geçiş yapılabildiğini doğrular.",
+        "steps": [
+          {
+            "action": "En az bir projenin arşivlenmiş durumda olduğundan emin olun (proje detay sayfasından arşivlenmiş statüye taşıyın).",
+            "expected_result": "\"Projeler\" kartında \"Arşivleri Göster\" anahtarı görünür hale gelir."
+          },
+          {
+            "action": "\"Arşivleri Göster\" anahtarını açın.",
+            "expected_result": "Kartın altında \"Arşivlenmiş Projeler\" başlıklı ek bir liste belirir ve geçmiş projeler burada gösterilir."
+          },
+          {
+            "action": "Aynı anahtarı tekrar kapatın.",
+            "expected_result": "Arşivlenmiş bölüm gizlenir, aktif projeler listesi etkilenmez."
+          }
+        ],
+        "expected_result": "Kullanıcı tek bir anahtarla aktif ve geçmiş projeler arasında görünüm değiştirebilir."
+      },
+      {
+        "external_id": "CRM-LEADS-206",
+        "title": "Aktivite bölümünde not ekleme",
+        "description": "\"Aktivite\" kartındaki \"Not\" formuyla hızlıca not eklenmesini doğrular.",
+        "steps": [
+          {
+            "action": "\"Aktivite\" kartında \"Not\" başlığı altındaki metin kutusuna kısa bir yorum yazın.",
+            "expected_result": "Kutunun altındaki \"Not Ekle\" butonu aktif olur."
+          },
+          {
+            "action": "\"Not Ekle\" butonuna basın.",
+            "expected_result": "Buton kısa süreli \"Kaydediliyor...\" durumuna geçer."
+          },
+          {
+            "action": "Zaman çizelgesinin en üstüne bakın.",
+            "expected_result": "Az önce girilen içerik tarih/ saat etiketiyle ilk satıra eklenmiştir."
+          }
+        ],
+        "expected_result": "Kullanıcılar birkaç saniye içinde yeni not girip kronolojik akışta görebilir."
+      },
+      {
+        "external_id": "CRM-LEADS-207",
+        "title": "Hatırlatıcı kurup takvimden tarih/saat seçme",
+        "description": "Aktivite formundaki \"Hatırlatıcı Kur?\" anahtarıyla tarih/saat seçicisinin çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "\"Not\" formunda \"Hatırlatıcı Kur?\" anahtarını açın.",
+            "expected_result": "\"Tarih ve Saat\" alanı ve takvim ikonları görünür."
+          },
+          {
+            "action": "Tarih alanına tıklayıp açılan mini takvimden gelecekteki bir gün seçin, ardından saat listesinden uygun bir saat belirleyin.",
+            "expected_result": "Alan seçtiğiniz tarih ve saati DD.AA.YYYY HH:MM formatında gösterir."
+          },
+          {
+            "action": "Hatırlatma metnini yazıp \"Hatırlatıcı Ekle\" butonuna basın.",
+            "expected_result": "Zaman çizelgesine alarm ikonu olan yeni bir satır eklenir ve seçilen tarih/saat etiketi görünür."
+          }
+        ],
+        "expected_result": "Hatırlatıcılar takvim seçimleriyle birlikte kaydedilir ve zaman çizelgesinde açıkça gösterilir."
+      },
+      {
+        "external_id": "CRM-LEADS-208",
+        "title": "Seans Ekle butonuyla takvimden tarih seçerek seans planlama",
+        "description": "Kişi başlığındaki \"Seans Ekle\" düğmesinden açılan planlama sihirbazının tarih/saat seçimlerini kaydettiğini doğrular.",
+        "steps": [
+          {
+            "action": "Kişi detay sayfasının üst kısmındaki \"Seans Ekle\" (takvim ikonlu) butonuna tıklayın.",
+            "expected_result": "Seans planlama paneli yan tarafta açılır."
+          },
+          {
+            "action": "Paneldeki tarih alanına tıklayın, takvimden uygun günü seçin ve saat seçicisinden bir zaman belirleyin.",
+            "expected_result": "Seçilen tarih ve saat üst adıma taşınır; panel ilerleme göstergesi dolmaya devam eder."
+          },
+          {
+            "action": "Gerekli diğer alanları (proje seçimi, notlar vb.) doldurup planlamayı tamamlayın.",
+            "expected_result": "Panel \"Seans Ekle\" düğmesiyle kapanır, üstte \"Seansınız takvime eklendi\" mesajı çıkar."
+          },
+          {
+            "action": "Kişi başlığındaki \"Seanslar\" bölümünü kontrol edin.",
+            "expected_result": "Yeni seans sayacı artar ve kartta yaklaşan tarih çip olarak görüntülenir."
+          }
+        ],
+        "expected_result": "Seans planlama sihirbazı, takvimden seçilen tarih/saat ile kayıt oluşturur ve kişi özetine yansıtır."
+      }
+    ]
+  }
+]

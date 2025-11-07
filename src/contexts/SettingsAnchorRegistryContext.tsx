@@ -67,6 +67,7 @@ export function SettingsAnchorRegistryProvider({
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useSettingsAnchorRegistry(anchor?: SettingsAnchor | null) {
   const context = useContext(SettingsAnchorRegistryContext);
 
@@ -75,9 +76,10 @@ export function useSettingsAnchorRegistry(anchor?: SettingsAnchor | null) {
       return;
     }
     return context.registerAnchor(anchor);
-  }, [context, anchor?.id, anchor?.label]);
+  }, [context, anchor]);
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useRegisteredSettingsAnchors(): SettingsAnchor[] {
   const context = useContext(SettingsAnchorRegistryContext);
   return context?.anchors ?? [];

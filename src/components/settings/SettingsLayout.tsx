@@ -25,6 +25,10 @@ import {
 import { cn } from "@/lib/utils";
 import { useSettingsContext } from "@/contexts/SettingsContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import {
+  SettingsAnchorRegistryProvider,
+  useRegisteredSettingsAnchors,
+} from "@/contexts/SettingsAnchorRegistryContext";
 import { useTranslation } from "react-i18next";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
 import SettingsHelpSheet from "@/components/settings/SettingsHelpSheet";
@@ -55,7 +59,7 @@ type SettingsLayoutProps = {
   enableOverlay?: boolean;
 };
 
-export default function SettingsLayout({
+function SettingsLayoutInner({
   enableOverlay = true,
 }: SettingsLayoutProps) {
   const location = useLocation();
@@ -78,6 +82,7 @@ export default function SettingsLayout({
   const { t: tCommon } = useTranslation("common");
   const { t: tPages } = useTranslation("pages");
   const { toast } = useToast();
+  const registeredAnchors = useRegisteredSettingsAnchors();
 
   const currentPath = location.pathname;
   const isSettingsRoot = currentPath === "/settings";
@@ -96,6 +101,27 @@ export default function SettingsLayout({
       backgroundLocationRef.current = backgroundLocationFromState;
     }
   }, [backgroundLocationFromState, shouldUseOverlay]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    if (!shouldUseOverlay) {
+      return;
+    }
+
+    const { body, documentElement } = document;
+    const previousBodyOverflow = body.style.overflow;
+    const previousHtmlOverflow = documentElement.style.overflow;
+
+    body.style.overflow = "hidden";
+    documentElement.style.overflow = "hidden";
+
+    return () => {
+      body.style.overflow = previousBodyOverflow;
+      documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [shouldUseOverlay]);
 
   useEffect(() => {
     if (!shouldUseOverlay) {
@@ -757,6 +783,13 @@ export default function SettingsLayout({
     const merged: StickySectionNavItem[] = [];
     const seenIds = new Set<string>();
 
+    registeredAnchors.forEach((item) => {
+      if (item.id && !seenIds.has(item.id) && item.label) {
+        merged.push({ id: item.id, title: item.label });
+        seenIds.add(item.id);
+      }
+    });
+
     contextSectionNavItems.forEach((item) => {
       if (item.id && !seenIds.has(item.id) && item.title) {
         merged.push(item);
@@ -772,7 +805,7 @@ export default function SettingsLayout({
     });
 
     return merged;
-  }, [contextSectionNavItems, domSectionNavItems]);
+  }, [contextSectionNavItems, domSectionNavItems, registeredAnchors]);
 
   const shouldShowScrollTopButton =
     showScrollTop && !(isMobile && isSettingsRoot);
@@ -1209,5 +1242,13 @@ export default function SettingsLayout({
       {helpSheet}
       {guardDialog}
     </>
+  );
+}
+
+export default function SettingsLayout(props: SettingsLayoutProps) {
+  return (
+    <SettingsAnchorRegistryProvider>
+      <SettingsLayoutInner {...props} />
+    </SettingsAnchorRegistryProvider>
   );
 }

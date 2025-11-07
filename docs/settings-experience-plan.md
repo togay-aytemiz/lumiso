@@ -185,7 +185,7 @@ Cross-cutting components:
 - ✅ Implement desktop `SettingsAnchorNav` within the modal shell, including scroll-spy integration, DOM discovery for legacy sections, and consistent sticky behavior across Profile, General, Notifications, Projects, Leads, Services, and other pages.
 - ✅ Ship mobile-first navigation baseline: `SettingsMobileDashboard` + in-modal subpage header/back affordance mirroring native settings apps, wired into existing navigation guard + scroll-spy logic.
 - ✅ Route `/settings` index to the new settings directory rather than auto-routing to Profile, preserving desktop + mobile parity.
-- ▫️ Create `useSettingsAnchorRegistry` primitive with storybook examples, reusing the scroll-spy patterns proven in Project/Lead/Sheet detail pages.
+- ✅ Create `useSettingsAnchorRegistry` primitive (see `src/contexts/SettingsAnchorRegistryContext.tsx`) so sections can self-register anchors via `SettingsTwoColumnSection`/`SettingsSingleColumnSection`; layout now merges registry items with DOM discovery for sticky pills.
 - ✅ Implement `SettingsHelpSheet` component triggered by the header `Need help?` action; support markdown + media embeds and connect content to the shared i18n pipeline.
 - ▫️ Introduce section primitives (`SettingsFormSection`, `SettingsCollectionSection`, `SettingsToggleSection`, `SettingsDangerSection`, `SettingsPlaceholderSection`).
 - ▫️ Create shared uploader hook and refresh button pattern.

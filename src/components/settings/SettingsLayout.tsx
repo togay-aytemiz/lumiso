@@ -216,6 +216,7 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
   const contentRef = useRef<HTMLElement | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [scrollTopRightOffset, setScrollTopRightOffset] = useState(24);
+  const [scrollTopBottomOffset, setScrollTopBottomOffset] = useState<number | null>(null);
   const [domSectionNavItems, setDomSectionNavItems] = useState<
     StickySectionNavItem[]
   >([]);
@@ -256,16 +257,23 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
 
     if (isMobile) {
       setScrollTopRightOffset(16);
+      const navEl = document.querySelector<HTMLElement>(".mobile-bottom-nav");
+      const navHeight = navEl?.getBoundingClientRect().height ?? 0;
+      const baseBottom = hasChanges ? 96 : 20;
+      const computedBottom =
+        navHeight > 0 ? navHeight + baseBottom : baseBottom + 12;
+      setScrollTopBottomOffset(computedBottom);
       return;
     }
 
+    setScrollTopBottomOffset(null);
     const container = contentRef.current;
     if (!container) return;
 
     const rect = container.getBoundingClientRect();
     const offset = Math.max(window.innerWidth - rect.right + 24, 16);
     setScrollTopRightOffset(offset);
-  }, [isMobile]);
+  }, [hasChanges, isMobile]);
 
   const refreshDomSectionNavItems = useCallback(() => {
     const container = contentRef.current;
@@ -349,6 +357,16 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
     container.addEventListener("scroll", handleScroll);
     window.addEventListener("resize", updateScrollTopPosition);
 
+    let navResizeObserver: ResizeObserver | null = null;
+    const navEl = document.querySelector(".mobile-bottom-nav");
+    if (navEl && "ResizeObserver" in window) {
+      navResizeObserver = new ResizeObserver(() => updateScrollTopPosition());
+      navResizeObserver.observe(navEl);
+    }
+    const navCheckTimeout = window.setTimeout(() => {
+      updateScrollTopPosition();
+    }, 250);
+
     let frame = 0;
     let observer: MutationObserver | null = null;
 
@@ -377,6 +395,8 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
       }
       container.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", updateScrollTopPosition);
+      navResizeObserver?.disconnect();
+      window.clearTimeout(navCheckTimeout);
     };
   }, [
     currentPath,
@@ -1257,7 +1277,12 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
                 "fixed z-[60] h-11 w-11 rounded-full border-transparent bg-[hsl(var(--accent-200))] text-[hsl(var(--accent-900))] shadow-lg transition-all hover:bg-[hsl(var(--accent-300))] hover:shadow-xl focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2",
                 hasChanges ? "bottom-24 md:bottom-28" : "bottom-5 md:bottom-6"
               )}
-              style={{ right: `${scrollTopRightOffset}px` }}
+              style={{
+                right: `${scrollTopRightOffset}px`,
+                ...(scrollTopBottomOffset !== null
+                  ? { bottom: `${scrollTopBottomOffset}px` }
+                  : undefined),
+              }}
               aria-label={tCommon("buttons.backToTop", {
                 defaultValue: "Back to top",
               })}
@@ -1344,7 +1369,12 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
                       ? "bottom-24 md:bottom-28"
                       : "bottom-5 md:bottom-6"
                   )}
-                  style={{ right: `${scrollTopRightOffset}px` }}
+                  style={{
+                    right: `${scrollTopRightOffset}px`,
+                    ...(scrollTopBottomOffset !== null
+                      ? { bottom: `${scrollTopBottomOffset}px` }
+                      : undefined),
+                  }}
                   aria-label={tCommon("buttons.backToTop", {
                     defaultValue: "Back to top",
                   })}

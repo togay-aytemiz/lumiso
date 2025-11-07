@@ -18,23 +18,15 @@ def check_env():
         die("QASE_PROJECT eksik")
 
 def get_all_cases_by_external_id():
-    limit = 100
-    offset = 0
-    out = {}
+    limit, offset, out = 100, 0, {}
     while True:
         url = f"{BASE_URL}/case/{PROJECT}?limit={limit}&offset={offset}"
         r = requests.get(url, headers=HEADERS)
-        if r.status_code == 404:
-            die(f"Project bulunamadı PROJECT={PROJECT}")
-        if r.status_code == 401:
-            die("Yetkisiz token")
-        try:
-            r.raise_for_status()
-            body = r.json()
-        except Exception:
-            die(f"Listeleme parse hatası status={r.status_code} body={r.text[:300]}")
-        result = body.get("result", {})
-        entities = result.get("entities", []) or []
+        if r.status_code in (401, 404):
+            die(f"Case list hata {r.status_code} body={r.text[:300]}")
+        r.raise_for_status()
+        body = r.json().get("result", {})
+        entities = body.get("entities", []) or []
         for e in entities:
             ext = e.get("external_id")
             if ext:
@@ -45,10 +37,46 @@ def get_all_cases_by_external_id():
     print(f"[qase-sync] Existing cases fetched: {len(out)}")
     return out
 
+def list_suites():
+    suites = {}
+    limit, offset = 100, 0
+    while True:
+        url = f"{BASE_URL}/suite/{PROJECT}?limit={limit}&offset={offset}"
+        r = requests.get(url, headers=HEADERS)
+        if r.status_code in (401, 404):
+            die(f"Suite list hata {r.status_code} body={r.text[:300]}")
+        r.raise_for_status()
+        body = r.json().get("result", {})
+        entities = body.get("entities", []) or []
+        for s in entities:
+            suites[s["title"]] = s["id"]
+        if len(entities) < limit:
+            break
+        offset += limit
+    return suites
+
+def create_suite(title):
+    url = f"{BASE_URL}/suite/{PROJECT}"
+    payload = {"title": title, "description": f"Auto created for suite {title}"}
+    r = requests.post(url, headers=HEADERS, data=json.dumps(payload))
+    if r.status_code in (401, 404, 400):
+        die(f"Suite create hata {r.status_code} body={r.text[:300]}")
+    r.raise_for_status()
+    sid = r.json()["result"]["id"]
+    print(f"[qase-sync] Suite created: {title} id={sid}")
+    return sid
+
+def get_or_create_suite_id(title, cache):
+    if title in cache:
+        return cache[title]
+    sid = create_suite(title)
+    cache[title] = sid
+    return sid
+
 def create_case(payload):
     r = requests.post(f"{BASE_URL}/case/{PROJECT}", headers=HEADERS, data=json.dumps(payload))
-    if r.status_code in (401, 404):
-        die(f"Create case hata {r.status_code} body={r.text[:300]}")
+    if r.status_code in (401, 404, 400):
+        die(f"Case create hata {r.status_code} body={r.text[:400]}")
     r.raise_for_status()
     cid = r.json()["result"]["id"]
     print(f"[qase-sync] Created case {payload.get('external_id')} id={cid}")
@@ -56,8 +84,8 @@ def create_case(payload):
 
 def update_case(case_id, payload):
     r = requests.patch(f"{BASE_URL}/case/{PROJECT}/{case_id}", headers=HEADERS, data=json.dumps(payload))
-    if r.status_code in (401, 404):
-        die(f"Update case hata {r.status_code} body={r.text[:300]}")
+    if r.status_code in (401, 404, 400):
+        die(f"Case update hata {r.status_code} body={r.text[:400]}")
     r.raise_for_status()
     print(f"[qase-sync] Updated case id={case_id}")
 
@@ -67,16 +95,17 @@ def open_run(title, case_ids):
         return
     payload = {"title": title, "cases": case_ids}
     r = requests.post(f"{BASE_URL}/run/{PROJECT}", headers=HEADERS, data=json.dumps(payload))
-    if r.status_code in (401, 404):
-        die(f"Create run hata {r.status_code} body={r.text[:300]}")
+    if r.status_code in (401, 404, 400):
+        die(f"Run create hata {r.status_code} body={r.text[:400]}")
     r.raise_for_status()
     rid = r.json()["result"]["id"]
     print(f"[qase-sync] Run created id={rid} cases={len(case_ids)}")
 
-def map_json_case_to_qase(case, suite_name):
+def map_json_case_to_qase(case, suite_id):
     steps = []
-    for s in case.get("steps", []):
+    for idx, s in enumerate(case.get("steps", []), start=1):
         if not isinstance(s, dict):
+            print(f"[qase-sync] Uyarı step dict değil atlandı ext={case.get('external_id')} idx={idx}")
             continue
         steps.append({
             "action": s.get("action", ""),
@@ -85,7 +114,7 @@ def map_json_case_to_qase(case, suite_name):
     return {
         "title": case["title"],
         "external_id": case["external_id"],
-        "suite_title": suite_name,
+        "suite_id": suite_id,
         "description": case.get("description", ""),
         "steps": steps,
         "priority": "medium",
@@ -107,62 +136,70 @@ def load_target_files():
     return glob.glob("docs/manual-testing/tests/*.json")
 
 def parse_file_into_suites(file_path):
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, "r", encoding="utf-8-sig") as f:
         data = json.load(f)
-
     suites = []
-
     if isinstance(data, dict) and "cases" in data:
         suite_name = data.get("suite") or Path(file_path).stem
         suites.append((suite_name, data.get("cases", [])))
-
     elif isinstance(data, list):
         suite_name = Path(file_path).stem
         suites.append((suite_name, data))
-
-    elif isinstance(data, dict):
-        for k, v in data.items():
+    else:
+        for k, v in (data.items() if isinstance(data, dict) else []):
             if isinstance(v, list):
                 suites.append((k, v))
-
     if not suites:
         die(f"JSON biçimi desteklenmiyor file={file_path}")
     return suites
 
+def validate_case(c, file_path, suite):
+    req = ["external_id", "title"]
+    for k in req:
+        if k not in c or not isinstance(c[k], str) or not c[k].strip():
+            die(f"Gerekli alan eksik {k} file={file_path} suite={suite}")
+    if "steps" in c and not isinstance(c["steps"], list):
+        die(f"steps liste olmalı file={file_path} suite={suite} ext={c.get('external_id')}")
+
 def main():
     check_env()
     ext_to_id = get_all_cases_by_external_id()
+    suite_cache = list_suites()
     files = load_target_files()
     if not files:
-        die("JSON dosyası bulunamadı docs manual testing yolunu kontrol et")
+        die("JSON dosyası bulunamadı. docs manual testing yolunu kontrol et")
 
     explicit_ids = set()
     if os.environ.get("RETEST_IDS"):
         explicit_ids = {x.strip() for x in os.environ["RETEST_IDS"].split(",") if x.strip()}
 
+    created = 0
+    updated = 0
     touched_case_ids = []
 
     for fp in files:
-        for suite, cases in parse_file_into_suites(fp):
-            print(f"[qase-sync] File={fp} suite={suite} case_count={len(cases)}")
+        for suite_name, cases in parse_file_into_suites(fp):
+            sid = get_or_create_suite_id(suite_name, suite_cache)
+            print(f"[qase-sync] File={fp} suite={suite_name} suite_id={sid} case_count={len(cases)}")
             for c in cases:
                 if not isinstance(c, dict):
-                    print(f"[qase-sync] Atlandı. Dict değil file={fp}")
+                    print(f"[qase-sync] Atlandı dict değil file={fp}")
                     continue
-                if "external_id" not in c or "title" not in c:
-                    print(f"[qase-sync] Atlandı. external_id ya da title eksik file={fp}")
-                    continue
-                payload = map_json_case_to_qase(c, suite)
+                validate_case(c, fp, suite_name)
+                payload = map_json_case_to_qase(c, sid)
                 ext = payload["external_id"]
                 if ext in ext_to_id:
                     update_case(ext_to_id[ext], payload)
                     case_id = ext_to_id[ext]
+                    updated += 1
                 else:
                     case_id = create_case(payload)
                     ext_to_id[ext] = case_id
+                    created += 1
                 if not explicit_ids or ext in explicit_ids:
                     touched_case_ids.append(case_id)
 
+    print(f"[qase-sync] Summary created={created} updated={updated} included_in_run={len(touched_case_ids)}")
     title = "Manual re test auto generated" if not explicit_ids else "Manual re test targeted by external_id"
     open_run(title, touched_case_ids)
 

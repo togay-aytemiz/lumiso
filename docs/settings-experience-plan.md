@@ -187,7 +187,7 @@ Cross-cutting components:
 - ✅ Route `/settings` index to the new settings directory rather than auto-routing to Profile, preserving desktop + mobile parity.
 - ✅ Create `useSettingsAnchorRegistry` primitive (see `src/contexts/SettingsAnchorRegistryContext.tsx`) so sections can self-register anchors via `SettingsTwoColumnSection`/`SettingsSingleColumnSection`; layout now merges registry items with DOM discovery for sticky pills.
 - ✅ Implement `SettingsHelpSheet` component triggered by the header `Need help?` action; support markdown + media embeds and connect content to the shared i18n pipeline.
-- ▫️ Introduce section primitives (`SettingsFormSection`, `SettingsCollectionSection`, `SettingsToggleSection`, `SettingsDangerSection`, `SettingsPlaceholderSection`).
+- ✅ Introduce section primitives (`SettingsFormSection`, `SettingsCollectionSection`, `SettingsToggleSection`, `SettingsDangerSection`, `SettingsPlaceholderSection`) powered by `SettingsTwoColumnSection`/`SettingsSingleColumnSection` so teams can drop in consistent layouts without redoing scaffolding (`src/components/settings/SettingsSectionVariants.tsx`).
 - ▫️ Create shared uploader hook and refresh button pattern.
 - ▫️ Add storybook/preview entries (optional) or Chromatic snapshots.
 - ▫️ Update tests for new primitives (`src/components/settings/__tests__`).

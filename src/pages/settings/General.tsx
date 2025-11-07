@@ -231,10 +231,6 @@ export default function General() {
     }
   };
 
-  const validateBrandColor = (color: string) => {
-    return /^#[0-9A-F]{6}$/i.test(color);
-  };
-
   const handleBrandColorChange = (value: string) => {
     // Allow any input while typing, validate only for final color picker sync
     brandingSection.updateValue("brandColor", value);

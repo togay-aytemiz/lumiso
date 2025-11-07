@@ -187,9 +187,6 @@ export default function Notifications() {
     };
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user found');
-
       const dbField = fieldMap[field];
       if (!dbField) throw new Error('Invalid field');
 
@@ -403,177 +400,25 @@ export default function Notifications() {
 
   return (
     <SettingsPageWrapper>
-      <div className="space-y-8">
-        {/* Master Controls */}
-        <CategorySettingsSection
+      <div className="space-y-10">
+        <SettingsToggleSection
+          sectionId="master-controls"
           title={t('settings.notifications.masterControls.title')}
           description={t('settings.notifications.masterControls.description')}
-          sectionId="master-controls"
-        >
-          <div className="space-y-6">
-            {/* Master Toggle */}
-            <div className="flex flex-col gap-4 rounded-lg border-2 border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex-1">
-                <Label htmlFor="global-notifications" className="text-base font-medium flex items-center gap-2">
-                  {settings.globalEnabled ? <Power className="h-4 w-4" /> : <PowerOff className="h-4 w-4" />}
-                  {t('settings.notifications.masterControls.allNotifications')}
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {t('settings.notifications.masterControls.allNotificationsHelp')}
-                </p>
-              </div>
-              <Switch
-                id="global-notifications"
-                checked={settings.globalEnabled}
-                onCheckedChange={handleToggleAllNotifications}
-                disabled={autoSaveStates.globalEnabled === 'saving'}
-                className="self-end sm:self-auto"
-              />
-            </div>
-
-            {/* Scheduled Time Setting */}
-            <div className="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex-1">
-                <Label htmlFor="scheduled-time" className="text-base font-medium flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  {t('settings.notifications.masterControls.scheduledTime')}
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {t('settings.notifications.masterControls.scheduledTimeHelp')}
-                </p>
-              </div>
-              <Select
-                value={settings.scheduledTime}
-                onValueChange={(value) => handleAutoSave('scheduledTime', value)}
-                disabled={autoSaveStates.scheduledTime === 'saving'}
-              >
-                <SelectTrigger className="w-full sm:w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {timeOptions.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CategorySettingsSection>
-
-        {/* Scheduled Notifications */}
-        <CategorySettingsSection
+          items={masterToggleItems}
+        />
+        <SettingsToggleSection
+          sectionId="scheduled"
           title={t('settings.notifications.scheduled.title')}
           description={`${t('settings.notifications.scheduled.description')} ${settings.scheduledTime}`}
-          sectionId="scheduled"
-        >
-          <div className="space-y-6">
-
-            {/* Daily Summary */}
-            <div className="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex-1">
-                <Label htmlFor="daily-summary" className="text-base font-medium">
-                  {t('settings.notifications.scheduled.dailySummary')}
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {t('settings.notifications.scheduled.dailySummaryHelp')}
-                </p>
-              </div>
-              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => testNotification('daily-summary-empty')}
-                  disabled={testingNotification === 'daily-summary-empty'}
-                  className="text-muted-foreground hover:text-muted-foreground/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
-                >
-                  {testingNotification === 'daily-summary-empty' ? (
-                    <>
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      {t('settings.notifications.testing')}
-                    </>
-                  ) : (
-                    t('settings.notifications.sendEmptyTest')
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => testNotification('daily-summary')}
-                  disabled={testingNotification === 'daily-summary'}
-                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
-                >
-                  {testingNotification === 'daily-summary' ? (
-                    <>
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      {t('settings.notifications.testing')}
-                    </>
-                  ) : (
-                    t('settings.notifications.sendTest')
-                  )}
-                </Button>
-                <Switch
-                  id="daily-summary"
-                  checked={settings.dailySummaryEnabled}
-                  onCheckedChange={(checked) => handleAutoSave('dailySummaryEnabled', checked)}
-                  disabled={autoSaveStates.dailySummaryEnabled === 'saving'}
-                  className="self-end sm:self-auto"
-                />
-              </div>
-            </div>
-
-          </div>
-        </CategorySettingsSection>
-
-        {/* Immediate Notifications */}
-        <CategorySettingsSection
+          items={scheduledItems}
+        />
+        <SettingsToggleSection
+          sectionId="immediate"
           title={t('settings.notifications.immediate.title')}
           description={t('settings.notifications.immediate.description')}
-          sectionId="immediate"
-        >
-          <div className="space-y-6">
-
-
-            {/* Project Milestone */}
-            <div className="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex-1">
-                <Label htmlFor="project-milestone" className="text-base font-medium">
-                  {t('settings.notifications.immediate.projectMilestone')}
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {t('settings.notifications.immediate.projectMilestoneHelp')}
-                </p>
-              </div>
-              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => testNotification('project-milestone')}
-                  disabled={testingNotification === 'project-milestone'}
-                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
-                >
-                  {testingNotification === 'project-milestone' ? (
-                    <>
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      {t('settings.notifications.testing')}
-                    </>
-                  ) : (
-                    t('settings.notifications.sendTest')
-                  )}
-                </Button>
-                <Switch
-                  id="project-milestone"
-                  checked={settings.projectMilestoneEnabled}
-                  onCheckedChange={(checked) => handleAutoSave('projectMilestoneEnabled', checked)}
-                  disabled={autoSaveStates.projectMilestoneEnabled === 'saving'}
-                  className="self-end sm:self-auto"
-                />
-              </div>
-            </div>
-          </div>
-        </CategorySettingsSection>
-
+          items={immediateItems}
+        />
       </div>
     </SettingsPageWrapper>
   );

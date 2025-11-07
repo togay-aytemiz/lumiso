@@ -119,7 +119,6 @@ def map_json_case_to_qase(case, suite_id):
         "suite_id": suite_id,
         "description": case.get("description", ""),
         "steps": steps,
-        "type": "functional",
         "automation": False
     }
 

@@ -275,24 +275,148 @@
         "expected_result": "Arşivleme işlemi proje durumunu arşiv sekmesine taşır; kullanıcı isterse aynı menüden projeyi geri yükleyebilir."
       },
       {
-        "external_id": "CRM-PROJECTS-312",
-        "title": "Kişi detayındaki Projeler kartından yeni proje açma",
-        "description": "Lead detay sayfasındaki “Proje Ekle” akışının lead bilgilerini sihirbaza otomatik taşıdığını doğrular.",
+        "external_id": "CRM-PROJECTS-313",
+        "title": "Aktivite ve Geçmiş sekmeleriyle proje notlarını takip etme",
+        "description": "Proje detay panelindeki Aktivite kartında not ekleme ve Geçmiş sekmesine geçişi doğrular.",
         "steps": [
           {
-            "action": "Bir kişinin detay sayfasını açın ve \"Projeler\" kartındaki \"Proje Ekle\" butonuna tıklayın.",
-            "expected_result": "Proje oluştur sihirbazı lead bilgileri doldurulmuş olarak açılır."
+            "action": "Herhangi bir projeyi açarak sağdaki hızlı görünümde 'Aktivite' kartını bulun.",
+            "expected_result": "Kartta 'Aktivite' ve 'Geçmiş' etiketli iki sekme görünür, altındaki form not girişi içindir."
           },
           {
-            "action": "Detaylar ve paketler adımlarını tamamlayıp projeyi oluşturun.",
-            "expected_result": "Lead sayfasındaki Projeler kartı yeni kartı listeler; yanında kişi adı otomatik doldurulmuştur."
+            "action": "Not alanına kısa bir yorum yazıp 'Not Ekle' butonuna basın.",
+            "expected_result": "Buton kısa süreli 'Kaydediliyor' durumuna geçer ve yeni not zaman çizelgesinin en üstüne eklenir."
           },
           {
-            "action": "/projects sayfasına gidip yeni proje adını arayın.",
-            "expected_result": "Proje listede görünür ve lead sütununda aynı kişi adı gösterilir."
+            "action": "'Geçmiş' sekmesine tıklayın.",
+            "expected_result": "Kayıtlı sistem değişiklikleri (statü, hizmet vb.) kronolojik olarak listelenir."
+          },
+          {
+            "action": "Tekrar 'Aktivite' sekmesine dönün.",
+            "expected_result": "Az önce eklediğiniz not hâlâ listenin en üstünde görünür ve saat damgası gösterir."
           }
         ],
-        "expected_result": "Lead içinden başlatılan proje sihirbazı kişiyi otomatik bağlar ve proje hem lead kartında hem de genel projeler sayfasında görünür."
+        "expected_result": "Kullanıcı aynı panelde yeni not ekleyip Aktivite/Geçmiş sekmeleri arasında geçiş yapabilir, not hemen görünür."
+      },
+      {
+        "external_id": "CRM-PROJECTS-314",
+        "title": "Yapılacaklar listesi ve ilerleme çubuğunu güncelleme",
+        "description": "Project Todo kartında görev ekleme, tamamlamaya işaretleme ve ilerleme çubuğunun güncellenmesini doğrular.",
+        "steps": [
+          {
+            "action": "Proje panelindeki 'Yapılacaklar' kartını bulun ve 'Yeni yapılacak ekle...' alanına kısa bir görev yazın.",
+            "expected_result": "Alan altındaki 'Yapılacak Ekle' butonu aktif olur."
+          },
+          {
+            "action": "'Yapılacak Ekle' butonuna basın.",
+            "expected_result": "Görev listeye eklenir ve ilerleme yüzdesi bir miktar artar."
+          },
+          {
+            "action": "Görev satırındaki kutucuğu işaretleyerek tamamlandı olarak işaretleyin.",
+            "expected_result": "Satır griye döner, çubuğun yüzdesi artar ve yeşil toast 'Yapılacak tamamlandı' der."
+          },
+          {
+            "action": "Kutucuğu tekrar kaldırıp görevi 'tamamlanmadı' durumuna alın.",
+            "expected_result": "Satır eski haline döner, ilerleme yüzdesi geriye çekilir."
+          }
+        ],
+        "expected_result": "Görev ekleme/düzenleme işlemleri çubuk yüzdesini dinamik günceller ve kullanıcılara net geri bildirim verir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-315",
+        "title": "Projeyi panelden farklı bir duruma alma",
+        "description": "Proje detay panelindeki durum menüsüyle statü değiştirmeyi test eder.",
+        "steps": [
+          {
+            "action": "Proje panelinin üst kısmındaki durum rozetine tıklayın.",
+            "expected_result": "Kullanılabilir statülerin listelendiği bir menü açılır."
+          },
+          {
+            "action": "Farklı bir statü seçin (ör. 'Teslimatta').",
+            "expected_result": "Rozet yeni renge/etikete geçer ve kısa süreli başarı mesajı çıkar."
+          },
+          {
+            "action": "Aktivite kartının Geçmiş sekmesini kontrol edin.",
+            "expected_result": "Son zaman satırı statü değişikliğini kaydeder."
+          }
+        ],
+        "expected_result": "Panel üstünden statü değiştirildiğinde hem rozet hem de tarihçe anında güncellenir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-316",
+        "title": "Projeden seans planlayıp düzenleme",
+        "description": "Proje hızlı görünümünden seans planlama ve düzenleme akışını kapsar.",
+        "steps": [
+          {
+            "action": "Proje panelinde 'Seans Planla' (veya 'Seans Ekle') butonuna tıklayın.",
+            "expected_result": "Seans planlama paneli proje bağlamıyla açılır ve kişi alanı otomatik seçilidir."
+          },
+          {
+            "action": "Takvimden tarih ve saat seçip seansı kaydedin.",
+            "expected_result": "Toast seansın eklendiğini söyler ve seans kartında yaklaşan tarih görünür."
+          },
+          {
+            "action": "Seans satırındaki düzenle ikonuna tıklayıp zamanı değiştirin.",
+            "expected_result": "Diyalog yeni saatle kaydedilir, seans listesi güncellenir ve Aktivite kartına yeni kayıt eklenir."
+          }
+        ],
+        "expected_result": "Projeden planlanan seanslar kolayca düzenlenebilir ve özet kartları anında güncellenir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-317",
+        "title": "Hizmet/fiyat değişikliklerinin ödeme özetine etkisi",
+        "description": "Projetin Ödemeler kartında hizmet fiyatı değiştirildiğinde toplamların nasıl güncellendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Ödemeler kartında 'Hizmet ekle' düğmesine tıklayıp bir hizmet seçin.",
+            "expected_result": "Hizmet seçimi paneli açılır ve paket/ek sekmeleri görünür."
+          },
+          {
+            "action": "Hizmeti ekleyip miktar veya birim fiyatını değiştirin, ardından 'Hizmetleri kaydet' butonuna basın.",
+            "expected_result": "Panel kapanır; 'Proje hizmetleri' kartındaki sayılar ve ek hizmet toplamı güncellenir."
+          },
+          {
+            "action": "Finansal özet kartındaki 'Proje toplamı' ve 'Kalan tutar' alanlarını inceleyin.",
+            "expected_result": "Tutarlar yeni hizmet bedeline göre yeniden hesaplanmıştır."
+          }
+        ],
+        "expected_result": "Hizmet fiyatı/miktarı değiştiğinde finansal özet (sözleşme toplamı, KDV, kalan tutar) anında doğru hesaplanır."
+      },
+      {
+        "external_id": "CRM-PROJECTS-318",
+        "title": "Kanban’da stage değiştirme panelden takip ediliyor",
+        "description": "Proje panelinde yapılan statü değişikliğinin Kanban ilerlemesine yansımasını doğrular.",
+        "steps": [
+          {
+            "action": "Kanban görünümünde bir projeyi seçip panelde statüsünü değiştirin (ör. 'Planlandı' → 'Teslimatta').",
+            "expected_result": "Panel kapanmadan toast statünün değiştiğini bildirir."
+          },
+          {
+            "action": "Paneli kapatıp Kanban sütunlarını inceleyin.",
+            "expected_result": "Projeyi yeni statü sütununun en üst sırasında görürsünüz; kart otomatik olarak listenin başına taşınmıştır."
+          }
+        ],
+        "expected_result": "Panelde yapılan statü değişimi Kanban sütunlarına anında yansır ve kart yeni sütunun tepesine taşınır."
+      },
+      {
+        "external_id": "CRM-PROJECTS-319",
+        "title": "Kanban’da sürükleyip bırakma ve yeni projelerin sırası",
+        "description": "Sürüklenen kartların doğru sütunda ve sırada kaldığını, yeni projelerin stage’in en üstüne eklendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Kanban görünümünde bir projeyi farklı bir statü sütununa sürükleyip bırakın.",
+            "expected_result": "Kart yeni sütuna taşınır, küçük başarı mesajı çıkar ve bir süre sonra yerinde kalır."
+          },
+          {
+            "action": "Yeni bir proje oluşturup tekrar Kanban’a dönün.",
+            "expected_result": "Yeni proje varsayılan statü sütununun en üstünde, listedeki ilk kart olarak görünür."
+          },
+          {
+            "action": "Sürüklediğiniz karta dönüp sayfayı yenileyin.",
+            "expected_result": "Kart hâlâ yeni sütundadır ve bıraktığınız sırayı korur."
+          }
+        ],
+        "expected_result": "Kanban sürükle-bırak işlemleri kalıcıdır; yeni projeler ilgili sütunun en üstüne yerleşir ve yeniden yükleme sonrası da aynı sırada kalır."
       }
     ]
   }

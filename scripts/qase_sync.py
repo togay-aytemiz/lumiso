@@ -1,5 +1,5 @@
 # scripts/qase_sync.py
-import os, json, glob, requests, sys
+import os, json, glob, requests, sys, re
 from pathlib import Path
 
 API_TOKEN = os.environ.get("QASE_API_TOKEN")
@@ -136,28 +136,50 @@ def load_target_files():
     return glob.glob("docs/manual-testing/tests/*.json")
 
 def parse_file_into_suites(file_path):
+    # UTF-8 BOM güvenli
     with open(file_path, "r", encoding="utf-8-sig") as f:
         data = json.load(f)
-    suites = []
-    if isinstance(data, dict) and "cases" in data:
-        suite_name = data.get("suite") or Path(file_path).stem
-        suites.append((suite_name, data.get("cases", [])))
-    elif isinstance(data, list):
-        suite_name = Path(file_path).stem
-        suites.append((suite_name, data))
-    else:
-        for k, v in (data.items() if isinstance(data, dict) else []):
-            if isinstance(v, list):
-                suites.append((k, v))
-    if not suites:
-        die(f"JSON biçimi desteklenmiyor file={file_path}")
-    return suites
 
-def validate_case(c, file_path, suite):
-    req = ["external_id", "title"]
-    for k in req:
-        if k not in c or not isinstance(c[k], str) or not c[k].strip():
-            die(f"Gerekli alan eksik {k} file={file_path} suite={suite}")
+    suites = []
+
+    # 1 biçim: tek suite objesi
+    # { "suite": "Ayarlar - Profil", "cases": [ ... ] }
+    if isinstance(data, dict) and "cases" in data and "suite" in data:
+        suites.append((data["suite"], data.get("cases", [])))
+        return suites
+
+    # 2 biçim: birden çok suite nesnesinden oluşan liste
+    # [ { "suite": "...", "cases": [...] }, { "suite": "...", "cases": [...] } ]
+    if isinstance(data, list) and all(isinstance(x, dict) and "suite" in x and "cases" in x for x in data):
+        for obj in data:
+            suites.append((obj["suite"], obj.get("cases", [])))
+        return suites
+
+    # 3 biçim: sözlükte suite adi -> case listesi
+    # { "Ayarlar - Profil": [ ... ], "Ayarlar - Genel": [ ... ] }
+    if isinstance(data, dict) and all(isinstance(v, list) for v in data.values()):
+        for k, v in data.items():
+            suites.append((k, v))
+        return suites
+
+    die(f"JSON biçimi desteklenmiyor file={file_path}")
+
+def make_auto_id(suite_name: str, index: int) -> str:
+    slug = re.sub(r'[^A-Za-z0-9]+', '-', suite_name).upper().strip('-')
+    return f"{slug}-{index:03d}"
+
+def validate_and_fill_case(c, file_path, suite, index, used_ids):
+    if "title" not in c or not isinstance(c["title"], str) or not c["title"].strip():
+        die(f"Gerekli alan eksik title file={file_path} suite={suite}")
+    if "external_id" not in c or not isinstance(c["external_id"], str) or not c["external_id"].strip():
+        c["external_id"] = make_auto_id(suite, index)
+        print(f"[qase-sync] external_id otomatik atandı ext={c['external_id']} suite={suite}")
+    base = c["external_id"]
+    inc = 1
+    while c["external_id"] in used_ids:
+        inc += 1
+        c["external_id"] = f"{base}-{inc}"
+    used_ids.add(c["external_id"])
     if "steps" in c and not isinstance(c["steps"], list):
         die(f"steps liste olmalı file={file_path} suite={suite} ext={c.get('external_id')}")
 
@@ -176,16 +198,17 @@ def main():
     created = 0
     updated = 0
     touched_case_ids = []
+    used_ids = set(ext_to_id.keys())
 
     for fp in files:
         for suite_name, cases in parse_file_into_suites(fp):
             sid = get_or_create_suite_id(suite_name, suite_cache)
             print(f"[qase-sync] File={fp} suite={suite_name} suite_id={sid} case_count={len(cases)}")
-            for c in cases:
+            for idx, c in enumerate(cases, start=1):
                 if not isinstance(c, dict):
                     print(f"[qase-sync] Atlandı dict değil file={fp}")
                     continue
-                validate_case(c, fp, suite_name)
+                validate_and_fill_case(c, fp, suite_name, idx, used_ids)
                 payload = map_json_case_to_qase(c, sid)
                 ext = payload["external_id"]
                 if ext in ext_to_id:

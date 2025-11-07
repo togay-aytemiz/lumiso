@@ -206,7 +206,7 @@ Cross-cutting components:
 
 ### Phase 3 — Page Wave B (Data Collections)
 
-- ▫️ Leads: refactor statuses & fields into collection sections, add keyboard reorder, align modals.
+- ✅ Leads: refactor statuses & fields into collection sections, add keyboard reorder, align modals.
   - ✅ Annotated legacy sections so the refreshed sticky navigation renders across the page.
 - ▫️ Projects: same pattern as leads; ensure statuses/types share components.
   - ✅ Added anchor metadata to existing sections to participate in the sticky navigation.

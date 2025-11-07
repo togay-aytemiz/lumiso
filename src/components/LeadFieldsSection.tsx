@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import SettingsSection from "@/components/SettingsSection";
+import {
+  SettingsCollectionSection,
+} from "@/components/settings/SettingsSectionVariants";
 import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 import { LeadFieldsList } from "./LeadFieldsList";
 import { LeadFieldDialog } from "./LeadFieldDialog";
@@ -37,33 +39,39 @@ export function LeadFieldsSection() {
 
   if (loading) {
     return (
-      <SettingsSection
+      <SettingsCollectionSection
+        sectionId="lead-fields"
         title={t("lead_fields.title")}
         description={t("lead_fields.description")}
+        bodyClassName="p-6"
       >
         <FormLoadingSkeleton rows={3} />
-      </SettingsSection>
+      </SettingsCollectionSection>
     );
   }
 
   return (
     <>
-      <SettingsSection
+      <SettingsCollectionSection
+        sectionId="lead-fields"
         title={t("lead_fields.title")}
         description={t("lead_fields.description")}
         action={{
           label: t("lead_fields.add_field"),
           onClick: () => setIsDialogOpen(true),
-          icon: <Plus className="h-4 w-4" />,
+          icon: Plus,
         }}
+        bodyClassName="p-0"
       >
-        <LeadFieldsList
-          fields={fieldDefinitions}
-          onEdit={handleEdit}
-          onDelete={deleteFieldDefinition}
-          onReorder={reorderFieldDefinitions}
-        />
-      </SettingsSection>
+        <div className="p-6">
+          <LeadFieldsList
+            fields={fieldDefinitions}
+            onEdit={handleEdit}
+            onDelete={deleteFieldDefinition}
+            onReorder={reorderFieldDefinitions}
+          />
+        </div>
+      </SettingsCollectionSection>
 
       <LeadFieldDialog
         open={isDialogOpen}

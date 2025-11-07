@@ -19,7 +19,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { AddLeadStatusDialog, EditLeadStatusDialog } from "./settings/LeadStatusDialogs";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import SettingsSection from "./SettingsSection";
+import {
+  SettingsCollectionSection,
+} from "@/components/settings/SettingsSectionVariants";
 import { useLeadStatuses, useOrganizationSettings } from "@/hooks/useOrganizationData";
 import { useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -233,19 +235,24 @@ const LeadStatusesSection = () => {
 
   if (isLoading) {
     return (
-      <SettingsSection 
+      <SettingsCollectionSection
+        sectionId="lead-statuses"
         title={t('lead_statuses.title')}
         description={t('lead_statuses.description')}
+        bodyClassName="p-6"
       >
         <div className="space-y-4">
-          <div className="h-8 bg-muted rounded animate-pulse" />
+          <div className="h-8 rounded bg-muted animate-pulse" />
           <div className="flex flex-wrap gap-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-8 w-24 bg-muted rounded-full animate-pulse" />
+              <div
+                key={i}
+                className="h-8 w-24 rounded-full bg-muted animate-pulse"
+              />
             ))}
           </div>
         </div>
-      </SettingsSection>
+      </SettingsCollectionSection>
     );
   }
 
@@ -261,11 +268,12 @@ const LeadStatusesSection = () => {
 
   return (
     <>
-      <SettingsSection 
+      <SettingsCollectionSection
+        sectionId="lead-statuses"
         title={t('lead_statuses.title')}
         description={t('lead_statuses.description')}
+        bodyClassName="p-6"
       >
-        {/* Settings Toggle Section */}
         <div className="space-y-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-0.5">
@@ -420,7 +428,7 @@ const LeadStatusesSection = () => {
             queryClient.invalidateQueries({ queryKey: ['lead_statuses', activeOrganizationId] });
           }}
         />
-      </SettingsSection>
+      </SettingsCollectionSection>
     </>
   );
 };

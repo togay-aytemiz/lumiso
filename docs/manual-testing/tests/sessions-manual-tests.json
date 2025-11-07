@@ -784,5 +784,134 @@
         "expected_result": "Pasif edilen seans durumları kullanıcıya seçim olarak sunulmaz ve raporlardan çıkarılır."
       }
     ]
+  },
+  {
+    "suite": "Seanslar - Hatırlatmalar",
+    "cases": [
+      {
+        "external_id": "CRM-SESSIONS-444",
+        "title": "Hatırlatmalar sayfası özet kartları ve sayımlar",
+        "description": "Üstteki KPI kartlarının gecikmiş, bugün, yaklaşan ve tamamlanan hatırlatıcı sayılarını doğru göstermesini doğrular.",
+        "steps": [
+          {
+            "action": "Sol menüden 'Hatırlatmalar' sayfasını açın.",
+            "expected_result": "Başlıkta 'Hatırlatmalar' ve altında 'Etkinliklerinizi ve hatırlatmalarınızı yönetin' metni görünür."
+          },
+          {
+            "action": "Üstteki dört kartı inceleyin.",
+            "expected_result": "Kartlar sırasıyla 'Gecikmiş', 'Bugün', 'Yaklaşan' ve 'Tamamlandı' metinlerini ve sayı rozetlerini gösterir."
+          },
+          {
+            "action": "Zaman çizelgesinden tamamlanmamış bir hatırlatmayı 'Tamamlandı olarak işaretle' butonuyla kapatın.",
+            "expected_result": "Toast kısa süreli başarı mesajı verir; 'Tamamlandı' kartındaki sayı artar, ilgili kart (ör. 'Gecikmiş') bir azalır."
+          }
+        ],
+        "expected_result": "Özet kartları sayfadaki gerçek hatırlatıcı durumlarına göre güncel sayıları gösterir."
+      },
+      {
+        "external_id": "CRM-SESSIONS-445",
+        "title": "Filtre çipleri ve hızlı filtreler",
+        "description": "Masaüstü filtre pill’lerinin ve hızlı filtre rozetlerinin seçilen aralığa göre listeyi güncellediğini doğrular.",
+        "steps": [
+          {
+            "action": "Sayfanın masaüstü görünümünde üstteki filtre satırını inceleyin.",
+            "expected_result": "'Tümü', 'Gecikmiş', 'Bugün', 'Yarın', 'Bu Hafta', 'Gelecek Hafta', 'Bu Ay' çipleri ve her birinin yanındaki adet rozetleri görünür."
+          },
+          {
+            "action": "'Bugün' çipine tıklayın.",
+            "expected_result": "Çip vurgulanır, rozet soluk kalır ve zaman çizelgesi yalnızca bugünkü hatırlatmaları gösterir."
+          },
+          {
+            "action": "Aynı satırdan 'Gecikmiş' çipini seçin.",
+            "expected_result": "Çerçeve kırmızımsı bir vurgu alır ve liste yalnızca gecikmiş öğeleri gösterir; diğer çipler pasifleşir."
+          }
+        ],
+        "expected_result": "Filtre çipleri tek tıkla seçilen tarih aralığına göre hatırlatma listelerini günceller."
+      },
+      {
+        "external_id": "CRM-SESSIONS-446",
+        "title": "Tamamlananları göster ve Gecikmişleri gizle anahtarları",
+        "description": "Üstteki anahtarların zaman çizelgesinde hangi öğelerin gösterileceğini etkilemesini doğrular.",
+        "steps": [
+          {
+            "action": "Filtre satırında 'Tamamlananları Göster' anahtarını açın.",
+            "expected_result": "Alt tarafta 'Tamamlanan hatırlatmalar' akordeonu görünür ve tamamladığınız öğe sayısını gösterir."
+          },
+          {
+            "action": "Aynı satırdaki 'Gecikmişleri gizle' anahtarını açın.",
+            "expected_result": "Zaman çizelgesinde gecikmiş olarak işaretlenen satırlar gizlenir; bilgi rozetleri kaybolur."
+          },
+          {
+            "action": "Her iki anahtarı kapatın.",
+            "expected_result": "Gecikmiş satırlar yeniden görünür, tamamlanan akordeonu sadece filtre 'Tümü' olduğunda görünür."
+          }
+        ],
+        "expected_result": "Anahtarlar yalnızca görünümü değiştirir; veriler aynı oturumda güncellenmeden saklanır."
+      },
+      {
+        "external_id": "CRM-SESSIONS-447",
+        "title": "Hatırlatmayı tamamla ve geri al",
+        "description": "Zaman çizelgesindeki 'Tamamlandı olarak işaretle' / 'Tamamlanmadı olarak işaretle' butonlarının çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "Aktif bir hatırlatmanın kartındaki 'Tamamlandı olarak işaretle' butonuna basın.",
+            "expected_result": "Satır üzerindeki durum rozetinde 'Tamamlandı' etiketi belirir ve kart soluklaşır."
+          },
+          {
+            "action": "Aynı kartta beliren 'Tamamlanmadı olarak işaretle' butonuna basın.",
+            "expected_result": "Satır eski renklerine döner ve tekrar aktif listeye taşınır."
+          },
+          {
+            "action": "Tamamlanan hatırlatmalar akordeonunu açın.",
+            "expected_result": "İşaretlediğiniz öğe kısa süreliğine burada görünür; geri aldığınızda listeden çıkar."
+          }
+        ],
+        "expected_result": "Hatırlatma kartındaki aksiyon butonları kayıt durumunu Supabase üzerinde günceller ve UI anında yenilenir."
+      },
+      {
+        "external_id": "CRM-SESSIONS-448",
+        "title": "Kişi ve proje bağlantıları",
+        "description": "Her hatırlatma kartındaki 'Kişiyi aç' ve 'Projeyi aç' aksiyonlarının ilgili detayları gösterdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Lead ve proje bilgisi bulunan bir hatırlatmayı bulun.",
+            "expected_result": "Kartta alt kısımda 'Kişiyi aç' ve 'Projeyi aç' bağlantıları görünür."
+          },
+          {
+            "action": "'Kişiyi aç' butonuna tıklayın.",
+            "expected_result": "Yeni sekme veya aynı sekmede kişi detay sayfası (`/leads/:id`) açılır."
+          },
+          {
+            "action": "'Projeyi aç' butonuna tıklayın.",
+            "expected_result": "Sağdan proje paneli açılır; proje adı, statüsü ve sekmeleri gösterilir."
+          },
+          {
+            "action": "Paneli kapatın.",
+            "expected_result": "Hatırlatmalar sayfasına geri dönersiniz ve liste olduğu gibi kalır."
+          }
+        ],
+        "expected_result": "Hatırlatma kartındaki kısayollar ilgili kişi ve proje detaylarını tek tıkla erişilebilir kılar."
+      },
+      {
+        "external_id": "CRM-SESSIONS-449",
+        "title": "Tamamlanan hatırlatmalar akordeonu",
+        "description": "Tamamlanan hatırlatmalar bölümünün sayaç, açıklama ve geçmiş tarih gruplarıyla çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "'Tamamlananları Göster' anahtarını açık tutarak sayfanın altına kaydırın.",
+            "expected_result": "'Tamamlanan hatırlatmalar' başlıklı akordeon ve yanındaki toplam sayı görünür."
+          },
+          {
+            "action": "Akordeona tıklayarak içeriği açın.",
+            "expected_result": "Üstte kısa açıklama, altında tarih bazlı gruplar ve her grubun altında tamamlanan kartlar listelenir."
+          },
+          {
+            "action": "Herhangi bir tamamlanmış kartta 'Tamamlanmadı olarak işaretle' butonuna basın.",
+            "expected_result": "Kart akordeondan kaybolur ve aktif listeye geri döner."
+          }
+        ],
+        "expected_result": "Tamamlanan akordeonu, geçmiş hatırlatmaları ihtiyaç halinde inceleyip tekrar aktif hale getirmeye izin verir."
+      }
+    ]
   }
 ]

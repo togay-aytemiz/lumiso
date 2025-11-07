@@ -113,11 +113,22 @@ def map_json_case_to_qase(case, suite_id):
             "action": s.get("action", ""),
             "expected_result": s.get("expected_result", "")
         })
+
+    summary = (case.get("expected_result") or "").strip()
+
+    # expected_result’u description’ın altına taşı
+    description_text = case.get("description", "").strip()
+    if summary:
+        if description_text:
+            description_text += "\n\n**Expected Result:** " + summary
+        else:
+            description_text = "**Expected Result:** " + summary
+
     return {
         "title": case["title"],
         "external_id": case["external_id"],
         "suite_id": suite_id,
-        "description": case.get("description", ""),
+        "description": description_text,   # description + expected result birleşik
         "steps": steps,
         "automation": False
     }

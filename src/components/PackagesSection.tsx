@@ -403,8 +403,9 @@ const PackagesSection = () => {
         className="border-none bg-transparent shadow-none px-0"
         unstyledBody
       >
-        {filteredPackages.length === 0 ? (
-          <div className="text-center py-8">
+        <div className="space-y-4 px-2 sm:px-0">
+          {filteredPackages.length === 0 ? (
+            <div className="text-center py-8">
             <p className="text-muted-foreground mb-4">
               {packages.length === 0
                 ? t('packages.no_packages')
@@ -416,9 +417,9 @@ const PackagesSection = () => {
                 {t('packages.create_first')}
               </Button>
             )}
-          </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {filteredPackages.map((pkg) => {
               const depositSummary = extractDepositSummary(pkg);
               const quantityLookup = packageLineItemQuantities.get(pkg.id);
@@ -592,8 +593,9 @@ const PackagesSection = () => {
                 </Card>
               );
             })}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </SettingsCollectionSection>
 
       {canManagePackages && (

@@ -205,6 +205,7 @@ Cross-cutting components:
 - ▫️ Ship translation updates and ensure tutorials overlay the refreshed layout.
 - ▫️ Routing & breakpoints: route `/settings` to the mobile dashboard below `md`, ensure back navigation + compact spacing tokens apply across Profile/General/Notifications.
 - ✅ Restored category-level dirty tracking so the sticky save footer and sidebar dirty indicators light up immediately when Profile/General edits occur, even inside the overlay shell.
+- ✅ Mobile anchor chips now render on Profile/General/Notifications so the overlay nav matches desktop for form-heavy pages.
 
 ### Phase 3 — Page Wave B (Data Collections)
 
@@ -216,9 +217,10 @@ Cross-cutting components:
 - ✅ Services: standardize cards for session types/packages/services; consolidate onboarding surfaces and actions with the compact collection shell.
   - ✅ Enabled sticky navigation by backfilling section anchors on current components.
   - ✅ Session type + package cards now render without the redundant inner wrapper so density matches the rest of the compact settings.
+  - ✅ Package cards regain mobile padding so cards no longer touch the viewport edges.
 - ✳️ **Data Fetch Policy Notes** — React-query caches all collection fetches per organization with `staleTime=5m`, window-focus revalidation disabled; every settings page exposes the `SettingsRefreshButton` so ops teams can pull a manual refresh (call to `refetch()` on the underlying hook). Mutations triggered by drag/drop or dialogs keep their existing optimistic updates + background refetch. Free-form inputs never auto-save: they rely on the sticky footer (ensuring explicit intent) while non-form toggles continue to auto-save with inline toast confirmations.
 - ✅ Documented data fetch policies (manual refresh vs. auto): Leads/Projects/Services read from their `useOrganizationData` react-query caches (staleTime 5m) with a shared `SettingsRefreshButton` triggering `refetch()`; only mutation flows auto-save (drag/drop, dialog submits) while text inputs rely on the sticky footer so users explicitly commit batched edits.
-- ▫️ Extend anchor nav mapping and mobile back pattern to collection-heavy pages (Leads/Projects/Services) with sensible section groupings.
+- ✅ Extend anchor nav mapping and mobile back pattern to collection-heavy pages (Leads/Projects/Services) with sensible section groupings — sticky pills now appear on mobile detail views for these pages, mirroring the desktop nav and keeping the “Back to settings” affordance one tap away.
 
 ### Phase 3.5 — Compliance & Billing Foundations
 
@@ -293,3 +295,5 @@ Cross-cutting components:
 - 2025-11-07 — Codex — Projects + Services waves refit: statuses/types/session sections now ride the `SettingsCollectionSection`/`SettingsTwoColumnSection` shells with compact header actions, unblocked anchor pills, and refreshed package/service cards; manual skim on `/settings/projects` and `/settings/services`.
 - 2025-11-08 — Codex — Project types adopted the two-column management layout and settings dirty-state tracking was stabilized so the sticky save footer + nav dots reappear on `/settings/projects`, `/settings/profile`, and `/settings/general`.
 - 2025-11-08 — Codex — Removed the extra wrappers around session types/packages cards, fixed the input reset regression so Profile/General fields stay editable, and brought the tax & billing section onto the shared sticky footer flow.
+- 2025-11-08 — Codex — Extended the anchor nav + mobile back pattern for `/settings/leads`, `/settings/projects`, and `/settings/services` so the chip navigation appears on mobile detail views just like desktop.
+- 2025-11-08 — Codex — Added mobile anchor pills for Profile/General/Notifications and restored gutter padding around Packages cards.

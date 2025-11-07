@@ -59,9 +59,7 @@ type SettingsLayoutProps = {
   enableOverlay?: boolean;
 };
 
-function SettingsLayoutInner({
-  enableOverlay = true,
-}: SettingsLayoutProps) {
+function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const locationState =
@@ -127,17 +125,11 @@ function SettingsLayoutInner({
     if (!shouldUseOverlay) {
       return;
     }
-    if (
-      backgroundLocationRef.current &&
-      !backgroundLocationFromState
-    ) {
-      navigate(
-        `${location.pathname}${location.search}${location.hash}`,
-        {
-          replace: true,
-          state: { backgroundLocation: backgroundLocationRef.current },
-        }
-      );
+    if (backgroundLocationRef.current && !backgroundLocationFromState) {
+      navigate(`${location.pathname}${location.search}${location.hash}`, {
+        replace: true,
+        state: { backgroundLocation: backgroundLocationRef.current },
+      });
     }
   }, [
     shouldUseOverlay,
@@ -148,10 +140,9 @@ function SettingsLayoutInner({
     navigate,
   ]);
 
-  const stableBackgroundLocation =
-    shouldUseOverlay
-      ? backgroundLocationFromState ?? backgroundLocationRef.current
-      : null;
+  const stableBackgroundLocation = shouldUseOverlay
+    ? backgroundLocationFromState ?? backgroundLocationRef.current
+    : null;
 
   const settingsNavigationState = useMemo(() => {
     if (!shouldUseOverlay || !stableBackgroundLocation) {
@@ -586,8 +577,9 @@ function SettingsLayoutInner({
       const locked = isItemLocked(item.href);
       const itemHasChanges = hasCategoryChanges(item.href);
       const metadata = pageMetadata[item.href];
-      const description =
-        metadata?.descriptionKey ? tPages(metadata.descriptionKey) : undefined;
+      const description = metadata?.descriptionKey
+        ? tPages(metadata.descriptionKey)
+        : undefined;
 
       const baseButtonClasses =
         variant === "mobile"
@@ -665,7 +657,9 @@ function SettingsLayoutInner({
               <Icon className={iconClasses} />
             </span>
             <span className={textWrapperClasses}>
-              <span className={titleClasses}>{t(`settings.${item.title}`)}</span>
+              <span className={titleClasses}>
+                {t(`settings.${item.title}`)}
+              </span>
               {description && (
                 <span className={descriptionClasses}>{description}</span>
               )}
@@ -679,7 +673,9 @@ function SettingsLayoutInner({
               <Lock
                 className={cn(
                   "h-4 w-4",
-                  isDangerMobile ? "text-destructive/80" : "text-muted-foreground"
+                  isDangerMobile
+                    ? "text-destructive/80"
+                    : "text-muted-foreground"
                 )}
               />
             ) : (
@@ -697,13 +693,7 @@ function SettingsLayoutInner({
         </button>
       );
     },
-    [
-      handleMobileNavClick,
-      hasCategoryChanges,
-      isItemLocked,
-      t,
-      tPages,
-    ]
+    [handleMobileNavClick, hasCategoryChanges, isItemLocked, t, tPages]
   );
 
   const renderSettingsDirectory = useCallback(
@@ -815,6 +805,25 @@ function SettingsLayoutInner({
     [sectionNavItems]
   );
 
+  const anchorNavPages = [
+    "/settings/leads",
+    "/settings/projects",
+    "/settings/services",
+    "/settings/profile",
+    "/settings/general",
+    "/settings/notifications",
+  ];
+
+  const isAnchorEligible = anchorNavPages.some(
+    (prefix) => currentPath === prefix || currentPath.startsWith(`${prefix}/`)
+  );
+
+  const shouldShowMobileAnchorNav =
+    isMobile &&
+    !isSettingsRoot &&
+    isAnchorEligible &&
+    sectionNavItems.length > 0;
+
   const headerClassName = cn(
     "sticky top-0 z-30 px-4 sm:px-6",
     "border-b border-border/60 bg-[hsl(var(--background))] py-3 backdrop-blur supports-[backdrop-filter]:bg-[hsl(var(--background))]"
@@ -865,7 +874,10 @@ function SettingsLayoutInner({
       </div>
 
       {sectionNavItems.length > 0 && (
-        <div className="mt-3 hidden border-t border-border/50 pt-3 md:block">
+        <div
+          className="mt-3 hidden border-t border-border/50 pt-3 md:block"
+          data-settings-anchor-nav="true"
+        >
           <StickySectionNav
             items={sectionNavItems}
             align="start"
@@ -913,6 +925,22 @@ function SettingsLayoutInner({
           )}
         </div>
       </div>
+      {shouldShowMobileAnchorNav && (
+        <div
+          className="border-t border-border/60 px-4 py-2 sm:px-6"
+          data-settings-anchor-nav="true"
+        >
+          <StickySectionNav
+            items={sectionNavItems}
+            align="start"
+            navClassName="justify-start"
+            observeIds={sectionNavIds}
+            fallbackActiveId={sectionNavIds[0]}
+            disableSticky
+            className="border-0 bg-transparent px-0 py-0"
+          />
+        </div>
+      )}
     </header>
   );
 
@@ -962,8 +990,8 @@ function SettingsLayoutInner({
               item.variant === "danger"
                 ? "text-destructive"
                 : isActive
-                  ? "text-[hsl(var(--accent-700))]"
-                  : "text-muted-foreground/80"
+                ? "text-[hsl(var(--accent-700))]"
+                : "text-muted-foreground/80"
             )}
           />
           <span className="hidden truncate text-sm font-medium md:flex md:items-center md:gap-2">
@@ -1056,10 +1084,21 @@ function SettingsLayoutInner({
       if (!headerEl) {
         return;
       }
-      const offset = Math.ceil(headerEl.getBoundingClientRect().height + 16);
+
+      const headerHeight = headerEl.getBoundingClientRect().height;
+      const anchorNavEl = headerEl.querySelector(
+        "[data-settings-anchor-nav='true']"
+      ) as HTMLElement | null;
+      const anchorHeight = anchorNavEl?.getBoundingClientRect().height ?? 0;
+      const baseGap = 12;
+      const computedOffset = Math.max(
+        headerHeight - anchorHeight + baseGap,
+        64
+      );
+
       document.documentElement.style.setProperty(
         "--settings-section-offset",
-        `${offset}px`
+        `${Math.round(computedOffset)}px`
       );
     };
 
@@ -1123,7 +1162,9 @@ function SettingsLayoutInner({
                   onMouseDown={(event) => event.stopPropagation()}
                   className={cn(
                     "fixed z-[60] h-11 w-11 rounded-full border-transparent bg-[hsl(var(--accent-200))] text-[hsl(var(--accent-900))] shadow-lg transition-all hover:bg-[hsl(var(--accent-300))] hover:shadow-xl focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2",
-                    hasChanges ? "bottom-24 md:bottom-28" : "bottom-5 md:bottom-6"
+                    hasChanges
+                      ? "bottom-24 md:bottom-28"
+                      : "bottom-5 md:bottom-6"
                   )}
                   style={{ right: `${scrollTopRightOffset}px` }}
                   aria-label={tCommon("buttons.backToTop", {
@@ -1210,7 +1251,9 @@ function SettingsLayoutInner({
                   onMouseDown={(event) => event.stopPropagation()}
                   className={cn(
                     "fixed z-[60] h-11 w-11 rounded-full border-transparent bg-[hsl(var(--accent-200))] text-[hsl(var(--accent-900))] shadow-lg transition-all hover:bg-[hsl(var(--accent-300))] hover:shadow-xl focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2",
-                    hasChanges ? "bottom-24 md:bottom-28" : "bottom-5 md:bottom-6"
+                    hasChanges
+                      ? "bottom-24 md:bottom-28"
+                      : "bottom-5 md:bottom-6"
                   )}
                   style={{ right: `${scrollTopRightOffset}px` }}
                   aria-label={tCommon("buttons.backToTop", {

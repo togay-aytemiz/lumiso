@@ -115,9 +115,13 @@ def parse_suites(fp):
     suites = []
     if isinstance(data, dict) and "suite" in data and "cases" in data: return [(data["suite"], data.get("cases", []))]
     if isinstance(data, list) and all(isinstance(x, dict) and "suite" in x and "cases" in x for x in data):
-        for o in data: suites.append((o["suite"], o.get("cases", []))); return suites
+        for o in data:
+            suites.append((o["suite"], o.get("cases", [])))
+        return suites
     if isinstance(data, dict) and all(isinstance(v, list) for v in data.values()):
-        for k,v in data.items(): suites.append((k,v)); return suites
+        for k,v in data.items():
+            suites.append((k,v))
+        return suites
     fail(f"unsupported JSON shape file={fp}")
 
 def ensure_case_shape(c, fp, suite, idx, seen_exts):

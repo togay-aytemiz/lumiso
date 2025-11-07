@@ -1,273 +1,283 @@
-import { useState, useEffect } from "react";
+import { useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { getUserOrganizationId } from "@/lib/organizationUtils";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import {
+  LEAD_FIELD_DEFINITIONS_GC_TIME,
+  LEAD_FIELD_DEFINITIONS_STALE_TIME,
+  fetchLeadFieldDefinitionsForOrganization,
+  leadFieldDefinitionsQueryKey,
+  persistLeadFieldDefinitionsToStorage,
+  readLeadFieldDefinitionsFromStorage,
+} from "@/services/leadFieldDefinitions";
 import {
   LeadFieldDefinition,
   CreateLeadFieldDefinition,
   UpdateLeadFieldDefinition,
 } from "@/types/leadFields";
-import { useToast } from "@/hooks/use-toast";
+
+const sortDefinitions = (definitions: LeadFieldDefinition[]) =>
+  [...definitions].sort(
+    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+  );
+
+const getMaxSortOrder = (definitions: LeadFieldDefinition[]) =>
+  definitions.reduce(
+    (max, field) => Math.max(max, field.sort_order ?? 0),
+    0
+  );
 
 export function useLeadFieldDefinitions() {
-  // Try bootstrapping from localStorage if pre-seeded by OrganizationProvider
-  const bootstrapFromStorage = () => {
-    if (typeof window === 'undefined') return null as LeadFieldDefinition[] | null;
-    try {
-      // We don't know org here; allow any org cache as a fast-start hint.
-      // Prefer the most recently written by scanning keys.
-      const keys = Object.keys(localStorage).filter(k => k.startsWith('lead_field_definitions:'));
-      if (!keys.length) return null;
-      // Choose the longest key as a naive proxy for latest (keys are similar; ordering by recency is not exposed)
-      const key = keys.sort().slice(-1)[0];
-      const raw = localStorage.getItem(key);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw) as LeadFieldDefinition[];
-      return Array.isArray(parsed) ? parsed : null;
-    } catch {
-      return null;
-    }
-  };
-
-  const seeded = bootstrapFromStorage();
-  const [fieldDefinitions, setFieldDefinitions] = useState<LeadFieldDefinition[]>(seeded ?? []);
-  const [loading, setLoading] = useState(!seeded);
-  const [error, setError] = useState<string | null>(null);
+  const { activeOrganizationId } = useOrganization();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const fetchFieldDefinitions = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) {
+  const query = useQuery({
+    queryKey: leadFieldDefinitionsQueryKey(activeOrganizationId),
+    queryFn: async () => {
+      if (!activeOrganizationId) {
         throw new Error("No active organization found");
       }
-
-      // Ensure default field definitions exist
-      await supabase.rpc("ensure_default_lead_field_definitions", {
-        org_id: organizationId,
-        user_uuid: (await supabase.auth.getUser()).data.user?.id,
-      });
-
-      const { data, error: fetchError } = await supabase
-        .from("lead_field_definitions")
-        .select("*")
-        .eq("organization_id", organizationId)
-        .order("sort_order", { ascending: true });
-
-      if (fetchError) {
-        throw fetchError;
-      }
-
-      setFieldDefinitions((data || []) as LeadFieldDefinition[]);
-    } catch (err) {
-      console.error("Error fetching field definitions:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch field definitions"
+      const definitions = await fetchLeadFieldDefinitionsForOrganization(
+        activeOrganizationId
       );
-    } finally {
-      setLoading(false);
+      persistLeadFieldDefinitionsToStorage(activeOrganizationId, definitions);
+      return definitions;
+    },
+    enabled: !!activeOrganizationId,
+    staleTime: LEAD_FIELD_DEFINITIONS_STALE_TIME,
+    gcTime: LEAD_FIELD_DEFINITIONS_GC_TIME,
+    refetchOnWindowFocus: false,
+    initialData: () =>
+      readLeadFieldDefinitionsFromStorage(activeOrganizationId) ??
+      readLeadFieldDefinitionsFromStorage(),
+  });
+
+  const updateCache = useCallback(
+    (updater: (definitions: LeadFieldDefinition[]) => LeadFieldDefinition[]) => {
+      if (!activeOrganizationId) return;
+
+      queryClient.setQueryData<LeadFieldDefinition[]>(
+        leadFieldDefinitionsQueryKey(activeOrganizationId),
+        (current = []) => {
+          const next = sortDefinitions(updater(current));
+          persistLeadFieldDefinitionsToStorage(activeOrganizationId, next);
+          return next;
+        }
+      );
+    },
+    [activeOrganizationId, queryClient]
+  );
+
+  const ensureOrganizationId = useCallback(() => {
+    if (!activeOrganizationId) {
+      throw new Error("No active organization found");
     }
-  };
+    return activeOrganizationId;
+  }, [activeOrganizationId]);
 
-  const createFieldDefinition = async (
-    definition: CreateLeadFieldDefinition
-  ) => {
-    try {
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) {
-        throw new Error("No active organization found");
+  const createFieldDefinition = useCallback(
+    async (definition: CreateLeadFieldDefinition) => {
+      const organizationId = ensureOrganizationId();
+
+      try {
+        const snapshot =
+          queryClient.getQueryData<LeadFieldDefinition[]>(
+            leadFieldDefinitionsQueryKey(organizationId)
+          ) ?? [];
+        const maxSortOrder = getMaxSortOrder(snapshot);
+
+        const { data, error } = await supabase
+          .from("lead_field_definitions")
+          .insert({
+            ...definition,
+            organization_id: organizationId,
+            sort_order: definition.sort_order ?? maxSortOrder + 1,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          throw error;
+        }
+
+        updateCache((prev) => [...prev, data as LeadFieldDefinition]);
+
+        toast({
+          title: "Field created",
+          description: `Field "${definition.label}" has been created successfully.`,
+        });
+
+        return data;
+      } catch (err) {
+        console.error("Error creating field definition:", err);
+        toast({
+          title: "Error",
+          description:
+            err instanceof Error ? err.message : "Failed to create field",
+          variant: "destructive",
+        });
+        throw err;
       }
+    },
+    [ensureOrganizationId, queryClient, toast, updateCache]
+  );
 
-      // Get the highest sort order and add 1
-      const maxSortOrder = Math.max(
-        ...fieldDefinitions.map((f) => f.sort_order),
-        0
-      );
+  const updateFieldDefinition = useCallback(
+    async (id: string, updates: UpdateLeadFieldDefinition) => {
+      try {
+        const { data, error } = await supabase
+          .from("lead_field_definitions")
+          .update(updates)
+          .eq("id", id)
+          .select()
+          .single();
 
-      const { data, error } = await supabase
-        .from("lead_field_definitions")
-        .insert({
-          ...definition,
-          organization_id: organizationId,
-          sort_order: definition.sort_order ?? maxSortOrder + 1,
-        })
-        .select()
-        .single();
+        if (error) {
+          throw error;
+        }
 
-      if (error) {
-        throw error;
-      }
-
-      setFieldDefinitions((prev) =>
-        [...prev, data as LeadFieldDefinition].sort(
-          (a, b) => a.sort_order - b.sort_order
-        )
-      );
-
-      toast({
-        title: "Field created",
-        description: `Field "${definition.label}" has been created successfully.`,
-      });
-
-      return data;
-    } catch (err) {
-      console.error("Error creating field definition:", err);
-      toast({
-        title: "Error",
-        description:
-          err instanceof Error ? err.message : "Failed to create field",
-        variant: "destructive",
-      });
-      throw err;
-    }
-  };
-
-  const updateFieldDefinition = async (
-    id: string,
-    updates: UpdateLeadFieldDefinition
-  ) => {
-    try {
-      const { data, error } = await supabase
-        .from("lead_field_definitions")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      setFieldDefinitions((prev) =>
-        prev
-          .map((field) =>
+        updateCache((prev) =>
+          prev.map((field) =>
             field.id === id ? (data as LeadFieldDefinition) : field
           )
-          .sort((a, b) => a.sort_order - b.sort_order)
-      );
-
-      toast({
-        title: "Field updated",
-        description: "Field has been updated successfully.",
-      });
-
-      return data;
-    } catch (err) {
-      console.error("Error updating field definition:", err);
-      toast({
-        title: "Error",
-        description:
-          err instanceof Error ? err.message : "Failed to update field",
-        variant: "destructive",
-      });
-      throw err;
-    }
-  };
-
-  const deleteFieldDefinition = async (id: string) => {
-    try {
-      const field = fieldDefinitions.find((f) => f.id === id);
-      if (!field) {
-        throw new Error("Field not found");
-      }
-
-      if (field.is_system) {
-        throw new Error("System fields cannot be deleted");
-      }
-
-      // Delete from lead_field_definitions and verify it was actually deleted
-      const { data: deletedField, error } = await supabase
-        .from("lead_field_definitions")
-        .delete()
-        .eq("id", id)
-        .select();
-
-      if (error) {
-        throw error;
-      }
-
-      // Check if the deletion actually happened (RLS policies might prevent it)
-      if (!deletedField || deletedField.length === 0) {
-        throw new Error(
-          "Field could not be deleted. You may not have permission or the field does not exist."
         );
+
+        toast({
+          title: "Field updated",
+          description: "Field has been updated successfully.",
+        });
+
+        return data;
+      } catch (err) {
+        console.error("Error updating field definition:", err);
+        toast({
+          title: "Error",
+          description:
+            err instanceof Error ? err.message : "Failed to update field",
+          variant: "destructive",
+        });
+        throw err;
       }
+    },
+    [toast, updateCache]
+  );
 
-      // Delete all field values for this field and verify
-      const { error: valuesError } = await supabase
-        .from("lead_field_values")
-        .delete()
-        .eq("field_key", field.field_key);
+  const deleteFieldDefinition = useCallback(
+    async (id: string) => {
+      const organizationId = ensureOrganizationId();
 
-      if (valuesError) {
-        // Log but don't fail - values might not exist
-        console.warn("Error deleting field values:", valuesError);
-      }
+      try {
+        const snapshot =
+          queryClient.getQueryData<LeadFieldDefinition[]>(
+            leadFieldDefinitionsQueryKey(organizationId)
+          ) ?? [];
+        const field = snapshot.find((f) => f.id === id);
 
-      // Only update local state after successful database deletion
-      setFieldDefinitions((prev) => prev.filter((field) => field.id !== id));
+        if (!field) {
+          throw new Error("Field not found");
+        }
 
-      toast({
-        title: "Field deleted",
-        description: `Field "${field.label}" and all its data have been deleted.`,
-      });
-    } catch (err) {
-      console.error("Error deleting field definition:", err);
-      toast({
-        title: "Error",
-        description:
-          err instanceof Error ? err.message : "Failed to delete field",
-        variant: "destructive",
-      });
-      throw err;
-    }
-  };
+        if (field.is_system) {
+          throw new Error("System fields cannot be deleted");
+        }
 
-  const reorderFieldDefinitions = async (
-    reorderedFields: LeadFieldDefinition[]
-  ) => {
-    try {
-      // Update sort_order for all fields
-      const updates = reorderedFields.map((field, index) => ({
-        id: field.id,
-        sort_order: index + 1,
-      }));
-
-      for (const update of updates) {
-        await supabase
+        const { data: deletedField, error } = await supabase
           .from("lead_field_definitions")
-          .update({ sort_order: update.sort_order })
-          .eq("id", update.id);
+          .delete()
+          .eq("id", id)
+          .select();
+
+        if (error) {
+          throw error;
+        }
+
+        if (!deletedField || deletedField.length === 0) {
+          throw new Error(
+            "Field could not be deleted. You may not have permission or the field does not exist."
+          );
+        }
+
+        const { error: valuesError } = await supabase
+          .from("lead_field_values")
+          .delete()
+          .eq("field_key", field.field_key);
+
+        if (valuesError) {
+          console.warn("Error deleting field values:", valuesError);
+        }
+
+        updateCache((prev) => prev.filter((item) => item.id !== id));
+
+        toast({
+          title: "Field deleted",
+          description: `Field "${field.label}" and all its data have been deleted.`,
+        });
+      } catch (err) {
+        console.error("Error deleting field definition:", err);
+        toast({
+          title: "Error",
+          description:
+            err instanceof Error ? err.message : "Failed to delete field",
+          variant: "destructive",
+        });
+        throw err;
       }
+    },
+    [ensureOrganizationId, queryClient, toast, updateCache]
+  );
 
-      setFieldDefinitions(reorderedFields);
+  const reorderFieldDefinitions = useCallback(
+    async (reorderedFields: LeadFieldDefinition[]) => {
+      const organizationId = ensureOrganizationId();
 
-      toast({
-        title: "Fields reordered",
-        description: "Field order has been updated successfully.",
-      });
-    } catch (err) {
-      console.error("Error reordering fields:", err);
-      toast({
-        title: "Error",
-        description: "Failed to reorder fields",
-        variant: "destructive",
-      });
-      throw err;
-    }
-  };
+      try {
+        const normalizedFields = reorderedFields.map((field, index) => ({
+          ...field,
+          sort_order: index + 1,
+        }));
 
-  useEffect(() => {
-    fetchFieldDefinitions();
-  }, []);
+        await Promise.all(
+          normalizedFields.map((field) =>
+            supabase
+              .from("lead_field_definitions")
+              .update({ sort_order: field.sort_order })
+              .eq("id", field.id)
+          )
+        );
+
+        updateCache(() => normalizedFields);
+
+        toast({
+          title: "Fields reordered",
+          description: "Field order has been updated successfully.",
+        });
+      } catch (err) {
+        console.error("Error reordering fields:", err);
+        toast({
+          title: "Error",
+          description: "Failed to reorder fields",
+          variant: "destructive",
+        });
+        throw err;
+      }
+    },
+    [ensureOrganizationId, toast, updateCache]
+  );
+
+  const error =
+    query.error instanceof Error
+      ? query.error.message
+      : query.error
+      ? String(query.error)
+      : null;
 
   return {
-    fieldDefinitions,
-    loading,
+    fieldDefinitions: query.data ?? [],
+    loading: query.isLoading || query.isFetching,
     error,
-    refetch: fetchFieldDefinitions,
+    refetch: query.refetch,
     createFieldDefinition,
     updateFieldDefinition,
     deleteFieldDefinition,

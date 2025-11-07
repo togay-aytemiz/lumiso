@@ -7,6 +7,12 @@ import {
   fetchOrganizationSettingsWithCache,
   ORGANIZATION_SETTINGS_CACHE_TTL,
 } from '@/lib/organizationSettingsCache';
+import {
+  LEAD_FIELD_DEFINITIONS_GC_TIME,
+  LEAD_FIELD_DEFINITIONS_STALE_TIME,
+  fetchLeadFieldDefinitionsForOrganization,
+  leadFieldDefinitionsQueryKey,
+} from '@/services/leadFieldDefinitions';
 
 interface Organization {
   id: string;
@@ -313,31 +319,15 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
       })
     );
 
-    // Lead field definitions — not on React Query, seed localStorage for fast bootstrap
-    tasks.push((async () => {
-      try {
-        const { data: authUser } = await supabase.auth.getUser();
-        await supabase.rpc('ensure_default_lead_field_definitions', { org_id: orgId, user_uuid: authUser.user?.id });
-      } catch (error) {
-        console.warn('Failed to ensure default lead field definitions', error);
-      }
-      try {
-        const { data, error } = await supabase
-          .from('lead_field_definitions')
-          .select('*')
-          .eq('organization_id', orgId)
-          .order('sort_order', { ascending: true });
-        if (!error && data && typeof window !== 'undefined') {
-          try {
-            localStorage.setItem(`lead_field_definitions:${orgId}`, JSON.stringify(data));
-          } catch (storageError) {
-            console.warn('Failed to cache lead field definitions', storageError);
-          }
-        }
-      } catch (error) {
-        console.warn('Failed to preload lead field definitions', error);
-      }
-    })());
+    // Lead field definitions (settings collections)
+    tasks.push(
+      queryClient.prefetchQuery({
+        queryKey: leadFieldDefinitionsQueryKey(orgId),
+        queryFn: () => fetchLeadFieldDefinitionsForOrganization(orgId),
+        staleTime: LEAD_FIELD_DEFINITIONS_STALE_TIME,
+        gcTime: LEAD_FIELD_DEFINITIONS_GC_TIME,
+      })
+    );
 
     await Promise.allSettled(tasks);
   }, [queryClient]);

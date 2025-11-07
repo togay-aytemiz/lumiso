@@ -48,6 +48,11 @@ def extract_external_ref(case_detail):
         val = case_detail.get(key)
         if isinstance(val, str) and val.strip():
             return val.strip()
+    desc = case_detail.get("description")
+    if isinstance(desc, str):
+        for line in desc.splitlines():
+            if line.lower().startswith("external id:"):
+                return line.split(":", 1)[1].strip()
     return ""
 
 def build_indexes():
@@ -98,9 +103,13 @@ def map_payload(case, suite_id):
     desc = (case.get("description") or "").strip()
     if root_exp:
         desc = (desc + ("\n\n" if desc else "")) + f"**Expected Result:** {root_exp}"
+    ext = case["external_id"].strip()
+    filtered_lines = [line for line in desc.splitlines() if not line.lower().startswith("external id:")]
+    desc = "\n".join(filtered_lines).strip()
+    desc = (desc + ("\n\n" if desc else "")) + f"External ID: {ext}"
     return {
         "title": case["title"],
-        "external_id": case["external_id"],
+        "external_id": ext,
         "suite_id": suite_id,
         "description": desc,
         "steps": steps,

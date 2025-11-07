@@ -223,6 +223,7 @@ Cross-cutting components:
 
 - ✅ Persist organization tax profile via `useOrganizationSettings` with optimistic save + dirty-state pill; ensure partial updates do not clear existing tax identifiers.
 - ✅ Validate the Supabase migration `20251109120000_services_vat_profile.sql` (service VAT columns + tax profile defaults) and document rollout sequencing. _(Applied to prod 2025‑11‑09.)_
+- ✅ Billing tax profile now hooks into the shared sticky footer (no bespoke chip/buttons) so only input edits surface the save bar while other toggles keep toast-only auto-save behavior.
 - ▫️ QA + deploy follow-up migration `20251109161000_tax_profile_defaults_include.sql` to align defaults with VAT-inclusive pricing and update seeded sample services.
 - ▫️ Add validation masks for TCKN/VKN (11-digit national ID vs 10-digit tax number) and guard rails for numeric KDV ranges (0–99.99%).
 - ▫️ Surface audit log events (`settings_tax_profile_updated`) so finance tooling can track changes before e-Fatura integrations.
@@ -290,4 +291,4 @@ Cross-cutting components:
 - 2025-11-07 — Codex — Phase 2 kickoff: shared `SettingsImageUploadCard` now powers Profile/General, and Notifications sections are tagged for the sticky nav/tutorials; manual checks on `/settings/profile`, `/settings/general`, `/settings/notifications`.
 - 2025-11-07 — Codex — Projects + Services waves refit: statuses/types/session sections now ride the `SettingsCollectionSection`/`SettingsTwoColumnSection` shells with compact header actions, unblocked anchor pills, and refreshed package/service cards; manual skim on `/settings/projects` and `/settings/services`.
 - 2025-11-08 — Codex — Project types adopted the two-column management layout and settings dirty-state tracking was stabilized so the sticky save footer + nav dots reappear on `/settings/projects`, `/settings/profile`, and `/settings/general`.
-- 2025-11-08 — Codex — Removed the extra wrappers around session types/packages cards and fixed the input reset regression so Profile/General fields stay editable while the sticky footer remains visible.
+- 2025-11-08 — Codex — Removed the extra wrappers around session types/packages cards, fixed the input reset regression so Profile/General fields stay editable, and brought the tax & billing section onto the shared sticky footer flow.

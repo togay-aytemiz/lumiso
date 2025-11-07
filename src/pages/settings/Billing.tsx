@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import { TaxBillingSection, TaxProfileFormState, TaxProfileFormErrors } from "@/components/settings/TaxBillingSection";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { DEFAULT_ORGANIZATION_TAX_PROFILE, OrganizationTaxProfile } from "@/lib/organizationSettingsCache";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { useSettingsContext } from "@/contexts/SettingsContext";
 
 const clampVatRate = (value: number) => {
   if (!Number.isFinite(value)) return 0;
@@ -63,6 +65,9 @@ export default function Billing() {
   const { t } = useTranslation(["pages", "forms", "common"]);
   const { toast } = useToast();
   const { settings, loading, updateSettings } = useOrganizationSettings();
+  const location = useLocation();
+  const categoryPath = location.pathname;
+  const { registerSectionHandler, unregisterSectionHandler, setSectionDirty } = useSettingsContext();
 
   const normalizedProfile = useMemo(() => {
     const source = settings?.taxProfile as OrganizationTaxProfile | null;
@@ -148,18 +153,53 @@ export default function Billing() {
     }
   }, [draftProfile, toast, t, updateSettings, validate]);
 
+  const taxSectionName = t("taxBilling.title", { ns: "forms" });
+  const handlersRef = useRef({
+    handleSave: async () => {
+      /* noop */
+    },
+    handleCancel: () => {
+      /* noop */
+    },
+  });
+
+  useEffect(() => {
+    handlersRef.current = {
+      handleSave: async () => {
+        await handleSave();
+      },
+      handleCancel: () => {
+        handleReset();
+      },
+    };
+  }, [handleReset, handleSave]);
+
+  useEffect(() => {
+    registerSectionHandler(
+      categoryPath,
+      "tax-billing",
+      taxSectionName,
+      () => handlersRef.current.handleSave(),
+      () => handlersRef.current.handleCancel()
+    );
+    return () => {
+      unregisterSectionHandler(categoryPath, "tax-billing");
+    };
+  }, [categoryPath, registerSectionHandler, unregisterSectionHandler, taxSectionName]);
+
+  useEffect(() => {
+    setSectionDirty(categoryPath, "tax-billing", isDirty);
+  }, [categoryPath, isDirty, setSectionDirty]);
+
   return (
     <SettingsPageWrapper>
       <div className="space-y-6">
         <TaxBillingSection
           profile={formState}
           errors={errors}
-          dirty={isDirty}
           loading={loading}
           saving={saving}
           onChange={handleChange}
-          onSave={handleSave}
-          onReset={handleReset}
         />
       </div>
     </SettingsPageWrapper>

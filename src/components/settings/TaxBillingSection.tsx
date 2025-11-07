@@ -1,12 +1,10 @@
 import { ChangeEvent } from "react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
@@ -28,10 +26,7 @@ interface TaxBillingSectionProps {
   errors: TaxProfileFormErrors;
   loading: boolean;
   saving: boolean;
-  dirty: boolean;
   onChange: (updates: Partial<TaxProfileFormState>) => void;
-  onSave: () => void;
-  onReset: () => void;
 }
 
 export function TaxBillingSection({
@@ -39,10 +34,7 @@ export function TaxBillingSection({
   errors,
   loading,
   saving,
-  dirty,
   onChange,
-  onSave,
-  onReset,
 }: TaxBillingSectionProps) {
   const { t } = useTranslation("forms");
 
@@ -63,9 +55,6 @@ export function TaxBillingSection({
             {t("taxBilling.description")}
           </p>
         </div>
-        {dirty ? (
-          <Badge variant="secondary">{t("taxBilling.unsaved")}</Badge>
-        ) : null}
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2">
@@ -246,14 +235,6 @@ export function TaxBillingSection({
           />
         </div>
       </CardContent>
-      <CardFooter className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-        <Button type="button" variant="ghost" onClick={onReset} disabled={!dirty || saving || loading}>
-          {t("taxBilling.reset")}
-        </Button>
-        <Button type="button" onClick={onSave} disabled={!dirty || saving || loading}>
-          {saving ? t("taxBilling.saving") : t("taxBilling.save")}
-        </Button>
-      </CardFooter>
     </Card>
   );
 }

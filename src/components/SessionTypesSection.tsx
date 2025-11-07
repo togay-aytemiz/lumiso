@@ -423,6 +423,7 @@ const SessionTypesSection = () => {
               })}
             </div>
           )}
+        )}
       </SettingsCollectionSection>
 
       <AddSessionTypeDialog

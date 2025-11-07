@@ -49,6 +49,8 @@ import { settingsClasses, settingsTokens } from "@/theme/settingsTokens";
 
 const CLOSE_TARGET = "__settings_close__";
 const LAST_NON_SETTINGS_PATH_KEY = "lumiso:last-non-settings-path";
+const MOBILE_SECTION_EXTRA_GAP = 10;
+const DESKTOP_SECTION_MAX_OFFSET = 112;
 
 type SettingsLocationState = {
   from?: string;
@@ -218,6 +220,8 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
   const mobileDirectoryScrollRef = useRef<HTMLDivElement | null>(null);
   const mobileDetailScrollRef = useRef<HTMLDivElement | null>(null);
   const desktopContentScrollRef = useRef<HTMLDivElement | null>(null);
+  const sectionScrollOffsetRef = useRef(140);
+  const anchorNavHeightRef = useRef(0);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setModalState("idle"), 200);
@@ -805,6 +809,81 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
     [sectionNavItems]
   );
 
+  const getSectionScrollOffset = useCallback(
+    (forceTop?: boolean) => {
+      if (forceTop) {
+        return 0;
+      }
+      const baseOffset = sectionScrollOffsetRef.current ?? 0;
+      if (isMobile) {
+        return Math.max(baseOffset + MOBILE_SECTION_EXTRA_GAP, 0);
+      }
+      const anchorHeight = anchorNavHeightRef.current ?? 0;
+      const adjusted = baseOffset - anchorHeight;
+      return Math.max(Math.min(adjusted, DESKTOP_SECTION_MAX_OFFSET), 0);
+    },
+    [isMobile]
+  );
+
+  const scrollToSection = useCallback(
+    (targetId: string, options?: { forceTop?: boolean }) => {
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      const forceTop = options?.forceTop ?? false;
+      const container = contentRef.current;
+      const behavior: ScrollBehavior = "smooth";
+
+      if (forceTop) {
+        if (container) {
+          container.scrollTo({ top: 0, behavior });
+        } else {
+          window.scrollTo({ top: 0, behavior });
+        }
+        return;
+      }
+
+      const target = document.getElementById(targetId);
+      if (!target) {
+        return;
+      }
+
+      const resolvedOffset = getSectionScrollOffset();
+
+      if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        const targetTop =
+          targetRect.top - containerRect.top + container.scrollTop;
+
+        container.scrollTo({
+          top: targetTop - resolvedOffset,
+          behavior,
+        });
+        return;
+      }
+
+      const viewportTargetTop =
+        window.scrollY + target.getBoundingClientRect().top;
+
+      window.scrollTo({
+        top: viewportTargetTop - resolvedOffset,
+        behavior,
+      });
+    },
+    [getSectionScrollOffset]
+  );
+
+  const anchorAwareSectionNavItems = useMemo(
+    () =>
+      sectionNavItems.map((item, index) => ({
+        ...item,
+        onSelect: () => scrollToSection(item.id, { forceTop: index === 0 }),
+      })),
+    [scrollToSection, sectionNavItems]
+  );
+
   const anchorNavPages = [
     "/settings/leads",
     "/settings/projects",
@@ -879,7 +958,7 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
           data-settings-anchor-nav="true"
         >
           <StickySectionNav
-            items={sectionNavItems}
+            items={anchorAwareSectionNavItems}
             align="start"
             navClassName="justify-start"
             observeIds={sectionNavIds}
@@ -931,7 +1010,7 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
           data-settings-anchor-nav="true"
         >
           <StickySectionNav
-            items={sectionNavItems}
+            items={anchorAwareSectionNavItems}
             align="start"
             navClassName="justify-start"
             observeIds={sectionNavIds}
@@ -1096,6 +1175,8 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
         64
       );
 
+      sectionScrollOffsetRef.current = computedOffset;
+      anchorNavHeightRef.current = anchorHeight;
       document.documentElement.style.setProperty(
         "--settings-section-offset",
         `${Math.round(computedOffset)}px`

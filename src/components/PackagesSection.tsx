@@ -400,27 +400,31 @@ const PackagesSection = () => {
           </div>
         }
         contentClassName="space-y-4"
-        className="border-none bg-transparent shadow-none px-0"
+        className="border-none bg-transparent shadow-none"
         unstyledBody
       >
-        <div className="space-y-4 px-2 sm:px-0">
+        <div className="space-y-4 px-3 sm:px-0">
           {filteredPackages.length === 0 ? (
-            <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">
-              {packages.length === 0
-                ? t('packages.no_packages')
-                : t('packages.no_active_packages')}
-            </p>
-            {canManagePackages && packages.length === 0 && (
-              <Button onClick={openCreatePackage} variant="outline" data-testid="add-package-button">
-                <Plus className="h-4 w-4 mr-2" />
-                {t('packages.create_first')}
-              </Button>
-            )}
+            <div className="py-8 text-center">
+              <p className="mb-4 text-muted-foreground">
+                {packages.length === 0
+                  ? t("packages.no_packages")
+                  : t("packages.no_active_packages")}
+              </p>
+              {canManagePackages && packages.length === 0 && (
+                <Button
+                  onClick={openCreatePackage}
+                  variant="outline"
+                  data-testid="add-package-button"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t("packages.create_first")}
+                </Button>
+              )}
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {filteredPackages.map((pkg) => {
+              {filteredPackages.map((pkg) => {
               const depositSummary = extractDepositSummary(pkg);
               const quantityLookup = packageLineItemQuantities.get(pkg.id);
               const defaultAddOns = Array.isArray(pkg.default_add_ons) ? pkg.default_add_ons : [];

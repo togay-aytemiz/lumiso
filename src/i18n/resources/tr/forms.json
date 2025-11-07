@@ -374,7 +374,9 @@
     "custom_statuses": "Özel Durumlar",
     "add_status": "Durum Ekle",
     "drag_instructions": "Yeniden sıralamak için sürükleyin (⋮⋮) • Durum adlarını ve renklerini düzenlemek için tıklayın.",
-    "preferences_updated": "Tercihler güncellendi"
+    "preferences_updated": "Tercihler güncellendi",
+    "reorder_success": "Durum sırası başarıyla güncellendi",
+    "reorder_error": "Durum sırası güncellenemedi"
   },
   "social_channels": {
     "title": "Sosyal Kanallar",

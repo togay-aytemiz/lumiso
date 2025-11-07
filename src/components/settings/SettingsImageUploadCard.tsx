@@ -3,8 +3,11 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
-import { Upload, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Upload } from "lucide-react";
+import {
+  SettingsActionPills,
+  PillButton,
+} from "@/components/settings/SettingsActionPills";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,6 +49,7 @@ export interface SettingsImageUploadCardProps {
   previewSize?: "md" | "lg";
   actionSlot?: ReactNode;
   className?: string;
+  contentClassName?: string;
 }
 
 export function SettingsImageUploadCard({
@@ -67,6 +71,7 @@ export function SettingsImageUploadCard({
   previewSize = "md",
   actionSlot,
   className,
+  contentClassName,
 }: SettingsImageUploadCardProps) {
   const sizeClasses =
     previewSize === "lg" ? "h-20 w-20 sm:h-24 sm:w-24" : "h-16 w-16";
@@ -97,52 +102,54 @@ export function SettingsImageUploadCard({
         className
       )}
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <PreviewWrapper
-          type={onPreview ? "button" : undefined}
-          onClick={onPreview}
-          className={cn(
-            "relative border border-dashed border-border/60 bg-background/60 p-1",
-            shapeClasses,
-            sizeClasses,
-            onPreview &&
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          )}
-        >
-          <div className={cn("h-full w-full", shapeClasses)}>{previewContent}</div>
-        </PreviewWrapper>
-        <div>
-          <p className="text-sm font-medium">{title}</p>
-          <p className="text-xs text-muted-foreground">{description}</p>
+      <div
+        className={cn(
+          "flex flex-col gap-4 md:flex-row md:items-center md:gap-6",
+          contentClassName
+        )}
+      >
+        <div className="flex items-center gap-4">
+          <PreviewWrapper
+            type={onPreview ? "button" : undefined}
+            onClick={onPreview}
+            className={cn(
+              "relative border border-dashed border-border/60 bg-background/60 p-1",
+              shapeClasses,
+              sizeClasses,
+              onPreview &&
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            )}
+          >
+            <div className={cn("h-full w-full", shapeClasses)}>{previewContent}</div>
+          </PreviewWrapper>
+          <div>
+            <p className="text-sm font-medium">{title}</p>
+            <p className="text-xs text-muted-foreground">{description}</p>
+          </div>
         </div>
+        {helperText && (
+          <div className="text-xs text-muted-foreground md:ml-auto">
+            {helperText}
+          </div>
+        )}
       </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="pill"
+        <SettingsActionPills>
+          <PillButton
+            label={uploadBusy ? uploadingLabel ?? uploadLabel : uploadLabel}
             onClick={onUploadClick}
-            disabled={uploadBusy}
-            className="flex items-center gap-2"
-          >
-            {uploadBusy ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Upload className="h-4 w-4" />
-            )}
-            {uploadBusy ? uploadingLabel ?? uploadLabel : uploadLabel}
-          </Button>
+            loading={uploadBusy}
+            icon={<Upload className="h-4 w-4" />}
+            aria-label={uploadLabel}
+          />
           {deleteAction && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
+                <PillButton
+                  label={deleteAction.label}
+                  variant="pillDanger"
                   size="sm"
-                  className="flex items-center gap-2 text-destructive hover:text-destructive"
-                >
-                  {deleteAction.label}
-                </Button>
+                />
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -164,10 +171,7 @@ export function SettingsImageUploadCard({
             </AlertDialog>
           )}
           {actionSlot}
-        </div>
-        {helperText && (
-          <p className="text-xs text-muted-foreground">{helperText}</p>
-        )}
+        </SettingsActionPills>
       </div>
       {inputProps && (
         <input

@@ -414,7 +414,9 @@
     "custom_statuses": "Custom Statuses",
     "add_status": "Add Status",
     "drag_instructions": "Drag (⋮⋮) to reorder • Click to edit status names and colors.",
-    "preferences_updated": "Preferences updated"
+    "preferences_updated": "Preferences updated",
+    "reorder_success": "Status order updated successfully",
+    "reorder_error": "Failed to update status order"
   },
   "social_channels": {
     "title": "Social Channels",

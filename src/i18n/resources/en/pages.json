@@ -1222,7 +1222,12 @@
       },
       "toasts": {
         "success": "Success",
-        "workingHoursUpdated": "Working hours updated successfully"
+        "workingHoursUpdated": "Working hours updated successfully",
+        "photoUploadSuccess": "Profile photo uploaded successfully",
+        "photoUploadError": "Failed to upload profile photo",
+        "photoDeleteSuccess": "Profile photo deleted successfully",
+        "photoDeleteError": "Failed to delete profile photo",
+        "loadError": "Failed to load profile"
       }
     },
     "billing": {

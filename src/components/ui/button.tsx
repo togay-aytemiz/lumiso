@@ -24,6 +24,8 @@ const buttonVariants = cva(
           "bg-transparent text-current hover:bg-transparent hover:text-current shadow-none",
         pill:
           "rounded-2xl border border-transparent bg-muted text-foreground shadow-sm hover:bg-[hsl(var(--accent-100))] hover:text-[hsl(var(--accent-800))]",
+        pillDanger:
+          "rounded-2xl border border-transparent bg-destructive/10 text-destructive shadow-sm hover:bg-destructive/20 hover:text-destructive",
       },
       size: {
         default: "h-10 px-4 py-2",

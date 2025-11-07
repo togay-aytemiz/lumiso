@@ -1222,7 +1222,12 @@
       },
       "toasts": {
         "success": "Başarılı",
-        "workingHoursUpdated": "Çalışma saatleri başarıyla güncellendi"
+        "workingHoursUpdated": "Çalışma saatleri başarıyla güncellendi",
+        "photoUploadSuccess": "Profil fotoğrafı başarıyla yüklendi",
+        "photoUploadError": "Profil fotoğrafı yüklenemedi",
+        "photoDeleteSuccess": "Profil fotoğrafı başarıyla silindi",
+        "photoDeleteError": "Profil fotoğrafı silinemedi",
+        "loadError": "Profil yüklenemedi"
       }
     },
     "billing": {

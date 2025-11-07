@@ -382,17 +382,17 @@ export default function Profile() {
             deleteAction={
               hasProfilePhoto
                 ? {
-                    label: t('common.delete'),
+                    label: t('buttons.delete', { ns: 'common' }),
                     confirmationTitle: t('settings.profile.profileInfo.deletePhoto'),
                     confirmationDescription: t('settings.profile.profileInfo.deletePhotoConfirm'),
                     confirmationButtonLabel: t('settings.profile.profileInfo.deletePhotoButton'),
-                    cancelLabel: t('common.cancel'),
+                    cancelLabel: t('buttons.cancel', { ns: 'common' }),
                     onConfirm: handleDeleteProfilePhoto,
                   }
                 : undefined
             }
           />
-          <div className="space-y-2 sm:col-span-2">
+          <div className="space-y-2">
             <Label htmlFor="full-name">{t('settings.profile.profileInfo.fullName')}</Label>
             <Input
               id="full-name"

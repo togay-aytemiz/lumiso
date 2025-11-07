@@ -223,10 +223,10 @@ const LeadStatusesSection = () => {
       // Invalidate cache to refresh data
       queryClient.invalidateQueries({ queryKey: ['lead_statuses', activeOrganizationId] });
 
-      toast.success("Status order updated successfully");
+      toast.success(t('lead_statuses.reorder_success'));
     } catch (error) {
       console.error('Error updating status order:', error);
-      toast.error("Failed to update status order");
+      toast.error(t('lead_statuses.reorder_error'));
     }
   };
 

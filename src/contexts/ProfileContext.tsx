@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from './AuthContext';
 import { ProfileContext } from './profile-context';
 import type { Profile } from './profile-context';
+import { useTranslation } from 'react-i18next';
 
 // Global cache to prevent duplicate requests
 let profileCache: { profile: Profile | null; timestamp: number; userId: string } | null = null;
@@ -26,6 +27,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { t } = useTranslation(['pages', 'common']);
 
   const fetchProfile = useCallback(async (): Promise<Profile | null> => {
     if (!user?.id) return null;
@@ -70,15 +72,17 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error fetching profile:', error);
       toast({
-        title: "Error",
-        description: "Failed to load profile",
+        title: t("common:toast.error", { defaultValue: "Error" }),
+        description: t("settings.profile.toasts.loadError", {
+          defaultValue: "Failed to load profile",
+        }),
         variant: "destructive",
       });
       return null;
     } finally {
       ongoingProfileFetch = null;
     }
-  }, [user?.id, toast]);
+  }, [user?.id, toast, t]);
 
   const refreshProfile = useCallback(async () => {
     if (!user?.id) return;
@@ -182,23 +186,29 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       if (!updateResult.success) throw updateResult.error;
 
       toast({
-        title: "Success",
-        description: "Profile photo uploaded successfully",
+        title: t("common:toast.success", { defaultValue: "Success" }),
+        description: t("settings.profile.toasts.photoUploadSuccess", {
+          defaultValue: "Profile photo uploaded successfully",
+        }),
       });
 
       return { success: true, url: publicUrl };
     } catch (error: unknown) {
       console.error('Error uploading profile photo:', error);
       toast({
-        title: "Error",
-        description: getErrorMessage(error) || "Failed to upload profile photo",
+        title: t("common:toast.error", { defaultValue: "Error" }),
+        description:
+          getErrorMessage(error) ||
+          t("settings.profile.toasts.photoUploadError", {
+            defaultValue: "Failed to upload profile photo",
+          }),
         variant: "destructive",
       });
       return { success: false, error };
     } finally {
       setUploading(false);
     }
-  }, [user?.id, profile?.profile_photo_url, updateProfile, toast]);
+  }, [user?.id, profile?.profile_photo_url, updateProfile, toast, t]);
 
   const deleteProfilePhoto = useCallback(async () => {
     if (!profile?.profile_photo_url) {
@@ -226,8 +236,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       
       if (result.success) {
         toast({
-          title: "Success",
-          description: "Profile photo deleted successfully",
+          title: t("common:toast.success", { defaultValue: "Success" }),
+          description: t("settings.profile.toasts.photoDeleteSuccess", {
+            defaultValue: "Profile photo deleted successfully",
+          }),
         });
       }
 
@@ -235,13 +247,17 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     } catch (error: unknown) {
       console.error('Error deleting profile photo:', error);
       toast({
-        title: "Error", 
-        description: getErrorMessage(error) || "Failed to delete profile photo",
+        title: t("common:toast.error", { defaultValue: "Error" }),
+        description:
+          getErrorMessage(error) ||
+          t("settings.profile.toasts.photoDeleteError", {
+            defaultValue: "Failed to delete profile photo",
+          }),
         variant: "destructive",
       });
       return { success: false, error };
     }
-  }, [profile?.profile_photo_url, updateProfile, toast]);
+  }, [profile?.profile_photo_url, updateProfile, toast, t]);
 
   // Fetch profile when user changes
   useEffect(() => {

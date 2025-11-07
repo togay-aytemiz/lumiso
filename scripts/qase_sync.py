@@ -128,7 +128,7 @@ def update_case(case_id, payload):
     r = requests.patch(f"{BASE_URL}/case/{PROJECT}/{case_id}", headers=HEADERS, data=json.dumps(payload))
     if r.status_code in (400,401,404):
         fail(f"case_update_failed id={case_id} {r.status_code} {r.text[:400]}")
-    print(f"[qase-sync] case_updated id={case_id}")
+    print(f"[qase-sync] case_updated id={case_id} ext={payload.get('external_id')} title={payload.get('title')}")
     return case_id
 
 # ---------- IO ----------

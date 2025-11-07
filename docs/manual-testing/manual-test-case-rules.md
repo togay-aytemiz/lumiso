@@ -1,12 +1,12 @@
-# Settings Manual Test Case Rules
+# Manuel Test Case Kuralları
 
-Bu not, ayarlar alanı için manuel test senaryolarını nasıl üreteceğimizi kalıcı olarak tarif eder. Yeni modüller geldikçe aynı şemayı ve dil kurallarını kullanarak bu dosyayı genişletin.
+Bu not, uygulamanın tamamı için manuel test senaryolarını nasıl üreteceğimizi kalıcı olarak tarif eder. Ayarlar, CRM modülleri, şablonlar, iş akışları gibi tüm alanlarda aynı şema ve dil kurallarını kullanarak bu dosyayı genişletin.
 
 ## Kaynaklar
 
-- Uygulama sayfaları `src/pages/settings/*.tsx` altında. Şu an Profil, Genel, Bildirimler, Potansiyel Müşteriler (Leads), Projeler, Hizmetler, Faturalandırma ve Tehlike Bölgesi sayfaları kapsanıyor.
-- Yapışkan kaydet çubuğu, bölüm bazlı kirlenme takibi ve uyarılar `SettingsPageWrapper`, `CategorySettingsSection`, `SettingsStickyFooter` bileşenleriyle sağlanıyor. Senaryo yazarak bunların davranışını doğruluyoruz, ama metinde bileşen isimleri geçmiyor.
-- Durum/veri güncellemeleri `useProfile`, `useOrganizationSettings`, `useWorkingHours`, `useOrganizationData` gibi hook’larla ve Supabase işlemleriyle yürütülüyor. Testleri yazmadan önce ilgili kodu okuyup hangi alanların görünür olduğunu anlayın, sonra yalnızca arayüzdeki metinlere referans verin.
+- Modül sayfaları `src/pages/**/*.tsx`, destekleyici bileşenler `src/components/**` altında. Test eklemeden önce ilgili sayfayı ve destekleyen hook/bileşenleri inceleyin; senaryolarda **yalnızca kullanıcıya görünen metinleri** kullanın.
+- Ayarlar özelinde `SettingsPageWrapper`, `SettingsStickyFooter`, `CategorySettingsSection` gibi bileşenler yapışkan kaydet/guard davranışını sağlar; bu akışları test ederken bileşen adını değil, görünen uyarı ve butonları anlatın.
+- CRM modülleri (Leads, Projects, Sessions, Payments), Şablonlar, Workflows ve Global Search için `docs/manual-testing/tests/*.json` içindeki mevcut şemayı baz alın; yeni dosyalar oluştururken aynı yapıya sadık kalın.
 
 ## JSON Şeması
 
@@ -42,7 +42,18 @@ Her sayfada 8-12 vaka bulunmalı ve `external_id` değerleri benzersiz olmalıd�
 - Beklenen sonuçlarda hem ekranda görülen değişiklikleri hem de kaydın kalıcı olup olmadığını kullanıcı gözüyle anlatın; “Sunucuya POST atılır” gibi teknik anlatımlardan kaçının.
 - İhtiyaç varsa ön koşulları da basit Türkçe ile belirtin (“Bu testi çalıştırmadan önce en az bir paket oluşturun”).
 
-## Kapsam Notları
+## Kapsam Özeti
+
+Aşağıdaki JSON dosyaları güncel durumda kapsam sağlıyor:
+
+- `settings-manual-tests.json`: Profil, Genel, Bildirimler, Leads Settings, Projeler, Hizmetler, Faturalandırma, Tehlike Bölgesi.
+- `leads-manual-tests.json`, `projects-manual-tests.json`, `sessions-manual-tests.json`, `payments-manual-tests.json`: CRM ana modüllerinin tablo, detay, sheet ve export akışları.
+- `templates-manual-tests.json`, `workflows-manual-tests.json`: Şablon builder, görsel havuzu, workflow oluşturma/durum yönetimi, guard akışları.
+- `global-search-manual-tests.json`: Header araması için lead/proje/seans/custom field kapsamı.
+- `auth-manual-tests.json`, `onboarding-manual-tests.json`: Şimdilik TBD yer tutucuları; onboarding/Auth tamamlandığında ayrıntılandırılacak.
+- `mobile-manual-tests.json`: Navigasyon sheet’leri, mobil ayarlar deneyimi, AppSheetModal davranışları ve builder/workflow akışlarının mobil doğrulamaları.
+
+Aşağıdaki bölümler ayarlar modülüne özel kapsam notlarını listeler:
 
 ### Profil
 
@@ -100,3 +111,10 @@ Her sayfada 8-12 vaka bulunmalı ve `external_id` değerleri benzersiz olmalıd�
 3. Otomatik kaydeden akışlarda kontrolün kısa süreli kilitlendiğini ve bilgi mesajını bekleyin.
 4. Ön koşul gerekiyorsa adımların başında belirtin (“Bu testi çalıştırmadan önce bir paket oluşturulmuş olmalı”).
 5. Yeni sayfalar için aynı JSON şemasını, Türkçe dili ve teknik olmayan üslubu koruyarak yeni bölümler ekleyin.
+
+## Sonraki Adımlar / Eksik Kapsam
+
+1. **Onboarding & Auth akışları**: İlk girişte otomatik oluşturulan paketler, seans türleri, hizmetler, KDV/region ayarları için gerçek senaryolar (TBD dosyaları) doldurulmalı.
+2. **Çoklu kanal entegrasyonları**: WhatsApp/SMS gönderimleri tamamlandığında workflows/templates testlerine gerçek cihaz doğrulamaları eklenmeli.
+3. **Mobil/Responsive varyantlar**: Header Global Search ve kritik modüllerin mobil davranışları için ek senaryolar yazılmalı.
+4. **Yeni modüller**: Pipeline’da olan onboarding adımları, auth iyileştirmeleri veya henüz kapsanmayan sayfalar için aynı şemayla yeni suite’ler açın.

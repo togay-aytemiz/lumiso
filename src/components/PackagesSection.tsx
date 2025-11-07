@@ -400,6 +400,7 @@ const PackagesSection = () => {
           </div>
         }
         contentClassName="space-y-4"
+        className="border-none bg-transparent shadow-none px-0"
         unstyledBody
       >
         {filteredPackages.length === 0 ? (
@@ -593,7 +594,6 @@ const PackagesSection = () => {
             })}
           </div>
         )}
-        </div>
       </SettingsCollectionSection>
 
       {canManagePackages && (

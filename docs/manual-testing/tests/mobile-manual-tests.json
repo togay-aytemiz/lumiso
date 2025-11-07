@@ -1,0 +1,441 @@
+[
+  {
+    "suite": "Mobil - Alt Navigasyon",
+    "cases": [
+      {
+        "external_id": "CRM-MOBILE-001",
+        "title": "MobileBottomNav sekmeleriyle ana modüller arasında geçiş",
+        "description": "Mobil dipteki sekme çubuğu Dashboard/Leads/Projects ikonlarıyla rota değiştirir ve aktif sekmede rengi değiştirir.",
+        "steps": [
+          {
+            "action": "Telefon kırılımında uygulamayı açın; ekranın altında beş ikonlu MobileBottomNav görünür.",
+            "expected_result": "Dashboard, Leads, Projects, Bookings ve More ikonları ortalanmış şekilde listelenir."
+          },
+          {
+            "action": "\"Leads\" ikonuna dokunun.",
+            "expected_result": "Rota `/leads` olur, ikon ve metin mavi (primary) renge döner."
+          },
+          {
+            "action": "Aynı sekme aktifken tekrar dokunun.",
+            "expected_result": "Sayfa üste kayar (scrollToTop tetiklenir)."
+          },
+          {
+            "action": "\"Projects\" ikonuna geçin.",
+            "expected_result": "`/projects` rotasına gidilir ve önceki sekmedeki renk pasif tona döner."
+          }
+        ],
+        "expected_result": "MobileBottomNav sekmeleri ikon/metin durumlarıyla aktif rotayı gösterir ve tekrar dokunulunca listeyi üste kaydırır."
+      },
+      {
+        "external_id": "CRM-MOBILE-002",
+        "title": "Bookings ve Automation alt menülerinin BottomSheetMenu ile açılması",
+        "description": "Bookings/Automation sekmeleri alt tab’dan ayrı sheet olarak açılır; seçim sonrası sheet kapanıp ilgili sayfa açılır.",
+        "steps": [
+          {
+            "action": "\"Bookings\" sekmesine dokunun.",
+            "expected_result": "Alt kısımdan başlığı \"Bookings\" olan bir sheet kayar; Calendar, Sessions, Reminders seçenekleri tek sütunda görünür."
+          },
+          {
+            "action": "\"Sessions\" satırını seçin.",
+            "expected_result": "Sheet kapanır ve `/sessions` rotası açılır."
+          },
+          {
+            "action": "\"More\" sekmesine dokunup listeden \"Automation\" seçeneğini açın.",
+            "expected_result": "İkinci bir sheet “Automation” başlığıyla açılır; Workflows ve Templates seçenekleri görünür."
+          },
+          {
+            "action": "\"Workflows\" seçeneğine dokunun.",
+            "expected_result": "Sheet kapanır ve `/workflows` sayfası yüklenir."
+          }
+        ],
+        "expected_result": "Bookings ve Automation alt menüleri BottomSheetMenu ile açılır, seçim sonrasında otomatik kapanır ve kullanıcı yeni rotaya geçer."
+      },
+      {
+        "external_id": "CRM-MOBILE-003",
+        "title": "More sheet’inde Help, Settings ve Sign Out aksiyonları",
+        "description": "More sekmesi Analytics/Payments/Settings/Help gibi ek aksiyonları gösterir; UserMenu içeriği sheet’e gömülüdür.",
+        "steps": [
+          {
+            "action": "\"More\" sekmesine dokunun.",
+            "expected_result": "Başlığı “More” olan sheet açılır; üstte Analytics, Automation, Payments satırları listelenir."
+          },
+          {
+            "action": "\"Settings\" satırını seçin.",
+            "expected_result": "Sheet kapanır ve `/settings` rotası açılır."
+          },
+          {
+            "action": "Tekrar \"More\" sheet’ini açıp alt bölümdeki \"Help & Support\" butonuna dokunun.",
+            "expected_result": "HelpModal açılır; sheet kapanır."
+          },
+          {
+            "action": "\"More\" sheet’ini tekrar açıp \"Sign Out\" satırını seçin.",
+            "expected_result": "Tarayıcı `window.confirm` gösterir; onaylarsanız Supabase çıkış yapar ve `/auth` sayfasına yönlendirilirsiniz."
+          }
+        ],
+        "expected_result": "More sheet’i içindeki Settings/Help/Sign Out gibi aksiyonlar sheet kapanarak ilgili modalı veya rotayı açar."
+      },
+      {
+        "external_id": "CRM-MOBILE-004",
+        "title": "MobileBottomNav’ın auth sayfasında ve klavye açıldığında gizlenmesi",
+        "description": "Nav bar, Auth rotasında veya klavye açıldığında görünmemeli; onboarding modu da gizler.",
+        "steps": [
+          {
+            "action": "Tarayıcıda `/auth` rotasına gidin.",
+            "expected_result": "Alt nav tamamen kaybolur (isVisible=false)."
+          },
+          {
+            "action": "Dashboard’a dönüp herhangi bir form alanına dokunarak mobil klavyeyi açın (örn. Template Builder’da konu alanı).",
+            "expected_result": "Viewport küçülünce nav otomatik gizlenir; klavye kapatılınca tekrar görünür."
+          },
+          {
+            "action": "Guided onboarding sırasında (shouldLockNavigation=true) nav çubuğunu kontrol edin.",
+            "expected_result": "Nav çubuğu onboarding bitene kadar gizlenir."
+          }
+        ],
+        "expected_result": "MobileBottomNav auth rotasında, klavye açıkken veya onboarding modunda gizlenir; koşullar kalkınca otomatik geri gelir."
+      }
+    ]
+  },
+  {
+    "suite": "Mobil - Ayarlar Deneyimi",
+    "cases": [
+      {
+        "external_id": "CRM-MOBILE-010",
+        "title": "Ayarlar sayfasında mobil geri butonu ve tam ekran görünüm",
+        "description": "SettingsLayout mobilde overlay kullanmaz; geri butonu ve state korumasının çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "Mobilde herhangi bir sayfadayken \"Settings\" menüsünü açıp örn. \"Profil\" sayfasına gidin.",
+            "expected_result": "Sayfa tam ekran açılır, üst sol köşede Chevron ikonlu bir geri butonu görünür."
+          },
+          {
+            "action": "Geri butonuna dokunun.",
+            "expected_result": "Uygulama sizi bir önceki route’a döndürür (ör. /leads) ve Settings mobil görünüm kapanır."
+          },
+          {
+            "action": "Tekrar Ayarlar > Bildirimler’e gidin.",
+            "expected_result": "Yeni sayfa yine tam ekran açılır ve başlık altında açıklama metni tam genişlikte görünür."
+          }
+        ],
+        "expected_result": "Mobil ayarlar sayfası tam ekran çalışır ve üstteki geri butonuyla sorunsuz kapanır."
+      },
+      {
+        "external_id": "CRM-MOBILE-011",
+        "title": "Mobilde yapışkan kaydet çubuğu ve klavye davranışı",
+        "description": "SettingsStickyFooter mobilde ekranın altına sabitlenir; klavye açıldığında bile butonlar erişilebilir olmalıdır.",
+        "steps": [
+          {
+            "action": "Ayarlar > Profil’de alttaki bir input’a (örn. İş Telefonu) dokunarak mobil klavyeyi açın.",
+            "expected_result": "“Değişiklikleri Kaydet / İptal” çubuğu ekranın üstünde sabit kalır, klavye üstüne oturmaz."
+          },
+          {
+            "action": "Çubuktaki \"Değişiklikleri Kaydet\" butonuna dokunun.",
+            "expected_result": "Buton tam genişlikte görünür, dokunma alanı yeterlidir ve toast başarı mesajı gösterir."
+          },
+          {
+            "action": "Tekrar bir alanı değiştirip geri butonuna basın.",
+            "expected_result": "NavigationGuard diyaloğu mobil tam ekran modal olarak açılır ve seçenekler dikey yerleşir."
+          }
+        ],
+        "expected_result": "Mobilde yapışkan çubuk klavyenin üstünde kalır ve guard diyaloğu tüm seçenekleri okuyabilir şekilde açılır."
+      }
+    ]
+  },
+  {
+    "suite": "Mobil - CRM Modülleri",
+    "cases": [
+      {
+        "external_id": "CRM-MOBILE-020",
+        "title": "Leads header’ında aksiyonların sıkıştırılması",
+        "description": "AllLeads sayfasındaki \"Kişi Ekle\" butonu küçük ekranlarda yalnızca ikon gösterecek şekilde tasarlandı; bu davranışı doğrular.",
+        "steps": [
+          {
+            "action": "Mobilde /leads sayfasını açın.",
+            "expected_result": "Sayfanın üstünde Global Search tüm genişliği kaplar ve hemen yanında artı ikonlu küçük bir buton görünür."
+          },
+          {
+            "action": "Butonu inceleyin.",
+            "expected_result": "Butonda sadece artı ikonu ve mobilde kısa bir metin (ya da hiç metin) görünür; geniş ekran etiketleri gizlidir."
+          },
+          {
+            "action": "Butona dokunarak Kişi Ekle panelini açın.",
+            "expected_result": "AppSheetModal tam ekran açılır ve içerik dikey kaydırılabilir."
+          }
+        ],
+        "expected_result": "Kişi Ekle butonu mobilde minimal yer kaplar ancak sheet’i yine de açar."
+      },
+      {
+        "external_id": "CRM-MOBILE-021",
+        "title": "Mobilde AppSheetModal tam ekran ve guard davranışı",
+        "description": "AddLeadDialog gibi AppSheetModal kullanan formlar mobilde alt kaydırmalı tam ekran çalışmalıdır.",
+        "steps": [
+          {
+            "action": "/leads sayfasında artı ikonlu butona basarak Kişi Ekle panelini açın.",
+            "expected_result": "Panel ekranın altından kayarak açılır ve üstte kapanma çubuğu görünür."
+          },
+          {
+            "action": "Formu kaydırın ve farklı bölümlere erişin.",
+            "expected_result": "Panel içinde bağımsız kaydırma çalışır, arka plan sabit kalır."
+          },
+          {
+            "action": "Formu kirli hale getirip paneli kapatmayı deneyin.",
+            "expected_result": "NavigationGuard tam ekran modal şeklinde açılır; \"Kal\", \"Kaydet ve Çık\", \"Değişiklikleri İptal Et\" seçenekleri rahat tıklanır."
+          }
+        ],
+        "expected_result": "Mobil sheet’ler tam ekran davranır, içi kaydırılabilir ve guard diyaloğu kapanışı güvene alır."
+      },
+      {
+        "external_id": "CRM-MOBILE-022",
+        "title": "Mobilde yeni kişiyi oluşturma ve listeye dönme",
+        "description": "AddLeadDialog formunun mobilde temel alanlarla doldurulup kaydedilebildiğini doğrular.",
+        "steps": [
+          {
+            "action": "/leads sayfasında artı ikonuna dokunarak sheet’i açın.",
+            "expected_result": "\"Kişi Ekle\" başlıklı form tam ekran görünür ve kaydırma mümkündür."
+          },
+          {
+            "action": "\"Ad\" alanına isim, \"E-posta\" ve \"Telefon\" alanlarına geçerli değerler yazın.",
+            "expected_result": "Form kirlenir, alt kısımdaki \"Kişi Oluştur\" butonu mavi renkte aktif hale gelir."
+          },
+          {
+            "action": "\"Kişi Oluştur\" butonuna dokunun.",
+            "expected_result": "Buton kısa süre 'Oluşturuluyor...' durumuna geçer, sheet kapanır ve yeşil toast başarı mesajı gösterir."
+          },
+          {
+            "action": "Lead listesini kontrol edin.",
+            "expected_result": "Yeni kişi en üstte görünür ve hemen tıklanabilir durumdadır."
+          }
+        ],
+        "expected_result": "Mobilde AddLeadDialog tüm alanlarla doldurulabilir, kaydedilir ve liste yeni kişiyi gösterecek şekilde güncellenir."
+      }
+    ]
+  },
+  {
+    "suite": "Mobil - Kişi Detay ve Hatırlatıcılar",
+    "cases": [
+      {
+        "external_id": "CRM-MOBILE-040",
+        "title": "Kişi Detayları kartında WhatsApp/SMS/E-posta aksiyonları",
+        "description": "UnifiedClientDetails bileşeni mobilde hızlı aksiyon butonlarını dar alanda gösterir.",
+        "steps": [
+          {
+            "action": "/leads listesinden herhangi bir kişiyi açın.",
+            "expected_result": "Sayfanın üst kısmında \"Kişi Detayları\" kartı ve altında iletişim alanları görünür."
+          },
+          {
+            "action": "Telefon alanı doluysa kartın üst kısmındaki \"WhatsApp\" ve \"SMS\" butonlarına bakın.",
+            "expected_result": "Her buton ikon + kısa etiket içerir; dokunduğunuzda sırasıyla `https://wa.me/` ve `sms:` bağlantıları yeni sekme/uygulamada açılır."
+          },
+          {
+            "action": "E-posta alanı doluysa \"E-posta\" butonuna dokunun.",
+            "expected_result": "Varsayılan posta uygulaması `mailto:` bağlantısıyla açılır; Lead sayfası açık kalır."
+          }
+        ],
+        "expected_result": "Mobil cihazda Kişi Detayları kartı hızlı iletişim aksiyonlarını tek dokunuşla erişilebilir kılar."
+      },
+      {
+        "external_id": "CRM-MOBILE-041",
+        "title": "Seans planlama sihirbazını mobilde tamamlamak",
+        "description": "ScheduleSessionDialog, SessionSchedulingSheet aracılığıyla mobilde tam ekran sihirbaz açar.",
+        "steps": [
+          {
+            "action": "Lead detayında üst sağdaki \"Seans Ekle\" butonuna dokunun.",
+            "expected_result": "\"Seans planla\" başlıklı wizard alt kısımdan tam ekran açılır ve ilerleme çubuğu %1/7 gösterir."
+          },
+          {
+            "action": "\"Kişi\" adımı otomatik doluysa ileri gidin, \"Proje\" adımında mevcut projeler listelenir; gerekirse \"Projeye bağlamadan devam et\" seçeneğini kullanın.",
+            "expected_result": "Adım listesi mobilde \"Adımları göster\" butonuyla açılıp kapanır, seçilen adım vurgulanır."
+          },
+          {
+            "action": "\"Seans türü\" ve \"Takvim\" adımlarında tür + tarih/saat seçin.",
+            "expected_result": "Seçimler özet kutularında görünüp \"İleri\" butonu aktif hale gelir."
+          },
+          {
+            "action": "\"Özet\" adımında \"Seansı onayla\" butonuna dokunun.",
+            "expected_result": "Buton 'Onaylanıyor...' durumuna geçer, ardından başarı ekranı çıkar; \"Yeni seans planla\" ve \"Kapat\" seçenekleri görünür."
+          }
+        ],
+        "expected_result": "SessionSchedulingSheet mobilde tüm adımları tek sütunda gösterir, seçimler sorunsuzca kaydedilir ve başarı ekranı erişilebilir olur."
+      },
+      {
+        "external_id": "CRM-MOBILE-042",
+        "title": "Aktivite formundan mobil hatırlatıcı oluşturma",
+        "description": "LeadActivitySection’daki \"Hatırlatıcı Kur?\" anahtarı mobilde formu genişleterek tarih/saat seçimini zorunlu kılar.",
+        "steps": [
+          {
+            "action": "Lead detayında aktivite formuna kaydırın ve \"Hatırlatıcı Kur?\" anahtarını açın.",
+            "expected_result": "Formda tarih ve saat alanları açılır; takvim/saat seçicileri ekrana sığacak şekilde tam genişlikte görünür."
+          },
+          {
+            "action": "Gelecekteki bir tarih ve saat seçip hatırlatma metni yazın.",
+            "expected_result": "\"Hatırlatıcı Ekle\" butonu mavi renge döner."
+          },
+          {
+            "action": "\"Hatırlatıcı Ekle\" butonuna dokunun.",
+            "expected_result": "Form temizlenir, zaman çizelgesine alarm ikonlu yeni satır eklenir ve mobil toast başarı mesajı gösterir."
+          }
+        ],
+        "expected_result": "Hatırlatıcı oluşturma akışı mobilde takvim/saat bileşenleriyle tamamlanabilir ve timeline hemen güncellenir."
+      }
+    ]
+  },
+  {
+    "suite": "Mobil - Proje ve Paket Sihirbazları",
+    "cases": [
+      {
+        "external_id": "CRM-MOBILE-050",
+        "title": "Proje oluştur sihirbazını mobilde tamamlamak",
+        "description": "AllProjects sayfasındaki \"Proje Ekle\" butonu ProjectCreationWizardSheet’i açar; mobilde tek sütun adımları doğrulanır.",
+        "steps": [
+          {
+            "action": "/projects sayfasında \"Proje Ekle\" butonuna dokunun.",
+            "expected_result": "ProjectCreationWizardSheet tam ekran açılır, üstte ilerleme çubuğu ve \"Adım 1/4\" etiketi görünür."
+          },
+          {
+            "action": "\"Kişi\" adımında kişi seçin veya yeni kişi oluşturun ve \"İleri\"ye dokunun.",
+            "expected_result": "Adım listesi (Kişi, Detaylar, Paketler, Özet) mobilde açılır kapanır; seçilen adım vurgulanır."
+          },
+          {
+            "action": "\"Detaylar\" adımında proje adını ve türünü girip \"Paketler\" adımına ilerleyin.",
+            "expected_result": "Seçilen tür/hizmetler adım kartının altında özet satırı olarak görünür."
+          },
+          {
+            "action": "\"Özet\" adımında \"Projeyi Oluştur\" butonuna dokunun.",
+            "expected_result": "Buton kısa süre yüklenir, sheet kapanır ve proje listesinde yeni kayıt üstte görünür."
+          }
+        ],
+        "expected_result": "ProjectCreationWizard mobil ekranda kaydırılabilir, tüm adımlar tek sütunda tamamlanabilir ve kayıt başarıyla oluşur."
+      },
+      {
+        "external_id": "CRM-MOBILE-051",
+        "title": "Paket oluşturma sihirbazında mobil guard davranışı",
+        "description": "Settings → Hizmetler → Paketler kartındaki \"Paket ekle\" butonu PackageCreationWizardSheet’i açar ve NavigationGuard gösterir.",
+        "steps": [
+          {
+            "action": "Ayarlar > Hizmetler sayfasında \"Paket ekle\"ye dokunun.",
+            "expected_result": "Çok adımlı sihirbaz tam ekran açılır, \"Temeller\" adımı tek sütunda gösterilir."
+          },
+          {
+            "action": "Ad, açıklama ve fiyat alanlarını kısmen doldurup sheet’i kapatmaya çalışın.",
+            "expected_result": "\"Düzenlemeye Devam Et\" ve \"Değişiklikleri İptal Et\" seçenekleri olan NavigationGuard tam ekran açılır."
+          },
+          {
+            "action": "\"Düzenlemeye Devam Et\"i seçip kalan alanları doldurun ve \"Tamamla\" butonuna dokunun.",
+            "expected_result": "Buton 'Tamamlanıyor…' durumuna geçer, sheet kapanır ve paket listesi yeni kartı gösterir."
+          }
+        ],
+        "expected_result": "PackageCreationWizard mobilde guard diyaloğuyla korunur ve paket kaydı tamamlandığında liste güncellenir."
+      },
+      {
+        "external_id": "CRM-MOBILE-052",
+        "title": "Seans planlama sihirbazıyla mevcut seansı düzenleme",
+        "description": "SessionDetail sayfasındaki \"Güncelle\"/\"Yeniden planla\" aksiyonu EditSessionDialog üzerinden aynı wizard’ı edit modunda açar.",
+        "steps": [
+          {
+            "action": "/sessions listesinden bir seansı açın ve üstteki \"Güncelle\" butonuna dokunun.",
+            "expected_result": "EditSessionDialog, SessionPlanningWizardSheet’i “edit” modunda tam ekran açar; ilerleme çubuğu mevcut adıma göre ayarlanır."
+          },
+          {
+            "action": "Takvim adımına gidip tarih/saat değiştirin.",
+            "expected_result": "Önceki değerler alanlarda dolu gelir, yeni seçimler özet satırına yansır."
+          },
+          {
+            "action": "\"Özet\" adımında \"Seansı onayla\" butonuna dokunun.",
+            "expected_result": "Sheet kapanır, SessionDetail sayfasındaki tarih/saat satırı yeni değerlerle güncellenir ve yeşil toast mesajı çıkar."
+          }
+        ],
+        "expected_result": "EditSessionDialog mobilde aynı wizard UI’sını kullanır; mevcut verilerle açılır ve güncellemeler anında yansır."
+      }
+    ]
+  },
+  {
+    "suite": "Mobil - Arama ve Çapraz Erişim",
+    "cases": [
+      {
+        "external_id": "CRM-MOBILE-060",
+        "title": "Global Search alanını mobil başlıktan kullanma",
+        "description": "PageHeaderSearch, mobil ekranda tam genişlikli input olarak çalışır.",
+        "steps": [
+          {
+            "action": "Mobilde herhangi bir liste sayfasını (ör. /leads) açın ve üstteki arama alanına dokunun.",
+            "expected_result": "Input odaklanır, klavye açılır ve placeholder \"Hızlı ara…\" metni görünür."
+          },
+          {
+            "action": "En az üç harf yazın (örn. proje adı).",
+            "expected_result": "GlobalSearch dropdown’u ekran genişliğine göre tam genişlikte açılır, \"LEADS\", \"PROJECTS\" vb. başlıklarla gruplanmış sonuçlar listelenir."
+          },
+          {
+            "action": "Bir proje sonucuna dokunun.",
+            "expected_result": "Dropdown kapanır, `/projects/:id` sayfası açılır ve arama alanı otomatik temizlenir."
+          }
+        ],
+        "expected_result": "Mobilde GlobalSearch inputu header içinde kalır, sonuç listesi tam genişlikte açılır ve seçim sonrası temizlenir."
+      },
+      {
+        "external_id": "CRM-MOBILE-061",
+        "title": "Seans detayından kişiye ve projeye hızlı geçiş",
+        "description": "SessionDetail sayfasındaki \"Kişi\" ve \"Proje\" satırları dokunulabilir chipler olarak çalışır.",
+        "steps": [
+          {
+            "action": "/sessions sayfasından herhangi bir seansa dokunarak detayını açın.",
+            "expected_result": "Üstte kart içinde Kişi ve Proje satırları görünür."
+          },
+          {
+            "action": "Kişi satırına dokunun.",
+            "expected_result": "Uygulama `/leads/:id` sayfasına yönlenir; geri butonuyla SessionDetail’a dönebilirsiniz."
+          },
+          {
+            "action": "Tekrar seans detayına dönüp Proje satırına dokunun (varsa).",
+            "expected_result": "`/projects/:id` sayfası açılır ve mobil geri jestiyle seansa döndüğünüzde önceki pozisyon korunur."
+          }
+        ],
+        "expected_result": "SessionDetail kartındaki bağlantılar mobilde tek dokunuşla lead/proje sayfalarına geçiş sağlar."
+      }
+    ]
+  },
+  {
+    "suite": "Mobil - Şablonlar ve İş Akışları",
+    "cases": [
+      {
+        "external_id": "CRM-MOBILE-030",
+        "title": "Template Builder’da mobil/desktop önizleme düğmeleri",
+        "description": "TemplatePreview, e-posta kanalında Monitor/Smartphone düğmeleriyle iki cihaz genişliğini gösterir; mobilde bu düğmeler kullanılabilir olmalıdır.",
+        "steps": [
+          {
+            "action": "Template Builder’da bir e-posta şablonu açın ve mobilde sağ paneldeki önizleme bölümüne kaydırın.",
+            "expected_result": "Üstte \"Desktop\" ve \"Mobile\" butonları yan yana görünür."
+          },
+          {
+            "action": "\"Mobile\" butonuna dokunun.",
+            "expected_result": "Önizleme genişliği daralır (max-w-sm) ve bloklar telefon görünümüne göre yeniden düzenlenir."
+          },
+          {
+            "action": "\"Desktop\" butonuna geri dönüp bir test e-postası gönderin.",
+            "expected_result": "\"Test Gönder\" butonu mobilde de erişilebilir olur ve işlemi başlatır."
+          }
+        ],
+        "expected_result": "Preview panelindeki cihaz düğmeleri mobil ekranda da görünüyor ve responsive genişlik değişiyor."
+      },
+      {
+        "external_id": "CRM-MOBILE-031",
+        "title": "Workflow oluşturma sheet’inde dikey yerleşim ve guard",
+        "description": "CreateWorkflowSheet mobilde AppSheetModal ile açılır; uzun form alanları dikeyde kaydırılabilir ve NavigationGuard çalışmalıdır.",
+        "steps": [
+          {
+            "action": "/workflows sayfasında \"Workflow oluştur\" butonuna mobilde dokunun.",
+            "expected_result": "Sheet tam ekran açılır, form alanları dikey olarak listelenir."
+          },
+          {
+            "action": "Tetikleyici, şablon ve kanal alanlarını doldurup sayfayı kaydırın.",
+            "expected_result": "Her bölüm (Temel Bilgi, Kanallar, Durum) tek sütunda görünür; Switch ve Select bileşenleri parmakla kolayca ayarlanır."
+          },
+          {
+            "action": "Form kirliyken sheet’i kapatmayı deneyin.",
+            "expected_result": "NavigationGuard mobilde tam ekran açılır; \"Kal\", \"Kaydet ve Çık\", \"Değişiklikleri İptal Et\" seçenekleri rahat okunur."
+          }
+        ],
+        "expected_result": "Workflow oluşturma akışı mobilde tam ekran sheet olarak çalışır ve guard diyaloğu kapanışı güvene alır."
+      }
+    ]
+  }
+]

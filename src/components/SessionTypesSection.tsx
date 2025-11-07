@@ -422,7 +422,6 @@ const SessionTypesSection = () => {
                 );
               })}
             </div>
-          )}
         )}
       </SettingsCollectionSection>
 

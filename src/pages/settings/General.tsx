@@ -23,15 +23,41 @@ import { detectBrowserTimezone } from "@/lib/dateFormatUtils";
 import { emailSchema, phoneSchema } from "@/lib/validation";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
+import { useSettingsFileUploader } from "@/hooks/useSettingsFileUploader";
+import { useToast } from "@/hooks/use-toast";
 
 export default function General() {
-  const { settings, loading, uploading, updateSettings, uploadLogo, deleteLogo } = useOrganizationSettings();
+  const {
+    settings,
+    loading,
+    uploading,
+    updateSettings,
+    uploadLogo,
+    deleteLogo,
+  } = useOrganizationSettings();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { completeCurrentStep } = useOnboarding();
   const { t } = useTranslation(['pages', 'common']);
+  const { toast } = useToast();
+  const {
+    inputProps: logoUploaderInputProps,
+    openFilePicker: openLogoFilePicker,
+    isUploading: logoUploaderBusy,
+  } = useSettingsFileUploader({
+    inputRef: fileInputRef,
+    upload: uploadLogo,
+    accept: ["image/png", "image/jpeg", "image/webp", "image/svg+xml"],
+    maxSizeMB: 2,
+    onError: (error) =>
+      toast({
+        title: "Logo upload failed",
+        description: error.message,
+        variant: "destructive",
+      }),
+  });
 
   // Check if we're in tutorial mode from Profile onboarding
   const isInTutorial = searchParams.get('tutorial') === 'true';
@@ -178,31 +204,7 @@ export default function General() {
     setShowTutorial(false);
   };
 
-  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate file before uploading
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
-      return;
-    }
-
-    if (file.size > 2 * 1024 * 1024) {
-      alert('File size must be less than 2MB');
-      return;
-    }
-
-    // Upload immediately like profile photo
-    await uploadLogo(file);
-    
-    // Reset input value to allow selecting the same file again
-    event.target.value = '';
-  };
-
-  const handleFileButtonClick = () => {
-    fileInputRef.current?.click();
-  };
+  const logoUploadBusy = uploading || logoUploaderBusy;
 
   const validateBrandColor = (color: string) => {
     return /^#[0-9A-F]{6}$/i.test(color);
@@ -396,25 +398,26 @@ export default function General() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={handleFileButtonClick}
-                    disabled={uploading}
+                    onClick={openLogoFilePicker}
+                    disabled={logoUploadBusy}
                     className="flex items-center gap-2"
                   >
-                    {uploading ? (
+                    {logoUploadBusy ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Upload className="h-4 w-4" />
                     )}
-                    {uploading ? t("settings.general.branding.uploading") : t("settings.general.branding.choose_new_logo")}
+                    {logoUploadBusy
+                      ? t("settings.general.branding.uploading")
+                      : t("settings.general.branding.choose_new_logo")}
                   </Button>
                 </div>
 
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
-                  onChange={handleLogoUpload}
                   className="hidden"
+                  {...logoUploaderInputProps}
                 />
               </div>
               

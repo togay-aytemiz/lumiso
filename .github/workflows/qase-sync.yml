@@ -35,6 +35,26 @@ jobs:
       - name: Install deps
         run: python -m pip install requests
 
+      # >>> BURASI YENI DEBUG ADIMI <<<
+      - name: Debug Qase project access
+        env:
+          QASE_API_TOKEN: ${{ secrets.QASE_API_TOKEN }}
+          QASE_PROJECT: LUMISO
+        run: |
+          python - << 'PY'
+          import os, requests
+          base = "https://api.qase.io/v1"
+          proj = os.environ["QASE_PROJECT"]
+          tok  = os.environ["QASE_API_TOKEN"]
+          h = {"Token": tok}
+          r = requests.get(f"{base}/project/{proj}", headers=h)
+          print("GET /project status:", r.status_code)
+          print("GET /project body:", r.text[:300])
+          r2 = requests.get(f"{base}/suite/{proj}?limit=5&offset=0", headers=h)
+          print("GET /suite status:", r2.status_code)
+          print("GET /suite body:", r2.text[:300])
+          PY
+
       - name: Sync to Qase and open run
         env:
           QASE_API_TOKEN: ${{ secrets.QASE_API_TOKEN }}

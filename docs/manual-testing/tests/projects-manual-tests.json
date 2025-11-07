@@ -1,0 +1,299 @@
+[
+  {
+    "suite": "Projects - Ana Akışlar",
+    "cases": [
+      {
+        "external_id": "CRM-PROJECTS-301",
+        "title": "Projeyi oluştur sihirbazında yeni kişi ekleyip doğrulama",
+        "description": "/projects sayfasındaki sihirbazda yeni kişi açarak projeyi başlatma ve kişinin /leads listesinde belirdiğini doğrulama.",
+        "steps": [
+          {
+            "action": "Projeler sayfasını açın ve üst sağ köşedeki \"Proje Ekle\" butonuna tıklayın.",
+            "expected_result": "“Proje oluştur” başlıklı dört adımlı sihirbaz yan tarafta açılır."
+          },
+          {
+            "action": "\"İleri\" butonuna basarak Kişi adımını atlamaya çalışın.",
+            "expected_result": "Kırmızı uyarı “Bir kişi seçin” mesajını gösterir ve adım değişmez."
+          },
+          {
+            "action": "\"Yeni kişi oluştur\" düğmesine tıklayın, açılan mini formda ad ve iletişim bilgilerini girip kaydedin.",
+            "expected_result": "Form kapanır, oluşturduğunuz yeni kişi otomatik seçilir ve adı adım listesindeki özet alanına yazılır."
+          },
+          {
+            "action": "\"İleri\" butonuna basıp proje detaylarını tamamlayın, sihirbazı bitirerek projeyi oluşturun.",
+            "expected_result": "Başarı bildirimi çıkar ve proje listede görünür."
+          },
+          {
+            "action": "Yeni kişi adını not edin ve /leads sayfasına gidip arama alanına yazın.",
+            "expected_result": "Kişi listede bulunur; detay sayfasında Projeler kartı az önce oluşturulan projeyi gösterir."
+          }
+        ],
+        "expected_result": "Sihirbaz yeni kişi oluşturup projeye bağlayabilir; oluşturulan kişi Kişiler sayfasında görünür ve projeyle ilişkili olur."
+      },
+      {
+        "external_id": "CRM-PROJECTS-312",
+        "title": "Projeyi oluştur sihirbazında mevcut kişi seçme",
+        "description": "Sihirbazda var olan bir kişiyi seçip projeyi tamamlamayı ve lead detayında kartın güncellendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Projeler sayfasında \"Proje Ekle\" butonuna tıklayın.",
+            "expected_result": "Sihirbaz açılır ve Kişi adımı görünür."
+          },
+          {
+            "action": "Arama alanına mevcut bir kişinin adını yazın ve sonuç listesinden seçin.",
+            "expected_result": "Seçilen kişi adım listesindeki özet alanında görünür."
+          },
+          {
+            "action": "\"İleri\" butonuna basıp detaylar ve paketler adımlarını tamamlayın.",
+            "expected_result": "Sihirbaz sorunsuz ilerler ve proje başarıyla oluşturulur."
+          },
+          {
+            "action": "Kişiler sayfasına gidip seçtiğiniz kişiyi açın.",
+            "expected_result": "Detay sayfasındaki Projeler kartı yeni oluşturulan projeyi listeler; proje adına tıklandığında ilgili proje açılır."
+          }
+        ],
+        "expected_result": "Mevcut bir kişiyle başlatılan proje hem /projects listesinde hem de ilgili kişi detayında görünür."
+      },
+      {
+        "external_id": "CRM-PROJECTS-302",
+        "title": "Detaylar adımında proje adı ve türü zorunludur",
+        "description": "Detaylar ekranında zorunlu alanlar boş bırakıldığında gösterilen hata mesajlarını doğrular.",
+        "steps": [
+          {
+            "action": "Detaylar adımında \"Proje adı\" ve \"Proje türü\" alanlarını boş bırakıp \"İleri\" butonuna basın.",
+            "expected_result": "Alanların altında kırmızı uyarılar çıkar ve adım değişmez."
+          },
+          {
+            "action": "\"Proje adı\"na \"Yaz Çekimi\" yazın, tür açılır listesinden mevcut bir tür seçin ve isteğe bağlı açıklama ekleyin.",
+            "expected_result": "Uyarılar kaybolur, adım listesinde seçilen ad ve tür küçük gri yazıyla görünür."
+          },
+          {
+            "action": "\"İleri\" butonuna basın.",
+            "expected_result": "Sihirbaz “Paketler ve hizmetler” adımına ilerler."
+          }
+        ],
+        "expected_result": "Detaylar adımı geçmeden önce proje adı ve türü girilmelidir; doğru doldurulduğunda kullanıcı paketler adımına geçebilir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-303",
+        "title": "Paket seçme ve hizmetleri düzenleme",
+        "description": "Paketler adımında bir paket seçilmesini ve \"Hizmetleri düzenle\" paneliyle hizmet eklenmesini doğrular.",
+        "steps": [
+          {
+            "action": "Paketler adımında listelenen paket kartlarından birine tıklayın.",
+            "expected_result": "Kart \"Seçili\" rozetini alır ve sağ üstte paket adı özet bölümüne eklenir."
+          },
+          {
+            "action": "\"Hizmetleri düzenle\" düğmesine tıklayın.",
+            "expected_result": "Hizmetleri düzenle paneli açılır; paket dahilindeki ve ek hizmetler sekmeler halinde görünür."
+          },
+          {
+            "action": "Ek hizmetler sekmesinden bir hizmet seçin, adetini güncelleyin ve \"Hizmetleri kaydet\" düğmesine basın.",
+            "expected_result": "Panel kapanır, seçilen hizmet sayacı \"Ek hizmet\" rozetinde artar."
+          },
+          {
+            "action": "\"İleri\" düğmesiyle özet adımına geçin.",
+            "expected_result": "Özet kartında paket adı ve hizmet sayısı doğru şekilde listelenir."
+          }
+        ],
+        "expected_result": "Paket seçimi ve hizmet düzenleme işlemleri paket özetine yansır ve kullanıcıyı özet adımına taşır."
+      },
+      {
+        "external_id": "CRM-PROJECTS-304",
+        "title": "Sihirbazı tamamlayıp yeni projeyi listede görme",
+        "description": "Özet adımında bilgiler kontrol edilip proje oluşturulduktan sonra listenin güncellendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Özet adımında fiyat kartlarını ve kişi/proje kartlarını inceleyin.",
+            "expected_result": "Kapora, paket fiyatı ve hizmet toplamları “Kontrol edin ve onaylayın” bölümünde gösterilir."
+          },
+          {
+            "action": "\"Projeyi oluştur\" düğmesine basın.",
+            "expected_result": "Buton \"Oluşturuluyor…\" durumuna geçer ve yeşil bir bildirim başarılı olduğunu belirtir."
+          },
+          {
+            "action": "Sihirbaz kapandıktan sonra liste görünümüne dönüp arama kutusuna yeni proje adını yazın.",
+            "expected_result": "Yeni proje satırı sonuçlarda görünür, seçtiğiniz proje türü sütununda listelenir."
+          }
+        ],
+        "expected_result": "Sihirbaz tamamlandığında proje oluşturulur, toast gösterilir ve kayıt liste görünümünde aranarak bulunabilir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-305",
+        "title": "Kanban, Liste ve Arşiv görünümleri arasında geçiş",
+        "description": "Üstteki görünüm sekmeleriyle proje kartlarının farklı görünüm modlarına geçtiğini doğrular.",
+        "steps": [
+          {
+            "action": "Kanban sekmesine tıklayın (varsayılan görünüm).",
+            "expected_result": "Sütunlar proje durumlarına göre sıralanır ve kartlar sürüklenebilir halde görünür."
+          },
+          {
+            "action": "Bir kartı sürükleyerek başka bir sütuna bırakın.",
+            "expected_result": "Kart yeni sütuna taşınır ve üstte \"Proje … durumuna taşındı\" bildirimi görünür."
+          },
+          {
+            "action": "\"Liste\" sekmesine geçin.",
+            "expected_result": "Tablo görünümü açılır, sütun başlıkları ve filtre kısımları aktif olur."
+          },
+          {
+            "action": "\"Arşivlendi\" sekmesine geçin.",
+            "expected_result": "Arşivlenmiş projeleri gösteren ikinci tablo açılır ve sekmenin yanında arşiv sayısı rozet olarak görünür."
+          }
+        ],
+        "expected_result": "Kullanıcı tek tıkla Kanban/List/Arşiv görünümüne geçebilir; kart sürükleme işlemi durumları günceller."
+      },
+      {
+        "external_id": "CRM-PROJECTS-306",
+        "title": "Liste görünümünde filtre uygulama ve Excel’e aktarma",
+        "description": "Proje tablosunda filtre panelinin kullanılması ve sonuçların Excel olarak indirilmesi.",
+        "steps": [
+          {
+            "action": "Liste görünümünde tablonun üstündeki \"Filtreler\" düğmesine tıklayın.",
+            "expected_result": "Sağda tür, durum ve hizmet gibi seçenekleri içeren filtre paneli açılır."
+          },
+          {
+            "action": "Bir proje türü ve bir durum seçip \"Uygula\" düğmesine basın.",
+            "expected_result": "Tablo yalnızca seçilen kriterlerle eşleşen projeleri gösterir, özet satırında filtre bilgisi görünür."
+          },
+          {
+            "action": "Tablonun sağ üstündeki \"Excel'e aktar\" menüsünü kullanarak dışa aktarma işlemini başlatın.",
+            "expected_result": "Buton kısa süreli \"Yükleniyor\" simgesi gösterir, ardından \"Dışa aktarma hazır\" bildirimi çıkar ve .xlsx dosyası indirilir."
+          }
+        ],
+        "expected_result": "Filtrelenen listeyi tek tıkla Excel formatında indirebilir ve filtrelerin sadece ilgili kayıtları döndürdüğünü görebilirsiniz."
+      },
+      {
+        "external_id": "CRM-PROJECTS-307",
+        "title": "Proje hızlı görünümünde başlığı düzenleme",
+        "description": "Liste satırına tıklayınca açılan hızlı görünümde proje adının güncellenmesini doğrular.",
+        "steps": [
+          {
+            "action": "Liste tablosunda herhangi bir projeye tıklayın.",
+            "expected_result": "Sağda proje detaylarını gösteren kaydırmalı panel açılır."
+          },
+          {
+            "action": "Panelin üst kısmındaki proje adının yanındaki kalem ikonuna tıklayın.",
+            "expected_result": "Ad alanı düzenlenebilir hale gelir ve altında \"Kaydet\"/\"İptal\" butonları görünür."
+          },
+          {
+            "action": "Yeni bir ad yazıp \"Kaydet\" butonuna basın.",
+            "expected_result": "Yeşil bildirim \"Proje başarıyla güncellendi\" mesajını gösterir ve panel başlığı yeni adla güncellenir."
+          },
+          {
+            "action": "Paneli kapatıp tabloyu yenileyin veya arama kutusunda yeni adı kontrol edin.",
+            "expected_result": "Liste satırı da güncellenmiş proje adını gösterir."
+          }
+        ],
+        "expected_result": "Proje adı hızlı görünümde düzenlenebilir ve hem panelde hem de listede anında güncellenir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-308",
+        "title": "Kapora ayarlama ve kapora ödemesi kaydetme",
+        "description": "Projede kapora özeti bölümünün yapılandırılması ve ödemeye dönüştürülmesi.",
+        "steps": [
+          {
+            "action": "Proje hızlı görünümünde \"Ödemeler\" kartına kaydırın ve \"Kapora ayarla\" butonuna tıklayın.",
+            "expected_result": "Kapora ayarları paneli açılır; tutar veya yüzde seçenekleri görünür."
+          },
+          {
+            "action": "Sabit bir tutar girip \"Kapora kaydet\" butonuna basın.",
+            "expected_result": "Panel kapanır, kapora özeti kartında \"Kapora bekleniyor\" metni ve tutar görünür."
+          },
+          {
+            "action": "\"Kapora ödemesi işle\" butonunu seçip tahsil edilen tutarı ve tarihi girin.",
+            "expected_result": "\"Ödemeyi kaydet\" işleminden sonra kart \"Kapora tahsil edildi\" mesajına döner."
+          }
+        ],
+        "expected_result": "Kapora ayarlanıp kapora ödemesi işlendiğinde özet kartı yeni durumu (bekliyor/parçalı/tamamlandı) anında gösterir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-309",
+        "title": "Manuel ödeme ekleme, düzenleme ve silme",
+        "description": "Ödemeler tablosunda manuel kayıt oluşturma, düzenleme ve kaldırma akışını doğrular.",
+        "steps": [
+          {
+            "action": "\"Ödeme Ekle\" butonuna tıklayın.",
+            "expected_result": "\"Ödeme Ekle\" başlıklı pencere açılır ve tutar, açıklama, durum alanları doldurulabilir."
+          },
+          {
+            "action": "Tutar girip durumu \"Ödendi\" seçin, isteğe bağlı not ekleyin ve kaydedin.",
+            "expected_result": "Ödemeler listesine yeni satır eklenir, satırdaki rozet \"Ödendi\" olarak belirir."
+          },
+          {
+            "action": "Satırdaki kalem ikonuna tıklayıp açıklamayı değiştirin, ardından kaydedin.",
+            "expected_result": "Satır güncellenir ve son düzenleme tarihi yenilenir."
+          },
+          {
+            "action": "Aynı satırdaki çöp kutusu ikonuna basıp silme uyarısını onaylayın.",
+            "expected_result": "Satır listeden kaldırılır ve \"Ödeme başarıyla silindi\" mesajı çıkar."
+          }
+        ],
+        "expected_result": "Manuel ödemeler eklenip düzenlenebilir, gerekirse silinerek finansal özet otomatik güncellenir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-310",
+        "title": "Projeye hizmet ekleme ve fiyat özetinin güncellenmesi",
+        "description": "Ödemeler kartındaki \"Hizmet ekle\" akışının seçilen hizmetleri kalite kartlarına yansıttığını doğrular.",
+        "steps": [
+          {
+            "action": "\"Hizmet ekle\" butonuna tıklayın ve açılan seçim panelinde katalogdan bir hizmet seçin.",
+            "expected_result": "Hizmet satırı seçildi olarak işaretlenir; adet ve fiyat alanları düzenlenebilir."
+          },
+          {
+            "action": "Adet veya fiyat üzerinde değişiklik yapıp \"Hizmetleri kaydet\" butonunu seçin.",
+            "expected_result": "Panel kapanır, \"Proje hizmetleri\" kartındaki sayılar (pakete dahil / ek hizmet) güncellenir."
+          },
+          {
+            "action": "Finansal özet kartına bakın.",
+            "expected_result": "Sözleşme toplamı ve KDV satırları yeni hizmetin tutarını dahil edecek şekilde güncellenmiştir."
+          }
+        ],
+        "expected_result": "Hizmet ekleme/düzenleme işlemleri kart özetlerine ve toplam fiyatlara anında yansır."
+      },
+      {
+        "external_id": "CRM-PROJECTS-311",
+        "title": "Projeyi arşivleme ve geri yükleme",
+        "description": "Proje panelindeki arşiv seçeneklerinin projeyi aktif/arşiv görünümünden taşıdığını doğrular.",
+        "steps": [
+          {
+            "action": "Proje panelinin üst kısmındaki üç noktadan \"Arşivle\" seçeneğini tıklayın.",
+            "expected_result": "Arşiv onay penceresi açılır; varsa tahsil edilmemiş bakiye ve planlı seans bilgisi gösterilir."
+          },
+          {
+            "action": "Onayı verin.",
+            "expected_result": "Yeşil toast projeyi arşivlediğini bildirir ve panel kapanır."
+          },
+          {
+            "action": "\"Arşivlendi\" sekmesine geçip projeyi arayın.",
+            "expected_result": "Proje arşiv tablosunda listelenir."
+          },
+          {
+            "action": "Arşiv satırındaki üç noktadan \"Arşivden çıkar\" seçeneğine tıklayın.",
+            "expected_result": "Proje yeniden aktif hale gelir ve Kanban/List görünümüne döner."
+          }
+        ],
+        "expected_result": "Arşivleme işlemi proje durumunu arşiv sekmesine taşır; kullanıcı isterse aynı menüden projeyi geri yükleyebilir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-312",
+        "title": "Kişi detayındaki Projeler kartından yeni proje açma",
+        "description": "Lead detay sayfasındaki “Proje Ekle” akışının lead bilgilerini sihirbaza otomatik taşıdığını doğrular.",
+        "steps": [
+          {
+            "action": "Bir kişinin detay sayfasını açın ve \"Projeler\" kartındaki \"Proje Ekle\" butonuna tıklayın.",
+            "expected_result": "Proje oluştur sihirbazı lead bilgileri doldurulmuş olarak açılır."
+          },
+          {
+            "action": "Detaylar ve paketler adımlarını tamamlayıp projeyi oluşturun.",
+            "expected_result": "Lead sayfasındaki Projeler kartı yeni kartı listeler; yanında kişi adı otomatik doldurulmuştur."
+          },
+          {
+            "action": "/projects sayfasına gidip yeni proje adını arayın.",
+            "expected_result": "Proje listede görünür ve lead sütununda aynı kişi adı gösterilir."
+          }
+        ],
+        "expected_result": "Lead içinden başlatılan proje sihirbazı kişiyi otomatik bağlar ve proje hem lead kartında hem de genel projeler sayfasında görünür."
+      }
+    ]
+  }
+]

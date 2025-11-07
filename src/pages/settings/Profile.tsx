@@ -22,6 +22,7 @@ import { trimAndNormalizeSpaces, createTrimmedBlurHandler } from "@/lib/inputUti
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useTranslation } from "react-i18next";
+import { useSettingsFileUploader } from "@/hooks/useSettingsFileUploader";
 
 export default function Profile() {
   const [emailAddress, setEmailAddress] = useState("");
@@ -30,12 +31,35 @@ export default function Profile() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
-  const { profile, loading: profileLoading, uploading, updateProfile, uploadProfilePhoto, deleteProfilePhoto } = useProfile();
+  const {
+    profile,
+    loading: profileLoading,
+    uploading,
+    updateProfile,
+    uploadProfilePhoto,
+    deleteProfilePhoto,
+  } = useProfile();
   const { workingHours, loading: workingHoursLoading, updateWorkingHour } = useWorkingHours();
   const { activeOrganization } = useOrganization();
   const { completeCurrentStep } = useOnboarding();
   const { toast } = useToast();
   const { t } = useTranslation(['pages', 'common']);
+  const {
+    inputProps: profilePhotoInputProps,
+    openFilePicker: openProfilePhotoPicker,
+    isUploading: uploaderBusy,
+  } = useSettingsFileUploader({
+    inputRef: fileInputRef,
+    upload: uploadProfilePhoto,
+    accept: ["image/png", "image/jpeg", "image/webp"],
+    maxSizeMB: 2,
+    onError: (error) =>
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      }),
+  });
 
   // Check if we're in tutorial mode
   const isInTutorial = searchParams.get('tutorial') === 'true';
@@ -137,13 +161,6 @@ export default function Profile() {
       }
       // Mark working hours section as dirty to show save button
       workingHoursSection.updateValue("workingHours", workingHours);
-    }
-  };
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      await uploadProfilePhoto(file);
     }
   };
 
@@ -258,6 +275,8 @@ export default function Profile() {
   const handleTutorialExit = async () => {
     setShowTutorial(false);
   };
+
+  const uploadBusy = uploading || uploaderBusy;
 
   // Show loading state until all data is loaded
   if (profileLoading || workingHoursLoading) {
@@ -394,22 +413,25 @@ export default function Profile() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
                   className="hidden"
+                  {...profilePhotoInputProps}
                 />
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="flex items-center gap-2 w-full sm:w-fit"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
+                  onClick={openProfilePhotoPicker}
+                  disabled={uploadBusy}
                 >
-                  {uploading ? (
+                  {uploadBusy ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <Upload className="h-4 w-4" />
                   )}
-                  {uploading ? t('settings.profile.profileInfo.uploading') : profile?.profile_photo_url ? t('settings.profile.profileInfo.chooseNewFile') : t('settings.profile.profileInfo.chooseFile')}
+                  {uploadBusy
+                    ? t('settings.profile.profileInfo.uploading')
+                    : profile?.profile_photo_url
+                      ? t('settings.profile.profileInfo.chooseNewFile')
+                      : t('settings.profile.profileInfo.chooseFile')}
                 </Button>
               </div>
 

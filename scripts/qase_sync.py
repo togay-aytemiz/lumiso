@@ -1,4 +1,3 @@
-# scripts/qase_sync.py
 import os, json, glob, requests, sys, re
 from pathlib import Path
 
@@ -75,8 +74,9 @@ def get_or_create_suite_id(title, cache):
 
 def create_case(payload):
     r = requests.post(f"{BASE_URL}/case/{PROJECT}", headers=HEADERS, data=json.dumps(payload))
-    if r.status_code in (401, 404, 400):
-        die(f"Case create hata {r.status_code} body={r.text[:400]}")
+    if r.status_code >= 400:
+        print("[qase-sync] create_case payload:", json.dumps(payload, ensure_ascii=False)[:1000])
+        print("[qase-sync] create_case resp:", r.status_code, r.text[:1000])
     r.raise_for_status()
     cid = r.json()["result"]["id"]
     print(f"[qase-sync] Created case {payload.get('external_id')} id={cid}")
@@ -84,8 +84,9 @@ def create_case(payload):
 
 def update_case(case_id, payload):
     r = requests.patch(f"{BASE_URL}/case/{PROJECT}/{case_id}", headers=HEADERS, data=json.dumps(payload))
-    if r.status_code in (401, 404, 400):
-        die(f"Case update hata {r.status_code} body={r.text[:400]}")
+    if r.status_code >= 400:
+        print("[qase-sync] update_case payload:", json.dumps(payload, ensure_ascii=False)[:1000])
+        print("[qase-sync] update_case resp:", r.status_code, r.text[:1000])
     r.raise_for_status()
     print(f"[qase-sync] Updated case id={case_id}")
 
@@ -105,9 +106,10 @@ def map_json_case_to_qase(case, suite_id):
     steps = []
     for idx, s in enumerate(case.get("steps", []), start=1):
         if not isinstance(s, dict):
-            print(f"[qase-sync] Uyarı step dict değil atlandı ext={case.get('external_id')} idx={idx}")
+            print(f"[qase-sync] Uyarı: step dict değil, atlandı ext={case.get('external_id')} idx={idx}")
             continue
         steps.append({
+            "position": idx,
             "action": s.get("action", ""),
             "expected_result": s.get("expected_result", "")
         })
@@ -117,9 +119,7 @@ def map_json_case_to_qase(case, suite_id):
         "suite_id": suite_id,
         "description": case.get("description", ""),
         "steps": steps,
-        "priority": "medium",
-        "severity": "normal",
-        "behavior": "positive",
+        "type": "functional",
         "automation": False
     }
 
@@ -136,27 +136,20 @@ def load_target_files():
     return glob.glob("docs/manual-testing/tests/*.json")
 
 def parse_file_into_suites(file_path):
-    # UTF-8 BOM güvenli
     with open(file_path, "r", encoding="utf-8-sig") as f:
         data = json.load(f)
 
     suites = []
 
-    # 1 biçim: tek suite objesi
-    # { "suite": "Ayarlar - Profil", "cases": [ ... ] }
     if isinstance(data, dict) and "cases" in data and "suite" in data:
         suites.append((data["suite"], data.get("cases", [])))
         return suites
 
-    # 2 biçim: birden çok suite nesnesinden oluşan liste
-    # [ { "suite": "...", "cases": [...] }, { "suite": "...", "cases": [...] } ]
     if isinstance(data, list) and all(isinstance(x, dict) and "suite" in x and "cases" in x for x in data):
         for obj in data:
             suites.append((obj["suite"], obj.get("cases", [])))
         return suites
 
-    # 3 biçim: sözlükte suite adi -> case listesi
-    # { "Ayarlar - Profil": [ ... ], "Ayarlar - Genel": [ ... ] }
     if isinstance(data, dict) and all(isinstance(v, list) for v in data.values()):
         for k, v in data.items():
             suites.append((k, v))
@@ -195,8 +188,7 @@ def main():
     if os.environ.get("RETEST_IDS"):
         explicit_ids = {x.strip() for x in os.environ["RETEST_IDS"].split(",") if x.strip()}
 
-    created = 0
-    updated = 0
+    created, updated = 0, 0
     touched_case_ids = []
     used_ids = set(ext_to_id.keys())
 

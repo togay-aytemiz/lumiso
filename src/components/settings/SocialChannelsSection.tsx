@@ -37,6 +37,8 @@ interface SocialChannelsSectionProps {
   socialChannels: Record<string, SocialChannel>;
   onUpdate: (channels: Record<string, SocialChannel>) => void;
   isDirty: boolean;
+  variant?: "card" | "embedded";
+  className?: string;
 }
 
 const PREDEFINED_PLATFORMS: Array<{
@@ -53,7 +55,13 @@ const PREDEFINED_PLATFORMS: Array<{
   { key: 'tiktok', name: 'TikTok', icon: Music },
 ];
 
-export function SocialChannelsSection({ socialChannels, onUpdate, isDirty }: SocialChannelsSectionProps) {
+export function SocialChannelsSection({
+  socialChannels,
+  onUpdate,
+  isDirty,
+  variant = "card",
+  className,
+}: SocialChannelsSectionProps) {
   const { t } = useTranslation('forms');
   const [customPlatformName, setCustomPlatformName] = useState('');
 
@@ -148,178 +156,199 @@ export function SocialChannelsSection({ socialChannels, onUpdate, isDirty }: Soc
   const channelEntries = Object.entries(socialChannels)
     .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0));
 
+  const content = (
+    <div className="space-y-4">
+      {/* Existing Channels with Drag & Drop */}
+      {channelEntries.length > 0 && (
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="social-channels">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="space-y-3"
+              >
+                {channelEntries.map(([key, channel], index) => {
+                  const Icon = getChannelIcon(channel);
+                  const hasValidUrl = channel.url && validateUrl(channel.url);
+
+                  return (
+                    <Draggable key={key} draggableId={key} index={index}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={cn(
+                            "flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors",
+                            !hasValidUrl && channel.url && "border-destructive/50 bg-destructive/5",
+                            snapshot.isDragging && "shadow-lg"
+                          )}
+                        >
+                          <div
+                            {...provided.dragHandleProps}
+                            className="cursor-grab rounded-lg p-1 text-muted-foreground transition hover:bg-muted/40 active:cursor-grabbing"
+                          >
+                            <GripVertical className="h-4 w-4" />
+                          </div>
+
+                          <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+
+                          <div className="min-w-0 w-20 flex-shrink-0">
+                            <span className="block truncate text-sm font-medium">
+                              {channel.customPlatformName || channel.name}
+                            </span>
+                          </div>
+
+                          <div className="flex-1">
+                            <Input
+                              placeholder={`https://${channel.platform === 'website' ? 'yourwebsite.com' : `${channel.platform}.com/yourprofile`}`}
+                              value={channel.url}
+                              onChange={(e) => updateChannel(key, { url: e.target.value })}
+                              className={cn(
+                                "h-9 text-sm",
+                                !hasValidUrl && channel.url && "border-destructive focus-visible:ring-destructive"
+                              )}
+                            />
+                            {!hasValidUrl && channel.url && (
+                              <p className="mt-1 text-xs text-destructive">
+                                {t('social_channels.url_invalid')}
+                              </p>
+                            )}
+                          </div>
+
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-9 w-9 flex-shrink-0 rounded-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>{t('social_channels.remove_channel_title')}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {t('social_channels.remove_channel_description', { name: channel.customPlatformName || channel.name })}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>{t('common:common.buttons.cancel')}</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => removeChannel(key)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  {t('social_channels.remove_button')}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      )}
+                    </Draggable>
+                  );
+                })}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      )}
+
+      {/* Empty State */}
+      {channelEntries.length === 0 && (
+        <div className="py-6 text-center text-muted-foreground">
+          <Globe className="mx-auto mb-2 h-8 w-8 opacity-50" />
+          <p className="text-sm">{t('social_channels.no_channels')}</p>
+          <p className="text-xs">{t('social_channels.add_links_description')}</p>
+        </div>
+      )}
+
+      {/* Add Platform Buttons */}
+      {availablePlatforms.length > 0 && (
+        <div>
+          <Label className="mb-2 block text-sm font-medium">
+            {t('social_channels.add_platform')}
+          </Label>
+          <div className="flex flex-wrap gap-2">
+            {availablePlatforms.map((platform) => {
+              const Icon = platform.icon;
+              return (
+                <Button
+                  key={platform.key}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addPredefinedPlatform(platform.key)}
+                  className="flex items-center gap-2"
+                >
+                  <Icon className="h-4 w-4" />
+                  {platform.name}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Add Custom Platform */}
+      <div className="flex gap-2">
+        <Input
+          placeholder={t('social_channels.custom_platform_placeholder')}
+          value={customPlatformName}
+          onChange={(e) => setCustomPlatformName(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && addCustomPlatform()}
+          className="flex-1"
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={addCustomPlatform}
+          disabled={!customPlatformName.trim()}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          {t('social_channels.add_custom')}
+        </Button>
+      </div>
+
+      {/* Helper Text */}
+      <div className="space-y-1 text-xs text-muted-foreground">
+        <p>• {t('social_channels.help_text.appear_in_emails')}</p>
+        <p>• {t('social_channels.help_text.drag_to_reorder')}</p>
+        <p>• {t('social_channels.help_text.valid_urls_only')}</p>
+      </div>
+    </div>
+  );
+
+  if (variant === "embedded") {
+    return (
+      <div className={cn("space-y-4", className)}>
+        {isDirty && (
+          <Badge variant="secondary" className="w-fit">
+            {t('social_channels.unsaved_changes')}
+          </Badge>
+        )}
+        {content}
+      </div>
+    );
+  }
+
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Globe className="h-5 w-5" />
           {t('social_channels.title')}
-          {isDirty && <Badge variant="secondary">{t('social_channels.unsaved_changes')}</Badge>}
+          {isDirty && (
+            <Badge variant="secondary">{t('social_channels.unsaved_changes')}</Badge>
+          )}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
           {t('social_channels.description')}
         </p>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {/* Existing Channels with Drag & Drop */}
-          {channelEntries.length > 0 && (
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId="social-channels">
-                {(provided) => (
-                  <div 
-                    {...provided.droppableProps} 
-                    ref={provided.innerRef}
-                    className="space-y-3"
-                  >
-                    {channelEntries.map(([key, channel], index) => {
-                      const Icon = getChannelIcon(channel);
-                      const hasValidUrl = channel.url && validateUrl(channel.url);
-                      
-                      return (
-                        <Draggable key={key} draggableId={key} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              className={cn(
-                                "flex items-center gap-3 p-3 rounded-lg border bg-card transition-colors",
-                                !hasValidUrl && channel.url && "border-destructive/50 bg-destructive/5",
-                                snapshot.isDragging && "shadow-lg"
-                              )}
-                            >
-                              <div 
-                                {...provided.dragHandleProps}
-                                className="cursor-grab active:cursor-grabbing"
-                              >
-                                <GripVertical className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                              
-                              <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                              
-                              <div className="min-w-0 w-20 flex-shrink-0">
-                                <span className="text-sm font-medium truncate block">
-                                  {channel.customPlatformName || channel.name}
-                                </span>
-                              </div>
-                              
-                              <div className="flex-1">
-                                <Input
-                                  placeholder={`https://${channel.platform === 'website' ? 'yourwebsite.com' : `${channel.platform}.com/yourprofile`}`}
-                                  value={channel.url}
-                                  onChange={(e) => updateChannel(key, { url: e.target.value })}
-                                  className={cn(
-                                    "h-9 text-sm",
-                                    !hasValidUrl && channel.url && "border-destructive focus:ring-destructive"
-                                  )}
-                                 />
-                                 {!hasValidUrl && channel.url && (
-                                   <p className="text-xs text-destructive mt-1">{t('social_channels.url_invalid')}</p>
-                                 )}
-                               </div>
-                              
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 w-9 p-0 flex-shrink-0"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                 <AlertDialogContent>
-                                   <AlertDialogHeader>
-                                     <AlertDialogTitle>{t('social_channels.remove_channel_title')}</AlertDialogTitle>
-                                     <AlertDialogDescription>
-                                       {t('social_channels.remove_channel_description', { name: channel.customPlatformName || channel.name })}
-                                     </AlertDialogDescription>
-                                   </AlertDialogHeader>
-                                   <AlertDialogFooter>
-                                     <AlertDialogCancel>{t('common:common.buttons.cancel')}</AlertDialogCancel>
-                                     <AlertDialogAction 
-                                       onClick={() => removeChannel(key)}
-                                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                     >
-                                       {t('social_channels.remove_button')}
-                                     </AlertDialogAction>
-                                   </AlertDialogFooter>
-                                 </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          )}
-                        </Draggable>
-                      );
-                    })}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
-          )}
-
-          {/* Empty State */}
-          {channelEntries.length === 0 && (
-            <div className="text-center py-6 text-muted-foreground">
-              <Globe className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">{t('social_channels.no_channels')}</p>
-              <p className="text-xs">{t('social_channels.add_links_description')}</p>
-            </div>
-          )}
-
-          {/* Add Platform Buttons */}
-          {availablePlatforms.length > 0 && (
-            <div>
-              <Label className="text-sm font-medium mb-2 block">{t('social_channels.add_platform')}</Label>
-              <div className="flex flex-wrap gap-2">
-                {availablePlatforms.map((platform) => {
-                  const Icon = platform.icon;
-                  return (
-                    <Button
-                      key={platform.key}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addPredefinedPlatform(platform.key)}
-                      className="flex items-center gap-2 h-9"
-                    >
-                      <Icon className="h-4 w-4" />
-                      {platform.name}
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Add Custom Platform */}
-          <div className="flex gap-2">
-            <Input
-              placeholder={t('social_channels.custom_platform_placeholder')}
-              value={customPlatformName}
-              onChange={(e) => setCustomPlatformName(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && addCustomPlatform()}
-              className="flex-1 h-9"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={addCustomPlatform}
-              disabled={!customPlatformName.trim()}
-              className="flex items-center gap-2 h-9"
-            >
-              <Plus className="h-4 w-4" />
-              {t('social_channels.add_custom')}
-            </Button>
-          </div>
-
-          {/* Helper Text */}
-          <div className="text-xs text-muted-foreground space-y-1">
-            <p>• {t('social_channels.help_text.appear_in_emails')}</p>
-            <p>• {t('social_channels.help_text.drag_to_reorder')}</p>
-            <p>• {t('social_channels.help_text.valid_urls_only')}</p>
-          </div>
-        </div>
-      </CardContent>
+      <CardContent>{content}</CardContent>
     </Card>
   );
 }

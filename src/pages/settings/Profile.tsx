@@ -2,7 +2,11 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
-import { CategorySettingsSection } from "@/components/settings/CategorySettingsSection";
+import {
+  SettingsCollectionSection,
+  SettingsFormSection,
+} from "@/components/settings/SettingsSectionVariants";
+import { SettingsRefreshButton } from "@/components/settings/SettingsRefreshButton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,8 +42,14 @@ export default function Profile() {
     updateProfile,
     uploadProfilePhoto,
     deleteProfilePhoto,
+    refreshProfile,
   } = useProfile();
-  const { workingHours, loading: workingHoursLoading, updateWorkingHour } = useWorkingHours();
+  const {
+    workingHours,
+    loading: workingHoursLoading,
+    updateWorkingHour,
+    refetch: refetchWorkingHours,
+  } = useWorkingHours();
   const { activeOrganization } = useOrganization();
   const { completeCurrentStep } = useOnboarding();
   const { toast } = useToast();
@@ -69,6 +79,8 @@ export default function Profile() {
     if (stepParam) return parseInt(stepParam) - 1;
     return 0;
   });
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+  const [isProfileRefreshing, setIsProfileRefreshing] = useState(false);
 
   // Profile section state
   const profileSection = useSettingsCategorySection({
@@ -145,6 +157,12 @@ export default function Profile() {
     }
   }, [workingHours, workingHoursSection]);
 
+  useEffect(() => {
+    if (!profileLoading && !workingHoursLoading && !lastSyncedAt) {
+      setLastSyncedAt(new Date());
+    }
+  }, [lastSyncedAt, profileLoading, workingHoursLoading]);
+
   const handleWorkingHourUpdate = async (
     dayOfWeek: number,
     field: string,
@@ -199,6 +217,18 @@ export default function Profile() {
   };
 
   const timeOptions = generateTimeOptions();
+
+  const handleProfileRefresh = async () => {
+    try {
+      setIsProfileRefreshing(true);
+      await Promise.all([refreshProfile(), refetchWorkingHours()]);
+      setLastSyncedAt(new Date());
+    } catch (error) {
+      console.error("Failed to refresh profile data", error);
+    } finally {
+      setIsProfileRefreshing(false);
+    }
+  };
 
   // Tutorial steps
   const tutorialSteps: TutorialStep[] = [
@@ -289,136 +319,70 @@ export default function Profile() {
 
   return (
     <SettingsPageWrapper>
-      <div className="space-y-8">
-        <CategorySettingsSection
+      <div className="space-y-10">
+        <SettingsFormSection
+          sectionId="profile"
           title={t('settings.profile.profileInfo.title')}
           description={t('settings.profile.profileInfo.description')}
-          sectionId="profile"
-          data-walkthrough="profile-form"
+          dataWalkthrough="profile-form"
+          fieldColumns={2}
+          leftColumnFooter={
+            <SettingsRefreshButton
+              onRefresh={handleProfileRefresh}
+              isRefreshing={isProfileRefreshing}
+              lastUpdatedAt={lastSyncedAt}
+            />
+          }
         >
-          <div className="space-y-6">
-            {/* Avatar Upload */}
-            <div className="space-y-2">
-              <Label htmlFor="avatar-upload">{t('settings.profile.profileInfo.profilePhoto')}</Label>
-              
-              {/* Current Photo Preview - Always show container to prevent layout shift */}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg bg-muted/30 max-w-md min-h-[80px]">
+          <div className="space-y-4 rounded-2xl border border-border/60 bg-muted/20 p-4 sm:col-span-2">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex flex-1 items-center gap-4">
                 {profile?.profile_photo_url ? (
-                  <>
-                    {/* Mobile Layout */}
-                    <div className="flex items-center gap-3 sm:hidden">
-                      <div className="relative cursor-pointer" onClick={() => setIsProfilePhotoModalOpen(true)}>
-                        <img 
-                          src={profile.profile_photo_url} 
-                          alt="Current profile photo - click to enlarge" 
-                          className="w-12 h-12 object-cover bg-white border rounded-full hover:opacity-80 transition-opacity"
-                          title="Click to view full size"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{t('settings.profile.profileInfo.currentPhoto')}</p>
-                        <p className="text-xs text-muted-foreground">{t('settings.profile.profileInfo.photoCurrentlySet')}</p>
-                      </div>
-                    </div>
-                    
-                    {/* Desktop/Tablet Layout */}
-                    <div className="hidden sm:flex sm:items-center sm:gap-4 sm:flex-1">
-                      <div className="relative cursor-pointer" onClick={() => setIsProfilePhotoModalOpen(true)}>
-                        <img 
-                          src={profile.profile_photo_url} 
-                          alt="Current profile photo - click to enlarge" 
-                          className="w-16 h-16 object-cover bg-white border rounded-full hover:opacity-80 transition-opacity"
-                          title="Click to view full size"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{t('settings.profile.profileInfo.currentPhoto')}</p>
-                        <p className="text-xs text-muted-foreground">{t('settings.profile.profileInfo.photoCurrentlySet')}</p>
-                      </div>
-                    </div>
-
-                    {/* Delete Button - Full width on mobile, inline on larger screens */}
-                    <div className="w-full sm:w-auto">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="w-full sm:w-auto flex items-center justify-center gap-2 text-destructive hover:text-destructive"
-                            >
-                              <X className="h-4 w-4" />
-                              {t('common.delete')}
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{t('settings.profile.profileInfo.deletePhoto')}</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              {t('settings.profile.profileInfo.deletePhotoConfirm')}
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={handleDeleteProfilePhoto}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              {t('settings.profile.profileInfo.deletePhotoButton')}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </>
+                  <button
+                    type="button"
+                    onClick={() => setIsProfilePhotoModalOpen(true)}
+                    className="relative rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    <img
+                      src={profile.profile_photo_url}
+                      alt={t('settings.profile.profileInfo.currentPhoto')}
+                      className="h-16 w-16 rounded-full border bg-white object-cover"
+                    />
+                  </button>
                 ) : (
-                  <>
-                    {/* Mobile Layout - Placeholder */}
-                    <div className="flex items-center gap-3 sm:hidden">
-                      <Avatar className="w-12 h-12">
-                        <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                          {profileSection.values.fullName 
-                            ? profileSection.values.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-                            : 'U'
-                          }
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{t('settings.profile.profileInfo.defaultAvatar')}</p>
-                        <p className="text-xs text-muted-foreground">{t('settings.profile.profileInfo.defaultAvatarHelp')}</p>
-                      </div>
-                    </div>
-                    
-                    {/* Desktop/Tablet Layout - Placeholder */}
-                    <div className="hidden sm:flex sm:items-center sm:gap-4 sm:flex-1">
-                      <Avatar className="w-16 h-16">
-                        <AvatarFallback className="bg-primary/10 text-primary font-semibold text-lg">
-                          {profileSection.values.fullName 
-                            ? profileSection.values.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-                            : 'U'
-                          }
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{t('settings.profile.profileInfo.defaultAvatar')}</p>
-                        <p className="text-xs text-muted-foreground">{t('settings.profile.profileInfo.defaultAvatarLongHelp')}</p>
-                      </div>
-                    </div>
-                  </>
+                  <Avatar className="h-16 w-16">
+                    <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
+                      {profileSection.values.fullName
+                        ? profileSection.values.fullName
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')
+                            .substring(0, 2)
+                            .toUpperCase()
+                        : 'U'}
+                    </AvatarFallback>
+                  </Avatar>
                 )}
+                <div>
+                  <p className="text-sm font-medium">
+                    {profile?.profile_photo_url
+                      ? t('settings.profile.profileInfo.currentPhoto')
+                      : t('settings.profile.profileInfo.defaultAvatar')}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {profile?.profile_photo_url
+                      ? t('settings.profile.profileInfo.photoCurrentlySet')
+                      : t('settings.profile.profileInfo.defaultAvatarLongHelp')}
+                  </p>
+                </div>
               </div>
-
-              {/* File Upload Button */}
-              <div className="flex flex-col gap-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  {...profilePhotoInputProps}
-                />
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap gap-2">
                 <Button
+                  type="button"
                   variant="outline"
-                  className="flex items-center gap-2 w-full sm:w-fit"
+                  className="flex items-center gap-2"
                   onClick={openProfilePhotoPicker}
                   disabled={uploadBusy}
                 >
@@ -433,135 +397,170 @@ export default function Profile() {
                       ? t('settings.profile.profileInfo.chooseNewFile')
                       : t('settings.profile.profileInfo.chooseFile')}
                 </Button>
+                {profile?.profile_photo_url && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2 text-destructive hover:text-destructive"
+                      >
+                        <X className="h-4 w-4" />
+                        {t('common.delete')}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{t('settings.profile.profileInfo.deletePhoto')}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {t('settings.profile.profileInfo.deletePhotoConfirm')}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteProfilePhoto}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {t('settings.profile.profileInfo.deletePhotoButton')}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  {...profilePhotoInputProps}
+                />
               </div>
-
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {t('settings.profile.profileInfo.fileFormatsHelp')}
               </p>
             </div>
-
-            {/* Full Name */}
-            <div className="space-y-2">
-              <Label htmlFor="full-name">{t('settings.profile.profileInfo.fullName')}</Label>
-              <Input
-                id="full-name"
-                placeholder={t('settings.profile.profileInfo.fullNamePlaceholder')}
-                value={profileSection.values.fullName}
-                onChange={(e) => profileSection.updateValue("fullName", e.target.value)}
-                onBlur={createTrimmedBlurHandler(profileSection.values.fullName, (value) => profileSection.updateValue("fullName", value))}
-                className="max-w-md"
-              />
-            </div>
-
-            {/* Phone Number */}
-            <div className="space-y-2">
-              <Label htmlFor="phone">{t('settings.profile.profileInfo.phoneNumber')}</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder={t('settings.profile.profileInfo.phoneNumberPlaceholder')}
-                value={profileSection.values.phoneNumber}
-                onChange={(e) => profileSection.updateValue("phoneNumber", e.target.value)}
-                onBlur={createTrimmedBlurHandler(profileSection.values.phoneNumber, (value) => profileSection.updateValue("phoneNumber", value))}
-                className="max-w-md"
-              />
-            </div>
-
-            {/* Email Address */}
-            <div className="space-y-2">
-              <Label htmlFor="email">{t('settings.profile.profileInfo.emailAddress')}</Label>
-              <Input
-                id="email"
-                type="email"
-                value={emailAddress}
-                disabled
-                className="max-w-md"
-              />
-              <p className="text-sm text-muted-foreground">
-                {t('settings.profile.profileInfo.emailHelp')}
-              </p>
-            </div>
           </div>
-        </CategorySettingsSection>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="full-name">{t('settings.profile.profileInfo.fullName')}</Label>
+            <Input
+              id="full-name"
+              placeholder={t('settings.profile.profileInfo.fullNamePlaceholder')}
+              value={profileSection.values.fullName}
+              onChange={(e) => profileSection.updateValue("fullName", e.target.value)}
+              onBlur={createTrimmedBlurHandler(
+                profileSection.values.fullName,
+                (value) => profileSection.updateValue("fullName", value)
+              )}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">{t('settings.profile.profileInfo.phoneNumber')}</Label>
+            <Input
+              id="phone"
+              type="tel"
+              placeholder={t('settings.profile.profileInfo.phoneNumberPlaceholder')}
+              value={profileSection.values.phoneNumber}
+              onChange={(e) => profileSection.updateValue("phoneNumber", e.target.value)}
+              onBlur={createTrimmedBlurHandler(
+                profileSection.values.phoneNumber,
+                (value) => profileSection.updateValue("phoneNumber", value)
+              )}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">{t('settings.profile.profileInfo.emailAddress')}</Label>
+            <Input id="email" type="email" value={emailAddress} disabled />
+            <p className="text-xs text-muted-foreground">
+              {t('settings.profile.profileInfo.emailHelp')}
+            </p>
+          </div>
+        </SettingsFormSection>
 
-        <CategorySettingsSection
+        <SettingsCollectionSection
+          sectionId="working-hours"
           title={t('settings.profile.workingHours.title')}
           description={t('settings.profile.workingHours.helpText')}
-          sectionId="working-hours"
+          bodyClassName="divide-y divide-border/70"
         >
-          <div className="space-y-4">
-            {days.map((dayOfWeek, index) => {
-              const workingHour = getWorkingHourByDay(dayOfWeek);
-              return (
-                <div key={dayOfWeek} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg">
-                  {/* Mobile/Tablet - keep original order */}
-                  <div className="flex items-center justify-between sm:hidden gap-3">
-                    <Label className="font-medium text-sm">
-                      {dayLabels[index]}
-                    </Label>
-                    <Switch
-                      checked={workingHour.enabled}
-                      onCheckedChange={(checked) => handleWorkingHourUpdate(dayOfWeek, 'enabled', checked)}
-                    />
+          {days.map((dayOfWeek, index) => {
+            const workingHour = getWorkingHourByDay(dayOfWeek);
+            const dayLabel = dayLabels[index];
+            return (
+              <div
+                key={dayOfWeek}
+                className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:gap-6"
+              >
+                <div className="flex w-full items-center justify-between gap-4 sm:w-80">
+                  <div>
+                    <p className="text-sm font-semibold">{dayLabel}</p>
                   </div>
-                  
-                  {/* Desktop - LTR layout: Switch first, then day name */}
-                  <div className="hidden sm:flex sm:items-center sm:w-32 gap-3">
-                    <Switch
-                      checked={workingHour.enabled}
-                      onCheckedChange={(checked) => handleWorkingHourUpdate(dayOfWeek, 'enabled', checked)}
-                    />
-                    <Label className="font-medium text-sm">
-                      {dayLabels[index]}
-                    </Label>
-                  </div>
-                  
-                  {workingHour.enabled && (
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-1">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm text-muted-foreground min-w-20">{t('labels.from', { ns: 'common' })}</Label>
-                        <Select
-                          value={workingHour.start_time} 
-                          onValueChange={(value) => handleWorkingHourUpdate(dayOfWeek, 'start_time', value)}
-                        >
-                          <SelectTrigger className="w-28">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {timeOptions.map((time) => (
-                              <SelectItem key={time} value={time}>
-                                {time}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm text-muted-foreground min-w-20">{t('labels.to', { ns: 'common' })}</Label>
-                        <Select
-                          value={workingHour.end_time} 
-                          onValueChange={(value) => handleWorkingHourUpdate(dayOfWeek, 'end_time', value)}
-                        >
-                          <SelectTrigger className="w-28">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {timeOptions.map((time) => (
-                              <SelectItem key={time} value={time}>
-                                {time}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  )}
+                  <Switch
+                    checked={workingHour.enabled}
+                    onCheckedChange={(checked) =>
+                      handleWorkingHourUpdate(dayOfWeek, 'enabled', checked)
+                    }
+                    aria-label={dayLabel}
+                  />
                 </div>
-              );
-            })}
-          </div>
-        </CategorySettingsSection>
+                {workingHour.enabled && (
+                  <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium uppercase text-muted-foreground">
+                        {t('labels.from', { ns: 'common' })}
+                      </span>
+                      <Select
+                        value={workingHour.start_time}
+                        onValueChange={(value) =>
+                          handleWorkingHourUpdate(dayOfWeek, 'start_time', value)
+                        }
+                      >
+                        <SelectTrigger
+                          className="w-28"
+                          aria-label={`${dayLabel} start time`}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {timeOptions.map((time) => (
+                            <SelectItem key={`${dayOfWeek}-start-${time}`} value={time}>
+                              {time}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium uppercase text-muted-foreground">
+                        {t('labels.to', { ns: 'common' })}
+                      </span>
+                      <Select
+                        value={workingHour.end_time}
+                        onValueChange={(value) =>
+                          handleWorkingHourUpdate(dayOfWeek, 'end_time', value)
+                        }
+                      >
+                        <SelectTrigger
+                          className="w-28"
+                          aria-label={`${dayLabel} end time`}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {timeOptions.map((time) => (
+                            <SelectItem key={`${dayOfWeek}-end-${time}`} value={time}>
+                              {time}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </SettingsCollectionSection>
       </div>
 
       {/* Profile Photo Modal */}

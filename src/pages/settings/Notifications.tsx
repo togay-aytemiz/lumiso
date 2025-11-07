@@ -1,12 +1,10 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
-import { CategorySettingsSection } from "@/components/settings/CategorySettingsSection";
-import { Label } from "@/components/ui/label";
+import { SettingsToggleSection } from "@/components/settings/SettingsSectionVariants";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Loader2, TestTube, Power, PowerOff, Clock, Zap } from "lucide-react";
+import { Loader2, Power, Clock, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
@@ -37,6 +35,7 @@ export default function Notifications() {
   });
 
   const [autoSaveStates, setAutoSaveStates] = useState<{[key: string]: 'idle' | 'saving'}>({});
+  const userIdRef = useRef<string | null>(null);
 
   // Generate time options every 30 minutes in 24h format
   const generateTimeOptions = () => {
@@ -53,19 +52,15 @@ export default function Notifications() {
   const timeOptions = generateTimeOptions();
 
   // Load settings from database
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
+    const userId = userIdRef.current;
+    if (!userId) return;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
+      setLoading(true);
       const { data, error } = await supabase
         .from('user_settings')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .maybeSingle();
 
       if (error) {
@@ -87,16 +82,51 @@ export default function Notifications() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    const init = async () => {
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        if (error) throw error;
+        if (!mounted) return;
+        if (!data.user) {
+          setLoading(false);
+          return;
+        }
+        userIdRef.current = data.user.id;
+        await loadSettings();
+      } catch (error) {
+        console.error('Error initializing notification settings:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void init();
+
+    return () => {
+      mounted = false;
+    };
+  }, [loadSettings]);
 
   // Master toggle for all notifications
   const handleToggleAllNotifications = async (enabled: boolean) => {
     setAutoSaveStates(prev => ({ ...prev, globalEnabled: 'saving' }));
+    const userId = userIdRef.current;
+    if (!userId) {
+      setAutoSaveStates(prev => ({ ...prev, globalEnabled: 'idle' }));
+      toast({
+        title: t('settings.notifications.toasts.error'),
+        description: t('settings.notifications.toasts.errorDesc'),
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user found');
-
       // Update global setting and all individual settings
       const updates = {
         notification_global_enabled: enabled,
@@ -107,7 +137,7 @@ export default function Notifications() {
       const { error } = await supabase
         .from('user_settings')
         .update(updates)
-        .eq('user_id', user.id);
+        .eq('user_id', userId);
 
       if (error) throw error;
 
@@ -138,6 +168,16 @@ export default function Notifications() {
   // Auto-save function for individual settings
   const handleAutoSave = async (field: keyof NotificationSettings, value: boolean | string) => {
     setAutoSaveStates(prev => ({ ...prev, [field]: 'saving' }));
+    const userId = userIdRef.current;
+    if (!userId) {
+      setAutoSaveStates(prev => ({ ...prev, [field]: 'idle' }));
+      toast({
+        title: t('settings.notifications.toasts.error'),
+        description: t('settings.notifications.toasts.errorDesc'),
+        variant: "destructive",
+      });
+      return;
+    }
     
     const fieldMap: {[key in keyof NotificationSettings]: string} = {
       globalEnabled: 'notification_global_enabled',
@@ -156,7 +196,7 @@ export default function Notifications() {
       const { error } = await supabase
         .from('user_settings')
         .update({ [dbField]: value })
-        .eq('user_id', user.id);
+        .eq('user_id', userId);
 
       if (error) throw error;
 
@@ -225,6 +265,141 @@ export default function Notifications() {
       </SettingsPageWrapper>
     );
   }
+
+  const masterToggleItems = [
+    {
+      id: "global-enabled",
+      title: t('settings.notifications.masterControls.allNotifications'),
+      description: t('settings.notifications.masterControls.allNotificationsHelp'),
+      icon: Power,
+      control: (
+        <Switch
+          id="global-notifications"
+          checked={settings.globalEnabled}
+          onCheckedChange={handleToggleAllNotifications}
+          disabled={autoSaveStates.globalEnabled === 'saving'}
+          aria-label={t('settings.notifications.masterControls.allNotifications')}
+        />
+      ),
+    },
+    {
+      id: "scheduled-time",
+      title: t('settings.notifications.masterControls.scheduledTime'),
+      description: t('settings.notifications.masterControls.scheduledTimeHelp'),
+      icon: Clock,
+      control: (
+        <Select
+          value={settings.scheduledTime}
+          onValueChange={(value) => handleAutoSave('scheduledTime', value)}
+          disabled={autoSaveStates.scheduledTime === 'saving'}
+        >
+          <SelectTrigger
+            className="w-32"
+            aria-label={t('settings.notifications.masterControls.scheduledTime')}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="max-h-60">
+            {timeOptions.map((time) => (
+              <SelectItem key={time} value={time}>
+                {time}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ),
+    },
+  ];
+
+  const scheduledItems = [
+    {
+      id: "daily-summary",
+      title: t('settings.notifications.scheduled.dailySummary'),
+      description: `${t('settings.notifications.scheduled.description')} ${settings.scheduledTime}`,
+      icon: Clock,
+      control: (
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end sm:gap-4">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => testNotification('daily-summary-empty')}
+              disabled={testingNotification === 'daily-summary-empty'}
+              className="h-auto px-0 text-sm text-muted-foreground hover:text-muted-foreground/80"
+            >
+              {testingNotification === 'daily-summary-empty' ? (
+                <>
+                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                  {t('settings.notifications.testing')}
+                </>
+              ) : (
+                t('settings.notifications.sendEmptyTest')
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => testNotification('daily-summary')}
+              disabled={testingNotification === 'daily-summary'}
+              className="h-auto px-0 text-sm text-primary hover:text-primary/80"
+            >
+              {testingNotification === 'daily-summary' ? (
+                <>
+                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                  {t('settings.notifications.testing')}
+                </>
+              ) : (
+                t('settings.notifications.sendTest')
+              )}
+            </Button>
+          </div>
+          <Switch
+            id="daily-summary"
+            checked={settings.dailySummaryEnabled}
+            onCheckedChange={(checked) => handleAutoSave('dailySummaryEnabled', checked)}
+            disabled={autoSaveStates.dailySummaryEnabled === 'saving'}
+            aria-label={t('settings.notifications.scheduled.dailySummary')}
+          />
+        </div>
+      ),
+    },
+  ];
+
+  const immediateItems = [
+    {
+      id: "project-milestone",
+      title: t('settings.notifications.immediate.projectMilestone'),
+      description: t('settings.notifications.immediate.projectMilestoneHelp'),
+      icon: Zap,
+      control: (
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end sm:gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => testNotification('project-milestone')}
+            disabled={testingNotification === 'project-milestone'}
+            className="h-auto px-0 text-sm text-primary hover:text-primary/80"
+          >
+            {testingNotification === 'project-milestone' ? (
+              <>
+                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                {t('settings.notifications.testing')}
+              </>
+            ) : (
+              t('settings.notifications.sendTest')
+            )}
+          </Button>
+          <Switch
+            id="project-milestone"
+            checked={settings.projectMilestoneEnabled}
+            onCheckedChange={(checked) => handleAutoSave('projectMilestoneEnabled', checked)}
+            disabled={autoSaveStates.projectMilestoneEnabled === 'saving'}
+            aria-label={t('settings.notifications.immediate.projectMilestone')}
+          />
+        </div>
+      ),
+    },
+  ];
 
   return (
     <SettingsPageWrapper>

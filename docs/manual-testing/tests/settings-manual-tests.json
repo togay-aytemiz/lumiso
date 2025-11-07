@@ -1,0 +1,1106 @@
+[
+  {
+    "suite": "Ayarlar - Profil",
+    "cases": [
+      {
+        "external_id": "CRM-PROFILE-001",
+        "title": "Profil bilgileri kaydedilirken boşlukların temizlenmesi",
+        "description": "Ad ve telefon alanına fazla boşluk yazıldığında alanların kendini düzeltip kaydedildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Profil sayfasını açın ve 'Profil Bilgileri' kartını görüntüleyin.",
+            "expected_result": "Kart başlığının yanında uyarı noktası yoktur ve alanlar mevcut değerlerle doludur."
+          },
+          {
+            "action": "'Ad Soyad' alanına başına ve sonuna boşluk ekleyerek `  Studio  Lumiso  ` yazın, sonra başka bir alana tıklayın.",
+            "expected_result": "Alan otomatik olarak 'Studio Lumiso' metnine döner ve kartta turuncu kirlenme göstergesi görünür."
+          },
+          {
+            "action": "'Telefon' alanına `  +90 555 000 00 00  ` yazın ve alandan çıkın.",
+            "expected_result": "Telefon alanı ekstra boşlukları temizler ve alt kısımda 'Değişiklikleri Kaydet' / 'İptal' çubuğu belirir."
+          },
+          {
+            "action": "Alt çubuktaki 'Değişiklikleri Kaydet' butonuna basın.",
+            "expected_result": "Buton kısa süreli 'Kaydediliyor' durumuna geçer ve griye döner."
+          },
+          {
+            "action": "Ekranın sağ alt köşesinde görünen bildirimi bekleyin.",
+            "expected_result": "Yeşil bildirim ayarların kaydedildiğini söyler, alt çubuk ve turuncu gösterge kaybolur."
+          }
+        ],
+        "expected_result": "Ad ve telefon alanları boşluksuz şekilde saklanır ve kart tekrar temiz duruma döner."
+      },
+      {
+        "external_id": "CRM-PROFILE-002",
+        "title": "Profil fotoğrafı yükleme ve önizleme",
+        "description": "Yeni bir fotoğraf seçildiğinde yükleme, küçük önizleme ve büyük önizleme penceresinin doğru çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "'Profil Bilgileri' kartındaki 'Dosya seç' butonuna tıklayın.",
+            "expected_result": "Cihazın dosya seçme penceresi açılır."
+          },
+          {
+            "action": "2 MB altında desteklenen bir görsel seçip onaylayın.",
+            "expected_result": "Buton kısa süreli yüklenme gösterir ve kartta küçük fotoğraf görünür."
+          },
+          {
+            "action": "Küçük fotoğrafın üzerine tıklayın.",
+            "expected_result": "Fotoğrafı daha büyük gösteren bir pencere açılır."
+          },
+          {
+            "action": "Pencereyi çarpı ikonundan veya arka plana tıklayarak kapatın.",
+            "expected_result": "Pencere kapanır ve kartta küçük fotoğraf kalmaya devam eder."
+          }
+        ],
+        "expected_result": "Yeni fotoğraf kaydedilir ve kullanıcı istediğinde büyüterek görüntüleyebilir."
+      },
+      {
+        "external_id": "CRM-PROFILE-003",
+        "title": "Profil fotoğrafını silme",
+        "description": "Var olan fotoğrafın silme onayı sonrası kaldırıldığını ve avatar harflerine dönüldüğünü doğrular.",
+        "steps": [
+          {
+            "action": "Kartta küçük fotoğraf göründüğünü kontrol edin.",
+            "expected_result": "Fotoğraf varsa yanında 'Sil' butonu bulunur."
+          },
+          {
+            "action": "'Sil' butonuna basın.",
+            "expected_result": "Onay isteyen bir pencere açılır."
+          },
+          {
+            "action": "Penceredeki kırmızı onay butonuna tıklayın.",
+            "expected_result": "Fotoğraf kaldırılır, avatar ilk harfleri gösterir ve kırmızı bilgilendirme mesajı çıkar."
+          },
+          {
+            "action": "Sayfayı yenileyin.",
+            "expected_result": "Profil fotoğrafı boş durumdadır ve avatar yalnızca harf gösterir."
+          }
+        ],
+        "expected_result": "Fotoğraf kalıcı olarak silinir ve kullanıcı tekrar yükleyene kadar varsayılan avatar görünür."
+      },
+      {
+        "external_id": "CRM-PROFILE-004",
+        "title": "Çalışma saatlerini kapatıp yeniden açma",
+        "description": "Bir günün çalışma saatini kapatıp açtığımızda saat seçimlerinin kaydedildiğini doğrular.",
+        "steps": [
+          {
+            "action": "'Çalışma Saatleri' bölümünde açık görünen bir gün satırı seçin.",
+            "expected_result": "Satırda başlangıç ve bitiş saatleri görünür."
+          },
+          {
+            "action": "Günün yanındaki anahtarı kapatın.",
+            "expected_result": "Saat seçimleri kaybolur ve kısa süreli başarı mesajı çıkar."
+          },
+          {
+            "action": "Aynı anahtarı yeniden açın.",
+            "expected_result": "Saat seçimleri geri gelir."
+          },
+          {
+            "action": "Başlangıç listesinde '08:00', bitiş listesinde '14:00' seçin.",
+            "expected_result": "Seçilen saatler satırda görünür ve bilgi bildirimi alınır."
+          },
+          {
+            "action": "Sayfayı yenileyip aynı günü kontrol edin.",
+            "expected_result": "Gün açık kalır ve saatler 08:00 - 14:00 olarak görünür."
+          }
+        ],
+        "expected_result": "Çalışma saatleri değişiklikleri hemen kaydedilir ve sayfa yenilendiğinde korunur."
+      },
+      {
+        "external_id": "CRM-PROFILE-005",
+        "title": "E-posta alanının yalnızca okunabilir olması",
+        "description": "Oturum açmış kullanıcının e-posta adresinin düzenlenemediğini gösterir.",
+        "steps": [
+          {
+            "action": "'Profil Bilgileri' kartındaki E-posta alanına tıklayın.",
+            "expected_result": "Alan gri görünür ve imleç çıkmaz."
+          },
+          {
+            "action": "Klavyeden birkaç karakter yazmayı deneyin.",
+            "expected_result": "Alan içeriği değişmez."
+          },
+          {
+            "action": "Alan altındaki açıklama metnini okuyun.",
+            "expected_result": "Metin, e-postanın giriş yapmış kullanıcıdan alındığını açıklar."
+          }
+        ],
+        "expected_result": "E-posta alanı kullanıcı tarafından değiştirilemez ve yalnızca bilgi amaçlı gösterilir."
+      },
+      {
+        "external_id": "CRM-PROFILE-006",
+        "title": "Profil turunu tamamlama",
+        "description": "Sayfa turu açıkken adımların zorunlu alanları kontrol edip genel ayarlara yönlendirdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Tarayıcıya `/settings/profile?tutorial=true` yazarak sayfayı açın.",
+            "expected_result": "Turun birinci adımı otomatik olarak görünür."
+          },
+          {
+            "action": "'Ad Soyad' alanını boş bırakarak 'İleri' butonuna basmaya çalışın.",
+            "expected_result": "Buton aktif olmaz veya alanı doldurmanız gerektiğini belirten bir uyarı çıkar."
+          },
+          {
+            "action": "Ad Soyad alanını doldurup sıradaki adımları takip edin.",
+            "expected_result": "Tur kartları sırayla ilerler ve ilgili bölümleri vurgular."
+          },
+          {
+            "action": "Son adımda gösterilen yönlendirme butonuna basın.",
+            "expected_result": "Sayfa `/settings/general?tutorial=true` adresine yönlendirilir."
+          }
+        ],
+        "expected_result": "Profil turu tamamlanınca kullanıcı otomatik olarak Genel ayarlar turuna geçer."
+      }
+    ]
+  },
+  {
+    "suite": "Ayarlar - Genel",
+    "cases": [
+      {
+        "external_id": "CRM-GENERAL-001",
+        "title": "Marka bilgilerini kaydetme",
+        "description": "Şirket adı, e-posta ve telefon bilgileri değiştirildiğinde kaydetme çubuğunun çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "Genel ayarlar sayfasını açın ve 'Marka Bilgileri' kartını görüntüleyin.",
+            "expected_result": "Alanlar mevcut verilerle doludur."
+          },
+          {
+            "action": "'Şirket Adı', 'İş E-postası' ve 'İş Telefonu' alanlarına geçerli bilgiler yazın.",
+            "expected_result": "Kart başlığı yanında turuncu bir nokta çıkar ve alt çubuk görünür."
+          },
+          {
+            "action": "Alt kısımdaki 'Değişiklikleri Kaydet' butonuna basın.",
+            "expected_result": "Buton 'Kaydediliyor' durumuna geçer."
+          },
+          {
+            "action": "Bildirim göründükten sonra sayfayı yenileyin.",
+            "expected_result": "Yeni bilgiler aynen kalır ve kart temizlenir."
+          }
+        ],
+        "expected_result": "Marka bilgileri başarıyla saklanır ve kullanıcıya bildirim gösterilir."
+      },
+      {
+        "external_id": "CRM-GENERAL-002",
+        "title": "E-posta ve telefon doğrulama uyarıları",
+        "description": "Geçersiz formatların alan altında kırmızı uyarı göstermesini doğrular.",
+        "steps": [
+          {
+            "action": "'İş E-postası' alanına `hatali@` yazın ve alandan çıkın.",
+            "expected_result": "Alan kırmızı çerçeve alır ve altına 'Geçerli bir e-posta girin' uyarısı gelir."
+          },
+          {
+            "action": "Aynı alana geçerli bir adres yazın.",
+            "expected_result": "Uyarı kaybolur."
+          },
+          {
+            "action": "'İş Telefonu' alanına harf içeren bir ifade yazın.",
+            "expected_result": "Alan kırmızı olur ve geçerli bir numara girmeniz gerektiğini belirten uyarı çıkar."
+          },
+          {
+            "action": "Telefona doğru formatta bir numara yazın.",
+            "expected_result": "Alan normale döner ve kaydetmeye hazır hale gelir."
+          }
+        ],
+        "expected_result": "Kullanıcı hatalı veri girdiğinde net uyarılar görür ve düzeltmeden kaydedemez."
+      },
+      {
+        "external_id": "CRM-GENERAL-003",
+        "title": "Logo yükleme, önizleme ve silme",
+        "description": "Logo alanındaki dosya kısıtları, önizleme penceresi ve silme akışını doğrular.",
+        "steps": [
+          {
+            "action": "'Yeni logo seç' butonuna tıklayın.",
+            "expected_result": "Dosya seçici açılır."
+          },
+          {
+            "action": "Görsel olmayan veya 2 MB'den büyük bir dosya seçin.",
+            "expected_result": "Uygun olmayan dosya için uyarı çıkar ve logo değişmez."
+          },
+          {
+            "action": "Kurallara uygun bir görsel seçin.",
+            "expected_result": "Kartta küçük logo görünür ve başarı mesajı çıkar."
+          },
+          {
+            "action": "Logonun üzerine tıklayın.",
+            "expected_result": "Logo büyük boyutta gösteren pencere açılır."
+          },
+          {
+            "action": "Penceredeki 'Sil' butonuna basıp onaylayın.",
+            "expected_result": "Logo kaldırılır ve kart tekrar boş durum metnini gösterir."
+          }
+        ],
+        "expected_result": "Kullanıcı yalnızca geçerli logoları yükleyebilir, görüntüleyebilir ve dilediğinde silebilir."
+      },
+      {
+        "external_id": "CRM-GENERAL-004",
+        "title": "Marka rengi alanlarının senkron olması",
+        "description": "Renk seçici ve hex kutusunun birbirini güncellediğini ve geçersiz değerde uyarı verdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Renk seçiciden farklı bir renk seçin.",
+            "expected_result": "Yanındaki metin alanı aynı kodu gösterir."
+          },
+          {
+            "action": "Metin alanına geçersiz bir değer (ör. `#12G`) yazın.",
+            "expected_result": "Tarayıcı alanı geçersiz olarak işaretler ve kaydet butonu pasifleşir."
+          },
+          {
+            "action": "Metin alanına geçerli bir kod yazıp değişiklikleri kaydedin.",
+            "expected_result": "Bildirim çıkar ve sayfa yenilendiğinde renk aynı kalır."
+          }
+        ],
+        "expected_result": "Renk değerleri yalnızca geçerli formatta kaydedilir ve iki alan birbirini takip eder."
+      },
+      {
+        "external_id": "CRM-GENERAL-005",
+        "title": "Hazır sosyal kanal ekleme ve kaldırma",
+        "description": "Platform butonlarıyla satır ekleme, geçersiz URL uyarıları ve silme onayını doğrular.",
+        "steps": [
+          {
+            "action": "'Instagram' butonuna tıklayın.",
+            "expected_result": "Instagram satırı listeye eklenir."
+          },
+          {
+            "action": "URL alanına `instagram` yazın.",
+            "expected_result": "Satır kırmızı kenarlık alır ve 'Geçerli adres girin' uyarısı görünür."
+          },
+          {
+            "action": "Adresin başına `https://` ekleyin.",
+            "expected_result": "Uyarı kaybolur."
+          },
+          {
+            "action": "Satırı sürükleyip farklı bir sıraya bırakın.",
+            "expected_result": "Satır yeni konumunda kalır."
+          },
+          {
+            "action": "Satırdaki çöp kutusu ikonuna basıp silme onayını verin.",
+            "expected_result": "Satır listeden kaldırılır."
+          }
+        ],
+        "expected_result": "Sosyal kanal satırları yalnızca geçerli adreslerle saklanır ve kullanıcı istediği gibi sıralayabilir veya silebilir."
+      },
+      {
+        "external_id": "CRM-GENERAL-006",
+        "title": "Özel sosyal platform ekleme",
+        "description": "Özel platform alanının boşken butonu kilitlemesini ve yeni satırın kalıcı kaydedilmesini doğrular.",
+        "steps": [
+          {
+            "action": "Özel platform metin kutusunu boş bırakın ve 'Ekle' butonuna bakın.",
+            "expected_result": "Buton devre dışıdır."
+          },
+          {
+            "action": "Kutucuğa 'Behance' yazıp 'Özel platform ekle' butonuna basın.",
+            "expected_result": "Yeni satır listede görünür ve URL alanı boştur."
+          },
+          {
+            "action": "Satıra geçerli bir adres ekleyip değişiklikleri kaydedin.",
+            "expected_result": "Sayfa yenilendiğinde Behance satırı aynı şekilde görünür."
+          }
+        ],
+        "expected_result": "Özel platformlar ad girilmeden eklenemez ve kaydedildikten sonra listede kalır."
+      },
+      {
+        "external_id": "CRM-GENERAL-007",
+        "title": "Bölgesel tercihleri güncelleme",
+        "description": "Tarih formatı, saat formatı, saat dilimi ve dil seçiminin birlikte kaydedildiğini doğrular.",
+        "steps": [
+          {
+            "action": "'Tarih Formatı' açılır listesinden farklı bir format seçin.",
+            "expected_result": "Seçim hemen uygulanır ve kart kirli durumuna geçer."
+          },
+          {
+            "action": "'Saat formatı' bölümünde 24 saat seçeneğini işaretleyin.",
+            "expected_result": "Seçim anında güncellenir."
+          },
+          {
+            "action": "Saat dilimi alanında 'İstanbul' aratıp uygun sonucu seçin.",
+            "expected_result": "Alan seçtiğiniz saat dilimini gösterir."
+          },
+          {
+            "action": "Dil değiştiriciden farklı bir dil seçip tekrar Türkçe'ye dönün.",
+            "expected_result": "Sayfadaki metinler seçtiğiniz dile göre değişip geri döner."
+          },
+          {
+            "action": "Alt çubuktaki 'Değişiklikleri Kaydet' butonuna basın ve sayfayı yenileyin.",
+            "expected_result": "Seçilen tarih, saat ve dil tercihleri korunur."
+          }
+        ],
+        "expected_result": "Bölgesel ayarlar birlikte saklanır ve kullanıcıya aynı değerlerle geri yüklenir."
+      }
+    ]
+  },
+  {
+    "suite": "Ayarlar - Bildirimler",
+    "cases": [
+      {
+        "external_id": "CRM-NOTIFICATIONS-001",
+        "title": "Tüm bildirimler anahtarının zincirleme etkisi",
+        "description": "Üstteki anahtar kapatılıp açıldığında tüm diğer ayarların eşleştiğini doğrular.",
+        "steps": [
+          {
+            "action": "Bildirimler sayfasını açın ve 'Tüm bildirimler' anahtarını kapatın.",
+            "expected_result": "Kartın rengi değişir ve alt satırlardaki anahtarlar da kapalı hale gelir."
+          },
+          {
+            "action": "Kısa süreli bilgi mesajını bekleyin.",
+            "expected_result": "Mesaj, tüm bildirimlerin kapatıldığını bildirir."
+          },
+          {
+            "action": "Anahtarı tekrar açın.",
+            "expected_result": "Bütün alt anahtarlar açılır ve yeni bir başarı mesajı görünür."
+          }
+        ],
+        "expected_result": "Üst anahtar diğer bildirim seçeneklerini aynı duruma getirir ve kullanıcıya bilgi verir."
+      },
+      {
+        "external_id": "CRM-NOTIFICATIONS-002",
+        "title": "Günlük özet zamanını değiştirme",
+        "description": "Planlı özet saatinin seçimle güncellenip otomatik kaydedildiğini doğrular.",
+        "steps": [
+          {
+            "action": "'Günlük özet zamanı' açılır listesini tıklayın.",
+            "expected_result": "00:00'dan 23:30'a kadar 30 dakikalık seçenekler görünür."
+          },
+          {
+            "action": "Farklı bir saat seçin.",
+            "expected_result": "Liste kapanır, seçim alanında yeni saat yazar ve kısa süreli yüklenme simgesi görünür."
+          },
+          {
+            "action": "Bildirimi bekleyin.",
+            "expected_result": "Mesaj yeni saatin kaydedildiğini belirtir."
+          },
+          {
+            "action": "Sayfayı yenileyin.",
+            "expected_result": "Kart altındaki açıklama yeni saati gösterir."
+          }
+        ],
+        "expected_result": "Planlı özet saati seçimden hemen sonra saklanır ve açıklamada güncellenir."
+      },
+      {
+        "external_id": "CRM-NOTIFICATIONS-003",
+        "title": "Günlük özet test e-postaları",
+        "description": "Boş ve içerikli test gönderimlerinin hem başarılı hem hatalı durumlarını doğrular.",
+        "steps": [
+          {
+            "action": "'Günlük Özet' kartındaki 'Boş test gönder' bağlantısına tıklayın.",
+            "expected_result": "Bağlantının yanında küçük yüklenme simgesi belirir."
+          },
+          {
+            "action": "Yüklenme bittiğinde mesajı okuyun.",
+            "expected_result": "Mesaj test e-postasının gönderildiğini söyler."
+          },
+          {
+            "action": "Ardından 'Test gönder' bağlantısına basın.",
+            "expected_result": "İkinci bir yüklenme simgesi görünür ve tamamlandığında yeni mesaj çıkar."
+          },
+          {
+            "action": "İnternet bağlantısını kesip aynı butona tekrar basın.",
+            "expected_result": "Kırmızı hata mesajı görünür ve işlem tamamlanmaz."
+          }
+        ],
+        "expected_result": "Kullanıcı hem başarılı hem de başarısız test gönderimlerinde açık geri bildirim alır."
+      },
+      {
+        "external_id": "CRM-NOTIFICATIONS-004",
+        "title": "Günlük özet anahtarını kapatıp açma",
+        "description": "Karttaki anahtarın otomatik kaydettiğini ve kısa süreli kilitlendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Günlük özet anahtarını kapatın.",
+            "expected_result": "Anahtar griye döner ve kısa süreli kilitlenir."
+          },
+          {
+            "action": "Mesajı bekleyin.",
+            "expected_result": "Bildirim günlük özetlerin kapandığını söyler."
+          },
+          {
+            "action": "Anahtarı tekrar açın.",
+            "expected_result": "Anahtar yeniden aktif olur ve başka bir mesaj görünür."
+          }
+        ],
+        "expected_result": "Anahtar değişimleri otomatik kaydedilir ve kullanıcıya bilgi verilir."
+      },
+      {
+        "external_id": "CRM-NOTIFICATIONS-005",
+        "title": "Proje kilometre taşı test bildirimi",
+        "description": "Anlık bildirimler kartındaki test butonunun çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "'Proje kilometre taşı' satırındaki 'Test gönder' bağlantısına tıklayın.",
+            "expected_result": "Bağlantı yanında küçük bir yüklenme simgesi görünür."
+          },
+          {
+            "action": "Yüklenme bitince mesajı kontrol edin.",
+            "expected_result": "Yeşil mesaj test bildiriminin gönderildiğini söyler."
+          },
+          {
+            "action": "Ağ bağlantısını kesip aynı bağlantıya tekrar basın.",
+            "expected_result": "Kırmızı hata mesajı görünür ve işlem iptal edilir."
+          }
+        ],
+        "expected_result": "Test butonu başarılı ve hatalı durumlarda kullanıcıya açık geri bildirim verir."
+      },
+      {
+        "external_id": "CRM-NOTIFICATIONS-006",
+        "title": "Veri gelene kadar iskelet ekranının görünmesi",
+        "description": "Sayfa açılırken yüklenme iskeletinin çıktığını doğrular.",
+        "steps": [
+          {
+            "action": "Tarayıcıda yavaş ağ modunu açıp bildirimler sayfasını yenileyin.",
+            "expected_result": "Kartlar yerine gri iskelet blokları görünür."
+          },
+          {
+            "action": "Veri yüklenene kadar bekleyin.",
+            "expected_result": "Gerçek kartlar iskeletlerin yerini alır ve sayfa kullanılabilir olur."
+          }
+        ],
+        "expected_result": "Kullanıcı veri gelene kadar boş ekran yerine iskelet görür."
+      }
+    ]
+  },
+  {
+    "suite": "Ayarlar - Potansiyel Müşteriler",
+    "cases": [
+      {
+        "external_id": "CRM-LEADS-001",
+        "title": "Durum düğmelerini göster anahtarını yönetme",
+        "description": "Sistem durum rozetlerinin tercih olarak kaydedildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Potansiyel Müşteriler sayfasını açın ve 'Durum düğmelerini göster' anahtarını kapatın.",
+            "expected_result": "Sistem durum rozetleri gizlenir."
+          },
+          {
+            "action": "Anahtarı tekrar açın.",
+            "expected_result": "Rozetler geri gelir ve yeşil bilgi mesajı görünür."
+          },
+          {
+            "action": "Sayfayı yenileyin.",
+            "expected_result": "Anahtar son seçiminizi korur ve rozetler aynı durumda kalır."
+          }
+        ],
+        "expected_result": "Kullanıcı hızlı durum butonlarının görünürlüğünü kaydedilmiş bir tercih olarak yönetebilir."
+      },
+      {
+        "external_id": "CRM-LEADS-002",
+        "title": "Yeni lead durumu ekleme",
+        "description": "Alt tabaka üzerinden isim, renk ve yaşam döngüsü seçilerek yeni rozet eklemeyi doğrular.",
+        "steps": [
+          {
+            "action": "'Durum ekle' butonuna basın.",
+            "expected_result": "Alt sayfa açılır ve alanlar boş gelir."
+          },
+          {
+            "action": "İsim alanına 'Teklif Gönderildi' yazıp bir renk seçin.",
+            "expected_result": "Yaşam döngüsü önerisi otomatik güncellenir."
+          },
+          {
+            "action": "'Kaydet' butonuna basın.",
+            "expected_result": "Başarı mesajı çıkar ve sayfa kapanır."
+          },
+          {
+            "action": "Yeni rozetin listede göründüğünü kontrol edin.",
+            "expected_result": "Rozet seçtiğiniz renk ve yaşam döngüsü etiketiyle görünür."
+          }
+        ],
+        "expected_result": "Kullanıcı yeni durumu hızlıca ekleyebilir ve listeye yansır."
+      },
+      {
+        "external_id": "CRM-LEADS-003",
+        "title": "Durum rozetlerini sürükleyerek sıralama",
+        "description": "Tutamak üzerinden sürükle-bırak yapıldığında sıralamanın kaydedildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Özel rozetlerden birinin üzerindeki tutamağı basılı tutun.",
+            "expected_result": "Rozet yarı saydam olur ve sürüklenebilir."
+          },
+          {
+            "action": "Rozeti yeni bir konuma bırakın.",
+            "expected_result": "Rozet yeni yerinde kalır ve kısa bir bilgi mesajı görünür."
+          },
+          {
+            "action": "Sayfayı yenileyin.",
+            "expected_result": "Rozetler yeni sırayı korur."
+          }
+        ],
+        "expected_result": "Sıralama değişiklikleri kalıcıdır ve kullanıcıya bildirilmektedir."
+      },
+      {
+        "external_id": "CRM-LEADS-004",
+        "title": "Kullanılan durumun silinememesi",
+        "description": "Aktif kayıtlarda yer alan durumun silinmek istendiğinde uyarı verdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Listedeki bir durumu düzenlemek için kalem ikonuna basın.",
+            "expected_result": "Alt sayfa açılır ve durum bilgileri görüntülenir."
+          },
+          {
+            "action": "'Sil' butonuna basıp uyarıyı onaylayın.",
+            "expected_result": "Kırmızı bir mesaj, durumun kullanılmakta olduğu için silinemeyeceğini belirtir."
+          },
+          {
+            "action": "Pencereyi kapatıp listeyi kontrol edin.",
+            "expected_result": "Durum listede kalmaya devam eder."
+          }
+        ],
+        "expected_result": "Sistemde kullanılan durumlar kullanıcıya açıklayıcı bir uyarı vererek korunur."
+      },
+      {
+        "external_id": "CRM-LEADS-005",
+        "title": "Özel lead alanı ekleme",
+        "description": "Alan ekleme modaliyle yeni bir seçim alanı oluşturulduğunu doğrular.",
+        "steps": [
+          {
+            "action": "'Alan ekle' butonuna basın.",
+            "expected_result": "Modal açılır."
+          },
+          {
+            "action": "Etiket alanına 'Favori mekân' yazın, tür olarak 'Seçim' seçin ve seçeneklere 'Kapalı, Açık' girin.",
+            "expected_result": "Seçenekler virgülle ayrılmış halde görünür."
+          },
+          {
+            "action": "'Kaydet' butonuna basın.",
+            "expected_result": "Başarı mesajı çıkar ve modal kapanır."
+          },
+          {
+            "action": "Yeni alanı listede bulun.",
+            "expected_result": "Alan doğru tür etiketiyle ve 'Formda görünsün' bilgisiyle listelenir."
+          }
+        ],
+        "expected_result": "Yeni özel alanlar saniyeler içinde eklenir ve listeye yansır."
+      },
+      {
+        "external_id": "CRM-LEADS-006",
+        "title": "Lead alanlarını sürükleyerek sıralama",
+        "description": "Sistem alanları hariç satırların farklı sıraya taşındığında kaydedildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Sistem alanı olmayan bir satırın solundaki tutamağı basılı tutun.",
+            "expected_result": "Satır gölgeli hale gelir."
+          },
+          {
+            "action": "Satırı yeni sıraya bırakın.",
+            "expected_result": "Satır yeni yerinde kalır ve kısa mesaj görünür."
+          },
+          {
+            "action": "Sayfayı yenileyin.",
+            "expected_result": "Alanlar yeni sıra ile yüklenir."
+          }
+        ],
+        "expected_result": "Sistem alanları dışındaki tüm alanlar yeniden sıralanabilir."
+      },
+      {
+        "external_id": "CRM-LEADS-007",
+        "title": "Sistem alanlarının kilitli olması",
+        "description": "Zorunlu alanların sürüklenemediğini ve silinemediğini doğrular.",
+        "steps": [
+          {
+            "action": "'Ad Soyad' gibi sistem alanının tutamağını sürüklemeyi deneyin.",
+            "expected_result": "Tutamağın rengi soluktur ve satır hareket etmez."
+          },
+          {
+            "action": "Aynı satırda sil butonu arayın.",
+            "expected_result": "Sistem alanlarında sil butonu görünmez."
+          },
+          {
+            "action": "Düzenle ikonuna basın.",
+            "expected_result": "Modal açılır ancak silme seçeneği sunulmaz."
+          }
+        ],
+        "expected_result": "Sistem alanları yanlışlıkla değiştirilemez veya silinemez."
+      }
+    ]
+  },
+  {
+    "suite": "Ayarlar - Projeler",
+    "cases": [
+      {
+        "external_id": "CRM-PROJECTS-001",
+        "title": "Boş organizasyonda varsayılan proje aşamalarının oluşması",
+        "description": "Hiç aşama yokken sayfanın otomatik olarak temel aşamaları eklediğini doğrular.",
+        "steps": [
+          {
+            "action": "Projeler sayfasını boş bir hesapla açın.",
+            "expected_result": "Kısa bir yüklenmeden sonra aşama rozetleri görünür."
+          },
+          {
+            "action": "Listelenen rozetleri inceleyin.",
+            "expected_result": "Planned, Booked, Post Production, Completed ve Cancelled rozetleri hazır gelir."
+          }
+        ],
+        "expected_result": "Sistemde hiç kayıt olmasa bile temel aşamalar otomatik eklenir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-002",
+        "title": "Yeni proje aşaması ekleme",
+        "description": "Aşama ekleme diyaloğunun isim, renk seçimi ve kaydetme adımlarını doğrular.",
+        "steps": [
+          {
+            "action": "'Aşama ekle' butonuna tıklayın.",
+            "expected_result": "Diyalog açılır."
+          },
+          {
+            "action": "İsim alanına 'Albüm Teslim edildi' yazıp bir renk seçin.",
+            "expected_result": "Önizleme seçtiğiniz renge bürünür."
+          },
+          {
+            "action": "'Kaydet' butonuna basın.",
+            "expected_result": "Başarı mesajı çıkar ve yeni rozet listeye eklenir."
+          },
+          {
+            "action": "Rozetin sürüklenebilir olduğunu kontrol edin.",
+            "expected_result": "Üzerine geldiğinizde tutamak ikonu belirir."
+          }
+        ],
+        "expected_result": "Yeni aşamalar saniyeler içinde oluşturulup sıraya eklenir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-003",
+        "title": "Proje aşamalarını sürükleyerek sıralama",
+        "description": "Rozetlerin konumu değiştirildiğinde kaydedildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Herhangi bir rozetin tutamağını basılı tutun.",
+            "expected_result": "Rozet yarı saydam olur."
+          },
+          {
+            "action": "Rozeti yeni konuma bırakın.",
+            "expected_result": "Rozet yeni yerde kalır ve bilgi mesajı görünür."
+          },
+          {
+            "action": "Sayfayı yenileyin.",
+            "expected_result": "Sıra değişikliği korunur."
+          }
+        ],
+        "expected_result": "Sürükle-bırak işlemleri kalıcıdır."
+      },
+      {
+        "external_id": "CRM-PROJECTS-004",
+        "title": "Korumalı aşamaların silinememesi",
+        "description": "Planlandı gibi sistem aşamalarının silme seçeneği olmadan gösterildiğini doğrular.",
+        "steps": [
+          {
+            "action": "'Planned' rozetine tıklayarak düzenleme penceresini açın.",
+            "expected_result": "Pencerede sil seçeneği görünmez ve bu aşamanın korunduğuna dair metin bulunur."
+          },
+          {
+            "action": "Başka yollarla (ör. sürükleme sırasında) rozetin kaybolup kaybolmadığını kontrol edin.",
+            "expected_result": "Rozet listede kalmaya devam eder."
+          }
+        ],
+        "expected_result": "Zorunlu aşamalar kullanıcı hatalarına karşı korunur."
+      },
+      {
+        "external_id": "CRM-PROJECTS-005",
+        "title": "Proje türü ekleme ve varsayılan yapma",
+        "description": "Yeni tür eklenip varsayılan seçildiğinde listede doğru rozetin göründüğünü doğrular.",
+        "steps": [
+          {
+            "action": "'Proje Türleri' kartındaki 'Tür ekle' butonuna tıklayın.",
+            "expected_result": "Diyalog açılır."
+          },
+          {
+            "action": "İsim alanına 'Mini Çekim' yazıp 'Varsayılan yap' kutusunu işaretleyin.",
+            "expected_result": "Kutunun yanında onay işareti görünür."
+          },
+          {
+            "action": "'Kaydet' butonuna basın.",
+            "expected_result": "Yeni tür çip olarak listelenir ve üzerinde küçük bir onay işareti bulunur."
+          },
+          {
+            "action": "Listede önceki varsayılan türü kontrol edin.",
+            "expected_result": "Önceki türün varsayılan rozeti kaybolur."
+          }
+        ],
+        "expected_result": "Varsayılan tür tek bir çipte gösterilir ve kullanıcı tarafından değiştirilebilir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-006",
+        "title": "Kullanılan proje türünün silinememesi",
+        "description": "Projelerde kullanılan bir tür silinmek istendiğinde gösterilen uyarıyı doğrular.",
+        "steps": [
+          {
+            "action": "Listeden kullanılan bir türü seçip düzenleme penceresini açın.",
+            "expected_result": "Sil butonu görünür."
+          },
+          {
+            "action": "Sil butonuna basıp onaylayın.",
+            "expected_result": "Kırmızı uyarı, türün mevcut projelerde kullanıldığı için silinemeyeceğini belirtir."
+          },
+          {
+            "action": "Pencereyi kapatın.",
+            "expected_result": "Tür listede kalmaya devam eder."
+          }
+        ],
+        "expected_result": "Kullanımda olan türler korunur ve kullanıcıya neden silinemediği açıklanır."
+      },
+      {
+        "external_id": "CRM-PROJECTS-007",
+        "title": "Oturum durumları için tamamlanan/iptal edilen uyarısı",
+        "description": "Listenin yalnızca aktif durum içerdiğinde bilgi uyarısı verdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Oturum durumları listesinden tamamlanan ve iptal edilen durumları geçici olarak kaldırın veya pasif yapın.",
+            "expected_result": "Listede yalnızca aktif durumlar görünür."
+          },
+          {
+            "action": "Sayfayı yenileyin.",
+            "expected_result": "Üstte 'Tamamlanan ve iptal durumları ekleyin' diyen bir bilgi mesajı çıkar."
+          },
+          {
+            "action": "Yeni bir 'Completed' veya 'Cancelled' durumu ekleyin.",
+            "expected_result": "Uyarı mesajı kaybolur."
+          }
+        ],
+        "expected_result": "Sistem otomasyonların çalışması için gerekli durumları hatırlatır."
+      },
+      {
+        "external_id": "CRM-PROJECTS-008",
+        "title": "Oturum durumunu pasif yapma ve silme",
+        "description": "Silme diyalogundaki iki farklı seçeneğin davranışını doğrular.",
+        "steps": [
+          {
+            "action": "Aktif bir oturum durumunun çöp kutusu ikonuna tıklayın.",
+            "expected_result": "'Pasif yap' ve 'Sil' seçenekleri olan bir pencere açılır."
+          },
+          {
+            "action": "Önce 'Pasif yap' seçeneğini tıklayın.",
+            "expected_result": "Durum rozeti saydamlaşır ve 'Pasif' etiketi eklenir."
+          },
+          {
+            "action": "Aynı rozet için tekrar sil ikonuna basıp bu kez 'Sil' seçeneğini onaylayın.",
+            "expected_result": "Durum tamamen listeden kaybolur ve başarı mesajı görünür."
+          }
+        ],
+        "expected_result": "Kullanıcı durumları önce pasif hale getirebilir, gerekirse tamamen silebilir."
+      }
+    ]
+  },
+  {
+    "suite": "Ayarlar - Hizmetler",
+    "cases": [
+      {
+        "external_id": "CRM-SERVICES-001",
+        "title": "Yeni seans türü ekleme ve varsayılan yapma",
+        "description": "Seans türü panelinde yeni bir tür oluşturup varsayılan yapıldığını doğrular.",
+        "steps": [
+          {
+            "action": "'Seans Türleri' kartındaki 'Seans türü ekle' butonuna basın.",
+            "expected_result": "Kaydırmalı panel açılır."
+          },
+          {
+            "action": "İsim, açıklama ve süre (ör. 90 dakika) girip 'Varsayılan yap' anahtarını açın.",
+            "expected_result": "Anahtar maviye döner ve panel kirlenir."
+          },
+          {
+            "action": "'Kaydet' butonuna basın.",
+            "expected_result": "Toast mesajı çıkar ve yeni kartta 'Varsayılan' rozeti görünür."
+          },
+          {
+            "action": "Sayfayı yenileyin.",
+            "expected_result": "Yeni tür listede kalır ve varsayılan rozeti hala görünür."
+          }
+        ],
+        "expected_result": "Seans türleri kolayca eklenip varsayılan yapılabilir."
+      },
+      {
+        "external_id": "CRM-SERVICES-002",
+        "title": "Seans türünü pasif yapma",
+        "description": "Silme diyalogundan pasif seçildiğinde kartın griye döndüğünü doğrular.",
+        "steps": [
+          {
+            "action": "Bir seans türü kartındaki çöp kutusu ikonuna tıklayın.",
+            "expected_result": "'Pasif yap' ve 'Sil' seçenekleri çıkar."
+          },
+          {
+            "action": "'Pasif yap' seçeneğini tıklayın.",
+            "expected_result": "Kart griye döner ve 'Pasif' rozeti eklenir."
+          },
+          {
+            "action": "'Pasifleri göster' anahtarını kapatın.",
+            "expected_result": "Pasif kart gridden kaybolur."
+          }
+        ],
+        "expected_result": "Seans türleri tamamen silinmeden pasifleştirilebilir."
+      },
+      {
+        "external_id": "CRM-SERVICES-003",
+        "title": "Pasifleri göster anahtarının filtrelemesi",
+        "description": "Anahtar açılıp kapandığında filtrelemenin çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "'Pasifleri göster' anahtarını açın.",
+            "expected_result": "Pasif kartlar ve rozetleri görünür."
+          },
+          {
+            "action": "Anahtarı kapatın.",
+            "expected_result": "Pasif kartlar gizlenir."
+          }
+        ],
+        "expected_result": "Kullanıcı pasif türleri tek tıkla gösterebilir veya saklayabilir."
+      },
+      {
+        "external_id": "CRM-SERVICES-004",
+        "title": "Paket oluşturma sihirbazını açma",
+        "description": "Paket ekle butonunun çok adımlı sihirbazı açıp kayıttan sonra kapattığını doğrular.",
+        "steps": [
+          {
+            "action": "'Paketler' kartındaki 'Paket ekle' butonuna tıklayın.",
+            "expected_result": "Sihirbaz sağdan açılır."
+          },
+          {
+            "action": "Zorunlu adımları doldurup sihirbazı tamamlayın.",
+            "expected_result": "Son adımda başarı mesajı çıkar ve sihirbaz kapanır."
+          },
+          {
+            "action": "Yeni paket kartının listede göründüğünü kontrol edin.",
+            "expected_result": "Kart fiyat bilgileriyle birlikte görüntülenir."
+          }
+        ],
+        "expected_result": "Paketler yalnızca sihirbaz üzerinden eklenir ve tamamlandığında listeye düşer."
+      },
+      {
+        "external_id": "CRM-SERVICES-005",
+        "title": "Paketleri pasif yapmak ve silmek",
+        "description": "Silme diyalogundaki iki seçeneğin davranışını doğrular.",
+        "steps": [
+          {
+            "action": "Bir paket kartındaki çöp kutusu ikonuna tıklayın.",
+            "expected_result": "'Pasif yap' ve 'Sil' seçenekleri çıkar."
+          },
+          {
+            "action": "'Pasif yap' seçeneğini deneyin.",
+            "expected_result": "Kart pasif rozeti alır ve yalnızca pasifler görünürken listelenir."
+          },
+          {
+            "action": "Aynı kartı tekrar açıp 'Sil' seçeneğini onaylayın.",
+            "expected_result": "Paket tamamen listeden kaybolur."
+          }
+        ],
+        "expected_result": "Kullanıcı paketleri önce pasifleştirip isterse kalıcı olarak silebilir."
+      },
+      {
+        "external_id": "CRM-SERVICES-006",
+        "title": "Hizmet segment kontrolüyle filtreleme",
+        "description": "Teslimat ve Kapsam sekmelerinin gösterilen hizmetleri değiştirdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Segment kontrolünde 'Teslimat' seçeneğini seçin.",
+            "expected_result": "Listede yalnızca teslimat türündeki kategoriler görünür ve bilgi metni buna göre güncellenir."
+          },
+          {
+            "action": "'Kapsam' seçeneğine geçin.",
+            "expected_result": "Gösterilen kategori ve kartlar kapsam hizmetleriyle değişir."
+          }
+        ],
+        "expected_result": "Kullanıcı tek tıkla iki farklı hizmet tipini filtreleyebilir."
+      },
+      {
+        "external_id": "CRM-SERVICES-007",
+        "title": "Hizmet kartını pasif yapma veya silme",
+        "description": "Kart üzerindeki ikonların pasif ve silme akışını doğrular.",
+        "steps": [
+          {
+            "action": "Bir hizmet kartındaki çöp kutusu ikonuna tıklayın.",
+            "expected_result": "'Pasif yap' ve 'Sil' seçenekleri görünür."
+          },
+          {
+            "action": "'Pasif yap'ı seçin.",
+            "expected_result": "Kart gri bir rozetle pasif olarak işaretlenir."
+          },
+          {
+            "action": "Aynı işlemden sonra 'Sil' seçeneğini kullanın.",
+            "expected_result": "Hizmet tamamen listeden çıkar ve başarı mesajı gösterilir."
+          }
+        ],
+        "expected_result": "Hizmetler gerektiğinde pasifleştirilebilir veya kalıcı olarak silinebilir."
+      }
+    ]
+  },
+  {
+    "suite": "Ayarlar - Faturalandırma",
+    "cases": [
+      {
+        "external_id": "CRM-BILLING-001",
+        "title": "Şirket seçildiğinde şirket adının zorunlu olması",
+        "description": "Şirket tipi seçildiğinde boş şirket adıyla kaydetmeye izin verilmediğini doğrular.",
+        "steps": [
+          {
+            "action": "Faturalandırma sayfasında 'Şirket' seçeneğini işaretleyin.",
+            "expected_result": "'Şirket Adı' alanı kırmızı yıldız alır."
+          },
+          {
+            "action": "Alan boşken 'Kaydet' butonuna basın.",
+            "expected_result": "Alan altında kırmızı 'Şirket adı zorunludur' uyarısı görünür ve işlem yapılmaz."
+          },
+          {
+            "action": "Şirket adını doldurup tekrar kaydedin.",
+            "expected_result": "Uyarı kaybolur ve yeşil bildirim çıkar."
+          }
+        ],
+        "expected_result": "Şirket profili seçildiğinde ad alanı boş bırakılamaz."
+      },
+      {
+        "external_id": "CRM-BILLING-002",
+        "title": "Varsayılan KDV oranı doğrulaması",
+        "description": "KDV oranı alanının yalnızca 0-99,99 arasında sayıları kabul ettiğini doğrular.",
+        "steps": [
+          {
+            "action": "KDV alanını temizleyip harfler yazın.",
+            "expected_result": "Alan kırmızı olur ve geçerli bir sayı girmeniz istendiğini belirten uyarı çıkar."
+          },
+          {
+            "action": "Alana 150 yazın.",
+            "expected_result": "Uyarı değerin 0 ile 99,99 arasında olması gerektiğini söyler."
+          },
+          {
+            "action": "Alana 18 yazıp dışarı tıklayın.",
+            "expected_result": "Uyarı kaybolur ve alan normal hale gelir."
+          }
+        ],
+        "expected_result": "KDV alanı yalnızca geçerli aralıktaki sayıların kaydedilmesine izin verir."
+      },
+      {
+        "external_id": "CRM-BILLING-003",
+        "title": "KDV modu seçeneğini değiştirme",
+        "description": "KDV hesaplama modunu değiştirdiğinizde seçimin kaydedildiğini doğrular.",
+        "steps": [
+          {
+            "action": "'KDV hesaplama yöntemi' bölümünde 'Dahil' kartını seçin.",
+            "expected_result": "Seçilen kart yeşil çerçeve alır."
+          },
+          {
+            "action": "Ardından 'Hariç' kartına tıklayın.",
+            "expected_result": "Yeni seçim vurgulanır ve kart kirlenir."
+          },
+          {
+            "action": "'Kaydet' butonuna basın.",
+            "expected_result": "Bildirim çıkar ve sayfa yenilendiğinde son seçim korunur."
+          }
+        ],
+        "expected_result": "KDV modu kullanıcı seçimlerine göre saklanır."
+      },
+      {
+        "external_id": "CRM-BILLING-004",
+        "title": "Fiyatlara KDV dahil anahtarını değiştirme",
+        "description": "Anahtarın kaydedildiğini ve açıklamanın güncellendiğini doğrular.",
+        "steps": [
+          {
+            "action": "'Fiyatlara KDV dahil' anahtarını açıp kapatın.",
+            "expected_result": "Anahtarın durumu hemen değişir ve açıklama metni güncel kalır."
+          },
+          {
+            "action": "Yeni durumda bırakıp 'Kaydet' butonuna basın.",
+            "expected_result": "Yeşil bildirim çıkar ve sayfa yenilendiğinde anahtar aynı konumda kalır."
+          }
+        ],
+        "expected_result": "KDV dahil/ hariç tercihi kullanıcıya göre saklanır."
+      },
+      {
+        "external_id": "CRM-BILLING-005",
+        "title": "Sıfırla ve Kaydet butonlarının davranışı",
+        "description": "Alanlar değişince sıfırlama ve kaydetme butonlarının doğru çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "Adres veya vergi dairesi alanını değiştirin.",
+            "expected_result": "Kart kirlenir ve 'Sıfırla' butonu aktifleşir."
+          },
+          {
+            "action": "'Sıfırla' butonuna basın.",
+            "expected_result": "Alanlar son kayıtlı haline döner ve kirlenme kaybolur."
+          },
+          {
+            "action": "Alanları tekrar değiştirip 'Kaydet' butonuna basın.",
+            "expected_result": "Yeşil bildirim çıkar ve değişiklikler saklanır."
+          }
+        ],
+        "expected_result": "Kullanıcı değişiklikleri kolayca geri alabilir veya kaydedebilir."
+      }
+    ]
+  },
+  {
+    "suite": "Ayarlar - Tehlike Bölgesi",
+    "cases": [
+      {
+        "external_id": "CRM-DANGER-001",
+        "title": "Parola girilmeden silme yapılamaması",
+        "description": "Parola alanı boşken işlem başlatılamadığını doğrular.",
+        "steps": [
+          {
+            "action": "Tehlike Bölgesi sayfasında 'Tüm verileri sil' butonuna tıklayın.",
+            "expected_result": "Uyarı penceresi ve parola alanı açılır."
+          },
+          {
+            "action": "Parola yazmadan kırmızı onay butonuna basın.",
+            "expected_result": "Kırmızı uyarı parola gerektiğini söyler ve işlem başlamaz."
+          }
+        ],
+        "expected_result": "Parola girilmeden hiçbir veri silinmez."
+      },
+      {
+        "external_id": "CRM-DANGER-002",
+        "title": "Onay penceresindeki veri listesi",
+        "description": "Uyarı metninin silinecek tüm veri türlerini gösterdiğini doğrular.",
+        "steps": [
+          {
+            "action": "Onay penceresinde listelenen maddeleri okuyun.",
+            "expected_result": "Leads, projeler, oturumlar, hatırlatmalar, ödemeler ve ayarlar listelenir."
+          }
+        ],
+        "expected_result": "Kullanıcı hangi verilerin silineceğini net şekilde görür."
+      },
+      {
+        "external_id": "CRM-DANGER-003",
+        "title": "İptal edildiğinde parola alanının temizlenmesi",
+        "description": "İptal butonuna basınca parola bilgisinin sıfırlandığını doğrular.",
+        "steps": [
+          {
+            "action": "Parola alanına rastgele bir değer yazın.",
+            "expected_result": "Alan dolu görünür."
+          },
+          {
+            "action": "'İptal' butonuna basın.",
+            "expected_result": "Pencere kapanır ve ana karttaki parola alanı boş kalır."
+          },
+          {
+            "action": "Butona tekrar basıp pencereyi açın.",
+            "expected_result": "Parola alanı yine boş gelir."
+          }
+        ],
+        "expected_result": "İşlem iptal edildiğinde hiçbir parola bilgisi saklanmaz."
+      },
+      {
+        "external_id": "CRM-DANGER-004",
+        "title": "Başarılı silme akışı",
+        "description": "Parola girilip onaylandığında sürecin nasıl ilerlediğini doğrular.",
+        "steps": [
+          {
+            "action": "Parola alanına geçerli bir değer yazıp kırmızı butona basın.",
+            "expected_result": "Buton üzerinde yüklenme animasyonu belirir ve diğer butonlar kilitlenir."
+          },
+          {
+            "action": "Yaklaşık iki saniye bekleyin.",
+            "expected_result": "Kırmızı başarı bildirimi silme işleminin tamamlandığını söyler ve parola alanı boşalır."
+          }
+        ],
+        "expected_result": "Silme tamamlandığında kullanıcı kırmızı bir onay mesajı görür ve alanlar sıfırlanır."
+      },
+      {
+        "external_id": "CRM-DANGER-005",
+        "title": "İşlem sırasında butonların kilitlenmesi",
+        "description": "Silme işlemi sürerken butonların tekrar tıklanamadığını doğrular.",
+        "steps": [
+          {
+            "action": "Parola girip silme işlemini başlatın ve yüklenme devam ederken butonlara tıklamayı deneyin.",
+            "expected_result": "Kırmızı onay ve 'İptal' butonları devre dışı kalır."
+          },
+          {
+            "action": "İşlem tamamlanınca buton durumunu kontrol edin.",
+            "expected_result": "Butonlar tekrar aktif hale gelir."
+          }
+        ],
+        "expected_result": "Uzun süren işlemlerde kullanıcı çift tıklama yapamaz ve süreç bittiğinde kontroller serbest kalır."
+      }
+    ]
+  }
+]

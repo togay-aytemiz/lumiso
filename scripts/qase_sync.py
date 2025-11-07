@@ -26,6 +26,23 @@ def get_case_detail(cid):
     r = requests.get(f"{BASE_URL}/case/{PROJECT}/{cid}", headers=HEADERS); r.raise_for_status()
     return r.json().get("result") or {}
 
+def find_case_id_by_external_id(ext):
+    if not ext:
+        return None
+    query = f'case.external_id:"{ext}" AND project:{PROJECT}'
+    try:
+        r = requests.get(f"{BASE_URL}/search", headers=HEADERS, params={"query": query, "limit": 1})
+        if r.status_code == 404:
+            return None
+        r.raise_for_status()
+        entities = (r.json().get("result") or {}).get("entities") or []
+        for ent in entities:
+            if str(ent.get("external_id")).strip() == ext:
+                return ent.get("id")
+    except requests.RequestException as exc:
+        print(f"[qase-sync] warn_search_failed ext={ext} err={exc}")
+    return None
+
 def extract_external_ref(case_detail):
     for key in ("external_id", "code", "number"):
         val = case_detail.get(key)
@@ -162,8 +179,14 @@ def main():
                 ext = payload["external_id"]
                 title_key = (sid, payload["title"].strip().lower())
 
-                if ext in ext_map:
-                    cid = update_case(ext_map[ext], payload)
+                cid = ext_map.get(ext)
+                if not cid:
+                    cid = find_case_id_by_external_id(ext)
+                    if cid:
+                        ext_map[ext] = cid
+
+                if cid:
+                    update_case(cid, payload)
                     updated += 1
                 elif title_key in title_map:
                     # migrate old case without external_id to this external_id

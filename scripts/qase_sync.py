@@ -26,12 +26,19 @@ def get_case_detail(cid):
     r = requests.get(f"{BASE_URL}/case/{PROJECT}/{cid}", headers=HEADERS); r.raise_for_status()
     return r.json().get("result") or {}
 
+def extract_external_ref(case_detail):
+    for key in ("external_id", "code", "number"):
+        val = case_detail.get(key)
+        if isinstance(val, str) and val.strip():
+            return val.strip()
+    return ""
+
 def build_indexes():
     ids = list_case_ids()
     ext_map, title_map = {}, {}
     for cid in ids:
         d = get_case_detail(cid)
-        ext = (d.get("external_id") or "").strip()
+        ext = extract_external_ref(d)
         title = (d.get("title") or "").strip().lower()
         suite_id = d.get("suite_id")
         if ext:

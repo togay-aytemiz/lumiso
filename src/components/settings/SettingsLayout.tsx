@@ -1244,29 +1244,27 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
               style={{ WebkitOverflowScrolling: "touch" }}
             >
               <Outlet />
-              {shouldShowScrollTopButton && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={handleScrollToTop}
-                  onMouseDown={(event) => event.stopPropagation()}
-                  className={cn(
-                    "fixed z-[60] h-11 w-11 rounded-full border-transparent bg-[hsl(var(--accent-200))] text-[hsl(var(--accent-900))] shadow-lg transition-all hover:bg-[hsl(var(--accent-300))] hover:shadow-xl focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2",
-                    hasChanges
-                      ? "bottom-24 md:bottom-28"
-                      : "bottom-5 md:bottom-6"
-                  )}
-                  style={{ right: `${scrollTopRightOffset}px` }}
-                  aria-label={tCommon("buttons.backToTop", {
-                    defaultValue: "Back to top",
-                  })}
-                >
-                  <ArrowUp className="h-5 w-5" />
-                </Button>
-              )}
             </div>
           </main>
+          {shouldShowScrollTopButton && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={handleScrollToTop}
+              onMouseDown={(event) => event.stopPropagation()}
+              className={cn(
+                "fixed z-[60] h-11 w-11 rounded-full border-transparent bg-[hsl(var(--accent-200))] text-[hsl(var(--accent-900))] shadow-lg transition-all hover:bg-[hsl(var(--accent-300))] hover:shadow-xl focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2",
+                hasChanges ? "bottom-24 md:bottom-28" : "bottom-5 md:bottom-6"
+              )}
+              style={{ right: `${scrollTopRightOffset}px` }}
+              aria-label={tCommon("buttons.backToTop", {
+                defaultValue: "Back to top",
+              })}
+            >
+              <ArrowUp className="h-5 w-5" />
+            </Button>
+          )}
         </div>
         {helpSheet}
         {guardDialog}

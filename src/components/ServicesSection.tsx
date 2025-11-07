@@ -457,9 +457,11 @@ const ServicesSection = () => {
         title={tForms("services.title")}
         description={tForms("services.description")}
         headerAside={sectionActions}
-        bodyClassName="p-6"
+        contentClassName="space-y-4"
+        className="border-none bg-transparent shadow-none"
+        unstyledBody
       >
-        <div className="space-y-4">
+        <div className="space-y-4 px-3 py-6 sm:px-0">
           {[1, 2].map((i) => (
             <div key={i} className="animate-pulse">
               <div className="mb-3 h-12 rounded-lg bg-muted" />
@@ -481,114 +483,118 @@ const ServicesSection = () => {
         title={tForms("services.title")}
         description={tForms("services.description")}
         headerAside={sectionActions}
-        bodyClassName="p-0"
+        contentClassName="space-y-6"
+        className="border-none bg-transparent shadow-none"
+        unstyledBody
       >
-        <div className="space-y-6 p-6">
+        <div className="space-y-6  py-2 sm:px-0">
           <div className="space-y-2">
-          <SegmentedControl
-            value={activeType}
-            onValueChange={(value) => setActiveType(value as ServiceType)}
-            options={[
-              {
-                value: "deliverable",
-                label: renderSegmentLabel(
-                  tForms("services.types.deliverable"),
-                  typeCounts.deliverable
-                ),
-                tooltip: tForms("services.types.deliverable_hint"),
-              },
-              {
-                value: "coverage",
-                label: renderSegmentLabel(
-                  tForms("services.types.coverage"),
-                  typeCounts.coverage
-                ),
-                tooltip: tForms("services.types.coverage_hint"),
-              },
-            ]}
-            className="w-full sm:w-auto"
-          />
-          <p className="text-sm text-muted-foreground max-w-2xl">
-            {activeType === "deliverable"
-              ? tForms("services.types.deliverable_hint")
-              : tForms("services.types.coverage_hint")}
-          </p>
-        </div>
-
-        {Object.keys(groupedServices).length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">
-              {activeType === "coverage"
-                ? tForms("services.empty.coverage")
-                : tForms("services.empty.deliverable")}
+            <SegmentedControl
+              value={activeType}
+              onValueChange={(value) => setActiveType(value as ServiceType)}
+              options={[
+                {
+                  value: "deliverable",
+                  label: renderSegmentLabel(
+                    tForms("services.types.deliverable"),
+                    typeCounts.deliverable
+                  ),
+                  tooltip: tForms("services.types.deliverable_hint"),
+                },
+                {
+                  value: "coverage",
+                  label: renderSegmentLabel(
+                    tForms("services.types.coverage"),
+                    typeCounts.coverage
+                  ),
+                  tooltip: tForms("services.types.coverage_hint"),
+                },
+              ]}
+              className="w-full sm:w-auto"
+            />
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              {activeType === "deliverable"
+                ? tForms("services.types.deliverable_hint")
+                : tForms("services.types.coverage_hint")}
             </p>
-            {canManageServices && (
-              <Button
-                onClick={() => setShowNewServiceDialog(true)}
-                variant="outline"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                {tForms("services.add_first_service")}
-              </Button>
-            )}
           </div>
-        ) : (
-          <>
-            <div className="space-y-2.5">
-              {Object.entries(groupedServices).map(
-                ([category, categoryServices]) => (
-                  <Collapsible
-                    key={category}
-                    open={openCategories.has(category)}
-                    onOpenChange={() => toggleCategory(category)}
-                  >
-                    {/* Enhanced category header - full-width tap area */}
-                    <CollapsibleTrigger className="flex items-center justify-between w-full p-4 text-left bg-muted rounded-lg hover:bg-muted/80 transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                      <div className="flex items-center gap-3">
-                        {openCategories.has(category) ? (
-                          <ChevronDown className="h-4 w-4 flex-shrink-0" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                        )}
-                        <span className="font-medium text-base md:text-sm">
-                          {category}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          ({categoryServices.length})
-                        </span>
-                      </div>
-                    </CollapsibleTrigger>
 
-                    <CollapsibleContent className="mt-2.5 grid grid-rows-[0fr] transition-[grid-template-rows,opacity] duration-250 ease-out data-[state=open]:grid-rows-[1fr] data-[state=closed]:opacity-0 data-[state=open]:opacity-100">
-                      <div className="overflow-hidden space-y-4">
-                        <div className="hidden md:block space-y-4 pl-3">
-                          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-                            {categoryServices.map((service) => renderServiceCard(service))}
-                          </div>
-                        </div>
-
-                        {/* Mobile view */}
-                        <div className="md:hidden space-y-4 pl-3">
-                          {categoryServices.length === 0 ? (
-                            <div className="text-center py-6 text-muted-foreground">
-                              <p className="text-sm">
-                                {tForms("services.no_services_in_category")}
-                              </p>
-                            </div>
-                          ) : (
-                            categoryServices.map((service) =>
-                              renderServiceCard(service)
-                            )
-                          )}
-                        </div>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                )
+          {Object.keys(groupedServices).length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">
+                {activeType === "coverage"
+                  ? tForms("services.empty.coverage")
+                  : tForms("services.empty.deliverable")}
+              </p>
+              {canManageServices && (
+                <Button
+                  onClick={() => setShowNewServiceDialog(true)}
+                  variant="outline"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {tForms("services.add_first_service")}
+                </Button>
               )}
             </div>
-          </>
-        )}
+          ) : (
+            <>
+              <div className="space-y-2.5">
+                {Object.entries(groupedServices).map(
+                  ([category, categoryServices]) => (
+                    <Collapsible
+                      key={category}
+                      open={openCategories.has(category)}
+                      onOpenChange={() => toggleCategory(category)}
+                    >
+                      {/* Enhanced category header - full-width tap area */}
+                      <CollapsibleTrigger className="flex items-center justify-between w-full p-4 text-left bg-muted rounded-lg hover:bg-muted/80 transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                        <div className="flex items-center gap-3">
+                          {openCategories.has(category) ? (
+                            <ChevronDown className="h-4 w-4 flex-shrink-0" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 flex-shrink-0" />
+                          )}
+                          <span className="font-medium text-base md:text-sm">
+                            {category}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            ({categoryServices.length})
+                          </span>
+                        </div>
+                      </CollapsibleTrigger>
+
+                      <CollapsibleContent className="mt-2.5 grid grid-rows-[0fr] transition-[grid-template-rows,opacity] duration-250 ease-out data-[state=open]:grid-rows-[1fr] data-[state=closed]:opacity-0 data-[state=open]:opacity-100">
+                        <div className="overflow-hidden space-y-4">
+                          <div className="hidden md:block space-y-4 pl-3">
+                            <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                              {categoryServices.map((service) =>
+                                renderServiceCard(service)
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Mobile view */}
+                          <div className="md:hidden space-y-4 pl-3">
+                            {categoryServices.length === 0 ? (
+                              <div className="text-center py-6 text-muted-foreground">
+                                <p className="text-sm">
+                                  {tForms("services.no_services_in_category")}
+                                </p>
+                              </div>
+                            ) : (
+                              categoryServices.map((service) =>
+                                renderServiceCard(service)
+                              )
+                            )}
+                          </div>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )
+                )}
+              </div>
+            </>
+          )}
         </div>
       </SettingsCollectionSection>
 
@@ -618,10 +624,15 @@ const ServicesSection = () => {
             }}
           />
 
-          <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <AlertDialog
+            open={deleteConfirmOpen}
+            onOpenChange={setDeleteConfirmOpen}
+          >
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>{tForms("services.delete_title")}</AlertDialogTitle>
+                <AlertDialogTitle>
+                  {tForms("services.delete_title")}
+                </AlertDialogTitle>
                 <AlertDialogDescription className="space-y-2 text-sm text-muted-foreground">
                   <p className="text-foreground">
                     {tForms("services.delete_confirm", {

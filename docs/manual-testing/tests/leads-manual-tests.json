@@ -177,6 +177,66 @@
           }
         ],
         "expected_result": "Seans planlama sihirbazı, takvimden seçilen tarih/saat ile kayıt oluşturur ve kişi özetine yansıtır."
+      },
+      {
+        "external_id": "CRM-LEADS-209",
+        "title": "Durum filtresi ile listeyi daraltma ve sıfırlama",
+        "description": "/leads tablosundaki filtre panelinin durumlara göre sonuçları sınırladığını ve kolayca sıfırlanabildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Kişi Yönetimi sayfasında üstteki \"Filtreler\" butonuna tıklayın.",
+            "expected_result": "Sağ tarafta filtre paneli açılır ve durum seçenekleri listelenir."
+          },
+          {
+            "action": "\"Durum\" bölümünden en az iki seçenek işaretleyip paneli kapatın.",
+            "expected_result": "Tablonun üstünde turuncu \"2 aktif filtre\" etiketi görünür ve sadece seçilen durumlara sahip kişiler listelenir."
+          },
+          {
+            "action": "Tablonun üst kısmındaki \"Filtreleri sıfırla\" bağlantısına tıklayın.",
+            "expected_result": "Aktif filtre etiketi kaybolur ve tablo tüm kişileri tekrar gösterir."
+          }
+        ],
+        "expected_result": "Filtre paneliyle seçilen durumlar tabloya anında uygulanır, tek tıkla sıfırlanarak eski haline döner."
+      },
+      {
+        "external_id": "CRM-LEADS-210",
+        "title": "Excel'e Aktar butonuyla veri dışa aktarma",
+        "description": "Filtrelenmiş kişilerin Excel dosyası olarak indirilebildiğini doğrular.",
+        "steps": [
+          {
+            "action": "İsteğe bağlı olarak küçük bir filtre veya arama uygulayın.",
+            "expected_result": "Tablo yalnızca seçili kriterle eşleşen kayıtları gösterir."
+          },
+          {
+            "action": "Üstteki \"Excel'e aktar\" butonuna tıklayın.",
+            "expected_result": "Buton kısa süreli yüklenme durumuna geçer."
+          },
+          {
+            "action": "Ekranın sağ alt köşesindeki bildirimleri takip edin.",
+            "expected_result": "Yeşil bildirim \"Filtrelenen kişiler indirildi\" mesajını gösterir ve tarayıcı otomatik olarak .xlsx dosyası indirir."
+          }
+        ],
+        "expected_result": "Kullanıcı uyguladığı filtrelerle eşleşen listeyi tek tıkla Excel formatında indirebilir."
+      },
+      {
+        "external_id": "CRM-LEADS-211",
+        "title": "Aktivite zaman çizelgesinde Geçmiş sekmesini inceleme",
+        "description": "Kişi detay sayfasındaki Aktivite kartında \"Aktivite\" ve \"Geçmiş\" segmentleri arasında geçiş yapılabildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Kişi detay sayfasında aşağı kaydırarak \"Aktivite\" kartını bulun.",
+            "expected_result": "Kartta \"Aktivite\" ve \"Geçmiş\" etiketli iki sekme düğmesi görünür."
+          },
+          {
+            "action": "\"Geçmiş\" sekmesine tıklayın.",
+            "expected_result": "Zaman çizelgesi sistem değişikliklerini (ör. alan güncellemeleri) kronolojik olarak listeler."
+          },
+          {
+            "action": "Yeniden \"Aktivite\" sekmesine dönün.",
+            "expected_result": "Kart, kullanıcı notları ve hatırlatıcıları içeren standart görünümüne geri döner."
+          }
+        ],
+        "expected_result": "Aktivite kartı iki farklı görünümü arasında sorunsuz geçiş yaparak hem manuel notları hem de sistem geçmişini inceleme imkânı verir."
       }
     ]
   }

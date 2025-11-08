@@ -17,6 +17,8 @@ export function useOrganizationData<T>(
     enabled?: boolean;
     staleTime?: number;
     gcTime?: number; // renamed from cacheTime in TanStack Query v5
+    refetchInterval?: number;
+    refetchOnWindowFocus?: boolean;
   }
 ) {
   const { activeOrganizationId, loading: orgLoading } = useOrganization();
@@ -32,6 +34,9 @@ export function useOrganizationData<T>(
     enabled: !orgLoading && !!activeOrganizationId && (options?.enabled ?? true),
     staleTime: options?.staleTime ?? 5 * 60 * 1000, // 5 minutes
     gcTime: options?.gcTime ?? 10 * 60 * 1000, // 10 minutes
+    refetchInterval: options?.refetchInterval ?? 2 * 60 * 1000,
+    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? true,
+    refetchOnReconnect: true,
   });
 }
 
@@ -77,6 +82,9 @@ export function useLeadStatuses() {
     },
     enabled: !!activeOrganizationId,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 }
 

@@ -124,6 +124,13 @@ def create_case(payload):
     print(f"[qase-sync] case_created ext={payload['external_id']} id={cid}")
     return cid
 
+def delete_case(case_id):
+    r = requests.delete(f"{BASE_URL}/case/{PROJECT}/{case_id}", headers=HEADERS)
+    if r.status_code not in (200,204,404):
+        fail(f"case_delete_failed id={case_id} {r.status_code} {r.text[:300]}")
+    status = "not_found" if r.status_code == 404 else "deleted"
+    print(f"[qase-sync] case_{status} id={case_id}")
+
 def update_case(case_id, payload):
     r = requests.patch(f"{BASE_URL}/case/{PROJECT}/{case_id}", headers=HEADERS, data=json.dumps(payload))
     if r.status_code in (400,401,404):
@@ -131,7 +138,9 @@ def update_case(case_id, payload):
     fresh = get_case_detail(case_id)
     fresh_title = (fresh.get("title") or "").strip()
     if fresh_title != payload.get("title"):
-        print(f"[qase-sync] warn_title_mismatch id={case_id} wanted={payload.get('title')} got={fresh_title}")
+        print(f"[qase-sync] warn_title_mismatch id={case_id} wanted={payload.get('title')} got={fresh_title} -> recreate")
+        delete_case(case_id)
+        return create_case(payload)
     else:
         print(f"[qase-sync] case_updated id={case_id} ext={payload.get('external_id')} title={fresh_title}")
     return case_id
@@ -200,13 +209,14 @@ def main():
                         ext_map[ext] = cid
 
                 if cid:
-                    update_case(cid, payload)
+                    cid = update_case(cid, payload)
+                    ext_map[ext] = cid
                     updated += 1
                 elif title_key in title_map:
                     # migrate old case without external_id to this external_id
                     cid = title_map[title_key]
                     print(f"[qase-sync] migrating title match to set external_id ext={ext} id={cid}")
-                    update_case(cid, payload)
+                    cid = update_case(cid, payload)
                     ext_map[ext] = cid
                     updated += 1
                 else:

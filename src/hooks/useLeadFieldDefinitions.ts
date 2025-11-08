@@ -48,7 +48,9 @@ export function useLeadFieldDefinitions() {
     enabled: !!activeOrganizationId,
     staleTime: LEAD_FIELD_DEFINITIONS_STALE_TIME,
     gcTime: LEAD_FIELD_DEFINITIONS_GC_TIME,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchInterval: 60 * 1000,
     initialData: () =>
       readLeadFieldDefinitionsFromStorage(activeOrganizationId) ??
       readLeadFieldDefinitionsFromStorage(),

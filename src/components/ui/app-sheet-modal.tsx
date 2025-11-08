@@ -1,10 +1,16 @@
 import { ReactNode, useCallback } from 'react';
-import type { FocusOutsideEvent, PointerDownOutsideEvent } from '@radix-ui/react-dismissable-layer';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+
+type DismissableLayerEvent<T extends Event> = CustomEvent<{
+  originalEvent: T;
+}>;
+
+type PointerDownOutsideEvent = DismissableLayerEvent<PointerEvent>;
+type FocusOutsideEvent = DismissableLayerEvent<FocusEvent>;
 
 interface FooterAction {
   label: string;

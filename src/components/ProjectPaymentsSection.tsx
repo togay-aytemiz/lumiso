@@ -27,6 +27,7 @@ import {
   ProjectDepositSetupDialog,
   ProjectDepositPaymentDialog
 } from "./ProjectDepositDialogs";
+import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -117,6 +118,8 @@ const formatCurrency = (amount: number) => {
     return `${Math.round(amount)} ${CURRENCY}`;
   }
 };
+
+const toDateInputValue = (date?: Date) => (date ? date.toISOString().split("T")[0] : null);
 
 const aggregatePricing = (records: ProjectServiceRecord[]): VatTotals =>
   records.reduce<VatTotals>(
@@ -1064,6 +1067,14 @@ interface GeneralPaymentDialogProps {
   outstanding: number;
 }
 
+interface GeneralPaymentInitialState {
+  amountValue: number | null;
+  amountInput: string;
+  description: string;
+  status: PaymentStatus;
+  datePaid: string | null;
+}
+
 function GeneralPaymentDialog({
   projectId,
   open,
@@ -1081,23 +1092,62 @@ function GeneralPaymentDialog({
   const [isLoading, setIsLoading] = useState(false);
   const browserLocale = getUserLocale();
 
-  const defaultAmount = useMemo(() => Math.max(outstanding, 0), [outstanding]);
+  const initialStateRef = useRef<GeneralPaymentInitialState>({
+    amountValue: null,
+    amountInput: "",
+    description: "",
+    status: "paid",
+    datePaid: null
+  });
+  const wasOpenRef = useRef(false);
 
   useEffect(() => {
-    if (!open) return;
-    setAmount(defaultAmount > 0 ? String(defaultAmount) : "");
-    setDescription("");
-    setStatus("paid");
-    setDatePaid(new Date());
-  }, [open, defaultAmount]);
+    if (open && !wasOpenRef.current) {
+      const initialDate = new Date();
 
-  const navigation = useModalNavigation({
-    isDirty: Boolean(amount.trim() || description.trim() || status !== "paid"),
-    onDiscard: () => {
-      setAmount(defaultAmount > 0 ? String(defaultAmount) : "");
+      setAmount("");
       setDescription("");
       setStatus("paid");
-      setDatePaid(new Date());
+      setDatePaid(initialDate);
+
+      initialStateRef.current = {
+        amountValue: null,
+        amountInput: "",
+        description: "",
+        status: "paid",
+        datePaid: toDateInputValue(initialDate)
+      };
+    }
+
+    wasOpenRef.current = open;
+  }, [open]);
+
+  const initialState = initialStateRef.current;
+  const normalizedAmount = amount.trim();
+  const normalizedDescription = description.trim();
+  const parsedAmount = Number.parseFloat(amount);
+  const hasAmountChange =
+    initialState.amountValue !== null
+      ? !Number.isFinite(parsedAmount) ||
+        Math.abs(parsedAmount - initialState.amountValue) > 0.000001
+      : normalizedAmount.length > 0;
+  const hasDescriptionChange = normalizedDescription.length > 0;
+  const hasStatusChange = status !== initialState.status;
+  const currentDateValue = status === "paid" ? toDateInputValue(datePaid) : null;
+  const shouldCompareDate = initialState.status === "paid" && status === "paid";
+  const hasDateChange =
+    shouldCompareDate && currentDateValue !== initialState.datePaid;
+
+  const isDirty = hasAmountChange || hasDescriptionChange || hasStatusChange || hasDateChange;
+
+  const navigation = useModalNavigation({
+    isDirty,
+    onDiscard: () => {
+      const initial = initialStateRef.current;
+      setAmount(initial.amountInput);
+      setDescription(initial.description);
+      setStatus(initial.status);
+      setDatePaid(initial.datePaid ? new Date(initial.datePaid) : undefined);
       onOpenChange(false);
     }
   });
@@ -1178,28 +1228,29 @@ function GeneralPaymentDialog({
   const fillLabel = t("payments.quick.fill_link", { defaultValue: "Fill remaining amount" });
 
   return (
-    <AppSheetModal
-      title={t("payments.add_payment")}
-      isOpen={open}
-      onOpenChange={onOpenChange}
-      size="content"
-      dirty={Boolean(amount.trim() || description.trim())}
-      onDirtyClose={handleDirtyClose}
-      footerActions={[
-        {
-          label: t("buttons.cancel"),
-          onClick: () => handleDirtyClose(),
-          variant: "outline" as const,
-          disabled: isLoading
-        },
-        {
-          label: isLoading ? t("payments.adding") : t("payments.add_payment"),
-          onClick: () => void handleSubmit(),
-          disabled: isLoading || !amount.trim(),
-          loading: isLoading
-        }
-      ]}
-    >
+    <>
+      <AppSheetModal
+        title={t("payments.add_payment")}
+        isOpen={open}
+        onOpenChange={onOpenChange}
+        size="content"
+        dirty={isDirty}
+        onDirtyClose={handleDirtyClose}
+        footerActions={[
+          {
+            label: t("buttons.cancel"),
+            onClick: () => handleDirtyClose(),
+            variant: "outline" as const,
+            disabled: isLoading
+          },
+          {
+            label: isLoading ? t("payments.adding") : t("payments.add_payment"),
+            onClick: () => void handleSubmit(),
+            disabled: isLoading || !amount.trim(),
+            loading: isLoading
+          }
+        ]}
+      >
       <div className="space-y-4">
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground">{helperCopy}</p>
@@ -1295,7 +1346,15 @@ function GeneralPaymentDialog({
           />
         </div>
       </div>
-    </AppSheetModal>
+      </AppSheetModal>
+
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        message={navigation.message}
+      />
+    </>
   );
 }
 
@@ -1306,6 +1365,13 @@ interface RefundPaymentDialogProps {
   onCompleted: () => void;
   depositPaid: number;
   totalPaid: number;
+}
+
+interface RefundPaymentInitialState {
+  amountInput: string;
+  reason: string;
+  applyToDeposit: boolean;
+  datePaid: string | null;
 }
 
 function RefundPaymentDialog({
@@ -1320,26 +1386,62 @@ function RefundPaymentDialog({
   const toast = useI18nToast();
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
-  const [applyToDeposit, setApplyToDeposit] = useState(depositPaid > 0);
+  const [applyToDeposit, setApplyToDeposit] = useState(false);
   const [datePaid, setDatePaid] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(false);
   const browserLocale = getUserLocale();
 
-  useEffect(() => {
-    if (!open) return;
-    setAmount("");
-    setReason("");
-    setApplyToDeposit(depositPaid > 0);
-    setDatePaid(new Date());
-  }, [open, depositPaid]);
+  const initialStateRef = useRef<RefundPaymentInitialState>({
+    amountInput: "",
+    reason: "",
+    applyToDeposit: false,
+    datePaid: toDateInputValue(new Date())
+  });
+  const wasOpenRef = useRef(false);
 
-  const navigation = useModalNavigation({
-    isDirty: Boolean(amount.trim() || reason.trim()),
-    onDiscard: () => {
+  useEffect(() => {
+    if (open && !wasOpenRef.current) {
+      const initialDate = new Date();
+
       setAmount("");
       setReason("");
-      setApplyToDeposit(depositPaid > 0);
-      setDatePaid(new Date());
+      setApplyToDeposit(false);
+      setDatePaid(initialDate);
+
+      initialStateRef.current = {
+        amountInput: "",
+        reason: "",
+        applyToDeposit: false,
+        datePaid: toDateInputValue(initialDate)
+      };
+    }
+
+    wasOpenRef.current = open;
+  }, [open]);
+
+  const initialState = initialStateRef.current;
+  const normalizedAmount = amount.trim();
+  const normalizedReason = reason.trim();
+  const currentDateValue = toDateInputValue(datePaid);
+  const hasAmountChange = normalizedAmount !== initialState.amountInput;
+  const hasReasonChange = normalizedReason !== initialState.reason;
+  const hasApplyChange = applyToDeposit !== initialState.applyToDeposit;
+  const hasDateChange = currentDateValue !== initialState.datePaid;
+  const isDirty = hasAmountChange || hasReasonChange || hasApplyChange || hasDateChange;
+
+  const canRefundFullAmount = totalPaid > 0;
+  const refundAllLabel = t("payments.refund.fill_full_amount", {
+    defaultValue: "Refund entire collected amount"
+  });
+
+  const navigation = useModalNavigation({
+    isDirty,
+    onDiscard: () => {
+      const initial = initialStateRef.current;
+      setAmount(initial.amountInput);
+      setReason(initial.reason);
+      setApplyToDeposit(initial.applyToDeposit);
+      setDatePaid(initial.datePaid ? new Date(initial.datePaid) : undefined);
       onOpenChange(false);
     }
   });
@@ -1407,51 +1509,30 @@ function RefundPaymentDialog({
   };
 
   return (
-    <AppSheetModal
-      title={t("payments.refund.title", { defaultValue: "Issue refund" })}
-      isOpen={open}
-      onOpenChange={onOpenChange}
-      size="content"
-      dirty={Boolean(amount.trim() || reason.trim())}
-      onDirtyClose={handleDirtyClose}
-      footerActions={[
-        {
-          label: t("buttons.cancel"),
-          onClick: () => handleDirtyClose(),
-          variant: "outline" as const,
-          disabled: isLoading
-        },
-        {
-          label: isLoading ? t("payments.adding") : t("payments.refund.submit", { defaultValue: "Record refund" }),
-          onClick: () => void handleSubmit(),
-          disabled: isLoading || !amount.trim(),
-          loading: isLoading
-        }
-      ]}
-    >
+    <>
+      <AppSheetModal
+        title={t("payments.refund.title", { defaultValue: "Issue refund" })}
+        isOpen={open}
+        onOpenChange={onOpenChange}
+        size="content"
+        dirty={isDirty}
+        onDirtyClose={handleDirtyClose}
+        footerActions={[
+          {
+            label: t("buttons.cancel"),
+            onClick: () => handleDirtyClose(),
+            variant: "outline" as const,
+            disabled: isLoading
+          },
+          {
+            label: isLoading ? t("payments.adding") : t("payments.refund.submit", { defaultValue: "Record refund" }),
+            onClick: () => void handleSubmit(),
+            disabled: isLoading || !amount.trim(),
+            loading: isLoading
+          }
+        ]}
+      >
       <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="refund-amount">{t("payments.refund.amount_label", { defaultValue: "Refund amount (TRY)" })} *</Label>
-          <Input
-            id="refund-amount"
-            type="number"
-            step="0.01"
-            placeholder="0.00"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="refund-reason">{t("payments.refund.reason_label", { defaultValue: "Reason (optional)" })}</Label>
-          <Textarea
-            id="refund-reason"
-            placeholder={t("payments.refund.reason_placeholder", { defaultValue: "Add an optional note" })}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            rows={2}
-          />
-        </div>
         <div className="flex items-center justify-between rounded-lg border p-3">
           <div>
             <p className="text-sm font-medium">
@@ -1472,6 +1553,43 @@ function RefundPaymentDialog({
             checked={applyToDeposit && depositPaid > 0}
             disabled={depositPaid <= 0}
             onCheckedChange={(checked) => setApplyToDeposit(checked)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="refund-amount">{t("payments.refund.amount_label", { defaultValue: "Refund amount (TRY)" })} *</Label>
+            <button
+              type="button"
+              className={cn(
+                "text-xs font-semibold text-primary",
+                !canRefundFullAmount && "opacity-50"
+              )}
+              onClick={() => canRefundFullAmount && setAmount(String(totalPaid))}
+              disabled={!canRefundFullAmount}
+            >
+              {refundAllLabel}
+            </button>
+          </div>
+          <Input
+            id="refund-amount"
+            type="number"
+            step="0.01"
+            placeholder="0.00"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="refund-reason">{t("payments.refund.reason_label", { defaultValue: "Reason (optional)" })}</Label>
+          <Textarea
+            id="refund-reason"
+            placeholder={t("payments.refund.reason_placeholder", { defaultValue: "Add an optional note" })}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows={2}
           />
         </div>
         <div className="space-y-2">
@@ -1522,6 +1640,14 @@ function RefundPaymentDialog({
           })}
         </p>
       )}
-    </AppSheetModal>
+      </AppSheetModal>
+
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        message={navigation.message}
+      />
+    </>
   );
 }

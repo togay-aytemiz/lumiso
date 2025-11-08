@@ -160,8 +160,8 @@ Bu listeyi her iterasyon sonunda güncelleyin; tamamlanan işleri kaydedip kalan
 - [x] `ProjectDepositDialogs`: sabitleme/snapshot UI’si, “farkı kalana taşı” aksiyonu ve banner CTA’ları eklendi.
 - [x] Lokalizasyonlar + QA rehberi: EN/TR çevirileri güncellendi, `docs/manual-testing/tests/projects-manual-tests.json` içine yeni senaryolar (tam kapora, kısmi, ekstra hizmet, iade) işlendi.
 - [x] Quick action butonları için gri `pill` ve kırmızı `pillDanger` varyantlarını `Button` bileşeninde finalize et; tüm ödeme ekranlarında aynı stil kullanılmalı.
+- [x] `AppSheetModal` kirli kapanış akışı: `GeneralPaymentDialog` ve `RefundPaymentDialog` NavigationGuardDialog ile entegre edildi, ESC/X/İptal + dirty guard davranışları sorunsuz kapanıyor.
 
 ### Devam Eden / Bekleyen
 
-- [ ] `AppSheetModal` kapanma davranışı: `GeneralPaymentDialog` & `RefundPaymentDialog` için ESC/X/İptal + dirty guard akışları hâlâ kapalı (sheet kapanmıyor). Modal navigasyon hook’u güncellenecek.
 - [ ] Final QA + prod migration: Supabase migration henüz prod’a itilmedi; canlıya çıkmadan önce `db push` + smoke test turu planlanmalı (özellikle kapora iadesi ve legacy backfill senaryoları).

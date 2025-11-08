@@ -341,6 +341,46 @@
           }
         ],
         "expected_result": "EditLeadDialog kullanıcının izni olmadan kapanmaz; sadece net şekilde kalma veya değişiklikleri iptal etme seçenekleriyle sonlandırılır."
+      },
+      {
+        "external_id": "CRM-LEADS-240",
+        "title": "Lead statüleri otomatik kaydedilir ve diğer sekmede senkron görünür",
+        "description": "/settings/leads sayfasında statü tercihleri için manuel \"Kaydet\" gerekmeden anlık kayıt ve arka plan senkronizasyonunu doğrular.",
+        "steps": [
+          {
+            "action": "/settings/leads sayfasına gidin ve \"Lead Statüleri\" kartındaki \"Hızlı butonları göster\" anahtarını kapatıp tekrar açın.",
+            "expected_result": "Her değişiklikte yeşil başarı toastı görünür, sticky save bar tetiklenmez."
+          },
+          {
+            "action": "Aynı kartta özel statülerden birini sürükleyip farklı bir sıraya bırakın.",
+            "expected_result": "Sürükle-bırak bırakıldığı anda \"Statü sırası güncellendi\" bildirimi gelir."
+          },
+          {
+            "action": "İkinci bir tarayıcı sekmesinde veya pencerede /settings/leads sayfasını açın (manuel yenileme yapmayın, sadece sekmeye geçip ~60 sn bekleyin).",
+            "expected_result": "Arka plan refetch tetiklenir ve ikinci sekmede de yeni statü sırası + hızlı buton tercihi görünür."
+          }
+        ],
+        "expected_result": "Lead statü ayarları her etkileşimde otomatik kaydolur ve diğer sekmeler/cihazlar kısa süre sonra aynı halde görünür."
+      },
+      {
+        "external_id": "CRM-LEADS-241",
+        "title": "Lead alanları ekleme/düzenleme otomatik kaydedilir ve senkron olur",
+        "description": "\"Lead Alanları\" kartında custom alanların anında kaydedilip diğer sekmelere refetch ile yansıdığını doğrular.",
+        "steps": [
+          {
+            "action": "/settings/leads → Lead Alanları kartında \"Alan Ekle\" butonuna basın, zorunlu alanları doldurun ve kaydedin.",
+            "expected_result": "Dialog kapanır, yeşil toast görünür ve yeni alan listede hemen belirir."
+          },
+          {
+            "action": "Yeni alanın yanındaki üç nokta/menüden düzenleyip farklı bir label yazın, ardından kaydedin.",
+            "expected_result": "Alan satırı hemen güncellenir; sticky save veya manuel yenileme gerekmez."
+          },
+          {
+            "action": "Farklı bir sekmede aynı ayar sayfasını açın veya mevcut sekmeye geri dönüp ~1 dakika bekleyin.",
+            "expected_result": "Arka plan sorgusu tetiklenir ve diğer sekmede de yeni alan + güncellenen label görünür."
+          }
+        ],
+        "expected_result": "Lead alanları dialog üzerinden kaydedildiği anda kalıcıdır ve ekstra aksiyon olmadan diğer sekmelerde görünür hale gelir."
       }
     ]
   }

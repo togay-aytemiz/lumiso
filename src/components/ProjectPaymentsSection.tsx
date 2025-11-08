@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { format } from "date-fns";
-import { CreditCard, PiggyBank, Edit2, Trash2, HelpCircle } from "lucide-react";
+import { CreditCard, Coins, Edit2, Trash2, HelpCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +17,7 @@ import {
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { PAYMENT_COLORS } from "@/lib/paymentColors";
-import { cn } from "@/lib/utils";
+import { cn, formatLongDate } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { AddPaymentDialog } from "./AddPaymentDialog";
@@ -757,7 +756,7 @@ export function ProjectPaymentsSection({
     if (!value) return null;
     const parsed = new Date(value);
     if (Number.isNaN(parsed.getTime())) return null;
-    return format(parsed, "PPP");
+    return formatLongDate(parsed);
   }, []);
 
   const includedSelections = useMemo<ProjectServiceQuickEditSelection[]>(
@@ -858,6 +857,10 @@ export function ProjectPaymentsSection({
       };
     }
   );
+
+  const depositConfigured = financialSummary.depositStatus !== "none";
+  const depositEditLabel = t("payments.deposit.actions.edit_short", { defaultValue: "Edit" });
+  const depositRecordLabel = t("payments.deposit.actions.record_short", { defaultValue: "Record payment" });
 
   return (
     <>
@@ -1014,72 +1017,63 @@ export function ProjectPaymentsSection({
               </div>
 
               <div className="rounded-xl border p-5">
-                <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
-                  <div className="rounded-md bg-amber-100 p-2 text-amber-700">
-                    <PiggyBank className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-md bg-amber-100 p-2 text-amber-700">
+                      <Coins className="h-5 w-5" />
+                    </div>
+                    <div className="space-y-2">
                       <h3 className="text-base font-semibold">
-                        {t("payments.deposit.title", { defaultValue: "Deposit overview" })}
+                        {t("payments.deposit.title", { defaultValue: "Deposit details" })}
                       </h3>
-                      {financialSummary.depositStatus !== "none" && (
-                        <Badge variant="outline">
-                          {t("payments.types.deposit", { defaultValue: "Deposit" })}
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {financialSummary.depositStatus === "none" &&
-                        t("payments.deposit.not_configured", {
-                          defaultValue: "No deposit configured for this project."
-                        })}
-                      {financialSummary.depositStatus === "due" &&
-                        t("payments.deposit.due", {
-                          amount: formatCurrency(financialSummary.depositAmount),
-                          defaultValue: "{{amount}} deposit outstanding."
-                        })}
-                      {financialSummary.depositStatus === "partial" &&
-                        t("payments.deposit.partial", {
-                          paid: formatCurrency(financialSummary.depositPaid),
-                          required: formatCurrency(financialSummary.depositAmount),
-                          remaining: formatCurrency(financialSummary.depositRemaining),
-                          defaultValue: "{{paid}} of {{required}} collected ({{remaining}} remaining)."
-                        })}
-                      {financialSummary.depositStatus === "paid" &&
-                        t("payments.deposit.paid", {
-                          amount: formatCurrency(financialSummary.depositAmount),
-                          defaultValue: "Deposit collected ({{amount}})."
-                        })}
-                    </p>
-                    {financialSummary.depositLastPaymentDate && (
-                      <p className="text-xs text-muted-foreground">
-                        {t("payments.deposit.last_payment", {
-                          date:
-                            formatDateSafely(financialSummary.depositLastPaymentDate) ??
-                            financialSummary.depositLastPaymentDate,
-                          defaultValue: "Last deposit payment on {{date}}."
-                        })}
-                      </p>
-                    )}
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        size="sm"
-                        variant="default"
-                        onClick={() => setDepositSetupOpen(true)}
-                      >
-                        {t("payments.deposit.actions.configure", {
-                          defaultValue: "Configure deposit"
-                        })}
-                      </Button>
-                      {financialSummary.depositStatus !== "none" && financialSummary.depositRemaining > 0 && (
-                        <Button size="sm" variant="outline" onClick={() => setDepositPaymentOpen(true)}>
-                          {t("payments.deposit.actions.record_payment", {
-                            defaultValue: "Record deposit payment"
+                      <p className="text-sm text-muted-foreground">
+                        {financialSummary.depositStatus === "none" &&
+                          t("payments.deposit.not_configured", {
+                            defaultValue: "No deposit configured for this project."
                           })}
-                        </Button>
+                        {financialSummary.depositStatus === "due" &&
+                          t("payments.deposit.due", {
+                            amount: formatCurrency(financialSummary.depositAmount),
+                            defaultValue: "{{amount}} deposit outstanding."
+                          })}
+                        {financialSummary.depositStatus === "partial" &&
+                          t("payments.deposit.partial", {
+                            paid: formatCurrency(financialSummary.depositPaid),
+                            required: formatCurrency(financialSummary.depositAmount),
+                            remaining: formatCurrency(financialSummary.depositRemaining),
+                            defaultValue: "{{paid}} of {{required}} collected ({{remaining}} remaining)."
+                          })}
+                        {financialSummary.depositStatus === "paid" &&
+                          t("payments.deposit.paid", {
+                            amount: formatCurrency(financialSummary.depositAmount),
+                            defaultValue: "Deposit collected ({{amount}})."
+                          })}
+                      </p>
+                      {financialSummary.depositLastPaymentDate && (
+                        <p className="text-xs text-muted-foreground">
+                          {t("payments.deposit.last_payment", {
+                            date:
+                              formatDateSafely(financialSummary.depositLastPaymentDate) ??
+                              financialSummary.depositLastPaymentDate,
+                            defaultValue: "Last deposit payment on {{date}}."
+                          })}
+                        </p>
                       )}
                     </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setDepositSetupOpen(true)}
+                    >
+                      {depositEditLabel}
+                    </Button>
+                    {depositConfigured && financialSummary.depositRemaining > 0 && (
+                      <Button size="sm" onClick={() => setDepositPaymentOpen(true)}>
+                        {depositRecordLabel}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>

@@ -189,22 +189,27 @@
       {
         "external_id": "CRM-PROJECTS-308",
         "title": "Kapora ayarlama ve kapora ödemesi kaydetme",
-        "description": "Projede kapora özeti bölümünün yapılandırılması ve ödemeye dönüştürülmesi.",
+        "description": "Kapora bilgisi otomatik gelen projelerde karttaki verilerin doğru görünmesini, düzenlenmesini ve ödeme sheet'inin davranışlarını doğrular.",
         "steps": [
           {
-            "action": "Proje hızlı görünümünde \"Ödemeler\" kartına kaydırın ve \"Kapora ayarla\" butonuna tıklayın.",
-            "expected_result": "Kapora ayarları paneli açılır; tutar veya yüzde seçenekleri görünür."
+            "action": "Yeni bir proje oluştururken kaporası tanımlı hazır paketi seçin ve hedef projeyi açın.",
+            "expected_result": "Proje açıldığında kapora kartı otomatik olarak \"₺X kapora bekleniyor\" bilgisini gösterir; tutar paket konfigürasyonuyla aynıdır."
           },
           {
-            "action": "Sabit bir tutar girip \"Kapora kaydet\" butonuna basın.",
-            "expected_result": "Panel kapanır, kapora özeti kartında \"Kapora bekleniyor\" metni ve tutar görünür."
+            "action": "Kartın sağındaki \"Düzenle\" butonuna tıklayın, sabit tutarı farklı bir değerle değiştirip \"Kapora kaydet\"’e basın.",
+            "expected_result": "Panel kapanır; başlığın altındaki metin yeni tutarla güncellenir ve ödemeler listesinde kapora satırındaki tutar da yeni değeri gösterir."
           },
           {
-            "action": "\"Kapora ödemesi işle\" butonunu seçip tahsil edilen tutarı ve tarihi girin.",
-            "expected_result": "\"Ödemeyi kaydet\" işleminden sonra kart \"Kapora tahsil edildi\" mesajına döner."
+            "action": "Sağdaki \"Ödeme işle\" butonunu seçin.",
+            "expected_result": "Kapora ödeme sheet'i açılır; tutar alanı boş gelir ve bilgi kutusunda kalan kapora tutarı gösterilir.",
+            "notes": "Sheet açılır açılmaz kapatma simgesine basıldığında herhangi bir uyarı çıkmadığını doğrulayın."
+          },
+          {
+            "action": "Sheet'i tekrar açıp \"Kalan tutarı doldur\" bağlantısına tıklayın; tarih alanını bugün dışında farklı bir tarih seçip \"Ödeme kaydet\" ile kaydedin.",
+            "expected_result": "Bağlantı tutarı otomatik doldurur; kaydettikten sonra kartta durum \"Kapora tahsil edildi\" (veya kalan varsa \"Kısmi ödeme\") olarak görünür, \"Son kapora ödemesi\" satırı seçtiğiniz tarih ile güncellenir ve ödemeler tablosunda yeni kayıt doğru tarih/tutarla listelenir."
           }
         ],
-        "expected_result": "Kapora ayarlanıp kapora ödemesi işlendiğinde özet kartı yeni durumu (bekliyor/parçalı/tamamlandı) anında gösterir."
+        "expected_result": "Kapora kartı paketlerden gelen tutarı doğru gösterir, düzenlemeler anında kart ve satırlara yansır, ödeme sheet'i varsayılan olarak boş açılır ve hem \"Kalan tutarı doldur\" bağlantısı hem de tarih seçimi ödeme kaydı ve kart özetini doğru şekilde günceller."
       },
       {
         "external_id": "CRM-PROJECTS-309",
@@ -525,6 +530,46 @@
           }
         ],
         "expected_result": "Arşiv sekmesindeki export yalnızca veri varsa çalışır ve aktif sekmeden bağımsızdır."
+      },
+      {
+        "external_id": "CRM-PROJECTS-330",
+        "title": "Proje detay sayfasında sticky sekme navigasyonu",
+        "description": "Detay sayfasının üstündeki sekme çubuğunun (Genel Bakış, Ödemeler, Hizmetler, Seanslar, Aktivite, Yapılacaklar) hedef başlıkları gizlemeden kaydırdığını doğrular.",
+        "steps": [
+          {
+            "action": "Herhangi bir projeyi tam sayfa /projects/:id görünümünde açın ve sekme çubuğundan \"Ödemeler\" butonuna tıklayın.",
+            "expected_result": "Sayfa ödemeler kartına kayar; \"Ödemeler\" başlığı sticky barın hemen altında tamamen görünür, blur alanı üstünü kapatmaz."
+          },
+          {
+            "action": "\"Hizmetler\" veya \"Seanslar\" sekmesine tıklayın.",
+            "expected_result": "İlgili bölüm başlığı yine çubuğun altında kalır, nav scroll sırasında ekranın üstüne yapışık kalmaya devam eder."
+          },
+          {
+            "action": "\"Genel Bakış\" sekmesini seçin veya en üste çıkın.",
+            "expected_result": "Sayfa en üste yumuşak şekilde kayar, header ile navigasyon arasında boşluk oluşmaz."
+          }
+        ],
+        "expected_result": "Proje detayındaki tüm sekmeler başlıkları gizlemeden doğru konuma götürür ve sticky çubuk kaydırma boyunca görünür kalır."
+      },
+      {
+        "external_id": "CRM-PROJECTS-331",
+        "title": "Projeyi Gör sheet'inde bölüm geçişleri sheet içinde kayar",
+        "description": "Lead detayındaki 'Projeyi Gör' veya /projects listesindeki hızlı görünüm sheet'inde aynı sekme çubuğunun yalnızca sheet içini kaydırdığını ve arka planı etkilemediğini doğrular.",
+        "steps": [
+          {
+            "action": "Herhangi bir lead veya proje satırından 'Projeyi Gör' sheet'ini açın.",
+            "expected_result": "Sheet üstünde Genel Bakış / Ödemeler / Hizmetler / Seanslar / Aktivite / Yapılacaklar sekme çubuğu görünür."
+          },
+          {
+            "action": "Sheet açıkken \"Ödemeler\" sekmesine tıklayın ve aynı anda ana sayfanın scroll durumunu izleyin.",
+            "expected_result": "Sheet içeriği kayar, \"Ödemeler\" başlığı blur alanının altında kalmaz ve arka plan sayfasının scroll pozisyonu değişmez."
+          },
+          {
+            "action": "\"Aktivite\" gibi başka bir sekmeye tıklayın ve sheet'i kapatmadan tekrar \"Genel Bakış\"ı seçin.",
+            "expected_result": "Her seçim sheet içinde yumuşak kaydırma yapar, navigasyon barı sheet top’ına yapışık kalır ve başlık çakışması olmaz."
+          }
+        ],
+        "expected_result": "Projeyi Gör sheet'i, tam sayfa görünümle aynı sekme etiketlerini kullanır ve kaydırma sadece sheet içinde gerçekleşir."
       }
     ]
   }

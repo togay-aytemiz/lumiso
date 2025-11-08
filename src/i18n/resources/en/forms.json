@@ -641,7 +641,7 @@
       "vat_breakdown_aria": "Show VAT breakdown"
     },
     "deposit": {
-      "title": "Deposit overview",
+      "title": "Deposit details",
       "not_configured": "No deposit configured for this project.",
       "due": "{{amount}} deposit outstanding.",
       "partial": "{{paid}} of {{required}} collected ({{remaining}} remaining).",
@@ -652,10 +652,12 @@
       "description_placeholder": "Optional note for your records",
       "setup_success": "Deposit details updated.",
       "actions": {
-        "configure": "Configure deposit",
+        "configure": "Add deposit",
         "record_payment": "Record deposit payment",
         "setup": "Set deposit amount",
-        "adjust": "Adjust deposit amount"
+        "adjust": "Edit deposit",
+        "edit_short": "Edit",
+        "record_short": "Record payment"
       },
       "enable_label": "Request a deposit",
       "enable_helper": "Ask for a prepayment to confirm the reservation.",
@@ -664,6 +666,8 @@
       "remaining_info": "Remaining deposit: {{remaining}} TRY",
       "payment_description_placeholder": "Optional note for the payment",
       "payment_success": "Deposit payment recorded.",
+      "fill_remaining": "Use remaining amount",
+      "fill_full": "Use full deposit",
       "payment_action": "Record payment",
       "amount_exceeds_remaining": "The amount exceeds the remaining deposit ({{remaining}}).",
       "mode_label": "Deposit type",

@@ -4,7 +4,7 @@ import { ProjectCreationProvider } from "../context/ProjectCreationProvider";
 import { ProjectCreationWizard } from "./ProjectCreationWizard";
 import { useProjectCreationActions } from "../hooks/useProjectCreationActions";
 import { useProjectCreationContext } from "../hooks/useProjectCreationContext";
-import { ProjectCreationStepId } from "../types";
+import { ProjectCreationStepId, type ProjectServiceLineItem } from "../types";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useToast } from "@/components/ui/use-toast";
@@ -22,6 +22,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useNavigate } from "react-router-dom";
+import { calculateLineItemPricing } from "@/features/package-creation/utils/lineItemPricing";
+import { computeDepositAmount, type ProjectDepositConfig } from "@/lib/payments/depositUtils";
 
 interface ProjectCreationWizardSheetProps {
   isOpen: boolean;
@@ -198,6 +200,37 @@ const ProjectCreationWizardSheetInner = ({
       }
 
       const basePriceValue = parseFloat(state.details.basePrice ?? "") || 0;
+      const manualDepositAmount = parseManualDepositAmount(state.details.depositAmount);
+      let packageDepositConfig: ProjectDepositConfig | null = null;
+
+      if (!manualDepositAmount && state.services.packageId) {
+        const { data: packageRecord, error: packageError } = await supabase
+          .from("packages")
+          .select("pricing_metadata")
+          .eq("id", state.services.packageId)
+          .single();
+        if (packageError) {
+          console.error("Error fetching package deposit metadata:", packageError);
+        } else {
+          packageDepositConfig = buildDepositConfigFromPackageMetadata(
+            packageRecord?.pricing_metadata ?? null
+          );
+        }
+      }
+
+      const projectDepositConfig = manualDepositAmount
+        ? { mode: "fixed", value: manualDepositAmount }
+        : packageDepositConfig;
+
+      const extrasTotalGross = computeExtraServicesTotal(state.services.extraItems);
+      const calculatedDepositAmount =
+        projectDepositConfig != null
+          ? computeDepositAmount(projectDepositConfig, {
+              basePrice: basePriceValue,
+              extrasTotal: extrasTotalGross,
+              contractTotal: basePriceValue + extrasTotalGross,
+            })
+          : 0;
 
       const { data: newProject, error: projectError } = await supabase
         .from("projects")
@@ -210,6 +243,7 @@ const ProjectCreationWizardSheetInner = ({
           status_id: statusId,
           project_type_id: state.details.projectTypeId,
           base_price: basePriceValue,
+          deposit_config: projectDepositConfig ?? null,
         })
         .select("id")
         .single();
@@ -228,6 +262,23 @@ const ProjectCreationWizardSheetInner = ({
         });
 
         if (paymentError) throw paymentError;
+      }
+
+      if (projectDepositConfig && calculatedDepositAmount > 0) {
+        const depositDescription =
+          projectDepositConfig.due_label ??
+          tForms("payments.types.deposit_due", { defaultValue: "Deposit (due)" });
+        const { error: depositDueError } = await supabase.from("payments").insert({
+          project_id: newProject.id,
+          user_id: user.id,
+          organization_id: organizationId,
+          amount: calculatedDepositAmount,
+          description: depositDescription,
+          status: "due",
+          type: "deposit_due",
+        });
+
+        if (depositDueError) throw depositDueError;
       }
 
       const catalogLineItems = allServiceItems.filter(
@@ -310,6 +361,7 @@ const ProjectCreationWizardSheetInner = ({
     onProjectCreated,
     shouldLockNavigation,
     state.details.basePrice,
+    state.details.depositAmount,
     state.details.description,
     state.details.name,
     state.details.projectTypeId,
@@ -318,6 +370,7 @@ const ProjectCreationWizardSheetInner = ({
     state.meta.defaultStatusId,
     state.meta.entrySource,
     allServiceItems,
+    state.services.extraItems,
     state.services.packageId,
     tCommon,
     tForms,
@@ -364,3 +417,75 @@ const ProjectCreationWizardSheetInner = ({
     </>
   );
 };
+
+const parseManualDepositAmount = (value?: string): number | null =>
+  normalizePositiveNumber(value);
+
+const normalizePositiveNumber = (value: unknown): number | null => {
+  if (typeof value === "number") {
+    if (!Number.isFinite(value) || value <= 0) {
+      return null;
+    }
+    return Math.round(value * 100) / 100;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    const normalized = Number.parseFloat(trimmed.replace(",", "."));
+    if (!Number.isFinite(normalized) || normalized <= 0) {
+      return null;
+    }
+    return Math.round(normalized * 100) / 100;
+  }
+  return null;
+};
+
+const mapPackageDepositMode = (raw: unknown): ProjectDepositConfig["mode"] | null => {
+  if (raw === "fixed") return "fixed";
+  if (raw === "percent_base") return "percent_base";
+  if (raw === "percent_subtotal" || raw === "percent_total") return "percent_total";
+  return null;
+};
+
+const buildDepositConfigFromPackageMetadata = (
+  metadata: unknown
+): ProjectDepositConfig | null => {
+  if (!metadata || typeof metadata !== "object") {
+    return null;
+  }
+  const record = metadata as Record<string, unknown>;
+  if (!record["enableDeposit"]) {
+    return null;
+  }
+  const mode = mapPackageDepositMode(record["depositMode"]);
+  if (!mode) {
+    return null;
+  }
+
+  if (mode === "fixed") {
+    const fixedValue =
+      normalizePositiveNumber(record["depositValue"]) ??
+      normalizePositiveNumber(record["depositAmount"]);
+    return fixedValue ? { mode, value: fixedValue } : null;
+  }
+
+  const percentValue = normalizePositiveNumber(record["depositValue"]);
+  if (percentValue) {
+    return { mode, value: percentValue };
+  }
+
+  const fallbackAmount = normalizePositiveNumber(record["depositAmount"]);
+  if (fallbackAmount) {
+    return { mode: "fixed", value: fallbackAmount };
+  }
+
+  return null;
+};
+
+const computeExtraServicesTotal = (items: ProjectServiceLineItem[]): number =>
+  items.reduce((sum, item) => {
+    const pricing = calculateLineItemPricing(item);
+    return sum + pricing.gross;
+  }, 0);

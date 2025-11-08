@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ExternalLink, AlertTriangle, Calendar as CalendarIcon, ChevronDown, Pencil, Trash2 } from 'lucide-react';
@@ -18,6 +18,8 @@ import { useFormsTranslation, useMessagesTranslation } from '@/hooks/useTypedTra
 import { EntityHeader } from '@/components/EntityHeader';
 import { buildSessionSummaryItems } from '@/lib/sessions/buildSessionSummaryItems';
 import { useIsMobile } from "@/hooks/use-mobile";
+import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
+import { useTranslation } from "react-i18next";
 interface SessionData {
   id: string;
   session_name?: string | null;
@@ -75,12 +77,15 @@ export default function SessionSheetView({
   const {
     t: tMessages
   } = useMessagesTranslation();
+  const { t: tPages } = useTranslation("pages");
   const isMobile = useIsMobile();
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editStartStep, setEditStartStep] = useState<SessionPlanningStepId | undefined>(undefined);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const sheetNavOffset = 0;
   const fetchSession = useCallback(async () => {
     if (!sessionId) return;
     try {
@@ -310,87 +315,98 @@ export default function SessionSheetView({
       </span>
     </span>
   ) : undefined;
+
+  const leftColumnContent = session?.leads ? (
+    <UnifiedClientDetails
+      lead={{
+        id: session.leads.id,
+        name: session.leads.name,
+        email: session.leads.email,
+        phone: session.leads.phone,
+        notes: session.leads.notes,
+      }}
+      title={tPages("sessionDetail.cards.clientDetails")}
+      showQuickActions={true}
+      showClickableNames={true}
+      defaultExpanded={false}
+      onNavigateToLead={handleLeadClick}
+    />
+  ) : null;
+
+  const sections = session
+    ? [
+        {
+          id: "session-sheet-gallery",
+          title: tPages("sessionDetail.gallery.title"),
+          content: <SessionGallery sessionId={session.id} />,
+        },
+      ]
+    : [];
+
+  const dangerZone = (
+    <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-6">
+      <div className="space-y-4">
+        <h3 className="font-medium text-destructive">
+          {tPages("sessionDetail.dangerZone.title")}
+        </h3>
+        <Button
+          variant="outline"
+          onClick={() => setIsDeleteDialogOpen(true)}
+          className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+          size="lg"
+        >
+          {tPages("sessionDetail.dangerZone.button")}
+        </Button>
+        <p className="text-sm text-muted-foreground text-center">
+          {tPages("sessionDetail.dangerZone.description")}
+        </p>
+      </div>
+    </div>
+  );
   return <>
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full h-[100vh] overflow-y-auto overscroll-contain pr-2 pt-8 sm:pt-6 sm:max-w-6xl lg:max-w-7xl">
-          {loading ? <div className="p-6">
-              <div className="animate-pulse space-y-4">
-                <div className="h-6 bg-muted rounded w-1/3"></div>
-                <div className="h-4 bg-muted rounded w-1/2"></div>
-                <div className="h-32 bg-muted rounded"></div>
-              </div>
-            </div> : session ? <>
-              <div className="space-y-6 pb-6">
-                <EntityHeader
-                  name={sessionNameDisplay}
-                  title={headerTitle}
-                  summaryItems={summaryItems}
-                  banner={overdueBanner}
-                  actions={headerActions}
-                  avatarClassName="bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500 text-white ring-0"
-                  avatarContent={<CalendarIcon className="h-5 w-5 text-white" aria-hidden="true" />}
-                  fallbackInitials="SE"
-                />
-
-                {/* Main Content Grid */}
-                <div className="grid grid-cols-12 gap-4 md:gap-6 w-full max-w-full overflow-hidden">
-                  {/* Left summary column */}
-                  <aside className="col-span-12 lg:col-span-4 min-w-0">
-                    <div className="h-fit space-y-4 w-full max-w-full">
-                      {session.leads && (
-                        <UnifiedClientDetails
-                          lead={{
-                            id: session.leads.id,
-                            name: session.leads.name,
-                            email: session.leads.email,
-                            phone: session.leads.phone,
-                            notes: session.leads.notes,
-                          }}
-                          title={tForms('sessionSheet.clientDetails')}
-                          showQuickActions={true}
-                          showClickableNames={true}
-                          defaultExpanded={false}
-                          onNavigateToLead={handleLeadClick}
-                        />
-                      )}
-                    </div>
-                  </aside>
-
-                  {/* Right detail column */}
-                  <main className="col-span-12 lg:col-span-8 min-w-0">
-                    <div className="space-y-6 md:space-y-8 w-full max-w-full">
-                      <section className="scroll-mt-[88px] w-full max-w-full overflow-hidden">
-                        <div className="w-full max-w-full">
-                          <SessionGallery sessionId={session.id} />
-                        </div>
-                      </section>
-
-                      {/* Danger Zone */}
-                      <section className="scroll-mt-[88px] w-full max-w-full overflow-hidden">
-                        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-6">
-                          <div className="space-y-4">
-                            <Button
-                              variant="outline"
-                              onClick={() => setIsDeleteDialogOpen(true)}
-                              className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                              size="lg"
-                            >
-                              {tForms('sessionSheet.deleteSession')}
-                            </Button>
-                            <p className="text-sm text-muted-foreground text-center">
-                              {tForms('sessionSheet.deleteWarning')}
-                            </p>
-                          </div>
-                        </div>
-                      </section>
-                    </div>
-                  </main>
+        <SheetContent className="w-full h-[100vh] overflow-hidden p-0 sm:max-w-6xl lg:max-w-7xl">
+          <div
+            ref={scrollContainerRef}
+            className="h-full overflow-y-auto overscroll-contain bg-background"
+          >
+            {loading ? <div className="p-6">
+                <div className="animate-pulse space-y-4">
+                  <div className="h-6 bg-muted rounded w-1/3"></div>
+                  <div className="h-4 bg-muted rounded w-1/2"></div>
+                  <div className="h-32 bg-muted rounded"></div>
                 </div>
-              </div>
-            </> : <div className="p-6 text-center">
-              <h3 className="text-lg font-semibold mb-2">{tForms('sessions.sessionNotFound')}</h3>
-              <p className="text-muted-foreground">{tForms('sessions.unableToLoadDetails')}</p>
-            </div>}
+              </div> : session ? (
+                <div className="mx-auto max-w-full px-4 pb-10 pt-6 sm:px-6">
+                  <div className="space-y-6">
+                    <EntityHeader
+                      name={sessionNameDisplay}
+                      title={headerTitle}
+                      summaryItems={summaryItems}
+                      banner={overdueBanner}
+                      actions={headerActions}
+                      avatarClassName="bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500 text-white ring-0"
+                      avatarContent={<CalendarIcon className="h-5 w-5 text-white" aria-hidden="true" />}
+                      fallbackInitials="SE"
+                    />
+
+                    <ProjectDetailsLayout
+                      header={<></>}
+                      left={leftColumnContent}
+                      sections={sections}
+                      overviewNavId="session-sheet-overview"
+                      overviewLabel={tForms('project_sheet.overview_tab')}
+                      stickyTopOffset={sheetNavOffset}
+                      scrollContainerRef={scrollContainerRef}
+                      rightFooter={dangerZone}
+                    />
+                  </div>
+                </div>
+              ) : <div className="p-6 text-center">
+                <h3 className="text-lg font-semibold mb-2">{tForms('sessions.sessionNotFound')}</h3>
+                <p className="text-muted-foreground">{tForms('sessions.unableToLoadDetails')}</p>
+              </div>}
+          </div>
         </SheetContent>
       </Sheet>
 

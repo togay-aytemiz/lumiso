@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { format } from "date-fns";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { format, isSameDay } from "date-fns";
 import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "@/components/react-calendar.css";
@@ -559,20 +559,24 @@ export function ProjectDepositPaymentDialog({
   const [description, setDescription] = useState<string>("");
   const [datePaid, setDatePaid] = useState<Date | undefined>(new Date());
   const [isSaving, setIsSaving] = useState(false);
+  const initialDateRef = useRef<Date | null>(null);
 
   useEffect(() => {
     if (!open) return;
-    const remaining = Math.max(depositAmount - depositPaid, 0);
-    setAmount(remaining > 0 ? remaining.toFixed(2) : depositAmount.toFixed(2));
+    const now = new Date();
+    initialDateRef.current = now;
+    setAmount("");
     setDescription("");
-    setDatePaid(new Date());
+    setDatePaid(now);
   }, [open, depositAmount, depositPaid]);
 
   const remainingAmount = Math.max(depositAmount - depositPaid, 0);
 
-  const isDirty =
-    Boolean(amount.trim() || description.trim()) ||
-    (datePaid && !Number.isNaN(datePaid.getTime()));
+  const dateChanged =
+    Boolean(datePaid && initialDateRef.current && !Number.isNaN(datePaid.getTime())) &&
+    !isSameDay(datePaid as Date, initialDateRef.current as Date);
+
+  const isDirty = Boolean(amount.trim() || description.trim() || dateChanged);
 
   const navigation = useModalNavigation({
     isDirty,
@@ -717,9 +721,31 @@ export function ProjectDepositPaymentDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="deposit-payment-amount">
-              {t("payments.amount_try", { defaultValue: "Amount (TRY)" })} *
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="deposit-payment-amount">
+                {t("payments.amount_try", { defaultValue: "Amount (TRY)" })} *
+              </Label>
+              {(remainingAmount > 0 || depositAmount > 0) && (
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  className="h-auto px-0 text-xs font-semibold"
+                  onClick={() => {
+                    const target = remainingAmount > 0 ? remainingAmount : depositAmount;
+                    setAmount(target > 0 ? target.toFixed(2) : "");
+                  }}
+                >
+                  {remainingAmount > 0
+                    ? t("payments.deposit.fill_remaining", {
+                        defaultValue: "Use remaining amount"
+                      })
+                    : t("payments.deposit.fill_full", {
+                        defaultValue: "Use full deposit"
+                      })}
+                </Button>
+              )}
+            </div>
             <Input
               id="deposit-payment-amount"
               type="number"

@@ -596,7 +596,7 @@ export function ViewProjectDialog({
                } else {
                  window.scrollTo({ top: 0, behavior: "smooth" });
                }
-             }} rightFooter={<div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
+             }} scrollContainerRef={scrollContainerRef} rightFooter={<div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
                    <div className="space-y-3">
                      <Button variant="outline" onClick={() => setShowDeleteDialog(true)} className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
                        {tForms('projectDetails.header.delete')}

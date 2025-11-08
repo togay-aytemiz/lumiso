@@ -6,6 +6,7 @@ type IOCallback = (entries: IntersectionObserverEntry[]) => void;
 const observeMock = jest.fn();
 const disconnectMock = jest.fn();
 let intersectionCallback: IOCallback | null = null;
+const scrollToMock = jest.fn();
 
 class FakeIntersectionObserver {
   constructor(callback: IOCallback) {
@@ -20,8 +21,17 @@ describe("StickySectionNav", () => {
     observeMock.mockClear();
     disconnectMock.mockClear();
     intersectionCallback = null;
+    scrollToMock.mockClear();
     // @ts-expect-error - assign test double
     global.IntersectionObserver = FakeIntersectionObserver;
+    Object.defineProperty(window, "scrollTo", {
+      value: scrollToMock,
+      writable: true,
+    });
+    Object.defineProperty(window, "scrollY", {
+      value: 0,
+      writable: true,
+    });
   });
 
   afterEach(() => {
@@ -59,17 +69,78 @@ describe("StickySectionNav", () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
   });
 
-  it("scrolls to section when onSelect is absent", () => {
+  it("scrolls window to section when onSelect is absent", () => {
     const target = document.createElement("div");
     target.id = "section-3";
-    const scrollSpy = jest.fn();
-    target.scrollIntoView = scrollSpy;
+    target.getBoundingClientRect = () =>
+      ({
+        top: 400,
+        bottom: 420,
+        left: 0,
+        right: 0,
+        height: 20,
+        width: 0,
+        x: 0,
+        y: 400,
+        toJSON: () => ({}),
+      }) as DOMRect;
     document.body.appendChild(target);
 
     render(<StickySectionNav items={baseItems} scrollBehavior="auto" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Section 3" }));
-    expect(scrollSpy).toHaveBeenCalledWith({ behavior: "auto", block: "start" });
+    expect(scrollToMock).toHaveBeenCalledWith({ top: 388, behavior: "auto" });
+  });
+
+  it("scrolls provided container when ref is set", () => {
+    const container = document.createElement("div");
+    container.scrollTop = 10;
+    container.getBoundingClientRect = () =>
+      ({
+        top: 100,
+        bottom: 500,
+        left: 0,
+        right: 0,
+        height: 400,
+        width: 0,
+        x: 0,
+        y: 100,
+        toJSON: () => ({}),
+      }) as DOMRect;
+    container.scrollTo = jest.fn();
+
+    const target = document.createElement("div");
+    target.id = "section-2";
+    target.getBoundingClientRect = () =>
+      ({
+        top: 320,
+        bottom: 360,
+        left: 0,
+        right: 0,
+        height: 40,
+        width: 0,
+        x: 0,
+        y: 320,
+        toJSON: () => ({}),
+      }) as DOMRect;
+
+    container.appendChild(target);
+    document.body.appendChild(container);
+
+    const scrollContainerRef =
+      { current: container } as NonNullable<StickySectionNavProps["scrollContainerRef"]>;
+
+    render(
+      <StickySectionNav
+        items={baseItems}
+        scrollContainerRef={scrollContainerRef}
+        scrollBehavior="auto"
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Section 2" }));
+    expect(container.scrollTo).toHaveBeenCalledWith({ top: 218, behavior: "auto" });
+    expect(scrollToMock).not.toHaveBeenCalled();
   });
 
   it("updates the active id when observed sections intersect", async () => {

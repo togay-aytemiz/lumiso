@@ -71,6 +71,12 @@ export const organizationSettingsItems: SettingsNavItem[] = [
     testId: "billing-section",
   },
   {
+    title: "billingSubscription",
+    href: "/settings/billing/subscription",
+    icon: CreditCard,
+    testId: "billing-subscription-section",
+  },
+  {
     title: "dangerZone",
     href: "/settings/danger-zone",
     icon: AlertTriangle,
@@ -119,6 +125,10 @@ export const pageMetadata: Record<
   "/settings/billing": {
     titleKey: "settings.billing.title",
     descriptionKey: "settings.billing.description",
+  },
+  "/settings/billing/subscription": {
+    titleKey: "settings.billingSubscription.title",
+    descriptionKey: "settings.billingSubscription.description",
   },
   "/settings/danger-zone": {
     titleKey: "settings.dangerZone.title",

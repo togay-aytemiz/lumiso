@@ -1115,7 +1115,7 @@
       "vat_breakdown_aria": "KDV dağılımını göster"
     },
     "deposit": {
-      "title": "Kapora özeti",
+      "title": "Kapora bilgileri",
       "not_configured": "Bu proje için kapora tanımlanmadı.",
       "due": "{{amount}} kapora bekleniyor.",
       "partial": "{{required}} kaporanın {{paid}} tutarı alındı (kalan {{remaining}}).",
@@ -1126,10 +1126,12 @@
       "description_placeholder": "Kayıtlarınız için isteğe bağlı not",
       "setup_success": "Kapora bilgileri güncellendi.",
       "actions": {
-        "configure": "Kapora ayarla",
+        "configure": "Kapora Ekle",
         "record_payment": "Kapora ödemesi işle",
         "setup": "Kapora tutarı belirle",
-        "adjust": "Kapora tutarını düzenle"
+        "adjust": "Kapora düzenle",
+        "edit_short": "Düzenle",
+        "record_short": "Ödeme işle"
       },
       "enable_label": "Rezervasyonu güvenceye almak için peşinat talep edin.",
       "enable_helper": "Rezervasyonun kesinleşmesi için peşinat isteyin.",
@@ -1138,6 +1140,8 @@
       "remaining_info": "Kalan kapora: {{remaining}} TL",
       "payment_description_placeholder": "Ödeme için isteğe bağlı not",
       "payment_success": "Kapora ödemesi kaydedildi.",
+      "fill_remaining": "Kalan tutarı doldur",
+      "fill_full": "Kapora tutarını doldur",
       "payment_action": "Ödemeyi kaydet",
       "amount_exceeds_remaining": "Tutar kalan kapora tutarını aşıyor ({{remaining}}).",
       "mode_label": "Kapora türü",

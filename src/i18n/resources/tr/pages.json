@@ -1233,7 +1233,19 @@
     "billing": {
       "title": "Faturalandırma ve Ödemeler",
       "description": "Fatura profili, vergi ve ödeme bilgileri",
-      "comingSoon": "Yakında geliyor..."
+      "comingSoon": "Yakında geliyor...",
+      "companySectionTitle": "Müşteri faturalandırma kimliği",
+      "companySectionDescription": "Faturalarda ve paketlerde gösterilecek yasal şirket bilgilerinizi girin.",
+      "taxSectionTitle": "Varsayılan KDV ve fiyatlandırma",
+      "taxSectionDescription": "Yeni hizmet/paket oluştururken kullanılacak varsayılan değerler.",
+      "paymentMethodsTitle": "Ödeme yöntemleri",
+      "paymentMethodsDescription": "Müşterilere göstereceğiniz banka hesapları veya ödeme linkleri.",
+      "paymentMethodsPlaceholder": "Müşteriye dönük ödeme yöntemleri yakında eklenecek."
+    },
+    "billingSubscription": {
+      "title": "Lumiso aboneliği",
+      "description": "Lumiso planınızı, faturalarınızı ve fatura bilgilerinizi buradan yönetin.",
+      "comingSoon": "Çalışma alanı aboneliği yakında buradan yönetilebilecek."
     },
     "integrations": {
       "title": "Entegrasyonlar",

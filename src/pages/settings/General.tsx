@@ -41,7 +41,7 @@ export default function General() {
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { completeCurrentStep } = useOnboarding();
+  const { completeCurrentStep, currentStepInfo, nextStepInfo, isInGuidedSetup } = useOnboarding();
   const { t } = useTranslation(['pages', 'common', 'forms']);
   const { toast } = useToast();
   const {
@@ -64,6 +64,30 @@ export default function General() {
   // Check if we're in tutorial mode from Profile onboarding
   const isInTutorial = searchParams.get('tutorial') === 'true';
   const [showTutorial, setShowTutorial] = useState(isInTutorial);
+  const [tutorialDismissed, setTutorialDismissed] = useState(false);
+  const onboardingProfileStepActive =
+    isInGuidedSetup && currentStepInfo?.route?.startsWith("/settings/profile");
+  const onboardingStepRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (isInTutorial) {
+      setTutorialDismissed(false);
+      setShowTutorial(true);
+    }
+  }, [isInTutorial]);
+
+  useEffect(() => {
+    if (onboardingProfileStepActive) {
+      const currentId = currentStepInfo?.id ?? null;
+      if (onboardingStepRef.current !== currentId) {
+        onboardingStepRef.current = currentId;
+        setTutorialDismissed(false);
+      }
+      if (!tutorialDismissed) {
+        setShowTutorial(true);
+      }
+    }
+  }, [onboardingProfileStepActive, currentStepInfo?.id, tutorialDismissed]);
   
   // Create tutorial steps for General page (steps 3, 4, and 5 from Profile)
   const tutorialSteps: TutorialStep[] = [
@@ -216,16 +240,25 @@ export default function General() {
   const handleTutorialComplete = async () => {
     // Settings tutorial completed successfully
     try {
+      const nextRoute = nextStepInfo?.route;
       await completeCurrentStep();
-      // Navigating to next tutorial step
+      setTutorialDismissed(true);
       setShowTutorial(false);
-      navigate('/getting-started');
+      if (nextRoute) {
+        const target = nextRoute.includes("?")
+          ? nextRoute
+          : `${nextRoute}?tutorial=true`;
+        navigate(target);
+      } else {
+        navigate('/getting-started');
+      }
     } catch (error) {
       console.error('❌ Error completing step:', error);
     }
   };
 
   const handleTutorialExit = async () => {
+    setTutorialDismissed(true);
     setShowTutorial(false);
   };
 

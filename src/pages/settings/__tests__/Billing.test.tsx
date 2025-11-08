@@ -39,8 +39,14 @@ describe("Billing settings page", () => {
     render(<Billing />);
 
     expect(screen.getByTestId("settings-page-wrapper")).toBeInTheDocument();
-    expect(screen.getByText("settings.billing.title")).toBeInTheDocument();
-    expect(screen.getByText("settings.billing.description")).toBeInTheDocument();
-    expect(screen.getByText("settings.billing.comingSoon")).toBeInTheDocument();
+    expect(
+      screen.getByText("settings.billing.companySectionTitle")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("settings.billing.taxSectionTitle")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("settings.billing.paymentMethodsPlaceholder")
+    ).toBeInTheDocument();
   });
 });

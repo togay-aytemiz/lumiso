@@ -868,6 +868,7 @@ export function LegacyProjectSheetView({
           overviewNavId="project-sheet-overview"
           overviewLabel={tForms('project_sheet.overview_tab')}
           stickyTopOffset={sheetNavOffset}
+          scrollContainerRef={scrollContainerRef}
           onOverviewScroll={() => {
             if (scrollContainerRef.current) {
               scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });

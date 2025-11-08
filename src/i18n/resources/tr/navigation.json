@@ -59,7 +59,8 @@
     "leads": "Kişi Yönetimi",
     "clientMessaging": "Müşteri Mesajlaşma",
     "contracts": "Sözleşmeler",
-    "dangerZone": "Tehlike Bölgesi"
+    "dangerZone": "Tehlike Bölgesi",
+    "billingSubscription": "Lumiso Aboneliği"
   },
   "admin": {
     "title": "Yönetim",

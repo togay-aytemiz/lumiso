@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { RefObject } from "react";
 import { cn } from "@/lib/utils";
 
 export interface StickySectionNavItem {
@@ -19,6 +20,7 @@ export interface StickySectionNavProps {
   fallbackActiveId?: string;
   scrollBehavior?: ScrollBehavior;
   disableSticky?: boolean;
+  scrollContainerRef?: RefObject<HTMLElement | null>;
 }
 
 const ALIGN_CLASSNAMES: Record<NonNullable<StickySectionNavProps["align"]>, string> = {
@@ -46,6 +48,7 @@ const BASE_NAV_BUTTON_CLASSES = [
 const ACTIVE_NAV_CLASSES = "border-primary/50 bg-primary/10 text-primary shadow-sm";
 const INACTIVE_NAV_CLASSES =
   "border-transparent bg-muted/20 text-muted-foreground hover:bg-muted/30 hover:text-foreground";
+const EXTRA_SCROLL_MARGIN_PX = 12;
 
 export function StickySectionNav({
   items,
@@ -58,10 +61,12 @@ export function StickySectionNav({
   onActiveChange,
   fallbackActiveId,
   scrollBehavior = "smooth",
-  disableSticky = false
+  disableSticky = false,
+  scrollContainerRef
 }: StickySectionNavProps) {
   const [activeId, setActiveId] = useState<string>(() => fallbackActiveId ?? items[0]?.id ?? "");
   const observer = useRef<IntersectionObserver | null>(null);
+  const navRef = useRef<HTMLDivElement>(null);
 
   const idsToObserve = useMemo(() => {
     const ids = observeIds && observeIds.length > 0 ? observeIds : items.map((item) => item.id);
@@ -120,6 +125,37 @@ export function StickySectionNav({
     }
   }, [activeId, onActiveChange]);
 
+  const scrollToTarget = (targetId: string) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const target = document.getElementById(targetId);
+    if (!target) {
+      return;
+    }
+
+    const stickyOffset =
+      (disableSticky ? 0 : (navRef.current?.offsetHeight ?? 0) + stickyTopOffset) +
+      EXTRA_SCROLL_MARGIN_PX;
+    const scrollContainer = scrollContainerRef?.current;
+
+    if (scrollContainer) {
+      const containerRect = scrollContainer.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const currentOffset = scrollContainer.scrollTop ?? 0;
+      const relativeTop = targetRect.top - containerRect.top + currentOffset;
+      const scrollTarget = Math.max(0, relativeTop - stickyOffset);
+      scrollContainer.scrollTo({ top: scrollTarget, behavior: scrollBehavior });
+      return;
+    }
+
+    const targetPosition = target.getBoundingClientRect().top + window.scrollY;
+    const scrollTarget = Math.max(0, targetPosition - stickyOffset);
+
+    window.scrollTo({ top: scrollTarget, behavior: scrollBehavior });
+  };
+
   const handleSelect = (item: StickySectionNavItem) => {
     setActiveId(item.id);
 
@@ -128,14 +164,7 @@ export function StickySectionNav({
       return;
     }
 
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const target = document.getElementById(item.id);
-    if (target) {
-      target.scrollIntoView({ behavior: scrollBehavior, block: "start" });
-    }
+    scrollToTarget(item.id);
   };
 
   if (items.length === 0) {
@@ -150,6 +179,7 @@ export function StickySectionNav({
 
   return (
     <div
+      ref={navRef}
       className={cn(containerClasses, className)}
       style={containerStyle}
     >

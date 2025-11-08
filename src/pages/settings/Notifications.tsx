@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import { SettingsToggleSection } from "@/components/settings/SettingsSectionVariants";
 import { Switch } from "@/components/ui/switch";
@@ -9,33 +9,16 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useTranslation } from "react-i18next";
-
-
-interface NotificationSettings {
-  // Master Controls
-  globalEnabled: boolean;
-  scheduledTime: string;
-  
-  // Scheduled Notifications  
-  dailySummaryEnabled: boolean;
-  
-  // Immediate Notifications
-  projectMilestoneEnabled: boolean;
-}
+import {
+  useNotificationSettings,
+  NotificationSettings,
+} from "@/hooks/useNotificationSettings";
 
 export default function Notifications() {
   const { toast } = useToast();
   const { t } = useTranslation('pages');
-  const [loading, setLoading] = useState(true);
-  const [settings, setSettings] = useState<NotificationSettings>({
-    globalEnabled: true,
-    scheduledTime: "09:00",
-    dailySummaryEnabled: true,
-    projectMilestoneEnabled: true,
-  });
-
+  const { settings, loading, updateSettings } = useNotificationSettings();
   const [autoSaveStates, setAutoSaveStates] = useState<{[key: string]: 'idle' | 'saving'}>({});
-  const userIdRef = useRef<string | null>(null);
 
   // Generate time options every 30 minutes in 24h format
   const generateTimeOptions = () => {
@@ -51,103 +34,15 @@ export default function Notifications() {
 
   const timeOptions = generateTimeOptions();
 
-  // Load settings from database
-  const loadSettings = useCallback(async () => {
-    const userId = userIdRef.current;
-    if (!userId) return;
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('user_settings')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error loading settings:', error);
-        return;
-      }
-
-      if (data) {
-        const loadedSettings: NotificationSettings = {
-          globalEnabled: data.notification_global_enabled ?? true,
-          scheduledTime: data.notification_scheduled_time ?? "09:00",
-          dailySummaryEnabled: data.notification_daily_summary_enabled ?? true,
-          projectMilestoneEnabled: data.notification_project_milestone_enabled ?? true,
-        };
-        setSettings(loadedSettings);
-      }
-    } catch (error) {
-      console.error('Error loading notification settings:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    const init = async () => {
-      try {
-        const { data, error } = await supabase.auth.getUser();
-        if (error) throw error;
-        if (!mounted) return;
-        if (!data.user) {
-          setLoading(false);
-          return;
-        }
-        userIdRef.current = data.user.id;
-        await loadSettings();
-      } catch (error) {
-        console.error('Error initializing notification settings:', error);
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    void init();
-
-    return () => {
-      mounted = false;
-    };
-  }, [loadSettings]);
-
   // Master toggle for all notifications
   const handleToggleAllNotifications = async (enabled: boolean) => {
     setAutoSaveStates(prev => ({ ...prev, globalEnabled: 'saving' }));
-    const userId = userIdRef.current;
-    if (!userId) {
-      setAutoSaveStates(prev => ({ ...prev, globalEnabled: 'idle' }));
-      toast({
-        title: t('settings.notifications.toasts.error'),
-        description: t('settings.notifications.toasts.errorDesc'),
-        variant: "destructive",
-      });
-      return;
-    }
-    
     try {
-      // Update global setting and all individual settings
-      const updates = {
-        notification_global_enabled: enabled,
-        notification_daily_summary_enabled: enabled,
-        notification_project_milestone_enabled: enabled,
-      };
-
-      const { error } = await supabase
-        .from('user_settings')
-        .update(updates)
-        .eq('user_id', userId);
-
-      if (error) throw error;
-
-      setSettings(prev => ({
-        ...prev,
+      await updateSettings({
         globalEnabled: enabled,
         dailySummaryEnabled: enabled,
         projectMilestoneEnabled: enabled,
-      }));
-      
+      });
       setAutoSaveStates(prev => ({ ...prev, globalEnabled: 'idle' }));
       
       toast({
@@ -168,36 +63,9 @@ export default function Notifications() {
   // Auto-save function for individual settings
   const handleAutoSave = async (field: keyof NotificationSettings, value: boolean | string) => {
     setAutoSaveStates(prev => ({ ...prev, [field]: 'saving' }));
-    const userId = userIdRef.current;
-    if (!userId) {
-      setAutoSaveStates(prev => ({ ...prev, [field]: 'idle' }));
-      toast({
-        title: t('settings.notifications.toasts.error'),
-        description: t('settings.notifications.toasts.errorDesc'),
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    const fieldMap: {[key in keyof NotificationSettings]: string} = {
-      globalEnabled: 'notification_global_enabled',
-      scheduledTime: 'notification_scheduled_time',
-      dailySummaryEnabled: 'notification_daily_summary_enabled',
-      projectMilestoneEnabled: 'notification_project_milestone_enabled',
-    };
 
     try {
-      const dbField = fieldMap[field];
-      if (!dbField) throw new Error('Invalid field');
-
-      const { error } = await supabase
-        .from('user_settings')
-        .update({ [dbField]: value })
-        .eq('user_id', userId);
-
-      if (error) throw error;
-
-      setSettings(prev => ({ ...prev, [field]: value }));
+      await updateSettings({ [field]: value });
       setAutoSaveStates(prev => ({ ...prev, [field]: 'idle' }));
       
       toast({

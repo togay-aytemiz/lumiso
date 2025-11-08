@@ -350,6 +350,42 @@
           }
         ],
         "expected_result": "Kişide seans kalmadığında özet kartı kullanıcıyı yeni seans planlamaya yönlendirir."
+      },
+      {
+        "external_id": "CRM-SESSIONS-452",
+        "title": "Session detay sayfasında sticky sekme navigasyonu",
+        "description": "Genel Bakış / Galeri sekmelerine tıklandığında başlıkların sticky çubuk altında kalmadan göründüğünü doğrular.",
+        "steps": [
+          {
+            "action": "/sessions/:id sayfasında üstteki sekme çubuğundan \"Galeri\" butonuna tıklayın.",
+            "expected_result": "Sayfa galeri kartına kayar; \"Galeri\" başlığı blur alanının altında kalmaz ve çubuk ekranın üstüne yapışık kalır."
+          },
+          {
+            "action": "Sekme çubuğundan tekrar \"Genel Bakış\" seçeneğine tıklayın.",
+            "expected_result": "Sayfa en üste yumuşak şekilde kayar ve EntityHeader bölümünün tamamı görünür."
+          }
+        ],
+        "expected_result": "Session detail’deki sticky sekmeler her seçimde doğru bölüme kaydırır ve başlıkları gizlemez."
+      },
+      {
+        "external_id": "CRM-SESSIONS-453",
+        "title": "Session sheet’inde sekme ve metin uyumu",
+        "description": "Quick view sheet’inde kullanılan sekme etiketlerinin sayfa ile aynı olduğunu, kaydırmanın sheet içinde kaldığını ve Tehlike Bölgesi metinlerinin detail sayfasıyla eşleştiğini doğrular.",
+        "steps": [
+          {
+            "action": "Listeden veya takvimden herhangi bir seans sheet’ini açın.",
+            "expected_result": "Sheet üstünde \"Genel Bakış\" ve \"Galeri\" sekmeleri görünür; Tehlike Bölgesi başlığı \"Seansı Sil\" butonuyla detail sayfasındakiyle aynı metinleri gösterir."
+          },
+          {
+            "action": "\"Galeri\" sekmesine tıklayın ve arka plan sayfasının scroll durumunu kontrol edin.",
+            "expected_result": "Kaydırma yalnızca sheet içinde gerçekleşir; başlık sticky çubuğun altında kalmaz ve arka plan sayfası hareket etmez."
+          },
+          {
+            "action": "\"Genel Bakış\" sekmesine geri dönün.",
+            "expected_result": "Sheet en üste döner, EntityHeader alanı tam görünür ve nav çubuğu sheet’in üstüne yapışık kalır."
+          }
+        ],
+        "expected_result": "Session sheet, detail sayfasıyla aynı metinleri ve sekme davranışını korur; kaydırma sadece sheet içinde yapılır."
       }
     ]
   },

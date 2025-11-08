@@ -49,7 +49,7 @@ export default function Profile() {
     refetch: refetchWorkingHours,
   } = useWorkingHours();
   const { activeOrganization } = useOrganization();
-  const { completeCurrentStep } = useOnboarding();
+  const { completeCurrentStep, currentStepInfo, isInGuidedSetup } = useOnboarding();
   const { toast } = useToast();
   const { t } = useTranslation(['pages', 'common']);
   const {
@@ -73,10 +73,34 @@ export default function Profile() {
   const isInTutorial = searchParams.get('tutorial') === 'true';
   const stepParam = searchParams.get('step');
   const [showTutorial, setShowTutorial] = useState(isInTutorial);
+  const [tutorialDismissed, setTutorialDismissed] = useState(false);
   const [tutorialStepIndex, setTutorialStepIndex] = useState(() => {
     if (stepParam) return parseInt(stepParam) - 1;
     return 0;
   });
+  const onboardingProfileStepActive =
+    isInGuidedSetup && currentStepInfo?.route?.startsWith("/settings/profile");
+  const onboardingStepRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (isInTutorial) {
+      setTutorialDismissed(false);
+      setShowTutorial(true);
+    }
+  }, [isInTutorial]);
+
+  useEffect(() => {
+    if (onboardingProfileStepActive) {
+      const currentId = currentStepInfo?.id ?? null;
+      if (onboardingStepRef.current !== currentId) {
+        onboardingStepRef.current = currentId;
+        setTutorialDismissed(false);
+      }
+      if (!tutorialDismissed) {
+        setShowTutorial(true);
+      }
+    }
+  }, [onboardingProfileStepActive, currentStepInfo?.id, tutorialDismissed]);
 
   // Profile section state
   const profileSection = useSettingsCategorySection({
@@ -285,13 +309,14 @@ export default function Profile() {
   ];
 
   const handleTutorialComplete = async () => {
-    // Profile tutorial completed, moving to general settings
-    // Navigate to General tutorial instead of completing step
+    // Profile tutorial completed, moving to general settings (same onboarding step)
+    setTutorialDismissed(true);
     setShowTutorial(false);
-    navigate('/settings/general?tutorial=true');
+    navigate("/settings/general?tutorial=true");
   };
 
   const handleTutorialExit = async () => {
+    setTutorialDismissed(true);
     setShowTutorial(false);
   };
 

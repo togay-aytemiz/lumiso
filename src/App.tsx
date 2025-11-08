@@ -29,6 +29,7 @@ import LeadsSettings from "./pages/settings/Leads";
 import ServicesSettings from "./pages/settings/Services";
 import ContractsSettings from "./pages/settings/Contracts";
 import BillingSettings from "./pages/settings/Billing";
+import BillingSubscriptionSettings from "./pages/settings/BillingSubscription";
 import DangerZoneSettings from "./pages/settings/DangerZone";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -52,6 +53,7 @@ const renderSettingsRoutes = (enableOverlay: boolean) => (
     <Route path="services" element={<ServicesSettings />} />
     <Route path="contracts" element={<ContractsSettings />} />
     <Route path="billing" element={<BillingSettings />} />
+    <Route path="billing/subscription" element={<BillingSubscriptionSettings />} />
     <Route path="danger-zone" element={<DangerZoneSettings />} />
   </Route>
 );

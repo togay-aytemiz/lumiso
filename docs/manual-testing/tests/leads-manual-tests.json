@@ -179,6 +179,26 @@
         "expected_result": "Seans planlama sihirbazı, takvimden seçilen tarih/saat ile kayıt oluşturur ve kişi özetine yansıtır."
       },
       {
+        "external_id": "CRM-LEADS-242",
+        "title": "Lead detay sekme navigasyonu başlıkları gizlemez",
+        "description": "Genel Bakış / Projeler / Aktivite sekmelerine tıklandığında sticky barın hedef başlıkları kapatmadan kaydırdığını doğrular.",
+        "steps": [
+          {
+            "action": "Herhangi bir /leads/:id sayfasını açın ve üstteki sekme çubuğundan \"Projeler\" seçeneğine tıklayın.",
+            "expected_result": "Sayfa projeler bölümüne kayar ve \"Projeler\" kart başlığı sticky barın hemen altında tamamen görünür."
+          },
+          {
+            "action": "Aynı çubuktan \"Aktivite\" sekmesine tıklayın.",
+            "expected_result": "\"Aktivite\" başlığı blur/şeffaf alanın altında kalmaz, sticky nav kaydırma boyunca ekranın üstüne yapışık kalır."
+          },
+          {
+            "action": "\"Genel Bakış\" sekmesine dönün.",
+            "expected_result": "Sayfa üst kısma yumuşak şekilde kayar; header ve sekme çubuğu arasında boşluk oluşmaz ve en üstteki kartlar tamamen görünür."
+          }
+        ],
+        "expected_result": "Sekmeler hangi bölüm seçilirse seçilsin başlıkları gizlemeden doğru konuma kaydırır ve sticky çubuk her zaman görünür kalır."
+      },
+      {
         "external_id": "CRM-LEADS-209",
         "title": "Durum filtresi ile listeyi daraltma ve sıfırlama",
         "description": "/leads tablosundaki filtre panelinin durumlara göre sonuçları sınırladığını ve kolayca sıfırlanabildiğini doğrular.",

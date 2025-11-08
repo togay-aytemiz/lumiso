@@ -1233,7 +1233,19 @@
     "billing": {
       "title": "Billing & Payments",
       "description": "Billing profile, taxes, payment info",
-      "comingSoon": "Coming soon..."
+      "comingSoon": "Coming soon...",
+      "companySectionTitle": "Client billing identity",
+      "companySectionDescription": "Legal entity info shown on invoices, packages, and payment requests.",
+      "taxSectionTitle": "Default VAT & pricing",
+      "taxSectionDescription": "Used whenever you create new services or packages (can be overridden per item).",
+      "paymentMethodsTitle": "Payment methods",
+      "paymentMethodsDescription": "Bank accounts or payment links shared on client invoices.",
+      "paymentMethodsPlaceholder": "Client-facing payment methods are coming soon."
+    },
+    "billingSubscription": {
+      "title": "Lumiso subscription",
+      "description": "Manage your Lumiso plan, invoices, and billing contacts.",
+      "comingSoon": "Workspace subscription management is coming soon."
     },
     "integrations": {
       "title": "Integrations",

@@ -1,4 +1,4 @@
-import { ReactNode, useMemo } from "react";
+import { ReactNode, useMemo, type RefObject } from "react";
 import StickySectionNav, { StickySectionNavItem } from "./StickySectionNav";
 const DEFAULT_OVERVIEW_ID = "project-overview";
 const DEFAULT_OVERVIEW_LABEL = "Overview";
@@ -15,6 +15,7 @@ interface ProjectDetailsLayoutProps {
   onOverviewScroll?: () => void;
   navAlign?: "start" | "center" | "end";
   navAriaLabel?: string;
+  scrollContainerRef?: RefObject<HTMLElement | null>;
 }
 
 export default function ProjectDetailsLayout({
@@ -28,7 +29,8 @@ export default function ProjectDetailsLayout({
   overviewLabel = DEFAULT_OVERVIEW_LABEL,
   onOverviewScroll,
   navAlign = "end",
-  navAriaLabel = "Section navigation"
+  navAriaLabel = "Section navigation",
+  scrollContainerRef
 }: ProjectDetailsLayoutProps) {
   const navItems = useMemo<StickySectionNavItem[]>(() => {
     const sectionNav = sections.map((section) => ({
@@ -46,6 +48,12 @@ export default function ProjectDetailsLayout({
         return;
       }
 
+      const container = scrollContainerRef?.current;
+      if (container) {
+        container.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
       if (typeof window !== "undefined") {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
@@ -59,7 +67,7 @@ export default function ProjectDetailsLayout({
       },
       ...sectionNav
     ];
-  }, [sections, showOverviewNav, overviewNavId, overviewLabel, onOverviewScroll]);
+  }, [sections, showOverviewNav, overviewNavId, overviewLabel, onOverviewScroll, scrollContainerRef]);
 
   return (
     <div className="w-full min-h-screen">
@@ -78,6 +86,7 @@ export default function ProjectDetailsLayout({
         stickyTopOffset={stickyTopOffset}
         align={navAlign}
         ariaLabel={navAriaLabel}
+        scrollContainerRef={scrollContainerRef}
         fallbackActiveId={showOverviewNav ? overviewNavId : sections[0]?.id}
       />
 

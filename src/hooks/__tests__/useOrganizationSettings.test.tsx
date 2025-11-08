@@ -33,6 +33,7 @@ jest.mock("@/lib/organizationSettingsCache", () => ({
     defaultVatRate: 20,
     defaultVatMode: "inclusive",
     pricesIncludeVat: true,
+    vatExempt: false,
   },
 }));
 

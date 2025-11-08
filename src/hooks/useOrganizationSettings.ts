@@ -53,6 +53,7 @@ const normalizeSettings = (
       rawProfile?.companyName ??
       settings.photography_business_name ??
       DEFAULT_ORGANIZATION_TAX_PROFILE.companyName,
+    vatExempt: Boolean(rawProfile?.vatExempt),
   };
 
   return {

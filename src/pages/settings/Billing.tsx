@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Switch } from "@/components/ui/switch";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import {
   DEFAULT_ORGANIZATION_TAX_PROFILE,
@@ -26,14 +25,14 @@ const clampVatRate = (value: number) => {
 };
 
 type TaxProfileFormState = {
-  legalEntityType: "individual" | "company";
+  legalEntityType: "individual" | "company" | "freelance";
   companyName: string;
   taxOffice: string;
   taxNumber: string;
   billingAddress: string;
   defaultVatRate: string;
   defaultVatMode: "inclusive" | "exclusive";
-  pricesIncludeVat: boolean;
+  vatExempt: boolean;
 };
 
 type TaxProfileFormErrors = Partial<Record<keyof TaxProfileFormState, string>>;
@@ -51,23 +50,59 @@ const profileToFormState = (
       ? String(profile.defaultVatRate)
       : String(DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate),
   defaultVatMode: profile.defaultVatMode ?? "exclusive",
-  pricesIncludeVat: profile.pricesIncludeVat ?? false,
+  vatExempt: Boolean(profile.vatExempt),
 });
 
-const normalizeProfile = (profile: OrganizationTaxProfile): OrganizationTaxProfile => {
+const normalizeProfile = (
+  profile: OrganizationTaxProfile
+): OrganizationTaxProfile => {
+  const normalizedEntity: OrganizationTaxProfile["legalEntityType"] =
+    profile.legalEntityType === "company"
+      ? "company"
+      : profile.legalEntityType === "freelance"
+      ? "freelance"
+      : "individual";
+  const vatExempt = Boolean(
+    profile.vatExempt || normalizedEntity === "freelance"
+  );
   const numericVatRate = Number(profile.defaultVatRate);
 
   return {
     ...DEFAULT_ORGANIZATION_TAX_PROFILE,
     ...profile,
-    legalEntityType: profile.legalEntityType === "company" ? "company" : "individual",
-    defaultVatMode: profile.defaultVatMode === "inclusive" ? "inclusive" : "exclusive",
-    defaultVatRate: clampVatRate(Number.isFinite(numericVatRate) ? numericVatRate : DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate),
-    pricesIncludeVat: Boolean(profile.pricesIncludeVat),
-    companyName: typeof profile.companyName === "string" ? profile.companyName.trim() || null : null,
-    taxOffice: typeof profile.taxOffice === "string" ? profile.taxOffice.trim() || null : null,
-    taxNumber: typeof profile.taxNumber === "string" ? profile.taxNumber.trim() || null : null,
-    billingAddress: typeof profile.billingAddress === "string" ? profile.billingAddress.trim() || null : null,
+    legalEntityType: normalizedEntity,
+    vatExempt,
+    defaultVatMode: vatExempt
+      ? "exclusive"
+      : profile.defaultVatMode === "inclusive"
+      ? "inclusive"
+      : "exclusive",
+    defaultVatRate: vatExempt
+      ? 0
+      : clampVatRate(
+          Number.isFinite(numericVatRate)
+            ? numericVatRate
+            : DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate
+        ),
+    pricesIncludeVat: vatExempt
+      ? false
+      : Boolean(profile.pricesIncludeVat),
+    companyName:
+      typeof profile.companyName === "string"
+        ? profile.companyName.trim() || null
+        : null,
+    taxOffice:
+      typeof profile.taxOffice === "string"
+        ? profile.taxOffice.trim() || null
+        : null,
+    taxNumber:
+      typeof profile.taxNumber === "string"
+        ? profile.taxNumber.trim() || null
+        : null,
+    billingAddress:
+      typeof profile.billingAddress === "string"
+        ? profile.billingAddress.trim() || null
+        : null,
   };
 };
 
@@ -79,9 +114,12 @@ const formToProfile = (form: TaxProfileFormState): OrganizationTaxProfile => {
     taxOffice: form.taxOffice.trim() || null,
     taxNumber: form.taxNumber.trim() || null,
     billingAddress: form.billingAddress.trim() || null,
-    defaultVatRate: Number.isFinite(parsedRate) ? parsedRate : DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate,
+    defaultVatRate: Number.isFinite(parsedRate)
+      ? parsedRate
+      : DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate,
     defaultVatMode: form.defaultVatMode,
-    pricesIncludeVat: form.pricesIncludeVat,
+    pricesIncludeVat: form.defaultVatMode === "inclusive",
+    vatExempt: form.vatExempt,
   });
 };
 
@@ -121,6 +159,36 @@ export default function Billing() {
       ...updates,
     }));
   }, []);
+
+  const preserveScrollPosition = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const { scrollX, scrollY } = window;
+    requestAnimationFrame(() => {
+      window.scrollTo(scrollX, scrollY);
+    });
+  }, []);
+
+  const handleEntityTypeChange = useCallback(
+    (value: TaxProfileFormState["legalEntityType"]) => {
+      const vatFree = value === "freelance";
+      handleChange({
+        legalEntityType: value,
+        vatExempt: vatFree,
+        defaultVatRate: vatFree
+          ? "0"
+          : formState.defaultVatRate || String(DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate),
+      });
+    },
+    [formState.defaultVatRate, handleChange]
+  );
+
+  const handleVatModeChange = useCallback(
+    (value: "inclusive" | "exclusive") => {
+      preserveScrollPosition();
+      handleChange({ defaultVatMode: value });
+    },
+    [handleChange, preserveScrollPosition]
+  );
 
   const validate = useCallback((): boolean => {
     const nextErrors: TaxProfileFormErrors = {};
@@ -218,6 +286,8 @@ export default function Billing() {
     setSectionDirty(categoryPath, "tax-billing", isDirty);
   }, [categoryPath, isDirty, setSectionDirty]);
 
+  const showVatFields = !formState.vatExempt;
+
   return (
     <SettingsPageWrapper>
       <div className="space-y-8">
@@ -234,12 +304,12 @@ export default function Billing() {
             <RadioGroup
               value={formState.legalEntityType}
               onValueChange={(value) =>
-                handleChange({
-                  legalEntityType: value as TaxProfileFormState["legalEntityType"],
-                })
+                handleEntityTypeChange(
+                  value as TaxProfileFormState["legalEntityType"]
+                )
               }
               disabled={loading || saving}
-              className="grid gap-3 sm:grid-cols-2"
+              className="grid gap-3 sm:grid-cols-3"
             >
               <label
                 htmlFor="entity-individual"
@@ -284,6 +354,29 @@ export default function Billing() {
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {t("taxBilling.legalEntity.companyHint", { ns: "forms" })}
+                  </p>
+                </div>
+              </label>
+              <label
+                htmlFor="entity-freelance"
+                className={cn(
+                  "flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-colors",
+                  formState.legalEntityType === "freelance"
+                    ? "border-emerald-500 bg-emerald-50"
+                    : "border-border hover:border-emerald-300"
+                )}
+              >
+                <RadioGroupItem
+                  id="entity-freelance"
+                  value="freelance"
+                  className="mt-1"
+                />
+                <div>
+                  <p className="font-semibold">
+                    {t("taxBilling.legalEntity.freelance", { ns: "forms" })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("taxBilling.legalEntity.freelanceHint", { ns: "forms" })}
                   </p>
                 </div>
               </label>
@@ -369,12 +462,13 @@ export default function Billing() {
           </div>
         </SettingsFormSection>
 
-        <SettingsFormSection
-          sectionId="client-billing-tax"
-          title={t("settings.billing.taxSectionTitle")}
-          description={t("settings.billing.taxSectionDescription")}
-          fieldColumns={2}
-        >
+        {showVatFields && (
+          <SettingsFormSection
+            sectionId="client-billing-tax"
+            title={t("settings.billing.taxSectionTitle")}
+            description={t("settings.billing.taxSectionDescription")}
+            fieldColumns={2}
+          >
           <div className="space-y-2">
             <Label htmlFor="vatRate">
               {t("taxBilling.defaultVatRate.label", { ns: "forms" })}
@@ -405,9 +499,9 @@ export default function Billing() {
             <RadioGroup
               value={formState.defaultVatMode}
               onValueChange={(value) =>
-                handleChange({
-                  defaultVatMode: value as TaxProfileFormState["defaultVatMode"],
-                })
+                handleVatModeChange(
+                  value as TaxProfileFormState["defaultVatMode"]
+                )
               }
               disabled={loading || saving}
               className="grid gap-3"
@@ -464,27 +558,8 @@ export default function Billing() {
               </label>
             </RadioGroup>
           </div>
-          <div className="sm:col-span-2 rounded-2xl border border-dashed border-muted-foreground/30 p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold">
-                  {t("taxBilling.pricesIncludeVat.label", { ns: "forms" })}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {t("taxBilling.pricesIncludeVat.helper", { ns: "forms" })}
-                </p>
-              </div>
-              <Switch
-                id="prices-include-vat"
-                checked={formState.pricesIncludeVat}
-                onCheckedChange={(checked) =>
-                  handleChange({ pricesIncludeVat: checked })
-                }
-                disabled={loading || saving}
-              />
-            </div>
-          </div>
         </SettingsFormSection>
+        )}
 
         <SettingsCollectionSection
           sectionId="client-billing-payment-methods"

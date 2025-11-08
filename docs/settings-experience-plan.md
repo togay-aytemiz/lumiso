@@ -268,6 +268,21 @@ Cross-cutting components:
 
 > Update the table as work lands (check items, add Notes column if needed).
 
+### Billing — Client TODO (next iteration)
+
+- [ ] Add a third legal entity type for “freelance / no VAT” profiles that disables all VAT fields and hides tax-related UI everywhere (settings, service/package editors, project detail summaries, etc.).
+- [ ] When the no-VAT mode is selected, ensure downstream builders (service cards, package pricing, invoice preview) never show VAT toggles.
+- [ ] Fix the VAT mode radio buttons so changing the selection doesn’t scroll the page back to the top.
+- [ ] Remove the redundant “prices include VAT” switch (radio buttons remain the single source of truth).
+- [ ] Update manual test suites (including `docs/manual-testing/tests/leads-manual-tests.json` and future billing test files) to cover VAT vs. VAT-free flows so QA validates both behaviors.
+
+### UX Debt / Interaction Consistency
+
+- [ ] Ensure any non-input toggles/sliders (working-hours switches, notification toggles, etc.) auto-save immediately and never trigger the sticky footer—only text/textarea inputs should require manual save.
+- [ ] Align sticky nav labels and anchors: remove/rename nav entries that don’t correspond to actual sections (e.g., “Faturalandırma ve Ödemeler” anchor) or add the missing section block so nav items always have a matching target.
+- [ ] Eliminate the “scroll jump” bug seen when changing dropdowns/radios in Billing → VAT defaults and General → Regional settings by standardizing anchor registration/scroll management across forms (likely a shared fix in `SettingsFormSection`).
+- [ ] For the freelance/no-VAT mode, hide company/VAT fields when selected but restore the previously entered values when switching back to individual/company so users don’t lose data.
+
 ## Technical Follow-Ups
 
 - Consolidate Supabase RPC usage: prefer centralized service modules under `src/services/settings/**`.
@@ -282,6 +297,7 @@ Cross-cutting components:
 - Visual: run Chromatic or Percy diff on key breakpoints.
 - Performance: log bundle impact (target net-neutral) and measure paint timelines via Lighthouse.
 - Accessibility: automated (axe) + manual keyboard review for drag-and-drop alternatives.
+- Manual: expand billing/leads test suites to cover VAT-exempt (“freelance”) scenarios so KDV alanlarının gizlenmesi ve app-wide davranış doğrulanır.
 
 ## Open Questions
 

@@ -1656,7 +1656,9 @@
       "individual": "Şahıs",
       "individualHint": "Faturaları şahıs şirketi olarak kesiyorsanız seçin.",
       "company": "Şirket",
-      "companyHint": "Limited/Anonim gibi kayıtlı şirketler için kullanın."
+      "companyHint": "Limited/Anonim gibi kayıtlı şirketler için kullanın.",
+      "freelance": "Serbest / KDV yok",
+      "freelanceHint": "Faturaya KDV eklemeden, doğrudan tahsilat yaptığınız durumlarda kullanın."
     },
     "companyName": {
       "label": "Şirket veya fatura adı",

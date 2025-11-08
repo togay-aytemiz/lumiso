@@ -241,6 +241,7 @@ export function useOrganizationTaxProfile() {
           rawProfile?.companyName ??
           (settings.photography_business_name as string | null) ??
           DEFAULT_ORGANIZATION_TAX_PROFILE.companyName,
+        vatExempt: Boolean(rawProfile?.vatExempt),
       };
     },
     enabled: !!activeOrganizationId,

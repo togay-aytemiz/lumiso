@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export interface OrganizationTaxProfile {
-  legalEntityType: "individual" | "company";
+  legalEntityType: "individual" | "company" | "freelance";
   companyName: string | null;
   taxOffice: string | null;
   taxNumber: string | null;
@@ -9,6 +9,7 @@ export interface OrganizationTaxProfile {
   defaultVatRate: number;
   defaultVatMode: "inclusive" | "exclusive";
   pricesIncludeVat: boolean;
+  vatExempt: boolean;
 }
 
 export interface CachedOrganizationSettings {
@@ -36,6 +37,7 @@ export const DEFAULT_ORGANIZATION_TAX_PROFILE: OrganizationTaxProfile = {
   defaultVatRate: 20,
   defaultVatMode: "inclusive",
   pricesIncludeVat: true,
+  vatExempt: false,
 };
 
 interface CacheEntry {

@@ -736,8 +736,7 @@
     },
     "edit_disabled_title": "Editing disabled",
     "edit_disabled_description": "Adjust base price or deposit settings from the payment summary.",
-    "no_records": "No payment records yet.",
-    "updating": "Updating..."
+    "no_records": "No payment records yet."
   },
   "sessionSheet": {
     "fullDetails": "Full Details",
@@ -1670,7 +1669,9 @@
       "individual": "Individual (Şahıs)",
       "individualHint": "Use when invoicing as a sole proprietor.",
       "company": "Company (Şirket)",
-      "companyHint": "Use for registered limited/anonim companies."
+      "companyHint": "Use for registered limited/anonim companies.",
+      "freelance": "Freelancer / cash (no VAT)",
+      "freelanceHint": "Use when you accept direct payments and do not issue VAT invoices."
     },
     "companyName": {
       "label": "Company or billing name",

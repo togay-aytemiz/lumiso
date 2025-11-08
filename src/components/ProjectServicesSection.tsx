@@ -1,357 +1,562 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Edit2, Save, X, Plus } from "lucide-react";
-import { useI18nToast } from "@/lib/toastHelpers";
-import { ServicePicker, type PickerService } from "./ServicePicker";
-import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 import type { Database } from "@/integrations/supabase/types";
-interface Service {
-  id: string;
-  name: string;
-  category: string | null;
-  cost_price?: number;
-  selling_price?: number;
-  price?: number;
-  extra?: boolean | null;
-  billing_type?: "included" | "extra";
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { useToast } from "@/hooks/use-toast";
+import { ProjectServicesCard } from "./ProjectServicesCard";
+import {
+  ProjectServicesQuickEditDialog,
+  type ProjectServiceQuickEditResult,
+  type ProjectServiceQuickEditSelection,
+  type QuickServiceRecord
+} from "./ProjectServicesQuickEditDialog";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
+import {
+  computeServiceTotals,
+  DEFAULT_VAT_TOTALS,
+  type VatTotals
+} from "@/lib/payments/servicePricing";
+import {
+  fetchProjectServiceRecords,
+  type ProjectServiceRecord
+} from "@/lib/services/projectServiceRecords";
+
+const CURRENCY = "TRY";
+
+const formatCurrency = (amount: number) => {
+  try {
+    return new Intl.NumberFormat("tr-TR", {
+      style: "currency",
+      currency: CURRENCY,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    }).format(Number.isFinite(amount) ? amount : 0);
+  } catch {
+    return `${Math.round(amount)} ${CURRENCY}`;
+  }
+};
+
+const aggregatePricing = (records: ProjectServiceRecord[]): VatTotals =>
+  records.reduce<VatTotals>(
+    (totals, record) => {
+      const pricing = computeServiceTotals({
+        unitPrice: record.service.selling_price ?? record.service.price ?? null,
+        quantity: record.quantity,
+        vatRate: record.service.vat_rate ?? null,
+        vatMode: record.service.price_includes_vat === false ? "exclusive" : "inclusive"
+      });
+      return {
+        net: totals.net + pricing.net,
+        vat: totals.vat + pricing.vat,
+        gross: totals.gross + pricing.gross
+      };
+    },
+    { ...DEFAULT_VAT_TOTALS }
+  );
+
 interface ProjectServicesSectionProps {
   projectId: string;
   onServicesUpdated?: () => void;
 }
-export function ProjectServicesSection({
-  projectId,
-  onServicesUpdated
-}: ProjectServicesSectionProps) {
-  const [services, setServices] = useState<Service[]>([]);
-  const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [availableServices, setAvailableServices] = useState<Service[]>([]);
-  const [loadingAvailable, setLoadingAvailable] = useState(true);
-  const [errorAvailable, setErrorAvailable] = useState<string | null>(null);
-  const toast = useI18nToast();
+
+export function ProjectServicesSection({ projectId, onServicesUpdated }: ProjectServicesSectionProps) {
   const { t } = useFormsTranslation();
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const fetchProjectServices = useCallback(async () => {
-    try {
-      const {
-        data,
-        error
-      } = await supabase
-        .from<{
-          id: string;
-          billing_type: "included" | "extra";
-          services: Database["public"]["Tables"]["services"]["Row"] | null;
-        }>('project_services')
-        .select(`
-          id,
-          billing_type,
-          services!inner (
-            id,
-            name,
-            category,
-            cost_price,
-            selling_price,
-            price,
-            extra
-          )
-        `)
-        .eq('project_id', projectId);
-      if (error) throw error;
-      const fetchedServices =
-        data
-          ?.map((ps) => {
-            const svc = ps.services;
-            if (!svc) return null;
-            const record: Service = {
-              id: svc.id,
-              name: svc.name,
-              category: svc.category,
-              cost_price: svc.cost_price ?? undefined,
-              selling_price: svc.selling_price ?? undefined,
-              price: svc.price ?? undefined,
-              extra: svc.extra,
-              billing_type: ps.billing_type
-            };
-            return record;
-          })
-          .filter((record): record is Service => Boolean(record)) ?? [];
-      setServices(fetchedServices);
-    } catch (error) {
-      console.error('Error fetching project services:', error);
-      const message = error instanceof Error ? error.message : t('payments.error_loading', { defaultValue: 'Unable to load payments' });
-      toast.error(message);
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId, t, toast]);
-  const fetchAvailableServices = useCallback(async () => {
-    setLoadingAvailable(true);
-    setErrorAvailable(null);
-    try {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
-      if (!user) return;
+  const { toast } = useToast();
 
-      // Get user's active organization ID
-      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
-      if (!organizationId) return;
+  const [serviceRecords, setServiceRecords] = useState<ProjectServiceRecord[]>([]);
+  const [basePrice, setBasePrice] = useState(0);
+  const [isLoadingServices, setIsLoadingServices] = useState(true);
+  const [isLoadingBasePrice, setIsLoadingBasePrice] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-      const {
-        data,
-        error
-      } = await supabase
-        .from<Database["public"]["Tables"]["services"]["Row"]>("services")
-        .select("id, name, category, cost_price, selling_price, price, extra")
-        .eq("organization_id", organizationId)
-        .order("category", {
-        ascending: true
-      }).order("name", {
-        ascending: true
+  const [availableServices, setAvailableServices] = useState<QuickServiceRecord[]>([]);
+  const [availableServicesLoading, setAvailableServicesLoading] = useState(false);
+  const [availableServicesError, setAvailableServicesError] = useState<string | null>(null);
+  const [serviceDialogState, setServiceDialogState] = useState<{
+    open: boolean;
+    mode: "included" | "extra";
+  }>({ open: false, mode: "included" });
+
+  const handleLoadError = useCallback(
+    (error: unknown) => {
+      console.error("Error loading services:", error);
+      const fallback = t("payments.services.load_error", {
+        defaultValue: "Unable to load services."
       });
-      if (error) throw error;
-      setAvailableServices((data ?? []).map((svc) => ({
-        id: svc.id,
-        name: svc.name,
-        category: svc.category,
-        cost_price: svc.cost_price ?? undefined,
-        selling_price: svc.selling_price ?? undefined,
-        price: svc.price ?? undefined,
-        extra: svc.extra
-      })));
-    } catch (err) {
-      console.error("Error fetching available services:", err);
-      const message = err instanceof Error ? err.message : t('payments.services.load_error', { defaultValue: 'Unable to load services.' });
-      setErrorAvailable(message);
-    } finally {
-      setLoadingAvailable(false);
-    }
-  }, [t]);
+      const description = error instanceof Error ? error.message : fallback;
+      setErrorMessage(description);
+      toast({
+        title: fallback,
+        description,
+        variant: "destructive"
+      });
+    },
+    [t, toast]
+  );
+
+  const refreshServiceRecords = useCallback(async () => {
+    const records = await fetchProjectServiceRecords(projectId);
+    setServiceRecords(records);
+    return records;
+  }, [projectId]);
+
   useEffect(() => {
-    void fetchProjectServices();
-    void fetchAvailableServices();
-  }, [fetchAvailableServices, fetchProjectServices]);
-  const handleServicePickerChange = (serviceIds: string[]) => {
-    const selectedServices = availableServices
-      .filter(service => serviceIds.includes(service.id))
-      .map(service => {
-        const existing = services.find(s => s.id === service.id);
-        const billingType =
-          existing?.billing_type ??
-          (service.extra ? "extra" : "included");
-        return { ...service, billing_type: billingType };
+    let active = true;
+    setIsLoadingServices(true);
+    refreshServiceRecords()
+      .then(() => {
+        if (active) setErrorMessage(null);
+      })
+      .catch((error) => {
+        if (active) handleLoadError(error);
+      })
+      .finally(() => {
+        if (active) setIsLoadingServices(false);
       });
-    setServices(selectedServices);
-  };
-  const handleSaveServices = async (selectedServices: Service[]) => {
-    setSaving(true);
-    try {
-      const {
-        data: {
-          user
+    return () => {
+      active = false;
+    };
+  }, [refreshServiceRecords, handleLoadError]);
+
+  useEffect(() => {
+    let active = true;
+    setIsLoadingBasePrice(true);
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from<Database["public"]["Tables"]["projects"]["Row"]>("projects")
+          .select("base_price")
+          .eq("id", projectId)
+          .single();
+        if (error) throw error;
+        if (active) {
+          setBasePrice(data?.base_price ?? 0);
+          setErrorMessage(null);
         }
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      // First, delete existing project services
-      const {
-        error: deleteError
-      } = await supabase.from('project_services').delete().eq('project_id', projectId);
-      if (deleteError) throw deleteError;
-
-      // Then, insert new project services
-      if (selectedServices.length > 0) {
-        const serviceInserts = selectedServices.map(service => ({
-          project_id: projectId,
-          service_id: service.id,
-          user_id: user.id,
-          billing_type:
-            service.billing_type ??
-            (service.extra ? "extra" : "included")
-        }));
-        const {
-          error: insertError
-        } = await supabase.from('project_services').insert(serviceInserts);
-        if (insertError) throw insertError;
+      } catch (error) {
+        if (active) handleLoadError(error);
+      } finally {
+        if (active) setIsLoadingBasePrice(false);
       }
-      setServices(selectedServices);
-      setIsEditing(false);
-      onServicesUpdated?.();
+    })();
+    return () => {
+      active = false;
+    };
+  }, [projectId, handleLoadError]);
 
-      // Smoothly scroll back to the top of Services section after saving
-      setTimeout(() => {
-        sectionRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }, 50);
-      toast.success(t('services.services_updated'));
+  const fetchAvailableServices = useCallback(async () => {
+    if (availableServices.length > 0 || availableServicesLoading) return;
+    setAvailableServicesLoading(true);
+    setAvailableServicesError(null);
+    try {
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
+        throw new Error(
+          t("payments.organization_required", { defaultValue: "Organization required" })
+        );
+      }
+      const { data, error } = await supabase
+        .from<Database["public"]["Tables"]["services"]["Row"]>("services")
+        .select(
+          "id, name, category, extra, selling_price, price, cost_price, vat_rate, price_includes_vat, service_type"
+        )
+        .eq("organization_id", organizationId)
+        .eq("is_active", true)
+        .order("category", { ascending: true })
+        .order("name", { ascending: true });
+      if (error) throw error;
+      setAvailableServices(
+        (data ?? []).map((service) => ({
+          id: service.id,
+          name: service.name,
+          category: service.category,
+          extra: Boolean(service.extra),
+          selling_price: service.selling_price,
+          price: service.price,
+          cost_price: service.cost_price,
+          vat_rate: service.vat_rate,
+          price_includes_vat: service.price_includes_vat,
+          service_type: service.service_type
+        }))
+      );
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      toast.error(message);
+      console.error("Error fetching available services:", error);
+      setAvailableServicesError(
+        error instanceof Error
+          ? error.message
+          : t("payments.services.load_error", { defaultValue: "Unable to load services." })
+      );
     } finally {
-      setSaving(false);
+      setAvailableServicesLoading(false);
     }
-  };
-  if (loading) {
-    return <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between text-lg font-medium">
-            <div className="flex items-center gap-2">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              {t('services.title')}
+  }, [availableServices.length, availableServicesLoading, t]);
+
+  const handleServiceDialogOpen = useCallback(
+    async (mode: "included" | "extra") => {
+      setServiceDialogState({ open: true, mode });
+      await fetchAvailableServices();
+    },
+    [fetchAvailableServices]
+  );
+
+  const handleServiceQuickEditSubmit = useCallback(
+    async (mode: "included" | "extra", results: ProjectServiceQuickEditResult[]) => {
+      try {
+        const existingRecordsSameMode = serviceRecords.filter(
+          (record) => record.billingType === mode
+        );
+        const existingByServiceIdSameMode = new Map(
+          existingRecordsSameMode.map((record) => [record.service.id, record])
+        );
+        const existingByServiceIdAnyMode = new Map(
+          serviceRecords.map((record) => [record.service.id, record])
+        );
+        const selectedIds = new Set(results.map((result) => result.serviceId));
+
+        const toDelete = existingRecordsSameMode
+          .filter((record) => !selectedIds.has(record.service.id))
+          .map((record) => record.projectServiceId);
+
+        if (toDelete.length > 0) {
+          const { error } = await supabase.from("project_services").delete().in("id", toDelete);
+          if (error) throw error;
+        }
+
+        if (results.length > 0) {
+          const {
+            data: { user }
+          } = await supabase.auth.getUser();
+          if (!user) {
+            throw new Error(
+              t("payments.user_not_authenticated", { defaultValue: "User not authenticated" })
+            );
+          }
+
+          const inserts = results
+            .filter((result) => !existingByServiceIdAnyMode.has(result.serviceId))
+            .map((result) => {
+              const quantity = Math.max(1, Number(result.quantity ?? 1));
+              return {
+                project_id: projectId,
+                service_id: result.serviceId,
+                user_id: user.id,
+                billing_type: mode,
+                quantity,
+                unit_cost_override: result.overrides.unitCost ?? null,
+                unit_price_override: result.overrides.unitPrice ?? null,
+                vat_mode_override: result.overrides.vatMode ?? null,
+                vat_rate_override: result.overrides.vatRate ?? null
+              };
+            });
+
+          if (inserts.length > 0) {
+            const organizationId = await getUserOrganizationId();
+            if (!organizationId) {
+              throw new Error(
+                t("payments.organization_required", { defaultValue: "Organization required" })
+              );
+            }
+            const { error } = await supabase.from("project_services").insert(inserts);
+            if (error) throw error;
+          }
+
+          const toUpdate = results.filter((result) =>
+            existingByServiceIdAnyMode.has(result.serviceId)
+          );
+
+          for (const result of toUpdate) {
+            const existing = existingByServiceIdAnyMode.get(result.serviceId);
+            if (!existing) continue;
+            const quantity = Math.max(1, Number(result.quantity ?? 1));
+            const { error } = await supabase
+              .from("project_services")
+              .update({
+                billing_type: mode,
+                quantity,
+                unit_cost_override: result.overrides.unitCost ?? null,
+                unit_price_override: result.overrides.unitPrice ?? null,
+                vat_mode_override: result.overrides.vatMode ?? null,
+                vat_rate_override: result.overrides.vatRate ?? null
+              })
+              .eq("id", existing.projectServiceId);
+            if (error) throw error;
+          }
+        }
+
+        await refreshServiceRecords();
+        onServicesUpdated?.();
+        toast({
+          title: t("services.services_updated", { defaultValue: "Services updated" })
+        });
+      } catch (error) {
+        console.error("Error updating services:", error);
+        toast({
+          title: t("payments.services.quick_edit_error", {
+            defaultValue: "Unable to update services"
+          }),
+          description: error instanceof Error ? error.message : undefined,
+          variant: "destructive"
+        });
+      }
+    },
+    [onServicesUpdated, projectId, refreshServiceRecords, serviceRecords, t, toast]
+  );
+
+  const includedServices = useMemo(
+    () => serviceRecords.filter((record) => record.billingType === "included"),
+    [serviceRecords]
+  );
+  const extraServices = useMemo(
+    () => serviceRecords.filter((record) => record.billingType === "extra"),
+    [serviceRecords]
+  );
+
+  const includedTotals = useMemo(() => aggregatePricing(includedServices), [includedServices]);
+  const extraTotals = useMemo(() => aggregatePricing(extraServices), [extraServices]);
+
+  const includedCardItems = useMemo(
+    () =>
+      includedServices.map((record) => ({
+        key: record.projectServiceId,
+        left: <div className="font-medium">{record.service.name}</div>,
+        right: (
+          <div className="font-medium text-muted-foreground">
+            {t("payments.services.quantity_short", {
+              count: record.quantity,
+              defaultValue: "x {{count}}"
+            })}
+          </div>
+        )
+      })),
+    [includedServices, t]
+  );
+
+  const extraCardItems = useMemo(
+    () =>
+      extraServices.map((record) => {
+        const pricing = computeServiceTotals({
+          unitPrice: record.service.selling_price ?? record.service.price ?? null,
+          quantity: record.quantity,
+          vatRate: record.service.vat_rate ?? null,
+          vatMode: record.service.price_includes_vat === false ? "exclusive" : "inclusive"
+        });
+
+        return {
+          key: record.projectServiceId,
+          left: <div className="font-medium">{record.service.name}</div>,
+          right: (
+            <div className="text-right">
+              <div className="font-medium text-muted-foreground">
+                {formatCurrency(pricing.gross)}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {t("payments.services.unit_price_line", {
+                  quantity: record.quantity,
+                  amount: formatCurrency(record.service.selling_price ?? record.service.price ?? 0),
+                  defaultValue: "{{quantity}} × {{amount}}"
+                })}
+              </div>
             </div>
-            <div className="w-6 h-6 bg-muted animate-pulse rounded" />
+          )
+        };
+      }),
+    [extraServices, t]
+  );
+
+  const includedSelections = useMemo<ProjectServiceQuickEditSelection[]>(
+    () =>
+      includedServices.map((record) => ({
+        serviceId: record.service.id,
+        projectServiceId: record.projectServiceId,
+        quantity: record.quantity,
+        unitCost: record.overrides.unitCost ?? record.service.cost_price ?? null,
+        unitPrice: record.overrides.unitPrice ?? record.service.selling_price ?? record.service.price ?? null,
+        vatMode: record.overrides.vatMode ?? (record.service.price_includes_vat === false ? "exclusive" : "inclusive"),
+        vatRate: record.overrides.vatRate ?? record.service.vat_rate ?? null
+      })),
+    [includedServices]
+  );
+
+  const extraSelections = useMemo<ProjectServiceQuickEditSelection[]>(
+    () =>
+      extraServices.map((record) => ({
+        serviceId: record.service.id,
+        projectServiceId: record.projectServiceId,
+        quantity: record.quantity,
+        unitCost: record.overrides.unitCost ?? record.service.cost_price ?? null,
+        unitPrice: record.overrides.unitPrice ?? record.service.selling_price ?? record.service.price ?? null,
+        vatMode: record.overrides.vatMode ?? (record.service.price_includes_vat === false ? "exclusive" : "inclusive"),
+        vatRate: record.overrides.vatRate ?? record.service.vat_rate ?? null
+      })),
+    [extraServices]
+  );
+
+  const isLoading = isLoadingServices || isLoadingBasePrice;
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl font-semibold">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+              />
+            </svg>
+            {t("services.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            <div className="w-full h-4 bg-muted animate-pulse rounded" />
-            <div className="w-3/4 h-4 bg-muted animate-pulse rounded" />
-          </div>
-        </CardContent>
-      </Card>;
-  }
-  return <div ref={sectionRef}>
-      <Card>
-        <CardHeader>
-        <CardTitle className="flex items-center justify-between text-xl font-semibold">
-          <div className="flex items-center gap-2">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            {t('services.title')}
-          </div>
-          {!isEditing && (services.length === 0 ? <Button size="sm" onClick={() => setIsEditing(true)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                {t('services.add')}
-              </Button> : <Button size="sm" onClick={() => setIsEditing(true)} className="gap-2">
-                <Edit2 className="h-4 w-4" />
-                {t('services.edit')}
-              </Button>)}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {isEditing ? <div className="space-y-4">
-            <ServicePicker services={availableServices.map(s => ({
-            ...s,
-            cost_price: s.cost_price,
-            selling_price: s.selling_price,
-            price: s.price,
-            active: true
-          }))} value={services.map(s => s.id)} onChange={handleServicePickerChange} disabled={saving} isLoading={loadingAvailable} error={errorAvailable} onRetry={fetchAvailableServices} />
-            
-            {/* Selected services display in edit mode */}
-            {services.length > 0 && (
-              <div className="rounded-md border p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-sm font-medium">{t('services.selected_services')} ({services.length})</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setServices([])}
-                    disabled={saving}
-                    className="h-8"
-                  >
-                    {t('buttons.clearAll')}
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {services.map((service) => {
-                    const costPrice = service.cost_price ?? 0;
-                    const sellingPrice = service.selling_price ?? service.price ?? 0;
-                    const hasPrices = costPrice > 0 || sellingPrice > 0;
-                    return (
-                      <Badge
-                        key={service.id}
-                        variant="secondary"
-                        className="h-7 rounded-full px-3 text-xs"
-                      >
-                        <span>
-                          {service.name}
-                          {hasPrices && (
-                            <>
-                              <span className="mx-1">·</span>
-                              <span className="text-foreground/70">₺{costPrice}/₺{sellingPrice}</span>
-                            </>
-                          )}
-                        </span>
-                        <button
-                          className="ml-2 inline-flex rounded-full p-0.5 hover:text-foreground"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const newServices = services.filter(s => s.id !== service.id);
-                            setServices(newServices);
-                          }}
-                          aria-label={`Remove ${service.name}`}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </Badge>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <Button size="sm" onClick={() => handleSaveServices(services)} disabled={saving}>
-                <Save className="h-4 w-4 mr-1" />
-                {saving ? t('common:actions.saving') : t('common:buttons.save')}
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => {
-              setIsEditing(false);
-              fetchProjectServices(); // Reset to original services
-            }} disabled={saving}>
-                <X className="h-4 w-4 mr-1" />
-                {t('common:buttons.cancel')}
-              </Button>
+          {isLoading ? (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {[0, 1].map((item) => (
+                <div
+                  key={item}
+                  className="h-32 rounded-xl border bg-muted/40 animate-pulse"
+                />
+              ))}
             </div>
-          </div> : <div>
-            {services.length > 0 ? <div className="flex flex-wrap gap-2">
-                {services.map(service => {
-              // Service data rendered
-              const costPrice = service.cost_price ?? 0;
-              const sellingPrice = service.selling_price ?? service.price ?? 0;
-              const hasPrices = costPrice > 0 || sellingPrice > 0;
-              // Price information processed
-              return <Badge 
-                      key={service.id} 
-                      variant="secondary" 
-                      className="h-auto min-h-7 rounded-lg px-3 py-1.5 text-xs whitespace-normal break-words max-w-full"
-                      title={`${service.name}${hasPrices ? ` - Cost: ₺${costPrice}, Selling: ₺${sellingPrice}` : ''}`}
-                    >
-                       <div className="flex flex-col gap-0.5 w-full">
-                         <span className="font-medium leading-tight">{service.name}</span>
-                         {hasPrices && (
-                            <span className="text-xs text-foreground/60 leading-tight">
-                              {t('services.cost')}: ₺{costPrice} · {t('services.selling')}: ₺{sellingPrice}
-                            </span>
-                         )}
-                       </div>
-                     </Badge>;
-            })}
-              </div> : <div className="text-center py-6">
-                <svg className="h-8 w-8 text-muted-foreground mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                 <p className="text-muted-foreground text-sm">{t('projectDetails.services.emptyState')}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {t('projectDetails.services.addHint')}
-                  </p>
-              </div>}
-          </div>}
-      </CardContent>
-    </Card>
-    </div>;
+          ) : errorMessage ? (
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+              {errorMessage}
+            </div>
+          ) : (
+            <TooltipProvider delayDuration={150}>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <ProjectServicesCard
+                  items={includedCardItems}
+                  emptyCtaLabel={t("payments.services.add_included_cta", {
+                    defaultValue: "Pakete dahil hizmet ekle"
+                  })}
+                  onAdd={() => handleServiceDialogOpen("included")}
+                  title={t("payments.services.included_title", {
+                    defaultValue: "Included in package"
+                  })}
+                  helperText={t("payments.services.included_helper", {
+                    total: formatCurrency(basePrice),
+                    defaultValue: "Paket fiyatına dahil edilmiştir."
+                  })}
+                  tooltipAriaLabel={t("payments.services.included_info", {
+                    defaultValue: "Included services info"
+                  })}
+                  tooltipContent={
+                    <>
+                      <p className="font-medium">
+                        {t("payments.services.included_tooltip.title", {
+                          defaultValue: "Pakete dahil hizmetler"
+                        })}
+                      </p>
+                      <ul className="list-disc space-y-1 pl-4">
+                        <li>
+                          {t("payments.services.included_tooltip.point1", {
+                            defaultValue: "Müşteriye ek fatura oluşturmaz; paket fiyatına dahildir."
+                          })}
+                        </li>
+                        <li>
+                          {t("payments.services.included_tooltip.point2", {
+                            defaultValue: "KDV paket toplamında hesaplanır, satır bazında gösterilmez."
+                          })}
+                        </li>
+                        <li>
+                          {t("payments.services.included_tooltip.point3", {
+                            defaultValue: "Bu liste paket kapsamını ve teslimatlarını netleştirir."
+                          })}
+                        </li>
+                      </ul>
+                    </>
+                  }
+                  addButtonLabel={
+                    includedCardItems.length > 0
+                      ? t("payments.services.manage_button", {
+                          defaultValue: "Hizmetleri düzenle"
+                        })
+                      : t("payments.services.add_button", {
+                          defaultValue: "Add service"
+                        })
+                  }
+                />
+                <ProjectServicesCard
+                  items={extraCardItems}
+                  emptyCtaLabel={t("payments.services.add_extra_cta", {
+                    defaultValue: "Ücrete ek hizmet ekle"
+                  })}
+                  onAdd={() => handleServiceDialogOpen("extra")}
+                  title={t("payments.services.addons_title", {
+                    defaultValue: "Add-on services"
+                  })}
+                  helperText={t("payments.services.addons_helper", {
+                    total: formatCurrency(extraTotals.gross),
+                    defaultValue: "Billed on top of the base package."
+                  })}
+                  tooltipAriaLabel={t("payments.services.addons_info", {
+                    defaultValue: "Add-on services info"
+                  })}
+                  tooltipContent={
+                    <>
+                      <p className="font-medium">
+                        {t("payments.services.addons_tooltip.title", {
+                          defaultValue: "Ek hizmetler"
+                        })}
+                      </p>
+                      <ul className="list-disc space-y-1 pl-4">
+                        <li>
+                          {t("payments.services.addons_tooltip.point1", {
+                            defaultValue: "Müşteriye paket fiyatına ek olarak faturalandırılır."
+                          })}
+                        </li>
+                        <li>
+                          {t("payments.services.addons_tooltip.point2", {
+                            defaultValue: "KDV ve fiyatlandırma her hizmetin moduna göre hesaplanır."
+                          })}
+                        </li>
+                        <li>
+                          {t("payments.services.addons_tooltip.point3", {
+                            defaultValue: "Sözleşme ve ödeme toplamına otomatik yansır."
+                          })}
+                        </li>
+                      </ul>
+                    </>
+                  }
+                  addButtonLabel={
+                    extraCardItems.length > 0
+                      ? t("payments.services.manage_button", {
+                          defaultValue: "Hizmetleri düzenle"
+                        })
+                      : t("payments.services.add_button", {
+                          defaultValue: "Add service"
+                        })
+                  }
+                  itemAlign="start"
+                />
+              </div>
+            </TooltipProvider>
+          )}
+        </CardContent>
+      </Card>
+
+      <ProjectServicesQuickEditDialog
+        open={serviceDialogState.open}
+        onOpenChange={(open) =>
+          setServiceDialogState((previous) => ({
+            ...previous,
+            open
+          }))
+        }
+        mode={serviceDialogState.mode}
+        services={availableServices}
+        selections={serviceDialogState.mode === "included" ? includedSelections : extraSelections}
+        isLoading={availableServicesLoading}
+        error={availableServicesError}
+        onRetry={fetchAvailableServices}
+        onSubmit={async (result) => {
+          await handleServiceQuickEditSubmit(serviceDialogState.mode, result);
+        }}
+      />
+    </>
+  );
 }

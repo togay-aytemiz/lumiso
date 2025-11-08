@@ -1301,12 +1301,15 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
     <div className="flex h-full w-full">
       <aside
         className={cn(
-          "hidden h-full shrink-0 flex-col overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:flex",
+          "hidden h-full shrink-0 flex-col overflow-hidden transition-all duration-500 md:flex",
           shouldShowDesktopSidebar
             ? "md:border-r md:border-border/70 md:bg-muted/10 md:backdrop-blur-sm md:opacity-100"
             : "md:-translate-x-6 md:border-transparent md:bg-transparent md:opacity-0"
         )}
-        style={desktopSidebarStyle}
+        style={{
+          ...desktopSidebarStyle,
+          transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
+        }}
         aria-hidden={!shouldShowDesktopSidebar}
       >
         {shouldShowDesktopSidebar && (

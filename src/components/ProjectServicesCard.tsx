@@ -74,6 +74,7 @@ export function ProjectServicesCard({
       </div>
       {hasItems ? (
         <>
+          <div className="mt-3 h-px w-full bg-border" role="separator" aria-hidden="true" />
           <div className="mt-2 space-y-1.5">
             {items.map(({ key, left, right }) => (
               <div

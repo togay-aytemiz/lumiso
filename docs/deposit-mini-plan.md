@@ -82,19 +82,18 @@
 4. Kullanıcı müşteriye nasıl ileteceğini kendi belirler; UI varsayımda bulunmaz. Henüz ödeme olmadığı için yalnızca “Tutarı güncelle” aksiyonu aktiftir.
 
 ### 2. Kaporanın Taksitle Tahsili
-1. Müşteri ilk taksit olarak ₺1.000 öder. Kullanıcı sağ üstteki “Kapora ödemesi” kısayolunu açar; dialog `amount = remainingDeposit` önerir ve `deposit_allocation` alanını otomatik doldurur.
-2. Kart `depositPaid = 1000`, `remainingDeposit = 1500` gösterir ve statüyü “kısmi”ye çeker.
-3. İkinci taksit geldiğinde aynı formda `deposit_allocation = 1500` seçilerek kayıt girilir; toplam `depositPaid = 2500` olur ve statü “tahsil edildi”ye döner.
+1. Müşteri ilk taksit olarak ₺1.000 öder. Kullanıcı “Kapora ödemesi” kısayolunu açar; dialog kalan kaporayı önerir fakat kullanıcı 1.000 TL olarak günceller.
+2. Sistem 1.000 TL’yi kapora olarak işler; kart `depositPaid = 1000`, `remainingDeposit = 1500` gösterir.
+3. İkinci taksit geldiğinde aynı kısayol kullanılır; önerilen tutar 1.500 TL’dir. Kaydedildiğinde statü “tahsil edildi”ye döner.
 
 ### 3. Kapora + Bakiye Tek Ödemede
 1. Çekim sonrası müşteri ₺12.400’ün tamamını yatırır.
-2. Kullanıcı “Genel ödeme” kısayolunu açar; formda “Kapora payı” bölümü `min(amount, remainingDeposit)` değerini önerir ve kısa bir açıklama (örn. “Kapora için 2.500 TL ayırdık, kalan 9.900 TL bakiye olarak kaydedilecek”) gösterir.
-3. Kullanıcı isterse değeri düzenler, kaydı kaydeder.
-4. Kart “Kapora tahsil edildi” + “Kalan bakiye 9.900 TL tahsil edildi” mesajını gösterir; listede tek ödeme satırı olur, rozet `Kapora payı: ₺2.500`.
+2. Kullanıcı “Tamamını tahsil et” kısayolunu seçip 12.400 TL girer; arayüz “Kapora ve kalan bakiyenin tamamı kapanacak” mesajını gösterir.
+3. Sistem eksik kaporayı otomatik kapatır, kalan tutarı bakiye olarak işler; ödeme listesinde tek satır görünür ve rozet `Kapora payı: ₺2.500` olarak etiketlenir.
 
 ### 4. Ek Hizmet Eklenmesi (Kapora Tutarı Sabitlenmişken)
 1. Fotoğrafçı yeni albüm ekler, proje toplamı artar.
-2. `financialSummary.depositAmount` büyür; snapshot farklı olduğu için kartta sarı banner çıkar: “Kilitlediğiniz 2.500 TL kapora yerine hesaplanan tutar 3.100 TL.”
+2. `financialSummary.depositAmount` büyür; snapshot farklı olduğu için kartta sarı banner çıkar: “Sabitlenen kapora 2.500 TL, hesaplanan tutar 3.100 TL.”
 3. Kullanıcı iki seçenekten birini seçer:
    - “Kapora tutarını güncelle”: dialog açılır, yeni tutar sabitlenir ve kart mesajı yenilenir.
    - “Farkı kalan bakiyeye taşı”: snapshot aynı kalır, sistem `remaining` değerini artırır ve banner kapanır.
@@ -102,7 +101,7 @@
 ### 5. Kapora Hedefi Azaldığında (İndirim)
 1. Kullanıcı kaporayı %30’dan %15’e düşürür.
 2. Yeni hesap `depositAmount = 1.250`, ancak `depositPaid = 2.500` olduğu için kart “Kapora hedefinden 1.250 TL fazla tahsilat var” uyarısı verir.
-3. Kullanıcı “Fazlayı kalana taşı” veya “İade oluştur” aksiyonlarından birini seçer; seçim `deposit_allocation` değerlerine yansıtılır.
+3. Kullanıcı “Fazlayı kalana taşı” veya “İade oluştur” aksiyonlarından birini seçer; sistem seçime göre ödemeleri yeniden sınıflandırır ya da iade dialogunu açar.
 4. Karar sonrası uyarı kapanır, snapshot yeni değeri referans alır.
 
 ### 6. Kaporanın Kapatılması
@@ -111,8 +110,8 @@
 3. Onay verildiğinde snapshot alanları temizlenir, kart “Bu proje kaporasız ilerliyor” mesajını gösterir.
 
 ### 7. Kapora İadesi
-1. Müşteri kaporasını geri ister. Kullanıcı “Kapora iadesi” butonuna basar; dialogda iade tutarı ve iade sebebi alanları bulunur.
-2. Form, iade edilecek tutarı önerir (`depositPaid` kadar) ve işlem tamamlandığında pozitif tutarlı kayıt silinmez; bunun yerine otomatik bir iade satırı eklenir (`amount < 0`, `deposit_allocation < 0` arka planda belirlenir).
+1. Müşteri kaporasını geri ister. Kullanıcı “Kapora iadesi” butonuna basar; dialogda iade tutarı ve sebebi alanları bulunur.
+2. Form, iade edilecek tutarı önerir (`depositPaid` kadar) ve işlem tamamlandığında pozitif tutarlı kayıt silinmez; bunun yerine otomatik bir iade satırı eklenir (negatif değerler arka planda işlenir).
 3. Kart “Kapora iade edildi” mesajını ve yeni `depositPaid` değerini gösterir; kullanıcı negatif tutar yazmakla uğraşmaz.
 
 ### 8. Legacy Projelerde Kapora Payını Tamamlama
@@ -130,6 +129,6 @@
 1. Migration: `payments.deposit_allocation` kolonu, `deposit_due`/`base_price` temizliği ve `deposit_config` snapshot alanları.
 2. Sunucu & client tip güncellemeleri (`src/integrations/supabase/types.ts`, deposit utils).
 3. `ProjectPaymentsSection`: yeni hesaplama akışı, kapora kartı uyarıları, toplamlar için `deposit_due` hariç filtreler.
-4. `AddPaymentDialog` ve `EditPaymentDialog`: kapora switch'i, otomatik defaultlar, validasyon.
+4. `AddPaymentDialog` ve `EditPaymentDialog`: senaryo butonları (Kapora/Kalan/Tam), otomatik kapora paylaşımı, yönlendirici mesajlar.
 5. `ProjectDepositDialogs`: sabitleme/snapshot UI'si, banner aksiyonları.
 6. QA checklist: farklı akışları (tam kapora, kısmi, sabitleme, ekstra hizmet) manuel test senaryolarına ekleyin (`docs/manual-testing/tests/projects-manual-tests.json`).

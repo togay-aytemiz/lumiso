@@ -236,28 +236,60 @@
         "expected_result": "\"Kapora tutarını sabitle\" aksiyonu kilit bilgisi ve tarihini günceller; yeni hizmet eklendiğinde çıkan banner doğru tutarları gösterir ve iki aksiyon da ilgili senaryoya göre kilidi güncellemeden hata vermeden tamamlanır."
       },
       {
+        "external_id": "CRM-PROJECTS-308C",
+        "title": "İade sheet'i ve kapora iadesi akışı",
+        "description": "İade kısayolunun yeni toggle yerleşimini, \"ödenen tutarın tamamını iade et\" butonunu ve kapora kartı/ödemeler listesindeki etkilerini doğrular.",
+        "steps": [
+          {
+            "action": "Kaporasının tamamı tahsil edilmiş bir projede \"İade\" hızlı aksiyonuna tıklayın.",
+            "expected_result": "\"İade\" sheet'i açılır; kapora toggle'ı kartın en üstünde kapalı olarak gelir, altında tutar girişi boş ve \"Ödenen tutarın tamamını iade et\" bağlantısı görünür."
+          },
+          {
+            "action": "\"Ödenen tutarın tamamını iade et\" bağlantısına basın.",
+            "expected_result": "Bağlantı iade tutar alanını mevcut toplam tahsilatla doldurur; bağlantı pasifleşir ve kullanıcı isterse değeri elle değiştirebilir."
+          },
+          {
+            "action": "\"Kapora iadesi olarak uygula\" switch'ini açın.",
+            "expected_result": "Helper metin kaporadan ne kadar düşüleceğini belirtir; toggle açıkken sheet kapanmaya çalışıldığında Navigation Guard uyarısı çıkar ve \"Kal\" seçildiğinde sheet açık kalır."
+          },
+          {
+            "action": "İade kaydını tamamlayın.",
+            "expected_result": "Ödemeler tablosuna kırmızı tutarlı yeni satır eklenir; satırda \"İade\" rozeti ve \"Kapora iadesi: -₺X\" etiketi görünür."
+          },
+          {
+            "action": "Kapora kartını kontrol edin.",
+            "expected_result": "Karttaki durum 'Kapora tahsil edildi' yerine yeni bakiyeye göre güncellenir (örn. 'Kapora bekleniyor' veya 'Kısmi'). Aynı zamanda bilgi satırı \"Kapora iade edildi\" mesajını gösterir ve kalan tutar yeniden hesaplanır."
+          }
+        ],
+        "expected_result": "İade sheet'i toggle'ın üstte ve varsayılan kapalı olduğunu gösterir; \"Ödenen tutarın tamamını iade et\" bağlantısı tutarı doldurur, kaydedilen iade satırı kırmızı renkte listelenir ve kapora kartı anında yeni statüye göre güncellenir."
+      },
+      {
         "external_id": "CRM-PROJECTS-309",
         "title": "Manuel ödeme ekleme, düzenleme ve silme",
         "description": "Ödemeler tablosunda manuel kayıt oluşturma, düzenleme ve kaldırma akışını doğrular.",
         "steps": [
           {
             "action": "\"Ödeme Ekle\" butonuna tıklayın.",
-            "expected_result": "\"Ödeme Ekle\" başlıklı pencere açılır ve tutar, açıklama, durum alanları doldurulabilir."
+            "expected_result": "\"Ödeme Ekle\" başlıklı sheet açılır; üstte kalan tutarı ve kapora durumunu özetleyen helper metinler gösterilir, tutar alanı boş gelir ve sağ üstte \"Kalan tutarı doldur\" bağlantısı görünür."
           },
           {
-            "action": "Tutar girip durumu \"Ödendi\" seçin, isteğe bağlı not ekleyin ve kaydedin.",
-            "expected_result": "Ödemeler listesine yeni satır eklenir, satırdaki rozet \"Ödendi\" olarak belirir."
+            "action": "\"Kalan tutarı doldur\" bağlantısına tıklayın ve hemen ardından sheet'i kapatma ikonuna basın.",
+            "expected_result": "Tutar alanı outstanding tutarla dolar; kapatma ikonuna basınca Navigation Guard uyarısı çıkar, \"Kal\" seçildiğinde sheet açık kalır ve girilen değer silinmez."
+          },
+          {
+            "action": "Tutarı manuel olarak değiştirin, durumu \"Ödendi\" seçin, isteğe bağlı açıklama ekleyin ve kaydedin.",
+            "expected_result": "Ödemeler listesine yeni satır eklenir; satırdaki rozet \"Ödendi\" olarak belirir ve açıklama bilgisi listelenir."
           },
           {
             "action": "Satırdaki kalem ikonuna tıklayıp açıklamayı değiştirin, ardından kaydedin.",
-            "expected_result": "Satır güncellenir ve son düzenleme tarihi yenilenir."
+            "expected_result": "Satır güncellenir, gerekirse \"Kapora payı\" etiketi yeni tutara göre yeniden hesaplanır ve son düzenleme tarihi yenilenir."
           },
           {
             "action": "Aynı satırdaki çöp kutusu ikonuna basıp silme uyarısını onaylayın.",
             "expected_result": "Satır listeden kaldırılır ve \"Ödeme başarıyla silindi\" mesajı çıkar."
           }
         ],
-        "expected_result": "Manuel ödemeler eklenip düzenlenebilir, gerekirse silinerek finansal özet otomatik güncellenir."
+        "expected_result": "Manuel ödemeler sheet'i boş tutar alanıyla açılır, \"Kalan tutarı doldur\" bağlantısı ve Navigation Guard çalışır; kayıt eklendiğinde rozet/kapora payı alanları doğru güncellenir ve akış silme dahil sorunsuz tamamlanır."
       },
       {
         "external_id": "CRM-PROJECTS-310",

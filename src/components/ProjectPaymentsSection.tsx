@@ -184,8 +184,15 @@ export function ProjectPaymentsSection({
   const [isSnapshotUpdating, setIsSnapshotUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const hasLoadedInitially = useRef(false);
+  const toastRef = useRef(toast);
+  const tRef = useRef(t);
   const [showAllPayments, setShowAllPayments] = useState(false);
   const [isAnimatingExpansion, setIsAnimatingExpansion] = useState(false);
+
+  useEffect(() => {
+    toastRef.current = toast;
+    tRef.current = t;
+  }, [toast, t]);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -218,14 +225,18 @@ export function ProjectPaymentsSection({
       setPayments(data ?? []);
     } catch (error) {
       console.error("Error fetching payments:", error);
-      toast({
-        title: t("payments.error_loading", { defaultValue: "Error loading payments" }),
+      const translate = tRef.current;
+      const notify = toastRef.current;
+      notify({
+        title: translate("payments.error_loading", { defaultValue: "Error loading payments" }),
         description:
-          error instanceof Error ? error.message : t("payments.error_loading", { defaultValue: "Unable to load payments." }),
+          error instanceof Error
+            ? error.message
+            : translate("payments.error_loading", { defaultValue: "Unable to load payments." }),
         variant: "destructive"
       });
     }
-  }, [projectId, t, toast]);
+  }, [projectId]);
 
   const fetchProjectServices = useCallback(async () => {
     try {
@@ -364,7 +375,7 @@ export function ProjectPaymentsSection({
 
     const depositPaid = payments
       .filter((payment) => payment.status === "paid")
-      .reduce((sum, payment) => sum + Math.max(payment.deposit_allocation ?? 0, 0), 0);
+      .reduce((sum, payment) => sum + (payment.deposit_allocation ?? 0), 0);
 
     const depositRemaining = Math.max(targetDepositAmount - depositPaid, 0);
     let depositStatus: FinancialSummary["depositStatus"] = "none";
@@ -857,6 +868,29 @@ export function ProjectPaymentsSection({
                     <ul className="divide-y">
                       {visiblePayments.map((payment, index) => {
                         const isPaid = payment.status === "paid";
+                        const isRefund = payment.amount < 0;
+                        const depositAllocation = payment.deposit_allocation ?? 0;
+                        const showDepositAllocation = depositAllocation !== 0;
+                        const depositAllocationLabel =
+                          depositAllocation > 0
+                            ? t("payments.deposit.allocation_badge", {
+                                amount: formatCurrency(depositAllocation),
+                                defaultValue: "Deposit share: {{amount}}",
+                              })
+                            : t("payments.deposit.refund_badge", {
+                                amount: formatCurrency(depositAllocation),
+                                defaultValue: "Kapora iadesi: {{amount}}",
+                              });
+                        const statusLabel = isRefund
+                          ? t("payments.refund.badge", { defaultValue: "İade" })
+                          : isPaid
+                            ? t("payments.paid", { defaultValue: "Paid" })
+                            : t("payments.due", { defaultValue: "Due" });
+                        const statusBadgeClass = isRefund
+                          ? "border-destructive/40 text-destructive"
+                          : isPaid
+                            ? PAYMENT_COLORS.paid.badgeClass
+                            : PAYMENT_COLORS.due.badgeClass;
                         const displayDate =
                           formatDateSafely(payment.date_paid) ??
                           formatDateSafely(payment.created_at) ??
@@ -882,27 +916,31 @@ export function ProjectPaymentsSection({
                                 variant="outline"
                                 className={cn(
                                   "px-2 py-0.5 text-[10px] font-semibold sm:hidden",
-                                  isPaid
-                                    ? PAYMENT_COLORS.paid.badgeClass
-                                    : PAYMENT_COLORS.due.badgeClass
+                                  statusBadgeClass,
+                                  isRefund && "bg-destructive/5"
                                 )}
                               >
-                                {isPaid
-                                  ? t("payments.paid", { defaultValue: "Paid" })
-                                  : t("payments.due", { defaultValue: "Due" })}
+                                {statusLabel}
                               </Badge>
                             </div>
-                            <div className="font-semibold tabular-nums sm:justify-self-end">
+                            <div
+                              className={cn(
+                                "font-semibold tabular-nums sm:justify-self-end",
+                                isRefund && "text-destructive"
+                              )}
+                            >
                               {formatCurrency(payment.amount)}
                             </div>
                             <div className="flex flex-col gap-1 text-xs text-muted-foreground sm:text-sm">
                               <span>{description}</span>
-                              {payment.deposit_allocation > 0 && (
-                                <span className="font-medium text-amber-700">
-                                  {t("payments.deposit.allocation_badge", {
-                                    amount: formatCurrency(payment.deposit_allocation),
-                                    defaultValue: "Deposit share: {{amount}}",
-                                  })}
+                              {showDepositAllocation && (
+                                <span
+                                  className={cn(
+                                    "font-medium",
+                                    depositAllocation > 0 ? "text-amber-700" : "text-destructive"
+                                  )}
+                                >
+                                  {depositAllocationLabel}
                                 </span>
                               )}
                             </div>
@@ -911,14 +949,11 @@ export function ProjectPaymentsSection({
                                 variant="outline"
                                 className={cn(
                                   "hidden px-2 py-0.5 text-[10px] font-semibold sm:inline-flex",
-                                  isPaid
-                                    ? PAYMENT_COLORS.paid.badgeClass
-                                    : PAYMENT_COLORS.due.badgeClass
+                                  statusBadgeClass,
+                                  isRefund && "bg-destructive/5"
                                 )}
                               >
-                                {isPaid
-                                  ? t("payments.paid", { defaultValue: "Paid" })
-                                  : t("payments.due", { defaultValue: "Due" })}
+                                {statusLabel}
                               </Badge>
                               {(canEdit || canDelete) && (
                                 <IconActionButtonGroup className="ml-1">
@@ -1431,7 +1466,7 @@ function RefundPaymentDialog({
 
   const canRefundFullAmount = totalPaid > 0;
   const refundAllLabel = t("payments.refund.fill_full_amount", {
-    defaultValue: "Refund entire collected amount"
+    defaultValue: "Ödenen tutarın tamamını iade et"
   });
 
   const navigation = useModalNavigation({

@@ -618,6 +618,7 @@
     "extra_services": "Extra services",
     "remaining_balance": "Remaining balance",
     "no_payments": "No payment records yet. Set a base price to get started.",
+    "show_more": "Show more payments",
     "delete_payment": "Delete Payment",
     "delete_payment_confirm": "Are you sure you want to delete this payment? This action cannot be undone.",
     "deleting": "Deleting...",

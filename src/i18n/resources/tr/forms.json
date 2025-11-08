@@ -1092,6 +1092,7 @@
     "extra_services": "Ek hizmetler",
     "remaining_balance": "Kalan bakiye",
     "no_payments": "Henüz ödeme kaydı yok. Başlamak için bir temel fiyat belirleyin.",
+    "show_more": "Daha fazla ödeme göster",
     "delete_payment": "Ödemeyi Sil",
     "delete_payment_confirm": "Bu ödemeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
     "deleting": "Siliniyor...",

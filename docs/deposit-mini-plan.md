@@ -43,11 +43,12 @@
 - **Ödeme ekle (GeneralPaymentDialog)**: Kapora dışı tüm tahsilatlar bu sheet’ten geçer. Sheet üzerinde iki kritik detay bulunur:
   - Dialog, kalan bakiyeyi ve varsa kapora bakiyesini özetleyen helper metin + “Kalan tutarı doldur” bağlantısı gösterir. Bağlantı, outstanding toplamını `amount` alanına kopyalar.
   - `deposit_allocation`, `min(amount, depositRemaining)` olarak otomatik hesaplanır; kullanıcıya “Kapora hesabı hala açık” bilgisini veren kopya gösterilir ama ekstra alan gerekmez. Kapora zaten kapalıysa helper copy “Bu ödeme kaporayı etkilemez” şeklindedir.
-- **İade (RefundPaymentDialog)**: Kullanıcı yalnızca iade tutarı, sebep ve tarih girer. Dialog içinde “Kapora iadesi olarak uygula” switch’i bulunur; açık olduğunda `deposit_allocation` negatif değerle güncellenir. Kullanıcı negatif tutar girmez, backend yatırımıyla uyumlu kalır.
+  - Tutar alanı her açılışta boş gelir; kullanıcı istediği değeri elle girer veya “Kalan tutarı doldur” butonuyla tek tıkla otomatik doldurur.
+- **İade (RefundPaymentDialog)**: Sheet, kapora toggle’ını kartın en üstünde gösterir ve switch varsayılan olarak kapalı gelir; kullanıcı sadece kaporadan düşmek istediğinde açar. Tutar alanı boş başlar, sağ üstündeki “Ödenen tutarın tamamını iade et” bağlantısı tüm tahsilatı otomatik doldurur. Toggle açıldığında `deposit_allocation` negatif değerle güncellenir; kullanıcı sadece pozitif tutar girer, backend eksi işaretini yönetir.
 - **Kapora kartı ve snapshot banner’ı**:
   - "Kapora tutarını sabitle" / "Güncelle" aksiyonları snapshot alanlarını yönetir; kart, hangi toplam üzerinden kilitlendiğini ve son kilitlenme tarihini banner olarak gösterir.
   - Proje toplamı snapshot’tan saparsa sarı bilgi bandı çıkar. Kullanıcı “Yeni tutarı sabitle” veya “Farkı kalan bakiyeye taşı” aksiyonlarından birini seçene kadar banner kalır.
-- **Ödeme listesi**: `base_price` satırı tamamen kaldırılır. Her ödeme satırında sistemin hesapladığı `Kapora payı` rozeti (örn. `Kapora payı: ₺1.000`) gösterilir; kullanıcı hiçbir adımda manuel oran girmez. Quick action ile eklenen ödemeler ilgili rozetlerle (“Kapora ödemesi”, “Ödeme kaydı”, “İade”) etiketlenir.
+- **Ödeme listesi**: `base_price` satırı tamamen kaldırılır. Her ödeme satırında sistemin hesapladığı `Kapora payı` rozeti (örn. `Kapora payı: ₺1.000`) gösterilir; kullanıcı hiçbir adımda manuel oran girmez. İade satırları kırmızı tutar ve `İade` rozetleriyle vurgulanır; kaporadan düşülen miktarlar `Kapora iadesi: -₺X` etiketiyle listelenir. Quick action ile eklenen ödemeler ilgili rozetlerle (“Kapora ödemesi”, “Ödeme kaydı”, “İade”) etiketlenir.
 - **Kapora statüsü**: `depositPaid >= depositAmount` → “Tahsil edildi”, `depositPaid > 0` → “Kısmi”, aksi halde “Bekleniyor”. İadeler `depositPaid` hesabında negatif olarak izlenir ve kartta “Kapora iadesi yapıldı” mesajı otomatik tetiklenir.
 
 ## Edge Case Kuralları
@@ -60,8 +61,8 @@
 
 ### 2. Geri Ödeme / İade
 
-- “İade” butonu `RefundPaymentDialog`u açar; kullanıcı yalnızca iade tutarını, isteğe bağlı sebebi ve tarihi girer.
-- Dialogdaki “Kapora iadesi olarak uygula” switch'i, `deposit_allocation` değerini otomatik negatif yapar ve kullanıcıya ne kadar kaporanın azalacağını helper metinle açıklar. Switch kapalıysa iade sadece kalan bakiyeden düşer.
+- “İade” butonu `RefundPaymentDialog`u açar; kullanıcı yalnızca iade tutarını, isteğe bağlı sebebi ve tarihi girer. Tutar alanı boş gelir ve “Ödenen tutarın tamamını iade et” bağlantısı tek tıklamayla mevcut tahsilatı kopyalar.
+- Dialogdaki “Kapora iadesi olarak uygula” switch'i varsayılan olarak kapalıdır; açılırsa `deposit_allocation` değerini otomatik negatif yapar ve kullanıcıya ne kadar kaporanın azalacağını helper metinle açıklar. Switch kapalıysa iade sadece kalan bakiyeden düşer.
 - Kapora kartı `depositPaid` hesabına negatif değerleri dahil ederek "kapora iade edildi" durumunu gösterebilir; gerekli durumlarda otomatik banner ile “Kapora {{delta}} TL eksildi” mesajı çıkar.
 
 ### 3. Kapora Hedefi Azaldığında
@@ -130,9 +131,9 @@
 
 ### 7. Kapora İadesi
 
-1. Müşteri kaporasını geri ister. Kullanıcı “İade” butonuna basar; `RefundPaymentDialog` tutar, neden ve tarih alanlarını tek sheet’te gösterir.
-2. Form, iade edilecek kapora tutarını önerir (`depositPaid` kadar) ve “Kapora iadesi olarak uygula” switch’i açık geldiği için `deposit_allocation` otomatik negatif yazılır.
-3. İşlem tamamlandığında pozitif kayıt silinmez; sistem ayrı bir iade satırı ekler ve kart “Kapora iade edildi” mesajıyla güncel `depositPaid` değerini gösterir.
+1. Müşteri kaporasını geri ister. Kullanıcı “İade” butonuna basar; `RefundPaymentDialog` üstte kapora toggle’ını, altında tutar ve tarih alanlarını tek sheet’te gösterir.
+2. Formdaki tutar alanı boş gelir; sağ üstteki “Ödenen tutarın tamamını iade et” bağlantısı tüm tahsilatı otomatik yazar. “Kapora iadesi olarak uygula” switch’i varsayılan olarak kapalıdır; kullanıcı kaporayı düşmek istediğinde açar.
+3. İşlem tamamlandığında pozitif kayıt silinmez; sistem ayrı bir iade satırı ekler, satır `Kapora iadesi: -₺X` etiketini taşır ve kart “Kapora iade edildi” mesajıyla güncel `depositPaid` değerini gösterir.
 
 ### 8. Legacy Projelerde Kapora Payını Tamamlama
 

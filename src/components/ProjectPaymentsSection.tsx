@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { IconActionButton } from "@/components/ui/icon-action-button";
+import { IconActionButtonGroup } from "@/components/ui/icon-action-button-group";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AlertDialog,
@@ -78,6 +80,7 @@ interface FinancialSummary {
 }
 
 const CURRENCY = "TRY";
+const PAYMENT_PREVIEW_COUNT = 3;
 
 const formatCurrency = (amount: number) => {
   try {
@@ -153,6 +156,7 @@ export function ProjectPaymentsSection({
   const [isLoading, setIsLoading] = useState(true);
   const hasLoadedInitially = useRef(false);
   const [showAllPayments, setShowAllPayments] = useState(false);
+  const [isAnimatingExpansion, setIsAnimatingExpansion] = useState(false);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -219,7 +223,7 @@ export function ProjectPaymentsSection({
   }, [fetchPayments, fetchProject, fetchProjectServices, refreshToken]);
 
   useEffect(() => {
-    if (payments.length <= 3) {
+    if (payments.length <= PAYMENT_PREVIEW_COUNT) {
       setShowAllPayments(false);
     }
   }, [payments.length]);
@@ -227,6 +231,18 @@ export function ProjectPaymentsSection({
   useEffect(() => {
     setShowAllPayments(false);
   }, [projectId]);
+
+  useEffect(() => {
+    if (!isAnimatingExpansion) return;
+    const timer = setTimeout(() => setIsAnimatingExpansion(false), 400);
+    return () => clearTimeout(timer);
+  }, [isAnimatingExpansion]);
+
+  useEffect(() => {
+    if (!showAllPayments) {
+      setIsAnimatingExpansion(false);
+    }
+  }, [showAllPayments]);
 
   const handlePaymentsRefresh = useCallback(async () => {
     await fetchPayments();
@@ -448,22 +464,6 @@ export function ProjectPaymentsSection({
     ]
   );
 
-  const renderPaymentTypeLabel = useCallback(
-    (payment: Payment) => {
-      switch (payment.type) {
-        case "deposit_due":
-          return t("payments.types.deposit_due", { defaultValue: "Deposit (due)" });
-        case "deposit_payment":
-          return t("payments.types.deposit_payment", { defaultValue: "Deposit payment" });
-        case "base_price":
-          return t("payments.types.base_price", { defaultValue: "Base price" });
-        default:
-          return t("payments.types.manual", { defaultValue: "Manual" });
-      }
-    },
-    [t]
-  );
-
   const getPaymentDescription = useCallback(
     (payment: Payment) => {
       switch (payment.type) {
@@ -520,8 +520,11 @@ export function ProjectPaymentsSection({
   const depositRecordLabel = t("payments.deposit.actions.record_short", { defaultValue: "Record payment" });
   const shouldRenderSkeleton = isLoading && !hasLoadedInitially.current;
   const isRefreshing = isLoading && hasLoadedInitially.current;
-  const visiblePayments = showAllPayments ? payments : payments.slice(0, 3);
-  const canShowMorePayments = !showAllPayments && payments.length > 3;
+  const visiblePayments = showAllPayments
+    ? payments
+    : payments.slice(0, PAYMENT_PREVIEW_COUNT);
+  const canShowMorePayments =
+    !showAllPayments && payments.length > PAYMENT_PREVIEW_COUNT;
 
   return (
     <>
@@ -754,7 +757,7 @@ export function ProjectPaymentsSection({
                 <div className="space-y-2">
                   <div className="overflow-hidden rounded-lg border">
                     <ul className="divide-y">
-                      {visiblePayments.map((payment) => {
+                      {visiblePayments.map((payment, index) => {
                         const isPaid = payment.status === "paid";
                         const displayDate =
                           formatDateSafely(payment.date_paid) ??
@@ -763,6 +766,8 @@ export function ProjectPaymentsSection({
                         const description = getPaymentDescription(payment);
                         const canEdit = !["base_price", "deposit_due"].includes(payment.type);
                         const canDelete = ["manual", "deposit_payment"].includes(payment.type);
+                        const shouldAnimateExpansion =
+                          isAnimatingExpansion && index >= PAYMENT_PREVIEW_COUNT;
                         return (
                           <li
                             key={payment.id}
@@ -772,15 +777,13 @@ export function ProjectPaymentsSection({
                                 ? "bg-amber-50/70"
                                 : payment.type === "base_price"
                                 ? "bg-muted/40"
-                                : "hover:bg-muted/40"
+                                : "hover:bg-muted/40",
+                              shouldAnimateExpansion && "animate-slide-up"
                             )}
                           >
                             <div className="flex items-start justify-between gap-2 sm:justify-start">
                               <div>
                                 <div className="font-medium tabular-nums">{displayDate}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {renderPaymentTypeLabel(payment)}
-                                </div>
                               </div>
                               <Badge
                                 variant="outline"
@@ -816,28 +819,33 @@ export function ProjectPaymentsSection({
                                   ? t("payments.paid", { defaultValue: "Paid" })
                                   : t("payments.due", { defaultValue: "Due" })}
                               </Badge>
-                              {canEdit && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleEditPayment(payment)}
-                                  className="h-7 w-7 p-0"
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {canDelete && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => {
-                                    setPaymentToDelete(payment);
-                                    setShowDeleteDialog(true);
-                                  }}
-                                  className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                              {(canEdit || canDelete) && (
+                                <IconActionButtonGroup className="ml-1">
+                                  {canEdit && (
+                                    <IconActionButton onClick={() => handleEditPayment(payment)}>
+                                      <Edit2 className="h-4 w-4" />
+                                      <span className="sr-only">
+                                        {t("payments.actions.edit", { defaultValue: "Edit payment" })}
+                                      </span>
+                                    </IconActionButton>
+                                  )}
+                                  {canDelete && (
+                                    <IconActionButton
+                                      variant="danger"
+                                      onClick={() => {
+                                        setPaymentToDelete(payment);
+                                        setShowDeleteDialog(true);
+                                      }}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                      <span className="sr-only">
+                                        {t("payments.actions.delete", {
+                                          defaultValue: "Delete payment"
+                                        })}
+                                      </span>
+                                    </IconActionButton>
+                                  )}
+                                </IconActionButtonGroup>
                               )}
                             </div>
                           </li>
@@ -849,15 +857,19 @@ export function ProjectPaymentsSection({
                     <div className="flex justify-center">
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="textGhost"
                         size="sm"
-                        className="h-7 px-3 text-xs"
-                        onClick={() => setShowAllPayments(true)}
+                        className="group h-auto gap-1 px-0 py-0 text-sm font-medium"
+                        onClick={() => {
+                          setShowAllPayments(true);
+                          setIsAnimatingExpansion(true);
+                        }}
                       >
-                        <span className="flex items-center gap-1 text-muted-foreground">
-                          <ChevronDown className="h-3.5 w-3.5" />
-                          {t("payments.show_more", { defaultValue: "Show more payments" })}
-                        </span>
+                        {t("payments.show_more", { defaultValue: "Show more payments" })}
+                        <ChevronDown
+                          className="h-3.5 w-3.5 text-muted-foreground"
+                          aria-hidden="true"
+                        />
                       </Button>
                     </div>
                   ) : null}

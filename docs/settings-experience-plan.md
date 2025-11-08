@@ -278,7 +278,7 @@ Cross-cutting components:
 
 ### UX Debt / Interaction Consistency
 
-- [ ] Ensure any non-input toggles/sliders (working-hours switches, notification toggles, etc.) auto-save immediately and never trigger the sticky footer—only text/textarea inputs should require manual save.
+- [ ] Audit Profile, General, Notifications, Leads, and Billing to ensure every non-input toggle/slider auto-saves immediately (no sticky footer) while only free-text inputs rely on the save footer; fix any lingering legacy sections.
 - [ ] Align sticky nav labels and anchors: remove/rename nav entries that don’t correspond to actual sections (e.g., “Faturalandırma ve Ödemeler” anchor) or add the missing section block so nav items always have a matching target.
 - [ ] Eliminate the “scroll jump” bug seen when changing dropdowns/radios in Billing → VAT defaults and General → Regional settings by standardizing anchor registration/scroll management across forms (likely a shared fix in `SettingsFormSection`).
 - [ ] For the freelance/no-VAT mode, hide company/VAT fields when selected but restore the previously entered values when switching back to individual/company so users don’t lose data.

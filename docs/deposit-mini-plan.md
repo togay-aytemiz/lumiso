@@ -8,7 +8,7 @@
 
 ## Hedefler
 1. Ödeme listesinde yalnızca gerçekleşmiş işlemler (kapora ödemeleri dahil) görünsün; beklentiler ayrı bir özet kartında takip edilsin.
-2. Kapora statüsü, kullanıcı hangi ödeme tipini seçerse seçsin, toplam tahsilat içinde kaporaya ayrılan tutara bakarak güncellensin.
+2. Kapora statüsü, kullanıcı ödeme formunda ekstra alanlarla uğraşmadan otomatik güncellensin.
 3. Fotoğrafçı "kaporayı şu tutarda sabitledim" diyebilsin; yeni hizmetler eklendiğinde otomatik artış yerine sabit tutarı güncelleme ya da farkı bakiyeye taşıma seçenekleri sunulsun.
 4. Ödeme araçları sadeleşsin: `base_price` ve `deposit_due` tipleri kaldırılarak konfigürasyon + tahsilat ayrımı netleşsin.
 
@@ -18,6 +18,7 @@
 - `payments` tablosuna `deposit_allocation numeric default 0` kolonu ekleyin. Bu kolon ödemenin ne kadarının kapora hesabına yazıldığını belirtir.
 - Yeni tipler: sadece `manual`, `deposit_payment`, `balance_due`. `deposit_payment` varsayılan olarak `deposit_allocation = min(amount, remainingDeposit)` ile kaydedilir. Diğer tiplerde kullanıcı formdan değer girer.
 - `deposit_due` satırları yerine `projects.deposit_config` içine `snapshot_amount`, `snapshot_total`, `snapshot_locked_at`, `snapshot_note` alanları eklenir. Bu alanlar kaporanın hangi toplam üzerinden sabitlendiğini gösterir.
+- `deposit_allocation` alanı kullanıcıya gösterilmez; backend ödeme niyetine göre bu değeri hesaplar (HoneyBook, Studio Ninja gibi çözümlerdeki “deposit payment” yaklaşımı referans alınır).
 - Eski veriyi taşımak için migration:
   1. `deposit_due` satırlarından `amount` değerini ilgili projenin `snapshot_amount` alanına yaz.
   2. Satırın `status = paid` olması halinde `deposit_allocation = amount` olacak şekilde aynı projede yeni bir `deposit_payment` kaydı üret veya mevcut kapora ödemeleri arasında paylaştır.
@@ -31,22 +32,26 @@
   - Sabitlenen tutar gösterilir (`snapshot_amount`), kullanıcı henüz sabitlemediyse kart "Hesaplanan kapora" etiketini kullanır.
   - Kapora tahsilatı gerçekleşmişse tarih, `deposit_allocation` kullanan ödemelerin son tarihinden alınır.
 
-### 3. UI / Akış
-- **Ödeme ekleme / düzenleme**: Formun altına `Kapora tahsilatına dahil et` switch'i eklenir. Switch açıkken kullanıcı tahsilatın ne kadarının kaporaya ayrıldığını girer (default: `min(amount, remainingDeposit)`).
+-### 3. UI / Akış
+- **Ödeme aksiyonları**: Ödeme kartının sağ üstünde üç temel buton bulunur: `Kapora ödemesi`, `Kalan ödeme`, `Tamamını tahsil et`. Kullanıcı senaryoya göre butonu seçer; form yalnızca tutar, tarih ve opsiyonel açıklama ister.
+- **Otomatik kapora payı**: Kullanıcı tutarı girdikten sonra sistem seçilen aksiyona göre `deposit_allocation` değerini hesaplar.
+  - Kapora ödemesi → `min(amount, remainingDeposit)`
+  - Tamamını tahsil et → Kapora eksikse önce eksik kaporayı kapatır, kalanı bakiye tahsilatı olarak işler.
+  - Kalan ödeme → Kapora zaten kapalıysa tamamını bakiyeye yazar; kapora eksikse kullanıcıya “Kaporayı da bugün tahsil etmek ister misin?” prompt'u gösterir.
 - **Kapora kartı**:
   - "Kapora tutarını sabitle" butonu snapshot alanlarını doldurur. Sabitlendiğinde kart "Kapora tutarı ₺X olarak belirlendi" mesajını gösterir; kullanıcının müşteriye nasıl ilettiği varsayılmaz.
   - "Kapora tutarını güncelle" aksiyonu yeni snapshot oluşturur ve isteğe bağlı olarak paylaşılabilir kısa metin üretir.
   - "Farkı kalan bakiyeye taşı" aksiyonu yalnızca proje kalan tutarını artırır; kapora snapshot değişmez.
-- **Ödeme listesi**: `base_price` satırı çıkarılır. Liste her ödeme için `kapora katkısı` rozetini gösterir (örn. `Kapora payı: ₺1.000`).
+- **Ödeme listesi**: `base_price` satırı çıkarılır. Liste her ödeme için sistemin hesapladığı `Kapora payı` rozetini gösterir (örn. `Kapora payı: ₺1.000`); kullanıcı payı manuel girmez.
 - **Kapora statüsü**: `depositPaid >= depositAmount` ise "tahsil edildi", `depositPaid > 0` ise "kısmi", aksi halde "bekleniyor".
-- **Hızlı aksiyonlar**: Ödeme kartının sağ üstünde `Kapora ödemesi`, `Genel ödeme`, `İade` şeklinde açıklamalı butonlar bulunur. Böylece kullanıcı negatif tutar girme veya karmaşık form doldurma ihtiyacı olmadan doğru diyaloga yönlendirilir.
+- **İade**: Ayrı bir butonla açılır; kullanıcı sadece iade tutarı + sebep girer, negatif sayı girmez.
 
 ## Edge Case Kuralları
 
-### 1. Ödeme Güncelleme / Silme
-- Her ödeme satırı düzenlenirken `deposit_allocation` alanı formda güncellenir; validasyon `0 ≤ deposit_allocation ≤ amount` ve `toplam allocation ≤ hedef kapora` koşullarını zorlar.
-- Kapora payı düşürülürse geriye kalan tahsilat `balance_due` bölümüne kaydırılır; artırılırsa kalan limitten düşülür. Operasyon başarıyla tamamlanamazsa kullanıcıya “Kapora payı hedefi aşıyor” uyarısı gösterilir.
-- Kapora katkısı olan bir satır silindiğinde `depositPaid` yeniden hesaplanır ve kapora kartı otomatik olarak “bekleniyor / kısmi” durumuna dönebilir.
+-### 1. Ödeme Güncelleme / Silme
+- Düzenleme diyaloğu, ödemeyi oluşturan aksiyonu gösterir (Kapora, Kalan, Tam). Kullanıcı aksiyonu değiştirirse sistem `deposit_allocation` değerini otomatik yeniden hesaplar.
+- Validasyon mesajları yalnızca iş kurallarını anlatır (“Bu ödeme kaporayı 500 TL fazla kapatıyor. Farkı kalan ödemeye taşıyalım mı?”). Kullanıcıdan sayı girmesi istenmez; yalnızca önerilen aksiyonlardan birini seçer.
+- Bir ödeme silinmek istediğinde modal “Bu ödemeyi silmek yerine iade kaydı oluşturmak ister misiniz?” diye sorar. Silme tamamlanırsa kapora statüsü otomatik güncellenir ve audit log’a not düşülür.
 
 ### 2. Geri Ödeme / İade
 - Ödeme kartındaki “İade” kısayolu ilgili diyalogu açar; kullanıcı sadece iade tutarını ve sebebini girer. Sistem arka planda `amount` değerini negatif, `deposit_allocation` alanını da girilen kapora payına göre ayarlar; kullanıcı manuel negatif sayı girmek zorunda kalmaz.
@@ -61,9 +66,9 @@
 ### 4. Kapora Devre Dışı
 - Kapora modu `none` olduğunda snapshot alanları temizlenir ve tüm ödemelerin `deposit_allocation` değeri 0'a çekilir. Eğer kullanıcı devre dışı bırakırken mevcut kapora katkısı varsa sistem “Kapora paylarını sıfırlamak üzeresiniz” onayı ister ve kalan bakiye yeniden hesaplanır.
 
-### 5. Bir Ödemeyi Parçalı Kapora Yapmak
-- Switch varsayılanı `min(amount, remainingDeposit)` olsa da kullanıcı alanı serbestçe düzenleyebilir; UI, “Kalan kapora limiti: ₺X” göstergesiyle destekler.
-- Eğer kullanıcı aynı tarihte iki ödeme girip birini sadece kapora, diğerini kalan bakiye olarak işaretlemek isterse, ikinci ödeme için `deposit_allocation` alanı manuel `0` bırakılabilir.
+-### 5. Bir Ödemeyi Parçalı Kapora Yapmak
+- “Tamamını tahsil et” veya “Kalan ödeme” akışı seçildiğinde sistem kapora eksikse otomatik olarak önce kaporayı, sonra bakiyeyi kapatır; kullanıcıya bilgi metni gösterilir.
+- Aynı gün birden fazla işlem yapılacaksa kullanıcı ayrı aksiyonları (Kapora ödemesi, Kalan ödeme) kullanır; ekstra alan gösterilmez.
 
 ### 6. Var Olan Kapora Ödemelerinin Backfill'i
 - Migration sonrasında `deposit_allocation` değeri olmayan satırlarda UI “Kapora payını seç” banner'ı gösterir; kullanıcı tek tıkla `amount` kadar pay atayabilir veya sıfır bırakabilir.
@@ -116,9 +121,9 @@
 3. Kapora kartı uyarısı kaybolur, statü yeniden hesaplanır.
 
 ### 9. Ödeme Düzenleme/Silme Yolculuğu
-1. Kullanıcı bir kapora ödemesini düzenlemek ister; dialog üstünde “Kapora payı” alanı kısa bir yardım metniyle (“Kapora tutarı hedefi: ₺X”) açıklanır.
-2. Formdaki alan hedefi aşarsa kırmızı yardım metni çıkar; kullanıcı yanlış yapmadan çıkabilsin diye önerilen değerler buton olarak listelenir.
-3. Ödeme silinmek istendiğinde sistem “Bu ödeme yerine iade kaydı oluşturmak ister misiniz?” sorusunu sorar. Kullanıcı iade seçerse yeni iade dialogu açılır ve ödeme silinmez; gerçekten silmek isterse onay sonrası `depositPaid` yeniden hesaplanır ve kart statüsü güncellenir.
+1. Kullanıcı bir ödemeyi düzenlemek ister; dialog, ödeme hangi aksiyonla oluşturulduysa onu gösterir (ör. “Kapora ödemesi”). Gerekirse aksiyon değiştirilebilir.
+2. Sistem yeni tutarın kapora hedefini aşması durumunda “Bu ödeme kaporayı 500 TL fazla kapatacak, farkı kalan bakiyeye taşıyalım mı?” şeklinde yönlendirici mesaj gösterir; kullanıcı sadece önerilen aksiyonlardan birini seçer.
+3. Ödeme silinmek istendiğinde modal “Bu ödemeyi silmek yerine iade kaydı oluşturmak ister misiniz?” diye sorar. Kullanıcı gerçekten silerse kapora statüsü otomatik güncellenir ve audit log’a not düşülür.
 
 
 ## Uygulama Adımları

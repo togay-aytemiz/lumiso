@@ -434,9 +434,6 @@ const formatCurrency = useCallback((amount: string | number | null) => {
             >
               {row.name}
             </Button>
-            {row.description ? (
-              <div className="text-xs text-muted-foreground">{row.description}</div>
-            ) : null}
           </div>
         ),
       },
@@ -561,9 +558,6 @@ const formatCurrency = useCallback((amount: string | number | null) => {
             >
               {row.name}
             </Button>
-            {row.description ? (
-              <div className="text-xs text-muted-foreground">{row.description}</div>
-            ) : null}
           </div>
         ),
       },

@@ -31,7 +31,7 @@ export function SettingsStickyFooter({
         className
       )}
     >
-      <div className="flex w-full items-center justify-end gap-2 px-4 py-4 sm:px-0">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-end gap-2 px-4 py-4 sm:px-6 lg:px-8">
         <Button
           variant="ghost"
           onClick={onCancel}

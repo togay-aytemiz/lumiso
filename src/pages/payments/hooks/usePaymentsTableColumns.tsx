@@ -129,10 +129,10 @@ export function usePaymentsTableColumns({
         minWidth: "120px",
         render: (row) => (
           <Badge variant="outline">
-            {row.type === "base_price"
-              ? t("payments.type.base")
-              : row.type === "extra"
-                ? t("payments.type.extra")
+            {row.type === "deposit_payment"
+              ? t("payments.type.deposit")
+              : row.type === "balance_due"
+                ? t("payments.type.balance")
                 : t("payments.type.manual")}
           </Badge>
         ),

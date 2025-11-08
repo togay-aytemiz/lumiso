@@ -776,7 +776,7 @@ export function LegacyProjectSheetView({
                 <UnifiedClientDetails 
                   lead={lead} 
                   showClickableNames={true}
-                  defaultExpanded={false}
+                  defaultExpanded={!isMobile}
                   onLeadUpdated={() => {
                     fetchLead();
                     onProjectUpdated();

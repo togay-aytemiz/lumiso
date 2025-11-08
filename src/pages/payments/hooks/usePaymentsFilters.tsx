@@ -244,10 +244,10 @@ export function usePaymentsFilters({
       TYPE_FILTER_OPTIONS.map((value) => ({
         value,
         label:
-          value === "base_price"
-            ? t("payments.type.base")
-            : value === "extra"
-              ? t("payments.type.extra")
+          value === "deposit_payment"
+            ? t("payments.type.deposit")
+            : value === "balance_due"
+              ? t("payments.type.balance")
               : t("payments.type.manual"),
       })),
     [t]

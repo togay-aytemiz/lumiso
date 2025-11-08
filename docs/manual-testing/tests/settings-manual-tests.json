@@ -301,31 +301,27 @@
       },
       {
         "external_id": "CRM-GENERAL-007",
-        "title": "Bölgesel tercihleri güncelleme",
-        "description": "Tarih formatı, saat formatı, saat dilimi ve dil seçiminin birlikte kaydedildiğini doğrular.",
+        "title": "Bölgesel tercihlerin otomatik kaydedilmesi",
+        "description": "Tarih, saat formatı ve saat dilimi seçimlerinin alt çubuğa gerek kalmadan kaydedildiğini doğrular.",
         "steps": [
           {
             "action": "'Tarih Formatı' açılır listesinden farklı bir format seçin.",
-            "expected_result": "Seçim hemen uygulanır ve kart kirli durumuna geçer."
+            "expected_result": "Seçim anında uygulanır, alt kaydetme çubuğu görünmez ve sağ altta \"Bölgesel Ayarlar güncellendi\" toast'ı çıkar."
           },
           {
-            "action": "'Saat formatı' bölümünde 24 saat seçeneğini işaretleyin.",
-            "expected_result": "Seçim anında güncellenir."
+            "action": "'Saat formatı' bölümünde diğer seçeneğe geçin.",
+            "expected_result": "Yeni seçim hemen vurgulanır ve ikinci bir toast daha gösterilir."
           },
           {
-            "action": "Saat dilimi alanında 'İstanbul' aratıp uygun sonucu seçin.",
-            "expected_result": "Alan seçtiğiniz saat dilimini gösterir."
+            "action": "Saat dilimi alanında şehir aratıp farklı bir saat dilimi seçin.",
+            "expected_result": "Alan yeni değeri gösterir; sayfa yeniden yüklenmez ve başka bir toast daha gelir."
           },
           {
-            "action": "Dil değiştiriciden farklı bir dil seçip tekrar Türkçe'ye dönün.",
-            "expected_result": "Sayfadaki metinler seçtiğiniz dile göre değişip geri döner."
-          },
-          {
-            "action": "Alt çubuktaki 'Değişiklikleri Kaydet' butonuna basın ve sayfayı yenileyin.",
-            "expected_result": "Seçilen tarih, saat ve dil tercihleri korunur."
+            "action": "Sayfayı yenileyin.",
+            "expected_result": "Az önce seçtiğiniz tarih formatı, saat formatı ve saat dilimi aynen kalır."
           }
         ],
-        "expected_result": "Bölgesel ayarlar birlikte saklanır ve kullanıcıya aynı değerlerle geri yüklenir."
+        "expected_result": "Bölgesel ayarlar otomatik kaydedilir, alt çubuk tetiklenmez ve değerler sayfa yenilense bile korunur."
       }
     ]
   },
@@ -1138,39 +1134,47 @@
       },
       {
         "external_id": "CRM-BILLING-003",
-        "title": "KDV modu seçeneğini değiştirme",
-        "description": "KDV hesaplama modunu değiştirdiğinizde seçimin kaydedildiğini doğrular.",
+        "title": "KDV modu otomatik kaydı",
+        "description": "KDV hesaplama kartlarının değiştiği anda kaydedilip tosta yansıtıldığını doğrular.",
         "steps": [
           {
             "action": "'KDV hesaplama yöntemi' bölümünde 'Dahil' kartını seçin.",
-            "expected_result": "Seçilen kart yeşil çerçeve alır."
+            "expected_result": "Seçilen kart anında vurgulanır ve \"Vergi & Faturalama\" başlıklı auto-save toast'ı görünür."
           },
           {
             "action": "Ardından 'Hariç' kartına tıklayın.",
-            "expected_result": "Yeni seçim vurgulanır ve kart kirlenir."
+            "expected_result": "Yeni seçim vurgulanır ve ikinci bir toast çıkar."
           },
           {
-            "action": "'Kaydet' butonuna basın.",
-            "expected_result": "Bildirim çıkar ve sayfa yenilendiğinde son seçim korunur."
+            "action": "Sayfayı yenileyin.",
+            "expected_result": "KDV modu son seçiminizde kalır; ekstra kaydetme adımı gerekmez."
           }
         ],
-        "expected_result": "KDV modu kullanıcı seçimlerine göre saklanır."
+        "expected_result": "KDV modu kullanıcı seçimlerine göre otomatik saklanır ve yenilemede korunur."
       },
       {
         "external_id": "CRM-BILLING-004",
-        "title": "Fiyatlara KDV dahil anahtarını değiştirme",
-        "description": "Anahtarın kaydedildiğini ve açıklamanın güncellendiğini doğrular.",
+        "title": "Serbest ↔ Şahıs/Şirket geçişinde alanların davranışı",
+        "description": "Serbest modunun varsayılan olduğunu, şirket tipine geçince alanların açıldığını ve varsayılan KDV değerlerinin otomatik ayarlandığını doğrular.",
         "steps": [
           {
-            "action": "'Fiyatlara KDV dahil' anahtarını açıp kapatın.",
-            "expected_result": "Anahtarın durumu hemen değişir ve açıklama metni güncel kalır."
+            "action": "Sayfayı yeni açtığınızda şirket tipi seçimini kontrol edin.",
+            "expected_result": "Varsayılan olarak 'Serbest / KDV yok' seçilidir, şirket alanları görünmez ve KDV oranı 0'dır."
           },
           {
-            "action": "Yeni durumda bırakıp 'Kaydet' butonuna basın.",
-            "expected_result": "Yeşil bildirim çıkar ve sayfa yenilendiğinde anahtar aynı konumda kalır."
+            "action": "'Şahıs' ya da 'Şirket' seçeneğini işaretleyin.",
+            "expected_result": "Şirket alanları belirir, uyarı bandı gösterilir, KDV oranı otomatik 20 olur ve 'Fiyata dahil' modu seçilir; ayrıca auto-save toast'ı çıkar."
+          },
+          {
+            "action": "Sayfayı yenileyin.",
+            "expected_result": "Seçtiğiniz tüzel kişilik ve 20 / fiyata dahil varsayılanları aynen korunur."
+          },
+          {
+            "action": "Tekrar 'Serbest / KDV yok' seçeneğine dönün.",
+            "expected_result": "Şirket alanları ve uyarı gizlenir, KDV oranı 0'a döner ve başka bir toast görünür."
           }
         ],
-        "expected_result": "KDV dahil/ hariç tercihi kullanıcıya göre saklanır."
+        "expected_result": "Serbest mode'u tüm alanları gizler, diğer tipler alanları açar ve yeni varsayılanları otomatik olarak kaydeder."
       },
       {
         "external_id": "CRM-BILLING-005",

@@ -161,6 +161,7 @@ const basePayment: PaymentRow = {
   date_paid: "2024-01-01",
   created_at: "2024-01-01T00:00:00Z",
   type: "manual",
+  deposit_allocation: 0,
 };
 
 type SupabaseFromMock = jest.Mock<unknown, [string]>;
@@ -297,43 +298,6 @@ describe("EditPaymentDialog", () => {
     expect(toastMock.success).toHaveBeenCalledWith("edit_payment.payment_updated");
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(onPaymentUpdated).toHaveBeenCalled();
-  });
-
-  it("updates base price on related project when editing a base payment", async () => {
-    const paymentEqMock = jest.fn(async () => ({ error: null }));
-    const projectEqMock = jest.fn(async () => ({ error: null }));
-    const updatePaymentMock: PaymentTableMock["update"] = jest.fn(() => ({ eq: paymentEqMock }));
-    const updateProjectMock = jest.fn(() => ({ eq: projectEqMock }));
-
-    supabaseFromMock.mockImplementation((table: string) => {
-      if (table === "payments") {
-        return { update: updatePaymentMock } satisfies PaymentTableMock;
-      }
-      if (table === "projects") {
-        return { update: updateProjectMock };
-      }
-      return originalFromImplementation(table);
-    });
-
-    render(
-      <EditPaymentDialog
-        payment={{ ...basePayment, type: "base_price" }}
-        open={true}
-        onOpenChange={jest.fn()}
-        onPaymentUpdated={jest.fn()}
-      />
-    );
-
-    fireEvent.change(screen.getByLabelText(/edit_payment.amount_try/i), { target: { value: "250" } });
-    fireEvent.click(screen.getByTestId("footer-action-1"));
-
-    await waitFor(() => {
-      expect(updatePaymentMock).toHaveBeenCalled();
-    });
-
-    expect(updateProjectMock).toHaveBeenCalledWith(expect.objectContaining({ base_price: 250 }));
-    expect(paymentEqMock).toHaveBeenCalledWith("id", "payment-1");
-    expect(projectEqMock).toHaveBeenCalledWith("id", "project-9");
   });
 
   it("switches to due status, removes the paid date, and respects dirty close flow", async () => {

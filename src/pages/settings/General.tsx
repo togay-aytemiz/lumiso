@@ -176,6 +176,7 @@ export default function General() {
   const regionalSection = useSettingsCategorySection({
     sectionId: "regional",
     sectionName: t("settings.general.regional.title"),
+    autoSave: true,
     initialValues: {
       dateFormat: settings?.date_format || "DD/MM/YYYY",
       timeFormat: settings?.time_format || "12-hour",

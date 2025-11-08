@@ -82,7 +82,7 @@ describe("usePaymentsFilters", () => {
     const onStateChange = jest.fn();
     const initialState = buildState({
       status: ["due" satisfies PaymentStatusFilter],
-      type: ["base_price" satisfies PaymentTypeFilter],
+      type: ["balance_due" satisfies PaymentTypeFilter],
       amountMin: 10,
       amountMax: 50,
     });
@@ -134,7 +134,7 @@ describe("usePaymentsFilters", () => {
 
     const nextState = buildState({
       status: ["paid", "due"].map((value) => value as PaymentStatusFilter),
-      type: ["extra" satisfies PaymentTypeFilter],
+      type: ["deposit_payment" satisfies PaymentTypeFilter],
       amountMax: 90,
       search: "due",
     });

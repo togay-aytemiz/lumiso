@@ -640,6 +640,36 @@
       "vat_breakdown_empty": "No VAT calculated yet.",
       "vat_breakdown_aria": "Show VAT breakdown"
     },
+    "actions": {
+      "deposit_quick": "Deposit payment",
+      "balance_payment": "Record balance payment",
+      "full_payment": "Collect full amount",
+      "refund_payment": "Issue refund"
+    },
+    "quick": {
+      "balance_title": "Record balance payment",
+      "full_title": "Collect full payment",
+      "balance_helper": "Use this option for payments that only cover the remaining balance.",
+      "balance_helper_with_deposit": "Deposit still has an outstanding amount. This payment will apply only to the balance.",
+      "full_helper": "Records a single payment that closes both the deposit and any remaining balance.",
+      "balance_success": "Payment recorded.",
+      "full_success": "Payment recorded.",
+      "full_amount_error": "Enter the full outstanding amount ({{amount}}).",
+      "remaining_hint": "Outstanding total: {{amount}}",
+      "fill_link": "Fill remaining amount"
+    },
+    "refund": {
+      "title": "Issue refund",
+      "amount_label": "Refund amount (TRY)",
+      "reason_label": "Reason (optional)",
+      "reason_placeholder": "Add an optional note",
+      "deposit_toggle": "Apply refund to deposit",
+      "deposit_toggle_helper": "Reduces collected deposit by up to {{amount}}.",
+      "deposit_toggle_disabled": "No collected deposit to refund.",
+      "submit": "Record refund",
+      "success": "Refund recorded.",
+      "no_payments_hint": "There are no recorded payments; refund entries will appear as negative amounts."
+    },
     "deposit": {
       "title": "Deposit details",
       "not_configured": "No deposit configured for this project.",
@@ -657,13 +687,24 @@
         "setup": "Set deposit amount",
         "adjust": "Edit deposit",
         "edit_short": "Edit",
-        "record_short": "Record payment"
+        "record_short": "Record payment",
+        "lock_now": "Lock amount",
+        "refresh_snapshot": "Update deposit amount",
+        "keep_locked": "Keep current amount"
       },
       "enable_label": "Request a deposit",
       "enable_helper": "Ask for a prepayment to confirm the reservation.",
       "amount_invalid": "Enter a valid deposit amount greater than zero.",
       "payment_title": "Record deposit payment",
       "remaining_info": "Remaining deposit: {{remaining}} TRY",
+      "allocation_badge": "Deposit share: {{amount}}",
+      "snapshot_locked": "Deposit locked at {{amount}}",
+      "snapshot_locked_dated": "Deposit locked at {{amount}} on {{date}}",
+      "snapshot_unlocked": "Deposit follows package totals (currently {{amount}})",
+      "snapshot_banner": "Locked deposit {{locked}} differs from the current calculation {{suggested}}.",
+      "snapshot_refresh_success": "Deposit amount updated.",
+      "snapshot_keep_success": "Deposit will remain locked at the current amount.",
+      "snapshot_error": "Unable to update deposit lock.",
       "payment_description_placeholder": "Optional note for the payment",
       "payment_success": "Deposit payment recorded.",
       "fill_remaining": "Use remaining amount",
@@ -1705,6 +1746,11 @@
     "pricesIncludeVat": {
       "label": "Catalog prices include VAT",
       "helper": "When enabled, new services mark VAT as included by default."
+    },
+    "freelanceWarning": {
+      "title": "Double-check VAT defaults",
+      "description": "We switched the default VAT rate to 20% and marked it as included in prices. Adjust these values if your invoices use a different rate.",
+      "dismiss": "Hide reminder"
     },
     "validation": {
       "companyNameRequired": "Company name is required for company entities.",

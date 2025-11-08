@@ -1,11 +1,12 @@
 import { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { Lock, LucideIcon } from "lucide-react";
+import { SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import {
-  SidebarMenuItem,
-  SidebarMenuButton
-} from "@/components/ui/sidebar";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface SidebarNavItemProps {
@@ -22,18 +23,18 @@ interface SidebarNavItemProps {
   state?: unknown;
 }
 
-export function SidebarNavItem({ 
-  title, 
-  url, 
-  icon: Icon, 
-  isActive = false, 
+export function SidebarNavItem({
+  title,
+  url,
+  icon: Icon,
+  isActive = false,
   isLocked = false,
   onClick,
   onLockedClick,
   children,
   className = "",
   badge,
-  state
+  state,
 }: SidebarNavItemProps) {
   const buttonClasses = cn(
     "group/item w-full h-9 border border-transparent",
@@ -78,11 +79,7 @@ export function SidebarNavItem({
       </TooltipContent>
     </Tooltip>
   ) : url ? (
-    <SidebarMenuButton
-      asChild
-      isActive={isActive}
-      className={buttonClasses}
-    >
+    <SidebarMenuButton asChild isActive={isActive} className={buttonClasses}>
       <NavLink
         to={url}
         state={state}
@@ -104,11 +101,7 @@ export function SidebarNavItem({
   return (
     <SidebarMenuItem>
       {buttonContent}
-      {children && (
-        <div className="ml-6 mt-1 space-y-0.5">
-          {children}
-        </div>
-      )}
+      {children && <div className="ml-6 mt-1 space-y-0.5">{children}</div>}
     </SidebarMenuItem>
   );
 }

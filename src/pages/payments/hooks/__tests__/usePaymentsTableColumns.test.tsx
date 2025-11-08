@@ -28,7 +28,7 @@ describe("usePaymentsTableColumns", () => {
     date_paid: "2024-05-10T00:00:00Z",
     status: "paid",
     description: "Deposit",
-    type: "base_price",
+    type: "balance_due",
     project_id: "project-1",
     created_at: "2024-05-01T00:00:00Z",
     projects: {
@@ -166,13 +166,13 @@ describe("usePaymentsTableColumns", () => {
     });
     dueStatusView.unmount();
 
-    const baseTypeView = render(typeColumn!.render(baseRow));
-    expect(baseTypeView.getByText("payments.type.base")).toBeInTheDocument();
-    baseTypeView.unmount();
+    const balanceTypeView = render(typeColumn!.render(baseRow));
+    expect(balanceTypeView.getByText("payments.type.balance")).toBeInTheDocument();
+    balanceTypeView.unmount();
 
-    const extraTypeView = render(typeColumn!.render({ ...baseRow, type: "extra" }));
-    expect(extraTypeView.getByText("payments.type.extra")).toBeInTheDocument();
-    extraTypeView.unmount();
+    const depositTypeView = render(typeColumn!.render({ ...baseRow, type: "deposit_payment" }));
+    expect(depositTypeView.getByText("payments.type.deposit")).toBeInTheDocument();
+    depositTypeView.unmount();
 
     const manualTypeView = render(typeColumn!.render({ ...baseRow, type: "manual" }));
     expect(manualTypeView.getByText("payments.type.manual")).toBeInTheDocument();

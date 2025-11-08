@@ -278,10 +278,26 @@ Cross-cutting components:
 
 ### UX Debt / Interaction Consistency
 
-- [ ] Audit Profile, General, Notifications, Leads, and Billing to ensure every non-input toggle/slider auto-saves immediately (no sticky footer) while only free-text inputs rely on the save footer; fix any lingering legacy sections.
-- [ ] Align sticky nav labels and anchors: remove/rename nav entries that don’t correspond to actual sections (e.g., “Faturalandırma ve Ödemeler” anchor) or add the missing section block so nav items always have a matching target.
-- [ ] Eliminate the “scroll jump” bug seen when changing dropdowns/radios in Billing → VAT defaults and General → Regional settings by standardizing anchor registration/scroll management across forms (likely a shared fix in `SettingsFormSection`).
+- [x] Audit Profile, General, Notifications, Leads, and Billing to ensure every non-input toggle/slider auto-saves immediately (no sticky footer) while only free-text inputs rely on the save footer; fix any lingering legacy sections.
+  - Inventory every toggle/slider/switch per page and map it to the component + hook responsible for the mutation (e.g., `BooleanSettingField` → `useNotificationsSettings().mutate`).
+  - Capture whether each control currently triggers debounce/auto-save, requires a footer action, or relies on legacy `SettingsSection` submit handlers.
+  - Draft a per-page fix list that calls out: component swap (to `SettingsAutoSaveToggle`), hook refactor, or UX copy tweak so expectations are clear inside the UI.
+  - Add acceptance notes in the table above once each page is verified (e.g., “Profile toggles auto-save ✅ 2025-11-10”) so progress is visible without digging into code.
+  - ✅ **Audit snapshot — 2025-11-10**
+    - Profile: working-hours switches + time selects call `handleWorkingHourUpdate` which hits `updateWorkingHour` directly (`src/pages/settings/Profile.tsx:439-516`), so toggles auto-save while the profile text form still relies on the sticky footer.
+    - General: Branding still relies on the sticky footer (text inputs), but Regional’s date/time/timezone controls now call `useSettingsCategorySection({ autoSave: true })` (`src/pages/settings/General.tsx:176-205`), so changing those selects no longer surfaces the save footer.
+    - Notifications: every switch/select is wired through the `handleAutoSave` helper with per-field pending states (`src/pages/settings/Notifications.tsx:134-220`), so the section is fully auto-save and does not expose a sticky footer.
+    - Leads: the quick-button visibility switch calls `updatePreference` immediately (`src/components/LeadStatusesSection.tsx:277-337`) and drag/drop reorder APIs also persist on drop; no legacy `SettingsSection` wrappers remain.
+    - Billing: tax profile radios (legal entity + VAT mode) now auto-save via `handleAutoSaveField` in `src/pages/settings/Billing.tsx`, so only the free-text company/VAT inputs rely on the sticky footer.
+    - ✅ Icon-only actions (dismiss buttons, help affordances) now consume the shared `Button` component’s `size="icon"` + `colorScheme` styling (`src/components/ui/button.tsx`), so hover/normal states stay legible without ad-hoc CSS per page.
+- [x] Align sticky nav labels and anchors: remove/rename nav entries that don’t correspond to actual sections (e.g., “Faturalandırma ve Ödemeler” anchor) or add the missing section block so nav items always have a matching target.
+  - ✅ Billing — switched the sticky-footer registration to use the real `client-billing-company` section ID/title (`src/pages/settings/Billing.tsx`) so the nav pills now only show “Şirket Bilgileri”, “Vergi Ayarları”, and “Ödeme Yöntemleri”; the phantom “Faturalandırma ve Ödemeler” anchor no longer appears.
+- [x] Eliminate the “scroll jump” bug seen when changing dropdowns/radios in Billing → VAT defaults and General → Regional settings by standardizing anchor registration/scroll management across forms (likely a shared fix in `SettingsFormSection`).
 - [ ] For the freelance/no-VAT mode, hide company/VAT fields when selected but restore the previously entered values when switching back to individual/company so users don’t lose data.
+- [ ] Normalize section-level primary/secondary action placement (primary button pinned right, secondary left or inline link) so headers never flip-flop alignment between pages; update `CategorySettingsSection` API if needed.
+- [ ] Lock in the compact spacing tokens (24px top, 20px internal gutters, 12px between field groups) across all section primitives and add a lint rule or Storybook check to catch regressions.
+- [ ] Ensure help affordances (icon button vs. inline link) are consistent: `SettingsHelpButton` when there’s a modal/tooltip, inline text link when routing away, never both in the same header.
+- [ ] Confirm keyboard focus, hover, and pressed states on toggles/sliders match the latest token spec (blue outline, 2px shadow) across dark/light themes to avoid WCAG regressions.
 
 ## Technical Follow-Ups
 
@@ -297,7 +313,7 @@ Cross-cutting components:
 - Visual: run Chromatic or Percy diff on key breakpoints.
 - Performance: log bundle impact (target net-neutral) and measure paint timelines via Lighthouse.
 - Accessibility: automated (axe) + manual keyboard review for drag-and-drop alternatives.
-- Manual: expand billing/leads test suites to cover VAT-exempt (“freelance”) scenarios so KDV alanlarının gizlenmesi ve app-wide davranış doğrulanır.
+- Manual: expanded Billing + General suites (`docs/manual-testing/tests/settings-manual-tests.json`) now cover the auto-save flows (regional selects, VAT mode/legal entity toggles, freelance defaults) so QA verifies toast behavior + persistence without sticky footers.
 
 ## Open Questions
 

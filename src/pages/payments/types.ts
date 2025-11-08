@@ -65,7 +65,6 @@ export type DateFilterType =
   | "custom";
 
 export type PaymentStatusFilter = "paid" | "due";
-export type PaymentTypeFilter = "base_price" | "extra" | "manual";
+export type PaymentTypeFilter = "deposit_payment" | "balance_due" | "manual";
 
 export type ProjectDetails = NonNullable<Payment["projects"]>;
-

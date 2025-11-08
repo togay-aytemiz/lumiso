@@ -29,15 +29,15 @@ export interface CachedOrganizationSettings {
 }
 
 export const DEFAULT_ORGANIZATION_TAX_PROFILE: OrganizationTaxProfile = {
-  legalEntityType: "individual",
+  legalEntityType: "freelance",
   companyName: null,
   taxOffice: null,
   taxNumber: null,
   billingAddress: null,
-  defaultVatRate: 20,
-  defaultVatMode: "inclusive",
-  pricesIncludeVat: true,
-  vatExempt: false,
+  defaultVatRate: 0,
+  defaultVatMode: "exclusive",
+  pricesIncludeVat: false,
+  vatExempt: true,
 };
 
 interface CacheEntry {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
-import SettingsSection from "@/components/SettingsSection";
+import { SettingsSingleColumnSection } from "@/components/settings/SettingsSections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,7 +51,8 @@ export default function DangerZone() {
   return (
     <SettingsPageWrapper>
       <div className="space-y-6">
-        <SettingsSection
+        <SettingsSingleColumnSection
+          sectionId="danger-zone-delete-data"
           title={t('settings.dangerZone.deleteData.title')}
           description={t('settings.dangerZone.deleteData.description')}
         >
@@ -144,7 +145,7 @@ export default function DangerZone() {
               </div>
             </div>
           </div>
-        </SettingsSection>
+        </SettingsSingleColumnSection>
       </div>
     </SettingsPageWrapper>
   );

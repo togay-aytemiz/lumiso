@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface SettingsSectionOptions<T> {
   sectionName: string;
@@ -39,6 +40,7 @@ export function useSettingsSection<T extends Record<string, unknown>>({
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation("common");
   const throttleRef = useRef<ReturnType<typeof setTimeout>>();
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -77,13 +79,19 @@ export function useSettingsSection<T extends Record<string, unknown>>({
           
           // Throttled toast for auto-save to avoid spam
           toast({
-            title: `Updated ${sectionName}`,
+            title: t("toast.settingsAutoSavedTitle"),
+            description: t("toast.settingsAutoSavedSection", {
+              section: sectionName,
+            }),
             duration: 2000,
           });
         } else {
           // Regular toast for manual save
           toast({
-            title: `Saved ${sectionName}`,
+            title: t("toast.settingsSavedTitle"),
+            description: t("toast.settingsSavedCategory", {
+              category: sectionName,
+            }),
             duration: 3000,
           });
         }
@@ -91,7 +99,7 @@ export function useSettingsSection<T extends Record<string, unknown>>({
     } catch (error: unknown) {
       // Always show error toasts
       toast({
-        title: "Error",
+        title: t("toast.error"),
         description: getErrorMessage(error),
         variant: "destructive",
         duration: 5000,
@@ -99,7 +107,7 @@ export function useSettingsSection<T extends Record<string, unknown>>({
     } finally {
       setIsSaving(false);
     }
-  }, [values, onSave, sectionName, autoSave, toast, disableToast]);
+  }, [values, onSave, sectionName, autoSave, toast, disableToast, t]);
 
   const updateValue = useCallback(
     (key: keyof T, value: T[keyof T]) => {

@@ -700,7 +700,7 @@ export default function ProjectDetail() {
                 <UnifiedClientDetails 
                   lead={lead} 
                   showClickableNames={true}
-                  defaultExpanded={false}
+                  defaultExpanded={!isMobile}
                   onLeadUpdated={() => {
                     fetchLead();
                   }} 

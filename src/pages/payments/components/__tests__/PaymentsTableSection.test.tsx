@@ -27,7 +27,7 @@ describe("PaymentsTableSection", () => {
       date_paid: null,
       status: "paid",
       description: null,
-      type: "base_price",
+      type: "balance_due",
       project_id: "project-1",
       created_at: "2024-01-01T00:00:00Z",
       projects: null,

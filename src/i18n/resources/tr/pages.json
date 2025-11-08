@@ -1118,7 +1118,7 @@
         "description": "Tarih, saat ve bölgesel tercihleri yapılandırın",
         "dateFormat": "Tarih Formatı",
         "timeFormat": "Saat Formatı",
-        "timeFormat12Hour": "12 saat örn. 14:00",
+        "timeFormat12Hour": "12 saat (örn. 2:00 PM)",
         "timeFormat24Hour": "24 saat örn. 14:00",
         "timezone": "Saat Dilimi"
       },
@@ -1481,8 +1481,8 @@
       "due": "Bekliyor"
     },
     "type": {
-      "base": "Temel",
-      "extra": "Ekstra",
+      "deposit": "Kapora",
+      "balance": "Kalan ödeme",
       "manual": "Manuel"
     },
     "emptyState": {

@@ -21,6 +21,11 @@ export function useSettingsCategorySection<T extends Record<string, unknown>>(
   const serializedInitialValues = JSON.stringify(options.initialValues);
   const stableInitialValuesRef = useRef(options.initialValues);
   const serializedRef = useRef(serializedInitialValues);
+  const autoSaveEnabled = Boolean(options.autoSave);
+  const shouldRegisterWithCategory = !autoSaveEnabled;
+  const resolvedThrottleMs = autoSaveEnabled
+    ? options.throttleMs ?? 0
+    : options.throttleMs;
 
   if (serializedRef.current !== serializedInitialValues) {
     serializedRef.current = serializedInitialValues;
@@ -32,8 +37,8 @@ export function useSettingsCategorySection<T extends Record<string, unknown>>(
     initialValues: stableInitialValuesRef.current,
     onSave: options.onSave,
     autoSave: options.autoSave,
-    throttleMs: options.throttleMs,
-    disableToast: true // Disable section-level toasts in favor of category-level toasts
+    throttleMs: resolvedThrottleMs,
+    disableToast: !autoSaveEnabled // Auto-save sections should surface their own toasts
   });
 
   // Use refs to avoid recreating functions
@@ -75,6 +80,10 @@ export function useSettingsCategorySection<T extends Record<string, unknown>>(
 
   // Register this section with the category context - only when path/id changes
   useEffect(() => {
+    if (!shouldRegisterWithCategory) {
+      return;
+    }
+
     registerSectionHandler(
       categoryPath,
       options.sectionId,
@@ -86,13 +95,31 @@ export function useSettingsCategorySection<T extends Record<string, unknown>>(
     return () => {
       unregisterSectionHandler(categoryPath, options.sectionId);
     };
-  }, [categoryPath, options.sectionId, options.sectionName, registerSectionHandler, unregisterSectionHandler]); // Removed handler deps
+  }, [
+    categoryPath,
+    options.sectionId,
+    options.sectionName,
+    registerSectionHandler,
+    unregisterSectionHandler,
+    shouldRegisterWithCategory,
+  ]);
 
   // Update dirty state in context
   useEffect(() => {
+    if (!shouldRegisterWithCategory) {
+      return;
+    }
+
     console.log(`🔍 Dirty state check for ${options.sectionId}:`, section.isDirty, "logoFile:", !!section.values.logoFile);
     setSectionDirty(categoryPath, options.sectionId, section.isDirty);
-  }, [section.isDirty, section.values.logoFile, categoryPath, options.sectionId, setSectionDirty]);
+  }, [
+    section.isDirty,
+    section.values.logoFile,
+    categoryPath,
+    options.sectionId,
+    setSectionDirty,
+    shouldRegisterWithCategory,
+  ]);
 
   return {
     ...section,

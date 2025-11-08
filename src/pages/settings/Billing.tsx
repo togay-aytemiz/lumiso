@@ -5,6 +5,7 @@ import {
   SettingsCollectionSection,
   SettingsFormSection,
 } from "@/components/settings/SettingsSectionVariants";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useSettingsContext } from "@/contexts/SettingsContext";
 import { cn } from "@/lib/utils";
+import { AlertTriangle, X } from "lucide-react";
 
 const clampVatRate = (value: number) => {
   if (!Number.isFinite(value)) return 0;
@@ -40,7 +42,8 @@ type TaxProfileFormErrors = Partial<Record<keyof TaxProfileFormState, string>>;
 const profileToFormState = (
   profile: OrganizationTaxProfile
 ): TaxProfileFormState => ({
-  legalEntityType: profile.legalEntityType ?? "individual",
+  legalEntityType:
+    profile.legalEntityType ?? DEFAULT_ORGANIZATION_TAX_PROFILE.legalEntityType,
   companyName: profile.companyName ?? "",
   taxOffice: profile.taxOffice ?? "",
   taxNumber: profile.taxNumber ?? "",
@@ -49,7 +52,8 @@ const profileToFormState = (
     profile.defaultVatRate != null && Number.isFinite(profile.defaultVatRate)
       ? String(profile.defaultVatRate)
       : String(DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate),
-  defaultVatMode: profile.defaultVatMode ?? "exclusive",
+  defaultVatMode:
+    profile.defaultVatMode ?? DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatMode,
   vatExempt: Boolean(profile.vatExempt),
 });
 
@@ -123,9 +127,6 @@ const formToProfile = (form: TaxProfileFormState): OrganizationTaxProfile => {
   });
 };
 
-const isEqualProfile = (a: OrganizationTaxProfile, b: OrganizationTaxProfile) =>
-  JSON.stringify(normalizeProfile(a)) === JSON.stringify(normalizeProfile(b));
-
 export default function Billing() {
   const { t } = useTranslation(["pages", "forms", "common"]);
   const { toast } = useToast();
@@ -144,21 +145,80 @@ export default function Billing() {
     return merged;
   }, [settings]);
 
-  const [formState, setFormState] = useState<TaxProfileFormState>(() => profileToFormState(normalizedProfile));
+  const savedFormState = useMemo(
+    () => profileToFormState(normalizedProfile),
+    [normalizedProfile]
+  );
+
+  const [formState, setFormState] = useState<TaxProfileFormState>(() => savedFormState);
   const [errors, setErrors] = useState<TaxProfileFormErrors>({});
   const [saving, setSaving] = useState(false);
+  const dirtyFieldsRef = useRef<Set<keyof TaxProfileFormState>>(new Set());
+  const [dirtyFieldsVersion, setDirtyFieldsVersion] = useState(0);
+  const [autoSavingField, setAutoSavingField] = useState<"legalEntityType" | "defaultVatMode" | null>(null);
+  const [showVatReminder, setShowVatReminder] = useState(false);
+
+  const NON_FREELANCE_DEFAULT_VAT_RATE = "20";
+  const NON_FREELANCE_DEFAULT_VAT_MODE: TaxProfileFormState["defaultVatMode"] = "inclusive";
+
+  const markFieldDirty = useCallback((field?: keyof TaxProfileFormState) => {
+    if (!field) return;
+    if (!dirtyFieldsRef.current.has(field)) {
+      dirtyFieldsRef.current.add(field);
+      setDirtyFieldsVersion((version) => version + 1);
+    }
+  }, []);
+
+  const clearFieldDirty = useCallback((field: keyof TaxProfileFormState) => {
+    if (dirtyFieldsRef.current.delete(field)) {
+      setDirtyFieldsVersion((version) => version + 1);
+    }
+  }, []);
+
+  const clearAllDirtyFields = useCallback(() => {
+    if (dirtyFieldsRef.current.size > 0) {
+      dirtyFieldsRef.current.clear();
+      setDirtyFieldsVersion((version) => version + 1);
+    }
+  }, []);
 
   useEffect(() => {
-    setFormState(profileToFormState(normalizedProfile));
-    setErrors({});
-  }, [normalizedProfile]);
+    setFormState((prev) => {
+      const next = { ...prev };
+      (Object.keys(savedFormState) as (keyof TaxProfileFormState)[]).forEach((key) => {
+        if (!dirtyFieldsRef.current.has(key)) {
+          next[key] = savedFormState[key];
+        }
+      });
+      return next;
+    });
 
-  const handleChange = useCallback((updates: Partial<TaxProfileFormState>) => {
-    setFormState((prev) => ({
-      ...prev,
-      ...updates,
-    }));
-  }, []);
+    setErrors((prev) => {
+      if (!prev || Object.keys(prev).length === 0) {
+        return prev;
+      }
+      const nextErrors = { ...prev };
+      (Object.keys(nextErrors) as (keyof TaxProfileFormState)[]).forEach((key) => {
+        if (!dirtyFieldsRef.current.has(key)) {
+          delete nextErrors[key];
+        }
+      });
+      return nextErrors;
+    });
+  }, [savedFormState]);
+
+  const handleChange = useCallback(
+    (updates: Partial<TaxProfileFormState>, dirtyField?: keyof TaxProfileFormState) => {
+      setFormState((prev) => ({
+        ...prev,
+        ...updates,
+      }));
+      if (dirtyField) {
+        markFieldDirty(dirtyField);
+      }
+    },
+    [markFieldDirty]
+  );
 
   const preserveScrollPosition = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -168,76 +228,183 @@ export default function Billing() {
     });
   }, []);
 
+  const validate = useCallback(
+    (state: TaxProfileFormState = formState): boolean => {
+      const nextErrors: TaxProfileFormErrors = {};
+
+      if (state.legalEntityType === "company" && !state.companyName.trim()) {
+        nextErrors.companyName = t("taxBilling.validation.companyNameRequired", { ns: "forms" });
+      }
+
+      const vatRateValue = parseFloat(state.defaultVatRate.replace(",", "."));
+      if (state.defaultVatRate.trim() === "" || Number.isNaN(vatRateValue)) {
+        nextErrors.defaultVatRate = t("taxBilling.validation.vatRateInvalid", { ns: "forms" });
+      } else if (vatRateValue < 0 || vatRateValue > 99.99) {
+        nextErrors.defaultVatRate = t("taxBilling.validation.vatRateRange", { ns: "forms" });
+      }
+
+      setErrors(nextErrors);
+      return Object.keys(nextErrors).length === 0;
+    },
+    [formState, t]
+  );
+
+  const persistTaxProfile = useCallback(
+    async (state: TaxProfileFormState, options?: { skipValidation?: boolean }) => {
+      if (!options?.skipValidation) {
+        const isValid = validate(state);
+        if (!isValid) {
+          return false;
+        }
+      }
+
+      const result = await updateSettings({ taxProfile: formToProfile(state) });
+      if (result.error || !result.success) {
+        throw new Error(
+          result.error?.message ??
+            t("taxBilling.notifications.saveFailed", { ns: "forms" })
+        );
+      }
+
+      return true;
+    },
+    [t, updateSettings, validate]
+  );
+
+  const handleAutoSaveField = useCallback(
+    async (
+      updates: Partial<TaxProfileFormState>,
+      field: "legalEntityType" | "defaultVatMode"
+    ) => {
+      setFormState((prev) => ({
+        ...prev,
+        ...updates,
+      }));
+      if (updates.legalEntityType !== undefined) {
+        clearFieldDirty("legalEntityType");
+      }
+      if (updates.vatExempt !== undefined) {
+        clearFieldDirty("vatExempt");
+      }
+      if (updates.defaultVatRate !== undefined) {
+        clearFieldDirty("defaultVatRate");
+      }
+      if (updates.defaultVatMode !== undefined) {
+        clearFieldDirty("defaultVatMode");
+      }
+      setAutoSavingField(field);
+      try {
+        const baseState = savedFormState;
+        const nextState = {
+          ...baseState,
+          ...updates,
+        };
+        await persistTaxProfile(nextState, { skipValidation: true });
+        setErrors((prev) => {
+          if (!prev || Object.keys(prev).length === 0) {
+            return prev;
+          }
+          const nextErrors = { ...prev };
+          if (updates.legalEntityType !== undefined) {
+            delete nextErrors.companyName;
+            delete nextErrors.defaultVatRate;
+          }
+          if (updates.defaultVatMode !== undefined) {
+            delete nextErrors.defaultVatRate;
+          }
+          return nextErrors;
+        });
+        toast({
+          title: t("toast.settingsAutoSavedTitle", { ns: "common" }),
+          description: t("toast.settingsAutoSavedSection", {
+            ns: "common",
+            section: t("settings.billing.taxSectionTitle"),
+          }),
+          duration: 2500,
+        });
+      } catch (error) {
+        const fallback = savedFormState;
+        setFormState((prev) => ({
+          ...prev,
+          ...(field === "legalEntityType"
+            ? {
+                legalEntityType: fallback.legalEntityType,
+                vatExempt: fallback.vatExempt,
+                defaultVatRate: fallback.defaultVatRate,
+              }
+            : {
+                defaultVatMode: fallback.defaultVatMode,
+              }),
+        }));
+        toast({
+          title: t("toast.error", { ns: "common" }),
+          description:
+            error instanceof Error
+              ? error.message
+              : t("taxBilling.notifications.saveFailed", { ns: "forms" }),
+          variant: "destructive",
+        });
+      } finally {
+        setAutoSavingField(null);
+      }
+    },
+    [clearFieldDirty, persistTaxProfile, savedFormState, t, toast]
+  );
+
   const handleEntityTypeChange = useCallback(
     (value: TaxProfileFormState["legalEntityType"]) => {
       const vatFree = value === "freelance";
-      handleChange({
+      const updates: Partial<TaxProfileFormState> = {
         legalEntityType: value,
         vatExempt: vatFree,
-        defaultVatRate: vatFree
-          ? "0"
-          : formState.defaultVatRate || String(DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate),
-      });
+      };
+      if (vatFree) {
+        updates.defaultVatRate = "0";
+        setShowVatReminder(false);
+      } else {
+        updates.defaultVatRate = NON_FREELANCE_DEFAULT_VAT_RATE;
+        updates.defaultVatMode = NON_FREELANCE_DEFAULT_VAT_MODE;
+        if (formState.legalEntityType === "freelance") {
+          setShowVatReminder(true);
+        }
+      }
+      handleAutoSaveField(updates, "legalEntityType");
     },
-    [formState.defaultVatRate, handleChange]
+    [formState.defaultVatRate, formState.legalEntityType, handleAutoSaveField]
   );
 
   const handleVatModeChange = useCallback(
     (value: "inclusive" | "exclusive") => {
       preserveScrollPosition();
-      handleChange({ defaultVatMode: value });
+      handleAutoSaveField({ defaultVatMode: value }, "defaultVatMode");
     },
-    [handleChange, preserveScrollPosition]
+    [handleAutoSaveField, preserveScrollPosition]
   );
 
-  const validate = useCallback((): boolean => {
-    const nextErrors: TaxProfileFormErrors = {};
-
-    if (formState.legalEntityType === "company" && !formState.companyName.trim()) {
-      nextErrors.companyName = t("taxBilling.validation.companyNameRequired", { ns: "forms" });
-    }
-
-    const vatRateValue = parseFloat(formState.defaultVatRate.replace(",", "."));
-    if (formState.defaultVatRate.trim() === "" || Number.isNaN(vatRateValue)) {
-      nextErrors.defaultVatRate = t("taxBilling.validation.vatRateInvalid", { ns: "forms" });
-    } else if (vatRateValue < 0 || vatRateValue > 99.99) {
-      nextErrors.defaultVatRate = t("taxBilling.validation.vatRateRange", { ns: "forms" });
-    }
-
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  }, [formState, t]);
-
-  const draftProfile = useMemo(() => formToProfile(formState), [formState]);
-  const isDirty = useMemo(() => !isEqualProfile(draftProfile, normalizedProfile), [draftProfile, normalizedProfile]);
-
   const handleReset = useCallback(() => {
-    setFormState(profileToFormState(normalizedProfile));
+    clearAllDirtyFields();
+    setFormState(savedFormState);
     setErrors({});
-  }, [normalizedProfile]);
+  }, [clearAllDirtyFields, savedFormState]);
 
   const handleSave = useCallback(async () => {
-    if (!validate()) return;
     setSaving(true);
     try {
-      const result = await updateSettings({ taxProfile: draftProfile });
-      if (result.success) {
-        toast({
-          title: t("toast.success", { ns: "common" }),
-          description: t("taxBilling.notifications.saved", { ns: "forms" }),
-        });
-        setErrors({});
-      } else {
-        toast({
-          title: t("toast.error", { ns: "common" }),
-          description: t("taxBilling.notifications.saveFailed", { ns: "forms" }),
-          variant: "destructive",
-        });
+      const success = await persistTaxProfile(formState);
+      if (!success) {
+        return;
       }
+      clearAllDirtyFields();
+      toast({
+        title: t("toast.success", { ns: "common" }),
+        description: t("taxBilling.notifications.saved", { ns: "forms" }),
+      });
+      setErrors({});
     } catch (error: unknown) {
-      const message = error instanceof Error
-        ? error.message
-        : t("taxBilling.notifications.saveFailed", { ns: "forms" });
+      const message =
+        error instanceof Error
+          ? error.message
+          : t("taxBilling.notifications.saveFailed", { ns: "forms" });
       toast({
         title: t("toast.error", { ns: "common" }),
         description: message,
@@ -246,9 +413,10 @@ export default function Billing() {
     } finally {
       setSaving(false);
     }
-  }, [draftProfile, toast, t, updateSettings, validate]);
+  }, [clearAllDirtyFields, formState, persistTaxProfile, t, toast]);
 
-  const taxSectionName = t("settings.billing.title");
+  const taxSectionId = "client-billing-company";
+  const taxSectionName = t("settings.billing.companySectionTitle");
   const handlersRef = useRef({
     handleSave: async () => {
       /* noop */
@@ -272,21 +440,22 @@ export default function Billing() {
   useEffect(() => {
     registerSectionHandler(
       categoryPath,
-      "tax-billing",
+      taxSectionId,
       taxSectionName,
       () => handlersRef.current.handleSave(),
       () => handlersRef.current.handleCancel()
     );
     return () => {
-      unregisterSectionHandler(categoryPath, "tax-billing");
+      unregisterSectionHandler(categoryPath, taxSectionId);
     };
-  }, [categoryPath, registerSectionHandler, unregisterSectionHandler, taxSectionName]);
+  }, [categoryPath, registerSectionHandler, unregisterSectionHandler, taxSectionId, taxSectionName]);
 
   useEffect(() => {
-    setSectionDirty(categoryPath, "tax-billing", isDirty);
-  }, [categoryPath, isDirty, setSectionDirty]);
+    setSectionDirty(categoryPath, taxSectionId, dirtyFieldsRef.current.size > 0);
+  }, [categoryPath, dirtyFieldsVersion, setSectionDirty, taxSectionId]);
 
   const showVatFields = !formState.vatExempt;
+  const isFreelance = formState.legalEntityType === "freelance";
 
   return (
     <SettingsPageWrapper>
@@ -308,7 +477,7 @@ export default function Billing() {
                   value as TaxProfileFormState["legalEntityType"]
                 )
               }
-              disabled={loading || saving}
+              disabled={loading || saving || autoSavingField === "legalEntityType"}
               className="grid gap-3 sm:grid-cols-3"
             >
               <label
@@ -382,84 +551,112 @@ export default function Billing() {
               </label>
             </RadioGroup>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="companyName">
-              {t("taxBilling.companyName.label", { ns: "forms" })}
-              {formState.legalEntityType === "company" && (
-                <span className="text-rose-500"> *</span>
-              )}
-            </Label>
-            <Input
-              id="companyName"
-              value={formState.companyName}
-              onChange={(event) =>
-                handleChange({ companyName: event.target.value })
-              }
-              placeholder={t("taxBilling.companyName.placeholder", {
-                ns: "forms",
-              })}
-              disabled={loading || saving}
-            />
-            {errors.companyName ? (
-              <p className="text-xs text-destructive">{errors.companyName}</p>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                {t("taxBilling.companyName.helper", { ns: "forms" })}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="taxOffice">
-              {t("taxBilling.taxOffice.label", { ns: "forms" })}
-            </Label>
-            <Input
-              id="taxOffice"
-              value={formState.taxOffice}
-              onChange={(event) =>
-                handleChange({ taxOffice: event.target.value })
-              }
-              placeholder={t("taxBilling.taxOffice.placeholder", {
-                ns: "forms",
-              })}
-              disabled={loading || saving}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="taxNumber">
-              {t("taxBilling.taxNumber.label", { ns: "forms" })}
-            </Label>
-            <Input
-              id="taxNumber"
-              value={formState.taxNumber}
-              onChange={(event) =>
-                handleChange({ taxNumber: event.target.value })
-              }
-              placeholder={t("taxBilling.taxNumber.placeholder", {
-                ns: "forms",
-              })}
-              disabled={loading || saving}
-            />
-            <p className="text-xs text-muted-foreground">
-              {t("taxBilling.taxNumber.helper", { ns: "forms" })}
-            </p>
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="billingAddress">
-              {t("taxBilling.billingAddress.label", { ns: "forms" })}
-            </Label>
-            <Textarea
-              id="billingAddress"
-              value={formState.billingAddress}
-              onChange={(event) =>
-                handleChange({ billingAddress: event.target.value })
-              }
-              placeholder={t("taxBilling.billingAddress.placeholder", {
-                ns: "forms",
-              })}
-              rows={3}
-              disabled={loading || saving}
-            />
-          </div>
+          {!isFreelance && showVatReminder && (
+            <div className="sm:col-span-2">
+              <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
+                <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+                <div className="space-y-1 text-sm">
+                  <p className="font-semibold">
+                    {t("taxBilling.freelanceWarning.title", { ns: "forms" })}
+                  </p>
+                  <p>{t("taxBilling.freelanceWarning.description", { ns: "forms" })}</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="tinted"
+                  colorScheme="amber"
+                  size="icon"
+                  className="ml-auto shrink-0"
+                  onClick={() => setShowVatReminder(false)}
+                  aria-label={t("taxBilling.freelanceWarning.dismiss", { ns: "forms" })}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+          {!isFreelance && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="companyName">
+                  {t("taxBilling.companyName.label", { ns: "forms" })}
+                  {formState.legalEntityType === "company" && (
+                    <span className="text-rose-500"> *</span>
+                  )}
+                </Label>
+                <Input
+                  id="companyName"
+                  value={formState.companyName}
+                  onChange={(event) =>
+                    handleChange({ companyName: event.target.value }, "companyName")
+                  }
+                  placeholder={t("taxBilling.companyName.placeholder", {
+                    ns: "forms",
+                  })}
+                  disabled={loading || saving}
+                />
+                {errors.companyName ? (
+                  <p className="text-xs text-destructive">{errors.companyName}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {t("taxBilling.companyName.helper", { ns: "forms" })}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="taxOffice">
+                  {t("taxBilling.taxOffice.label", { ns: "forms" })}
+                </Label>
+                <Input
+                  id="taxOffice"
+                  value={formState.taxOffice}
+                  onChange={(event) =>
+                    handleChange({ taxOffice: event.target.value }, "taxOffice")
+                  }
+                  placeholder={t("taxBilling.taxOffice.placeholder", {
+                    ns: "forms",
+                  })}
+                  disabled={loading || saving}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="taxNumber">
+                  {t("taxBilling.taxNumber.label", { ns: "forms" })}
+                </Label>
+                <Input
+                  id="taxNumber"
+                  value={formState.taxNumber}
+                  onChange={(event) =>
+                    handleChange({ taxNumber: event.target.value }, "taxNumber")
+                  }
+                  placeholder={t("taxBilling.taxNumber.placeholder", {
+                    ns: "forms",
+                  })}
+                  disabled={loading || saving}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t("taxBilling.taxNumber.helper", { ns: "forms" })}
+                </p>
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="billingAddress">
+                  {t("taxBilling.billingAddress.label", { ns: "forms" })}
+                </Label>
+                <Textarea
+                  id="billingAddress"
+                  value={formState.billingAddress}
+                  onChange={(event) =>
+                    handleChange({ billingAddress: event.target.value }, "billingAddress")
+                  }
+                  placeholder={t("taxBilling.billingAddress.placeholder", {
+                    ns: "forms",
+                  })}
+                  rows={3}
+                  disabled={loading || saving}
+                />
+              </div>
+            </>
+          )}
         </SettingsFormSection>
 
         {showVatFields && (
@@ -482,7 +679,7 @@ export default function Billing() {
               inputMode="decimal"
               value={formState.defaultVatRate}
               onChange={(event) =>
-                handleChange({ defaultVatRate: event.target.value })
+                handleChange({ defaultVatRate: event.target.value }, "defaultVatRate")
               }
               disabled={loading || saving}
             />
@@ -503,7 +700,7 @@ export default function Billing() {
                   value as TaxProfileFormState["defaultVatMode"]
                 )
               }
-              disabled={loading || saving}
+              disabled={loading || saving || autoSavingField === "defaultVatMode"}
               className="grid gap-3"
             >
               <label

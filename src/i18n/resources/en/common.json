@@ -149,7 +149,10 @@
     "settingsDiscardedTitle": "Changes discarded",
     "settingsDiscardedDescription": "Your unsaved changes have been discarded.",
     "settingsSaveErrorDescription": "Failed to save settings. Please try again.",
-    "settingsSavedCategory": "Saved {{category}} settings"
+    "settingsSavedCategory": "Saved {{category}} settings",
+    "settingsAutoSavedTitle": "Changes updated",
+    "settingsAutoSavedDescription": "Your changes were saved automatically.",
+    "settingsAutoSavedSection": "{{section}} updated"
   },
   "legal": {
     "all_rights_reserved": "All rights reserved."

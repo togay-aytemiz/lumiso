@@ -1114,6 +1114,36 @@
       "vat_breakdown_empty": "Hizmetlerde KDV hesaplanmadı.",
       "vat_breakdown_aria": "KDV dağılımını göster"
     },
+    "actions": {
+      "deposit_quick": "Kapora ödemesi",
+      "balance_payment": "Kalan ödemeyi kaydet",
+      "full_payment": "Tamamını tahsil et",
+      "refund_payment": "İade işle"
+    },
+    "quick": {
+      "balance_title": "Kalan ödemeyi kaydet",
+      "full_title": "Tamamını tahsil et",
+      "balance_helper": "Sadece kalan bakiyeyi kapatan ödemeler için kullanın.",
+      "balance_helper_with_deposit": "Kapora henüz tamamen tahsil edilmedi. Bu ödeme yalnızca kalan bakiyeye işlenecek.",
+      "full_helper": "Kapora ve kalan bakiyeyi tek ödemede kapatır.",
+      "balance_success": "Ödeme kaydedildi.",
+      "full_success": "Ödeme kaydedildi.",
+      "full_amount_error": "Lütfen toplam bekleyen tutarı girin ({{amount}}).",
+      "remaining_hint": "Kalan toplam: {{amount}}",
+      "fill_link": "Kalan tutarı doldur"
+    },
+    "refund": {
+      "title": "İade kaydı oluştur",
+      "amount_label": "İade tutarı (TL)",
+      "reason_label": "Açıklama (isteğe bağlı)",
+      "reason_placeholder": "İsteğe bağlı not ekleyin",
+      "deposit_toggle": "İadeyi kaporaya uygula",
+      "deposit_toggle_helper": "Toplam {{amount}} kapora tahsilatını azaltır.",
+      "deposit_toggle_disabled": "İade edilecek kapora bulunmuyor.",
+      "submit": "İadeyi kaydet",
+      "success": "İade kaydı oluşturuldu.",
+      "no_payments_hint": "Kayıtlı ödeme yok; iade satırı negatif tutar olarak görünecek."
+    },
     "deposit": {
       "title": "Kapora bilgileri",
       "not_configured": "Bu proje için kapora tanımlanmadı.",
@@ -1131,13 +1161,24 @@
         "setup": "Kapora tutarı belirle",
         "adjust": "Kapora düzenle",
         "edit_short": "Düzenle",
-        "record_short": "Ödeme işle"
+        "record_short": "Ödeme işle",
+        "lock_now": "Kapora tutarını sabitle",
+        "refresh_snapshot": "Kapora tutarını güncelle",
+        "keep_locked": "Mevcut tutarı koru"
       },
       "enable_label": "Rezervasyonu güvenceye almak için peşinat talep edin.",
       "enable_helper": "Rezervasyonun kesinleşmesi için peşinat isteyin.",
       "amount_invalid": "Lütfen sıfırdan büyük geçerli bir kapora tutarı girin.",
       "payment_title": "Kapora ödemesi işle",
       "remaining_info": "Kalan kapora: {{remaining}} TL",
+      "allocation_badge": "Kapora payı: {{amount}}",
+      "snapshot_locked": "Kapora {{amount}} tutarında sabitlendi",
+      "snapshot_locked_dated": "{{date}} tarihinde {{amount}} tutarında sabitlendi",
+      "snapshot_unlocked": "Kapora paket toplamına göre hesaplanır (şu an {{amount}})",
+      "snapshot_banner": "Sabitlediğiniz kapora {{locked}} ile güncel hesap {{suggested}} farklı.",
+      "snapshot_refresh_success": "Kapora tutarı güncellendi.",
+      "snapshot_keep_success": "Kapora mevcut tutarda sabit kalacak.",
+      "snapshot_error": "Kapora kilidi güncellenemedi.",
       "payment_description_placeholder": "Ödeme için isteğe bağlı not",
       "payment_success": "Kapora ödemesi kaydedildi.",
       "fill_remaining": "Kalan tutarı doldur",
@@ -1692,6 +1733,11 @@
     "pricesIncludeVat": {
       "label": "Katalog fiyatlarına KDV dahil",
       "helper": "Açık olduğunda yeni hizmetler KDV dahil işaretlenir."
+    },
+    "freelanceWarning": {
+      "title": "KDV varsayılanlarını kontrol et",
+      "description": "Varsayılan KDV oranını %20'ye çekip “fiyata dahil” seçeneğini açtık. Faturalarınız farklı değer kullanıyorsa güncelleyin.",
+      "dismiss": "Hatırlatmayı gizle"
     },
     "validation": {
       "companyNameRequired": "Şirket türü seçildiğinde şirket adı zorunludur.",

@@ -21,6 +21,7 @@ export interface StickySectionNavProps {
   scrollBehavior?: ScrollBehavior;
   disableSticky?: boolean;
   scrollContainerRef?: RefObject<HTMLElement | null>;
+  minItemsToShow?: number;
 }
 
 const ALIGN_CLASSNAMES: Record<NonNullable<StickySectionNavProps["align"]>, string> = {
@@ -62,11 +63,13 @@ export function StickySectionNav({
   fallbackActiveId,
   scrollBehavior = "smooth",
   disableSticky = false,
-  scrollContainerRef
+  scrollContainerRef,
+  minItemsToShow = 1
 }: StickySectionNavProps) {
   const [activeId, setActiveId] = useState<string>(() => fallbackActiveId ?? items[0]?.id ?? "");
   const observer = useRef<IntersectionObserver | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
+  const hasMinimumItems = items.length >= minItemsToShow;
 
   const idsToObserve = useMemo(() => {
     const ids = observeIds && observeIds.length > 0 ? observeIds : items.map((item) => item.id);
@@ -74,7 +77,7 @@ export function StickySectionNav({
   }, [observeIds, items]);
 
   useEffect(() => {
-    if (idsToObserve.length === 0 || typeof window === "undefined") {
+    if (!hasMinimumItems || idsToObserve.length === 0 || typeof window === "undefined") {
       return undefined;
     }
 
@@ -99,11 +102,16 @@ export function StickySectionNav({
     headings.forEach((el) => observer.current?.observe(el));
 
     return () => observer.current?.disconnect();
-  }, [idsToObserve]);
+  }, [idsToObserve, hasMinimumItems]);
 
   useEffect(() => {
+    if (!hasMinimumItems) {
+      setActiveId((prev) => (prev === "" ? prev : ""));
+      return;
+    }
+
     if (idsToObserve.length === 0) {
-      setActiveId("");
+      setActiveId((prev) => (prev === "" ? prev : ""));
       return;
     }
 
@@ -117,13 +125,14 @@ export function StickySectionNav({
           : idsToObserve[0];
       return preferred ?? "";
     });
-  }, [idsToObserve, fallbackActiveId]);
+  }, [idsToObserve, fallbackActiveId, hasMinimumItems]);
 
   useEffect(() => {
-    if (activeId && onActiveChange) {
-      onActiveChange(activeId);
+    if (!hasMinimumItems || !activeId || !onActiveChange) {
+      return;
     }
-  }, [activeId, onActiveChange]);
+    onActiveChange(activeId);
+  }, [activeId, onActiveChange, hasMinimumItems]);
 
   const scrollToTarget = (targetId: string) => {
     if (typeof window === "undefined") {
@@ -167,7 +176,7 @@ export function StickySectionNav({
     scrollToTarget(item.id);
   };
 
-  if (items.length === 0) {
+  if (!hasMinimumItems) {
     return null;
   }
 

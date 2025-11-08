@@ -1,4 +1,4 @@
-import { render, screen, waitFor, fireEvent } from "@/utils/testUtils";
+import { render, screen, waitFor } from "@/utils/testUtils";
 import { ProjectPaymentsSection } from "../ProjectPaymentsSection";
 import { mockSupabaseClient } from "@/utils/testUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -23,14 +23,6 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
 }));
 
 jest.mock("react-calendar/dist/Calendar.css", () => ({}));
-
-jest.mock("../AddPaymentDialog", () => ({
-  AddPaymentDialog: ({ onPaymentAdded }: { onPaymentAdded?: () => void }) => (
-    <button onClick={() => onPaymentAdded?.()} aria-label="trigger-add-payment">
-      add payment
-    </button>
-  ),
-}));
 
 jest.mock("../EditPaymentDialog", () => ({
   EditPaymentDialog: () => null,
@@ -137,7 +129,8 @@ describe("ProjectPaymentsSection", () => {
         status: "due",
         date_paid: null,
         created_at: "2024-05-01T00:00:00Z",
-        type: "base_price",
+        type: "balance_due",
+        deposit_allocation: 0,
       },
       {
         id: "pay-paid",
@@ -147,7 +140,8 @@ describe("ProjectPaymentsSection", () => {
         status: "paid",
         date_paid: "2024-05-02T00:00:00Z",
         created_at: "2024-05-02T00:00:00Z",
-        type: "manual",
+        type: "deposit_payment",
+        deposit_allocation: 200,
       },
       {
         id: "pay-due",
@@ -158,6 +152,7 @@ describe("ProjectPaymentsSection", () => {
         date_paid: null,
         created_at: "2024-05-03T00:00:00Z",
         type: "manual",
+        deposit_allocation: 0,
       },
     ];
 
@@ -212,46 +207,25 @@ describe("ProjectPaymentsSection", () => {
     expect(screen.getByText("payments.no_records")).toBeInTheDocument();
   });
 
-  it("refreshes payments and notifies parent when a new payment is added", async () => {
-    const onPaymentsUpdated = jest.fn();
-    const payments = [
-      {
-        id: "pay-base",
-        project_id: "project-1",
-        amount: 500,
-        description: null,
-        status: "due",
-        date_paid: null,
-        created_at: "2024-05-01T00:00:00Z",
-        type: "base_price",
+  it("renders quick action buttons with proper availability", async () => {
+    setupSupabaseFrom({
+      project: {
+        id: "project-quick",
+        base_price: 600,
+        deposit_config: { mode: "fixed", value: 200 }
       },
-    ];
-
-    setupSupabaseFrom({
-      project: { id: "project-1", base_price: 500 },
-      payments,
+      payments: [],
       services: [],
     });
 
-    render(<ProjectPaymentsSection projectId="project-1" onPaymentsUpdated={onPaymentsUpdated} />);
+    render(<ProjectPaymentsSection projectId="project-quick" />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText("trigger-add-payment")).toBeInTheDocument();
+      expect(screen.getByText("payments.actions.deposit_quick")).toBeInTheDocument();
     });
 
-    mockSupabaseClient.from.mockClear();
-    setupSupabaseFrom({
-      project: { id: "project-1", base_price: 500 },
-      payments,
-      services: [],
-    });
-
-    fireEvent.click(screen.getByLabelText("trigger-add-payment"));
-
-    await waitFor(() => {
-      expect(onPaymentsUpdated).toHaveBeenCalled();
-    });
-
-    expect(mockSupabaseClient.from).toHaveBeenCalledWith("payments");
+    expect(screen.getByText("payments.actions.deposit_quick")).toBeEnabled();
+    expect(screen.getByText("payments.add_payment")).toBeEnabled();
+    expect(screen.getByText("payments.actions.refund_payment")).toBeDisabled();
   });
 });

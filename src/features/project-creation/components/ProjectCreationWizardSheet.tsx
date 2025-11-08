@@ -87,7 +87,6 @@ const ProjectCreationWizardSheetInner = ({
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
   const { t: tProject } = useTranslation("projectCreation");
-  const { t: tForms } = useTranslation("forms");
   const { t: tCommon } = useTranslation("common");
   const { currentStep, shouldLockNavigation, completeCurrentStep } = useOnboarding();
   const openedRef = useRef(false);
@@ -223,14 +222,25 @@ const ProjectCreationWizardSheetInner = ({
         : packageDepositConfig;
 
       const extrasTotalGross = computeExtraServicesTotal(state.services.extraItems);
+      const contractTotal = basePriceValue + extrasTotalGross;
       const calculatedDepositAmount =
         projectDepositConfig != null
           ? computeDepositAmount(projectDepositConfig, {
               basePrice: basePriceValue,
               extrasTotal: extrasTotalGross,
-              contractTotal: basePriceValue + extrasTotalGross,
+              contractTotal,
             })
           : 0;
+
+      const depositConfigPayload =
+        projectDepositConfig && calculatedDepositAmount > 0
+          ? {
+              ...projectDepositConfig,
+              snapshot_amount: calculatedDepositAmount,
+              snapshot_total: contractTotal,
+              snapshot_locked_at: new Date().toISOString(),
+            }
+          : projectDepositConfig ?? null;
 
       const { data: newProject, error: projectError } = await supabase
         .from("projects")
@@ -243,43 +253,12 @@ const ProjectCreationWizardSheetInner = ({
           status_id: statusId,
           project_type_id: state.details.projectTypeId,
           base_price: basePriceValue,
-          deposit_config: projectDepositConfig ?? null,
+          deposit_config: depositConfigPayload,
         })
         .select("id")
         .single();
 
       if (projectError) throw projectError;
-
-      if (basePriceValue > 0) {
-        const { error: paymentError } = await supabase.from("payments").insert({
-          project_id: newProject.id,
-          user_id: user.id,
-          organization_id: organizationId,
-          amount: basePriceValue,
-          description: tForms("payments.base_price"),
-          status: "due",
-          type: "base_price",
-        });
-
-        if (paymentError) throw paymentError;
-      }
-
-      if (projectDepositConfig && calculatedDepositAmount > 0) {
-        const depositDescription =
-          projectDepositConfig.due_label ??
-          tForms("payments.types.deposit_due", { defaultValue: "Deposit (due)" });
-        const { error: depositDueError } = await supabase.from("payments").insert({
-          project_id: newProject.id,
-          user_id: user.id,
-          organization_id: organizationId,
-          amount: calculatedDepositAmount,
-          description: depositDescription,
-          status: "due",
-          type: "deposit_due",
-        });
-
-        if (depositDueError) throw depositDueError;
-      }
 
       const catalogLineItems = allServiceItems.filter(
         (item) => item.type === "existing" && item.serviceId
@@ -373,7 +352,6 @@ const ProjectCreationWizardSheetInner = ({
     state.services.extraItems,
     state.services.packageId,
     tCommon,
-    tForms,
     tProject,
     toast,
     navigate,

@@ -231,7 +231,7 @@ describe("Payments page", () => {
       amount: 1500,
       description: "Milestone",
       status: "paid",
-      type: "base_price",
+      type: "balance_due",
       project_id: "project-1",
       projects: {
         id: "project-1",

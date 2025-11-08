@@ -1481,8 +1481,8 @@
       "due": "Due"
     },
     "type": {
-      "base": "Base",
-      "extra": "Extra",
+      "deposit": "Deposit",
+      "balance": "Balance",
       "manual": "Manual"
     },
     "emptyState": {

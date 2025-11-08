@@ -212,6 +212,30 @@
         "expected_result": "Kapora kartı paketlerden gelen tutarı doğru gösterir, düzenlemeler anında kart ve satırlara yansır, ödeme sheet'i varsayılan olarak boş açılır ve hem \"Kalan tutarı doldur\" bağlantısı hem de tarih seçimi ödeme kaydı ve kart özetini doğru şekilde günceller."
       },
       {
+        "external_id": "CRM-PROJECTS-308B",
+        "title": "Kapora tutarını sabitleme ve fark yönetimi",
+        "description": "Kapora kilitleme akışını, yeni hizmet eklendiğinde çıkan uyarıyı ve iki aksiyonun (tutarı güncelle / farkı kalan tutara taşı) davranışlarını doğrular.",
+        "steps": [
+          {
+            "action": "Kapora ayarlı projeyi açın ve kartta \"Kapora tutarını sabitle\" butonuna tıklayın.",
+            "expected_result": "Buton kaybolur; kart altında \"Kapora ₺X olarak sabitlendi\" bilgisi ve kilitleme tarihi görüntülenir."
+          },
+          {
+            "action": "Projeye yeni bir ücretli hizmet ekleyin ya da paket fiyatını artırın.",
+            "expected_result": "Kartın altında sarı uyarı bloğu belirir; mevcut kilit ile yeni hesaplanan tutar arasındaki fark gösterilir ve iki aksiyon (\"Tutarı güncelle\" ve \"Mevcut tutarı koru\") aktif hale gelir."
+          },
+          {
+            "action": "\"Tutarı güncelle\"yi seçin.",
+            "expected_result": "Uyarı kapanır, kilitli tutar yeni hesapla eşitlenir ve kilitleme tarihi güncellenir."
+          },
+          {
+            "action": "Tekrar yeni bir hizmet ekleyip bu sefer \"Mevcut tutarı koru\" aksiyonunu seçin.",
+            "expected_result": "Uyarı kapanır, kilitli tutar değişmez ancak karttaki bilgi \"Kapora {{amount}} olarak sabitlendi\" şeklinde kalır ve depozit farkı ödeme özetinin \"Kalan\" alanına yansır."
+          }
+        ],
+        "expected_result": "\"Kapora tutarını sabitle\" aksiyonu kilit bilgisi ve tarihini günceller; yeni hizmet eklendiğinde çıkan banner doğru tutarları gösterir ve iki aksiyon da ilgili senaryoya göre kilidi güncellemeden hata vermeden tamamlanır."
+      },
+      {
         "external_id": "CRM-PROJECTS-309",
         "title": "Manuel ödeme ekleme, düzenleme ve silme",
         "description": "Ödemeler tablosunda manuel kayıt oluşturma, düzenleme ve kaldırma akışını doğrular.",

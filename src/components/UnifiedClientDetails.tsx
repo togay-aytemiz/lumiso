@@ -108,6 +108,27 @@ export function UnifiedClientDetails({
     loading: valuesLoading,
     refetch: refetchFieldValues,
   } = useLeadFieldValues(lead.id);
+
+  const [hasLoadedFieldDefinitionsOnce, setHasLoadedFieldDefinitionsOnce] =
+    useState(false);
+  const [hasLoadedFieldValuesOnce, setHasLoadedFieldValuesOnce] =
+    useState(false);
+
+  useEffect(() => {
+    if (!fieldsLoading && !hasLoadedFieldDefinitionsOnce) {
+      setHasLoadedFieldDefinitionsOnce(true);
+    }
+  }, [fieldsLoading, hasLoadedFieldDefinitionsOnce]);
+
+  useEffect(() => {
+    if (!valuesLoading && !hasLoadedFieldValuesOnce) {
+      setHasLoadedFieldValuesOnce(true);
+    }
+  }, [valuesLoading, hasLoadedFieldValuesOnce]);
+
+  useEffect(() => {
+    setHasLoadedFieldValuesOnce(false);
+  }, [lead.id]);
   const [localLead, setLocalLead] = useState(lead);
   const pendingCoreUpdatesRef = useRef<Record<string, string | null>>({});
   // Permissions removed for single photographer mode - always allow
@@ -124,7 +145,9 @@ export function UnifiedClientDetails({
     },
   });
 
-  const loading = fieldsLoading || valuesLoading;
+  const loading =
+    (!hasLoadedFieldDefinitionsOnce && fieldsLoading) ||
+    (!hasLoadedFieldValuesOnce && valuesLoading);
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   useEffect(() => {

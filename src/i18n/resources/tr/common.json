@@ -149,7 +149,10 @@
     "settingsDiscardedTitle": "Değişikliklerden vazgeçildi",
     "settingsDiscardedDescription": "Kaydedilmemiş değişiklikleriniz silindi.",
     "settingsSaveErrorDescription": "Ayarlar kaydedilemedi. Lütfen tekrar deneyin.",
-    "settingsSavedCategory": "{{category}} ayarları kaydedildi"
+    "settingsSavedCategory": "{{category}} ayarları kaydedildi",
+    "settingsAutoSavedTitle": "Değişiklikler güncellendi",
+    "settingsAutoSavedDescription": "Düzenlemeleriniz otomatik olarak kaydedildi.",
+    "settingsAutoSavedSection": "{{section}} güncellendi"
   },
   "legal": {
     "all_rights_reserved": "Tüm hakları saklıdır."

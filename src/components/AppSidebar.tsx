@@ -1,23 +1,23 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { 
-  LayoutDashboard, 
-  Users, 
-  Calendar, 
-  Bell, 
-  BarChart3, 
-  FolderOpen, 
-  CreditCard, 
-  CalendarDays, 
-  CalendarRange, 
-  BookOpen, 
+import {
+  LayoutDashboard,
+  Users,
+  Calendar,
+  Bell,
+  BarChart3,
+  FolderOpen,
+  CreditCard,
+  CalendarDays,
+  CalendarRange,
+  BookOpen,
   Settings,
   HelpCircle,
   ChevronDown,
   FileText,
   Zap,
   Shield,
-  Activity
+  Activity,
 } from "lucide-react";
 import logo from "@/assets/Logo.png";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -28,7 +28,12 @@ import {
   SidebarHeader,
   SidebarMenu,
 } from "@/components/ui/sidebar";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { UserMenu } from "@/components/UserMenu";
 import { SidebarCategory } from "@/components/sidebar/SidebarCategory";
@@ -64,7 +69,6 @@ const automationItems = [
   { title: "Templates", url: "/templates", icon: FileText },
 ];
 
-
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -74,9 +78,10 @@ export function AppSidebar() {
   const { isAdminOrSupport } = useUserRole();
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const { t } = useNavigationTranslation();
-  const settingsLinkState = !isMobile && !currentPath.startsWith("/settings")
-    ? { backgroundLocation: location }
-    : undefined;
+  const settingsLinkState =
+    !isMobile && !currentPath.startsWith("/settings")
+      ? { backgroundLocation: location }
+      : undefined;
 
   // Mobile sheet states
   const [bookingsSheetOpen, setBookingsSheetOpen] = useState(false);
@@ -94,8 +99,8 @@ export function AppSidebar() {
     return currentPath.startsWith(path);
   };
 
-  const isBookingsChildActive = ["/calendar", "/sessions", "/reminders"].some((path) =>
-    currentPath.startsWith(path)
+  const isBookingsChildActive = ["/calendar", "/sessions", "/reminders"].some(
+    (path) => currentPath.startsWith(path)
   );
   const [bookingsOpen, setBookingsOpen] = useState(isBookingsChildActive);
 
@@ -103,22 +108,22 @@ export function AppSidebar() {
     currentPath.startsWith(path)
   );
   const [automationOpen, setAutomationOpen] = useState(isAutomationChildActive);
-  
+
   const isItemLocked = (itemUrl?: string) => {
     // If on getting-started page - LOCK EVERYTHING
-    if (location.pathname === '/getting-started') {
+    if (location.pathname === "/getting-started") {
       return true;
     }
-    
+
     // Simple rule: During guided setup, lock everything except settings
     if (shouldLockNavigation) {
       // Settings should always be accessible during guided setup
-      if (itemUrl && itemUrl.startsWith('/settings')) {
+      if (itemUrl && itemUrl.startsWith("/settings")) {
         return false;
       }
       return true;
     }
-    
+
     // Not in guided setup - everything is unlocked
     return false;
   };
@@ -179,15 +184,12 @@ export function AppSidebar() {
 
   return (
     <>
-      <Sidebar
-        className="border-r border-sidebar-border"
-        collapsible="icon"
-      >
+      <Sidebar className="border-r border-sidebar-border" collapsible="icon">
         <SidebarHeader className="p-6">
           <div className="flex items-center">
-            <img 
-              src={logo} 
-              alt="Lumiso CRM" 
+            <img
+              src={logo}
+              alt="Lumiso CRM"
               className="h-10 w-auto object-contain"
             />
           </div>
@@ -195,11 +197,12 @@ export function AppSidebar() {
 
         <SidebarContent className="px-3 flex-1 overflow-y-auto">
           {/* Getting Started - Always visible when on getting-started page OR in guided setup */}
-          {(location.pathname === '/getting-started' || shouldLockNavigation) && (
+          {(location.pathname === "/getting-started" ||
+            shouldLockNavigation) && (
             <div className="mb-6">
               <SidebarMenu>
                 <SidebarNavItem
-                  title={t('menu.getting_started')}
+                  title={t("menu.getting_started")}
                   url="/getting-started"
                   icon={BookOpen}
                   isActive={isActive("/getting-started")}
@@ -210,23 +213,23 @@ export function AppSidebar() {
           )}
 
           {/* MODULES Category */}
-          <SidebarCategory title={t('sections.main')}>
+          <SidebarCategory title={t("sections.main")}>
             {moduleItems.map((item) => {
               let translationKey: string;
-              switch(item.title) {
-                case 'Dashboard':
-                  translationKey = t('menu.dashboard');
+              switch (item.title) {
+                case "Dashboard":
+                  translationKey = t("menu.dashboard");
                   break;
-                case 'Leads':
-                  translationKey = t('menu.leads');
+                case "Leads":
+                  translationKey = t("menu.leads");
                   break;
-                case 'Projects':
-                  translationKey = t('menu.projects');
+                case "Projects":
+                  translationKey = t("menu.projects");
                   break;
                 default:
                   translationKey = item.title;
               }
-              
+
               return (
                 <SidebarNavItem
                   key={item.title}
@@ -243,46 +246,48 @@ export function AppSidebar() {
 
             {/* Bookings with submenu */}
             <SidebarNavItem
-              title={t('menu.sessions')}
+              title={t("menu.sessions")}
               icon={CalendarRange}
               isActive={isBookingsChildActive}
-              isLocked={isItemLocked('/calendar')}
+              isLocked={isItemLocked("/calendar")}
               onLockedClick={handleLockedItemClick}
-              onClick={!isItemLocked('/calendar') ? handleBookingsClick : undefined}
+              onClick={
+                !isItemLocked("/calendar") ? handleBookingsClick : undefined
+              }
               badge={
-                !isItemLocked('/calendar') && !isMobile ? (
-                  <ChevronDown 
+                !isItemLocked("/calendar") && !isMobile ? (
+                  <ChevronDown
                     className={`h-4 w-4 transition-transform duration-200 ${
-                      bookingsOpen ? 'rotate-180' : 'rotate-0'
-                    }`} 
+                      bookingsOpen ? "rotate-180" : "rotate-0"
+                    }`}
                   />
                 ) : undefined
               }
             >
-              <div 
+              <div
                 className={`overflow-hidden transition-all duration-300 ease-out ${
-                  bookingsOpen && !isItemLocked('/calendar') && !isMobile
-                    ? 'max-h-40 opacity-100' 
-                    : 'max-h-0 opacity-0'
+                  bookingsOpen && !isItemLocked("/calendar") && !isMobile
+                    ? "max-h-40 opacity-100"
+                    : "max-h-0 opacity-0"
                 }`}
               >
                 <SidebarMenu className="space-y-0.5 pt-1">
                   {bookingItems.map((item) => {
                     let translationKey: string;
-                    switch(item.title) {
-                      case 'Calendar':
-                        translationKey = t('menu.calendar');
+                    switch (item.title) {
+                      case "Calendar":
+                        translationKey = t("menu.calendar");
                         break;
-                      case 'Sessions':
-                        translationKey = t('menu.sessions');
+                      case "Sessions":
+                        translationKey = t("menu.sessions");
                         break;
-                        case 'Reminders':
-                          translationKey = t('menu.reminders');
-                          break;
+                      case "Reminders":
+                        translationKey = t("menu.reminders");
+                        break;
                       default:
                         translationKey = item.title;
                     }
-                    
+
                     return (
                       <SidebarSubItem
                         key={item.title}
@@ -302,21 +307,21 @@ export function AppSidebar() {
           </SidebarCategory>
 
           {/* TOOLS Category */}
-          <div className="mt-6">
-            <SidebarCategory title={t('sections.tools')}>
+          <div className="mt-2">
+            <SidebarCategory title={t("sections.tools")}>
               {toolItems.map((item) => {
                 let translationKey: string;
-                switch(item.title) {
-                  case 'Analytics':
-                    translationKey = t('menu.analytics');
+                switch (item.title) {
+                  case "Analytics":
+                    translationKey = t("menu.analytics");
                     break;
-                  case 'Payments':
-                    translationKey = t('menu.payments');
+                  case "Payments":
+                    translationKey = t("menu.payments");
                     break;
                   default:
                     translationKey = item.title;
                 }
-                
+
                 return (
                   <SidebarNavItem
                     key={item.title}
@@ -332,43 +337,47 @@ export function AppSidebar() {
               })}
 
               <SidebarNavItem
-                title={t('menu.workflows')}
+                title={t("menu.workflows")}
                 icon={Zap}
                 isActive={isAutomationChildActive}
-                isLocked={isItemLocked('/workflows')}
+                isLocked={isItemLocked("/workflows")}
                 onLockedClick={handleLockedItemClick}
-                onClick={!isItemLocked('/workflows') ? handleAutomationClick : undefined}
+                onClick={
+                  !isItemLocked("/workflows")
+                    ? handleAutomationClick
+                    : undefined
+                }
                 badge={
-                  !isItemLocked('/workflows') && !isMobile ? (
-                    <ChevronDown 
+                  !isItemLocked("/workflows") && !isMobile ? (
+                    <ChevronDown
                       className={`h-4 w-4 transition-transform duration-200 ${
-                        automationOpen ? 'rotate-180' : 'rotate-0'
-                      }`} 
+                        automationOpen ? "rotate-180" : "rotate-0"
+                      }`}
                     />
                   ) : undefined
                 }
               >
-                <div 
+                <div
                   className={`overflow-hidden transition-all duration-300 ease-out ${
-                    automationOpen && !isItemLocked('/workflows') && !isMobile
-                      ? 'max-h-40 opacity-100' 
-                      : 'max-h-0 opacity-0'
+                    automationOpen && !isItemLocked("/workflows") && !isMobile
+                      ? "max-h-40 opacity-100"
+                      : "max-h-0 opacity-0"
                   }`}
                 >
                   <SidebarMenu className="space-y-0.5 pt-1">
                     {automationItems.map((item) => {
                       let translationKey: string;
-                      switch(item.title) {
-                        case 'Workflows':
-                          translationKey = t('menu.workflows');
+                      switch (item.title) {
+                        case "Workflows":
+                          translationKey = t("menu.workflows");
                           break;
-                        case 'Templates':
-                          translationKey = t('menu.templates');
+                        case "Templates":
+                          translationKey = t("menu.templates");
                           break;
                         default:
                           translationKey = item.title;
                       }
-                      
+
                       return (
                         <SidebarSubItem
                           key={item.title}
@@ -389,10 +398,10 @@ export function AppSidebar() {
           </div>
 
           {/* SYSTEM Category */}
-          <div className="mt-6">
-            <SidebarCategory title={t('sections.system')}>
+          <div className="mt-2">
+            <SidebarCategory title={t("sections.system")}>
               <SidebarNavItem
-                title={t('menu.settings')}
+                title={t("menu.settings")}
                 url="/settings"
                 state={settingsLinkState}
                 icon={Settings}
@@ -402,14 +411,14 @@ export function AppSidebar() {
                 onClick={handleNavClick}
               />
               <SidebarNavItem
-                title={t('menu.help')}
+                title={t("menu.help")}
                 icon={HelpCircle}
                 onClick={() => setHelpModalOpen(true)}
               />
               {/* Administration - Only for admin/support users */}
               {isAdminOrSupport() && (
                 <SidebarNavItem
-                  title={t('menu.administration')}
+                  title={t("menu.administration")}
                   url="/admin"
                   icon={Shield}
                   isActive={isActive("/admin")}
@@ -423,36 +432,34 @@ export function AppSidebar() {
         </SidebarContent>
 
         <SidebarFooter className="p-4 mt-auto shrink-0">
-          {!shouldLockNavigation && !location.pathname.startsWith('/getting-started') && (
-            <UserMenu variant="sidebar" />
-          )}
+          {!shouldLockNavigation &&
+            !location.pathname.startsWith("/getting-started") && (
+              <UserMenu variant="sidebar" />
+            )}
         </SidebarFooter>
       </Sidebar>
 
-      <HelpModal 
-        isOpen={helpModalOpen} 
-        onOpenChange={setHelpModalOpen} 
-      />
+      <HelpModal isOpen={helpModalOpen} onOpenChange={setHelpModalOpen} />
 
       {/* Mobile Sheets */}
       <Sheet open={bookingsSheetOpen} onOpenChange={setBookingsSheetOpen}>
         <SheetContent side="left" className="w-80 p-0">
           <SheetHeader className="p-6 pb-4">
-            <SheetTitle>{t('mobile_sheets.bookings')}</SheetTitle>
+            <SheetTitle>{t("mobile_sheets.bookings")}</SheetTitle>
           </SheetHeader>
           <div className="px-3">
             <SidebarMenu className="space-y-0.5">
               {bookingItems.map((item) => {
                 let translationKey: string;
-                switch(item.title) {
-                  case 'Calendar':
-                    translationKey = t('menu.calendar');
+                switch (item.title) {
+                  case "Calendar":
+                    translationKey = t("menu.calendar");
                     break;
-                  case 'Sessions':
-                    translationKey = t('menu.sessions');
+                  case "Sessions":
+                    translationKey = t("menu.sessions");
                     break;
-                  case 'Reminders':
-                    translationKey = t('menu.reminders');
+                  case "Reminders":
+                    translationKey = t("menu.reminders");
                     break;
                   default:
                     translationKey = item.title;
@@ -479,23 +486,23 @@ export function AppSidebar() {
       <Sheet open={automationSheetOpen} onOpenChange={setAutomationSheetOpen}>
         <SheetContent side="left" className="w-80 p-0">
           <SheetHeader className="p-6 pb-4">
-            <SheetTitle>{t('mobile_sheets.automation')}</SheetTitle>
+            <SheetTitle>{t("mobile_sheets.automation")}</SheetTitle>
           </SheetHeader>
           <div className="px-3">
             <SidebarMenu className="space-y-0.5">
               {automationItems.map((item) => {
                 let translationKey: string;
-                switch(item.title) {
-                  case 'Workflows':
-                    translationKey = t('menu.workflows');
+                switch (item.title) {
+                  case "Workflows":
+                    translationKey = t("menu.workflows");
                     break;
-                  case 'Templates':
-                    translationKey = t('menu.templates');
+                  case "Templates":
+                    translationKey = t("menu.templates");
                     break;
                   default:
                     translationKey = item.title;
                 }
-                
+
                 return (
                   <SidebarSubItem
                     key={item.title}

@@ -326,10 +326,10 @@ const pageSize = PAGE_SIZE;
             return isPaid ? t("payments.status.paid") : t("payments.status.due");
           }
           case "type":
-            return payment.type === "base_price"
-              ? t("payments.type.base")
-              : payment.type === "extra"
-                ? t("payments.type.extra")
+            return payment.type === "deposit_payment"
+              ? t("payments.type.deposit")
+              : payment.type === "balance_due"
+                ? t("payments.type.balance")
                 : t("payments.type.manual");
           default: {
             const fallbackValue = (payment as Record<string, unknown>)[columnId];
@@ -700,10 +700,10 @@ const pageSize = PAGE_SIZE;
       const typeLabel = filtersState.type
         .map((value) => {
           switch (value) {
-            case "base_price":
-              return t("payments.type.base");
-            case "extra":
-              return t("payments.type.extra");
+            case "deposit_payment":
+              return t("payments.type.deposit");
+            case "balance_due":
+              return t("payments.type.balance");
             default:
               return t("payments.type.manual");
           }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { CreditCard, Coins, Edit2, Trash2, HelpCircle, ChevronDown } from "lucide-react";
+import { CreditCard, Coins, Edit2, Trash2, HelpCircle, ChevronDown, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,15 +19,33 @@ import {
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { PAYMENT_COLORS } from "@/lib/paymentColors";
-import { cn, formatLongDate } from "@/lib/utils";
+import { cn, formatLongDate, getUserLocale, getDateFnsLocale } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
-import { AddPaymentDialog } from "./AddPaymentDialog";
 import { EditPaymentDialog } from "./EditPaymentDialog";
 import {
   ProjectDepositSetupDialog,
   ProjectDepositPaymentDialog
 } from "./ProjectDepositDialogs";
+import { AppSheetModal } from "@/components/ui/app-sheet-modal";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import ReactCalendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
+import "@/components/react-calendar.css";
+import { Switch } from "@/components/ui/switch";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
+import { useI18nToast } from "@/lib/toastHelpers";
 import {
   computeDepositAmount,
   parseDepositConfig,
@@ -42,7 +61,7 @@ import { fetchProjectServiceRecords, type ProjectServiceRecord } from "@/lib/ser
 import type { Database } from "@/integrations/supabase/types";
 
 type PaymentStatus = "paid" | "due";
-type PaymentType = "manual" | "base_price" | "deposit_due" | "deposit_payment";
+type PaymentType = "manual" | "deposit_payment" | "balance_due";
 
 interface Payment {
   id: string;
@@ -54,6 +73,7 @@ interface Payment {
   created_at: string;
   updated_at: string;
   type: PaymentType;
+  deposit_allocation: number;
 }
 
 
@@ -71,6 +91,9 @@ interface FinancialSummary {
   extraTotals: VatTotals;
   contractTotal: number;
   depositAmount: number;
+  depositSuggestedAmount: number;
+  depositSnapshotTotal: number | null;
+  depositSnapshotLockedAt: string | null;
   depositPaid: number;
   depositRemaining: number;
   depositStatus: "none" | "due" | "partial" | "paid";
@@ -153,6 +176,9 @@ export function ProjectPaymentsSection({
 
   const [depositSetupOpen, setDepositSetupOpen] = useState(false);
   const [depositPaymentOpen, setDepositPaymentOpen] = useState(false);
+  const [generalPaymentOpen, setGeneralPaymentOpen] = useState(false);
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
+  const [isSnapshotUpdating, setIsSnapshotUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const hasLoadedInitially = useRef(false);
   const [showAllPayments, setShowAllPayments] = useState(false);
@@ -250,16 +276,6 @@ export function ProjectPaymentsSection({
   }, [fetchPayments, onPaymentsUpdated]);
 
   const handleEditPayment = (payment: Payment) => {
-    if (payment.type === "base_price" || payment.type === "deposit_due") {
-      toast({
-        title: t("payments.edit_disabled_title", { defaultValue: "Editing disabled" }),
-        description: t("payments.edit_disabled_description", {
-          defaultValue: "Adjust base price or deposit settings from the payment summary."
-        }),
-        variant: "destructive"
-      });
-      return;
-    }
     setEditingPayment(payment);
     setShowEditDialog(true);
   };
@@ -294,12 +310,8 @@ export function ProjectPaymentsSection({
     }
   };
 
-  const depositPayments = useMemo(
-    () => payments.filter((payment) => payment.type === "deposit_payment"),
-    [payments]
-  );
-  const depositDueRecord = useMemo(
-    () => payments.find((payment) => payment.type === "deposit_due") ?? null,
+  const depositContributionPayments = useMemo(
+    () => payments.filter((payment) => payment.deposit_allocation > 0 && payment.status === "paid"),
     [payments]
   );
   const financialSummary = useMemo<FinancialSummary>(() => {
@@ -331,19 +343,29 @@ export function ProjectPaymentsSection({
 
     const contractTotal = project.basePrice + extraTotals.gross;
 
-    const depositAmount = computeDepositAmount(project.depositConfig ?? DEFAULT_DEPOSIT_CONFIG, {
+    const depositSuggestedAmount = computeDepositAmount(project.depositConfig ?? DEFAULT_DEPOSIT_CONFIG, {
       basePrice: project.basePrice,
       extrasTotal: extraTotals.gross,
       contractTotal
     });
+    const snapshotAmount =
+      project.depositConfig?.snapshot_amount != null
+        ? Number(project.depositConfig.snapshot_amount)
+        : null;
+    const targetDepositAmount = snapshotAmount ?? depositSuggestedAmount;
+    const snapshotLockedAt = project.depositConfig?.snapshot_locked_at ?? null;
+    const snapshotTotal =
+      project.depositConfig?.snapshot_total != null
+        ? Number(project.depositConfig.snapshot_total)
+        : null;
 
-    const depositPaid = depositPayments
+    const depositPaid = payments
       .filter((payment) => payment.status === "paid")
-      .reduce((sum, payment) => sum + payment.amount, 0);
+      .reduce((sum, payment) => sum + Math.max(payment.deposit_allocation ?? 0, 0), 0);
 
-    const depositRemaining = Math.max(depositAmount - depositPaid, 0);
+    const depositRemaining = Math.max(targetDepositAmount - depositPaid, 0);
     let depositStatus: FinancialSummary["depositStatus"] = "none";
-    if (depositAmount > 0) {
+    if (targetDepositAmount > 0) {
       if (depositRemaining <= 0) {
         depositStatus = "paid";
       } else if (depositPaid > 0) {
@@ -366,97 +388,74 @@ export function ProjectPaymentsSection({
       includedTotals,
       extraTotals,
       contractTotal,
-      depositAmount,
+      depositAmount: targetDepositAmount,
+      depositSuggestedAmount,
+      depositSnapshotTotal: snapshotTotal,
+      depositSnapshotLockedAt: snapshotLockedAt,
       depositPaid,
       depositRemaining,
       depositStatus,
-      depositLastPaymentDate: findLatestDate(depositPayments),
+      depositLastPaymentDate: findLatestDate(depositContributionPayments),
       totalPaid,
       remaining
     };
-  }, [project, serviceRecords, depositPayments, payments]);
+  }, [project, serviceRecords, depositContributionPayments, payments]);
 
   const handleDepositConfigSaved = useCallback(
     async (config: ProjectDepositConfig) => {
       if (!project) return;
       setProject({ ...project, depositConfig: config });
+      onPaymentsUpdated?.();
+    },
+    [onPaymentsUpdated, project]
+  );
 
-      const amount = computeDepositAmount(config, {
-        basePrice: financialSummary.basePrice,
-        extrasTotal: financialSummary.extraTotals.gross,
-        contractTotal: financialSummary.contractTotal
-      });
-
-      const depositPaid = depositPayments
-        .filter((payment) => payment.status === "paid")
-        .reduce((sum, payment) => sum + payment.amount, 0);
-
-      const label = config.due_label ?? t("payments.types.deposit_due", { defaultValue: "Deposit" });
-      const newStatus = depositPaid >= amount && amount > 0 ? "paid" : "due";
-      const latestPaymentDate = findLatestDate(depositPayments);
-
+  const handleSnapshotAction = useCallback(
+    async (mode: "refresh" | "acknowledge") => {
+      if (!project) return;
+      setIsSnapshotUpdating(true);
+      const nextConfig: ProjectDepositConfig = {
+        ...project.depositConfig,
+        snapshot_amount:
+          mode === "refresh"
+            ? financialSummary.depositSuggestedAmount
+            : project.depositConfig.snapshot_amount ?? financialSummary.depositSuggestedAmount,
+        snapshot_total: financialSummary.contractTotal,
+        snapshot_locked_at: new Date().toISOString()
+      };
       try {
-        if (amount <= 0 && depositDueRecord) {
-          await supabase.from("payments").delete().eq("id", depositDueRecord.id);
-        } else if (amount > 0 && depositDueRecord) {
-          await supabase
-            .from("payments")
-            .update({
-              amount,
-              description: config.description ?? label,
-              status: newStatus,
-              date_paid: newStatus === "paid" ? latestPaymentDate : null,
-              type: "deposit_due"
-            })
-            .eq("id", depositDueRecord.id);
-        } else if (amount > 0 && !depositDueRecord) {
-          const {
-            data: { user }
-          } = await supabase.auth.getUser();
-          if (!user) {
-            throw new Error(
-              t("payments.user_not_authenticated", { defaultValue: "User not authenticated" })
-            );
-          }
-          const organizationId = await getUserOrganizationId();
-          if (!organizationId) {
-            throw new Error(
-              t("payments.organization_required", { defaultValue: "Organization required" })
-            );
-          }
-          await supabase.from("payments").insert({
-            project_id: projectId,
-            user_id: user.id,
-            organization_id: organizationId,
-            amount,
-            description: config.description ?? label,
-            status: newStatus,
-            date_paid: newStatus === "paid" ? latestPaymentDate : null,
-            type: "deposit_due"
-          });
-        }
-      } catch (error) {
-        console.error("Error syncing deposit schedule:", error);
+        const { error } = await supabase
+          .from("projects")
+          .update({ deposit_config: nextConfig })
+          .eq("id", projectId);
+        if (error) throw error;
+        setProject((prev) => (prev ? { ...prev, depositConfig: nextConfig } : prev));
         toast({
-          title: t("payments.deposit.sync_error", {
-            defaultValue: "Unable to sync deposit schedule"
+          title:
+            mode === "refresh"
+              ? t("payments.deposit.snapshot_refresh_success", {
+                  defaultValue: "Deposit amount updated"
+                })
+              : t("payments.deposit.snapshot_keep_success", {
+                  defaultValue: "Deposit will remain locked"
+                })
+        });
+      } catch (error) {
+        console.error("Error updating deposit snapshot:", error);
+        toast({
+          title: t("payments.deposit.snapshot_error", {
+            defaultValue: "Unable to update deposit lock"
           }),
           description: error instanceof Error ? error.message : undefined,
           variant: "destructive"
         });
       } finally {
-        await fetchPayments();
-        onPaymentsUpdated?.();
+        setIsSnapshotUpdating(false);
       }
     },
     [
-      depositDueRecord,
-      depositPayments,
-      fetchPayments,
-      financialSummary.basePrice,
       financialSummary.contractTotal,
-      financialSummary.extraTotals.gross,
-      onPaymentsUpdated,
+      financialSummary.depositSuggestedAmount,
       project,
       projectId,
       t,
@@ -467,18 +466,16 @@ export function ProjectPaymentsSection({
   const getPaymentDescription = useCallback(
     (payment: Payment) => {
       switch (payment.type) {
-        case "deposit_due":
-          return (
-            payment.description ??
-            t("payments.descriptions.deposit_due", { defaultValue: "Scheduled deposit" })
-          );
         case "deposit_payment":
           return (
             payment.description ??
             t("payments.descriptions.deposit_payment", { defaultValue: "Deposit payment" })
           );
-        case "base_price":
-          return t("payments.base_price_label", { defaultValue: "Base Price" });
+        case "balance_due":
+          return (
+            payment.description ??
+            t("payments.descriptions.balance_due", { defaultValue: "Balance payment" })
+          );
         default:
           return payment.description?.trim() || t("payments.no_description", { defaultValue: "No description provided" });
       }
@@ -517,7 +514,39 @@ export function ProjectPaymentsSection({
 
   const depositConfigured = financialSummary.depositStatus !== "none";
   const depositEditLabel = t("payments.deposit.actions.edit_short", { defaultValue: "Edit" });
-  const depositRecordLabel = t("payments.deposit.actions.record_short", { defaultValue: "Record payment" });
+  const lockedDepositAmount = project?.depositConfig?.snapshot_amount ?? null;
+  const lockedDepositDate = financialSummary.depositSnapshotLockedAt;
+  const snapshotLabel = lockedDepositAmount
+    ? t(
+        lockedDepositDate
+          ? "payments.deposit.snapshot_locked_dated"
+          : "payments.deposit.snapshot_locked",
+        {
+          amount: formatCurrency(lockedDepositAmount),
+          date:
+            lockedDepositDate != null
+              ? formatDateSafely(lockedDepositDate) ?? lockedDepositDate
+              : undefined,
+          defaultValue:
+            lockedDepositDate != null
+              ? "Deposit locked at {{amount}} on {{date}}"
+              : "Deposit locked at {{amount}}"
+        }
+      )
+    : t("payments.deposit.snapshot_unlocked", {
+        amount: formatCurrency(financialSummary.depositSuggestedAmount),
+        defaultValue: "Deposit follows package totals (currently {{amount}})"
+      });
+  const snapshotTotalDiff =
+    financialSummary.depositSnapshotTotal != null &&
+    Math.abs(financialSummary.depositSnapshotTotal - financialSummary.contractTotal) >= 1;
+  const snapshotAmountDiff =
+    lockedDepositAmount != null &&
+    Math.abs(financialSummary.depositSuggestedAmount - lockedDepositAmount) >= 1;
+  const shouldShowSnapshotBanner =
+    depositConfigured && lockedDepositAmount != null && (snapshotTotalDiff || snapshotAmountDiff);
+  const canLockDeposit =
+    depositConfigured && !lockedDepositAmount && financialSummary.depositSuggestedAmount > 0;
   const shouldRenderSkeleton = isLoading && !hasLoadedInitially.current;
   const isRefreshing = isLoading && hasLoadedInitially.current;
   const visiblePayments = showAllPayments
@@ -530,12 +559,38 @@ export function ProjectPaymentsSection({
     <>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <CardTitle className="flex items-center gap-2 text-xl font-semibold">
               <CreditCard className="h-4 w-4" />
               {t("payments.title", { defaultValue: "Payments" })}
             </CardTitle>
-            <AddPaymentDialog projectId={projectId} onPaymentAdded={handlePaymentsRefresh} />
+            <div className="flex flex-wrap gap-2">
+              {depositConfigured && (
+                <Button
+                  size="sm"
+                  variant="pill"
+                  onClick={() => setDepositPaymentOpen(true)}
+                  disabled={financialSummary.depositRemaining <= 0}
+                >
+                  {t("payments.actions.deposit_quick", { defaultValue: "Deposit payment" })}
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="pill"
+                onClick={() => setGeneralPaymentOpen(true)}
+              >
+                {t("payments.add_payment")}
+              </Button>
+              <Button
+                size="sm"
+                variant="pillDanger"
+                onClick={() => setRefundDialogOpen(true)}
+                disabled={financialSummary.totalPaid <= 0}
+              >
+                {t("payments.actions.refund_payment", { defaultValue: "Issue refund" })}
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -720,6 +775,7 @@ export function ProjectPaymentsSection({
                             defaultValue: "Deposit collected ({{amount}})."
                           })}
                       </p>
+                      <p className="text-xs text-muted-foreground">{snapshotLabel}</p>
                       {financialSummary.depositLastPaymentDate && (
                         <p className="text-xs text-muted-foreground">
                           {t("payments.deposit.last_payment", {
@@ -740,14 +796,53 @@ export function ProjectPaymentsSection({
                     >
                       {depositEditLabel}
                     </Button>
-                    {depositConfigured && financialSummary.depositRemaining > 0 && (
-                      <Button size="sm" onClick={() => setDepositPaymentOpen(true)}>
-                        {depositRecordLabel}
+                    {canLockDeposit && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => handleSnapshotAction("refresh")}
+                        disabled={isSnapshotUpdating}
+                      >
+                        {t("payments.deposit.actions.lock_now", { defaultValue: "Lock amount" })}
                       </Button>
                     )}
                   </div>
                 </div>
               </div>
+
+              {shouldShowSnapshotBanner && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                  <p>
+                    {t("payments.deposit.snapshot_banner", {
+                      locked: formatCurrency(lockedDepositAmount ?? 0),
+                      suggested: formatCurrency(financialSummary.depositSuggestedAmount),
+                      defaultValue:
+                        "Locked deposit {{locked}} differs from the current calculation {{suggested}}."
+                    })}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => handleSnapshotAction("refresh")}
+                      disabled={isSnapshotUpdating}
+                    >
+                      {t("payments.deposit.actions.refresh_snapshot", {
+                        defaultValue: "Update deposit amount"
+                      })}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleSnapshotAction("acknowledge")}
+                      disabled={isSnapshotUpdating}
+                    >
+                      {t("payments.deposit.actions.keep_locked", {
+                        defaultValue: "Keep current amount"
+                      })}
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {payments.length === 0 ? (
                 <div className="py-10 text-center text-muted-foreground">
@@ -764,20 +859,15 @@ export function ProjectPaymentsSection({
                           formatDateSafely(payment.created_at) ??
                           "";
                         const description = getPaymentDescription(payment);
-                        const canEdit = !["base_price", "deposit_due"].includes(payment.type);
-                        const canDelete = ["manual", "deposit_payment"].includes(payment.type);
+                        const canEdit = true;
+                        const canDelete = ["manual", "deposit_payment", "balance_due"].includes(payment.type);
                         const shouldAnimateExpansion =
                           isAnimatingExpansion && index >= PAYMENT_PREVIEW_COUNT;
                         return (
                           <li
                             key={payment.id}
                             className={cn(
-                              "flex flex-col gap-2 px-3 py-2 text-sm transition-colors sm:grid sm:grid-cols-[minmax(140px,auto)_minmax(110px,auto)_1fr_auto] sm:items-center",
-                              payment.type === "deposit_due"
-                                ? "bg-amber-50/70"
-                                : payment.type === "base_price"
-                                ? "bg-muted/40"
-                                : "hover:bg-muted/40",
+                              "flex flex-col gap-2 px-3 py-2 text-sm transition-colors sm:grid sm:grid-cols-[minmax(140px,auto)_minmax(110px,auto)_1fr_auto] sm:items-center hover:bg-muted/40",
                               shouldAnimateExpansion && "animate-slide-up"
                             )}
                           >
@@ -802,8 +892,16 @@ export function ProjectPaymentsSection({
                             <div className="font-semibold tabular-nums sm:justify-self-end">
                               {formatCurrency(payment.amount)}
                             </div>
-                            <div className="text-xs text-muted-foreground sm:text-sm">
-                              {description}
+                            <div className="flex flex-col gap-1 text-xs text-muted-foreground sm:text-sm">
+                              <span>{description}</span>
+                              {payment.deposit_allocation > 0 && (
+                                <span className="font-medium text-amber-700">
+                                  {t("payments.deposit.allocation_badge", {
+                                    amount: formatCurrency(payment.deposit_allocation),
+                                    defaultValue: "Deposit share: {{amount}}",
+                                  })}
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center justify-start gap-1 sm:justify-end">
                               <Badge
@@ -902,20 +1000,27 @@ export function ProjectPaymentsSection({
         projectId={projectId}
         open={depositPaymentOpen}
         onOpenChange={setDepositPaymentOpen}
-        depositDue={
-          depositDueRecord
-            ? {
-                id: depositDueRecord.id,
-                amount: depositDueRecord.amount,
-                status: depositDueRecord.status,
-                date_paid: depositDueRecord.date_paid,
-                description: depositDueRecord.description
-              }
-            : null
-        }
         depositAmount={financialSummary.depositAmount}
         depositPaid={financialSummary.depositPaid}
         onCompleted={handlePaymentsRefresh}
+      />
+
+      <GeneralPaymentDialog
+        projectId={projectId}
+        open={generalPaymentOpen}
+        onOpenChange={setGeneralPaymentOpen}
+        onCompleted={handlePaymentsRefresh}
+        depositRemaining={financialSummary.depositRemaining}
+        outstanding={financialSummary.remaining}
+      />
+
+      <RefundPaymentDialog
+        projectId={projectId}
+        open={refundDialogOpen}
+        onOpenChange={setRefundDialogOpen}
+        onCompleted={handlePaymentsRefresh}
+        depositPaid={financialSummary.depositPaid}
+        totalPaid={financialSummary.totalPaid}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -947,5 +1052,476 @@ export function ProjectPaymentsSection({
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+interface GeneralPaymentDialogProps {
+  projectId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCompleted: () => void;
+  depositRemaining: number;
+  outstanding: number;
+}
+
+function GeneralPaymentDialog({
+  projectId,
+  open,
+  onOpenChange,
+  onCompleted,
+  depositRemaining,
+  outstanding
+}: GeneralPaymentDialogProps) {
+  const { t } = useFormsTranslation();
+  const toast = useI18nToast();
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [status, setStatus] = useState<"paid" | "due">("paid");
+  const [datePaid, setDatePaid] = useState<Date | undefined>(new Date());
+  const [isLoading, setIsLoading] = useState(false);
+  const browserLocale = getUserLocale();
+
+  const defaultAmount = useMemo(() => Math.max(outstanding, 0), [outstanding]);
+
+  useEffect(() => {
+    if (!open) return;
+    setAmount(defaultAmount > 0 ? String(defaultAmount) : "");
+    setDescription("");
+    setStatus("paid");
+    setDatePaid(new Date());
+  }, [open, defaultAmount]);
+
+  const navigation = useModalNavigation({
+    isDirty: Boolean(amount.trim() || description.trim() || status !== "paid"),
+    onDiscard: () => {
+      setAmount(defaultAmount > 0 ? String(defaultAmount) : "");
+      setDescription("");
+      setStatus("paid");
+      setDatePaid(new Date());
+      onOpenChange(false);
+    }
+  });
+
+  const handleSubmit = async () => {
+    if (!amount.trim()) {
+      toast.error(t("payments.amount_required"));
+      return;
+    }
+    const parsedAmount = Number.parseFloat(amount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      toast.error(t("payments.amount_required"));
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error(t("payments.user_not_authenticated", { defaultValue: "User not authenticated" }));
+      }
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
+        throw new Error(t("payments.organization_required", { defaultValue: "Organization required" }));
+      }
+
+      const depositAllocation = Math.min(parsedAmount, depositRemaining);
+      const paymentDate =
+        status === "paid"
+          ? datePaid?.toISOString().split("T")[0] ?? new Date().toISOString().split("T")[0]
+          : null;
+
+      const { error } = await supabase.from("payments").insert({
+        project_id: projectId,
+        user_id: user.id,
+        organization_id: organizationId,
+        amount: parsedAmount,
+        description: description.trim() || null,
+        status,
+        date_paid: paymentDate,
+        type: "balance_due",
+        deposit_allocation: depositAllocation
+      });
+
+      if (error) throw error;
+
+      toast.success(t("payments.quick.balance_success", { defaultValue: "Payment recorded." }));
+      onCompleted();
+      onOpenChange(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("payments.error_loading", { defaultValue: "An unexpected error occurred." }));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDirtyClose = () => {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      onOpenChange(false);
+    }
+  };
+
+  const helperCopy =
+    depositRemaining > 0
+      ? t("payments.quick.balance_helper_with_deposit", {
+          defaultValue: "Deposit still has an outstanding amount. This payment will be tracked as remaining balance only."
+        })
+      : t("payments.quick.balance_helper", {
+          defaultValue: "Use this option for payments that don't affect the deposit."
+        });
+  const remainingHint = t("payments.quick.remaining_hint", {
+    amount: formatCurrency(outstanding),
+    defaultValue: "Outstanding total: {{amount}}"
+  });
+  const fillLabel = t("payments.quick.fill_link", { defaultValue: "Fill remaining amount" });
+
+  return (
+    <AppSheetModal
+      title={t("payments.add_payment")}
+      isOpen={open}
+      onOpenChange={onOpenChange}
+      size="content"
+      dirty={Boolean(amount.trim() || description.trim())}
+      onDirtyClose={handleDirtyClose}
+      footerActions={[
+        {
+          label: t("buttons.cancel"),
+          onClick: () => handleDirtyClose(),
+          variant: "outline" as const,
+          disabled: isLoading
+        },
+        {
+          label: isLoading ? t("payments.adding") : t("payments.add_payment"),
+          onClick: () => void handleSubmit(),
+          disabled: isLoading || !amount.trim(),
+          loading: isLoading
+        }
+      ]}
+    >
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground">{helperCopy}</p>
+          <p className="text-xs text-muted-foreground">{remainingHint}</p>
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="general-amount">{t("payments.amount_try")} *</Label>
+            <button
+              type="button"
+              className={cn(
+                "text-xs font-semibold text-primary",
+                outstanding <= 0 && "opacity-50"
+              )}
+              onClick={() => outstanding > 0 && setAmount(String(outstanding))}
+              disabled={outstanding <= 0}
+            >
+              {fillLabel}
+            </button>
+          </div>
+          <Input
+            id="general-amount"
+            type="number"
+            step="0.01"
+            placeholder="0.00"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="general-status">{t("payments.payment_status")}</Label>
+          <Select value={status} onValueChange={(value: "paid" | "due") => setStatus(value)}>
+            <SelectTrigger id="general-status">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="paid">{t("payments.paid")}</SelectItem>
+              <SelectItem value="due">{t("payments.due")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {status === "paid" && (
+          <div className="space-y-2">
+            <Label>{t("payments.date_paid")}</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !datePaid && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {datePaid
+                    ? format(datePaid, "PPP", { locale: getDateFnsLocale() })
+                    : t("payments.pick_date")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto min-w-[18rem] p-0 rounded-xl border border-border shadow-md" align="start">
+                <div className="p-2">
+                  <ReactCalendar
+                    className="react-calendar w-full p-2 pointer-events-auto"
+                    locale={browserLocale}
+                    view="month"
+                    minDetail="month"
+                    next2Label={null}
+                    prev2Label={null}
+                    onChange={(value) => {
+                      const d = Array.isArray(value) ? value[0] : value;
+                      const date = d instanceof Date ? d : undefined;
+                      setDatePaid(date);
+                    }}
+                    value={datePaid ?? null}
+                    formatShortWeekday={(_, date) =>
+                      new Intl.DateTimeFormat(browserLocale, { weekday: "short" }).format(date)
+                    }
+                  />
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
+        <div className="space-y-2">
+          <Label htmlFor="general-description">{t("payments.description")}</Label>
+          <Textarea
+            id="general-description"
+            placeholder={t("payments.description_placeholder")}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={2}
+          />
+        </div>
+      </div>
+    </AppSheetModal>
+  );
+}
+
+interface RefundPaymentDialogProps {
+  projectId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCompleted: () => void;
+  depositPaid: number;
+  totalPaid: number;
+}
+
+function RefundPaymentDialog({
+  projectId,
+  open,
+  onOpenChange,
+  onCompleted,
+  depositPaid,
+  totalPaid
+}: RefundPaymentDialogProps) {
+  const { t } = useFormsTranslation();
+  const toast = useI18nToast();
+  const [amount, setAmount] = useState("");
+  const [reason, setReason] = useState("");
+  const [applyToDeposit, setApplyToDeposit] = useState(depositPaid > 0);
+  const [datePaid, setDatePaid] = useState<Date | undefined>(new Date());
+  const [isLoading, setIsLoading] = useState(false);
+  const browserLocale = getUserLocale();
+
+  useEffect(() => {
+    if (!open) return;
+    setAmount("");
+    setReason("");
+    setApplyToDeposit(depositPaid > 0);
+    setDatePaid(new Date());
+  }, [open, depositPaid]);
+
+  const navigation = useModalNavigation({
+    isDirty: Boolean(amount.trim() || reason.trim()),
+    onDiscard: () => {
+      setAmount("");
+      setReason("");
+      setApplyToDeposit(depositPaid > 0);
+      setDatePaid(new Date());
+      onOpenChange(false);
+    }
+  });
+
+  const handleSubmit = async () => {
+    if (!amount.trim()) {
+      toast.error(t("payments.amount_required"));
+      return;
+    }
+    const parsedAmount = Number.parseFloat(amount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      toast.error(t("payments.amount_required"));
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error(t("payments.user_not_authenticated", { defaultValue: "User not authenticated" }));
+      }
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
+        throw new Error(t("payments.organization_required", { defaultValue: "Organization required" }));
+      }
+
+      const depositAllocation =
+        applyToDeposit && depositPaid > 0
+          ? -Math.min(parsedAmount, depositPaid)
+          : 0;
+
+      const paymentDate = datePaid?.toISOString().split("T")[0] ?? new Date().toISOString().split("T")[0];
+
+      const { error } = await supabase.from("payments").insert({
+        project_id: projectId,
+        user_id: user.id,
+        organization_id: organizationId,
+        amount: -parsedAmount,
+        description: reason.trim() || null,
+        status: "paid",
+        date_paid: paymentDate,
+        type: "manual",
+        deposit_allocation: depositAllocation
+      });
+
+      if (error) throw error;
+
+      toast.success(t("payments.refund.success", { defaultValue: "Refund recorded." }));
+      onCompleted();
+      onOpenChange(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("payments.error_loading", { defaultValue: "An unexpected error occurred." }));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDirtyClose = () => {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      onOpenChange(false);
+    }
+  };
+
+  return (
+    <AppSheetModal
+      title={t("payments.refund.title", { defaultValue: "Issue refund" })}
+      isOpen={open}
+      onOpenChange={onOpenChange}
+      size="content"
+      dirty={Boolean(amount.trim() || reason.trim())}
+      onDirtyClose={handleDirtyClose}
+      footerActions={[
+        {
+          label: t("buttons.cancel"),
+          onClick: () => handleDirtyClose(),
+          variant: "outline" as const,
+          disabled: isLoading
+        },
+        {
+          label: isLoading ? t("payments.adding") : t("payments.refund.submit", { defaultValue: "Record refund" }),
+          onClick: () => void handleSubmit(),
+          disabled: isLoading || !amount.trim(),
+          loading: isLoading
+        }
+      ]}
+    >
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="refund-amount">{t("payments.refund.amount_label", { defaultValue: "Refund amount (TRY)" })} *</Label>
+          <Input
+            id="refund-amount"
+            type="number"
+            step="0.01"
+            placeholder="0.00"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="refund-reason">{t("payments.refund.reason_label", { defaultValue: "Reason (optional)" })}</Label>
+          <Textarea
+            id="refund-reason"
+            placeholder={t("payments.refund.reason_placeholder", { defaultValue: "Add an optional note" })}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows={2}
+          />
+        </div>
+        <div className="flex items-center justify-between rounded-lg border p-3">
+          <div>
+            <p className="text-sm font-medium">
+              {t("payments.refund.deposit_toggle", { defaultValue: "Apply refund to deposit" })}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {depositPaid > 0
+                ? t("payments.refund.deposit_toggle_helper", {
+                    amount: formatCurrency(depositPaid),
+                    defaultValue: "Reduces collected deposit by up to {{amount}}."
+                  })
+                : t("payments.refund.deposit_toggle_disabled", {
+                    defaultValue: "No collected deposit to refund."
+                  })}
+            </p>
+          </div>
+          <Switch
+            checked={applyToDeposit && depositPaid > 0}
+            disabled={depositPaid <= 0}
+            onCheckedChange={(checked) => setApplyToDeposit(checked)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>{t("payments.date_paid")}</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !datePaid && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {datePaid
+                  ? format(datePaid, "PPP", { locale: getDateFnsLocale() })
+                  : t("payments.pick_date")}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto min-w-[18rem] p-0 rounded-xl border border-border shadow-md" align="start">
+              <div className="p-2">
+                <ReactCalendar
+                  className="react-calendar w-full p-2 pointer-events-auto"
+                  locale={browserLocale}
+                  view="month"
+                  minDetail="month"
+                  next2Label={null}
+                  prev2Label={null}
+                  onChange={(value) => {
+                    const d = Array.isArray(value) ? value[0] : value;
+                    const date = d instanceof Date ? d : undefined;
+                    setDatePaid(date);
+                  }}
+                  value={datePaid ?? null}
+                  formatShortWeekday={(_, date) =>
+                    new Intl.DateTimeFormat(browserLocale, { weekday: "short" }).format(date)
+                  }
+                />
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+      {totalPaid <= 0 && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          {t("payments.refund.no_payments_hint", {
+            defaultValue: "There are no recorded payments, refunds will create negative entries."
+          })}
+        </p>
+      )}
+    </AppSheetModal>
   );
 }

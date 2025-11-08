@@ -7,11 +7,6 @@ export const PROJECT_SELECT_FIELDS =
 
 export const STATUS_FILTER_OPTIONS: PaymentStatusFilter[] = ["paid", "due"];
 
-export const TYPE_FILTER_OPTIONS: PaymentTypeFilter[] = [
-  "base_price",
-  "extra",
-  "manual",
-];
+export const TYPE_FILTER_OPTIONS: PaymentTypeFilter[] = ["deposit_payment", "balance_due", "manual"];
 
 export const SEARCH_MIN_CHARS = 3;
-

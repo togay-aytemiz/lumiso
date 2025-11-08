@@ -828,11 +828,12 @@ export type Database = {
           created_at: string
           date_paid: string | null
           description: string | null
+          deposit_allocation: number
           id: string
           organization_id: string | null
           project_id: string
           status: string
-          type: "base_price" | "manual" | "deposit_due" | "deposit_payment"
+          type: "manual" | "deposit_payment" | "balance_due"
           updated_at: string
           user_id: string
         }
@@ -841,11 +842,12 @@ export type Database = {
           created_at?: string
           date_paid?: string | null
           description?: string | null
+          deposit_allocation?: number
           id?: string
           organization_id?: string | null
           project_id: string
           status: string
-          type?: "base_price" | "manual" | "deposit_due" | "deposit_payment"
+          type?: "manual" | "deposit_payment" | "balance_due"
           updated_at?: string
           user_id: string
         }
@@ -854,11 +856,12 @@ export type Database = {
           created_at?: string
           date_paid?: string | null
           description?: string | null
+          deposit_allocation?: number
           id?: string
           organization_id?: string | null
           project_id?: string
           status?: string
-          type?: "base_price" | "manual" | "deposit_due" | "deposit_payment"
+          type?: "manual" | "deposit_payment" | "balance_due"
           updated_at?: string
           user_id?: string
         }

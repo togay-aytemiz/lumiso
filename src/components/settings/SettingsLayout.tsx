@@ -838,6 +838,7 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
     return merged;
   }, [contextSectionNavItems, domSectionNavItems, registeredAnchors]);
 
+  const hasMultipleSections = sectionNavItems.length > 1;
   const shouldShowScrollTopButton =
     showScrollTop && !(isMobile && isSettingsRoot);
 
@@ -940,7 +941,7 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
     isMobile &&
     !isSettingsRoot &&
     isAnchorEligible &&
-    sectionNavItems.length > 0;
+    hasMultipleSections;
 
   const headerClassName = cn(
     "sticky top-0 z-30 px-4 sm:px-6",
@@ -991,7 +992,7 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
         </div>
       </div>
 
-      {sectionNavItems.length > 0 && (
+      {hasMultipleSections && (
         <div
           className="mt-3 hidden border-t border-border/50 pt-3 md:block"
           data-settings-anchor-nav="true"
@@ -1004,6 +1005,7 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
             fallbackActiveId={sectionNavIds[0]}
             disableSticky
             className="border-0 bg-transparent px-0 py-0"
+            minItemsToShow={2}
           />
         </div>
       )}
@@ -1056,6 +1058,7 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
             fallbackActiveId={sectionNavIds[0]}
             disableSticky
             className="border-0 bg-transparent px-0 py-0"
+            minItemsToShow={2}
           />
         </div>
       )}

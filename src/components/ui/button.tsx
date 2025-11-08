@@ -4,6 +4,34 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
+const buttonColorSchemes = {
+  amber: {
+    base: "border border-amber-300 bg-amber-100 text-amber-900",
+    hover: "hover:bg-amber-200",
+    focus: "focus-visible:ring-amber-300/60",
+  },
+  emerald: {
+    base: "border border-emerald-300 bg-emerald-100 text-emerald-900",
+    hover: "hover:bg-emerald-200",
+    focus: "focus-visible:ring-emerald-300/60",
+  },
+  blue: {
+    base: "border border-sky-300 bg-sky-100 text-sky-900",
+    hover: "hover:bg-sky-200",
+    focus: "focus-visible:ring-sky-300/60",
+  },
+  slate: {
+    base: "border border-slate-300 bg-slate-100 text-slate-900",
+    hover: "hover:bg-slate-200",
+    focus: "focus-visible:ring-slate-300/60",
+  },
+  rose: {
+    base: "border border-rose-300 bg-rose-100 text-rose-900",
+    hover: "hover:bg-rose-200",
+    focus: "focus-visible:ring-rose-300/60",
+  },
+} as const
+
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
@@ -16,7 +44,10 @@ const buttonVariants = cva(
           "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground hover:text-white",
+        ghost:
+          "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+        tinted:
+          "border border-transparent bg-muted text-muted-foreground hover:bg-muted/80",
         link: "text-accent underline-offset-4 hover:underline",
         textAccent:
           "bg-transparent text-accent hover:bg-transparent hover:underline hover:underline-offset-4 hover:decoration-current",
@@ -35,7 +66,7 @@ const buttonVariants = cva(
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
+        icon: "h-8 w-8 rounded-full p-0",
       },
     },
     defaultVariants: {
@@ -49,6 +80,7 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
+  colorScheme?: keyof typeof buttonColorSchemes
 }
 
 type ButtonComponent = React.ForwardRefExoticComponent<
@@ -58,11 +90,25 @@ type ButtonComponent = React.ForwardRefExoticComponent<
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  (
+    { className, variant, size, colorScheme, asChild = false, ...props },
+    ref
+  ) => {
     const Comp = asChild ? Slot : "button"
+    const tintClasses =
+      variant === "tinted" && colorScheme
+        ? buttonColorSchemes[colorScheme]
+        : undefined
+
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(
+          buttonVariants({ variant, size }),
+          tintClasses?.base,
+          tintClasses?.hover,
+          tintClasses?.focus,
+          className
+        )}
         ref={ref}
         {...props}
       />

@@ -42,15 +42,6 @@ interface DepositPaymentDialogProps {
   projectId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  depositDue:
-    | {
-        id: string;
-        amount: number;
-        status: "paid" | "due";
-        date_paid: string | null;
-        description: string | null;
-      }
-    | null;
   depositAmount: number;
   depositPaid: number;
   onCompleted: () => Promise<void> | void;
@@ -225,12 +216,21 @@ export function ProjectDepositSetupDialog({
         ? { ...basePayload, description: preservedDescription }
         : basePayload;
 
+    const shouldSnapshot = mode !== "none" && computedAmount > 0;
+    const snapshotTimestamp = new Date().toISOString();
+    const payloadWithSnapshot: ProjectDepositConfig = {
+      ...payload,
+      snapshot_amount: shouldSnapshot ? computedAmount : null,
+      snapshot_total: shouldSnapshot ? contractTotal : null,
+      snapshot_locked_at: shouldSnapshot ? snapshotTimestamp : null
+    };
+
     setIsSaving(true);
 
     try {
       const { error } = await supabase
         .from("projects")
-        .update({ deposit_config: payload })
+        .update({ deposit_config: payloadWithSnapshot })
         .eq("id", projectId);
 
       if (error) throw error;
@@ -546,7 +546,6 @@ export function ProjectDepositPaymentDialog({
   projectId,
   open,
   onOpenChange,
-  depositDue,
   depositAmount,
   depositPaid,
   onCompleted
@@ -638,26 +637,11 @@ export function ProjectDepositPaymentDialog({
         description: description.trim() || null,
         status: "paid",
         date_paid: paymentDate,
-        type: "deposit_payment"
+        type: "deposit_payment",
+        deposit_allocation: parsedAmount
       });
 
       if (insertError) throw insertError;
-
-      if (depositDue) {
-        const newRemaining = Math.max(depositAmount - (depositPaid + parsedAmount), 0);
-        const updatePayload: Record<string, unknown> = {
-          status: newRemaining <= 0 ? "paid" : "due",
-          type: "deposit_due"
-        };
-        if (newRemaining <= 0) {
-          updatePayload.date_paid = paymentDate;
-        }
-        const { error: updateError } = await supabase
-          .from("payments")
-          .update(updatePayload)
-          .eq("id", depositDue.id);
-        if (updateError) throw updateError;
-      }
 
       toast.success(
         t("payments.deposit.payment_success", {

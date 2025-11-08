@@ -69,6 +69,17 @@ describe("StickySectionNav", () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
   });
 
+  it("does not render when below the minimum item threshold", () => {
+    render(
+      <StickySectionNav
+        items={[baseItems[0]]}
+        minItemsToShow={2}
+      />
+    );
+
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
   it("scrolls window to section when onSelect is absent", () => {
     const target = document.createElement("div");
     target.id = "section-3";

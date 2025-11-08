@@ -212,7 +212,7 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
     "enter"
   );
   const [showHelp, setShowHelp] = useState(false);
-  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const closeTimeoutRef = useRef<ReturnType<typeof window.setTimeout> | undefined>();
   const contentRef = useRef<HTMLElement | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [scrollTopRightOffset, setScrollTopRightOffset] = useState(24);
@@ -250,6 +250,11 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
     }, 180);
   }, [exitSettings]);
 
+  const hasChangesRef = useRef(hasChanges);
+  useEffect(() => {
+    hasChangesRef.current = hasChanges;
+  }, [hasChanges]);
+
   const updateScrollTopPosition = useCallback(() => {
     if (typeof window === "undefined") {
       return;
@@ -259,7 +264,7 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
       setScrollTopRightOffset(16);
       const navEl = document.querySelector<HTMLElement>(".mobile-bottom-nav");
       const navHeight = navEl?.getBoundingClientRect().height ?? 0;
-      const baseBottom = hasChanges ? 96 : 20;
+      const baseBottom = hasChangesRef.current ? 96 : 20;
       const computedBottom =
         navHeight > 0 ? navHeight + baseBottom : baseBottom + 12;
       setScrollTopBottomOffset(computedBottom);
@@ -273,7 +278,11 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
     const rect = container.getBoundingClientRect();
     const offset = Math.max(window.innerWidth - rect.right + 24, 16);
     setScrollTopRightOffset(offset);
-  }, [hasChanges, isMobile]);
+  }, [isMobile]);
+
+  useEffect(() => {
+    updateScrollTopPosition();
+  }, [hasChanges, updateScrollTopPosition]);
 
   const refreshDomSectionNavItems = useCallback(() => {
     const container = contentRef.current;

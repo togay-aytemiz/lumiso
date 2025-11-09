@@ -303,6 +303,106 @@
           }
         ],
         "expected_result": "Excel aktarımı yalnızca veri mevcutken yapılır ve işlem başarıyla tamamlandığında kullanıcı bilgilendirilir."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-526",
+        "title": "Kayıtlı ve Bekleyen görünümleri arasında geçiş",
+        "description": "Tablodaki segment kontrolüyle Recorded/Scheduled görünümleri değiştirildiğinde kolon setlerinin, filtre panelinin ve veri kümesinin doğru şekilde değiştiğini doğrular.",
+        "steps": [
+          {
+            "action": "Ödemeler sayfasını açın ve tablonun üstündeki segment kontrolde 'Kayıtlı' seçeneğinin varsayılan olarak aktif olduğunu doğrulayın.",
+            "expected_result": "Kontrolde 'Kayıtlı' vurgulanır, tablo klasik ödeme kolonlarını (Tarih, Kişi, Tutar vb.) gösterir ve filtre panelinde durum/tür/tutar seçenekleri bulunur."
+          },
+          {
+            "action": "Aynı kontrolden 'Bekleyen' (Scheduled) seçeneğini tıklayın.",
+            "expected_result": "Tablo bekleyen ödemelere özel kolonları (Güncellendi, Lead, Proje, Bekleyen, Tahsil Edilen) gösterir, satırlar yalnızca planlanmış ödemelerden oluşur ve filtre panelinde sadece planlanan tutar alanları yer alır."
+          },
+          {
+            "action": "Segment kontrolde yeniden 'Kayıtlı' seçeneğine dönün.",
+            "expected_result": "Tablo yeniden kayıtlı ödemeleri listeler, kolonlar eski hâline döner ve filtre paneli durdurulan seçimleri koruyarak açılır."
+          }
+        ],
+        "expected_result": "Segment kontrolü görünüm bazlı kolonları, veri kaynaklarını ve filtre panelini sorunsuzca değiştirir."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-527",
+        "title": "Bekleyen görünümde tutar filtresi uygulanması",
+        "description": "Scheduled görünümüne özel min/maks tutar alanlarının uygulanabildiğini, özet çiplerinin bu değerlere göre güncellendiğini ve tek tuşla sıfırlanabildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Segment kontrolden 'Bekleyen' seçeneğini açın ve tablonun üstündeki 'Filtreler' düğmesine tıklayın.",
+            "expected_result": "Sağdaki panelde sadece 'Tutar' başlığı, iki adet sayısal giriş alanı ve yanlarında onay (tik) butonu görünür."
+          },
+          {
+            "action": "Minimum alana 1000, maksimum alana 5000 yazıp tik butonuna basın.",
+            "expected_result": "Filtre sayacı artar, tablonun üst kısmında 'Min 1.000 TL' ve 'Max 5.000 TL' değeri içeren çipler çıkar ve bekleyen liste yalnız bu aralıkta kalan ödemeleri gösterir."
+          },
+          {
+            "action": "Paneldeki 'Temizle' / 'Filtreleri sıfırla' aksiyonunu kullanın.",
+            "expected_result": "Alanlar boşalır, çipler kaybolur ve bekleyen tablosu tekrar tüm planlanmış ödemeleri gösterir."
+          }
+        ],
+        "expected_result": "Scheduled filtre panelindeki tutar alanları uygulanabilir, özet çipleri üretir ve tek adımda sıfırlanabilir."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-528",
+        "title": "Bekleyen tablosu sıralama ve kalan/tahsil hesaplamaları",
+        "description": "Scheduled tablosunda hesaplanan kolonların doğru değerleri gösterdiğini ve başlıklara tıklanarak sıralamanın değiştirilebildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Bekleyen görünümde herhangi bir satırın 'Bekleyen' ve 'Tahsil Edilen' kolonlarını inceleyin.",
+            "expected_result": "Bekleyen tutar, satırdaki kalan bakiyeyi; Tahsil Edilen ise başlangıç tutarı eksi kalan değeri tabular biçimde gösterir."
+          },
+          {
+            "action": "'Güncellendi' kolon başlığına tıklayın ve ardından tekrar tıklayın.",
+            "expected_result": "İlk tıklamada satırlar en eski tarihten yeniye, ikinci tıklamada en güncel kayıtlar üste gelecek şekilde yeniden sıralanır; ok ikonu yön değiştirir."
+          },
+          {
+            "action": "'Bekleyen' kolon başlığına tıklayın, ardından segment kontrolden kısa süreliğine 'Kayıtlı' görünüme geçip tekrar 'Bekleyen'e dönün.",
+            "expected_result": "Satırlar kalan tutara göre yeniden sıralanır ve görünüm değiştirip geri geldiğinizde seçtiğiniz kolon/yön korunmuş olur."
+          }
+        ],
+        "expected_result": "Bekleyen tablosunda hesaplanan tutarlar doğru gösterilir ve kullanıcı seçtiği sıralama kolonunu kaybetmeden görünümler arasında dolaşabilir."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-529",
+        "title": "Bekleyen görünümden Excel aktarımı",
+        "description": "Scheduled görünümü seçiliyken export butonunun planlanmış ödemeleri, güncelleme tarihi ve tahsil bilgileriyle birlikte dışa aktardığını doğrular.",
+        "steps": [
+          {
+            "action": "Bekleyen görünümü açıkken 'Excel'e aktar' butonuna tıklayın.",
+            "expected_result": "Butonda spinner belirir ve `scheduled-payments-YYYY-MM-DD_HHmm.xlsx` isimli dosya indirilir; dosyada Güncellendi, Lead, Proje, Bekleyen ve Tahsil Edilen kolonları bulunur."
+          },
+          {
+            "action": "Bekleyen filtrelerini sıfırlayarak satır kalmayacak şekilde daraltın ve export butonuna tekrar basın.",
+            "expected_result": "Dosya indirme başlamaz, ekranın sağ alt köşesinde 'Dışa aktarılacak veri yok' benzeri uyarı toast'ı görünür."
+          }
+        ],
+        "expected_result": "Export aksiyonu aktif görünümdeki veri setini kullanır; Scheduled görünümünde yalnız planlanan ödemeler şablona yazılır ve veri yoksa kullanıcı uyarılır."
+      },
+      {
+        "external_id": "CRM-PAYMENTS-530",
+        "title": "Görünüme özel filtre özet çipleri",
+        "description": "Kayıtlı ve Bekleyen görünümlerinin kendi filtre özetlerini gösterdiğini ve görünüm değiştirildiğinde ilgili çiplerin saklanıp tekrar geri geldiğini doğrular.",
+        "steps": [
+          {
+            "action": "Kayıtlı görünümde 'Ödeme durumu' filtresinden sadece 'Ödendi'yi seçin.",
+            "expected_result": "Tablonun üstünde 'Ödeme durumu: Ödendi' yazılı bir çip ve aktif filtre sayısını gösteren badge görünür."
+          },
+          {
+            "action": "Segment kontrolden 'Bekleyen' görünümüne geçin.",
+            "expected_result": "Kayıtlı görünüme ait çipler gizlenir; herhangi bir bekleyen filtresi uygulanmadığı için özet alanı boş kalır."
+          },
+          {
+            "action": "Bekleyen filtre panelinden minimum tutara 2000 yazarak uygulayın.",
+            "expected_result": "Özet alanında yalnızca 'Min 2.000 TL' benzeri bekleyen çipi görünür ve kayıtlı filtre çipleri hala gösterilmez."
+          },
+          {
+            "action": "Segment kontrolden tekrar 'Kayıtlı' seçeneğine dönün.",
+            "expected_result": "Kayıtlı görünümdeki 'Ödeme durumu' çipi geri gelir; bekleyen filtre çipi ise görünmez olmaya devam eder."
+          }
+        ],
+        "expected_result": "Her görünüm kendi filtre özetiyle çalışır; çipler görünüm değişiklikleri arasında doğru şekilde saklanıp geri yüklenir."
       }
     ]
   },

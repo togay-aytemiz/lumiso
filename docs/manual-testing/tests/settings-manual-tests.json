@@ -1235,6 +1235,62 @@
           }
         ],
         "expected_result": "Kullanıcı değişiklikleri kolayca geri alabilir veya kaydedebilir."
+      },
+      {
+        "external_id": "CRM-BILLING-006",
+        "title": "Freelance modunda KDV alanlarının tamamı gizlenir",
+        "description": "Freelance / KDV'siz modu seçildiğinde hem ayarlar hem de aşağı akış servis/paket adımlarının KDV düzenleme kontrollerini göstermediğini doğrular.",
+        "steps": [
+          {
+            "action": "/settings/billing sayfasında \"Serbest / KDV yok\" tüzel kişiliğini seçin ve auto-save toast'ını bekleyin.",
+            "expected_result": "Şirket/VKN alanları ile KDV oranı kartı gizlenir, varsayılan oran 0 olur ve başka alan görünmez."
+          },
+          {
+            "action": "/settings/services sayfasına gidip herhangi bir kartı inceleyin.",
+            "expected_result": "Kartın fiyat özetinde \"KDV\" satırı bulunmaz ve satır içi rozetler yalnızca Net/Toplam değerlerini gösterir."
+          },
+          {
+            "action": "\"Servis Ekle\" sheet'ini açın.",
+            "expected_result": "Formda KDV bölümüne ait aç/kapa anahtarı veya oran/mode alanları yer almaz."
+          },
+          {
+            "action": "Yeni paket oluşturma akışında hizmet ekleyip satır ayarlarını açın.",
+            "expected_result": "\"KDV'yi düzenle\" anahtarı görünmez, satır özetlerinde KDV modu alanı yer almaz."
+          },
+          {
+            "action": "Herhangi bir projede teklif/ödemeler akışına gidip fatura ön izlemesini açın.",
+            "expected_result": "Ön izlemede \"KDV\" satırı yer almaz; sadece Ara Toplam ve Genel Toplam gösterilir."
+          }
+        ],
+        "expected_result": "Freelance modunda ayarlar ve tüm akışlar KDV ile ilgili alanları tamamen gizler."
+      },
+      {
+        "external_id": "CRM-BILLING-007",
+        "title": "Şirket moduna dönünce KDV kontrolleri geri gelir",
+        "description": "Freelance modundan şirket/şahısa geçildiğinde tüm alanların ve builder kontrollerinin geri geldiğini doğrular.",
+        "steps": [
+          {
+            "action": "/settings/billing sayfasında tüzel kişiliği \"Şirket\" olarak değiştirin.",
+            "expected_result": "Şirket adı, vergi dairesi, VKN, adres ve KDV oranı kartı tekrar görünür; oran otomatik 20'ye, mod \"Fiyata dahil\"e döner."
+          },
+          {
+            "action": "/settings/services sayfasına dönüp aynı kartı kontrol edin.",
+            "expected_result": "Kartta \"KDV\" satırı tekrar görünür ve oran bilgi rozetinde belirtilir."
+          },
+          {
+            "action": "\"Servis Ekle\" sheet'ini açıp alt bölümdeki KDV ayarlarını kontrol edin.",
+            "expected_result": "KDV bölümünü açıp oran/mode değerlerini değiştirebildiğinizi görürsünüz."
+          },
+          {
+            "action": "Paket oluşturma akışına giderek bir hizmet satırında \"KDV'yi düzenle\" anahtarını açın.",
+            "expected_result": "Mod (Dahil/Hariç) seçimi ve oran alanı tekrar etkindir; satır özetleri değişiklikleri yansıtır."
+          },
+          {
+            "action": "Herhangi bir projede teklif/ödemeler ön izlemesini kontrol edin.",
+            "expected_result": "\"KDV\" satırı ve tutarı tekrar görünür, toplam hesaplamasına eklenir."
+          }
+        ],
+        "expected_result": "Şirket/Şahıs moduna dönüldüğünde ayarlar ve builder akışları eski KDV yeteneklerini geri kazanır."
       }
     ]
   },

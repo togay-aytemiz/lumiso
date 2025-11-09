@@ -22,6 +22,7 @@ import {
   fetchProjectServiceRecords,
   type ProjectServiceRecord
 } from "@/lib/services/projectServiceRecords";
+import { useOrganizationTaxProfile } from "@/hooks/useOrganizationData";
 
 const CURRENCY = "TRY";
 
@@ -38,14 +39,15 @@ const formatCurrency = (amount: number) => {
   }
 };
 
-const aggregatePricing = (records: ProjectServiceRecord[]): VatTotals =>
+const aggregatePricing = (records: ProjectServiceRecord[], vatEnabled: boolean): VatTotals =>
   records.reduce<VatTotals>(
     (totals, record) => {
       const pricing = computeServiceTotals({
         unitPrice: record.service.selling_price ?? record.service.price ?? null,
         quantity: record.quantity,
-        vatRate: record.service.vat_rate ?? null,
-        vatMode: record.service.price_includes_vat === false ? "exclusive" : "inclusive"
+        vatRate: vatEnabled ? record.service.vat_rate ?? null : null,
+        vatMode:
+          vatEnabled && record.service.price_includes_vat === false ? "exclusive" : "inclusive"
       });
       return {
         net: totals.net + pricing.net,
@@ -64,6 +66,9 @@ interface ProjectServicesSectionProps {
 export function ProjectServicesSection({ projectId, onServicesUpdated }: ProjectServicesSectionProps) {
   const { t } = useFormsTranslation();
   const { toast } = useToast();
+  const taxProfileQuery = useOrganizationTaxProfile();
+  const vatExempt = Boolean(taxProfileQuery.data?.vatExempt);
+  const vatUiEnabled = !vatExempt;
 
   const [serviceRecords, setServiceRecords] = useState<ProjectServiceRecord[]>([]);
   const [basePrice, setBasePrice] = useState(0);
@@ -204,6 +209,16 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
   const handleServiceQuickEditSubmit = useCallback(
     async (mode: "included" | "extra", results: ProjectServiceQuickEditResult[]) => {
       try {
+        const effectiveResults = vatUiEnabled
+          ? results
+          : results.map((result) => ({
+              ...result,
+              overrides: {
+                ...result.overrides,
+                vatMode: undefined,
+                vatRate: undefined
+              }
+            }));
         const existingRecordsSameMode = serviceRecords.filter(
           (record) => record.billingType === mode
         );
@@ -213,7 +228,7 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
         const existingByServiceIdAnyMode = new Map(
           serviceRecords.map((record) => [record.service.id, record])
         );
-        const selectedIds = new Set(results.map((result) => result.serviceId));
+        const selectedIds = new Set(effectiveResults.map((result) => result.serviceId));
 
         const toDelete = existingRecordsSameMode
           .filter((record) => !selectedIds.has(record.service.id))
@@ -224,7 +239,7 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
           if (error) throw error;
         }
 
-        if (results.length > 0) {
+        if (effectiveResults.length > 0) {
           const {
             data: { user }
           } = await supabase.auth.getUser();
@@ -234,7 +249,7 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
             );
           }
 
-          const inserts = results
+          const inserts = effectiveResults
             .filter((result) => !existingByServiceIdAnyMode.has(result.serviceId))
             .map((result) => {
               const quantity = Math.max(1, Number(result.quantity ?? 1));
@@ -262,7 +277,7 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
             if (error) throw error;
           }
 
-          const toUpdate = results.filter((result) =>
+          const toUpdate = effectiveResults.filter((result) =>
             existingByServiceIdAnyMode.has(result.serviceId)
           );
 
@@ -291,8 +306,7 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
           const total = includedTotals.gross + extraTotals.gross;
           await syncProjectOutstandingPayment({
             projectId,
-            contractTotalOverride: total,
-            description: project?.name ? `Outstanding balance — ${project.name}` : undefined,
+            contractTotalOverride: total
           });
         } catch (error) {
           console.warn("Failed to resync outstanding after services update:", error);
@@ -311,7 +325,7 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
         });
       }
     },
-    [onServicesUpdated, projectId, refreshServiceRecords, serviceRecords, t, toast]
+    [onServicesUpdated, projectId, refreshServiceRecords, serviceRecords, t, toast, vatUiEnabled]
   );
 
   const includedServices = useMemo(
@@ -323,8 +337,14 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
     [serviceRecords]
   );
 
-  const includedTotals = useMemo(() => aggregatePricing(includedServices), [includedServices]);
-  const extraTotals = useMemo(() => aggregatePricing(extraServices), [extraServices]);
+  const includedTotals = useMemo(
+    () => aggregatePricing(includedServices, vatUiEnabled),
+    [includedServices, vatUiEnabled]
+  );
+  const extraTotals = useMemo(
+    () => aggregatePricing(extraServices, vatUiEnabled),
+    [extraServices, vatUiEnabled]
+  );
 
   const includedCardItems = useMemo(
     () =>
@@ -349,8 +369,8 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
         const pricing = computeServiceTotals({
           unitPrice: record.service.selling_price ?? record.service.price ?? null,
           quantity: record.quantity,
-          vatRate: record.service.vat_rate ?? null,
-          vatMode: record.service.price_includes_vat === false ? "exclusive" : "inclusive"
+          vatRate: vatUiEnabled ? record.service.vat_rate ?? null : null,
+          vatMode: vatUiEnabled && record.service.price_includes_vat === false ? "exclusive" : "inclusive"
         });
 
         return {
@@ -372,7 +392,7 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
           )
         };
       }),
-    [extraServices, t]
+    [extraServices, t, vatUiEnabled]
   );
 
   const includedSelections = useMemo<ProjectServiceQuickEditSelection[]>(
@@ -383,10 +403,15 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
         quantity: record.quantity,
         unitCost: record.overrides.unitCost ?? record.service.cost_price ?? null,
         unitPrice: record.overrides.unitPrice ?? record.service.selling_price ?? record.service.price ?? null,
-        vatMode: record.overrides.vatMode ?? (record.service.price_includes_vat === false ? "exclusive" : "inclusive"),
-        vatRate: record.overrides.vatRate ?? record.service.vat_rate ?? null
+        vatMode: vatUiEnabled
+          ? record.overrides.vatMode ??
+            (record.service.price_includes_vat === false ? "exclusive" : "inclusive")
+          : "exclusive",
+        vatRate: vatUiEnabled
+          ? record.overrides.vatRate ?? record.service.vat_rate ?? null
+          : null
       })),
-    [includedServices]
+    [includedServices, vatUiEnabled]
   );
 
   const extraSelections = useMemo<ProjectServiceQuickEditSelection[]>(
@@ -397,10 +422,15 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
         quantity: record.quantity,
         unitCost: record.overrides.unitCost ?? record.service.cost_price ?? null,
         unitPrice: record.overrides.unitPrice ?? record.service.selling_price ?? record.service.price ?? null,
-        vatMode: record.overrides.vatMode ?? (record.service.price_includes_vat === false ? "exclusive" : "inclusive"),
-        vatRate: record.overrides.vatRate ?? record.service.vat_rate ?? null
+        vatMode: vatUiEnabled
+          ? record.overrides.vatMode ??
+            (record.service.price_includes_vat === false ? "exclusive" : "inclusive")
+          : "exclusive",
+        vatRate: vatUiEnabled
+          ? record.overrides.vatRate ?? record.service.vat_rate ?? null
+          : null
       })),
-    [extraServices]
+    [extraServices, vatUiEnabled]
   );
 
   const isLoading = isLoadingServices || isLoadingBasePrice;

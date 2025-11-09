@@ -234,14 +234,21 @@ export function useOrganizationTaxProfile() {
       }
 
       const rawProfile = (settings.tax_profile ?? null) as OrganizationTaxProfile | null;
+      const normalizedEntity =
+        rawProfile?.legalEntityType ??
+        DEFAULT_ORGANIZATION_TAX_PROFILE.legalEntityType;
+      const normalizedCompanyName =
+        rawProfile?.companyName ??
+        (settings.photography_business_name as string | null) ??
+        DEFAULT_ORGANIZATION_TAX_PROFILE.companyName;
+      const derivedVatExempt =
+        rawProfile?.vatExempt ?? normalizedEntity === "freelance";
       return {
         ...DEFAULT_ORGANIZATION_TAX_PROFILE,
         ...(rawProfile ?? {}),
-        companyName:
-          rawProfile?.companyName ??
-          (settings.photography_business_name as string | null) ??
-          DEFAULT_ORGANIZATION_TAX_PROFILE.companyName,
-        vatExempt: Boolean(rawProfile?.vatExempt),
+        legalEntityType: normalizedEntity,
+        companyName: normalizedCompanyName,
+        vatExempt: derivedVatExempt,
       };
     },
     enabled: !!activeOrganizationId,

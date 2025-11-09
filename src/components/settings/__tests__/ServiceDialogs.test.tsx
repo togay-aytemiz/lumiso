@@ -197,8 +197,6 @@ const translations: Record<string, string> = {
   "service.vat_section.mode_inclusive": "Included in price",
   "service.vat_section.mode_exclusive": "Add on top",
   "service.vat_section.defaults_hint": "Defaults come from organization settings.",
-  "service.vat_section.toggle_label": "Adjust VAT settings",
-  "service.vat_section.toggle_helper": "Enable to override defaults.",
   "service.vat_section.summary": "VAT {{rate}}% • {{mode}}",
   "service.vat_section.summary_mode.inclusive": "included in price",
   "service.vat_section.summary_mode.exclusive": "added on top",

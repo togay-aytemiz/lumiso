@@ -28,6 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useOrganizationTaxProfile } from "@/hooks/useOrganizationData";
 
 export interface QuickServiceRecord {
   id: string;
@@ -115,9 +116,10 @@ const isPricingDirty = (entry: SelectedServiceEntry) =>
   !isSameNumber(entry.values.unitCost, entry.defaults.unitCost) ||
   !isSameNumber(entry.values.unitPrice, entry.defaults.unitPrice);
 
-const isVatDirty = (entry: SelectedServiceEntry) =>
-  entry.values.vatMode !== entry.defaults.vatMode ||
-  !isSameNumber(entry.values.vatRate, entry.defaults.vatRate);
+const isVatDirty = (entry: SelectedServiceEntry, vatEnabled: boolean) =>
+  vatEnabled &&
+  (entry.values.vatMode !== entry.defaults.vatMode ||
+    !isSameNumber(entry.values.vatRate, entry.defaults.vatRate));
 
 export function ProjectServicesQuickEditDialog({
   open,
@@ -133,6 +135,9 @@ export function ProjectServicesQuickEditDialog({
   const { t } = useFormsTranslation();
   const { t: tProject } = useTranslation("projectCreation");
   const { t: tCommon } = useTranslation("common");
+  const taxProfileQuery = useOrganizationTaxProfile();
+  const vatExempt = Boolean(taxProfileQuery.data?.vatExempt);
+  const vatUiEnabled = !vatExempt;
 
   const [selectionMap, setSelectionMap] = useState<Map<string, SelectedServiceEntry>>(new Map());
   const [isSaving, setIsSaving] = useState(false);
@@ -155,11 +160,15 @@ export function ProjectServicesQuickEditDialog({
       return {
         unitCost: catalog.cost_price ?? fallback?.unitCost ?? null,
         unitPrice: catalog.selling_price ?? catalog.price ?? fallback?.unitPrice ?? null,
-        vatMode: catalog.price_includes_vat === false ? "exclusive" : fallback?.vatMode ?? "inclusive",
-        vatRate: catalog.vat_rate ?? fallback?.vatRate ?? null,
+        vatMode: vatUiEnabled
+          ? catalog.price_includes_vat === false
+            ? "exclusive"
+            : fallback?.vatMode ?? "inclusive"
+          : "exclusive",
+        vatRate: vatUiEnabled ? catalog.vat_rate ?? fallback?.vatRate ?? null : null,
       };
     },
-    [serviceMap],
+    [serviceMap, vatUiEnabled],
   );
 
   useEffect(() => {
@@ -179,24 +188,24 @@ export function ProjectServicesQuickEditDialog({
           values: {
             unitCost: selection.unitCost ?? defaults.unitCost ?? null,
             unitPrice: selection.unitPrice ?? defaults.unitPrice ?? null,
-            vatMode: selection.vatMode ?? defaults.vatMode,
-            vatRate: selection.vatRate ?? defaults.vatRate ?? null,
+            vatMode: vatUiEnabled ? selection.vatMode ?? defaults.vatMode : "exclusive",
+            vatRate: vatUiEnabled ? selection.vatRate ?? defaults.vatRate ?? null : null,
           },
           defaults,
           openPricing: false,
           openVat: false,
         };
         const pricingDirty = isPricingDirty(entry);
-        const vatDirty = isVatDirty(entry);
+        const vatDirty = isVatDirty(entry, vatUiEnabled);
         next.set(selection.serviceId, {
           ...entry,
           openPricing: pricingDirty,
-          openVat: vatDirty,
+          openVat: vatUiEnabled && vatDirty,
         });
       });
       return next;
     });
-  }, [computeDefaults, open, selections]);
+  }, [computeDefaults, open, selections, vatUiEnabled]);
 
   const inventoryServices = useMemo<ServiceInventoryItem[]>(
     () =>
@@ -207,10 +216,13 @@ export function ProjectServicesQuickEditDialog({
         serviceType: (service.service_type ?? undefined) as ServiceInventoryType | undefined,
         unitCost: service.cost_price ?? undefined,
         unitPrice: service.selling_price ?? service.price ?? undefined,
-        vatRate: service.vat_rate ?? undefined,
-        priceIncludesVat: service.price_includes_vat ?? undefined,
+        vatRate:
+          vatUiEnabled && typeof service.vat_rate === "number"
+            ? service.vat_rate
+            : undefined,
+        priceIncludesVat: vatUiEnabled && service.price_includes_vat ? true : false,
       })),
-    [services],
+    [services, vatUiEnabled],
   );
 
   const inventoryLabels = useMemo<ServiceInventoryLabels>(() => ({
@@ -473,6 +485,7 @@ export function ProjectServicesQuickEditDialog({
 
   const toggleVat = useCallback(
     (serviceId: string) => {
+      if (!vatUiEnabled) return;
       let shouldPrompt = false;
       updateEntry(serviceId, (entry) => {
         if (!entry.openVat) {
@@ -482,7 +495,7 @@ export function ProjectServicesQuickEditDialog({
           };
         }
 
-        if (isVatDirty(entry)) {
+        if (isVatDirty(entry, vatUiEnabled)) {
           shouldPrompt = true;
           return entry;
         }
@@ -502,11 +515,15 @@ export function ProjectServicesQuickEditDialog({
         setPendingReset({ serviceId, type: "vat" });
       }
     },
-    [setPendingReset, updateEntry],
+    [setPendingReset, updateEntry, vatUiEnabled],
   );
 
   const handleConfirmReset = useCallback(() => {
     if (!pendingReset) return;
+    if (!vatUiEnabled && pendingReset.type === "vat") {
+      setPendingReset(null);
+      return;
+    }
     setSelectionMap((previous) => {
       const current = previous.get(pendingReset.serviceId);
       if (!current) return previous;
@@ -536,7 +553,7 @@ export function ProjectServicesQuickEditDialog({
       return next;
     });
     setPendingReset(null);
-  }, [pendingReset]);
+  }, [pendingReset, vatUiEnabled]);
 
   const handleCancelReset = useCallback(() => {
     setPendingReset(null);
@@ -544,6 +561,9 @@ export function ProjectServicesQuickEditDialog({
 
   const handleNumericChange = useCallback(
     (serviceId: string, field: keyof SelectionValues, raw: string) => {
+      if (!vatUiEnabled && (field === "vatMode" || field === "vatRate")) {
+        return;
+      }
       const trimmed = raw.trim();
       if (trimmed === "") {
         updateEntry(serviceId, (entry) => ({
@@ -567,11 +587,12 @@ export function ProjectServicesQuickEditDialog({
         },
       }));
     },
-    [updateEntry],
+    [updateEntry, vatUiEnabled],
   );
 
   const handleVatRateChange = useCallback(
     (serviceId: string, raw: string) => {
+      if (!vatUiEnabled) return;
       const trimmed = raw.trim();
       if (!trimmed) {
         updateEntry(serviceId, (entry) => ({
@@ -594,11 +615,12 @@ export function ProjectServicesQuickEditDialog({
         },
       }));
     },
-    [updateEntry],
+    [updateEntry, vatUiEnabled],
   );
 
   const handleVatModeChange = useCallback(
     (serviceId: string, value: VatModeOption) => {
+      if (!vatUiEnabled) return;
       updateEntry(serviceId, (entry) => ({
         ...entry,
         values: {
@@ -607,7 +629,7 @@ export function ProjectServicesQuickEditDialog({
         },
       }));
     },
-    [updateEntry],
+    [updateEntry, vatUiEnabled],
   );
 
   const handleSubmit = useCallback(async () => {
@@ -620,7 +642,7 @@ export function ProjectServicesQuickEditDialog({
           overrides.unitCost = entry.values.unitCost;
           overrides.unitPrice = entry.values.unitPrice;
         }
-        if (isVatDirty(entry)) {
+        if (isVatDirty(entry, vatUiEnabled)) {
           overrides.vatMode = entry.values.vatMode;
           overrides.vatRate = entry.values.vatRate;
         }
@@ -718,8 +740,8 @@ export function ProjectServicesQuickEditDialog({
             const entry = selectionMap.get(service.id);
             if (!entry) return null;
             const pricingDirty = isPricingDirty(entry);
-            const vatDirty = isVatDirty(entry);
-            const showVatButton = entry.openPricing || entry.openVat;
+            const vatDirty = isVatDirty(entry, vatUiEnabled);
+            const showVatButton = vatUiEnabled && (entry.openPricing || entry.openVat);
             return (
               <div className="flex flex-wrap items-center gap-2">
                 <Button
@@ -794,7 +816,7 @@ export function ProjectServicesQuickEditDialog({
                   </div>
                 ) : null}
 
-                {entry.openVat ? (
+                {vatUiEnabled && entry.openVat ? (
                   <div className="grid gap-3 sm:grid-cols-[repeat(2,minmax(0,200px))]">
                     <div className="space-y-1">
                       <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">

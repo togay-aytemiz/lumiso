@@ -14,7 +14,7 @@ import { useProjectCreationContext } from "../hooks/useProjectCreationContext";
 import { cn } from "@/lib/utils";
 import { calculateLineItemPricing } from "@/features/package-creation/utils/lineItemPricing";
 import { normalizeServiceUnit } from "@/lib/services/units";
-import { usePackages } from "@/hooks/useOrganizationData";
+import { usePackages, useOrganizationTaxProfile } from "@/hooks/useOrganizationData";
 import type { ProjectServiceLineItem } from "../types";
 
 interface PackageRecord {
@@ -68,6 +68,9 @@ export const SummaryStep = () => {
   const servicesSectionRef = useRef<HTMLDivElement | null>(null);
 
   const packagesQuery = usePackages();
+  const taxProfileQuery = useOrganizationTaxProfile();
+  const vatExempt = Boolean(taxProfileQuery.data?.vatExempt);
+  const vatUiEnabled = !vatExempt;
   const packages = (packagesQuery.data as PackageRecord[]) ?? [];
   const selectedPackage = state.services.packageId
     ? packages.find((pkg) => pkg.id === state.services.packageId)
@@ -79,12 +82,26 @@ export const SummaryStep = () => {
   );
   const hasServices = existingItems.length > 0;
 
+  const normalizeItemVat = useCallback(
+    (item: ProjectServiceLineItem): ProjectServiceLineItem =>
+      vatUiEnabled
+        ? item
+        : {
+            ...item,
+            vatRate: null,
+            vatMode: "exclusive",
+          },
+    [vatUiEnabled]
+  );
+
   const totals = useMemo(() => {
     return existingItems.reduce(
       (acc, item) => {
         const quantity = Math.max(1, item.quantity ?? 1);
         const unitCost = Number(item.unitCost ?? 0);
-        const pricing = calculateLineItemPricing(item as ProjectServiceLineItem);
+        const pricing = calculateLineItemPricing(
+          normalizeItemVat(item as ProjectServiceLineItem)
+        );
         acc.cost += unitCost * quantity;
         acc.net += pricing.net;
         acc.vat += pricing.vat;
@@ -93,14 +110,17 @@ export const SummaryStep = () => {
       },
       { cost: 0, net: 0, vat: 0, total: 0 }
     );
-  }, [existingItems]);
+  }, [existingItems, normalizeItemVat]);
 
   const servicesMargin = totals.net - totals.cost;
 
   const vatBreakdown = useMemo(() => {
+    if (!vatUiEnabled) {
+      return [];
+    }
     const buckets = new Map<number, number>();
     existingItems.forEach((item) => {
-      const pricing = calculateLineItemPricing(item as ProjectServiceLineItem);
+      const pricing = calculateLineItemPricing(normalizeItemVat(item as ProjectServiceLineItem));
       if (!(pricing.vat > 0)) return;
       const rate =
         typeof item.vatRate === "number" && Number.isFinite(item.vatRate)
@@ -112,7 +132,7 @@ export const SummaryStep = () => {
     return Array.from(buckets.entries())
       .sort((a, b) => b[0] - a[0])
       .map(([rate, amount]) => ({ rate, amount }));
-  }, [existingItems]);
+  }, [existingItems, normalizeItemVat, vatUiEnabled]);
 
   const basePriceValue = useMemo(() => {
     const parsed = parseFloat(state.details.basePrice ?? "");
@@ -130,6 +150,24 @@ export const SummaryStep = () => {
 
   const packageDerived = useMemo(() => {
     const round = (value: number) => Math.round(value * 100) / 100;
+    if (!vatUiEnabled) {
+      if (basePriceValue > 0) {
+        const gross = round(basePriceValue);
+        return {
+          packageNet: gross,
+          packageVat: 0,
+          packageGross: gross,
+          packageVatRate: null,
+        };
+      }
+      const gross = round(totals.total);
+      return {
+        packageNet: gross,
+        packageVat: 0,
+        packageGross: gross,
+        packageVatRate: null,
+      };
+    }
     const singleVatRate =
       vatBreakdown.length === 1 && Number.isFinite(vatBreakdown[0].rate)
         ? vatBreakdown[0].rate
@@ -163,7 +201,7 @@ export const SummaryStep = () => {
       packageGross: round(totals.total),
       packageVatRate: singleVatRate,
     };
-  }, [basePriceValue, totals, vatBreakdown]);
+  }, [basePriceValue, totals, vatBreakdown, vatUiEnabled]);
 
   const clientNet = packageDerived.packageNet;
   const clientTax = packageDerived.packageVat;
@@ -431,6 +469,7 @@ export const SummaryStep = () => {
                 value={formatCurrency(packageDerived.packageNet)}
                 emphasizeLabel
               />
+            {vatUiEnabled && (
               <SummaryTotalRow
                 label={
                   packageDerived.packageVatRate != null
@@ -446,6 +485,7 @@ export const SummaryStep = () => {
                     : undefined
                 }
               />
+            )}
               <SummaryTotalRow
                 label={t("steps.packages.summary.packageGross")}
                 value={formatCurrency(packageDerived.packageGross)}
@@ -458,10 +498,12 @@ export const SummaryStep = () => {
                 label={t("steps.packages.summary.clientNet")}
                 value={formatCurrency(clientNet)}
               />
+            {vatUiEnabled && (
               <SummaryTotalRow
                 label={t("steps.packages.summary.clientTax")}
                 value={formatCurrency(clientTax)}
               />
+            )}
               <SummaryTotalRow
                 label={t("steps.packages.summary.clientTotal")}
                 value={formatCurrency(clientTotal)}

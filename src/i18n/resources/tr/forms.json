@@ -1546,8 +1546,6 @@
       "mode_inclusive": "Fiyata dahil",
       "mode_exclusive": "Üstüne ekle",
       "defaults_hint": "Varsayılan değerler Vergi ve Faturalama profilinden gelir.",
-      "toggle_label": "KDV ayarlarını düzenle",
-      "toggle_helper": "Bu hizmet için varsayılanları değiştirmek için açın.",
       "summary": "KDV %{{rate}} • {{mode}}",
       "summary_mode": {
         "inclusive": "fiyata dahil",

@@ -46,14 +46,21 @@ const normalizeSettings = (
     (settings.social_channels as Record<string, SocialChannel> | null) ||
     DEFAULT_SOCIAL_CHANNELS;
   const rawProfile = settings.tax_profile as OrganizationTaxProfile | null;
+  const normalizedEntity =
+    rawProfile?.legalEntityType ??
+    DEFAULT_ORGANIZATION_TAX_PROFILE.legalEntityType;
+  const normalizedCompanyName =
+    rawProfile?.companyName ??
+    settings.photography_business_name ??
+    DEFAULT_ORGANIZATION_TAX_PROFILE.companyName;
+  const derivedVatExempt =
+    rawProfile?.vatExempt ?? normalizedEntity === "freelance";
   const taxProfile: OrganizationTaxProfile = {
     ...DEFAULT_ORGANIZATION_TAX_PROFILE,
     ...(rawProfile ?? {}),
-    companyName:
-      rawProfile?.companyName ??
-      settings.photography_business_name ??
-      DEFAULT_ORGANIZATION_TAX_PROFILE.companyName,
-    vatExempt: Boolean(rawProfile?.vatExempt),
+    legalEntityType: normalizedEntity,
+    companyName: normalizedCompanyName,
+    vatExempt: derivedVatExempt,
   };
 
   return {

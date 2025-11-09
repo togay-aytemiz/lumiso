@@ -82,6 +82,7 @@ export interface CustomServicesSectionProps {
   onItemVatToggle(itemId: string): void;
   onItemVatRateChange(itemId: string, value: string): void;
   onItemVatModeChange(itemId: string, mode: VatModeOption): void;
+  vatControlsEnabled?: boolean;
 }
 
 export const CustomServicesSection = ({
@@ -110,7 +111,11 @@ export const CustomServicesSection = ({
   onItemVatToggle,
   onItemVatRateChange,
   onItemVatModeChange,
-}: CustomServicesSectionProps) => (
+  vatControlsEnabled = true,
+}: CustomServicesSectionProps) => {
+  const showVatControls = vatControlsEnabled;
+
+  return (
   <section className="space-y-4 rounded-2xl border border-border/70 bg-white/80 p-5 shadow-sm backdrop-blur">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div className="space-y-1 max-w-xl">
@@ -169,58 +174,62 @@ export const CustomServicesSection = ({
           </div>
         </div>
 
-        <div className="pt-1">
-          <Button
-            type="button"
-            variant="link"
-            size="sm"
-            className="h-auto px-0 text-xs font-semibold"
-            onClick={onQuickAddVatToggle}
-          >
-            {form.vatFormOpen ? strings.vatToggleClose : strings.vatToggleOpen}
-          </Button>
-        </div>
-
-        {form.vatFormOpen ? (
+        {showVatControls ? (
           <>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1">
-                <Label htmlFor="custom-service-vat-rate">{strings.vatRateLabel}</Label>
-                <Input
-                  id="custom-service-vat-rate"
-                  type="number"
-                  inputMode="decimal"
-                  min={0}
-                  max={99.99}
-                  step="0.01"
-                  value={form.vatRate}
-                  onChange={(event) =>
-                    onFormChange({ vatRate: event.target.value.replace(/[^0-9.,]/g, "") })
-                  }
-                  placeholder={strings.vatRatePlaceholder}
-                  className="h-10"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">{strings.vatModeLabel}</Label>
-                <Select
-                  value={form.vatMode}
-                  onValueChange={(value) => onFormChange({ vatMode: value as VatModeOption })}
-                >
-                  <SelectTrigger className="h-10 w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {vatModeOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="pt-1">
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="h-auto px-0 text-xs font-semibold"
+                onClick={onQuickAddVatToggle}
+              >
+                {form.vatFormOpen ? strings.vatToggleClose : strings.vatToggleOpen}
+              </Button>
             </div>
-            <p className="text-[11px] text-muted-foreground">{strings.vatHelper}</p>
+
+            {form.vatFormOpen ? (
+              <>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="custom-service-vat-rate">{strings.vatRateLabel}</Label>
+                    <Input
+                      id="custom-service-vat-rate"
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      max={99.99}
+                      step="0.01"
+                      value={form.vatRate}
+                      onChange={(event) =>
+                        onFormChange({ vatRate: event.target.value.replace(/[^0-9.,]/g, "") })
+                      }
+                      placeholder={strings.vatRatePlaceholder}
+                      className="h-10"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">{strings.vatModeLabel}</Label>
+                    <Select
+                      value={form.vatMode}
+                      onValueChange={(value) => onFormChange({ vatMode: value as VatModeOption })}
+                    >
+                      <SelectTrigger className="h-10 w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {vatModeOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <p className="text-[11px] text-muted-foreground">{strings.vatHelper}</p>
+              </>
+            ) : null}
           </>
         ) : null}
 
@@ -317,15 +326,17 @@ export const CustomServicesSection = ({
                   </div>
                 </div>
 
-                <Button
-                  type="button"
-                  variant="link"
-                  size="sm"
-                  className="h-auto px-0 text-xs font-semibold"
-                  onClick={() => onItemVatToggle(item.id)}
-                >
-                  {item.vatEditorOpen ? strings.vatToggleClose : strings.vatToggleOpen}
-                </Button>
+                {showVatControls ? (
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    className="h-auto px-0 text-xs font-semibold"
+                    onClick={() => onItemVatToggle(item.id)}
+                  >
+                    {item.vatEditorOpen ? strings.vatToggleClose : strings.vatToggleOpen}
+                  </Button>
+                ) : null}
 
                 <IconActionButton
                   onClick={() => onItemRemove(item.id)}
@@ -337,7 +348,7 @@ export const CustomServicesSection = ({
                 </IconActionButton>
               </div>
 
-              {item.vatEditorOpen ? (
+              {showVatControls && item.vatEditorOpen ? (
                 <div className="mt-3 space-y-3">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1">
@@ -402,3 +413,4 @@ export const CustomServicesSection = ({
     ) : null}
   </section>
 );
+};

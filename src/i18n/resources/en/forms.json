@@ -1547,8 +1547,6 @@
       "mode_inclusive": "Included in price",
       "mode_exclusive": "Add on top",
       "defaults_hint": "Defaults come from your Tax & Billing profile.",
-      "toggle_label": "Adjust VAT settings",
-      "toggle_helper": "Enable to override the defaults for this service.",
       "summary": "VAT {{rate}}% • {{mode}}",
       "summary_mode": {
         "inclusive": "included in price",

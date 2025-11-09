@@ -377,9 +377,11 @@
       "finalSummary": {
         "title": "Paket fiyatı özeti",
         "tooltip": "Seçilen hizmetleri nasıl fiyatlandırdığına göre net, KDV ve KDV dahil toplamları gösterir.",
+        "tooltipNoVat": "Seçilen hizmetleri nasıl fiyatlandırdığına göre toplam tutarı gösterir.",
         "net": "Toplam tutar (KDV hariç)",
         "vat": "KDV tutarı",
         "gross": "Toplam tutar (KDV dahil)",
+        "totalNoVat": "Toplam tutar",
         "inclusiveHelper": "Seçilen hizmetler paket fiyatının içinde kabul edilir.",
         "addOnsHelper": "Müşteri toplamı = paket fiyatı + seçilen hizmetler.",
         "servicesLine": "Hizmet toplamı: {{amount}} (iç takip)."

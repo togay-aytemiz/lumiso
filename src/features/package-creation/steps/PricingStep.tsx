@@ -42,17 +42,22 @@ export const PricingStep = () => {
   const { updatePricing, setCurrentStep } = usePackageCreationActions();
   const taxProfileQuery = useOrganizationTaxProfile();
   const taxProfile = taxProfileQuery.data;
+  const vatExempt = Boolean(taxProfile?.vatExempt);
+  const vatUiEnabled = !vatExempt;
 
   const defaultVatRate = useMemo(() => {
+    if (vatExempt) {
+      return 0;
+    }
     if (typeof taxProfile?.defaultVatRate === "number" && Number.isFinite(taxProfile.defaultVatRate)) {
       return Number(taxProfile.defaultVatRate);
     }
     return 0;
-  }, [taxProfile]);
+  }, [taxProfile, vatExempt]);
 
   const defaultVatMode: PackageVatMode = useMemo(
-    () => (taxProfile?.defaultVatMode === "inclusive" ? "inclusive" : "exclusive"),
-    [taxProfile]
+    () => (vatExempt ? "exclusive" : taxProfile?.defaultVatMode === "inclusive" ? "inclusive" : "exclusive"),
+    [taxProfile, vatExempt]
   );
 
   useEffect(() => {
@@ -280,6 +285,11 @@ export const PricingStep = () => {
     : t("steps.pricing.descriptionAddOns", {
         amount: formatCurrency(clientTotal),
       });
+  const finalSummaryTooltip = vatUiEnabled
+    ? t("steps.pricing.finalSummary.tooltip")
+    : t("steps.pricing.finalSummary.tooltipNoVat", {
+        defaultValue: "Seçilen hizmetleri nasıl fiyatlandırdığına göre toplam tutarı gösterir.",
+      });
 
   const hasCustomVatValues =
     (state.pricing.packageVatRate ?? defaultVatRate) !== defaultVatRate ||
@@ -319,24 +329,26 @@ export const PricingStep = () => {
             placeholder={t("steps.pricing.basePrice.placeholder")}
             className="w-full max-w-md"
           />
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <span>
-              {t("steps.pricing.packageVat.inputHint", {
-                rate: formatPercent(packageVatRate),
-                mode: packageVatModeLabel,
-              })}
-            </span>
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              className="h-auto px-0 text-xs font-semibold"
-              onClick={() => handlePackageVatToggle(!state.pricing.packageVatOverrideEnabled)}
-            >
-              {packageVatButtonLabel}
-            </Button>
-          </div>
-          {state.pricing.packageVatOverrideEnabled ? (
+          {vatUiEnabled ? (
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span>
+                {t("steps.pricing.packageVat.inputHint", {
+                  rate: formatPercent(packageVatRate),
+                  mode: packageVatModeLabel,
+                })}
+              </span>
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="h-auto px-0 text-xs font-semibold"
+                onClick={() => handlePackageVatToggle(!state.pricing.packageVatOverrideEnabled)}
+              >
+                {packageVatButtonLabel}
+              </Button>
+            </div>
+          ) : null}
+          {vatUiEnabled && state.pricing.packageVatOverrideEnabled ? (
             <div className="space-y-4 rounded-xl border border-border/70 bg-white/80 p-4">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1">
@@ -492,22 +504,33 @@ export const PricingStep = () => {
             </h3>
             <HelperTooltip
               label={t("steps.pricing.finalSummary.title")}
-              content={t("steps.pricing.finalSummary.tooltip")}
+              content={finalSummaryTooltip}
             />
           </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <SummaryMetric
-              label={t("steps.pricing.finalSummary.net")}
-              value={formatCurrency(combinedNet)}
-            />
-            <SummaryMetric
-              label={t("steps.pricing.finalSummary.vat")}
-              value={formatCurrency(combinedVat)}
-            />
-            <SummaryMetric
-              label={t("steps.pricing.finalSummary.gross")}
-              value={formatCurrency(combinedGross)}
-            />
+          <div className={cn("grid gap-3", vatUiEnabled ? "sm:grid-cols-3" : "sm:grid-cols-1")}>
+            {vatUiEnabled ? (
+              <>
+                <SummaryMetric
+                  label={t("steps.pricing.finalSummary.net")}
+                  value={formatCurrency(combinedNet)}
+                />
+                <SummaryMetric
+                  label={t("steps.pricing.finalSummary.vat")}
+                  value={formatCurrency(combinedVat)}
+                />
+                <SummaryMetric
+                  label={t("steps.pricing.finalSummary.gross")}
+                  value={formatCurrency(combinedGross)}
+                />
+              </>
+            ) : (
+              <SummaryMetric
+                label={t("steps.pricing.finalSummary.totalNoVat", {
+                  defaultValue: "Toplam tutar",
+                })}
+                value={formatCurrency(combinedGross)}
+              />
+            )}
           </div>
           <div className="space-y-1 text-xs text-muted-foreground">
             <p>

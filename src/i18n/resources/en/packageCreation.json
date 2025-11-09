@@ -377,9 +377,11 @@
       "finalSummary": {
         "title": "Package price summary",
         "tooltip": "Shows the net, VAT, and gross totals based on how you price selected services.",
+        "tooltipNoVat": "Shows the overall total based on how you price selected services.",
         "net": "Package (excl. VAT)",
         "vat": "VAT amount",
         "gross": "Package (incl. VAT)",
+        "totalNoVat": "Total price",
         "inclusiveHelper": "Selected services are priced inside the package total.",
         "addOnsHelper": "Client total includes the package price plus selected services.",
         "servicesLine": "Services total: {{amount}} (internal tracking)."

@@ -162,7 +162,6 @@ const useServiceCategories = (open: boolean) => {
 
 interface VatSettingsSectionProps {
   t: (key: string, options?: Record<string, unknown>) => string;
-  open: boolean;
   vatDefaults: ServiceVatDefaults;
   vatRateValue: string;
   onVatRateChange: (value: string) => void;
@@ -173,7 +172,6 @@ interface VatSettingsSectionProps {
 
 const VatSettingsSection = ({
   t,
-  open,
   vatDefaults,
   vatRateValue,
   onVatRateChange,
@@ -181,7 +179,6 @@ const VatSettingsSection = ({
   priceIncludesVat,
   onPriceIncludesVatChange,
 }: VatSettingsSectionProps) => {
-  const toggleId = useId();
   const rateInputId = useId();
 
   const defaultRate = vatDefaults.vatRate ?? DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate;
@@ -195,30 +192,6 @@ const VatSettingsSection = ({
     (!Number.isNaN(parsedRate) && Math.abs(parsedRate - defaultRate) < 0.001);
   const usesDefaultMode = priceIncludesVat === defaultMode;
   const differsFromDefaults = !usesDefaultRate || !usesDefaultMode;
-
-  const [expanded, setExpanded] = useState(false);
-
-  useEffect(() => {
-    if (!open) {
-      setExpanded(false);
-      return;
-    }
-    if ((differsFromDefaults || !vatRateValid) && !expanded) {
-      setExpanded(true);
-    }
-  }, [open, differsFromDefaults, vatRateValid, expanded]);
-
-  useEffect(() => {
-    if (!vatRateValid && !expanded) {
-      setExpanded(true);
-    }
-  }, [vatRateValid, expanded]);
-
-  useEffect(() => {
-    if (differsFromDefaults && !expanded) {
-      setExpanded(true);
-    }
-  }, [differsFromDefaults, expanded]);
 
   const formatter = useMemo(
     () =>
@@ -248,83 +221,60 @@ const VatSettingsSection = ({
     mode: summaryMode,
   });
 
-  const handleToggleChange = useCallback(
-    (checked: boolean) => {
-      if (!checked) {
-        onVatRateChange("");
-        onPriceIncludesVatChange(Boolean(defaultMode));
-      }
-      setExpanded(checked);
-    },
-    [defaultMode, onPriceIncludesVatChange, onVatRateChange, setExpanded]
-  );
-
   return (
     <div className="space-y-3 rounded-xl border border-border/70 bg-muted/10 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
-          <p className="text-sm font-semibold text-slate-900">{t("service.vat_section.title")}</p>
-          <p className="text-xs text-muted-foreground">
-            {expanded ? t("service.vat_section.description") : summaryText}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Switch id={toggleId} checked={expanded} onCheckedChange={handleToggleChange} />
-          <div className="space-y-1">
-            <Label htmlFor={toggleId} className="text-sm font-medium text-slate-900">
-              {t("service.vat_section.toggle_label")}
-            </Label>
-            <p className="text-xs text-muted-foreground">{t("service.vat_section.toggle_helper")}</p>
-          </div>
-        </div>
+      <div className="space-y-1">
+        <p className="text-sm font-semibold text-slate-900">{t("service.vat_section.title")}</p>
+        <p className="text-xs text-muted-foreground">{t("service.vat_section.description")}</p>
+        {differsFromDefaults ? (
+          <p className="text-[11px] text-muted-foreground">{summaryText}</p>
+        ) : null}
       </div>
 
-      {expanded ? (
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="flex min-w-[140px] flex-col gap-1">
-            <Label
-              htmlFor={rateInputId}
-              className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-            >
-              {t("service.vat_section.rate_label")}
-            </Label>
-            <Input
-              id={rateInputId}
-              type="number"
-              inputMode="decimal"
-              min={0}
-              max={99.99}
-              step="0.01"
-              value={vatRateValue}
-              onChange={(event) => onVatRateChange(event.target.value)}
-              placeholder={String(defaultRate)}
-              className="h-9 w-[120px]"
-            />
-            <p className={cn("text-xs", vatRateValid ? "text-muted-foreground" : "text-destructive")}>
-              {vatRateValid
-                ? t("service.vat_section.defaults_hint")
-                : t("service.errors.vat_rate_range")}
-            </p>
-          </div>
-          <div className="flex min-w-[180px] flex-col gap-1">
-            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("service.vat_section.mode_label")}
-            </Label>
-            <Select
-              value={priceIncludesVat ? "inclusive" : "exclusive"}
-              onValueChange={(value) => onPriceIncludesVatChange(value === "inclusive")}
-            >
-              <SelectTrigger className="h-9 rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="inclusive">{t("service.vat_section.mode_inclusive")}</SelectItem>
-                <SelectItem value="exclusive">{t("service.vat_section.mode_exclusive")}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex min-w-[140px] flex-col gap-1">
+          <Label
+            htmlFor={rateInputId}
+            className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+          >
+            {t("service.vat_section.rate_label")}
+          </Label>
+          <Input
+            id={rateInputId}
+            type="number"
+            inputMode="decimal"
+            min={0}
+            max={99.99}
+            step="0.01"
+            value={vatRateValue}
+            onChange={(event) => onVatRateChange(event.target.value)}
+            placeholder={String(defaultRate)}
+            className="h-9 w-[120px]"
+          />
+          <p className={cn("text-xs", vatRateValid ? "text-muted-foreground" : "text-destructive")}>
+            {vatRateValid
+              ? t("service.vat_section.defaults_hint")
+              : t("service.errors.vat_rate_range")}
+          </p>
         </div>
-      ) : null}
+        <div className="flex min-w-[180px] flex-col gap-1">
+          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("service.vat_section.mode_label")}
+          </Label>
+          <Select
+            value={priceIncludesVat ? "inclusive" : "exclusive"}
+            onValueChange={(value) => onPriceIncludesVatChange(value === "inclusive")}
+          >
+            <SelectTrigger className="h-9 rounded-xl">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="inclusive">{t("service.vat_section.mode_inclusive")}</SelectItem>
+              <SelectItem value="exclusive">{t("service.vat_section.mode_exclusive")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
     </div>
   );
 };
@@ -344,12 +294,17 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const { data: organizationTaxProfile } = useOrganizationTaxProfile();
+  const vatExempt = Boolean(organizationTaxProfile?.vatExempt);
   const vatDefaults = useMemo(
     () => ({
-      vatRate: organizationTaxProfile?.defaultVatRate ?? DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate,
-      priceIncludesVat: organizationTaxProfile?.pricesIncludeVat ?? DEFAULT_ORGANIZATION_TAX_PROFILE.pricesIncludeVat,
+      vatRate: vatExempt
+        ? 0
+        : organizationTaxProfile?.defaultVatRate ?? DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate,
+      priceIncludesVat: vatExempt
+        ? false
+        : organizationTaxProfile?.pricesIncludeVat ?? DEFAULT_ORGANIZATION_TAX_PROFILE.pricesIncludeVat,
     }),
-    [organizationTaxProfile]
+    [organizationTaxProfile, vatExempt]
   );
   const [formData, setFormData] = useState<ServiceFormState>(() =>
     createFormState(initialType, {}, vatDefaults)
@@ -410,6 +365,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
   const hasSelectedCategory = hasSelectedType && Boolean(formData.category.trim());
   const vatRateNumeric = parseFloat(formData.vat_rate.replace(",", "."));
   const vatRateValid =
+    vatExempt ||
     (formData.vat_rate.trim() === "" && vatDefaults.vatRate != null) ||
     (!Number.isNaN(vatRateNumeric) && vatRateNumeric >= 0 && vatRateNumeric <= 99.99);
   const isSaveDisabled =
@@ -441,12 +397,16 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
       return;
     }
 
-    const parsedVatRate =
-      formData.vat_rate.trim() === ""
-        ? vatDefaults.vatRate ?? DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate
-        : parseFloat(formData.vat_rate.replace(",", "."));
+    const parsedVatRate = vatExempt
+      ? 0
+      : formData.vat_rate.trim() === ""
+          ? vatDefaults.vatRate ?? DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate
+          : parseFloat(formData.vat_rate.replace(",", "."));
 
-    if (Number.isNaN(parsedVatRate) || parsedVatRate < 0 || parsedVatRate > 99.99) {
+    if (
+      !vatExempt &&
+      (Number.isNaN(parsedVatRate) || parsedVatRate < 0 || parsedVatRate > 99.99)
+    ) {
       toast({
         title: t("toast.error", { ns: "common" }),
         description: t("service.errors.vat_rate_invalid"),
@@ -454,6 +414,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
       });
       return;
     }
+    const priceIncludesVat = vatExempt ? false : formData.price_includes_vat;
 
     setLoading(true);
     try {
@@ -483,7 +444,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
         vendor_name: formData.vendor_name.trim() || null,
         default_unit: null,
         vat_rate: parsedVatRate,
-        price_includes_vat: formData.price_includes_vat,
+        price_includes_vat: priceIncludesVat,
       });
 
       if (error) throw error;
@@ -769,18 +730,21 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
             </div>
           </div>
 
-          <VatSettingsSection
-            t={t}
-            open={open}
-            vatDefaults={vatDefaults}
-            vatRateValue={formData.vat_rate}
-            onVatRateChange={(value) => setFormData((prev) => ({ ...prev, vat_rate: value }))}
-            vatRateValid={vatRateValid}
-            priceIncludesVat={formData.price_includes_vat}
-            onPriceIncludesVatChange={(value) =>
-              setFormData((prev) => ({ ...prev, price_includes_vat: value }))
-            }
-          />
+          {!vatExempt && (
+            <VatSettingsSection
+              t={t}
+              vatDefaults={vatDefaults}
+              vatRateValue={formData.vat_rate}
+              onVatRateChange={(value) =>
+                setFormData((prev) => ({ ...prev, vat_rate: value }))
+              }
+              vatRateValid={vatRateValid}
+              priceIncludesVat={formData.price_includes_vat}
+              onPriceIncludesVatChange={(value) =>
+                setFormData((prev) => ({ ...prev, price_includes_vat: value }))
+              }
+            />
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="vendor_name">
@@ -836,12 +800,17 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const { data: organizationTaxProfile } = useOrganizationTaxProfile();
+  const vatExempt = Boolean(organizationTaxProfile?.vatExempt);
   const vatDefaults = useMemo(
     () => ({
-      vatRate: organizationTaxProfile?.defaultVatRate ?? DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate,
-      priceIncludesVat: organizationTaxProfile?.pricesIncludeVat ?? DEFAULT_ORGANIZATION_TAX_PROFILE.pricesIncludeVat,
+      vatRate: vatExempt
+        ? 0
+        : organizationTaxProfile?.defaultVatRate ?? DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate,
+      priceIncludesVat: vatExempt
+        ? false
+        : organizationTaxProfile?.pricesIncludeVat ?? DEFAULT_ORGANIZATION_TAX_PROFILE.pricesIncludeVat,
     }),
-    [organizationTaxProfile]
+    [organizationTaxProfile, vatExempt]
   );
   const [formData, setFormData] = useState<ServiceFormState>(() =>
     createFormState("deliverable", {}, vatDefaults)
@@ -861,9 +830,15 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
             price: service.price?.toString() || "",
             cost_price: service.cost_price?.toString() || "",
             selling_price: service.selling_price?.toString() || "",
-            vat_rate: service.vat_rate != null ? String(service.vat_rate) : "",
-            price_includes_vat:
-              service.price_includes_vat ?? (vatDefaults.priceIncludesVat ?? DEFAULT_ORGANIZATION_TAX_PROFILE.pricesIncludeVat),
+            vat_rate: vatExempt
+              ? "0"
+              : service.vat_rate != null
+                  ? String(service.vat_rate)
+                  : "",
+            price_includes_vat: vatExempt
+              ? false
+              : service.price_includes_vat ??
+                (vatDefaults.priceIncludesVat ?? DEFAULT_ORGANIZATION_TAX_PROFILE.pricesIncludeVat),
             extra: service.extra ?? false,
             service_type: resolvedType,
             vendor_name: service.vendor_name || "",
@@ -876,7 +851,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       setNewCategoryName("");
       setSelectedType(resolvedType);
     }
-  }, [service, open, vatDefaults]);
+  }, [service, open, vatDefaults, vatExempt]);
 
   const serviceTypeOptions = useMemo(
     () => [
@@ -918,6 +893,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
   const hasSelectedCategory = Boolean(formData.category?.trim());
   const editVatRateNumeric = parseFloat(formData.vat_rate.replace(",", "."));
   const editVatRateValid =
+    vatExempt ||
     (formData.vat_rate.trim() === "" && vatDefaults.vatRate != null) ||
     (!Number.isNaN(editVatRateNumeric) && editVatRateNumeric >= 0 && editVatRateNumeric <= 99.99);
   const isSaveDisabled =
@@ -959,12 +935,16 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       return;
     }
 
-    const parsedVatRate =
-      formData.vat_rate.trim() === ""
-        ? vatDefaults.vatRate ?? DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate
-        : parseFloat(formData.vat_rate.replace(",", "."));
+    const parsedVatRate = vatExempt
+      ? 0
+      : formData.vat_rate.trim() === ""
+          ? vatDefaults.vatRate ?? DEFAULT_ORGANIZATION_TAX_PROFILE.defaultVatRate
+          : parseFloat(formData.vat_rate.replace(",", "."));
 
-    if (Number.isNaN(parsedVatRate) || parsedVatRate < 0 || parsedVatRate > 99.99) {
+    if (
+      !vatExempt &&
+      (Number.isNaN(parsedVatRate) || parsedVatRate < 0 || parsedVatRate > 99.99)
+    ) {
       toast({
         title: t("toast.error", { ns: "common" }),
         description: t("service.errors.vat_rate_invalid"),
@@ -972,6 +952,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       });
       return;
     }
+    const priceIncludesVat = vatExempt ? false : formData.price_includes_vat;
 
     setLoading(true);
     try {
@@ -990,7 +971,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
           vendor_name: formData.vendor_name.trim() || null,
           is_active: formData.is_active,
           vat_rate: parsedVatRate,
-          price_includes_vat: formData.price_includes_vat,
+          price_includes_vat: priceIncludesVat,
         })
         .eq("id", service?.id);
 
@@ -1027,9 +1008,16 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
         price: service.price?.toString() || "",
         cost_price: service.cost_price?.toString() || "",
         selling_price: service.selling_price?.toString() || "",
-        vat_rate: service.vat_rate != null ? String(service.vat_rate) : "",
-        price_includes_vat:
-          service.price_includes_vat ?? (vatDefaults.priceIncludesVat ?? DEFAULT_ORGANIZATION_TAX_PROFILE.pricesIncludeVat),
+        vat_rate:
+          vatExempt && service.vat_rate == null
+            ? "0"
+            : service.vat_rate != null
+                ? String(service.vat_rate)
+                : "",
+        price_includes_vat: vatExempt
+          ? false
+          : service.price_includes_vat ??
+            (vatDefaults.priceIncludesVat ?? DEFAULT_ORGANIZATION_TAX_PROFILE.pricesIncludeVat),
         extra: service.extra ?? false,
         service_type: (service.service_type ?? "deliverable") as ServiceType,
         vendor_name: service.vendor_name || "",
@@ -1052,7 +1040,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       formData.vendor_name.trim() !== baseState.vendor_name?.trim() ||
       formData.is_active !== baseState.is_active
     );
-  }, [formData, service, vatDefaults]);
+  }, [formData, service, vatDefaults, vatExempt]);
 
   const navigation = useModalNavigation({
     isDirty,
@@ -1072,9 +1060,16 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
             price: service.price?.toString() || "",
             cost_price: service.cost_price?.toString() || "",
             selling_price: service.selling_price?.toString() || "",
-            vat_rate: service.vat_rate != null ? String(service.vat_rate) : "",
-            price_includes_vat:
-              service.price_includes_vat ?? (vatDefaults.priceIncludesVat ?? DEFAULT_ORGANIZATION_TAX_PROFILE.pricesIncludeVat),
+            vat_rate:
+              vatExempt && service.vat_rate == null
+                ? "0"
+                : service.vat_rate != null
+                    ? String(service.vat_rate)
+                    : "",
+            price_includes_vat: vatExempt
+              ? false
+              : service.price_includes_vat ??
+                (vatDefaults.priceIncludesVat ?? DEFAULT_ORGANIZATION_TAX_PROFILE.pricesIncludeVat),
             extra: service.extra ?? false,
             service_type: resolvedType,
             vendor_name: service.vendor_name || "",
@@ -1339,18 +1334,21 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
             </div>
           </div>
 
-          <VatSettingsSection
-            t={t}
-            open={open}
-            vatDefaults={vatDefaults}
-            vatRateValue={formData.vat_rate}
-            onVatRateChange={(value) => setFormData((prev) => ({ ...prev, vat_rate: value }))}
-            vatRateValid={editVatRateValid}
-            priceIncludesVat={formData.price_includes_vat}
-            onPriceIncludesVatChange={(value) =>
-              setFormData((prev) => ({ ...prev, price_includes_vat: value }))
-            }
-          />
+          {!vatExempt && (
+            <VatSettingsSection
+              t={t}
+              vatDefaults={vatDefaults}
+              vatRateValue={formData.vat_rate}
+              onVatRateChange={(value) =>
+                setFormData((prev) => ({ ...prev, vat_rate: value }))
+              }
+              vatRateValid={editVatRateValid}
+              priceIncludesVat={formData.price_includes_vat}
+              onPriceIncludesVatChange={(value) =>
+                setFormData((prev) => ({ ...prev, price_includes_vat: value }))
+              }
+            />
+          )}
 
             <div className="space-y-2">
               <Label htmlFor="edit-vendor-name">

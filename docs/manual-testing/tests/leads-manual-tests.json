@@ -401,6 +401,54 @@
           }
         ],
         "expected_result": "Lead alanları dialog üzerinden kaydedildiği anda kalıcıdır ve ekstra aksiyon olmadan diğer sekmelerde görünür hale gelir."
+      },
+      {
+        "external_id": "CRM-LEADS-260",
+        "title": "Freelance / KDV'siz profilde lead teklif sihirbazı KDV kontrollerini gizler",
+        "description": "Freelance/no-VAT tüzel kişiliği seçildiğinde lead → proje/teklif sihirbazının hizmet kartlarında ve fatura ön izlemesinde KDV ayarlarını göstermediğini doğrular.",
+        "steps": [
+          {
+            "action": "/settings/billing sayfasını açın ve \"Freelance / KDV'siz\" tüzel kişilik seçeneğini işaretleyin.",
+            "expected_result": "Şirket bilgileri + KDV oranı alanları gizlenir, formda sadece bireysel bilgiler kalır."
+          },
+          {
+            "action": "Son değişikliklerden emin olduktan sonra herhangi bir lead kartını açın ve üstteki \"Proje Oluştur\" veya \"Teklif Hazırla\" akışını başlatın.",
+            "expected_result": "Sihirbaz açılır ve hizmet seçimi adımı varsayılan servis kartlarıyla yüklenir."
+          },
+          {
+            "action": "Herhangi bir hizmet kartının aksiyonlarını açın (\"KDV'yi düzenle\" ya da \"KDV'yi özelleştir\" butonlarını arayın).",
+            "expected_result": "Freelance modunda hiçbir kartta KDV anahtarı görünmez; fiyat alanı tek satırdır."
+          },
+          {
+            "action": "Akışın fiyat özetine veya fatura ön izlemesine ilerleyin.",
+            "expected_result": "Özet satırlarında KDV toplamı yer almaz, sadece ara toplam ve genel toplam gösterilir."
+          }
+        ],
+        "expected_result": "Freelance/KDV'siz profilde hem hizmet düzenleyicilerinde hem de önizleme ekranında KDV'ye dair hiçbir kontrol veya tutar görünmez."
+      },
+      {
+        "external_id": "CRM-LEADS-261",
+        "title": "KDV'li tüzel kişiliğe geri dönünce builder KDV modlarını geri getirir",
+        "description": "Şirket veya bireysel moduna geri dönüldüğünde lead → proje sihirbazının KDV modlarını tekrar sunup fiyatlara uyguladığını doğrular.",
+        "steps": [
+          {
+            "action": "/settings/billing sayfasında tüzel kişiliği \"Şirket\" olarak değiştirin ve \"KDV fiyatlara dahil\" radiosunu seçili bırakın.",
+            "expected_result": "KDV oranı + mod alanları tekrar görünür ve kaydetmeden sayfadan ayrıldığınızda otomatik olarak saklanır."
+          },
+          {
+            "action": "Aynı lead üzerinde tekrar \"Proje Oluştur\" sihirbazını başlatın.",
+            "expected_result": "Hizmet kartları bu kez sağ üstte \"KDV ayarlarını düzenle\" anahtarını gösterir."
+          },
+          {
+            "action": "Bir hizmette KDV ayarlarını açın, modu \"KDV hariç\" yapın ve %18 oranı girin.",
+            "expected_result": "Mod seçimi ve oran alanları görünür, değişiklikler hemen satır özetine yansır."
+          },
+          {
+            "action": "Fatura ön izlemesini kontrol edin.",
+            "expected_result": "Toplamda \"KDV (%18)\" satırı eklenir ve genel toplam bu vergi ile hesaplanır."
+          }
+        ],
+        "expected_result": "KDV'li tüzel kişiliğe dönüldüğünde tüm builder adımları KDV modunu seçmeye izin verir ve ön izleme net olarak vergi satırını gösterir."
       }
     ]
   }

@@ -112,7 +112,12 @@ export const ServicesStep = () => {
   const servicesQuery = useServices();
   const taxProfileQuery = useOrganizationTaxProfile();
   const taxProfile = taxProfileQuery.data;
+  const vatExempt = Boolean(taxProfile?.vatExempt);
+  const vatUiEnabled = !vatExempt;
   const defaultVatRate = useMemo(() => {
+    if (vatExempt) {
+      return 0;
+    }
     if (
       typeof taxProfile?.defaultVatRate === "number" &&
       Number.isFinite(taxProfile.defaultVatRate)
@@ -120,11 +125,15 @@ export const ServicesStep = () => {
       return Number(taxProfile.defaultVatRate);
     }
     return 0;
-  }, [taxProfile]);
+  }, [taxProfile, vatExempt]);
   const defaultVatMode: PackageVatMode = useMemo(
     () =>
-      taxProfile?.defaultVatMode === "inclusive" ? "inclusive" : "exclusive",
-    [taxProfile]
+      vatExempt
+        ? "exclusive"
+        : taxProfile?.defaultVatMode === "inclusive"
+            ? "inclusive"
+            : "exclusive",
+    [taxProfile, vatExempt]
   );
   const defaultVatRateString = useMemo(
     () =>
@@ -157,6 +166,9 @@ export const ServicesStep = () => {
     string | null
   >(null);
   const hasVatOverrides = useMemo(() => {
+    if (!vatUiEnabled) {
+      return false;
+    }
     return state.services.items.some((item) => {
       const rate =
         typeof item.vatRate === "number" && Number.isFinite(item.vatRate)
@@ -167,7 +179,7 @@ export const ServicesStep = () => {
       const modeDiff = mode != null && mode !== defaultVatMode;
       return rateDiff || modeDiff;
     });
-  }, [state.services.items, defaultVatRate, defaultVatMode]);
+  }, [state.services.items, defaultVatRate, defaultVatMode, vatUiEnabled]);
   const [showVatControls, setShowVatControls] = useState(false);
   const [showVatResetPrompt, setShowVatResetPrompt] = useState(false);
   const [existingEditors, setExistingEditors] = useState<
@@ -194,18 +206,28 @@ export const ServicesStep = () => {
     state.services.showQuickAdd,
   ]);
 
+  useEffect(() => {
+    if (!vatUiEnabled && showVatControls) {
+      setShowVatControls(false);
+    }
+    if (!vatUiEnabled) {
+      setShowQuickAddVatForm(false);
+      setCustomVatPanels({});
+    }
+  }, [showVatControls, vatUiEnabled]);
+
   const serviceMap = useMemo<Map<string, ServiceWithMetadata>>(() => {
     const entries = services
       .filter((service) => service.is_active !== false)
       .map((service) => {
         const vatRate =
+          vatUiEnabled &&
           typeof service.vat_rate === "number" &&
           Number.isFinite(service.vat_rate)
             ? Number(service.vat_rate)
             : null;
-        const vatMode: PackageVatMode = service.price_includes_vat
-          ? "inclusive"
-          : "exclusive";
+        const vatMode: PackageVatMode =
+          vatUiEnabled && service.price_includes_vat ? "inclusive" : "exclusive";
         const unit = normalizeServiceUnit(service.default_unit);
         return [
           service.id,
@@ -218,13 +240,13 @@ export const ServicesStep = () => {
             isActive: true,
             vatRate,
             vatMode,
-            priceIncludesVat: service.price_includes_vat ?? false,
+            priceIncludesVat: vatUiEnabled && service.price_includes_vat ? true : false,
             unit,
           },
         ] as const;
       });
     return new Map(entries);
-  }, [services]);
+  }, [services, vatUiEnabled]);
 
   const getExistingDefaults = useCallback(
     (serviceId: string) => {
@@ -232,11 +254,16 @@ export const ServicesStep = () => {
       const unitCost = service?.unitCost ?? null;
       const unitPrice = service?.unitPrice ?? null;
       const vatRate =
-        typeof service?.vatRate === "number" && Number.isFinite(service.vatRate)
+        vatUiEnabled &&
+        typeof service?.vatRate === "number" &&
+        Number.isFinite(service.vatRate)
           ? Number(service.vatRate)
           : defaultVatRate;
-      const vatMode: PackageVatMode =
-        service?.vatMode === "exclusive" ? "exclusive" : defaultVatMode;
+      const vatMode: PackageVatMode = vatUiEnabled
+        ? service?.vatMode === "exclusive"
+          ? "exclusive"
+          : defaultVatMode
+        : "exclusive";
 
       return {
         unitCost,
@@ -245,7 +272,7 @@ export const ServicesStep = () => {
         vatMode,
       };
     },
-    [defaultVatMode, defaultVatRate, serviceMap]
+    [defaultVatMode, defaultVatRate, serviceMap, vatUiEnabled]
   );
 
   const inventoryServices = useMemo<ServiceInventoryItem[]>(
@@ -265,13 +292,14 @@ export const ServicesStep = () => {
           defaultUnit: service.default_unit ?? null,
           isActive: true,
           vatRate:
+            vatUiEnabled &&
             typeof service.vat_rate === "number" &&
             Number.isFinite(service.vat_rate)
               ? Number(service.vat_rate)
               : null,
-          priceIncludesVat: service.price_includes_vat ?? false,
+          priceIncludesVat: vatUiEnabled && service.price_includes_vat ? true : false,
         })),
-    [services]
+    [services, vatUiEnabled]
   );
 
   const existingHasPricingOverrides = useCallback(
@@ -288,6 +316,7 @@ export const ServicesStep = () => {
 
   const existingHasVatOverrides = useCallback(
     (item: PackageCreationLineItem) => {
+      if (!vatUiEnabled) return false;
       if (item.type !== "existing" || !item.serviceId) return false;
       const defaults = getExistingDefaults(item.serviceId);
       const vatMode = item.vatMode ?? defaults.vatMode;
@@ -300,7 +329,7 @@ export const ServicesStep = () => {
         !isSameNumber(vatRate ?? null, defaults.vatRate ?? null)
       );
     },
-    [getExistingDefaults]
+    [getExistingDefaults, vatUiEnabled]
   );
 
   const existingItems = state.services.items.filter(
@@ -342,12 +371,24 @@ export const ServicesStep = () => {
     [existingItems]
   );
 
+  const normalizeLineItemVat = useCallback(
+    (item: PackageCreationLineItem): PackageCreationLineItem =>
+      vatUiEnabled
+        ? item
+        : {
+            ...item,
+            vatRate: null,
+            vatMode: "exclusive",
+          },
+    [vatUiEnabled]
+  );
+
   const totals = useMemo(() => {
     return state.services.items.reduce(
       (acc, item) => {
         const quantity = Math.max(1, item.quantity ?? 1);
         const unitCost = Number(item.unitCost ?? 0);
-        const pricing = calculateLineItemPricing(item);
+        const pricing = calculateLineItemPricing(normalizeLineItemVat(item));
         acc.cost += unitCost * quantity;
         acc.price += pricing.net;
         acc.vat += pricing.vat;
@@ -356,7 +397,7 @@ export const ServicesStep = () => {
       },
       { cost: 0, price: 0, vat: 0, total: 0 }
     );
-  }, [state.services.items]);
+  }, [normalizeLineItemVat, state.services.items]);
 
   const margin = totals.price - totals.cost;
 
@@ -492,6 +533,7 @@ export const ServicesStep = () => {
   };
 
   const toggleExistingVat = (serviceId: string) => {
+    if (!vatUiEnabled) return;
     const item = existingItems.find(
       (existing) => existing.serviceId === serviceId
     );
@@ -774,7 +816,7 @@ export const ServicesStep = () => {
         typeof item.unitPrice === "number" && Number.isFinite(item.unitPrice)
           ? item.unitPrice
           : null;
-      const pricing = calculateLineItemPricing(item);
+      const pricing = calculateLineItemPricing(normalizeLineItemVat(item));
       const service =
         item.type === "existing" && item.serviceId
           ? serviceMap.get(item.serviceId)
@@ -810,7 +852,7 @@ export const ServicesStep = () => {
         isCustom: item.type === "custom",
       };
     });
-  }, [getUnitLabel, serviceMap, state.services.items]);
+  }, [getUnitLabel, normalizeLineItemVat, serviceMap, state.services.items]);
 
   const updateItem = (
     itemId: string,
@@ -823,6 +865,7 @@ export const ServicesStep = () => {
   };
 
   const handleVatModeChange = (itemId: string, mode: PackageVatMode) => {
+    if (!vatUiEnabled) return;
     updateItem(itemId, { vatMode: mode });
   };
 
@@ -846,6 +889,7 @@ export const ServicesStep = () => {
   };
 
   const handleVatRateChange = (itemId: string, value: string) => {
+    if (!vatUiEnabled) return;
     const trimmed = value.trim();
     if (!trimmed) {
       updateItem(itemId, { vatRate: null });
@@ -868,9 +912,12 @@ export const ServicesStep = () => {
     }).format(value);
 
   const vatBreakdown = useMemo(() => {
+    if (!vatUiEnabled) {
+      return [];
+    }
     const buckets = new Map<number, number>();
     state.services.items.forEach((item) => {
-      const pricing = calculateLineItemPricing(item);
+      const pricing = calculateLineItemPricing(normalizeLineItemVat(item));
       if (!(pricing.vat > 0)) return;
       const rate =
         typeof item.vatRate === "number" && Number.isFinite(item.vatRate)
@@ -883,7 +930,7 @@ export const ServicesStep = () => {
     return Array.from(buckets.entries())
       .sort((a, b) => b[0] - a[0])
       .map(([rate, amount]) => ({ rate, amount }));
-  }, [state.services.items]);
+  }, [normalizeLineItemVat, state.services.items, vatUiEnabled]);
 
   const removeItem = (itemId: string) => {
     updateServices({
@@ -1027,6 +1074,7 @@ export const ServicesStep = () => {
   }, [pendingInventoryReset, t]);
 
   const handleToggleVatControls = () => {
+    if (!vatUiEnabled) return;
     if (showVatControls) {
       if (hasVatOverrides) {
         setShowVatResetPrompt(true);
@@ -1052,6 +1100,7 @@ export const ServicesStep = () => {
   }, [customVatRate, customVatMode, defaultVatMode, defaultVatRate]);
 
   const handleQuickAddVatToggle = () => {
+    if (!vatUiEnabled) return;
     if (!showQuickAddVatForm) {
       setShowQuickAddVatForm(true);
       return;
@@ -1215,6 +1264,9 @@ export const ServicesStep = () => {
       parsedVatRate = Math.min(99.99, Math.max(0, numericVat));
     }
 
+    const guardedVatRate = vatUiEnabled ? parsedVatRate : 0;
+    const guardedVatMode: PackageVatMode = vatUiEnabled ? customVatMode : "exclusive";
+
     const newItem: PackageCreationLineItem = {
       id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       type: "custom",
@@ -1224,8 +1276,8 @@ export const ServicesStep = () => {
       unitPrice: parsedPrice,
       vendorName: null,
       source: "adhoc",
-      vatRate: parsedVatRate,
-      vatMode: customVatMode,
+      vatRate: guardedVatRate,
+      vatMode: guardedVatMode,
       unit: DEFAULT_SERVICE_UNIT,
     };
 
@@ -1279,7 +1331,7 @@ export const ServicesStep = () => {
           };
           const pricingDirty = existingHasPricingOverrides(item);
           const vatDirty = existingHasVatOverrides(item);
-          const showVatButton = editorState.pricing || editorState.vat;
+          const showVatButton = vatUiEnabled && (editorState.pricing || editorState.vat);
           return (
             <div className="flex flex-wrap items-center gap-2">
               <Button
@@ -1373,7 +1425,7 @@ export const ServicesStep = () => {
                 </div>
               ) : null}
 
-              {editorState.vat ? (
+              {vatUiEnabled && editorState.vat ? (
                 <div className="grid gap-3 sm:grid-cols-[repeat(2,minmax(0,200px))]">
                   <div className="space-y-1">
                     <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -1426,7 +1478,7 @@ export const ServicesStep = () => {
           );
         }}
       />
-      {state.services.items.length > 0 ? (
+      {vatUiEnabled && state.services.items.length > 0 ? (
         <ServiceVatOverridesSection
           title={t("steps.services.vatControls.title")}
           description={t("steps.services.vatControls.description")}
@@ -1481,6 +1533,7 @@ export const ServicesStep = () => {
         onItemVatToggle={handleCustomVatToggle}
         onItemVatRateChange={handleVatRateChange}
         onItemVatModeChange={handleVatModeChange}
+        vatControlsEnabled={vatUiEnabled}
       />
 
       <div className="space-y-3">
@@ -1512,9 +1565,18 @@ export const ServicesStep = () => {
                 <SummaryTotalRow
                   label={t("steps.services.summary.price")}
                   value={formatCurrency(totals.price)}
+                  emphasizeLabel={!vatUiEnabled}
                 />
+                {!vatUiEnabled ? (
+                  <SummaryTotalRow
+                    label={t("steps.services.summary.margin")}
+                    value={formatCurrency(margin)}
+                    tone={margin >= 0 ? "positive" : "negative"}
+                    emphasizeLabel
+                  />
+                ) : null}
               </SummaryTotalsSection>
-              {vatBreakdown.length ? (
+              {vatUiEnabled && vatBreakdown.length ? (
                 <SummaryTotalsSection className="space-y-1">
                   {vatBreakdown.map((entry) => (
                     <SummaryTotalRow
@@ -1527,7 +1589,7 @@ export const ServicesStep = () => {
                   ))}
                 </SummaryTotalsSection>
               ) : null}
-              {vatBreakdown.length !== 1 ? (
+              {vatUiEnabled && vatBreakdown.length !== 1 ? (
                 <SummaryTotalsSection>
                   <SummaryTotalRow
                     label={
@@ -1543,22 +1605,26 @@ export const ServicesStep = () => {
                   />
                 </SummaryTotalsSection>
               ) : null}
-              <SummaryTotalsDivider />
-              <SummaryTotalsSection className="pt-3">
-                <SummaryTotalRow
-                  label={t("steps.services.summary.gross", {
-                    defaultValue: "Total",
-                  })}
-                  value={formatCurrency(totals.total)}
-                  emphasizeLabel
-                />
-                <SummaryTotalRow
-                  label={t("steps.services.summary.margin")}
-                  value={formatCurrency(margin)}
-                  tone={margin >= 0 ? "positive" : "negative"}
-                  emphasizeLabel
-                />
-              </SummaryTotalsSection>
+              {vatUiEnabled ? (
+                <>
+                  <SummaryTotalsDivider />
+                  <SummaryTotalsSection className="pt-3">
+                    <SummaryTotalRow
+                      label={t("steps.services.summary.gross", {
+                        defaultValue: "Total",
+                      })}
+                      value={formatCurrency(totals.total)}
+                      emphasizeLabel
+                    />
+                    <SummaryTotalRow
+                      label={t("steps.services.summary.margin")}
+                      value={formatCurrency(margin)}
+                      tone={margin >= 0 ? "positive" : "negative"}
+                      emphasizeLabel
+                    />
+                  </SummaryTotalsSection>
+                </>
+              ) : null}
             </SummaryTotalsCard>
           </div>
         ) : null}

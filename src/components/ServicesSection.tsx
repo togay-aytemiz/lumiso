@@ -27,7 +27,7 @@ import { IconActionButton } from "@/components/ui/icon-action-button";
 import { IconActionButtonGroup } from "@/components/ui/icon-action-button-group";
 import { Switch } from "@/components/ui/switch";
 // Permissions removed for single photographer mode
-import { useServices } from "@/hooks/useOrganizationData";
+import { useServices, useOrganizationTaxProfile } from "@/hooks/useOrganizationData";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import {
   useFormsTranslation,
@@ -74,6 +74,8 @@ const ServicesSection = () => {
 
   // Use cached services data
   const { data: services = [], isLoading } = useServices();
+  const { data: taxProfile } = useOrganizationTaxProfile();
+  const vatExempt = Boolean(taxProfile?.vatExempt);
 
   // Delete service mutation
   const deleteServiceMutation = useMutation({
@@ -211,22 +213,26 @@ const ServicesSection = () => {
     const costPrice = Number(service.cost_price ?? 0) || 0;
     const sellingPrice =
       Number(service.selling_price ?? service.price ?? 0) || 0;
-    const vatRateValue =
-      typeof service.vat_rate === "number" && Number.isFinite(service.vat_rate)
+    const resolvedVatRate =
+      !vatExempt &&
+      typeof service.vat_rate === "number" &&
+      Number.isFinite(service.vat_rate)
         ? service.vat_rate
         : 0;
+    const resolvedVatMode =
+      !vatExempt && service.price_includes_vat ? "inclusive" : "exclusive";
     const vatAmountValue =
-      sellingPrice > 0 && vatRateValue > 0
+      sellingPrice > 0 && resolvedVatRate > 0
         ? calculateVatPortion(
             sellingPrice,
-            vatRateValue,
-            service.price_includes_vat ? "inclusive" : "exclusive"
+            resolvedVatRate,
+            resolvedVatMode
           )
         : 0;
-    const totalPrice = service.price_includes_vat
+    const totalPrice = resolvedVatMode === "inclusive"
       ? sellingPrice
       : sellingPrice + vatAmountValue;
-    const pricingRows = [
+    const baseRows = [
       {
         key: "cost",
         label: tForms("services.cost"),
@@ -237,23 +243,36 @@ const ServicesSection = () => {
         key: "selling",
         label: tForms("services.selling"),
         value: formatCurrency(sellingPrice),
-        valueClassName: "text-foreground",
-      },
-      {
-        key: "vat",
-        label: tForms("services.vat_label_compact", {
-          rate: formatRate(vatRateValue),
-        }),
-        value: formatCurrency(vatAmountValue),
-        valueClassName: "text-foreground",
-      },
-      {
-        key: "total",
-        label: tForms("services.total_price"),
-        value: formatCurrency(totalPrice),
-        valueClassName: "text-emerald-500",
+        valueClassName: vatExempt ? "text-emerald-500" : "text-foreground",
       },
     ];
+
+    const vatRows =
+      !vatExempt && resolvedVatRate > 0
+        ? [
+            {
+              key: "vat",
+              label: tForms("services.vat_label_compact", {
+                rate: formatRate(resolvedVatRate),
+              }),
+              value: formatCurrency(vatAmountValue),
+              valueClassName: "text-foreground",
+            },
+          ]
+        : [];
+
+    const totalRows = vatExempt
+      ? []
+      : [
+          {
+            key: "total",
+            label: tForms("services.total_price"),
+            value: formatCurrency(totalPrice),
+            valueClassName: "text-emerald-500",
+          },
+        ];
+
+    const pricingRows = [...baseRows, ...vatRows, ...totalRows];
 
     return (
       <div

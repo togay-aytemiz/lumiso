@@ -12,6 +12,11 @@ jest.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
+jest.mock("@/lib/payments/outstanding", () => ({
+  syncProjectOutstandingPayment: jest.fn().mockResolvedValue(undefined),
+  recalculateProjectOutstanding: jest.fn().mockResolvedValue(undefined),
+}));
+
 type QueryResult<TData> = {
   data: TData;
   error: unknown | null;
@@ -20,6 +25,7 @@ type QueryResult<TData> = {
 type OrderChain<TData> = {
   select: jest.Mock<OrderChain<TData>, []>;
   eq: jest.Mock<OrderChain<TData>, [string, unknown]>;
+  in: jest.Mock<OrderChain<TData>, [string, unknown[]]>;
   order: jest.Mock<OrderChain<TData> | Promise<QueryResult<TData>>, [string, unknown?]>;
   __orderCalls?: number;
 };
@@ -29,6 +35,7 @@ const createOrderChain = <TData>(result: QueryResult<TData>, requiredOrders = 1)
 
   chain.select = jest.fn(() => chain as OrderChain<TData>);
   chain.eq = jest.fn(() => chain as OrderChain<TData>);
+  chain.in = jest.fn(() => chain as OrderChain<TData>);
   chain.order = jest.fn(() => {
     chain.__orderCalls = (chain.__orderCalls || 0) + 1;
     if (chain.__orderCalls >= requiredOrders) {
@@ -173,7 +180,13 @@ describe("ProjectService.fetchProjects", () => {
         case "project_services":
           return createSelectInChain(servicesData);
         case "payments":
-          return createSelectInChain(paymentsData);
+          return {
+            select: jest.fn(() => ({
+              in: jest.fn(() => ({
+                eq: jest.fn(() => Promise.resolve(paymentsData)),
+              })),
+            })),
+          };
         case "leads":
           return {
             select: jest.fn(() => ({

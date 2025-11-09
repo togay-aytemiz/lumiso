@@ -35,6 +35,11 @@ jest.mock("@/lib/organizationUtils", () => ({
   getUserOrganizationId: jest.fn().mockResolvedValue("org-123"),
 }));
 
+jest.mock("@/lib/payments/outstanding", () => ({
+  syncProjectOutstandingPayment: jest.fn().mockResolvedValue(undefined),
+  recalculateProjectOutstanding: jest.fn(),
+}));
+
 jest.mock("../ProjectCreationWizard", () => ({
   ProjectCreationWizard: jest.fn(() => {
     const { state } = useProjectCreationContext();

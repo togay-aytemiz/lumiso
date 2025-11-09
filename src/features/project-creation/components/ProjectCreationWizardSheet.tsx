@@ -7,6 +7,7 @@ import { useProjectCreationContext } from "../hooks/useProjectCreationContext";
 import { ProjectCreationStepId, type ProjectServiceLineItem } from "../types";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
+import { syncProjectOutstandingPayment } from "@/lib/payments/outstanding";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslation } from "react-i18next";
 import { trackEvent } from "@/lib/telemetry";
@@ -277,6 +278,14 @@ const ProjectCreationWizardSheetInner = ({
 
         if (servicesError) throw servicesError;
       }
+
+      await syncProjectOutstandingPayment({
+        projectId: newProject.id,
+        organizationId,
+        userId: user.id,
+        contractTotalOverride: contractTotal,
+        description: state.details.name ? `Outstanding balance — ${state.details.name}` : undefined,
+      });
 
       toast({
         title: tCommon("actions.success"),

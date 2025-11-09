@@ -3,6 +3,7 @@ import type { Database } from '@/integrations/supabase/types';
 import { BaseEntityService } from './BaseEntityService';
 import { logAuditEvent } from '@/lib/auditLog';
 import type { Json } from "@/integrations/supabase/types";
+import { syncProjectOutstandingPayment } from "@/lib/payments/outstanding";
 
 export interface ProjectWithDetails {
   id: string;
@@ -327,6 +328,12 @@ export class ProjectService extends BaseEntityService {
       .single();
 
     if (error || !projectData) throw new Error('Failed to create project');
+    await syncProjectOutstandingPayment({
+      projectId: projectData.id,
+      organizationId,
+      userId: user.id,
+      description: `Outstanding balance — ${data.name}`,
+    });
 
     // Fetch and return the created project with all related data
     const { active, archived } = await this.fetchProjects(true);
@@ -361,7 +368,6 @@ export class ProjectService extends BaseEntityService {
       .single();
 
     if (error || !result) return null;
-
     if (previousRow) {
       void logAuditEvent({
         entityType: "project",
@@ -369,6 +375,15 @@ export class ProjectService extends BaseEntityService {
         action: "updated",
         oldValues: previousRow as unknown as Json,
         newValues: result as unknown as Json,
+      });
+    }
+
+    if (typeof data.base_price === "number") {
+      await syncProjectOutstandingPayment({
+        projectId: id,
+        organizationId: result.organization_id,
+        userId: result.user_id,
+        description: `Outstanding balance — ${result.name}`,
       });
     }
 
@@ -443,7 +458,8 @@ export class ProjectService extends BaseEntityService {
     const { data, error } = await supabase
       .from<PaymentRow>('payments')
       .select('project_id, amount, status')
-      .in('project_id', projectIds);
+      .in('project_id', projectIds)
+      .eq('entry_kind', 'recorded');
 
     if (error || !data) {
       return [];

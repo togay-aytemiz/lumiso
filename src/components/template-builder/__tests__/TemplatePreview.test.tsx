@@ -370,4 +370,37 @@ describe("EmailPreview", () => {
     expect(screen.getByText(/Subject for Alice Example/)).toBeInTheDocument();
     expect(screen.getByText(/Preheader for Lumiso Studios/)).toBeInTheDocument();
   });
+
+  it("applies the organization brand color to CTA buttons", () => {
+    useOrganizationSettingsMock.mockReturnValue({
+      settings: {
+        primary_brand_color: "#842E5C",
+      },
+    });
+
+    const ctaBlock: TemplateBlock = {
+      id: "cta-1",
+      type: "cta",
+      visible: true,
+      order: 1,
+      data: {
+        text: "Book Now",
+        variant: "primary",
+        link: "",
+      },
+    };
+
+    render(
+      <EmailPreview
+        blocks={[ctaBlock]}
+        mockData={previewData}
+        device="desktop"
+        emailSubject="Subject"
+        preheader="Preheader"
+      />
+    );
+
+    const button = screen.getByRole("button", { name: /Book Now/i });
+    expect(button).toHaveStyle({ backgroundColor: "#842E5C" });
+  });
 });

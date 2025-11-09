@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -1182,6 +1183,13 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
         width: shouldShowDesktopSidebar ? "var(--settings-rail-width)" : "0px",
       }
     : undefined;
+
+  useLayoutEffect(() => {
+    if (isMobile || !isSettingsRoot) {
+      return;
+    }
+    pushSettingsPath("/settings/profile", { replace: true });
+  }, [isMobile, isSettingsRoot, pushSettingsPath]);
 
   useEffect(() => {
     if (isMobile) {

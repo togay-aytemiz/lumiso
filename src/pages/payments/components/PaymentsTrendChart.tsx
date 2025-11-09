@@ -13,7 +13,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 interface PaymentsTrendChartProps {
   hasTrendData: boolean;
   chartConfig: ChartConfig;
-  chartLegendLabels: { paid: string; due: string };
+  chartLegendLabels: { paid: string; due: string; refund: string };
   paymentsTrend: PaymentTrendPoint[];
   trendGrouping: TrendGrouping;
   onTrendGroupingChange: (grouping: TrendGrouping) => void;
@@ -115,6 +115,18 @@ export function PaymentsTrendChart({
                 strokeWidth={2}
                 dot={false}
                 strokeDasharray="4 4"
+                activeDot={{ r: 5 }}
+                isAnimationActive={paymentsTrend.length > 1}
+                animationDuration={600}
+              />
+              <Line
+                key={`refund-${trendGrouping}-${rangeLabel}`}
+                type="monotone"
+                dataKey="refund"
+                stroke={chartConfig.refund.color}
+                strokeWidth={2}
+                dot={false}
+                strokeDasharray="2 6"
                 activeDot={{ r: 5 }}
                 isAnimationActive={paymentsTrend.length > 1}
                 animationDuration={600}

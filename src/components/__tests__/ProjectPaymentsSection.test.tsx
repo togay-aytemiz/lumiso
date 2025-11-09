@@ -4,6 +4,11 @@ import { mockSupabaseClient } from "@/utils/testUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
+jest.mock("@/lib/payments/outstanding", () => ({
+  recalculateProjectOutstanding: jest.fn(),
+  syncProjectOutstandingPayment: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock("@/integrations/supabase/client", () => ({
   supabase: mockSupabaseClient,
 }));
@@ -62,14 +67,16 @@ const setupSupabaseFrom = ({
     }),
   });
 
-  const paymentsOrderFinal = jest
-    .fn()
-    .mockResolvedValue({ data: payments, error: null });
-  const paymentsOrder = jest.fn().mockReturnValue({ order: paymentsOrderFinal });
+  const paymentsOrderFinal = jest.fn().mockResolvedValue({ data: payments, error: null });
+  const paymentsOrder = jest.fn().mockReturnValue(paymentsOrderFinal);
+  const paymentsEntryKindEq = jest.fn().mockReturnValue({
+    order: paymentsOrder,
+  });
+  const paymentsProjectEq = jest.fn().mockReturnValue({
+    eq: paymentsEntryKindEq,
+  });
   const selectPayments = jest.fn().mockReturnValue({
-    eq: jest.fn().mockReturnValue({
-      order: paymentsOrder,
-    }),
+    eq: paymentsProjectEq,
   });
 
   const selectServices = jest.fn().mockReturnValue({
@@ -129,8 +136,12 @@ describe("ProjectPaymentsSection", () => {
         status: "due",
         date_paid: null,
         created_at: "2024-05-01T00:00:00Z",
+        updated_at: "2024-05-01T00:00:00Z",
         type: "balance_due",
         deposit_allocation: 0,
+        entry_kind: "recorded",
+        scheduled_initial_amount: null,
+        scheduled_remaining_amount: null,
       },
       {
         id: "pay-paid",
@@ -140,8 +151,12 @@ describe("ProjectPaymentsSection", () => {
         status: "paid",
         date_paid: "2024-05-02T00:00:00Z",
         created_at: "2024-05-02T00:00:00Z",
+        updated_at: "2024-05-02T00:00:00Z",
         type: "deposit_payment",
         deposit_allocation: 200,
+        entry_kind: "recorded",
+        scheduled_initial_amount: null,
+        scheduled_remaining_amount: null,
       },
       {
         id: "pay-due",
@@ -151,8 +166,12 @@ describe("ProjectPaymentsSection", () => {
         status: "due",
         date_paid: null,
         created_at: "2024-05-03T00:00:00Z",
+        updated_at: "2024-05-03T00:00:00Z",
         type: "manual",
         deposit_allocation: 0,
+        entry_kind: "recorded",
+        scheduled_initial_amount: null,
+        scheduled_remaining_amount: null,
       },
     ];
 

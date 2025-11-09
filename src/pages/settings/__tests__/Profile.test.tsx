@@ -356,7 +356,6 @@ describe("Profile settings page", () => {
   it("shows a loading skeleton while profile data is loading", async () => {
     const profileSectionMock = createSectionMock({
       fullName: "",
-      phoneNumber: "",
     });
     const workingHoursSectionMock = createSectionMock({ workingHours: [] });
 
@@ -392,7 +391,6 @@ describe("Profile settings page", () => {
   it("preloads profile and working hours data into their sections", async () => {
     const profileSectionMock = createSectionMock({
       fullName: "",
-      phoneNumber: "",
     });
     const workingHoursSectionMock = createSectionMock({ workingHours: [] });
 
@@ -431,7 +429,6 @@ describe("Profile settings page", () => {
     await waitFor(() => {
       expect(profileSectionMock.setValues).toHaveBeenCalledWith({
         fullName: "Jane Doe",
-        phoneNumber: "+1 555 0100",
       });
     });
 
@@ -445,7 +442,7 @@ describe("Profile settings page", () => {
   });
 
   it("renders the onboarding tutorial when the tutorial query parameter is present", async () => {
-    const profileSectionMock = createSectionMock({ fullName: "", phoneNumber: "" });
+    const profileSectionMock = createSectionMock({ fullName: "" });
     const workingHoursSectionMock = createSectionMock({ workingHours: [] });
 
     mockUseSettingsCategorySection.mockImplementation(({ sectionId }: SettingsCategorySectionArgs) =>
@@ -500,7 +497,7 @@ describe("Profile settings page", () => {
   });
 
   it("updates working hours and surfaces a success toast", async () => {
-    const profileSectionMock = createSectionMock({ fullName: "Jane", phoneNumber: "" });
+    const profileSectionMock = createSectionMock({ fullName: "Jane" });
     const workingHoursSectionMock = createSectionMock({ workingHours: [] });
 
     mockUseSettingsCategorySection.mockImplementation(({ sectionId }: SettingsCategorySectionArgs) =>

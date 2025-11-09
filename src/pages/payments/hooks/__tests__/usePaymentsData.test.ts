@@ -38,6 +38,7 @@ type QueryBuilder<T extends QueryResult> = PromiseLike<T> & {
   select: jest.Mock<QueryBuilder<T>, [string?]>;
   ilike: jest.Mock<QueryBuilder<T>, [string, string]>;
   in: jest.Mock<QueryBuilder<T>, [string, unknown[]]>;
+  lt: jest.Mock<QueryBuilder<T>, [string, unknown]>;
   or: jest.Mock<QueryBuilder<T>, [string]>;
   gte: jest.Mock<QueryBuilder<T>, [string, unknown]>;
   lte: jest.Mock<QueryBuilder<T>, [string, unknown]>;
@@ -53,6 +54,7 @@ const createQueryBuilder = <T extends QueryResult>(result: T): QueryBuilder<T> =
     select: jest.fn(() => builder),
     ilike: jest.fn(() => builder),
     in: jest.fn(() => builder),
+    lt: jest.fn(() => builder),
     or: jest.fn(() => builder),
     gte: jest.fn(() => builder),
     lte: jest.fn(() => builder),
@@ -230,7 +232,7 @@ describe("usePaymentsData", () => {
     expect(tableBuilder.range).toHaveBeenCalledWith(0, 1);
     expect(tableBuilder.order).toHaveBeenCalledWith("created_at", { ascending: false });
     expect(metricsBuilder.select).toHaveBeenCalledWith(
-      "id, amount, status, type, date_paid, created_at, project_id"
+      "id, amount, status, type, date_paid, created_at, updated_at, project_id, entry_kind, scheduled_initial_amount, scheduled_remaining_amount"
     );
     expect(hydrationProjectsBuilder.select).toHaveBeenCalledWith(PROJECT_SELECT_FIELDS);
     expect(hydrationProjectsBuilder.in).toHaveBeenCalledWith("id", [
@@ -312,10 +314,36 @@ describe("usePaymentsData", () => {
     expect(result.current.totalCount).toBe(3);
     expect(result.current.metricsPayments).toEqual(nextMetrics);
     expect(nextMetricsBuilder.select).toHaveBeenCalledWith(
-      "id, amount, status, type, date_paid, created_at, project_id"
+      "id, amount, status, type, date_paid, created_at, updated_at, project_id, entry_kind, scheduled_initial_amount, scheduled_remaining_amount"
     );
     expect(nextTableBuilder.range).toHaveBeenCalledWith(2, 3);
     expect(queues.payments).toHaveLength(0);
+  });
+
+  it("applies refund-only status filter via amount comparison", async () => {
+    const tableBuilder = enqueue(
+      "payments",
+      createQueryBuilder({ data: [], error: null, count: 0 })
+    );
+    const metricsBuilder = enqueue(
+      "payments",
+      createQueryBuilder({ data: [], error: null })
+    );
+
+    renderHook(
+      (props: typeof baseProps & { onError: (error: Error) => void }) =>
+        usePaymentsData(props),
+      {
+        initialProps: {
+          ...baseProps,
+          statusFilters: ["refund"],
+          onError,
+        },
+      }
+    );
+
+    await waitFor(() => expect(tableBuilder.lt).toHaveBeenCalledWith("amount", 0));
+    await waitFor(() => expect(metricsBuilder.lt).toHaveBeenCalledWith("amount", 0));
   });
 
   it("applies search, type, and amount filters when fetching data", async () => {
@@ -496,7 +524,7 @@ describe("usePaymentsData", () => {
     expect(tableBuilder.range).toHaveBeenCalledWith(0, 24);
 
     expect(metricsBuilder.select).toHaveBeenCalledWith(
-      "id, amount, status, type, date_paid, created_at, project_id"
+      "id, amount, status, type, date_paid, created_at, updated_at, project_id, entry_kind, scheduled_initial_amount, scheduled_remaining_amount"
     );
     expect(metricsBuilder.ilike).toHaveBeenCalledWith("status", "paid");
     expect(metricsBuilder.in).toHaveBeenCalledWith("type", ["extra"]);

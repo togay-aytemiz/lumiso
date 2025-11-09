@@ -397,21 +397,30 @@ export default function General() {
             }
           />
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="brand-color">{t("settings.general.branding.primaryBrandColor")}</Label>
+            <Label htmlFor="brand-color-input">{t("settings.general.branding.brandColor")}</Label>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Input
-                id="brand-color"
-                type="color"
-                value={brandingSection.values.brandColor}
-                onChange={(e) => brandingSection.updateValue("brandColor", e.target.value)}
-                className="h-12 w-20 rounded-xl border border-border/60 bg-card p-1"
-              />
+              <div className="relative h-12 w-12">
+                <input
+                  id="brand-color-input"
+                  type="color"
+                  value={brandingSection.values.brandColor}
+                  onChange={(e) => brandingSection.updateValue("brandColor", e.target.value)}
+                  className="peer absolute inset-0 h-full w-full cursor-pointer rounded-full opacity-0"
+                  aria-label={t("settings.general.branding.brandColor")}
+                  title={t("settings.general.branding.brandColorHelp")}
+                />
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none h-12 w-12 rounded-full border border-border/60 shadow-[inset_0_1px_3px_rgba(15,23,42,0.25)] transition-shadow peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-[hsl(var(--accent-500))]"
+                  style={{ backgroundColor: brandingSection.values.brandColor }}
+                />
+              </div>
               <Input
                 value={brandingSection.values.brandColor}
                 onChange={(e) => handleBrandColorChange(e.target.value)}
                 placeholder="#1EB29F"
                 pattern="^#[0-9A-Fa-f]{6}$"
-                className="sm:max-w-xs"
+                className="font-mono uppercase sm:max-w-xs"
               />
             </div>
             <p className="text-xs text-muted-foreground">

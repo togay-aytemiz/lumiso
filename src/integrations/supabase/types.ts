@@ -829,9 +829,12 @@ export type Database = {
           date_paid: string | null
           description: string | null
           deposit_allocation: number
+          entry_kind: "recorded" | "scheduled"
           id: string
           organization_id: string | null
           project_id: string
+          scheduled_initial_amount: number | null
+          scheduled_remaining_amount: number | null
           status: string
           type: "manual" | "deposit_payment" | "balance_due"
           updated_at: string
@@ -843,9 +846,12 @@ export type Database = {
           date_paid?: string | null
           description?: string | null
           deposit_allocation?: number
+          entry_kind?: "recorded" | "scheduled"
           id?: string
           organization_id?: string | null
           project_id: string
+          scheduled_initial_amount?: number | null
+          scheduled_remaining_amount?: number | null
           status: string
           type?: "manual" | "deposit_payment" | "balance_due"
           updated_at?: string
@@ -857,9 +863,12 @@ export type Database = {
           date_paid?: string | null
           description?: string | null
           deposit_allocation?: number
+          entry_kind?: "recorded" | "scheduled"
           id?: string
           organization_id?: string | null
           project_id?: string
+          scheduled_initial_amount?: number | null
+          scheduled_remaining_amount?: number | null
           status?: string
           type?: "manual" | "deposit_payment" | "balance_due"
           updated_at?: string

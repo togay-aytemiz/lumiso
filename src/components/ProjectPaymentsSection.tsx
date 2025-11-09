@@ -60,6 +60,7 @@ import {
 } from "@/lib/payments/servicePricing";
 import { fetchProjectServiceRecords, type ProjectServiceRecord } from "@/lib/services/projectServiceRecords";
 import type { Database } from "@/integrations/supabase/types";
+import { recalculateProjectOutstanding, syncProjectOutstandingPayment } from "@/lib/payments/outstanding";
 
 type PaymentStatus = "paid" | "due";
 type PaymentType = "manual" | "deposit_payment" | "balance_due";
@@ -75,6 +76,9 @@ interface Payment {
   updated_at: string;
   type: PaymentType;
   deposit_allocation: number;
+  entry_kind?: "recorded" | "scheduled";
+  scheduled_initial_amount?: number | null;
+  scheduled_remaining_amount?: number | null;
 }
 
 
@@ -184,6 +188,7 @@ export function ProjectPaymentsSection({
   const [isSnapshotUpdating, setIsSnapshotUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const hasLoadedInitially = useRef(false);
+  const lastOutstandingSyncRef = useRef<{ projectId: string; total: number } | null>(null);
   const toastRef = useRef(toast);
   const tRef = useRef(t);
   const [showAllPayments, setShowAllPayments] = useState(false);
@@ -220,6 +225,7 @@ export function ProjectPaymentsSection({
         .from<Payment>("payments")
         .select("*")
         .eq("project_id", projectId)
+        .eq("entry_kind", "recorded")
         .order("created_at", { ascending: false });
       if (error) throw error;
       setPayments(data ?? []);
@@ -284,6 +290,7 @@ export function ProjectPaymentsSection({
     }
   }, [showAllPayments]);
 
+
   const handlePaymentsRefresh = useCallback(async () => {
     await fetchPayments();
     onPaymentsUpdated?.();
@@ -309,6 +316,7 @@ export function ProjectPaymentsSection({
           defaultValue: "Payment deleted successfully"
         })
       });
+      await recalculateProjectOutstanding(projectId);
       await handlePaymentsRefresh();
     } catch (error) {
       toast({
@@ -414,6 +422,30 @@ export function ProjectPaymentsSection({
       remaining
     };
   }, [project, serviceRecords, depositContributionPayments, payments]);
+
+  useEffect(() => {
+    if (!project || isLoading) return;
+    const total = Number(financialSummary.contractTotal ?? 0);
+    if (!Number.isFinite(total)) {
+      return;
+    }
+    const previous = lastOutstandingSyncRef.current;
+    if (previous && previous.projectId === projectId && previous.total === total) {
+      return;
+    }
+    lastOutstandingSyncRef.current = { projectId, total };
+    void (async () => {
+      try {
+        await syncProjectOutstandingPayment({
+          projectId,
+          contractTotalOverride: total,
+          description: project.name ? `Outstanding balance — ${project.name}` : undefined,
+        });
+      } catch (error) {
+        console.warn("Unable to sync outstanding payments", error);
+      }
+    })();
+  }, [financialSummary.contractTotal, isLoading, project, projectId]);
 
   const handleDepositConfigSaved = useCallback(
     async (config: ProjectDepositConfig) => {
@@ -1231,6 +1263,7 @@ function GeneralPaymentDialog({
 
       if (error) throw error;
 
+      await recalculateProjectOutstanding(projectId);
       toast.success(t("payments.quick.balance_success", { defaultValue: "Payment recorded." }));
       onCompleted();
       onOpenChange(false);
@@ -1526,6 +1559,7 @@ function RefundPaymentDialog({
 
       if (error) throw error;
 
+      await recalculateProjectOutstanding(projectId);
       toast.success(t("payments.refund.success", { defaultValue: "Refund recorded." }));
       onCompleted();
       onOpenChange(false);

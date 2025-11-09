@@ -1093,7 +1093,7 @@
         "deleteLogoConfirm": "Logonuzu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
         "deleteLogoButton": "Logo Sil",
         "brandColor": "Marka Rengi",
-        "brandColorHelp": "Arayüz için birincil marka renginizi seçin",
+        "brandColorHelp": "Müşteri e-postalarında, otomatik hatırlatmalarda ve aksiyon butonlarında görünür. Renk ön izlemesine tıklayarak seçiciyi açabilir veya geçerli bir hex kodu yazabilirsiniz (örn. #1EB29F).",
         "company_name": "Şirket Adı",
         "company_name_placeholder": "örn., Tatlı Rüyalar Fotoğrafçılık",
         "company_name_help": "Müşterilere göründüğü şekliyle işletme adınız",
@@ -1418,16 +1418,18 @@
     },
     "metrics": {
       "overviewTitle": "Ödeme Özeti",
-      "totalInvoiced": "Toplam Faturalanan",
-      "totalPaid": "Toplam Ödenen",
-      "remainingBalance": "Bekleyen Bakiye",
-      "collectionRate": "Tahsilat Oranı"
+      "totalInvoiced": "Toplam faturalanan",
+      "totalPaid": "Toplam tahsilat",
+      "totalRefunded": "İade edilen",
+      "remainingBalance": "Bekleyen bakiye",
+      "collectionRate": "Tahsilat oranı"
     },
     "chart": {
       "title": "Ödeme Trendleri",
       "legend": {
-        "paid": "Ödendi",
-        "due": "Bekleyen"
+        "paid": "Tahsil",
+        "due": "Bekleyen",
+        "refund": "İade"
       },
       "empty": "Bu dönem için ödeme kaydı olduğunda trend grafiği görünecek.",
       "groupingLabel": "Görünüm",
@@ -1477,13 +1479,22 @@
       "type": "Tür"
     },
     "status": {
-      "paid": "Ödendi",
-      "due": "Bekliyor"
+      "paid": "Tahsil",
+      "due": "Bekleyen",
+      "refund": "İade"
+    },
+    "refund": {
+      "badge": "İade",
+      "amountLabel": "İade"
     },
     "type": {
       "deposit": "Kapora",
       "balance": "Kalan ödeme",
-      "manual": "Manuel"
+      "manual": "Manuel",
+      "scheduled": "Planlanan"
+    },
+    "scheduled": {
+      "defaultDescription": "Bekleyen bakiye"
     },
     "emptyState": {
       "noPaymentsWithLabel": "\"{{labelFilter}}\" etiketli ödeme bulunamadı.",

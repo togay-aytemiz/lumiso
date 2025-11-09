@@ -7,6 +7,10 @@ export interface Payment {
   type: string;
   project_id: string;
   created_at: string;
+  updated_at?: string;
+  entry_kind?: "recorded" | "scheduled";
+  scheduled_initial_amount?: number | null;
+  scheduled_remaining_amount?: number | null;
   projects: {
     id: string;
     name: string;
@@ -29,6 +33,7 @@ export interface Payment {
 export interface PaymentMetrics {
   totalPaid: number;
   totalInvoiced: number;
+  totalRefunded: number;
   remainingBalance: number;
   collectionRate: number;
 }
@@ -37,6 +42,7 @@ export interface PaymentTrendPoint {
   period: string;
   paid: number;
   due: number;
+  refund: number;
 }
 
 export type TrendGrouping = "day" | "week" | "month";
@@ -64,7 +70,7 @@ export type DateFilterType =
   | "allTime"
   | "custom";
 
-export type PaymentStatusFilter = "paid" | "due";
+export type PaymentStatusFilter = "paid" | "due" | "refund";
 export type PaymentTypeFilter = "deposit_payment" | "balance_due" | "manual";
 
 export type ProjectDetails = NonNullable<Payment["projects"]>;

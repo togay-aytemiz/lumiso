@@ -1,8 +1,8 @@
 import { PAYMENT_COLORS } from "./paymentColors";
 
 describe("paymentColors", () => {
-  it("exposes paid and due status color mappings", () => {
-    expect(Object.keys(PAYMENT_COLORS)).toEqual(["paid", "due"]);
+  it("exposes paid, due, and refund status color mappings", () => {
+    expect(Object.keys(PAYMENT_COLORS)).toEqual(["paid", "due", "refund"]);
   });
 
   it("provides consistent styling fields for each status", () => {

@@ -1,4 +1,4 @@
-import { assert, assertEquals, assertRejects } from "std/testing/asserts.ts";
+import { assert, assertEquals, assertRejects, assertStringIncludes } from "std/testing/asserts.ts";
 import {
   checkNotificationEnabled,
   updateNotificationStatus,
@@ -8,6 +8,7 @@ import {
   setResendClientForTests,
   resetResendClientForTests,
 } from "../notification-processor/index.ts";
+import { generateModernDailySummaryEmail } from "../notification-processor/_templates/enhanced-daily-summary-modern.ts";
 
 type MaybeSingleRow = { data: Record<string, unknown> | null; error: null };
 
@@ -281,4 +282,25 @@ Deno.test("processWorkflowMessage renders template variables before sending", as
   assertEquals(payload.html, "<p>Project: Wedding</p>");
 
   resetResendClientForTests();
+});
+
+Deno.test("generateModernDailySummaryEmail applies the organization brand color", () => {
+  const html = generateModernDailySummaryEmail(
+    [],
+    [],
+    { leads: [], activities: [] },
+    [],
+    {
+      businessName: "Studio",
+      brandColor: "#842E5C",
+      dateFormat: "DD/MM/YYYY",
+      timeFormat: "12-hour",
+      timezone: "UTC",
+      language: "en",
+      baseUrl: "https://app.lumiso.test",
+    },
+  );
+
+  assertStringIncludes(html, "color: #842E5C;");
+  assertStringIncludes(html, "linear-gradient(135deg, #842E5C1a");
 });

@@ -1093,7 +1093,7 @@
         "deleteLogoConfirm": "Are you sure you want to delete your logo? This action cannot be undone.",
         "deleteLogoButton": "Delete Logo",
         "brandColor": "Brand Color",
-        "brandColorHelp": "Choose your primary brand color for the interface",
+        "brandColorHelp": "Appears on client emails, automated reminders, and CTA buttons. Click the color preview to open the picker or type a valid hex value (e.g., #1EB29F).",
         "brandColorHelpAlt": "Used in client-facing UI and outgoing messages. Must be a valid hex color (e.g., #1EB29F)",
         "company_name": "Company Name",
         "company_name_placeholder": "e.g., Sweet Dreams Photography",
@@ -1420,6 +1420,7 @@
       "overviewTitle": "Payment Overview",
       "totalInvoiced": "Total Invoiced",
       "totalPaid": "Total Paid",
+      "totalRefunded": "Refunded",
       "remainingBalance": "Outstanding Balance",
       "collectionRate": "Collection Rate"
     },
@@ -1427,7 +1428,8 @@
       "title": "Payment Trend",
       "legend": {
         "paid": "Paid",
-        "due": "Outstanding"
+        "due": "Outstanding",
+        "refund": "Refunds"
       },
       "empty": "Trend data will appear once payments are recorded for this period.",
       "groupingLabel": "Group by",
@@ -1478,12 +1480,21 @@
     },
     "status": {
       "paid": "Paid",
-      "due": "Due"
+      "due": "Due",
+      "refund": "Refund"
+    },
+    "refund": {
+      "badge": "Refund",
+      "amountLabel": "Refund"
     },
     "type": {
       "deposit": "Deposit",
       "balance": "Balance",
-      "manual": "Manual"
+      "manual": "Manual",
+      "scheduled": "Scheduled"
+    },
+    "scheduled": {
+      "defaultDescription": "Outstanding balance"
     },
     "emptyState": {
       "noPaymentsWithLabel": "No payments found with label containing \"{{labelFilter}}\".",

@@ -237,16 +237,16 @@
         "description": "Renk seçici ve hex kutusunun birbirini güncellediğini ve geçersiz değerde uyarı verdiğini doğrular.",
         "steps": [
           {
-            "action": "Renk seçiciden farklı bir renk seçin.",
-            "expected_result": "Yanındaki metin alanı aynı kodu gösterir."
+            "action": "Yuvarlak renk ön izlemesine tıklayıp açılan seçiciden farklı bir renk seçin.",
+            "expected_result": "Ön izleme balonu ve yanındaki hex alanı aynı kodu gösterir."
           },
           {
-            "action": "Metin alanına geçersiz bir değer (ör. `#12G`) yazın.",
-            "expected_result": "Tarayıcı alanı geçersiz olarak işaretler ve kaydet butonu pasifleşir."
+            "action": "Hex alanına geçersiz bir değer (ör. `#12G`) yazıp alandan çıkın.",
+            "expected_result": "Tarayıcı alanı kırmızı çerçeveyle işaretler, kaydet çubuğu pasif kalır ve ön izleme eski değerde kalır."
           },
           {
-            "action": "Metin alanına geçerli bir kod yazıp değişiklikleri kaydedin.",
-            "expected_result": "Bildirim çıkar ve sayfa yenilendiğinde renk aynı kalır."
+            "action": "Hex alanına geçerli bir kod (örn. `#842E5C`) yazıp 'Değişiklikleri Kaydet' butonuna basın.",
+            "expected_result": "Toast çıkar, sayfa yenilendiğinde renk ön izlemesi aynı tonu gösterir."
           }
         ],
         "expected_result": "Renk değerleri yalnızca geçerli formatta kaydedilir ve iki alan birbirini takip eder."
@@ -322,6 +322,46 @@
           }
         ],
         "expected_result": "Bölgesel ayarlar otomatik kaydedilir, alt çubuk tetiklenmez ve değerler sayfa yenilense bile korunur."
+      },
+      {
+        "external_id": "CRM-GENERAL-008",
+        "title": "Gerçek e-postada marka rengini doğrulama",
+        "description": "Marka rengini değiştirdikten sonra gönderilen test e-postasında yeni tonun kullanıldığını doğrular.",
+        "steps": [
+          {
+            "action": "Genel ayarlarda marka rengini benzersiz bir hex değere (örn. `#842E5C`) çekip 'Değişiklikleri Kaydet' butonuna basın.",
+            "expected_result": "Toast yeni rengin kaydedildiğini bildirir ve alan aynı kodu gösterir."
+          },
+          {
+            "action": "Şablonlar > Template Builder sayfasında e-posta kanalı açık bir şablonu açıp 'Test e-postası gönder' butonuyla kendinize mail atın.",
+            "expected_result": "Gönderim başarılı bildirimi çıkar ve birkaç saniye içinde posta kutunuza e-posta düşer."
+          },
+          {
+            "action": "Gelen test e-postasını açıp başlık bandı ve CTA butonunun rengini kontrol edin.",
+            "expected_result": "Üst bölümdeki vurgu alanı ve butonlar az önce seçtiğiniz hex koduyla eşleşir; eski yeşil varsayılan görünmez."
+          }
+        ],
+        "expected_result": "Gerçek e-posta çıktısı marka rengindeki değişikliği tamamen yansıtır."
+      },
+      {
+        "external_id": "CRM-GENERAL-009",
+        "title": "Template Builder ön izlemesinde marka rengini doğrulama",
+        "description": "Marka rengini güncelledikten sonra e-posta ön izlemesinde CTA ve bağlantıların aynı tonu aldığını doğrular.",
+        "steps": [
+          {
+            "action": "Genel ayarlarda yeni marka rengini kaydettikten sonra Şablonlar > Template Builder sayfasında herhangi bir e-posta şablonunu açın.",
+            "expected_result": "Sayfa yüklendiğinde CTA bloğu yeni hex kodunu kullanır."
+          },
+          {
+            "action": "Ön izleme panelinde masaüstü ve mobil görünümler arasında geçiş yapın.",
+            "expected_result": "Her iki görünümde de CTA arka planı ve metin varyantları yeni renk ile eşleşir."
+          },
+          {
+            "action": "Eğer şablonda metin türü CTA varsa, link stilinin rengini kontrol edin.",
+            "expected_result": "Metin tabanlı CTA'lar eski #1EB29F yerine kaydedilen hex kodunu kullanır."
+          }
+        ],
+        "expected_result": "Template Builder ön izlemesi hiçbir sayfa yenilemesi gerektirmeden marka rengini güncel tonuyla gösterir."
       }
     ]
   },

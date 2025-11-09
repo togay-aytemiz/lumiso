@@ -108,12 +108,10 @@ export default function Profile() {
     sectionName: t('settings.profile.title'),
     initialValues: {
       fullName: profile?.full_name || "",
-      phoneNumber: profile?.phone_number || "",
     },
     onSave: async (values) => {
       const result = await updateProfile({
         full_name: trimAndNormalizeSpaces(values.fullName),
-        phone_number: trimAndNormalizeSpaces(values.phoneNumber),
       });
       
       if (!result.success) {
@@ -162,16 +160,14 @@ export default function Profile() {
   const setProfileValues = profileSection.setValues;
   const setWorkingHoursValues = workingHoursSection.setValues;
   const profileFullName = profile?.full_name ?? "";
-  const profilePhone = profile?.phone_number ?? "";
 
   useEffect(() => {
     if (!profile || profileLoading) return;
 
     setProfileValues({
       fullName: profileFullName,
-      phoneNumber: profilePhone,
     });
-  }, [profile, profileLoading, profileFullName, profilePhone, setProfileValues]);
+  }, [profile, profileLoading, profileFullName, setProfileValues]);
 
   // Update working hours form when data loads
   const workingHoursSignature = useMemo(
@@ -271,7 +267,6 @@ export default function Profile() {
       content: (
         <div className="space-y-2 text-sm text-muted-foreground">
           <p>{t('settings.profile.tutorial.completeInfo.fullNameRequired')}</p>
-          <p>{t('settings.profile.tutorial.completeInfo.phoneOptional')}</p>
           <p>{t('settings.profile.tutorial.completeInfo.profilePhoto')}</p>
         </div>
       ),
@@ -410,20 +405,6 @@ export default function Profile() {
               onBlur={createTrimmedBlurHandler(
                 profileSection.values.fullName,
                 (value) => profileSection.updateValue("fullName", value)
-              )}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">{t('settings.profile.profileInfo.phoneNumber')}</Label>
-            <Input
-              id="phone"
-              type="tel"
-              placeholder={t('settings.profile.profileInfo.phoneNumberPlaceholder')}
-              value={profileSection.values.phoneNumber}
-              onChange={(e) => profileSection.updateValue("phoneNumber", e.target.value)}
-              onBlur={createTrimmedBlurHandler(
-                profileSection.values.phoneNumber,
-                (value) => profileSection.updateValue("phoneNumber", value)
               )}
             />
           </div>

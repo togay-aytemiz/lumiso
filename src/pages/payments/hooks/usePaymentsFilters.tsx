@@ -143,9 +143,11 @@ export function usePaymentsFilters({
   );
 
   const activeFilterCount = useMemo(() => {
-    const hasStatus =
-      filtersState.status.length > 0 &&
-      filtersState.status.length < STATUS_FILTER_OPTIONS.length;
+    const hasRefundSelected = filtersState.status.includes("refund");
+    const hasStatus = hasRefundSelected
+      ? filtersState.status.length === 1
+      : filtersState.status.length > 0 &&
+        filtersState.status.length < STATUS_FILTER_OPTIONS.length - 1;
     const hasType =
       filtersState.type.length > 0 &&
       filtersState.type.length < TYPE_FILTER_OPTIONS.length;
@@ -172,7 +174,11 @@ export function usePaymentsFilters({
 
   const handleStatusChange = useCallback(
     (values: PaymentStatusFilter[]) => {
-      updateState((prev) => ({ ...prev, status: values }));
+      const hasRefund = values.includes("refund");
+      const nextValues: PaymentStatusFilter[] = hasRefund
+        ? ["refund"]
+        : values.filter((value) => value !== "refund");
+      updateState((prev) => ({ ...prev, status: nextValues }));
     },
     [updateState]
   );
@@ -234,7 +240,12 @@ export function usePaymentsFilters({
     () =>
       STATUS_FILTER_OPTIONS.map((value) => ({
         value,
-        label: value === "paid" ? t("payments.status.paid") : t("payments.status.due"),
+        label:
+          value === "paid"
+            ? t("payments.status.paid")
+            : value === "due"
+              ? t("payments.status.due")
+              : t("payments.refund.badge", { defaultValue: "Refund" }),
       })),
     [t]
   );

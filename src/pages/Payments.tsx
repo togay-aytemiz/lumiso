@@ -318,7 +318,9 @@ const pageSize = PAGE_SIZE;
           case "lead":
             return payment.projects?.leads?.name ?? "";
           case "amount":
-            return Number(payment.amount);
+            return payment.entry_kind === "scheduled"
+              ? Number(payment.scheduled_remaining_amount ?? payment.amount)
+              : Number(payment.amount);
           case "description":
             return payment.description?.trim() ?? "";
           case "status": {
@@ -326,6 +328,9 @@ const pageSize = PAGE_SIZE;
             return isPaid ? t("payments.status.paid") : t("payments.status.due");
           }
           case "type":
+            if ((payment.entry_kind ?? "recorded") === "scheduled") {
+              return t("payments.type.scheduled");
+            }
             return payment.type === "deposit_payment"
               ? t("payments.type.deposit")
               : payment.type === "balance_due"
@@ -448,6 +453,10 @@ const pageSize = PAGE_SIZE;
         label: t("payments.chart.legend.due"),
         color: PAYMENT_COLORS.due.hex,
       },
+      refund: {
+        label: t("payments.chart.legend.refund"),
+        color: PAYMENT_COLORS.refund.hex,
+      },
     }),
     [t]
   );
@@ -456,6 +465,7 @@ const pageSize = PAGE_SIZE;
     () => ({
       paid: t("payments.chart.legend.paid"),
       due: t("payments.chart.legend.due"),
+      refund: t("payments.chart.legend.refund"),
     }),
     [t]
   );
@@ -485,6 +495,7 @@ const pageSize = PAGE_SIZE;
     type Bucket = {
       paid: number;
       due: number;
+      refund: number;
       labelStart: Date;
       labelEnd: Date;
     };
@@ -526,12 +537,17 @@ const pageSize = PAGE_SIZE;
     interval.forEach((date) => {
       const { key, labelStart, labelEnd } = getBucketDescriptor(date);
       if (!buckets.has(key)) {
-        buckets.set(key, { paid: 0, due: 0, labelStart, labelEnd });
+        buckets.set(key, { paid: 0, due: 0, refund: 0, labelStart, labelEnd });
       }
     });
 
     metricsPayments.forEach((payment) => {
-      const paymentDate = new Date(payment.date_paid || payment.created_at);
+      const entryKind = payment.entry_kind ?? "recorded";
+      const isScheduled = entryKind === "scheduled";
+      const amount = Number(payment.amount) || 0;
+      const paymentDate = isScheduled
+        ? new Date(payment.updated_at ?? payment.created_at)
+        : new Date(payment.date_paid || payment.created_at);
       if (Number.isNaN(paymentDate.getTime())) {
         return;
       }
@@ -546,12 +562,28 @@ const pageSize = PAGE_SIZE;
         return;
       }
 
-      const amount = Number(payment.amount) || 0;
+      if (isScheduled) {
+        const scheduledValue =
+          Number(
+            payment.scheduled_remaining_amount ??
+              payment.scheduled_initial_amount ??
+              payment.amount ??
+              0
+          ) || 0;
+        bucket.due += scheduledValue;
+        return;
+      }
+
       const isPaid = (payment.status || "").toLowerCase() === "paid";
+      const isRefund = amount < 0;
+
+      if (isRefund) {
+        bucket.refund += Math.abs(amount);
+      }
 
       if (isPaid) {
         bucket.paid += amount;
-      } else {
+      } else if (!isRefund) {
         bucket.due += amount;
       }
     });
@@ -585,29 +617,49 @@ const pageSize = PAGE_SIZE;
         period: formatLabel(bucket),
         paid: bucket.paid,
         due: bucket.due,
+        refund: bucket.refund,
       }));
   }, [metricsPayments, selectedDateRange, trendGrouping, dateLocale]);
 
   const metrics = useMemo((): PaymentMetrics => {
-    const totalInvoiced = metricsPayments.reduce(
-      (sum, p) => sum + Number(p.amount),
+    const recordedEntries = metricsPayments.filter(
+      (payment) => (payment.entry_kind ?? "recorded") !== "scheduled"
+    );
+    const scheduledEntries = metricsPayments.filter(
+      (payment) => (payment.entry_kind ?? "recorded") === "scheduled"
+    );
+
+    const totalPaid = recordedEntries
+      .filter((payment) => (payment.status || "").toLowerCase() === "paid" && Number(payment.amount) > 0)
+      .reduce((sum, payment) => sum + Number(payment.amount), 0);
+
+    const totalRefunded = recordedEntries
+      .filter((payment) => Number(payment.amount) < 0)
+      .reduce((sum, payment) => sum + Math.abs(Number(payment.amount)), 0);
+
+    const manualDueTotal = recordedEntries
+      .filter((payment) => (payment.status || "").toLowerCase() !== "paid")
+      .reduce((sum, payment) => sum + Number(payment.amount), 0);
+
+    const scheduledInitialTotal = scheduledEntries.reduce(
+      (sum, payment) => sum + Number(payment.scheduled_initial_amount ?? payment.amount ?? 0),
       0
     );
 
-    const totalPaid = metricsPayments
-      .filter((p) => (p.status || "").toLowerCase() === "paid")
-      .reduce((sum, p) => sum + Number(p.amount), 0);
+    const scheduledRemainingTotal = scheduledEntries.reduce(
+      (sum, payment) => sum + Number(payment.scheduled_remaining_amount ?? payment.amount ?? 0),
+      0
+    );
 
-    const remainingBalance = metricsPayments
-      .filter((p) => (p.status || "").toLowerCase() !== "paid")
-      .reduce((sum, p) => sum + Number(p.amount), 0);
-
-    const collectionRate =
-      totalInvoiced > 0 ? totalPaid / totalInvoiced : 0;
+    const totalInvoiced = scheduledInitialTotal + manualDueTotal;
+    const remainingBalance = scheduledRemainingTotal + manualDueTotal;
+    const netCollected = Math.max(totalPaid - totalRefunded, 0);
+    const collectionRate = totalInvoiced > 0 ? netCollected / totalInvoiced : 0;
 
     return {
       totalPaid,
       totalInvoiced,
+      totalRefunded,
       remainingBalance,
       collectionRate,
     };
@@ -621,7 +673,7 @@ const pageSize = PAGE_SIZE;
   };
 
   const hasTrendData = paymentsTrend.some(
-    (point) => Math.abs(point.paid) > 0 || Math.abs(point.due) > 0
+    (point) => Math.abs(point.paid) > 0 || Math.abs(point.due) > 0 || Math.abs(point.refund) > 0
   );
 
   const hasSearchTerm = filtersState.search.trim().length >= SEARCH_MIN_CHARS;
@@ -686,7 +738,9 @@ const pageSize = PAGE_SIZE;
         .map((value) =>
           value === "paid"
             ? t("payments.status.paid")
-            : t("payments.status.due")
+            : value === "due"
+              ? t("payments.status.due")
+              : t("payments.refund.badge", { defaultValue: "Refund" })
         )
         .join(", ");
 

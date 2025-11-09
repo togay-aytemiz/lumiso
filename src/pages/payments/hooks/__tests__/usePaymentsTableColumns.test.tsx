@@ -31,6 +31,10 @@ describe("usePaymentsTableColumns", () => {
     type: "balance_due",
     project_id: "project-1",
     created_at: "2024-05-01T00:00:00Z",
+    updated_at: "2024-05-02T00:00:00Z",
+    entry_kind: "recorded",
+    scheduled_initial_amount: null,
+    scheduled_remaining_amount: null,
     projects: {
       id: "project-1",
       name: "Aurora",
@@ -126,6 +130,26 @@ describe("usePaymentsTableColumns", () => {
     expect(formatAmount).toHaveBeenCalledWith(150);
     expect(amountView.getByText("$150")).toBeInTheDocument();
     amountView.unmount();
+
+    formatAmount.mockClear();
+    const refundAmountView = render(amountColumn!.render({ ...baseRow, amount: -75 }));
+    expect(formatAmount).toHaveBeenCalledWith(75);
+    expect(refundAmountView.getByText("-$75")).toBeInTheDocument();
+    refundAmountView.unmount();
+
+    formatAmount.mockClear();
+    const scheduledAmountView = render(
+      amountColumn!.render({
+        ...baseRow,
+        entry_kind: "scheduled",
+        amount: 5000,
+        scheduled_initial_amount: 5000,
+        scheduled_remaining_amount: 3200,
+      })
+    );
+    expect(formatAmount).toHaveBeenCalledWith(3200);
+    expect(scheduledAmountView.getByText("$3200")).toBeInTheDocument();
+    scheduledAmountView.unmount();
   });
 
   it("formats dates and statuses while applying payment colors", () => {
@@ -166,6 +190,13 @@ describe("usePaymentsTableColumns", () => {
     });
     dueStatusView.unmount();
 
+    const refundStatusView = render(statusColumn!.render({ ...baseRow, amount: -50 }));
+    const refundBadge = refundStatusView.getByText("payments.refund.badge");
+    PAYMENT_COLORS.refund.badgeClass.split(" ").forEach((className) => {
+      expect(refundBadge).toHaveClass(className);
+    });
+    refundStatusView.unmount();
+
     const balanceTypeView = render(typeColumn!.render(baseRow));
     expect(balanceTypeView.getByText("payments.type.balance")).toBeInTheDocument();
     balanceTypeView.unmount();
@@ -177,5 +208,11 @@ describe("usePaymentsTableColumns", () => {
     const manualTypeView = render(typeColumn!.render({ ...baseRow, type: "manual" }));
     expect(manualTypeView.getByText("payments.type.manual")).toBeInTheDocument();
     manualTypeView.unmount();
+
+    const scheduledTypeView = render(
+      typeColumn!.render({ ...baseRow, entry_kind: "scheduled" })
+    );
+    expect(scheduledTypeView.getByText("payments.type.scheduled")).toBeInTheDocument();
+    scheduledTypeView.unmount();
   });
 });

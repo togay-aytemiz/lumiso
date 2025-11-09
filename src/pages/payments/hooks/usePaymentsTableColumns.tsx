@@ -87,7 +87,29 @@ export function usePaymentsTableColumns({
         sortId: "amount",
         align: "right",
         minWidth: "140px",
-        render: (row) => formatAmount(Number(row.amount)),
+        render: (row) => {
+          const amountValue = Number(row.amount);
+          const entryKind = row.entry_kind ?? "recorded";
+          const scheduledRemaining = Number(
+            row.scheduled_remaining_amount ?? row.amount ?? 0
+          );
+          if (entryKind === "scheduled") {
+            return (
+              <span className="tabular-nums font-semibold">
+                {formatAmount(Math.max(scheduledRemaining, 0))}
+              </span>
+            );
+          }
+          const isRefund = Number.isFinite(amountValue) && amountValue < 0;
+          if (isRefund) {
+            return (
+              <span className="tabular-nums font-semibold text-destructive">
+                -{formatAmount(Math.abs(amountValue))}
+              </span>
+            );
+          }
+          return <span className="tabular-nums">{formatAmount(amountValue)}</span>;
+        },
       },
       {
         id: "description",
@@ -106,16 +128,27 @@ export function usePaymentsTableColumns({
         hideable: true,
         minWidth: "160px",
         render: (row) => {
+          const amountValue = Number(row.amount);
+          const entryKind = row.entry_kind ?? "recorded";
+          const isRefund = entryKind === "recorded" && Number.isFinite(amountValue) && amountValue < 0;
           const isPaid = (row.status || "").toLowerCase() === "paid";
+          const badgeConfig = isRefund
+            ? PAYMENT_COLORS.refund
+            : isPaid
+              ? PAYMENT_COLORS.paid
+              : PAYMENT_COLORS.due;
+          const statusLabel = isRefund
+            ? t("payments.refund.badge", { defaultValue: "İade" })
+            : isPaid
+              ? t("payments.status.paid")
+              : t("payments.status.due");
+
           return (
             <Badge
               variant="outline"
-              className={cn(
-                "px-2 py-0.5 text-xs font-semibold",
-                isPaid ? PAYMENT_COLORS.paid.badgeClass : PAYMENT_COLORS.due.badgeClass
-              )}
+              className={cn("px-2 py-0.5 text-xs font-semibold", badgeConfig.badgeClass)}
             >
-              {isPaid ? t("payments.status.paid") : t("payments.status.due")}
+              {statusLabel}
             </Badge>
           );
         },
@@ -129,11 +162,13 @@ export function usePaymentsTableColumns({
         minWidth: "120px",
         render: (row) => (
           <Badge variant="outline">
-            {row.type === "deposit_payment"
-              ? t("payments.type.deposit")
-              : row.type === "balance_due"
-                ? t("payments.type.balance")
-                : t("payments.type.manual")}
+            {row.entry_kind === "scheduled"
+              ? t("payments.type.scheduled")
+              : row.type === "deposit_payment"
+                ? t("payments.type.deposit")
+                : row.type === "balance_due"
+                  ? t("payments.type.balance")
+                  : t("payments.type.manual")}
           </Badge>
         ),
       },

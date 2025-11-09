@@ -35,6 +35,12 @@ export function PaymentsMetricsSummary({
           </div>
         </div>
         <div className="space-y-1">
+          <span className="text-sm text-muted-foreground">{t("payments.metrics.totalRefunded")}</span>
+          <div className={cn("text-xl font-semibold", PAYMENT_COLORS.refund.textClass)}>
+            {formatCurrency(metrics.totalRefunded)}
+          </div>
+        </div>
+        <div className="space-y-1">
           <span className="text-sm text-muted-foreground">{t("payments.metrics.remainingBalance")}</span>
           <div className={cn("text-xl font-semibold", PAYMENT_COLORS.due.textClass)}>
             {formatCurrency(metrics.remainingBalance)}

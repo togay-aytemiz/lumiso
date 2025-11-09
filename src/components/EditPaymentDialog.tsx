@@ -16,6 +16,7 @@ import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 import type { Database } from "@/integrations/supabase/types";
+import { recalculateProjectOutstanding } from "@/lib/payments/outstanding";
 
 interface Payment {
   id: string;
@@ -27,6 +28,8 @@ interface Payment {
   created_at: string;
   type: "manual" | "deposit_payment" | "balance_due";
   deposit_allocation: number;
+  entry_kind?: "recorded" | "scheduled";
+  scheduled_initial_amount?: number | null;
 }
 
 interface EditPaymentDialogProps {
@@ -108,6 +111,10 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
         deposit_allocation: Math.max(nextDepositAllocation, 0)
       };
 
+      if (payment.entry_kind === "scheduled") {
+        updateData.scheduled_initial_amount = parsedAmount;
+      }
+
       const { error } = await supabase
         .from('payments')
         .update(updateData)
@@ -119,6 +126,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
 
       onOpenChange(false);
       onPaymentUpdated();
+      await recalculateProjectOutstanding(payment.project_id);
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {

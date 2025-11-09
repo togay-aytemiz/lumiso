@@ -633,7 +633,11 @@ export function useProjectsData({
             ? supabase.from("project_services").select(`project_id, service:services(id, name)`).in("project_id", projectIds)
             : Promise.resolve<{ data: ServiceRow[]; error: null }>({ data: [], error: null }),
           projectIds.length
-            ? supabase.from("payments").select("project_id, amount, status").in("project_id", projectIds)
+            ? supabase
+                .from("payments")
+                .select("project_id, amount, status")
+                .in("project_id", projectIds)
+                .eq("entry_kind", "recorded")
             : Promise.resolve<{ data: PaymentRow[]; error: null }>({ data: [], error: null }),
           leadIds.length
             ? supabase.from("leads").select("id, name, status, email, phone").in("id", leadIds)

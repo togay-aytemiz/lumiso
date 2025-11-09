@@ -26,6 +26,7 @@ import {
 } from "@/lib/payments/depositUtils";
 import { Switch } from "@/components/ui/switch";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { recalculateProjectOutstanding } from "@/lib/payments/outstanding";
 
 interface DepositSetupDialogProps {
   projectId: string;
@@ -643,6 +644,7 @@ export function ProjectDepositPaymentDialog({
 
       if (insertError) throw insertError;
 
+      await recalculateProjectOutstanding(projectId);
       toast.success(
         t("payments.deposit.payment_success", {
           defaultValue: "Deposit payment recorded."

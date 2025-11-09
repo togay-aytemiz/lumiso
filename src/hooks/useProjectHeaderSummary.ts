@@ -83,7 +83,8 @@ export function useProjectHeaderSummary(projectId?: string | null, refreshToken?
         supabase
           .from("payments")
           .select("amount, status")
-          .eq("project_id", projectId),
+          .eq("project_id", projectId)
+          .eq("entry_kind", "recorded"),
         supabase.from("todos").select("id, is_completed").eq("project_id", projectId)
       ]);
 

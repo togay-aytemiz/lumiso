@@ -30,6 +30,11 @@ jest.mock("@/lib/telemetry", () => ({
   trackEvent: jest.fn(),
 }));
 
+jest.mock("@/lib/payments/outstanding", () => ({
+  syncProjectOutstandingPayment: jest.fn().mockResolvedValue(undefined),
+  recalculateProjectOutstanding: jest.fn(),
+}));
+
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));

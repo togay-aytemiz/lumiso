@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   PROJECT_SELECT_FIELDS,
   SEARCH_MIN_CHARS,
+  STATUS_FILTER_OPTIONS,
   TYPE_FILTER_OPTIONS,
 } from "../constants";
 import type {
@@ -345,6 +346,12 @@ export function usePaymentsData({
 
       const shouldFilterTypes =
         typeFilters.length > 0 && typeFilters.length < TYPE_FILTER_OPTIONS.length;
+      const refundOnly = statusFilters.length === 1 && statusFilters[0] === "refund";
+      const standardStatuses = statusFilters.filter((status) => status !== "refund");
+      const totalStandardStatuses =
+        STATUS_FILTER_OPTIONS.filter((status) => status !== "refund").length;
+      const shouldFilterStandardStatuses =
+        standardStatuses.length > 0 && standardStatuses.length < totalStandardStatuses;
 
       const context = await createSearchContext(globalSearchTerm);
 
@@ -371,13 +378,21 @@ export function usePaymentsData({
       if (activeDateRange) {
         const startISO = activeDateRange.start.toISOString();
         const endISO = activeDateRange.end.toISOString();
+        const recordedPaidWindow = `and(entry_kind.eq.recorded,date_paid.gte.${startISO},date_paid.lte.${endISO})`;
+        const recordedCreatedWindow = `and(entry_kind.eq.recorded,date_paid.is.null,created_at.gte.${startISO},created_at.lte.${endISO})`;
         tableQuery = tableQuery.or(
-          `and(date_paid.gte.${startISO},date_paid.lte.${endISO}),and(date_paid.is.null,created_at.gte.${startISO},created_at.lte.${endISO})`
+          `entry_kind.eq.scheduled,${recordedPaidWindow},${recordedCreatedWindow}`
         );
       }
 
-      if (statusFilters.length === 1) {
-        tableQuery = tableQuery.ilike("status", statusFilters[0]);
+      if (refundOnly) {
+        tableQuery = tableQuery.lt("amount", 0);
+      } else if (shouldFilterStandardStatuses) {
+        if (standardStatuses.length === 1) {
+          tableQuery = tableQuery.ilike("status", standardStatuses[0]);
+        } else {
+          tableQuery = tableQuery.in("status", standardStatuses);
+        }
       }
 
       if (shouldFilterTypes) {
@@ -429,18 +444,28 @@ export function usePaymentsData({
       if (includeMetrics) {
         let metricsQuery = supabase
           .from("payments")
-          .select("id, amount, status, type, date_paid, created_at, project_id");
+          .select(
+            "id, amount, status, type, date_paid, created_at, updated_at, project_id, entry_kind, scheduled_initial_amount, scheduled_remaining_amount"
+          );
 
         if (activeDateRange) {
           const startISO = activeDateRange.start.toISOString();
           const endISO = activeDateRange.end.toISOString();
+          const recordedPaidWindow = `and(entry_kind.eq.recorded,date_paid.gte.${startISO},date_paid.lte.${endISO})`;
+          const recordedCreatedWindow = `and(entry_kind.eq.recorded,date_paid.is.null,created_at.gte.${startISO},created_at.lte.${endISO})`;
           metricsQuery = metricsQuery.or(
-            `and(date_paid.gte.${startISO},date_paid.lte.${endISO}),and(date_paid.is.null,created_at.gte.${startISO},created_at.lte.${endISO})`
+            `entry_kind.eq.scheduled,${recordedPaidWindow},${recordedCreatedWindow}`
           );
         }
 
-        if (statusFilters.length === 1) {
-          metricsQuery = metricsQuery.ilike("status", statusFilters[0]);
+        if (refundOnly) {
+          metricsQuery = metricsQuery.lt("amount", 0);
+        } else if (shouldFilterStandardStatuses) {
+          if (standardStatuses.length === 1) {
+            metricsQuery = metricsQuery.ilike("status", standardStatuses[0]);
+          } else {
+            metricsQuery = metricsQuery.in("status", standardStatuses);
+          }
         }
 
         if (shouldFilterTypes) {

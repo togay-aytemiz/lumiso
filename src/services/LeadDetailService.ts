@@ -267,7 +267,8 @@ export async function fetchLeadProjectSummary(
       const { data: payments, error: paymentsError } = await supabase
         .from("payments")
         .select("project_id, amount, status")
-        .in("project_id", projectIds);
+        .in("project_id", projectIds)
+        .eq("entry_kind", "recorded");
 
       if (paymentsError) throw paymentsError;
 

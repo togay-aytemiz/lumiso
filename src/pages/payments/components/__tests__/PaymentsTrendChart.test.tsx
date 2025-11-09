@@ -88,11 +88,12 @@ describe("PaymentsTrendChart", () => {
         chartConfig={{
           paid: { label: "payments.chart.legend.paid", color: "#00ff00" },
           due: { label: "payments.chart.legend.due", color: "#ff0000" },
+          refund: { label: "payments.chart.legend.refund", color: "#0000ff" },
         }}
-        chartLegendLabels={{ paid: "Paid label", due: "Due label" }}
+        chartLegendLabels={{ paid: "Paid label", due: "Due label", refund: "Refund label" }}
         paymentsTrend={[
-          { period: "2024-05-01", paid: 1200, due: 300 },
-          { period: "2024-05-02", paid: 800, due: 450 },
+          { period: "2024-05-01", paid: 1200, due: 300, refund: 200 },
+          { period: "2024-05-02", paid: 800, due: 450, refund: 0 },
         ]}
         trendGrouping="day"
         onTrendGroupingChange={jest.fn()}
@@ -104,6 +105,7 @@ describe("PaymentsTrendChart", () => {
 
     expect(screen.getByTestId("chart-container")).toBeInTheDocument();
     expect(screen.getByTestId("line-chart")).toHaveAttribute("data-point-count", "2");
+    expect(screen.getByTestId("line-refund")).toBeInTheDocument();
 
     const tooltipCall = chartModule.ChartTooltipContent.mock.calls[0]?.[0];
     expect(typeof tooltipCall?.formatter).toBe("function");
@@ -123,8 +125,9 @@ describe("PaymentsTrendChart", () => {
         chartConfig={{
           paid: { label: "payments.chart.legend.paid", color: "#00ff00" },
           due: { label: "payments.chart.legend.due", color: "#ff0000" },
+          refund: { label: "payments.chart.legend.refund", color: "#0000ff" },
         }}
-        chartLegendLabels={{ paid: "Paid", due: "Due" }}
+        chartLegendLabels={{ paid: "Paid", due: "Due", refund: "Refund" }}
         paymentsTrend={[]}
         trendGrouping="day"
         onTrendGroupingChange={handleGroupingChange}
@@ -147,8 +150,9 @@ describe("PaymentsTrendChart", () => {
         chartConfig={{
           paid: { label: "payments.chart.legend.paid", color: "#00ff00" },
           due: { label: "payments.chart.legend.due", color: "#ff0000" },
+          refund: { label: "payments.chart.legend.refund", color: "#0000ff" },
         }}
-        chartLegendLabels={{ paid: "Paid", due: "Due" }}
+        chartLegendLabels={{ paid: "Paid", due: "Due", refund: "Refund" }}
         paymentsTrend={[]}
         trendGrouping="day"
         onTrendGroupingChange={jest.fn()}

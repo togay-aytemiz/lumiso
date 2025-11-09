@@ -40,6 +40,14 @@ export interface PaymentMetrics {
 }
 
 export type PaymentView = "recorded" | "scheduled";
+
+export type ScheduledSortField =
+  | "updated_at"
+  | "scheduled_remaining_amount"
+  | "scheduled_initial_amount"
+  | "collected_amount"
+  | "project_name"
+  | "lead_name";
 export interface PaymentTrendPoint {
   period: string;
   paid: number;

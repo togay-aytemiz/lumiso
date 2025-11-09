@@ -62,6 +62,8 @@ interface UsePaymentsDataOptions {
   searchTerm: string;
   activeDateRange: { start: Date; end: Date } | null;
   onError: (error: Error) => void;
+  scheduledAmountMinFilter?: number | null;
+  scheduledAmountMaxFilter?: number | null;
 }
 
 interface UsePaymentsDataResult {
@@ -208,6 +210,8 @@ export function usePaymentsData({
   searchTerm,
   activeDateRange,
   onError,
+  scheduledAmountMinFilter = null,
+  scheduledAmountMaxFilter = null,
 }: UsePaymentsDataOptions): UsePaymentsDataResult {
   const [paginatedPayments, setPaginatedPayments] = useState<Payment[]>([]);
   const [metricsPayments, setMetricsPayments] = useState<Payment[]>([]);
@@ -425,8 +429,8 @@ export function usePaymentsData({
         range,
         includeMetrics = false,
         includeCount = false,
-        includeScheduled = false,
-      } = options ?? {};
+    includeScheduled = false,
+  } = options ?? {};
       const rawSearch = searchTerm.trim();
       const globalSearchTerm =
         rawSearch.length >= SEARCH_MIN_CHARS ? rawSearch : "";
@@ -641,7 +645,25 @@ export function usePaymentsData({
         }
 
         if (includeScheduled) {
-          let scheduledQuery = supabase.from("payments").select("*").eq("entry_kind", "scheduled");
+          let scheduledQuery = supabase
+            .from("payments")
+            .select("*")
+            .eq("entry_kind", "scheduled")
+            .gt("scheduled_remaining_amount", 0);
+
+          if (scheduledAmountMinFilter != null && Number.isFinite(scheduledAmountMinFilter)) {
+            scheduledQuery = scheduledQuery.gte(
+              "scheduled_remaining_amount",
+              Number(scheduledAmountMinFilter)
+            );
+          }
+
+          if (scheduledAmountMaxFilter != null && Number.isFinite(scheduledAmountMaxFilter)) {
+            scheduledQuery = scheduledQuery.lte(
+              "scheduled_remaining_amount",
+              Number(scheduledAmountMaxFilter)
+            );
+          }
 
           if (searchFilters?.length) {
             scheduledQuery = scheduledQuery.or(searchFilters.join(","));
@@ -700,6 +722,8 @@ export function usePaymentsData({
       statusFilters,
       typeFilters,
       ensureLogTimestampSupport,
+      scheduledAmountMaxFilter,
+      scheduledAmountMinFilter,
     ]
   );
 

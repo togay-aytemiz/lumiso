@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { ProjectSheetView } from "@/components/ProjectSheetView";
@@ -37,7 +38,7 @@ import {
 } from "@/components/ui/chart";
 import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Progress } from "@/components/ui/progress";
-import { FileDown, Loader2 } from "lucide-react";
+import { FileDown, Loader2, Check } from "lucide-react";
 import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
 import { PAYMENT_COLORS } from "@/lib/paymentColors";
 import {
@@ -53,6 +54,7 @@ import {
   PaymentTrendPoint,
   ProjectDetails,
   PaymentView,
+  ScheduledSortField,
   SortDirection,
   SortField,
   TrendGrouping,
@@ -80,6 +82,13 @@ const pageSize = PAGE_SIZE;
   const [projectSheetOpen, setProjectSheetOpen] = useState(false);
   const [trendGrouping, setTrendGrouping] = useState<TrendGrouping>("month");
   const [paymentsView, setPaymentsView] = useState<PaymentView>("recorded");
+  const [scheduledAmountMin, setScheduledAmountMin] = useState<number | null>(null);
+  const [scheduledAmountMax, setScheduledAmountMax] = useState<number | null>(null);
+  const [scheduledAmountMinDraft, setScheduledAmountMinDraft] = useState<string>("");
+  const [scheduledAmountMaxDraft, setScheduledAmountMaxDraft] = useState<string>("");
+  const [scheduledSortField, setScheduledSortField] =
+    useState<ScheduledSortField>("updated_at");
+  const [scheduledSortDirection, setScheduledSortDirection] = useState<SortDirection>("desc");
   const handlePaymentsViewChange = useCallback((value: string) => {
     setPaymentsView(value as PaymentView);
   }, []);
@@ -225,6 +234,8 @@ const pageSize = PAGE_SIZE;
     searchTerm: filtersState.search,
     activeDateRange,
     onError: handleDataError,
+    scheduledAmountMinFilter: scheduledAmountMin,
+    scheduledAmountMaxFilter: scheduledAmountMax,
   });
 
   // Throttle data refresh on window focus / visibility changes
@@ -241,6 +252,18 @@ const pageSize = PAGE_SIZE;
       setPage(computedTotalPages);
     }
   }, [totalCount, page, pageSize]);
+
+  useEffect(() => {
+    setScheduledAmountMinDraft(
+      scheduledAmountMin != null ? String(scheduledAmountMin) : ""
+    );
+  }, [scheduledAmountMin]);
+
+  useEffect(() => {
+    setScheduledAmountMaxDraft(
+      scheduledAmountMax != null ? String(scheduledAmountMax) : ""
+    );
+  }, [scheduledAmountMax]);
 
   // Project row open/close handlers (define before columns so columns can reference them)
   const handleProjectSheetOpenChange = useCallback((open: boolean) => {
@@ -279,6 +302,15 @@ const pageSize = PAGE_SIZE;
     [navigate]
   );
 
+  const parseScheduledAmountInput = useCallback((value: string): number | null => {
+    const trimmed = value.trim();
+    if (trimmed === "") {
+      return null;
+    }
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, []);
+
   // Columns are needed for export mapping; define before handleExport
   const tableColumns = usePaymentsTableColumns({
     onProjectSelect: handleProjectOpen,
@@ -291,14 +323,16 @@ const pageSize = PAGE_SIZE;
       {
         id: "schedule_updated",
         label: t("payments.table.waiting.updated"),
-        sortable: false,
+        sortable: true,
+        sortId: "updated_at",
         minWidth: "140px",
         render: (row) => formatDate(row.updated_at ?? row.created_at),
       },
       {
         id: "waiting_lead",
         label: t("payments.table.lead"),
-        sortable: false,
+        sortable: true,
+        sortId: "lead_name",
         minWidth: "180px",
         render: (row) =>
           row.projects?.leads ? (
@@ -321,7 +355,8 @@ const pageSize = PAGE_SIZE;
       {
         id: "waiting_project",
         label: t("payments.table.project"),
-        sortable: false,
+        sortable: true,
+        sortId: "project_name",
         minWidth: "200px",
         render: (row) =>
           row.projects ? (
@@ -343,6 +378,8 @@ const pageSize = PAGE_SIZE;
       {
         id: "waiting_remaining",
         label: t("payments.table.waiting.remaining"),
+        sortable: true,
+        sortId: "scheduled_remaining_amount",
         align: "right",
         minWidth: "140px",
         render: (row) => {
@@ -356,6 +393,8 @@ const pageSize = PAGE_SIZE;
       {
         id: "waiting_collected",
         label: t("payments.table.waiting.collected"),
+        sortable: true,
+        sortId: "collected_amount",
         align: "right",
         minWidth: "140px",
         render: (row) => {
@@ -371,20 +410,114 @@ const pageSize = PAGE_SIZE;
     [formatCurrency, handleNavigateToLead, handleProjectOpen, t]
   );
 
+  const handleScheduledAmountMinDraftChange = useCallback((value: string) => {
+    setScheduledAmountMinDraft(value);
+  }, []);
+
+  const handleScheduledAmountMaxDraftChange = useCallback((value: string) => {
+    setScheduledAmountMaxDraft(value);
+  }, []);
+
+  const scheduledAmountDirty = useMemo(() => {
+    const parsedMin = parseScheduledAmountInput(scheduledAmountMinDraft);
+    const parsedMax = parseScheduledAmountInput(scheduledAmountMaxDraft);
+    return parsedMin !== scheduledAmountMin || parsedMax !== scheduledAmountMax;
+  }, [
+    parseScheduledAmountInput,
+    scheduledAmountMax,
+    scheduledAmountMaxDraft,
+    scheduledAmountMin,
+    scheduledAmountMinDraft,
+  ]);
+
+  const handleScheduledFiltersApply = useCallback(() => {
+    const parsedMin = parseScheduledAmountInput(scheduledAmountMinDraft);
+    const parsedMax = parseScheduledAmountInput(scheduledAmountMaxDraft);
+    setScheduledAmountMin(parsedMin);
+    setScheduledAmountMax(parsedMax);
+  }, [parseScheduledAmountInput, scheduledAmountMaxDraft, scheduledAmountMinDraft]);
+
+  const handleScheduledFiltersReset = useCallback(() => {
+    setScheduledAmountMin(null);
+    setScheduledAmountMax(null);
+    setScheduledAmountMinDraft("");
+    setScheduledAmountMaxDraft("");
+  }, []);
+
+  const scheduledActiveFilterCount = useMemo(
+    () => [scheduledAmountMin != null, scheduledAmountMax != null].filter(Boolean).length,
+    [scheduledAmountMax, scheduledAmountMin]
+  );
+
+  const cleanedScheduledPayments = useMemo(
+    () =>
+      scheduledPayments.filter(
+        (payment) => Number(payment.scheduled_remaining_amount ?? payment.amount ?? 0) > 0
+      ),
+    [scheduledPayments]
+  );
+
+  const scheduledSortedPayments = useMemo(() => {
+    const list = [...cleanedScheduledPayments];
+    const direction = scheduledSortDirection === "asc" ? 1 : -1;
+
+    const getRemaining = (payment: Payment) =>
+      Number(payment.scheduled_remaining_amount ?? payment.amount ?? 0) || 0;
+    const getInitial = (payment: Payment) =>
+      Number(payment.scheduled_initial_amount ?? payment.amount ?? 0) || 0;
+    const getCollected = (payment: Payment) =>
+      Math.max(getInitial(payment) - getRemaining(payment), 0);
+    const getUpdatedTime = (payment: Payment) =>
+      new Date(payment.updated_at ?? payment.created_at).getTime();
+
+    list.sort((a, b) => {
+      let diff = 0;
+      switch (scheduledSortField) {
+        case "scheduled_remaining_amount":
+          diff = getRemaining(a) - getRemaining(b);
+          break;
+        case "scheduled_initial_amount":
+          diff = getInitial(a) - getInitial(b);
+          break;
+        case "collected_amount":
+          diff = getCollected(a) - getCollected(b);
+          break;
+        case "project_name": {
+          const aName = a.projects?.name ?? "";
+          const bName = b.projects?.name ?? "";
+          return aName.localeCompare(bName, undefined, { sensitivity: "base" }) * direction;
+        }
+        case "lead_name": {
+          const aName = a.projects?.leads?.name ?? "";
+          const bName = b.projects?.leads?.name ?? "";
+          return aName.localeCompare(bName, undefined, { sensitivity: "base" }) * direction;
+        }
+        default:
+          diff = getUpdatedTime(a) - getUpdatedTime(b);
+          break;
+      }
+      if (diff === 0) {
+        return 0;
+      }
+      return diff * direction;
+    });
+
+    return list;
+  }, [cleanedScheduledPayments, scheduledSortDirection, scheduledSortField]);
+
   const handleExport = useCallback(async () => {
     if (exporting) return;
 
-    const totalRecords = totalCount || paginatedPayments.length;
-    if (totalRecords === 0) {
-      toast({
-        title: t("payments.export.noDataTitle"),
-        description: t("payments.export.noDataDescription"),
-      });
-      return;
-    }
+    const runRecordedExport = async () => {
+      const totalRecords = totalCount || paginatedPayments.length;
+      if (totalRecords === 0) {
+        toast({
+          title: t("payments.export.noDataTitle"),
+          description: t("payments.export.noDataDescription"),
+        });
+        return;
+      }
 
-    try {
-      setExporting(true);
       const range = { from: 0, to: totalRecords - 1 };
       const { payments: exportPayments } = await fetchPaymentsData({
         range,
@@ -458,7 +591,55 @@ const pageSize = PAGE_SIZE;
 
       const timestamp = format(new Date(), "yyyy-MM-dd_HHmm");
       writeFileXLSX(workbook, `payments-${timestamp}.xlsx`);
+    };
 
+    const runScheduledExport = async () => {
+      const exportPayments = scheduledSortedPayments;
+
+      if (!exportPayments.length) {
+        toast({
+          title: t("payments.export.noDataTitle"),
+          description: t("payments.export.noDataDescription"),
+        });
+        return;
+      }
+
+      const rows = exportPayments.map((payment) => {
+        const remaining = Math.max(
+          Number(payment.scheduled_remaining_amount ?? payment.amount ?? 0),
+          0
+        );
+        const initial = Math.max(
+          Number(payment.scheduled_initial_amount ?? payment.amount ?? 0),
+          0
+        );
+        const collected = Math.max(initial - remaining, 0);
+        return {
+          [t("payments.table.waiting.updated")]: formatDate(
+            payment.updated_at ?? payment.created_at
+          ),
+          [t("payments.table.lead")]: payment.projects?.leads?.name ?? "",
+          [t("payments.table.project")]: payment.projects?.name ?? "",
+          [t("payments.table.waiting.remaining")]: formatCurrency(remaining),
+          [t("payments.table.waiting.collected")]: formatCurrency(collected),
+        };
+      });
+
+      const worksheet = XLSXUtils.json_to_sheet(rows);
+      const workbook = XLSXUtils.book_new();
+      XLSXUtils.book_append_sheet(workbook, worksheet, "Scheduled");
+
+      const timestamp = format(new Date(), "yyyy-MM-dd_HHmm");
+      writeFileXLSX(workbook, `scheduled-payments-${timestamp}.xlsx`);
+    };
+
+    try {
+      setExporting(true);
+      if (paymentsView === "recorded") {
+        await runRecordedExport();
+      } else {
+        await runScheduledExport();
+      }
       toast({
         title: t("payments.export.successTitle"),
         description: t("payments.export.successDescription"),
@@ -478,7 +659,11 @@ const pageSize = PAGE_SIZE;
   }, [
     exporting,
     fetchPaymentsData,
+    formatCurrency,
+    formatDate,
     paginatedPayments.length,
+    paymentsView,
+    scheduledSortedPayments,
     tableColumns,
     t,
     totalCount,
@@ -748,15 +933,16 @@ const pageSize = PAGE_SIZE;
 
   const hasSearchTerm = filtersState.search.trim().length >= SEARCH_MIN_CHARS;
   const hasRecordedResults = totalCount > 0 || paginatedPayments.length > 0;
+  const hasScheduledResults = scheduledSortedPayments.length > 0;
 
   const hasMorePayments = paginatedPayments.length < totalCount;
   const isLoadingMorePayments = tableLoading && page > 1;
-  const displayedPayments = paymentsView === "recorded" ? paginatedPayments : scheduledPayments;
+  const displayedPayments = paymentsView === "recorded" ? paginatedPayments : scheduledSortedPayments;
   const displayedColumns = paymentsView === "recorded" ? tableColumns : waitingColumns;
   const tableIsLoading =
     paymentsView === "recorded"
       ? tableLoading && page === 1 && paginatedPayments.length === 0
-      : tableLoading && scheduledPayments.length === 0;
+      : tableLoading && !hasScheduledResults;
   const displayedHasMore = paymentsView === "recorded" ? hasMorePayments : false;
   const displayedOnLoadMore =
     paymentsView === "recorded" && hasMorePayments ? handleLoadMorePayments : undefined;
@@ -770,16 +956,14 @@ const pageSize = PAGE_SIZE;
   }, [hasMorePayments, page, pageSize, tableLoading, totalCount]);
 
   const exportActions = useMemo(() => {
-    if (paymentsView !== "recorded") {
-      return null;
-    }
+    const hasData = paymentsView === "recorded" ? hasRecordedResults : hasScheduledResults;
     return (
       <Button
         type="button"
         variant="outline"
         size="sm"
         onClick={handleExport}
-        disabled={!hasRecordedResults || tableLoading || exporting}
+        disabled={!hasData || tableLoading || exporting}
         className="hidden sm:inline-flex"
       >
         {exporting ? (
@@ -790,7 +974,7 @@ const pageSize = PAGE_SIZE;
         <span>{t("payments.export.button")}</span>
       </Button>
     );
-  }, [exporting, handleExport, hasRecordedResults, paymentsView, tableLoading, t]);
+  }, [exporting, handleExport, hasRecordedResults, hasScheduledResults, paymentsView, tableLoading, t]);
 
   // Use AdvancedDataTable's built-in header search instead of toolbar
 
@@ -817,7 +1001,9 @@ const pageSize = PAGE_SIZE;
       ? hasSearchTerm || activeFilterCount > 0
         ? t("payments.emptyState.noPaymentsWithFilters")
         : t("payments.emptyState.noPaymentsForPeriod")
-      : t("payments.emptyState.noScheduledPayments");
+      : scheduledActiveFilterCount > 0
+        ? t("payments.emptyState.noPaymentsWithFilters")
+        : t("payments.emptyState.noScheduledPayments");
 
   // Build filter summary chips similar to leads/projects
   const filterSummaryChips = useMemo(() => {
@@ -904,6 +1090,113 @@ const pageSize = PAGE_SIZE;
     t,
   ]);
 
+  const scheduledFilterSummary = useMemo(() => {
+    const chips: { id: string; label: React.ReactNode }[] = [];
+    if (scheduledAmountMin != null) {
+      chips.push({
+        id: "scheduled-min",
+        label: (
+          <span>
+            <span className="mr-1 text-xs uppercase tracking-wide text-muted-foreground">
+              {t("payments.filters.amountMinPlaceholder")}:
+            </span>
+            {formatCurrency(scheduledAmountMin)}
+          </span>
+        ),
+      });
+    }
+    if (scheduledAmountMax != null) {
+      chips.push({
+        id: "scheduled-max",
+        label: (
+          <span>
+            <span className="mr-1 text-xs uppercase tracking-wide text-muted-foreground">
+              {t("payments.filters.amountMaxPlaceholder")}:
+            </span>
+            {formatCurrency(scheduledAmountMax)}
+          </span>
+        ),
+      });
+    }
+    return chips;
+  }, [formatCurrency, scheduledAmountMax, scheduledAmountMin, t]);
+
+  const scheduledFiltersConfig = useMemo(
+    () => ({
+      title: t("payments.filterPanel.title"),
+      content: (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("payments.filters.amountHeading")}
+          </p>
+          <div className="flex items-center gap-2">
+            <div className="grid flex-1 gap-2 sm:grid-cols-2">
+              <Input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                value={scheduledAmountMinDraft}
+                onChange={(event) => handleScheduledAmountMinDraftChange(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    handleScheduledFiltersApply();
+                  }
+                }}
+                placeholder={t("payments.filters.amountMinPlaceholder")}
+                className="h-9 rounded-full"
+              />
+              <Input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                value={scheduledAmountMaxDraft}
+                onChange={(event) => handleScheduledAmountMaxDraftChange(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    handleScheduledFiltersApply();
+                  }
+                }}
+                placeholder={t("payments.filters.amountMaxPlaceholder")}
+                className="h-9 rounded-full"
+              />
+            </div>
+            <Button
+              type="button"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={handleScheduledFiltersApply}
+              disabled={!scheduledAmountDirty}
+            >
+              <Check className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      ),
+      activeCount: scheduledActiveFilterCount,
+      onReset: scheduledActiveFilterCount ? handleScheduledFiltersReset : undefined,
+      collapsedByDefault: true,
+    }),
+    [
+      handleScheduledAmountMaxDraftChange,
+      handleScheduledAmountMinDraftChange,
+      handleScheduledFiltersApply,
+      handleScheduledFiltersReset,
+      scheduledActiveFilterCount,
+      scheduledAmountDirty,
+      scheduledAmountMaxDraft,
+      scheduledAmountMinDraft,
+      t,
+    ]
+  );
+
+  const filtersConfigForView = paymentsView === "recorded" ? filtersConfig : scheduledFiltersConfig;
+  const summaryChipsForView =
+    paymentsView === "recorded" ? filterSummaryChips : scheduledFilterSummary;
+
   // (moved up above columns)
 
   const handleViewFullDetails = useCallback(() => {
@@ -914,19 +1207,32 @@ const pageSize = PAGE_SIZE;
 
   // tableColumns defined above (before handleExport)
 
-  const sortStateForTable = useMemo<AdvancedDataTableSortState>(
+  const recordedSortState = useMemo<AdvancedDataTableSortState>(
     () => ({ columnId: sortField, direction: sortDirection }),
     [sortField, sortDirection]
   );
 
+  const scheduledSortState = useMemo<AdvancedDataTableSortState>(
+    () => ({ columnId: scheduledSortField, direction: scheduledSortDirection }),
+    [scheduledSortField, scheduledSortDirection]
+  );
+
+  const sortStateForTable = paymentsView === "recorded" ? recordedSortState : scheduledSortState;
+
   const handleTableSortChange = useCallback(
     (next: AdvancedDataTableSortState) => {
       if (!next.columnId) return;
-      setSortField(next.columnId as SortField);
-      setSortDirection(next.direction as SortDirection);
-      setPage(1);
+      if (paymentsView === "recorded") {
+        setSortField(next.columnId as SortField);
+        setSortDirection(next.direction as SortDirection);
+        setPage(1);
+        return;
+      }
+
+      setScheduledSortField(next.columnId as ScheduledSortField);
+      setScheduledSortDirection(next.direction as SortDirection);
     },
-    []
+    [paymentsView]
   );
 
   return (
@@ -980,9 +1286,9 @@ const pageSize = PAGE_SIZE;
         title={tableTitle}
         data={displayedPayments}
         columns={displayedColumns}
-        filters={filtersConfig}
+        filters={filtersConfigForView}
         toolbar={undefined}
-        summary={{ text: undefined, chips: filterSummaryChips }}
+        summary={{ text: undefined, chips: summaryChipsForView }}
         actions={exportActions}
         sortState={sortStateForTable}
         onSortChange={handleTableSortChange}

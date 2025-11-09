@@ -21,7 +21,12 @@ import {
   type ProjectServiceQuickEditSelection,
   type QuickServiceRecord,
 } from "@/components/ProjectServicesQuickEditDialog";
-import { usePackages, useProjectTypes, useServices } from "@/hooks/useOrganizationData";
+import {
+  usePackages,
+  useProjectTypes,
+  useServices,
+  useOrganizationTaxProfile,
+} from "@/hooks/useOrganizationData";
 import { useProjectCreationContext } from "../hooks/useProjectCreationContext";
 import { useProjectCreationActions } from "../hooks/useProjectCreationActions";
 import { cn } from "@/lib/utils";
@@ -82,6 +87,9 @@ export const PackagesStep = () => {
   const packagesQuery = usePackages();
   const servicesQuery = useServices();
   const projectTypesQuery = useProjectTypes();
+  const taxProfileQuery = useOrganizationTaxProfile();
+  const vatExempt = Boolean(taxProfileQuery.data?.vatExempt);
+  const vatUiEnabled = !vatExempt;
 
   const packages = useMemo<PackageRecord[]>(
     () => (Array.isArray(packagesQuery.data) ? (packagesQuery.data as PackageRecord[]) : []),
@@ -129,10 +137,13 @@ export const PackagesStep = () => {
       new Map(
         services.map((service) => {
           const vatRate =
-            typeof service.vat_rate === "number" && Number.isFinite(service.vat_rate)
+            vatUiEnabled &&
+            typeof service.vat_rate === "number" &&
+            Number.isFinite(service.vat_rate)
               ? Number(service.vat_rate)
               : null;
-          const vatMode: VatMode = service.price_includes_vat ? "inclusive" : "exclusive";
+          const vatMode: VatMode =
+            vatUiEnabled && service.price_includes_vat ? "inclusive" : "exclusive";
           const unit = normalizeServiceUnit(service.default_unit);
           return [
             service.id,
@@ -143,32 +154,33 @@ export const PackagesStep = () => {
               serviceType: (service.service_type ?? "unknown") as ServiceInventoryType,
               vatRate,
               vatMode,
-              priceIncludesVat: service.price_includes_vat ?? false,
+              priceIncludesVat: vatUiEnabled && service.price_includes_vat ? true : false,
               unit,
               isActive: service.is_active !== false,
             },
           ] as const;
         })
       ) as Map<string, ServiceWithMetadata>,
-    [services]
+    [services, vatUiEnabled]
   );
 
   const buildLineItemFromService = useCallback(
-    (service: ServiceWithMetadata): ProjectServiceLineItem => ({
-      id: service.id,
-      type: "existing",
-      serviceId: service.id,
-      name: service.name,
-      quantity: 1,
-      unitCost: service.unitCost,
-      unitPrice: service.unitPrice,
-      vendorName: service.vendor_name ?? null,
-      vatRate: service.vatRate ?? null,
-      vatMode: service.vatMode,
-      unit: service.unit,
-      source: "catalog",
-    }),
-    []
+    (service: ServiceWithMetadata): ProjectServiceLineItem =>
+      normalizeItemVat({
+        id: service.id,
+        type: "existing",
+        serviceId: service.id,
+        name: service.name,
+        quantity: 1,
+        unitCost: service.unitCost,
+        unitPrice: service.unitPrice,
+        vendorName: service.vendor_name ?? null,
+        vatRate: service.vatRate ?? null,
+        vatMode: service.vatMode,
+        unit: service.unit,
+        source: "catalog",
+      }),
+    [normalizeItemVat]
   );
 
   const includedItems = state.services.includedItems;
@@ -186,6 +198,18 @@ export const PackagesStep = () => {
     mode: "included",
   });
 
+  const normalizeItemVat = useCallback(
+    (item: ProjectServiceLineItem): ProjectServiceLineItem =>
+      vatUiEnabled
+        ? item
+        : {
+            ...item,
+            vatRate: null,
+            vatMode: "exclusive",
+          },
+    [vatUiEnabled]
+  );
+
   const aggregateLineItems = useCallback(
     (items: ProjectServiceLineItem[]) =>
       items.reduce(
@@ -195,7 +219,7 @@ export const PackagesStep = () => {
             typeof item.unitCost === "number" && Number.isFinite(item.unitCost)
               ? item.unitCost
               : 0;
-          const pricing = calculateLineItemPricing(item);
+          const pricing = calculateLineItemPricing(normalizeItemVat(item));
           acc.cost += unitCost * quantity;
           acc.net += pricing.net;
           acc.vat += pricing.vat;
@@ -204,7 +228,7 @@ export const PackagesStep = () => {
         },
         { cost: 0, net: 0, vat: 0, total: 0 }
       ),
-    []
+    [normalizeItemVat]
   );
 
   const includedTotals = useMemo(
@@ -249,9 +273,12 @@ export const PackagesStep = () => {
   );
   const buildVatBreakdown = useCallback(
     (items: ProjectServiceLineItem[]) => {
+      if (!vatUiEnabled) {
+        return [];
+      }
       const buckets = new Map<number, number>();
       items.forEach((item) => {
-        const pricing = calculateLineItemPricing(item);
+        const pricing = calculateLineItemPricing(normalizeItemVat(item));
         if (!(pricing.vat > 0)) return;
         const rate =
           typeof item.vatRate === "number" && Number.isFinite(item.vatRate)
@@ -264,7 +291,7 @@ export const PackagesStep = () => {
         .sort((a, b) => b[0] - a[0])
         .map(([rate, amount]) => ({ rate, amount }));
     },
-    []
+    [normalizeItemVat, vatUiEnabled]
   );
 
   const overallVatBreakdown = useMemo(
@@ -296,13 +323,17 @@ export const PackagesStep = () => {
           selling_price: service.selling_price ?? service.price ?? null,
           price: service.price ?? null,
           cost_price: service.cost_price ?? null,
-          vat_rate: service.vat_rate ?? null,
-          price_includes_vat: service.price_includes_vat ?? null,
+          vat_rate:
+            vatUiEnabled && typeof service.vat_rate === "number"
+              ? Number(service.vat_rate)
+              : null,
+          price_includes_vat:
+            vatUiEnabled && service.price_includes_vat ? true : false,
           service_type: serviceType,
           extra: false,
         };
       }),
-    [services]
+    [services, vatUiEnabled]
   );
 
   const existingItemsByServiceId = useMemo(() => {
@@ -358,6 +389,11 @@ export const PackagesStep = () => {
         "vatRate",
         () => existing?.vatRate ?? serviceMeta?.vatRate ?? null
       );
+      const normalizedVatMode = vatUiEnabled
+        ? (resolvedVatMode ?? "inclusive")
+        : "exclusive";
+      const normalizedVatRate =
+        vatUiEnabled && typeof resolvedVatRate === "number" ? resolvedVatRate : null;
 
       const fallbackId =
         existing?.id ??
@@ -365,7 +401,7 @@ export const PackagesStep = () => {
         resolvedServiceId ??
         `svc-${Math.random().toString(36).slice(2, 10)}`;
 
-      return {
+      return normalizeItemVat({
         id: fallbackId,
         type: existing?.type ?? "existing",
         serviceId: resolvedServiceId ?? undefined,
@@ -374,13 +410,13 @@ export const PackagesStep = () => {
         unitCost: typeof resolvedUnitCost === "number" ? resolvedUnitCost : null,
         unitPrice: typeof resolvedUnitPrice === "number" ? resolvedUnitPrice : null,
         vendorName: serviceMeta?.vendor_name ?? existing?.vendorName ?? null,
-        vatMode: resolvedVatMode ?? "inclusive",
-        vatRate: typeof resolvedVatRate === "number" ? resolvedVatRate : null,
+        vatMode: normalizedVatMode,
+        vatRate: normalizedVatRate,
         unit: existing?.unit ?? serviceMeta?.unit ?? DEFAULT_SERVICE_UNIT,
         source: existing?.source ?? "catalog",
-      };
+      });
     },
-    [existingItemsByServiceId, resolveOverride, serviceMap]
+    [existingItemsByServiceId, normalizeItemVat, resolveOverride, serviceMap, vatUiEnabled]
   );
 
   const toSelection = useCallback(
@@ -388,11 +424,17 @@ export const PackagesStep = () => {
       if (!item.serviceId) return null;
       const serviceMeta = serviceMap.get(item.serviceId);
       const quantity = Math.max(1, item.quantity ?? 1);
-      const vatMode = item.vatMode ?? serviceMeta?.vatMode ?? "inclusive";
+      const vatMode = vatUiEnabled
+        ? item.vatMode ?? serviceMeta?.vatMode ?? "inclusive"
+        : "exclusive";
       const vatRate =
-        typeof item.vatRate === "number" && Number.isFinite(item.vatRate)
+        vatUiEnabled &&
+        typeof item.vatRate === "number" &&
+        Number.isFinite(item.vatRate)
           ? item.vatRate
-          : serviceMeta?.vatRate ?? null;
+          : vatUiEnabled
+          ? serviceMeta?.vatRate ?? null
+          : null;
       const unitCost =
         typeof item.unitCost === "number" && Number.isFinite(item.unitCost)
           ? item.unitCost
@@ -412,7 +454,7 @@ export const PackagesStep = () => {
         vatRate,
       };
     },
-    [serviceMap]
+    [serviceMap, vatUiEnabled]
   );
 
   const includedSelections = useMemo<ProjectServiceQuickEditSelection[]>(() => {
@@ -695,6 +737,32 @@ export const PackagesStep = () => {
 
   const packageDerived = useMemo(() => {
     const round = (value: number) => Math.round(value * 100) / 100;
+    if (!vatUiEnabled) {
+      if (basePriceValue > 0) {
+        const gross = round(basePriceValue);
+        return {
+          packageNet: gross,
+          packageVat: 0,
+          packageGross: gross,
+          packageVatRate: null,
+        };
+      }
+      if (includedTotals.total > 0) {
+        const gross = round(includedTotals.total);
+        return {
+          packageNet: gross,
+          packageVat: 0,
+          packageGross: gross,
+          packageVatRate: null,
+        };
+      }
+      return {
+        packageNet: 0,
+        packageVat: 0,
+        packageGross: 0,
+        packageVatRate: null,
+      };
+    }
     const baseVatRate =
       overallVatBreakdown.length === 1 &&
       Number.isFinite(overallVatBreakdown[0].rate)
@@ -751,6 +819,7 @@ export const PackagesStep = () => {
     includedTotals.vat,
     includedVatBreakdown,
     overallVatBreakdown,
+    vatUiEnabled,
   ]);
 
   const clientTotals = useMemo(
@@ -1188,16 +1257,18 @@ export const PackagesStep = () => {
                         label={t("steps.packages.summary.servicesCount")}
                         value={String(addOnCount)}
                       />
-                      <SummaryTotalRow
-                        label={
-                          extraVatBreakdown.length === 1
-                            ? t("steps.packages.summary.servicesVatWithRate", {
-                                rate: formatPercent(extraVatBreakdown[0].rate),
-                              })
-                            : t("steps.packages.summary.servicesVat")
-                        }
-                        value={formatCurrency(extraTotals.vat)}
-                      />
+                      {vatUiEnabled && (
+                        <SummaryTotalRow
+                          label={
+                            extraVatBreakdown.length === 1
+                              ? t("steps.packages.summary.servicesVatWithRate", {
+                                  rate: formatPercent(extraVatBreakdown[0].rate),
+                                })
+                              : t("steps.packages.summary.servicesVat")
+                          }
+                          value={formatCurrency(extraTotals.vat)}
+                        />
+                      )}
                       <SummaryTotalRow
                         label={t("steps.packages.summary.servicesCost")}
                         value={formatCurrency(extraTotals.cost)}
@@ -1230,21 +1301,23 @@ export const PackagesStep = () => {
                     value={formatCurrency(packageDerived.packageNet)}
                     emphasizeLabel
                   />
-                  <SummaryTotalRow
-                    label={
-                      packageDerived.packageVatRate != null
-                        ? t("steps.packages.summary.packageVatWithRate", {
-                            rate: formatPercent(packageDerived.packageVatRate),
-                          })
-                        : t("steps.packages.summary.packageVat")
-                    }
-                    value={formatCurrency(packageDerived.packageVat)}
-                    helper={
-                      packageDerived.packageVatRate != null
-                        ? t("steps.packages.summary.packageVatHelperInclusive")
-                        : undefined
-                    }
-                  />
+                  {vatUiEnabled && (
+                    <SummaryTotalRow
+                      label={
+                        packageDerived.packageVatRate != null
+                          ? t("steps.packages.summary.packageVatWithRate", {
+                              rate: formatPercent(packageDerived.packageVatRate),
+                            })
+                          : t("steps.packages.summary.packageVat")
+                      }
+                      value={formatCurrency(packageDerived.packageVat)}
+                      helper={
+                        packageDerived.packageVatRate != null
+                          ? t("steps.packages.summary.packageVatHelperInclusive")
+                          : undefined
+                      }
+                    />
+                  )}
                   <SummaryTotalRow
                     label={t("steps.packages.summary.packageGross")}
                     value={formatCurrency(packageDerived.packageGross)}
@@ -1257,10 +1330,12 @@ export const PackagesStep = () => {
                     label={t("steps.packages.summary.clientNet")}
                     value={formatCurrency(clientNet)}
                   />
-                  <SummaryTotalRow
-                    label={t("steps.packages.summary.clientTax")}
-                    value={formatCurrency(clientTax)}
-                  />
+                  {vatUiEnabled && (
+                    <SummaryTotalRow
+                      label={t("steps.packages.summary.clientTax")}
+                      value={formatCurrency(clientTax)}
+                    />
+                  )}
                   <SummaryTotalRow
                     label={t("steps.packages.summary.clientTotal")}
                     value={formatCurrency(clientTotal)}

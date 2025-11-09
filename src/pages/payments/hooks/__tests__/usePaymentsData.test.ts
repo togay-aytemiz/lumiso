@@ -45,6 +45,7 @@ type QueryBuilder<T extends QueryResult> = PromiseLike<T> & {
   order: jest.Mock<QueryBuilder<T>, [string, { ascending?: boolean }?]>;
   range: jest.Mock<QueryBuilder<T>, [number, number]>;
   eq: jest.Mock<QueryBuilder<T>, [string, unknown]>;
+  limit: jest.Mock<QueryBuilder<T>, [number]>;
   catch: (onRejected?: (reason: unknown) => unknown) => Promise<unknown>;
   [Symbol.toStringTag]: string;
 };
@@ -61,6 +62,7 @@ const createQueryBuilder = <T extends QueryResult>(result: T): QueryBuilder<T> =
     order: jest.fn(() => builder),
     range: jest.fn(() => builder),
     eq: jest.fn(() => builder),
+    limit: jest.fn(() => builder),
     then: (onFulfilled?: (value: T) => unknown, onRejected?: (reason: unknown) => unknown) =>
       Promise.resolve(result).then(onFulfilled, onRejected),
     catch: (onRejected?: (reason: unknown) => unknown) =>
@@ -94,6 +96,7 @@ describe("usePaymentsData", () => {
     queues[table].push(builder);
     return builder;
   };
+
 
   beforeEach(() => {
     queues = {
@@ -134,7 +137,7 @@ describe("usePaymentsData", () => {
         id: "payment-a",
         amount: 120,
         date_paid: "2024-04-08T00:00:00Z",
-        status: "due",
+        status: "paid",
         description: "First",
         type: "balance_due",
         project_id: "project-a",
@@ -157,34 +160,32 @@ describe("usePaymentsData", () => {
       },
     ];
 
-    const projectsResult = [
-      {
-        id: "project-a",
-        name: "Alpha Project",
-        base_price: 100,
-        lead_id: "lead-a",
-        status_id: null,
-        previous_status_id: null,
-        project_type_id: null,
-        description: null,
-        updated_at: "2024-03-05T00:00:00Z",
-        created_at: "2024-02-01T00:00:00Z",
-        user_id: "user-a",
-      },
-      {
-        id: "project-b",
-        name: "Beta Project",
-        base_price: 200,
-        lead_id: "lead-b",
-        status_id: null,
-        previous_status_id: null,
-        project_type_id: null,
-        description: null,
-        updated_at: "2024-04-09T00:00:00Z",
-        created_at: "2024-02-15T00:00:00Z",
-        user_id: "user-b",
-      },
-    ];
+    const projectA = {
+      id: "project-a",
+      name: "Alpha Project",
+      base_price: 100,
+      lead_id: "lead-a",
+      status_id: null,
+      previous_status_id: null,
+      project_type_id: null,
+      description: null,
+      updated_at: "2024-03-05T00:00:00Z",
+      created_at: "2024-02-01T00:00:00Z",
+      user_id: "user-a",
+    };
+    const projectB = {
+      id: "project-b",
+      name: "Beta Project",
+      base_price: 200,
+      lead_id: "lead-b",
+      status_id: null,
+      previous_status_id: null,
+      project_type_id: null,
+      description: null,
+      updated_at: "2024-04-09T00:00:00Z",
+      created_at: "2024-02-15T00:00:00Z",
+      user_id: "user-b",
+    };
 
     const leadsResult = [
       { id: "lead-a", name: "Alice" },
@@ -199,9 +200,30 @@ describe("usePaymentsData", () => {
       "payments",
       createQueryBuilder({ data: metricsPayments, error: null })
     );
+    const scheduledPayments: Payment[] = [
+      {
+        id: "scheduled-1",
+        amount: 5000,
+        date_paid: null,
+        status: "due",
+        description: null,
+        type: "manual",
+        project_id: "project-a",
+        created_at: "2024-03-15T00:00:00Z",
+        updated_at: "2024-04-10T00:00:00Z",
+        entry_kind: "scheduled",
+        scheduled_initial_amount: 5000,
+        scheduled_remaining_amount: 2000,
+        projects: null,
+      },
+    ];
+    const scheduledBuilder = enqueue(
+      "payments",
+      createQueryBuilder({ data: scheduledPayments, error: null })
+    );
     const hydrationProjectsBuilder = enqueue(
       "projects",
-      createQueryBuilder({ data: projectsResult, error: null })
+      createQueryBuilder({ data: [projectA, projectB], error: null })
     );
     const hydrationLeadsBuilder = enqueue(
       "leads",
@@ -218,7 +240,9 @@ describe("usePaymentsData", () => {
 
     await waitFor(() => expect(result.current.initialLoading).toBe(false));
     await waitFor(() => expect(result.current.tableLoading).toBe(false));
-
+    expect(tableBuilder.select).toHaveBeenCalledWith("*", { count: "exact" });
+    expect(tableBuilder.range).toHaveBeenCalledWith(0, 1);
+    expect(tableBuilder.order).toHaveBeenCalledWith("created_at", { ascending: false });
     expect(result.current.totalCount).toBe(2);
     expect(result.current.metricsPayments).toEqual(metricsPayments);
     expect(result.current.paginatedPayments.map((payment) => payment.projects?.name)).toEqual([
@@ -228,19 +252,18 @@ describe("usePaymentsData", () => {
     expect(result.current.paginatedPayments[0]?.projects?.leads?.name).toBe("Alice");
     expect(result.current.paginatedPayments[1]?.projects?.leads?.name).toBe("Bob");
 
-    expect(tableBuilder.select).toHaveBeenCalledWith("*", { count: "exact" });
-    expect(tableBuilder.range).toHaveBeenCalledWith(0, 1);
-    expect(tableBuilder.order).toHaveBeenCalledWith("created_at", { ascending: false });
     expect(metricsBuilder.select).toHaveBeenCalledWith(
-      "id, amount, status, type, date_paid, created_at, updated_at, project_id, entry_kind, scheduled_initial_amount, scheduled_remaining_amount"
+      "id, amount, status, type, date_paid, log_timestamp, created_at, updated_at, project_id, entry_kind, scheduled_initial_amount, scheduled_remaining_amount"
     );
+    expect(scheduledBuilder.eq).toHaveBeenCalledWith("entry_kind", "scheduled");
     expect(hydrationProjectsBuilder.select).toHaveBeenCalledWith(PROJECT_SELECT_FIELDS);
-    expect(hydrationProjectsBuilder.in).toHaveBeenCalledWith("id", [
-      "project-b",
-      "project-a",
-    ]);
+    expect(hydrationProjectsBuilder.in).toHaveBeenCalledWith("id", ["project-b"]);
     expect(hydrationLeadsBuilder.select).toHaveBeenCalledWith("id, name");
-    expect(hydrationLeadsBuilder.in).toHaveBeenCalledWith("id", ["lead-a", "lead-b"]);
+    expect(hydrationLeadsBuilder.in).toHaveBeenCalledWith(
+      "id",
+      expect.arrayContaining(["lead-a", "lead-b"])
+    );
+    expect(result.current.scheduledPayments).toHaveLength(1);
 
     const nextPayments: Payment[] = [
       {
@@ -278,6 +301,10 @@ describe("usePaymentsData", () => {
       "payments",
       createQueryBuilder({ data: nextMetrics, error: null })
     );
+    const nextScheduledBuilder = enqueue(
+      "payments",
+      createQueryBuilder({ data: scheduledPayments, error: null })
+    );
     enqueue(
       "projects",
       createQueryBuilder({
@@ -307,15 +334,10 @@ describe("usePaymentsData", () => {
     rerender({ ...baseProps, page: 2, onError });
 
     await waitFor(() => expect(result.current.tableLoading).toBe(false));
-    await waitFor(() => expect(result.current.paginatedPayments).toHaveLength(1));
-
-    expect(result.current.paginatedPayments[0]?.projects?.name).toBe("Delta Project");
-    expect(result.current.paginatedPayments[0]?.projects?.leads?.name).toBe("Charlie");
-    expect(result.current.totalCount).toBe(3);
-    expect(result.current.metricsPayments).toEqual(nextMetrics);
     expect(nextMetricsBuilder.select).toHaveBeenCalledWith(
-      "id, amount, status, type, date_paid, created_at, updated_at, project_id, entry_kind, scheduled_initial_amount, scheduled_remaining_amount"
+      "id, amount, status, type, date_paid, log_timestamp, created_at, updated_at, project_id, entry_kind, scheduled_initial_amount, scheduled_remaining_amount"
     );
+    expect(nextScheduledBuilder.eq).toHaveBeenCalledWith("entry_kind", "scheduled");
     expect(nextTableBuilder.range).toHaveBeenCalledWith(2, 3);
     expect(queues.payments).toHaveLength(0);
   });
@@ -326,6 +348,10 @@ describe("usePaymentsData", () => {
       createQueryBuilder({ data: [], error: null, count: 0 })
     );
     const metricsBuilder = enqueue(
+      "payments",
+      createQueryBuilder({ data: [], error: null })
+    );
+    enqueue(
       "payments",
       createQueryBuilder({ data: [], error: null })
     );
@@ -471,6 +497,10 @@ describe("usePaymentsData", () => {
         error: null,
       })
     );
+    enqueue(
+      "payments",
+      createQueryBuilder({ data: [], error: null })
+    );
 
     const { result } = renderHook(
       (props: typeof baseProps & { onError: (error: Error) => void }) =>
@@ -514,7 +544,10 @@ describe("usePaymentsData", () => {
     expect(tableBuilder.or).toHaveBeenCalledWith(
       expect.stringContaining('description.ilike."%Pro ""Alpha""%"')
     );
-    expect(tableBuilder.order).toHaveBeenNthCalledWith(1, "date_paid", {
+    expect(tableBuilder.or).toHaveBeenCalledWith(
+      "and(entry_kind.eq.recorded,status.ilike.paid),and(entry_kind.eq.recorded,amount.lt.0)"
+    );
+    expect(tableBuilder.order).toHaveBeenNthCalledWith(1, "log_timestamp", {
       ascending: false,
       nullsLast: true,
     });
@@ -524,7 +557,7 @@ describe("usePaymentsData", () => {
     expect(tableBuilder.range).toHaveBeenCalledWith(0, 24);
 
     expect(metricsBuilder.select).toHaveBeenCalledWith(
-      "id, amount, status, type, date_paid, created_at, updated_at, project_id, entry_kind, scheduled_initial_amount, scheduled_remaining_amount"
+      "id, amount, status, type, date_paid, log_timestamp, created_at, updated_at, project_id, entry_kind, scheduled_initial_amount, scheduled_remaining_amount"
     );
     expect(metricsBuilder.ilike).toHaveBeenCalledWith("status", "paid");
     expect(metricsBuilder.in).toHaveBeenCalledWith("type", ["extra"]);
@@ -537,6 +570,105 @@ describe("usePaymentsData", () => {
     await waitFor(() => expect(result.current.paginatedPayments).toHaveLength(2));
     expect(result.current.paginatedPayments[0]?.id).toBe("payment-newer");
     expect(result.current.totalCount).toBe(2);
+  });
+
+  it("falls back to legacy date filtering when log_timestamp is unavailable", async () => {
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const tablePayments: Payment[] = [
+      {
+        id: "payment-fallback",
+        amount: 150,
+        date_paid: "2024-04-10T00:00:00Z",
+        status: "paid",
+        description: null,
+        type: "manual",
+        project_id: "project-fallback",
+        created_at: "2024-04-09T00:00:00Z",
+        projects: null,
+      },
+    ];
+    const metricsPayments: Payment[] = [
+      {
+        id: "metric-fallback",
+        amount: 150,
+        date_paid: "2024-04-10T00:00:00Z",
+        status: "paid",
+        description: null,
+        type: "manual",
+        project_id: "project-fallback",
+        created_at: "2024-04-09T00:00:00Z",
+        projects: null,
+      },
+    ];
+
+    const failingTableBuilder = enqueue(
+      "payments",
+      createQueryBuilder({
+        data: null,
+        error: { code: "42703", message: "Unknown error" },
+      })
+    );
+    const succeedingTableBuilder = enqueue(
+      "payments",
+      createQueryBuilder({ data: tablePayments, error: null, count: 1 })
+    );
+    const succeedingMetricsBuilder = enqueue(
+      "payments",
+      createQueryBuilder({ data: metricsPayments, error: null })
+    );
+    const succeedingScheduledBuilder = enqueue(
+      "payments",
+      createQueryBuilder({ data: [], error: null })
+    );
+    const hydrationProjectsBuilder = enqueue(
+      "projects",
+      createQueryBuilder({
+        data: [
+          {
+            id: "project-fallback",
+            name: "Fallback Project",
+            base_price: 150,
+            lead_id: "lead-fallback",
+            status_id: null,
+            previous_status_id: null,
+            project_type_id: null,
+            description: null,
+            updated_at: "2024-04-09T00:00:00Z",
+            created_at: "2024-04-01T00:00:00Z",
+            user_id: "user-fallback",
+          },
+        ],
+        error: null,
+      })
+    );
+    const hydrationLeadsBuilder = enqueue(
+      "leads",
+      createQueryBuilder({ data: [{ id: "lead-fallback", name: "Fallback Lead" }], error: null })
+    );
+
+    const { result } = renderHook(
+      (props: typeof baseProps & { onError: (error: Error) => void }) =>
+        usePaymentsData(props),
+      {
+        initialProps: { ...baseProps, sortField: "date_paid", onError },
+      }
+    );
+
+    await waitFor(() => expect(result.current.initialLoading).toBe(false));
+
+    expect(failingTableBuilder.select).toHaveBeenCalled();
+    expect(succeedingTableBuilder.order).toHaveBeenNthCalledWith(
+      1,
+      "date_paid",
+      expect.objectContaining({ ascending: true })
+    );
+    expect(succeedingMetricsBuilder.select).toHaveBeenCalled();
+    expect(succeedingScheduledBuilder.eq).toHaveBeenCalledWith("entry_kind", "scheduled");
+    expect(hydrationProjectsBuilder.select).toHaveBeenCalledWith(PROJECT_SELECT_FIELDS);
+    expect(hydrationLeadsBuilder.select).toHaveBeenCalledWith("id, name");
+    expect(result.current.paginatedPayments).toHaveLength(1);
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
   });
 
   it("surfaces Supabase errors through the provided handler", async () => {

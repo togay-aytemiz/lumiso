@@ -203,12 +203,14 @@ describe("Payments page", () => {
       payments: [],
       count: 0,
       metricsData: [],
+      scheduledPayments: [],
     });
 
     mockUsePaymentsData.mockReturnValue({
       paginatedPayments: [],
       metricsPayments: [],
       totalCount: 0,
+      scheduledPayments: [],
       initialLoading: true,
       tableLoading: false,
       fetchPayments,
@@ -249,12 +251,14 @@ describe("Payments page", () => {
       payments: [paymentRow],
       count: 1,
       metricsData: [],
+      scheduledPayments: [],
     });
 
     mockUsePaymentsData.mockReturnValue({
       paginatedPayments: [paymentRow],
       metricsPayments: [paymentRow],
       totalCount: 1,
+      scheduledPayments: [],
       initialLoading: false,
       tableLoading: false,
       fetchPayments: jest.fn<

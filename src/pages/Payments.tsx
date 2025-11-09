@@ -43,6 +43,7 @@ import { PAYMENT_COLORS } from "@/lib/paymentColors";
 import {
   AdvancedDataTable,
   type AdvancedDataTableSortState,
+  type AdvancedTableColumn,
 } from "@/components/data-table";
 import { PAGE_SIZE, SEARCH_MIN_CHARS } from "@/pages/payments/constants";
 import {
@@ -51,6 +52,7 @@ import {
   PaymentMetrics,
   PaymentTrendPoint,
   ProjectDetails,
+  PaymentView,
   SortDirection,
   SortField,
   TrendGrouping,
@@ -63,6 +65,7 @@ import { PaymentsTrendChart } from "@/pages/payments/components/PaymentsTrendCha
 import { PaymentsMetricsSummary } from "@/pages/payments/components/PaymentsMetricsSummary";
 import { PaymentsTableSection } from "@/pages/payments/components/PaymentsTableSection";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 
 const Payments = () => {
   const { t } = useTranslation("pages");
@@ -76,6 +79,10 @@ const pageSize = PAGE_SIZE;
   const [selectedProject, setSelectedProject] = useState<ProjectDetails | null>(null);
   const [projectSheetOpen, setProjectSheetOpen] = useState(false);
   const [trendGrouping, setTrendGrouping] = useState<TrendGrouping>("month");
+  const [paymentsView, setPaymentsView] = useState<PaymentView>("recorded");
+  const handlePaymentsViewChange = useCallback((value: string) => {
+    setPaymentsView(value as PaymentView);
+  }, []);
   const sheetCloseTimeoutRef = useRef<number | null>(null);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -200,6 +207,7 @@ const pageSize = PAGE_SIZE;
   const {
     paginatedPayments,
     metricsPayments,
+    scheduledPayments,
     totalCount,
     initialLoading,
     tableLoading,
@@ -278,6 +286,91 @@ const pageSize = PAGE_SIZE;
     formatAmount: formatCurrency,
   });
 
+  const waitingColumns = useMemo<AdvancedTableColumn<Payment>[]>(
+    () => [
+      {
+        id: "schedule_updated",
+        label: t("payments.table.waiting.updated"),
+        sortable: false,
+        minWidth: "140px",
+        render: (row) => formatDate(row.updated_at ?? row.created_at),
+      },
+      {
+        id: "waiting_lead",
+        label: t("payments.table.lead"),
+        sortable: false,
+        minWidth: "180px",
+        render: (row) =>
+          row.projects?.leads ? (
+            <Button
+              variant="link"
+              className="p-0 h-auto font-medium"
+              onClick={(event) => {
+                event.stopPropagation();
+                if (row.projects?.leads?.id) {
+                  handleNavigateToLead(row.projects.leads.id);
+                }
+              }}
+            >
+              {row.projects.leads.name}
+            </Button>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          ),
+      },
+      {
+        id: "waiting_project",
+        label: t("payments.table.project"),
+        sortable: false,
+        minWidth: "200px",
+        render: (row) =>
+          row.projects ? (
+            <Button
+              variant="link"
+              className="p-0 h-auto font-medium"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                handleProjectOpen(row);
+              }}
+            >
+              {row.projects.name}
+            </Button>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          ),
+      },
+      {
+        id: "waiting_remaining",
+        label: t("payments.table.waiting.remaining"),
+        align: "right",
+        minWidth: "140px",
+        render: (row) => {
+          const remaining = Math.max(
+            Number(row.scheduled_remaining_amount ?? row.amount ?? 0),
+            0
+          );
+          return <span className="tabular-nums">{formatCurrency(remaining)}</span>;
+        },
+      },
+      {
+        id: "waiting_collected",
+        label: t("payments.table.waiting.collected"),
+        align: "right",
+        minWidth: "140px",
+        render: (row) => {
+          const initial = Math.max(Number(row.scheduled_initial_amount ?? row.amount ?? 0), 0);
+          const remaining = Math.max(Number(row.scheduled_remaining_amount ?? 0), 0);
+          const collected = Math.max(initial - remaining, 0);
+          return (
+            <span className="tabular-nums text-muted-foreground">{formatCurrency(collected)}</span>
+          );
+        },
+      },
+    ],
+    [formatCurrency, handleNavigateToLead, handleProjectOpen, t]
+  );
+
   const handleExport = useCallback(async () => {
     if (exporting) return;
 
@@ -312,7 +405,7 @@ const pageSize = PAGE_SIZE;
       const valueForColumn = (payment: Payment, columnId: string) => {
         switch (columnId) {
           case "date_paid":
-            return formatDate(payment.date_paid || payment.created_at);
+            return formatDate(payment.log_timestamp || payment.date_paid || payment.created_at);
           case "project":
             return payment.projects?.name ?? "";
           case "lead":
@@ -397,7 +490,7 @@ const pageSize = PAGE_SIZE;
     }
 
     const sortedDates = metricsPayments
-      .map((payment) => new Date(payment.date_paid || payment.created_at))
+      .map((payment) => new Date(payment.log_timestamp ?? payment.date_paid ?? payment.created_at))
       .filter((date) => !Number.isNaN(date.getTime()))
       .sort((a, b) => a.getTime() - b.getTime());
 
@@ -449,23 +542,10 @@ const pageSize = PAGE_SIZE;
         label: t("payments.chart.legend.paid"),
         color: PAYMENT_COLORS.paid.hex,
       },
-      due: {
-        label: t("payments.chart.legend.due"),
-        color: PAYMENT_COLORS.due.hex,
-      },
       refund: {
         label: t("payments.chart.legend.refund"),
         color: PAYMENT_COLORS.refund.hex,
       },
-    }),
-    [t]
-  );
-
-  const chartLegendLabels = useMemo(
-    () => ({
-      paid: t("payments.chart.legend.paid"),
-      due: t("payments.chart.legend.due"),
-      refund: t("payments.chart.legend.refund"),
     }),
     [t]
   );
@@ -494,7 +574,6 @@ const pageSize = PAGE_SIZE;
 
     type Bucket = {
       paid: number;
-      due: number;
       refund: number;
       labelStart: Date;
       labelEnd: Date;
@@ -537,17 +616,25 @@ const pageSize = PAGE_SIZE;
     interval.forEach((date) => {
       const { key, labelStart, labelEnd } = getBucketDescriptor(date);
       if (!buckets.has(key)) {
-        buckets.set(key, { paid: 0, due: 0, refund: 0, labelStart, labelEnd });
+        buckets.set(key, { paid: 0, refund: 0, labelStart, labelEnd });
       }
     });
 
-    metricsPayments.forEach((payment) => {
+    const actualPayments = metricsPayments.filter((payment) => {
       const entryKind = payment.entry_kind ?? "recorded";
-      const isScheduled = entryKind === "scheduled";
+      if (entryKind !== "recorded") {
+        return false;
+      }
       const amount = Number(payment.amount) || 0;
-      const paymentDate = isScheduled
-        ? new Date(payment.updated_at ?? payment.created_at)
-        : new Date(payment.date_paid || payment.created_at);
+      if (amount < 0) {
+        return true;
+      }
+      return (payment.status || "").toLowerCase() === "paid";
+    });
+
+    actualPayments.forEach((payment) => {
+      const timestamp = payment.log_timestamp ?? payment.date_paid ?? payment.created_at;
+      const paymentDate = new Date(timestamp);
       if (Number.isNaN(paymentDate.getTime())) {
         return;
       }
@@ -562,29 +649,11 @@ const pageSize = PAGE_SIZE;
         return;
       }
 
-      if (isScheduled) {
-        const scheduledValue =
-          Number(
-            payment.scheduled_remaining_amount ??
-              payment.scheduled_initial_amount ??
-              payment.amount ??
-              0
-          ) || 0;
-        bucket.due += scheduledValue;
-        return;
-      }
-
-      const isPaid = (payment.status || "").toLowerCase() === "paid";
-      const isRefund = amount < 0;
-
-      if (isRefund) {
+      const amount = Number(payment.amount) || 0;
+      if (amount < 0) {
         bucket.refund += Math.abs(amount);
-      }
-
-      if (isPaid) {
+      } else {
         bucket.paid += amount;
-      } else if (!isRefund) {
-        bucket.due += amount;
       }
     });
 
@@ -616,7 +685,6 @@ const pageSize = PAGE_SIZE;
       .map(([, bucket]) => ({
         period: formatLabel(bucket),
         paid: bucket.paid,
-        due: bucket.due,
         refund: bucket.refund,
       }));
   }, [metricsPayments, selectedDateRange, trendGrouping, dateLocale]);
@@ -673,14 +741,26 @@ const pageSize = PAGE_SIZE;
   };
 
   const hasTrendData = paymentsTrend.some(
-    (point) => Math.abs(point.paid) > 0 || Math.abs(point.due) > 0 || Math.abs(point.refund) > 0
+    (point) =>
+      Math.abs(point.paid) > 0 ||
+      Math.abs(point.refund) > 0
   );
 
   const hasSearchTerm = filtersState.search.trim().length >= SEARCH_MIN_CHARS;
-  const hasAnyResults = totalCount > 0 || paginatedPayments.length > 0;
+  const hasRecordedResults = totalCount > 0 || paginatedPayments.length > 0;
 
   const hasMorePayments = paginatedPayments.length < totalCount;
   const isLoadingMorePayments = tableLoading && page > 1;
+  const displayedPayments = paymentsView === "recorded" ? paginatedPayments : scheduledPayments;
+  const displayedColumns = paymentsView === "recorded" ? tableColumns : waitingColumns;
+  const tableIsLoading =
+    paymentsView === "recorded"
+      ? tableLoading && page === 1 && paginatedPayments.length === 0
+      : tableLoading && scheduledPayments.length === 0;
+  const displayedHasMore = paymentsView === "recorded" ? hasMorePayments : false;
+  const displayedOnLoadMore =
+    paymentsView === "recorded" && hasMorePayments ? handleLoadMorePayments : undefined;
+  const displayedIsLoadingMore = paymentsView === "recorded" ? isLoadingMorePayments : false;
 
   const handleLoadMorePayments = useCallback(() => {
     if (tableLoading || !hasMorePayments) return;
@@ -689,14 +769,17 @@ const pageSize = PAGE_SIZE;
     setPage((prev) => prev + 1);
   }, [hasMorePayments, page, pageSize, tableLoading, totalCount]);
 
-  const exportActions = useMemo(
-    () => (
+  const exportActions = useMemo(() => {
+    if (paymentsView !== "recorded") {
+      return null;
+    }
+    return (
       <Button
         type="button"
         variant="outline"
         size="sm"
         onClick={handleExport}
-        disabled={!hasAnyResults || tableLoading || exporting}
+        disabled={!hasRecordedResults || tableLoading || exporting}
         className="hidden sm:inline-flex"
       >
         {exporting ? (
@@ -706,16 +789,35 @@ const pageSize = PAGE_SIZE;
         )}
         <span>{t("payments.export.button")}</span>
       </Button>
-    ),
-    [exporting, handleExport, hasAnyResults, tableLoading, t]
-  );
+    );
+  }, [exporting, handleExport, hasRecordedResults, paymentsView, tableLoading, t]);
 
   // Use AdvancedDataTable's built-in header search instead of toolbar
 
+  const tableTitle = useMemo(
+    () => (
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <span className="text-lg font-semibold">{t("payments.tableTitle")}</span>
+        <SegmentedControl
+          size="sm"
+          value={paymentsView}
+          onValueChange={handlePaymentsViewChange}
+          options={[
+            { value: "recorded", label: t("payments.table.view.recorded") },
+            { value: "scheduled", label: t("payments.table.view.scheduled") },
+          ]}
+        />
+      </div>
+    ),
+    [handlePaymentsViewChange, paymentsView, t]
+  );
+
   const emptyStateMessage =
-    hasSearchTerm || activeFilterCount > 0
-      ? t("payments.emptyState.noPaymentsWithFilters")
-      : t("payments.emptyState.noPaymentsForPeriod");
+    paymentsView === "recorded"
+      ? hasSearchTerm || activeFilterCount > 0
+        ? t("payments.emptyState.noPaymentsWithFilters")
+        : t("payments.emptyState.noPaymentsForPeriod")
+      : t("payments.emptyState.noScheduledPayments");
 
   // Build filter summary chips similar to leads/projects
   const filterSummaryChips = useMemo(() => {
@@ -859,7 +961,6 @@ const pageSize = PAGE_SIZE;
         <PaymentsTrendChart
           hasTrendData={hasTrendData}
           chartConfig={chartConfig}
-          chartLegendLabels={chartLegendLabels}
           paymentsTrend={paymentsTrend}
           trendGrouping={trendGrouping}
           onTrendGroupingChange={setTrendGrouping}
@@ -876,9 +977,9 @@ const pageSize = PAGE_SIZE;
 
       {/* Payments Table */}
       <PaymentsTableSection
-        title={t("payments.tableTitle")}
-        data={paginatedPayments}
-        columns={tableColumns}
+        title={tableTitle}
+        data={displayedPayments}
+        columns={displayedColumns}
         filters={filtersConfig}
         toolbar={undefined}
         summary={{ text: undefined, chips: filterSummaryChips }}
@@ -892,10 +993,10 @@ const pageSize = PAGE_SIZE;
         searchMinChars={SEARCH_MIN_CHARS}
         emptyState={<div className="text-muted-foreground">{emptyStateMessage}</div>}
         onRowClick={handleProjectOpen}
-        isLoading={tableLoading && page === 1 && paginatedPayments.length === 0}
-        onLoadMore={hasMorePayments ? handleLoadMorePayments : undefined}
-        hasMore={hasMorePayments}
-        isLoadingMore={isLoadingMorePayments}
+        isLoading={tableIsLoading}
+        onLoadMore={displayedOnLoadMore}
+        hasMore={displayedHasMore}
+        isLoadingMore={displayedIsLoadingMore}
       />
 
       {/* Project Details Dialog */}

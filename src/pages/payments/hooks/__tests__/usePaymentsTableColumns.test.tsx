@@ -26,6 +26,7 @@ describe("usePaymentsTableColumns", () => {
     id: "payment-1",
     amount: 150,
     date_paid: "2024-05-10T00:00:00Z",
+    log_timestamp: "2024-05-11T09:00:00Z",
     status: "paid",
     description: "Deposit",
     type: "balance_due",
@@ -168,11 +169,13 @@ describe("usePaymentsTableColumns", () => {
 
     formatDate.mockClear();
     const paidDateView = render(dateColumn!.render(baseRow));
-    expect(formatDate).toHaveBeenCalledWith("2024-05-10T00:00:00Z");
+    expect(formatDate).toHaveBeenCalledWith("2024-05-11T09:00:00Z");
     expect(paidDateView.getByText("formatted-date")).toBeInTheDocument();
     paidDateView.unmount();
 
-    const createdDateView = render(dateColumn!.render({ ...baseRow, date_paid: null }));
+    const createdDateView = render(
+      dateColumn!.render({ ...baseRow, log_timestamp: null, date_paid: null })
+    );
     expect(formatDate).toHaveBeenCalledWith("2024-05-01T00:00:00Z");
     createdDateView.unmount();
 

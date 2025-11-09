@@ -2,6 +2,7 @@ export interface Payment {
   id: string;
   amount: number;
   date_paid: string | null;
+  log_timestamp?: string | null;
   status: string;
   description: string | null;
   type: string;
@@ -38,10 +39,10 @@ export interface PaymentMetrics {
   collectionRate: number;
 }
 
+export type PaymentView = "recorded" | "scheduled";
 export interface PaymentTrendPoint {
   period: string;
   paid: number;
-  due: number;
   refund: number;
 }
 

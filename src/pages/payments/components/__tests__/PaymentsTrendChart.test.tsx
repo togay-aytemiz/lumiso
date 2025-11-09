@@ -53,7 +53,7 @@ jest.mock("@/components/ui/chart", () => {
 });
 
 jest.mock("recharts", () => ({
-  LineChart: ({ children, data }: { children: React.ReactNode; data: unknown[] }) => (
+  ComposedChart: ({ children, data }: { children: React.ReactNode; data: unknown[] }) => (
     <div data-testid="line-chart" data-point-count={data.length}>
       {children}
     </div>
@@ -61,6 +61,7 @@ jest.mock("recharts", () => ({
   Line: ({ dataKey }: { dataKey: string }) => (
     <div data-testid={`line-${dataKey}`} />
   ),
+  Bar: ({ dataKey }: { dataKey: string }) => <div data-testid={`bar-${dataKey}`} />,
   CartesianGrid: () => <div data-testid="cartesian-grid" />,
   XAxis: () => <div data-testid="x-axis" />,
   YAxis: () => <div data-testid="y-axis" />,
@@ -87,13 +88,11 @@ describe("PaymentsTrendChart", () => {
         hasTrendData
         chartConfig={{
           paid: { label: "payments.chart.legend.paid", color: "#00ff00" },
-          due: { label: "payments.chart.legend.due", color: "#ff0000" },
           refund: { label: "payments.chart.legend.refund", color: "#0000ff" },
         }}
-        chartLegendLabels={{ paid: "Paid label", due: "Due label", refund: "Refund label" }}
         paymentsTrend={[
-          { period: "2024-05-01", paid: 1200, due: 300, refund: 200 },
-          { period: "2024-05-02", paid: 800, due: 450, refund: 0 },
+          { period: "2024-05-01", paid: 1200, refund: 200 },
+          { period: "2024-05-02", paid: 800, refund: 0 },
         ]}
         trendGrouping="day"
         onTrendGroupingChange={jest.fn()}
@@ -112,7 +111,7 @@ describe("PaymentsTrendChart", () => {
 
     const { formatter } = tooltipCall!;
     const { getByText } = render(<>{formatter(1500, "paid")}</>);
-    expect(getByText("Paid label")).toBeInTheDocument();
+    expect(getByText("payments.chart.legend.paid")).toBeInTheDocument();
     expect(getByText("TRY 1500.00")).toBeInTheDocument();
   });
 
@@ -124,10 +123,8 @@ describe("PaymentsTrendChart", () => {
         hasTrendData
         chartConfig={{
           paid: { label: "payments.chart.legend.paid", color: "#00ff00" },
-          due: { label: "payments.chart.legend.due", color: "#ff0000" },
           refund: { label: "payments.chart.legend.refund", color: "#0000ff" },
         }}
-        chartLegendLabels={{ paid: "Paid", due: "Due", refund: "Refund" }}
         paymentsTrend={[]}
         trendGrouping="day"
         onTrendGroupingChange={handleGroupingChange}
@@ -149,10 +146,8 @@ describe("PaymentsTrendChart", () => {
         hasTrendData={false}
         chartConfig={{
           paid: { label: "payments.chart.legend.paid", color: "#00ff00" },
-          due: { label: "payments.chart.legend.due", color: "#ff0000" },
           refund: { label: "payments.chart.legend.refund", color: "#0000ff" },
         }}
-        chartLegendLabels={{ paid: "Paid", due: "Due", refund: "Refund" }}
         paymentsTrend={[]}
         trendGrouping="day"
         onTrendGroupingChange={jest.fn()}

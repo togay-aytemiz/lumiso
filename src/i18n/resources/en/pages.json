@@ -1429,7 +1429,8 @@
       "legend": {
         "paid": "Paid",
         "due": "Outstanding",
-        "refund": "Refunds"
+        "refund": "Refunds",
+        "scheduled": "Outstanding"
       },
       "empty": "Trend data will appear once payments are recorded for this period.",
       "groupingLabel": "Group by",
@@ -1437,7 +1438,8 @@
         "day": "Day",
         "week": "Week",
         "month": "Month"
-      }
+      },
+      "showOutstanding": "Show outstanding"
     },
     "range": {
       "label": "Date Range",
@@ -1476,7 +1478,16 @@
       "lead": "Lead",
       "description": "Description",
       "status": "Status",
-      "type": "Type"
+      "type": "Type",
+      "view": {
+        "recorded": "Recorded",
+        "scheduled": "Expected"
+      },
+      "waiting": {
+        "updated": "Last update",
+        "remaining": "Remaining amount",
+        "collected": "Collected"
+      }
     },
     "status": {
       "paid": "Paid",
@@ -1499,7 +1510,8 @@
     "emptyState": {
       "noPaymentsWithLabel": "No payments found with label containing \"{{labelFilter}}\".",
       "noPaymentsWithFilters": "No payments match your current filters.",
-      "noPaymentsForPeriod": "No payments found for selected period."
+      "noPaymentsForPeriod": "No payments found for selected period.",
+      "noScheduledPayments": "No scheduled payments to show."
     },
     "defaultLabel": "Payment",
     "errorFetching": "Error fetching payments"

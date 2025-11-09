@@ -827,6 +827,7 @@ export type Database = {
           amount: number
           created_at: string
           date_paid: string | null
+          log_timestamp: string | null
           description: string | null
           deposit_allocation: number
           entry_kind: "recorded" | "scheduled"
@@ -844,6 +845,7 @@ export type Database = {
           amount: number
           created_at?: string
           date_paid?: string | null
+          log_timestamp?: string | null
           description?: string | null
           deposit_allocation?: number
           entry_kind?: "recorded" | "scheduled"
@@ -861,6 +863,7 @@ export type Database = {
           amount?: number
           created_at?: string
           date_paid?: string | null
+          log_timestamp?: string | null
           description?: string | null
           deposit_allocation?: number
           entry_kind?: "recorded" | "scheduled"

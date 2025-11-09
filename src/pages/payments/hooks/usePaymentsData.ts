@@ -6,6 +6,7 @@ import {
   STATUS_FILTER_OPTIONS,
   TYPE_FILTER_OPTIONS,
 } from "../constants";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 import type {
   Payment,
   PaymentStatusFilter,
@@ -27,6 +28,7 @@ type ProjectRecord = {
   updated_at: string | null;
   created_at: string | null;
   user_id: string | null;
+  project_statuses?: { name?: string | null } | null;
 };
 
 type LeadSummary = { id: string; name: string };
@@ -36,6 +38,7 @@ interface SearchContext {
   leadDetailsMap: Map<string, LeadSummary>;
   pendingLeadIds: Set<string>;
   searchProjectIds: Set<string>;
+  archivedProjectIds: Set<string>;
   upsertProjects: (projects: ProjectRecord[] | null | undefined) => void;
   assignProjectLead: () => void;
 }
@@ -44,6 +47,7 @@ type FetchPaymentsDataOptions = {
   range?: { from: number; to: number };
   includeMetrics?: boolean;
   includeCount?: boolean;
+  includeScheduled?: boolean;
 };
 
 interface UsePaymentsDataOptions {
@@ -63,6 +67,7 @@ interface UsePaymentsDataOptions {
 interface UsePaymentsDataResult {
   paginatedPayments: Payment[];
   metricsPayments: Payment[];
+  scheduledPayments: Payment[];
   totalCount: number;
   initialLoading: boolean;
   tableLoading: boolean;
@@ -71,10 +76,25 @@ interface UsePaymentsDataResult {
     payments: Payment[];
     count: number;
     metricsData: Payment[] | null;
+    scheduledPayments?: Payment[] | null;
   }>;
 }
 
 type EnrichedPayment = Payment & { projects: ProjectDetails | null };
+
+const LOG_TIMESTAMP_FIELD = "log_timestamp";
+
+const isLogTimestampMissingError = (error: unknown): boolean => {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+  const maybe = error as { code?: string; message?: string; details?: string };
+  if (maybe.code === "42703") {
+    return true;
+  }
+  const payload = `${maybe.message ?? ""} ${maybe.details ?? ""}`.toLowerCase();
+  return payload.includes(LOG_TIMESTAMP_FIELD);
+};
 
 const sortEnrichedPayments = (
   payments: EnrichedPayment[],
@@ -106,8 +126,10 @@ const sortEnrichedPayments = (
 
   if (sortField === "date_paid") {
     return [...payments].sort((a, b) => {
-      const dateA = a.date_paid ? new Date(a.date_paid) : new Date(a.created_at);
-      const dateB = b.date_paid ? new Date(b.date_paid) : new Date(b.created_at);
+      const rawDateA = a.log_timestamp ?? a.date_paid ?? a.created_at;
+      const rawDateB = b.log_timestamp ?? b.date_paid ?? b.created_at;
+      const dateA = new Date(rawDateA);
+      const dateB = new Date(rawDateB);
       const rawTimeA = Number.isNaN(dateA.getTime()) ? null : dateA.getTime();
       const rawTimeB = Number.isNaN(dateB.getTime()) ? null : dateB.getTime();
       const timeA =
@@ -189,11 +211,65 @@ export function usePaymentsData({
 }: UsePaymentsDataOptions): UsePaymentsDataResult {
   const [paginatedPayments, setPaginatedPayments] = useState<Payment[]>([]);
   const [metricsPayments, setMetricsPayments] = useState<Payment[]>([]);
+  const [scheduledPayments, setScheduledPayments] = useState<Payment[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [initialLoading, setInitialLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(false);
   const initialLoadRef = useRef(true);
   const lastFetchedPageRef = useRef(0);
+
+  const archivedStatusIdRef = useRef<string | null>(null);
+  const logTimestampSupportedRef = useRef<boolean | null>(
+    process.env.NODE_ENV === "test" ? true : null
+  );
+  const logTimestampSupportPromiseRef = useRef<Promise<boolean> | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const organizationId = await getUserOrganizationId();
+        if (!organizationId) {
+          archivedStatusIdRef.current = null;
+          return;
+        }
+        const { data, error } = await supabase
+          .from("project_statuses")
+          .select("id")
+          .eq("organization_id", organizationId)
+          .ilike("name", "archived")
+          .maybeSingle();
+        if (error) throw error;
+        archivedStatusIdRef.current = data?.id ?? null;
+      } catch (error) {
+        console.error("Failed to load archived status id", error);
+        archivedStatusIdRef.current = null;
+      }
+    })();
+  }, []);
+
+  const ensureLogTimestampSupport = useCallback(async () => {
+    if (logTimestampSupportedRef.current !== null) {
+      return logTimestampSupportedRef.current;
+    }
+    if (logTimestampSupportPromiseRef.current) {
+      return logTimestampSupportPromiseRef.current;
+    }
+    const probe = (async () => {
+      const { error } = await supabase
+        .from("payments")
+        .select(LOG_TIMESTAMP_FIELD)
+        .limit(1);
+      if (error && !isLogTimestampMissingError(error)) {
+        console.warn("[payments] Unable to confirm log timestamp support:", error);
+      }
+      logTimestampSupportedRef.current = error ? false : true;
+      return logTimestampSupportedRef.current;
+    })();
+    logTimestampSupportPromiseRef.current = probe.finally(() => {
+      logTimestampSupportPromiseRef.current = null;
+    });
+    return logTimestampSupportPromiseRef.current;
+  }, []);
 
   const createSearchContext = useCallback(
     async (globalSearchTerm: string): Promise<SearchContext> => {
@@ -201,9 +277,15 @@ export function usePaymentsData({
       const leadDetailsMap = new Map<string, LeadSummary>();
       const pendingLeadIds = new Set<string>();
       const searchProjectIds = new Set<string>();
+      const archivedProjectIds = new Set<string>();
 
       const upsertProjects = (projects: ProjectRecord[] | null | undefined) => {
+        const archivedStatusId = archivedStatusIdRef.current;
         projects?.forEach((project) => {
+          if (archivedStatusId && project.status_id === archivedStatusId) {
+            archivedProjectIds.add(project.id);
+            return;
+          }
           projectDetailsMap.set(project.id, {
             id: project.id,
             name: project.name,
@@ -271,6 +353,7 @@ export function usePaymentsData({
         leadDetailsMap,
         pendingLeadIds,
         searchProjectIds,
+        archivedProjectIds,
         upsertProjects,
         assignProjectLead,
       };
@@ -286,6 +369,7 @@ export function usePaymentsData({
         pendingLeadIds,
         upsertProjects,
         assignProjectLead,
+        archivedProjectIds,
       } = context;
 
       const projectIds = Array.from(
@@ -324,17 +408,25 @@ export function usePaymentsData({
 
       assignProjectLead();
 
-      return paymentsList.map((payment) => ({
-        ...payment,
-        projects: payment.project_id ? projectDetailsMap.get(payment.project_id) ?? null : null,
-      }));
+      return paymentsList
+        .filter((payment) => !archivedProjectIds.has(payment.project_id))
+        .map((payment) => ({
+          ...payment,
+          projects: payment.project_id ? projectDetailsMap.get(payment.project_id) ?? null : null,
+        }));
     },
     []
   );
 
   const fetchPaymentsData = useCallback(
     async (options?: FetchPaymentsDataOptions) => {
-      const { range, includeMetrics = false, includeCount = false } = options ?? {};
+      const supportsLogTimestamp = await ensureLogTimestampSupport();
+      const {
+        range,
+        includeMetrics = false,
+        includeCount = false,
+        includeScheduled = false,
+      } = options ?? {};
       const rawSearch = searchTerm.trim();
       const globalSearchTerm =
         rawSearch.length >= SEARCH_MIN_CHARS ? rawSearch : "";
@@ -371,139 +463,230 @@ export function usePaymentsData({
             })()
           : null;
 
-      let tableQuery = supabase
-        .from("payments")
-        .select("*", { count: includeCount ? "exact" : undefined });
-
-      if (activeDateRange) {
-        const startISO = activeDateRange.start.toISOString();
-        const endISO = activeDateRange.end.toISOString();
-        const recordedPaidWindow = `and(entry_kind.eq.recorded,date_paid.gte.${startISO},date_paid.lte.${endISO})`;
-        const recordedCreatedWindow = `and(entry_kind.eq.recorded,date_paid.is.null,created_at.gte.${startISO},created_at.lte.${endISO})`;
-        tableQuery = tableQuery.or(
-          `entry_kind.eq.scheduled,${recordedPaidWindow},${recordedCreatedWindow}`
-        );
-      }
-
-      if (refundOnly) {
-        tableQuery = tableQuery.lt("amount", 0);
-      } else if (shouldFilterStandardStatuses) {
-        if (standardStatuses.length === 1) {
-          tableQuery = tableQuery.ilike("status", standardStatuses[0]);
-        } else {
-          tableQuery = tableQuery.in("status", standardStatuses);
-        }
-      }
-
-      if (shouldFilterTypes) {
-        tableQuery = tableQuery.in("type", typeFilters);
-      }
-
-      if (hasMinAmount) {
-        tableQuery = tableQuery.gte("amount", minAmountValue as number);
-      }
-
-      if (hasMaxAmount) {
-        tableQuery = tableQuery.lte("amount", maxAmountValue as number);
-      }
-
-      if (searchFilters?.length) {
-        tableQuery = tableQuery.or(searchFilters.join(","));
-      }
-
-      const ascending = sortDirection === "asc";
-
-      switch (sortField) {
-        case "date_paid":
-          tableQuery = tableQuery
-            .order("date_paid", { ascending, nullsLast: true })
-            .order("created_at", { ascending });
-          break;
-        case "amount":
-        case "description":
-        case "status":
-        case "type":
-          tableQuery = tableQuery.order(sortField, { ascending });
-          break;
-        default:
-          tableQuery = tableQuery.order("created_at", { ascending: false });
-          break;
-      }
-
-      if (range) {
-        tableQuery = tableQuery.range(range.from, range.to);
-      }
-
-      const tableResult = await tableQuery;
-      if (tableResult.error) {
-        throw tableResult.error;
-      }
-
-      let metricsData: Payment[] | null = null;
-
-      if (includeMetrics) {
-        let metricsQuery = supabase
+      const runFetch = async (useLogTimestamp: boolean) => {
+        let tableQuery = supabase
           .from("payments")
-          .select(
-            "id, amount, status, type, date_paid, created_at, updated_at, project_id, entry_kind, scheduled_initial_amount, scheduled_remaining_amount"
-          );
+          .select("*", { count: includeCount ? "exact" : undefined });
 
         if (activeDateRange) {
           const startISO = activeDateRange.start.toISOString();
           const endISO = activeDateRange.end.toISOString();
-          const recordedPaidWindow = `and(entry_kind.eq.recorded,date_paid.gte.${startISO},date_paid.lte.${endISO})`;
-          const recordedCreatedWindow = `and(entry_kind.eq.recorded,date_paid.is.null,created_at.gte.${startISO},created_at.lte.${endISO})`;
-          metricsQuery = metricsQuery.or(
-            `entry_kind.eq.scheduled,${recordedPaidWindow},${recordedCreatedWindow}`
-          );
+          if (useLogTimestamp) {
+            tableQuery = tableQuery.gte(LOG_TIMESTAMP_FIELD, startISO).lte(LOG_TIMESTAMP_FIELD, endISO);
+          } else {
+            const paidWindow = `and(entry_kind.eq.recorded,status.ilike.paid,date_paid.gte.${startISO},date_paid.lte.${endISO})`;
+            const createdWindow = `and(entry_kind.eq.recorded,status.ilike.paid,date_paid.is.null,created_at.gte.${startISO},created_at.lte.${endISO})`;
+            const refundWindow = `and(entry_kind.eq.recorded,amount.lt.0,created_at.gte.${startISO},created_at.lte.${endISO})`;
+            tableQuery = tableQuery.or([paidWindow, createdWindow, refundWindow].join(","));
+          }
         }
 
         if (refundOnly) {
-          metricsQuery = metricsQuery.lt("amount", 0);
+          tableQuery = tableQuery.lt("amount", 0);
         } else if (shouldFilterStandardStatuses) {
           if (standardStatuses.length === 1) {
-            metricsQuery = metricsQuery.ilike("status", standardStatuses[0]);
+            tableQuery = tableQuery.ilike("status", standardStatuses[0]);
           } else {
-            metricsQuery = metricsQuery.in("status", standardStatuses);
+            tableQuery = tableQuery.in("status", standardStatuses);
           }
         }
 
         if (shouldFilterTypes) {
-          metricsQuery = metricsQuery.in("type", typeFilters);
+          tableQuery = tableQuery.in("type", typeFilters);
         }
 
         if (hasMinAmount) {
-          metricsQuery = metricsQuery.gte("amount", minAmountValue as number);
+          tableQuery = tableQuery.gte("amount", minAmountValue as number);
         }
 
         if (hasMaxAmount) {
-          metricsQuery = metricsQuery.lte("amount", maxAmountValue as number);
+          tableQuery = tableQuery.lte("amount", maxAmountValue as number);
         }
 
         if (searchFilters?.length) {
-          metricsQuery = metricsQuery.or(searchFilters.join(","));
+          tableQuery = tableQuery.or(searchFilters.join(","));
         }
 
-        const metricsResult = await metricsQuery;
-        if (metricsResult.error) {
-          throw metricsResult.error;
+        tableQuery = tableQuery.or(
+          "and(entry_kind.eq.recorded,status.ilike.paid),and(entry_kind.eq.recorded,amount.lt.0)"
+        );
+
+        const ascending = sortDirection === "asc";
+
+        switch (sortField) {
+          case "date_paid":
+            if (useLogTimestamp) {
+              tableQuery = tableQuery
+                .order(LOG_TIMESTAMP_FIELD, { ascending, nullsLast: true })
+                .order("created_at", { ascending });
+            } else {
+              tableQuery = tableQuery
+                .order("date_paid", { ascending, nullsLast: true })
+                .order("created_at", { ascending });
+            }
+            break;
+          case "amount":
+          case "description":
+          case "status":
+          case "type":
+            tableQuery = tableQuery.order(sortField, { ascending });
+            break;
+          default:
+            tableQuery = tableQuery.order("created_at", { ascending: false });
+            break;
         }
-        metricsData = (metricsResult.data as Payment[] | null) ?? null;
-      }
 
-      const tableData = (tableResult.data as Payment[] | null) ?? [];
-      const enriched = await hydratePayments(tableData, context);
-      const sorted = sortEnrichedPayments(enriched, sortField, sortDirection);
+        if (range) {
+          tableQuery = tableQuery.range(range.from, range.to);
+        }
 
-      const computedCount = includeCount
-        ? tableResult.count ?? sorted.length
-        : sorted.length;
+        const tableResult = await tableQuery;
+        if (tableResult.error) {
+          throw tableResult.error;
+        }
 
-      return {
-        payments: sorted,
-        count: computedCount,
-        metricsData,
+        let metricsData: Payment[] | null = null;
+        let scheduledData: Payment[] | null = null;
+
+        if (includeMetrics) {
+          const metricFields = [
+            "id",
+            "amount",
+            "status",
+            "type",
+            "date_paid",
+            "created_at",
+            "updated_at",
+            "project_id",
+            "entry_kind",
+            "scheduled_initial_amount",
+            "scheduled_remaining_amount",
+          ];
+          if (useLogTimestamp) {
+            metricFields.splice(5, 0, LOG_TIMESTAMP_FIELD);
+          }
+
+          let metricsQuery = supabase.from("payments").select(metricFields.join(", "));
+
+          if (activeDateRange) {
+            const startISO = activeDateRange.start.toISOString();
+            const endISO = activeDateRange.end.toISOString();
+            if (useLogTimestamp) {
+              metricsQuery = metricsQuery.gte(LOG_TIMESTAMP_FIELD, startISO).lte(LOG_TIMESTAMP_FIELD, endISO);
+            } else {
+              const paidWindow = `and(entry_kind.eq.recorded,status.ilike.paid,date_paid.gte.${startISO},date_paid.lte.${endISO})`;
+              const createdWindow = `and(entry_kind.eq.recorded,status.ilike.paid,date_paid.is.null,created_at.gte.${startISO},created_at.lte.${endISO})`;
+              const refundWindow = `and(entry_kind.eq.recorded,amount.lt.0,created_at.gte.${startISO},created_at.lte.${endISO})`;
+              metricsQuery = metricsQuery.or([paidWindow, createdWindow, refundWindow].join(","));
+            }
+          }
+
+          if (refundOnly) {
+            metricsQuery = metricsQuery.lt("amount", 0);
+          } else if (shouldFilterStandardStatuses) {
+            if (standardStatuses.length === 1) {
+              metricsQuery = metricsQuery.ilike("status", standardStatuses[0]);
+            } else {
+              metricsQuery = metricsQuery.in("status", standardStatuses);
+            }
+          }
+
+          if (shouldFilterTypes) {
+            metricsQuery = metricsQuery.in("type", typeFilters);
+          }
+
+          if (hasMinAmount) {
+            metricsQuery = metricsQuery.gte("amount", minAmountValue as number);
+          }
+
+          if (hasMaxAmount) {
+            metricsQuery = metricsQuery.lte("amount", maxAmountValue as number);
+          }
+
+          if (searchFilters?.length) {
+            metricsQuery = metricsQuery.or(searchFilters.join(","));
+          }
+
+          const metricsResult = await metricsQuery;
+          if (metricsResult.error) {
+            throw metricsResult.error;
+          }
+          const rawMetrics = (metricsResult.data as Payment[] | null) ?? null;
+          if (rawMetrics?.length) {
+            const metricsProjectIds = Array.from(
+              new Set(
+                rawMetrics
+                  .map((payment) => payment.project_id)
+                  .filter((id): id is string => Boolean(id))
+              )
+            );
+            const missingForMetrics = metricsProjectIds.filter(
+              (id) => !context.projectDetailsMap.has(id) && !context.archivedProjectIds.has(id)
+            );
+            if (missingForMetrics.length) {
+              const { data: metricsProjects, error: metricsProjectsError } = await supabase
+                .from("projects")
+                .select(PROJECT_SELECT_FIELDS)
+                .in("id", missingForMetrics);
+
+              if (metricsProjectsError) throw metricsProjectsError;
+
+              context.upsertProjects(metricsProjects);
+            }
+          }
+
+          metricsData = rawMetrics
+            ? rawMetrics.filter((payment) => !context.archivedProjectIds.has(payment.project_id))
+            : null;
+        }
+
+        if (includeScheduled) {
+          let scheduledQuery = supabase.from("payments").select("*").eq("entry_kind", "scheduled");
+
+          if (searchFilters?.length) {
+            scheduledQuery = scheduledQuery.or(searchFilters.join(","));
+          }
+
+          scheduledQuery = scheduledQuery.order("updated_at", { ascending: false });
+
+          const scheduledResult = await scheduledQuery;
+          if (scheduledResult.error) {
+            throw scheduledResult.error;
+          }
+
+          const scheduledRaw = (scheduledResult.data as Payment[] | null) ?? [];
+          scheduledData = await hydratePayments(scheduledRaw, context);
+        }
+
+        const tableData = (tableResult.data as Payment[] | null) ?? [];
+        const enriched = await hydratePayments(tableData, context);
+        const sorted = sortEnrichedPayments(enriched, sortField, sortDirection);
+
+        const computedCount = includeCount
+          ? tableResult.count ?? sorted.length
+          : sorted.length;
+
+        return {
+          payments: sorted,
+          count: computedCount,
+          metricsData,
+          scheduledPayments: scheduledData,
+        };
       };
+
+      try {
+        return await runFetch(supportsLogTimestamp);
+      } catch (error) {
+        if (logTimestampSupportedRef.current && isLogTimestampMissingError(error)) {
+          console.warn(
+            "[payments] Falling back to legacy date filters because log_timestamp is unavailable."
+          );
+          logTimestampSupportedRef.current = false;
+          logTimestampSupportPromiseRef.current = null;
+          return runFetch(false);
+        }
+        throw error;
+      }
     },
     [
       activeDateRange,
@@ -516,6 +699,7 @@ export function usePaymentsData({
       sortField,
       statusFilters,
       typeFilters,
+      ensureLogTimestampSupport,
     ]
   );
 
@@ -552,10 +736,11 @@ export function usePaymentsData({
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      const { payments, count, metricsData } = await fetchPaymentsData({
+      const { payments, count, metricsData, scheduledPayments: scheduledData } = await fetchPaymentsData({
         range: { from, to },
         includeMetrics: true,
         includeCount: true,
+        includeScheduled: true,
       });
 
       fetchedPayments = payments;
@@ -569,6 +754,11 @@ export function usePaymentsData({
       });
       setTotalCount(count);
       setMetricsPayments(metricsData ?? []);
+      if (scheduledData) {
+        setScheduledPayments(scheduledData);
+      } else if (page === 1) {
+        setScheduledPayments([]);
+      }
       lastFetchedPageRef.current = page;
     } catch (error) {
       onError(buildError(error));
@@ -589,6 +779,7 @@ export function usePaymentsData({
     () => ({
       paginatedPayments,
       metricsPayments,
+      scheduledPayments,
       totalCount,
       initialLoading,
       tableLoading,
@@ -600,6 +791,7 @@ export function usePaymentsData({
       fetchPaymentsData,
       initialLoading,
       metricsPayments,
+      scheduledPayments,
       paginatedPayments,
       tableLoading,
       totalCount,

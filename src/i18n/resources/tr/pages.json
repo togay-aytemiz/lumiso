@@ -1429,7 +1429,8 @@
       "legend": {
         "paid": "Tahsil",
         "due": "Bekleyen",
-        "refund": "İade"
+        "refund": "İade",
+        "scheduled": "Bekleyen"
       },
       "empty": "Bu dönem için ödeme kaydı olduğunda trend grafiği görünecek.",
       "groupingLabel": "Görünüm",
@@ -1437,7 +1438,8 @@
         "day": "Gün",
         "week": "Hafta",
         "month": "Ay"
-      }
+      },
+      "showOutstanding": "Bekleyenleri göster"
     },
     "range": {
       "label": "Tarih Aralığı",
@@ -1476,7 +1478,16 @@
       "lead": "Kişi",
       "description": "Açıklama",
       "status": "Durum",
-      "type": "Tür"
+      "type": "Tür",
+      "view": {
+        "recorded": "Gerçekleşen",
+        "scheduled": "Beklenen"
+      },
+      "waiting": {
+        "updated": "Son güncelleme",
+        "remaining": "Beklenen tutar",
+        "collected": "Tahsil edilen"
+      }
     },
     "status": {
       "paid": "Tahsil",
@@ -1499,7 +1510,8 @@
     "emptyState": {
       "noPaymentsWithLabel": "\"{{labelFilter}}\" etiketli ödeme bulunamadı.",
       "noPaymentsWithFilters": "Seçilen filtrelerle eşleşen ödeme bulunamadı.",
-      "noPaymentsForPeriod": "Seçili dönem için ödeme bulunamadı."
+      "noPaymentsForPeriod": "Seçili dönem için ödeme bulunamadı.",
+      "noScheduledPayments": "Bekleyen ödeme bulunamadı."
     },
     "defaultLabel": "Ödeme",
     "errorFetching": "Ödemeler alınırken hata oluştu"

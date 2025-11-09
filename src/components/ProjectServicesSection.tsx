@@ -287,6 +287,16 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
 
         await refreshServiceRecords();
         onServicesUpdated?.();
+        try {
+          const total = includedTotals.gross + extraTotals.gross;
+          await syncProjectOutstandingPayment({
+            projectId,
+            contractTotalOverride: total,
+            description: project?.name ? `Outstanding balance — ${project.name}` : undefined,
+          });
+        } catch (error) {
+          console.warn("Failed to resync outstanding after services update:", error);
+        }
         toast({
           title: t("services.services_updated", { defaultValue: "Services updated" })
         });

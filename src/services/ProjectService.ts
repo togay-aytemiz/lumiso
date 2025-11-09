@@ -64,7 +64,7 @@ type TodoSummary = Pick<TodoRow, "project_id" | "is_completed">;
 type ProjectServiceSummary = ProjectServiceRow & {
   service: Pick<ServiceRow, "id" | "name"> | null;
 };
-type PaymentSummary = Pick<PaymentRow, "project_id" | "amount" | "status">;
+type PaymentSummary = Pick<PaymentRow, "project_id" | "amount" | "status" | "entry_kind">;
 type LeadSummary = Pick<LeadRow, "id" | "name" | "status" | "email" | "phone">;
 type ProjectStatusSummary = Pick<ProjectStatusRow, "id" | "name" | "color" | "sort_order">;
 type ProjectTypeSummary = Pick<ProjectTypeRow, "id" | "name">;
@@ -457,7 +457,7 @@ export class ProjectService extends BaseEntityService {
     if (projectIds.length === 0) return [];
     const { data, error } = await supabase
       .from<PaymentRow>('payments')
-      .select('project_id, amount, status')
+      .select('project_id, amount, status, entry_kind')
       .in('project_id', projectIds)
       .eq('entry_kind', 'recorded');
 

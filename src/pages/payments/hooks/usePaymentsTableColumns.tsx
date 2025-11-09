@@ -29,7 +29,7 @@ export function usePaymentsTableColumns({
         sortId: "date_paid",
         hideable: false,
         minWidth: "140px",
-        render: (row) => formatDate(row.date_paid || row.created_at),
+        render: (row) => formatDate(row.log_timestamp ?? row.date_paid ?? row.created_at),
       },
       {
         id: "lead",
@@ -95,7 +95,7 @@ export function usePaymentsTableColumns({
           );
           if (entryKind === "scheduled") {
             return (
-              <span className="tabular-nums font-semibold">
+              <span className="tabular-nums font-semibold text-muted-foreground">
                 {formatAmount(Math.max(scheduledRemaining, 0))}
               </span>
             );

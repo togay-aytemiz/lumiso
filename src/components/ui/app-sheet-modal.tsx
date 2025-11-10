@@ -1,4 +1,4 @@
-import { ReactNode, useCallback } from 'react';
+import { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
@@ -30,6 +30,8 @@ interface AppSheetModalProps {
   dirty?: boolean;
   onDirtyClose?: () => void;
 }
+
+const RECENT_OPEN_GUARD_MS = 200;
 
 const getDismissableEventTarget = (
   event: PointerDownOutsideEvent | FocusOutsideEvent,
@@ -66,6 +68,13 @@ export function AppSheetModal({
   onDirtyClose
 }: AppSheetModalProps) {
   const isMobile = useIsMobile();
+  const lastOpenedRef = useRef(0);
+
+  useEffect(() => {
+    if (isOpen) {
+      lastOpenedRef.current = Date.now();
+    }
+  }, [isOpen]);
 
   const handleOpenChange = useCallback((open: boolean) => {
     if (!open && dirty && onDirtyClose) {
@@ -79,6 +88,12 @@ export function AppSheetModal({
     (event: PointerDownOutsideEvent | FocusOutsideEvent) => {
       const target = getDismissableEventTarget(event);
       if (target?.closest('[role="dialog"],[role="alertdialog"]')) {
+        event.preventDefault();
+        return;
+      }
+
+      const justOpened = Date.now() - lastOpenedRef.current < RECENT_OPEN_GUARD_MS;
+      if (justOpened) {
         event.preventDefault();
         return;
       }

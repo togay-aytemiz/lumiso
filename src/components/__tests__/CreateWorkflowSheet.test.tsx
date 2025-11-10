@@ -158,7 +158,7 @@ const useModalNavigationMock = useModalNavigation as jest.MockedFunction<typeof 
           expect.objectContaining({
             action_config: {
               template_id: "template-1",
-              channels: ["email", "sms"],
+              channels: ["email"],
             },
             delay_minutes: 0,
           }),

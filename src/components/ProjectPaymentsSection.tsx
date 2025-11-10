@@ -535,14 +535,17 @@ export function ProjectPaymentsSection({
     async (mode: "refresh" | "acknowledge") => {
       if (!project) return;
       setIsSnapshotUpdating(true);
+      const suggestedAmount = financialSummary.depositSuggestedAmount;
+      const lockedAmount =
+        mode === "refresh"
+          ? suggestedAmount
+          : project.depositConfig.snapshot_amount ?? suggestedAmount;
       const nextConfig: ProjectDepositConfig = {
         ...project.depositConfig,
-        snapshot_amount:
-          mode === "refresh"
-            ? financialSummary.depositSuggestedAmount
-            : project.depositConfig.snapshot_amount ?? financialSummary.depositSuggestedAmount,
+        snapshot_amount: lockedAmount,
         snapshot_total: financialSummary.contractTotal,
-        snapshot_locked_at: new Date().toISOString()
+        snapshot_locked_at: new Date().toISOString(),
+        snapshot_acknowledged_amount: suggestedAmount
       };
       try {
         const { error } = await supabase
@@ -640,6 +643,8 @@ export function ProjectPaymentsSection({
     defaultValue: "Kapora tutarını düzenle"
   });
   const lockedDepositAmount = project?.depositConfig?.snapshot_amount ?? null;
+  const acknowledgedSnapshotAmount =
+    project?.depositConfig?.snapshot_acknowledged_amount ?? lockedDepositAmount;
   const lockedDepositDate = financialSummary.depositSnapshotLockedAt;
   const snapshotLabel = lockedDepositAmount
     ? t(
@@ -666,8 +671,8 @@ export function ProjectPaymentsSection({
     financialSummary.depositSnapshotTotal != null &&
     Math.abs(financialSummary.depositSnapshotTotal - financialSummary.contractTotal) >= 1;
   const snapshotAmountDiff =
-    lockedDepositAmount != null &&
-    Math.abs(financialSummary.depositSuggestedAmount - lockedDepositAmount) >= 1;
+    acknowledgedSnapshotAmount != null &&
+    Math.abs(financialSummary.depositSuggestedAmount - acknowledgedSnapshotAmount) >= 1;
   const shouldShowSnapshotBanner =
     depositConfigured && lockedDepositAmount != null && (snapshotTotalDiff || snapshotAmountDiff);
   const canLockDeposit =

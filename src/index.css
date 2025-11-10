@@ -550,6 +550,15 @@ All colors MUST be HSL.
     font-size: var(--font-3xs);
     line-height: 0.875rem;
   }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .data-table-container th,

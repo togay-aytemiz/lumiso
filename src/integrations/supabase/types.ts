@@ -1048,6 +1048,8 @@ export type Database = {
           lead_id: string
           name: string
           organization_id: string
+          package_id: string | null
+          package_snapshot: Json | null
           previous_status_id: string | null
           project_type_id: string | null
           sort_order: number | null
@@ -1064,6 +1066,8 @@ export type Database = {
           lead_id: string
           name: string
           organization_id: string
+          package_id?: string | null
+          package_snapshot?: Json | null
           previous_status_id?: string | null
           project_type_id?: string | null
           sort_order?: number | null
@@ -1080,6 +1084,8 @@ export type Database = {
           lead_id?: string
           name?: string
           organization_id?: string
+          package_id?: string | null
+          package_snapshot?: Json | null
           previous_status_id?: string | null
           project_type_id?: string | null
           sort_order?: number | null

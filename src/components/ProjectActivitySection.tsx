@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActivityForm } from "@/components/shared/ActivityForm";
 import { ActivityTimeline } from "@/components/shared/ActivityTimeline";
 import { SegmentedControl } from "@/components/ui/segmented-control";
@@ -931,10 +931,18 @@ export function ProjectActivitySection({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="flex items-center gap-2 text-xl font-semibold">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+              />
+            </svg>
             {t("activitiesHistory.title")}
-          </h3>
+          </CardTitle>
           <SegmentedControl
             size="sm"
             value={selectedSegment}

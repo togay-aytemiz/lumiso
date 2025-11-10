@@ -223,7 +223,8 @@ export function ProjectDepositSetupDialog({
       ...payload,
       snapshot_amount: shouldSnapshot ? computedAmount : null,
       snapshot_total: shouldSnapshot ? contractTotal : null,
-      snapshot_locked_at: shouldSnapshot ? snapshotTimestamp : null
+      snapshot_locked_at: shouldSnapshot ? snapshotTimestamp : null,
+      snapshot_acknowledged_amount: shouldSnapshot ? computedAmount : null
     };
 
     setIsSaving(true);
@@ -236,7 +237,7 @@ export function ProjectDepositSetupDialog({
 
       if (error) throw error;
 
-      await onConfigSaved(payload);
+      await onConfigSaved(payloadWithSnapshot);
       toast.success(
         t("payments.deposit.setup_success", {
           defaultValue: "Deposit details updated."

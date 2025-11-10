@@ -6,6 +6,7 @@ import { useProjectCreationActions } from "../hooks/useProjectCreationActions";
 import { useProjectCreationContext } from "../hooks/useProjectCreationContext";
 import { ProjectCreationStepId, type ProjectServiceLineItem } from "../types";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { syncProjectOutstandingPayment } from "@/lib/payments/outstanding";
 import { useToast } from "@/components/ui/use-toast";
@@ -24,7 +25,21 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useNavigate } from "react-router-dom";
 import { calculateLineItemPricing } from "@/features/package-creation/utils/lineItemPricing";
-import { computeDepositAmount, type ProjectDepositConfig } from "@/lib/payments/depositUtils";
+import {
+  computeDepositAmount,
+  parseDepositConfig,
+  type ProjectDepositConfig,
+} from "@/lib/payments/depositUtils";
+import {
+  buildProjectPackageSnapshot,
+  parseProjectPackageSnapshot,
+  type ProjectPackageSnapshot,
+} from "@/lib/projects/projectPackageSnapshot";
+import {
+  fetchProjectServiceRecords,
+  type ProjectServiceRecord,
+} from "@/lib/services/projectServiceRecords";
+import { Loader2 } from "lucide-react";
 
 interface ProjectCreationWizardSheetProps {
   isOpen: boolean;
@@ -35,7 +50,13 @@ interface ProjectCreationWizardSheetProps {
   defaultStatusId?: string | null;
   startStepOverride?: ProjectCreationStepId;
   onProjectCreated?: (project?: { id: string; name?: string }) => void;
+  projectId?: string;
+  mode?: "create" | "edit";
+  leadLocked?: boolean;
+  onProjectUpdated?: (project?: { id: string; name?: string }) => void;
 }
+
+type PackageRow = Database["public"]["Tables"]["packages"]["Row"];
 
 export const ProjectCreationWizardSheet = ({
   isOpen,
@@ -46,7 +67,14 @@ export const ProjectCreationWizardSheet = ({
   defaultStatusId,
   startStepOverride,
   onProjectCreated,
+  projectId,
+  mode,
+  leadLocked,
+  onProjectUpdated,
 }: ProjectCreationWizardSheetProps) => {
+  const resolvedMode = mode ?? (projectId ? "edit" : "create");
+  const resolvedLeadLocked =
+    typeof leadLocked === "boolean" ? leadLocked : resolvedMode === "edit";
   const entryContext = useMemo(
     () => ({
       leadId,
@@ -54,8 +82,20 @@ export const ProjectCreationWizardSheet = ({
       entrySource,
       defaultStatusId: defaultStatusId ?? undefined,
       startStepOverride,
+      projectId,
+      mode: resolvedMode,
+      leadLocked: resolvedLeadLocked,
     }),
-    [leadId, leadName, entrySource, defaultStatusId, startStepOverride]
+    [
+      leadId,
+      leadName,
+      entrySource,
+      defaultStatusId,
+      startStepOverride,
+      projectId,
+      resolvedMode,
+      resolvedLeadLocked,
+    ]
   );
 
   const providerKey = useMemo(
@@ -69,6 +109,8 @@ export const ProjectCreationWizardSheet = ({
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         onProjectCreated={onProjectCreated}
+        projectId={projectId}
+        onProjectUpdated={onProjectUpdated}
       />
     </ProjectCreationProvider>
   );
@@ -78,10 +120,17 @@ const ProjectCreationWizardSheetInner = ({
   isOpen,
   onOpenChange,
   onProjectCreated,
-}: Pick<ProjectCreationWizardSheetProps, "isOpen" | "onOpenChange" | "onProjectCreated">) => {
+  projectId,
+  onProjectUpdated,
+}: Pick<
+  ProjectCreationWizardSheetProps,
+  "isOpen" | "onOpenChange" | "onProjectCreated" | "projectId" | "onProjectUpdated"
+>) => {
   const { state } = useProjectCreationContext();
-  const { reset } = useProjectCreationActions();
+  const { reset, updateLead, updateDetails, updateServices, markDirty } =
+    useProjectCreationActions();
   const [isCreating, setIsCreating] = useState(false);
+  const [isHydrating, setIsHydrating] = useState(false);
   const { toast } = useToast();
   const { t: tProject } = useTranslation("projectCreation");
   const { t: tCommon } = useTranslation("common");
@@ -126,6 +175,114 @@ const ProjectCreationWizardSheetInner = ({
     });
   }, [isOpen, state.meta.entrySource]);
 
+  useEffect(() => {
+    if (!isOpen || !projectId) {
+      setIsHydrating(false);
+      return;
+    }
+    let cancelled = false;
+    setIsHydrating(true);
+
+    (async () => {
+      try {
+        const { data: projectData, error } = await supabase
+          .from<Database["public"]["Tables"]["projects"]["Row"]>("projects")
+          .select(
+            "id, lead_id, name, description, status_id, project_type_id, base_price, deposit_config, package_id, package_snapshot"
+          )
+          .eq("id", projectId)
+          .single();
+        if (error) throw error;
+
+        const [serviceRecords, leadResult] = await Promise.all([
+          fetchProjectServiceRecords(projectId),
+          supabase
+            .from<Database["public"]["Tables"]["leads"]["Row"]>("leads")
+            .select("id, name")
+            .eq("id", projectData.lead_id)
+            .maybeSingle(),
+        ]);
+
+        if (cancelled) return;
+
+        const snapshot = parseProjectPackageSnapshot(projectData.package_snapshot);
+        const includedItems = serviceRecords
+          .filter((record) => record.billingType === "included")
+          .map(mapServiceRecordToLineItem);
+        const extraItems = serviceRecords
+          .filter((record) => record.billingType === "extra")
+          .map(mapServiceRecordToLineItem);
+
+        updateLead(
+          {
+            id: projectData.lead_id,
+            name: leadResult.data?.name ?? state.meta.initialEntryContext?.leadName,
+            mode: "existing",
+          },
+          { markDirty: false }
+        );
+        updateDetails(
+          {
+            name: projectData.name,
+            description: projectData.description ?? undefined,
+            projectTypeId: projectData.project_type_id ?? undefined,
+            statusId: projectData.status_id ?? undefined,
+            basePrice:
+              typeof projectData.base_price === "number"
+                ? String(projectData.base_price)
+                : undefined,
+            depositAmount: deriveManualDepositInput(projectData.deposit_config),
+          },
+          { markDirty: false }
+        );
+        updateServices(
+          {
+            includedItems,
+            extraItems,
+            packageId: projectData.package_id ?? undefined,
+            packageLabel: snapshot?.name,
+            showCustomSetup: !projectData.package_id,
+          },
+          { markDirty: false }
+        );
+        markDirty(false);
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Error hydrating project wizard:", error);
+        toast({
+          title: tCommon("labels.error"),
+          description:
+            error instanceof Error
+              ? error.message
+              : tCommon("messages.error.generic", {
+                  defaultValue: "Something went wrong. Please try again.",
+                }),
+          variant: "destructive",
+        });
+        forceClose();
+      } finally {
+        if (!cancelled) {
+          setIsHydrating(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    forceClose,
+    isOpen,
+    markDirty,
+    projectId,
+    state.meta.initialEntryContext?.leadName,
+    tCommon,
+    toast,
+    updateDetails,
+    updateLead,
+    updateServices,
+  ]);
+
   const validateBeforeSubmit = useCallback(() => {
     if (!state.lead.id) {
       toast({
@@ -155,6 +312,7 @@ const ProjectCreationWizardSheetInner = ({
 
     setIsCreating(true);
     const entrySource = state.meta.entrySource ?? "direct";
+    const editingProjectId = projectId ?? null;
 
     try {
       const {
@@ -198,19 +356,28 @@ const ProjectCreationWizardSheetInner = ({
       const basePriceValue = parseFloat(state.details.basePrice ?? "") || 0;
       const manualDepositAmount = parseManualDepositAmount(state.details.depositAmount);
       let packageDepositConfig: ProjectDepositConfig | null = null;
+      let packageRecord: PackageRow | null = null;
+      let packageSnapshotPayload: ProjectPackageSnapshot | null = null;
 
-      if (!manualDepositAmount && state.services.packageId) {
-        const { data: packageRecord, error: packageError } = await supabase
-          .from("packages")
-          .select("pricing_metadata")
+      if (state.services.packageId) {
+        const { data, error } = await supabase
+          .from<PackageRow>("packages")
+          .select(
+            "id, name, description, price, client_total, line_items, delivery_estimate_type, delivery_photo_count_min, delivery_photo_count_max, delivery_lead_time_unit, delivery_lead_time_value, delivery_methods, include_addons_in_price, pricing_metadata"
+          )
           .eq("id", state.services.packageId)
           .single();
-        if (packageError) {
-          console.error("Error fetching package deposit metadata:", packageError);
-        } else {
-          packageDepositConfig = buildDepositConfigFromPackageMetadata(
-            packageRecord?.pricing_metadata ?? null
-          );
+
+        if (error) {
+          console.error("Error fetching package metadata:", error);
+        } else if (data) {
+          packageRecord = data;
+          packageSnapshotPayload = buildProjectPackageSnapshot(data);
+          if (!manualDepositAmount) {
+            packageDepositConfig = buildDepositConfigFromPackageMetadata(
+              data.pricing_metadata ?? null
+            );
+          }
         }
       }
 
@@ -236,8 +403,100 @@ const ProjectCreationWizardSheetInner = ({
               snapshot_amount: calculatedDepositAmount,
               snapshot_total: contractTotal,
               snapshot_locked_at: new Date().toISOString(),
+              snapshot_acknowledged_amount: calculatedDepositAmount,
             }
           : projectDepositConfig ?? null;
+
+      const toNumberOrNull = (value: unknown) =>
+        typeof value === "number" && Number.isFinite(value) ? value : null;
+
+      const buildServicePayloadTemplate = (
+        items: ProjectServiceLineItem[],
+        billingType: "included" | "extra"
+      ) =>
+        items
+          .filter((item): item is ProjectServiceLineItem & { serviceId: string } => {
+            return item.type === "existing" && typeof item.serviceId === "string";
+          })
+          .map((item) => {
+            const quantity = Math.max(1, Number(item.quantity ?? 1));
+            return {
+              service_id: item.serviceId,
+              billing_type: billingType,
+              quantity,
+              unit_cost_override: toNumberOrNull(item.unitCost),
+              unit_price_override: toNumberOrNull(item.unitPrice),
+              vat_mode_override: item.vatMode ?? null,
+              vat_rate_override: toNumberOrNull(item.vatRate),
+            };
+          });
+
+      const servicePayloadTemplate = [
+        ...buildServicePayloadTemplate(state.services.includedItems, "included"),
+        ...buildServicePayloadTemplate(state.services.extraItems, "extra"),
+      ];
+
+      const persistProjectServices = async (targetProjectId: string) => {
+        const payload = servicePayloadTemplate.map((item) => ({
+          ...item,
+          project_id: targetProjectId,
+          user_id: user.id,
+        }));
+        await supabase.from("project_services").delete().eq("project_id", targetProjectId);
+        if (payload.length > 0) {
+          const { error: servicesError } = await supabase.from("project_services").insert(payload);
+          if (servicesError) throw servicesError;
+        }
+      };
+
+      if (editingProjectId) {
+        const { error: updateError } = await supabase
+          .from("projects")
+          .update({
+            name: state.details.name?.trim(),
+            description: state.details.description?.trim() || null,
+            status_id: statusId,
+            project_type_id: state.details.projectTypeId,
+            base_price: basePriceValue,
+            deposit_config: depositConfigPayload,
+            package_id: packageRecord?.id ?? state.services.packageId ?? null,
+            package_snapshot: packageSnapshotPayload,
+          })
+          .eq("id", editingProjectId);
+        if (updateError) throw updateError;
+
+        await persistProjectServices(editingProjectId);
+
+        await syncProjectOutstandingPayment({
+          projectId: editingProjectId,
+          organizationId,
+          userId: user.id,
+          contractTotalOverride: contractTotal,
+          description: state.details.name ? `Outstanding balance — ${state.details.name}` : undefined,
+        });
+
+        toast({
+          title: tCommon("actions.success"),
+          description: tCommon("messages.success.project_updated", {
+            defaultValue: "Project updated successfully.",
+          }),
+        });
+
+        trackEvent("project_wizard_updated", {
+          projectId: editingProjectId,
+          entrySource,
+          packageId: state.services.packageId ?? null,
+          serviceCount: servicePayloadTemplate.length,
+          basePrice: basePriceValue,
+        });
+
+        onProjectUpdated?.({
+          id: editingProjectId,
+          name: state.details.name?.trim(),
+        });
+        forceClose();
+        return;
+      }
 
       const { data: newProject, error: projectError } = await supabase
         .from("projects")
@@ -251,47 +510,15 @@ const ProjectCreationWizardSheetInner = ({
           project_type_id: state.details.projectTypeId,
           base_price: basePriceValue,
           deposit_config: depositConfigPayload,
+          package_id: packageRecord?.id ?? state.services.packageId ?? null,
+          package_snapshot: packageSnapshotPayload,
         })
         .select("id")
         .single();
 
       if (projectError) throw projectError;
 
-      const toNumberOrNull = (value: unknown) =>
-        typeof value === "number" && Number.isFinite(value) ? value : null;
-
-      const buildServicePayload = (
-        items: ProjectServiceLineItem[],
-        billingType: "included" | "extra"
-      ) =>
-        items
-          .filter((item): item is ProjectServiceLineItem & { serviceId: string } => {
-            return item.type === "existing" && typeof item.serviceId === "string";
-          })
-          .map((item) => {
-            const quantity = Math.max(1, Number(item.quantity ?? 1));
-            return {
-              project_id: newProject.id,
-              service_id: item.serviceId,
-              user_id: user.id,
-              billing_type: billingType,
-              quantity,
-              unit_cost_override: toNumberOrNull(item.unitCost),
-              unit_price_override: toNumberOrNull(item.unitPrice),
-              vat_mode_override: item.vatMode ?? null,
-              vat_rate_override: toNumberOrNull(item.vatRate),
-            };
-          });
-
-      const servicePayload = [
-        ...buildServicePayload(state.services.includedItems, "included"),
-        ...buildServicePayload(state.services.extraItems, "extra"),
-      ];
-
-      if (servicePayload.length > 0) {
-        const { error: servicesError } = await supabase.from("project_services").insert(servicePayload);
-        if (servicesError) throw servicesError;
-      }
+      await persistProjectServices(newProject.id);
 
       await syncProjectOutstandingPayment({
         projectId: newProject.id,
@@ -318,7 +545,7 @@ const ProjectCreationWizardSheetInner = ({
         className: "flex-col items-start",
       });
 
-      if (shouldLockNavigation && currentStep === 3) {
+      if (!editingProjectId && shouldLockNavigation && currentStep === 3) {
         try {
           await completeCurrentStep();
         } catch (error) {
@@ -330,7 +557,7 @@ const ProjectCreationWizardSheetInner = ({
         projectId: newProject.id,
         entrySource,
         packageId: state.services.packageId ?? null,
-        serviceCount: servicePayload.length,
+        serviceCount: servicePayloadTemplate.length,
         basePrice: basePriceValue,
       });
       onProjectCreated?.({
@@ -343,6 +570,7 @@ const ProjectCreationWizardSheetInner = ({
       trackEvent("project_wizard_error", {
         message,
         entrySource,
+        mode: editingProjectId ? "edit" : "create",
       });
       toast({
         title: tCommon("labels.error"),
@@ -361,6 +589,8 @@ const ProjectCreationWizardSheetInner = ({
     currentStep,
     forceClose,
     onProjectCreated,
+    onProjectUpdated,
+    projectId,
     shouldLockNavigation,
     state.details.basePrice,
     state.details.depositAmount,
@@ -388,15 +618,26 @@ const ProjectCreationWizardSheetInner = ({
         isOpen={isOpen}
         onOpenChange={handleModalOpenChange}
         size="xl"
-        dirty={state.meta.isDirty}
-        onDirtyClose={requestClose}
-      >
-        {isOpen ? (
-          <div className="flex h-full flex-col">
+      dirty={state.meta.isDirty}
+      onDirtyClose={requestClose}
+    >
+      {isOpen ? (
+        <div className="flex h-full flex-col">
+          {isHydrating ? (
+            <div className="flex flex-1 items-center justify-center gap-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              <span>
+                {tProject("wizard.loadingProject", {
+                  defaultValue: "Loading project...",
+                })}
+              </span>
+            </div>
+          ) : (
             <ProjectCreationWizard onComplete={handleComplete} isCompleting={isCreating} />
-          </div>
-        ) : null}
-      </AppSheetModal>
+          )}
+        </div>
+      ) : null}
+    </AppSheetModal>
 
       <AlertDialog open={showGuardDialog} onOpenChange={setShowGuardDialog}>
         <AlertDialogContent>
@@ -490,3 +731,32 @@ const computeExtraServicesTotal = (items: ProjectServiceLineItem[]): number =>
     const pricing = calculateLineItemPricing(item);
     return sum + pricing.gross;
   }, 0);
+
+const mapServiceRecordToLineItem = (
+  record: ProjectServiceRecord
+): ProjectServiceLineItem => ({
+  id: record.projectServiceId,
+  type: "existing",
+  serviceId: record.service.id,
+  name: record.service.name,
+  quantity: record.quantity,
+  unitCost: record.overrides.unitCost ?? record.service.cost_price ?? undefined,
+  unitPrice:
+    record.overrides.unitPrice ??
+    record.service.selling_price ??
+    record.service.price ??
+    undefined,
+  vatRate: record.overrides.vatRate ?? record.service.vat_rate ?? undefined,
+  vatMode:
+    record.overrides.vatMode ??
+    (record.service.price_includes_vat === false ? "exclusive" : "inclusive"),
+  source: "catalog",
+});
+
+const deriveManualDepositInput = (rawConfig: unknown): string | undefined => {
+  const parsed = parseDepositConfig(rawConfig as Json | null | undefined);
+  if (parsed.mode === "fixed" && typeof parsed.value === "number" && parsed.value > 0) {
+    return String(parsed.value);
+  }
+  return undefined;
+};

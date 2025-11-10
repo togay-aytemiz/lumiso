@@ -15,6 +15,7 @@ import { ProjectStagePipeline } from "@/components/ProjectStagePipeline";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { SimpleProjectTypeSelect } from "@/components/SimpleProjectTypeSelect";
 import { ProjectPaymentsSection } from "@/components/ProjectPaymentsSection";
+import { ProjectPackageSummaryCard } from "@/components/ProjectPackageSummaryCard";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
@@ -28,6 +29,12 @@ import { buildProjectSummaryItems } from "@/lib/projects/buildProjectSummaryItem
 import { useProjectHeaderSummary } from "@/hooks/useProjectHeaderSummary";
 import { useProjectSessionsSummary } from "@/hooks/useProjectSessionsSummary";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  parseProjectPackageSnapshot,
+  type ProjectPackageSnapshot,
+} from "@/lib/projects/projectPackageSnapshot";
+import { ProjectCreationWizardSheet } from "@/features/project-creation";
+import type { ProjectCreationStepId } from "@/features/project-creation/types";
 
 const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "Unknown error";
@@ -43,6 +50,8 @@ interface Project {
   status_id?: string | null;
   previous_status_id?: string | null;
   project_type_id?: string | null;
+  package_id?: string | null;
+  package_snapshot?: ProjectPackageSnapshot | null;
 }
 
 interface Lead {
@@ -104,9 +113,16 @@ export default function ProjectDetail() {
     plannedCount: 0
   });
   const [archiveLoading, setArchiveLoading] = useState(false);
+  const [editWizardOpen, setEditWizardOpen] = useState(false);
+  const [editWizardStartStep, setEditWizardStartStep] =
+    useState<ProjectCreationStepId>("details");
 
   const { summary: headerSummary } = useProjectHeaderSummary(project?.id, summaryRefreshToken);
   const { summary: sessionsSummary } = useProjectSessionsSummary(project?.id ?? "", summaryRefreshToken);
+  const packageSnapshot = useMemo(
+    () => parseProjectPackageSnapshot(project?.package_snapshot),
+    [project?.package_snapshot]
+  );
 
   const plannedSessionsCount = useMemo(() => {
     return sessions.filter(session => (session.status || "").toLowerCase() === "planned").length;
@@ -481,6 +497,17 @@ export default function ProjectDetail() {
     setSummaryRefreshToken(prev => prev + 1);
   };
 
+  const openEditWizard = useCallback((step: ProjectCreationStepId) => {
+    setEditWizardStartStep(step);
+    setEditWizardOpen(true);
+  }, []);
+
+  const handleWizardUpdated = useCallback(() => {
+    void fetchProject();
+    triggerSummaryRefresh();
+    setServicesVersion(prev => prev + 1);
+  }, [fetchProject, triggerSummaryRefresh]);
+
   const handleStatusPreview = useCallback((statusId: string | null) => {
     setLocalStatusId(statusId);
   }, []);
@@ -696,6 +723,15 @@ export default function ProjectDetail() {
           header={<></>} 
           left={
             <div className="space-y-6">
+              {project && (
+                <ProjectPackageSummaryCard
+                  projectId={project.id}
+                  snapshot={packageSnapshot}
+                  servicesVersion={servicesVersion}
+                  onEditDetails={() => openEditWizard("details")}
+                  onEditPackage={() => openEditWizard("packages")}
+                />
+              )}
               {lead && (
                 <UnifiedClientDetails 
                   lead={lead} 
@@ -859,6 +895,19 @@ export default function ProjectDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {project ? (
+        <ProjectCreationWizardSheet
+          isOpen={editWizardOpen}
+          onOpenChange={setEditWizardOpen}
+          leadId={project.lead_id}
+          leadName={lead?.name ?? ""}
+          projectId={project.id}
+          startStepOverride={editWizardStartStep}
+          mode="edit"
+          onProjectUpdated={handleWizardUpdated}
+        />
+      ) : null}
     </div>
   );
 }

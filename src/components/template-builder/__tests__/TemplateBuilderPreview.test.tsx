@@ -71,40 +71,26 @@ jest.mock("@/lib/utils", () => ({
   cn: (...classes: string[]) => classes.filter(Boolean).join(" "),
 }));
 
-jest.mock("@/components/ui/tabs", () => {
-  type TabsProps = {
-    value: string;
-    onValueChange?: (value: string) => void;
-    children: ReactNode;
-  };
-
-  type TabsTriggerProps = {
-    value: string;
-    children: ReactNode;
-    onValueChange?: (value: string) => void;
-  };
-
-  type TabsChildProps = { children: ReactNode };
-
-  return {
-    Tabs: ({ value, onValueChange, children }: TabsProps) => (
-      <div data-testid="tabs" data-value={value}>
-        {React.Children.map(children, (child: ReactNode) =>
-          React.isValidElement(child)
-            ? React.cloneElement(child as ReactElement, { onValueChange })
-            : child
-        )}
-      </div>
-    ),
-    TabsList: ({ children }: TabsChildProps) => <div>{children}</div>,
-    TabsTrigger: ({ value, children, onValueChange }: TabsTriggerProps) => (
-      <button type="button" onClick={() => onValueChange?.(value)}>
-        {children}
-      </button>
-    ),
-    TabsContent: ({ children }: TabsChildProps) => <div>{children}</div>,
-  };
-});
+jest.mock("@/components/ui/segmented-control", () => ({
+  SegmentedControl: ({ options, onValueChange }: { options: any[]; onValueChange: (value: string) => void }) => (
+    <div data-testid="segmented-control">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          disabled={option.disabled}
+          onClick={() => {
+            if (!option.disabled) {
+              onValueChange(option.value);
+            }
+          }}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  ),
+}));
 
 const clipboardWriteMock = jest.fn().mockResolvedValue(undefined);
 const supabaseInvokeMock = supabase.functions.invoke as jest.MockedFunction<typeof supabase.functions.invoke>;

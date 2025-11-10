@@ -29,6 +29,11 @@ import { EntityHeader } from "@/components/EntityHeader";
 import { buildProjectSummaryItems } from "@/lib/projects/buildProjectSummaryItems";
 import { useProjectHeaderSummary } from "@/hooks/useProjectHeaderSummary";
 import { useProjectSessionsSummary } from "@/hooks/useProjectSessionsSummary";
+import { ProjectPackageSummaryCard } from "@/components/ProjectPackageSummaryCard";
+import { parseProjectPackageSnapshot } from "@/lib/projects/projectPackageSnapshot";
+import { ProjectCreationWizardSheet } from "@/features/project-creation";
+import type { ProjectCreationStepId } from "@/features/project-creation/types";
+import type { ProjectPackageSnapshot } from "@/lib/projects/projectPackageSnapshot";
 
 interface Project {
   id: string;
@@ -41,6 +46,8 @@ interface Project {
   status_id?: string | null;
   previous_status_id?: string | null;
   project_type_id?: string | null;
+  package_id?: string | null;
+  package_snapshot?: ProjectPackageSnapshot | null;
 }
 
 interface Lead {
@@ -113,10 +120,17 @@ export function LegacyProjectSheetView({
     plannedCount: 0
   });
   const [archiveLoading, setArchiveLoading] = useState(false);
+  const [editWizardOpen, setEditWizardOpen] = useState(false);
+  const [editWizardStartStep, setEditWizardStartStep] =
+    useState<ProjectCreationStepId>("details");
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const { summary: headerSummary } = useProjectHeaderSummary(project?.id || null, summaryRefreshToken);
   const { summary: sessionsSummary } = useProjectSessionsSummary(project?.id ?? "", summaryRefreshToken);
+  const packageSnapshot = useMemo(
+    () => parseProjectPackageSnapshot(project?.package_snapshot),
+    [project?.package_snapshot]
+  );
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const plannedSessionsCount = useMemo(() => {
@@ -486,6 +500,18 @@ export function LegacyProjectSheetView({
     setSummaryRefreshToken(prev => prev + 1);
   };
 
+  const openEditWizard = useCallback((step: ProjectCreationStepId) => {
+    setEditWizardStartStep(step);
+    setEditWizardOpen(true);
+  }, []);
+
+  const handleWizardUpdated = useCallback(() => {
+    onProjectUpdated();
+    triggerSummaryRefresh();
+    setServicesVersion(prev => prev + 1);
+    void fetchLead();
+  }, [fetchLead, onProjectUpdated]);
+
   const summaryItems = useMemo(() => buildProjectSummaryItems({
     t: tPages,
     payments: headerSummary.payments,
@@ -772,6 +798,15 @@ export function LegacyProjectSheetView({
           header={<></>} 
           left={
             <div className="space-y-4">
+              {project && (
+                <ProjectPackageSummaryCard
+                  projectId={project.id}
+                  snapshot={packageSnapshot}
+                  servicesVersion={servicesVersion}
+                  onEditDetails={() => openEditWizard("details")}
+                  onEditPackage={() => openEditWizard("packages")}
+                />
+              )}
               {lead && (
                 <UnifiedClientDetails 
                   lead={lead} 
@@ -897,6 +932,19 @@ export function LegacyProjectSheetView({
     </>
   );
 
+  const editWizard = project ? (
+    <ProjectCreationWizardSheet
+      isOpen={editWizardOpen}
+      onOpenChange={setEditWizardOpen}
+      leadId={project.lead_id}
+      leadName={lead?.name ?? leadName}
+      projectId={project.id}
+      startStepOverride={editWizardStartStep}
+      mode="edit"
+      onProjectUpdated={handleWizardUpdated}
+    />
+  ) : null;
+
   // Render as Sheet or Dialog based on mode
   if (mode === 'sheet') {
     return (
@@ -954,6 +1002,7 @@ export function LegacyProjectSheetView({
           </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        {editWizard}
       </>
     );
   }
@@ -1007,6 +1056,7 @@ export function LegacyProjectSheetView({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {editWizard}
     </>
   );
 }

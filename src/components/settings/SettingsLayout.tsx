@@ -1026,10 +1026,11 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
         {showMobileBackButton && (
           <Button
             type="button"
-            variant="ghost"
+            variant="tinted"
+            colorScheme="slate"
             size="icon"
             onClick={handleMobileBackToDashboard}
-            className="h-10 w-10 shrink-0 rounded-full bg-muted text-foreground shadow-sm hover:bg-muted/80 focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2"
+            className="h-10 w-10 shrink-0"
             aria-label={mobileBackLabel}
           >
             <ChevronLeft className="h-5 w-5" />

@@ -1779,6 +1779,35 @@
       "saveFailed": "We couldn’t update your Tax & Billing defaults."
     }
   },
+  "project_package_card": {
+    "title": "Package & delivery",
+    "no_package": "No package selected",
+    "header_title": "Project summary",
+    "package_attached": "Linked package: {{name}}",
+    "custom_description": "No package selected • Custom service setup",
+    "customized": "Customized",
+    "customized_hint": "Services were adjusted after applying this package.",
+    "custom_label": "Custom",
+    "custom_plan_hint": "Link a package or keep tailoring services just for this project.",
+    "custom_plan_title": "Services",
+    "custom_plan_description": "{{count}} services tailored for this project",
+    "custom_plan_overview": "{{included}} included • {{extras}} extras",
+    "package_label": "Package",
+    "photos": "Photo delivery",
+    "lead_time_label": "Turnaround",
+    "methods": "Delivery methods",
+    "empty": "Link a package to capture delivery expectations and communicate them with clients.",
+    "edit_project": "Projeyi düzenle",
+    "change_package": "Paketi değiştir",
+    "select_package": "Paket seç",
+    "none": "Not specified",
+    "photo_range": "{{min}} – {{max}} photos",
+    "photo_single": "{{count}} photos",
+    "lead_time": "{{value}} {{unit}}",
+    "days": "days",
+    "weeks": "weeks",
+    "loading": "Loading services…"
+  },
   "auth": {
     "sign_in": {
       "title": "Sign in",

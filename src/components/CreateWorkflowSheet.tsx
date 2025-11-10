@@ -32,6 +32,12 @@ interface CreateWorkflowSheetProps {
   children?: React.ReactNode;
 }
 type ChannelType = 'email' | 'sms' | 'whatsapp';
+const COMING_SOON_CHANNELS: ChannelType[] = ['whatsapp', 'sms'];
+const getDefaultEnabledChannels = (): Record<ChannelType, boolean> => ({
+  email: true,
+  whatsapp: false,
+  sms: false
+});
 export function CreateWorkflowSheet({
   onCreateWorkflow,
   editWorkflow,
@@ -63,10 +69,10 @@ export function CreateWorkflowSheet({
     { value: 60, label: t('pages:workflows.createDialog.reminderDelays.60') }
   ];
 
-  const channelConfigs: Record<ChannelType, { icon: ComponentType<{ className?: string }>; label: string; color: string }> = {
+  const channelConfigs: Record<ChannelType, { icon: ComponentType<{ className?: string }>; label: string; color: string; comingSoon?: boolean }> = {
     email: { icon: Mail, label: t('pages:workflows.createDialog.channels.email'), color: 'bg-blue-500' },
-    whatsapp: { icon: MessageCircle, label: t('pages:workflows.createDialog.channels.whatsapp'), color: 'bg-green-600' },
-    sms: { icon: Phone, label: t('pages:workflows.createDialog.channels.sms'), color: 'bg-green-500' }
+    whatsapp: { icon: MessageCircle, label: t('pages:workflows.createDialog.channels.whatsapp'), color: 'bg-green-600', comingSoon: true },
+    sms: { icon: Phone, label: t('pages:workflows.createDialog.channels.sms'), color: 'bg-green-500', comingSoon: true }
   };
 
   // Initialize form data based on edit workflow
@@ -91,16 +97,8 @@ export function CreateWorkflowSheet({
   const [initialSelectedTemplate, setInitialSelectedTemplate] = useState<string>('');
   const [reminderDelay, setReminderDelay] = useState<number>(1440);
   const [initialReminderDelay, setInitialReminderDelay] = useState<number>(1440);
-  const [enabledChannels, setEnabledChannels] = useState<Record<ChannelType, boolean>>({
-    email: true,
-    whatsapp: true,
-    sms: true
-  });
-  const [initialEnabledChannels, setInitialEnabledChannels] = useState<Record<ChannelType, boolean>>({
-    email: true,
-    whatsapp: true,
-    sms: true
-  });
+  const [enabledChannels, setEnabledChannels] = useState<Record<ChannelType, boolean>>(getDefaultEnabledChannels());
+  const [initialEnabledChannels, setInitialEnabledChannels] = useState<Record<ChannelType, boolean>>(getDefaultEnabledChannels());
 
   // Auto-open when editWorkflow is provided and reset form data
   useEffect(() => {
@@ -116,8 +114,8 @@ export function CreateWorkflowSheet({
       const newReminderDelay = editWorkflow.reminder_delay_minutes || 1440;
       const newEnabledChannels = {
         email: editWorkflow.email_enabled ?? true,
-        whatsapp: editWorkflow.whatsapp_enabled ?? true,
-        sms: editWorkflow.sms_enabled ?? true
+        whatsapp: false,
+        sms: false
       };
       
       setFormData(newFormData);
@@ -140,12 +138,8 @@ export function CreateWorkflowSheet({
       };
       const defaultSelectedTemplate = '';
       const defaultReminderDelay = 1440;
-      const defaultEnabledChannels = {
-        email: true,
-        whatsapp: true,
-        sms: true
-      };
-      
+      const defaultEnabledChannels = getDefaultEnabledChannels();
+      setEnabledChannels(defaultEnabledChannels);
       setInitialFormData(defaultFormData);
       setInitialSelectedTemplate(defaultSelectedTemplate);
       setInitialReminderDelay(defaultReminderDelay);
@@ -156,7 +150,7 @@ export function CreateWorkflowSheet({
     if (!formData.name.trim() || !formData.trigger_type || !selectedTemplate || !isTemplateValid) return;
     
     const activeChannels = (Object.entries(enabledChannels) as Array<[ChannelType, boolean]>)
-      .filter(([, enabled]) => enabled)
+      .filter(([channel, enabled]) => enabled && !channelConfigs[channel].comingSoon)
       .map(([channel]) => channel);
     const workflowStep = {
       step_order: 1,
@@ -199,11 +193,9 @@ export function CreateWorkflowSheet({
     });
     setSelectedTemplate('');
     setReminderDelay(1440);
-    setEnabledChannels({
-      email: true,
-      whatsapp: true,
-      sms: true
-    });
+    const defaultChannels = getDefaultEnabledChannels();
+    setEnabledChannels(defaultChannels);
+    setInitialEnabledChannels(defaultChannels);
   };
   const updateFormData = <Key extends keyof WorkflowFormData>(
     field: Key,
@@ -215,6 +207,9 @@ export function CreateWorkflowSheet({
     }));
   };
   const toggleChannel = (channel: ChannelType) => {
+    if (COMING_SOON_CHANNELS.includes(channel)) {
+      return;
+    }
     setEnabledChannels(prev => ({
       ...prev,
       [channel]: !prev[channel]
@@ -222,7 +217,9 @@ export function CreateWorkflowSheet({
   };
   const selectedTemplateData = sessionTemplates.find(t => t.id === selectedTemplate);
   const isTemplateValid = selectedTemplate ? !!selectedTemplateData : true;
-  const hasEnabledChannels = Object.values(enabledChannels).some(enabled => enabled);
+  const hasEnabledChannels = (Object.entries(enabledChannels) as Array<[ChannelType, boolean]>).some(
+    ([channel, enabled]) => enabled && !channelConfigs[channel].comingSoon
+  );
   
   // Auto-clear invalid template selection when templates are loaded
   useEffect(() => {
@@ -373,12 +370,22 @@ export function CreateWorkflowSheet({
 
             <div className="grid grid-cols-1 gap-3">
               {Object.entries(channelConfigs).map(([channel, config]) => {
+              const channelKey = channel as ChannelType;
               const IconComponent = config.icon;
-              const isEnabled = enabledChannels[channel as ChannelType];
-              return <div key={channel} className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${isEnabled ? 'border-primary bg-primary/5' : 'border-border'}`}>
+              const isEnabled = enabledChannels[channelKey];
+              const isComingSoon = Boolean(config.comingSoon);
+              const cardClasses = cn(
+                "flex items-center justify-between p-3 border rounded-lg transition-colors",
+                isComingSoon
+                  ? "border-dashed border-amber-200 bg-amber-50/60"
+                  : isEnabled
+                    ? "border-primary bg-primary/5"
+                    : "border-border"
+              );
+              return <div key={channel} className={cardClasses} aria-disabled={isComingSoon}>
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-md ${config.color} bg-opacity-20`}>
-                        <IconComponent className={`h-4 w-4 text-white`} />
+                      <div className={cn("p-2 rounded-md text-white", config.color, isComingSoon && "opacity-70")}>
+                        <IconComponent className="h-4 w-4" />
                       </div>
                       <div>
                         <p className="font-medium text-sm">{config.label}</p>
@@ -387,7 +394,13 @@ export function CreateWorkflowSheet({
                         </p>
                       </div>
                     </div>
-                    <Switch checked={isEnabled} onCheckedChange={() => toggleChannel(channel as ChannelType)} />
+                    {isComingSoon ? (
+                      <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                        {t('pages:workflows.createDialog.fields.channels.soon')}
+                      </span>
+                    ) : (
+                      <Switch checked={isEnabled} onCheckedChange={() => toggleChannel(channelKey)} />
+                    )}
                   </div>;
             })}
             </div>

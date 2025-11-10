@@ -227,9 +227,6 @@ export function ProjectServicesSection({ projectId, onServicesUpdated, refreshTo
         const existingByServiceIdSameMode = new Map(
           existingRecordsSameMode.map((record) => [record.service.id, record])
         );
-        const existingByServiceIdAnyMode = new Map(
-          serviceRecords.map((record) => [record.service.id, record])
-        );
         const selectedIds = new Set(effectiveResults.map((result) => result.serviceId));
 
         const toDelete = existingRecordsSameMode
@@ -252,7 +249,7 @@ export function ProjectServicesSection({ projectId, onServicesUpdated, refreshTo
           }
 
           const inserts = effectiveResults
-            .filter((result) => !existingByServiceIdAnyMode.has(result.serviceId))
+            .filter((result) => !existingByServiceIdSameMode.has(result.serviceId))
             .map((result) => {
               const quantity = Math.max(1, Number(result.quantity ?? 1));
               return {
@@ -280,11 +277,11 @@ export function ProjectServicesSection({ projectId, onServicesUpdated, refreshTo
           }
 
           const toUpdate = effectiveResults.filter((result) =>
-            existingByServiceIdAnyMode.has(result.serviceId)
+            existingByServiceIdSameMode.has(result.serviceId)
           );
 
           for (const result of toUpdate) {
-            const existing = existingByServiceIdAnyMode.get(result.serviceId);
+            const existing = existingByServiceIdSameMode.get(result.serviceId);
             if (!existing) continue;
             const quantity = Math.max(1, Number(result.quantity ?? 1));
             const { error } = await supabase

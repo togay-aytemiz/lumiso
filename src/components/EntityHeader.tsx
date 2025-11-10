@@ -68,10 +68,11 @@ export function EntityHeader({
         <div className="flex min-w-0 items-center gap-3">
           {onBack && (
             <Button
-              variant="ghost"
+              variant="tinted"
+              colorScheme="slate"
               size="icon"
               onClick={onBack}
-              className="h-10 w-10 rounded-full border border-border text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+              className="h-10 w-10"
             >
               <ArrowLeft className="h-4 w-4" />
               <span className="sr-only">{backLabel}</span>

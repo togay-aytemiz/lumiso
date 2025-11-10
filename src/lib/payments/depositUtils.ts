@@ -10,6 +10,7 @@ export interface ProjectDepositConfig {
   snapshot_amount?: number | null;
   snapshot_total?: number | null;
   snapshot_locked_at?: string | null;
+  snapshot_acknowledged_amount?: number | null;
   snapshot_note?: string | null;
 }
 
@@ -41,6 +42,7 @@ export const DEFAULT_DEPOSIT_CONFIG: ProjectDepositConfig = {
   snapshot_amount: null,
   snapshot_total: null,
   snapshot_locked_at: null,
+  snapshot_acknowledged_amount: null,
   snapshot_note: null,
 };
 
@@ -70,6 +72,7 @@ export const parseDepositConfig = (raw: Json | null | undefined): ProjectDeposit
   const snapshotTotal = extractNumeric(record.snapshot_total);
   const snapshotLockedAt =
     typeof record.snapshot_locked_at === "string" ? record.snapshot_locked_at : undefined;
+  const snapshotAcknowledgedAmount = extractNumeric(record.snapshot_acknowledged_amount);
   const snapshotNote =
     typeof record.snapshot_note === "string" ? record.snapshot_note : undefined;
 
@@ -81,6 +84,7 @@ export const parseDepositConfig = (raw: Json | null | undefined): ProjectDeposit
       snapshot_amount: snapshotAmount ?? null,
       snapshot_total: snapshotTotal ?? null,
       snapshot_locked_at: snapshotLockedAt ?? null,
+      snapshot_acknowledged_amount: snapshotAcknowledgedAmount ?? null,
       snapshot_note: snapshotNote ?? null,
     };
   }
@@ -93,6 +97,7 @@ export const parseDepositConfig = (raw: Json | null | undefined): ProjectDeposit
     snapshot_amount: snapshotAmount ?? null,
     snapshot_total: snapshotTotal ?? null,
     snapshot_locked_at: snapshotLockedAt ?? null,
+    snapshot_acknowledged_amount: snapshotAcknowledgedAmount ?? null,
     snapshot_note: snapshotNote ?? null,
   };
 };

@@ -1574,6 +1574,20 @@
       "createWorkflow": "Create Workflow",
       "createFirstWorkflow": "Create Your First Workflow"
     },
+    "toasts": {
+      "successTitle": "Success",
+      "errorTitle": "Error",
+      "loadError": "Failed to load workflows",
+      "createSuccess": "Workflow created successfully",
+      "createError": "Failed to create workflow",
+      "updateSuccess": "Workflow updated successfully",
+      "updateError": "Failed to update workflow",
+      "deleteSuccess": "Workflow deleted successfully",
+      "deleteError": "Failed to delete workflow",
+      "toggleActive": "Workflow activated successfully",
+      "togglePaused": "Workflow paused successfully",
+      "toggleError": "Failed to update workflow status"
+    },
     "table": {
       "workflowName": "Workflow Name",
       "trigger": "Trigger",
@@ -1676,7 +1690,8 @@
           "label": "Notification Channels",
           "description": "Choose which channels to send notifications through",
           "sendVia": "Send via {{channel}}",
-          "error": "Please enable at least one notification channel"
+          "error": "Please enable at least one notification channel",
+          "soon": "SOON"
         },
         "startActive": {
           "label": "Start Active",
@@ -1784,7 +1799,7 @@
         "email": "Email",
         "whatsapp": "WhatsApp",
         "sms": "SMS",
-        "plain": "Plain"
+        "soon": "SOON"
       },
       "emailPreview": "Email Preview",
       "subject": "Subject:",

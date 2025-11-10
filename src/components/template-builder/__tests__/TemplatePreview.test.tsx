@@ -39,48 +39,26 @@ jest.mock("@/lib/templateUtils", () => ({
   generatePlainText: (...args: unknown[]) => generatePlainTextMock(...args),
 }));
 
-jest.mock("@/components/ui/tabs", () => {
-  const TabsContext = React.createContext<{ onValueChange?: (value: string) => void }>({});
-
-  const Tabs = ({
-    onValueChange,
-    children,
-  }: {
-    onValueChange?: (value: string) => void;
-    children: React.ReactNode;
-  }) => <TabsContext.Provider value={{ onValueChange }}>{children}</TabsContext.Provider>;
-
-  const TabsList = ({ children, ...props }: { children: React.ReactNode }) => <div {...props}>{children}</div>;
-
-  const TabsTrigger = ({
-    value,
-    children,
-    ...props
-  }: {
-    value: string;
-    children: React.ReactNode;
-  } & React.ButtonHTMLAttributes<HTMLButtonElement>) => {
-    const ctx = React.useContext(TabsContext);
-    return (
-      <button
-        type="button"
-        {...props}
-        onClick={() => ctx.onValueChange?.(value)}
-      >
-        {children}
-      </button>
-    );
-  };
-
-  const TabsContent = ({ children, ...props }: { children: React.ReactNode }) => <div {...props}>{children}</div>;
-
-  return {
-    Tabs,
-    TabsList,
-    TabsTrigger,
-    TabsContent,
-  };
-});
+jest.mock("@/components/ui/segmented-control", () => ({
+  SegmentedControl: ({ options, onValueChange }: { options: any[]; onValueChange: (value: string) => void }) => (
+    <div>
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          disabled={option.disabled}
+          onClick={() => {
+            if (!option.disabled) {
+              onValueChange(option.value);
+            }
+          }}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  ),
+}));
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -137,7 +115,7 @@ const previewData = {
 };
 
 describe("TemplatePreview", () => {
-  it("switches channels when tabs are selected", () => {
+  it("shows upcoming chips and keeps WhatsApp/SMS disabled", () => {
     const onChannelChange = jest.fn();
 
     render(
@@ -149,11 +127,16 @@ describe("TemplatePreview", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /templateBuilder\.preview\.channels\.whatsapp/ }));
-    expect(onChannelChange).toHaveBeenCalledWith("whatsapp");
+    const whatsappButton = screen.getByRole("button", { name: /templateBuilder\.preview\.channels\.whatsapp/ });
+    const smsButton = screen.getByRole("button", { name: /templateBuilder\.preview\.channels\.sms/ });
 
-    fireEvent.click(screen.getByRole("button", { name: /templateBuilder\.preview\.channels\.sms/ }));
-    expect(onChannelChange).toHaveBeenCalledWith("sms");
+    expect(whatsappButton).toBeDisabled();
+    expect(smsButton).toBeDisabled();
+    expect(screen.getAllByText(/templateBuilder\.preview\.channels\.soon/)).toHaveLength(2);
+
+    fireEvent.click(whatsappButton);
+    fireEvent.click(smsButton);
+    expect(onChannelChange).not.toHaveBeenCalled();
   });
 
   it("sends a test email when user has an email and blocks exist", async () => {

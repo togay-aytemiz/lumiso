@@ -1574,6 +1574,20 @@
       "createWorkflow": "İş Akışı Oluştur",
       "createFirstWorkflow": "İlk İş Akışınızı Oluşturun"
     },
+    "toasts": {
+      "successTitle": "Başarılı",
+      "errorTitle": "Hata",
+      "loadError": "İş akışları yüklenemedi",
+      "createSuccess": "İş akışı başarıyla oluşturuldu",
+      "createError": "İş akışı oluşturulamadı",
+      "updateSuccess": "İş akışı başarıyla güncellendi",
+      "updateError": "İş akışı güncellenemedi",
+      "deleteSuccess": "İş akışı başarıyla silindi",
+      "deleteError": "İş akışı silinemedi",
+      "toggleActive": "İş akışı etkinleştirildi",
+      "togglePaused": "İş akışı duraklatıldı",
+      "toggleError": "İş akışı durumu güncellenemedi"
+    },
     "table": {
       "workflowName": "İş Akışı Adı",
       "trigger": "Tetikleyici",
@@ -1676,7 +1690,8 @@
           "label": "Bildirim Kanalları",
           "description": "Bildirimlerin hangi kanallardan gönderileceğini seçin",
           "sendVia": "{{channel}} ile gönder",
-          "error": "Lütfen en az bir bildirim kanalını etkinleştirin"
+          "error": "Lütfen en az bir bildirim kanalını etkinleştirin",
+          "soon": "Yakında"
         },
         "startActive": {
           "label": "Aktif Başlat",
@@ -1784,7 +1799,7 @@
         "email": "E posta",
         "whatsapp": "WhatsApp",
         "sms": "SMS",
-        "plain": "Düz Metin"
+        "soon": "Yakında"
       },
       "emailPreview": "E posta Önizleme",
       "subject": "Konu:",

@@ -15,6 +15,7 @@ interface ProjectDetailsLayoutProps {
   onOverviewScroll?: () => void;
   navAlign?: "start" | "center" | "end";
   navAriaLabel?: string;
+  navClassName?: string;
   scrollContainerRef?: RefObject<HTMLElement | null>;
 }
 
@@ -30,6 +31,7 @@ export default function ProjectDetailsLayout({
   onOverviewScroll,
   navAlign = "end",
   navAriaLabel = "Section navigation",
+  navClassName = "justify-start md:justify-end",
   scrollContainerRef
 }: ProjectDetailsLayoutProps) {
   const navItems = useMemo<StickySectionNavItem[]>(() => {
@@ -86,6 +88,7 @@ export default function ProjectDetailsLayout({
         stickyTopOffset={stickyTopOffset}
         align={navAlign}
         ariaLabel={navAriaLabel}
+        navClassName={navClassName}
         scrollContainerRef={scrollContainerRef}
         fallbackActiveId={showOverviewNav ? overviewNavId : sections[0]?.id}
       />

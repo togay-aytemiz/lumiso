@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Workflow, WorkflowStep, WorkflowFormData } from '@/types/workflow';
 import { getUserOrganizationId } from '@/lib/organizationUtils';
+import { useTranslation } from 'react-i18next';
 
 type NotificationChannel = NonNullable<WorkflowStep['action_config']['channels']>[number];
 
@@ -26,13 +27,44 @@ const getErrorMessage = (error: unknown) => {
   if (typeof error === 'string') {
     return error;
   }
-  return 'An unexpected error occurred';
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as { message?: unknown }).message === 'string'
+  ) {
+    return (error as { message: string }).message;
+  }
+  return undefined;
 };
 
 export function useWorkflows() {
   const [workflows, setWorkflows] = useState<WorkflowWithMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { t } = useTranslation('pages');
+  const getToastKey = useCallback((key: string) => `workflows.toasts.${key}`, []);
+
+  const showSuccessToast = useCallback(
+    (key: string, options?: Record<string, unknown>) => {
+      toast({
+        title: t('workflows.toasts.successTitle'),
+        description: t(getToastKey(key), options),
+      });
+    },
+    [getToastKey, t, toast]
+  );
+
+  const showErrorToast = useCallback(
+    (key: string, errorMessage?: string) => {
+      toast({
+        title: t('workflows.toasts.errorTitle'),
+        description: errorMessage ?? t(getToastKey(key)),
+        variant: 'destructive',
+      });
+    },
+    [getToastKey, t, toast]
+  );
 
   const fetchWorkflows = useCallback(async () => {
     try {
@@ -79,17 +111,13 @@ export function useWorkflows() {
       setWorkflows(transformedWorkflows);
     } catch (error) {
       console.error('Error fetching workflows:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load workflows',
-        variant: 'destructive',
-      });
+      showErrorToast('loadError');
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [showErrorToast]);
 
-  const createWorkflow = async (formData: WorkflowFormData): Promise<void> => {
+  const createWorkflow = useCallback(async (formData: WorkflowFormData): Promise<void> => {
     try {
       // Input validation
       if (!formData.name?.trim()) {
@@ -156,24 +184,17 @@ export function useWorkflows() {
         if (stepsError) throw stepsError;
       }
 
-      toast({
-        title: 'Success',
-        description: 'Workflow created successfully',
-      });
+      showSuccessToast('createSuccess');
 
       await fetchWorkflows();
     } catch (error: unknown) {
       console.error('Error creating workflow:', error);
-      toast({
-        title: 'Error',
-        description: getErrorMessage(error) || 'Failed to create workflow',
-        variant: 'destructive',
-      });
+      showErrorToast('createError', getErrorMessage(error));
       throw error;
     }
-  };
+  }, [fetchWorkflows, showErrorToast, showSuccessToast]);
 
-  const updateWorkflow = async (id: string, updates: Partial<WorkflowFormData>) => {
+  const updateWorkflow = useCallback(async (id: string, updates: Partial<WorkflowFormData>) => {
     try {
       // Input validation
       if (!id) {
@@ -244,23 +265,16 @@ export function useWorkflows() {
         }
       }
 
-      toast({
-        title: 'Success',
-        description: 'Workflow updated successfully',
-      });
+      showSuccessToast('updateSuccess');
 
       await fetchWorkflows();
     } catch (error: unknown) {
       console.error('Error updating workflow:', error);
-      toast({
-        title: 'Error',
-        description: getErrorMessage(error) || 'Failed to update workflow',
-        variant: 'destructive',
-      });
+      showErrorToast('updateError', getErrorMessage(error));
     }
-  };
+  }, [fetchWorkflows, showErrorToast, showSuccessToast]);
 
-  const deleteWorkflow = async (id: string) => {
+  const deleteWorkflow = useCallback(async (id: string) => {
     try {
       // First delete workflow steps
       await supabase.from('workflow_steps').delete().eq('workflow_id', id);
@@ -269,23 +283,16 @@ export function useWorkflows() {
       const { error } = await supabase.from('workflows').delete().eq('id', id);
       if (error) throw error;
 
-      toast({
-        title: 'Success',
-        description: 'Workflow deleted successfully',
-      });
+      showSuccessToast('deleteSuccess');
 
       await fetchWorkflows();
     } catch (error: unknown) {
       console.error('Error deleting workflow:', error);
-      toast({
-        title: 'Error',
-        description: getErrorMessage(error) || 'Failed to delete workflow',
-        variant: 'destructive',
-      });
+      showErrorToast('deleteError', getErrorMessage(error));
     }
-  };
+  }, [fetchWorkflows, showErrorToast, showSuccessToast]);
 
-  const toggleWorkflowStatus = async (id: string, isActive: boolean) => {
+  const toggleWorkflowStatus = useCallback(async (id: string, isActive: boolean) => {
     try {
       const { error } = await supabase
         .from('workflows')
@@ -294,21 +301,14 @@ export function useWorkflows() {
 
       if (error) throw error;
 
-      toast({
-        title: 'Success',
-        description: `Workflow ${isActive ? 'activated' : 'paused'} successfully`,
-      });
+      showSuccessToast(isActive ? 'toggleActive' : 'togglePaused');
 
       await fetchWorkflows();
     } catch (error: unknown) {
       console.error('Error toggling workflow:', error);
-      toast({
-        title: 'Error',
-        description: getErrorMessage(error) || 'Failed to update workflow status',
-        variant: 'destructive',
-      });
+      showErrorToast('toggleError', getErrorMessage(error));
     }
-  };
+  }, [fetchWorkflows, showErrorToast, showSuccessToast]);
 
   useEffect(() => {
     void fetchWorkflows();

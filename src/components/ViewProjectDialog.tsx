@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -17,11 +17,16 @@ import { ProjectTodoListEnhanced } from "./ProjectTodoListEnhanced";
 import { ProjectStatusBadge } from "./ProjectStatusBadge";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
 import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
+import { ProjectPackageSummaryCard } from "@/components/ProjectPackageSummaryCard";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { useSessionActions } from "@/hooks/useSessionActions";
 import { onArchiveToggle } from "@/components/projectArchiveToggle";
+import { parseProjectPackageSnapshot } from "@/lib/projects/projectPackageSnapshot";
+import { ProjectCreationWizardSheet } from "@/features/project-creation";
+import type { ProjectCreationStepId } from "@/features/project-creation/types";
+import type { ProjectPackageSnapshot } from "@/lib/projects/projectPackageSnapshot";
 // AssigneesList removed - single user organization
 interface Project {
   id: string;
@@ -34,6 +39,8 @@ interface Project {
   status_id?: string | null;
   previous_status_id?: string | null;
   project_type_id?: string | null;
+  package_id?: string | null;
+  package_snapshot?: ProjectPackageSnapshot | null;
 }
 interface Lead {
   id: string;
@@ -102,8 +109,15 @@ export function ViewProjectDialog({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [servicesVersion, setServicesVersion] = useState(0);
   const [isArchived, setIsArchived] = useState(false);
+  const [editWizardOpen, setEditWizardOpen] = useState(false);
+  const [editWizardStartStep, setEditWizardStartStep] =
+    useState<ProjectCreationStepId>("details");
   const [localStatusId, setLocalStatusId] = useState<string | null | undefined>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const packageSnapshot = useMemo(
+    () => parseProjectPackageSnapshot(project?.package_snapshot),
+    [project?.package_snapshot]
+  );
   const {
     toast
   } = useToast();
@@ -132,29 +146,6 @@ export function ViewProjectDialog({
     }
   }, [project?.id, tForms, toast]);
 
-  const sectionId = {
-    payments: "project-dialog-payments",
-    services: "project-dialog-services",
-    sessions: "project-dialog-sessions",
-    activities: "project-dialog-activities",
-    todos: "project-dialog-todos"
-  } as const;
-
-  const dialogNavOffset = 24;
-  const fetchProjectType = useCallback(async () => {
-    const projectTypeId = project?.project_type_id;
-    if (!projectTypeId) return;
-    try {
-      const {
-        data,
-        error
-      } = await supabase.from('project_types').select('id, name').eq('id', projectTypeId).single();
-      if (error) throw error;
-      setProjectType(data);
-    } catch (error) {
-      console.error('Error fetching project type:', error);
-    }
-  }, [project?.project_type_id]);
   const fetchLead = useCallback(async () => {
     const leadId = project?.lead_id;
     if (!leadId) return;
@@ -169,6 +160,42 @@ export function ViewProjectDialog({
       console.error('Error fetching lead:', error);
     }
   }, [project?.lead_id]);
+
+  const sectionId = {
+    payments: "project-dialog-payments",
+    services: "project-dialog-services",
+    sessions: "project-dialog-sessions",
+    activities: "project-dialog-activities",
+    todos: "project-dialog-todos"
+  } as const;
+
+  const dialogNavOffset = 24;
+
+  const openEditWizard = useCallback((step: ProjectCreationStepId) => {
+    setEditWizardStartStep(step);
+    setEditWizardOpen(true);
+  }, []);
+
+  const handleWizardUpdated = useCallback(() => {
+    onProjectUpdated();
+    setServicesVersion(prev => prev + 1);
+    void fetchLead();
+  }, [fetchLead, onProjectUpdated]);
+
+  const fetchProjectType = useCallback(async () => {
+    const projectTypeId = project?.project_type_id;
+    if (!projectTypeId) return;
+    try {
+      const {
+        data,
+        error
+      } = await supabase.from('project_types').select('id, name').eq('id', projectTypeId).single();
+      if (error) throw error;
+      setProjectType(data);
+    } catch (error) {
+      console.error('Error fetching project type:', error);
+    }
+  }, [project?.project_type_id]);
   const handleAssigneesUpdate = () => {
     onProjectUpdated();
   };
@@ -550,6 +577,15 @@ export function ViewProjectDialog({
 
           <div className={isArchived ? 'opacity-60 pointer-events-none select-none' : ''}>
              <ProjectDetailsLayout header={<></>} left={<div className="space-y-4">
+                   {project && (
+                     <ProjectPackageSummaryCard
+                       projectId={project.id}
+                       snapshot={packageSnapshot}
+                       servicesVersion={servicesVersion}
+                       onEditDetails={() => openEditWizard("details")}
+                       onEditPackage={() => openEditWizard("packages")}
+                     />
+                   )}
                    {lead && <UnifiedClientDetails 
                      lead={lead} 
                      showClickableNames={true}
@@ -628,6 +664,19 @@ export function ViewProjectDialog({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {project ? (
+        <ProjectCreationWizardSheet
+          isOpen={editWizardOpen}
+          onOpenChange={setEditWizardOpen}
+          leadId={project.lead_id}
+          leadName={lead?.name ?? leadName}
+          projectId={project.id}
+          startStepOverride={editWizardStartStep}
+          mode="edit"
+          onProjectUpdated={handleWizardUpdated}
+        />
+      ) : null}
 
     </>;
 }

@@ -54,6 +54,9 @@ export interface ProjectCreationMetaState {
   entrySource?: string;
   defaultStatusId?: string | null;
   initialEntryContext?: ProjectCreationEntryContext;
+  mode: "create" | "edit";
+  projectId?: string;
+  leadLocked?: boolean;
 }
 
 export interface ProjectCreationState {
@@ -69,6 +72,9 @@ export interface ProjectCreationEntryContext {
   entrySource?: string;
   defaultStatusId?: string | null;
   startStepOverride?: ProjectCreationStepId;
+  projectId?: string;
+  mode?: "create" | "edit";
+  leadLocked?: boolean;
 }
 
 export type ProjectCreationAction =

@@ -4,8 +4,8 @@ import { TemplateBlock } from '@/types/templateBuilder';
 
 interface OptimizedTemplatePreviewProps {
   blocks: TemplateBlock[];
-  activeChannel: 'email' | 'whatsapp' | 'sms' | 'plaintext';
-  onChannelChange: (channel: 'email' | 'whatsapp' | 'sms' | 'plaintext') => void;
+  activeChannel: 'email' | 'whatsapp' | 'sms';
+  onChannelChange: (channel: 'email' | 'whatsapp' | 'sms') => void;
   emailSubject: string;
   preheader: string;
   previewData: Record<string, string>;

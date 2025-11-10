@@ -30,13 +30,25 @@ export const PROJECT_CREATION_STEPS: ProjectCreationStepConfig[] = [
   { id: "summary", labelKey: "steps.summary.navigationLabel" },
 ];
 
-const deriveInitialMeta = (entryContext: ProjectCreationEntryContext = {}): ProjectCreationMetaState => ({
-  currentStep: computeInitialStep(entryContext),
-  isDirty: false,
-  entrySource: entryContext.entrySource,
-  defaultStatusId: entryContext.defaultStatusId,
-  initialEntryContext: Object.keys(entryContext).length ? { ...entryContext } : undefined,
-});
+const deriveInitialMeta = (
+  entryContext: ProjectCreationEntryContext = {}
+): ProjectCreationMetaState => {
+  const mode = entryContext.mode ?? (entryContext.projectId ? "edit" : "create");
+  const leadLocked =
+    typeof entryContext.leadLocked === "boolean"
+      ? entryContext.leadLocked
+      : mode === "edit";
+  return {
+    currentStep: computeInitialStep(entryContext),
+    isDirty: false,
+    entrySource: entryContext.entrySource,
+    defaultStatusId: entryContext.defaultStatusId,
+    initialEntryContext: Object.keys(entryContext).length ? { ...entryContext } : undefined,
+    mode,
+    projectId: entryContext.projectId,
+    leadLocked,
+  };
+};
 
 export const createInitialProjectCreationState = (
   entryContext: ProjectCreationEntryContext = {}

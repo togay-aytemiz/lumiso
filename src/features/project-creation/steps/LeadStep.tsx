@@ -135,6 +135,45 @@ export const LeadStep = () => {
     return leadOptions.find((lead) => lead.id === state.lead.id);
   }, [leadOptions, state.lead.id]);
 
+  if (state.meta.leadLocked) {
+    const lockedLead: LeadOption | undefined =
+      selectedLeadOption ??
+      (state.lead.id
+        ? {
+            id: state.lead.id,
+            name: state.lead.name ?? "",
+            email: state.lead.email ?? undefined,
+            phone: state.lead.phone ?? undefined,
+            status: state.lead.status ?? undefined,
+            status_id: undefined,
+          }
+        : undefined);
+
+    return (
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold tracking-tight">
+            {t("steps.lead.heading")}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t("steps.lead.lockedDescription", {
+              defaultValue: "Lead can’t be changed while editing this project.",
+            })}
+          </p>
+        </div>
+        {lockedLead ? (
+          <div className="rounded-xl border border-border/70 bg-white p-4 shadow-sm">
+            <LeadSummaryPreview lead={lockedLead} />
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-border/70 p-4 text-sm text-muted-foreground">
+            {t("steps.lead.noLeadSelected", { defaultValue: "No lead selected." })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const handleAssignLead = (lead: LeadOption) => {
     updateLead({
       id: lead.id,

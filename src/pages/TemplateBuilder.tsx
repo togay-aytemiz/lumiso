@@ -24,6 +24,7 @@ import { useTranslation } from "react-i18next";
 // Optimized TemplateBuilder component
 const OptimizedTemplateBuilderContent = React.memo(() => {
   const { t, i18n } = useTranslation("pages");
+  const { t: tCommon } = useTranslation("common");
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -34,7 +35,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   const { getVariableValue } = useTemplateVariables();
 
   // Local state for UI
-  const [activeChannel, setActiveChannel] = useState<'email' | 'whatsapp' | 'sms' | 'plain'>('email');
+  const [activeChannel, setActiveChannel] = useState<'email' | 'whatsapp' | 'sms'>('email');
   const [selectedPreviewData, setSelectedPreviewData] = useState(0);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingName, setEditingName] = useState('');
@@ -247,17 +248,25 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     );
   }
 
+  const backLabel = tCommon("buttons.back", { defaultValue: "Back" });
+
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
       <div className="border-b bg-background px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <ArrowLeft 
-              className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
-              strokeWidth={2.5}
+            <Button
+              type="button"
+              variant="tinted"
+              colorScheme="slate"
+              size="icon"
               onClick={handleNavigateBack}
-            />
+              className="h-10 w-10"
+            >
+              <ArrowLeft className="h-4 w-4" strokeWidth={2.5} />
+              <span className="sr-only">{backLabel}</span>
+            </Button>
             <div className="flex items-center gap-2">
               {isEditingName ? (
                 <Input
@@ -421,8 +430,8 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
         <div className="w-1/2">
           <OptimizedTemplatePreview
             blocks={blocks}
-            activeChannel={activeChannel as 'email' | 'whatsapp' | 'sms' | 'plaintext'}
-            onChannelChange={(channel) => setActiveChannel(channel as 'email' | 'whatsapp' | 'sms' | 'plain')}
+            activeChannel={activeChannel}
+            onChannelChange={(channel) => setActiveChannel(channel)}
             emailSubject={subject}
             preheader={preheader}
             previewData={selectedData.data}

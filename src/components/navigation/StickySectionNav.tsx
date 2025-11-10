@@ -194,7 +194,7 @@ export function StickySectionNav({
     >
       <nav
         className={cn(
-          "flex w-full max-w-full items-center gap-2 overflow-x-auto",
+          "flex w-full max-w-full items-center gap-2 overflow-x-auto hide-scrollbar",
           ALIGN_CLASSNAMES[align],
           navClassName
         )}

@@ -1,0 +1,300 @@
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Camera, Clock, PackageCheck, Send } from "lucide-react";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import type { ProjectPackageSnapshot } from "@/lib/projects/projectPackageSnapshot";
+import {
+  fetchProjectServiceRecords,
+  type ProjectServiceRecord,
+} from "@/lib/services/projectServiceRecords";
+
+interface ProjectPackageSummaryCardProps {
+  projectId: string;
+  snapshot: ProjectPackageSnapshot | null;
+  servicesVersion?: number;
+  onEditDetails: () => void;
+  onEditPackage: () => void;
+}
+
+const formatPhotoEstimate = (snapshot: ProjectPackageSnapshot | null, t: ReturnType<typeof useFormsTranslation>["t"]) => {
+  const delivery = snapshot?.delivery;
+  if (!delivery || (!delivery.photoCountMin && !delivery.photoCountMax)) {
+    return t("project_package_card.none", { defaultValue: "Not specified" });
+  }
+
+  if (delivery.photoCountMin && delivery.photoCountMax && delivery.photoCountMin !== delivery.photoCountMax) {
+    return t("project_package_card.photo_range", {
+      min: delivery.photoCountMin,
+      max: delivery.photoCountMax,
+      defaultValue: "{{min}} – {{max}} photos",
+    });
+  }
+
+  const value = delivery.photoCountMin ?? delivery.photoCountMax;
+  if (!value) {
+    return t("project_package_card.none", { defaultValue: "Not specified" });
+  }
+  return t("project_package_card.photo_single", {
+    count: value,
+    defaultValue: "{{count}} photos",
+  });
+};
+
+const formatLeadTime = (snapshot: ProjectPackageSnapshot | null, t: ReturnType<typeof useFormsTranslation>["t"]) => {
+  const delivery = snapshot?.delivery;
+  if (!delivery || !delivery.leadTimeValue || !delivery.leadTimeUnit) {
+    return t("project_package_card.none", { defaultValue: "Not specified" });
+  }
+  const unit =
+    delivery.leadTimeUnit === "days"
+      ? t("project_package_card.days", { defaultValue: "days" })
+      : t("project_package_card.weeks", { defaultValue: "weeks" });
+  return t("project_package_card.lead_time", {
+    value: delivery.leadTimeValue,
+    unit,
+    defaultValue: "{{value}} {{unit}}",
+  });
+};
+
+const formatMethods = (snapshot: ProjectPackageSnapshot | null, t: ReturnType<typeof useFormsTranslation>["t"]) => {
+  const methods = snapshot?.delivery?.methods;
+  if (!methods || methods.length === 0) {
+    return t("project_package_card.none", { defaultValue: "Not specified" });
+  }
+  return methods.map((method) => method.name ?? method.methodId).join(", ");
+};
+
+const hasServiceDifferences = (
+  records: ProjectServiceRecord[],
+  snapshot: ProjectPackageSnapshot
+): boolean => {
+  const packageMap = new Map<string, number>();
+  snapshot.lineItems
+    .filter((item) => item.type === "existing" && item.serviceId)
+    .forEach((item) => {
+      if (!item.serviceId) return;
+      const quantity = Math.max(1, Number(item.quantity ?? 1));
+      packageMap.set(item.serviceId, (packageMap.get(item.serviceId) ?? 0) + quantity);
+    });
+
+  const includedRecords = records.filter((record) => record.billingType === "included");
+  const actualMap = new Map<string, number>();
+  includedRecords.forEach((record) => {
+    actualMap.set(record.service.id, (actualMap.get(record.service.id) ?? 0) + record.quantity);
+  });
+
+  if (packageMap.size !== actualMap.size) {
+    return true;
+  }
+
+  for (const [serviceId, quantity] of packageMap.entries()) {
+    if (actualMap.get(serviceId) !== quantity) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+export function ProjectPackageSummaryCard({
+  projectId,
+  snapshot,
+  servicesVersion,
+  onEditDetails,
+  onEditPackage,
+}: ProjectPackageSummaryCardProps) {
+  const { t } = useFormsTranslation();
+  const [customized, setCustomized] = useState(false);
+  const [serviceRecords, setServiceRecords] = useState<ProjectServiceRecord[] | null>(null);
+  const [servicesLoading, setServicesLoading] = useState(false);
+
+  const lineItemsSignature = useMemo(() => {
+    if (!snapshot) return "";
+    return snapshot.lineItems
+      .map((item) => `${item.serviceId ?? item.name}:${item.quantity}`)
+      .join("|");
+  }, [snapshot]);
+
+  useEffect(() => {
+    let active = true;
+    setServicesLoading(true);
+    fetchProjectServiceRecords(projectId)
+      .then((records) => {
+        if (!active) return;
+        setServiceRecords(records);
+        if (snapshot) {
+          setCustomized(hasServiceDifferences(records, snapshot));
+        } else {
+          setCustomized(false);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load project services:", error);
+        if (active) {
+          setServiceRecords(null);
+          setCustomized(false);
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setServicesLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [projectId, snapshot, lineItemsSignature, servicesVersion]);
+
+  const photoLabel = useMemo(() => formatPhotoEstimate(snapshot, t), [snapshot, t]);
+  const leadTimeLabel = useMemo(() => formatLeadTime(snapshot, t), [snapshot, t]);
+  const methodsLabel = useMemo(() => formatMethods(snapshot, t), [snapshot, t]);
+  const servicesSummary = useMemo(() => {
+    if (!serviceRecords || serviceRecords.length === 0) {
+      return null;
+    }
+    const included = serviceRecords.filter((record) => record.billingType === "included");
+    const extras = serviceRecords.filter((record) => record.billingType === "extra");
+    return {
+      includedCount: included.length,
+      extraCount: extras.length,
+      total: serviceRecords.length,
+    };
+  }, [serviceRecords]);
+
+  return (
+    <Card className="shadow-sm">
+      <CardHeader className="pb-3 space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-xl font-semibold">
+            <PackageCheck className="h-4 w-4" />
+            {t("project_package_card.header_title", { defaultValue: "Project summary" })}
+          </CardTitle>
+          <div className="ml-auto flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="pill"
+              onClick={onEditPackage}
+              className="min-w-[110px]"
+            >
+              {snapshot
+                ? t("project_package_card.change_package", { defaultValue: "Paketi değiştir" })
+                : t("project_package_card.select_package", { defaultValue: "Paket seç" })}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onEditDetails}
+              className="h-9 rounded-lg bg-accent/10 px-3 text-sm font-semibold text-accent transition-colors hover:bg-accent/20"
+            >
+              {t("project_package_card.edit_project", { defaultValue: "Projeyi düzenle" })}
+            </Button>
+          </div>
+        </div>
+        {snapshot ? (
+          <CardDescription className="text-sm text-muted-foreground">
+            {t("project_package_card.package_attached", {
+              name: snapshot.name,
+              defaultValue: "Linked package: {{name}}",
+            })}
+          </CardDescription>
+        ) : null}
+        {snapshot && customized ? (
+          <p className="text-xs text-muted-foreground">
+            {t("project_package_card.customized_hint", {
+              defaultValue: "Services were adjusted after applying this package.",
+            })}
+          </p>
+        ) : null}
+      </CardHeader>
+      <CardContent className="space-y-4 text-sm">
+        <div className="space-y-3">
+          <InfoRow
+            icon={
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+            }
+            label={t("project_package_card.package_label", { defaultValue: "Package" })}
+            value={
+              snapshot?.name ??
+              t("project_package_card.custom_label", { defaultValue: "Custom plan" })
+            }
+          />
+          <InfoRow
+            icon={<Camera className="h-4 w-4 text-primary" />}
+            label={t("project_package_card.photos", { defaultValue: "Photo delivery" })}
+            value={photoLabel}
+          />
+          <InfoRow
+            icon={<Clock className="h-4 w-4 text-primary" />}
+            label={t("project_package_card.lead_time_label", { defaultValue: "Turnaround" })}
+            value={leadTimeLabel}
+          />
+          <InfoRow
+            icon={<Send className="h-4 w-4 text-primary" />}
+            label={t("project_package_card.methods", { defaultValue: "Delivery methods" })}
+            value={methodsLabel}
+          />
+          {servicesSummary ? (
+            <InfoRow
+              icon={
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+              }
+              label={t("project_package_card.custom_plan_title", {
+                defaultValue: "Hizmetler",
+              })}
+              value={t("project_package_card.custom_plan_overview", {
+                included: servicesSummary.includedCount,
+                extras: servicesSummary.extraCount,
+                total: servicesSummary.total,
+                defaultValue: "{{included}} included • {{extras}} extras",
+              })}
+            />
+          ) : null}
+        </div>
+        {!snapshot && servicesSummary === null ? (
+          <p className="text-sm text-muted-foreground">
+            {t("project_package_card.empty", {
+              defaultValue:
+                "Link a package to capture delivery expectations and communicate them with clients.",
+            })}
+            {servicesLoading
+              ? ` ${t("project_package_card.loading", { defaultValue: "Loading services…" })}`
+              : null}
+          </p>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+interface InfoRowProps {
+  icon: ReactNode;
+  label: string;
+  value: string;
+}
+
+const InfoRow = ({ icon, label, value }: InfoRowProps) => (
+  <div className="flex items-center gap-3 rounded-lg border border-border/70 px-3 py-2">
+    <div className="rounded-md bg-primary/10 p-2 text-primary">{icon ?? <PackageCheck className="h-4 w-4" />}</div>
+    <div className="min-w-0">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <p className="text-sm font-medium text-foreground line-clamp-2">{value}</p>
+    </div>
+  </div>
+);

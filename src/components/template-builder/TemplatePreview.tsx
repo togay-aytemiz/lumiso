@@ -1,25 +1,21 @@
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Send, Monitor, Smartphone } from "lucide-react";
 import { TemplateBlock } from "@/types/templateBuilder";
 import { EmailPreview } from "./previews/EmailPreview";
 import { WhatsAppPreview } from "./previews/WhatsAppPreview";
 import { SMSPreview } from "./previews/SMSPreview";
-import { PlainTextPreview } from "./PlainTextPreview";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 
-type TemplateChannel = "email" | "whatsapp" | "sms" | "plaintext";
+type TemplateChannel = "email" | "whatsapp" | "sms";
 
 const isTemplateChannel = (value: string): value is TemplateChannel =>
-  value === "email" ||
-  value === "whatsapp" ||
-  value === "sms" ||
-  value === "plaintext";
+  value === "email" || value === "whatsapp" || value === "sms";
 
 const getErrorMessage = (error: unknown): string | undefined => {
   if (error instanceof Error) {
@@ -51,7 +47,7 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
-  const { t, i18n } = useTranslation('pages');
+  const { t } = useTranslation('pages');
 
   const defaultMockData = {
     customer_name: t('templateBuilder.preview.mockData.customerName'),
@@ -63,9 +59,43 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
   };
 
   const mockData = previewData || defaultMockData;
+  const disabledChannels: TemplateChannel[] = ["whatsapp", "sms"];
+  const soonLabel = t('templateBuilder.preview.channels.soon');
+
+  const renderChannelLabel = (icon: string, label: string, showSoon = false) => (
+    <span className="flex items-center gap-2">
+      <span aria-hidden="true">{icon}</span>
+      <span>{label}</span>
+      {showSoon && (
+        <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+          {soonLabel}
+        </span>
+      )}
+    </span>
+  );
+
+  const channelOptions = [
+    {
+      value: "email",
+      label: renderChannelLabel("📧", t('templateBuilder.preview.channels.email')),
+      ariaLabel: t('templateBuilder.preview.channels.email'),
+    },
+    {
+      value: "whatsapp",
+      label: renderChannelLabel("💬", t('templateBuilder.preview.channels.whatsapp'), true),
+      ariaLabel: t('templateBuilder.preview.channels.whatsapp'),
+      disabled: true,
+    },
+    {
+      value: "sms",
+      label: renderChannelLabel("📱", t('templateBuilder.preview.channels.sms'), true),
+      ariaLabel: t('templateBuilder.preview.channels.sms'),
+      disabled: true,
+    },
+  ];
 
   const handleChannelChange = (value: string) => {
-    if (isTemplateChannel(value)) {
+    if (isTemplateChannel(value) && !disabledChannels.includes(value)) {
       onChannelChange(value);
     }
   };
@@ -169,37 +199,25 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
         </div>
       </div>
 
-      {/* Channel Tabs */}
-      <div className="border-b px-6 py-2">
-        <Tabs value={activeChannel} onValueChange={handleChannelChange}>
-          <TabsList className="grid grid-cols-4 w-full max-w-lg">
-            <TabsTrigger value="email" className="flex items-center gap-2">
-              📧 {t('templateBuilder.preview.channels.email')}
-            </TabsTrigger>
-            <TabsTrigger value="whatsapp" className="flex items-center gap-2">
-              💬 {t('templateBuilder.preview.channels.whatsapp')}
-            </TabsTrigger>
-            <TabsTrigger value="sms" className="flex items-center gap-2">
-              📱 {t('templateBuilder.preview.channels.sms')}
-            </TabsTrigger>
-            <TabsTrigger value="plaintext" className="flex items-center gap-2">
-              📄 {t('templateBuilder.preview.channels.plain')}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+      {/* Channel Selector */}
+      <div className="border-b px-6 py-3">
+        <SegmentedControl
+          value={activeChannel}
+          onValueChange={handleChannelChange}
+          options={channelOptions}
+          className="w-full max-w-xl justify-between"
+        />
       </div>
 
       {/* Preview Content */}
       <div className="flex-1 overflow-y-auto p-6">
         <div className={cn(
           "mx-auto transition-all duration-200",
-          activeChannel === "email" 
-            ? previewDevice === "desktop" 
-              ? "max-w-2xl" 
-              : "max-w-sm"
-            : activeChannel === "plaintext"
+          activeChannel === "email"
+            ? previewDevice === "desktop"
               ? "max-w-2xl"
               : "max-w-sm"
+            : "max-w-sm"
         )}>
           {activeChannel === "email" && (
             <EmailPreview
@@ -220,13 +238,6 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
           
           {activeChannel === "sms" && (
             <SMSPreview
-              blocks={blocks.filter(b => b.visible)}
-              mockData={mockData}
-            />
-          )}
-
-          {activeChannel === "plaintext" && (
-            <PlainTextPreview
               blocks={blocks.filter(b => b.visible)}
               mockData={mockData}
             />

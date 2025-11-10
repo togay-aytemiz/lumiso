@@ -4,14 +4,26 @@ jest.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
+jest.mock("@/lib/services/projectServiceRecords", () => ({
+  fetchProjectServiceRecords: jest.fn(),
+}));
+
+jest.mock("@/hooks/useOrganizationData", () => ({
+  useOrganizationTaxProfile: jest.fn(),
+}));
+
 import React from "react";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { useProjectPayments } from "../useProjectPayments";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchProjectServiceRecords } from "@/lib/services/projectServiceRecords";
+import { useOrganizationTaxProfile } from "@/hooks/useOrganizationData";
 
 const supabaseFromMock = supabase.from as jest.Mock;
+const fetchProjectServiceRecordsMock = fetchProjectServiceRecords as jest.Mock;
+const useOrganizationTaxProfileMock = useOrganizationTaxProfile as jest.Mock;
 
 const createSingleChain = (result: { data: unknown; error: unknown }) => ({
   select: jest.fn(() => ({
@@ -24,7 +36,9 @@ const createSingleChain = (result: { data: unknown; error: unknown }) => ({
 const createPaidPaymentsChain = (result: { data: unknown; error: unknown }) => ({
   select: jest.fn(() => ({
     eq: jest.fn((_column: string, _value: unknown) => ({
-      eq: jest.fn(() => Promise.resolve(result)),
+      eq: jest.fn((_columnB: string, _valueB: unknown) => ({
+        eq: jest.fn(() => Promise.resolve(result)),
+      })),
     })),
   })),
 });
@@ -42,6 +56,8 @@ describe("useProjectPayments", () => {
       defaultOptions: { queries: { retry: false } },
     });
     supabaseFromMock.mockReset();
+    fetchProjectServiceRecordsMock.mockReset();
+    useOrganizationTaxProfileMock.mockReturnValue({ data: { vatExempt: false } });
   });
 
   afterEach(() => {
@@ -49,46 +65,58 @@ describe("useProjectPayments", () => {
   });
 
   it("aggregates project, services, and payments into summary", async () => {
+    fetchProjectServiceRecordsMock.mockResolvedValue([
+      {
+        projectServiceId: "service-1",
+        billingType: "extra",
+        quantity: 1,
+        overrides: { unitCost: null, unitPrice: null, vatMode: null, vatRate: null },
+        service: {
+          id: "svc-1",
+          name: "Service 1",
+          extra: true,
+          selling_price: 400,
+          price: 400,
+          vat_rate: 0,
+          price_includes_vat: true,
+        },
+      },
+      {
+        projectServiceId: "service-2",
+        billingType: "extra",
+        quantity: 1,
+        overrides: { unitCost: null, unitPrice: null, vatMode: null, vatRate: null },
+        service: {
+          id: "svc-2",
+          name: "Service 2",
+          extra: true,
+          selling_price: 100,
+          price: 100,
+          vat_rate: 0,
+          price_includes_vat: true,
+        },
+      },
+      {
+        projectServiceId: "service-3",
+        billingType: "included",
+        quantity: 1,
+        overrides: { unitCost: null, unitPrice: null, vatMode: null, vatRate: null },
+        service: {
+          id: "svc-3",
+          name: "Service 3",
+          extra: false,
+          selling_price: 50,
+          price: 50,
+          vat_rate: 0,
+          price_includes_vat: true,
+        },
+      },
+    ]);
+
     supabaseFromMock.mockImplementation((table: string) => {
       switch (table) {
         case "projects":
           return createSingleChain({ data: { base_price: 1000 }, error: null });
-        case "project_services":
-          return {
-            select: jest.fn(() => ({
-              eq: jest.fn(() =>
-                Promise.resolve({
-                  data: [
-                    {
-                      quantity: 1,
-                      unit_price_override: null,
-                      vat_rate_override: null,
-                      vat_mode_override: null,
-                      services: {
-                        selling_price: 400,
-                        price: 350,
-                        vat_rate: 0,
-                        price_includes_vat: true,
-                      },
-                    },
-                    {
-                      quantity: 1,
-                      unit_price_override: null,
-                      vat_rate_override: null,
-                      vat_mode_override: null,
-                      services: {
-                        selling_price: null,
-                        price: 100,
-                        vat_rate: 0,
-                        price_includes_vat: true,
-                      },
-                    },
-                  ],
-                  error: null,
-                })
-              ),
-            })),
-          };
         case "payments":
           return createPaidPaymentsChain({
             data: [
@@ -117,15 +145,66 @@ describe("useProjectPayments", () => {
     });
   });
 
-  it("falls back to zeroed summary when any request fails", async () => {
+  it("omits VAT when organization is VAT exempt", async () => {
+    useOrganizationTaxProfileMock.mockReturnValue({ data: { vatExempt: true } });
+    fetchProjectServiceRecordsMock.mockResolvedValue([
+      {
+        projectServiceId: "service-vat",
+        billingType: "extra",
+        quantity: 1,
+        overrides: { unitCost: null, unitPrice: null, vatMode: null, vatRate: null },
+        service: {
+          id: "svc-vat",
+          name: "VAT Service",
+          extra: true,
+          selling_price: 100,
+          price: 100,
+          vat_rate: 20,
+          price_includes_vat: false,
+        },
+      },
+    ]);
+
     supabaseFromMock.mockImplementation((table: string) => {
-      if (table === "projects") {
-        return createSingleChain({
-          data: null,
-          error: new Error("project fetch failed"),
-        });
+      switch (table) {
+        case "projects":
+          return createSingleChain({ data: { base_price: 0 }, error: null });
+        case "payments":
+          return createPaidPaymentsChain({ data: [], error: null });
+        default:
+          throw new Error(`Unexpected table ${table}`);
       }
-      throw new Error(`Unexpected table ${table}`);
+    });
+
+    const { result } = renderHook(() => useProjectPayments("project-vat"), {
+      wrapper: wrapper(),
+    });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.paymentSummary).toEqual({
+      totalPaid: 0,
+      totalProject: 100,
+      remaining: 100,
+      currency: "TRY",
+    });
+  });
+
+  it("falls back to zeroed summary when any request fails", async () => {
+    fetchProjectServiceRecordsMock.mockRejectedValue(new Error("project fetch failed"));
+
+    supabaseFromMock.mockImplementation((table: string) => {
+      switch (table) {
+        case "projects":
+          return createSingleChain({
+            data: null,
+            error: new Error("project fetch failed"),
+          });
+        case "payments":
+          return createPaidPaymentsChain({ data: [], error: null });
+        default:
+          throw new Error(`Unexpected table ${table}`);
+      }
     });
 
     const { result } = renderHook(
@@ -160,21 +239,12 @@ describe("useProjectPayments", () => {
       }),
     ];
 
+    fetchProjectServiceRecordsMock.mockResolvedValue([]);
+
     supabaseFromMock.mockImplementation((table: string) => {
       switch (table) {
         case "projects":
           return basePriceChain.shift();
-        case "project_services":
-          return {
-            select: jest.fn(() => ({
-              eq: jest.fn(() =>
-                Promise.resolve({
-                  data: [],
-                  error: null,
-                })
-              ),
-            })),
-          };
         case "payments":
           return paymentsChain.shift();
         default:
@@ -203,6 +273,23 @@ describe("useProjectPayments", () => {
     expect(result.current.paymentSummary.totalPaid).toBe(50);
 
     supabaseFromMock.mockClear();
+
+    const refetchBase = createSingleChain({ data: { base_price: 200 }, error: null });
+    const refetchPayments = createPaidPaymentsChain({
+      data: [{ amount: 50 }],
+      error: null,
+    });
+
+    supabaseFromMock.mockImplementation((table: string) => {
+      switch (table) {
+        case "projects":
+          return refetchBase;
+        case "payments":
+          return refetchPayments;
+        default:
+          throw new Error(`Unexpected table ${table}`);
+      }
+    });
 
     await act(async () => {
       await result.current.refetch();

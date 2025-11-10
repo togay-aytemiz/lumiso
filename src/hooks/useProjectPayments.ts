@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { computeServiceTotals } from '@/lib/payments/servicePricing';
+import { fetchProjectServiceRecords } from '@/lib/services/projectServiceRecords';
+import { useOrganizationTaxProfile } from '@/hooks/useOrganizationData';
 
 interface PaymentSummary {
   totalPaid: number;
@@ -17,65 +19,50 @@ export const useProjectPayments = (projectId: string, refreshTrigger?: number) =
     currency: 'TRY',
   });
   const [loading, setLoading] = useState(true);
+  const taxProfileQuery = useOrganizationTaxProfile();
+  const vatExempt = Boolean(taxProfileQuery.data?.vatExempt);
+  const vatEnabled = !vatExempt;
 
   const fetchPaymentSummary = useCallback(async () => {
     try {
       setLoading(true);
-      // Get project base price
-      const { data: projectData, error: projectError } = await supabase
-        .from('projects')
-        .select('base_price')
-        .eq('id', projectId)
-        .single();
+      const [projectResponse, serviceRecords, paymentsResponse] = await Promise.all([
+        supabase
+          .from('projects')
+          .select('base_price')
+          .eq('id', projectId)
+          .single(),
+        fetchProjectServiceRecords(projectId),
+        supabase
+          .from('payments')
+          .select('amount')
+          .eq('project_id', projectId)
+          .eq('status', 'paid')
+          .eq('entry_kind', 'recorded'),
+      ]);
 
-      if (projectError) throw projectError;
+      if (projectResponse.error) throw projectResponse.error;
+      if (paymentsResponse.error) throw paymentsResponse.error;
 
-      // Get total cost of added services
-      const { data: servicesData, error: servicesError } = await supabase
-        .from('project_services')
-        .select(`
-          quantity,
-          unit_price_override,
-          vat_rate_override,
-          vat_mode_override,
-          services!inner (
-            selling_price,
-            price,
-            vat_rate,
-            price_includes_vat
-          )
-        `)
-        .eq('project_id', projectId);
-
-      if (servicesError) throw servicesError;
-
-      // Get total paid amount
-      const { data: paymentsData, error: paymentsError } = await supabase
-        .from('payments')
-        .select('amount')
-        .eq('project_id', projectId)
-        .eq('status', 'paid');
-
-      if (paymentsError) throw paymentsError;
-
-      const basePrice = projectData?.base_price || 0;
-      const servicesCost =
-        servicesData?.reduce((sum, entry) => {
-          const service = entry?.services;
-          if (!service) return sum;
+      const basePrice = projectResponse.data?.base_price || 0;
+      const servicesCost = serviceRecords
+        .filter((record) => record.billingType === 'extra')
+        .reduce((sum, record) => {
           const pricing = computeServiceTotals({
-            unitPrice: entry?.unit_price_override ?? service.selling_price ?? service.price ?? null,
-            quantity: entry?.quantity ?? 1,
-            vatRate: entry?.vat_rate_override ?? service.vat_rate ?? null,
+            unitPrice: record.service.selling_price ?? record.service.price ?? null,
+            quantity: record.quantity,
+            vatRate: vatEnabled ? record.service.vat_rate ?? null : null,
             vatMode:
-              entry?.vat_mode_override ??
-              (service.price_includes_vat === false ? "exclusive" : "inclusive"),
+              vatEnabled && record.service.price_includes_vat === false
+                ? 'exclusive'
+                : 'inclusive',
           });
           return sum + pricing.gross;
-        }, 0) || 0;
-      
+        }, 0);
+
+      const paymentsData = paymentsResponse.data ?? [];
       const totalProject = basePrice + servicesCost;
-      const totalPaid = paymentsData?.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0;
+      const totalPaid = paymentsData.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
       const remaining = Math.max(0, totalProject - totalPaid);
 
       setPaymentSummary({
@@ -95,7 +82,7 @@ export const useProjectPayments = (projectId: string, refreshTrigger?: number) =
     } finally {
       setLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, vatEnabled]);
 
   useEffect(() => {
     void fetchPaymentSummary();

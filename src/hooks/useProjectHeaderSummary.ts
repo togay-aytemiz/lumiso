@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
 import { computeServiceTotals } from "@/lib/payments/servicePricing";
+import { fetchProjectServiceRecords } from "@/lib/services/projectServiceRecords";
+import { useOrganizationTaxProfile } from "@/hooks/useOrganizationData";
 
 export interface ProjectHeaderPaymentSummary {
   totalPaid: number;
@@ -20,9 +21,6 @@ export interface ProjectHeaderServicesSummary {
   names: string[];
   totalValue: number;
 }
-
-type ProjectServiceRow = Database["public"]["Tables"]["project_services"]["Row"];
-type ServiceRow = Database["public"]["Tables"]["services"]["Row"];
 
 interface ProjectHeaderSummaryState {
   payments: ProjectHeaderPaymentSummary;
@@ -51,6 +49,9 @@ const DEFAULT_SUMMARY: ProjectHeaderSummaryState = {
 export function useProjectHeaderSummary(projectId?: string | null, refreshToken?: number) {
   const [summary, setSummary] = useState<ProjectHeaderSummaryState>(DEFAULT_SUMMARY);
   const [loading, setLoading] = useState(false);
+  const taxProfileQuery = useOrganizationTaxProfile();
+  const vatExempt = Boolean(taxProfileQuery.data?.vatExempt);
+  const vatEnabled = !vatExempt;
 
   const fetchSummary = useCallback(async () => {
     if (!projectId) {
@@ -60,26 +61,9 @@ export function useProjectHeaderSummary(projectId?: string | null, refreshToken?
 
     setLoading(true);
     try {
-      const [projectResponse, servicesResponse, paymentsResponse, todosResponse] = await Promise.all([
+      const [projectResponse, serviceRecords, paymentsResponse, todosResponse] = await Promise.all([
         supabase.from("projects").select("base_price").eq("id", projectId).single(),
-        supabase
-          .from("project_services")
-          .select(`
-            billing_type,
-            quantity,
-            unit_price_override,
-            vat_rate_override,
-            vat_mode_override,
-            services!inner (
-              id,
-              name,
-              selling_price,
-              price,
-              vat_rate,
-              price_includes_vat
-            )
-          `)
-          .eq("project_id", projectId),
+        fetchProjectServiceRecords(projectId),
         supabase
           .from("payments")
           .select("amount, status")
@@ -89,33 +73,26 @@ export function useProjectHeaderSummary(projectId?: string | null, refreshToken?
       ]);
 
       if (projectResponse.error) throw projectResponse.error;
-      if (servicesResponse.error) throw servicesResponse.error;
       if (paymentsResponse.error) throw paymentsResponse.error;
       if (todosResponse.error) throw todosResponse.error;
 
       const basePrice = Number(projectResponse.data?.base_price) || 0;
 
-      const serviceRows = (servicesResponse.data || []) as Array<
-        ProjectServiceRow & { services: ServiceRow | null }
-      >;
-
-      let servicesTotal = 0;
-      const serviceNames: string[] = [];
-      serviceRows.forEach((entry) => {
-        const service = entry.services;
-        if (!service) return;
-        serviceNames.push(service.name);
-        if (entry.billing_type !== "extra") return;
-        const pricing = computeServiceTotals({
-          unitPrice: entry.unit_price_override ?? service.selling_price ?? service.price ?? null,
-          quantity: entry.quantity ?? 1,
-          vatRate: entry.vat_rate_override ?? service.vat_rate ?? null,
-          vatMode:
-            entry.vat_mode_override ??
-            (service.price_includes_vat === false ? "exclusive" : "inclusive"),
-        });
-        servicesTotal += pricing.gross;
-      });
+      const serviceNames = serviceRecords.map((record) => record.service.name);
+      const servicesTotal = serviceRecords
+        .filter((record) => record.billingType === "extra")
+        .reduce((total, record) => {
+          const pricing = computeServiceTotals({
+            unitPrice: record.service.selling_price ?? record.service.price ?? null,
+            quantity: record.quantity,
+            vatRate: vatEnabled ? record.service.vat_rate ?? null : null,
+            vatMode:
+              vatEnabled && record.service.price_includes_vat === false
+                ? "exclusive"
+                : "inclusive",
+          });
+          return total + pricing.gross;
+        }, 0);
 
       const paymentRows = paymentsResponse.data || [];
       const totalPaid = paymentRows.reduce((total, payment) => {
@@ -143,7 +120,7 @@ export function useProjectHeaderSummary(projectId?: string | null, refreshToken?
           completed: completedTodos
         },
         services: {
-          total: serviceNames.length,
+          total: serviceRecords.length,
           names: serviceNames,
           totalValue: servicesTotal
         }
@@ -154,7 +131,7 @@ export function useProjectHeaderSummary(projectId?: string | null, refreshToken?
     } finally {
       setLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, vatEnabled]);
 
   useEffect(() => {
     fetchSummary();

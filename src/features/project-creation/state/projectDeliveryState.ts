@@ -38,7 +38,7 @@ const mapMethodSnapshots = (
     }));
 
 export const createDefaultProjectDeliveryState = (): ProjectCreationDelivery => ({
-  enabled: false,
+  enabled: true,
   enablePhotoEstimate: false,
   estimateType: "single",
   countMin: null,
@@ -70,7 +70,7 @@ export const deriveDeliveryStateFromSnapshot = (
     snapshot.methodsEnabled ?? ((snapshot.methods?.length ?? 0) > 0);
 
   return {
-    enabled: photosEnabled || leadTimeEnabled || methodsEnabled,
+    enabled: true,
     enablePhotoEstimate: photosEnabled,
     estimateType,
     countMin: photosEnabled ? snapshot.photoCountMin ?? null : null,

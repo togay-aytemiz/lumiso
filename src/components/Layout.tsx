@@ -46,16 +46,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       history.scrollRestoration = 'manual';
     }
     
-    // Force scroll to top immediately and after next frame
     const scrollToTop = () => {
-      window.scrollTo(0, 0);
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     };
     
     scrollToTop();
-    requestAnimationFrame(scrollToTop);
-  }, [location.pathname]);
+    const raf = requestAnimationFrame(scrollToTop);
+    const timeout = window.setTimeout(scrollToTop, 150);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(timeout);
+    };
+  }, [location.pathname, location.search, location.hash, location.key]);
 
   return (
     <SidebarProvider>

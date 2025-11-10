@@ -509,9 +509,8 @@ export const SummaryStep = () => {
     t,
   ]);
 
-  const deliveryEnabled = deliveryState.enabled !== false;
   const deliveryPhotoSummary = useMemo(() => {
-    if (!deliveryEnabled || deliveryState.enablePhotoEstimate === false) {
+    if (deliveryState.enablePhotoEstimate === false) {
       return t("summary.delivery.photo.placeholder");
     }
     if (deliveryState.estimateType === "range") {
@@ -528,7 +527,6 @@ export const SummaryStep = () => {
     }
     return t("summary.delivery.photo.placeholder");
   }, [
-    deliveryEnabled,
     deliveryState.countMax,
     deliveryState.countMin,
     deliveryState.enablePhotoEstimate,
@@ -537,7 +535,7 @@ export const SummaryStep = () => {
   ]);
 
   const deliveryLeadTimeSummary = useMemo(() => {
-    if (!deliveryEnabled || deliveryState.enableLeadTime === false) {
+    if (deliveryState.enableLeadTime === false) {
       return t("summary.delivery.leadTime.placeholder");
     }
     if (deliveryState.leadTimeValue) {
@@ -549,7 +547,6 @@ export const SummaryStep = () => {
     }
     return t("summary.delivery.leadTime.placeholder");
   }, [
-    deliveryEnabled,
     deliveryState.enableLeadTime,
     deliveryState.leadTimeUnit,
     deliveryState.leadTimeValue,
@@ -557,27 +554,22 @@ export const SummaryStep = () => {
   ]);
 
   const deliveryMethodsList = useMemo(() => {
-    if (!deliveryEnabled || deliveryState.enableMethods === false) {
+    if (deliveryState.enableMethods === false) {
       return [];
     }
     return deliveryState.methods
       .map((method) => method.name ?? method.methodId)
       .filter((name): name is string => Boolean(name && name.trim()));
-  }, [
-    deliveryEnabled,
-    deliveryState.enableMethods,
-    deliveryState.methods,
-  ]);
+  }, [deliveryState.enableMethods, deliveryState.methods]);
 
   const deliveryMethodsSummary = deliveryMethodsList.length
     ? deliveryMethodsList.join(", ")
     : t("summary.delivery.methods.placeholder");
 
   const hasDeliveryDetails =
-    deliveryEnabled &&
-    ((deliveryState.enablePhotoEstimate && (deliveryState.countMin || deliveryState.countMax)) ||
-      (deliveryState.enableLeadTime && deliveryState.leadTimeValue) ||
-      (deliveryState.enableMethods && deliveryMethodsList.length > 0));
+    (deliveryState.enablePhotoEstimate && (deliveryState.countMin || deliveryState.countMax)) ||
+    (deliveryState.enableLeadTime && deliveryState.leadTimeValue) ||
+    (deliveryState.enableMethods && deliveryMethodsList.length > 0);
 
   return (
     <div className="space-y-6">
@@ -604,24 +596,6 @@ export const SummaryStep = () => {
         </div>
       </section>
 
-      <section className="space-y-3">
-        <SummarySectionHeading>{t("summary.delivery.heading")}</SummarySectionHeading>
-        <SummaryDeliveryCard
-          title={t("summary.delivery.title")}
-          helper={t("summary.delivery.helper")}
-          photoLabel={t("summary.delivery.photo.label")}
-          photoValue={deliveryPhotoSummary}
-          leadLabel={t("summary.delivery.leadTime.label")}
-          leadValue={deliveryLeadTimeSummary}
-          methodsLabel={t("summary.delivery.methods.label")}
-          methodsValue={deliveryMethodsSummary}
-          hasDetails={hasDeliveryDetails}
-          disabledLabel={t("summary.delivery.empty")}
-          actionLabel={t("summary.delivery.actions.edit")}
-          onEdit={openDelivery}
-        />
-      </section>
-
       {(servicesReferenceStrings.includedChip ||
         servicesReferenceStrings.addOnChip ||
         servicesReferenceStrings.addOnTotalChip) && (
@@ -637,6 +611,22 @@ export const SummaryStep = () => {
           />
         </section>
       )}
+
+      <section className="space-y-3">
+        <SummaryDeliveryCard
+          title={t("summary.delivery.title")}
+          photoLabel={t("summary.delivery.photo.label")}
+          photoValue={deliveryPhotoSummary}
+          leadLabel={t("summary.delivery.leadTime.label")}
+          leadValue={deliveryLeadTimeSummary}
+          methodsLabel={t("summary.delivery.methods.label")}
+          methodsValue={deliveryMethodsSummary}
+          hasDetails={hasDeliveryDetails}
+          disabledLabel={t("summary.delivery.empty")}
+          actionLabel={t("summary.delivery.actions.edit")}
+          onEdit={openDelivery}
+        />
+      </section>
 
       <section className="space-y-3">
         <SummarySectionHeading>{t("summary.description.heading")}</SummarySectionHeading>

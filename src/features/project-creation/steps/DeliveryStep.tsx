@@ -12,7 +12,6 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { ToggleSection } from "@/components/ui/toggle-section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SelectablePill } from "@/components/ui/selectable-pill";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useProjectCreationContext } from "../hooks/useProjectCreationContext";
 import { useProjectCreationActions } from "../hooks/useProjectCreationActions";
@@ -57,17 +56,12 @@ export const DeliveryStep = () => {
   }, [methodsQuery.data]);
 
   const deliveryState = state.delivery ?? createDefaultProjectDeliveryState();
-  const deliveryEnabled = deliveryState.enabled !== false;
   const leadTimeUnit = deliveryState.leadTimeUnit === "weeks" ? "weeks" : "days";
   const estimateType = deliveryState.estimateType === "range" ? "range" : "single";
-  const photoEnabled = deliveryEnabled && deliveryState.enablePhotoEstimate !== false;
-  const leadTimeEnabled = deliveryEnabled && deliveryState.enableLeadTime !== false;
-  const methodsEnabled = deliveryEnabled && deliveryState.enableMethods !== false;
+  const photoEnabled = deliveryState.enablePhotoEstimate !== false;
+  const leadTimeEnabled = deliveryState.enableLeadTime !== false;
+  const methodsEnabled = deliveryState.enableMethods !== false;
   const selectedMethodIds = deliveryState.methods.map((method) => method.methodId);
-
-  const handleToggleDelivery = (enabled: boolean) => {
-    updateDelivery({ enabled });
-  };
 
   const handleEstimateChange = (value: "single" | "range") => {
     updateDelivery({
@@ -263,25 +257,14 @@ export const DeliveryStep = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-2">
-          <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-            {t("steps.delivery.heading")}
-          </h2>
-          <p className="text-sm text-muted-foreground">{t("steps.delivery.description")}</p>
-        </div>
-        <div className="flex items-center gap-3 rounded-2xl border border-border/70 px-4 py-2 text-sm shadow-sm">
-          <span className="text-muted-foreground">{t("steps.delivery.masterToggleLabel")}</span>
-          <Switch checked={deliveryEnabled} onCheckedChange={handleToggleDelivery} />
-        </div>
+      <div className="space-y-2">
+        <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+          {t("steps.delivery.heading")}
+        </h2>
+        <p className="text-sm text-muted-foreground">{t("steps.delivery.description")}</p>
       </div>
 
-      {!deliveryEnabled ? (
-        <div className="rounded-2xl border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
-          {t("steps.delivery.disabledHelper")}
-        </div>
-      ) : (
-        <div className="space-y-4">
+      <div className="space-y-4">
           <ToggleSection
             title={t("steps.delivery.sections.photo.title")}
             description={t("steps.delivery.sections.photo.description")}
@@ -399,21 +382,21 @@ export const DeliveryStep = () => {
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                {catalogMethods.map((method) => {
-                  const isSelected = selectedMethodIds.includes(method.id);
-                  return (
-                    <SelectablePill
-                      key={method.id}
+                  {catalogMethods.map((method) => {
+                    const isSelected = selectedMethodIds.includes(method.id);
+                    return (
+                      <SelectablePill
+                        key={method.id}
                         selected={isSelected}
                         onClick={() => toggleMethod(method)}
                         className="text-xs"
                       >
-                      {method.name}
-                    </SelectablePill>
-                  );
-                })}
-              </div>
-            )}
+                        {method.name}
+                      </SelectablePill>
+                    );
+                  })}
+                </div>
+              )}
             <div className="space-y-2">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                 <Input
@@ -442,8 +425,7 @@ export const DeliveryStep = () => {
             </div>
           </div>
         </ToggleSection>
-        </div>
-      )}
+      </div>
     </div>
   );
 };

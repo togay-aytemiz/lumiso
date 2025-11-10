@@ -95,12 +95,12 @@ export default function ProjectDetailsLayout({
 
     const container = scrollContainerRef?.current;
     if (container) {
-      container.scrollTo({ top: 0, behavior: "smooth" });
+      container.scrollTo({ top: 0, left: 0, behavior: "smooth" });
       return;
     }
 
     if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
     }
   }, [onOverviewScroll, scrollContainerRef]);
 

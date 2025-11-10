@@ -1,16 +1,10 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  ServicesTableCard,
-  SummaryTotalRow,
-  SummaryTotalsCard,
-  SummaryTotalsDivider,
-  SummaryTotalsSection,
-  type ServicesTableRow,
-} from "@/components/services";
 import { useProjectCreationContext } from "../hooks/useProjectCreationContext";
+import { useProjectCreationActions } from "../hooks/useProjectCreationActions";
+import { SummaryTotalRow, SummaryTotalsCard, SummaryTotalsDivider, SummaryTotalsSection } from "@/components/services";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { calculateLineItemPricing } from "@/features/package-creation/utils/lineItemPricing";
 import { normalizeServiceUnit } from "@/lib/services/units";
@@ -65,7 +59,7 @@ export const SummaryStep = () => {
   const { t } = useTranslation("projectCreation");
   const { t: tPackages } = useTranslation("packageCreation");
   const { state } = useProjectCreationContext();
-  const servicesSectionRef = useRef<HTMLDivElement | null>(null);
+  const { setCurrentStep } = useProjectCreationActions();
 
   const packagesQuery = usePackages();
   const taxProfileQuery = useOrganizationTaxProfile();
@@ -76,9 +70,11 @@ export const SummaryStep = () => {
     ? packages.find((pkg) => pkg.id === state.services.packageId)
     : undefined;
 
+  const includedItems = state.services.includedItems;
+  const addOnItems = state.services.extraItems;
   const existingItems = useMemo(
-    () => [...state.services.includedItems, ...state.services.extraItems],
-    [state.services.includedItems, state.services.extraItems]
+    () => [...includedItems, ...addOnItems],
+    [includedItems, addOnItems]
   );
   const hasServices = existingItems.length > 0;
 
@@ -94,32 +90,44 @@ export const SummaryStep = () => {
     [vatUiEnabled]
   );
 
-  const totals = useMemo(() => {
-    return existingItems.reduce(
-      (acc, item) => {
-        const quantity = Math.max(1, item.quantity ?? 1);
-        const unitCost = Number(item.unitCost ?? 0);
-        const pricing = calculateLineItemPricing(
-          normalizeItemVat(item as ProjectServiceLineItem)
-        );
-        acc.cost += unitCost * quantity;
-        acc.net += pricing.net;
-        acc.vat += pricing.vat;
-        acc.total += pricing.gross;
-        return acc;
-      },
-      { cost: 0, net: 0, vat: 0, total: 0 }
-    );
-  }, [existingItems, normalizeItemVat]);
+  const aggregateItems = useCallback(
+    (items: ProjectServiceLineItem[]) =>
+      items.reduce(
+        (acc, item) => {
+          const quantity = Math.max(1, item.quantity ?? 1);
+          const unitCost = Number(item.unitCost ?? 0);
+          const pricing = calculateLineItemPricing(
+            normalizeItemVat(item as ProjectServiceLineItem)
+          );
+          acc.cost += unitCost * quantity;
+          acc.net += pricing.net;
+          acc.vat += pricing.vat;
+          acc.total += pricing.gross;
+          return acc;
+        },
+        { cost: 0, net: 0, vat: 0, total: 0 }
+      ),
+    [normalizeItemVat]
+  );
 
-  const servicesMargin = totals.net - totals.cost;
+  const addOnTotals = useMemo(
+    () => aggregateItems(addOnItems),
+    [aggregateItems, addOnItems]
+  );
+
+  const includedTotals = useMemo(
+    () => aggregateItems(includedItems),
+    [aggregateItems, includedItems]
+  );
+
+  const servicesMargin = addOnTotals.net - addOnTotals.cost;
 
   const vatBreakdown = useMemo(() => {
     if (!vatUiEnabled) {
       return [];
     }
     const buckets = new Map<number, number>();
-    existingItems.forEach((item) => {
+    addOnItems.forEach((item) => {
       const pricing = calculateLineItemPricing(normalizeItemVat(item as ProjectServiceLineItem));
       if (!(pricing.vat > 0)) return;
       const rate =
@@ -132,7 +140,7 @@ export const SummaryStep = () => {
     return Array.from(buckets.entries())
       .sort((a, b) => b[0] - a[0])
       .map(([rate, amount]) => ({ rate, amount }));
-  }, [existingItems, normalizeItemVat, vatUiEnabled]);
+  }, [addOnItems, normalizeItemVat, vatUiEnabled]);
 
   const basePriceValue = useMemo(() => {
     const parsed = parseFloat(state.details.basePrice ?? "");
@@ -160,7 +168,7 @@ export const SummaryStep = () => {
           packageVatRate: null,
         };
       }
-      const gross = round(totals.total);
+      const gross = round(addOnTotals.total);
       return {
         packageNet: gross,
         packageVat: 0,
@@ -185,7 +193,7 @@ export const SummaryStep = () => {
           packageVatRate: singleVatRate,
         };
       }
-      const vatPortion = Math.min(totals.vat, basePriceValue);
+      const vatPortion = Math.min(addOnTotals.vat, basePriceValue);
       const netPortion = round(Math.max(basePriceValue - vatPortion, 0));
       return {
         packageNet: netPortion,
@@ -196,16 +204,22 @@ export const SummaryStep = () => {
     }
 
     return {
-      packageNet: round(totals.net),
-      packageVat: round(totals.vat),
-      packageGross: round(totals.total),
+      packageNet: round(addOnTotals.net),
+      packageVat: round(addOnTotals.vat),
+      packageGross: round(addOnTotals.total),
       packageVatRate: singleVatRate,
     };
-  }, [basePriceValue, totals, vatBreakdown, vatUiEnabled]);
+  }, [addOnTotals, basePriceValue, vatBreakdown, vatUiEnabled]);
 
-  const clientNet = packageDerived.packageNet;
-  const clientTax = packageDerived.packageVat;
-  const clientTotal = packageDerived.packageGross;
+  const clientNet = includeAddOnsInPrice
+    ? packageDerived.packageNet
+    : packageDerived.packageNet + addOnTotals.net;
+  const clientTax = includeAddOnsInPrice
+    ? packageDerived.packageVat
+    : packageDerived.packageVat + addOnTotals.vat;
+  const clientTotal = includeAddOnsInPrice
+    ? packageDerived.packageGross
+    : packageDerived.packageGross + addOnTotals.total;
 
   const packageMetadata = selectedPackage?.pricing_metadata ?? null;
   const parsedPackageDeposit = useMemo(() => {
@@ -262,8 +276,13 @@ export const SummaryStep = () => {
     return t("summary.cards.pricing.depositHelperDefault");
   }, [derivedDeposit, parsedPackageDeposit, t, tPackages]);
 
-  const clientTotalHelper =
-    basePriceValue > 0 ? t("steps.packages.summary.clientTotalHelperInclusive") : undefined;
+  const clientTotalHelper = includeAddOnsInPrice
+    ? t("steps.packages.summary.clientTotalHelperInclusive")
+    : addOnTotals.total > 0
+    ? t("steps.packages.summary.clientTotalHelperExtras", {
+        defaultValue: "Add-ons are billed on top of the package.",
+      })
+    : undefined;
 
   const getUnitLabel = useCallback(
     (unit?: string | null) =>
@@ -273,16 +292,25 @@ export const SummaryStep = () => {
     [t]
   );
 
+  const includedItemIds = useMemo(
+    () => new Set(state.services.includedItems.map((item) => item.id)),
+    [state.services.includedItems]
+  );
+
   const servicesTableRows = useMemo<ServicesTableRow[]>(() => {
     return existingItems.map((item) => {
       const quantity = Math.max(1, item.quantity ?? 1);
       const pricing = calculateLineItemPricing(item as ProjectServiceLineItem);
       const hasUnitCost = typeof item.unitCost === "number" && Number.isFinite(item.unitCost);
-      const lineCost = hasUnitCost ? Math.round(Number(item.unitCost ?? 0) * quantity * 100) / 100 : null;
-      const unitPrice =
+      const lineCost =
+        hasUnitCost ? Math.round(Number(item.unitCost ?? 0) * quantity * 100) / 100 : null;
+      const rawUnitPrice =
         typeof item.unitPrice === "number" && Number.isFinite(item.unitPrice)
           ? item.unitPrice
           : null;
+      const isIncluded = includedItemIds.has(item.id);
+      const unitPrice = isIncluded ? null : rawUnitPrice;
+      const lineTotal = isIncluded ? null : Math.round(pricing.gross * 100) / 100;
       return {
         id: item.id,
         name: item.name,
@@ -291,36 +319,11 @@ export const SummaryStep = () => {
         unitLabel: getUnitLabel(item.unit),
         lineCost,
         unitPrice,
-        lineTotal: Math.round(pricing.gross * 100) / 100,
+        lineTotal,
         isCustom: item.type === "custom",
       };
     });
-  }, [existingItems, getUnitLabel]);
-
-  const servicesSectionLabels = useMemo(() => {
-    return {
-      columns: {
-        name: t("steps.packages.summary.table.name"),
-        quantity: t("steps.packages.summary.table.quantity"),
-        cost: t("steps.packages.summary.table.cost"),
-        unitPrice: t("steps.packages.summary.table.unitPrice"),
-        lineTotal: t("steps.packages.summary.table.lineTotal"),
-      },
-      totals: {
-        cost: t("steps.packages.summary.totals.cost"),
-        price: t("steps.packages.summary.totals.price"),
-        vat: t("steps.packages.summary.totals.vat"),
-        total: t("steps.packages.summary.totals.total"),
-        margin: t("steps.packages.summary.totals.margin"),
-      },
-      customTag: t("steps.packages.summary.customTag"),
-      customVendorFallback: t("steps.packages.summary.customVendorFallback"),
-    };
-  }, [t]);
-
-  const handleViewDetails = useCallback(() => {
-    servicesSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+  }, [existingItems, getUnitLabel, includedItemIds]);
 
   const leadName = state.lead.name?.trim() ?? t("summary.values.notSet");
   const leadContact = [state.lead.email?.trim(), state.lead.phone?.trim()].filter(Boolean).join(" • ");
@@ -380,12 +383,27 @@ export const SummaryStep = () => {
             depositValue={derivedDeposit > 0 ? depositDisplay : undefined}
             depositHelper={depositHelper}
             helper={clientTotalHelper}
-            onViewDetails={handleViewDetails}
             detailsLabel={t("summary.cards.pricing.detailsLink")}
           />
           <SummaryInfoStack className="lg:col-span-2" entries={infoEntries} />
         </div>
       </section>
+
+      {(servicesReferenceStrings.includedChip ||
+        servicesReferenceStrings.addOnChip ||
+        servicesReferenceStrings.addOnTotalChip) && (
+        <section className="space-y-3">
+          <SummaryServicesReference
+            title={servicesReferenceStrings.title}
+            helper={servicesReferenceStrings.helper}
+            actionLabel={servicesReferenceStrings.action}
+            includedChip={servicesReferenceStrings.includedChip}
+            addOnChip={servicesReferenceStrings.addOnChip}
+            addOnTotalChip={servicesReferenceStrings.addOnTotalChip}
+            onOpenServices={openServices}
+          />
+        </section>
+      )}
 
       <section className="space-y-3">
         <SummarySectionHeading>{t("summary.description.heading")}</SummarySectionHeading>
@@ -395,150 +413,6 @@ export const SummaryStep = () => {
         />
       </section>
 
-      <section ref={servicesSectionRef} className="space-y-3">
-        <SummarySectionHeading>{t("summary.services.heading")}</SummarySectionHeading>
-        {hasServices ? (
-          <ServicesTableCard
-            rows={servicesTableRows}
-            labels={servicesSectionLabels}
-            emptyMessage={t("summary.services.empty")}
-            formatCurrency={(value) => formatCurrency(value)}
-            className="bg-white/95"
-          />
-        ) : (
-          <div className="rounded-xl border border-border/60 bg-white p-4 text-sm text-muted-foreground">
-            {t("summary.services.empty")}
-          </div>
-        )}
-        <div className={cn("flex", hasServices ? "justify-end" : "justify-stretch")}>
-          <SummaryTotalsCard
-            className={cn(
-              "bg-white/95",
-              hasServices ? "sm:w-auto sm:min-w-[320px]" : "w-full max-w-none"
-            )}
-          >
-            {hasServices ? (
-              <>
-                <SummaryTotalRow
-                  label={t("steps.packages.summary.servicesCount")}
-                  value={String(existingItems.length)}
-                />
-                <SummaryTotalsSection>
-                  <SummaryTotalRow
-                    label={t("steps.packages.summary.servicesCost")}
-                    value={formatCurrency(totals.cost)}
-                  />
-                  <SummaryTotalRow
-                    label={t("steps.packages.summary.servicesPrice")}
-                    value={formatCurrency(totals.net)}
-                  />
-                </SummaryTotalsSection>
-                {vatBreakdown.length ? (
-                  <SummaryTotalsSection className="space-y-1">
-                    {vatBreakdown.map((entry) => (
-                      <SummaryTotalRow
-                        key={entry.rate}
-                        label={t("steps.packages.summary.vatBreakdown", {
-                          rate: formatPercent(entry.rate),
-                        })}
-                        value={formatCurrency(entry.amount)}
-                      />
-                    ))}
-                  </SummaryTotalsSection>
-                ) : null}
-                <SummaryTotalsDivider />
-                <SummaryTotalsSection className="pt-3">
-                  <SummaryTotalRow
-                    label={t("steps.packages.summary.servicesGross")}
-                    value={formatCurrency(totals.total)}
-                    emphasizeLabel
-                  />
-                  <SummaryTotalRow
-                    label={t("steps.packages.summary.servicesMargin")}
-                    value={formatCurrency(servicesMargin)}
-                    tone={servicesMargin >= 0 ? "positive" : "negative"}
-                    emphasizeLabel
-                  />
-                </SummaryTotalsSection>
-                <SummaryTotalsDivider />
-              </>
-            ) : null}
-            <SummaryTotalsSection className={cn("space-y-3", hasServices ? "pt-3" : undefined)}>
-              <SummaryTotalRow
-                label={t("steps.packages.summary.packageNet")}
-                value={formatCurrency(packageDerived.packageNet)}
-                emphasizeLabel
-              />
-            {vatUiEnabled && (
-              <SummaryTotalRow
-                label={
-                  packageDerived.packageVatRate != null
-                    ? t("steps.packages.summary.packageVatWithRate", {
-                        rate: formatPercent(packageDerived.packageVatRate),
-                      })
-                    : t("steps.packages.summary.packageVat")
-                }
-                value={formatCurrency(packageDerived.packageVat)}
-                helper={
-                  packageDerived.packageVatRate != null
-                    ? t("steps.packages.summary.packageVatHelperInclusive")
-                    : undefined
-                }
-              />
-            )}
-              <SummaryTotalRow
-                label={t("steps.packages.summary.packageGross")}
-                value={formatCurrency(packageDerived.packageGross)}
-                emphasizeLabel
-              />
-            </SummaryTotalsSection>
-            <SummaryTotalsDivider />
-            <SummaryTotalsSection className={cn("space-y-3", hasServices ? "pt-3" : undefined)}>
-              <SummaryTotalRow
-                label={t("steps.packages.summary.clientNet")}
-                value={formatCurrency(clientNet)}
-              />
-            {vatUiEnabled && (
-              <SummaryTotalRow
-                label={t("steps.packages.summary.clientTax")}
-                value={formatCurrency(clientTax)}
-              />
-            )}
-              <SummaryTotalRow
-                label={t("steps.packages.summary.clientTotal")}
-                value={formatCurrency(clientTotal)}
-                emphasizeLabel
-                tone="positive"
-                helper={clientTotalHelper}
-              />
-            </SummaryTotalsSection>
-            <SummaryTotalsDivider />
-            <SummaryTotalsSection className={cn("space-y-3", hasServices ? "pt-3" : undefined)}>
-              <SummaryTotalRow
-                label={t("steps.packages.summary.deposit")}
-                value={formatCurrency(derivedDeposit)}
-                helper={depositHelper}
-                emphasizeLabel={derivedDeposit > 0}
-              />
-            </SummaryTotalsSection>
-          </SummaryTotalsCard>
-        </div>
-      </section>
-
-      {hasServices ? (
-        <section className="space-y-3">
-          <SummarySectionHeading>{t("summary.services.badgeHeading")}</SummarySectionHeading>
-          <div className="flex flex-wrap gap-2">
-            {existingItems.map((item) => (
-              <Badge key={item.id} variant="secondary" className="text-xs font-medium">
-                {Math.max(1, item.quantity ?? 1) > 1
-                  ? `${item.name} ×${Math.max(1, item.quantity ?? 1)}`
-                  : item.name}
-              </Badge>
-            ))}
-          </div>
-        </section>
-      ) : null}
     </div>
   );
 };
@@ -548,6 +422,75 @@ const SummarySectionHeading = ({ children }: { children: string }) => (
     {children}
   </p>
 );
+
+interface SummaryServicesReferenceProps {
+  title: string;
+  helper: string;
+  actionLabel: string;
+  includedChip?: ServiceChipProps | null;
+  addOnChip?: ServiceChipProps | null;
+  addOnTotalChip?: ServiceChipProps | null;
+  onOpenServices: () => void;
+}
+
+const SummaryServicesReference = ({
+  title,
+  helper,
+  actionLabel,
+  includedChip,
+  addOnChip,
+  addOnTotalChip,
+  onOpenServices,
+}: SummaryServicesReferenceProps) => {
+  return (
+    <div className="rounded-2xl border border-border/70 bg-white/95 p-5 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">{title}</p>
+          <p className="text-xs text-muted-foreground">{helper}</p>
+        </div>
+        <Button
+          type="button"
+          variant="link"
+          size="sm"
+          className="h-auto px-0 text-xs font-semibold"
+          onClick={onOpenServices}
+        >
+          {actionLabel}
+        </Button>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {includedChip ? <ServiceChip {...includedChip} /> : null}
+        {addOnChip ? <ServiceChip {...addOnChip} /> : null}
+        {addOnTotalChip ? <ServiceChip {...addOnTotalChip} /> : null}
+      </div>
+    </div>
+  );
+};
+
+interface ServiceChipProps {
+  label: string;
+  tooltip?: string | null;
+}
+
+const ServiceChip = ({ label, tooltip }: ServiceChipProps) => {
+  const chip = (
+    <span className="rounded-full border border-border/60 bg-white px-3 py-1 text-xs font-semibold text-slate-900">
+      {label}
+    </span>
+  );
+
+  if (!tooltip) return chip;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{chip}</TooltipTrigger>
+      <TooltipContent className="text-xs font-medium text-slate-900">
+        {tooltip}
+      </TooltipContent>
+    </Tooltip>
+  );
+};
 
 const SummaryPricingCard = ({
   className,
@@ -567,7 +510,7 @@ const SummaryPricingCard = ({
   depositValue?: string;
   depositHelper: string;
   helper?: string;
-  onViewDetails: () => void;
+  onViewDetails?: () => void;
   detailsLabel: string;
 }) => (
   <div
@@ -595,9 +538,11 @@ const SummaryPricingCard = ({
       </div>
       {helper ? <p className="text-xs text-muted-foreground">{helper}</p> : null}
   </div>
-  <Button variant="link" size="sm" className="h-auto w-fit px-0 text-xs font-semibold" onClick={onViewDetails}>
-    {detailsLabel}
-  </Button>
+  {onViewDetails ? (
+    <Button variant="link" size="sm" className="h-auto w-fit px-0 text-xs font-semibold" onClick={onViewDetails}>
+      {detailsLabel}
+    </Button>
+  ) : null}
 </div>
 );
 

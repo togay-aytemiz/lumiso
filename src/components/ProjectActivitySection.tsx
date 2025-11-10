@@ -405,7 +405,7 @@ export function ProjectActivitySection({
         reminder_time: string | null;
       } = {
         user_id: userData.user.id,
-        lead_id,
+        lead_id: leadId,
         project_id: projectId,
         type: isReminderMode ? "reminder" : "note",
         content: content.trim(),

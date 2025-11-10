@@ -1795,6 +1795,7 @@
     "package_label": "Package",
     "photos": "Photo delivery",
     "lead_time_label": "Turnaround",
+    "delivery_summary": "Delivery",
     "methods": "Delivery methods",
     "empty": "Link a package to capture delivery expectations and communicate them with clients.",
     "edit_project": "Projeyi düzenle",

@@ -1794,6 +1794,7 @@
     "package_label": "Paket",
     "photos": "Fotoğraf teslimi",
     "lead_time_label": "Teslim süresi",
+    "delivery_summary": "Teslimat",
     "methods": "Teslim yöntemleri",
     "empty": "Teslim beklentilerini paylaşmak için bir paket bağlayın.",
     "edit_project": "Düzenle",

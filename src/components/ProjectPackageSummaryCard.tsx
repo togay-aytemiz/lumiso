@@ -149,6 +149,26 @@ export function ProjectPackageSummaryCard({
   const photoLabel = useMemo(() => formatPhotoEstimate(snapshot, t), [snapshot, t]);
   const leadTimeLabel = useMemo(() => formatLeadTime(snapshot, t), [snapshot, t]);
   const methodsLabel = useMemo(() => formatMethods(snapshot, t), [snapshot, t]);
+  const deliveryItems = useMemo(
+    () => [
+      {
+        key: "photos",
+        icon: <Camera className="h-3.5 w-3.5" />, 
+        label: photoLabel,
+      },
+      {
+        key: "lead",
+        icon: <Clock className="h-3.5 w-3.5" />, 
+        label: leadTimeLabel,
+      },
+      {
+        key: "methods",
+        icon: <Send className="h-3.5 w-3.5" />, 
+        label: methodsLabel,
+      },
+    ],
+    [leadTimeLabel, methodsLabel, photoLabel]
+  );
   const servicesSummary = useMemo(() => {
     if (!serviceRecords || serviceRecords.length === 0) {
       return null;
@@ -226,23 +246,23 @@ export function ProjectPackageSummaryCard({
               t("project_package_card.custom_label", { defaultValue: "Custom plan" })
             }
           />
-          <div className="grid gap-3 md:grid-cols-3">
-            <InfoRow
-              icon={<Camera className="h-4 w-4 text-primary" />}
-              label={t("project_package_card.photos", { defaultValue: "Photo delivery" })}
-              value={photoLabel}
-            />
-            <InfoRow
-              icon={<Clock className="h-4 w-4 text-primary" />}
-              label={t("project_package_card.lead_time_label", { defaultValue: "Turnaround" })}
-              value={leadTimeLabel}
-            />
-            <InfoRow
-              icon={<Send className="h-4 w-4 text-primary" />}
-              label={t("project_package_card.methods", { defaultValue: "Delivery methods" })}
-              value={methodsLabel}
-            />
-          </div>
+          <InfoRow
+            icon={<Send className="h-4 w-4 text-primary" />}
+            label={t("project_package_card.delivery_summary", { defaultValue: "Delivery" })}
+            value={
+              <div className="flex flex-wrap gap-2">
+                {deliveryItems.map((item) => (
+                  <span
+                    key={item.key}
+                    className="flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground"
+                  >
+                    <span className="text-primary">{item.icon}</span>
+                    <span className="text-foreground">{item.label}</span>
+                  </span>
+                ))}
+              </div>
+            }
+          />
           {servicesSummary ? (
             <InfoRow
               icon={
@@ -286,7 +306,7 @@ export function ProjectPackageSummaryCard({
 interface InfoRowProps {
   icon: ReactNode;
   label: string;
-  value: string;
+  value: ReactNode;
 }
 
 const InfoRow = ({ icon, label, value }: InfoRowProps) => (
@@ -296,7 +316,11 @@ const InfoRow = ({ icon, label, value }: InfoRowProps) => (
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {label}
       </p>
-      <p className="text-sm font-medium text-foreground line-clamp-2">{value}</p>
+      {typeof value === "string" ? (
+        <p className="text-sm font-medium text-foreground line-clamp-2">{value}</p>
+      ) : (
+        <div className="mt-1 text-sm font-medium text-foreground">{value}</div>
+      )}
     </div>
   </div>
 );

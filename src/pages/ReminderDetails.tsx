@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
@@ -104,6 +104,8 @@ const filterPillBadgeBaseClasses =
   "ml-2 h-5 min-w-[2rem] rounded-full border border-border/50 bg-muted/40 px-2 text-xs font-medium text-muted-foreground transition-colors";
 const filterPillBadgeActiveClasses =
   "border-primary/30 bg-primary/15 text-primary";
+
+const INITIAL_REMINDER_BATCH = 25;
 
 // Legacy summary card removed in favor of shared <KpiCard /> component used across the app
 
@@ -323,6 +325,7 @@ const ReminderDetails = () => {
   const { t } = useTranslation("pages");
   const { t: tForms } = useFormsTranslation();
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [visibleReminderCount, setVisibleReminderCount] = useState(INITIAL_REMINDER_BATCH);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("today");
@@ -331,6 +334,18 @@ const ReminderDetails = () => {
   const navigate = useNavigate();
   const [viewingProject, setViewingProject] = useState<ReminderProject | null>(null);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
+<<<<<<< ours
+<<<<<<< ours
+  const reminderLoadMoreRef = useRef<HTMLDivElement | null>(null);
+  const reminderLoadPendingRef = useRef(false);
+  const prevLoadingRef = useRef(true);
+=======
+  const [editingReminder, setEditingReminder] = useState<Activity | null>(null);
+  const [reminderSheetOpen, setReminderSheetOpen] = useState(false);
+  const [editingProjectName, setEditingProjectName] = useState<string | undefined>(undefined);
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 
   const fetchReminders = useCallback(async () => {
     setLoading(true);
@@ -377,6 +392,17 @@ const ReminderDetails = () => {
   useThrottledRefetchOnFocus(() => {
     void fetchReminders();
   }, 30_000);
+
+  useEffect(() => {
+    if (prevLoadingRef.current && !loading) {
+      setVisibleReminderCount(INITIAL_REMINDER_BATCH);
+    }
+    prevLoadingRef.current = loading;
+  }, [loading]);
+
+  useEffect(() => {
+    setVisibleReminderCount(INITIAL_REMINDER_BATCH);
+  }, [selectedFilter, hideOverdue]);
 
   const getLeadName = useCallback(
     (leadId: string) => {
@@ -599,6 +625,73 @@ const ReminderDetails = () => {
     () => groupActivitiesByDate(activeActivities, "asc"),
     [activeActivities]
   );
+
+  const totalActiveReminders = activeActivities.length;
+
+  const visibleActiveGroups = useMemo(() => {
+    if (visibleReminderCount >= totalActiveReminders) {
+      return groupedActiveActivities;
+    }
+
+    const limited: { date: string; items: Activity[] }[] = [];
+    let collected = 0;
+
+    for (const group of groupedActiveActivities) {
+      if (collected >= visibleReminderCount) {
+        break;
+      }
+      limited.push(group);
+      collected += group.items.length;
+    }
+
+    return limited;
+  }, [groupedActiveActivities, totalActiveReminders, visibleReminderCount]);
+
+  const hasMoreReminders = visibleReminderCount < totalActiveReminders;
+
+  const handleLoadMoreReminders = useCallback(() => {
+    setVisibleReminderCount((prev) => {
+      if (prev >= totalActiveReminders) {
+        return prev;
+      }
+      return Math.min(prev + INITIAL_REMINDER_BATCH, totalActiveReminders);
+    });
+  }, [totalActiveReminders]);
+
+  useEffect(() => {
+    if (!hasMoreReminders) {
+      return;
+    }
+
+    const target = reminderLoadMoreRef.current;
+    if (!target) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry?.isIntersecting) {
+          return;
+        }
+        if (reminderLoadPendingRef.current) {
+          return;
+        }
+        reminderLoadPendingRef.current = true;
+        handleLoadMoreReminders();
+        window.setTimeout(() => {
+          reminderLoadPendingRef.current = false;
+        }, 200);
+      },
+      {
+        root: null,
+        rootMargin: "320px",
+      }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [handleLoadMoreReminders, hasMoreReminders]);
 
   const groupedCompletedActivities = useMemo(
     () => groupActivitiesByDate(completedActivities, "desc"),
@@ -826,7 +919,7 @@ const ReminderDetails = () => {
               </div>
             ) : (
               <div className="space-y-6">
-                {groupedActiveActivities.map((group) => {
+                {visibleActiveGroups.map((group) => {
                   const relativeLabel = (() => {
                     if (isToday(group.date)) return t("reminders.filters.today");
                     if (isTomorrow(group.date)) return t("reminders.filters.tomorrow");
@@ -876,6 +969,11 @@ const ReminderDetails = () => {
                     </div>
                   );
                 })}
+                {hasMoreReminders && (
+                  <div ref={reminderLoadMoreRef} className="flex items-center justify-center py-4">
+                    <span className="sr-only">Load more reminders</span>
+                  </div>
+                )}
               </div>
             )}
 

@@ -40,6 +40,11 @@ import {
   type ProjectServiceRecord,
 } from "@/lib/services/projectServiceRecords";
 import { Loader2 } from "lucide-react";
+import {
+  buildDeliverySnapshotFromState,
+  deriveDeliveryStateFromSnapshot,
+  createDefaultProjectDeliveryState,
+} from "../state/projectDeliveryState";
 
 interface ProjectCreationWizardSheetProps {
   isOpen: boolean;
@@ -127,7 +132,7 @@ const ProjectCreationWizardSheetInner = ({
   "isOpen" | "onOpenChange" | "onProjectCreated" | "projectId" | "onProjectUpdated"
 >) => {
   const { state } = useProjectCreationContext();
-  const { reset, updateLead, updateDetails, updateServices, markDirty } =
+  const { reset, updateLead, updateDetails, updateServices, updateDelivery, markDirty } =
     useProjectCreationActions();
   const [isCreating, setIsCreating] = useState(false);
   const [isHydrating, setIsHydrating] = useState(false);
@@ -138,6 +143,10 @@ const ProjectCreationWizardSheetInner = ({
   const openedRef = useRef(false);
   const [showGuardDialog, setShowGuardDialog] = useState(false);
   const navigate = useNavigate();
+  const isEditMode = state.meta.mode === "edit";
+  const sheetTitle = isEditMode
+    ? tProject("wizard.editTitle", { defaultValue: "Proje düzenle" })
+    : tProject("wizard.title");
 
   const forceClose = useCallback(() => {
     onOpenChange(false);
@@ -245,6 +254,12 @@ const ProjectCreationWizardSheetInner = ({
           },
           { markDirty: false }
         );
+        updateDelivery(
+          snapshot?.delivery
+            ? deriveDeliveryStateFromSnapshot(snapshot.delivery)
+            : createDefaultProjectDeliveryState(),
+          { markDirty: false }
+        );
         markDirty(false);
       } catch (error) {
         if (cancelled) return;
@@ -281,6 +296,7 @@ const ProjectCreationWizardSheetInner = ({
     updateDetails,
     updateLead,
     updateServices,
+    updateDelivery,
   ]);
 
   const validateBeforeSubmit = useCallback(() => {
@@ -387,6 +403,7 @@ const ProjectCreationWizardSheetInner = ({
 
       const extrasTotalGross = computeExtraServicesTotal(state.services.extraItems);
       const contractTotal = basePriceValue + extrasTotalGross;
+      const deliveryState = state.delivery ?? createDefaultProjectDeliveryState();
       const calculatedDepositAmount =
         projectDepositConfig != null
           ? computeDepositAmount(projectDepositConfig, {
@@ -448,6 +465,35 @@ const ProjectCreationWizardSheetInner = ({
           if (servicesError) throw servicesError;
         }
       };
+
+      const deliverySnapshot = buildDeliverySnapshotFromState(
+        deliveryState,
+        packageSnapshotPayload?.delivery ?? null
+      );
+
+      if (deliverySnapshot || packageSnapshotPayload) {
+        if (!packageSnapshotPayload) {
+          const fallbackName =
+            state.services.packageLabel ??
+            state.details.name ??
+            tProject("summary.values.customServices");
+          packageSnapshotPayload = {
+            id: state.services.packageId ?? "custom-delivery",
+            name: fallbackName ?? "Custom delivery",
+            description: state.details.description ?? null,
+            price: basePriceValue || null,
+            clientTotal: contractTotal || null,
+            includeAddOnsInPrice: null,
+            delivery: deliverySnapshot,
+            lineItems: [],
+          };
+        } else {
+          packageSnapshotPayload = {
+            ...packageSnapshotPayload,
+            delivery: deliverySnapshot,
+          };
+        }
+      }
 
       if (editingProjectId) {
         const { error: updateError } = await supabase
@@ -604,6 +650,8 @@ const ProjectCreationWizardSheetInner = ({
     state.services.includedItems,
     state.services.extraItems,
     state.services.packageId,
+    state.services.packageLabel,
+    state.delivery,
     tCommon,
     tProject,
     toast,
@@ -614,30 +662,30 @@ const ProjectCreationWizardSheetInner = ({
   return (
     <>
       <AppSheetModal
-        title={tProject("wizard.title")}
+        title={sheetTitle}
         isOpen={isOpen}
         onOpenChange={handleModalOpenChange}
         size="xl"
-      dirty={state.meta.isDirty}
-      onDirtyClose={requestClose}
-    >
-      {isOpen ? (
-        <div className="flex h-full flex-col">
-          {isHydrating ? (
-            <div className="flex flex-1 items-center justify-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-              <span>
-                {tProject("wizard.loadingProject", {
-                  defaultValue: "Loading project...",
-                })}
-              </span>
-            </div>
-          ) : (
-            <ProjectCreationWizard onComplete={handleComplete} isCompleting={isCreating} />
-          )}
-        </div>
-      ) : null}
-    </AppSheetModal>
+        dirty={state.meta.isDirty}
+        onDirtyClose={requestClose}
+      >
+        {isOpen ? (
+          <div className="flex h-full flex-col">
+            {isHydrating ? (
+              <div className="flex flex-1 items-center justify-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                <span>
+                  {tProject("wizard.loadingProject", {
+                    defaultValue: "Loading project...",
+                  })}
+                </span>
+              </div>
+            ) : (
+              <ProjectCreationWizard onComplete={handleComplete} isCompleting={isCreating} />
+            )}
+          </div>
+        ) : null}
+      </AppSheetModal>
 
       <AlertDialog open={showGuardDialog} onOpenChange={setShowGuardDialog}>
         <AlertDialogContent>

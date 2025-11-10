@@ -20,16 +20,19 @@ import { ProjectCreationStepId } from "../types";
 import { LeadStep } from "../steps/LeadStep";
 import { DetailsStep } from "../steps/DetailsStep";
 import { PackagesStep } from "../steps/PackagesStep";
+import { DeliveryStep } from "../steps/DeliveryStep";
 import { SummaryStep } from "../steps/SummaryStep";
 import {
   WizardStepList,
   type WizardStepListSupportingTextArgs,
 } from "@/features/wizard/components/WizardStepList";
+import { createDefaultProjectDeliveryState } from "../state/projectDeliveryState";
 
 const STEP_COMPONENTS: Record<ProjectCreationStepId, () => JSX.Element> = {
   lead: LeadStep,
   details: DetailsStep,
   packages: PackagesStep,
+  delivery: DeliveryStep,
   summary: SummaryStep,
 };
 
@@ -53,6 +56,8 @@ export const ProjectCreationWizard = ({
   );
   const [mobileStepsOpen, setMobileStepsOpen] = useState(false);
   const viewedStepRef = useRef<ProjectCreationStepId | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const isEditing = state.meta.mode === "edit";
 
   const rawIndex = useMemo(
     () =>
@@ -114,6 +119,11 @@ export const ProjectCreationWizard = ({
     []
   );
 
+  useEffect(() => {
+    if (!scrollContainerRef.current) return;
+    scrollContainerRef.current.scrollTop = 0;
+  }, [meta.currentStep]);
+
   const stepStatus = useMemo(() => {
     const leadSummary = state.lead.name?.trim();
     const hasLead = Boolean(state.lead.id || leadSummary);
@@ -139,10 +149,49 @@ export const ProjectCreationWizard = ({
 
     const summaryNotes = state.details.description?.trim();
 
+    const deliveryState = state.delivery ?? createDefaultProjectDeliveryState();
+    const deliverySummary = (() => {
+      if (deliveryState.enabled === false) {
+        return t("steps.delivery.stepSummary.disabled");
+      }
+      if (deliveryState.enableLeadTime && deliveryState.leadTimeValue) {
+        const unitKey = deliveryState.leadTimeUnit === "weeks" ? "weeks" : "days";
+        return t("steps.delivery.stepSummary.leadTime", {
+          value: deliveryState.leadTimeValue,
+          unit: t(`steps.delivery.leadTime.${unitKey}`),
+        });
+      }
+      if (
+        deliveryState.enablePhotoEstimate &&
+        (deliveryState.countMin || deliveryState.countMax)
+      ) {
+        if (deliveryState.estimateType === "range" && deliveryState.countMax) {
+          return t("steps.delivery.stepSummary.photoRange", {
+            min: deliveryState.countMin ?? deliveryState.countMax,
+            max: deliveryState.countMax,
+          });
+        }
+        if (deliveryState.countMin) {
+          return t("steps.delivery.stepSummary.photoSingle", {
+            count: deliveryState.countMin,
+          });
+        }
+      }
+      if (deliveryState.enableMethods && deliveryState.methods.length > 0) {
+        return t("steps.delivery.stepSummary.methods", {
+          count: deliveryState.methods.length,
+        });
+      }
+      return undefined;
+    })();
+    const hasDeliveryValue =
+      deliveryState.enabled === false ? true : Boolean(deliverySummary);
+
     return {
       lead: { summary: leadSummary, hasValue: hasLead },
       details: { summary: detailsSummary, hasValue: hasDetails },
       packages: { summary: packageSummary, hasValue: hasPackages },
+      delivery: { summary: deliverySummary, hasValue: hasDeliveryValue },
       summary: {
         summary: summaryNotes,
         hasValue: Boolean(summaryNotes),
@@ -151,7 +200,7 @@ export const ProjectCreationWizard = ({
       ProjectCreationStepId,
       { summary?: string; hasValue: boolean }
     >;
-  }, [state.details, state.lead, state.services, t]);
+  }, [state.details, state.lead, state.services, state.delivery, t]);
 
   const goToStep = (index: number) => {
     const target = PROJECT_CREATION_STEPS[index];
@@ -201,6 +250,16 @@ export const ProjectCreationWizard = ({
   const currentStepLabel =
     (currentStepConfig && t(currentStepConfig.labelKey)) ||
     t("stepper.unknownStep");
+  const summaryIndex = useMemo(
+    () => PROJECT_CREATION_STEPS.findIndex((step) => step.id === "summary"),
+    []
+  );
+
+  const handleReview = () => {
+    if (summaryIndex < 0) return;
+    if (meta.currentStep === "summary") return;
+    goToStep(summaryIndex);
+  };
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-slate-50">
@@ -297,7 +356,10 @@ export const ProjectCreationWizard = ({
             </Collapsible>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 py-10 sm:px-6 lg:px-8">
+          <div
+            ref={scrollContainerRef}
+            className="flex-1 overflow-y-auto px-4 py-10 sm:px-6 lg:px-8"
+          >
             <div className="mx-auto w-full max-w-3xl space-y-6">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
                 <Button
@@ -327,6 +389,15 @@ export const ProjectCreationWizard = ({
                       : t("wizard.createProject")}
                   </Button>
                 )}
+                {isEditing && meta.currentStep !== "summary" ? (
+                  <Button
+                    variant="secondary"
+                    onClick={handleReview}
+                    className="w-full sm:w-auto sm:px-6"
+                  >
+                    {t("wizard.review")}
+                  </Button>
+                ) : null}
               </div>
               <div
                 key={meta.currentStep}
@@ -346,6 +417,7 @@ const REQUIRED_STEPS: Record<ProjectCreationStepId, boolean> = {
   lead: true,
   details: true,
   packages: false,
+  delivery: false,
   summary: false,
 };
 

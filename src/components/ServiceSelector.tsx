@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Check, ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -65,14 +65,26 @@ export function ServiceSelector({
     void fetchServices();
   }, [fetchServices]);
 
-  const groupedServices = availableServices.reduce((groups, service) => {
-    const category = service.category || "Uncategorized";
-    if (!groups[category]) {
-      groups[category] = [];
-    }
-    groups[category].push(service);
-    return groups;
-  }, {} as Record<string, Service[]>);
+  const groupedServiceEntries = useMemo(() => {
+    const groups = availableServices.reduce((groupMap, service) => {
+      const category = service.category || "Uncategorized";
+      if (!groupMap[category]) {
+        groupMap[category] = [];
+      }
+      groupMap[category].push(service);
+      return groupMap;
+    }, {} as Record<string, Service[]>);
+
+    Object.values(groups).forEach((servicesInCategory) => {
+      servicesInCategory.sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+      );
+    });
+
+    return Object.entries(groups).sort(([a], [b]) =>
+      a.localeCompare(b, undefined, { sensitivity: "base" })
+    );
+  }, [availableServices]);
 
   const handleServiceToggle = (service: Service) => {
     const isSelected = selectedServices.some(s => s.id === service.id);
@@ -159,7 +171,7 @@ export function ServiceSelector({
         <PopoverContent className="w-[400px] p-0" align="start">
           <ScrollArea className="max-h-60">
             <div className="p-4 space-y-3">
-              {Object.entries(groupedServices).map(([category, services], categoryIndex) => (
+              {groupedServiceEntries.map(([category, services], categoryIndex) => (
                 <div key={category}>
                   {categoryIndex > 0 && <Separator className="my-2" />}
                   <div className="space-y-2">

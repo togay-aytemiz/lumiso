@@ -268,7 +268,9 @@ export function ServiceInventorySelector({
 
   const resolvedType = availableTypes.includes(activeType) ? activeType : availableTypes[0] ?? "deliverable";
   const activeMeta = labels.typeMeta[resolvedType];
-  const activeCategories = Object.entries(groupedByType[resolvedType] ?? {});
+  const activeCategories = Object.entries(groupedByType[resolvedType] ?? {}).sort(([a], [b]) =>
+    a.localeCompare(b, undefined, { sensitivity: "base" })
+  );
   const activeStats = typeStats[resolvedType] ?? { totalServices: 0, selectedServices: 0, totalQuantity: 0 };
   const ActiveIcon =
     activeMeta?.icon ??

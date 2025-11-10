@@ -395,15 +395,33 @@ const ServicesSection = () => {
     [normalizedServices, activeType, showInactive]
   );
 
+  const uncategorizedLabel = tForms("services.uncategorized");
+
   // Group services by category for selected type
-  const groupedServices = filteredServices.reduce((acc, service) => {
-    const category = service.category || tForms("services.uncategorized");
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(service);
-    return acc;
-  }, {} as Record<string, Service[]>);
+  const groupedServices = useMemo(() => {
+    const groups = filteredServices.reduce((acc, service) => {
+      const category = service.category || uncategorizedLabel;
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(service);
+      return acc;
+    }, {} as Record<string, Service[]>);
+
+    Object.values(groups).forEach((servicesInCategory) => {
+      servicesInCategory.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
+    });
+
+    return groups;
+  }, [filteredServices, uncategorizedLabel]);
+
+  const sortedGroupedServices = useMemo(
+    () =>
+      Object.entries(groupedServices).sort(([a], [b]) =>
+        a.localeCompare(b, undefined, { sensitivity: "base" })
+      ),
+    [groupedServices]
+  );
 
   const toggleCategory = (category: string) => {
     const newOpenCategories = new Set(openCategories);
@@ -538,7 +556,7 @@ const ServicesSection = () => {
             </p>
           </div>
 
-          {Object.keys(groupedServices).length === 0 ? (
+          {sortedGroupedServices.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground mb-4">
                 {activeType === "coverage"
@@ -558,7 +576,7 @@ const ServicesSection = () => {
           ) : (
             <>
               <div className="space-y-2.5">
-                {Object.entries(groupedServices).map(
+                {sortedGroupedServices.map(
                   ([category, categoryServices]) => (
                     <Collapsible
                       key={category}

@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { useProjectTypes } from "@/hooks/useOrganizationData";
+import { useProjectTypes, useOrganizationTaxProfile } from "@/hooks/useOrganizationData";
 import { usePackageCreationSnapshot } from "../hooks/usePackageCreationSnapshot";
 import { calculateLineItemPricing } from "../utils/lineItemPricing";
 import type { PackageCreationLineItem } from "../types";
@@ -62,6 +62,9 @@ export const SummaryStep = () => {
   const { snapshot } = usePackageCreationSnapshot();
   const { updateBasics, setCurrentStep } = usePackageCreationActions();
   const { data: projectTypes = [] } = useProjectTypes();
+  const taxProfileQuery = useOrganizationTaxProfile();
+  const vatExempt = Boolean(taxProfileQuery.data?.vatExempt);
+  const vatUiEnabled = !vatExempt;
 
   const projectTypeMap = useMemo(
     () =>
@@ -220,6 +223,10 @@ export const SummaryStep = () => {
   }, [t]);
 
   const vatBreakdown = useMemo(() => {
+    if (!vatUiEnabled) {
+      return [];
+    }
+
     const buckets = new Map<number, number>();
 
     snapshot.services.items.forEach((item) => {
@@ -247,7 +254,7 @@ export const SummaryStep = () => {
     return Array.from(buckets.entries())
       .sort((a, b) => b[0] - a[0])
       .map(([rate, amount]) => ({ rate, amount: roundToTwo(amount) }));
-  }, [snapshot.services.items]);
+  }, [snapshot.services.items, vatUiEnabled]);
 
   const packageVatModeLabel = t(`steps.pricing.packageVat.mode.${snapshot.pricing.packageVatMode}`, {
     defaultValue: snapshot.pricing.packageVatMode === "inclusive" ? "Included in price" : "Add on top",
@@ -473,9 +480,18 @@ export const SummaryStep = () => {
               <SummaryTotalRow
                 label={t("summaryView.servicesTotals.servicePrice")}
                 value={formatCurrency(snapshot.services.totals.price)}
+                emphasizeLabel={!vatUiEnabled}
               />
+              {!vatUiEnabled ? (
+                <SummaryTotalRow
+                  label={t("summaryView.servicesTotals.serviceMargin")}
+                  value={formatCurrency(snapshot.pricing.servicesMargin)}
+                  tone={snapshot.pricing.servicesMargin >= 0 ? "positive" : "negative"}
+                  emphasizeLabel
+                />
+              ) : null}
             </SummaryTotalsSection>
-            {vatBreakdown.length ? (
+            {vatUiEnabled && vatBreakdown.length ? (
               <SummaryTotalsSection className="space-y-1">
                 {vatBreakdown.map((entry) => (
                   <SummaryTotalRow
@@ -488,7 +504,7 @@ export const SummaryStep = () => {
                 ))}
               </SummaryTotalsSection>
             ) : null}
-            {vatBreakdown.length !== 1 ? (
+            {vatUiEnabled && vatBreakdown.length !== 1 ? (
               <SummaryTotalsSection>
                 <SummaryTotalRow
                   label={
@@ -501,50 +517,68 @@ export const SummaryStep = () => {
               </SummaryTotalsSection>
             ) : null}
             <SummaryTotalsDivider />
-            <SummaryTotalsSection className="pt-3">
-              <SummaryTotalRow
-                label={t("summaryView.servicesTotals.serviceGross")}
-                value={formatCurrency(snapshot.services.totals.total)}
-                emphasizeLabel
-              />
-              <SummaryTotalRow
-                label={t("summaryView.servicesTotals.serviceMargin")}
-                value={formatCurrency(snapshot.pricing.servicesMargin)}
-                tone={snapshot.pricing.servicesMargin >= 0 ? "positive" : "negative"}
-                emphasizeLabel
-              />
+            {vatUiEnabled ? (
+              <>
+                <SummaryTotalsSection className="pt-3">
+                  <SummaryTotalRow
+                    label={t("summaryView.servicesTotals.serviceGross")}
+                    value={formatCurrency(snapshot.services.totals.total)}
+                    emphasizeLabel
+                  />
+                  <SummaryTotalRow
+                    label={t("summaryView.servicesTotals.serviceMargin")}
+                    value={formatCurrency(snapshot.pricing.servicesMargin)}
+                    tone={snapshot.pricing.servicesMargin >= 0 ? "positive" : "negative"}
+                    emphasizeLabel
+                  />
+                </SummaryTotalsSection>
+                <SummaryTotalsDivider />
+              </>
+            ) : null}
+            <SummaryTotalsSection className={cn("space-y-3", vatUiEnabled ? "pt-3" : undefined)}>
+              {vatUiEnabled ? (
+                <SummaryTotalRow
+                  label={t("summaryView.servicesTotals.packageNet")}
+                  value={formatCurrency(packageNet)}
+                  emphasizeLabel
+                />
+              ) : null}
+              {vatUiEnabled ? (
+                <>
+                  <SummaryTotalRow
+                    label={packageVatLabel}
+                    value={formatCurrency(packageVatAmount)}
+                    helper={packageVatModeLabel}
+                  />
+                  <SummaryTotalRow
+                    label={t("summaryView.servicesTotals.packageGross")}
+                    value={formatCurrency(packageGross)}
+                    emphasizeLabel
+                  />
+                </>
+              ) : null}
             </SummaryTotalsSection>
-            <SummaryTotalsDivider />
-            <SummaryTotalsSection className="pt-3 space-y-3">
+            {vatUiEnabled ? <SummaryTotalsDivider /> : null}
+            <SummaryTotalsSection className={cn("space-y-3", vatUiEnabled ? "pt-3" : undefined)}>
+              {vatUiEnabled ? (
+                <>
+                  <SummaryTotalRow
+                    label={t("summaryView.servicesTotals.clientNet")}
+                    value={formatCurrency(combinedNet)}
+                  />
+                  <SummaryTotalRow
+                    label={t("summaryView.servicesTotals.totalTax")}
+                    value={formatCurrency(totalTax)}
+                    emphasizeLabel
+                  />
+                </>
+              ) : null}
               <SummaryTotalRow
-                label={t("summaryView.servicesTotals.packageNet")}
-                value={formatCurrency(packageNet)}
-                emphasizeLabel
-              />
-              <SummaryTotalRow
-                label={packageVatLabel}
-                value={formatCurrency(packageVatAmount)}
-                helper={packageVatModeLabel}
-              />
-              <SummaryTotalRow
-                label={t("summaryView.servicesTotals.packageGross")}
-                value={formatCurrency(packageGross)}
-                emphasizeLabel
-              />
-            </SummaryTotalsSection>
-            <SummaryTotalsDivider />
-            <SummaryTotalsSection className="pt-3 space-y-3">
-              <SummaryTotalRow
-                label={t("summaryView.servicesTotals.clientNet")}
-                value={formatCurrency(combinedNet)}
-              />
-              <SummaryTotalRow
-                label={t("summaryView.servicesTotals.totalTax")}
-                value={formatCurrency(totalTax)}
-                emphasizeLabel
-              />
-              <SummaryTotalRow
-                label={t("summaryView.servicesTotals.grandTotal")}
+                label={
+                  vatUiEnabled
+                    ? t("summaryView.servicesTotals.grandTotal")
+                    : t("summaryView.servicesTotals.packageGross")
+                }
                 value={formatCurrency(clientTotal)}
                 emphasizeLabel
                 tone="positive"

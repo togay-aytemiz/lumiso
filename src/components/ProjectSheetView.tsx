@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore, ExternalLink, FolderOpen } from "lucide-react";
+import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore, ExternalLink, FolderOpen, CalendarPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectActivitySection } from "./ProjectActivitySection";
 import { ProjectTodoListEnhanced } from "./ProjectTodoListEnhanced";
@@ -20,6 +20,7 @@ import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
+import { SessionSchedulingSheet } from "@/components/SessionSchedulingSheet";
 // AssigneesList removed - single user organization
 import { SessionWithStatus } from "@/lib/sessionSorting";
 import { onArchiveToggle } from "@/components/projectArchiveToggle";
@@ -120,6 +121,7 @@ export function LegacyProjectSheetView({
     plannedCount: 0
   });
   const [archiveLoading, setArchiveLoading] = useState(false);
+  const [sessionSheetOpen, setSessionSheetOpen] = useState(false);
   const [editWizardOpen, setEditWizardOpen] = useState(false);
   const [editWizardStartStep, setEditWizardStartStep] =
     useState<ProjectCreationStepId>("details");
@@ -647,9 +649,9 @@ export function LegacyProjectSheetView({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
-        <DropdownMenuItem role="menuitem" onSelect={() => setIsEditing(true)}>
-          <Pencil className="mr-2 h-4 w-4" />
-          <span>{tForms('project_sheet.edit_project')}</span>
+        <DropdownMenuItem role="menuitem" onSelect={() => setSessionSheetOpen(true)}>
+          <CalendarPlus className="mr-2 h-4 w-4" />
+          <span>{tForms('sessions.schedule_new')}</span>
         </DropdownMenuItem>
         <DropdownMenuItem role="menuitem" onSelect={handleArchiveAction}>
           {isArchived ? (
@@ -945,6 +947,21 @@ export function LegacyProjectSheetView({
     />
   ) : null;
 
+  const sessionSheet = project ? (
+    <SessionSchedulingSheet
+      leadId={project.lead_id}
+      leadName={lead?.name ?? leadName}
+      projectId={project.id}
+      projectName={project.name}
+      isOpen={sessionSheetOpen}
+      onOpenChange={setSessionSheetOpen}
+      onSessionScheduled={() => {
+        fetchProjectSessions();
+        onProjectUpdated();
+      }}
+    />
+  ) : null;
+
   // Render as Sheet or Dialog based on mode
   if (mode === 'sheet') {
     return (
@@ -1003,6 +1020,7 @@ export function LegacyProjectSheetView({
           </AlertDialogContent>
         </AlertDialog>
         {editWizard}
+        {sessionSheet}
       </>
     );
   }
@@ -1054,10 +1072,11 @@ export function LegacyProjectSheetView({
               {isDeleting ? tForms('actions.deleting') : tForms('deleteDialog.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      {editWizard}
-    </>
+      </AlertDialogContent>
+    </AlertDialog>
+    {sessionSheet}
+    {editWizard}
+  </>
   );
 }
 

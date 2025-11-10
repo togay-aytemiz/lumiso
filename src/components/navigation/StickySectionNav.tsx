@@ -134,22 +134,74 @@ export function StickySectionNav({
     onActiveChange(activeId);
   }, [activeId, onActiveChange, hasMinimumItems]);
 
+  const escapeIdForSelector = (id: string) => {
+    if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
+      return CSS.escape(id);
+    }
+    return id.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+  };
+
+  const findTargetElement = (targetId: string) => {
+    const container = scrollContainerRef?.current;
+    const escapedId = escapeIdForSelector(targetId);
+    const selector = `#${escapedId}`;
+
+    if (container) {
+      try {
+        const scopedMatch = container.querySelector<HTMLElement>(selector);
+        if (scopedMatch) {
+          return { element: scopedMatch, withinContainer: true } as const;
+        }
+      } catch {
+        // Fallback to manual search below
+      }
+
+      if (typeof document !== "undefined") {
+        try {
+          const docMatches = document.querySelectorAll<HTMLElement>(selector);
+          for (const el of docMatches) {
+            if (container.contains(el)) {
+              return { element: el, withinContainer: true } as const;
+            }
+          }
+        } catch {
+          // Ignore and fallback to manual search
+        }
+      }
+
+      const fallbackMatches = container.querySelectorAll<HTMLElement>("[id]");
+      for (const el of fallbackMatches) {
+        if (el.id === targetId) {
+          return { element: el, withinContainer: true } as const;
+        }
+      }
+    }
+
+    const documentTarget = typeof document !== "undefined" ? document.getElementById(targetId) : null;
+    if (documentTarget) {
+      return { element: documentTarget, withinContainer: false } as const;
+    }
+
+    return null;
+  };
+
   const scrollToTarget = (targetId: string) => {
     if (typeof window === "undefined") {
       return;
     }
 
-    const target = document.getElementById(targetId);
-    if (!target) {
+    const targetResult = findTargetElement(targetId);
+    if (!targetResult) {
       return;
     }
+    const { element: target, withinContainer } = targetResult;
 
     const stickyOffset =
       (disableSticky ? 0 : (navRef.current?.offsetHeight ?? 0) + stickyTopOffset) +
       EXTRA_SCROLL_MARGIN_PX;
     const scrollContainer = scrollContainerRef?.current;
 
-    if (scrollContainer) {
+    if (withinContainer && scrollContainer) {
       const containerRect = scrollContainer.getBoundingClientRect();
       const targetRect = target.getBoundingClientRect();
       const currentOffset = scrollContainer.scrollTop ?? 0;

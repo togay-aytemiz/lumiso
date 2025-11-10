@@ -29,9 +29,9 @@ export default function ProjectDetailsLayout({
   overviewNavId = DEFAULT_OVERVIEW_ID,
   overviewLabel = DEFAULT_OVERVIEW_LABEL,
   onOverviewScroll,
-  navAlign = "end",
+  navAlign = "start",
   navAriaLabel = "Section navigation",
-  navClassName = "justify-start md:justify-end",
+  navClassName = "md:justify-end",
   scrollContainerRef
 }: ProjectDetailsLayoutProps) {
   const navItems = useMemo<StickySectionNavItem[]>(() => {

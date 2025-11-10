@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore, FolderOpen } from "lucide-react";
+import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore, FolderOpen, CalendarPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectActivitySection } from "@/components/ProjectActivitySection";
 import { ProjectTodoListEnhanced } from "@/components/ProjectTodoListEnhanced";
@@ -19,6 +19,7 @@ import { ProjectPackageSummaryCard } from "@/components/ProjectPackageSummaryCar
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
+import { SessionSchedulingSheet } from "@/components/SessionSchedulingSheet";
 // AssigneesList removed - single user organization
 import { SessionWithStatus } from "@/lib/sessionSorting";
 import { onArchiveToggle } from "@/components/projectArchiveToggle";
@@ -106,6 +107,7 @@ export default function ProjectDetail() {
   const [localStatusId, setLocalStatusId] = useState<string | null | undefined>(null);
   const [servicesVersion, setServicesVersion] = useState(0);
   const [summaryRefreshToken, setSummaryRefreshToken] = useState(0);
+  const [sessionSheetOpen, setSessionSheetOpen] = useState(false);
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [archiveConfirmState, setArchiveConfirmState] = useState({
     hasOutstanding: false,
@@ -569,9 +571,9 @@ export default function ProjectDetail() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" side="bottom">
-        <DropdownMenuItem onSelect={() => setIsEditing(true)}>
-          <Pencil className="mr-2 h-4 w-4" />
-          <span>{t("project_sheet.edit_project")}</span>
+        <DropdownMenuItem onSelect={() => setSessionSheetOpen(true)}>
+          <CalendarPlus className="mr-2 h-4 w-4" />
+          <span>{t("sessions.schedule_new")}</span>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={handleArchiveAction}>
           {isArchived ? (
@@ -588,6 +590,28 @@ export default function ProjectDetail() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+
+  const desktopQuickActions = (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        className="min-w-[140px] gap-2 border-indigo-500 bg-indigo-100 text-indigo-800 hover:bg-indigo-200 hover:text-indigo-900"
+        onClick={() => setSessionSheetOpen(true)}
+      >
+        <CalendarPlus className="h-4 w-4" />
+        {t("sessions.schedule_new")}
+      </Button>
+      <Button
+        variant="pill"
+        size="sm"
+        className="min-w-[140px]"
+        onClick={handleArchiveAction}
+      >
+        {isArchived ? t("project_sheet.restore_project") : t("project_sheet.archive_project")}
+      </Button>
+    </div>
   );
 
   const headerActions = isEditing ? (
@@ -634,7 +658,7 @@ export default function ProjectDetail() {
         {moreActionsButton}
       </div>
     ) : (
-      moreActionsButton
+      desktopQuickActions
     )
   );
 
@@ -906,6 +930,21 @@ export default function ProjectDetail() {
           startStepOverride={editWizardStartStep}
           mode="edit"
           onProjectUpdated={handleWizardUpdated}
+        />
+      ) : null}
+      {project ? (
+        <SessionSchedulingSheet
+          leadId={project.lead_id}
+          leadName={lead?.name ?? ""}
+          projectId={project.id}
+          projectName={project.name}
+          isOpen={sessionSheetOpen}
+          onOpenChange={setSessionSheetOpen}
+          onSessionScheduled={() => {
+            handleSessionUpdated();
+            triggerSummaryRefresh();
+            setSessionSheetOpen(false);
+          }}
         />
       ) : null}
     </div>

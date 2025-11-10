@@ -154,6 +154,61 @@ describe("StickySectionNav", () => {
     expect(scrollToMock).not.toHaveBeenCalled();
   });
 
+  it("prioritizes targets within the scroll container when duplicate ids exist", () => {
+    const container = document.createElement("div");
+    container.scrollTop = 0;
+    container.getBoundingClientRect = () =>
+      ({
+        top: 0,
+        bottom: 400,
+        left: 0,
+        right: 0,
+        height: 400,
+        width: 0,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }) as DOMRect;
+    container.scrollTo = jest.fn();
+
+    const targetInside = document.createElement("div");
+    targetInside.id = "section-2";
+    targetInside.getBoundingClientRect = () =>
+      ({
+        top: 200,
+        bottom: 240,
+        left: 0,
+        right: 0,
+        height: 40,
+        width: 0,
+        x: 0,
+        y: 200,
+        toJSON: () => ({}),
+      }) as DOMRect;
+
+    const targetOutside = document.createElement("div");
+    targetOutside.id = "section-2";
+
+    container.appendChild(targetInside);
+    document.body.appendChild(container);
+    document.body.appendChild(targetOutside);
+
+    const scrollContainerRef =
+      { current: container } as NonNullable<StickySectionNavProps["scrollContainerRef"]>;
+
+    render(
+      <StickySectionNav
+        items={baseItems}
+        scrollContainerRef={scrollContainerRef}
+        scrollBehavior="auto"
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Section 2" }));
+    expect(container.scrollTo).toHaveBeenCalledTimes(1);
+    expect(scrollToMock).not.toHaveBeenCalled();
+  });
+
   it("updates the active id when observed sections intersect", async () => {
     const onActiveChange = jest.fn();
 

@@ -187,8 +187,8 @@ export function ProjectPackageSummaryCard({
               onClick={onEditDetails}
               className="h-9 rounded-lg bg-accent/10 px-3 text-sm font-semibold text-accent transition-colors hover:bg-accent/20"
             >
-              {t("project_package_card.edit_project", { defaultValue: "Projeyi düzenle" })}
-            </Button>
+            {t("project_package_card.edit_project", { defaultValue: "Düzenle" })}
+          </Button>
           </div>
         </div>
         {snapshot ? (
@@ -226,21 +226,23 @@ export function ProjectPackageSummaryCard({
               t("project_package_card.custom_label", { defaultValue: "Custom plan" })
             }
           />
-          <InfoRow
-            icon={<Camera className="h-4 w-4 text-primary" />}
-            label={t("project_package_card.photos", { defaultValue: "Photo delivery" })}
-            value={photoLabel}
-          />
-          <InfoRow
-            icon={<Clock className="h-4 w-4 text-primary" />}
-            label={t("project_package_card.lead_time_label", { defaultValue: "Turnaround" })}
-            value={leadTimeLabel}
-          />
-          <InfoRow
-            icon={<Send className="h-4 w-4 text-primary" />}
-            label={t("project_package_card.methods", { defaultValue: "Delivery methods" })}
-            value={methodsLabel}
-          />
+          <div className="grid gap-3 md:grid-cols-3">
+            <InfoRow
+              icon={<Camera className="h-4 w-4 text-primary" />}
+              label={t("project_package_card.photos", { defaultValue: "Photo delivery" })}
+              value={photoLabel}
+            />
+            <InfoRow
+              icon={<Clock className="h-4 w-4 text-primary" />}
+              label={t("project_package_card.lead_time_label", { defaultValue: "Turnaround" })}
+              value={leadTimeLabel}
+            />
+            <InfoRow
+              icon={<Send className="h-4 w-4 text-primary" />}
+              label={t("project_package_card.methods", { defaultValue: "Delivery methods" })}
+              value={methodsLabel}
+            />
+          </div>
           {servicesSummary ? (
             <InfoRow
               icon={

@@ -718,6 +718,9 @@ export default function ProjectDetail() {
                   onPaymentsUpdated={() => {
                     triggerSummaryRefresh();
                   }}
+                  onBasePriceUpdated={() => {
+                    setServicesVersion(v => v + 1);
+                  }}
                   refreshToken={servicesVersion}
                 />
               )
@@ -728,6 +731,7 @@ export default function ProjectDetail() {
               content: (
                 <ProjectServicesSection
                   projectId={project!.id}
+                  refreshToken={servicesVersion}
                   onServicesUpdated={() => {
                     setServicesVersion(v => v + 1);
                     triggerSummaryRefresh();

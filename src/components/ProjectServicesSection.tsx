@@ -23,6 +23,7 @@ import {
   type ProjectServiceRecord
 } from "@/lib/services/projectServiceRecords";
 import { useOrganizationTaxProfile } from "@/hooks/useOrganizationData";
+import { syncProjectOutstandingPayment } from "@/lib/payments/outstanding";
 
 const CURRENCY = "TRY";
 
@@ -61,9 +62,10 @@ const aggregatePricing = (records: ProjectServiceRecord[], vatEnabled: boolean):
 interface ProjectServicesSectionProps {
   projectId: string;
   onServicesUpdated?: () => void;
+  refreshToken?: number;
 }
 
-export function ProjectServicesSection({ projectId, onServicesUpdated }: ProjectServicesSectionProps) {
+export function ProjectServicesSection({ projectId, onServicesUpdated, refreshToken }: ProjectServicesSectionProps) {
   const { t } = useFormsTranslation();
   const { toast } = useToast();
   const taxProfileQuery = useOrganizationTaxProfile();
@@ -149,7 +151,7 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
     return () => {
       active = false;
     };
-  }, [projectId, handleLoadError]);
+  }, [projectId, handleLoadError, refreshToken]);
 
   const fetchAvailableServices = useCallback(async () => {
     if (availableServices.length > 0 || availableServicesLoading) return;

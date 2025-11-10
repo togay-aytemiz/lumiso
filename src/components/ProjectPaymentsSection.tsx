@@ -7,8 +7,7 @@ import {
   HelpCircle,
   ChevronDown,
   CalendarIcon,
-  CheckCircle2,
-  X
+  CheckCircle2
 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -637,7 +636,9 @@ export function ProjectPaymentsSection({
 
   const depositConfigured = financialSummary.depositStatus !== "none";
   const isDepositPaid = financialSummary.depositStatus === "paid";
-  const depositEditLabel = t("payments.deposit.actions.edit_short", { defaultValue: "Edit" });
+  const depositEditLabel = t("payments.deposit.actions.edit_short", {
+    defaultValue: "Kapora tutarını düzenle"
+  });
   const lockedDepositAmount = project?.depositConfig?.snapshot_amount ?? null;
   const lockedDepositDate = financialSummary.depositSnapshotLockedAt;
   const snapshotLabel = lockedDepositAmount
@@ -972,56 +973,45 @@ export function ProjectPaymentsSection({
 
                 {shouldShowSnapshotBanner && (
                   <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-900">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-1 space-y-3">
-                        <p className="font-medium">
-                          {t("payments.deposit.snapshot_banner", {
-                            locked: formatCurrency(lockedDepositAmount ?? 0),
-                            suggested: formatCurrency(financialSummary.depositSuggestedAmount),
-                            defaultValue:
-                              "Locked deposit {{locked}} differs from the current calculation {{suggested}}."
-                          })}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <Button
-                            size="sm"
-                            variant="pill"
-                            onClick={() => handleSnapshotAction("refresh")}
-                            disabled={isSnapshotUpdating}
-                          >
-                            {t("payments.deposit.actions.refresh_snapshot", {
-                              defaultValue: "Update deposit amount"
-                            })}
-                          </Button>
-                          <button
-                            type="button"
-                            onClick={() => handleSnapshotAction("acknowledge")}
-                            disabled={isSnapshotUpdating}
-                            className={cn(
-                              "text-sm font-semibold text-amber-900 underline-offset-4 transition",
-                              isSnapshotUpdating ? "opacity-60" : "hover:underline"
-                            )}
-                          >
-                            {t("payments.deposit.actions.keep_locked", {
-                              defaultValue: "Keep current amount"
-                            })}
-                          </button>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleSnapshotAction("acknowledge")}
-                        disabled={isSnapshotUpdating}
-                        className={cn(
-                          "rounded-full p-1 text-amber-700 transition hover:bg-amber-100",
-                          isSnapshotUpdating && "opacity-60"
-                        )}
-                        aria-label={t("payments.deposit.actions.keep_locked", {
-                          defaultValue: "Keep current amount"
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <p className="flex-1 font-medium">
+                        {t("payments.deposit.snapshot_banner", {
+                          locked: formatCurrency(lockedDepositAmount ?? 0),
+                          suggested: formatCurrency(financialSummary.depositSuggestedAmount),
+                          defaultValue:
+                            "Locked deposit {{locked}} differs from the current calculation {{suggested}}."
                         })}
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                        <Button
+                          size="sm"
+                          variant="pill"
+                          className={cn(
+                            "!bg-amber-500 !text-white hover:!bg-amber-600 focus-visible:!ring-amber-300 shadow-sm",
+                            isSnapshotUpdating && "opacity-70"
+                          )}
+                          onClick={() => handleSnapshotAction("refresh")}
+                          disabled={isSnapshotUpdating}
+                        >
+                          {t("payments.deposit.actions.refresh_snapshot", {
+                            defaultValue: "Update deposit amount"
+                          })}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="pill"
+                          className={cn(
+                            "!bg-amber-100 !text-amber-900 hover:!bg-amber-200 border border-amber-200 shadow-sm",
+                            isSnapshotUpdating && "opacity-70"
+                          )}
+                          onClick={() => handleSnapshotAction("acknowledge")}
+                          disabled={isSnapshotUpdating}
+                        >
+                          {t("payments.deposit.actions.keep_locked", {
+                            defaultValue: "Keep current amount"
+                          })}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}

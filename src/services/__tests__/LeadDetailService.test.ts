@@ -6,15 +6,40 @@ jest.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
+jest.mock("@/lib/organizationSettingsCache", () => {
+  const actual = jest.requireActual("@/lib/organizationSettingsCache");
+  return {
+    ...actual,
+    fetchOrganizationSettingsWithCache: jest.fn(),
+  };
+});
+
 import {
   fetchLeadById,
   fetchLeadSessions,
   fetchLeadProjectSummary,
   fetchLatestLeadActivity,
 } from "../LeadDetailService";
+import {
+  DEFAULT_ORGANIZATION_TAX_PROFILE,
+  fetchOrganizationSettingsWithCache,
+} from "@/lib/organizationSettingsCache";
+
+const fetchOrganizationSettingsWithCacheMock =
+  fetchOrganizationSettingsWithCache as jest.MockedFunction<
+    typeof fetchOrganizationSettingsWithCache
+  >;
 
 beforeEach(() => {
   supabaseFromMock.mockReset();
+  fetchOrganizationSettingsWithCacheMock.mockReset();
+  fetchOrganizationSettingsWithCacheMock.mockResolvedValue({
+    organization_id: "org-default",
+    tax_profile: {
+      ...DEFAULT_ORGANIZATION_TAX_PROFILE,
+      vatExempt: false,
+    },
+  });
 });
 
 const createSelectEqMaybeSingleChain = (result: { data: unknown; error: unknown }) => {
@@ -180,7 +205,9 @@ const createTodosChain = (result: { data: unknown; error: unknown }) => {
 
 const createPaymentsChain = (result: { data: unknown; error: unknown }) => ({
   select: jest.fn(() => ({
-    in: jest.fn(() => Promise.resolve(result)),
+    in: jest.fn(() => ({
+      eq: jest.fn(() => Promise.resolve(result)),
+    })),
   })),
 });
 
@@ -194,6 +221,7 @@ describe("fetchLeadProjectSummary", () => {
         status_id: "status-active",
         project_services: [
           {
+            billing_type: "included",
             quantity: 1,
             unit_price_override: null,
             vat_rate_override: null,
@@ -206,6 +234,20 @@ describe("fetchLeadProjectSummary", () => {
             },
           },
           {
+            billing_type: null,
+            quantity: 1,
+            unit_price_override: null,
+            vat_rate_override: null,
+            vat_mode_override: null,
+            services: {
+              selling_price: 1000,
+              price: 1000,
+              vat_rate: 0,
+              price_includes_vat: true,
+            },
+          },
+          {
+            billing_type: "extra",
             quantity: 1,
             unit_price_override: null,
             vat_rate_override: null,
@@ -272,8 +314,70 @@ describe("fetchLeadProjectSummary", () => {
     });
     expect(result.payments).toEqual({
       totalPaid: 600,
-      total: 1600,
-      remaining: 1000,
+      total: 1200,
+      remaining: 600,
+      currency: "TRY",
+    });
+  });
+
+  it("honors VAT exemption settings when aggregating extras", async () => {
+    fetchOrganizationSettingsWithCacheMock.mockResolvedValue({
+      organization_id: "org-try",
+      tax_profile: {
+        ...DEFAULT_ORGANIZATION_TAX_PROFILE,
+        vatExempt: true,
+        legalEntityType: "company",
+      },
+    });
+
+    const projects = [
+      {
+        id: "proj-1",
+        updated_at: null,
+        base_price: 12500,
+        status_id: "status-active",
+        project_services: [
+          {
+            billing_type: "extra",
+            quantity: 1,
+            unit_price_override: null,
+            vat_rate_override: 20,
+            vat_mode_override: "exclusive",
+            services: {
+              selling_price: null,
+              price: 5000,
+              vat_rate: 20,
+              price_includes_vat: false,
+            },
+          },
+        ],
+      },
+    ];
+
+    supabaseFromMock.mockImplementation((table: string) => {
+      switch (table) {
+        case "projects":
+          return createProjectsChain({ data: projects, error: null });
+        case "project_statuses":
+          return createProjectStatusesChain({
+            data: { id: "status-archived" },
+            error: null,
+          });
+        case "todos":
+          return createTodosChain({ data: null, error: null });
+        case "payments":
+          return createPaymentsChain({ data: [], error: null });
+        default:
+          throw new Error(`Unexpected table ${table}`);
+      }
+    });
+
+    const result = await fetchLeadProjectSummary("lead-1", "org-try");
+
+    expect(result.payments).toEqual({
+      totalPaid: 0,
+      total: 17500,
+      remaining: 17500,
       currency: "TRY",
     });
   });

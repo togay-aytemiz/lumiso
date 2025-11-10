@@ -1,5 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import { computeServiceTotals } from "@/lib/payments/servicePricing";
+import {
+  DEFAULT_ORGANIZATION_TAX_PROFILE,
+  fetchOrganizationSettingsWithCache,
+  type OrganizationTaxProfile
+} from "@/lib/organizationSettingsCache";
 
 export interface LeadDetailRecord {
   id: string;
@@ -61,6 +66,32 @@ export interface LeadProjectSummaryPayload {
 }
 
 const archivedStatusCache = new Map<string, string | null>();
+const vatPreferenceCache = new Map<string, boolean>();
+
+async function resolveVatEnabled(organizationId?: string | null): Promise<boolean> {
+  if (!organizationId) {
+    return true;
+  }
+
+  if (vatPreferenceCache.has(organizationId)) {
+    return vatPreferenceCache.get(organizationId)!;
+  }
+
+  try {
+    const settings = await fetchOrganizationSettingsWithCache(organizationId);
+    const taxProfile = (settings?.tax_profile ?? null) as OrganizationTaxProfile | null;
+    const normalizedEntity =
+      taxProfile?.legalEntityType ?? DEFAULT_ORGANIZATION_TAX_PROFILE.legalEntityType;
+    const vatExempt = taxProfile?.vatExempt ?? normalizedEntity === "freelance";
+    const vatEnabled = !vatExempt;
+    vatPreferenceCache.set(organizationId, vatEnabled);
+    return vatEnabled;
+  } catch (error) {
+    console.error("Error resolving VAT preference for organization:", error);
+    vatPreferenceCache.set(organizationId, true);
+    return true;
+  }
+}
 
 async function getArchivedProjectStatusId(organizationId: string): Promise<string | null> {
   if (archivedStatusCache.has(organizationId)) {
@@ -146,7 +177,7 @@ export async function fetchLeadProjectSummary(
   leadId: string,
   organizationId: string
 ): Promise<LeadProjectSummaryPayload> {
-  const [projectsResult, archivedStatusId] = await Promise.all([
+  const [projectsResult, archivedStatusId, vatEnabled] = await Promise.all([
     supabase
       .from("projects")
       .select(
@@ -156,6 +187,7 @@ export async function fetchLeadProjectSummary(
         base_price,
         status_id,
         project_services (
+          billing_type,
           quantity,
           unit_price_override,
           vat_rate_override,
@@ -171,7 +203,8 @@ export async function fetchLeadProjectSummary(
       )
       .eq("lead_id", leadId)
       .eq("organization_id", organizationId),
-    getArchivedProjectStatusId(organizationId)
+    getArchivedProjectStatusId(organizationId),
+    resolveVatEnabled(organizationId)
   ]);
 
   if (projectsResult.error) throw projectsResult.error;
@@ -184,6 +217,7 @@ export async function fetchLeadProjectSummary(
       status_id: string | null;
       project_services?:
         | Array<{
+            billing_type?: "included" | "extra" | null;
             quantity?: number | null;
             unit_price_override?: number | null;
             vat_rate_override?: number | null;
@@ -246,15 +280,20 @@ export async function fetchLeadProjectSummary(
   visibleProjects.forEach((project) => {
     const basePrice = Number(project.base_price) || 0;
     const servicesTotal = (project.project_services || []).reduce((sum, entry) => {
+      const billingType = (entry?.billing_type ?? "included").toString().trim().toLowerCase();
+      if (billingType !== "extra") {
+        return sum;
+      }
       const service = entry?.services;
       if (!service) return sum;
       const pricing = computeServiceTotals({
         unitPrice: entry?.unit_price_override ?? service.selling_price ?? service.price ?? null,
         quantity: entry?.quantity ?? 1,
-        vatRate: entry?.vat_rate_override ?? service.vat_rate ?? null,
-        vatMode:
-          entry?.vat_mode_override ??
-          (service.price_includes_vat === false ? "exclusive" : "inclusive"),
+        vatRate: vatEnabled ? entry?.vat_rate_override ?? service.vat_rate ?? null : 0,
+        vatMode: vatEnabled
+          ? entry?.vat_mode_override ??
+            (service.price_includes_vat === false ? "exclusive" : "inclusive")
+          : "inclusive",
       });
       return sum + pricing.gross;
     }, 0);

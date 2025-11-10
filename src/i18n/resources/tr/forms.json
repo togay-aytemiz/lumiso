@@ -1163,6 +1163,7 @@
       "due": "{{amount}} kapora bekleniyor.",
       "partial": "{{required}} kaporanın {{paid}} tutarı alındı (kalan {{remaining}}).",
       "paid": "Kapora tahsil edildi ({{amount}}).",
+      "paid_chip": "Kapora ödendi",
       "last_payment": "Son kapora ödemesi {{date}} tarihinde.",
       "setup_title": "Kapora ayarla",
       "setup_action": "Kapora kaydet",

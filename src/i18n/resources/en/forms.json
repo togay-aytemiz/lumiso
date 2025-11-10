@@ -689,6 +689,7 @@
       "due": "{{amount}} deposit outstanding.",
       "partial": "{{paid}} of {{required}} collected ({{remaining}} remaining).",
       "paid": "Deposit collected ({{amount}}).",
+      "paid_chip": "Deposit paid",
       "last_payment": "Last deposit payment on {{date}}.",
       "setup_title": "Configure deposit",
       "setup_action": "Save deposit",

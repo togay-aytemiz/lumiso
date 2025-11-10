@@ -1,5 +1,14 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { CreditCard, Coins, Edit2, Trash2, HelpCircle, ChevronDown, CalendarIcon } from "lucide-react";
+import {
+  CreditCard,
+  Coins,
+  Edit2,
+  Trash2,
+  HelpCircle,
+  ChevronDown,
+  CalendarIcon,
+  CheckCircle2
+} from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -566,6 +575,7 @@ export function ProjectPaymentsSection({
   }, [serviceRecords, vatUiEnabled]);
 
   const depositConfigured = financialSummary.depositStatus !== "none";
+  const isDepositPaid = financialSummary.depositStatus === "paid";
   const depositEditLabel = t("payments.deposit.actions.edit_short", { defaultValue: "Edit" });
   const lockedDepositAmount = project?.depositConfig?.snapshot_amount ?? null;
   const lockedDepositDate = financialSummary.depositSnapshotLockedAt;
@@ -800,13 +810,31 @@ export function ProjectPaymentsSection({
               <div className="rounded-xl border p-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="flex items-start gap-3">
-                    <div className="rounded-md bg-amber-100 p-2 text-amber-700">
-                      <Coins className="h-5 w-5" />
+                    <div
+                      className={cn(
+                        "rounded-md p-2",
+                        isDepositPaid
+                          ? "rounded-full bg-emerald-100 text-emerald-700"
+                          : "bg-amber-100 text-amber-700"
+                      )}
+                    >
+                      {isDepositPaid ? (
+                        <CheckCircle2 className="h-5 w-5" />
+                      ) : (
+                        <Coins className="h-5 w-5" />
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <h3 className="text-base font-semibold">
-                        {t("payments.deposit.title", { defaultValue: "Deposit details" })}
-                      </h3>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-base font-semibold">
+                          {t("payments.deposit.title", { defaultValue: "Deposit details" })}
+                        </h3>
+                        {isDepositPaid && (
+                          <Badge variant="success">
+                            {t("payments.deposit.paid_chip", { defaultValue: "Deposit paid" })}
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         {financialSummary.depositStatus === "none" &&
                           t("payments.deposit.not_configured", {
@@ -830,23 +858,27 @@ export function ProjectPaymentsSection({
                             defaultValue: "Deposit collected ({{amount}})."
                           })}
                       </p>
-                      <p className="text-xs text-muted-foreground">{snapshotLabel}</p>
-                      {financialSummary.depositLastPaymentDate && (
-                        <p className="text-xs text-muted-foreground">
-                          {t("payments.deposit.last_payment", {
-                            date:
-                              formatDateSafely(financialSummary.depositLastPaymentDate) ??
-                              financialSummary.depositLastPaymentDate,
-                            defaultValue: "Last deposit payment on {{date}}."
-                          })}
-                        </p>
+                      {!isDepositPaid && (
+                        <>
+                          <p className="text-xs text-muted-foreground">{snapshotLabel}</p>
+                          {financialSummary.depositLastPaymentDate && (
+                            <p className="text-xs text-muted-foreground">
+                              {t("payments.deposit.last_payment", {
+                                date:
+                                  formatDateSafely(financialSummary.depositLastPaymentDate) ??
+                                  financialSummary.depositLastPaymentDate,
+                                defaultValue: "Last deposit payment on {{date}}."
+                              })}
+                            </p>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="pill"
                       onClick={() => setDepositSetupOpen(true)}
                     >
                       {depositEditLabel}
@@ -900,8 +932,13 @@ export function ProjectPaymentsSection({
               )}
 
               {payments.length === 0 ? (
-                <div className="py-10 text-center text-muted-foreground">
-                  {t("payments.no_records", { defaultValue: "No payment records yet." })}
+                <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-muted-foreground/80" />
+                    <span>
+                      {t("payments.no_records", { defaultValue: "No payment records yet." })}
+                    </span>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-2">

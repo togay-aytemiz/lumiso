@@ -136,6 +136,7 @@
       "basePricePlaceholder": "0",
       "depositLabel": "Kapora (TRY)",
       "depositPlaceholder": "0",
+      "depositAdjustedNotice": "Ek hizmetler nedeniyle kapora otomatik güncellendi.",
       "servicesLabel": "Hizmetler ve ekler",
       "servicesBadge": "{{count}} adet seçildi",
       "servicesError": "Hizmetler yüklenemedi. Lütfen birazdan tekrar deneyin.",

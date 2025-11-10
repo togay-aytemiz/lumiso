@@ -635,8 +635,6 @@ export const PackagesStep = () => {
     return 0;
   }, [state.details.basePrice, selectedPackage]);
 
-  const includeAddOnsInPrice = selectedPackage?.include_addons_in_price ?? true;
-
   const packageDepositConfig = useMemo(() => {
     const metadata = selectedPackage?.pricing_metadata;
     if (!metadata || typeof metadata !== "object") {
@@ -673,43 +671,51 @@ export const PackagesStep = () => {
     };
   }, [selectedPackage]);
 
-  const suggestedDepositAmount = useMemo(() => {
-    if (!packageDepositConfig || !packageDepositConfig.enableDeposit) {
-      return 0;
-    }
-    const { depositMode, depositValue, depositTarget, depositAmount } = packageDepositConfig;
-    const roundCurrency = (value: number) => Math.round(value * 100) / 100;
-    if (depositMode === "fixed") {
-      if (depositAmount != null && depositAmount > 0) {
-        return roundCurrency(depositAmount);
+  const roundCurrency = useCallback((value: number) => Math.round(value * 100) / 100, []);
+
+  const computeSuggestedDeposit = useCallback(
+    (extrasOverride: number) => {
+      if (!packageDepositConfig || !packageDepositConfig.enableDeposit) {
+        return 0;
       }
-      if (depositValue != null && depositValue > 0) {
-        return roundCurrency(depositValue);
+      const { depositMode, depositValue, depositTarget, depositAmount } = packageDepositConfig;
+      if (depositMode === "fixed") {
+        if (depositAmount != null && depositAmount > 0) {
+          return roundCurrency(depositAmount);
+        }
+        if (depositValue != null && depositValue > 0) {
+          return roundCurrency(depositValue);
+        }
+        return 0;
       }
-      return 0;
-    }
-    if (!(depositValue != null && depositValue > 0)) {
+      if (!(depositValue != null && depositValue > 0)) {
+        return depositAmount != null && depositAmount > 0 ? roundCurrency(depositAmount) : 0;
+      }
+      const targetKey = depositTarget === "base" ? "base" : "subtotal";
+      const contractTotal = Math.max(0, basePriceValue + extrasOverride);
+      const targetAmount = targetKey === "base" ? basePriceValue : contractTotal;
+      if (!(targetAmount > 0)) {
+        return depositAmount != null && depositAmount > 0 ? roundCurrency(depositAmount) : 0;
+      }
+      const calculated = (targetAmount * depositValue) / 100;
+      const rounded = roundCurrency(calculated);
+      if (rounded > 0) {
+        return rounded;
+      }
       return depositAmount != null && depositAmount > 0 ? roundCurrency(depositAmount) : 0;
-    }
-    const targetKey = depositTarget === "base" ? "base" : "subtotal";
-    const subtotal = Math.max(0, basePriceValue + extraTotals.total);
-    const clientTotal = includeAddOnsInPrice ? basePriceValue : subtotal;
-    const targetAmount =
-      targetKey === "base"
-        ? basePriceValue
-        : includeAddOnsInPrice
-        ? clientTotal
-        : subtotal;
-    if (!(targetAmount > 0)) {
-      return depositAmount != null && depositAmount > 0 ? roundCurrency(depositAmount) : 0;
-    }
-    const calculated = (targetAmount * depositValue) / 100;
-    const rounded = roundCurrency(calculated);
-    if (rounded > 0) {
-      return rounded;
-    }
-    return depositAmount != null && depositAmount > 0 ? roundCurrency(depositAmount) : 0;
-  }, [packageDepositConfig, basePriceValue, extraTotals.total, includeAddOnsInPrice]);
+    },
+    [basePriceValue, packageDepositConfig, roundCurrency]
+  );
+
+  const suggestedDepositAmount = useMemo(
+    () => computeSuggestedDeposit(extraTotals.total),
+    [computeSuggestedDeposit, extraTotals.total]
+  );
+
+  const basePackageDepositAmount = useMemo(
+    () => computeSuggestedDeposit(0),
+    [computeSuggestedDeposit]
+  );
 
   const depositInputValue =
     state.details.depositAmount !== undefined
@@ -717,6 +723,10 @@ export const PackagesStep = () => {
       : suggestedDepositAmount > 0
       ? String(suggestedDepositAmount)
       : "";
+
+  const hasManualDepositInput = Boolean(
+    state.details.depositAmount && state.details.depositAmount.trim().length > 0
+  );
 
   const depositNumeric = useMemo(() => {
     const raw = state.details.depositAmount;
@@ -970,6 +980,9 @@ export const PackagesStep = () => {
     return t("summary.cards.pricing.depositHelperDefault");
   }, [depositValue, packageDepositConfig, t, tPackages, formatPercent]);
 
+  const depositAdjustedByExtras =
+    !hasManualDepositInput && suggestedDepositAmount - basePackageDepositAmount > 0.009;
+
   const renderServicePreview = (pkg: PackageRecord) => {
     const defaultServiceIds = pkg.default_add_ons ?? [];
     const defaultServices = services.filter((service) =>
@@ -1204,6 +1217,13 @@ export const PackagesStep = () => {
                 onChange={(event) => updateDetails({ depositAmount: event.target.value })}
                 placeholder={t("steps.packages.depositPlaceholder")}
               />
+              {depositAdjustedByExtras ? (
+                <p className="rounded-md bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900">
+                  {t("steps.packages.depositAdjustedNotice", {
+                    defaultValue: "Add-ons updated the deposit automatically.",
+                  })}
+                </p>
+              ) : null}
             </div>
           </div>
 

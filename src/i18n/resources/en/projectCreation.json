@@ -136,6 +136,7 @@
       "basePricePlaceholder": "0",
       "depositLabel": "Deposit (TRY)",
       "depositPlaceholder": "0",
+      "depositAdjustedNotice": "Add-ons updated the deposit automatically.",
       "servicesLabel": "Services & add-ons",
       "servicesBadge": "{{count}} selected",
       "servicesError": "Unable to load services. Try again in a moment.",

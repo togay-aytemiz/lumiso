@@ -1,4 +1,4 @@
-import { ReactNode, useMemo, type RefObject } from "react";
+import { ReactNode, useCallback, useMemo, type RefObject } from "react";
 import StickySectionNav, { StickySectionNavItem } from "./StickySectionNav";
 const DEFAULT_OVERVIEW_ID = "project-overview";
 const DEFAULT_OVERVIEW_LABEL = "Overview";
@@ -34,32 +34,86 @@ export default function ProjectDetailsLayout({
   navClassName = "md:justify-end",
   scrollContainerRef
 }: ProjectDetailsLayoutProps) {
+  const escapeIdForSelector = useCallback((id: string) => {
+    if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
+      return CSS.escape(id);
+    }
+    return id.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+  }, []);
+
+  const scrollToSection = useCallback(
+    (targetId: string) => {
+      if (typeof document === "undefined") {
+        return;
+      }
+
+      const container = scrollContainerRef?.current;
+      let target: HTMLElement | null = null;
+
+      if (container) {
+        const selector = `#${escapeIdForSelector(targetId)}`;
+        try {
+          target = container.querySelector<HTMLElement>(selector);
+        } catch {
+          target = null;
+        }
+
+        if (!target) {
+          const candidates = container.querySelectorAll<HTMLElement>("[id]");
+          for (const el of candidates) {
+            if (el.id === targetId) {
+              target = el;
+              break;
+            }
+          }
+        }
+      }
+
+      if (!target) {
+        target = document.getElementById(targetId);
+      }
+
+      if (!target) {
+        return;
+      }
+
+      const options: ScrollIntoViewOptions = { behavior: "smooth", block: "start", inline: "nearest" };
+      try {
+        target.scrollIntoView(options);
+      } catch {
+        target.scrollIntoView();
+      }
+    },
+    [escapeIdForSelector, scrollContainerRef]
+  );
+
+  const handleOverviewSelect = useCallback(() => {
+    if (onOverviewScroll) {
+      onOverviewScroll();
+      return;
+    }
+
+    const container = scrollContainerRef?.current;
+    if (container) {
+      container.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [onOverviewScroll, scrollContainerRef]);
+
   const navItems = useMemo<StickySectionNavItem[]>(() => {
     const sectionNav = sections.map((section) => ({
       id: section.id,
-      title: section.title
+      title: section.title,
+      onSelect: () => scrollToSection(section.id)
     }));
 
     if (!showOverviewNav) {
       return sectionNav;
     }
-
-    const handleOverviewSelect = () => {
-      if (onOverviewScroll) {
-        onOverviewScroll();
-        return;
-      }
-
-      const container = scrollContainerRef?.current;
-      if (container) {
-        container.scrollTo({ top: 0, behavior: "smooth" });
-        return;
-      }
-
-      if (typeof window !== "undefined") {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }
-    };
 
     return [
       {
@@ -69,7 +123,7 @@ export default function ProjectDetailsLayout({
       },
       ...sectionNav
     ];
-  }, [sections, showOverviewNav, overviewNavId, overviewLabel, onOverviewScroll, scrollContainerRef]);
+  }, [sections, scrollToSection, showOverviewNav, overviewNavId, overviewLabel, handleOverviewSelect]);
 
   return (
     <div className="w-full min-h-screen">

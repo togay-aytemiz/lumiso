@@ -336,7 +336,19 @@
       "exclusive": "KDV ayrıca eklenecek"
     },
     "vat_label_compact": "KDV (%{{rate}})",
-    "total_price": "Toplam fiyat"
+    "total_price": "Toplam fiyat",
+    "included_tooltip": {
+      "title": "Pakete dahil hizmetler",
+      "point1": "Müşteriye ek fatura oluşturmaz; paket fiyatına dahildir.",
+      "point2": "KDV paket toplamında hesaplanır, satır bazında gösterilmez.",
+      "point3": "Bu liste paket kapsamını ve teslimatlarını netleştirir."
+    },
+    "addons_tooltip": {
+      "title": "Ek hizmetler",
+      "point1": "Müşteriye paket fiyatına ek olarak faturalandırılır.",
+      "point2": "KDV ve fiyatlandırma her hizmetin moduna göre hesaplanır.",
+      "point3": "Sözleşme ve ödeme toplamına otomatik yansır."
+    }
   },
   "project_stages": {
     "title": "Proje Aşamaları",

@@ -164,6 +164,18 @@ export const PackagesStep = () => {
     [services, vatUiEnabled]
   );
 
+  const normalizeItemVat = useCallback(
+    (item: ProjectServiceLineItem): ProjectServiceLineItem =>
+      vatUiEnabled
+        ? item
+        : {
+            ...item,
+            vatRate: null,
+            vatMode: "exclusive",
+          },
+    [vatUiEnabled]
+  );
+
   const buildLineItemFromService = useCallback(
     (service: ServiceWithMetadata): ProjectServiceLineItem =>
       normalizeItemVat({
@@ -197,18 +209,6 @@ export const PackagesStep = () => {
     open: false,
     mode: "included",
   });
-
-  const normalizeItemVat = useCallback(
-    (item: ProjectServiceLineItem): ProjectServiceLineItem =>
-      vatUiEnabled
-        ? item
-        : {
-            ...item,
-            vatRate: null,
-            vatMode: "exclusive",
-          },
-    [vatUiEnabled]
-  );
 
   const aggregateLineItems = useCallback(
     (items: ProjectServiceLineItem[]) =>
@@ -592,18 +592,17 @@ export const PackagesStep = () => {
           ? Math.round(service.unitCost * quantity * 100) / 100
           : null;
       const isIncluded = includedItemIds.has(item.id);
-      const billingLabel =
-        isIncluded
-          ? tForms("services.included_badge", {
-              defaultValue: "Included",
-            })
-          : tForms("services.addons_badge", {
-              defaultValue: "Add-on",
-            });
+      const billingLabel = isIncluded
+        ? t("steps.packages.badges.included", { defaultValue: "Included" })
+        : t("steps.packages.badges.addOn", { defaultValue: "Add-on" });
       const vendorLabel = service?.vendor_name ?? item.vendorName ?? null;
       const metaLabel = vendorLabel
         ? `${vendorLabel} • ${billingLabel}`
         : billingLabel;
+      const unitPriceValue = item.unitPrice ?? service?.unitPrice ?? null;
+      const displayUnitPrice = isIncluded ? null : unitPriceValue;
+      const displayLineTotal = isIncluded ? null : Math.round(pricing.gross * 100) / 100;
+
       return {
         id: item.id,
         name: item.name,
@@ -611,8 +610,8 @@ export const PackagesStep = () => {
         quantity,
         unitLabel: getUnitLabel(item.unit ?? service?.unit ?? DEFAULT_SERVICE_UNIT),
         lineCost,
-        unitPrice: item.unitPrice ?? service?.unitPrice ?? null,
-        lineTotal: Math.round(pricing.gross * 100) / 100,
+        unitPrice: displayUnitPrice,
+        lineTotal: displayLineTotal,
         isCustom: false,
       };
     });
@@ -843,17 +842,26 @@ export const PackagesStep = () => {
   const clientTotal = clientTotals.total;
   const depositValue = depositNumeric;
 
-  const includedHelperText = tForms("services.included_helper", {
+  const includedHelperText = t("steps.packages.servicesCard.includedHelper", {
     total: formatCurrency(
       basePriceValue > 0 ? basePriceValue : packageDerived.packageGross - extraTotals.total
     ),
-    defaultValue: "Paket fiyatına dahil edilmiştir.",
+    defaultValue: "Included in the package price.",
   });
 
-  const extraHelperText = tForms("services.addons_helper", {
+  const extraHelperText = t("steps.packages.servicesCard.addonsHelper", {
     total: formatCurrency(extraTotals.total),
     defaultValue: "Billed on top of the base package.",
   });
+
+  const clientHelperText =
+    extraTotals.total > 0
+      ? t("steps.packages.summary.clientTotalHelperExtras", {
+          defaultValue: "Add-ons are billed on top of the package.",
+        })
+      : basePriceValue > 0
+      ? t("steps.packages.summary.clientTotalHelperInclusive")
+      : undefined;
 
   const includedTooltipContent = (
     <>
@@ -868,11 +876,13 @@ export const PackagesStep = () => {
             defaultValue: "Müşteriye ek fatura oluşturmaz; paket fiyatına dahildir.",
           })}
         </li>
-        <li>
-          {tForms("services.included_tooltip.point2", {
-            defaultValue: "KDV paket toplamında hesaplanır, satır bazında gösterilmez.",
-          })}
-        </li>
+        {vatUiEnabled ? (
+          <li>
+            {tForms("services.included_tooltip.point2", {
+              defaultValue: "KDV paket toplamında hesaplanır, satır bazında gösterilmez.",
+            })}
+          </li>
+        ) : null}
         <li>
           {tForms("services.included_tooltip.point3", {
             defaultValue: "Bu liste paket kapsamını ve teslimatlarını netleştirir.",
@@ -895,11 +905,13 @@ export const PackagesStep = () => {
             defaultValue: "Müşteriye paket fiyatına ek olarak faturalandırılır.",
           })}
         </li>
-        <li>
-          {tForms("services.addons_tooltip.point2", {
-            defaultValue: "KDV ve fiyatlandırma her hizmetin moduna göre hesaplanır.",
-          })}
-        </li>
+        {vatUiEnabled ? (
+          <li>
+            {tForms("services.addons_tooltip.point2", {
+              defaultValue: "KDV ve fiyatlandırma her hizmetin moduna göre hesaplanır.",
+            })}
+          </li>
+        ) : null}
         <li>
           {tForms("services.addons_tooltip.point3", {
             defaultValue: "Sözleşme ve ödeme toplamına otomatik yansır.",
@@ -909,10 +921,10 @@ export const PackagesStep = () => {
     </>
   );
 
-  const includedCardTitle = tForms("services.included_title", {
-    defaultValue: "Included in package",
+  const includedCardTitle = t("steps.packages.servicesCard.includedTitle", {
+    defaultValue: "Included services",
   });
-  const extraCardTitle = tForms("services.addons_title", {
+  const extraCardTitle = t("steps.packages.servicesCard.addonsTitle", {
     defaultValue: "Add-on services",
   });
   const includedEmptyCta = tForms("services.add_included_cta", {
@@ -1254,7 +1266,7 @@ export const PackagesStep = () => {
                   <>
                     <SummaryTotalsSection>
                       <SummaryTotalRow
-                        label={t("steps.packages.summary.servicesCount")}
+                        label={t("steps.packages.summary.servicesAddOnCount")}
                         value={String(addOnCount)}
                       />
                       {vatUiEnabled && (
@@ -1276,83 +1288,101 @@ export const PackagesStep = () => {
                       <SummaryTotalRow
                         label={t("steps.packages.summary.servicesPrice")}
                         value={formatCurrency(extraTotals.net)}
+                        emphasizeLabel={!vatUiEnabled}
+                      />
+                      {!vatUiEnabled && (
+                        <SummaryTotalRow
+                          label={t("steps.packages.summary.servicesMargin")}
+                          value={formatCurrency(servicesMargin)}
+                          tone={servicesMargin >= 0 ? "positive" : "negative"}
+                          emphasizeLabel
+                        />
+                      )}
+                    </SummaryTotalsSection>
+                    {vatUiEnabled ? (
+                      <>
+                        <SummaryTotalsDivider />
+                        <SummaryTotalsSection className="pt-3">
+                          <SummaryTotalRow
+                            label={t("steps.packages.summary.servicesGross")}
+                            value={formatCurrency(extraTotals.total)}
+                            emphasizeLabel
+                          />
+                          <SummaryTotalRow
+                            label={t("steps.packages.summary.servicesMargin")}
+                            value={formatCurrency(servicesMargin)}
+                            tone={servicesMargin >= 0 ? "positive" : "negative"}
+                            emphasizeLabel
+                          />
+                        </SummaryTotalsSection>
+                      </>
+                    ) : null}
+                    <SummaryTotalsDivider />
+                  </>
+                ) : null}
+                {vatUiEnabled ? (
+                  <>
+                    <SummaryTotalsSection className={cn("space-y-3", hasBillableServices ? "pt-3" : undefined)}>
+                      <SummaryTotalRow
+                        label={t("steps.packages.summary.packageNet")}
+                        value={formatCurrency(packageDerived.packageNet)}
+                        emphasizeLabel
+                      />
+                      <SummaryTotalRow
+                        label={
+                          packageDerived.packageVatRate != null
+                            ? t("steps.packages.summary.packageVatWithRate", {
+                                rate: formatPercent(packageDerived.packageVatRate),
+                              })
+                            : t("steps.packages.summary.packageVat")
+                        }
+                        value={formatCurrency(packageDerived.packageVat)}
+                        helper={
+                          packageDerived.packageVatRate != null
+                            ? t("steps.packages.summary.packageVatHelperInclusive")
+                            : undefined
+                        }
+                      />
+                      <SummaryTotalRow
+                        label={t("steps.packages.summary.packageGross")}
+                        value={formatCurrency(packageDerived.packageGross)}
+                        emphasizeLabel
                       />
                     </SummaryTotalsSection>
                     <SummaryTotalsDivider />
-                    <SummaryTotalsSection className="pt-3">
+                    <SummaryTotalsSection className={cn("space-y-3", "pt-3")}>
                       <SummaryTotalRow
-                        label={t("steps.packages.summary.servicesGross")}
-                        value={formatCurrency(extraTotals.total)}
-                        emphasizeLabel
+                        label={t("steps.packages.summary.clientNet")}
+                        value={formatCurrency(clientNet)}
                       />
                       <SummaryTotalRow
-                        label={t("steps.packages.summary.servicesMargin")}
-                        value={formatCurrency(servicesMargin)}
-                        tone={servicesMargin >= 0 ? "positive" : "negative"}
+                        label={t("steps.packages.summary.clientTax")}
+                        value={formatCurrency(clientTax)}
+                      />
+                      <SummaryTotalRow
+                        label={t("steps.packages.summary.clientTotal")}
+                        value={formatCurrency(clientTotal)}
+                        tone="positive"
                         emphasizeLabel
+                        helper={clientHelperText}
                       />
                     </SummaryTotalsSection>
                     <SummaryTotalsDivider />
                   </>
-                ) : null}
-                <SummaryTotalsSection className={cn("space-y-3", hasBillableServices ? "pt-3" : undefined)}>
-                  <SummaryTotalRow
-                    label={t("steps.packages.summary.packageNet")}
-                    value={formatCurrency(packageDerived.packageNet)}
-                    emphasizeLabel
-                  />
-                  {vatUiEnabled && (
-                    <SummaryTotalRow
-                      label={
-                        packageDerived.packageVatRate != null
-                          ? t("steps.packages.summary.packageVatWithRate", {
-                              rate: formatPercent(packageDerived.packageVatRate),
-                            })
-                          : t("steps.packages.summary.packageVat")
-                      }
-                      value={formatCurrency(packageDerived.packageVat)}
-                      helper={
-                        packageDerived.packageVatRate != null
-                          ? t("steps.packages.summary.packageVatHelperInclusive")
-                          : undefined
-                      }
-                    />
-                  )}
-                  <SummaryTotalRow
-                    label={t("steps.packages.summary.packageGross")}
-                    value={formatCurrency(packageDerived.packageGross)}
-                    emphasizeLabel
-                  />
-                </SummaryTotalsSection>
-                <SummaryTotalsDivider />
-                <SummaryTotalsSection className={cn("space-y-3", hasBillableServices ? "pt-3" : undefined)}>
-                  <SummaryTotalRow
-                    label={t("steps.packages.summary.clientNet")}
-                    value={formatCurrency(clientNet)}
-                  />
-                  {vatUiEnabled && (
-                    <SummaryTotalRow
-                      label={t("steps.packages.summary.clientTax")}
-                      value={formatCurrency(clientTax)}
-                    />
-                  )}
-                  <SummaryTotalRow
-                    label={t("steps.packages.summary.clientTotal")}
-                    value={formatCurrency(clientTotal)}
-                    tone="positive"
-                    emphasizeLabel
-                    helper={
-                      extraTotals.total > 0
-                        ? t("steps.packages.summary.clientTotalHelperExtras", {
-                            defaultValue: "Add-ons are billed on top of the package.",
-                          })
-                        : basePriceValue > 0
-                        ? t("steps.packages.summary.clientTotalHelperInclusive")
-                        : undefined
-                    }
-                  />
-                </SummaryTotalsSection>
-                <SummaryTotalsDivider />
+                ) : (
+                  <>
+                    <SummaryTotalsSection className={cn("space-y-3", hasBillableServices ? "pt-3" : undefined)}>
+                      <SummaryTotalRow
+                        label={t("steps.packages.summary.packageGross")}
+                        value={formatCurrency(clientTotal)}
+                        tone="positive"
+                        emphasizeLabel
+                        helper={clientHelperText}
+                      />
+                    </SummaryTotalsSection>
+                    <SummaryTotalsDivider />
+                  </>
+                )}
                 <SummaryTotalsSection className={cn("space-y-3", hasBillableServices ? "pt-3" : undefined)}>
                   <SummaryTotalRow
                     label={t("steps.packages.summary.deposit")}

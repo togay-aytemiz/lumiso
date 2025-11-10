@@ -338,7 +338,19 @@
       "exclusive": "VAT added on top"
     },
     "vat_label_compact": "VAT ({{rate}}%)",
-    "total_price": "Total price"
+    "total_price": "Total price",
+    "included_tooltip": {
+      "title": "Included services",
+      "point1": "No extra invoice is created; already covered by the package price.",
+      "point2": "VAT is calculated inside the package total and hidden per line.",
+      "point3": "Use this list to clarify what the package covers."
+    },
+    "addons_tooltip": {
+      "title": "Add-on services",
+      "point1": "Billed on top of the package price.",
+      "point2": "VAT and pricing follow each service’s mode.",
+      "point3": "Automatically reflected in contracts and payment totals."
+    }
   },
   "project_stages": {
     "title": "Project Stages",

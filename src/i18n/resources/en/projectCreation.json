@@ -57,7 +57,20 @@
     "services": {
       "heading": "Services & pricing summary",
       "empty": "No services selected yet.",
-      "badgeHeading": "Selected services"
+      "badgeHeading": "Selected services",
+      "reference": {
+        "title": "Service details",
+        "helper": "Selected services and VAT details live in the Services step.",
+        "action": "Open services",
+        "chips": {
+          "included": "Included services: {{count}}",
+          "addons": "Add-on services: {{count}}",
+          "addonsTotal": "Add-on total: {{amount}}"
+        },
+        "tooltip": {
+          "more": "+{{count}} more service(s)"
+        }
+      }
     }
   },
   "guardrail": {
@@ -141,7 +154,11 @@
         "ariaLabel": "Project services info",
         "toggleIncluded": "Included",
         "toggleAddon": "Add-on",
-        "toggleLabel": "Service billing mode"
+        "toggleLabel": "Service billing mode",
+        "includedTitle": "Included services",
+        "includedHelper": "Covered by the package price ({{total}}).",
+        "addonsTitle": "Add-on services",
+        "addonsHelper": "Billed on top of the base package ({{total}})."
       },
       "servicesSheet": {
         "title": "Edit services",
@@ -175,27 +192,27 @@
         "uncategorized": "Other",
         "inactive": "Inactive",
         "empty": "No services in your catalog yet. Create services to add them here.",
-      "selectedTag": "{{selected}}/{{total}} selected",
-      "quantityTag": "Quantity: {{count}}"
-    },
-    "actions": {
-      "editPricing": "Edit prices",
-      "resetPricing": "Revert to default price",
-      "resetPricingConfirmTitle": "Reset price overrides?",
-      "resetPricingConfirm": "This will restore the original price and VAT values for this service. Do you want to continue?",
-      "resetPricingConfirmCancel": "Keep changes",
-      "resetPricingConfirmConfirm": "Reset price",
-      "editVat": "Adjust VAT",
-      "resetVat": "Revert to default VAT",
-      "resetVatConfirmTitle": "Reset VAT overrides?",
-      "resetVatConfirm": "This will restore the default VAT settings for this service. Do you want to continue?",
-      "resetVatConfirmCancel": "Keep VAT",
-      "resetVatConfirmConfirm": "Reset VAT"
-    },
-    "list": {
-      "remove": "Remove",
-      "vendor": "Vendor",
-      "unitCost": "Unit cost",
+        "selectedTag": "{{selected}}/{{total}} selected",
+        "quantityTag": "Quantity: {{count}}"
+      },
+      "actions": {
+        "editPricing": "Edit prices",
+        "resetPricing": "Revert to default price",
+        "resetPricingConfirmTitle": "Reset price overrides?",
+        "resetPricingConfirm": "This will restore the original price and VAT values for this service. Do you want to continue?",
+        "resetPricingConfirmCancel": "Keep changes",
+        "resetPricingConfirmConfirm": "Reset price",
+        "editVat": "Adjust VAT",
+        "resetVat": "Revert to default VAT",
+        "resetVatConfirmTitle": "Reset VAT overrides?",
+        "resetVatConfirm": "This will restore the default VAT settings for this service. Do you want to continue?",
+        "resetVatConfirmCancel": "Keep VAT",
+        "resetVatConfirmConfirm": "Reset VAT"
+      },
+      "list": {
+        "remove": "Remove",
+        "vendor": "Vendor",
+        "unitCost": "Unit cost",
         "unitPrice": "Unit price",
         "quantity": "Quantity"
       },
@@ -275,7 +292,8 @@
         "clientTotalHelperInclusive": "Package price covers selected services.",
         "clientTotalHelperExtras": "Add-ons are billed on top of the package.",
         "deposit": "Deposit",
-        "depositHelperNone": "No deposit collected"
+        "depositHelperNone": "No deposit collected",
+        "servicesAddOnCount": "Add-on services selected"
       },
       "badges": {
         "included": "Included in package",

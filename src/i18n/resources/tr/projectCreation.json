@@ -57,7 +57,20 @@
     "services": {
       "heading": "Hizmetler ve fiyatlandırma özeti",
       "empty": "Henüz hizmet seçilmedi.",
-      "badgeHeading": "Seçilen hizmetler"
+      "badgeHeading": "Seçilen hizmetler",
+      "reference": {
+        "title": "Hizmet detayları",
+        "helper": "Seçilen hizmetlerin KDV ve satır bilgileri Hizmetler adımında yer alır.",
+        "action": "Hizmetleri aç",
+        "chips": {
+          "included": "Dahil hizmetler: {{count}}",
+          "addons": "Ek hizmetler: {{count}}",
+          "addonsTotal": "Ek hizmet toplamı: {{amount}}"
+        },
+        "tooltip": {
+          "more": "+{{count}} hizmet daha"
+        }
+      }
     }
   },
   "guardrail": {
@@ -141,7 +154,11 @@
         "ariaLabel": "Proje hizmetleri bilgisi",
         "toggleIncluded": "Pakete dahil",
         "toggleAddon": "Ücrete ek",
-        "toggleLabel": "Hizmet faturalama tipi"
+        "toggleLabel": "Hizmet faturalama tipi",
+        "includedTitle": "Paket dahilindeki hizmetler",
+        "includedHelper": "Paket fiyatına dahildir ({{total}}).",
+        "addonsTitle": "Ek hizmetler",
+        "addonsHelper": "Paket ücretine ek olarak faturalandırılır ({{total}})."
       },
       "servicesSheet": {
         "title": "Hizmetleri düzenle",
@@ -275,7 +292,8 @@
         "clientTotalHelperInclusive": "Paket fiyatı seçilen hizmetleri kapsıyor.",
         "clientTotalHelperExtras": "Ek hizmetler paket fiyatına eklenir.",
         "deposit": "Kapora",
-        "depositHelperNone": "Kapora alınmıyor"
+        "depositHelperNone": "Kapora alınmıyor",
+        "servicesAddOnCount": "Seçilen ek hizmet sayısı"
       },
       "badges": {
         "included": "Pakete dahil",

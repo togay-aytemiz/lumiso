@@ -1,15 +1,22 @@
-import { useCallback, useMemo } from "react";
+import { ReactNode, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useProjectCreationContext } from "../hooks/useProjectCreationContext";
 import { useProjectCreationActions } from "../hooks/useProjectCreationActions";
-import { SummaryTotalRow, SummaryTotalsCard, SummaryTotalsDivider, SummaryTotalsSection } from "@/components/services";
+import {
+  SummaryTotalRow,
+  SummaryTotalsCard,
+  SummaryTotalsDivider,
+  SummaryTotalsSection,
+  type ServicesTableRow,
+} from "@/components/services";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { calculateLineItemPricing } from "@/features/package-creation/utils/lineItemPricing";
 import { normalizeServiceUnit } from "@/lib/services/units";
 import { usePackages, useOrganizationTaxProfile } from "@/hooks/useOrganizationData";
 import type { ProjectServiceLineItem } from "../types";
+import { computeDepositAmount } from "@/lib/payments/depositUtils";
 
 interface PackageRecord {
   id: string;
@@ -77,6 +84,9 @@ export const SummaryStep = () => {
     [includedItems, addOnItems]
   );
   const hasServices = existingItems.length > 0;
+  const openServices = useCallback(() => {
+    setCurrentStep("packages");
+  }, [setCurrentStep]);
 
   const normalizeItemVat = useCallback(
     (item: ProjectServiceLineItem): ProjectServiceLineItem =>
@@ -154,8 +164,6 @@ export const SummaryStep = () => {
     return 0;
   }, [state.details.basePrice, selectedPackage]);
 
-  const includeAddOnsInPrice = selectedPackage?.include_addons_in_price ?? true;
-
   const packageDerived = useMemo(() => {
     const round = (value: number) => Math.round(value * 100) / 100;
     if (!vatUiEnabled) {
@@ -168,11 +176,19 @@ export const SummaryStep = () => {
           packageVatRate: null,
         };
       }
-      const gross = round(addOnTotals.total);
+      if (includedTotals.total > 0) {
+        const gross = round(includedTotals.total);
+        return {
+          packageNet: gross,
+          packageVat: 0,
+          packageGross: gross,
+          packageVatRate: null,
+        };
+      }
       return {
-        packageNet: gross,
+        packageNet: 0,
         packageVat: 0,
-        packageGross: gross,
+        packageGross: 0,
         packageVatRate: null,
       };
     }
@@ -204,22 +220,24 @@ export const SummaryStep = () => {
     }
 
     return {
-      packageNet: round(addOnTotals.net),
-      packageVat: round(addOnTotals.vat),
-      packageGross: round(addOnTotals.total),
+      packageNet: round(includedTotals.net),
+      packageVat: round(includedTotals.vat),
+      packageGross: round(includedTotals.total),
       packageVatRate: singleVatRate,
     };
-  }, [addOnTotals, basePriceValue, vatBreakdown, vatUiEnabled]);
+  }, [
+    addOnTotals.vat,
+    basePriceValue,
+    includedTotals.net,
+    includedTotals.total,
+    includedTotals.vat,
+    vatBreakdown,
+    vatUiEnabled,
+  ]);
 
-  const clientNet = includeAddOnsInPrice
-    ? packageDerived.packageNet
-    : packageDerived.packageNet + addOnTotals.net;
-  const clientTax = includeAddOnsInPrice
-    ? packageDerived.packageVat
-    : packageDerived.packageVat + addOnTotals.vat;
-  const clientTotal = includeAddOnsInPrice
-    ? packageDerived.packageGross
-    : packageDerived.packageGross + addOnTotals.total;
+  const clientNet = packageDerived.packageNet + addOnTotals.net;
+  const clientTax = packageDerived.packageVat + addOnTotals.vat;
+  const clientTotal = packageDerived.packageGross + addOnTotals.total;
 
   const packageMetadata = selectedPackage?.pricing_metadata ?? null;
   const parsedPackageDeposit = useMemo(() => {
@@ -241,26 +259,50 @@ export const SummaryStep = () => {
   }, [packageMetadata]);
 
   const depositAmountRaw = toPositiveNumber(state.details.depositAmount ?? null);
+  const packageDepositAmount = useMemo(() => {
+    if (!parsedPackageDeposit?.enable || !parsedPackageDeposit.mode) {
+      return 0;
+    }
+    if (parsedPackageDeposit.mode === "fixed") {
+      return parsedPackageDeposit.amount > 0 ? parsedPackageDeposit.amount : 0;
+    }
+    if (!(parsedPackageDeposit.value > 0)) {
+      return 0;
+    }
+    const percentMode: "percent_base" | "percent_total" =
+      parsedPackageDeposit.mode === "percent_base" ? "percent_base" : "percent_total";
+    return computeDepositAmount(
+      {
+        mode: percentMode,
+        value: parsedPackageDeposit.value,
+      },
+      {
+        basePrice: basePriceValue,
+        extrasTotal: addOnTotals.total,
+        contractTotal: basePriceValue + addOnTotals.total,
+      }
+    );
+  }, [addOnTotals.total, basePriceValue, parsedPackageDeposit]);
+
   const derivedDeposit = useMemo(() => {
     if (depositAmountRaw > 0) {
       return depositAmountRaw;
     }
-    if (parsedPackageDeposit?.enable) {
-      if (parsedPackageDeposit.mode === "fixed" && parsedPackageDeposit.amount > 0) {
-        return parsedPackageDeposit.amount;
-      }
-      if (parsedPackageDeposit.mode !== "fixed" && parsedPackageDeposit.value > 0) {
-        return parsedPackageDeposit.amount > 0 ? parsedPackageDeposit.amount : 0;
-      }
+    if (packageDepositAmount > 0) {
+      return packageDepositAmount;
     }
     return 0;
-  }, [depositAmountRaw, parsedPackageDeposit]);
+  }, [depositAmountRaw, packageDepositAmount]);
 
   const depositDisplay = formatCurrency(derivedDeposit);
 
+  const usingManualDeposit = depositAmountRaw > 0;
   const depositHelper = useMemo(() => {
     if (!(derivedDeposit > 0)) {
       return t("steps.packages.summary.depositHelperNone");
+    }
+    if (usingManualDeposit) {
+      return t("summary.cards.pricing.depositHelperDefault");
     }
     if (parsedPackageDeposit?.mode === "fixed") {
       return tPackages("summaryView.pricing.deposit.fixed", {
@@ -274,15 +316,16 @@ export const SummaryStep = () => {
       });
     }
     return t("summary.cards.pricing.depositHelperDefault");
-  }, [derivedDeposit, parsedPackageDeposit, t, tPackages]);
+  }, [derivedDeposit, parsedPackageDeposit, t, tPackages, usingManualDeposit]);
 
-  const clientTotalHelper = includeAddOnsInPrice
-    ? t("steps.packages.summary.clientTotalHelperInclusive")
-    : addOnTotals.total > 0
-    ? t("steps.packages.summary.clientTotalHelperExtras", {
-        defaultValue: "Add-ons are billed on top of the package.",
-      })
-    : undefined;
+  const clientTotalHelper =
+    addOnTotals.total > 0
+      ? t("steps.packages.summary.clientTotalHelperExtras", {
+          defaultValue: "Add-ons are billed on top of the package.",
+        })
+      : basePriceValue > 0
+      ? t("steps.packages.summary.clientTotalHelperInclusive")
+      : undefined;
 
   const getUnitLabel = useCallback(
     (unit?: string | null) =>
@@ -363,6 +406,102 @@ export const SummaryStep = () => {
       helper: packageHelperText,
     },
   ];
+
+  const buildServiceTooltipContent = useCallback(
+    (items: ProjectServiceLineItem[]) => {
+      if (!items.length) return null;
+      const MAX_ITEMS = 6;
+      const displayed = items.slice(0, MAX_ITEMS);
+      return (
+        <div className="space-y-2 text-left">
+          <ul className="list-disc space-y-1 pl-4 text-xs text-slate-900">
+            {displayed.map((item) => (
+              <li key={item.id}>
+                <span className="font-semibold">{item.name}</span>
+                {item.vendorName ? (
+                  <span className="ml-1 text-muted-foreground">{item.vendorName}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          {items.length > MAX_ITEMS ? (
+            <p className="text-[11px] text-muted-foreground">
+              {t("summary.services.reference.tooltip.more", {
+                count: items.length - MAX_ITEMS,
+              })}
+            </p>
+          ) : null}
+        </div>
+      );
+    },
+    [t]
+  );
+
+  const servicesReferenceStrings = useMemo<{
+    title: string;
+    helper: string;
+    action: string;
+    includedChip: ServiceChipProps | null;
+    addOnChip: ServiceChipProps | null;
+    addOnTotalChip: ServiceChipProps | null;
+  }>(() => {
+    const base = {
+      title: t("summary.services.reference.title"),
+      helper: t("summary.services.reference.helper"),
+      action: t("summary.services.reference.action"),
+      includedChip: null,
+      addOnChip: null,
+      addOnTotalChip: null,
+    };
+
+    if (!hasServices) {
+      return base;
+    }
+
+    const includedChip =
+      includedItems.length > 0
+        ? {
+            label: t("summary.services.reference.chips.included", {
+              count: includedItems.length,
+            }),
+            tooltip: buildServiceTooltipContent(includedItems),
+          }
+        : null;
+
+    const addOnChip =
+      addOnItems.length > 0
+        ? {
+            label: t("summary.services.reference.chips.addons", {
+              count: addOnItems.length,
+            }),
+            tooltip: buildServiceTooltipContent(addOnItems),
+          }
+        : null;
+
+    const addOnTotalChip =
+      addOnTotals.total > 0
+        ? {
+            label: t("summary.services.reference.chips.addonsTotal", {
+              amount: formatCurrency(addOnTotals.total),
+            }),
+            tooltip: null,
+          }
+        : null;
+
+    return {
+      ...base,
+      includedChip,
+      addOnChip,
+      addOnTotalChip,
+    };
+  }, [
+    addOnItems,
+    addOnTotals.total,
+    buildServiceTooltipContent,
+    hasServices,
+    includedItems,
+    t,
+  ]);
 
   return (
     <div className="space-y-6">
@@ -470,7 +609,7 @@ const SummaryServicesReference = ({
 
 interface ServiceChipProps {
   label: string;
-  tooltip?: string | null;
+  tooltip?: ReactNode | null;
 }
 
 const ServiceChip = ({ label, tooltip }: ServiceChipProps) => {
@@ -485,7 +624,7 @@ const ServiceChip = ({ label, tooltip }: ServiceChipProps) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>{chip}</TooltipTrigger>
-      <TooltipContent className="text-xs font-medium text-slate-900">
+      <TooltipContent className="max-w-xs space-y-2 text-xs leading-snug text-slate-900">
         {tooltip}
       </TooltipContent>
     </Tooltip>

@@ -80,10 +80,6 @@ const ProjectCreationWizardSheetInner = ({
   onProjectCreated,
 }: Pick<ProjectCreationWizardSheetProps, "isOpen" | "onOpenChange" | "onProjectCreated">) => {
   const { state } = useProjectCreationContext();
-  const allServiceItems = useMemo(
-    () => [...state.services.includedItems, ...state.services.extraItems],
-    [state.services.includedItems, state.services.extraItems]
-  );
   const { reset } = useProjectCreationActions();
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
@@ -261,21 +257,39 @@ const ProjectCreationWizardSheetInner = ({
 
       if (projectError) throw projectError;
 
-      const catalogLineItems = allServiceItems.filter(
-        (item) => item.type === "existing" && item.serviceId
-      );
+      const toNumberOrNull = (value: unknown) =>
+        typeof value === "number" && Number.isFinite(value) ? value : null;
 
-      if (catalogLineItems.length > 0) {
-        const servicePayload = catalogLineItems.map((item) => ({
-          project_id: newProject.id,
-          service_id: item.serviceId!,
-          user_id: user.id,
-        }));
+      const buildServicePayload = (
+        items: ProjectServiceLineItem[],
+        billingType: "included" | "extra"
+      ) =>
+        items
+          .filter((item): item is ProjectServiceLineItem & { serviceId: string } => {
+            return item.type === "existing" && typeof item.serviceId === "string";
+          })
+          .map((item) => {
+            const quantity = Math.max(1, Number(item.quantity ?? 1));
+            return {
+              project_id: newProject.id,
+              service_id: item.serviceId,
+              user_id: user.id,
+              billing_type: billingType,
+              quantity,
+              unit_cost_override: toNumberOrNull(item.unitCost),
+              unit_price_override: toNumberOrNull(item.unitPrice),
+              vat_mode_override: item.vatMode ?? null,
+              vat_rate_override: toNumberOrNull(item.vatRate),
+            };
+          });
 
-        const { error: servicesError } = await supabase
-          .from("project_services")
-          .insert(servicePayload);
+      const servicePayload = [
+        ...buildServicePayload(state.services.includedItems, "included"),
+        ...buildServicePayload(state.services.extraItems, "extra"),
+      ];
 
+      if (servicePayload.length > 0) {
+        const { error: servicesError } = await supabase.from("project_services").insert(servicePayload);
         if (servicesError) throw servicesError;
       }
 
@@ -316,7 +330,7 @@ const ProjectCreationWizardSheetInner = ({
         projectId: newProject.id,
         entrySource,
         packageId: state.services.packageId ?? null,
-        serviceCount: catalogLineItems.length,
+        serviceCount: servicePayload.length,
         basePrice: basePriceValue,
       });
       onProjectCreated?.({
@@ -357,7 +371,7 @@ const ProjectCreationWizardSheetInner = ({
     state.lead.id,
     state.meta.defaultStatusId,
     state.meta.entrySource,
-    allServiceItems,
+    state.services.includedItems,
     state.services.extraItems,
     state.services.packageId,
     tCommon,

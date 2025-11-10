@@ -5,7 +5,7 @@ import { Plus, Filter, FileDown, Loader2 } from "lucide-react";
 import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
 import { useNavigate } from "react-router-dom";
 import GlobalSearch from "@/components/GlobalSearch";
-import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
+import { PageHeader, PageHeaderActions, PageHeaderSearch } from "@/components/ui/page-header";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import {
@@ -889,26 +889,21 @@ const AllLeadsNew = () => {
 
   return (
     <div className="min-h-screen">
-      <PageHeader
-        title={t('leads.title')}
-        subtitle={t('leads.description')}
-      >
+      <PageHeader title={t('leads.title')}>
         <PageHeaderSearch>
-          <div className="flex items-center gap-2 w-full">
-            <div className="flex-1 min-w-0">
-              <GlobalSearch />
-            </div>
-            <Button 
-              size="sm"
-              onClick={() => setAddLeadDialogOpen(true)}
-              className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
-              data-testid="add-lead-button"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('leads.addLead')}</span>
-            </Button>
-          </div>
+          <GlobalSearch variant="header" />
         </PageHeaderSearch>
+        <PageHeaderActions>
+          <Button
+            size="sm"
+            onClick={() => setAddLeadDialogOpen(true)}
+            className="h-11 px-4"
+            data-testid="add-lead-button"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">{t('leads.addLead')}</span>
+          </Button>
+        </PageHeaderActions>
       </PageHeader>
       
       <div className="space-y-6 p-4 sm:p-6">

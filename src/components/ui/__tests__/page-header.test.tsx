@@ -5,10 +5,14 @@ import {
   PageHeaderSearch,
 } from "../page-header";
 
+jest.mock("@/components/UserMenu", () => ({
+  UserMenu: () => <div data-testid="user-menu" />,
+}));
+
 describe("PageHeader", () => {
-  it("renders sticky header with title, subtitle, and children", () => {
+  it("renders sticky header with title and layout components", () => {
     const { container } = render(
-      <PageHeader title="Dashboard" subtitle="Team overview" sticky>
+      <PageHeader title="Dashboard" sticky>
         <PageHeaderSearch>
           <div>Search content</div>
         </PageHeaderSearch>
@@ -22,12 +26,16 @@ describe("PageHeader", () => {
     expect(wrapper).toBeInTheDocument();
     expect(wrapper).toHaveClass("lg:sticky");
     expect(screen.getAllByText("Dashboard")).toHaveLength(2);
-    expect(screen.getAllByText("Team overview")).toHaveLength(2);
+    expect(screen.queryByText("Team overview")).not.toBeInTheDocument();
 
     const searchContainer = screen.getAllByText("Search content")[0].parentElement;
-    expect(searchContainer).toHaveClass("flex-1 w-full sm:max-w-lg");
+    expect(searchContainer).toHaveClass("flex-1 min-w-0 w-full");
 
     const actionsContainer = screen.getAllByText("Add item")[0].parentElement;
-    expect(actionsContainer).toHaveClass("flex items-center gap-2 flex-shrink-0 w-full sm:w-auto sm:justify-end");
+    expect(actionsContainer).toHaveClass(
+      "flex items-center gap-2 flex-shrink-0 w-full sm:w-auto sm:justify-end lg:justify-start"
+    );
+
+    expect(screen.getByTestId("user-menu")).toBeInTheDocument();
   });
 });

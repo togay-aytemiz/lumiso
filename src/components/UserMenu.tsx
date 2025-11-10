@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Settings, LogOut, ChevronUp, User } from "lucide-react";
+import { Settings, LogOut, ChevronUp, ChevronDown, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface UserMenuProps {
-  variant?: "sidebar" | "mobile" | "minimal";
+  variant?: "sidebar" | "mobile" | "minimal" | "header";
   onNavigate?: () => void;
 }
 
@@ -117,6 +118,79 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
         </div>
         <ChevronUp className="h-4 w-4 text-muted-foreground rotate-90 shrink-0" />
       </div>
+    );
+  }
+
+  if (variant === "header") {
+    return (
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className={cn(
+              "group flex items-center gap-3 pl-4 pr-3 py-2 border-l border-border/60 min-w-0",
+              "rounded-lg text-left transition-colors hover:bg-muted/60 focus-visible:outline-none",
+              "focus-visible:ring-2 focus-visible:ring-ring/50"
+            )}
+          >
+            <Avatar className="h-10 w-10 shrink-0">
+              {profile?.profile_photo_url && (
+                <AvatarImage
+                  src={profile.profile_photo_url}
+                  alt={displayName}
+                  className="object-cover"
+                />
+              )}
+              <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0 text-left">
+              <div className="font-medium text-sm text-foreground leading-tight truncate">
+                {displayName}
+              </div>
+              {user?.email && (
+                <div className="text-xs text-muted-foreground truncate">
+                  {user.email}
+                </div>
+              )}
+            </div>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 text-muted-foreground transition-transform duration-200 shrink-0",
+                isOpen && "rotate-180"
+              )}
+            />
+          </button>
+        </PopoverTrigger>
+
+        <PopoverContent
+          side="bottom"
+          align="end"
+          className="w-[var(--radix-popover-trigger-width)] p-2"
+          sideOffset={8}
+        >
+          <div className="flex flex-col gap-1">
+            <Button
+              variant="ghost"
+              onClick={handleSettings}
+              className="justify-start h-9 gap-3 px-3"
+            >
+              <User className="h-4 w-4" />
+              <span>{t('userMenu.profileSettings')}</span>
+            </Button>
+
+            <Button
+              variant="ghost"
+              onClick={handleSignOut}
+              className="justify-start h-9 gap-3 px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>{t('userMenu.signOut')}</span>
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
     );
   }
 

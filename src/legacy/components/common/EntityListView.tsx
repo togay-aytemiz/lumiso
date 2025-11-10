@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { DataTable, Column } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { PageHeader, PageHeaderSearch } from '@/components/ui/page-header';
+import { PageHeader, PageHeaderActions, PageHeaderSearch } from '@/components/ui/page-header';
 import GlobalSearch from '@/components/GlobalSearch';
 
 interface EntityListViewProps<T> {
@@ -43,25 +43,25 @@ export function EntityListView<T>({
 
   return (
     <div className="min-h-screen">
-      <PageHeader title={title} subtitle={subtitle}>
+      <PageHeader title={title}>
         <PageHeaderSearch>
-          <div className="flex items-center gap-2 w-full">
-            <div className="flex-1 min-w-0">
-              <GlobalSearch />
-            </div>
+          <GlobalSearch variant="header" />
+        </PageHeaderSearch>
+        {(onAddClick || headerActions) && (
+          <PageHeaderActions className="gap-3">
             {onAddClick && (
-              <Button 
+              <Button
                 size="sm"
                 onClick={onAddClick}
-                className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
+                className="h-11 px-4"
               >
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">{addButtonText}</span>
               </Button>
             )}
             {headerActions}
-          </div>
-        </PageHeaderSearch>
+          </PageHeaderActions>
+        )}
       </PageHeader>
       
       <div className="p-4 sm:p-6">

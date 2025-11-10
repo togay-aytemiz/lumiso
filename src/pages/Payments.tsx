@@ -1237,12 +1237,9 @@ const pageSize = PAGE_SIZE;
 
   return (
     <div className="min-h-screen overflow-x-hidden">
-      <PageHeader
-        title={t("payments.title")}
-        subtitle={t("payments.subtitle")}
-      >
+      <PageHeader title={t("payments.title")}>
         <PageHeaderSearch>
-          <GlobalSearch />
+          <GlobalSearch variant="header" />
         </PageHeaderSearch>
       </PageHeader>
 

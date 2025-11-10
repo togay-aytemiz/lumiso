@@ -20,7 +20,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import NewSessionDialog from "@/components/NewSessionDialog";
 import { formatTime, formatLongDate } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
-import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
+import { PageHeader, PageHeaderActions, PageHeaderSearch } from "@/components/ui/page-header";
 // Render project stage inline; no need to import ProjectStatusBadge here
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import SessionSheetView from "@/components/SessionSheetView";
@@ -1095,26 +1095,21 @@ const AllSessions = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      <PageHeader
-        title={t('sessions.title')}
-        subtitle={t('sessions.description')}
-      >
+      <PageHeader title={t('sessions.title')}>
         <PageHeaderSearch>
-          <div className="flex items-center gap-2 w-full">
-            <div className="flex-1 min-w-0">
-              <GlobalSearch />
-            </div>
-            <NewSessionDialog onSessionScheduled={fetchSessions}>
-              <Button
-                size="sm"
-                className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('sessions.addButton')}</span>
-              </Button>
-            </NewSessionDialog>
-          </div>
+          <GlobalSearch variant="header" />
         </PageHeaderSearch>
+        <PageHeaderActions>
+          <NewSessionDialog onSessionScheduled={fetchSessions}>
+            <Button
+              size="sm"
+              className="h-11 px-4"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('sessions.addButton')}</span>
+            </Button>
+          </NewSessionDialog>
+        </PageHeaderActions>
       </PageHeader>
 
       <div className="p-4 sm:p-6 space-y-6">

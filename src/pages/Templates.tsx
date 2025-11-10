@@ -283,10 +283,7 @@ const OptimizedTemplatesContent = React.memo(() => {
 
   return (
     <div className="min-h-screen">
-      <PageHeader 
-        title={t("templates.title")}
-        subtitle={t("templates.subtitle")}
-      />
+      <PageHeader title={t("templates.title")} />
       
       <div className="p-4 sm:p-6 space-y-6">
         <AdvancedDataTable

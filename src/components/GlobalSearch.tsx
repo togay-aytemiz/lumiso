@@ -18,6 +18,7 @@ import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import type { Database } from "@/integrations/supabase/types";
+import { cn } from "@/lib/utils";
 
 const INITIAL_RESULT_COUNT = 10;
 
@@ -75,7 +76,12 @@ interface Session {
   notes?: string;
 }
 
-const GlobalSearch = () => {
+interface GlobalSearchProps {
+  variant?: "default" | "header";
+  className?: string;
+}
+
+const GlobalSearch = ({ variant = "default", className }: GlobalSearchProps) => {
   const { t } = useFormsTranslation();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -618,9 +624,26 @@ const GlobalSearch = () => {
 
   let resultIndex = 0;
 
+  const wrapperClassName = cn(
+    "relative w-full min-w-0",
+    className
+  );
+
+  const inputContainerClassName = cn(
+    "relative",
+    variant === "header" &&
+      "rounded-full bg-muted/50 border border-transparent shadow-sm transition-colors focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20"
+  );
+
+  const inputClassName = cn(
+    "pl-10 pr-10 w-full truncate",
+    variant === "header" &&
+      "h-12 border-none bg-transparent text-base md:text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+  );
+
   return (
-    <div className="relative w-full min-w-0" ref={searchRef}>
-      <div className="relative">
+    <div className={wrapperClassName} ref={searchRef}>
+      <div className={inputContainerClassName}>
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" />
         <Input
           ref={inputRef}
@@ -631,7 +654,7 @@ const GlobalSearch = () => {
           onFocus={() => {
             if (results.length > 0) setIsOpen(true);
           }}
-          className="pl-10 pr-10 w-full truncate"
+          className={inputClassName}
         />
         {loading ? (
           <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">

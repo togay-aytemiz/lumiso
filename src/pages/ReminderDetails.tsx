@@ -932,16 +932,9 @@ const ReminderDetails = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader
-        title={t("reminders.title")}
-        subtitle={t("reminders.description")}
-      >
+      <PageHeader title={t("reminders.title")}>
         <PageHeaderSearch>
-          <div className="flex items-center gap-2 w-full">
-            <div className="flex-1 min-w-0">
-              <GlobalSearch />
-            </div>
-          </div>
+          <GlobalSearch variant="header" />
         </PageHeaderSearch>
       </PageHeader>
 

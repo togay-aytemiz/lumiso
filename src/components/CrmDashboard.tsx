@@ -190,12 +190,9 @@ const CrmDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-800 overflow-x-hidden">
-      <PageHeader
-        title={t('page.title')}
-        subtitle={t('page.subtitle')}
-      >
+      <PageHeader title={t('page.title')}>
         <PageHeaderSearch>
-          <GlobalSearch />
+          <GlobalSearch variant="header" />
         </PageHeaderSearch>
       </PageHeader>
 

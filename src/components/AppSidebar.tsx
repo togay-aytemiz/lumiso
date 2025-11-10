@@ -432,7 +432,8 @@ export function AppSidebar() {
         </SidebarContent>
 
         <SidebarFooter className="p-4 mt-auto shrink-0">
-          {!shouldLockNavigation &&
+          {isMobile &&
+            !shouldLockNavigation &&
             !location.pathname.startsWith("/getting-started") && (
               <UserMenu variant="sidebar" />
             )}

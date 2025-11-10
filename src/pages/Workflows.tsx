@@ -369,10 +369,7 @@ export default function Workflows() {
   if (loading) {
     return (
       <div className="min-h-screen overflow-x-hidden">
-        <PageHeader 
-          title={t("workflows.title")}
-          subtitle={t("workflows.subtitle")}
-        />
+        <PageHeader title={t("workflows.title")} />
         <PageLoadingSkeleton />
       </div>
     );
@@ -380,10 +377,7 @@ export default function Workflows() {
 
   return (
     <div className="min-h-screen overflow-x-hidden">
-      <PageHeader 
-        title={t("workflows.title")}
-        subtitle={t("workflows.subtitle")}
-      />
+      <PageHeader title={t("workflows.title")} />
       
       <div className="p-4 space-y-6">
         {/* Stats Cards */}

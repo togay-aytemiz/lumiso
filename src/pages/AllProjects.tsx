@@ -1182,26 +1182,21 @@ const formatCurrency = useCallback((amount: string | number | null) => {
       <div className="flex flex-col h-screen overflow-x-hidden">
       {/* Header */}
       <div className="flex-shrink-0">
-        <PageHeader
-          title={tForms('projects.pageTitle')}
-          subtitle={tForms('projects.pageSubtitle')}
-        >
+        <PageHeader title={tForms('projects.pageTitle')}>
           <PageHeaderSearch>
-            <div className="flex items-center gap-2 w-full">
-              <div className="flex-1 min-w-0">
-                <GlobalSearch />
-              </div>
-              <Button 
-                size="sm"
-                className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
-                data-testid="add-project-button"
-                onClick={() => setProjectWizardOpen(true)}
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('common:buttons.add_project')}</span>
-              </Button>
-            </div>
+            <GlobalSearch variant="header" />
           </PageHeaderSearch>
+          <PageHeaderActions>
+            <Button
+              size="sm"
+              className="h-11 px-4"
+              data-testid="add-project-button"
+              onClick={() => setProjectWizardOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('common:buttons.add_project')}</span>
+            </Button>
+          </PageHeaderActions>
         </PageHeader>
       </div>
 

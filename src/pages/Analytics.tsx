@@ -249,12 +249,9 @@ const Analytics = () => {
 
   return (
     <div className="min-h-screen overflow-x-hidden">
-      <PageHeader
-        title={t("analytics.title")}
-        subtitle={t("analytics.subtitle")}
-      >
+      <PageHeader title={t("analytics.title")}>
         <PageHeaderSearch>
-          <GlobalSearch />
+          <GlobalSearch variant="header" />
         </PageHeaderSearch>
       </PageHeader>
 

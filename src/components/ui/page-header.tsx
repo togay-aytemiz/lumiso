@@ -1,4 +1,5 @@
 import React from "react";
+import { UserMenu } from "@/components/UserMenu";
 import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
@@ -9,52 +10,61 @@ interface PageHeaderProps {
   sticky?: boolean;
 }
 
-export function PageHeader({ 
-  title, 
-  subtitle, 
-  children, 
+export function PageHeader({
+  title,
+  subtitle: _subtitle,
+  children,
   className,
-  sticky = false 
+  sticky = false
 }: PageHeaderProps) {
+  const hasChildren = React.Children.count(children) > 0;
+
   return (
-    <div 
+    <div
       className={cn(
-        "max-w-full",
-        sticky && "lg:sticky lg:top-0 lg:z-10 lg:bg-background/95 lg:backdrop-blur-sm lg:border-b",
+        "max-w-full border-b border-border/60 bg-background",
+        sticky && "lg:sticky lg:top-0 lg:z-10 lg:bg-background/95 lg:backdrop-blur-sm",
         className
       )}
     >
-      <div className="p-4 sm:p-6">
-        {/* Mobile/Tablet Layout: Stack title, then search + actions */}
+      <div className="px-4 sm:px-6 py-4 lg:py-5">
+        {/* Mobile/Tablet Layout */}
         <div className="flex flex-col gap-4 lg:hidden">
-          <div className="flex-shrink-0 min-w-0">
-            <h1 className="text-2xl font-bold truncate">{title}</h1>
-            {subtitle && (
-              <p className="text-muted-foreground text-sm truncate">{subtitle}</p>
-            )}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-shrink-0 min-w-0">
+              <h1 className="text-lg font-medium truncate text-foreground transition-all duration-300 ease-out animate-in fade-in slide-in-from-left-2">
+                {title}
+              </h1>
+            </div>
           </div>
-          
-          {children && (
+
+          {hasChildren && (
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
               {children}
             </div>
           )}
         </div>
 
-        {/* Desktop Layout: Title + subtitle on left, search + actions on right, same row */}
-        <div className="hidden lg:flex items-center justify-between gap-6">
-          <div className="flex-shrink-0 min-w-0 lg:max-w-md">
-            <h1 className="text-3xl font-bold truncate">{title}</h1>
-            {subtitle && (
-              <p className="text-muted-foreground truncate">{subtitle}</p>
-            )}
+        {/* Desktop Layout */}
+        <div className="hidden lg:grid lg:grid-cols-[auto,minmax(0,1fr),auto] lg:items-center lg:gap-6">
+          <div className="flex-shrink-0 min-w-0">
+            <h1 className="text-xl font-medium leading-tight truncate text-foreground transition-all duration-300 ease-out animate-in fade-in slide-in-from-left-2">
+              {title}
+            </h1>
           </div>
-          
-          {children && (
-            <div className="flex items-center gap-4 flex-1 max-w-4xl">
-              {children}
-            </div>
-          )}
+
+          <div
+            className={cn(
+              "flex items-center gap-3 min-w-0",
+              !hasChildren && "justify-end"
+            )}
+          >
+            {hasChildren ? children : null}
+          </div>
+
+          <div className="flex items-center justify-end">
+            <UserMenu variant="header" />
+          </div>
         </div>
       </div>
     </div>
@@ -68,15 +78,12 @@ interface PageHeaderSearchProps {
 
 export function PageHeaderSearch({ children, className }: PageHeaderSearchProps) {
   return (
-    <div className={cn(
-      // Mobile/Tablet: flexible width that grows
-      "flex-1 w-full sm:max-w-lg",
-      // Desktop: much wider search bar
-      "lg:flex-1 lg:max-w-none",
-      // Allow overflow for search dropdown
-      "overflow-visible",
-      className
-    )}>
+    <div
+      className={cn(
+        "flex-1 min-w-0 w-full",
+        className
+      )}
+    >
       {children}
     </div>
   );
@@ -89,13 +96,12 @@ interface PageHeaderActionsProps {
 
 export function PageHeaderActions({ children, className }: PageHeaderActionsProps) {
   return (
-    <div className={cn(
-      // Mobile/Tablet: flex-shrink-0 to prevent compression
-      "flex items-center gap-2 flex-shrink-0 w-full sm:w-auto sm:justify-end",
-      // Desktop: flex-shrink-0, no wrap
-      "lg:flex-shrink-0",
-      className
-    )}>
+    <div
+      className={cn(
+        "flex items-center gap-2 flex-shrink-0 w-full sm:w-auto sm:justify-end lg:justify-start",
+        className
+      )}
+    >
       {children}
     </div>
   );

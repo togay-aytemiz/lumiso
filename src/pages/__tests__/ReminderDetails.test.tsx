@@ -137,6 +137,7 @@ jest.mock("@/components/ui/page-header", () => ({
     </div>
   ),
   PageHeaderSearch: ({ children }: PropsWithChildren<ReactNode>) => <div>{children}</div>,
+  PageHeaderActions: ({ children }: PropsWithChildren<ReactNode>) => <div>{children}</div>,
 }));
 
 jest.mock("@/components/GlobalSearch", () => () => <div data-testid="global-search" />);

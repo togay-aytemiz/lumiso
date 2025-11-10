@@ -27,6 +27,9 @@ jest.mock("@/components/ui/page-header", () => ({
   PageHeaderSearch: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="page-header-search">{children}</div>
   ),
+  PageHeaderActions: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="page-header-actions">{children}</div>
+  ),
 }));
 
 type ButtonMockGlobals = { __buttonStates?: boolean[] };

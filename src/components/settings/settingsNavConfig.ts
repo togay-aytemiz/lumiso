@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   Bell,
   CreditCard,
+  Crown,
   FileText,
   FolderOpen,
   Package,
@@ -73,7 +74,7 @@ export const organizationSettingsItems: SettingsNavItem[] = [
   {
     title: "billingSubscription",
     href: "/settings/billing/subscription",
-    icon: CreditCard,
+    icon: Crown,
     testId: "billing-subscription-section",
   },
   {

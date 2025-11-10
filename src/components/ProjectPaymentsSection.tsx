@@ -7,7 +7,8 @@ import {
   HelpCircle,
   ChevronDown,
   CalendarIcon,
-  CheckCircle2
+  CheckCircle2,
+  X
 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -171,12 +172,14 @@ const findLatestDate = (payments: Payment[]): string | null => {
 interface ProjectPaymentsSectionProps {
   projectId: string;
   onPaymentsUpdated?: () => void;
+  onBasePriceUpdated?: () => void;
   refreshToken?: number;
 }
 
 export function ProjectPaymentsSection({
   projectId,
   onPaymentsUpdated,
+  onBasePriceUpdated,
   refreshToken
 }: ProjectPaymentsSectionProps) {
   const { toast } = useToast();
@@ -191,6 +194,9 @@ export function ProjectPaymentsSection({
   const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isBasePriceDialogOpen, setIsBasePriceDialogOpen] = useState(false);
+  const [basePriceInput, setBasePriceInput] = useState("");
+  const [isSavingBasePrice, setIsSavingBasePrice] = useState(false);
 
   const [depositSetupOpen, setDepositSetupOpen] = useState(false);
   const [depositPaymentOpen, setDepositPaymentOpen] = useState(false);
@@ -310,6 +316,51 @@ export function ProjectPaymentsSection({
     await fetchPayments();
     onPaymentsUpdated?.();
   }, [fetchPayments, onPaymentsUpdated]);
+
+  const handleBasePriceSave = useCallback(async () => {
+    const normalizedValue = basePriceInput.replace(",", ".").trim();
+    const parsed = Number.parseFloat(normalizedValue);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      toast({
+        title: t("payments.base_price_invalid", {
+          defaultValue: "Enter a valid package price."
+        }),
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSavingBasePrice(true);
+    try {
+      const { error } = await supabase
+        .from<Database["public"]["Tables"]["projects"]["Row"]>("projects")
+        .update({ base_price: parsed })
+        .eq("id", projectId);
+      if (error) throw error;
+
+      await recalculateProjectOutstanding(projectId);
+      await fetchProject();
+      onPaymentsUpdated?.();
+      onBasePriceUpdated?.();
+      toast({
+        title: t("payments.base_price_update_success", {
+          defaultValue: "Package price updated."
+        })
+      });
+      setIsBasePriceDialogOpen(false);
+    } catch (error) {
+      console.error("Error updating base price:", error);
+      toast({
+        title: t("payments.error_loading", {
+          defaultValue: "Unable to complete this action."
+        }),
+        description: error instanceof Error ? error.message : undefined,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSavingBasePrice(false);
+    }
+  }, [basePriceInput, fetchProject, onBasePriceUpdated, onPaymentsUpdated, projectId, t, toast]);
 
   const handleEditPayment = (payment: Payment) => {
     setEditingPayment(payment);
@@ -437,6 +488,16 @@ export function ProjectPaymentsSection({
       remaining
     };
   }, [depositContributionPayments, payments, project, serviceRecords, vatUiEnabled]);
+
+  useEffect(() => {
+    if (isBasePriceDialogOpen) {
+      setBasePriceInput(
+        Number.isFinite(financialSummary.basePrice)
+          ? String(financialSummary.basePrice)
+          : ""
+      );
+    }
+  }, [financialSummary.basePrice, isBasePriceDialogOpen]);
 
   useEffect(() => {
     if (!project || isLoading) return;
@@ -656,10 +717,12 @@ export function ProjectPaymentsSection({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-3 md:space-y-4">
           {shouldRenderSkeleton ? (
-            <div className="space-y-6">
-              <div className={cn("grid gap-4 md:grid-cols-2 lg:grid-cols-3", summaryGridDesktopClass)}>
+            <div className="space-y-3 md:space-y-4">
+              <div
+                className={cn("grid gap-2.5 md:gap-3 md:grid-cols-2 lg:grid-cols-3", summaryGridDesktopClass)}
+              >
                 {[1, 2, 3, 4].map((item) => (
                   <div key={item} className="h-24 rounded-xl border bg-muted animate-pulse" />
                 ))}
@@ -680,8 +743,10 @@ export function ProjectPaymentsSection({
                   </span>
                 </div>
               ) : null}
-              <div className={cn("grid gap-4 md:grid-cols-2 lg:grid-cols-3", summaryGridDesktopClass)}>
-                  <div className="rounded-xl border bg-muted/30 p-4">
+              <div
+                className={cn("grid gap-2.5 md:gap-3 md:grid-cols-2 lg:grid-cols-3", summaryGridDesktopClass)}
+              >
+                <div className="rounded-xl border bg-muted/30 p-4">
                   <div className="text-xs uppercase tracking-wide text-muted-foreground">
                     {t("payments.summary.contract_total", { defaultValue: "Project total" })}
                   </div>
@@ -695,6 +760,15 @@ export function ProjectPaymentsSection({
                       defaultValue: "Base {{base}} + extras {{extras}}"
                     })}
                   </div>
+                  <Button
+                    type="button"
+                    variant="textGhost"
+                    size="sm"
+                    className="mt-2 h-auto px-0 text-xs font-semibold text-primary"
+                    onClick={() => setIsBasePriceDialogOpen(true)}
+                  >
+                    {t("payments.base_price_edit", { defaultValue: "Edit package price" })}
+                  </Button>
                 </div>
 
                 <div className="rounded-xl border bg-muted/30 p-4">
@@ -807,7 +881,7 @@ export function ProjectPaymentsSection({
                 )}
               </div>
 
-              <div className="rounded-xl border p-5">
+              <div className="rounded-xl border p-4">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="flex items-start gap-3">
                     <div
@@ -895,41 +969,63 @@ export function ProjectPaymentsSection({
                     )}
                   </div>
                 </div>
-              </div>
 
-              {shouldShowSnapshotBanner && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                  <p>
-                    {t("payments.deposit.snapshot_banner", {
-                      locked: formatCurrency(lockedDepositAmount ?? 0),
-                      suggested: formatCurrency(financialSummary.depositSuggestedAmount),
-                      defaultValue:
-                        "Locked deposit {{locked}} differs from the current calculation {{suggested}}."
-                    })}
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleSnapshotAction("refresh")}
-                      disabled={isSnapshotUpdating}
-                    >
-                      {t("payments.deposit.actions.refresh_snapshot", {
-                        defaultValue: "Update deposit amount"
-                      })}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleSnapshotAction("acknowledge")}
-                      disabled={isSnapshotUpdating}
-                    >
-                      {t("payments.deposit.actions.keep_locked", {
-                        defaultValue: "Keep current amount"
-                      })}
-                    </Button>
+                {shouldShowSnapshotBanner && (
+                  <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-900">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1 space-y-3">
+                        <p className="font-medium">
+                          {t("payments.deposit.snapshot_banner", {
+                            locked: formatCurrency(lockedDepositAmount ?? 0),
+                            suggested: formatCurrency(financialSummary.depositSuggestedAmount),
+                            defaultValue:
+                              "Locked deposit {{locked}} differs from the current calculation {{suggested}}."
+                          })}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <Button
+                            size="sm"
+                            variant="pill"
+                            onClick={() => handleSnapshotAction("refresh")}
+                            disabled={isSnapshotUpdating}
+                          >
+                            {t("payments.deposit.actions.refresh_snapshot", {
+                              defaultValue: "Update deposit amount"
+                            })}
+                          </Button>
+                          <button
+                            type="button"
+                            onClick={() => handleSnapshotAction("acknowledge")}
+                            disabled={isSnapshotUpdating}
+                            className={cn(
+                              "text-sm font-semibold text-amber-900 underline-offset-4 transition",
+                              isSnapshotUpdating ? "opacity-60" : "hover:underline"
+                            )}
+                          >
+                            {t("payments.deposit.actions.keep_locked", {
+                              defaultValue: "Keep current amount"
+                            })}
+                          </button>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleSnapshotAction("acknowledge")}
+                        disabled={isSnapshotUpdating}
+                        className={cn(
+                          "rounded-full p-1 text-amber-700 transition hover:bg-amber-100",
+                          isSnapshotUpdating && "opacity-60"
+                        )}
+                        aria-label={t("payments.deposit.actions.keep_locked", {
+                          defaultValue: "Keep current amount"
+                        })}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
               {payments.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
@@ -1120,6 +1216,49 @@ export function ProjectPaymentsSection({
         depositPaid={financialSummary.depositPaid}
         onCompleted={handlePaymentsRefresh}
       />
+
+      <AppSheetModal
+        title={t("payments.base_price_edit", { defaultValue: "Edit package price" })}
+        isOpen={isBasePriceDialogOpen}
+        onOpenChange={setIsBasePriceDialogOpen}
+        size="content"
+        footerActions={[
+          {
+            label: t("buttons.cancel", { defaultValue: "Cancel" }),
+            variant: "outline" as const,
+            onClick: () => setIsBasePriceDialogOpen(false),
+            disabled: isSavingBasePrice
+          },
+          {
+            label: isSavingBasePrice
+              ? t("payments.updating", { defaultValue: "Updating..." })
+              : t("payments.base_price_save", { defaultValue: "Save package price" }),
+            onClick: () => void handleBasePriceSave(),
+            loading: isSavingBasePrice,
+            disabled: !basePriceInput.trim()
+          }
+        ]}
+      >
+        <div className="space-y-2">
+          <Label htmlFor="project-base-price-input">
+            {t("payments.base_price_label", { defaultValue: "Base price" })}
+          </Label>
+          <Input
+            id="project-base-price-input"
+            type="number"
+            min="0"
+            step="0.01"
+            value={basePriceInput}
+            onChange={(event) => setBasePriceInput(event.target.value)}
+            placeholder="0.00"
+          />
+          <p className="text-xs text-muted-foreground">
+            {t("payments.base_price_helper", {
+              defaultValue: "Impacts deposit, outstanding, and contract totals."
+            })}
+          </p>
+        </div>
+      </AppSheetModal>
 
       <GeneralPaymentDialog
         projectId={projectId}

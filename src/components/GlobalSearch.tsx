@@ -625,26 +625,31 @@ const GlobalSearch = ({ variant = "default", className }: GlobalSearchProps) => 
   let resultIndex = 0;
 
   const wrapperClassName = cn(
-    "relative w-full min-w-0",
+    "relative w-full min-w-0 transition-[flex-basis,max-width,width] duration-300 ease-out",
     className
   );
 
   const inputContainerClassName = cn(
-    "relative",
+    "relative group/search transition-[flex-basis,max-width,width] duration-300 ease-out",
     variant === "header" &&
       "rounded-full bg-muted/50 border border-transparent shadow-sm transition-colors focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20"
   );
 
   const inputClassName = cn(
-    "pl-10 pr-10 w-full truncate",
+    "pl-10 pr-10 w-full truncate text-base transition-[width] duration-300 ease-out placeholder:font-light placeholder:text-muted-foreground/70",
     variant === "header" &&
-      "h-12 border-none bg-transparent text-base md:text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+      "h-12 border-none bg-transparent text-lg md:text-base focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
+  );
+
+  const searchIconClassName = cn(
+    "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70 group-focus-within/search:text-foreground z-10 pointer-events-none",
+    variant === "header" && "text-muted-foreground/60 group-focus-within/search:text-foreground"
   );
 
   return (
     <div className={wrapperClassName} ref={searchRef}>
       <div className={inputContainerClassName}>
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" />
+        <Search className={searchIconClassName} />
         <Input
           ref={inputRef}
           placeholder={t("search.placeholder")}
@@ -657,7 +662,7 @@ const GlobalSearch = ({ variant = "default", className }: GlobalSearchProps) => 
           className={inputClassName}
         />
         {loading ? (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+          <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
             <span className="inline-flex h-4 w-4 items-center justify-center">
               <span className="h-4 w-4 animate-spin rounded-full border-[1.5px] border-muted-foreground/40 border-t-primary" />
             </span>
@@ -666,7 +671,7 @@ const GlobalSearch = ({ variant = "default", className }: GlobalSearchProps) => 
           query && (
             <button
               onClick={handleClearSearch}
-              className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute inset-y-0 right-3 flex h-full items-center text-muted-foreground hover:text-foreground transition-colors"
               aria-label={t("search.clearSearch")}
             >
               <X className="h-4 w-4" />

@@ -51,7 +51,7 @@
     "loadingMore": "Loading more...",
     "loadMore": "Load {{count}} more results ({{remaining}} remaining)",
     "showingAll": "Showing all {{count}} results",
-    "placeholder": "Search...",
+    "placeholder": "Search leads, projects, notes or reminders...",
     "clearSearch": "Clear search",
     "noResults": "No results found",
     "tryDifferent": "Try a different search term",

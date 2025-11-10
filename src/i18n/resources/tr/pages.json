@@ -43,7 +43,7 @@
     }
   },
   "leads": {
-    "title": "Kişi Yönetimi",
+    "title": "Kişiler",
     "description": "Tüm kişi ve müşterilerinizi yönetin, durumlarını takip edin",
     "filterByStatus": "Duruma göre filtrele:",
     "allStatuses": "Tüm Durumlar",

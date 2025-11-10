@@ -51,7 +51,7 @@
     "loadingMore": "Daha fazla yükleniyor...",
     "loadMore": "{{count}} sonuç daha yükle ({{remaining}} kaldı)",
     "showingAll": "Tüm {{count}} sonuç gösteriliyor",
-    "placeholder": "Ara...",
+    "placeholder": "Kişiler, projeler, notlar ve hatırlatıcıları ara...",
     "clearSearch": "Aramayı temizle",
     "noResults": "Sonuç bulunamadı",
     "tryDifferent": "Farklı bir arama terimi deneyin",

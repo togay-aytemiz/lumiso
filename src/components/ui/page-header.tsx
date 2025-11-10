@@ -22,8 +22,8 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "max-w-full border-b border-border/60 bg-background",
-        sticky && "lg:sticky lg:top-0 lg:z-10 lg:bg-background/95 lg:backdrop-blur-sm",
+        "max-w-full border-b border-border/60 bg-white dark:bg-white",
+        sticky && "lg:sticky lg:top-0 lg:z-10 lg:bg-white dark:lg:bg-white",
         className
       )}
     >
@@ -80,7 +80,7 @@ export function PageHeaderSearch({ children, className }: PageHeaderSearchProps)
   return (
     <div
       className={cn(
-        "flex-1 min-w-0 w-full",
+        "flex-1 min-w-0 w-full transition-[flex-basis,max-width,width] duration-300 ease-out",
         className
       )}
     >

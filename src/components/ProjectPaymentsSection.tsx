@@ -1068,34 +1068,22 @@ export function ProjectPaymentsSection({
                           <li
                             key={payment.id}
                             className={cn(
-                              "flex flex-col gap-2 px-3 py-2 text-sm transition-colors sm:grid sm:grid-cols-[minmax(140px,auto)_minmax(110px,auto)_1fr_auto] sm:items-center hover:bg-muted/40",
+                              "flex flex-col gap-1 px-3 py-1.5 text-sm transition-colors sm:grid sm:grid-cols-[minmax(140px,auto)_minmax(120px,auto)_1fr_auto] sm:items-center sm:gap-3 hover:bg-muted/40",
                               shouldAnimateExpansion && "animate-slide-up"
                             )}
                           >
-                            <div className="flex items-start justify-between gap-2 sm:justify-start">
-                              <div>
-                                <div className="font-medium tabular-nums">{displayDate}</div>
-                              </div>
-                              <Badge
-                                variant="outline"
-                                className={cn(
-                                  "px-2 py-0.5 text-[10px] font-semibold sm:hidden",
-                                  statusBadgeClass,
-                                  isRefund && "bg-destructive/5"
-                                )}
-                              >
-                                {statusLabel}
-                              </Badge>
+                            <div className="text-xs font-medium text-muted-foreground sm:text-sm">
+                              {displayDate}
                             </div>
                             <div
                               className={cn(
-                                "font-semibold tabular-nums sm:justify-self-end",
+                                "font-semibold tabular-nums tracking-tight sm:justify-self-end",
                                 isRefund && "text-destructive"
                               )}
                             >
                               {formatCurrency(payment.amount)}
                             </div>
-                            <div className="flex flex-col gap-1 text-xs text-muted-foreground sm:text-sm">
+                            <div className="flex flex-col gap-0.5 text-xs text-muted-foreground sm:text-sm">
                               <span>{description}</span>
                               {showDepositAllocation && (
                                 <span
@@ -1107,6 +1095,16 @@ export function ProjectPaymentsSection({
                                   {depositAllocationLabel}
                                 </span>
                               )}
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "mt-1 w-fit px-2 py-0.5 text-[10px] font-semibold sm:hidden",
+                                  statusBadgeClass,
+                                  isRefund && "bg-destructive/5"
+                                )}
+                              >
+                                {statusLabel}
+                              </Badge>
                             </div>
                             <div className="flex items-center justify-start gap-1 sm:justify-end">
                               <Badge

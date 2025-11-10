@@ -35,19 +35,11 @@ import type { ProjectCreationDetails, ProjectServiceLineItem } from "../types";
 import { calculateLineItemPricing } from "@/features/package-creation/utils/lineItemPricing";
 import { DEFAULT_SERVICE_UNIT, normalizeServiceUnit } from "@/lib/services/units";
 import type { VatMode } from "@/lib/accounting/vat";
+import { buildProjectPackageSnapshot } from "@/lib/projects/projectPackageSnapshot";
+import { deriveDeliveryStateFromSnapshot, createDefaultProjectDeliveryState } from "../state/projectDeliveryState";
+import type { Database } from "@/integrations/supabase/types";
 
-interface PackageRecord {
-  id: string;
-  name: string;
-  description?: string | null;
-  price?: number | null;
-  client_total?: number | null;
-  applicable_types: string[];
-  default_add_ons: string[];
-  is_active?: boolean;
-  include_addons_in_price?: boolean | null;
-  pricing_metadata?: Record<string, unknown> | null;
-}
+type PackageRecord = Database["public"]["Tables"]["packages"]["Row"];
 
 interface ServiceRecord {
   id: string;
@@ -82,7 +74,7 @@ export const PackagesStep = () => {
   const { t: tPackages } = useTranslation("packageCreation");
   const { t: tForms } = useTranslation("forms");
   const { state } = useProjectCreationContext();
-  const { updateServices, updateDetails } = useProjectCreationActions();
+  const { updateServices, updateDetails, updateDelivery } = useProjectCreationActions();
 
   const packagesQuery = usePackages();
   const servicesQuery = useServices();
@@ -177,19 +169,47 @@ export const PackagesStep = () => {
   );
 
   const buildLineItemFromService = useCallback(
-    (service: ServiceWithMetadata): ProjectServiceLineItem =>
+    (
+      service: ServiceWithMetadata,
+      overrides?: Partial<
+        Pick<
+          ProjectServiceLineItem,
+          | "id"
+          | "name"
+          | "quantity"
+          | "unitCost"
+          | "unitPrice"
+          | "vatMode"
+          | "vatRate"
+          | "unit"
+          | "vendorName"
+        >
+      >
+    ): ProjectServiceLineItem =>
       normalizeItemVat({
-        id: service.id,
+        id: overrides?.id ?? service.id,
         type: "existing",
         serviceId: service.id,
-        name: service.name,
-        quantity: 1,
-        unitCost: service.unitCost,
-        unitPrice: service.unitPrice,
-        vendorName: service.vendor_name ?? null,
-        vatRate: service.vatRate ?? null,
-        vatMode: service.vatMode,
-        unit: service.unit,
+        name: overrides?.name ?? service.name,
+        quantity: Math.max(1, overrides?.quantity ?? 1),
+        unitCost:
+          overrides && "unitCost" in overrides
+            ? overrides.unitCost ?? null
+            : service.unitCost,
+        unitPrice:
+          overrides && "unitPrice" in overrides
+            ? overrides.unitPrice ?? null
+            : service.unitPrice,
+        vendorName:
+          overrides && "vendorName" in overrides
+            ? overrides.vendorName ?? null
+            : service.vendor_name ?? null,
+        vatRate:
+          overrides && "vatRate" in overrides
+            ? overrides.vatRate ?? null
+            : service.vatRate ?? null,
+        vatMode: overrides?.vatMode ?? service.vatMode,
+        unit: overrides?.unit ?? service.unit,
         source: "catalog",
       }),
     [normalizeItemVat]
@@ -546,6 +566,111 @@ export const PackagesStep = () => {
     });
   }, [extraItems, formatCurrency, serviceMap, tForms]);
 
+  const buildPackageIncludedItems = useCallback(
+    (pkg: PackageRecord): ProjectServiceLineItem[] => {
+      if (!pkg.line_items || !Array.isArray(pkg.line_items)) {
+        return [];
+      }
+      return (pkg.line_items as unknown[])
+        .map((entry) => {
+          if (!entry || typeof entry !== "object") {
+            return null;
+          }
+          const item = entry as Record<string, unknown>;
+          if (item.type !== "existing") {
+            return null;
+          }
+          const serviceId =
+            typeof item.serviceId === "string" ? item.serviceId : null;
+          if (!serviceId) {
+            return null;
+          }
+          const service = serviceMap.get(serviceId);
+          if (!service) {
+            return null;
+          }
+          const rawQuantity =
+            typeof item.quantity === "number"
+              ? item.quantity
+              : Number(item.quantity ?? 1);
+          const normalizedQuantity =
+            Number.isFinite(rawQuantity) && rawQuantity > 0
+              ? rawQuantity
+              : undefined;
+          const normalizedUnitCost =
+            typeof item.unitCost === "number"
+              ? item.unitCost
+              : Number.isFinite(Number(item.unitCost))
+              ? Number(item.unitCost)
+              : undefined;
+          const normalizedUnitPrice =
+            typeof item.unitPrice === "number"
+              ? item.unitPrice
+              : Number.isFinite(Number(item.unitPrice))
+              ? Number(item.unitPrice)
+              : undefined;
+          const normalizedVatRate =
+            typeof item.vatRate === "number"
+              ? item.vatRate
+              : Number.isFinite(Number(item.vatRate))
+              ? Number(item.vatRate)
+              : undefined;
+
+          const overrides: Partial<ProjectServiceLineItem> = {
+            id: typeof item.id === "string" ? item.id : undefined,
+            name: typeof item.name === "string" ? item.name : undefined,
+            quantity:
+              normalizedQuantity !== undefined
+                ? Math.max(1, normalizedQuantity)
+                : undefined,
+            unitCost: normalizedUnitCost,
+            unitPrice: normalizedUnitPrice,
+            vatMode:
+              item.vatMode === "inclusive" || item.vatMode === "exclusive"
+                ? (item.vatMode as "inclusive" | "exclusive")
+                : undefined,
+            vatRate: normalizedVatRate,
+            unit:
+              typeof item.unit === "string" && item.unit.trim().length > 0
+                ? item.unit
+                : undefined,
+            vendorName:
+              typeof item.vendorName === "string" ? item.vendorName : undefined,
+          };
+          return buildLineItemFromService(service, overrides);
+        })
+        .filter(
+          (item): item is ProjectServiceLineItem =>
+            Boolean(item?.serviceId ?? item?.name)
+        );
+    },
+    [buildLineItemFromService, serviceMap]
+  );
+
+  const buildPackageAddOnItems = useCallback(
+    (pkg: PackageRecord, excludedIds: Set<string>): ProjectServiceLineItem[] => {
+      if (!Array.isArray(pkg.default_add_ons) || pkg.default_add_ons.length === 0) {
+        return [];
+      }
+      return pkg.default_add_ons
+        .map((serviceId) => {
+          if (!serviceId || excludedIds.has(serviceId)) {
+            return null;
+          }
+          const service = serviceMap.get(serviceId);
+          if (!service) {
+            return null;
+          }
+          return buildLineItemFromService(service);
+        })
+        .filter(
+          (item): item is ProjectServiceLineItem =>
+            Boolean(item?.serviceId ?? item?.name)
+        );
+    },
+    [buildLineItemFromService, serviceMap]
+  );
+
   const hasBillableServices = extraItems.length > 0;
 
   const getUnitLabel = useCallback(
@@ -620,8 +745,9 @@ export const PackagesStep = () => {
   useEffect(() => {
     if (!actionsRef.current) return;
     if (!state.services.packageId && !showCustomSetup) return;
+    if (state.meta.mode === "edit") return;
     actionsRef.current.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
-  }, [state.services.packageId, showCustomSetup]);
+  }, [state.services.packageId, showCustomSetup, state.meta.mode]);
 
   const basePriceValue = useMemo(() => {
     const parsed = parseFloat(state.details.basePrice ?? "");
@@ -1015,24 +1141,39 @@ export const PackagesStep = () => {
   };
 
   const handleSelectPackage = (pkg: PackageRecord) => {
-    const defaultServiceIds = pkg.default_add_ons ?? [];
-    const defaultItems = defaultServiceIds
-      .map((serviceId) => serviceMap.get(serviceId))
-      .filter((service): service is ServiceWithMetadata => Boolean(service))
-      .map((service) => buildLineItemFromService(service));
+    const includedFromPackage = buildPackageIncludedItems(pkg);
+    const includedIds = new Set(
+      includedFromPackage
+        .map((item) => item.serviceId)
+        .filter((id): id is string => Boolean(id))
+    );
+    const addonItems = buildPackageAddOnItems(pkg, includedIds);
 
     updateServices({
       packageId: pkg.id,
       packageLabel: pkg.name,
-      includedItems: defaultItems,
-      extraItems: [],
+      includedItems: includedFromPackage,
+      extraItems: addonItems,
       showCustomSetup: true,
     });
 
-    updateDetails({ depositAmount: undefined });
-    if (pkg.price != null) {
-      updateDetails({ basePrice: pkg.price.toString() });
+    const resolvedBasePrice =
+      typeof pkg.client_total === "number" && Number.isFinite(pkg.client_total)
+        ? pkg.client_total
+        : typeof pkg.price === "number" && Number.isFinite(pkg.price)
+        ? pkg.price
+        : null;
+
+    const detailsUpdate: Partial<ProjectCreationDetails> = {
+      depositAmount: undefined,
+    };
+    if (resolvedBasePrice != null) {
+      detailsUpdate.basePrice = String(resolvedBasePrice);
     }
+    updateDetails(detailsUpdate);
+
+    const snapshot = buildProjectPackageSnapshot(pkg);
+    updateDelivery(deriveDeliveryStateFromSnapshot(snapshot.delivery));
   };
 
   const handleClearPackage = () => {
@@ -1042,6 +1183,7 @@ export const PackagesStep = () => {
       packageLabel: hasItems ? t("summary.values.customServices") : undefined,
       showCustomSetup: hasItems || state.services.showCustomSetup,
     });
+    updateDelivery(createDefaultProjectDeliveryState());
   };
 
   const handleEnableCustom = () => {
@@ -1062,6 +1204,7 @@ export const PackagesStep = () => {
       basePrice: "",
       depositAmount: undefined,
     });
+    updateDelivery(createDefaultProjectDeliveryState());
   };
 
   const packagesLoading = packagesQuery.isLoading;

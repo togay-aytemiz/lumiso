@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
@@ -75,6 +75,8 @@ interface SessionWithComputed extends Session {
   statusIsInitial: boolean;
   segment: Exclude<SessionSegment, 'all'>;
 }
+
+const INITIAL_SESSION_BATCH = 25;
 
 const normalizeStatusName = (value?: string | null) =>
   (value ?? '').trim().toLowerCase();
@@ -217,6 +219,7 @@ const AllSessions = () => {
   const { t: tForms } = useFormsTranslation();
   const { t, i18n } = useTranslation('pages');
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [visibleSessionCount, setVisibleSessionCount] = useState(INITIAL_SESSION_BATCH);
   const [loading, setLoading] = useState(true);
   const [activeSegment, setActiveSegment] = useState<SessionSegment>('all');
   const [sortState, setSortState] = useState<AdvancedDataTableSortState>({
@@ -232,6 +235,7 @@ const AllSessions = () => {
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const isMobile = useIsMobile();
+  const prevLoadingRef = useRef(true);
 
   const fetchSessions = useCallback(async () => {
     setLoading(true);
@@ -336,6 +340,21 @@ const AllSessions = () => {
 
   // Refresh on focus/visibility with throttle to avoid request storms
   useThrottledRefetchOnFocus(fetchSessions, 30_000);
+
+  useEffect(() => {
+    if (prevLoadingRef.current && !loading) {
+      setVisibleSessionCount(INITIAL_SESSION_BATCH);
+    }
+    prevLoadingRef.current = loading;
+  }, [loading]);
+
+  useEffect(() => {
+    setVisibleSessionCount(INITIAL_SESSION_BATCH);
+  }, [activeSegment]);
+
+  useEffect(() => {
+    setVisibleSessionCount(INITIAL_SESSION_BATCH);
+  }, [sortState.columnId, sortState.direction]);
 
   const sessionStatuses = useMemo<SessionStatusRecord[]>(() => {
     const statuses = (sessionStatusData ?? []) as SessionStatusResponse[];
@@ -591,6 +610,24 @@ const AllSessions = () => {
 
     return sorted;
   }, [activeSegment, computedSessions, sortState]);
+
+  const totalSessionRows = filteredAndSortedSessions.length;
+
+  const visibleSessions = useMemo(
+    () => filteredAndSortedSessions.slice(0, visibleSessionCount),
+    [filteredAndSortedSessions, visibleSessionCount]
+  );
+
+  const hasMoreSessions = visibleSessionCount < totalSessionRows;
+
+  const handleLoadMoreSessions = useCallback(() => {
+    setVisibleSessionCount((prev) => {
+      if (prev >= totalSessionRows) {
+        return prev;
+      }
+      return Math.min(prev + INITIAL_SESSION_BATCH, totalSessionRows);
+    });
+  }, [totalSessionRows]);
 
   const handleRowClick = (session: SessionWithComputed) => {
     if (isMobile) {
@@ -1216,7 +1253,7 @@ const AllSessions = () => {
         <AdvancedDataTable
           title={t('sessions.tableTitle')}
           description={segmentInsight}
-          data={filteredAndSortedSessions}
+          data={visibleSessions}
           columns={columns}
           rowKey={(session) => session.id}
           onRowClick={handleRowClick}
@@ -1225,6 +1262,9 @@ const AllSessions = () => {
           isLoading={loading}
           emptyState={emptyState}
           actions={tableActions}
+          onLoadMore={hasMoreSessions ? handleLoadMoreSessions : undefined}
+          hasMore={hasMoreSessions}
+          isLoadingMore={false}
         />
 
         <ViewProjectDialog

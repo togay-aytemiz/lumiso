@@ -19,7 +19,7 @@ import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger
+  AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
   ArrowUpRight,
@@ -30,7 +30,7 @@ import {
   Clock,
   RotateCcw,
   SunMedium,
-  UserCircle
+  UserCircle,
 } from "lucide-react";
 import { cn, formatGroupDate, formatTime, getWeekRange } from "@/lib/utils";
 
@@ -66,9 +66,14 @@ type ReminderProject = {
   project_type_id?: string | null;
 };
 
-type FilterType = "all" | "overdue" | "today" | "tomorrow" | "thisWeek" | "nextWeek" | "thisMonth";
-
-
+type FilterType =
+  | "all"
+  | "overdue"
+  | "today"
+  | "tomorrow"
+  | "thisWeek"
+  | "nextWeek"
+  | "thisMonth";
 
 interface ReminderTimelineLabels {
   lead: string;
@@ -119,7 +124,10 @@ const getErrorMessage = (error: unknown) => {
   return "An unexpected error occurred";
 };
 
-const parseTimeValue = (time?: string | null, direction: "asc" | "desc" = "asc") => {
+const parseTimeValue = (
+  time?: string | null,
+  direction: "asc" | "desc" = "asc"
+) => {
   if (!time) {
     return direction === "desc" ? -1 : Number.MAX_SAFE_INTEGER;
   }
@@ -159,8 +167,10 @@ const groupActivitiesByDate = (
     items: items.sort((first, second) => {
       const firstValue = parseTimeValue(first.reminder_time, order);
       const secondValue = parseTimeValue(second.reminder_time, order);
-      return order === "desc" ? secondValue - firstValue : firstValue - secondValue;
-    })
+      return order === "desc"
+        ? secondValue - firstValue
+        : firstValue - secondValue;
+    }),
   }));
 };
 
@@ -173,7 +183,7 @@ const ReminderTimelineItem = ({
   isOverdue,
   isToday,
   isTomorrow,
-  labels
+  labels,
 }: ReminderTimelineItemProps) => {
   const statusConfig = (() => {
     if (activity.completed) {
@@ -181,25 +191,23 @@ const ReminderTimelineItem = ({
         label: labels.completed,
         className:
           "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900",
-        indicatorClassName: "border-emerald-300 bg-emerald-400/90"
+        indicatorClassName: "border-emerald-300 bg-emerald-400/90",
       };
     }
 
     if (isOverdue) {
       return {
         label: labels.overdue,
-        className:
-          "bg-destructive/10 text-destructive border-destructive/20",
-        indicatorClassName: "border-destructive/50 bg-destructive"
+        className: "bg-destructive/10 text-destructive border-destructive/20",
+        indicatorClassName: "border-destructive/50 bg-destructive",
       };
     }
 
     if (isToday) {
       return {
         label: labels.today,
-        className:
-          "bg-primary/10 text-primary border-primary/20",
-        indicatorClassName: "border-primary/40 bg-primary/80"
+        className: "bg-primary/10 text-primary border-primary/20",
+        indicatorClassName: "border-primary/40 bg-primary/80",
       };
     }
 
@@ -208,7 +216,7 @@ const ReminderTimelineItem = ({
         label: labels.tomorrow,
         className:
           "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/20 dark:text-amber-200 dark:border-amber-400/30",
-        indicatorClassName: "border-amber-300 bg-amber-400"
+        indicatorClassName: "border-amber-300 bg-amber-400",
       };
     }
 
@@ -233,7 +241,9 @@ const ReminderTimelineItem = ({
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               {statusConfig && (
-                <Badge className={cn("text-xs", statusConfig.className)}>{statusConfig.label}</Badge>
+                <Badge className={cn("text-xs", statusConfig.className)}>
+                  {statusConfig.label}
+                </Badge>
               )}
             </div>
             <div>
@@ -248,13 +258,17 @@ const ReminderTimelineItem = ({
               <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1.5">
                   <UserCircle className="h-4 w-4" aria-hidden="true" />
-                  <span className="font-medium text-foreground">{labels.lead}:</span>
+                  <span className="font-medium text-foreground">
+                    {labels.lead}:
+                  </span>
                   <span className="text-muted-foreground">{leadName}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Clock className="h-4 w-4" aria-hidden="true" />
                   <span>
-                    {activity.reminder_time ? formatTime(activity.reminder_time) : labels.noTime}
+                    {activity.reminder_time
+                      ? formatTime(activity.reminder_time)
+                      : labels.noTime}
                   </span>
                 </div>
               </div>
@@ -297,7 +311,7 @@ const ReminderTimelineItem = ({
                 {labels.openLead}
                 <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
               </Button>
-              {typeof onNavigateProject === 'function' && (
+              {typeof onNavigateProject === "function" && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -316,7 +330,6 @@ const ReminderTimelineItem = ({
           </div>
         </div>
       </div>
-
     </div>
   );
 };
@@ -325,27 +338,27 @@ const ReminderDetails = () => {
   const { t } = useTranslation("pages");
   const { t: tForms } = useFormsTranslation();
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [visibleReminderCount, setVisibleReminderCount] = useState(INITIAL_REMINDER_BATCH);
+  const [visibleReminderCount, setVisibleReminderCount] = useState(
+    INITIAL_REMINDER_BATCH
+  );
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("today");
   const [showCompleted, setShowCompleted] = useState(false);
   const [hideOverdue, setHideOverdue] = useState(false);
   const navigate = useNavigate();
-  const [viewingProject, setViewingProject] = useState<ReminderProject | null>(null);
+  const [viewingProject, setViewingProject] = useState<ReminderProject | null>(
+    null
+  );
   const [showProjectDialog, setShowProjectDialog] = useState(false);
-<<<<<<< ours
-<<<<<<< ours
   const reminderLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const reminderLoadPendingRef = useRef(false);
   const prevLoadingRef = useRef(true);
-=======
   const [editingReminder, setEditingReminder] = useState<Activity | null>(null);
   const [reminderSheetOpen, setReminderSheetOpen] = useState(false);
-  const [editingProjectName, setEditingProjectName] = useState<string | undefined>(undefined);
->>>>>>> theirs
-=======
->>>>>>> theirs
+  const [editingProjectName, setEditingProjectName] = useState<
+    string | undefined
+  >(undefined);
 
   const fetchReminders = useCallback(async () => {
     setLoading(true);
@@ -360,7 +373,9 @@ const ReminderDetails = () => {
       if (activitiesError) throw activitiesError;
 
       if (activitiesData && activitiesData.length > 0) {
-        const leadIds = [...new Set(activitiesData.map((activity) => activity.lead_id))];
+        const leadIds = [
+          ...new Set(activitiesData.map((activity) => activity.lead_id)),
+        ];
         if (leadIds.length > 0) {
           const { data: leadsData, error: leadsError } = await supabase
             .from("leads")
@@ -377,7 +392,7 @@ const ReminderDetails = () => {
       toast({
         title: "Error fetching reminders",
         description: getErrorMessage(error),
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -442,7 +457,10 @@ const ReminderDetails = () => {
     const reminder = new Date(reminderDate);
     const { start: startOfWeek, end: endOfWeek } = getWeekRange(today);
     reminder.setHours(0, 0, 0, 0);
-    return reminder.getTime() >= startOfWeek.getTime() && reminder.getTime() <= endOfWeek.getTime();
+    return (
+      reminder.getTime() >= startOfWeek.getTime() &&
+      reminder.getTime() <= endOfWeek.getTime()
+    );
   }, []);
 
   const isNextWeek = useCallback((reminderDate: string) => {
@@ -450,83 +468,162 @@ const ReminderDetails = () => {
     const reminder = new Date(reminderDate);
     const nextWeekDate = new Date(today);
     nextWeekDate.setDate(today.getDate() + 7);
-    const { start: startOfNextWeek, end: endOfNextWeek } = getWeekRange(nextWeekDate);
+    const { start: startOfNextWeek, end: endOfNextWeek } =
+      getWeekRange(nextWeekDate);
     startOfNextWeek.setHours(0, 0, 0, 0);
     endOfNextWeek.setHours(23, 59, 59, 999);
     reminder.setHours(0, 0, 0, 0);
-    return reminder.getTime() >= startOfNextWeek.getTime() && reminder.getTime() <= endOfNextWeek.getTime();
+    return (
+      reminder.getTime() >= startOfNextWeek.getTime() &&
+      reminder.getTime() <= endOfNextWeek.getTime()
+    );
   }, []);
 
   const isThisMonth = useCallback((reminderDate: string) => {
     const today = new Date();
     const reminder = new Date(reminderDate);
-    return today.getFullYear() === reminder.getFullYear() && today.getMonth() === reminder.getMonth();
+    return (
+      today.getFullYear() === reminder.getFullYear() &&
+      today.getMonth() === reminder.getMonth()
+    );
   }, []);
 
   const getReminderCountForFilter = useCallback(
     (filterType: FilterType) => {
-      const baseActivities = showCompleted ? activities : activities.filter((activity) => !activity.completed);
+      const baseActivities = showCompleted
+        ? activities
+        : activities.filter((activity) => !activity.completed);
 
       switch (filterType) {
         case "all":
           return baseActivities.length;
         case "overdue":
-          return baseActivities.filter((activity) => isOverdue(activity.reminder_date)).length;
+          return baseActivities.filter((activity) =>
+            isOverdue(activity.reminder_date)
+          ).length;
         case "today":
-          return baseActivities.filter((activity) => isToday(activity.reminder_date)).length;
+          return baseActivities.filter((activity) =>
+            isToday(activity.reminder_date)
+          ).length;
         case "tomorrow":
-          return baseActivities.filter((activity) => isTomorrow(activity.reminder_date)).length;
+          return baseActivities.filter((activity) =>
+            isTomorrow(activity.reminder_date)
+          ).length;
         case "thisWeek":
-          return baseActivities.filter((activity) => isThisWeek(activity.reminder_date)).length;
+          return baseActivities.filter((activity) =>
+            isThisWeek(activity.reminder_date)
+          ).length;
         case "nextWeek":
-          return baseActivities.filter((activity) => isNextWeek(activity.reminder_date)).length;
+          return baseActivities.filter((activity) =>
+            isNextWeek(activity.reminder_date)
+          ).length;
         case "thisMonth":
-          return baseActivities.filter((activity) => isThisMonth(activity.reminder_date)).length;
+          return baseActivities.filter((activity) =>
+            isThisMonth(activity.reminder_date)
+          ).length;
         default:
           return baseActivities.length;
       }
     },
-    [activities, showCompleted, isOverdue, isToday, isTomorrow, isThisWeek, isNextWeek, isThisMonth]
+    [
+      activities,
+      showCompleted,
+      isOverdue,
+      isToday,
+      isTomorrow,
+      isThisWeek,
+      isNextWeek,
+      isThisMonth,
+    ]
   );
 
   const quickFilters = useMemo(
     () => [
-      { key: "all", label: t("reminders.filters.all"), count: getReminderCountForFilter("all") },
-      { key: "today", label: t("reminders.filters.today"), count: getReminderCountForFilter("today") },
-      { key: "tomorrow", label: t("reminders.filters.tomorrow"), count: getReminderCountForFilter("tomorrow") }
+      {
+        key: "all",
+        label: t("reminders.filters.all"),
+        count: getReminderCountForFilter("all"),
+      },
+      {
+        key: "today",
+        label: t("reminders.filters.today"),
+        count: getReminderCountForFilter("today"),
+      },
+      {
+        key: "tomorrow",
+        label: t("reminders.filters.tomorrow"),
+        count: getReminderCountForFilter("tomorrow"),
+      },
     ],
     [getReminderCountForFilter, t]
   );
 
   const allDateFilters = useMemo(
     () => [
-      { key: "all", label: t("reminders.filters.all"), count: getReminderCountForFilter("all") },
-      { key: "overdue", label: t("reminders.filters.overdue"), count: getReminderCountForFilter("overdue") },
-      { key: "today", label: t("reminders.filters.today"), count: getReminderCountForFilter("today") },
-      { key: "tomorrow", label: t("reminders.filters.tomorrow"), count: getReminderCountForFilter("tomorrow") },
-      { key: "thisWeek", label: t("reminders.filters.thisWeek"), count: getReminderCountForFilter("thisWeek") },
-      { key: "nextWeek", label: t("reminders.filters.nextWeek"), count: getReminderCountForFilter("nextWeek") },
-      { key: "thisMonth", label: t("reminders.filters.thisMonth"), count: getReminderCountForFilter("thisMonth") }
+      {
+        key: "all",
+        label: t("reminders.filters.all"),
+        count: getReminderCountForFilter("all"),
+      },
+      {
+        key: "overdue",
+        label: t("reminders.filters.overdue"),
+        count: getReminderCountForFilter("overdue"),
+      },
+      {
+        key: "today",
+        label: t("reminders.filters.today"),
+        count: getReminderCountForFilter("today"),
+      },
+      {
+        key: "tomorrow",
+        label: t("reminders.filters.tomorrow"),
+        count: getReminderCountForFilter("tomorrow"),
+      },
+      {
+        key: "thisWeek",
+        label: t("reminders.filters.thisWeek"),
+        count: getReminderCountForFilter("thisWeek"),
+      },
+      {
+        key: "nextWeek",
+        label: t("reminders.filters.nextWeek"),
+        count: getReminderCountForFilter("nextWeek"),
+      },
+      {
+        key: "thisMonth",
+        label: t("reminders.filters.thisMonth"),
+        count: getReminderCountForFilter("thisMonth"),
+      },
     ],
     [getReminderCountForFilter, t]
   );
 
   const stats = useMemo(() => {
     const active = activities.filter((activity) => !activity.completed);
-    const overdue = active.filter((activity) => isOverdue(activity.reminder_date)).length;
-    const todayCount = active.filter((activity) => isToday(activity.reminder_date)).length;
-    const tomorrowCount = active.filter((activity) => isTomorrow(activity.reminder_date)).length;
-    const upcoming = active.filter(
-      (activity) => !isOverdue(activity.reminder_date) && !isToday(activity.reminder_date)
+    const overdue = active.filter((activity) =>
+      isOverdue(activity.reminder_date)
     ).length;
-    const completed = activities.filter((activity) => activity.completed).length;
+    const todayCount = active.filter((activity) =>
+      isToday(activity.reminder_date)
+    ).length;
+    const tomorrowCount = active.filter((activity) =>
+      isTomorrow(activity.reminder_date)
+    ).length;
+    const upcoming = active.filter(
+      (activity) =>
+        !isOverdue(activity.reminder_date) && !isToday(activity.reminder_date)
+    ).length;
+    const completed = activities.filter(
+      (activity) => activity.completed
+    ).length;
 
     return {
       overdue,
       today: todayCount,
       tomorrow: tomorrowCount,
       upcoming,
-      completed
+      completed,
     };
   }, [activities, isOverdue, isToday, isTomorrow]);
 
@@ -535,7 +632,10 @@ const ReminderDetails = () => {
     const active = activities.filter((a) => !a.completed);
     const tomorrow = active.filter((a) => isTomorrow(a.reminder_date)).length;
     const thisWeek = active.filter(
-      (a) => isThisWeek(a.reminder_date) && !isToday(a.reminder_date) && !isTomorrow(a.reminder_date)
+      (a) =>
+        isThisWeek(a.reminder_date) &&
+        !isToday(a.reminder_date) &&
+        !isTomorrow(a.reminder_date)
     ).length;
     const nextWeek = active.filter((a) => isNextWeek(a.reminder_date)).length;
     const total = tomorrow + thisWeek + nextWeek;
@@ -544,7 +644,8 @@ const ReminderDetails = () => {
 
   // Completion details
   const completedToday = useMemo(
-    () => activities.filter((a) => a.completed && isToday(a.reminder_date)).length,
+    () =>
+      activities.filter((a) => a.completed && isToday(a.reminder_date)).length,
     [activities, isToday]
   );
 
@@ -561,28 +662,52 @@ const ReminderDetails = () => {
         filteredCompleted = completed;
         break;
       case "overdue":
-        filteredActive = active.filter((activity) => isOverdue(activity.reminder_date));
-        filteredCompleted = completed.filter((activity) => isOverdue(activity.reminder_date));
+        filteredActive = active.filter((activity) =>
+          isOverdue(activity.reminder_date)
+        );
+        filteredCompleted = completed.filter((activity) =>
+          isOverdue(activity.reminder_date)
+        );
         break;
       case "today":
-        filteredActive = active.filter((activity) => isToday(activity.reminder_date));
-        filteredCompleted = completed.filter((activity) => isToday(activity.reminder_date));
+        filteredActive = active.filter((activity) =>
+          isToday(activity.reminder_date)
+        );
+        filteredCompleted = completed.filter((activity) =>
+          isToday(activity.reminder_date)
+        );
         break;
       case "tomorrow":
-        filteredActive = active.filter((activity) => isTomorrow(activity.reminder_date));
-        filteredCompleted = completed.filter((activity) => isTomorrow(activity.reminder_date));
+        filteredActive = active.filter((activity) =>
+          isTomorrow(activity.reminder_date)
+        );
+        filteredCompleted = completed.filter((activity) =>
+          isTomorrow(activity.reminder_date)
+        );
         break;
       case "thisWeek":
-        filteredActive = active.filter((activity) => isThisWeek(activity.reminder_date));
-        filteredCompleted = completed.filter((activity) => isThisWeek(activity.reminder_date));
+        filteredActive = active.filter((activity) =>
+          isThisWeek(activity.reminder_date)
+        );
+        filteredCompleted = completed.filter((activity) =>
+          isThisWeek(activity.reminder_date)
+        );
         break;
       case "nextWeek":
-        filteredActive = active.filter((activity) => isNextWeek(activity.reminder_date));
-        filteredCompleted = completed.filter((activity) => isNextWeek(activity.reminder_date));
+        filteredActive = active.filter((activity) =>
+          isNextWeek(activity.reminder_date)
+        );
+        filteredCompleted = completed.filter((activity) =>
+          isNextWeek(activity.reminder_date)
+        );
         break;
       case "thisMonth":
-        filteredActive = active.filter((activity) => isThisMonth(activity.reminder_date));
-        filteredCompleted = completed.filter((activity) => isThisMonth(activity.reminder_date));
+        filteredActive = active.filter((activity) =>
+          isThisMonth(activity.reminder_date)
+        );
+        filteredCompleted = completed.filter((activity) =>
+          isThisMonth(activity.reminder_date)
+        );
         break;
       default:
         filteredActive = active;
@@ -593,20 +718,27 @@ const ReminderDetails = () => {
     let finalActive = filteredActive;
 
     if (selectedFilter !== "overdue") {
-      const overdueActivities = active.filter((activity) => isOverdue(activity.reminder_date));
-      const nonOverdue = filteredActive.filter((activity) => !isOverdue(activity.reminder_date));
+      const overdueActivities = active.filter((activity) =>
+        isOverdue(activity.reminder_date)
+      );
+      const nonOverdue = filteredActive.filter(
+        (activity) => !isOverdue(activity.reminder_date)
+      );
       finalActive = [...overdueActivities, ...nonOverdue];
     }
 
     if (hideOverdue) {
-      finalActive = finalActive.filter((activity) => !isOverdue(activity.reminder_date));
+      finalActive = finalActive.filter(
+        (activity) => !isOverdue(activity.reminder_date)
+      );
     }
 
-    const visibleCompleted = (showCompleted || selectedFilter === "all") ? filteredCompleted : [];
+    const visibleCompleted =
+      showCompleted || selectedFilter === "all" ? filteredCompleted : [];
 
     return {
       activeActivities: finalActive,
-      completedActivities: visibleCompleted
+      completedActivities: visibleCompleted,
     };
   }, [
     activities,
@@ -618,7 +750,7 @@ const ReminderDetails = () => {
     isTomorrow,
     isThisWeek,
     isNextWeek,
-    isThisMonth
+    isThisMonth,
   ]);
 
   const groupedActiveActivities = useMemo(
@@ -709,16 +841,16 @@ const ReminderDetails = () => {
       overdue: tForms("reminders.overdue"),
       today: tForms("reminders.today"),
       tomorrow: tForms("reminders.tomorrow"),
-      completed: tForms("reminders.completed")
+      completed: tForms("reminders.completed"),
     }),
     [t, tForms]
   );
 
   // Icon presets to match shared KPI card design
-  const overdueIconPreset = useMemo(() => getKpiIconPreset('red'), []);
-  const todayIconPreset = useMemo(() => getKpiIconPreset('yellow'), []);
-  const upcomingIconPreset = useMemo(() => getKpiIconPreset('sky'), []);
-  const completedIconPreset = useMemo(() => getKpiIconPreset('emerald'), []);
+  const overdueIconPreset = useMemo(() => getKpiIconPreset("red"), []);
+  const todayIconPreset = useMemo(() => getKpiIconPreset("yellow"), []);
+  const upcomingIconPreset = useMemo(() => getKpiIconPreset("sky"), []);
+  const completedIconPreset = useMemo(() => getKpiIconPreset("emerald"), []);
 
   const toggleCompletion = async (activityId: string, completed: boolean) => {
     try {
@@ -736,14 +868,16 @@ const ReminderDetails = () => {
       );
 
       toast({
-        title: completed ? "Reminder marked as completed" : "Reminder marked as not completed",
-        description: "Reminder status updated successfully."
+        title: completed
+          ? "Reminder marked as completed"
+          : "Reminder marked as not completed",
+        description: "Reminder status updated successfully.",
       });
     } catch (error: unknown) {
       toast({
         title: "Error updating reminder",
         description: getErrorMessage(error),
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -756,16 +890,18 @@ const ReminderDetails = () => {
     if (!projectId) return;
     try {
       const { data, error } = await supabase
-        .from('projects')
-        .select('id, name, description, lead_id, user_id, created_at, updated_at, status_id, previous_status_id, project_type_id')
-        .eq('id', projectId)
+        .from("projects")
+        .select(
+          "id, name, description, lead_id, user_id, created_at, updated_at, status_id, previous_status_id, project_type_id"
+        )
+        .eq("id", projectId)
         .single();
       if (error) throw error;
 
       const { data: leadData, error: leadError } = await supabase
-        .from('leads')
-        .select('id, name, status')
-        .eq('id', data.lead_id)
+        .from("leads")
+        .select("id, name, status")
+        .eq("id", data.lead_id)
         .single();
       if (leadError) throw leadError;
 
@@ -774,16 +910,32 @@ const ReminderDetails = () => {
       // Ensure leads map has the project's lead name for the dialog
       setLeads((prev) => {
         const exists = prev.some((l) => l.id === data.lead_id);
-        return exists ? prev : [...prev, { id: data.lead_id, name: leadData?.name || 'Unknown Lead', status: leadData?.status || '' }];
+        return exists
+          ? prev
+          : [
+              ...prev,
+              {
+                id: data.lead_id,
+                name: leadData?.name || "Unknown Lead",
+                status: leadData?.status || "",
+              },
+            ];
       });
     } catch (error: unknown) {
-      toast({ title: 'Unable to open project', description: getErrorMessage(error), variant: 'destructive' });
+      toast({
+        title: "Unable to open project",
+        description: getErrorMessage(error),
+        variant: "destructive",
+      });
     }
   }, []);
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader title={t("reminders.title")} subtitle={t("reminders.description")}> 
+      <PageHeader
+        title={t("reminders.title")}
+        subtitle={t("reminders.description")}
+      >
         <PageHeaderSearch>
           <div className="flex items-center gap-2 w-full">
             <div className="flex-1 min-w-0">
@@ -804,11 +956,11 @@ const ReminderDetails = () => {
                 density="compact"
                 icon={BellRing}
                 {...overdueIconPreset}
-                title={t('reminders.stats.overdue')}
+                title={t("reminders.stats.overdue")}
                 value={stats.overdue}
                 info={{
-                  content: t('reminders.statsDescriptions.overdue'),
-                  ariaLabel: t('reminders.stats.overdue'),
+                  content: t("reminders.statsDescriptions.overdue"),
+                  ariaLabel: t("reminders.stats.overdue"),
                 }}
               />
 
@@ -818,11 +970,11 @@ const ReminderDetails = () => {
                 icon={SunMedium}
                 {...todayIconPreset}
                 iconForeground="text-white"
-                title={t('reminders.stats.today')}
+                title={t("reminders.stats.today")}
                 value={stats.today}
                 info={{
-                  content: t('reminders.statsDescriptions.today'),
-                  ariaLabel: t('reminders.stats.today'),
+                  content: t("reminders.statsDescriptions.today"),
+                  ariaLabel: t("reminders.stats.today"),
                 }}
               />
 
@@ -831,11 +983,15 @@ const ReminderDetails = () => {
                 density="compact"
                 icon={CalendarRange}
                 {...upcomingIconPreset}
-                title={t('reminders.stats.upcoming')}
+                title={t("reminders.stats.upcoming")}
                 value={upcomingBreakdown.total}
                 info={{
-                  content: t('reminders.statsDescriptions.upcoming', { tomorrow: upcomingBreakdown.tomorrow, later: upcomingBreakdown.thisWeek + upcomingBreakdown.nextWeek }),
-                  ariaLabel: t('reminders.stats.upcoming'),
+                  content: t("reminders.statsDescriptions.upcoming", {
+                    tomorrow: upcomingBreakdown.tomorrow,
+                    later:
+                      upcomingBreakdown.thisWeek + upcomingBreakdown.nextWeek,
+                  }),
+                  ariaLabel: t("reminders.stats.upcoming"),
                 }}
               />
 
@@ -844,11 +1000,14 @@ const ReminderDetails = () => {
                 density="compact"
                 icon={CheckCircle2}
                 {...completedIconPreset}
-                title={t('reminders.stats.completed')}
+                title={t("reminders.stats.completed")}
                 value={stats.completed}
                 info={{
-                  content: t('reminders.kpis.completedInfo', { today: completedToday, allTime: stats.completed }),
-                  ariaLabel: t('reminders.stats.completed')
+                  content: t("reminders.kpis.completedInfo", {
+                    today: completedToday,
+                    allTime: stats.completed,
+                  }),
+                  ariaLabel: t("reminders.stats.completed"),
                 }}
               />
             </div>
@@ -857,16 +1016,20 @@ const ReminderDetails = () => {
               <FilterBar
                 quickFilters={quickFilters}
                 activeQuickFilter={selectedFilter}
-                onQuickFilterChange={(filter) => setSelectedFilter(filter as FilterType)}
+                onQuickFilterChange={(filter) =>
+                  setSelectedFilter(filter as FilterType)
+                }
                 allDateFilters={allDateFilters}
                 activeDateFilter={selectedFilter}
-                onDateFilterChange={(filter) => setSelectedFilter(filter as FilterType)}
+                onDateFilterChange={(filter) =>
+                  setSelectedFilter(filter as FilterType)
+                }
                 showCompleted={showCompleted}
                 onShowCompletedChange={setShowCompleted}
                 showCompletedLabel={t("reminders.showCompleted")}
                 hideOverdue={hideOverdue}
                 onHideOverdueChange={setHideOverdue}
-                hideOverdueLabel={t('reminders.hideOverdue')}
+                hideOverdueLabel={t("reminders.hideOverdue")}
                 isSticky
               />
             </div>
@@ -883,14 +1046,17 @@ const ReminderDetails = () => {
                         filterPillBaseClasses,
                         selectedFilter === option.key && filterPillActiveClasses
                       )}
-                      onClick={() => setSelectedFilter(option.key as FilterType)}
+                      onClick={() =>
+                        setSelectedFilter(option.key as FilterType)
+                      }
                     >
                       <span>{option.label}</span>
                       <Badge
                         variant="outline"
                         className={cn(
                           filterPillBadgeBaseClasses,
-                          selectedFilter === option.key && filterPillBadgeActiveClasses
+                          selectedFilter === option.key &&
+                            filterPillBadgeActiveClasses
                         )}
                       >
                         {option.count}
@@ -902,36 +1068,58 @@ const ReminderDetails = () => {
                   <span className="flex items-center gap-2 text-sm text-muted-foreground">
                     {t("reminders.showCompleted")}
                   </span>
-                  <Switch checked={showCompleted} onCheckedChange={setShowCompleted} />
+                  <Switch
+                    checked={showCompleted}
+                    onCheckedChange={setShowCompleted}
+                  />
                   <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                    {t('reminders.hideOverdue')}
+                    {t("reminders.hideOverdue")}
                   </span>
-                  <Switch checked={hideOverdue} onCheckedChange={setHideOverdue} />
+                  <Switch
+                    checked={hideOverdue}
+                    onCheckedChange={setHideOverdue}
+                  />
                 </div>
               </div>
             </div>
 
             {groupedActiveActivities.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border/70 bg-card/50 p-12 text-center text-muted-foreground">
-                <Bell className="mx-auto mb-4 h-12 w-12 opacity-60" aria-hidden="true" />
-                <h3 className="text-lg font-medium text-foreground">{t("reminders.emptyState.title")}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{t("reminders.emptyState.description")}</p>
+                <Bell
+                  className="mx-auto mb-4 h-12 w-12 opacity-60"
+                  aria-hidden="true"
+                />
+                <h3 className="text-lg font-medium text-foreground">
+                  {t("reminders.emptyState.title")}
+                </h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {t("reminders.emptyState.description")}
+                </p>
               </div>
             ) : (
               <div className="space-y-6">
                 {visibleActiveGroups.map((group) => {
                   const relativeLabel = (() => {
-                    if (isToday(group.date)) return t("reminders.filters.today");
-                    if (isTomorrow(group.date)) return t("reminders.filters.tomorrow");
-                    if (isOverdue(group.date)) return t("reminders.filters.overdue");
-                    if (isThisWeek(group.date)) return t("reminders.filters.thisWeek");
-                    if (isNextWeek(group.date)) return t("reminders.filters.nextWeek");
-                    if (isThisMonth(group.date)) return t("reminders.filters.thisMonth");
+                    if (isToday(group.date))
+                      return t("reminders.filters.today");
+                    if (isTomorrow(group.date))
+                      return t("reminders.filters.tomorrow");
+                    if (isOverdue(group.date))
+                      return t("reminders.filters.overdue");
+                    if (isThisWeek(group.date))
+                      return t("reminders.filters.thisWeek");
+                    if (isNextWeek(group.date))
+                      return t("reminders.filters.nextWeek");
+                    if (isThisMonth(group.date))
+                      return t("reminders.filters.thisMonth");
                     return null;
                   })();
 
                   return (
-                    <div key={group.date} className="rounded-2xl border border-border/60 bg-card/70 p-5 shadow-sm">
+                    <div
+                      key={group.date}
+                      className="rounded-2xl border border-border/60 bg-card/70 p-5 shadow-sm"
+                    >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           {relativeLabel && (
@@ -945,19 +1133,30 @@ const ReminderDetails = () => {
                         </div>
                         <Badge variant="outline" className="rounded-full">
                           {group.items.length}
-                          <span className="sr-only">{t("reminders.title")}</span>
+                          <span className="sr-only">
+                            {t("reminders.title")}
+                          </span>
                         </Badge>
                       </div>
                       <div className="relative mt-6 space-y-6">
-                        <div className="absolute left-[11px] top-0 bottom-0 w-px bg-border/60" aria-hidden="true" />
+                        <div
+                          className="absolute left-[11px] top-0 bottom-0 w-px bg-border/60"
+                          aria-hidden="true"
+                        />
                         {group.items.map((activity) => (
                           <ReminderTimelineItem
                             key={activity.id}
                             activity={activity}
                             leadName={getLeadName(activity.lead_id)}
                             onToggleCompletion={toggleCompletion}
-                            onNavigate={() => handleReminderClick(activity.lead_id)}
-                            onNavigateProject={activity.project_id ? () => handleProjectClick(activity.project_id) : undefined}
+                            onNavigate={() =>
+                              handleReminderClick(activity.lead_id)
+                            }
+                            onNavigateProject={
+                              activity.project_id
+                                ? () => handleProjectClick(activity.project_id)
+                                : undefined
+                            }
                             isOverdue={isOverdue(activity.reminder_date)}
                             isToday={isToday(activity.reminder_date)}
                             isTomorrow={isTomorrow(activity.reminder_date)}
@@ -970,7 +1169,10 @@ const ReminderDetails = () => {
                   );
                 })}
                 {hasMoreReminders && (
-                  <div ref={reminderLoadMoreRef} className="flex items-center justify-center py-4">
+                  <div
+                    ref={reminderLoadMoreRef}
+                    className="flex items-center justify-center py-4"
+                  >
                     <span className="sr-only">Load more reminders</span>
                   </div>
                 )}
@@ -982,7 +1184,12 @@ const ReminderDetails = () => {
                 <Accordion type="single" collapsible>
                   <AccordionItem value="completed" className="border-b-0">
                     <AccordionTrigger className="px-5 text-left text-base font-semibold">
-                      {t("reminders.timeline.completedTitle")} ({groupedCompletedActivities.reduce((acc, group) => acc + group.items.length, 0)})
+                      {t("reminders.timeline.completedTitle")} (
+                      {groupedCompletedActivities.reduce(
+                        (acc, group) => acc + group.items.length,
+                        0
+                      )}
+                      )
                     </AccordionTrigger>
                     <AccordionContent className="px-5">
                       <p className="pb-4 text-sm text-muted-foreground">
@@ -990,23 +1197,40 @@ const ReminderDetails = () => {
                       </p>
                       <div className="space-y-4">
                         {groupedCompletedActivities.map((group) => (
-                          <div key={`completed-${group.date}`} className="space-y-4">
+                          <div
+                            key={`completed-${group.date}`}
+                            className="space-y-4"
+                          >
                             <div className="text-sm font-medium text-muted-foreground">
                               {formatGroupDate(group.date)}
                             </div>
                             <div className="relative space-y-4">
-                              <div className="absolute left-[11px] top-0 bottom-0 w-px bg-border/60" aria-hidden="true" />
+                              <div
+                                className="absolute left-[11px] top-0 bottom-0 w-px bg-border/60"
+                                aria-hidden="true"
+                              />
                               {group.items.map((activity) => (
                                 <ReminderTimelineItem
                                   key={activity.id}
                                   activity={activity}
                                   leadName={getLeadName(activity.lead_id)}
                                   onToggleCompletion={toggleCompletion}
-                                  onNavigate={() => handleReminderClick(activity.lead_id)}
-                                  onNavigateProject={activity.project_id ? () => handleProjectClick(activity.project_id) : undefined}
+                                  onNavigate={() =>
+                                    handleReminderClick(activity.lead_id)
+                                  }
+                                  onNavigateProject={
+                                    activity.project_id
+                                      ? () =>
+                                          handleProjectClick(
+                                            activity.project_id
+                                          )
+                                      : undefined
+                                  }
                                   isOverdue={isOverdue(activity.reminder_date)}
                                   isToday={isToday(activity.reminder_date)}
-                                  isTomorrow={isTomorrow(activity.reminder_date)}
+                                  isTomorrow={isTomorrow(
+                                    activity.reminder_date
+                                  )}
                                   labels={labels}
                                   hasProject={!!activity.project_id}
                                 />
@@ -1029,7 +1253,7 @@ const ReminderDetails = () => {
           open={showProjectDialog}
           onOpenChange={setShowProjectDialog}
           onProjectUpdated={fetchReminders}
-          leadName={getLeadName(viewingProject?.lead_id || '')}
+          leadName={getLeadName(viewingProject?.lead_id || "")}
         />
       )}
     </div>

@@ -11,7 +11,9 @@
     "cancel": "İptal",
     "createProject": "Projeyi oluştur",
     "creating": "Oluşturuluyor…",
-    "title": "Proje oluştur"
+    "title": "Proje oluştur",
+    "editTitle": "Proje düzenle",
+    "review": "Özeti incele"
   },
   "summary": {
     "sectionTitle": "Kontrol edin ve onaylayın",
@@ -71,10 +73,34 @@
           "more": "+{{count}} hizmet daha"
         }
       }
+    },
+    "delivery": {
+      "heading": "Teslimat",
+      "title": "Teslimat beklentileri",
+      "helper": "Müşteriye ileteceğiniz teslim kapsamını burada özetleyin.",
+      "photo": {
+        "label": "Fotoğraf teslimatı",
+        "placeholder": "Belirtilmedi",
+        "single": "{{count}} fotoğraf",
+        "range": "{{min}}-{{max}} fotoğraf"
+      },
+      "leadTime": {
+        "label": "Teslim süresi",
+        "placeholder": "Belirtilmedi",
+        "value": "{{value}} {{unit}}"
+      },
+      "methods": {
+        "label": "Teslim yöntemleri",
+        "placeholder": "Yöntem seçilmedi"
+      },
+      "empty": "Teslimat bilgisi paylaşılmadı.",
+      "actions": {
+        "edit": "Teslimatı düzenle"
+      }
     }
   },
   "guardrail": {
-    "unsavedTitle": "Kaydetmeden çıkılsın mı?",
+      "unsavedTitle": "Kaydetmeden çıkılsın mı?",
     "unsavedDescription": "Bir proje oluşturuyorsunuz. Düzenlemeye devam edin veya değişiklikleri silin.",
     "stay": "Düzenlemeye devam et",
     "discard": "Değişiklikleri sil"
@@ -294,11 +320,84 @@
         "clientTotalHelperExtras": "Ek hizmetler paket fiyatına eklenir.",
         "deposit": "Kapora",
         "depositHelperNone": "Kapora alınmıyor",
-        "servicesAddOnCount": "Seçilen ek hizmet sayısı"
+      "servicesAddOnCount": "Seçilen ek hizmet sayısı"
       },
       "badges": {
         "included": "Pakete dahil",
         "addOn": "Ücrete ek"
+      }
+    },
+    "delivery": {
+      "navigationLabel": "Teslimat",
+      "heading": "Teslimat",
+      "description": "Paket teslimine dair fotoğraf adedi, süre ve yöntem bilgilerini paylaşın.",
+      "masterToggleLabel": "Teslimat bilgisini paylaş",
+      "disabledHelper": "Bu projede teslimat detayı paylaşılmayacak.",
+      "stepSummary": {
+        "disabled": "Teslimat paylaşılmayacak",
+        "leadTime": "{{value}} {{unit}}",
+        "photoSingle": "{{count}} fotoğraf",
+        "photoRange": "{{min}}-{{max}} fotoğraf",
+        "methods": "{{count}} yöntem"
+      },
+      "sections": {
+        "disabled": "Paylaşılmayacak",
+        "photo": {
+          "title": "Fotoğraf teslimatı",
+          "description": "Teslim etmeyi planladığınız fotoğraf adedini belirtin.",
+          "single": "{{count}} fotoğraf",
+          "range": "{{min}}-{{max}} fotoğraf",
+          "notSet": "Belirtilmedi"
+        },
+        "leadTime": {
+          "title": "Teslim süresi",
+          "description": "Fotoğrafları müşteriye ulaştıracağınız süreyi paylaşın.",
+          "value": "{{value}} {{unit}}",
+          "notSet": "Belirtilmedi"
+        },
+        "methods": {
+          "title": "Teslim yöntemleri",
+          "description": "Teslimatı hangi kanallardan yapacağınızı seçin.",
+          "count": "{{count}} yöntem",
+          "notSet": "Belirtilmedi"
+        }
+      },
+      "photoCount": {
+        "single": {
+          "label": "Tek değer",
+          "placeholder": "Örn. 40",
+          "helper": "Teslim edeceğiniz tahmini fotoğraf adedi."
+        },
+        "range": {
+          "label": "Aralık",
+          "minPlaceholder": "Minimum",
+          "minHelper": "En az kaç fotoğraf vereceksiniz?",
+          "maxPlaceholder": "Maksimum",
+          "maxHelper": "En fazla kaç fotoğraf vereceksiniz?"
+        }
+      },
+      "leadTime": {
+        "placeholder": "Süre",
+        "unitPlaceholder": "Birim seçin",
+        "days": "Gün",
+        "weeks": "Hafta",
+        "helper": "Fotoğrafların müşteriye ulaşacağı tahmini süre."
+      },
+      "methods": {
+        "helper": "Teslimat için kullanacağınız yöntemleri seçin.",
+        "empty": "Henüz teslim yöntemi tanımlanmadı.",
+        "placeholder": "Yeni teslim yöntemi ekle",
+        "add": "Yöntemi ekle",
+        "saving": "Kaydediliyor…",
+        "addHelper": "Eklediğiniz yöntemler organizasyon kataloğunuza kaydedilir.",
+        "success": "Teslim yöntemi eklendi.",
+        "reactivateSuccess": "Devre dışı yöntem yeniden kullanıma açıldı.",
+        "errors": {
+          "required": "Lütfen bir yöntem adı girin.",
+          "organization": "Yeni yöntem eklemek için önce bir organizasyon seçmelisiniz.",
+          "duplicate": "Bu yöntem zaten mevcut.",
+          "generic": "Teslim yöntemi eklenemedi."
+        }
       }
     },
     "summary": {

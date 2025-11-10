@@ -125,7 +125,7 @@ export function ProjectServicesSection({ projectId, onServicesUpdated, refreshTo
     return () => {
       active = false;
     };
-  }, [refreshServiceRecords, handleLoadError]);
+  }, [refreshServiceRecords, handleLoadError, refreshToken]);
 
   useEffect(() => {
     let active = true;

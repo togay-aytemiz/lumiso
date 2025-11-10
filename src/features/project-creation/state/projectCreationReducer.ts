@@ -5,6 +5,7 @@ import {
   ProjectCreationState,
   ProjectCreationStepId,
 } from "../types";
+import { createDefaultProjectDeliveryState } from "./projectDeliveryState";
 
 const DEFAULT_STEP: ProjectCreationStepId = "lead";
 
@@ -27,6 +28,7 @@ export const PROJECT_CREATION_STEPS: ProjectCreationStepConfig[] = [
   { id: "lead", labelKey: "steps.lead.navigationLabel" },
   { id: "details", labelKey: "steps.details.navigationLabel" },
   { id: "packages", labelKey: "steps.packages.navigationLabel" },
+  { id: "delivery", labelKey: "steps.delivery.navigationLabel" },
   { id: "summary", labelKey: "steps.summary.navigationLabel" },
 ];
 
@@ -75,6 +77,7 @@ export const createInitialProjectCreationState = (
     extraItems: [],
     showCustomSetup: false,
   },
+  delivery: createDefaultProjectDeliveryState(),
   meta: deriveInitialMeta(entryContext),
 });
 
@@ -160,6 +163,24 @@ export const projectCreationReducer = (
       return {
         ...state,
         services: nextServices,
+        meta: {
+          ...state.meta,
+          isDirty: shouldMarkDirty ? true : state.meta.isDirty,
+        },
+      };
+    }
+    case "UPDATE_DELIVERY": {
+      const nextDelivery = {
+        ...state.delivery,
+        ...action.payload,
+      };
+      if (shallowEqual(state.delivery, nextDelivery)) {
+        return state;
+      }
+      const shouldMarkDirty = action.markDirty ?? true;
+      return {
+        ...state,
+        delivery: nextDelivery,
         meta: {
           ...state.meta,
           isDirty: shouldMarkDirty ? true : state.meta.isDirty,

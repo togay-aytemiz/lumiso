@@ -31,6 +31,9 @@ export interface ProjectPackageDeliverySnapshot {
   leadTimeValue?: number | null;
   leadTimeUnit?: "days" | "weeks" | null;
   methods: ProjectPackageDeliveryMethodSnapshot[];
+  photosEnabled?: boolean;
+  leadTimeEnabled?: boolean;
+  methodsEnabled?: boolean;
 }
 
 export interface ProjectPackageSnapshot {
@@ -95,6 +98,12 @@ const parseDeliveryMethods = (value: unknown): ProjectPackageDeliveryMethodSnaps
 export const buildProjectPackageSnapshot = (record: PackageRow): ProjectPackageSnapshot => {
   const estimateType: ProjectPackageEstimateType =
     record.delivery_estimate_type === "range" ? "range" : "single";
+  const parsedMethods = parseDeliveryMethods(record.delivery_methods);
+  const photosEnabled =
+    record.delivery_photo_count_min !== null || record.delivery_photo_count_max !== null;
+  const leadTimeEnabled =
+    record.delivery_lead_time_value !== null && record.delivery_lead_time_value !== undefined;
+  const methodsEnabled = parsedMethods.length > 0;
 
   return {
     id: record.id,
@@ -105,11 +114,16 @@ export const buildProjectPackageSnapshot = (record: PackageRow): ProjectPackageS
     includeAddOnsInPrice: record.include_addons_in_price ?? null,
     delivery: {
       estimateType,
-      photoCountMin: record.delivery_photo_count_min ?? null,
-      photoCountMax: record.delivery_photo_count_max ?? null,
-      leadTimeValue: record.delivery_lead_time_value ?? null,
-      leadTimeUnit: (record.delivery_lead_time_unit as "days" | "weeks" | null) ?? null,
-      methods: parseDeliveryMethods(record.delivery_methods)
+      photoCountMin: photosEnabled ? record.delivery_photo_count_min ?? null : null,
+      photoCountMax:
+        photosEnabled && estimateType === "range" ? record.delivery_photo_count_max ?? null : null,
+      leadTimeValue: leadTimeEnabled ? record.delivery_lead_time_value ?? null : null,
+      leadTimeUnit:
+        leadTimeEnabled && record.delivery_lead_time_unit === "weeks" ? "weeks" : leadTimeEnabled ? "days" : null,
+      methods: methodsEnabled ? parsedMethods : [],
+      photosEnabled,
+      leadTimeEnabled,
+      methodsEnabled,
     },
     lineItems: parseLineItems(record.line_items)
   };
@@ -130,7 +144,7 @@ export const parseProjectPackageSnapshot = (
     deliveryValue && typeof deliveryValue === "object"
       ? {
           estimateType:
-            (value.delivery as Record<string, unknown>).estimateType === "range" ? "range" : "single",
+            (deliveryValue as Record<string, unknown>).estimateType === "range" ? "range" : "single",
           photoCountMin: (deliveryValue as Record<string, unknown>).photoCountMin as number | null | undefined,
           photoCountMax: (deliveryValue as Record<string, unknown>).photoCountMax as number | null | undefined,
           leadTimeValue: (deliveryValue as Record<string, unknown>).leadTimeValue as number | null | undefined,
@@ -141,7 +155,10 @@ export const parseProjectPackageSnapshot = (
             | undefined,
           methods: parseDeliveryMethods(
             (deliveryValue as Record<string, unknown>).methods ?? []
-          )
+          ),
+          photosEnabled: (deliveryValue as Record<string, unknown>).photosEnabled as boolean | undefined,
+          leadTimeEnabled: (deliveryValue as Record<string, unknown>).leadTimeEnabled as boolean | undefined,
+          methodsEnabled: (deliveryValue as Record<string, unknown>).methodsEnabled as boolean | undefined,
         }
       : undefined;
 

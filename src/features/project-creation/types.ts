@@ -1,7 +1,12 @@
 import type { VatMode } from "@/lib/accounting/vat";
 import type { ServiceUnit } from "@/lib/services/units";
 
-export type ProjectCreationStepId = "lead" | "details" | "packages" | "summary";
+export type ProjectCreationStepId =
+  | "lead"
+  | "details"
+  | "packages"
+  | "delivery"
+  | "summary";
 
 export interface ProjectCreationLead {
   id?: string;
@@ -40,6 +45,24 @@ export interface ProjectServiceLineItem {
   source?: "catalog" | "adhoc";
 }
 
+export interface ProjectDeliveryMethodSelection {
+  methodId: string;
+  name?: string | null;
+}
+
+export interface ProjectCreationDelivery {
+  enabled: boolean;
+  enablePhotoEstimate: boolean;
+  estimateType: "single" | "range";
+  countMin?: number | null;
+  countMax?: number | null;
+  enableLeadTime: boolean;
+  leadTimeValue?: number | null;
+  leadTimeUnit?: "days" | "weeks";
+  enableMethods: boolean;
+  methods: ProjectDeliveryMethodSelection[];
+}
+
 export interface ProjectCreationServices {
   packageId?: string;
   packageLabel?: string;
@@ -63,6 +86,7 @@ export interface ProjectCreationState {
   lead: ProjectCreationLead;
   details: ProjectCreationDetails;
   services: ProjectCreationServices;
+  delivery: ProjectCreationDelivery;
   meta: ProjectCreationMetaState;
 }
 
@@ -89,6 +113,11 @@ export type ProjectCreationAction =
   | {
       type: "UPDATE_SERVICES";
       payload: Partial<ProjectCreationServices>;
+      markDirty?: boolean;
+    }
+  | {
+      type: "UPDATE_DELIVERY";
+      payload: Partial<ProjectCreationDelivery>;
       markDirty?: boolean;
     }
   | { type: "MARK_DIRTY"; payload: boolean }

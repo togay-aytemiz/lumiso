@@ -17,6 +17,8 @@ import { normalizeServiceUnit } from "@/lib/services/units";
 import { usePackages, useOrganizationTaxProfile } from "@/hooks/useOrganizationData";
 import type { ProjectServiceLineItem } from "../types";
 import { computeDepositAmount } from "@/lib/payments/depositUtils";
+import { SummarySectionHeading } from "@/components/summary";
+import { createDefaultProjectDeliveryState } from "../state/projectDeliveryState";
 
 interface PackageRecord {
   id: string;
@@ -87,6 +89,10 @@ export const SummaryStep = () => {
   const openServices = useCallback(() => {
     setCurrentStep("packages");
   }, [setCurrentStep]);
+  const openDelivery = useCallback(() => {
+    setCurrentStep("delivery");
+  }, [setCurrentStep]);
+  const deliveryState = state.delivery ?? createDefaultProjectDeliveryState();
 
   const normalizeItemVat = useCallback(
     (item: ProjectServiceLineItem): ProjectServiceLineItem =>
@@ -503,6 +509,76 @@ export const SummaryStep = () => {
     t,
   ]);
 
+  const deliveryEnabled = deliveryState.enabled !== false;
+  const deliveryPhotoSummary = useMemo(() => {
+    if (!deliveryEnabled || deliveryState.enablePhotoEstimate === false) {
+      return t("summary.delivery.photo.placeholder");
+    }
+    if (deliveryState.estimateType === "range") {
+      if (deliveryState.countMin && deliveryState.countMax) {
+        return t("summary.delivery.photo.range", {
+          min: deliveryState.countMin,
+          max: deliveryState.countMax,
+        });
+      }
+      return t("summary.delivery.photo.placeholder");
+    }
+    if (deliveryState.countMin) {
+      return t("summary.delivery.photo.single", { count: deliveryState.countMin });
+    }
+    return t("summary.delivery.photo.placeholder");
+  }, [
+    deliveryEnabled,
+    deliveryState.countMax,
+    deliveryState.countMin,
+    deliveryState.enablePhotoEstimate,
+    deliveryState.estimateType,
+    t,
+  ]);
+
+  const deliveryLeadTimeSummary = useMemo(() => {
+    if (!deliveryEnabled || deliveryState.enableLeadTime === false) {
+      return t("summary.delivery.leadTime.placeholder");
+    }
+    if (deliveryState.leadTimeValue) {
+      const unitKey = deliveryState.leadTimeUnit === "weeks" ? "weeks" : "days";
+      return t("summary.delivery.leadTime.value", {
+        value: deliveryState.leadTimeValue,
+        unit: t(`steps.delivery.leadTime.${unitKey}`),
+      });
+    }
+    return t("summary.delivery.leadTime.placeholder");
+  }, [
+    deliveryEnabled,
+    deliveryState.enableLeadTime,
+    deliveryState.leadTimeUnit,
+    deliveryState.leadTimeValue,
+    t,
+  ]);
+
+  const deliveryMethodsList = useMemo(() => {
+    if (!deliveryEnabled || deliveryState.enableMethods === false) {
+      return [];
+    }
+    return deliveryState.methods
+      .map((method) => method.name ?? method.methodId)
+      .filter((name): name is string => Boolean(name && name.trim()));
+  }, [
+    deliveryEnabled,
+    deliveryState.enableMethods,
+    deliveryState.methods,
+  ]);
+
+  const deliveryMethodsSummary = deliveryMethodsList.length
+    ? deliveryMethodsList.join(", ")
+    : t("summary.delivery.methods.placeholder");
+
+  const hasDeliveryDetails =
+    deliveryEnabled &&
+    ((deliveryState.enablePhotoEstimate && (deliveryState.countMin || deliveryState.countMax)) ||
+      (deliveryState.enableLeadTime && deliveryState.leadTimeValue) ||
+      (deliveryState.enableMethods && deliveryMethodsList.length > 0));
+
   return (
     <div className="space-y-6">
       <header className="space-y-2">
@@ -526,6 +602,24 @@ export const SummaryStep = () => {
           />
           <SummaryInfoStack className="lg:col-span-2" entries={infoEntries} />
         </div>
+      </section>
+
+      <section className="space-y-3">
+        <SummarySectionHeading>{t("summary.delivery.heading")}</SummarySectionHeading>
+        <SummaryDeliveryCard
+          title={t("summary.delivery.title")}
+          helper={t("summary.delivery.helper")}
+          photoLabel={t("summary.delivery.photo.label")}
+          photoValue={deliveryPhotoSummary}
+          leadLabel={t("summary.delivery.leadTime.label")}
+          leadValue={deliveryLeadTimeSummary}
+          methodsLabel={t("summary.delivery.methods.label")}
+          methodsValue={deliveryMethodsSummary}
+          hasDetails={hasDeliveryDetails}
+          disabledLabel={t("summary.delivery.empty")}
+          actionLabel={t("summary.delivery.actions.edit")}
+          onEdit={openDelivery}
+        />
       </section>
 
       {(servicesReferenceStrings.includedChip ||
@@ -716,6 +810,72 @@ const SummaryInfoStack = ({
         </div>
       ))}
     </div>
+  </div>
+);
+
+const SummaryDeliveryCard = ({
+  title,
+  helper,
+  photoLabel,
+  photoValue,
+  leadLabel,
+  leadValue,
+  methodsLabel,
+  methodsValue,
+  hasDetails,
+  disabledLabel,
+  actionLabel,
+  onEdit,
+}: {
+  title: string;
+  helper?: string;
+  photoLabel: string;
+  photoValue: string;
+  leadLabel: string;
+  leadValue: string;
+  methodsLabel: string;
+  methodsValue: string;
+  hasDetails: boolean;
+  disabledLabel: string;
+  actionLabel: string;
+  onEdit: () => void;
+}) => (
+  <div className="rounded-2xl border border-border/70 bg-white/95 p-5 shadow-sm">
+    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+      <div className="space-y-1">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {title}
+        </p>
+        {helper ? <p className="text-xs text-muted-foreground">{helper}</p> : null}
+      </div>
+      <Button
+        variant="link"
+        size="sm"
+        className="h-auto px-0 text-xs font-semibold"
+        onClick={onEdit}
+      >
+        {actionLabel}
+      </Button>
+    </div>
+    {hasDetails ? (
+      <dl className="mt-4 space-y-3 text-sm">
+        {[{ label: photoLabel, value: photoValue }, { label: leadLabel, value: leadValue }, { label: methodsLabel, value: methodsValue }].map(
+          ({ label, value }) => (
+            <div
+              key={label}
+              className="flex flex-col gap-1 border border-border/60 rounded-xl px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {label}
+              </dt>
+              <dd className="text-sm font-semibold text-slate-900">{value}</dd>
+            </div>
+          )
+        )}
+      </dl>
+    ) : (
+      <p className="mt-4 text-sm text-muted-foreground">{disabledLabel}</p>
+    )}
   </div>
 );
 

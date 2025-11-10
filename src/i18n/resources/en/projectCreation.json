@@ -11,7 +11,9 @@
     "cancel": "Cancel",
     "createProject": "Create project",
     "creating": "Creating…",
-    "title": "Create project"
+    "title": "Create project",
+    "editTitle": "Edit project",
+    "review": "Review summary"
   },
   "summary": {
     "sectionTitle": "Review and confirm",
@@ -70,6 +72,30 @@
         "tooltip": {
           "more": "+{{count}} more service(s)"
         }
+      }
+    },
+    "delivery": {
+      "heading": "Delivery",
+      "title": "Delivery expectations",
+      "helper": "Summarise how and when you'll deliver the final work.",
+      "photo": {
+        "label": "Photo delivery",
+        "placeholder": "Not set",
+        "single": "{{count}} photos",
+        "range": "{{min}}-{{max}} photos"
+      },
+      "leadTime": {
+        "label": "Turnaround",
+        "placeholder": "Not set",
+        "value": "{{value}} {{unit}}"
+      },
+      "methods": {
+        "label": "Delivery methods",
+        "placeholder": "No method selected"
+      },
+      "empty": "No delivery details shared.",
+      "actions": {
+        "edit": "Edit delivery"
       }
     }
   },
@@ -299,6 +325,79 @@
       "badges": {
         "included": "Included in package",
         "addOn": "Billable add-on"
+      }
+    },
+    "delivery": {
+      "navigationLabel": "Delivery",
+      "heading": "Delivery",
+      "description": "Capture how you'll hand off this project to the client.",
+      "masterToggleLabel": "Share delivery details",
+      "disabledHelper": "Delivery expectations will stay hidden for this project.",
+      "stepSummary": {
+        "disabled": "Delivery hidden",
+        "leadTime": "{{value}} {{unit}}",
+        "photoSingle": "{{count}} photos",
+        "photoRange": "{{min}}-{{max}} photos",
+        "methods": "{{count}} method(s)"
+      },
+      "sections": {
+        "disabled": "Hidden",
+        "photo": {
+          "title": "Photo delivery",
+          "description": "Share roughly how many photos you'll deliver.",
+          "single": "{{count}} photos",
+          "range": "{{min}}-{{max}} photos",
+          "notSet": "Not set"
+        },
+        "leadTime": {
+          "title": "Turnaround",
+          "description": "Let the client know how long delivery will take.",
+          "value": "{{value}} {{unit}}",
+          "notSet": "Not set"
+        },
+        "methods": {
+          "title": "Delivery methods",
+          "description": "Select the channels you'll use for delivery.",
+          "count": "{{count}} method(s)",
+          "notSet": "Not set"
+        }
+      },
+      "photoCount": {
+        "single": {
+          "label": "Single value",
+          "placeholder": "e.g. 40",
+          "helper": "Approximate number of photos you'll deliver."
+        },
+        "range": {
+          "label": "Range",
+          "minPlaceholder": "Minimum",
+          "minHelper": "Lowest number you'll deliver.",
+          "maxPlaceholder": "Maximum",
+          "maxHelper": "Highest number you'll deliver."
+        }
+      },
+      "leadTime": {
+        "placeholder": "Value",
+        "unitPlaceholder": "Select unit",
+        "days": "Days",
+        "weeks": "Weeks",
+        "helper": "Estimated time until the handoff is ready."
+      },
+      "methods": {
+        "helper": "Pick the methods you plan to use.",
+        "empty": "No delivery methods available yet.",
+        "placeholder": "Add a delivery method",
+        "add": "Add method",
+        "saving": "Saving…",
+        "addHelper": "New methods are saved to your organization catalog.",
+        "success": "Delivery method added.",
+        "reactivateSuccess": "Delivery method restored.",
+        "errors": {
+          "required": "Enter a delivery method name.",
+          "organization": "Select an organization before adding methods.",
+          "duplicate": "This method already exists.",
+          "generic": "We couldn't add this delivery method."
+        }
       }
     },
     "summary": {

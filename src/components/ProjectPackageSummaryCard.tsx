@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Camera, Clock, PackageCheck, Send } from "lucide-react";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
@@ -17,9 +17,12 @@ interface ProjectPackageSummaryCardProps {
   onEditPackage: () => void;
 }
 
-const formatPhotoEstimate = (snapshot: ProjectPackageSnapshot | null, t: ReturnType<typeof useFormsTranslation>["t"]) => {
+const formatPhotoEstimate = (
+  snapshot: ProjectPackageSnapshot | null,
+  t: ReturnType<typeof useFormsTranslation>["t"]
+) => {
   const delivery = snapshot?.delivery;
-  if (!delivery || (!delivery.photoCountMin && !delivery.photoCountMax)) {
+  if (!delivery || delivery.photosEnabled === false) {
     return t("project_package_card.none", { defaultValue: "Not specified" });
   }
 
@@ -41,9 +44,17 @@ const formatPhotoEstimate = (snapshot: ProjectPackageSnapshot | null, t: ReturnT
   });
 };
 
-const formatLeadTime = (snapshot: ProjectPackageSnapshot | null, t: ReturnType<typeof useFormsTranslation>["t"]) => {
+const formatLeadTime = (
+  snapshot: ProjectPackageSnapshot | null,
+  t: ReturnType<typeof useFormsTranslation>["t"]
+) => {
   const delivery = snapshot?.delivery;
-  if (!delivery || !delivery.leadTimeValue || !delivery.leadTimeUnit) {
+  if (
+    !delivery ||
+    delivery.leadTimeEnabled === false ||
+    !delivery.leadTimeValue ||
+    !delivery.leadTimeUnit
+  ) {
     return t("project_package_card.none", { defaultValue: "Not specified" });
   }
   const unit =
@@ -57,9 +68,13 @@ const formatLeadTime = (snapshot: ProjectPackageSnapshot | null, t: ReturnType<t
   });
 };
 
-const formatMethods = (snapshot: ProjectPackageSnapshot | null, t: ReturnType<typeof useFormsTranslation>["t"]) => {
-  const methods = snapshot?.delivery?.methods;
-  if (!methods || methods.length === 0) {
+const formatMethods = (
+  snapshot: ProjectPackageSnapshot | null,
+  t: ReturnType<typeof useFormsTranslation>["t"]
+) => {
+  const delivery = snapshot?.delivery;
+  const methods = delivery?.methods;
+  if (!delivery || delivery.methodsEnabled === false || !methods || methods.length === 0) {
     return t("project_package_card.none", { defaultValue: "Not specified" });
   }
   return methods.map((method) => method.name ?? method.methodId).join(", ");
@@ -211,14 +226,6 @@ export function ProjectPackageSummaryCard({
           </Button>
           </div>
         </div>
-        {snapshot ? (
-          <CardDescription className="text-sm text-muted-foreground">
-            {t("project_package_card.package_attached", {
-              name: snapshot.name,
-              defaultValue: "Linked package: {{name}}",
-            })}
-          </CardDescription>
-        ) : null}
         {snapshot && customized ? (
           <p className="text-xs text-muted-foreground">
             {t("project_package_card.customized_hint", {

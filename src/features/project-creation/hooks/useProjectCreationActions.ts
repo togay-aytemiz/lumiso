@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useProjectCreationContext } from "./useProjectCreationContext";
 import {
+  ProjectCreationDelivery,
   ProjectCreationDetails,
   ProjectCreationEntryContext,
   ProjectCreationLead,
@@ -64,6 +65,20 @@ export const useProjectCreationActions = () => {
     [dispatch]
   );
 
+  const updateDelivery = useCallback(
+    (
+      delivery: Partial<ProjectCreationDelivery>,
+      options?: { markDirty?: boolean }
+    ) => {
+      dispatch({
+        type: "UPDATE_DELIVERY",
+        payload: delivery,
+        markDirty: options?.markDirty,
+      });
+    },
+    [dispatch]
+  );
+
   const markDirty = useCallback(
     (isDirty: boolean) => {
       dispatch({ type: "MARK_DIRTY", payload: isDirty });
@@ -84,6 +99,7 @@ export const useProjectCreationActions = () => {
     updateLead,
     updateDetails,
     updateServices,
+    updateDelivery,
     markDirty,
     reset,
   };

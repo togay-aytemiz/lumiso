@@ -88,6 +88,11 @@ export function useTemplateVariables() {
 
         // Session variables (real database fields)
         {
+          key: "session_name",
+          label: "Session Name",
+          category: "session"
+        },
+        {
           key: "session_date",
           label: "Session Date",
           category: "session"
@@ -112,6 +117,21 @@ export function useTemplateVariables() {
           label: "Session Status",
           category: "session"
         },
+        {
+          key: "session_type",
+          label: "Session Type",
+          category: "session"
+        },
+        {
+          key: "session_duration",
+          label: "Session Duration",
+          category: "session"
+        },
+        {
+          key: "session_meeting_url",
+          label: "Session Meeting Link",
+          category: "session"
+        },
 
         // Project variables (real database fields)
         {
@@ -132,6 +152,11 @@ export function useTemplateVariables() {
         {
           key: "project_due_date",
           label: "Project Due Date",
+          category: "project"
+        },
+        {
+          key: "project_package_name",
+          label: "Project Package Name",
           category: "project"
         },
 
@@ -189,6 +214,10 @@ export function useTemplateVariables() {
     }
 
     // Session variables (real database fields)
+    if (key === "session_name") return "Signature Portrait Session";
+    if (key === "session_type") return "Engagement Session";
+    if (key === "session_duration") return "90 minutes";
+    if (key === "session_meeting_url") return "https://meet.example.com/lumiso-session";
     if (key === "session_date") return new Date().toLocaleDateString();
     if (key === "session_time") return "2:00 PM";  
     if (key === "session_location") return "Studio Location";
@@ -200,6 +229,7 @@ export function useTemplateVariables() {
     if (key === "project_type") return "Wedding";
     if (key === "project_status") return "In Progress";
     if (key === "project_due_date") return new Date().toLocaleDateString();
+    if (key === "project_package_name") return "Signature Wedding Collection";
 
     // System variables
     if (key === "current_date") return new Date().toLocaleDateString();

@@ -1820,11 +1820,18 @@
       },
       "mockData": {
         "customerName": "Sarah Johnson",
+        "sessionName": "Downtown Portrait Session",
         "sessionDate": "March 15, 2024",
         "sessionTime": "2:00 PM",
         "sessionLocation": "Studio Downtown",
+        "sessionType": "Engagement",
+        "sessionDuration": "90 minutes",
+        "sessionStatus": "Confirmed",
+        "sessionMeeting": "https://meet.example.com/preview",
         "businessName": "Radiant Photography",
-        "businessPhone": "(555) 123-4567"
+        "businessPhone": "(555) 123-4567",
+        "projectName": "Spring Wedding",
+        "projectPackage": "Signature Wedding Collection"
       },
       "whatsapp": {
         "online": "online"

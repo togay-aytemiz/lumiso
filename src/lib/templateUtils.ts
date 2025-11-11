@@ -54,13 +54,20 @@ export function getPreviewDataSets(language: string = 'en') {
         name: "Tam Veri",
         data: {
           customer_name: "Elif & Mert",
+          session_name: "Nişan Çekimi",
           session_date: "15 Mart 2024",
           session_time: "14:00",
           session_location: "Merkez Stüdyo",
+          session_type: "Nişan",
+          session_duration: "90 dakika",
+          session_status: "Planlandı",
+          session_meeting_url: "https://meet.example.com/elif-mert",
           business_name: "Parlak Fotoğrafçılık",
           business_phone: "(555) 123-4567",
           customer_email: "elif.mert@example.com",
-          business_email: "merhaba@parlakfotografcilik.com"
+          business_email: "merhaba@parlakfotografcilik.com",
+          project_name: "Yaz Düğünü",
+          project_package_name: "Lüks Düğün Paketi"
         }
       },
       {
@@ -69,7 +76,9 @@ export function getPreviewDataSets(language: string = 'en') {
           customer_name: "Ayşe Yılmaz",
           session_date: "20 Mart 2024",
           business_name: "Parlak Fotoğrafçılık",
-          business_phone: "(555) 123-4567"
+          business_phone: "(555) 123-4567",
+          session_status: "Beklemede",
+          project_name: "Portre Çalışması"
           // Missing time, location, emails
         }
       },
@@ -77,13 +86,20 @@ export function getPreviewDataSets(language: string = 'en') {
         name: "Uzun İsimler",
         data: {
           customer_name: "Zeynep Nur Kaya-Demir",
+          session_name: "Şehir Dışı Çift Çekimi",
           session_date: "25 Mart 2024", 
           session_time: "10:30",
           session_location: "Merkez Park Fotoğraf Stüdyosu ve Etkinlik Alanı",
+          session_type: "Özel",
+          session_duration: "120 dakika",
+          session_status: "Hazırlık",
+          session_meeting_url: "https://meet.example.com/zeynep",
           business_name: "Profesyonel Düğün ve Portre Fotoğraf Stüdyosu",
           business_phone: "(555) 987-6543",
           customer_email: "zeynep.nur.kaya.demir@example.com",
-          business_email: "iletisim@profesyoneldugünportre.com"
+          business_email: "iletisim@profesyoneldugünportre.com",
+          project_name: "Kıyı Düğünü",
+          project_package_name: "Premium Paket"
         }
       }
     ];
@@ -95,13 +111,20 @@ export function getPreviewDataSets(language: string = 'en') {
       name: "Complete Data",
       data: {
         customer_name: "Sarah Johnson",
+        session_name: "Downtown Portrait Session",
         session_date: "March 15, 2024",
         session_time: "2:00 PM",
         session_location: "Studio Downtown",
+        session_type: "Engagement",
+        session_duration: "90 minutes",
+        session_status: "Confirmed",
+        session_meeting_url: "https://meet.example.com/sarah",
         business_name: "Radiant Photography",
         business_phone: "(555) 123-4567",
         customer_email: "sarah@example.com",
-        business_email: "hello@radiantphotography.com"
+        business_email: "hello@radiantphotography.com",
+        project_name: "Spring Wedding",
+        project_package_name: "Signature Wedding Collection"
       }
     },
     {
@@ -110,7 +133,8 @@ export function getPreviewDataSets(language: string = 'en') {
         customer_name: "John Doe",
         session_date: "March 20, 2024",
         business_name: "Radiant Photography",
-        business_phone: "(555) 123-4567"
+        business_phone: "(555) 123-4567",
+        session_status: "Pending"
         // Missing time, location, emails
       }
     },
@@ -118,13 +142,20 @@ export function getPreviewDataSets(language: string = 'en') {
       name: "Long Names",
       data: {
         customer_name: "Alexandra Thompson-Williams",
+        session_name: "Destination Sunset Session",
         session_date: "March 25, 2024", 
         session_time: "10:30 AM",
         session_location: "Central Park Photography Studio & Event Space",
+        session_type: "Editorial",
+        session_duration: "2 hours",
+        session_status: "In Planning",
+        session_meeting_url: "https://meet.example.com/alexandra",
         business_name: "Professional Wedding & Portrait Photography Studio",
         business_phone: "(555) 987-6543",
         customer_email: "alexandra.thompson.williams@example.com",
-        business_email: "contact@professionalweddingportraitstudio.com"
+        business_email: "contact@professionalweddingportraitstudio.com",
+        project_name: "City Hall Ceremony",
+        project_package_name: "Elite Collection"
       }
     }
   ];

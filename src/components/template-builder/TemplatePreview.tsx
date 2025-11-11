@@ -51,11 +51,18 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
 
   const defaultMockData = {
     customer_name: t('templateBuilder.preview.mockData.customerName'),
+    session_name: t('templateBuilder.preview.mockData.sessionName'),
     session_date: t('templateBuilder.preview.mockData.sessionDate'),
     session_time: t('templateBuilder.preview.mockData.sessionTime'),
     session_location: t('templateBuilder.preview.mockData.sessionLocation'),
+    session_type: t('templateBuilder.preview.mockData.sessionType'),
+    session_duration: t('templateBuilder.preview.mockData.sessionDuration'),
+    session_status: t('templateBuilder.preview.mockData.sessionStatus'),
+    session_meeting_url: t('templateBuilder.preview.mockData.sessionMeeting'),
     business_name: t('templateBuilder.preview.mockData.businessName'),
     business_phone: t('templateBuilder.preview.mockData.businessPhone'),
+    project_name: t('templateBuilder.preview.mockData.projectName'),
+    project_package_name: t('templateBuilder.preview.mockData.projectPackage'),
   };
 
   const mockData = previewData || defaultMockData;

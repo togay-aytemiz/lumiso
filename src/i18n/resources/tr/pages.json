@@ -2115,17 +2115,21 @@
     "variables": {
       "categories": {
         "business": "İşletme",
-        "lead": "Aday",
+        "lead": "Kişi",
         "session": "Seans",
         "project": "Proje",
         "custom": "Sistem"
       },
       "labels": {
         "businessName": "İşletme Adı",
-        "leadStatus": "Aday Durumu",
-        "leadDueDate": "Aday Son Tarihi",
-        "leadCreatedDate": "Aday Oluşturma Tarihi",
-        "leadUpdatedDate": "Aday Güncelleme Tarihi",
+        "leadFullName": "Ad Soyad",
+        "leadEmail": "E-posta Adresi",
+        "leadPhone": "Telefon Numarası",
+        "leadNotes": "Notlar",
+        "leadStatus": "Kişi Durumu",
+        "leadDueDate": "Kişi Son Tarihi",
+        "leadCreatedDate": "Kişi Oluşturma Tarihi",
+        "leadUpdatedDate": "Kişi Güncelleme Tarihi",
         "sessionName": "Seans Adı",
         "sessionDate": "Seans Tarihi",
         "sessionTime": "Seans Saati",

@@ -60,11 +60,16 @@ const MemoizedBlockCard = React.memo(({
 }) => {
   const { t } = useTranslation('pages');
   
-  const handleClick = useCallback(() => {
-    if (!isActive) {
+  const handleHeaderToggle = useCallback(() => {
+    onActivate(block.id);
+  }, [block.id, onActivate]);
+
+  const handleHeaderKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
       onActivate(block.id);
     }
-  }, [block.id, isActive, onActivate]);
+  }, [block.id, onActivate]);
 
   const handleToggleVisibility = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -106,18 +111,22 @@ const MemoizedBlockCard = React.memo(({
           >
             <Card
               className={cn(
-                "cursor-pointer transition-colors",
+                "transition-colors",
                 isActive && "ring-2 ring-primary",
                 !block.visible && "opacity-50",
                 snapshot.isDragging && "shadow-lg"
               )}
-              onClick={handleClick}
             >
               <CardHeader
                 className={cn(
-                  "space-y-0 transition-all",
+                  "space-y-0 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                   isActive ? "pt-4 pb-2" : "py-4 md:py-5 min-h-[72px] justify-center"
                 )}
+                role="button"
+                tabIndex={0}
+                aria-expanded={isActive}
+                onClick={handleHeaderToggle}
+                onKeyDown={handleHeaderKeyDown}
               >
                 <div className="flex w-full items-center justify-between gap-2">
                   <CardTitle className="text-sm flex items-center gap-2">
@@ -156,7 +165,7 @@ const MemoizedBlockCard = React.memo(({
                   </div>
                 </div>
               </CardHeader>
-              <CollapsibleContent className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up data-[state=closed]:opacity-0 data-[state=open]:opacity-100 transition-opacity">
+              <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up data-[state=closed]:opacity-0 data-[state=open]:opacity-100 transition-opacity">
                 <CardContent className="pt-0">
                   <BlockEditor
                     block={block}

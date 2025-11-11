@@ -27,6 +27,15 @@ export function useTemplateVariables() {
     try {
       setLoading(true);
 
+      const leadFieldTranslationMap: Record<string, string> = {
+        name: t("templateBuilder.variables.labels.leadFullName"),
+        full_name: t("templateBuilder.variables.labels.leadFullName"),
+        email: t("templateBuilder.variables.labels.leadEmail"),
+        phone: t("templateBuilder.variables.labels.leadPhone"),
+        notes: t("templateBuilder.variables.labels.leadNotes"),
+        status: t("templateBuilder.variables.labels.leadStatus")
+      };
+
       // Fetch organization settings for business info
       const { data: orgSettings } = await supabase
         .from("organization_settings")
@@ -60,11 +69,14 @@ export function useTemplateVariables() {
         },
 
         // Lead variables from field definitions
-        ...(leadFields?.map(field => ({
-          key: `lead_${field.field_key}`,
-          label: field.label,
-          category: "lead" as const
-        })) || []),
+        ...(leadFields?.map(field => {
+          const translatedLabel = leadFieldTranslationMap[field.field_key] ?? field.label;
+          return {
+            key: `lead_${field.field_key}`,
+            label: translatedLabel,
+            category: "lead" as const
+          };
+        }) || []),
 
         // Static lead variables that exist in database
         {
@@ -175,7 +187,14 @@ export function useTemplateVariables() {
         }
       ];
 
-      setVariables(templateVariables);
+      const uniqueVariables = Array.from(
+        templateVariables.reduce((map, variable) => {
+          map.set(variable.key, variable);
+          return map;
+        }, new Map<string, TemplateVariable>()).values()
+      );
+
+      setVariables(uniqueVariables);
     } catch (error) {
       console.error("Error fetching template variables:", error);
     } finally {

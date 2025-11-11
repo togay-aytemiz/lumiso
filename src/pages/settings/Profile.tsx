@@ -13,7 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, Settings, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { User, Settings, CheckCircle, ShieldCheck } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useWorkingHours } from "@/hooks/useWorkingHours";
@@ -28,6 +29,7 @@ import { useSettingsFileUploader } from "@/hooks/useSettingsFileUploader";
 
 export default function Profile() {
   const [emailAddress, setEmailAddress] = useState("");
+  const [sendingPasswordEmail, setSendingPasswordEmail] = useState(false);
   const [isProfilePhotoModalOpen, setIsProfilePhotoModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchParams] = useSearchParams();
@@ -207,6 +209,42 @@ export default function Profile() {
     const result = await deleteProfilePhoto();
     if (result.success) {
       // The toast is handled in the hook
+    }
+  };
+
+  const handleSendPasswordResetLink = async () => {
+    if (!emailAddress) {
+      toast({
+        title: t('settings.profile.security.missingEmailTitle'),
+        description: t('settings.profile.security.missingEmailDescription'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSendingPasswordEmail(true);
+    try {
+      const normalizedEmail = emailAddress.trim().toLowerCase();
+      const params = new URLSearchParams({ email: normalizedEmail });
+      const redirectTo = `${window.location.origin}/auth/recovery?${params.toString()}`;
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+        redirectTo,
+      });
+      if (error) throw error;
+
+      toast({
+        title: t('settings.profile.security.successTitle'),
+        description: t('settings.profile.security.successDescription', { email: normalizedEmail }),
+      });
+    } catch (error) {
+      console.error("Change password request failed:", error);
+      toast({
+        title: t('settings.profile.security.errorTitle'),
+        description: t('settings.profile.security.errorDescription'),
+        variant: "destructive",
+      });
+    } finally {
+      setSendingPasswordEmail(false);
     }
   };
 
@@ -414,6 +452,37 @@ export default function Profile() {
             <p className="text-xs text-muted-foreground">
               {t('settings.profile.profileInfo.emailHelp')}
             </p>
+          </div>
+          <div className="sm:col-span-2 rounded-2xl border border-border/70 bg-muted/10 p-4 sm:p-5">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full bg-primary/10 p-2 text-primary">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  {t('settings.profile.security.title')}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {t('settings.profile.security.description')}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full rounded-full bg-muted px-6 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted/80 sm:w-auto"
+                onClick={handleSendPasswordResetLink}
+                disabled={sendingPasswordEmail || !emailAddress}
+              >
+                {sendingPasswordEmail
+                  ? t('settings.profile.security.ctaLoading')
+                  : t('settings.profile.security.cta')}
+              </Button>
+              <p className="text-xs text-muted-foreground sm:flex-1 sm:text-left">
+                {t('settings.profile.security.hint')}
+              </p>
+            </div>
           </div>
         </SettingsFormSection>
 

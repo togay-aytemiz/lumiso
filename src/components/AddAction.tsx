@@ -21,25 +21,20 @@ interface AddActionProps {
   className?: string;
 }
 
-const routeActionMap: Array<{
+interface AddActionRouteConfig {
   matcher: (pathname: string) => boolean;
-  action: AddActionType;
-}> = [
-  { matcher: (pathname) => pathname.startsWith("/leads"), action: "lead" },
-  { matcher: (pathname) => pathname.startsWith("/projects"), action: "project" },
-  {
-    matcher: (pathname) =>
-      pathname.startsWith("/calendar") ||
-      pathname.startsWith("/sessions") ||
-      pathname.startsWith("/reminders"),
-    action: "session",
-  },
-];
-
-function getPrimaryAction(pathname: string): AddActionType {
-  const match = routeActionMap.find((entry) => entry.matcher(pathname));
-  return match?.action ?? "lead";
+  label: string;
+  primaryAction: AddActionType | null;
+  openMenuOnPrimary: boolean;
 }
+
+const matchesRoute = (pathname: string, route: string) => {
+  if (route === "/") {
+    return pathname === "/" || pathname === "/dashboard";
+  }
+
+  return pathname === route || pathname.startsWith(`${route}/`);
+};
 
 export function AddAction({ className }: AddActionProps) {
   const location = useLocation();
@@ -47,23 +42,94 @@ export function AddAction({ className }: AddActionProps) {
   const { t: tCommon } = useTranslation("common");
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const primaryAction = useMemo(
-    () => getPrimaryAction(location.pathname),
-    [location.pathname]
+  const actionLabels = useMemo(
+    () => ({
+      lead: t("leads.addLead"),
+      project: t("projects.addProject"),
+      session: t("sessions.addButton"),
+      addNew: tCommon("buttons.addNew"),
+    }),
+    [t, tCommon]
   );
 
-  const labels: Record<AddActionType, string> = {
-    lead: t("leads.addLead"),
-    project: t("projects.addProject"),
-    session: t("sessions.addButton"),
-  };
+  const routeConfigs = useMemo<AddActionRouteConfig[]>(() => {
+    const addNewRoutes = [
+      "/",
+      "/dashboard",
+      "/analytics",
+      "/payments",
+      "/workflows",
+      "/templates",
+    ];
 
-  const primaryLabel =
-    primaryAction === "lead"
-      ? labels.lead
-      : primaryAction === "project"
-      ? labels.project
-      : labels.session;
+    return [
+      {
+        matcher: (pathname) => matchesRoute(pathname, "/leads"),
+        label: actionLabels.lead,
+        primaryAction: "lead",
+        openMenuOnPrimary: false,
+      },
+      {
+        matcher: (pathname) => matchesRoute(pathname, "/projects"),
+        label: actionLabels.project,
+        primaryAction: "project",
+        openMenuOnPrimary: false,
+      },
+      {
+        matcher: (pathname) => matchesRoute(pathname, "/calendar"),
+        label: actionLabels.session,
+        primaryAction: "session",
+        openMenuOnPrimary: false,
+      },
+      {
+        matcher: (pathname) => matchesRoute(pathname, "/sessions"),
+        label: actionLabels.lead,
+        primaryAction: "lead",
+        openMenuOnPrimary: false,
+      },
+      {
+        matcher: (pathname) => matchesRoute(pathname, "/reminders"),
+        label: actionLabels.lead,
+        primaryAction: "lead",
+        openMenuOnPrimary: false,
+      },
+      {
+        matcher: (pathname) => addNewRoutes.some((route) => matchesRoute(pathname, route)),
+        label: actionLabels.addNew,
+        primaryAction: null,
+        openMenuOnPrimary: true,
+      },
+    ];
+  }, [actionLabels]);
+
+  const currentConfig = useMemo<AddActionRouteConfig>(() => {
+    const match = routeConfigs.find((config) => config.matcher(location.pathname));
+
+    if (match) {
+      return match;
+    }
+
+    return {
+      matcher: () => true,
+      label: actionLabels.addNew,
+      primaryAction: null,
+      openMenuOnPrimary: true,
+    };
+  }, [routeConfigs, location.pathname, actionLabels.addNew]);
+
+  const primaryLabel = currentConfig.label ?? tCommon("buttons.new");
+
+  const handlePrimaryButtonClick = () => {
+    if (currentConfig.openMenuOnPrimary) {
+      setMenuOpen((previous) => !previous);
+      return;
+    }
+
+    if (currentConfig.primaryAction) {
+      setMenuOpen(false);
+      handleAction(currentConfig.primaryAction);
+    }
+  };
 
   const handleAction = (type: AddActionType) => {
     if (typeof window === "undefined") return;
@@ -75,9 +141,9 @@ export function AddAction({ className }: AddActionProps) {
   };
 
   const dropdownItems: Array<{ type: AddActionType; label: string }> = [
-    { type: "lead", label: labels.lead },
-    { type: "project", label: labels.project },
-    { type: "session", label: labels.session },
+    { type: "lead", label: actionLabels.lead },
+    { type: "project", label: actionLabels.project },
+    { type: "session", label: actionLabels.session },
   ];
 
   return (
@@ -90,8 +156,10 @@ export function AddAction({ className }: AddActionProps) {
       <Button
         type="button"
         className="h-12 rounded-l-full rounded-r-none px-3 sm:px-4"
-        onClick={() => handleAction(primaryAction)}
+        onClick={handlePrimaryButtonClick}
         aria-label={primaryLabel ?? tCommon("buttons.new")}
+        aria-haspopup={currentConfig.openMenuOnPrimary ? "menu" : undefined}
+        aria-expanded={currentConfig.openMenuOnPrimary ? menuOpen : undefined}
       >
         <Plus className="h-4 w-4" />
         <span className="hidden sm:inline whitespace-nowrap">
@@ -113,7 +181,10 @@ export function AddAction({ className }: AddActionProps) {
           {dropdownItems.map((item) => (
             <DropdownMenuItem
               key={item.type}
-              onSelect={() => handleAction(item.type)}
+              onSelect={() => {
+                handleAction(item.type);
+                setMenuOpen(false);
+              }}
               className="flex items-center justify-between"
             >
               <span>{item.label}</span>

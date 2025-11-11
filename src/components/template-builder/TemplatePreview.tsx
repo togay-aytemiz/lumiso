@@ -51,6 +51,13 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
 
   const defaultMockData = {
     customer_name: t('templateBuilder.preview.mockData.customerName'),
+    lead_name: t('templateBuilder.preview.mockData.leadName'),
+    lead_email: t('templateBuilder.preview.mockData.leadEmail'),
+    lead_phone: t('templateBuilder.preview.mockData.leadPhone'),
+    lead_status: t('templateBuilder.preview.mockData.leadStatus'),
+    lead_due_date: t('templateBuilder.preview.mockData.leadDueDate'),
+    lead_created_date: t('templateBuilder.preview.mockData.leadCreatedDate'),
+    lead_updated_date: t('templateBuilder.preview.mockData.leadUpdatedDate'),
     session_name: t('templateBuilder.preview.mockData.sessionName'),
     session_date: t('templateBuilder.preview.mockData.sessionDate'),
     session_time: t('templateBuilder.preview.mockData.sessionTime'),
@@ -66,7 +73,10 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
     project_package_name: t('templateBuilder.preview.mockData.projectPackage'),
   };
 
-  const mockData = previewData || defaultMockData;
+  const mockData = {
+    ...defaultMockData,
+    ...(previewData ?? {})
+  };
   const disabledChannels: TemplateChannel[] = ["whatsapp", "sms"];
   const soonLabel = t('templateBuilder.preview.channels.soon');
 

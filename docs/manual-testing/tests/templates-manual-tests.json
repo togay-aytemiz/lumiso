@@ -419,6 +419,43 @@
     ]
   },
   {
+    "suite": "Template Builder - Mock Veri Doğrulama",
+    "cases": [
+      {
+        "external_id": "CRM-TEMPLATES-220",
+        "title": "Mock veri setlerinin dil ve değişken eşleştirmesi",
+        "description": "Preview data selector’ündeki setlerin (Tam Veri, Eksik Alanlar, Uzun İsimler / Complete Data vb.) seçilen dile göre doğru isimlerle geldiğini, lead/customer alias alanlarının ({lead_name}, {lead_email}, {lead_phone}) mock değerle doldurulduğunu ve tüm kanallarda placeholder kalmadığını doğrular.",
+        "steps": [
+          {
+            "action": "Arayüz dili İngilizceyken Template Builder’da bir şablon açın ve preview veri seti menüsünden \"Complete Data\" seçeneğini seçin.",
+            "expected_result": "E-posta önizlemesinin üst kısmında konu, preheader ve ilk Text block’ta {lead_name}, {lead_email}, {lead_phone} gibi alanlar \"Sarah Johnson\", \"sarah@example.com\", \"(555) 987-6543\" değerleriyle görünür."
+          },
+          {
+            "action": "Aynı builder’da bir Text block seçip Variable Picker’dan {lead_name}, {lead_email}, {lead_phone}, {lead_status} ve {lead_due_date} değişkenlerini metne ekleyin.",
+            "expected_result": "Eklenen placeholder’ların tamamı önizlemede mock verilerle (Confirmed, March 28, 2024 vb.) çözümlenir; hiçbir `{…}` metni kalmaz."
+          },
+          {
+            "action": "Preview veri setini \"Missing Fields\" seçeneğine getirin.",
+            "expected_result": "Eksik alanlar için tire (`—`) veya varsayılan metin gösterilir, ancak {lead_name}/{lead_email}/{lead_phone} gibi alias alanlar yine mock değerle dolu kalır."
+          },
+          {
+            "action": "Uygulama dilini Türkçe’ye alın (Profil > Dil > Türkçe) ve builder sayfasını yenileyip aynı şablonu açın.",
+            "expected_result": "Preview veri seti isimleri \"Tam Veri / Eksik Alanlar / Uzun İsimler\" olarak görülür ve seçili set otomatik olarak \"Tam Veri\"ye döner."
+          },
+          {
+            "action": "\"Tam Veri\" seti seçiliyken e-posta, WhatsApp ve SMS sekmelerini sırayla kontrol edin.",
+            "expected_result": "Her kanalda {lead_name} alanı \"Elif & Mert\" olarak görünür; {lead_email} ve {lead_phone} sırasıyla \"elif.mert@example.com\" ve \"+90 555 123 4567\" değerini gösterir, SMS fallback metni kalmaz."
+          },
+          {
+            "action": "\"Uzun İsimler\" setini seçip builder’da {session_name} ve {project_name} değişkenlerinin satır içinde taşmasını kontrol edin.",
+            "expected_result": "Uzun Türkçe metinler satır kırarak gösterilir, layout bozulmaz ve tüm alias alanları yine mock verilerle dolar."
+          }
+        ],
+        "expected_result": "Mock veri setleri dil değiştikçe doğru isimle listelenir, lead/customer alias alanları her zaman doldurulur ve e-posta/WhatsApp/SMS önizlemelerinde hiçbir `{}` placeholder kalmaz."
+      }
+    ]
+  },
+  {
     "suite": "Template Builder - Görsel Havuzu",
     "cases": [
       {

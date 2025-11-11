@@ -8,6 +8,7 @@ interface SMSPreviewProps {
 
 export function SMSPreview({ blocks, mockData }: SMSPreviewProps) {
   const { t } = useTranslation('pages');
+  const previewRecipientName = mockData.lead_name || mockData.customer_name || t('templateBuilder.preview.mockData.customerName');
   const replacePlaceholders = (text: string) => {
     return text.replace(/\{(\w+)\}/g, (match, key) => mockData[key] || match);
   };
@@ -136,7 +137,7 @@ export function SMSPreview({ blocks, mockData }: SMSPreviewProps) {
           </div>
         ) : (
           <div className="text-sm">
-            {t('templateBuilder.preview.helloCustomer', { name: mockData.customer_name })} {t('templateBuilder.preview.excitedMessage')}.
+            {t('templateBuilder.preview.helloCustomer', { name: previewRecipientName })} {t('templateBuilder.preview.excitedMessage')}.
             
             {t('templateBuilder.preview.addBlocks')}.
           </div>

@@ -97,7 +97,7 @@ const sampleBlocks: TemplateBlock[] = [
     visible: true,
     order: 0,
     data: {
-      content: "Hello {customer_name}",
+      content: "Hello {lead_name}",
       formatting: {
         fontSize: "p",
       },
@@ -106,7 +106,14 @@ const sampleBlocks: TemplateBlock[] = [
 ];
 
 const previewData = {
+  lead_name: "Alice Example",
   customer_name: "Alice Example",
+  lead_email: "alice@example.com",
+  lead_phone: "555-222-1111",
+  lead_status: "Confirmed",
+  lead_due_date: "Aug 30",
+  lead_created_date: "Aug 1",
+  lead_updated_date: "Aug 10",
   session_name: "Creative Session",
   session_type: "Portrait",
   session_duration: "45m",
@@ -153,7 +160,7 @@ describe("TemplatePreview", () => {
         blocks={sampleBlocks}
         activeChannel="email"
         onChannelChange={jest.fn()}
-        emailSubject="Subject {customer_name}"
+        emailSubject="Subject {lead_name}"
         preheader="Preheader"
         previewData={previewData}
       />
@@ -408,7 +415,7 @@ describe("EmailPreview", () => {
         blocks={sampleBlocks}
         mockData={previewData}
         device="desktop"
-        emailSubject="Subject for {customer_name}"
+        emailSubject="Subject for {lead_name}"
         preheader="Preheader for {business_name}"
       />
     );

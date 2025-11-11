@@ -1822,6 +1822,13 @@
       },
       "mockData": {
         "customerName": "Sarah Johnson",
+        "leadName": "Sarah Johnson",
+        "leadEmail": "sarah@example.com",
+        "leadPhone": "(555) 987-6543",
+        "leadStatus": "Confirmed",
+        "leadDueDate": "March 28, 2024",
+        "leadCreatedDate": "March 1, 2024",
+        "leadUpdatedDate": "March 10, 2024",
         "sessionName": "Downtown Portrait Session",
         "sessionDate": "March 15, 2024",
         "sessionTime": "2:00 PM",

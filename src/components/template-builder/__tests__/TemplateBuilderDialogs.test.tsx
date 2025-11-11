@@ -15,12 +15,12 @@ jest.mock("react-i18next", () => ({
 jest.mock("@/hooks/useTemplateVariables", () => ({
   useTemplateVariables: jest.fn(() => ({
     variables: [
-      { key: "customer_name", label: "Customer Name", category: "lead" },
+      { key: "lead_name", label: "Customer Name", category: "lead" },
       { key: "session_date", label: "Session Date", category: "session" },
     ],
     loading: false,
     businessInfo: null,
-    getVariableValue: jest.fn(),
+    getVariableValue: jest.fn((key: string) => `mock-${key}`),
     refetch: jest.fn(),
   })),
 }));
@@ -158,7 +158,7 @@ describe("VariablePicker", () => {
 
     const templateVariablesValue = {
       variables: [
-        { key: "customer_name", label: "Customer Name", category: "lead" as const },
+        { key: "lead_name", label: "Customer Name", category: "lead" as const },
         { key: "session_date", label: "Session Date", category: "session" as const },
       ],
       businessInfo: null,
@@ -182,7 +182,7 @@ describe("VariablePicker", () => {
     expect(options).toHaveLength(2);
 
     fireEvent.click(options[0]);
-    expect(handleSelect).toHaveBeenCalledWith("{customer_name}");
+    expect(handleSelect).toHaveBeenCalledWith("{lead_name}");
   });
 });
 

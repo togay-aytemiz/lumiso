@@ -15,6 +15,7 @@ interface EmailPreviewProps {
 export function EmailPreview({ blocks, mockData, device, emailSubject, preheader }: EmailPreviewProps) {
   const { t } = useTranslation('pages');
   const { settings: organizationSettings } = useOrganizationSettings();
+  const previewRecipientName = mockData.lead_name || mockData.customer_name || t('templateBuilder.preview.mockData.customerName');
 
   const replacePlaceholders = (text: string) => {
     return text.replace(/\{(\w+)(?:\|([^}]*))?\}/g, (match, key, fallback) => {
@@ -92,7 +93,7 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
 
         {blocks.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
-            <h3 className="font-semibold mb-2">{t('templateBuilder.preview.helloCustomer', { name: mockData.customer_name })}</h3>
+            <h3 className="font-semibold mb-2">{t('templateBuilder.preview.helloCustomer', { name: previewRecipientName })}</h3>
             <p>{t('templateBuilder.preview.excitedMessage')}</p>
             <p className="mt-8 text-sm">{t('templateBuilder.preview.addBlocks')}</p>
           </div>

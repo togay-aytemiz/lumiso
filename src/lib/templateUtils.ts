@@ -46,14 +46,40 @@ export function generatePlainText(
   return 'No content available';
 }
 
+function buildPreviewData(
+  base: Record<string, string>,
+  lead: {
+    name: string;
+    email: string;
+    phone: string;
+    status: string;
+    dueDate: string;
+    createdDate: string;
+    updatedDate: string;
+  }
+): Record<string, string> {
+  return {
+    ...base,
+    customer_name: lead.name,
+    lead_name: lead.name,
+    customer_email: lead.email,
+    lead_email: lead.email,
+    customer_phone: lead.phone,
+    lead_phone: lead.phone,
+    lead_status: lead.status,
+    lead_due_date: lead.dueDate,
+    lead_created_date: lead.createdDate,
+    lead_updated_date: lead.updatedDate,
+  };
+}
+
 // Get preview data sets based on language
 export function getPreviewDataSets(language: string = 'en') {
   if (language === 'tr') {
     return [
       {
         name: "Tam Veri",
-        data: {
-          customer_name: "Elif & Mert",
+        data: buildPreviewData({
           session_name: "Nişan Çekimi",
           session_date: "15 Mart 2024",
           session_time: "14:00",
@@ -65,29 +91,41 @@ export function getPreviewDataSets(language: string = 'en') {
           session_notes: "Hazırlıklarınızı paylaşmayı unutmayın.",
           business_name: "Parlak Fotoğrafçılık",
           business_phone: "(555) 123-4567",
-          customer_email: "elif.mert@example.com",
           business_email: "merhaba@parlakfotografcilik.com",
           project_name: "Yaz Düğünü",
           project_package_name: "Lüks Düğün Paketi"
-        }
+        }, {
+          name: "Elif & Mert",
+          email: "elif.mert@example.com",
+          phone: "+90 555 123 4567",
+          status: "Planlandı",
+          dueDate: "20 Mart 2024",
+          createdDate: "1 Mart 2024",
+          updatedDate: "10 Mart 2024"
+        })
       },
       {
         name: "Eksik Alanlar",
-        data: {
-          customer_name: "Ayşe Yılmaz",
+        data: buildPreviewData({
           session_date: "20 Mart 2024",
           session_notes: "Ekipman listesi mailde.",
           business_name: "Parlak Fotoğrafçılık",
           business_phone: "(555) 123-4567",
           session_status: "Beklemede",
           project_name: "Portre Çalışması"
-          // Missing time, location, emails
-        }
+        }, {
+          name: "Ayşe Yılmaz",
+          email: "ayse@example.com",
+          phone: "+90 555 987 6543",
+          status: "Beklemede",
+          dueDate: "25 Mart 2024",
+          createdDate: "5 Mart 2024",
+          updatedDate: "12 Mart 2024"
+        })
       },
       {
         name: "Uzun İsimler",
-        data: {
-          customer_name: "Zeynep Nur Kaya-Demir",
+        data: buildPreviewData({
           session_name: "Şehir Dışı Çift Çekimi",
           session_date: "25 Mart 2024", 
           session_time: "10:30",
@@ -103,7 +141,15 @@ export function getPreviewDataSets(language: string = 'en') {
           business_email: "iletisim@profesyoneldugünportre.com",
           project_name: "Kıyı Düğünü",
           project_package_name: "Premium Paket"
-        }
+        }, {
+          name: "Zeynep Nur Kaya-Demir",
+          email: "zeynep.nur.kaya.demir@example.com",
+          phone: "+90 555 222 3344",
+          status: "Hazırlık",
+          dueDate: "30 Mart 2024",
+          createdDate: "3 Mart 2024",
+          updatedDate: "14 Mart 2024"
+        })
       }
     ];
   }
@@ -112,8 +158,7 @@ export function getPreviewDataSets(language: string = 'en') {
   return [
     {
       name: "Complete Data",
-      data: {
-        customer_name: "Sarah Johnson",
+      data: buildPreviewData({
         session_name: "Downtown Portrait Session",
         session_date: "March 15, 2024",
         session_time: "2:00 PM",
@@ -125,28 +170,40 @@ export function getPreviewDataSets(language: string = 'en') {
         session_notes: "Please bring your favorite outfit options.",
         business_name: "Radiant Photography",
         business_phone: "(555) 123-4567",
-        customer_email: "sarah@example.com",
         business_email: "hello@radiantphotography.com",
         project_name: "Spring Wedding",
         project_package_name: "Signature Wedding Collection"
-      }
+      }, {
+        name: "Sarah Johnson",
+        email: "sarah@example.com",
+        phone: "(555) 987-6543",
+        status: "Confirmed",
+        dueDate: "March 28, 2024",
+        createdDate: "March 1, 2024",
+        updatedDate: "March 10, 2024"
+      })
     },
     {
       name: "Missing Fields",
-      data: {
-        customer_name: "John Doe",
+      data: buildPreviewData({
         session_date: "March 20, 2024",
         session_notes: "We'll confirm wardrobe soon.",
         business_name: "Radiant Photography",
         business_phone: "(555) 123-4567",
         session_status: "Pending"
-        // Missing time, location, emails
-      }
+      }, {
+        name: "John Doe",
+        email: "john@example.com",
+        phone: "(555) 222-1111",
+        status: "Pending",
+        dueDate: "April 2, 2024",
+        createdDate: "March 5, 2024",
+        updatedDate: "March 9, 2024"
+      })
     },
     {
       name: "Long Names",
-      data: {
-        customer_name: "Alexandra Thompson-Williams",
+      data: buildPreviewData({
         session_name: "Destination Sunset Session",
         session_date: "March 25, 2024", 
         session_time: "10:30 AM",
@@ -158,11 +215,18 @@ export function getPreviewDataSets(language: string = 'en') {
         session_notes: "Prep call scheduled for next week.",
         business_name: "Professional Wedding & Portrait Photography Studio",
         business_phone: "(555) 987-6543",
-        customer_email: "alexandra.thompson.williams@example.com",
         business_email: "contact@professionalweddingportraitstudio.com",
         project_name: "City Hall Ceremony",
         project_package_name: "Elite Collection"
-      }
+      }, {
+        name: "Alexandra Thompson-Williams",
+        email: "alexandra.thompson.williams@example.com",
+        phone: "(555) 444-7777",
+        status: "In Planning",
+        dueDate: "April 10, 2024",
+        createdDate: "March 3, 2024",
+        updatedDate: "March 14, 2024"
+      })
     }
   ];
 }

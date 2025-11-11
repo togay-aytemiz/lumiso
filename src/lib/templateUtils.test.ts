@@ -93,7 +93,7 @@ describe("templateUtils", () => {
 
       expect(sets).toHaveLength(3);
       expect(sets[0]?.name).toBe("Complete Data");
-      expect(sets[0]?.data.customer_name).toBe("Sarah Johnson");
+      expect(sets[0]?.data.lead_name).toBe("Sarah Johnson");
     });
   });
 

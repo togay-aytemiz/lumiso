@@ -116,7 +116,7 @@ describe("PlainTextPreview", () => {
     render(
       <PlainTextPreview
         blocks={blocks}
-        mockData={{ customer_name: "Taylor" }}
+        mockData={{ lead_name: "Taylor", customer_name: "Taylor" }}
       />
     );
 
@@ -140,7 +140,7 @@ describe("TemplatePreview", () => {
       id: "1",
       type: "text",
       data: {
-        content: "Hello {customer_name}",
+        content: "Hello {lead_name}",
         formatting: {
           fontFamily: "Arial",
           fontSize: "p",
@@ -339,7 +339,7 @@ describe("OptimizedTemplatePreview", () => {
         onChannelChange={jest.fn()}
         emailSubject="Optimized Subject"
         preheader="Optimized Preheader"
-        previewData={{ customer_name: "Jordan" }}
+        previewData={{ lead_name: "Jordan", customer_name: "Jordan" }}
       />
     );
 

@@ -238,7 +238,43 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   const subjectCharCount = useMemo(() => getCharacterCount(subject), [subject]);
   const spamWords = useMemo(() => checkSpamWords(subject), [subject]);
   const previewDataSets = useMemo(() => getPreviewDataSets(i18n.language), [i18n.language]);
-  const selectedData = useMemo(() => previewDataSets[selectedPreviewData], [selectedPreviewData, previewDataSets]);
+  useEffect(() => {
+    if (selectedPreviewData >= previewDataSets.length) {
+      setSelectedPreviewData(0);
+    }
+  }, [selectedPreviewData, previewDataSets]);
+  const selectedPreviewDataset = useMemo(() => {
+    if (previewDataSets.length === 0) {
+      return undefined;
+    }
+    const safeIndex = Math.min(selectedPreviewData, previewDataSets.length - 1);
+    return previewDataSets[safeIndex];
+  }, [previewDataSets, selectedPreviewData]);
+  const datasetWithAliases = useMemo(() => {
+    const base = selectedPreviewDataset?.data ?? {};
+    const enhanced: Record<string, string> = { ...base };
+    if (enhanced.customer_name && !enhanced.lead_name) {
+      enhanced.lead_name = enhanced.customer_name;
+    }
+    if (enhanced.customer_email && !enhanced.lead_email) {
+      enhanced.lead_email = enhanced.customer_email;
+    }
+    if (enhanced.customer_phone && !enhanced.lead_phone) {
+      enhanced.lead_phone = enhanced.customer_phone;
+    }
+    return enhanced;
+  }, [selectedPreviewDataset]);
+  const variableFallbacks = useMemo(() => {
+    const map: Record<string, string> = {};
+    templateVariablesState.variables.forEach((variable) => {
+      map[variable.key] = templateVariablesState.getVariableValue(variable.key);
+    });
+    return map;
+  }, [templateVariablesState.variables, templateVariablesState.getVariableValue]);
+  const previewMockData = useMemo(() => ({
+    ...variableFallbacks,
+    ...datasetWithAliases
+  }), [variableFallbacks, datasetWithAliases]);
 
   if (loading) {
     return (
@@ -437,7 +473,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
             onChannelChange={(channel) => setActiveChannel(channel)}
             emailSubject={subject}
             preheader={preheader}
-            previewData={selectedData.data}
+            previewData={previewMockData}
           />
         </div>
       </div>

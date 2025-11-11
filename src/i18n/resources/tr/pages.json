@@ -1822,6 +1822,13 @@
       },
       "mockData": {
         "customerName": "Elif ve Mert",
+        "leadName": "Elif ve Mert",
+        "leadEmail": "elif.mert@example.com",
+        "leadPhone": "0555 123 4567",
+        "leadStatus": "Planlandı",
+        "leadDueDate": "28 Mart 2024",
+        "leadCreatedDate": "1 Mart 2024",
+        "leadUpdatedDate": "10 Mart 2024",
         "sessionName": "Şehir Çekimi",
         "sessionDate": "15 Mart 2024",
         "sessionTime": "14:00",

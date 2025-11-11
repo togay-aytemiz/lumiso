@@ -334,7 +334,7 @@ export function AddAction({ className }: AddActionProps) {
       <div
         ref={triggerRef}
         className={cn(
-          "group relative flex items-center overflow-hidden rounded-full border border-slate-200/80 bg-gradient-to-r from-slate-50 via-slate-100 to-white text-slate-900 shadow-[0_18px_38px_-20px_rgba(15,23,42,0.35)] transition-all duration-300 hover:shadow-[0_24px_50px_-22px_rgba(15,23,42,0.4)] focus-within:ring-2 focus-within:ring-slate-300/70 focus-within:ring-offset-2 focus-within:ring-offset-background",
+          "group relative flex items-center overflow-hidden rounded-full border border-slate-200/80 bg-gradient-to-r from-slate-50 via-slate-100 to-white text-slate-900 transition-all duration-300 focus-within:ring-2 focus-within:ring-slate-300/70 focus-within:ring-offset-2 focus-within:ring-offset-background",
           className
         )}
       >
@@ -355,9 +355,9 @@ export function AddAction({ className }: AddActionProps) {
           aria-haspopup={primaryButtonControlsMenu ? "menu" : undefined}
           aria-expanded={primaryButtonControlsMenu ? menuOpen : undefined}
         >
-          <Plus className="h-4 w-4 text-slate-700 transition-transform duration-200 group-hover/button:scale-110 group-hover/button:text-slate-900 group-focus-visible/button:scale-110 group-focus-visible/button:text-slate-900" />
+          <Plus className="h-4 w-4 text-slate-600 transition-transform duration-200 group-hover/button:scale-110 group-hover/button:text-slate-800 group-focus-visible/button:scale-110 group-focus-visible/button:text-slate-800" />
           <span
-            className="hidden whitespace-nowrap text-base text-slate-700 transition-colors duration-200 group-hover/button:text-slate-900 group-focus-visible/button:text-slate-900 sm:inline"
+            className="hidden whitespace-nowrap text-base text-slate-600 transition-colors duration-200 group-hover/button:text-slate-800 group-focus-visible/button:text-slate-800 sm:inline"
             data-add-action-label
           >
             <span
@@ -379,7 +379,7 @@ export function AddAction({ className }: AddActionProps) {
         >
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute left-0 top-1/2 h-7 w-px -translate-y-1/2 bg-slate-200"
+            className="pointer-events-none absolute left-0 top-1/2 h-7 w-px -translate-y-1/2 bg-slate-300"
           />
           <ChevronDown
             className={cn(

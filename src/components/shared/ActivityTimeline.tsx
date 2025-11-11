@@ -2,7 +2,6 @@ import { ActivityTimelineItem } from "./ActivityTimelineItem";
 import { ReminderTimelineCard } from "@/components/reminders/ReminderTimelineCard";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
-import { cn } from "@/lib/utils";
 
 interface Activity {
   id: string;
@@ -29,7 +28,6 @@ interface ActivityTimelineProps {
   onToggleCompletion: (activityId: string, completed: boolean) => void;
   onReminderLeadNavigate?: (leadId: string) => void;
   onReminderProjectNavigate?: (projectId: string) => void;
-  showTimelineMarker?: boolean;
 }
 
 export function ActivityTimeline({
@@ -39,7 +37,6 @@ export function ActivityTimeline({
   onToggleCompletion,
   onReminderLeadNavigate,
   onReminderProjectNavigate,
-  showTimelineMarker = true,
 }: ActivityTimelineProps) {
   const { t } = useFormsTranslation();
   
@@ -81,26 +78,20 @@ export function ActivityTimeline({
   return <div className="space-y-6">
       {sortedDays.map((day, dayIndex) => <div key={day.date} className="relative">
           {/* Day header */}
-          <div className={cn("flex items-center gap-3 mb-3", !showTimelineMarker && "ml-0")}>
-            {showTimelineMarker && (
-              <div className="flex flex-col items-center">
-                <div className="w-3 h-3 rounded-full bg-primary" />
-                {dayIndex < sortedDays.length - 1}
-              </div>
-            )}
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex flex-col items-center">
+              <div className="w-3 h-3 rounded-full bg-primary" />
+              {dayIndex < sortedDays.length - 1}
+            </div>
             <h3 className="text-sm font-medium text-muted-foreground">
               {formatDayHeader(day.date)}
             </h3>
           </div>
 
           {/* Activities for this day */}
-          <div
-            className={cn("space-y-1", showTimelineMarker ? "ml-6 relative" : "")}
-          >
+          <div className="ml-6 space-y-1 relative">
             {/* Connecting line for activities */}
-            {showTimelineMarker && (
-              <div className="absolute left-[-18px] top-0 bottom-0 w-px bg-muted-foreground/20" />
-            )}
+            <div className="absolute left-[-18px] top-0 bottom-0 w-px bg-muted-foreground/20" />
             
             {day.activities.map((activity, activityIndex) => {
           // Use ReminderTimelineCard for reminders with dates

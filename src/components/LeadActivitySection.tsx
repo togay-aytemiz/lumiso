@@ -11,8 +11,7 @@ import { ActivityForm } from "@/components/shared/ActivityForm";
 import { ActivityTimeline } from "@/components/shared/ActivityTimeline";
 import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { ViewProjectDialog } from "@/components/ViewProjectDialog";
-import { useProjectDialogController } from "@/hooks/useProjectDialogController";
+import { useNavigate } from "react-router-dom";
 import type { Database, Json } from "@/integrations/supabase/types";
 type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
@@ -136,6 +135,7 @@ export function LeadActivitySection({
   onActivityUpdated
 }: LeadActivitySectionProps) {
   const { t } = useFormsTranslation();
+  const navigate = useNavigate();
   const [activities, setActivities] = useState<TimelineActivity[]>([]);
   const [projectActivities, setProjectActivities] = useState<TimelineActivity[]>([]);
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
@@ -144,27 +144,12 @@ export function LeadActivitySection({
   const [saving, setSaving] = useState(false);
   const [selectedSegment, setSelectedSegment] = useState<"activity" | "history">("activity");
 
-  const resolveLeadName = useCallback(
-    (_leadId: string) => leadName,
-    [leadName]
-  );
-
-  const {
-    viewingProject,
-    projectDialogOpen,
-    onProjectDialogOpenChange,
-    projectDialogLeadName,
-    openProjectDialog,
-  } = useProjectDialogController({
-    resolveLeadName,
-  });
-
   const handleReminderProjectNavigate = useCallback(
     (projectId: string) => {
       if (!projectId) return;
-      void openProjectDialog(projectId);
+      navigate(`/projects/${projectId}`);
     },
-    [openProjectDialog]
+    [navigate]
   );
   
   const fetchLeadActivities = useCallback(async () => {
@@ -404,7 +389,7 @@ export function LeadActivitySection({
       });
     }
   };
-const getActivityDescription = (log: AuditLogEntry): string => {
+  const getActivityDescription = (log: AuditLogEntry): string => {
     if (log.entity_type === 'lead') {
       if (log.action === 'created') return t('activityLogs.lead_created');
       if (log.action === 'archived') return t('activityLogs.lead_archived');
@@ -459,26 +444,9 @@ const getActivityDescription = (log: AuditLogEntry): string => {
       if (log.action === 'updated') return name ? `Session "${name}" updated` : 'Session updated';
       if (log.action === 'archived') return name ? `Session "${name}" archived` : 'Session archived';
       if (log.action === 'restored') return name ? `Session "${name}" restored` : 'Session restored';
-  }
-  return `${log.entity_type} ${log.action}`;
-};
-
-  const handleProjectDialogUpdated = useCallback(() => {
-    void fetchLeadActivities();
-    void fetchProjectActivities();
-    onActivityUpdated?.();
-  }, [fetchLeadActivities, fetchProjectActivities, onActivityUpdated]);
-
-  const projectDialog = (
-    <ViewProjectDialog
-      project={viewingProject}
-      open={projectDialogOpen}
-      onOpenChange={onProjectDialogOpenChange}
-      onProjectUpdated={handleProjectDialogUpdated}
-      onActivityUpdated={onActivityUpdated}
-      leadName={projectDialogLeadName}
-    />
-  );
+    }
+    return `${log.entity_type} ${log.action}`;
+  };
   if (loading) {
     return <Card>
         <CardHeader>
@@ -520,7 +488,6 @@ const getActivityDescription = (log: AuditLogEntry): string => {
                     leadName={leadName}
                     onToggleCompletion={toggleCompletion}
                     onReminderProjectNavigate={handleReminderProjectNavigate}
-                    showTimelineMarker={false}
                   />
                 </div>}
 
@@ -532,7 +499,6 @@ const getActivityDescription = (log: AuditLogEntry): string => {
                     leadName={leadName}
                     onToggleCompletion={toggleCompletion}
                     onReminderProjectNavigate={handleReminderProjectNavigate}
-                    showTimelineMarker={false}
                   />
                 </div>}
 

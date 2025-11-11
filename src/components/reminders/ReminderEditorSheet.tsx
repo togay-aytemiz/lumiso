@@ -79,6 +79,7 @@ export const ReminderEditorSheet = ({
       title={title}
       isOpen={open}
       onOpenChange={onOpenChange}
+      size="content"
       footerActions={[
         {
           label: primaryActionLabel,

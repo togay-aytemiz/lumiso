@@ -420,7 +420,9 @@ describe("ImageLibrarySheet", () => {
       expect(screen.getByText("hero.png")).toBeInTheDocument()
     );
 
-    const copyButton = screen.getByRole("button", { name: "Copy image URL" });
+    const copyButton = screen.getByRole("button", {
+      name: "templateBuilder.imageManager.actions.copyUrl",
+    });
 
     fireEvent.click(copyButton);
     expect(clipboardWriteMock).toHaveBeenCalledWith(
@@ -428,7 +430,7 @@ describe("ImageLibrarySheet", () => {
     );
     await waitFor(() =>
       expect(toastMock).toHaveBeenCalledWith(
-        expect.objectContaining({ title: "Success" })
+        expect.objectContaining({ title: "toast.success" })
       )
     );
   });
@@ -451,7 +453,11 @@ describe("ImageLibrarySheet", () => {
       expect(screen.getByText("hero.png")).toBeInTheDocument()
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Insert" }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "templateBuilder.imageManager.actions.insert",
+      })
+    );
 
     expect(onImageSelect).toHaveBeenCalledWith(
       "https://cdn.local/hero.png",
@@ -471,20 +477,26 @@ describe("ImageLibrarySheet", () => {
       expect(screen.getByText("hero.png")).toBeInTheDocument()
     );
 
-    const editButton = screen.getByRole("button", { name: "Edit alt text" });
+    const editButton = screen.getByRole("button", {
+      name: "templateBuilder.imageManager.actions.editAlt",
+    });
 
     fireEvent.click(editButton);
 
     const input = screen.getByDisplayValue("Hero shot");
     fireEvent.change(input, { target: { value: "Updated alt" } });
 
-    const confirmButton = screen.getByRole("button", { name: "Confirm alt text" });
+    const confirmButton = screen.getByRole("button", {
+      name: "templateBuilder.imageManager.actions.confirmAlt",
+    });
     fireEvent.click(confirmButton);
 
     await waitFor(() => expect(updateMock).toHaveBeenCalled());
     expect(updateEqMock).toHaveBeenCalledWith("id", "asset-1");
     expect(toastMock).toHaveBeenCalledWith(
-      expect.objectContaining({ description: "Alt text updated" })
+      expect.objectContaining({
+        description: "templateBuilder.imageManager.messages.altSuccess",
+      })
     );
   });
 
@@ -501,16 +513,20 @@ describe("ImageLibrarySheet", () => {
       expect(screen.getByText("hero.png")).toBeInTheDocument()
     );
 
-    const deleteButton = screen.getByRole("button", { name: "Delete image" });
+    const deleteButton = screen.getByRole("button", {
+      name: "templateBuilder.imageManager.actions.deleteAria",
+    });
 
     fireEvent.click(deleteButton);
-    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(screen.getByRole("button", { name: "buttons.delete" }));
 
     await waitFor(() => expect(deleteMock).toHaveBeenCalled());
     expect(deleteEqMock).toHaveBeenCalledWith("id", "asset-1");
     expect(removeMock).toHaveBeenCalledWith(["template-images/hero.png"]);
     expect(toastMock).toHaveBeenCalledWith(
-      expect.objectContaining({ description: "Image deleted successfully" })
+      expect.objectContaining({
+        description: "templateBuilder.imageManager.messages.deleteSuccess",
+      })
     );
   });
 
@@ -523,7 +539,7 @@ describe("ImageLibrarySheet", () => {
     await waitFor(() =>
       expect(toastMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          description: "Failed to load images",
+          description: "templateBuilder.imageManager.messages.loadError",
           variant: "destructive",
         })
       )
@@ -543,15 +559,17 @@ describe("ImageLibrarySheet", () => {
       expect(screen.getByText("hero.png")).toBeInTheDocument()
     );
 
-    const deleteButton = screen.getByRole("button", { name: "Delete image" });
+    const deleteButton = screen.getByRole("button", {
+      name: "templateBuilder.imageManager.actions.deleteAria",
+    });
 
     fireEvent.click(deleteButton);
-    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(screen.getByRole("button", { name: "buttons.delete" }));
 
     await waitFor(() =>
       expect(toastMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          description: "Failed to delete image",
+          description: "templateBuilder.imageManager.messages.deleteError",
           variant: "destructive",
         })
       )

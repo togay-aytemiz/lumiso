@@ -1988,14 +1988,30 @@
       "loading": "Görseller yükleniyor...",
       "title": "Görsel Kütüphanesi",
       "titleWithCount": "Görsel Kütüphanesi ({{count}})",
+      "sheetDescription": "Yüklediğiniz görselleri yönetin. Şablonunuza eklemek için bir görsele tıklayın.",
       "empty": {
         "title": "Henüz görsel yüklenmemiş",
-        "description": "Başlamak için ilk görselinizi yükleyin"
+        "description": "Burada görmek için görsel bloğunu kullanarak bir görsel yükleyin."
       },
       "actions": {
         "insert": "Ekle",
         "deleteTitle": "Görseli Sil",
-        "altPlaceholder": "Alternatif metin"
+        "altPlaceholder": "Alternatif metin",
+        "copyUrl": "Görsel URL'sini kopyala",
+        "deleteAria": "Görseli sil",
+        "confirmAlt": "Alternatif metni onayla",
+        "cancelAlt": "Alternatif metin düzenlemesini iptal et",
+        "editAlt": "Alternatif metni düzenle"
+      },
+      "labels": {
+        "alt": "Alt: {{text}}"
+      },
+      "storage": {
+        "usage": "{{count}}/{{max}} görsel",
+        "size": "{{used}}/{{limit}}",
+        "manage": "Görselleri Yönet",
+        "limitReached": "Limit Aşıldı",
+        "nearLimit": "Limite Yakın"
       },
       "messages": {
         "loadError": "Görseller yüklenemedi",
@@ -2004,6 +2020,7 @@
         "altSuccess": "Alternatif metin başarıyla güncellendi",
         "altError": "Alternatif metin güncellenemedi",
         "copySuccess": "Görsel URL'si panoya kopyalandı",
+        "copyError": "URL kopyalanamadı",
         "noAltText": "Alt metin yok"
       }
     },

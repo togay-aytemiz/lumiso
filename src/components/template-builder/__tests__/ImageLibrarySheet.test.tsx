@@ -5,7 +5,8 @@ import { ImageLibrarySheet } from "../ImageLibrarySheet";
 const toastMock = jest.fn();
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
+    t: (key: string, options?: Record<string, unknown>) =>
+      options ? `${key}:${JSON.stringify(options)}` : key,
   }),
 }));
 
@@ -175,7 +176,9 @@ describe("ImageLibrarySheet", () => {
       expect(orderMock).toHaveBeenCalled();
     });
 
-    const insertButton = await screen.findByRole("button", { name: "Insert" });
+    const insertButton = await screen.findByRole("button", {
+      name: "templateBuilder.imageManager.actions.insert",
+    });
     fireEvent.click(insertButton);
 
     expect(onImageSelect).toHaveBeenCalledWith(
@@ -184,12 +187,12 @@ describe("ImageLibrarySheet", () => {
     );
     expect(onOpenChange).toHaveBeenCalledWith(false);
 
-    fireEvent.click(screen.getByLabelText("Copy image URL"));
+    fireEvent.click(screen.getByLabelText("templateBuilder.imageManager.actions.copyUrl"));
     await waitFor(() => {
       expect(clipboardWriteMock).toHaveBeenCalledWith("https://cdn.lumiso.test/studio.jpg");
       expect(toastMock).toHaveBeenCalledWith({
-        title: "Success",
-        description: "Image URL copied to clipboard",
+        title: "toast.success",
+        description: "templateBuilder.imageManager.messages.copySuccess",
       });
     });
   });
@@ -201,12 +204,12 @@ describe("ImageLibrarySheet", () => {
       expect(orderMock).toHaveBeenCalled();
     });
 
-    fireEvent.click(screen.getByLabelText("Edit alt text"));
+    fireEvent.click(screen.getByLabelText("templateBuilder.imageManager.actions.editAlt"));
 
-    const input = screen.getByPlaceholderText("Alt text");
+    const input = screen.getByPlaceholderText("templateBuilder.imageManager.actions.altPlaceholder");
     fireEvent.change(input, { target: { value: "New description" } });
 
-    fireEvent.click(screen.getByLabelText("Confirm alt text"));
+    fireEvent.click(screen.getByLabelText("templateBuilder.imageManager.actions.confirmAlt"));
 
     await waitFor(() => {
       expect(updateMock).toHaveBeenCalledWith({ alt_text: "New description" });
@@ -214,8 +217,8 @@ describe("ImageLibrarySheet", () => {
     });
 
     expect(toastMock).toHaveBeenCalledWith({
-      title: "Success",
-      description: "Alt text updated",
+      title: "toast.success",
+      description: "templateBuilder.imageManager.messages.altSuccess",
     });
   });
 
@@ -226,8 +229,8 @@ describe("ImageLibrarySheet", () => {
       expect(orderMock).toHaveBeenCalled();
     });
 
-    fireEvent.click(screen.getByLabelText("Delete image"));
-    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(screen.getByLabelText("templateBuilder.imageManager.actions.deleteAria"));
+    fireEvent.click(screen.getByRole("button", { name: "buttons.delete" }));
 
     await waitFor(() => {
       expect(removeMock).toHaveBeenCalledWith(["studio.jpg"]);
@@ -236,8 +239,8 @@ describe("ImageLibrarySheet", () => {
     });
 
     expect(toastMock).toHaveBeenCalledWith({
-      title: "Success",
-      description: "Image deleted successfully",
+      title: "toast.success",
+      description: "templateBuilder.imageManager.messages.deleteSuccess",
     });
   });
 });

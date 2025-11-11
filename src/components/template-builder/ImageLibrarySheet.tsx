@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,7 +35,8 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
   const [editingAltText, setEditingAltText] = useState<string | null>(null);
   const [tempAltText, setTempAltText] = useState('');
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t } = useTranslation('pages');
+  const { t: tCommon } = useTranslation('common');
   const { t: tMessages } = useMessagesTranslation();
   const { activeOrganization } = useOrganization();
 
@@ -59,8 +60,8 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
     } catch (error) {
       console.error('Error loading assets:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to load images',
+        title: tCommon('toast.error'),
+        description: t('templateBuilder.imageManager.messages.loadError'),
         variant: 'destructive',
       });
     } finally {
@@ -86,13 +87,13 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
     try {
       await navigator.clipboard.writeText(imageUrl);
       toast({
-        title: 'Success',
-        description: 'Image URL copied to clipboard',
+        title: tCommon('toast.success'),
+        description: t('templateBuilder.imageManager.messages.copySuccess'),
       });
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to copy URL',
+        title: tCommon('toast.error'),
+        description: t('templateBuilder.imageManager.messages.copyError'),
         variant: 'destructive',
       });
     }
@@ -116,8 +117,8 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
       if (dbError) throw dbError;
 
       toast({
-        title: 'Success',
-        description: 'Image deleted successfully',
+        title: tCommon('toast.success'),
+        description: t('templateBuilder.imageManager.messages.deleteSuccess'),
       });
 
       // Refresh the list
@@ -125,8 +126,8 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
     } catch (error) {
       console.error('Error deleting asset:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to delete image',
+        title: tCommon('toast.error'),
+        description: t('templateBuilder.imageManager.messages.deleteError'),
         variant: 'destructive',
       });
     }
@@ -146,14 +147,14 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
       ));
 
       toast({
-        title: 'Success',
-        description: 'Alt text updated',
+        title: tCommon('toast.success'),
+        description: t('templateBuilder.imageManager.messages.altSuccess'),
       });
     } catch (error) {
       console.error('Error updating alt text:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to update alt text',
+        title: tCommon('toast.error'),
+        description: t('templateBuilder.imageManager.messages.altError'),
         variant: 'destructive',
       });
     }
@@ -183,18 +184,26 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   };
 
+  const storageUsage = useMemo(
+    () => ({
+      total_images: assets.length,
+      total_storage_bytes: assets.reduce((total, asset) => total + asset.file_size, 0),
+    }),
+    [assets]
+  );
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[600px] sm:w-[700px] overflow-hidden flex flex-col">
+      <SheetContent className="flex flex-col overflow-hidden w-full sm:max-w-[640px] lg:max-w-[50vw] xl:max-w-[720px]">
         <SheetHeader>
-          <SheetTitle>Image Library</SheetTitle>
+          <SheetTitle>{t('templateBuilder.imageManager.title')}</SheetTitle>
           <SheetDescription>
-            Manage your uploaded images. Click on an image to select it for your template.
+            {t('templateBuilder.imageManager.sheetDescription')}
           </SheetDescription>
         </SheetHeader>
 
         <div className="mt-4">
-          <CompactStorageIndicator />
+          <CompactStorageIndicator usageOverride={storageUsage} isLoadingOverride={loading} />
         </div>
 
         <div className="flex-1 overflow-y-auto mt-6">
@@ -206,15 +215,20 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
             </div>
           ) : assets.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No images uploaded yet</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Upload an image using the image block to see it here
+              <p className="text-muted-foreground font-medium">
+                {t('templateBuilder.imageManager.empty.title')}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
+                {t('templateBuilder.imageManager.empty.description')}
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4">
               {assets.map((asset) => (
-                <div key={asset.id} className="group relative bg-card border rounded-lg overflow-hidden">
+                <div
+                  key={asset.id}
+                  className="group relative overflow-hidden rounded-2xl border border-border/60 bg-background/70 shadow-sm transition-shadow hover:shadow-md"
+                >
                   <div className="aspect-video relative">
                     <img
                       src={getImageUrl(asset.file_path)}
@@ -235,7 +249,7 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
                         type="button"
                         onClick={() => copyImageUrl(asset.file_path)}
                         className="h-8 w-8 p-0"
-                        aria-label="Copy image URL"
+                        aria-label={t('templateBuilder.imageManager.actions.copyUrl')}
                       >
                         <Copy className="h-3 w-3" />
                       </Button>
@@ -246,56 +260,58 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
                             variant="destructive"
                             type="button"
                             className="h-8 w-8 p-0"
-                            aria-label="Delete image"
+                            aria-label={t('templateBuilder.imageManager.actions.deleteAria')}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Image</AlertDialogTitle>
+                            <AlertDialogTitle>
+                              {t('templateBuilder.imageManager.actions.deleteTitle')}
+                            </AlertDialogTitle>
                             <AlertDialogDescription>
                               {tMessages('confirm.deleteWithName', { name: asset.file_name })} {tMessages('confirm.cannotUndo')}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel>{tCommon('buttons.cancel')}</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => deleteAsset(asset)}
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >
-                              Delete
+                              {tCommon('buttons.delete')}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
                     </div>
                   </div>
-                  
-                  <div className="p-3 space-y-2">
-                    <div className="flex items-center justify-between">
+
+                  <div className="p-3 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
                       <p className="text-sm font-medium truncate">{asset.file_name}</p>
                       <Badge variant="secondary" className="text-xs">
                         {formatFileSize(asset.file_size)}
                       </Badge>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                       {editingAltText === asset.id ? (
                         <div className="flex items-center gap-1 flex-1">
                           <Input
                             value={tempAltText}
                             onChange={(e) => setTempAltText(e.target.value)}
-                            placeholder="Alt text"
-                            className="h-7 text-xs"
+                            placeholder={t('templateBuilder.imageManager.actions.altPlaceholder')}
+                            className="h-8 text-xs"
                           />
                           <Button
                             size="sm"
                             variant="ghost"
                             type="button"
                             onClick={() => handleSaveAltText(asset.id)}
-                            className="h-7 w-7 p-0"
-                            aria-label="Confirm alt text"
+                            className="h-8 w-8 p-0"
+                            aria-label={t('templateBuilder.imageManager.actions.confirmAlt')}
                           >
                             <Check className="h-3 w-3" />
                           </Button>
@@ -304,8 +320,8 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
                             variant="ghost"
                             type="button"
                             onClick={handleCancelEditAltText}
-                            className="h-7 w-7 p-0"
-                            aria-label="Cancel alt text edit"
+                            className="h-8 w-8 p-0"
+                            aria-label={t('templateBuilder.imageManager.actions.cancelAlt')}
                           >
                             <X className="h-3 w-3" />
                           </Button>
@@ -313,15 +329,17 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
                       ) : (
                         <div className="flex items-center gap-1 flex-1">
                           <p className="text-xs text-muted-foreground flex-1 truncate">
-                            Alt: {asset.alt_text || 'No alt text'}
+                            {t('templateBuilder.imageManager.labels.alt', {
+                              text: asset.alt_text || t('templateBuilder.imageManager.messages.noAltText'),
+                            })}
                           </p>
                           <Button
                             size="sm"
                             variant="ghost"
                             type="button"
                             onClick={() => handleEditAltText(asset.id, asset.alt_text || '')}
-                            className="h-7 w-7 p-0"
-                            aria-label="Edit alt text"
+                            className="h-8 w-8 p-0"
+                            aria-label={t('templateBuilder.imageManager.actions.editAlt')}
                           >
                             <Edit3 className="h-3 w-3" />
                           </Button>
@@ -332,15 +350,15 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
                     {onImageSelect && (
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="pill"
                         type="button"
-                        className="w-full h-7 text-xs"
+                        className="w-full h-9 text-xs justify-center"
                         onClick={() => {
                           onImageSelect(getImageUrl(asset.file_path), asset.alt_text);
                           onOpenChange(false);
                         }}
                       >
-                        Insert
+                        {t('templateBuilder.imageManager.actions.insert')}
                       </Button>
                     )}
                   </div>

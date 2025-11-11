@@ -1988,14 +1988,30 @@
       "loading": "Loading images...",
       "title": "Image Library",
       "titleWithCount": "Image Library ({{count}})",
+      "sheetDescription": "Manage your uploaded images. Click on an image to insert it into your template.",
       "empty": {
         "title": "No images uploaded yet",
-        "description": "Upload your first image to get started"
+        "description": "Upload an image using the image block to see it here."
       },
       "actions": {
         "insert": "Insert",
         "deleteTitle": "Delete Image",
-        "altPlaceholder": "Alt text"
+        "altPlaceholder": "Alt text",
+        "copyUrl": "Copy image URL",
+        "deleteAria": "Delete image",
+        "confirmAlt": "Confirm alt text",
+        "cancelAlt": "Cancel alt text edit",
+        "editAlt": "Edit alt text"
+      },
+      "labels": {
+        "alt": "Alt: {{text}}"
+      },
+      "storage": {
+        "usage": "{{count}}/{{max}} images",
+        "size": "{{used}}/{{limit}}",
+        "manage": "Manage Images",
+        "limitReached": "Limit Reached",
+        "nearLimit": "Near Limit"
       },
       "messages": {
         "loadError": "Failed to load images",
@@ -2004,6 +2020,7 @@
         "altSuccess": "Alt text updated successfully",
         "altError": "Failed to update alt text",
         "copySuccess": "Image URL copied to clipboard",
+        "copyError": "Failed to copy URL",
         "noAltText": "No alt text"
       }
     },

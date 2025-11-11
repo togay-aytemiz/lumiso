@@ -2,6 +2,13 @@ import React from "react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import { CompactStorageIndicator } from "../CompactStorageIndicator";
 
+jest.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: Record<string, unknown>) =>
+      options ? `${key}:${JSON.stringify(options)}` : key,
+  }),
+}));
+
 const fromMock = jest.fn();
 const toastMock = jest.fn();
 const useOrganizationMock = jest.fn();
@@ -61,19 +68,27 @@ describe("CompactStorageIndicator", () => {
       { onManageImages: handleManage }
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Manage/ }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "templateBuilder.imageManager.storage.manage",
+      })
+    );
     expect(handleManage).toHaveBeenCalled();
   });
 
   it("shows near limit badge", async () => {
     await renderIndicator({ total_images: 45, total_storage_bytes: 40 * 1024 * 1024 });
 
-    expect(screen.getByText(/Near Limit/)).toBeInTheDocument();
+    expect(
+      screen.getByText("templateBuilder.imageManager.storage.nearLimit")
+    ).toBeInTheDocument();
   });
 
   it("shows limit reached badge when thresholds exceeded", async () => {
     await renderIndicator({ total_images: 55, total_storage_bytes: 51 * 1024 * 1024 });
 
-    expect(screen.getByText(/Limit Reached/)).toBeInTheDocument();
+    expect(
+      screen.getByText("templateBuilder.imageManager.storage.limitReached")
+    ).toBeInTheDocument();
   });
 });

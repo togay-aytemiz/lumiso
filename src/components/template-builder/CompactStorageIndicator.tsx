@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { useTranslation } from 'react-i18next';
 
 interface StorageUsage {
   total_images: number;
@@ -18,12 +19,19 @@ const STORAGE_LIMITS = {
 
 interface CompactStorageIndicatorProps {
   onManageImages?: () => void;
+  usageOverride?: StorageUsage;
+  isLoadingOverride?: boolean;
 }
 
-export function CompactStorageIndicator({ onManageImages }: CompactStorageIndicatorProps) {
+export function CompactStorageIndicator({
+  onManageImages,
+  usageOverride,
+  isLoadingOverride,
+}: CompactStorageIndicatorProps) {
   const [storageUsage, setStorageUsage] = useState<StorageUsage>({ total_images: 0, total_storage_bytes: 0 });
   const [loading, setLoading] = useState(true);
   const { activeOrganization } = useOrganization();
+  const { t } = useTranslation('pages');
 
   const fetchStorageUsage = useCallback(async () => {
     if (!activeOrganization?.id) {
@@ -52,16 +60,23 @@ export function CompactStorageIndicator({ onManageImages }: CompactStorageIndica
   }, [activeOrganization?.id]);
 
   useEffect(() => {
+    if (usageOverride) {
+      return;
+    }
+
     setLoading(true);
     void fetchStorageUsage();
-  }, [fetchStorageUsage]);
+  }, [fetchStorageUsage, usageOverride]);
 
-  if (loading) {
+  const effectiveUsage = usageOverride ?? storageUsage;
+  const effectiveLoading = usageOverride ? isLoadingOverride ?? false : loading;
+
+  if (effectiveLoading) {
     return <div className="h-4 w-32 bg-muted animate-pulse rounded" />;
   }
 
-  const imageProgress = (storageUsage.total_images / STORAGE_LIMITS.MAX_IMAGES) * 100;
-  const storageProgress = (storageUsage.total_storage_bytes / STORAGE_LIMITS.MAX_STORAGE_BYTES) * 100;
+  const imageProgress = (effectiveUsage.total_images / STORAGE_LIMITS.MAX_IMAGES) * 100;
+  const storageProgress = (effectiveUsage.total_storage_bytes / STORAGE_LIMITS.MAX_STORAGE_BYTES) * 100;
   const isNearLimit = imageProgress > 80 || storageProgress > 80;
   const isAtLimit = imageProgress >= 100 || storageProgress >= 100;
 
@@ -80,7 +95,10 @@ export function CompactStorageIndicator({ onManageImages }: CompactStorageIndica
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">
-              {storageUsage.total_images}/{STORAGE_LIMITS.MAX_IMAGES} images
+              {t('templateBuilder.imageManager.storage.usage', {
+                count: effectiveUsage.total_images,
+                max: STORAGE_LIMITS.MAX_IMAGES,
+              })}
             </span>
             {isAtLimit && <AlertTriangle className="h-3 w-3 text-destructive" />}
             {isNearLimit && !isAtLimit && <AlertTriangle className="h-3 w-3 text-warning" />}
@@ -88,26 +106,29 @@ export function CompactStorageIndicator({ onManageImages }: CompactStorageIndica
           <div className="flex items-center gap-2">
             <Progress value={Math.min(imageProgress, 100)} className="w-20 h-1" />
             <span className="text-xs text-muted-foreground">
-              {formatFileSize(storageUsage.total_storage_bytes)}/50MB
+              {t('templateBuilder.imageManager.storage.size', {
+                used: formatFileSize(effectiveUsage.total_storage_bytes),
+                limit: formatFileSize(STORAGE_LIMITS.MAX_STORAGE_BYTES),
+              })}
             </span>
           </div>
         </div>
       </div>
-      
+
       {onManageImages && (
         <Button variant="ghost" size="sm" onClick={onManageImages} className="text-xs">
-          Manage
+          {t('templateBuilder.imageManager.storage.manage')}
         </Button>
       )}
-      
+
       {isAtLimit && (
         <Badge variant="destructive" className="text-xs">
-          Limit Reached
+          {t('templateBuilder.imageManager.storage.limitReached')}
         </Badge>
       )}
       {isNearLimit && !isAtLimit && (
         <Badge variant="secondary" className="text-xs">
-          Near Limit
+          {t('templateBuilder.imageManager.storage.nearLimit')}
         </Badge>
       )}
     </div>

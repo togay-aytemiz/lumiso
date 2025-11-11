@@ -4,6 +4,7 @@ import { getUserLocale, getStartOfWeek, getDateFnsLocale, cn } from '@/lib/utils
 import { useSmartTimeRange } from '@/hooks/useSmartTimeRange';
 import { useOrganizationTimezone } from '@/hooks/useOrganizationTimezone';
 import { useTranslation } from 'react-i18next';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 interface Session {
@@ -747,29 +748,45 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                         const ariaLabel = [activity.content, projectName || leadName, startLabel].filter(Boolean).join(' • ');
 
                         return (
-                          <button
-                            type="button"
-                            key={activity.id}
-                            className={cn(
-                              'absolute z-10 pointer-events-auto rounded-lg border px-2 py-2 text-left text-[11px] shadow-sm transition-colors',
-                              activity.completed
-                                ? 'border-slate-200 bg-slate-100 text-slate-400 line-through'
-                                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
-                            )}
-                            style={{ top, height, left: leftValue, width: widthValue }}
-                            onClick={() => onActivityClick(activity)}
-                            aria-label={ariaLabel}
-                          >
-                            <div className="space-y-1 leading-snug">
-                              <p className="font-medium line-clamp-3">{activity.content}</p>
-                              <p className="text-[10px] uppercase tracking-wide text-slate-500">
-                                {projectName || leadName}
+                          <Tooltip key={activity.id}>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                className={cn(
+                                  'absolute z-10 pointer-events-auto rounded-lg border px-2 py-2 text-left text-[11px] shadow-sm transition-colors',
+                                  activity.completed
+                                    ? 'border-slate-200 bg-slate-100 text-slate-400 line-through'
+                                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                                )}
+                                style={{ top, height, left: leftValue, width: widthValue }}
+                                onClick={() => onActivityClick(activity)}
+                                aria-label={ariaLabel}
+                              >
+                                <div className="space-y-1 leading-snug">
+                                  <div className="flex items-center justify-between gap-2 w-full">
+                                    <p className="flex-1 min-w-0 font-medium line-clamp-1">{activity.content}</p>
+                                    <span className="text-[10px] font-medium text-slate-500 whitespace-nowrap">
+                                      {activity.reminder_time ? startLabel : t('calendar.labels.allDay')}
+                                    </span>
+                                  </div>
+                                  <p className="text-[10px] uppercase tracking-wide text-slate-500 truncate">
+                                    {projectName || leadName}
+                                  </p>
+                                </div>
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs space-y-1 text-[11px]">
+                              <p className="font-medium text-foreground">{activity.content}</p>
+                              <p className="text-muted-foreground">
+                                {projectName
+                                  ? `${t('calendar.labels.project')}: ${projectName}`
+                                  : `${t('calendar.labels.lead')}: ${leadName}`}
                               </p>
-                              <p className="text-[10px] text-slate-500">
-                                {activity.reminder_time ? startLabel : t('calendar.labels.allDay')}
+                              <p className="text-muted-foreground">
+                                {t('calendar.labels.time')}: {activity.reminder_time ? startLabel : t('calendar.labels.allDay')}
                               </p>
-                            </div>
-                          </button>
+                            </TooltipContent>
+                          </Tooltip>
                         );
                       })}
                   </div>

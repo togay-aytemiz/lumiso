@@ -100,10 +100,7 @@ const createSessionsChain = (result: { data: unknown; error: unknown }) => {
 const createProjectStatusesChain = (result: { data: unknown; error: unknown }) => {
   const chain: any = {
     select: jest.fn().mockImplementation(() => chain),
-    eq: jest.fn().mockImplementation(() => chain),
-    ilike: jest.fn().mockImplementation(() => chain),
-    limit: jest.fn().mockImplementation(() => chain),
-    maybeSingle: jest.fn().mockResolvedValue(result),
+    eq: jest.fn().mockResolvedValue(result),
   };
 
   return chain;
@@ -145,7 +142,9 @@ describe("fetchLeadSessions", () => {
           return createSessionsChain({ data: sessions, error: null });
         case "project_statuses":
           return createProjectStatusesChain({
-            data: { id: "status-archived" },
+            data: [
+              { id: "status-archived", lifecycle: "archived", name: "Archived" },
+            ],
             error: null,
           });
         default:
@@ -283,7 +282,9 @@ describe("fetchLeadProjectSummary", () => {
           return createProjectsChain({ data: projects, error: null });
         case "project_statuses":
           return createProjectStatusesChain({
-            data: { id: "status-archived" },
+            data: [
+              { id: "status-archived", lifecycle: "archived", name: "Archived" },
+            ],
             error: null,
           });
         case "todos":
@@ -360,7 +361,9 @@ describe("fetchLeadProjectSummary", () => {
           return createProjectsChain({ data: projects, error: null });
         case "project_statuses":
           return createProjectStatusesChain({
-            data: { id: "status-archived" },
+            data: [
+              { id: "status-archived", lifecycle: "archived", name: "Archived" },
+            ],
             error: null,
           });
         case "todos":
@@ -388,7 +391,7 @@ describe("fetchLeadProjectSummary", () => {
         case "projects":
           return createProjectsChain({ data: [], error: null });
         case "project_statuses":
-          return createProjectStatusesChain({ data: null, error: null });
+          return createProjectStatusesChain({ data: [], error: null });
         default:
           return createSelectEqMaybeSingleChain({ data: null, error: null });
       }

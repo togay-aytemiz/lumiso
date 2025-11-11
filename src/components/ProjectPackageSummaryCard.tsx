@@ -294,17 +294,6 @@ export function ProjectPackageSummaryCard({
             />
           ) : null}
         </div>
-        {!snapshot && servicesSummary === null ? (
-          <p className="text-sm text-muted-foreground">
-            {t("project_package_card.empty", {
-              defaultValue:
-                "Link a package to capture delivery expectations and communicate them with clients.",
-            })}
-            {servicesLoading
-              ? ` ${t("project_package_card.loading", { defaultValue: "Loading services…" })}`
-              : null}
-          </p>
-        ) : null}
       </CardContent>
     </Card>
   );

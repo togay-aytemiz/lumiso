@@ -861,6 +861,7 @@
       "lead": "Lead",
       "session": "Session",
       "project": "Project",
+      "time": "Time",
       "status": "Status",
       "moreEvents": "+{{count}} more"
     }

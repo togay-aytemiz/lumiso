@@ -5,6 +5,7 @@ import {
   fetchOrganizationSettingsWithCache,
   type OrganizationTaxProfile
 } from "@/lib/organizationSettingsCache";
+import type { Database } from "@/integrations/supabase/types";
 
 export interface LeadDetailRecord {
   id: string;
@@ -65,7 +66,9 @@ export interface LeadProjectSummaryPayload {
   payments: AggregatedPaymentSummary;
 }
 
-const archivedStatusCache = new Map<string, string | null>();
+type ProjectStatusRow = Database["public"]["Tables"]["project_statuses"]["Row"];
+
+const archivedStatusCache = new Map<string, string[]>();
 const vatPreferenceCache = new Map<string, boolean>();
 
 async function resolveVatEnabled(organizationId?: string | null): Promise<boolean> {
@@ -93,28 +96,39 @@ async function resolveVatEnabled(organizationId?: string | null): Promise<boolea
   }
 }
 
-async function getArchivedProjectStatusId(organizationId: string): Promise<string | null> {
+function normalizeStatusName(value?: string | null) {
+  return (value ?? "").trim().toLowerCase();
+}
+
+async function getArchivedProjectStatusIds(organizationId: string): Promise<string[]> {
   if (archivedStatusCache.has(organizationId)) {
-    return archivedStatusCache.get(organizationId) ?? null;
+    return archivedStatusCache.get(organizationId)!;
   }
 
   const { data, error } = await supabase
-    .from("project_statuses")
-    .select("id")
-    .eq("organization_id", organizationId)
-    .ilike("name", "archived")
-    .limit(1)
-    .maybeSingle();
+    .from<ProjectStatusRow>("project_statuses")
+    .select("id, lifecycle, name")
+    .eq("organization_id", organizationId);
 
   if (error) {
-    console.error("Error fetching archived project status:", error);
-    archivedStatusCache.set(organizationId, null);
-    return null;
+    console.error("Error fetching archived project statuses:", error);
+    archivedStatusCache.set(organizationId, []);
+    return [];
   }
 
-  const statusId = data?.id ?? null;
-  archivedStatusCache.set(organizationId, statusId);
-  return statusId;
+  const archivedStatusIds = (data ?? [])
+    .filter((status) => {
+      const lifecycle = normalizeStatusName(status.lifecycle);
+      if (lifecycle === "archived") {
+        return true;
+      }
+      const name = normalizeStatusName(status.name);
+      return name === "archived";
+    })
+    .map((status) => status.id);
+
+  archivedStatusCache.set(organizationId, archivedStatusIds);
+  return archivedStatusIds;
 }
 
 export async function fetchLeadById(leadId: string): Promise<LeadDetailRecord | null> {
@@ -137,7 +151,7 @@ export async function fetchLeadSessions(
   leadId: string,
   organizationId?: string | null
 ): Promise<LeadSessionRecord[]> {
-  const [{ data, error }, archivedStatusId] = await Promise.all([
+  const [{ data, error }, archivedStatusIds] = await Promise.all([
     supabase
       .from("sessions")
       .select(
@@ -153,7 +167,7 @@ export async function fetchLeadSessions(
       )
       .eq("lead_id", leadId)
       .order("created_at", { ascending: false }),
-    organizationId ? getArchivedProjectStatusId(organizationId) : Promise.resolve(null)
+    organizationId ? getArchivedProjectStatusIds(organizationId) : Promise.resolve([])
   ]);
 
   if (error) throw error;
@@ -163,13 +177,17 @@ export async function fetchLeadSessions(
     project_name: session.projects?.name ?? null
   }));
 
-  if (!archivedStatusId) {
+  if (!archivedStatusIds || archivedStatusIds.length === 0) {
     return rows;
   }
 
+  const archivedLookup = new Set(archivedStatusIds);
+
   return rows.filter((session) => {
     if (!session.project_id) return true;
-    return session.projects?.status_id !== archivedStatusId;
+    const projectStatusId = session.projects?.status_id;
+    if (!projectStatusId) return true;
+    return !archivedLookup.has(projectStatusId);
   });
 }
 
@@ -177,7 +195,7 @@ export async function fetchLeadProjectSummary(
   leadId: string,
   organizationId: string
 ): Promise<LeadProjectSummaryPayload> {
-  const [projectsResult, archivedStatusId, vatEnabled] = await Promise.all([
+  const [projectsResult, archivedStatusIds, vatEnabled] = await Promise.all([
     supabase
       .from("projects")
       .select(
@@ -203,7 +221,7 @@ export async function fetchLeadProjectSummary(
       )
       .eq("lead_id", leadId)
       .eq("organization_id", organizationId),
-    getArchivedProjectStatusId(organizationId),
+    getArchivedProjectStatusIds(organizationId),
     resolveVatEnabled(organizationId)
   ]);
 
@@ -234,9 +252,14 @@ export async function fetchLeadProjectSummary(
         | null;
     }>;
 
-  const visibleProjects = archivedStatusId
-    ? projects.filter((project) => project.status_id !== archivedStatusId)
-    : projects;
+  const archivedLookup = new Set(archivedStatusIds ?? []);
+  const visibleProjects =
+    archivedLookup.size > 0
+      ? projects.filter((project) => {
+          if (!project.status_id) return true;
+          return !archivedLookup.has(project.status_id);
+        })
+      : projects;
 
   const projectIds = visibleProjects.map((project) => project.id);
 

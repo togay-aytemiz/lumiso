@@ -1,8 +1,9 @@
 import { memo, KeyboardEvent as ReactKeyboardEvent } from "react";
 import { format, eachDayOfInterval, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isToday } from "date-fns";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { formatTime, formatDate, getUserLocale, getDateFnsLocale } from "@/lib/utils";
+import { formatDate, getUserLocale, getDateFnsLocale } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useOrganizationTimezone } from "@/hooks/useOrganizationTimezone";
 
 interface Session {
   id: string;
@@ -63,6 +64,7 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
   const { t } = useTranslation('pages');
   const userLocale = getUserLocale();
   const dateFnsLocale = getDateFnsLocale();
+  const { formatTime: formatOrgTime } = useOrganizationTimezone();
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: userLocale === 'en-US' ? 0 : 1 });
@@ -201,7 +203,7 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
                             const session = entry.item as Session;
                             const leadName = leadsMap[session.lead_id]?.name || t('calendar.labels.lead');
                             const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
-                            const line = `${formatTime(session.session_time, userLocale)} ${leadName}${projectName ? " • " + projectName : ""}`;
+                            const line = `${formatOrgTime(session.session_time)} ${leadName}${projectName ? " • " + projectName : ""}`;
                             return (
                               <Tooltip key={`s-${session.id}`}>
                                 <TooltipTrigger asChild>
@@ -218,7 +220,7 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
                                 <TooltipContent className="max-w-xs">
                                   <div className="text-sm font-medium">{projectName || t('calendar.labels.session')}</div>
                                   <div className="text-xs text-muted-foreground">{leadName}</div>
-                                  <div className="text-xs text-muted-foreground">{formatDate(session.session_date)} • {formatTime(session.session_time, userLocale)}</div>
+                                  <div className="text-xs text-muted-foreground">{formatDate(session.session_date)} • {formatOrgTime(session.session_time)}</div>
                                   {session.notes && <div className="mt-1 text-xs">{session.notes}</div>}
                                   <div className="text-xs">{t('calendar.labels.status')}: <span className="capitalize">{session.status}</span></div>
                                 </TooltipContent>
@@ -228,7 +230,7 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
                             const activity = entry.item as Activity;
                             const leadName = leadsMap[activity.lead_id]?.name || t('calendar.labels.lead');
                             const projectName = activity.project_id ? projectsMap[activity.project_id!]?.name : undefined;
-                            const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : t('calendar.labels.allDay');
+                            const timeText = activity.reminder_time ? formatOrgTime(activity.reminder_time) : t('calendar.labels.allDay');
                             const line = `${timeText} ${leadName}${projectName ? " • " + projectName : ""}`;
                             return (
                               <Tooltip key={`a-${activity.id}`}>
@@ -270,7 +272,7 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
                                   {sessionExtras.map((session) => {
                                     const leadName = leadsMap[session.lead_id]?.name || t('calendar.labels.lead');
                                     const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
-                                    const timeText = formatTime(session.session_time, userLocale);
+                                    const timeText = formatOrgTime(session.session_time);
                                     return (
                                       <li key={session.id} className="text-xs">
                                         {timeText} {leadName}{projectName ? ` • ${projectName}` : ""}
@@ -287,7 +289,7 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
                                   {activityExtras.map((activity) => {
                                     const leadName = leadsMap[activity.lead_id]?.name || t('calendar.labels.lead');
                                     const projectName = activity.project_id ? projectsMap[activity.project_id!]?.name : undefined;
-                                    const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : t('calendar.labels.allDay');
+                                    const timeText = activity.reminder_time ? formatOrgTime(activity.reminder_time) : t('calendar.labels.allDay');
                                     return (
                                       <li key={activity.id} className="text-xs">
                                         {timeText} {leadName}{projectName ? ` • ${projectName}` : ""}

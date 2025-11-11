@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { format, isToday, isSameMonth } from 'date-fns';
-import { formatTime, getUserLocale } from '@/lib/utils';
+import { useOrganizationTimezone } from '@/hooks/useOrganizationTimezone';
 
 interface Session {
   id: string;
@@ -56,7 +56,7 @@ export const CalendarDay = memo<CalendarDayProps>(function CalendarDay({
   onActivityClick,
   onDayClick
 }) {
-  const userLocale = getUserLocale();
+  const { formatTime: formatOrgTime } = useOrganizationTimezone();
   const isCurrentMonth = isSameMonth(date, currentDate);
   const isDayToday = isToday(date);
 
@@ -134,7 +134,7 @@ export const CalendarDay = memo<CalendarDayProps>(function CalendarDay({
             if (entry.kind === 'session') {
               const session = entry.item as Session;
               const leadName = leadsMap[session.lead_id]?.name || "Lead";
-              const timeText = formatTime(session.session_time, userLocale);
+              const timeText = formatOrgTime(session.session_time);
               
               return (
                 <button
@@ -152,7 +152,7 @@ export const CalendarDay = memo<CalendarDayProps>(function CalendarDay({
               const activity = entry.item as Activity;
               const leadName = leadsMap[activity.lead_id]?.name || "Lead";
               const projectName = activity.project_id ? projectsMap[activity.project_id]?.name : undefined;
-              const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day";
+              const timeText = activity.reminder_time ? formatOrgTime(activity.reminder_time) : "All day";
               
               return (
                 <button

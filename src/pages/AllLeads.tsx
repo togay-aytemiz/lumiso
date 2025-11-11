@@ -181,7 +181,10 @@ const AllLeadsNew = () => {
   const { activeOrganizationId } = useOrganization();
 
   useEffect(() => {
-    const handleAddLead = () => setAddLeadDialogOpen(true);
+    const handleAddLead = (event: Event) => {
+      event.preventDefault();
+      setAddLeadDialogOpen(true);
+    };
     window.addEventListener(ADD_ACTION_EVENTS.lead, handleAddLead);
     return () => {
       window.removeEventListener(ADD_ACTION_EVENTS.lead, handleAddLead);

@@ -127,7 +127,10 @@ const AllProjects = () => {
   const { data: serviceOptions = [] } = useServices();
 
   useEffect(() => {
-    const handleAddProject = () => setProjectWizardOpen(true);
+    const handleAddProject = (event: Event) => {
+      event.preventDefault();
+      setProjectWizardOpen(true);
+    };
     window.addEventListener(ADD_ACTION_EVENTS.project, handleAddProject);
     return () => {
       window.removeEventListener(ADD_ACTION_EVENTS.project, handleAddProject);

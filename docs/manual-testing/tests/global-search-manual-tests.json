@@ -113,6 +113,30 @@
           }
         ],
         "expected_result": "Klavye navigasyonu ve yükleme davranışı GlobalSearch komponentinin `activeIndex` ve `displayedCount` mantığıyla uyumlu çalışır."
+      },
+      {
+        "external_id": "CRM-GLOBALSEARCH-006",
+        "title": "Header varyantı AddAction ile birlikte focus sırasını korur",
+        "description": "GlobalSearch komponentinin header varyantı, aynı satırdaki AddAction butonu ile hizalıyken genişlik ve klavye davranışlarını doğrular.",
+        "steps": [
+          {
+            "action": "Masaüstü genişliğinde (/sessions gibi) liste sayfasını açın ve header alanını gözlemleyin.",
+            "expected_result": "Başlık satırında \"Hızlı ara…\" placeholder’lı arama alanı ile sağında \"Seans ekle\" etiketli AddAction butonu aynı satırda görünür."
+          },
+          {
+            "action": "Arama alanına 3+ karakter girerek dropdown’ı açın.",
+            "expected_result": "Dropdown açıldığında AddAction butonu aktif kalır; arama alanının genişliği daralmaz ve buton metni kırpılmaz."
+          },
+          {
+            "action": "Escape tuşuna basın.",
+            "expected_result": "Sonuç dropdown’ı kapanır ancak focus arama alanında kalır ve AddAction butonuna geçmez."
+          },
+          {
+            "action": "Tab tuşuna basın ve ardından boşluk (Space) ile seçilen elemana tıklamadan AddAction butonunu tetikleyin.",
+            "expected_result": "Focus sırası aramadan AddAction butonuna geçer; Space’e basınca seçili sayfaya özel eylem (ör. seans planlama sihirbazı) açılır."
+          }
+        ],
+        "expected_result": "Header varyantında arama ve AddAction birlikte konumlandığında bile focus, genişlik ve klavye davranışları bozulmadan çalışır."
       }
     ]
   }

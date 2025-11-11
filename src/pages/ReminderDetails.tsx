@@ -15,6 +15,8 @@ import { ListLoadingSkeleton } from "@/components/ui/loading-presets";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
+import { useProjectDialogController } from "@/hooks/useProjectDialogController";
+import { ReminderTimelineCard } from "@/components/reminders/ReminderTimelineCard";
 import {
   Accordion,
   AccordionContent,
@@ -22,17 +24,13 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-  ArrowUpRight,
   Bell,
   BellRing,
   CalendarRange,
   CheckCircle2,
-  Clock,
-  RotateCcw,
   SunMedium,
-  UserCircle,
 } from "lucide-react";
-import { cn, formatGroupDate, formatTime, getWeekRange } from "@/lib/utils";
+import { cn, formatGroupDate, getWeekRange } from "@/lib/utils";
 
 interface Activity {
   id: string;
@@ -53,19 +51,6 @@ interface Lead {
   status: string;
 }
 
-type ReminderProject = {
-  id: string;
-  name: string;
-  description: string | null;
-  lead_id: string;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
-  status_id?: string | null;
-  previous_status_id?: string | null;
-  project_type_id?: string | null;
-};
-
 type FilterType =
   | "all"
   | "overdue"
@@ -74,32 +59,6 @@ type FilterType =
   | "thisWeek"
   | "nextWeek"
   | "thisMonth";
-
-interface ReminderTimelineLabels {
-  lead: string;
-  markComplete: string;
-  markIncomplete: string;
-  openLead: string;
-  openProject: string;
-  noTime: string;
-  overdue: string;
-  today: string;
-  tomorrow: string;
-  completed: string;
-}
-
-interface ReminderTimelineItemProps {
-  activity: Activity;
-  leadName: string;
-  onToggleCompletion: (activityId: string, completed: boolean) => void;
-  onNavigate: () => void;
-  onNavigateProject?: () => void;
-  isOverdue: boolean;
-  isToday: boolean;
-  isTomorrow: boolean;
-  labels: ReminderTimelineLabels;
-  hasProject?: boolean;
-}
 
 const filterPillBaseClasses =
   "h-9 rounded-full px-3 border border-border/60 bg-background text-sm font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-0";
@@ -174,166 +133,6 @@ const groupActivitiesByDate = (
   }));
 };
 
-const ReminderTimelineItem = ({
-  activity,
-  leadName,
-  onToggleCompletion,
-  onNavigate,
-  onNavigateProject,
-  isOverdue,
-  isToday,
-  isTomorrow,
-  labels,
-}: ReminderTimelineItemProps) => {
-  const statusConfig = (() => {
-    if (activity.completed) {
-      return {
-        label: labels.completed,
-        className:
-          "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900",
-        indicatorClassName: "border-emerald-300 bg-emerald-400/90",
-      };
-    }
-
-    if (isOverdue) {
-      return {
-        label: labels.overdue,
-        className: "bg-destructive/10 text-destructive border-destructive/20",
-        indicatorClassName: "border-destructive/50 bg-destructive",
-      };
-    }
-
-    if (isToday) {
-      return {
-        label: labels.today,
-        className: "bg-primary/10 text-primary border-primary/20",
-        indicatorClassName: "border-primary/40 bg-primary/80",
-      };
-    }
-
-    if (isTomorrow) {
-      return {
-        label: labels.tomorrow,
-        className:
-          "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/20 dark:text-amber-200 dark:border-amber-400/30",
-        indicatorClassName: "border-amber-300 bg-amber-400",
-      };
-    }
-
-    return null;
-  })();
-
-  const indicatorClassName = statusConfig
-    ? statusConfig.indicatorClassName
-    : "border-border/70 bg-muted-foreground/70";
-
-  return (
-    <div className="relative pl-8">
-      <span
-        className={cn(
-          "absolute left-[6px] top-5 h-2.5 w-2.5 rounded-full border-2 bg-background",
-          indicatorClassName
-        )}
-        aria-hidden="true"
-      />
-      <div className="rounded-xl border border-border/70 bg-card/80 p-4 shadow-sm transition-all hover:border-primary/30 hover:shadow-md">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              {statusConfig && (
-                <Badge className={cn("text-xs", statusConfig.className)}>
-                  {statusConfig.label}
-                </Badge>
-              )}
-            </div>
-            <div>
-              <h3
-                className={cn(
-                  "text-base font-medium text-foreground",
-                  activity.completed && "line-through text-muted-foreground"
-                )}
-              >
-                {activity.content}
-              </h3>
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <UserCircle className="h-4 w-4" aria-hidden="true" />
-                  <span className="font-medium text-foreground">
-                    {labels.lead}:
-                  </span>
-                  <span className="text-muted-foreground">{leadName}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Clock className="h-4 w-4" aria-hidden="true" />
-                  <span>
-                    {activity.reminder_time
-                      ? formatTime(activity.reminder_time)
-                      : labels.noTime}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col gap-2 sm:items-end">
-            <Button
-              variant={activity.completed ? "outline" : "secondary"}
-              size="sm"
-              className="flex items-center gap-2"
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                onToggleCompletion(activity.id, !activity.completed);
-              }}
-            >
-              {activity.completed ? (
-                <>
-                  <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                  {labels.markIncomplete}
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-                  {labels.markComplete}
-                </>
-              )}
-            </Button>
-            <div className="flex flex-wrap items-center gap-2 justify-end">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-2 text-primary"
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onNavigate();
-                }}
-              >
-                {labels.openLead}
-                <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-              </Button>
-              {typeof onNavigateProject === "function" && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-2 text-primary"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    onNavigateProject?.();
-                  }}
-                >
-                  {labels.openProject}
-                  <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const ReminderDetails = () => {
   const { t } = useTranslation("pages");
   const { t: tForms } = useFormsTranslation();
@@ -347,10 +146,6 @@ const ReminderDetails = () => {
   const [showCompleted, setShowCompleted] = useState(false);
   const [hideOverdue, setHideOverdue] = useState(false);
   const navigate = useNavigate();
-  const [viewingProject, setViewingProject] = useState<ReminderProject | null>(
-    null
-  );
-  const [showProjectDialog, setShowProjectDialog] = useState(false);
   const reminderLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const reminderLoadPendingRef = useRef(false);
   const prevLoadingRef = useRef(true);
@@ -426,6 +221,36 @@ const ReminderDetails = () => {
     },
     [leads]
   );
+
+  const resolveLeadNameForDialog = useCallback(
+    (leadId: string) => getLeadName(leadId),
+    [getLeadName]
+  );
+
+  const handleDialogLeadResolved = useCallback(
+    (lead: { id: string; name: string; status?: string | null }) => {
+      setLeads((prev) => {
+        const exists = prev.some((item) => item.id === lead.id);
+        if (exists) return prev;
+        return [
+          ...prev,
+          { id: lead.id, name: lead.name, status: lead.status || "" },
+        ];
+      });
+    },
+    []
+  );
+
+  const {
+    viewingProject,
+    projectDialogOpen,
+    onProjectDialogOpenChange,
+    projectDialogLeadName,
+    openProjectDialog,
+  } = useProjectDialogController({
+    resolveLeadName: resolveLeadNameForDialog,
+    onLeadResolved: handleDialogLeadResolved,
+  });
 
   const isOverdue = useCallback((reminderDate: string) => {
     const today = new Date();
@@ -830,22 +655,6 @@ const ReminderDetails = () => {
     [completedActivities]
   );
 
-  const labels = useMemo<ReminderTimelineLabels>(
-    () => ({
-      lead: tForms("reminders.lead"),
-      markComplete: tForms("reminders.markComplete"),
-      markIncomplete: tForms("reminders.markIncomplete"),
-      openLead: t("reminders.timeline.openLead"),
-      openProject: t("reminders.timeline.openProject"),
-      noTime: tForms("reminders.noTime"),
-      overdue: tForms("reminders.overdue"),
-      today: tForms("reminders.today"),
-      tomorrow: tForms("reminders.tomorrow"),
-      completed: tForms("reminders.completed"),
-    }),
-    [t, tForms]
-  );
-
   // Icon presets to match shared KPI card design
   const overdueIconPreset = useMemo(() => getKpiIconPreset("red"), []);
   const todayIconPreset = useMemo(() => getKpiIconPreset("yellow"), []);
@@ -885,50 +694,6 @@ const ReminderDetails = () => {
   const handleReminderClick = (leadId: string) => {
     navigate(`/leads/${leadId}`);
   };
-
-  const handleProjectClick = useCallback(async (projectId?: string | null) => {
-    if (!projectId) return;
-    try {
-      const { data, error } = await supabase
-        .from("projects")
-        .select(
-          "id, name, description, lead_id, user_id, created_at, updated_at, status_id, previous_status_id, project_type_id"
-        )
-        .eq("id", projectId)
-        .single();
-      if (error) throw error;
-
-      const { data: leadData, error: leadError } = await supabase
-        .from("leads")
-        .select("id, name, status")
-        .eq("id", data.lead_id)
-        .single();
-      if (leadError) throw leadError;
-
-      setViewingProject(data as ReminderProject);
-      setShowProjectDialog(true);
-      // Ensure leads map has the project's lead name for the dialog
-      setLeads((prev) => {
-        const exists = prev.some((l) => l.id === data.lead_id);
-        return exists
-          ? prev
-          : [
-              ...prev,
-              {
-                id: data.lead_id,
-                name: leadData?.name || "Unknown Lead",
-                status: leadData?.status || "",
-              },
-            ];
-      });
-    } catch (error: unknown) {
-      toast({
-        title: "Unable to open project",
-        description: getErrorMessage(error),
-        variant: "destructive",
-      });
-    }
-  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -1137,24 +902,19 @@ const ReminderDetails = () => {
                           aria-hidden="true"
                         />
                         {group.items.map((activity) => (
-                          <ReminderTimelineItem
+                          <ReminderTimelineCard
                             key={activity.id}
                             activity={activity}
                             leadName={getLeadName(activity.lead_id)}
                             onToggleCompletion={toggleCompletion}
-                            onNavigate={() =>
+                            onOpenLead={() =>
                               handleReminderClick(activity.lead_id)
                             }
-                            onNavigateProject={
+                            onOpenProject={
                               activity.project_id
-                                ? () => handleProjectClick(activity.project_id)
+                                ? () => openProjectDialog(activity.project_id)
                                 : undefined
                             }
-                            isOverdue={isOverdue(activity.reminder_date)}
-                            isToday={isToday(activity.reminder_date)}
-                            isTomorrow={isTomorrow(activity.reminder_date)}
-                            labels={labels}
-                            hasProject={!!activity.project_id}
                           />
                         ))}
                       </div>
@@ -1203,29 +963,19 @@ const ReminderDetails = () => {
                                 aria-hidden="true"
                               />
                               {group.items.map((activity) => (
-                                <ReminderTimelineItem
+                                <ReminderTimelineCard
                                   key={activity.id}
                                   activity={activity}
                                   leadName={getLeadName(activity.lead_id)}
                                   onToggleCompletion={toggleCompletion}
-                                  onNavigate={() =>
+                                  onOpenLead={() =>
                                     handleReminderClick(activity.lead_id)
                                   }
-                                  onNavigateProject={
+                                  onOpenProject={
                                     activity.project_id
-                                      ? () =>
-                                          handleProjectClick(
-                                            activity.project_id
-                                          )
+                                      ? () => openProjectDialog(activity.project_id)
                                       : undefined
                                   }
-                                  isOverdue={isOverdue(activity.reminder_date)}
-                                  isToday={isToday(activity.reminder_date)}
-                                  isTomorrow={isTomorrow(
-                                    activity.reminder_date
-                                  )}
-                                  labels={labels}
-                                  hasProject={!!activity.project_id}
                                 />
                               ))}
                             </div>
@@ -1240,15 +990,13 @@ const ReminderDetails = () => {
           </>
         )}
       </div>
-      {viewingProject && (
-        <ViewProjectDialog
-          project={viewingProject}
-          open={showProjectDialog}
-          onOpenChange={setShowProjectDialog}
-          onProjectUpdated={fetchReminders}
-          leadName={getLeadName(viewingProject?.lead_id || "")}
-        />
-      )}
+      <ViewProjectDialog
+        project={viewingProject}
+        open={projectDialogOpen}
+        onOpenChange={onProjectDialogOpenChange}
+        onProjectUpdated={fetchReminders}
+        leadName={projectDialogLeadName}
+      />
     </div>
   );
 };

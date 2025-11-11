@@ -11,6 +11,7 @@ import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { formatLongDate, formatTime } from "@/lib/utils";
 import type { Database, Json } from "@/integrations/supabase/types";
 import type { PostgrestError } from "@supabase/supabase-js";
+import { useNavigate } from "react-router-dom";
 
 type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
 type AuditLogRow = Database["public"]["Tables"]["audit_log"]["Row"];
@@ -118,6 +119,7 @@ export function ProjectActivitySection({
   onActivityUpdated
 }: ProjectActivitySectionProps) {
   const { t } = useFormsTranslation();
+  const navigate = useNavigate();
   const [activities, setActivities] = useState<ProjectActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -125,6 +127,14 @@ export function ProjectActivitySection({
   const [statusLookup, setStatusLookup] = useState<Record<string, string>>({});
   const [serviceLookup, setServiceLookup] = useState<Record<string, string>>({});
   const [selectedSegment, setSelectedSegment] = useState<"activity" | "history">("activity");
+
+  const handleReminderLeadNavigate = useCallback(
+    (targetLeadId: string) => {
+      if (!targetLeadId) return;
+      navigate(`/leads/${targetLeadId}`);
+    },
+    [navigate]
+  );
 
   const fetchProjectActivities = useCallback(async () => {
     try {
@@ -971,6 +981,7 @@ export function ProjectActivitySection({
                   activities={activities}
                   leadName={leadName}
                   onToggleCompletion={toggleCompletion}
+                  onReminderLeadNavigate={handleReminderLeadNavigate}
                 />
               ) : (
                 <div className="text-sm text-muted-foreground text-center py-8">

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Plus, ChevronDown } from "lucide-react";
@@ -16,6 +16,9 @@ import {
   type AddActionEventDetail,
   type AddActionType,
 } from "@/constants/addActionEvents";
+import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
+import { ProjectCreationWizardSheet } from "@/features/project-creation";
+import NewSessionDialog from "@/components/NewSessionDialog";
 
 interface AddActionProps {
   className?: string;
@@ -41,6 +44,9 @@ export function AddAction({ className }: AddActionProps) {
   const { t } = useTranslation("pages");
   const { t: tCommon } = useTranslation("common");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [leadDialogOpen, setLeadDialogOpen] = useState(false);
+  const [projectWizardOpen, setProjectWizardOpen] = useState(false);
+  const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
 
   const actionLabels = useMemo(
     () => ({
@@ -83,14 +89,14 @@ export function AddAction({ className }: AddActionProps) {
       },
       {
         matcher: (pathname) => matchesRoute(pathname, "/sessions"),
-        label: actionLabels.lead,
-        primaryAction: "lead",
+        label: actionLabels.session,
+        primaryAction: "session",
         openMenuOnPrimary: false,
       },
       {
         matcher: (pathname) => matchesRoute(pathname, "/reminders"),
-        label: actionLabels.lead,
-        primaryAction: "lead",
+        label: actionLabels.session,
+        primaryAction: "session",
         openMenuOnPrimary: false,
       },
       {
@@ -119,6 +125,20 @@ export function AddAction({ className }: AddActionProps) {
 
   const primaryLabel = currentConfig.label ?? tCommon("buttons.new");
 
+  const openFallbackDialog = useCallback((type: AddActionType) => {
+    switch (type) {
+      case "lead":
+        setLeadDialogOpen(true);
+        break;
+      case "project":
+        setProjectWizardOpen(true);
+        break;
+      case "session":
+        setSessionDialogOpen(true);
+        break;
+    }
+  }, []);
+
   const handlePrimaryButtonClick = () => {
     if (currentConfig.openMenuOnPrimary) {
       setMenuOpen((previous) => !previous);
@@ -132,12 +152,19 @@ export function AddAction({ className }: AddActionProps) {
   };
 
   const handleAction = (type: AddActionType) => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") {
+      openFallbackDialog(type);
+      return;
+    }
     const eventName = ADD_ACTION_EVENTS[type];
     const event = new CustomEvent<AddActionEventDetail>(eventName, {
       detail: { source: "header", type },
+      cancelable: true,
     });
-    window.dispatchEvent(event);
+    const wasCancelled = !window.dispatchEvent(event);
+    if (!wasCancelled) {
+      openFallbackDialog(type);
+    }
   };
 
   const dropdownItems: Array<{ type: AddActionType; label: string }> = [
@@ -147,51 +174,71 @@ export function AddAction({ className }: AddActionProps) {
   ];
 
   return (
-    <div
-      className={cn(
-        "flex items-center overflow-hidden rounded-full border border-transparent bg-transparent",
-        className
-      )}
-    >
-      <Button
-        type="button"
-        className="h-12 rounded-l-full rounded-r-none px-3 sm:px-4"
-        onClick={handlePrimaryButtonClick}
-        aria-label={primaryLabel ?? tCommon("buttons.new")}
-        aria-haspopup={currentConfig.openMenuOnPrimary ? "menu" : undefined}
-        aria-expanded={currentConfig.openMenuOnPrimary ? menuOpen : undefined}
+    <>
+      <div
+        className={cn(
+          "flex items-center overflow-hidden rounded-full border border-transparent bg-transparent",
+          className
+        )}
       >
-        <Plus className="h-4 w-4" />
-        <span className="hidden sm:inline whitespace-nowrap">
-          {primaryLabel ?? tCommon("buttons.new")}
-        </span>
-      </Button>
-      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            className="h-12 w-10 rounded-l-none rounded-r-full px-0"
-            variant="default"
-            aria-label={tCommon("buttons.moreOptions")}
-          >
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" sideOffset={4} className="w-48">
-          {dropdownItems.map((item) => (
-            <DropdownMenuItem
-              key={item.type}
-              onSelect={() => {
-                handleAction(item.type);
-                setMenuOpen(false);
-              }}
-              className="flex items-center justify-between"
+        <Button
+          type="button"
+          className="h-12 rounded-l-full rounded-r-none px-3 sm:px-4"
+          onClick={handlePrimaryButtonClick}
+          aria-label={primaryLabel ?? tCommon("buttons.new")}
+          aria-haspopup={currentConfig.openMenuOnPrimary ? "menu" : undefined}
+          aria-expanded={currentConfig.openMenuOnPrimary ? menuOpen : undefined}
+        >
+          <Plus className="h-4 w-4" />
+          <span className="hidden sm:inline whitespace-nowrap">
+            {primaryLabel ?? tCommon("buttons.new")}
+          </span>
+        </Button>
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              className="h-12 w-10 rounded-l-none rounded-r-full px-0"
+              variant="default"
+              aria-label={tCommon("buttons.moreOptions")}
             >
-              <span>{item.label}</span>
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" sideOffset={4} className="w-48">
+            {dropdownItems.map((item) => (
+              <DropdownMenuItem
+                key={item.type}
+                onSelect={() => {
+                  handleAction(item.type);
+                  setMenuOpen(false);
+                }}
+                className="flex items-center justify-between"
+              >
+                <span>{item.label}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <EnhancedAddLeadDialog
+        open={leadDialogOpen}
+        onOpenChange={setLeadDialogOpen}
+        onClose={() => setLeadDialogOpen(false)}
+      />
+
+      <ProjectCreationWizardSheet
+        isOpen={projectWizardOpen}
+        onOpenChange={setProjectWizardOpen}
+        entrySource="header-add-action"
+      />
+
+      <NewSessionDialog
+        open={sessionDialogOpen}
+        onOpenChange={setSessionDialogOpen}
+        showDefaultTrigger={false}
+      />
+    </>
   );
 }

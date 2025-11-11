@@ -33,6 +33,8 @@ interface NewSessionDialogProps {
   children?: React.ReactNode;
   openEvent?: string;
   showDefaultTrigger?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -103,43 +105,69 @@ const NewSessionDialog = (props: NewSessionDialogProps) => {
   return <LegacyNewSessionDialog {...props} />;
 };
 
+const useControllableDialogState = (
+  controlledValue: boolean | undefined,
+  onChange?: (open: boolean) => void
+) => {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const isControlled = typeof controlledValue === "boolean";
+  const open = isControlled ? controlledValue : uncontrolledOpen;
+
+  const setOpen = useCallback(
+    (next: boolean) => {
+      if (!isControlled) {
+        setUncontrolledOpen(next);
+      }
+      onChange?.(next);
+    },
+    [isControlled, onChange]
+  );
+
+  return { open, setOpen };
+};
+
 const WizardNewSessionDialog = ({
   onSessionScheduled,
   children,
   openEvent,
   showDefaultTrigger = true,
+  open,
+  onOpenChange,
 }: NewSessionDialogProps) => {
-  const [open, setOpen] = useState(false);
+  const { open: dialogOpen, setOpen: setDialogOpen } = useControllableDialogState(open, onOpenChange);
   const { t: tForms } = useFormsTranslation();
 
   useEffect(() => {
     if (!openEvent || typeof window === "undefined") {
       return;
     }
-    const handleOpen = () => setOpen(true);
-    window.addEventListener(openEvent, handleOpen as EventListener);
-    return () => {
-      window.removeEventListener(openEvent, handleOpen as EventListener);
+    const handleOpen = (event: Event) => {
+      event.preventDefault();
+      setDialogOpen(true);
     };
-  }, [openEvent]);
+    window.addEventListener(openEvent, handleOpen);
+    return () => {
+      window.removeEventListener(openEvent, handleOpen);
+    };
+  }, [openEvent, setDialogOpen]);
 
   return (
     <>
       {children ? (
-        <div onClick={() => setOpen(true)}>{children}</div>
+        <div onClick={() => setDialogOpen(true)}>{children}</div>
       ) : showDefaultTrigger ? (
-        <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
+        <Button size="sm" className="gap-2" onClick={() => setDialogOpen(true)}>
           <Plus className="h-4 w-4" />
           {tForms("sessions.schedule_new")}
         </Button>
       ) : null}
       <SessionPlanningWizardSheet
-        isOpen={open}
-        onOpenChange={setOpen}
+        isOpen={dialogOpen}
+        onOpenChange={setDialogOpen}
         entrySource="sessionsPage"
         onSessionScheduled={() => {
           onSessionScheduled?.();
-          setOpen(false);
+          setDialogOpen(false);
         }}
       />
     </>
@@ -151,8 +179,10 @@ const LegacyNewSessionDialog = ({
   children,
   openEvent,
   showDefaultTrigger = true,
+  open,
+  onOpenChange,
 }: NewSessionDialogProps) => {
-  const [open, setOpen] = useState(false);
+  const { open: dialogOpen, setOpen: setDialogOpen } = useControllableDialogState(open, onOpenChange);
   const [loading, setLoading] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
@@ -167,12 +197,15 @@ const LegacyNewSessionDialog = ({
     if (!openEvent || typeof window === "undefined") {
       return;
     }
-    const handleOpen = () => setOpen(true);
-    window.addEventListener(openEvent, handleOpen as EventListener);
-    return () => {
-      window.removeEventListener(openEvent, handleOpen as EventListener);
+    const handleOpen = (event: Event) => {
+      event.preventDefault();
+      setDialogOpen(true);
     };
-  }, [openEvent]);
+    window.addEventListener(openEvent, handleOpen);
+    return () => {
+      window.removeEventListener(openEvent, handleOpen);
+    };
+  }, [openEvent, setDialogOpen]);
   
   const [sessionData, setSessionData] = useState({
     session_date: "",
@@ -250,10 +283,10 @@ const LegacyNewSessionDialog = ({
   }, [toast]);
 
   useEffect(() => {
-    if (open) {
+    if (dialogOpen) {
       void fetchLeads();
     }
-  }, [open, fetchLeads]);
+  }, [dialogOpen, fetchLeads]);
 
   const fetchProjects = useCallback(async (leadId: string) => {
     try {
@@ -420,7 +453,7 @@ const LegacyNewSessionDialog = ({
       setSelectedLeadId("");
       setSelectedProjectId("");
       setIsNewLead(false);
-      setOpen(false);
+      setDialogOpen(false);
       
       // Notify parent component
       if (onSessionScheduled) {
@@ -488,14 +521,14 @@ const LegacyNewSessionDialog = ({
       setSelectedLeadId("");
       setSelectedProjectId("");
       setIsNewLead(false);
-      setOpen(false);
+      setDialogOpen(false);
     }
   };
 
   const footerActions = [
     {
       label: tCommon("buttons.cancel"),
-      onClick: () => setOpen(false),
+      onClick: () => setDialogOpen(false),
       variant: "outline" as const,
       disabled: loading,
     },
@@ -514,11 +547,11 @@ const LegacyNewSessionDialog = ({
   return (
     <>
       {children ? (
-        <div onClick={() => setOpen(true)}>
+        <div onClick={() => setDialogOpen(true)}>
           {children}
         </div>
       ) : showDefaultTrigger ? (
-        <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
+        <Button size="sm" className="gap-2" onClick={() => setDialogOpen(true)}>
           <Plus className="h-4 w-4" />
           {tCommon('buttons.add')}
         </Button>
@@ -526,8 +559,8 @@ const LegacyNewSessionDialog = ({
 
       <AppSheetModal
         title={tForms('sessions.schedule_new')}
-        isOpen={open}
-        onOpenChange={setOpen}
+        isOpen={dialogOpen}
+        onOpenChange={setDialogOpen}
         size="lg"
         dirty={isDirty}
         onDirtyClose={handleDirtyClose}

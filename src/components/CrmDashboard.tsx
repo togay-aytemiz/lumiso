@@ -46,7 +46,10 @@ const CrmDashboard = () => {
   const { t } = useDashboardTranslation();
 
   useEffect(() => {
-    const handleAddLead = () => setAddLeadDialogOpen(true);
+    const handleAddLead = (event: Event) => {
+      event.preventDefault();
+      setAddLeadDialogOpen(true);
+    };
     window.addEventListener(ADD_ACTION_EVENTS.lead, handleAddLead);
     return () => {
       window.removeEventListener(ADD_ACTION_EVENTS.lead, handleAddLead);

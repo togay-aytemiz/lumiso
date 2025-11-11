@@ -1,0 +1,112 @@
+[
+  {
+    "suite": "Header - AddAction Birincil Akışları",
+    "cases": [
+      {
+        "external_id": "CRM-HEADER-ADD-001",
+        "title": "/leads sayfasında \"Kişi ekle\" sihirbazını açma",
+        "description": "Header’daki AddAction komponentinin lead sayfasında otomatik olarak EnhancedAddLeadDialog’u tetiklediğini doğrular.",
+        "steps": [
+          {
+            "action": "/leads rotasını masaüstünde açın ve header satırını inceleyin.",
+            "expected_result": "Global arama alanının hemen yanında \"+\" ikonlu ve “Kişi ekle” etiketli birincil buton görünür."
+          },
+          {
+            "action": "Butonun sol ana kısmına tıklayın.",
+            "expected_result": "EnhancedAddLeadDialog sağdan kayan sheet olarak açılır; başlıkta forms.translation’daki kişi oluşturma metni yer alır."
+          },
+          {
+            "action": "Dialogu kapat ikonuyla veya `Esc` ile kapatın.",
+            "expected_result": "Sheet kapanır, AddAction butonu tekrar aktif hale gelir ve header düzeni bozulmaz."
+          }
+        ],
+        "expected_result": "Leads sayfasındaki AddAction birincil tıklamada doğrudan EnhancedAddLeadDialog’u açmalı ve kapanış sonrası state temizlenmelidir."
+      },
+      {
+        "external_id": "CRM-HEADER-ADD-002",
+        "title": "/projects sayfasında Proje Oluştur sihirbazı",
+        "description": "Proje sayfasındaki birincil AddAction butonunun ProjectCreationWizardSheet’i başlattığını doğrular.",
+        "steps": [
+          {
+            "action": "/projects sayfasını açın ve header’daki buton metnini kontrol edin.",
+            "expected_result": "Buton üzerinde “Proje ekle” veya çeviri dosyasındaki karşılığı görünür."
+          },
+          {
+            "action": "Butona tıklayın.",
+            "expected_result": "ProjectCreationWizardSheet sağ tarafta açılır; ilk step lead seçimi ekranıdır."
+          },
+          {
+            "action": "Sihirbazı `X` veya “İptal” ile kapatın.",
+            "expected_result": "Sheet kapanır, yeni proje oluşturulmadan liste görünümüne dönersiniz."
+          }
+        ],
+        "expected_result": "Projects sayfasındaki AddAction `ADD_ACTION_EVENTS.project` yerine doğrudan sihirbazı açarak geçerli başlığı korur."
+      },
+      {
+        "external_id": "CRM-HEADER-ADD-003",
+        "title": "Takvim, Seanslar ve Hatırlatmalar sayfalarında \"Seans ekle\" davranışı",
+        "description": "Üç rota boyunca AddAction’ın doğru etiketi göstermesi ve SessionPlanningWizardSheet’i açmasını doğrular.",
+        "steps": [
+          {
+            "action": "/calendar sayfasına gidin.",
+            "expected_result": "Header butonu “Seans ekle” metnini gösterir."
+          },
+          {
+            "action": "Butona tıklayın.",
+            "expected_result": "Yeni seans planlama sihirbazı açılır; adım 1’de kişi seçimi yapılabilir."
+          },
+          {
+            "action": "Sihirbazı kapatın ve /sessions rotasına gidin.",
+            "expected_result": "/sessions üst header’ında da aynı “Seans ekle” etiketi görünür (eski “Kişi ekle” yazısı kalmamış olmalı)."
+          },
+          {
+            "action": "Butona tıklayıp sihirbazın açıldığını doğrulayın, sonra kapatın.",
+            "expected_result": "Sessions sayfasında sihirbaz sorunsuz açılıp kapanır."
+          },
+          {
+            "action": "/reminders sayfasına gidip aynı işlemi tekrarlayın.",
+            "expected_result": "Reminder listesinde AddAction yine “Seans ekle” olarak görünür ve sihirbazı açar."
+          }
+        ],
+        "expected_result": "Takvim, Seanslar ve Hatırlatmalar rotalarının tamamında AddAction etiketleri tutarlı şekilde “Seans ekle” olarak görünmeli ve sihirbazı çağırmalıdır."
+      }
+    ]
+  },
+  {
+    "suite": "Header - AddAction Dropdown ve Fallback Kontrolleri",
+    "cases": [
+      {
+        "external_id": "CRM-HEADER-ADD-004",
+        "title": "Dashboard gibi genel sayfalarda çoklu seçenek açma",
+        "description": "AddAction’ın \"Yeni ekle\" menü modunda her seçenek için ilgili sheet’i açabildiğini doğrular.",
+        "steps": [
+          {
+            "action": "/dashboard veya /analytics gibi genel bir rotayı masaüstünde açın.",
+            "expected_result": "Header’da “Yeni ekle” yazan kapsüllü butonun yanında küçük bir ok (dropdown) bölümü bulunur."
+          },
+          {
+            "action": "Butonun ana kısmına tıklayarak dropdown’ı açın.",
+            "expected_result": "Menüde “Kişi ekle”, “Proje ekle” ve “Seans ekle” seçenekleri listelenir."
+          },
+          {
+            "action": "Dropdown’ı kapatın ve bu kez yalnızca sağdaki ok (Chevron) segmentine tıklayın.",
+            "expected_result": "Aynı menü tekrar açılır; ok segmenti menüyü bağımsız olarak açıp kapatabilir."
+          },
+          {
+            "action": "“Kişi ekle” seçeneğini tıklayın.",
+            "expected_result": "EnhancedAddLeadDialog açılır; dialogu kapatın."
+          },
+          {
+            "action": "Dropdown’ı yeniden açıp “Proje ekle” seçin.",
+            "expected_result": "ProjectCreationWizardSheet görünür; hiç proje seçmeden kapatın."
+          },
+          {
+            "action": "Dropdown’ı tekrar açıp “Seans ekle” seçin.",
+            "expected_result": "Session planlama sihirbazı açılır ve kapatılabilir."
+          }
+        ],
+        "expected_result": "Genel rotalarda AddAction menüsü üç ayrı eylemi sırayla tetikleyebilir; sayfa özel event listener’ı olmasa bile fallback sheet’ler açılmalıdır."
+      }
+    ]
+  }
+]

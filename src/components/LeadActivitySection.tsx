@@ -11,6 +11,8 @@ import { ActivityForm } from "@/components/shared/ActivityForm";
 import { ActivityTimeline } from "@/components/shared/ActivityTimeline";
 import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { ViewProjectDialog } from "@/components/ViewProjectDialog";
+import { useProjectDialogController } from "@/hooks/useProjectDialogController";
 import type { Database, Json } from "@/integrations/supabase/types";
 type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
@@ -141,6 +143,29 @@ export function LeadActivitySection({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedSegment, setSelectedSegment] = useState<"activity" | "history">("activity");
+
+  const resolveLeadName = useCallback(
+    (_leadId: string) => leadName,
+    [leadName]
+  );
+
+  const {
+    viewingProject,
+    projectDialogOpen,
+    onProjectDialogOpenChange,
+    projectDialogLeadName,
+    openProjectDialog,
+  } = useProjectDialogController({
+    resolveLeadName,
+  });
+
+  const handleReminderProjectNavigate = useCallback(
+    (projectId: string) => {
+      if (!projectId) return;
+      void openProjectDialog(projectId);
+    },
+    [openProjectDialog]
+  );
   
   const fetchLeadActivities = useCallback(async () => {
     try {
@@ -379,7 +404,7 @@ export function LeadActivitySection({
       });
     }
   };
-  const getActivityDescription = (log: AuditLogEntry): string => {
+const getActivityDescription = (log: AuditLogEntry): string => {
     if (log.entity_type === 'lead') {
       if (log.action === 'created') return t('activityLogs.lead_created');
       if (log.action === 'archived') return t('activityLogs.lead_archived');
@@ -434,9 +459,26 @@ export function LeadActivitySection({
       if (log.action === 'updated') return name ? `Session "${name}" updated` : 'Session updated';
       if (log.action === 'archived') return name ? `Session "${name}" archived` : 'Session archived';
       if (log.action === 'restored') return name ? `Session "${name}" restored` : 'Session restored';
-    }
-    return `${log.entity_type} ${log.action}`;
-  };
+  }
+  return `${log.entity_type} ${log.action}`;
+};
+
+  const handleProjectDialogUpdated = useCallback(() => {
+    void fetchLeadActivities();
+    void fetchProjectActivities();
+    onActivityUpdated?.();
+  }, [fetchLeadActivities, fetchProjectActivities, onActivityUpdated]);
+
+  const projectDialog = (
+    <ViewProjectDialog
+      project={viewingProject}
+      open={projectDialogOpen}
+      onOpenChange={onProjectDialogOpenChange}
+      onProjectUpdated={handleProjectDialogUpdated}
+      onActivityUpdated={onActivityUpdated}
+      leadName={projectDialogLeadName}
+    />
+  );
   if (loading) {
     return <Card>
         <CardHeader>
@@ -473,12 +515,25 @@ export function LeadActivitySection({
             <div className="space-y-4">
               {activities.length > 0 && <div>
                   <h4 className="text-sm mb-3 text-gray-900 font-semibold">{t('activitiesHistory.leadActivities')}</h4>
-                  <ActivityTimeline activities={activities} leadName={leadName} onToggleCompletion={toggleCompletion} />
+                  <ActivityTimeline
+                    activities={activities}
+                    leadName={leadName}
+                    onToggleCompletion={toggleCompletion}
+                    onReminderProjectNavigate={handleReminderProjectNavigate}
+                    showTimelineMarker={false}
+                  />
                 </div>}
 
               {projectActivities.length > 0 && <div>
                   <h4 className="text-sm mb-3 font-bold text-gray-900">{t('activitiesHistory.projectActivities')}</h4>
-                  <ActivityTimeline activities={projectActivities} projects={projects} leadName={leadName} onToggleCompletion={toggleCompletion} />
+                  <ActivityTimeline
+                    activities={projectActivities}
+                    projects={projects}
+                    leadName={leadName}
+                    onToggleCompletion={toggleCompletion}
+                    onReminderProjectNavigate={handleReminderProjectNavigate}
+                    showTimelineMarker={false}
+                  />
                 </div>}
 
               {activities.length === 0 && projectActivities.length === 0 && <div className="text-sm text-muted-foreground text-center py-8">

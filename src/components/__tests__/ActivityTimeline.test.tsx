@@ -21,13 +21,13 @@ type ActivityItem = {
   project_id?: string;
 };
 
-type ReminderCardProps = {
+type ReminderTimelineCardProps = {
   activity: ActivityItem;
   projectName?: string;
   leadName: string;
   onToggleCompletion: (id: string, completed: boolean) => void;
-  hideStatusBadge?: boolean;
-  showCompletedBadge?: boolean;
+  onOpenLead?: () => void;
+  onOpenProject?: () => void;
 };
 
 type ActivityTimelineItemProps = {
@@ -38,8 +38,14 @@ type ActivityTimelineItemProps = {
   completed?: boolean;
 };
 
-const mockReminderCard = jest.fn(
-  ({ activity, projectName, onToggleCompletion }: ReminderCardProps) => (
+const mockReminderTimelineCard = jest.fn(
+  ({
+    activity,
+    projectName,
+    onToggleCompletion,
+    onOpenLead,
+    onOpenProject,
+  }: ReminderTimelineCardProps) => (
     <div data-testid={`reminder-${activity.id}`}>
       <span>{activity.content}</span>
       {projectName && (
@@ -51,6 +57,22 @@ const mockReminderCard = jest.fn(
       >
         toggle
       </button>
+      {onOpenLead && (
+        <button
+          data-testid={`reminder-open-lead-${activity.id}`}
+          onClick={() => onOpenLead()}
+        >
+          open lead
+        </button>
+      )}
+      {onOpenProject && (
+        <button
+          data-testid={`reminder-open-project-${activity.id}`}
+          onClick={() => onOpenProject()}
+        >
+          open project
+        </button>
+      )}
     </div>
   )
 );
@@ -74,9 +96,10 @@ const mockActivityTimelineItem = jest.fn(
   )
 );
 
-jest.mock("@/components/ReminderCard", () => ({
+jest.mock("@/components/reminders/ReminderTimelineCard", () => ({
   __esModule: true,
-  default: (props: ReminderCardProps) => mockReminderCard(props),
+  ReminderTimelineCard: (props: ReminderTimelineCardProps) =>
+    mockReminderTimelineCard(props),
 }));
 
 jest.mock("@/components/shared/ActivityTimelineItem", () => ({
@@ -92,7 +115,7 @@ describe("ActivityTimeline", () => {
     useFormsTranslationMock.mockReturnValue({
       t: (key: string) => key,
     });
-    mockReminderCard.mockClear();
+    mockReminderTimelineCard.mockClear();
     mockActivityTimelineItem.mockClear();
   });
 
@@ -136,6 +159,9 @@ describe("ActivityTimeline", () => {
       },
     ];
 
+    const openLead = jest.fn();
+    const openProject = jest.fn();
+
     render(
       <ActivityTimeline
         activities={activities}
@@ -145,16 +171,19 @@ describe("ActivityTimeline", () => {
         ]}
         leadName="Lead Name"
         onToggleCompletion={toggleCompletion}
+        onReminderLeadNavigate={openLead}
+        onReminderProjectNavigate={openProject}
       />
     );
 
-    expect(mockReminderCard).toHaveBeenCalledWith(
+    expect(mockReminderTimelineCard).toHaveBeenCalledWith(
       expect.objectContaining({
         activity: expect.objectContaining({ id: "reminder-1" }),
         leadName: "Lead Name",
         projectName: "Project Phoenix",
         onToggleCompletion: expect.any(Function),
-        hideStatusBadge: expect.any(Boolean),
+        onOpenLead: expect.any(Function),
+        onOpenProject: expect.any(Function),
       })
     );
 
@@ -178,5 +207,13 @@ describe("ActivityTimeline", () => {
     await user.click(screen.getByTestId("reminder-toggle-reminder-1"));
 
     expect(toggleCompletion).toHaveBeenCalledWith("reminder-1", true);
+
+    await user.click(
+      screen.getByTestId("reminder-open-project-reminder-1")
+    );
+    expect(openProject).toHaveBeenCalledWith("project-1");
+
+    await user.click(screen.getByTestId("reminder-open-lead-reminder-1"));
+    expect(openLead).toHaveBeenCalledWith("lead-1");
   });
 });

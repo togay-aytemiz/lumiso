@@ -14,8 +14,9 @@ import { FilterBar } from "@/components/FilterBar";
 import { ListLoadingSkeleton } from "@/components/ui/loading-presets";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { ViewProjectDialog } from "@/components/ViewProjectDialog";
+import { ProjectSheetView } from "@/components/ProjectSheetView";
 import { ReminderTimelineCard } from "@/components/reminders/ReminderTimelineCard";
+import { useProjectSheetController } from "@/hooks/useProjectSheetController";
 import {
   Accordion,
   AccordionContent,
@@ -49,19 +50,6 @@ interface Lead {
   name: string;
   status: string;
 }
-
-type ReminderProject = {
-  id: string;
-  name: string;
-  description: string | null;
-  lead_id: string;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
-  status_id?: string | null;
-  previous_status_id?: string | null;
-  project_type_id?: string | null;
-};
 
 type FilterType =
   | "all"
@@ -158,10 +146,6 @@ const ReminderDetails = () => {
   const [showCompleted, setShowCompleted] = useState(false);
   const [hideOverdue, setHideOverdue] = useState(false);
   const navigate = useNavigate();
-  const [viewingProject, setViewingProject] = useState<ReminderProject | null>(
-    null
-  );
-  const [showProjectDialog, setShowProjectDialog] = useState(false);
   const reminderLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const reminderLoadPendingRef = useRef(false);
   const prevLoadingRef = useRef(true);
@@ -237,6 +221,37 @@ const ReminderDetails = () => {
     },
     [leads]
   );
+
+  const resolveLeadName = useCallback(
+    (leadId: string) => getLeadName(leadId),
+    [getLeadName]
+  );
+
+  const handleDialogLeadResolved = useCallback((lead: {
+    id: string;
+    name: string;
+    status?: string | null;
+  }) => {
+    setLeads((prev) => {
+      const exists = prev.some((item) => item.id === lead.id);
+      if (exists) return prev;
+      return [
+        ...prev,
+        { id: lead.id, name: lead.name, status: lead.status || "" },
+      ];
+    });
+  }, []);
+
+  const {
+    viewingProject,
+    projectSheetOpen,
+    onProjectSheetOpenChange,
+    projectSheetLeadName,
+    openProjectSheet,
+  } = useProjectSheetController({
+    resolveLeadName,
+    onLeadResolved: handleDialogLeadResolved,
+  });
 
   const isOverdue = useCallback((reminderDate: string) => {
     const today = new Date();
@@ -681,50 +696,6 @@ const ReminderDetails = () => {
     navigate(`/leads/${leadId}`);
   };
 
-  const handleProjectClick = useCallback(async (projectId?: string | null) => {
-    if (!projectId) return;
-    try {
-      const { data, error } = await supabase
-        .from("projects")
-        .select(
-          "id, name, description, lead_id, user_id, created_at, updated_at, status_id, previous_status_id, project_type_id"
-        )
-        .eq("id", projectId)
-        .single();
-      if (error) throw error;
-
-      const { data: leadData, error: leadError } = await supabase
-        .from("leads")
-        .select("id, name, status")
-        .eq("id", data.lead_id)
-        .single();
-      if (leadError) throw leadError;
-
-      setViewingProject(data as ReminderProject);
-      setShowProjectDialog(true);
-      // Ensure leads map has the project's lead name for the dialog
-      setLeads((prev) => {
-        const exists = prev.some((l) => l.id === data.lead_id);
-        return exists
-          ? prev
-          : [
-              ...prev,
-              {
-                id: data.lead_id,
-                name: leadData?.name || "Unknown Lead",
-                status: leadData?.status || "",
-              },
-            ];
-      });
-    } catch (error: unknown) {
-      toast({
-        title: "Unable to open project",
-        description: getErrorMessage(error),
-        variant: "destructive",
-      });
-    }
-  }, []);
-
   return (
     <div className="min-h-screen bg-background">
       <PageHeader title={t("reminders.title")}>
@@ -942,9 +913,10 @@ const ReminderDetails = () => {
                             }
                             onOpenProject={
                               activity.project_id
-                                ? () => handleProjectClick(activity.project_id)
+                                ? () => openProjectSheet(activity.project_id)
                                 : undefined
                             }
+                            showStatusIndicator
                           />
                         ))}
                       </div>
@@ -1003,12 +975,12 @@ const ReminderDetails = () => {
                                   }
                                   onOpenProject={
                                     activity.project_id
-                                      ? () =>
-                                          handleProjectClick(
-                                            activity.project_id
-                                          )
+                                      ? () => openProjectSheet(
+                                          activity.project_id
+                                        )
                                       : undefined
                                   }
+                                  showStatusIndicator
                                 />
                               ))}
                             </div>
@@ -1023,15 +995,21 @@ const ReminderDetails = () => {
           </>
         )}
       </div>
-      {viewingProject && (
-        <ViewProjectDialog
-          project={viewingProject}
-          open={showProjectDialog}
-          onOpenChange={setShowProjectDialog}
-          onProjectUpdated={fetchReminders}
-          leadName={getLeadName(viewingProject?.lead_id || "")}
-        />
-      )}
+      <ProjectSheetView
+        project={viewingProject}
+        open={projectSheetOpen}
+        onOpenChange={onProjectSheetOpenChange}
+        onProjectUpdated={fetchReminders}
+        onActivityUpdated={fetchReminders}
+        leadName={projectSheetLeadName}
+        mode="sheet"
+        onViewFullDetails={() => {
+          if (viewingProject) {
+            onProjectSheetOpenChange(false);
+            navigate(`/projects/${viewingProject.id}`);
+          }
+        }}
+      />
     </div>
   );
 };

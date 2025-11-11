@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { toast } from "@/hooks/use-toast";
+import { useProjectSheetController } from "@/hooks/useProjectSheetController";
 
 jest.mock("@/hooks/use-toast", () => ({
   useToast: jest.fn(() => ({ toast: jest.fn() })),
@@ -16,6 +17,14 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
 
 jest.mock("@/lib/organizationUtils", () => ({
   getUserOrganizationId: jest.fn(),
+}));
+
+jest.mock("@/hooks/useProjectSheetController", () => ({
+  useProjectSheetController: jest.fn(),
+}));
+
+jest.mock("@/components/ProjectSheetView", () => ({
+  ProjectSheetView: () => <div data-testid="project-sheet-view" />,
 }));
 
 type ActivityFormProps = {
@@ -104,6 +113,7 @@ jest.mock("@/integrations/supabase/client", () => ({
 
 describe("LeadActivitySection", () => {
   const mockUseFormsTranslation = useFormsTranslation as jest.Mock;
+  const mockProjectDialogController = useProjectSheetController as jest.Mock;
   const mockGetUserOrganizationId = getUserOrganizationId as jest.Mock;
   const supabaseFromMock = supabase.from as jest.Mock;
   const supabaseAuthGetUserMock = supabase.auth.getUser as jest.Mock;
@@ -118,6 +128,14 @@ describe("LeadActivitySection", () => {
     });
     mockGetUserOrganizationId.mockResolvedValue("org-123");
     supabaseAuthGetUserMock.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+
+    mockProjectDialogController.mockReturnValue({
+      viewingProject: null,
+      projectSheetOpen: false,
+      onProjectSheetOpenChange: jest.fn(),
+      projectSheetLeadName: "Lead Name",
+      openProjectSheet: jest.fn(),
+    });
   });
 
   const setupSupabase = () => {

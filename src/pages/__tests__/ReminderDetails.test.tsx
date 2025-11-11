@@ -6,7 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { KpiCardProps } from "@/components/ui/kpi-card";
 import type FilterBar from "@/components/FilterBar";
-import type { ViewProjectDialog as ViewProjectDialogComponent } from "@/components/ViewProjectDialog";
+import type { ProjectSheetView as ProjectSheetViewComponent } from "@/components/ProjectSheetView";
 
 type TranslationOptions = {
   returnObjects?: boolean;
@@ -18,7 +18,7 @@ type TranslationOptions = {
 } & Record<string, unknown>;
 
 type FilterBarProps = ComponentProps<typeof FilterBar>;
-type ViewProjectDialogProps = ComponentProps<typeof ViewProjectDialogComponent>;
+type ProjectSheetViewProps = ComponentProps<typeof ProjectSheetViewComponent>;
 
 const mockNavigate = jest.fn();
 
@@ -181,10 +181,10 @@ jest.mock("@/components/ui/loading-presets", () => ({
   ListLoadingSkeleton: () => <div data-testid="loading-skeleton" />,
 }));
 
-jest.mock("@/components/ViewProjectDialog", () => ({
-  ViewProjectDialog: ({ open, project, leadName }: ViewProjectDialogProps) =>
+jest.mock("@/components/ProjectSheetView", () => ({
+  ProjectSheetView: ({ open, project, leadName }: ProjectSheetViewProps) =>
     open ? (
-      <div data-testid="view-project-dialog">
+      <div data-testid="project-sheet-view">
         {project?.name} - {leadName}
       </div>
     ) : null,
@@ -603,7 +603,7 @@ describe("ReminderDetails page", () => {
     fireEvent.click(openProjectButton);
 
     await waitFor(() => {
-      expect(screen.getByTestId("view-project-dialog")).toHaveTextContent("Project Phoenix - Taylor Bright");
+      expect(screen.getByTestId("project-sheet-view")).toHaveTextContent("Project Phoenix - Taylor Bright");
     });
 
     expect(mockSupabaseFrom).toHaveBeenNthCalledWith(3, "projects");

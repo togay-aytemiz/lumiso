@@ -11,6 +11,8 @@ import { ActivityForm } from "@/components/shared/ActivityForm";
 import { ActivityTimeline } from "@/components/shared/ActivityTimeline";
 import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { ProjectSheetView } from "@/components/ProjectSheetView";
+import { useProjectSheetController } from "@/hooks/useProjectSheetController";
 import { useNavigate } from "react-router-dom";
 import type { Database, Json } from "@/integrations/supabase/types";
 type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
@@ -144,12 +146,28 @@ export function LeadActivitySection({
   const [saving, setSaving] = useState(false);
   const [selectedSegment, setSelectedSegment] = useState<"activity" | "history">("activity");
 
+  const resolveLeadName = useCallback(
+    (candidateLeadId: string) =>
+      candidateLeadId === leadId ? leadName : undefined,
+    [leadId, leadName]
+  );
+
+  const {
+    viewingProject,
+    projectSheetOpen,
+    onProjectSheetOpenChange,
+    projectSheetLeadName,
+    openProjectSheet,
+  } = useProjectSheetController({
+    resolveLeadName,
+  });
+
   const handleReminderProjectNavigate = useCallback(
     (projectId: string) => {
       if (!projectId) return;
-      navigate(`/projects/${projectId}`);
+      void openProjectSheet(projectId);
     },
-    [navigate]
+    [openProjectSheet]
   );
   
   const fetchLeadActivities = useCallback(async () => {
@@ -444,22 +462,53 @@ export function LeadActivitySection({
       if (log.action === 'updated') return name ? `Session "${name}" updated` : 'Session updated';
       if (log.action === 'archived') return name ? `Session "${name}" archived` : 'Session archived';
       if (log.action === 'restored') return name ? `Session "${name}" restored` : 'Session restored';
-    }
-    return `${log.entity_type} ${log.action}`;
-  };
-  if (loading) {
-    return <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-48" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-        </CardContent>
-      </Card>;
   }
-  return <Card>
+  return `${log.entity_type} ${log.action}`;
+};
+
+  const handleProjectDialogUpdated = useCallback(() => {
+    void fetchLeadActivities();
+    void fetchProjectActivities();
+    onActivityUpdated?.();
+  }, [fetchLeadActivities, fetchProjectActivities, onActivityUpdated]);
+
+  const projectSheet = (
+    <ProjectSheetView
+      project={viewingProject}
+      open={projectSheetOpen}
+      onOpenChange={onProjectSheetOpenChange}
+      onProjectUpdated={handleProjectDialogUpdated}
+      onActivityUpdated={onActivityUpdated}
+      leadName={projectSheetLeadName}
+      mode="sheet"
+      onViewFullDetails={() => {
+        if (viewingProject) {
+          onProjectSheetOpenChange(false);
+          navigate(`/projects/${viewingProject.id}`);
+        }
+      }}
+    />
+  );
+  if (loading) {
+    return (
+      <>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </CardContent>
+        </Card>
+        {projectSheet}
+      </>
+    );
+  }
+  return (
+    <>
+      <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">
@@ -521,5 +570,8 @@ export function LeadActivitySection({
               </div>}
           </div>}
       </CardContent>
-    </Card>;
+      </Card>
+      {projectSheet}
+    </>
+  );
 }

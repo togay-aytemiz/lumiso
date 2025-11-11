@@ -28,6 +28,7 @@ interface ActivityTimelineProps {
   onToggleCompletion: (activityId: string, completed: boolean) => void;
   onReminderLeadNavigate?: (leadId: string) => void;
   onReminderProjectNavigate?: (projectId: string) => void;
+  showReminderStatusIndicator?: boolean;
 }
 
 export function ActivityTimeline({
@@ -37,6 +38,7 @@ export function ActivityTimeline({
   onToggleCompletion,
   onReminderLeadNavigate,
   onReminderProjectNavigate,
+  showReminderStatusIndicator = false,
 }: ActivityTimelineProps) {
   const { t } = useFormsTranslation();
   
@@ -121,6 +123,7 @@ export function ActivityTimeline({
                 onToggleCompletion={onToggleCompletion}
                 onOpenLead={handleOpenLead}
                 onOpenProject={handleOpenProject}
+                showStatusIndicator={showReminderStatusIndicator}
               />
             );
           }

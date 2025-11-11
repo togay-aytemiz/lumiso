@@ -37,6 +37,7 @@ export interface ReminderTimelineCardProps {
   onOpenProject?: () => void;
   projectName?: string;
   labels?: ReminderTimelineLabels;
+  showStatusIndicator?: boolean;
 }
 
 const isSameDay = (reminderDate?: string | null, offsetDays = 0) => {
@@ -68,6 +69,7 @@ export const ReminderTimelineCard = ({
   onOpenProject,
   projectName,
   labels: overrideLabels,
+  showStatusIndicator = false,
 }: ReminderTimelineCardProps) => {
   const { t } = useTranslation("pages");
   const { t: tForms } = useFormsTranslation();
@@ -140,14 +142,16 @@ export const ReminderTimelineCard = ({
     : "border-border/70 bg-muted-foreground/70";
 
   return (
-    <div className="relative pl-8">
-      <span
-        className={cn(
-          "absolute left-[6px] top-5 h-2.5 w-2.5 rounded-full border-2 bg-background",
-          indicatorClassName
-        )}
-        aria-hidden="true"
-      />
+    <div className={cn("relative", showStatusIndicator ? "pl-8" : "pl-0")}>
+      {showStatusIndicator && (
+        <span
+          className={cn(
+            "absolute left-[6px] top-5 h-2.5 w-2.5 rounded-full border-2 bg-background",
+            indicatorClassName
+          )}
+          aria-hidden="true"
+        />
+      )}
       <div className="rounded-xl border border-border/70 bg-card/80 p-4 shadow-sm transition-all hover:border-primary/30 hover:shadow-md">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-3">

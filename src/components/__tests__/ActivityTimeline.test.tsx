@@ -28,6 +28,7 @@ type ReminderTimelineCardProps = {
   onToggleCompletion: (id: string, completed: boolean) => void;
   onOpenLead?: () => void;
   onOpenProject?: () => void;
+  showStatusIndicator?: boolean;
 };
 
 type ActivityTimelineItemProps = {
@@ -45,6 +46,7 @@ const mockReminderTimelineCard = jest.fn(
     onToggleCompletion,
     onOpenLead,
     onOpenProject,
+    showStatusIndicator,
   }: ReminderTimelineCardProps) => (
     <div data-testid={`reminder-${activity.id}`}>
       <span>{activity.content}</span>
@@ -73,6 +75,7 @@ const mockReminderTimelineCard = jest.fn(
           open project
         </button>
       )}
+      <span data-testid={`status-indicator-${activity.id}`}>{String(showStatusIndicator)}</span>
     </div>
   )
 );
@@ -184,6 +187,7 @@ describe("ActivityTimeline", () => {
         onToggleCompletion: expect.any(Function),
         onOpenLead: expect.any(Function),
         onOpenProject: expect.any(Function),
+        showStatusIndicator: false,
       })
     );
 

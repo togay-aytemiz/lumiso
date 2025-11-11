@@ -15,7 +15,10 @@ import { ListLoadingSkeleton } from "@/components/ui/loading-presets";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { ProjectSheetView } from "@/components/ProjectSheetView";
-import { ReminderTimelineCard } from "@/components/reminders/ReminderTimelineCard";
+import {
+  ReminderTimelineCard,
+  type ReminderTimelineCardActivity,
+} from "@/components/reminders/ReminderTimelineCard";
 import { useProjectSheetController } from "@/hooks/useProjectSheetController";
 import {
   Accordion,
@@ -23,6 +26,20 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  ReminderEditorSheet,
+  type ReminderEditorValues,
+} from "@/components/reminders/ReminderEditorSheet";
 import {
   Bell,
   BellRing,
@@ -133,6 +150,20 @@ const groupActivitiesByDate = (
   }));
 };
 
+const buildReminderDateTimeValue = (
+  reminder?: ReminderTimelineCardActivity | null
+) => {
+  if (!reminder?.reminder_date) return "";
+  return reminder.reminder_time
+    ? `${reminder.reminder_date}T${reminder.reminder_time}`
+    : "";
+};
+
+const parseReminderDateTime = (value: string) => {
+  const [date, time] = value.split("T");
+  return { date, time: time ?? null };
+};
+
 const ReminderDetails = () => {
   const { t } = useTranslation("pages");
   const { t: tForms } = useFormsTranslation();
@@ -149,11 +180,24 @@ const ReminderDetails = () => {
   const reminderLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const reminderLoadPendingRef = useRef(false);
   const prevLoadingRef = useRef(true);
-  const [editingReminder, setEditingReminder] = useState<Activity | null>(null);
+  const [editingReminder, setEditingReminder] =
+    useState<ReminderTimelineCardActivity | null>(null);
   const [reminderSheetOpen, setReminderSheetOpen] = useState(false);
-  const [editingProjectName, setEditingProjectName] = useState<
-    string | undefined
-  >(undefined);
+  const [reminderSheetSubmitting, setReminderSheetSubmitting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [reminderToDelete, setReminderToDelete] =
+    useState<ReminderTimelineCardActivity | null>(null);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+
+  const reminderEditorInitialValues = useMemo<
+    ReminderEditorValues | undefined
+  >(() => {
+    if (!editingReminder) return undefined;
+    return {
+      content: editingReminder.content,
+      reminderDateTime: buildReminderDateTimeValue(editingReminder),
+    };
+  }, [editingReminder]);
 
   const fetchReminders = useCallback(async () => {
     setLoading(true);
@@ -679,13 +723,13 @@ const ReminderDetails = () => {
 
       toast({
         title: completed
-          ? "Reminder marked as completed"
-          : "Reminder marked as not completed",
-        description: "Reminder status updated successfully.",
+          ? tForms("reminders.markCompleteSuccessTitle")
+          : tForms("reminders.markIncompleteSuccessTitle"),
+        description: tForms("reminders.statusUpdateDescription"),
       });
     } catch (error: unknown) {
       toast({
-        title: "Error updating reminder",
+        title: tForms("reminders.statusUpdateErrorTitle"),
         description: getErrorMessage(error),
         variant: "destructive",
       });
@@ -695,6 +739,124 @@ const ReminderDetails = () => {
   const handleReminderClick = (leadId: string) => {
     navigate(`/leads/${leadId}`);
   };
+
+  const handleReminderSheetOpenChange = useCallback((open: boolean) => {
+    setReminderSheetOpen(open);
+    if (!open) {
+      setEditingReminder(null);
+    }
+  }, []);
+
+  const handleEditReminderRequest = useCallback(
+    (activity: ReminderTimelineCardActivity) => {
+      setEditingReminder(activity);
+      setReminderSheetOpen(true);
+    },
+    []
+  );
+
+  const handleDeleteReminderRequest = useCallback(
+    (activity: ReminderTimelineCardActivity) => {
+      setReminderToDelete(activity);
+      setDeleteDialogOpen(true);
+    },
+    []
+  );
+
+  const handleDeleteDialogOpenChange = useCallback((open: boolean) => {
+    setDeleteDialogOpen(open);
+    if (!open) {
+      setReminderToDelete(null);
+    }
+  }, []);
+
+  const handleReminderUpdate = useCallback(
+    async (values: ReminderEditorValues) => {
+      if (!editingReminder) return;
+      const { date, time } = parseReminderDateTime(values.reminderDateTime);
+      setReminderSheetSubmitting(true);
+      try {
+        const { error } = await supabase
+          .from("activities")
+          .update({
+            content: values.content,
+            reminder_date: date,
+            reminder_time: time,
+          })
+          .eq("id", editingReminder.id);
+
+        if (error) throw error;
+
+        setActivities((prev) =>
+          prev.map((activity) =>
+            activity.id === editingReminder.id
+              ? {
+                  ...activity,
+                  content: values.content,
+                  reminder_date: date,
+                  reminder_time: time,
+                }
+              : activity
+          )
+        );
+
+        toast({
+          title: tForms("reminders.updateSuccessTitle"),
+          description: tForms("reminders.updateSuccessDescription"),
+        });
+
+        handleReminderSheetOpenChange(false);
+        void fetchReminders();
+      } catch (error: unknown) {
+        toast({
+          title: tForms("reminders.updateErrorTitle"),
+          description: getErrorMessage(error),
+          variant: "destructive",
+        });
+      } finally {
+        setReminderSheetSubmitting(false);
+      }
+    },
+    [editingReminder, fetchReminders, handleReminderSheetOpenChange, tForms]
+  );
+
+  const handleConfirmDeleteReminder = useCallback(async () => {
+    if (!reminderToDelete) return;
+    setDeleteSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from("activities")
+        .delete()
+        .eq("id", reminderToDelete.id);
+
+      if (error) throw error;
+
+      setActivities((prev) =>
+        prev.filter((activity) => activity.id !== reminderToDelete.id)
+      );
+
+      toast({
+        title: tForms("reminders.deleteSuccessTitle"),
+        description: tForms("reminders.deleteSuccessDescription"),
+      });
+
+      handleDeleteDialogOpenChange(false);
+      void fetchReminders();
+    } catch (error: unknown) {
+      toast({
+        title: tForms("reminders.deleteErrorTitle"),
+        description: getErrorMessage(error),
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteSubmitting(false);
+    }
+  }, [
+    fetchReminders,
+    handleDeleteDialogOpenChange,
+    reminderToDelete,
+    tForms,
+  ]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -917,6 +1079,8 @@ const ReminderDetails = () => {
                                 : undefined
                             }
                             showStatusIndicator
+                            onEditReminder={handleEditReminderRequest}
+                            onDeleteReminder={handleDeleteReminderRequest}
                           />
                         ))}
                       </div>
@@ -981,6 +1145,8 @@ const ReminderDetails = () => {
                                       : undefined
                                   }
                                   showStatusIndicator
+                                  onEditReminder={handleEditReminderRequest}
+                                  onDeleteReminder={handleDeleteReminderRequest}
                                 />
                               ))}
                             </div>
@@ -995,6 +1161,47 @@ const ReminderDetails = () => {
           </>
         )}
       </div>
+      <ReminderEditorSheet
+        open={reminderSheetOpen && Boolean(editingReminder)}
+        onOpenChange={handleReminderSheetOpenChange}
+        mode={editingReminder ? "edit" : "create"}
+        initialValues={reminderEditorInitialValues}
+        onSubmit={handleReminderUpdate}
+        submitting={reminderSheetSubmitting}
+      />
+
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={handleDeleteDialogOpenChange}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {tForms("reminders.deleteConfirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {tForms("reminders.deleteConfirmDescription", {
+                content: reminderToDelete?.content ?? "",
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteSubmitting}>
+              {tForms("reminders.deleteCancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDeleteReminder}
+              disabled={deleteSubmitting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteSubmitting
+                ? tForms("reminders.deleteSubmitting")
+                : tForms("reminders.deleteConfirmAction")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <ProjectSheetView
         project={viewingProject}
         open={projectSheetOpen}

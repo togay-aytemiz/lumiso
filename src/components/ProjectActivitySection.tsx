@@ -3,7 +3,7 @@ import { ActivityForm } from "@/components/shared/ActivityForm";
 import { ActivityTimeline } from "@/components/shared/ActivityTimeline";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { toast } from "@/hooks/use-toast";
@@ -12,6 +12,21 @@ import { formatLongDate, formatTime } from "@/lib/utils";
 import type { Database, Json } from "@/integrations/supabase/types";
 import type { PostgrestError } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
+import {
+  ReminderEditorSheet,
+  type ReminderEditorValues,
+} from "@/components/reminders/ReminderEditorSheet";
+import type { ReminderTimelineCardActivity } from "@/components/reminders/ReminderTimelineCard";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
 type AuditLogRow = Database["public"]["Tables"]["audit_log"]["Row"];
@@ -75,6 +90,20 @@ const mapAuditLogRow = (row: AuditLogRow): AuditLogEntry => ({
   created_at: row.created_at,
 });
 
+const buildReminderDateTimeValue = (
+  reminder?: ReminderTimelineCardActivity | null
+) => {
+  if (!reminder?.reminder_date) return "";
+  return reminder.reminder_time
+    ? `${reminder.reminder_date}T${reminder.reminder_time}`
+    : "";
+};
+
+const parseReminderDateTime = (value: string) => {
+  const [date, time] = value.split("T");
+  return { date, time: time ?? null };
+};
+
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
     return error.message;
@@ -127,6 +156,24 @@ export function ProjectActivitySection({
   const [statusLookup, setStatusLookup] = useState<Record<string, string>>({});
   const [serviceLookup, setServiceLookup] = useState<Record<string, string>>({});
   const [selectedSegment, setSelectedSegment] = useState<"activity" | "history">("activity");
+  const [editingReminder, setEditingReminder] =
+    useState<ReminderTimelineCardActivity | null>(null);
+  const [reminderSheetOpen, setReminderSheetOpen] = useState(false);
+  const [reminderSheetSubmitting, setReminderSheetSubmitting] = useState(false);
+  const [reminderToDelete, setReminderToDelete] =
+    useState<ReminderTimelineCardActivity | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+
+  const reminderEditorInitialValues = useMemo<
+    ReminderEditorValues | undefined
+  >(() => {
+    if (!editingReminder) return undefined;
+    return {
+      content: editingReminder.content,
+      reminderDateTime: buildReminderDateTimeValue(editingReminder),
+    };
+  }, [editingReminder]);
 
   const handleReminderLeadNavigate = useCallback(
     (targetLeadId: string) => {
@@ -327,6 +374,137 @@ export function ProjectActivitySection({
     }
   }, [projectId, isRelevantLog]);
 
+  const handleReminderSheetOpenChange = useCallback((open: boolean) => {
+    setReminderSheetOpen(open);
+    if (!open) {
+      setEditingReminder(null);
+    }
+  }, []);
+
+  const handleEditReminderRequest = useCallback(
+    (activity: ReminderTimelineCardActivity) => {
+      setEditingReminder(activity);
+      setReminderSheetOpen(true);
+    },
+    []
+  );
+
+  const handleDeleteReminderRequest = useCallback(
+    (activity: ReminderTimelineCardActivity) => {
+      setReminderToDelete(activity);
+      setDeleteDialogOpen(true);
+    },
+    []
+  );
+
+  const handleDeleteDialogOpenChange = useCallback((open: boolean) => {
+    setDeleteDialogOpen(open);
+    if (!open) {
+      setReminderToDelete(null);
+    }
+  }, []);
+
+  const handleReminderUpdate = useCallback(
+    async (values: ReminderEditorValues) => {
+      if (!editingReminder) return;
+      const { date, time } = parseReminderDateTime(values.reminderDateTime);
+      setReminderSheetSubmitting(true);
+      try {
+        const { error } = await supabase
+          .from("activities")
+          .update({
+            content: values.content,
+            reminder_date: date,
+            reminder_time: time,
+          })
+          .eq("id", editingReminder.id);
+
+        if (error) throw error;
+
+        setActivities((prev) =>
+          prev.map((activity) =>
+            activity.id === editingReminder.id
+              ? {
+                  ...activity,
+                  content: values.content,
+                  reminder_date: date,
+                  reminder_time: time,
+                }
+              : activity
+          )
+        );
+
+        toast({
+          title: t("reminders.updateSuccessTitle"),
+          description: t("reminders.updateSuccessDescription"),
+        });
+
+        handleReminderSheetOpenChange(false);
+        void fetchProjectActivities();
+        void fetchHistoryData();
+        onActivityUpdated?.();
+      } catch (error) {
+        toast({
+          title: t("reminders.updateErrorTitle"),
+          description: getErrorMessage(error),
+          variant: "destructive",
+        });
+      } finally {
+        setReminderSheetSubmitting(false);
+      }
+    },
+    [
+      editingReminder,
+      fetchHistoryData,
+      fetchProjectActivities,
+      handleReminderSheetOpenChange,
+      onActivityUpdated,
+      t,
+    ]
+  );
+
+  const handleConfirmDeleteReminder = useCallback(async () => {
+    if (!reminderToDelete) return;
+    setDeleteSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from("activities")
+        .delete()
+        .eq("id", reminderToDelete.id);
+
+      if (error) throw error;
+
+      setActivities((prev) =>
+        prev.filter((activity) => activity.id !== reminderToDelete.id)
+      );
+
+      toast({
+        title: t("reminders.deleteSuccessTitle"),
+        description: t("reminders.deleteSuccessDescription"),
+      });
+
+      handleDeleteDialogOpenChange(false);
+      void fetchProjectActivities();
+      void fetchHistoryData();
+      onActivityUpdated?.();
+    } catch (error) {
+      toast({
+        title: t("reminders.deleteErrorTitle"),
+        description: getErrorMessage(error),
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteSubmitting(false);
+    }
+  }, [
+    fetchHistoryData,
+    fetchProjectActivities,
+    handleDeleteDialogOpenChange,
+    onActivityUpdated,
+    reminderToDelete,
+    t,
+  ]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -456,25 +634,27 @@ export function ProjectActivitySection({
   const toggleCompletion = async (activityId: string, completed: boolean) => {
     try {
       const { error } = await supabase
-        .from('activities')
+        .from("activities")
         .update({ completed })
-        .eq('id', activityId);
+        .eq("id", activityId);
       if (error) throw error;
-      
-      setActivities(prev => prev.map(activity => 
+
+      setActivities(prev => prev.map(activity =>
         activity.id === activityId ? { ...activity, completed } : activity
       ));
-      
+
       toast({
-        title: completed ? t("activity.task_completed") : t("activity.task_incomplete"),
-        description: t("activity.task_status_updated")
+        title: completed
+          ? t("reminders.markCompleteSuccessTitle")
+          : t("reminders.markIncompleteSuccessTitle"),
+        description: t("reminders.statusUpdateDescription"),
       });
 
       await fetchHistoryData();
       onActivityUpdated?.();
     } catch (error) {
       toast({
-        title: t("activity.error_updating_task"),
+        title: t("reminders.statusUpdateErrorTitle"),
         description: getErrorMessage(error),
         variant: "destructive"
       });
@@ -982,6 +1162,8 @@ export function ProjectActivitySection({
                   leadName={leadName}
                   onToggleCompletion={toggleCompletion}
                   onReminderLeadNavigate={handleReminderLeadNavigate}
+                  onEditReminder={handleEditReminderRequest}
+                  onDeleteReminder={handleDeleteReminderRequest}
                 />
               ) : (
                 <div className="text-sm text-muted-foreground text-center py-8">
@@ -1016,6 +1198,46 @@ export function ProjectActivitySection({
           </div>
         )}
       </CardContent>
+      <ReminderEditorSheet
+        open={reminderSheetOpen && Boolean(editingReminder)}
+        onOpenChange={handleReminderSheetOpenChange}
+        mode={editingReminder ? "edit" : "create"}
+        initialValues={reminderEditorInitialValues}
+        onSubmit={handleReminderUpdate}
+        submitting={reminderSheetSubmitting}
+      />
+
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={handleDeleteDialogOpenChange}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("reminders.deleteConfirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("reminders.deleteConfirmDescription", {
+                content: reminderToDelete?.content ?? "",
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteSubmitting}>
+              {t("reminders.deleteCancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDeleteReminder}
+              disabled={deleteSubmitting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteSubmitting
+                ? t("reminders.deleteSubmitting")
+                : t("reminders.deleteConfirmAction")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

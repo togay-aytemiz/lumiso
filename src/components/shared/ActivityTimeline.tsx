@@ -1,5 +1,8 @@
 import { ActivityTimelineItem } from "./ActivityTimelineItem";
-import { ReminderTimelineCard } from "@/components/reminders/ReminderTimelineCard";
+import {
+  ReminderTimelineCard,
+  type ReminderTimelineCardActivity,
+} from "@/components/reminders/ReminderTimelineCard";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { formatGroupDate } from "@/lib/utils";
@@ -30,6 +33,8 @@ interface ActivityTimelineProps {
   onReminderLeadNavigate?: (leadId: string) => void;
   onReminderProjectNavigate?: (projectId: string) => void;
   showReminderStatusIndicator?: boolean;
+  onEditReminder?: (activity: ReminderTimelineCardActivity) => void;
+  onDeleteReminder?: (activity: ReminderTimelineCardActivity) => void;
 }
 
 export function ActivityTimeline({
@@ -40,6 +45,8 @@ export function ActivityTimeline({
   onReminderLeadNavigate,
   onReminderProjectNavigate,
   showReminderStatusIndicator = false,
+  onEditReminder,
+  onDeleteReminder,
 }: ActivityTimelineProps) {
   const { t, i18n } = useFormsTranslation();
   const relativeDayLabels = {
@@ -129,6 +136,16 @@ export function ActivityTimeline({
                 onOpenLead={handleOpenLead}
                 onOpenProject={handleOpenProject}
                 showStatusIndicator={showReminderStatusIndicator}
+                onEditReminder={
+                  onEditReminder
+                    ? () => onEditReminder(reminderActivity)
+                    : undefined
+                }
+                onDeleteReminder={
+                  onDeleteReminder
+                    ? () => onDeleteReminder(reminderActivity)
+                    : undefined
+                }
               />
             );
           }

@@ -1,10 +1,20 @@
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight, CheckCircle2, Clock, RotateCcw, UserCircle } from "lucide-react";
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  Clock,
+  PenSquare,
+  RotateCcw,
+  Trash2,
+  UserCircle,
+} from "lucide-react";
 import { cn, formatTime } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { IconActionButton } from "@/components/ui/icon-action-button";
+import { IconActionButtonGroup } from "@/components/ui/icon-action-button-group";
 
 export interface ReminderTimelineCardActivity {
   id: string;
@@ -27,6 +37,8 @@ interface ReminderTimelineLabels {
   today: string;
   tomorrow: string;
   completed: string;
+  editReminder: string;
+  deleteReminder: string;
 }
 
 export interface ReminderTimelineCardProps {
@@ -38,6 +50,8 @@ export interface ReminderTimelineCardProps {
   projectName?: string;
   labels?: ReminderTimelineLabels;
   showStatusIndicator?: boolean;
+  onEditReminder?: (activity: ReminderTimelineCardActivity) => void;
+  onDeleteReminder?: (activity: ReminderTimelineCardActivity) => void;
 }
 
 const isSameDay = (reminderDate?: string | null, offsetDays = 0) => {
@@ -70,6 +84,8 @@ export const ReminderTimelineCard = ({
   projectName,
   labels: overrideLabels,
   showStatusIndicator = false,
+  onEditReminder,
+  onDeleteReminder,
 }: ReminderTimelineCardProps) => {
   const { t } = useTranslation("pages");
   const { t: tForms } = useFormsTranslation();
@@ -87,6 +103,8 @@ export const ReminderTimelineCard = ({
       today: tForms("reminders.today"),
       tomorrow: tForms("reminders.tomorrow"),
       completed: tForms("reminders.completed"),
+      editReminder: tForms("reminders.editReminder"),
+      deleteReminder: tForms("reminders.deleteReminder"),
     };
   }, [overrideLabels, t, tForms]);
 
@@ -248,6 +266,35 @@ export const ReminderTimelineCard = ({
                   {labels.openProject}
                   <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
                 </Button>
+              )}
+              {(onEditReminder || onDeleteReminder) && (
+                <IconActionButtonGroup>
+                  {onEditReminder && (
+                    <IconActionButton
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onEditReminder(activity);
+                      }}
+                      aria-label={labels.editReminder}
+                    >
+                      <PenSquare className="h-4 w-4" aria-hidden="true" />
+                    </IconActionButton>
+                  )}
+                  {onDeleteReminder && (
+                    <IconActionButton
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onDeleteReminder(activity);
+                      }}
+                      aria-label={labels.deleteReminder}
+                      variant="danger"
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    </IconActionButton>
+                  )}
+                </IconActionButtonGroup>
               )}
             </div>
           </div>

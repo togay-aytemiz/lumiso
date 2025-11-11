@@ -1,3 +1,39 @@
+.add-action-label {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.add-action-label::after {
+  content: "";
+  position: absolute;
+  inset: -45% -55%;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.9) 48%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: translateX(-120%);
+  animation: add-action-text-shimmer 2.8s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  will-change: transform;
+}
+
+@keyframes add-action-text-shimmer {
+  0% {
+    transform: translateX(-120%);
+  }
+  55% {
+    transform: translateX(120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
 .add-action-overlay {
   opacity: 0;
   transition: opacity 260ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -47,5 +83,10 @@
     transform: none !important;
     opacity: 1 !important;
     transition: none !important;
+  }
+  .add-action-label::after {
+    animation: none !important;
+    opacity: 0 !important;
+    transform: none !important;
   }
 }

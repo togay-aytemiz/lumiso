@@ -356,7 +356,7 @@ export function AddAction({ className }: AddActionProps) {
           aria-expanded={primaryButtonControlsMenu ? menuOpen : undefined}
         >
           <Plus className="h-4 w-4 text-slate-700 transition-transform duration-200 group-hover/button:scale-110 group-hover/button:text-slate-900 group-focus-visible/button:scale-110 group-focus-visible/button:text-slate-900" />
-          <span className="hidden whitespace-nowrap text-base text-slate-800 transition-colors duration-200 group-hover/button:text-slate-950 sm:inline">
+          <span className="add-action-label hidden whitespace-nowrap text-base text-slate-800 transition-colors duration-200 group-hover/button:text-slate-950 sm:inline">
             {primaryLabel ?? tCommon("buttons.new")}
           </span>
         </Button>

@@ -30,6 +30,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { ReminderTimelineCardActivity } from "@/components/reminders/ReminderTimelineCard";
+import { useTranslation } from "react-i18next";
+import { NoteEditorSheet } from "@/components/shared/NoteEditorSheet";
 type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
 type AuditLogRow = Database["public"]["Tables"]["audit_log"]["Row"];
@@ -166,6 +168,7 @@ export function LeadActivitySection({
   onActivityUpdated
 }: LeadActivitySectionProps) {
   const { t } = useFormsTranslation();
+  const { t: tCommon } = useTranslation("common");
   const navigate = useNavigate();
   const [activities, setActivities] = useState<TimelineActivity[]>([]);
   const [projectActivities, setProjectActivities] = useState<TimelineActivity[]>([]);
@@ -182,6 +185,12 @@ export function LeadActivitySection({
     useState<ReminderTimelineCardActivity | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [noteEditorOpen, setNoteEditorOpen] = useState(false);
+  const [noteEditorSubmitting, setNoteEditorSubmitting] = useState(false);
+  const [noteToEdit, setNoteToEdit] = useState<TimelineActivity | null>(null);
+  const [noteToDelete, setNoteToDelete] = useState<TimelineActivity | null>(null);
+  const [noteDeleteDialogOpen, setNoteDeleteDialogOpen] = useState(false);
+  const [noteDeleteSubmitting, setNoteDeleteSubmitting] = useState(false);
 
   const reminderEditorInitialValues = useMemo<
     ReminderEditorValues | undefined
@@ -368,6 +377,125 @@ export function LeadActivitySection({
       setReminderToDelete(null);
     }
   }, []);
+
+  const handleNoteEditorOpenChange = useCallback((open: boolean) => {
+    setNoteEditorOpen(open);
+    if (!open) {
+      setNoteToEdit(null);
+    }
+  }, []);
+
+  const handleEditNoteRequest = useCallback((activity: TimelineActivity) => {
+    setNoteToEdit(activity);
+    setNoteEditorOpen(true);
+  }, []);
+
+  const handleNoteEditorSubmit = useCallback(
+    async (updatedContent: string) => {
+      if (!noteToEdit) return;
+
+      setNoteEditorSubmitting(true);
+      try {
+        const { error } = await supabase
+          .from("activities")
+          .update({ content: updatedContent })
+          .eq("id", noteToEdit.id);
+
+        if (error) throw error;
+
+        setActivities((prev) =>
+          prev.map((activity) =>
+            activity.id === noteToEdit.id
+              ? { ...activity, content: updatedContent }
+              : activity
+          )
+        );
+
+        setProjectActivities((prev) =>
+          prev.map((activity) =>
+            activity.id === noteToEdit.id
+              ? { ...activity, content: updatedContent }
+              : activity
+          )
+        );
+
+        toast({
+          title: tCommon("toast.success"),
+          description: t("activities.note_update_success"),
+        });
+
+        handleNoteEditorOpenChange(false);
+        onActivityUpdated?.();
+      } catch (error) {
+        console.error("Error updating note:", error);
+        toast({
+          title: tCommon("toast.error"),
+          description: t("activities.note_update_error"),
+          variant: "destructive",
+        });
+      } finally {
+        setNoteEditorSubmitting(false);
+      }
+    },
+    [handleNoteEditorOpenChange, noteToEdit, onActivityUpdated, t, tCommon]
+  );
+
+  const handleDeleteNoteRequest = useCallback((activity: TimelineActivity) => {
+    setNoteToDelete(activity);
+    setNoteDeleteDialogOpen(true);
+  }, []);
+
+  const handleNoteDeleteDialogOpenChange = useCallback((open: boolean) => {
+    setNoteDeleteDialogOpen(open);
+    if (!open) {
+      setNoteToDelete(null);
+    }
+  }, []);
+
+  const handleConfirmDeleteNote = useCallback(async () => {
+    if (!noteToDelete) return;
+
+    setNoteDeleteSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from("activities")
+        .delete()
+        .eq("id", noteToDelete.id);
+
+      if (error) throw error;
+
+      setActivities((prev) =>
+        prev.filter((activity) => activity.id !== noteToDelete.id)
+      );
+
+      setProjectActivities((prev) =>
+        prev.filter((activity) => activity.id !== noteToDelete.id)
+      );
+
+      toast({
+        title: tCommon("toast.success"),
+        description: t("activities.note_delete_success"),
+      });
+
+      handleNoteDeleteDialogOpenChange(false);
+      onActivityUpdated?.();
+    } catch (error) {
+      console.error("Error deleting note:", error);
+      toast({
+        title: tCommon("toast.error"),
+        description: t("activities.note_delete_error"),
+        variant: "destructive",
+      });
+    } finally {
+      setNoteDeleteSubmitting(false);
+    }
+  }, [
+    handleNoteDeleteDialogOpenChange,
+    noteToDelete,
+    onActivityUpdated,
+    t,
+    tCommon,
+  ]);
 
   const handleReminderUpdate = useCallback(
     async (values: ReminderEditorValues) => {
@@ -742,6 +870,8 @@ export function LeadActivitySection({
                     onReminderProjectNavigate={handleReminderProjectNavigate}
                     onEditReminder={handleEditReminderRequest}
                     onDeleteReminder={handleDeleteReminderRequest}
+                    onEditNote={handleEditNoteRequest}
+                    onDeleteNote={handleDeleteNoteRequest}
                   />
                 </div>}
 
@@ -755,6 +885,8 @@ export function LeadActivitySection({
                     onReminderProjectNavigate={handleReminderProjectNavigate}
                     onEditReminder={handleEditReminderRequest}
                     onDeleteReminder={handleDeleteReminderRequest}
+                    onEditNote={handleEditNoteRequest}
+                    onDeleteNote={handleDeleteNoteRequest}
                   />
                 </div>}
 
@@ -787,6 +919,14 @@ export function LeadActivitySection({
         submitting={reminderSheetSubmitting}
       />
 
+      <NoteEditorSheet
+        open={noteEditorOpen && Boolean(noteToEdit)}
+        onOpenChange={handleNoteEditorOpenChange}
+        initialContent={noteToEdit?.content ?? ""}
+        onSubmit={handleNoteEditorSubmit}
+        submitting={noteEditorSubmitting}
+      />
+
       <AlertDialog
         open={deleteDialogOpen}
         onOpenChange={handleDeleteDialogOpenChange}
@@ -814,6 +954,36 @@ export function LeadActivitySection({
               {deleteSubmitting
                 ? t("reminders.deleteSubmitting")
                 : t("reminders.deleteConfirmAction")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={noteDeleteDialogOpen}
+        onOpenChange={handleNoteDeleteDialogOpenChange}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("activities.delete_note_title")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("activities.delete_note_description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={noteDeleteSubmitting}>
+              {tCommon("buttons.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDeleteNote}
+              disabled={noteDeleteSubmitting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {noteDeleteSubmitting
+                ? t("activities.delete_note_loading")
+                : t("activities.delete_note_confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

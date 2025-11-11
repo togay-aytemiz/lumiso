@@ -35,6 +35,8 @@ interface ActivityTimelineProps {
   showReminderStatusIndicator?: boolean;
   onEditReminder?: (activity: ReminderTimelineCardActivity) => void;
   onDeleteReminder?: (activity: ReminderTimelineCardActivity) => void;
+  onEditNote?: (activity: Activity) => void;
+  onDeleteNote?: (activity: Activity) => void;
 }
 
 export function ActivityTimeline({
@@ -47,6 +49,8 @@ export function ActivityTimeline({
   showReminderStatusIndicator = false,
   onEditReminder,
   onDeleteReminder,
+  onEditNote,
+  onDeleteNote,
 }: ActivityTimelineProps) {
   const { t, i18n } = useFormsTranslation();
   const relativeDayLabels = {
@@ -151,7 +155,29 @@ export function ActivityTimeline({
           }
 
           // Use timeline item for notes and reminders without dates
-          return <ActivityTimelineItem key={activity.id} id={activity.id} type={activity.type as 'note' | 'reminder'} content={activity.content} completed={activity.completed} projectName={getProjectName(activity.project_id)} onToggleCompletion={activity.type === 'reminder' ? onToggleCompletion : undefined} />;
+          return (
+            <ActivityTimelineItem
+              key={activity.id}
+              id={activity.id}
+              type={activity.type as "note" | "reminder"}
+              content={activity.content}
+              completed={activity.completed}
+              projectName={getProjectName(activity.project_id)}
+              onToggleCompletion={
+                activity.type === "reminder" ? onToggleCompletion : undefined
+              }
+              onEditNote={
+                activity.type === "note" && onEditNote
+                  ? () => onEditNote(activity)
+                  : undefined
+              }
+              onDeleteNote={
+                activity.type === "note" && onDeleteNote
+                  ? () => onDeleteNote(activity)
+                  : undefined
+              }
+            />
+          );
         })}
           </div>
         </div>)}

@@ -1176,9 +1176,22 @@
         "emailHelp": "Giriş e-posta adresiniz burada değiştirilemez",
         "deletePhoto": "Profil Fotoğrafını Sil",
         "deletePhotoConfirm": "Profil fotoğrafınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
-        "deletePhotoButton": "Fotoğraf Sil"
-      },
-      "workingHours": {
+      "deletePhotoButton": "Fotoğraf Sil"
+    },
+    "security": {
+      "title": "Şifre ve güvenlik",
+      "description": "Şifrenizi güncellemeniz gerektiğinde kendinize güvenli bir sıfırlama bağlantısı gönderin.",
+      "hint": "Giriş e-posta adresinize tek kullanımlık bir bağlantı gönderiyoruz. Güvenlik için 60 dakika sonra sona erer.",
+      "cta": "Sıfırlama e-postası gönder",
+      "ctaLoading": "Gönderiliyor...",
+      "successTitle": "Sıfırlama bağlantısı gönderildi",
+      "successDescription": "Yeni bir şifre belirlemek için {{email}} adresine gelen talimatları kontrol edin.",
+      "errorTitle": "Sıfırlama bağlantısı gönderilemedi",
+      "errorDescription": "Lütfen tekrar deneyin veya sorun devam ederse destekle iletişime geçin.",
+      "missingEmailTitle": "E-posta bulunamadı",
+      "missingEmailDescription": "Oturum açma e-postanızı bulamadık. Sayfayı yenileyip yeniden giriş yaptıktan sonra tekrar deneyin."
+    },
+    "workingHours": {
         "title": "Çalışma Saatleri",
         "description": "Seans planlama için müsaitliğinizi ayarlayın",
         "day": "Gün",

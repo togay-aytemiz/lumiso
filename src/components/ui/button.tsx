@@ -4,6 +4,8 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
+const surfaceActionButtonClass = "btn-surface-action"
+
 const buttonColorSchemes = {
   amber: {
     base: "border border-amber-300 bg-amber-100 text-amber-900",
@@ -57,8 +59,8 @@ const buttonVariants = cva(
         dangerOutline: "border border-destructive text-destructive hover:bg-destructive/10",
         chip:
           "bg-transparent text-current hover:bg-transparent hover:text-current shadow-none",
-        pill:
-          "rounded-2xl border border-transparent bg-muted text-foreground shadow-sm hover:bg-[hsl(var(--accent-100))] hover:text-[hsl(var(--accent-800))]",
+        surface: surfaceActionButtonClass,
+        pill: surfaceActionButtonClass,
         pillDanger:
           "rounded-2xl border border-transparent bg-destructive/10 text-destructive shadow-sm hover:bg-destructive/20 hover:text-destructive",
       },

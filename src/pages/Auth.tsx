@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useFormsTranslation, useMessagesTranslation } from "@/hooks/useTypedTranslation";
 import { useI18nToast } from "@/lib/toastHelpers";
+import { logAuthEvent } from "@/lib/authTelemetry";
 import { useTranslation } from "react-i18next";
 
 const normalizeAuthPath = (pathname: string) => {
@@ -30,10 +31,35 @@ const getModeFromLocation = (pathname: string, search: string): "signin" | "sign
   return "signin";
 };
 
+const AUTH_BYPASS_TYPES = new Set(["recovery", "invite"]);
+
+const getTypeFromSearchOrHash = (search: string, hash: string) => {
+  const searchParams = new URLSearchParams(search);
+  const hashParams = new URLSearchParams(hash.replace(/^#/, ""));
+  return (
+    (searchParams.get("type") || "").toLowerCase() ||
+    (hashParams.get("type") || "").toLowerCase()
+  );
+};
+
+const getAuthIntentFromLocation = (pathname: string, search: string, hash: string) => {
+  const normalized = normalizeAuthPath(pathname || "");
+  if (normalized.endsWith("/auth/recovery")) {
+    return "recovery";
+  }
+  const type = getTypeFromSearchOrHash(search, hash);
+  return type || undefined;
+};
+
+const shouldBypassRedirect = (intent?: string) => {
+  if (!intent) return false;
+  return AUTH_BYPASS_TYPES.has(intent);
+};
+
 const Auth = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(() => getModeFromLocation(location.pathname, location.search) === "signup");
@@ -53,6 +79,16 @@ const Auth = () => {
   const { t: tPages } = useTranslation('pages');
   const { t: tCommon } = useTranslation('common');
   const toast = useI18nToast();
+  const authIntent = getAuthIntentFromLocation(location.pathname, location.search, location.hash || "");
+  const recoveryIntentActive = authIntent === "recovery";
+  const recordToast = useCallback((toastVariant: "success" | "error", toastMessageKey?: string, toastCopy?: string) => {
+    logAuthEvent("auth_toast_triggered", {
+      toastVariant,
+      toastMessageKey,
+      toastCopy,
+      email,
+    });
+  }, [email]);
 
   // Password strength helpers (sign-up only UI)
   const getPasswordStrength = (pwd: string) => {
@@ -75,20 +111,54 @@ const Auth = () => {
   const resetPwdStrength = getPasswordStrength(newPassword);
 
   useEffect(() => {
-    const derivedMode = (isPasswordResetMode || isPasswordResetRequestMode)
+    const normalizedPath = normalizeAuthPath(location.pathname || "");
+    const hasRecoveryPath = normalizedPath.endsWith("/auth/recovery");
+    const searchParams = new URLSearchParams(location.search);
+    const searchType = (searchParams.get("type") || "").toLowerCase();
+    const hashType = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("type")?.toLowerCase();
+    const wantsRecovery = searchType === "recovery" || hashType === "recovery";
+
+    if (!hasRecoveryPath && wantsRecovery) {
+      if (searchType === "recovery") {
+        searchParams.delete("type");
+      }
+      const nextSearch = searchParams.toString();
+      const nextUrl = `/auth/recovery${nextSearch ? `?${nextSearch}` : ""}${location.hash || ""}`;
+      navigate(nextUrl, { replace: true });
+    }
+  }, [location.pathname, location.search, location.hash, navigate]);
+
+  useEffect(() => {
+    const derivedMode = (recoveryIntentActive || isPasswordResetRequestMode)
       ? "signin"
       : getModeFromLocation(location.pathname, location.search);
     const shouldSignUp = derivedMode === "signup";
 
     setIsSignUp((prev) => (prev === shouldSignUp ? prev : shouldSignUp));
-  }, [location.pathname, location.search, isPasswordResetMode, isPasswordResetRequestMode]);
+  }, [location.pathname, location.search, recoveryIntentActive, isPasswordResetRequestMode]);
 
-  // Redirect if already logged in
   useEffect(() => {
-    if (user) {
+    if (recoveryIntentActive) {
+      if (!isPasswordResetMode) {
+        setIsPasswordResetMode(true);
+      }
+      if (isPasswordResetRequestMode) {
+        setIsPasswordResetRequestMode(false);
+      }
+      if (showPassword) {
+        setShowPassword(false);
+      }
+    } else if (isPasswordResetMode) {
+      setIsPasswordResetMode(false);
+    }
+  }, [recoveryIntentActive, isPasswordResetMode, isPasswordResetRequestMode, showPassword]);
+
+  // Redirect if already logged in (unless we're handling recovery/invite flows)
+  useEffect(() => {
+    if (user && !shouldBypassRedirect(authIntent)) {
       navigate("/");
     }
-  }, [user, navigate]);
+  }, [user, navigate, authIntent]);
 
   const clearAuthState = () => {
     // Clear all auth related storage
@@ -98,6 +168,53 @@ const Auth = () => {
       }
     });
   };
+
+  useEffect(() => {
+    if (!recoveryIntentActive) return;
+    const searchParams = new URLSearchParams(location.search);
+    const emailFromQuery = (searchParams.get("email") || "").trim();
+    if (emailFromQuery && emailFromQuery !== email) {
+      setEmail(emailFromQuery);
+    }
+  }, [recoveryIntentActive, location.search, email]);
+
+  useEffect(() => {
+    if (!recoveryIntentActive || authLoading) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const verifyRecoverySession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (!isMounted) return;
+      const sessionUser = data?.session?.user;
+
+      if (!sessionUser) {
+        const copy = tMsg('auth.recovery_link_invalid', 'This recovery link is invalid or has expired. Request a new email to continue.');
+        toast.error(copy);
+        recordToast("error", "auth.recovery_link_invalid", copy);
+        logAuthEvent("auth_recovery_session_missing", {
+          errorMessage: error?.message || "missing_session",
+        });
+        setIsPasswordResetMode(false);
+        setIsPasswordResetRequestMode(false);
+        setShowPassword(false);
+        navigate("/auth/signin", { replace: true });
+        return;
+      }
+
+      if (!email && sessionUser.email) {
+        setEmail(sessionUser.email);
+      }
+    };
+
+    verifyRecoverySession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [recoveryIntentActive, authLoading, email, navigate, tMsg, toast, recordToast]);
 
   const featureSlides = [
     {
@@ -146,6 +263,7 @@ const Auth = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    logAuthEvent(isSignUp ? "auth_sign_up_start" : "auth_sign_in_start", { email });
 
     try {
       // Always clear previous state first
@@ -162,12 +280,23 @@ const Auth = () => {
         });
 
         if (error) throw error;
+        if (data.user) {
+          logAuthEvent("auth_sign_up_success", {
+            email,
+            supabaseUserId: data.user.id,
+            emailConfirmed: Boolean(data.user.email_confirmed_at),
+          });
+        }
 
         if (data.user && !data.user.email_confirmed_at) {
-          toast.success(tMsg('auth.email_confirmation'));
+          const copy = tMsg('auth.email_confirmation');
+          toast.success(copy);
+          recordToast("success", "auth.email_confirmation", copy);
           setLoading(false);
         } else if (data.user) {
-          toast.success(tMsg('auth.account_created'));
+          const copy = tMsg('auth.account_created');
+          toast.success(copy);
+          recordToast("success", "auth.account_created", copy);
           // Navigate to home
           setTimeout(() => navigate("/"), 1000);
         }
@@ -180,18 +309,30 @@ const Auth = () => {
         if (error) throw error;
 
         console.log("Sign in successful:", data.user?.id);
-        toast.success(tMsg('auth.signed_in'));
+        logAuthEvent("auth_sign_in_success", {
+          email,
+          supabaseUserId: data.user?.id,
+        });
+        const copy = tMsg('auth.signed_in');
+        toast.success(copy);
+        recordToast("success", "auth.signed_in", copy);
         
         // Navigate to home
         setTimeout(() => navigate("/"), 1000);
       }
     } catch (error: unknown) {
       console.error("Auth error:", error);
+      const fallbackKey = 'auth.auth_error';
       const message =
         error instanceof Error && error.message
           ? error.message
-          : tMsg('auth.auth_error');
+          : tMsg(fallbackKey);
+      logAuthEvent(isSignUp ? "auth_sign_up_error" : "auth_sign_in_error", {
+        email,
+        errorMessage: message,
+      });
       toast.error(message);
+      recordToast("error", error instanceof Error && error.message ? undefined : fallbackKey, message);
       setLoading(false);
     }
   };
@@ -200,26 +341,43 @@ const Auth = () => {
     event?.preventDefault();
 
     if (!email) {
-      toast.error(tMsg('auth.reset_email_missing'));
+      const copy = tMsg('auth.reset_email_missing');
+      toast.error(copy);
+      recordToast("error", "auth.reset_email_missing", copy);
+      logAuthEvent("auth_reset_request_error", {
+        email,
+        errorMessage: "missing_email",
+      });
       return;
     }
 
     setResettingPassword(true);
     try {
+      const recoveryRedirect = `${window.location.origin}/auth/signin?type=recovery`;
+      logAuthEvent("auth_reset_request_start", { email, redirectTo: recoveryRedirect });
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/signin?type=recovery`,
+        redirectTo: recoveryRedirect,
       });
 
       if (error) throw error;
 
-      toast.success(tMsg('auth.reset_email_sent'));
+      logAuthEvent("auth_reset_request_success", { email });
+      const copy = tMsg('auth.reset_email_sent');
+      toast.success(copy);
+      recordToast("success", "auth.reset_email_sent", copy);
     } catch (error: unknown) {
       console.error("Reset password error:", error);
+      const fallbackKey = 'auth.reset_email_error';
       const message =
         error instanceof Error && error.message
           ? error.message
-          : tMsg('auth.reset_email_error');
+          : tMsg(fallbackKey);
+      logAuthEvent("auth_reset_request_error", {
+        email,
+        errorMessage: message,
+      });
       toast.error(message);
+      recordToast("error", error instanceof Error && error.message ? undefined : fallbackKey, message);
     } finally {
       setResettingPassword(false);
     }
@@ -229,21 +387,38 @@ const Auth = () => {
     e.preventDefault();
 
     if (newPassword.length < 8) {
-      toast.error(tMsg('auth.password_too_short'));
+      const copy = tMsg('auth.password_too_short');
+      toast.error(copy);
+      recordToast("error", "auth.password_too_short", copy);
+      logAuthEvent("auth_password_update_error", {
+        errorMessage: "password_too_short_validation",
+      });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      toast.error(tMsg('auth.password_mismatch'));
+      const copy = tMsg('auth.password_mismatch');
+      toast.error(copy);
+      recordToast("error", "auth.password_mismatch", copy);
+      logAuthEvent("auth_password_update_error", {
+        errorMessage: "password_mismatch_validation",
+      });
       return;
     }
 
     setUpdatingPassword(true);
+    logAuthEvent("auth_password_update_start", {
+      passwordLength: newPassword.length,
+    });
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
 
-      toast.success(tMsg('auth.password_updated'));
+      logAuthEvent("auth_password_update_success", {});
+      const copy = tMsg('auth.password_updated');
+      toast.success(copy);
+      recordToast("success", "auth.password_updated", copy);
+
       setIsPasswordResetMode(false);
       setNewPassword("");
       setConfirmPassword("");
@@ -251,11 +426,16 @@ const Auth = () => {
       setTimeout(() => navigate("/"), 1000);
     } catch (error: unknown) {
       console.error("Password update error:", error);
+      const fallbackKey = 'auth.password_update_error';
       const message =
         error instanceof Error && error.message
           ? error.message
-          : tMsg('auth.password_update_error');
+          : tMsg(fallbackKey);
+      logAuthEvent("auth_password_update_error", {
+        errorMessage: message,
+      });
       toast.error(message);
+      recordToast("error", error instanceof Error && error.message ? undefined : fallbackKey, message);
     } finally {
       setUpdatingPassword(false);
     }

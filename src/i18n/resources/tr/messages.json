@@ -65,6 +65,23 @@
     "password_too_short": "Şifre en az 8 karakter olmalıdır.",
     "password_mismatch": "Şifreler eşleşmiyor.",
     "password_updated": "Şifreniz başarıyla güncellendi.",
-    "password_update_error": "Şifrenizi güncelleyemedik. Lütfen tekrar deneyin."
+    "password_update_error": "Şifrenizi güncelleyemedik. Lütfen tekrar deneyin.",
+    "password_change_subject": "Lumiso şifreniz değiştirildi",
+    "password_change_preheader": "Bu siz değilseniz hesabınızı hemen güvene alın.",
+    "password_change_body": "Lumiso hesabınızın şifresini az önce güncelledik.",
+    "password_change_support": "Bu işlemi siz yapmadıysanız hemen tekrar şifre sıfırlayın veya destekle iletişime geçin.",
+    "password_recovery_subject": "Lumiso şifrenizi sıfırlayın",
+    "password_recovery_preheader": "Yeni şifrenizi oluşturmak için bu güvenli bağlantıyı kullanın.",
+    "password_recovery_heading": "Yeni bir şifre belirleyin 🔐",
+    "password_recovery_body": "Lumiso şifrenizi sıfırlamak için bir istek aldık. Devam etmek için aşağıdaki butona tıklayın.",
+    "password_recovery_cta": "Şifreyi sıfırla",
+    "password_recovery_warning": "Bu bağlantı 60 dakika sonra sona erer. Bu isteği siz göndermediyseniz bu e-postayı yok sayabilirsiniz.",
+    "signup_confirmation_subject": "Lumiso e-postanızı doğrulayın",
+    "signup_confirmation_preheader": "Çalışma alanınızı etkinleştirmek için e-postanızı doğrulayın.",
+    "signup_confirmation_headline": "Lumiso e-postanızı doğrulayın",
+    "signup_confirmation_body": "Hesabınızı etkinleştirmek ve çalışmaya başlamak için aşağıdaki butona tıklayın.",
+    "signup_confirmation_cta": "E-postayı doğrula",
+    "signup_confirmation_warning": "Bu hesabı siz oluşturmadıysanız bu mesajı yok sayabilirsiniz.",
+    "recovery_link_invalid": "Bu kurtarma bağlantısı geçersiz veya süresi dolmuş. Devam etmek için yeni bir e-posta isteyin."
   }
 }

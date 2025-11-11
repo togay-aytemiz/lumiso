@@ -470,8 +470,9 @@ export default function Profile() {
             <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
               <Button
                 type="button"
-                variant="secondary"
-                className="w-full rounded-full bg-muted px-6 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted/80 sm:w-auto"
+                variant="surface"
+                size="sm"
+                className="w-full justify-center sm:w-fit sm:justify-start"
                 onClick={handleSendPasswordResetLink}
                 disabled={sendingPasswordEmail || !emailAddress}
               >

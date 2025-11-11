@@ -1176,9 +1176,22 @@
         "emailHelp": "Your login email address (cannot be changed here)",
         "deletePhoto": "Delete Profile Photo",
         "deletePhotoConfirm": "Are you sure you want to delete your profile photo? This action cannot be undone.",
-        "deletePhotoButton": "Delete Photo"
-      },
-      "workingHours": {
+      "deletePhotoButton": "Delete Photo"
+    },
+    "security": {
+      "title": "Password & security",
+      "description": "Send yourself a secure password reset link whenever you need to update your credentials.",
+      "hint": "We email a one-time link to your login address. It expires after 60 minutes for your safety.",
+      "cta": "Send reset email",
+      "ctaLoading": "Sending...",
+      "successTitle": "Reset link sent",
+      "successDescription": "Check {{email}} for the secure link to set a new password.",
+      "errorTitle": "Couldn't send reset link",
+      "errorDescription": "Please try again or contact support if the issue persists.",
+      "missingEmailTitle": "Email unavailable",
+      "missingEmailDescription": "We couldn't find your login email. Refresh the page or sign in again, then try once more."
+    },
+    "workingHours": {
         "title": "Working Hours",
         "description": "Set your availability for scheduling sessions",
         "day": "Day",

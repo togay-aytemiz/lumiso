@@ -65,6 +65,23 @@
     "password_too_short": "Password must be at least 8 characters long.",
     "password_mismatch": "Passwords do not match.",
     "password_updated": "Your password has been updated successfully.",
-    "password_update_error": "We couldn't update your password. Please try again."
+    "password_update_error": "We couldn't update your password. Please try again.",
+    "password_change_subject": "Your Lumiso password was changed",
+    "password_change_preheader": "If this wasn't you, secure your account immediately.",
+    "password_change_body": "We just updated the password for your Lumiso account.",
+    "password_change_support": "If you didn't make this change, reset your password again or contact support right away.",
+    "password_recovery_subject": "Reset your Lumiso password",
+    "password_recovery_preheader": "Use this secure link to create a new password.",
+    "password_recovery_heading": "Choose a new password 🔐",
+    "password_recovery_body": "We received a request to reset your Lumiso password. Click the button below to continue.",
+    "password_recovery_cta": "Reset password",
+    "password_recovery_warning": "This link expires in 60 minutes. If you didn't request a reset, you can safely ignore this email.",
+    "signup_confirmation_subject": "Confirm your Lumiso email",
+    "signup_confirmation_preheader": "Verify your address to activate your workspace.",
+    "signup_confirmation_headline": "Confirm your Lumiso email",
+    "signup_confirmation_body": "Click the button below to activate your account and start collaborating.",
+    "signup_confirmation_cta": "Confirm email",
+    "signup_confirmation_warning": "If you didn't sign up for Lumiso, you can ignore this email.",
+    "recovery_link_invalid": "This recovery link is invalid or has expired. Request a new email to continue."
   }
 }

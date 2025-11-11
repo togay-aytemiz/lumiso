@@ -1,13 +1,126 @@
 [
   {
-    "suite": "Auth (TBD)",
+    "suite": "Auth - Temel Giriş / Kayıt",
     "cases": [
       {
-        "external_id": "CRM-AUTH-TBD-001",
-        "title": "Auth testleri daha sonra beslenecek",
-        "description": "Kimlik doğrulama akışında planlanan değişiklikler tamamlandıktan sonra gerçek test senaryoları eklenecektir.",
-        "steps": [],
-        "expected_result": "TBD"
+        "external_id": "CRM-AUTH-001",
+        "title": "E-posta/şifre ile giriş başarılı ve oturum korunuyor",
+        "description": "Mutlu senaryodaki giriş akışını doğrulayın ve tarayıcıdaki breadcrumb tamponuna olayın düştüğünü kontrol edin.",
+        "steps": [
+          "/auth/signin adresine gidin.",
+          "Onaylı bir kullanıcı bilgisi ile formu doldurup gönderin.",
+          "Yönlendirme sonrası / sayfasını bir kez yenileyin.",
+          "Geliştirici araçlarını açıp `window.__lumisoAuthEvents` komutunu çalıştırın."
+        ],
+        "expected_result": "Kullanıcı / sayfasına yönlendirilir, yenilemeden sonra oturum açık kalır ve breadcrumb tamponunda son auth_sign_in_success olayı görünür."
+      },
+      {
+        "external_id": "CRM-AUTH-002",
+        "title": "Geçersiz bilgiler yerelleştirilmiş hata gösteriyor",
+        "description": "Hatalı şifrelerin oturum oluşturmadığından ve telemetriye hata olarak işlendiğinden emin olun.",
+        "steps": [
+          "/auth/signin adresine gidin.",
+          "Doğru e-posta fakat yanlış şifre girip gönderin.",
+          "Toast mesajını gözlemleyin, DevTools üzerinden breadcrumb güncellemelerini kontrol edin."
+        ],
+        "expected_result": "Form /auth üzerinde kalır, toast yerelleştirilmiş hata gösterir ve yönlendirme olmadan auth_sign_in_error olayı kaydedilir."
+      },
+      {
+        "external_id": "CRM-AUTH-003",
+        "title": "Yeni kayıt markalı doğrulama e-postasını tetikliyor",
+        "description": "Kayıt doğrulama hattının (Supabase admin link + Resend) uçtan uca çalıştığını doğrulayın.",
+        "steps": [
+          "/auth/signup adresine gidin.",
+          "Yeni bir e-posta ve geçerli şifre ile kayıt olun.",
+          "Toast mesajının e-postayı kontrol edin dediğini doğrulayın.",
+          "Resend üzerinden gelen e-postayı, konu/CTA bilgilerini inceleyin ve bağlantıya tıklayarak hesabı onaylayın."
+        ],
+        "expected_result": "Bekleyen kullanıcı yalnızca bir kez Lumiso markalı doğrulama e-postası alır, CTA /auth?mode=confirmed adresini açar ve aktivasyonu tamamlar."
+      }
+    ]
+  },
+  {
+    "suite": "Auth - Kurtarma & Şifre Yönetimi",
+    "cases": [
+      {
+        "external_id": "CRM-AUTH-004",
+        "title": "Şifre sıfırlama isteği markalı kurtarma e-postası gönderiyor",
+        "description": "/auth üzerinden doğru CTA ve telemetriyle Resend e-postası üretildiğini doğrulayın.",
+        "steps": [
+          "/auth/signin sayfasında \"Şifremi unuttum\" bağlantısına tıklayın ve bilinen bir e-posta girin.",
+          "Toast + breadcrumb çıktılarında auth_reset_request_success kaydını kontrol edin.",
+          "Gelen e-postadaki metin ve CTA URL'sini (/auth/recovery?email=...) doğrulayın."
+        ],
+        "expected_result": "Toast gönderimin başarılı olduğunu gösterir, e-posta yerelleştirilmiş metin içerir ve CTA önceden doldurulmuş e-posta ile /auth/recovery adresine gider."
+      },
+      {
+        "external_id": "CRM-AUTH-005",
+        "title": "Aktif oturum varken kurtarma bağlantısı çalışıyor",
+        "description": "Oturumu açık kullanıcılar reset bağlantısını açtığında /auth/recovery üzerinde kalmalı.",
+        "steps": [
+          "/auth üzerinden giriş yapın.",
+          "E-postadaki kurtarma bağlantısını aynı tarayıcıda açın.",
+          "Şifre sıfırlama formunu tamamlayın."
+        ],
+        "expected_result": "Sayfa / yerine /auth/recovery üzerinde kalır, sıfırlama başarılı olur ve breadcrumb auth_password_update_success kaydeder."
+      },
+      {
+        "external_id": "CRM-AUTH-006",
+        "title": "Süresi dolmuş/yeniden kullanılan bağlantı dostça hata veriyor",
+        "description": "Geçersiz bağlantı korumasını ve telemetriyi doğrulayın.",
+        "steps": [
+          "Bir kurtarma bağlantısını kullanarak şifreyi sıfırlayın.",
+          "Aynı bağlantıyı tekrar kullanmayı deneyin.",
+          "Toast/breadcrumb çıktısını gözlemleyin."
+        ],
+        "expected_result": "Kullanıcı bağlantının geçersiz olduğunu öğrenir, /auth/signin sayfasında kalır ve breadcrumb auth_recovery_session_missing olayı kaydeder."
+      },
+      {
+        "external_id": "CRM-AUTH-007",
+        "title": "Şifre güncellemesi güvenlik e-postası tetikliyor",
+        "description": "Başarılı reset sonrası güvenlik bildiriminin gönderildiğini doğrulayın.",
+        "steps": [
+          "/auth/recovery üzerinden şifre sıfırlayın.",
+          "Güvenlik bildirimi için gelen kutusunu kontrol edin.",
+          "Breadcrumb üzerinde auth_password_update_notification_success kaydını inceleyin."
+        ],
+        "expected_result": "Doğru metinle yalnızca bir güvenlik e-postası gelir, telemetri hem güncelleme hem de bildirim başarısını kaydeder."
+      },
+      {
+        "external_id": "CRM-AUTH-008",
+        "title": "Profil ayarları \"Sıfırlama e-postası gönder\" CTA'sı çalışıyor",
+        "description": "Ayarlar sayfasındaki güvenlik kartının aynı davranışı gösterdiğini doğrulayın.",
+        "steps": [
+          "Giriş yapmışken /settings/profile sayfasına gidin.",
+          "Güvenlik kartındaki şifre sıfırlama CTA'sına tıklayın.",
+          "Toast + e-posta + breadcrumb çıktılarının geldiğini doğrulayın."
+        ],
+        "expected_result": "CTA aktif olur, toast gönderimi onaylar, kurtarma e-postası gelir ve breadcrumb mevcut kullanıcı e-postasıyla auth_reset_request_start/success kaydeder."
+      }
+    ]
+  },
+  {
+    "suite": "Auth - İletişim & Destek",
+    "cases": [
+      {
+        "external_id": "CRM-AUTH-009",
+        "title": "Tarayıcı içi breadcrumb tamponu Destek için kullanılabilir",
+        "description": "Bu debug kancasının tüm ortamda çalıştığını doğrulayın.",
+        "steps": [
+          "Herhangi bir auth sayfasını açın ve basit bir eylem yapın (ör. şifre sıfırla modalını aç/kapat).",
+          "DevTools konsolunda `window.__lumisoAuthEvents` komutunu çalıştırın."
+        ],
+        "expected_result": "Konsol maskelenmiş e-posta ve zaman damgası içeren son (≤50) auth olayını listeler."
+      },
+      {
+        "external_id": "CRM-AUTH-010",
+        "title": "Destek CLI ile edge function üzerinden auth e-postası yeniden gönderilebiliyor",
+        "description": "Belirtilen npx komutunun manuel kurtarma/kayıt e-postası gönderebildiğini doğrulayın.",
+        "steps": [
+          "Repo kökünden `npx supabase functions invoke send-template-email --project-ref rifdykpdubrowzbylffe --no-verify-jwt --body '{\"authIntent\":\"password_recovery\",\"email\":\"tester@example.com\"}'` komutunu dev ortamına karşı çalıştırın.",
+          "Function loglarını izleyin ve e-posta teslimini doğrulayın."
+        ],
+        "expected_result": "Komut başarıyla tamamlanır, loglar auth intent bilgisini gösterir ve Resend test e-postasını teslim eder (gelen kutusu veya Resend panelinden doğrulanır)."
       }
     ]
   }

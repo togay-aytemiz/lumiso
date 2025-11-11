@@ -541,6 +541,10 @@ All colors MUST be HSL.
     @apply bg-[hsl(var(--sidebar-active))] text-[hsl(var(--sidebar-active-foreground))] shadow-sm;
   }
 
+  .btn-surface-action {
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-transparent bg-muted text-sm font-semibold text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 hover:bg-[hsl(var(--accent-100))] hover:text-[hsl(var(--accent-800))];
+  }
+
   .text-2xs {
     font-size: var(--font-2xs);
     line-height: 1rem;

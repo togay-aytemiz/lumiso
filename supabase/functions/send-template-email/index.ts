@@ -12,6 +12,7 @@ import {
 const resend: ResendClient = createResendClient(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const siteUrl = Deno.env.get('SITE_URL') ?? 'https://app.lumiso.com';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -127,6 +128,20 @@ type TemplateBlock =
   | FooterTemplateBlock
   | RawHtmlTemplateBlock;
 
+type AuthEmailIntent = "password_recovery" | "signup_confirmation";
+type AuthEmailLocale = "en" | "tr";
+
+interface AuthEmailCopy {
+  subject?: string;
+  preheader?: string;
+  headline?: string;
+  body?: string;
+  cta?: string;
+  warning?: string;
+}
+
+type RequiredAuthEmailCopy = Required<AuthEmailCopy>;
+
 interface SocialChannel {
   name: string;
   url?: string | null;
@@ -182,6 +197,45 @@ interface SimpleTemplate {
   master_content?: string | null;
 }
 
+const DEFAULT_AUTH_EMAIL_COPY: Record<AuthEmailLocale, Record<AuthEmailIntent, RequiredAuthEmailCopy>> = {
+  en: {
+    password_recovery: {
+      subject: "Reset your Lumiso password",
+      preheader: "Use this secure link to create a new password.",
+      headline: "Choose a new password",
+      body: "We received a request to reset your Lumiso password. Click the button below to continue.",
+      cta: "Reset password",
+      warning: "This link expires in 60 minutes. If you didn't request this reset, you can safely ignore this email.",
+    },
+    signup_confirmation: {
+      subject: "Confirm your Lumiso email",
+      preheader: "Verify your email address to activate your Lumiso workspace.",
+      headline: "Welcome to Lumiso",
+      body: "Confirm your email address to unlock your account and start collaborating with clients.",
+      cta: "Confirm email",
+      warning: "If you didn’t create a Lumiso account, you can ignore this message.",
+    },
+  },
+  tr: {
+    password_recovery: {
+      subject: "Lumiso şifrenizi sıfırlayın",
+      preheader: "Yeni şifrenizi oluşturmak için bu güvenli bağlantıyı kullanın.",
+      headline: "Yeni bir şifre belirleyin",
+      body: "Lumiso şifrenizi sıfırlamak için bir istek aldık. Devam etmek için aşağıdaki butona tıklayın.",
+      cta: "Şifreyi sıfırla",
+      warning: "Bu bağlantı 60 dakika sonra sona erer. Bu isteği siz göndermediyseniz e-postayı yok sayabilirsiniz.",
+    },
+    signup_confirmation: {
+      subject: "Lumiso e-postanızı doğrulayın",
+      preheader: "Lumiso hesabınızı etkinleştirmek için e-postanızı doğrulayın.",
+      headline: "Lumiso'ya hoş geldiniz",
+      body: "Hesabınızı etkinleştirmek ve müşterilerinizle çalışmaya başlamak için e-postanızı doğrulayın.",
+      cta: "E-postayı doğrula",
+      warning: "Bu hesabı siz oluşturmadıysanız bu mesajı yok sayabilirsiniz.",
+    },
+  },
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type GenericSupabaseClient = SupabaseClient<any, any, any>;
 
@@ -221,6 +275,12 @@ interface SendEmailRequest {
   blocks?: TemplateBlock[];
   mockData?: Record<string, string>;
   isTest?: boolean;
+  authIntent?: AuthEmailIntent;
+  email?: string;
+  locale?: string;
+  redirectTo?: string;
+  copy?: AuthEmailCopy;
+  metadata?: Record<string, string>;
   
   // Workflow format
   template_id?: string;
@@ -962,6 +1022,26 @@ function generatePlainText(blocks: TemplateBlock[], mockData: Record<string, str
   return plainText.trim();
 }
 
+const resolveAuthEmailCopy = (
+  locale: string | undefined,
+  intent: AuthEmailIntent,
+  override?: AuthEmailCopy
+): RequiredAuthEmailCopy => {
+  const language = (locale?.split('-')[0]?.toLowerCase() as AuthEmailLocale) ?? 'en';
+  const defaults =
+    DEFAULT_AUTH_EMAIL_COPY[language]?.[intent] ??
+    DEFAULT_AUTH_EMAIL_COPY.en[intent];
+
+  return {
+    subject: override?.subject || defaults.subject,
+    preheader: override?.preheader || defaults.preheader,
+    headline: override?.headline || defaults.headline,
+    body: override?.body || defaults.body,
+    cta: override?.cta || defaults.cta,
+    warning: override?.warning || defaults.warning,
+  };
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -974,6 +1054,10 @@ const handler = async (req: Request): Promise<Response> => {
     // Handle workflow requests
     if (requestData.template_id && requestData.recipient_email) {
       return await handleWorkflowEmail(requestData);
+    }
+
+    if (requestData.authIntent) {
+      return await handleAuthEmail(requestData);
     }
     
     // Handle template builder requests
@@ -1286,6 +1370,179 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
         error: getErrorMessage(error),
         details: getErrorStack(error),
         context: 'handleWorkflowEmail'
+      }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+}
+
+async function handleAuthEmail(requestData: SendEmailRequest): Promise<Response> {
+  const { authIntent, email, locale, redirectTo, copy, metadata } = requestData;
+
+  if (!authIntent || !email) {
+    return new Response(
+      JSON.stringify({ error: 'Missing authIntent or email' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  try {
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey) as GenericSupabaseClient;
+    const redirectTarget = redirectTo || `${siteUrl}/auth/recovery`;
+
+    let actionLink: string | null = null;
+    let supabaseError: Error | null = null;
+
+    if (authIntent === "password_recovery") {
+      const { data, error } = await supabaseClient.auth.admin.generateLink({
+        type: 'recovery',
+        email,
+        options: {
+          redirectTo: redirectTarget,
+        },
+      });
+      actionLink = data?.action_link ?? null;
+      supabaseError = error;
+    } else if (authIntent === "signup_confirmation") {
+      const { data, error } = await supabaseClient.auth.admin.generateLink({
+        type: 'signup',
+        email,
+        options: {
+          redirectTo: redirectTarget,
+        },
+      });
+      actionLink = data?.action_link ?? null;
+      supabaseError = error;
+    } else {
+      return new Response(
+        JSON.stringify({ error: `Auth intent ${authIntent} is not supported yet` }),
+        { status: 501, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (supabaseError || !actionLink) {
+      console.error('Failed to generate auth link:', supabaseError);
+      throw supabaseError ?? new Error('Missing action link from Supabase');
+    }
+
+    const resolvedCopy = resolveAuthEmailCopy(locale, authIntent, copy);
+    const mockData = {
+      user_name: metadata?.user_name ?? email.split('@')[0] ?? '',
+    };
+
+    const blocks: TemplateBlock[] = [
+      {
+        id: 'auth-headline',
+        type: 'text',
+        order: 0,
+        data: {
+          content: resolvedCopy.headline,
+          formatting: {
+            fontSize: 'h2',
+            bold: true,
+          },
+        },
+      },
+      {
+        id: 'auth-body',
+        type: 'text',
+        order: 1,
+        data: {
+          content: resolvedCopy.body,
+          formatting: {
+            fontSize: 'p',
+          },
+        },
+      },
+      ...(authIntent === "password_recovery"
+        ? [
+            {
+              id: 'auth-cta',
+              type: 'cta',
+              order: 2,
+              data: {
+                text: resolvedCopy.cta,
+                url: actionLink,
+                variant: 'primary',
+              },
+            } as TemplateBlock,
+            {
+              id: 'auth-warning',
+              type: 'text',
+              order: 3,
+              data: {
+                content: resolvedCopy.warning,
+                formatting: {
+                  fontSize: 'p',
+                },
+              },
+            } as TemplateBlock,
+          ]
+        : [
+            {
+              id: 'auth-cta',
+              type: 'cta',
+              order: 2,
+              data: {
+                text: resolvedCopy.cta,
+                url: actionLink,
+                variant: 'primary',
+              },
+            } as TemplateBlock,
+          ]),
+      {
+        id: 'auth-warning',
+        type: 'text',
+        order: 3,
+        data: {
+          content: resolvedCopy.warning,
+          formatting: {
+            fontSize: 'p',
+          },
+        },
+      },
+    ];
+
+    const htmlContent = generateHTMLContent(
+      blocks,
+      mockData,
+      resolvedCopy.subject,
+      resolvedCopy.preheader,
+      null,
+      false
+    );
+    const textContent = generatePlainText(blocks, mockData);
+
+    const emailData = {
+      from: `Lumiso <hello@updates.lumiso.app>`,
+      reply_to: 'support@lumiso.com',
+      to: [email],
+      subject: resolvedCopy.subject,
+      html: htmlContent,
+      text: textContent,
+      headers: {
+        'X-Lumiso-Auth-Intent': authIntent,
+      },
+    };
+
+    const emailResponse = await resend.emails.send(emailData);
+    console.log(`Auth email (${authIntent}) sent to ${email} with id ${emailResponse.data?.id}`);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        emailId: emailResponse.data?.id,
+        intent: authIntent,
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('Error in handleAuthEmail:', error);
+    return new Response(
+      JSON.stringify({
+        error: getErrorMessage(error),
+        details: getErrorStack(error),
+        context: 'handleAuthEmail',
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

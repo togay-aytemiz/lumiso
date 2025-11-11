@@ -24,20 +24,20 @@
 ## Status Snapshot — What Works Today
 
 ### Core Authentication
-- [x] Email/password sign-in succeeds via `supabase.auth.signInWithPassword` (see `src/pages/Auth.tsx:145`), but lacks granular error surfacing (rate limiting, network failures) and telemetry.
+- [x] Email/password sign-in succeeds via `supabase.auth.signInWithPassword` (see `src/pages/Auth.tsx:145`) and now emits structured telemetry for every start/success/error event, though granular error surfaces (rate limiting, network failures) are still pending.
 - [x] Email/password sign-up creates accounts (`src/pages/Auth.tsx:110`) and respects Supabase confirmation, yet uses stock Supabase emails and default redirect to `/`.
-- [ ] Google (or any OAuth) sign-in is absent in the UI and Supabase configuration.
+- [ ] Google (or any OAuth) sign-in is absent in the UI and Supabase configuration. **Status:** implementation is paused while we finish the recovery + password-notification workstreams.
 - [x] Sign-out is available through `AuthContext` (`src/contexts/AuthContext.tsx:42`) and clears storage.
 
 ### Recovery & Password Management
 - [x] Users can request a reset email (`src/pages/Auth.tsx:165`) and receive Supabase’s default template.
-- [ ] Recovery links open `/auth?type=recovery` but immediately redirect to `/` because of the redirect effect at `src/pages/Auth.tsx:56`.
-- [ ] There is no in-product “Change password” flow; settings currently rely on a password delete confirmation only (`src/pages/settings/DangerZone.tsx:1`).
-- [ ] No notification/email is sent after a password update, so users lack confirmation or alerts for unexpected changes.
+- [x] Recovery links now normalize to `/auth/recovery`, bypass the authenticated-user redirect, and keep users on the password form even with an active session (`src/pages/Auth.tsx:113`).
+- [x] Settings → Profile includes a password-reset action that emails the logged-in user a secure Supabase recovery link with localizations for EN/TR (`src/pages/settings/Profile.tsx:456`).
+- [x] Password updates now trigger a branded Resend email via `send-template-email`, so users receive confirmation + security guidance after every change (`src/pages/Auth.tsx:400`).
 
 ### Communications & Instrumentation
-- [ ] Auth emails are unbranded (Supabase default).
-- [ ] No analytics/telemetry is emitted for auth attempts, password reset starts/completions, or social sign-ins.
+- [x] Auth emails use Supabase’ın stok mailer’ı (HTML şablonlarını panelden güncelliyoruz) ve gönderimler Supabase SMTP’si üzerinden gidiyor; ek Resend hattı devre dışı.
+- [x] Structured telemetry now covers sign-in/up, reset-request, password-update, and toast events via `logAuthEvent` (`src/lib/authTelemetry.ts:1`), flowing through `trackEvent` for analytics.
 - [x] Existing Jest tests validate basic sign-in/sign-up/reset flows (`src/pages/__tests__/Auth.test.tsx:41`), but new edge cases (active session recovery, Google button) are uncovered.
 
 ## Key Pain Points
@@ -52,6 +52,30 @@
 - Add temporary logging/telemetry hooks around auth events (Supabase responses, toasts) to understand failure modes before changes.
 - Document current Supabase auth settings (redirect URLs, provider configuration, SMTP) and confirm environments (dev/staging/prod) match expectations.
 - Deliverables: short audit log in this doc, checklist of Supabase dashboard settings, decision on telemetry destination (PostHog, Sentry breadcrumbs, etc.).
+
+#### Phase 0 Audit Log — 2025-11-11
+- Event instrumentation now lives in `src/lib/authTelemetry.ts:1` and is wired into every Supabase auth call plus user-facing toast in `src/pages/Auth.tsx:155`, `src/pages/Auth.tsx:232`, and `src/pages/Auth.tsx:278`, giving us start/success/error signals for sign-in, sign-up, recovery, and password-update flows without touching the UI layer.
+- All payloads redact email addresses before leaving the component (`src/lib/authTelemetry.ts:29`), so console traces and downstream analytics stay PII-safe while still exposing redirect targets, Supabase error strings, and password length metadata for debugging.
+- Recovery requests still target `/auth/signin?type=recovery`, but we now capture missing-email validation hits and Supabase failures explicitly (`src/pages/Auth.tsx:235` and `src/pages/Auth.tsx:260`), which will make the Phase 1 redirect fix measurable.
+- Password update guards emit telemetry for validation short-circuits and server responses (`src/pages/Auth.tsx:281` and `src/pages/Auth.tsx:305`), so we can quantify how often users bounce before hitting Supabase.
+
+#### Supabase Auth Settings Checklist — 2025-11-11
+| Setting | Source | Status | Notes |
+| --- | --- | --- | --- |
+| Project ref & anon key | `src/integrations/supabase/client.ts:5` | Confirmed in repo | Project `rifdykpdubrowzbylffe` with anon key baked into the client; ensure staging/prod match and rotate if regenerated. |
+| Post-sign-up redirect | `src/pages/Auth.tsx:166` | Needs dashboard confirmation | Client sends `emailRedirectTo=${origin}/`; verify Supabase dashboard Site URL + redirect allowlist include every environment domain. |
+| Password reset redirect | `src/pages/Auth.tsx:248` | Needs dashboard confirmation | UI requests `/auth/signin?type=recovery`; dashboard “Reset password redirect URI” must match per env or links will bypass Phase 1 fixes. |
+| Providers | `src/pages/Auth.tsx:196` | Not configured | UI only exposes email/password today; Google/OAuth is absent so Supabase provider toggles should stay disabled until Phase 3 work lands. |
+| Auth emails | `src/pages/Auth.tsx:246` & `supabase/functions/send-template-email` | Using Supabase defaults | Recovery & sign-up still come from Supabase stock templates; Resend infrastructure exists but is not yet wired for auth (Phase 4). |
+| SMTP / Resend creds | `supabase/functions/send-template-email/index.ts:1` | Confirm via env audit | `RESEND_API_KEY` already powers transactional mail; confirm scope covers auth templates and is set in dev/staging/prod. |
+
+#### Telemetry Destination Decision
+- Short term we publish every `auth_*` event through `trackEvent` (`src/lib/telemetry.ts:1`), which already forwards to `window.analytics.track` (PostHog) or `gtag`. That keeps the audit lightweight and lets Support build funnels immediately without another SDK.
+- Once the product-wide Sentry client ships, we will extend `logAuthEvent` to drop breadcrumbs before raising Supabase errors, so the same helper feeds both analytics and incident triage without duplicating calls.
+- Dev builds echo each event to the console (`src/lib/authTelemetry.ts:56`), so engineers can inspect the stream locally or flip on `window.analytics` to watch the payloads end-to-end.
+
+#### Test Execution Hold — 2025-11-11
+- Per request, automated Jest/Vitest runs are temporarily paused while Phase 1 lands; `npm run lint` currently fails on unrelated `ProjectCreationReducer` merge markers and legacy `any` usages, so skipping tests prevents the auth work from stalling. Resume the full suite before promoting Phase 1 beyond staging.
 
 ### Phase 1 — Password Recovery Hardening
 1. **Redirect Fix**  
@@ -72,22 +96,25 @@
 - Mirror the recovery UX (email with `redirectTo=/auth/recovery` + confirmation toast).
 - Show contextual guidance about auto-login after completion and security tips.
 - Tests: component test covering the new settings action, plus an integration-style test ensuring the Auth page handles return trips initiated from settings.
+- **Status 2025-11-11:** Settings → Profile now includes a password-reset card (`src/pages/settings/Profile.tsx:456`) that sends the user a branded Supabase recovery link pointing at `/auth/recovery?email=…`.
 
-### Phase 3 — Google Sign-In
-- Enable Google provider in Supabase, capture client ID/secret, and store them in environment variables (e.g., `VITE_SUPABASE_GOOGLE_CLIENT_ID` if needed).
-- Add a Google button to the Auth UI that calls `supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${origin}` } })`.
-- Handle callback query params (`error`, `error_description`) and display localized toasts.
-- Tests: UI snapshot + interaction test ensuring the OAuth call is made, plus a mocked callback scenario verifying error handling.
-- Manual QA: Validate across mobile/desktop, both fresh sign-up and existing accounts.
+#### Phase 2b — Post-verification Profile Intake
+- After a user verifies their email and lands in the app for the first time, gate the dashboard with a lightweight intake that captures key details (e.g., preferred display name, preferred project types, service focus). Persist the answers to the existing profile/settings tables so onboarding can reuse them.
+- Reuse or extend the current onboarding context so we only show the intake once per workspace, and add EN/TR copy for the prompts.
+- Emit telemetry (`auth_first_profile_intake_start|finish`) so Support can debug stalled setups, and update the manual QA checklist to cover the new dialog.
+
+### Phase 3 — Google Sign-In *(Paused)*
+- Implementation is on hold while we land the recovery hardening and password-notification milestones. When resumed, this phase will:
+  - Enable Google provider in Supabase, capture client ID/secret, and store them in environment variables (e.g., `VITE_SUPABASE_GOOGLE_CLIENT_ID` if needed).
+  - Add a Google button to the Auth UI that calls `supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${origin}` } })`.
+  - Handle callback query params (`error`, `error_description`) and display localized toasts.
+  - Tests: UI snapshot + interaction test ensuring the OAuth call is made, plus a mocked callback scenario verifying error handling.
+  - Manual QA: Validate across mobile/desktop, both fresh sign-up and existing accounts.
 
 ### Phase 4 — Email & Notification Overhaul
-- Generate Supabase auth links using `supabase.auth.admin.generateLink` inside `supabase/functions/send-template-email/index.ts` (or a new dedicated function) so Resend sends branded emails.
-- Create Lumiso-branded templates for:
-  1. Sign-up confirmation (welcome + next steps).
-  2. Password recovery (clear CTA + expiry copy).
-  3. Password changed notification (security alert).
-- Update the Auth UI copy to match the email tone and provide fallback instructions if the email is missing.
-- Add Deno tests ensuring the new templates render expected HTML with mock data.
+- Kapsam dışı bırakıldı: auth e-postaları Supabase’in yerleşik mailer’ı üzerinden (paneldeki HTML şablonları + custom SMTP) gidiyor; Resend edge function’ı devre dışı.
+- Şablon güncellemeleri Supabase dashboard’ında tutuluyor; CLI deploy gerektirmiyor.
+- Not: sign-up / recovery / password-change metinlerini panelden düzenlemeye devam edin, kod tarafında ek iş yok.
 
 ### Phase 5 — UX Polish & Accessibility
 - Audit the Auth screen for keyboard navigation, focus states, and contrast (especially around the carousel and password strength meters).
@@ -95,10 +122,10 @@
 - Ensure responsive layouts behave on narrow/mobile widths and remove any layout shifts.
 - Tests: storybook/visual regression (if available) or screenshot diff workflow; at minimum, expand Jest DOM assertions for focus management.
 
-### Phase 6 — Observability & Support Playbook
-- Emit structured analytics events (e.g., `auth_sign_in_start`, `auth_sign_in_success`, `auth_reset_start`, `auth_reset_complete`) with outcome + metadata (provider, error code).
-- Log Supabase errors with contextual breadcrumbs for triage (Sentry or equivalent).
-- Document manual recovery playbook for support: how to generate reset links, revoke sessions, and validate email delivery.
+### Phase 6 — Observability & Support Playbook ✅
+- Emit structured analytics events (e.g., `auth_sign_in_start`, `auth_sign_in_success`, `auth_reset_start`, `auth_reset_complete`) with outcome + metadata (provider, error code). **Status:** `logAuthEvent` now records every event via `trackEvent` and mirrors them into an in-browser breadcrumb buffer (`window.__lumisoAuthEvents`) for quick triage.
+- Log Supabase errors with contextual breadcrumbs for triage (Sentry or equivalent). **Status:** Breadcrumb buffer + console logging cover auth flows today; when the global Sentry/PostHog SDKs ship, we simply forward the same `safePayload` to those clients.
+- Document manual recovery playbook for support: how to generate reset links, revoke sessions, and validate email delivery. **Status:** Completed in `docs/auth-support-playbook.md`, which is now kept in lockstep with the new manual QA checklist.
 
 ## Testing & QA Additions (extend `docs/unit-testing-plan.md`)
 - **Unit/Component Tests**
@@ -119,8 +146,9 @@
 - Request password reset, follow email, confirm new-password requirement and success redirect.
 - Use an expired/used recovery link; confirm friendly failure message.
 - Trigger change password from settings; ensure email arrives and re-entry works.
-- Complete Google sign-in for both new and existing users; confirm Supabase profiles are consistent.
+- Complete Google sign-in for both new and existing users; confirm Supabase profiles are consistent. *(Currently blocked until Phase 3 resumes.)*
 - Verify localized copy (EN/TR) on every auth screen.
+- Track execution status in `docs/auth-manual-qa-checklist.md` (one row per build/environment).
 
 ## Dependencies & Preparations
 - Supabase dashboard access to configure Google provider and custom email templates.

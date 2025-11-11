@@ -354,7 +354,7 @@ export function AddAction({ className }: AddActionProps) {
           role="dialog"
           aria-modal="true"
           data-state={menuOpen ? "open" : "closed"}
-          className="add-action-overlay fixed inset-0 z-50 flex items-start justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:justify-end sm:p-4"
+          className="add-action-overlay fixed inset-0 z-[100] flex items-start justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:justify-end sm:p-4"
           onClick={(event) => {
             if (event.target === event.currentTarget) {
               closeMenu();
@@ -409,11 +409,11 @@ export function AddAction({ className }: AddActionProps) {
                           {t("addAction.recommended", { defaultValue: "Önerilen" })}
                         </span>
                       ) : null}
-                      <div className="flex flex-1 flex-col items-start gap-5">
+                      <div className="flex w-full flex-1 items-start gap-4 sm:flex-col sm:items-start sm:gap-5">
                         <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all duration-500 group-hover:-translate-y-1 group-hover:rotate-3 group-hover:scale-105">
                           {item.icon}
                         </span>
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-1 flex-col gap-1.5">
                           <p className="text-base font-semibold leading-tight text-foreground">
                             {item.label}
                           </p>
@@ -421,10 +421,6 @@ export function AddAction({ className }: AddActionProps) {
                             {item.description}
                           </p>
                         </div>
-                        <span className="mt-auto inline-flex items-center gap-2 text-sm font-semibold text-primary transition group-hover:gap-3">
-                          {t("addAction.cta", { defaultValue: "Ekle" })}
-                          <ChevronDown className="h-3 w-3 -rotate-90" aria-hidden="true" />
-                        </span>
                       </div>
                     </button>
                   );

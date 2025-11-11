@@ -43,7 +43,11 @@ export function WhatsAppPreview({ blocks, mockData }: WhatsAppPreviewProps) {
               <WhatsAppTextBlock data={block.data as TextBlockData} replacePlaceholders={replacePlaceholders} formatText={formatWhatsAppText} />
             )}
             {block.type === "session-details" && (
-              <WhatsAppSessionDetails data={block.data as SessionDetailsBlockData} mockData={mockData} />
+              <WhatsAppSessionDetails
+                data={block.data as SessionDetailsBlockData}
+                mockData={mockData}
+                replacePlaceholders={replacePlaceholders}
+              />
             )}
             {block.type === "cta" && (
               <WhatsAppCTA data={block.data as CTABlockData} replacePlaceholders={replacePlaceholders} />
@@ -117,19 +121,47 @@ function WhatsAppTextBlock({
   );
 }
 
-function WhatsAppSessionDetails({ data, mockData }: { data: SessionDetailsBlockData; mockData: Record<string, string> }) {
+function WhatsAppSessionDetails({
+  data,
+  mockData,
+  replacePlaceholders,
+}: {
+  data: SessionDetailsBlockData;
+  mockData: Record<string, string>;
+  replacePlaceholders: (text: string) => string;
+}) {
   const { t } = useTranslation('pages');
-  
+  const fallback = '—';
+  const heading = data.customLabel ? replacePlaceholders(data.customLabel) : t('templateBuilder.preview.sessionDetails.defaultLabel');
+  const meetingLabel = data.meetingLabel ? replacePlaceholders(data.meetingLabel) : t('templateBuilder.preview.sessionDetails.meetingLink');
+  const projectLabel = data.projectLabel ? replacePlaceholders(data.projectLabel) : t('templateBuilder.preview.sessionDetails.project');
+  const packageLabel = data.packageLabel ? replacePlaceholders(data.packageLabel) : t('templateBuilder.preview.sessionDetails.package');
+  const notesFromMock = (mockData.session_notes || '').trim();
+  const resolvedNotes = data.customNotes?.trim()
+    ? replacePlaceholders(data.customNotes)
+    : notesFromMock || t('templateBuilder.preview.sessionDetails.defaultNote');
+
+  const lines: string[] = [];
+  if (data.showName) lines.push(`🎯 ${t('templateBuilder.preview.sessionDetails.session')} ${mockData.session_name || fallback}`);
+  if (data.showType) lines.push(`🧩 ${t('templateBuilder.preview.sessionDetails.type')} ${mockData.session_type || fallback}`);
+  if (data.showDuration) lines.push(`⏱️ ${t('templateBuilder.preview.sessionDetails.duration')} ${mockData.session_duration || fallback}`);
+  if (data.showStatus) lines.push(`📌 ${t('templateBuilder.preview.sessionDetails.status')} ${mockData.session_status || fallback}`);
+  if (data.showDate) lines.push(`📅 ${t('templateBuilder.preview.sessionDetails.date')} ${mockData.session_date || fallback}`);
+  if (data.showTime) lines.push(`🕐 ${t('templateBuilder.preview.sessionDetails.time')} ${mockData.session_time || fallback}`);
+  if (data.showLocation) lines.push(`📍 ${t('templateBuilder.preview.sessionDetails.location')} ${mockData.session_location || fallback}`);
+  if (data.showMeetingLink)
+    lines.push(`🔗 ${meetingLabel} ${mockData.session_meeting_url || fallback}`);
+  if (data.showProject) lines.push(`🗂️ ${projectLabel} ${mockData.project_name || fallback}`);
+  if (data.showPackage) lines.push(`🎁 ${packageLabel} ${mockData.project_package_name || fallback}`);
+  if (data.showNotes) lines.push(`📝 ${t('templateBuilder.preview.sessionDetails.notes')} ${resolvedNotes}`);
+
   return (
     <div className="text-sm">
-      <div className="font-medium mb-2">
-        📅 {data.customLabel || t('templateBuilder.preview.sessionDetails.defaultLabel')}
-      </div>
+      <div className="font-medium mb-2">📅 {heading}</div>
       <div className="space-y-1">
-        {data.showDate && <div>📅 {t('templateBuilder.preview.sessionDetails.date')} {mockData.session_date}</div>}
-        {data.showTime && <div>🕐 {t('templateBuilder.preview.sessionDetails.time')} {mockData.session_time}</div>}
-        {data.showLocation && <div>📍 {t('templateBuilder.preview.sessionDetails.location')} {mockData.session_location}</div>}
-        {data.showNotes && <div>📝 {t('templateBuilder.preview.sessionDetails.defaultNote')}</div>}
+        {lines.map((line, idx) => (
+          <div key={`${line}-${idx}`}>{line}</div>
+        ))}
       </div>
     </div>
   );

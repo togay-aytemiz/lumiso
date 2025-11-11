@@ -28,12 +28,39 @@ export function SMSPreview({ blocks, mockData }: SMSPreviewProps) {
 
         case "session-details": {
           const sessionData = block.data as SessionDetailsBlockData;
-          smsContent += sessionData.customLabel || t('templateBuilder.preview.sessionDetails.defaultLabel');
-          smsContent += "\n";
-          if (sessionData.showDate) smsContent += `${t('templateBuilder.preview.sessionDetails.date')} ${mockData.session_date}\n`;
-          if (sessionData.showTime) smsContent += `${t('templateBuilder.preview.sessionDetails.time')} ${mockData.session_time}\n`;
-          if (sessionData.showLocation) smsContent += `${t('templateBuilder.preview.sessionDetails.location')} ${mockData.session_location}\n`;
-          if (sessionData.showNotes) smsContent += t('templateBuilder.preview.sessionDetails.defaultNote');
+          const heading = sessionData.customLabel
+            ? replacePlaceholders(sessionData.customLabel)
+            : t('templateBuilder.preview.sessionDetails.defaultLabel');
+          const meetingLabel = sessionData.meetingLabel
+            ? replacePlaceholders(sessionData.meetingLabel)
+            : t('templateBuilder.preview.sessionDetails.meetingLink');
+          const projectLabel = sessionData.projectLabel
+            ? replacePlaceholders(sessionData.projectLabel)
+            : t('templateBuilder.preview.sessionDetails.project');
+          const packageLabel = sessionData.packageLabel
+            ? replacePlaceholders(sessionData.packageLabel)
+            : t('templateBuilder.preview.sessionDetails.package');
+          const notesFromMock = (mockData.session_notes || '').trim();
+          const resolvedNotes = sessionData.customNotes?.trim()
+            ? replacePlaceholders(sessionData.customNotes)
+            : notesFromMock || t('templateBuilder.preview.sessionDetails.defaultNote');
+          const lines: string[] = [];
+          if (sessionData.showName) lines.push(`${t('templateBuilder.preview.sessionDetails.session')} ${mockData.session_name || '—'}`);
+          if (sessionData.showType) lines.push(`${t('templateBuilder.preview.sessionDetails.type')} ${mockData.session_type || '—'}`);
+          if (sessionData.showDuration) lines.push(`${t('templateBuilder.preview.sessionDetails.duration')} ${mockData.session_duration || '—'}`);
+          if (sessionData.showStatus) lines.push(`${t('templateBuilder.preview.sessionDetails.status')} ${mockData.session_status || '—'}`);
+          if (sessionData.showDate) lines.push(`${t('templateBuilder.preview.sessionDetails.date')} ${mockData.session_date || '—'}`);
+          if (sessionData.showTime) lines.push(`${t('templateBuilder.preview.sessionDetails.time')} ${mockData.session_time || '—'}`);
+          if (sessionData.showLocation) lines.push(`${t('templateBuilder.preview.sessionDetails.location')} ${mockData.session_location || '—'}`);
+          if (sessionData.showMeetingLink) lines.push(`${meetingLabel} ${mockData.session_meeting_url || '—'}`);
+          if (sessionData.showProject) lines.push(`${projectLabel} ${mockData.project_name || '—'}`);
+          if (sessionData.showPackage) lines.push(`${packageLabel} ${mockData.project_package_name || '—'}`);
+          if (sessionData.showNotes) lines.push(`${t('templateBuilder.preview.sessionDetails.notes')} ${resolvedNotes}`);
+
+          smsContent += heading;
+          if (lines.length > 0) {
+            smsContent += "\n" + lines.join("\n");
+          }
           break;
         }
 

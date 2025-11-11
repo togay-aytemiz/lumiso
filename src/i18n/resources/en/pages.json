@@ -1828,6 +1828,7 @@
         "sessionDuration": "90 minutes",
         "sessionStatus": "Confirmed",
         "sessionMeeting": "https://meet.example.com/preview",
+        "sessionNotes": "Please bring your favorite outfit options.",
         "businessName": "Radiant Photography",
         "businessPhone": "(555) 123-4567",
         "projectName": "Spring Wedding",

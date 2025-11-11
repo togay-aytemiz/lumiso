@@ -726,6 +726,9 @@ export function generateHTMLContent(
           const projectLabel = sessionData.projectLabel ? replacePlaceholders(sessionData.projectLabel, mockData) : "Project";
           const packageLabel = sessionData.packageLabel ? replacePlaceholders(sessionData.packageLabel, mockData) : "Package";
           const meetingLabel = sessionData.meetingLabel ? replacePlaceholders(sessionData.meetingLabel, mockData) : "Meeting Link";
+          const resolvedNotes = sessionData.customNotes?.trim()
+            ? replacePlaceholders(sessionData.customNotes, mockData)
+            : (mockData.session_notes && mockData.session_notes.trim().length > 0 ? mockData.session_notes : '—');
 
           const detailRows = [
             { visible: sessionData.showName, label: 'Session', value: mockData.session_name || '—' },
@@ -765,11 +768,11 @@ export function generateHTMLContent(
                     `
                   )
                   .join('')}
-                ${sessionData.showNotes && sessionData.customNotes
+                ${sessionData.showNotes
                   ? `
                       <div class="session-detail-item">
                         <span class="session-detail-label">Notes:</span>
-                        <span class="session-detail-value">${replacePlaceholders(sessionData.customNotes, mockData)}</span>
+                        <span class="session-detail-value">${resolvedNotes}</span>
                       </div>
                     `
                   : ''}
@@ -916,6 +919,9 @@ function generatePlainText(blocks: TemplateBlock[], mockData: Record<string, str
         case 'session-details': {
           const data = block.data as SessionDetailsBlockData;
           const heading = data.customLabel ? replacePlaceholders(data.customLabel, mockData) : 'Session Details';
+          const resolvedNotes = data.customNotes?.trim()
+            ? replacePlaceholders(data.customNotes, mockData)
+            : (mockData.session_notes && mockData.session_notes.trim().length > 0 ? mockData.session_notes : '—');
           plainText += `${heading.toUpperCase()}\n`;
           plainText += `${'-'.repeat(heading.length)}\n`;
           if (data.showName) plainText += `Session: ${mockData.session_name || '—'}\n`;
@@ -929,8 +935,7 @@ function generatePlainText(blocks: TemplateBlock[], mockData: Record<string, str
           if (data.showProject) plainText += `${data.projectLabel || 'Project'}: ${mockData.project_name || '—'}\n`;
           if (data.showPackage) plainText += `${data.packageLabel || 'Package'}: ${mockData.project_package_name || '—'}\n`;
           if (data.showNotes) {
-            const customNotes = data.customNotes || 'Please arrive 10 minutes early. Bring comfortable outfits!';
-            plainText += `Notes: ${replacePlaceholders(customNotes, mockData)}\n`;
+            plainText += `Notes: ${resolvedNotes}\n`;
           }
           plainText += '\n';
           break;

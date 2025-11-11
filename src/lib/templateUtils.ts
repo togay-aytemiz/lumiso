@@ -62,6 +62,7 @@ export function getPreviewDataSets(language: string = 'en') {
           session_duration: "90 dakika",
           session_status: "Planlandı",
           session_meeting_url: "https://meet.example.com/elif-mert",
+          session_notes: "Hazırlıklarınızı paylaşmayı unutmayın.",
           business_name: "Parlak Fotoğrafçılık",
           business_phone: "(555) 123-4567",
           customer_email: "elif.mert@example.com",
@@ -75,6 +76,7 @@ export function getPreviewDataSets(language: string = 'en') {
         data: {
           customer_name: "Ayşe Yılmaz",
           session_date: "20 Mart 2024",
+          session_notes: "Ekipman listesi mailde.",
           business_name: "Parlak Fotoğrafçılık",
           business_phone: "(555) 123-4567",
           session_status: "Beklemede",
@@ -94,6 +96,7 @@ export function getPreviewDataSets(language: string = 'en') {
           session_duration: "120 dakika",
           session_status: "Hazırlık",
           session_meeting_url: "https://meet.example.com/zeynep",
+          session_notes: "Şehir dışı seyahati planlayalım.",
           business_name: "Profesyonel Düğün ve Portre Fotoğraf Stüdyosu",
           business_phone: "(555) 987-6543",
           customer_email: "zeynep.nur.kaya.demir@example.com",
@@ -119,6 +122,7 @@ export function getPreviewDataSets(language: string = 'en') {
         session_duration: "90 minutes",
         session_status: "Confirmed",
         session_meeting_url: "https://meet.example.com/sarah",
+        session_notes: "Please bring your favorite outfit options.",
         business_name: "Radiant Photography",
         business_phone: "(555) 123-4567",
         customer_email: "sarah@example.com",
@@ -132,6 +136,7 @@ export function getPreviewDataSets(language: string = 'en') {
       data: {
         customer_name: "John Doe",
         session_date: "March 20, 2024",
+        session_notes: "We'll confirm wardrobe soon.",
         business_name: "Radiant Photography",
         business_phone: "(555) 123-4567",
         session_status: "Pending"
@@ -150,6 +155,7 @@ export function getPreviewDataSets(language: string = 'en') {
         session_duration: "2 hours",
         session_status: "In Planning",
         session_meeting_url: "https://meet.example.com/alexandra",
+        session_notes: "Prep call scheduled for next week.",
         business_name: "Professional Wedding & Portrait Photography Studio",
         business_phone: "(555) 987-6543",
         customer_email: "alexandra.thompson.williams@example.com",

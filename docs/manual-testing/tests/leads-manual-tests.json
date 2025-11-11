@@ -447,6 +447,34 @@
         "expected_result": "Lead alanları dialog üzerinden kaydedildiği anda kalıcıdır ve ekstra aksiyon olmadan diğer sekmelerde görünür hale gelir."
       },
       {
+        "external_id": "CRM-LEADS-262",
+        "title": "Lead detayında Seanslar bölümü ve projeye bağlama",
+        "description": "Lead detay sayfasındaki yeni 'Seanslar' bölümünün projeye bağlı/bağlı olmayan seansları gösterdiğini ve karttan projeye bağlama akışını başlatabildiğini doğrular.",
+        "steps": [
+          {
+            "action": "En az biri projeye bağlı olmayan iki seansa sahip bir lead'i açın.",
+            "expected_result": "ProjectDetailsLayout içinde 'Projeler'den hemen sonra 'Seanslar' başlıklı yeni bir bölüm görünür."
+          },
+          {
+            "action": "Seanslar bölümüne inin ve kart başlığını kontrol edin.",
+            "expected_result": "Kartta takvim ikonu, toplam seans sayısı ve sağ üstte mor stilindeki 'Seans planla' butonu bulunur."
+          },
+          {
+            "action": "Projeye bağlı olmayan seans satırını bulun.",
+            "expected_result": "Satırda proje satırı 'Bağlı değil' bilgisini ve yanında 'Projeye bağla' bağlantısını gösterir."
+          },
+          {
+            "action": "Bu bağlantıya tıklayın.",
+            "expected_result": "Seans planlama sheet'i açılır ve doğrudan 'Proje' adımı aktif olur; lead bilgisi otomatik doludur."
+          },
+          {
+            "action": "Sheet'i kapatıp listede herhangi bir seans satırına tıklayın.",
+            "expected_result": "Sağdan SessionSheet açılır; kullanıcı tam seans detayına gitmek için 'Seansı görüntüle' aksiyonunu görebilir."
+          }
+        ],
+        "expected_result": "Lead detayındaki Seanslar bölümü tüm seansları tek yerde listeler, projeye bağlama kısayolunu sunar ve satırlardan sheet açılmasına izin verir."
+      },
+      {
         "external_id": "CRM-LEADS-260",
         "title": "Freelance / KDV'siz profilde lead teklif sihirbazı KDV kontrollerini gizler",
         "description": "Freelance/no-VAT tüzel kişiliği seçildiğinde lead → proje/teklif sihirbazının hizmet kartlarında ve fatura ön izlemesinde KDV ayarlarını göstermediğini doğrular.",

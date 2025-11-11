@@ -1828,6 +1828,7 @@
         "sessionDuration": "90 dakika",
         "sessionStatus": "Planlandı",
         "sessionMeeting": "https://meet.example.com/onizleme",
+        "sessionNotes": "Lütfen favori kombinlerinizi getirin.",
         "businessName": "Parlak Fotoğrafçılık",
         "businessPhone": "555 123 4567",
         "projectName": "Yaz Düğünü",

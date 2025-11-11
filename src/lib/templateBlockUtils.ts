@@ -69,8 +69,11 @@ export function blocksToHTML(blocks: TemplateBlock[], previewData: Record<string
             sessionHtml += `<p style="margin: 4px 0;"><strong>${row.label}:</strong> ${row.value}</p>`;
           });
 
-          if (sessionData.showNotes && sessionData.customNotes) {
-            sessionHtml += `<p style="margin: 4px 0;"><strong>Notes:</strong> ${replacePlaceholders(sessionData.customNotes, previewData)}</p>`;
+          if (sessionData.showNotes) {
+            const notesContent = sessionData.customNotes?.trim()
+              ? replacePlaceholders(sessionData.customNotes, previewData)
+              : '{session_notes}';
+            sessionHtml += `<p style="margin: 4px 0;"><strong>Notes:</strong> ${notesContent}</p>`;
           }
 
           sessionHtml += '</div>';
@@ -245,8 +248,11 @@ export function blocksToPlainText(blocks: TemplateBlock[], previewData: Record<s
         if (sessionData.showPackage) {
           sessionText += `${sessionData.packageLabel || 'Package'}: {project_package_name}\n`;
         }
-        if (sessionData.showNotes && sessionData.customNotes) {
-          sessionText += `Notes: ${replacePlaceholders(sessionData.customNotes, previewData)}\n`;
+        if (sessionData.showNotes) {
+          const notesContent = sessionData.customNotes?.trim()
+            ? replacePlaceholders(sessionData.customNotes, previewData)
+            : '{session_notes}';
+          sessionText += `Notes: ${notesContent}\n`;
         }
 
         return replacePlaceholders(sessionText, previewData);

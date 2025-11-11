@@ -1,3 +1,4 @@
+import { type ReactNode } from "react";
 import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData, DividerBlockData, SocialLinksBlockData, HeaderBlockData, RawHTMLBlockData } from "@/types/templateBuilder";
 import { cn } from "@/lib/utils";
 import { SocialChannel, useOrganizationSettings, OrganizationSettings } from "@/hooks/useOrganizationSettings";
@@ -49,7 +50,14 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
             case "text":
               return <TextBlockPreview key={block.id} data={block.data as TextBlockData} replacePlaceholders={replacePlaceholders} />;
             case "session-details":
-              return <SessionDetailsPreview key={block.id} data={block.data as SessionDetailsBlockData} mockData={mockData} />;
+              return (
+                <SessionDetailsPreview
+                  key={block.id}
+                  data={block.data as SessionDetailsBlockData}
+                  mockData={mockData}
+                  replacePlaceholders={replacePlaceholders}
+                />
+              );
             case "cta":
               return (
                 <CTABlockPreview
@@ -162,37 +170,120 @@ function TextBlockPreview({ data, replacePlaceholders }: { data: TextBlockData; 
   );
 }
 
-function SessionDetailsPreview({ data, mockData }: { data: SessionDetailsBlockData; mockData: Record<string, string> }) {
+function SessionDetailsPreview({
+  data,
+  mockData,
+  replacePlaceholders,
+}: {
+  data: SessionDetailsBlockData;
+  mockData: Record<string, string>;
+  replacePlaceholders: (text: string) => string;
+}) {
   const { t } = useTranslation('pages');
-  
+  const fallback = '—';
+  const formatValue = (value?: string) => (value && value.trim().length > 0 ? value : fallback);
+  const meetingUrl = (mockData.session_meeting_url || '').trim();
+
+  const resolvedLabel = data.customLabel ? replacePlaceholders(data.customLabel) : t('templateBuilder.preview.sessionDetails.defaultLabel');
+  const projectLabel = data.projectLabel ? replacePlaceholders(data.projectLabel) : t('templateBuilder.preview.sessionDetails.project');
+  const packageLabel = data.packageLabel ? replacePlaceholders(data.packageLabel) : t('templateBuilder.preview.sessionDetails.package');
+  const meetingLabel = data.meetingLabel ? replacePlaceholders(data.meetingLabel) : t('templateBuilder.preview.sessionDetails.meetingLink');
+
+  const detailRows: Array<{ key: string; label: string; value: ReactNode; visible?: boolean }> = [
+    {
+      key: 'name',
+      label: t('templateBuilder.preview.sessionDetails.session'),
+      value: formatValue(mockData.session_name),
+      visible: data.showName,
+    },
+    {
+      key: 'type',
+      label: t('templateBuilder.preview.sessionDetails.type'),
+      value: formatValue(mockData.session_type),
+      visible: data.showType,
+    },
+    {
+      key: 'duration',
+      label: t('templateBuilder.preview.sessionDetails.duration'),
+      value: formatValue(mockData.session_duration),
+      visible: data.showDuration,
+    },
+    {
+      key: 'status',
+      label: t('templateBuilder.preview.sessionDetails.status'),
+      value: formatValue(mockData.session_status),
+      visible: data.showStatus,
+    },
+    {
+      key: 'date',
+      label: t('templateBuilder.preview.sessionDetails.date'),
+      value: formatValue(mockData.session_date),
+      visible: data.showDate,
+    },
+    {
+      key: 'time',
+      label: t('templateBuilder.preview.sessionDetails.time'),
+      value: formatValue(mockData.session_time),
+      visible: data.showTime,
+    },
+    {
+      key: 'location',
+      label: t('templateBuilder.preview.sessionDetails.location'),
+      value: formatValue(mockData.session_location),
+      visible: data.showLocation,
+    },
+    {
+      key: 'meeting',
+      label: meetingLabel,
+      value: meetingUrl
+        ? (
+            <a
+              href={meetingUrl}
+              className="text-primary underline"
+              target="_blank"
+              rel="noreferrer"
+            >
+              {meetingUrl}
+            </a>
+          )
+        : fallback,
+      visible: data.showMeetingLink,
+    },
+    {
+      key: 'project',
+      label: projectLabel,
+      value: formatValue(mockData.project_name),
+      visible: data.showProject,
+    },
+    {
+      key: 'package',
+      label: packageLabel,
+      value: formatValue(mockData.project_package_name),
+      visible: data.showPackage,
+    },
+  ];
+
+  const notesFromMock = (mockData.session_notes || '').trim();
+  const resolvedNotes = data.customNotes?.trim()
+    ? replacePlaceholders(data.customNotes)
+    : notesFromMock || t('templateBuilder.preview.sessionDetails.defaultNote');
+
   return (
     <div className="bg-slate-50 p-4 rounded-lg border">
-      <h3 className="font-semibold mb-3 text-slate-900">
-        {data.customLabel || t('templateBuilder.preview.sessionDetails.defaultLabel')}
-      </h3>
+      <h3 className="font-semibold mb-3 text-slate-900">{resolvedLabel}</h3>
       <div className="space-y-2">
-        {data.showDate && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-600 w-16">{t('templateBuilder.preview.sessionDetails.date')}</span>
-            <span className="text-sm">{mockData.session_date}</span>
-          </div>
-        )}
-        {data.showTime && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-600 w-16">{t('templateBuilder.preview.sessionDetails.time')}</span>
-            <span className="text-sm">{mockData.session_time}</span>
-          </div>
-        )}
-        {data.showLocation && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-600 w-16">{t('templateBuilder.preview.sessionDetails.location')}</span>
-            <span className="text-sm">{mockData.session_location}</span>
-          </div>
-        )}
+        {detailRows
+          .filter((row) => row.visible)
+          .map((row) => (
+            <div key={row.key} className="flex items-center gap-2">
+              <span className="text-sm font-medium text-slate-600 w-32">{row.label}</span>
+              <span className="text-sm break-words">{row.value}</span>
+            </div>
+          ))}
         {data.showNotes && (
           <div className="flex items-start gap-2">
-            <span className="text-sm font-medium text-slate-600 w-16">{t('templateBuilder.preview.sessionDetails.notes')}</span>
-            <span className="text-sm">{data.customNotes || t('templateBuilder.preview.sessionDetails.defaultNote')}</span>
+            <span className="text-sm font-medium text-slate-600 w-32">{t('templateBuilder.preview.sessionDetails.notes')}</span>
+            <span className="text-sm whitespace-pre-wrap">{resolvedNotes}</span>
           </div>
         )}
       </div>

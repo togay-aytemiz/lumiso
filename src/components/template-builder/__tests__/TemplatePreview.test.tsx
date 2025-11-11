@@ -107,11 +107,19 @@ const sampleBlocks: TemplateBlock[] = [
 
 const previewData = {
   customer_name: "Alice Example",
+  session_name: "Creative Session",
+  session_type: "Portrait",
+  session_duration: "45m",
+  session_status: "Confirmed",
   session_date: "Aug 12",
   session_time: "2:00 PM",
   session_location: "Studio 5",
+  session_meeting_url: "https://meet.example.com/session",
+  session_notes: "Bring props",
   business_name: "Lumiso Studios",
   business_phone: "555-1234",
+  project_name: "Brand Shoot",
+  project_package_name: "Premium"
 };
 
 describe("TemplatePreview", () => {
@@ -240,6 +248,62 @@ describe("TemplatePreview", () => {
 
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
+  });
+
+  it("renders live session details with mock data in EmailPreview", () => {
+    const sessionBlock: TemplateBlock = {
+      id: "session-1",
+      type: "session-details",
+      visible: true,
+      order: 0,
+      data: {
+        showName: true,
+        showType: true,
+        showDuration: true,
+        showStatus: true,
+        showDate: true,
+        showTime: true,
+        showLocation: true,
+        showMeetingLink: true,
+        showProject: true,
+        showPackage: true,
+        showNotes: true,
+      },
+    };
+
+    render(
+      <EmailPreview
+        blocks={[sessionBlock]}
+        mockData={previewData}
+        device="desktop"
+        emailSubject="Subject"
+      />
+    );
+
+    expect(screen.getByText("Creative Session")).toBeInTheDocument();
+    expect(screen.getByText("Portrait")).toBeInTheDocument();
+    expect(screen.getByText("45m")).toBeInTheDocument();
+    expect(screen.getByText("Brand Shoot")).toBeInTheDocument();
+    expect(screen.getByText("Bring props")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: previewData.session_meeting_url })).toBeInTheDocument();
+  });
+
+  it("injects the same data into SMSPreview text output", () => {
+    const sessionBlock: TemplateBlock = {
+      id: "session-2",
+      type: "session-details",
+      visible: true,
+      order: 0,
+      data: {
+        showName: true,
+        showNotes: true,
+      },
+    };
+
+    render(<SMSPreview blocks={[sessionBlock]} mockData={previewData} />);
+
+    expect(screen.getByText(/Creative Session/)).toBeInTheDocument();
+    expect(screen.getByText(/Bring props/)).toBeInTheDocument();
   });
 
   it("switches email preview device between desktop and mobile", () => {

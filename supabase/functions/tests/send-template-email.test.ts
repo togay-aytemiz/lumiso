@@ -58,3 +58,38 @@ Deno.test("generateHTMLContent renders sorted blocks with placeholders", () => {
   assertEquals(firstIndex < secondIndex, true);
   assertStringIncludes(html, "Don't forget Jordan");
 });
+
+Deno.test("generateHTMLContent fills session details rows with mock data", () => {
+  const html = generateHTMLContent(
+    [
+      {
+        id: "s1",
+        type: "session-details",
+        order: 1,
+        data: {
+          customLabel: "Upcoming Session",
+          showName: true,
+          showType: true,
+          showDate: true,
+          showMeetingLink: true,
+          showNotes: true,
+        },
+      },
+    ],
+    {
+      session_name: "Golden Hour",
+      session_type: "Portrait",
+      session_date: "Oct 10",
+      session_meeting_url: "https://meet.example.com/golden",
+      session_notes: "Bring water",
+    },
+    "Subject",
+    undefined,
+    null,
+    false
+  );
+
+  assertStringIncludes(html, "Golden Hour");
+  assertStringIncludes(html, "https://meet.example.com/golden");
+  assertStringIncludes(html, "Bring water");
+});

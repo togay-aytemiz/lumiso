@@ -21,10 +21,18 @@
           },
           {
             "action": "'Özet' kartında bildirim anahtarlarını kontrol edip 'Seansı onayla' butonuna tıklayın.",
-            "expected_result": "Başarı ekranı 'Seans planlandı!' mesajını ve 'Yeni seans planla' ile 'Kapat' butonlarını gösterir."
+            "expected_result": "Sheet kapanmaz; başarı ekranı 'Seans planlandı!' mesajını, organizasyon tarih/saat formatıyla planlanan zamanı ve 'Seansı görüntüle', 'Yeni seans planla', 'Kapat' butonlarını aynı anda gösterir."
           },
           {
-            "action": "Sheet kapandığında 'Seanslar' kartındaki listeyi kontrol edin.",
+            "action": "Başarı ekranındaki özet kutusunda tarih-saat, kişi, proje ve konum satırlarını doğrulayın.",
+            "expected_result": "Satırlar planladığınız değerleri (bağlı lead adı, seçilen proje adı, girilen konum) eksiksiz biçimde gösterir; bildirim satırı açtığınız anahtarların durumunu yansıtır."
+          },
+          {
+            "action": "Başarı ekranındaki 'Seansı görüntüle' butonuna basın.",
+            "expected_result": "Seans detay sheet'i açılır, aynı kaydı gösterir ve istersek tam seans sayfasına gidebileceğimiz bağlantıyı sunar."
+          },
+          {
+            "action": "Sheet'i kapatıp 'Seanslar' kartındaki listeyi kontrol edin.",
             "expected_result": "Yeni seans kartı listede görünür ve sayaç 'Bu proje için X seans' olarak güncellenir."
           }
         ],
@@ -49,7 +57,15 @@
           },
           {
             "action": "Tarih ve saati belirleyip sihirbazı tamamlayın.",
-            "expected_result": "Sheet kapanır ve yeşil bildirim 'Seansınız takviminize eklendi...' mesajını gösterir."
+            "expected_result": "Sheet başarı ekranına geçer, planlanan tarihsaat yerel formatta görünür ve üç buton (Seansı görüntüle / Yeni seans planla / Kapat) erişilebilir olur."
+          },
+          {
+            "action": "Başarı ekranındaki özet kutusunu inceleyin.",
+            "expected_result": "Kişi satırı seçtiğiniz lead adını, proje satırı biraz önce oluşturduğunuz projeyi, konum satırı girdiğiniz değeri ve bildirim satırı açık/kapalı durumlarını doğru gösterir."
+          },
+          {
+            "action": "Önce 'Seansı görüntüle' butonunun çalıştığını kontrol edin, ardından 'Kapat' butonuna basın.",
+            "expected_result": "Seansı görüntüle seçeneği aynı kayıtla sheet açar; 'Kapat' butonu sheet'i kapatır ve kısa süreli başarı bildirimi ekranda belirir."
           },
           {
             "action": "Kişi başlığındaki 'Seanslar' kartını tekrar inceleyin.",
@@ -60,8 +76,8 @@
       },
       {
         "external_id": "CRM-SESSIONS-403",
-        "title": "Planlı seansı olan kişide Seans Ekle butonunun kilitlenmesi",
-        "description": "Planlı statüde en az bir seansı olan kişide başlıktaki 'Seans Ekle' butonunun devre dışı kalmasını doğrular.",
+        "title": "Planlı seansı olsa bile ikinci seansı planlayabilme",
+        "description": "Planlı statüde seansı bulunan kişilerde artık 'Seans Ekle' butonunun aktif kaldığını ve yeni seans eklenebildiğini doğrular.",
         "steps": [
           {
             "action": "Planlı durumda seansı olan bir kişinin detay sayfasını açın.",
@@ -69,14 +85,18 @@
           },
           {
             "action": "Üstteki 'Seans Ekle' butonunun üzerine gelin.",
-            "expected_result": "Buton gri/pasif görünür ve tooltip 'Zaten planlanmış bir seans mevcut.' metnini gösterir."
+            "expected_result": "Buton renkli durumdadır; tooltip artık kısıtlayıcı mesaj yerine varsayılan bilgiyi gösterir."
           },
           {
-            "action": "Butona tıklamayı deneyin.",
-            "expected_result": "Planlama sheet'i açılmaz; kullanıcı başka bir seans ekleyemez."
+            "action": "Butona tıklayın ve sihirbazı açın.",
+            "expected_result": "Sheet sorunsuz açılır; kişi adımı otomatik doludur ve yeni bir seans planlayabilirsiniz."
+          },
+          {
+            "action": "İkinci bir tarih/saat seçip akışı tamamlayın.",
+            "expected_result": "Başarı ekranı tekrar görünür ve lead başlığındaki seans sayacı + çipler iki planlı seansı yansıtacak şekilde artar."
           }
         ],
-        "expected_result": "Halihazırda planlı seansı olan kişilerde yeni seans oluşturma kısayolu devre dışıdır ve kullanıcıya nedeni Türkçe olarak açıklanır."
+        "expected_result": "Lead başlığındaki 'Seans Ekle' aksiyonu artık hiçbir planlı seans durumunda kilitlenmez; kullanıcı üst üste birden fazla plan oluşturabilir."
       },
       {
         "external_id": "CRM-SESSIONS-404",
@@ -193,7 +213,15 @@
         "steps": [
           {
             "action": "Herhangi bir girişten seans planlayıp başarı ekranına ulaşın.",
-            "expected_result": "Ekranda 'Seans planlandı!' başlığı, tarih/saat özeti ve iki buton ('Yeni seans planla', 'Kapat') görünür."
+            "expected_result": "Ekranda 'Seans planlandı!' başlığı, organizasyon tercihine göre biçimlenmiş tarih/saat özeti ve üç buton ('Seansı görüntüle', 'Yeni seans planla', 'Kapat') görünür."
+          },
+          {
+            "action": "Özet kartındaki tüm satırları kontrol edin.",
+            "expected_result": "Tarih ve saat satırı seçtiğiniz değerleri, kişi/proje satırları ilgili adları, konum satırı girilen adresi ve bildirim çubuğu seçili hatırlatıcı/özet durumlarını gösterir."
+          },
+          {
+            "action": "Önce 'Seansı görüntüle' butonuna basın, sheet'ten geri dönüp başarı ekranına dönün.",
+            "expected_result": "Seans detay sheet'i açılır; sheet kapatıldığında başarı ekranı aynı şekilde durur."
           },
           {
             "action": "'Yeni seans planla' butonuna basın.",
@@ -230,6 +258,26 @@
           }
         ],
         "expected_result": "Seansı olmayan projelerde kart net bir boş durum mesajı ve planlama çağrısı gösterir."
+      },
+      {
+        "external_id": "CRM-SESSIONS-454",
+        "title": "Projeye bağlı olmayan seanslarda 'Projeye bağla' aksiyonu",
+        "description": "Seans listelerinde projeye bağlı olmayan kayıtların görünür olduğunu ve 'Projeye bağla' düğmesinin sihirbazı proje adımına taşıdığını doğrular.",
+        "steps": [
+          {
+            "action": "Projeye bağlanmamış en az bir seansı olan bir lead'i açın ve detay sayfasındaki 'Seanslar' kartına inin.",
+            "expected_result": "Kartta ilgili seans için proje satırında 'Bağlı değil' metni ve yanında 'Projeye bağla' bağlantısı görünür."
+          },
+          {
+            "action": "Seans satırındaki 'Projeye bağla' bağlantısına tıklayın.",
+            "expected_result": "Seans planlama sheet'i açılır ve doğrudan 'Proje' adımı seçili halde gelir; başlıkta seans adı yer alır."
+          },
+          {
+            "action": "Adımda var olan bir projeyi seçip akışı tamamlayın (ya da iptal etmek isterseniz sheet'i kapatın).",
+            "expected_result": "Başarı ekranı seansın güncellendiğini bildirir; sheet kapatıldığında kartta artık seçtiğiniz proje adı görüntülenir."
+          }
+        ],
+        "expected_result": "Projeye bağlı olmayan seanslar listelerde kaybolmaz ve 'Projeye bağla' aksiyonu aynı sheet üzerinden hızlıca proje bağlamaya izin verir."
       },
       {
         "external_id": "CRM-SESSIONS-411",

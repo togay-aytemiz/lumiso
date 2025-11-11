@@ -59,6 +59,7 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
     session_duration: t('templateBuilder.preview.mockData.sessionDuration'),
     session_status: t('templateBuilder.preview.mockData.sessionStatus'),
     session_meeting_url: t('templateBuilder.preview.mockData.sessionMeeting'),
+    session_notes: t('templateBuilder.preview.mockData.sessionNotes'),
     business_name: t('templateBuilder.preview.mockData.businessName'),
     business_phone: t('templateBuilder.preview.mockData.businessPhone'),
     project_name: t('templateBuilder.preview.mockData.projectName'),

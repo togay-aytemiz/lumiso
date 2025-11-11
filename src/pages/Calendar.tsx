@@ -8,7 +8,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ProjectSheetView } from "@/components/ProjectSheetView";
 import { formatDate, formatTime, getUserLocale } from "@/lib/utils";
 import { isToday } from "date-fns";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
+import GlobalSearch from "@/components/GlobalSearch";
 import SessionSheetView from "@/components/SessionSheetView";
 import { useOptimizedCalendarData } from "@/hooks/useOptimizedCalendarData";
 import { useOptimizedCalendarEvents } from "@/hooks/useOptimizedCalendarEvents";
@@ -338,7 +339,11 @@ export default function Calendar() {
     return (
       <CalendarErrorWrapper error={error} retry={refreshCalendar}>
         <>
-          <PageHeader title={t("calendar.title")} />
+          <PageHeader title={t("calendar.title")}>
+            <PageHeaderSearch>
+              <GlobalSearch variant="header" />
+            </PageHeaderSearch>
+          </PageHeader>
 
           {/* Desktop controls in separate row */}
           <div className="hidden lg:block px-4 sm:px-6 lg:px-6">
@@ -379,7 +384,11 @@ export default function Calendar() {
   return (
     <CalendarErrorWrapper error={error} retry={refreshCalendar}>
       <>
-        <PageHeader title={t("calendar.title")} />
+        <PageHeader title={t("calendar.title")}>
+          <PageHeaderSearch>
+            <GlobalSearch variant="header" />
+          </PageHeaderSearch>
+        </PageHeader>
 
         {/* Desktop controls in separate row */}
         <div className="hidden lg:block px-4 sm:px-6 lg:px-6">

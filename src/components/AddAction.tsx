@@ -83,7 +83,7 @@ export function AddAction({ className }: AddActionProps) {
   return (
     <div
       className={cn(
-        "flex items-center gap-px rounded-full border border-transparent bg-transparent",
+        "flex items-center overflow-hidden rounded-full border border-transparent bg-transparent",
         className
       )}
     >
@@ -102,8 +102,8 @@ export function AddAction({ className }: AddActionProps) {
         <DropdownMenuTrigger asChild>
           <Button
             type="button"
-            variant="secondary"
             className="h-12 w-10 rounded-l-none rounded-r-full px-0"
+            variant="default"
             aria-label={tCommon("buttons.moreOptions")}
           >
             <ChevronDown className="h-4 w-4" />

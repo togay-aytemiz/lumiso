@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -16,6 +16,7 @@ import { useTemplateOperations } from "@/hooks/useTemplateOperations";
 import { TemplateErrorBoundary } from "@/components/template-builder/TemplateErrorBoundary";
 import { Template } from "@/types/template";
 import { useTranslation } from "react-i18next";
+import GlobalSearch from "@/components/GlobalSearch";
 
 // Optimized Templates component with memoization and error handling
 const OptimizedTemplatesContent = React.memo(() => {
@@ -283,8 +284,12 @@ const OptimizedTemplatesContent = React.memo(() => {
 
   return (
     <div className="min-h-screen">
-      <PageHeader title={t("templates.title")} />
-      
+      <PageHeader title={t("templates.title")}>
+        <PageHeaderSearch>
+          <GlobalSearch variant="header" />
+        </PageHeaderSearch>
+      </PageHeader>
+
       <div className="p-4 sm:p-6 space-y-6">
         <AdvancedDataTable
           title={t("templates.table.title", { defaultValue: t("templates.title") })}

@@ -861,6 +861,7 @@
       "lead": "Kişi",
       "session": "Seans",
       "project": "Proje",
+      "time": "Saat",
       "status": "Durum",
       "moreEvents": "+{{count}} daha"
     }

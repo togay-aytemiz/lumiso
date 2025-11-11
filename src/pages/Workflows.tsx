@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -23,6 +23,7 @@ import {
   getKpiIconPreset,
 } from "@/components/ui/kpi-presets";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import GlobalSearch from "@/components/GlobalSearch";
 
 export default function Workflows() {
   const { t, i18n } = useTranslation("pages");
@@ -369,7 +370,11 @@ export default function Workflows() {
   if (loading) {
     return (
       <div className="min-h-screen overflow-x-hidden">
-        <PageHeader title={t("workflows.title")} />
+        <PageHeader title={t("workflows.title")}>
+          <PageHeaderSearch>
+            <GlobalSearch variant="header" />
+          </PageHeaderSearch>
+        </PageHeader>
         <PageLoadingSkeleton />
       </div>
     );
@@ -377,8 +382,12 @@ export default function Workflows() {
 
   return (
     <div className="min-h-screen overflow-x-hidden">
-      <PageHeader title={t("workflows.title")} />
-      
+      <PageHeader title={t("workflows.title")}>
+        <PageHeaderSearch>
+          <GlobalSearch variant="header" />
+        </PageHeaderSearch>
+      </PageHeader>
+
       <div className="p-4 space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

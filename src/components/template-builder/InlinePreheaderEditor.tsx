@@ -1,8 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
+import type { UIEvent } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Check, X } from 'lucide-react';
 import { VariablePicker } from '@/components/template-builder/VariablePicker';
+import { useVariableLabelMap } from '@/hooks/useVariableLabelMap';
+import { VariableTokenText } from './VariableTokenText';
 
 interface InlinePreheaderEditorProps {
   value: string | null;
@@ -20,6 +23,8 @@ export function InlinePreheaderEditor({
   const [inputValue, setInputValue] = useState(value || '');
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const variableLabels = useVariableLabelMap();
 
   useEffect(() => {
     if (inputRef.current) {
@@ -64,18 +69,41 @@ export function InlinePreheaderEditor({
     }
   };
 
+  const handleInputScroll = (event: UIEvent<HTMLInputElement>) => {
+    setScrollLeft(event.currentTarget.scrollLeft);
+  };
+
   return (
     <div className="flex items-center gap-1">
-      <Input
-        ref={inputRef}
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={handleBlur}
-        placeholder={placeholder}
-        className="flex-1 h-8 text-sm"
-        disabled={isSaving}
-      />
+      <div className="relative flex-1">
+        <Input
+          ref={inputRef}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          placeholder={placeholder}
+          className="relative z-10 h-8 w-full text-sm bg-transparent text-transparent caret-foreground placeholder:text-transparent"
+          disabled={isSaving}
+          onScroll={handleInputScroll}
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-0 flex items-center overflow-hidden px-3 text-sm text-foreground whitespace-pre"
+        >
+          <div
+            className="w-full"
+            style={{ transform: `translateX(${-scrollLeft}px)` }}
+          >
+            <VariableTokenText
+              text={inputValue}
+              placeholder={placeholder}
+              variableLabels={variableLabels}
+            />
+            <span className="opacity-0">.</span>
+          </div>
+        </div>
+      </div>
       <VariablePicker 
         onVariableSelect={insertVariable}
         trigger={

@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Plus, Check } from "lucide-react";
-import { useTemplateVariables } from "@/hooks/useTemplateVariables";
 import type { TemplateVariable } from "@/types/templateBuilder";
 import { useTranslation } from "react-i18next";
+import { useTemplateVariablesContext } from "@/contexts/TemplateVariablesContext";
 
 interface VariablePickerProps {
   onVariableSelect: (variable: string) => void;
@@ -14,7 +14,7 @@ interface VariablePickerProps {
 
 export function VariablePicker({ onVariableSelect, trigger }: VariablePickerProps) {
   const [open, setOpen] = useState(false);
-  const { variables, loading } = useTemplateVariables();
+  const { variables, loading } = useTemplateVariablesContext();
   const { t } = useTranslation("pages");
 
   const handleSelect = (variableKey: string) => {

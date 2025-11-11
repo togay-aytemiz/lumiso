@@ -4,6 +4,7 @@ import { AddBlockSheet } from "../AddBlockSheet";
 import { VariablePicker } from "../VariablePicker";
 import { TemplateNameDialog } from "../TemplateNameDialog";
 import { DeleteTemplateDialog } from "../DeleteTemplateDialog";
+import { TemplateVariablesProvider } from "@/contexts/TemplateVariablesContext";
 
 jest.mock("react-i18next", () => ({
   useTranslation: jest.fn(() => ({
@@ -14,10 +15,13 @@ jest.mock("react-i18next", () => ({
 jest.mock("@/hooks/useTemplateVariables", () => ({
   useTemplateVariables: jest.fn(() => ({
     variables: [
-      { key: "customer_name", label: "Customer Name", category: "customer" },
+      { key: "customer_name", label: "Customer Name", category: "lead" },
       { key: "session_date", label: "Session Date", category: "session" },
     ],
     loading: false,
+    businessInfo: null,
+    getVariableValue: jest.fn(),
+    refetch: jest.fn(),
   })),
 }));
 
@@ -152,7 +156,22 @@ describe("VariablePicker", () => {
   it("renders grouped variables and calls onVariableSelect", () => {
     const handleSelect = jest.fn();
 
-    render(<VariablePicker onVariableSelect={handleSelect} />);
+    const templateVariablesValue = {
+      variables: [
+        { key: "customer_name", label: "Customer Name", category: "lead" as const },
+        { key: "session_date", label: "Session Date", category: "session" as const },
+      ],
+      businessInfo: null,
+      loading: false,
+      getVariableValue: jest.fn(),
+      refetch: jest.fn(),
+    };
+
+    render(
+      <TemplateVariablesProvider value={templateVariablesValue}>
+        <VariablePicker onVariableSelect={handleSelect} />
+      </TemplateVariablesProvider>
+    );
 
     const variableButton = screen.getByRole("button", { name: /Variable/ });
     fireEvent.click(variableButton);

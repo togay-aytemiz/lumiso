@@ -1,0 +1,88 @@
+import { useMemo } from "react";
+
+const VARIABLE_REGEX = /\{([a-zA-Z0-9_]+)(?:\|([^}]*))?\}/g;
+
+interface VariableTokenTextProps {
+  text: string;
+  placeholder?: string;
+  variableLabels: Record<string, string>;
+}
+
+interface Token {
+  type: "text" | "variable";
+  value: string;
+  key?: string;
+}
+
+function tokenize(text: string, variableLabels: Record<string, string>): Token[] {
+  const tokens: Token[] = [];
+  VARIABLE_REGEX.lastIndex = 0;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = VARIABLE_REGEX.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      tokens.push({
+        type: "text",
+        value: text.slice(lastIndex, match.index),
+      });
+    }
+
+    const key = match[1];
+    const fallbackLabel = match[2];
+    const label = variableLabels[key] || fallbackLabel || key;
+
+    tokens.push({
+      type: "variable",
+      value: label,
+      key,
+    });
+
+    lastIndex = VARIABLE_REGEX.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    tokens.push({
+      type: "text",
+      value: text.slice(lastIndex),
+    });
+  }
+
+  return tokens;
+}
+
+export function VariableTokenText({ text, placeholder, variableLabels }: VariableTokenTextProps) {
+  const tokens = useMemo(() => tokenize(text, variableLabels), [text, variableLabels]);
+  const placeholderText = placeholder ?? "";
+
+  if (!text) {
+    return (
+      <span className="text-muted-foreground">
+        {placeholderText}
+      </span>
+    );
+  }
+
+  return (
+    <>
+      {tokens.map((token, index) => {
+        if (token.type === "text") {
+          return (
+            <span key={`text-${index}`}>
+              {token.value}
+            </span>
+          );
+        }
+
+        return (
+          <span
+            key={`variable-${index}-${token.key}`}
+            className="inline-flex max-w-full items-center rounded bg-muted px-1.5 py-0.5 text-xs font-mono text-muted-foreground align-baseline"
+          >
+            {token.value}
+          </span>
+        );
+      })}
+    </>
+  );
+}

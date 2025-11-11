@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { TemplateVariable } from "@/types/templateBuilder";
@@ -210,7 +210,7 @@ export function useTemplateVariables() {
     }
   }, [activeOrganization?.id, fetchVariables]);
 
-  const getVariableValue = (key: string, mockData?: Record<string, string>): string => {
+  const getVariableValue = useCallback((key: string, mockData?: Record<string, string>): string => {
     // If mock data is provided, use it first
     if (mockData && mockData[key]) {
       return mockData[key];
@@ -257,13 +257,13 @@ export function useTemplateVariables() {
     if (key === "current_time") return new Date().toLocaleTimeString();
 
     return `{${key}}`;
-  };
+  }, [businessInfo]);
 
-  return {
+  return useMemo(() => ({
     variables,
     businessInfo,
     loading,
     getVariableValue,
     refetch: fetchVariables
-  };
+  }), [variables, businessInfo, loading, getVariableValue, fetchVariables]);
 }

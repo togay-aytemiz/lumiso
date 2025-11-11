@@ -20,6 +20,7 @@ import { TemplateNameDialog } from '@/components/template-builder/TemplateNameDi
 import { supabase } from '@/integrations/supabase/client';
 import { TemplateErrorBoundary } from "@/components/template-builder/TemplateErrorBoundary";
 import { useTranslation } from "react-i18next";
+import { TemplateVariablesProvider } from "@/contexts/TemplateVariablesContext";
 
 // Optimized TemplateBuilder component
 const OptimizedTemplateBuilderContent = React.memo(() => {
@@ -32,7 +33,8 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
 
   // Backend hooks
   const { template, loading, saving, lastSaved, isDirty, saveTemplate, publishTemplate, updateTemplate, resetDirtyState } = useTemplateBuilder(templateId || undefined);
-  const { getVariableValue } = useTemplateVariables();
+  const templateVariablesState = useTemplateVariables();
+  const { getVariableValue } = templateVariablesState;
 
   // Local state for UI
   const [activeChannel, setActiveChannel] = useState<'email' | 'whatsapp' | 'sms'>('email');
@@ -251,7 +253,8 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   const backLabel = tCommon("buttons.back", { defaultValue: "Back" });
 
   return (
-    <div className="h-screen flex flex-col">
+    <TemplateVariablesProvider value={templateVariablesState}>
+      <div className="h-screen flex flex-col">
       {/* Header */}
       <div className="border-b bg-background px-6 py-4">
         <div className="flex items-center justify-between">
@@ -459,6 +462,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
         loading={saving}
       />
     </div>
+  </TemplateVariablesProvider>
   );
 });
 

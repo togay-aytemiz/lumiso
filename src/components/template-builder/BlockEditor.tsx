@@ -14,10 +14,13 @@ import { ImageUpload } from "./ImageUpload";
 import { ImageLibrarySheet } from "./ImageLibrarySheet";
 import { useToast } from "@/hooks/use-toast";
 import { useRef, useState } from "react";
+import type { UIEvent } from "react";
 import { emojis } from "@/lib/templateUtils";
 import { DividerBlockEditor, SocialLinksBlockEditor, HeaderBlockEditor, RawHTMLBlockEditor } from "./NewBlockEditors";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
+import { useVariableLabelMap } from "@/hooks/useVariableLabelMap";
+import { VariableTokenText } from "./VariableTokenText";
 
 interface BlockEditorProps {
   block: TemplateBlock;
@@ -84,6 +87,8 @@ export function BlockEditor({ block, onUpdate, onRemove, onMoveUp, onMoveDown, c
 function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (data: TextBlockData) => void }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { t } = useTranslation("pages");
+  const variableLabels = useVariableLabelMap();
+  const [scrollPosition, setScrollPosition] = useState({ top: 0, left: 0 });
   
   const updateFormatting = <K extends keyof TextBlockData["formatting"]>(
     key: K,
@@ -131,6 +136,14 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
     }
   };
 
+  const handleTextareaScroll = (event: UIEvent<HTMLTextAreaElement>) => {
+    const target = event.currentTarget;
+    setScrollPosition({
+      top: target.scrollTop,
+      left: target.scrollLeft
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -141,13 +154,29 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
             <VariablePicker onVariableSelect={insertVariable} />
           </div>
         </div>
-        <Textarea
-          ref={textareaRef}
-          value={data.content}
-          onChange={(e) => onUpdate({ ...data, content: e.target.value })}
-          placeholder={t("templateBuilder.blockEditor.text.contentPlaceholder")}
-          rows={4}
-        />
+        <div className="relative">
+          <Textarea
+            ref={textareaRef}
+            value={data.content}
+            onChange={(e) => onUpdate({ ...data, content: e.target.value })}
+            placeholder={t("templateBuilder.blockEditor.text.contentPlaceholder")}
+            rows={4}
+            onScroll={handleTextareaScroll}
+            className="relative z-10 text-sm bg-transparent text-transparent caret-foreground placeholder:text-transparent selection:bg-primary/30"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-0 whitespace-pre-wrap break-words px-3 py-2 text-sm text-foreground"
+            style={{ transform: `translate(${-scrollPosition.left}px, ${-scrollPosition.top}px)` }}
+          >
+            <VariableTokenText
+              text={data.content}
+              placeholder={t("templateBuilder.blockEditor.text.contentPlaceholder")}
+              variableLabels={variableLabels}
+            />
+            <span className="opacity-0">.</span>
+          </div>
+        </div>
       </div>
       
       <div className="space-y-3">

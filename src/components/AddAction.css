@@ -1,36 +1,51 @@
+[data-add-action-label] {
+  position: relative;
+  display: inline-flex;
+  --add-action-label-color: currentColor;
+}
+
 .add-action-label {
   position: relative;
-  overflow: hidden;
-  isolation: isolate;
+  display: inline-flex;
+  color: var(--add-action-label-color);
+  white-space: inherit;
 }
 
 .add-action-label::after {
-  content: "";
+  content: attr(data-add-action-label-text);
   position: absolute;
-  inset: -45% -55%;
-  background: linear-gradient(
+  inset: 0;
+  display: inline-flex;
+  justify-content: inherit;
+  align-items: inherit;
+  background-image: linear-gradient(
     120deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.9) 48%,
-    rgba(255, 255, 255, 0) 100%
+    var(--add-action-label-color) 0%,
+    var(--add-action-label-color) 42%,
+    rgba(255, 255, 255, 0.9) 50%,
+    var(--add-action-label-color) 58%,
+    var(--add-action-label-color) 100%
   );
-  transform: translateX(-120%);
+  background-size: 220% 100%;
+  background-position: -120% 50%;
   animation: add-action-text-shimmer 2.8s ease-in-out infinite;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  will-change: background-position;
   pointer-events: none;
-  mix-blend-mode: screen;
-  opacity: 0.55;
-  will-change: transform;
 }
 
 @keyframes add-action-text-shimmer {
   0% {
-    transform: translateX(-120%);
+    background-position: -120% 50%;
   }
   55% {
-    transform: translateX(120%);
+    background-position: 120% 50%;
   }
   100% {
-    transform: translateX(120%);
+    background-position: 120% 50%;
   }
 }
 
@@ -84,9 +99,14 @@
     opacity: 1 !important;
     transition: none !important;
   }
-  .add-action-label::after {
+  [data-add-action-label] .add-action-label::after {
     animation: none !important;
-    opacity: 0 !important;
-    transform: none !important;
+    background-position: 120% 50% !important;
+  }
+}
+
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .add-action-label::after {
+    content: none;
   }
 }

@@ -47,6 +47,8 @@ describe("DeadSimpleSessionBanner", () => {
     "relativeDates.yesterday": "Yesterday",
     "relativeDates.past_due": "Past due",
     "sessionLabels.project": "Project",
+    "sessionSheet.placeholders.project": "No project linked",
+    "sessionSheet.actions.connectProject": "Connect project",
   } as const;
 
   const baseSession = {
@@ -121,10 +123,38 @@ describe("DeadSimpleSessionBanner", () => {
     );
 
     expect(screen.getByText("Past due")).toBeInTheDocument();
-    expect(screen.getByText("Project: Q4 Launch")).toBeInTheDocument();
+    expect(screen.getByText("Project:")).toBeInTheDocument();
+    expect(screen.getByText("Q4 Launch")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Planning Call"));
 
     expect(onClick).toHaveBeenCalledWith("session-2");
+  });
+
+  it("shows connect project action when session has no project", () => {
+    getRelativeDateMock.mockReturnValue("Today");
+    isOverdueSessionMock.mockReturnValue(false);
+
+    const onClick = jest.fn();
+    const onConnectProject = jest.fn();
+
+    render(
+      <DeadSimpleSessionBanner
+        session={{
+          ...baseSession,
+          project_id: undefined,
+          projects: undefined,
+        }}
+        onClick={onClick}
+        onConnectProject={onConnectProject}
+      />
+    );
+
+    expect(screen.getByText("No project linked")).toBeInTheDocument();
+    const connectButton = screen.getByText("Connect project");
+    fireEvent.click(connectButton);
+
+    expect(onConnectProject).toHaveBeenCalledWith("session-1");
+    expect(onClick).not.toHaveBeenCalled();
   });
 });

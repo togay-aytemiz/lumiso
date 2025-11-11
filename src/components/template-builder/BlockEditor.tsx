@@ -338,35 +338,22 @@ function SessionDetailsBlockEditor({ data, onUpdate }: { data: SessionDetailsBlo
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <Label>{t("templateBuilder.blockEditor.sessionDetails.showFields")}</Label>
-            <p className="text-xs text-muted-foreground">
-              {t("templateBuilder.blockEditor.sessionDetails.showFieldsHelper")}
-            </p>
+            <p className="text-xs text-muted-foreground">{t("templateBuilder.blockEditor.sessionDetails.showFieldsHelper")}</p>
           </div>
           <Badge variant="outline" className="text-xs font-normal px-2 py-0.5">
-            {t("templateBuilder.blockEditor.sessionDetails.fieldCount", {
-              active: enabledFieldCount,
-              total: totalFieldCount,
-            })}
+            {t("templateBuilder.blockEditor.sessionDetails.fieldCount", { active: enabledFieldCount, total: totalFieldCount })}
           </Badge>
         </div>
 
         <div className="space-y-3">
           {fieldSections.map((section) => (
-            <div
-              key={section.key}
-              className="space-y-2 rounded-lg border border-border/50 bg-muted/20 px-3 py-2"
-            >
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {section.title}
-              </p>
-              <div className="space-y-2">
+            <div key={section.key} className="space-y-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{section.title}</p>
+              <div className="grid gap-2 sm:grid-cols-2">
                 {section.items.map((item) => (
-                  <div key={item.key as string} className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">{item.label}</span>
-                    <Switch
-                      checked={getBoolean(item.key)}
-                      onCheckedChange={(checked) => updateField(item.key, checked)}
-                    />
+                  <div key={item.key as string} className="flex items-center justify-between rounded-lg border border-border/40 bg-background px-3 py-2">
+                    <span className="text-sm font-medium text-foreground">{item.label}</span>
+                    <Switch checked={getBoolean(item.key)} onCheckedChange={(checked) => updateField(item.key, checked)} />
                   </div>
                 ))}
               </div>
@@ -374,39 +361,6 @@ function SessionDetailsBlockEditor({ data, onUpdate }: { data: SessionDetailsBlo
           ))}
         </div>
       </div>
-
-      {data.showProject && (
-        <div>
-          <Label>{t("templateBuilder.blockEditor.sessionDetails.labels.project")}</Label>
-          <Input
-            value={data.projectLabel || ""}
-            onChange={(e) => updateField("projectLabel", e.target.value)}
-            placeholder={t("templateBuilder.blockEditor.sessionDetails.placeholders.project")}
-          />
-        </div>
-      )}
-
-      {data.showPackage && (
-        <div>
-          <Label>{t("templateBuilder.blockEditor.sessionDetails.labels.package")}</Label>
-          <Input
-            value={data.packageLabel || ""}
-            onChange={(e) => updateField("packageLabel", e.target.value)}
-            placeholder={t("templateBuilder.blockEditor.sessionDetails.placeholders.package")}
-          />
-        </div>
-      )}
-
-      {data.showMeetingLink && (
-        <div>
-          <Label>{t("templateBuilder.blockEditor.sessionDetails.labels.meeting")}</Label>
-          <Input
-            value={data.meetingLabel || ""}
-            onChange={(e) => updateField("meetingLabel", e.target.value)}
-            placeholder={t("templateBuilder.blockEditor.sessionDetails.placeholders.meeting")}
-          />
-        </div>
-      )}
 
       {data.showNotes && (
         <div>

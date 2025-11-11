@@ -31,30 +31,9 @@ export function SessionListCard({
   onSessionClick,
   onConnectProject
 }: SessionListCardProps) {
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between text-xl font-semibold">
-            <div className="flex items-center gap-2">
-              {TitleIcon ? <TitleIcon className="h-4 w-4" /> : null}
-              {title}
-            </div>
-            <div className="w-6 h-6 bg-muted animate-pulse rounded" />
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="w-full h-4 bg-muted animate-pulse rounded" />
-            <div className="w-3/4 h-4 bg-muted animate-pulse rounded" />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   const EmptyIcon = emptyState?.icon;
-  const sortedSessions = sortSessionsByLifecycle(sessions);
+  const sortedSessions = loading ? [] : sortSessionsByLifecycle(sessions);
+  const shouldShowSummary = !loading && summary != null;
 
   return (
     <Card>
@@ -68,9 +47,16 @@ export function SessionListCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {sortedSessions.length > 0 ? (
+        {loading ? (
           <div className="space-y-3">
-            {summary ? (
+            <div className="w-full h-4 bg-muted animate-pulse rounded" />
+            <div className="w-3/4 h-4 bg-muted animate-pulse rounded" />
+            <div className="h-16 bg-muted animate-pulse rounded" />
+            <div className="h-16 bg-muted animate-pulse rounded" />
+          </div>
+        ) : sortedSessions.length > 0 ? (
+          <div className="space-y-3">
+            {shouldShowSummary ? (
               <p className="text-sm text-muted-foreground mb-3">{summary}</p>
             ) : null}
             {sortedSessions.map((session) => (

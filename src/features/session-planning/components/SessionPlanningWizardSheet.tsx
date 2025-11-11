@@ -23,6 +23,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { CalendarDays, CheckCircle2, Loader2, MapPin, User, Briefcase } from "lucide-react";
 import { trackEvent } from "@/lib/telemetry";
 import { useNavigate } from "react-router-dom";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { formatDateWithOrgSettings, formatTimeWithOrgSettings } from "@/lib/dateFormatUtils";
+import { getUserLocale } from "@/lib/utils";
+import SessionSheetView from "@/components/SessionSheetView";
 
 const DRAFT_STORAGE_PREFIX = "session-wizard-draft";
 const DRAFT_VERSION = 1;
@@ -191,6 +195,8 @@ const SessionPlanningWizardSheetInner = ({
   const sessionHydrationRequestIdRef = useRef(0);
   const isMountedRef = useRef(true);
   const navigate = useNavigate();
+  const [isSessionViewerOpen, setIsSessionViewerOpen] = useState(false);
+  const [sessionViewerId, setSessionViewerId] = useState<string | null>(null);
   const needsProjectLookup = useMemo(
     () =>
       !isEditing &&
@@ -214,6 +220,15 @@ const SessionPlanningWizardSheetInner = ({
       isMountedRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (completionSummary?.sessionId) {
+      setSessionViewerId(completionSummary.sessionId);
+    } else {
+      setSessionViewerId(null);
+      setIsSessionViewerOpen(false);
+    }
+  }, [completionSummary]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -1020,6 +1035,14 @@ const SessionPlanningWizardSheetInner = ({
             summary={completionSummary}
             onClose={handleSuccessClose}
             onScheduleAnother={handleScheduleAnother}
+            onViewSession={
+              completionSummary.sessionId
+                ? () => {
+                    setSessionViewerId(completionSummary.sessionId);
+                    setIsSessionViewerOpen(true);
+                  }
+                : undefined
+            }
           />
         ) : (
           <SessionPlanningOriginalStateProvider value={initialSessionSnapshotRef.current}>
@@ -1079,6 +1102,22 @@ const SessionPlanningWizardSheetInner = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {sessionViewerId ? (
+        <SessionSheetView
+          sessionId={sessionViewerId}
+          isOpen={isSessionViewerOpen}
+          onOpenChange={setIsSessionViewerOpen}
+          onViewFullDetails={() => {
+            if (sessionViewerId) {
+              navigate(`/sessions/${sessionViewerId}`);
+            }
+          }}
+          onSessionUpdated={() => {
+            // No-op for now; sheet view handles its own updates
+          }}
+        />
+      ) : null}
     </>
   );
 };
@@ -1087,19 +1126,48 @@ const SessionPlanningSuccess = ({
   summary,
   onClose,
   onScheduleAnother,
+  onViewSession
 }: {
   summary: CompletionSummary;
   onClose: () => void;
   onScheduleAnother: () => void;
+  onViewSession?: () => void;
 }) => {
   const { t } = useTranslation("sessionPlanning");
+  const { settings } = useOrganizationSettings();
+  const userLocale = typeof window !== "undefined" ? getUserLocale() : "en-US";
+
+  const formattedDate = useMemo(() => {
+    if (!summary.sessionDate) {
+      return t("summary.values.dateTbd");
+    }
+    return formatDateWithOrgSettings(summary.sessionDate, {
+      dateFormat: settings?.date_format || "DD/MM/YYYY",
+      locale: userLocale
+    });
+  }, [settings?.date_format, summary.sessionDate, t, userLocale]);
+
+  const formattedTime = useMemo(() => {
+    if (!summary.sessionTime) {
+      return t("summary.values.timeTbd");
+    }
+    const preferredTimeFormat =
+      (settings?.time_format as "12-hour" | "24-hour") || "12-hour";
+    return formatTimeWithOrgSettings(summary.sessionTime, preferredTimeFormat);
+  }, [settings?.time_format, summary.sessionTime, t]);
+
   const scheduleText = useMemo(() => {
-    const parts = [
-      summary.sessionDate || t("summary.values.dateTbd"),
-      summary.sessionTime || t("summary.values.timeTbd"),
-    ];
-    return parts.join(" · ");
-  }, [summary.sessionDate, summary.sessionTime, t]);
+    if (!summary.sessionDate && !summary.sessionTime) {
+      return t("summary.values.notScheduled");
+    }
+    if (!summary.sessionTime) {
+      return formattedDate;
+    }
+    if (!summary.sessionDate) {
+      return formattedTime;
+    }
+    return `${formattedDate} · ${formattedTime}`;
+  }, [formattedDate, formattedTime, summary.sessionDate, summary.sessionTime, t]);
 
   const locationText = summary.location?.trim()
     ? summary.location
@@ -1148,11 +1216,16 @@ const SessionPlanningSuccess = ({
           })}
         </p>
       </div>
-      <div className="flex w-full max-w-md flex-col gap-3 sm:flex-row">
+      <div className="flex w-full max-w-md flex-col gap-3 sm:flex-row sm:flex-wrap">
+        {onViewSession ? (
+          <Button variant="secondary" className="w-full sm:flex-1" onClick={onViewSession}>
+            {t("wizard.successViewSession")}
+          </Button>
+        ) : null}
         <Button className="w-full sm:flex-1" onClick={onScheduleAnother}>
           {t("wizard.successScheduleAnother")}
         </Button>
-        <Button variant="outline" className="w-full sm:w-auto" onClick={onClose}>
+        <Button variant="outline" className="w-full sm:flex-1 sm:w-auto" onClick={onClose}>
           {t("wizard.successClose")}
         </Button>
       </div>

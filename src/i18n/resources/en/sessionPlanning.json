@@ -11,6 +11,7 @@
     "successTitle": "Session scheduled!",
     "successSubtitle": "We’ll take it from here. {{name}} is on the calendar.",
     "successNotifications": "Notifications — Reminders: {{reminders}} • Summary email: {{summaryEmail}}",
+    "successViewSession": "View session",
     "successScheduleAnother": "Schedule another session",
     "successClose": "Close",
     "discardPrompt": "Discard session draft?",

@@ -753,25 +753,27 @@ export function generateHTMLContent(
           htmlContent += `
             <div class="session-details">
               <h3>${heading}</h3>
-              ${detailRows
-                .filter((row) => row.visible)
-                .map(
-                  (row) => `
-                    <div class="session-detail-item">
-                      <span class="session-detail-label">${row.label}:</span>
-                      <span class="session-detail-value">${row.value || '—'}</span>
-                    </div>
-                  `
-                )
-                .join('')}
-              ${sessionData.showNotes && sessionData.customNotes
-                ? `
-                    <div class="session-detail-item">
-                      <span class="session-detail-label">Notes:</span>
-                      <span class="session-detail-value">${replacePlaceholders(sessionData.customNotes, mockData)}</span>
-                    </div>
-                  `
-                : ''}
+              <div class="session-detail-grid">
+                ${detailRows
+                  .filter((row) => row.visible)
+                  .map(
+                    (row) => `
+                      <div class="session-detail-item">
+                        <span class="session-detail-label">${row.label}:</span>
+                        <span class="session-detail-value">${row.value || '—'}</span>
+                      </div>
+                    `
+                  )
+                  .join('')}
+                ${sessionData.showNotes && sessionData.customNotes
+                  ? `
+                      <div class="session-detail-item">
+                        <span class="session-detail-label">Notes:</span>
+                        <span class="session-detail-value">${replacePlaceholders(sessionData.customNotes, mockData)}</span>
+                      </div>
+                    `
+                  : ''}
+              </div>
             </div>
           `;
           break;

@@ -11,6 +11,7 @@
     "successTitle": "Seans planlandı!",
     "successSubtitle": "Devamını biz hallederiz. {{name}} takvime eklendi.",
     "successNotifications": "Bildirimler — Hatırlatmalar: {{reminders}} • Özet e-postası: {{summaryEmail}}",
+    "successViewSession": "Seansı görüntüle",
     "successScheduleAnother": "Yeni seans planla",
     "successClose": "Kapat",
     "successTitle": "Seans planlandı!",

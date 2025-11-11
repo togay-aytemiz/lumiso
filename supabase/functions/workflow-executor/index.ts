@@ -57,6 +57,25 @@ function formatTime(timeString: string, format: string = '12-hour'): string {
   }
 }
 
+const formatDurationFromMinutes = (minutes?: number | null): string => {
+  if (typeof minutes !== 'number' || Number.isNaN(minutes) || minutes <= 0) {
+    return '';
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  const parts: string[] = [];
+
+  if (hours > 0) {
+    parts.push(`${hours}h`);
+  }
+  if (remainingMinutes > 0) {
+    parts.push(`${remainingMinutes}m`);
+  }
+
+  return parts.join(' ') || `${minutes}m`;
+};
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -146,14 +165,24 @@ interface LeadRecord {
 
 interface SessionRecord {
   id: string;
+  session_name?: string | null;
   session_date?: string | null;
   session_time?: string | null;
   location?: string | null;
   notes?: string | null;
+  status?: string | null;
+  meeting_url?: string | null;
+  session_type_id?: string | null;
+  session_types?: {
+    id?: string;
+    name?: string | null;
+    duration_minutes?: number | null;
+  } | null;
   leads?: LeadRecord | null;
   projects?: {
     name?: string | null;
     description?: string | null;
+    package_snapshot?: JsonRecord | null;
     project_types?: {
       name?: string | null;
     } | null;
@@ -165,6 +194,7 @@ interface ProjectRecord {
   id: string;
   name?: string | null;
   description?: string | null;
+  package_snapshot?: JsonRecord | null;
   project_types?: {
     name?: string | null;
   } | null;
@@ -181,6 +211,12 @@ type EntityData = JsonRecord & {
   notes?: string;
   session_date?: string;
   session_time?: string;
+  session_name?: string;
+  status?: string;
+  session_type_name?: string | null;
+  session_type_duration_minutes?: number | null;
+  project_package_name?: string;
+  meeting_url?: string;
   project_name?: string;
   project_type?: string;
   leads?: {
@@ -190,6 +226,14 @@ type EntityData = JsonRecord & {
   } | null;
   projects?: {
     name?: string | null;
+    package_snapshot?: JsonRecord | null;
+    project_types?: {
+      name?: string | null;
+    } | null;
+  } | null;
+  session_types?: {
+    name?: string | null;
+    duration_minutes?: number | null;
   } | null;
 };
 
@@ -870,43 +914,80 @@ async function executeSendMessageStep(
         ? entityData.leads.phone
         : '-';
 
+  const formattedSessionDate = formatDate(
+    typeof entityData.session_date === 'string'
+      ? entityData.session_date
+      : (typeof entityData.date === 'string' ? entityData.date : '')
+  );
+  const formattedSessionTime = formatTime(
+    typeof entityData.session_time === 'string'
+      ? entityData.session_time
+      : (typeof entityData.time === 'string' ? entityData.time : '')
+  );
+  const resolvedSessionLocation = (() => {
+    const locationValue = typeof entityData.location === 'string' ? entityData.location : '';
+    return locationValue && locationValue.trim() !== '' && locationValue !== 'Studio' ? locationValue : '-';
+  })();
+  const resolvedSessionNotes = typeof entityData.notes === 'string'
+    ? entityData.notes
+    : typeof entityData.session_notes === 'string'
+      ? entityData.session_notes
+      : '';
+  const resolvedSessionName = typeof entityData.session_name === 'string' ? entityData.session_name : '';
+  const resolvedSessionStatus = typeof entityData.status === 'string' ? entityData.status : '';
+  const resolvedSessionType = typeof entityData.session_type_name === 'string'
+    ? entityData.session_type_name
+    : typeof entityData.session_types?.name === 'string'
+      ? entityData.session_types.name
+      : '';
+  const resolvedSessionDuration = formatDurationFromMinutes(
+    typeof entityData.session_type_duration_minutes === 'number'
+      ? entityData.session_type_duration_minutes
+      : typeof (entityData as { duration_minutes?: number }).duration_minutes === 'number'
+        ? (entityData as { duration_minutes?: number }).duration_minutes
+        : undefined
+  );
+  const resolvedMeetingUrl = typeof entityData.meeting_url === 'string'
+    ? entityData.meeting_url
+    : typeof (entityData as { meetingUrl?: string }).meetingUrl === 'string'
+      ? (entityData as { meetingUrl?: string }).meetingUrl
+      : '';
+  const resolvedProjectName = typeof entityData.project_name === 'string'
+    ? entityData.project_name
+    : typeof entityData.projects?.name === 'string'
+      ? entityData.projects.name
+      : '';
+  const resolvedProjectPackage = typeof entityData.project_package_name === 'string'
+    ? entityData.project_package_name
+    : (() => {
+        const snapshot = isJsonRecord(entityData.projects?.package_snapshot)
+          ? entityData.projects?.package_snapshot
+          : undefined;
+        return snapshot && typeof snapshot.name === 'string' ? snapshot.name : '';
+      })();
+
   console.log('Workflow email - Mock data values:', {
     customer_name: resolvedCustomerName,
     lead_name: resolvedCustomerName,
     lead_email: resolvedCustomerEmail,
     lead_phone: resolvedCustomerPhone,
-    
-    // Session info with proper formatting using org settings
-    session_date: formatDate(typeof entityData.session_date === 'string' ? entityData.session_date : (typeof entityData.date === 'string' ? entityData.date : '')),
-    session_time: formatTime(typeof entityData.session_time === 'string' ? entityData.session_time : (typeof entityData.time === 'string' ? entityData.time : '')),
-    session_location: (() => {
-      const locationValue = typeof entityData.location === 'string' ? entityData.location : '';
-      return locationValue && locationValue.trim() !== '' && locationValue !== 'Studio' ? locationValue : '-';
-    })(),
-    session_notes: typeof entityData.notes === 'string'
-      ? entityData.notes
-      : typeof entityData.session_notes === 'string'
-        ? entityData.session_notes
-        : '',
-    
-    // Project info
-    project_name: typeof entityData.project_name === 'string'
-      ? entityData.project_name
-      : typeof entityData.projects?.name === 'string'
-        ? entityData.projects.name
-        : '',
+    session_name: resolvedSessionName,
+    session_status: resolvedSessionStatus,
+    session_type: resolvedSessionType,
+    session_duration: resolvedSessionDuration,
+    session_date: formattedSessionDate,
+    session_time: formattedSessionTime,
+    session_location: resolvedSessionLocation,
+    session_meeting_url: resolvedMeetingUrl,
+    session_notes: resolvedSessionNotes,
+    project_name: resolvedProjectName,
     project_type: typeof entityData.project_type === 'string' ? entityData.project_type : '',
-    
-    // Business info from organization settings
+    project_package_name: resolvedProjectPackage,
     business_name: orgSettings?.photography_business_name || 'Your Business',
     studio_name: orgSettings?.photography_business_name || 'Your Business',
-    
-    // Additional fallback mappings for common template variables
     client_name: resolvedCustomerName,
     client_email: resolvedCustomerEmail,
     customer_email: resolvedCustomerEmail,
-    
-    // Add all entity data for template flexibility (but don't override above mappings)
     ...entityData
   });
 
@@ -925,25 +1006,20 @@ async function executeSendMessageStep(
           lead_phone: resolvedCustomerPhone,
           
           // Session info with proper formatting using org settings
-          session_date: formatDate(typeof entityData.session_date === 'string' ? entityData.session_date : (typeof entityData.date === 'string' ? entityData.date : '')),
-          session_time: formatTime(typeof entityData.session_time === 'string' ? entityData.session_time : (typeof entityData.time === 'string' ? entityData.time : '')),
-          session_location: (() => {
-            const locationValue = typeof entityData.location === 'string' ? entityData.location : '';
-            return locationValue && locationValue.trim() !== '' && locationValue !== 'Studio' ? locationValue : '-';
-          })(),
-          session_notes: typeof entityData.notes === 'string'
-            ? entityData.notes
-            : typeof entityData.session_notes === 'string'
-              ? entityData.session_notes
-              : '',
+          session_name: resolvedSessionName,
+          session_status: resolvedSessionStatus,
+          session_type: resolvedSessionType,
+          session_duration: resolvedSessionDuration,
+          session_date: formattedSessionDate,
+          session_time: formattedSessionTime,
+          session_location: resolvedSessionLocation,
+          session_meeting_url: resolvedMeetingUrl,
+          session_notes: resolvedSessionNotes,
           
           // Project info
-          project_name: typeof entityData.project_name === 'string'
-            ? entityData.project_name
-            : typeof entityData.projects?.name === 'string'
-              ? entityData.projects.name
-              : '',
+          project_name: resolvedProjectName,
           project_type: typeof entityData.project_type === 'string' ? entityData.project_type : '',
+          project_package_name: resolvedProjectPackage,
           
           // Business info from organization settings
           business_name: orgSettings?.photography_business_name || 'Your Business',
@@ -1122,6 +1198,12 @@ async function getEntityData(
         session_time: getString(sessionDataRecord, 'session_time'),
         location: getString(sessionDataRecord, 'location'),
         notes: getString(sessionDataRecord, 'notes'),
+        session_name: getString(sessionDataRecord, 'session_name'),
+        status: getString(sessionDataRecord, 'status'),
+        session_type_name: getString(sessionDataRecord, 'session_type_name') || getString(sessionDataRecord, 'session_type'),
+        session_type_duration_minutes: getNumber(sessionDataRecord, 'session_type_duration_minutes'),
+        meeting_url: getString(sessionDataRecord, 'meeting_url'),
+        project_package_name: getString(sessionDataRecord, 'project_package_name'),
         customer_name: getString(leadDataRecord, 'name'),
         customer_email: getString(leadDataRecord, 'email'),
         customer_phone: getString(leadDataRecord, 'phone') || '-',
@@ -1162,6 +1244,7 @@ async function getEntityData(
         projects:project_id (
           name,
           description,
+          package_snapshot,
           project_types (
             name
           )
@@ -1187,23 +1270,30 @@ async function getEntityData(
       }
     }
     
-    entityData = {
-      session_date: session?.session_date,
-      session_time: session?.session_time,
-      location: session?.location,
-      notes: session?.notes,
-      customer_name: session?.leads?.name,
-      customer_email: session?.leads?.email,
-      customer_phone: session?.leads?.phone || '-',
-      project_name: session?.projects?.name,
-      project_type: session?.projects?.project_types?.name || '',
-      client_email: session?.leads?.email,
-      session_type_id: session?.session_type_id ?? null,
-      session_type_name: session?.session_types?.name ?? null,
-      session_type_duration_minutes: session?.session_types?.duration_minutes ?? null,
-      ...leadFieldValues,
-      ...session
-    };
+      entityData = {
+        session_date: session?.session_date,
+        session_time: session?.session_time,
+        location: session?.location,
+        notes: session?.notes,
+        session_name: session?.session_name ?? undefined,
+        status: session?.status ?? undefined,
+        session_type_name: session?.session_types?.name ?? undefined,
+        session_type_duration_minutes: session?.session_types?.duration_minutes ?? undefined,
+        meeting_url: (session as { meeting_url?: string }).meeting_url,
+        customer_name: session?.leads?.name,
+        customer_email: session?.leads?.email,
+        customer_phone: session?.leads?.phone || '-',
+        project_name: session?.projects?.name,
+        project_type: session?.projects?.project_types?.name || '',
+        client_email: session?.leads?.email,
+        session_type_id: session?.session_type_id ?? null,
+        project_package_name: (() => {
+          const snapshot = isJsonRecord(session?.projects?.package_snapshot) ? session?.projects?.package_snapshot : undefined;
+          return snapshot && typeof snapshot.name === 'string' ? snapshot.name : '';
+        })(),
+        ...leadFieldValues,
+        ...session
+      };
   } else if (entityType === 'project') {
     const { data: project } = await supabase
       .from('projects')
@@ -1247,6 +1337,10 @@ async function getEntityData(
       customer_email: project?.leads?.email,
       customer_phone: project?.leads?.phone || '-',
       client_email: project?.leads?.email,
+      project_package_name: (() => {
+        const snapshot = isJsonRecord(project?.package_snapshot) ? project?.package_snapshot : undefined;
+        return snapshot && typeof snapshot.name === 'string' ? snapshot.name : '';
+      })(),
       ...leadFieldValues,
       ...project
     };

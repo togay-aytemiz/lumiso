@@ -943,7 +943,6 @@ export default function ProjectDetail() {
           onSessionScheduled={() => {
             handleSessionUpdated();
             triggerSummaryRefresh();
-            setSessionSheetOpen(false);
           }}
         />
       ) : null}

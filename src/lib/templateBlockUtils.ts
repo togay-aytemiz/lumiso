@@ -39,22 +39,40 @@ export function blocksToHTML(blocks: TemplateBlock[], previewData: Record<string
       case 'session-details':
         {
           const sessionData = block.data as SessionDetailsBlockData;
+          const heading = sessionData.customLabel?.trim() || 'Session Details';
+          const projectLabel = sessionData.projectLabel?.trim() || 'Project';
+          const packageLabel = sessionData.packageLabel?.trim() || 'Package';
+          const meetingLabel = sessionData.meetingLabel?.trim() || 'Meeting Link';
+
+          const detailRows = [
+            { visible: sessionData.showName, label: 'Session', value: '{session_name}' },
+            { visible: sessionData.showType, label: 'Type', value: '{session_type}' },
+            { visible: sessionData.showDuration, label: 'Duration', value: '{session_duration}' },
+            { visible: sessionData.showStatus, label: 'Status', value: '{session_status}' },
+            { visible: sessionData.showDate, label: 'Date', value: '{session_date}' },
+            { visible: sessionData.showTime, label: 'Time', value: '{session_time}' },
+            { visible: sessionData.showLocation, label: 'Location', value: '{session_location}' },
+            {
+              visible: sessionData.showMeetingLink,
+              label: meetingLabel,
+              value: '<a href="{session_meeting_url}">{session_meeting_url}</a>',
+            },
+            { visible: sessionData.showProject, label: projectLabel, value: '{project_name}' },
+            { visible: sessionData.showPackage, label: packageLabel, value: '{project_package_name}' },
+          ];
+
           let sessionHtml = '<div style="background: #f9f9f9; padding: 16px; border-radius: 8px; margin: 16px 0;">';
-          sessionHtml += '<h3 style="margin: 0 0 12px 0;">Session Details</h3>';
-        
-          if (sessionData.showDate) {
-            sessionHtml += `<p style="margin: 4px 0;"><strong>Date:</strong> {session_date}</p>`;
-          }
-          if (sessionData.showTime) {
-            sessionHtml += `<p style="margin: 4px 0;"><strong>Time:</strong> {session_time}</p>`;
-          }
-          if (sessionData.showLocation) {
-            sessionHtml += `<p style="margin: 4px 0;"><strong>Location:</strong> {session_location}</p>`;
-          }
+          sessionHtml += `<h3 style="margin: 0 0 12px 0;">${heading}</h3>`;
+
+          detailRows.forEach((row) => {
+            if (!row.visible) return;
+            sessionHtml += `<p style="margin: 4px 0;"><strong>${row.label}:</strong> ${row.value}</p>`;
+          });
+
           if (sessionData.showNotes && sessionData.customNotes) {
-            sessionHtml += `<p style="margin: 4px 0;"><strong>Notes:</strong> ${sessionData.customNotes}</p>`;
+            sessionHtml += `<p style="margin: 4px 0;"><strong>Notes:</strong> ${replacePlaceholders(sessionData.customNotes, previewData)}</p>`;
           }
-        
+
           sessionHtml += '</div>';
           return replacePlaceholders(sessionHtml, previewData);
         }
@@ -194,8 +212,21 @@ export function blocksToPlainText(blocks: TemplateBlock[], previewData: Record<s
 
       case 'session-details': {
         const sessionData = block.data as SessionDetailsBlockData;
-        let sessionText = 'Session Details:\n';
+        const heading = sessionData.customLabel?.trim() || 'Session Details';
+        let sessionText = `${heading}:\n`;
 
+        if (sessionData.showName) {
+          sessionText += 'Session: {session_name}\n';
+        }
+        if (sessionData.showType) {
+          sessionText += 'Type: {session_type}\n';
+        }
+        if (sessionData.showDuration) {
+          sessionText += 'Duration: {session_duration}\n';
+        }
+        if (sessionData.showStatus) {
+          sessionText += 'Status: {session_status}\n';
+        }
         if (sessionData.showDate) {
           sessionText += 'Date: {session_date}\n';
         }
@@ -205,8 +236,17 @@ export function blocksToPlainText(blocks: TemplateBlock[], previewData: Record<s
         if (sessionData.showLocation) {
           sessionText += 'Location: {session_location}\n';
         }
+        if (sessionData.showMeetingLink) {
+          sessionText += `${sessionData.meetingLabel || 'Meeting Link'}: {session_meeting_url}\n`;
+        }
+        if (sessionData.showProject) {
+          sessionText += `${sessionData.projectLabel || 'Project'}: {project_name}\n`;
+        }
+        if (sessionData.showPackage) {
+          sessionText += `${sessionData.packageLabel || 'Package'}: {project_package_name}\n`;
+        }
         if (sessionData.showNotes && sessionData.customNotes) {
-          sessionText += `Notes: ${sessionData.customNotes}\n`;
+          sessionText += `Notes: ${replacePlaceholders(sessionData.customNotes, previewData)}\n`;
         }
 
         return replacePlaceholders(sessionText, previewData);

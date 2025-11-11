@@ -1846,9 +1846,16 @@
       },
       "sessionDetails": {
         "defaultLabel": "Session Details",
+        "session": "Session:",
+        "type": "Type:",
+        "duration": "Duration:",
+        "status": "Status:",
         "date": "Date:",
         "time": "Time:",
         "location": "Location:",
+        "meetingLink": "Meeting Link:",
+        "project": "Project:",
+        "package": "Package:",
         "notes": "Notes:",
         "defaultNote": "Please arrive 10 minutes early. Bring comfortable outfits!"
       }
@@ -1893,11 +1900,37 @@
         "customLabel": "Custom Label (optional)",
         "customLabelPlaceholder": "Session Details",
         "showFields": "Show Fields",
+        "showFieldsHelper": "Toggle which details appear in reminders and automations.",
+        "sections": {
+          "session": "Session basics",
+          "schedule": "Schedule",
+          "logistics": "Logistics",
+          "project": "Project & Package",
+          "notes": "Notes"
+        },
+        "fieldCount": "{{active}}/{{total}} fields enabled",
         "fields": {
+          "name": "Session Name",
+          "type": "Session Type",
+          "duration": "Duration",
+          "status": "Status",
           "date": "Date",
           "time": "Time",
           "location": "Location",
+          "meetingLink": "Meeting Link",
+          "project": "Project Name",
+          "package": "Package Name",
           "notes": "Notes"
+        },
+        "labels": {
+          "project": "Project Label Override",
+          "package": "Package Label Override",
+          "meeting": "Meeting Label Override"
+        },
+        "placeholders": {
+          "project": "Project",
+          "package": "Package",
+          "meeting": "Join link"
         },
         "customNotes": "Custom Notes (optional)",
         "customNotesPlaceholder": "Please arrive 10 minutes early. Bring comfortable outfits!"
@@ -2075,6 +2108,44 @@
           "description": "Logo, studio name, contact info, and compliance options"
         }
       }
+    },
+    "variables": {
+      "categories": {
+        "business": "Business",
+        "lead": "Lead",
+        "session": "Session",
+        "project": "Project",
+        "custom": "System"
+      },
+      "labels": {
+        "businessName": "Business Name",
+        "leadStatus": "Lead Status",
+        "leadDueDate": "Lead Due Date",
+        "leadCreatedDate": "Lead Created Date",
+        "leadUpdatedDate": "Lead Updated Date",
+        "sessionName": "Session Name",
+        "sessionDate": "Session Date",
+        "sessionTime": "Session Time",
+        "sessionLocation": "Session Location",
+        "sessionNotes": "Session Notes",
+        "sessionStatus": "Session Status",
+        "sessionType": "Session Type",
+        "sessionDuration": "Session Duration",
+        "sessionMeetingUrl": "Session Meeting Link",
+        "projectName": "Project Name",
+        "projectType": "Project Type",
+        "projectStatus": "Project Status",
+        "projectDueDate": "Project Due Date",
+        "projectPackageName": "Project Package Name",
+        "currentDate": "Current Date",
+        "currentTime": "Current Time"
+      }
+    },
+    "variablePicker": {
+      "trigger": "Insert Variable",
+      "search": "Search variables...",
+      "empty": "No variables found.",
+      "loading": "Loading variables..."
     },
     "nameDialog": {
       "titleSave": "Save Template",

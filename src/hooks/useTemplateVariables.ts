@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { TemplateVariable } from "@/types/templateBuilder";
+import { useTranslation } from "react-i18next";
 
 interface BusinessInfo {
   name: string;
@@ -18,6 +19,7 @@ export function useTemplateVariables() {
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const { activeOrganization } = useOrganization();
+  const { t, i18n } = useTranslation("pages");
 
   const fetchVariables = useCallback(async () => {
     if (!activeOrganization?.id) return;
@@ -53,122 +55,122 @@ export function useTemplateVariables() {
         // Business variables (only real ones from organization_settings)
         {
           key: "business_name",
-          label: "Business Name",
+          label: t("templateBuilder.variables.labels.businessName"),
           category: "business"
         },
 
         // Lead variables from field definitions
         ...(leadFields?.map(field => ({
           key: `lead_${field.field_key}`,
-          label: `Lead ${field.label}`,
+          label: field.label,
           category: "lead" as const
         })) || []),
 
         // Static lead variables that exist in database
         {
           key: "lead_status",
-          label: "Lead Status",
+          label: t("templateBuilder.variables.labels.leadStatus"),
           category: "lead"
         },
         {
           key: "lead_due_date",
-          label: "Lead Due Date", 
+          label: t("templateBuilder.variables.labels.leadDueDate"), 
           category: "lead"
         },
         {
           key: "lead_created_date",
-          label: "Lead Created Date",
+          label: t("templateBuilder.variables.labels.leadCreatedDate"),
           category: "lead"
         },
         {
           key: "lead_updated_date",
-          label: "Lead Updated Date",
+          label: t("templateBuilder.variables.labels.leadUpdatedDate"),
           category: "lead"
         },
 
         // Session variables (real database fields)
         {
           key: "session_name",
-          label: "Session Name",
+          label: t("templateBuilder.variables.labels.sessionName"),
           category: "session"
         },
         {
           key: "session_date",
-          label: "Session Date",
+          label: t("templateBuilder.variables.labels.sessionDate"),
           category: "session"
         },
         {
           key: "session_time", 
-          label: "Session Time",
+          label: t("templateBuilder.variables.labels.sessionTime"),
           category: "session"
         },
         {
           key: "session_location",
-          label: "Session Location",
+          label: t("templateBuilder.variables.labels.sessionLocation"),
           category: "session"
         },
         {
           key: "session_notes",
-          label: "Session Notes",
+          label: t("templateBuilder.variables.labels.sessionNotes"),
           category: "session"
         },
         {
           key: "session_status",
-          label: "Session Status",
+          label: t("templateBuilder.variables.labels.sessionStatus"),
           category: "session"
         },
         {
           key: "session_type",
-          label: "Session Type",
+          label: t("templateBuilder.variables.labels.sessionType"),
           category: "session"
         },
         {
           key: "session_duration",
-          label: "Session Duration",
+          label: t("templateBuilder.variables.labels.sessionDuration"),
           category: "session"
         },
         {
           key: "session_meeting_url",
-          label: "Session Meeting Link",
+          label: t("templateBuilder.variables.labels.sessionMeetingUrl"),
           category: "session"
         },
 
         // Project variables (real database fields)
         {
           key: "project_name",
-          label: "Project Name",
+          label: t("templateBuilder.variables.labels.projectName"),
           category: "project"
         },
         {
           key: "project_type",
-          label: "Project Type", 
+          label: t("templateBuilder.variables.labels.projectType"), 
           category: "project"
         },
         {
           key: "project_status",
-          label: "Project Status",
+          label: t("templateBuilder.variables.labels.projectStatus"),
           category: "project"
         },
         {
           key: "project_due_date",
-          label: "Project Due Date",
+          label: t("templateBuilder.variables.labels.projectDueDate"),
           category: "project"
         },
         {
           key: "project_package_name",
-          label: "Project Package Name",
+          label: t("templateBuilder.variables.labels.projectPackageName"),
           category: "project"
         },
 
         // System variables
         {
           key: "current_date",
-          label: "Current Date",
+          label: t("templateBuilder.variables.labels.currentDate"),
           category: "custom"
         },
         {
           key: "current_time",
-          label: "Current Time", 
+          label: t("templateBuilder.variables.labels.currentTime"), 
           category: "custom"
         }
       ];
@@ -179,7 +181,7 @@ export function useTemplateVariables() {
     } finally {
       setLoading(false);
     }
-  }, [activeOrganization?.id]);
+  }, [activeOrganization?.id, t, i18n.language]);
 
   useEffect(() => {
     if (activeOrganization?.id) {

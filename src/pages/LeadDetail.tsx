@@ -18,9 +18,9 @@ import { Calendar, CheckCircle, FolderPlus, User, Activity, CheckSquare, CreditC
 import { toast } from "@/hooks/use-toast";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
-import EditSessionDialog from "@/components/EditSessionDialog";
 import { LeadActivitySection } from "@/components/LeadActivitySection";
 import { ProjectsSection } from "@/components/ProjectsSection";
+import { LeadSessionsSection } from "@/components/LeadSessionsSection";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 // AssigneesList removed - single user organization
@@ -32,7 +32,6 @@ import { OnboardingTutorial, TutorialStep } from "@/components/shared/Onboarding
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { DetailPageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useMessagesTranslation, useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
-import { useSessionActions } from "@/hooks/useSessionActions";
 import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
 import { EntityHeader, type EntitySummaryItem } from "@/components/EntityHeader";
@@ -124,8 +123,6 @@ const LeadDetail = () => {
     }
   }, [id, detailLoading, leadQuery.isError, leadQuery.error, leadQuery.isSuccess, lead, navigate, tPages]);
   const [deleting, setDeleting] = useState(false);
-  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
-  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
 
   // User settings and status actions
   const {
@@ -143,7 +140,6 @@ const LeadDetail = () => {
     }
   });
 
-  const { deleteSession } = useSessionActions();
 
   const {
     currentStep,
@@ -500,13 +496,6 @@ const LeadDetail = () => {
       setConfirmDeleteText('');
     }
   };
-  const handleDeleteSession = async (sessionId: string) => {
-    const success = await deleteSession(sessionId);
-    if (success) {
-      void sessionsQuery.refetch();
-      void latestActivityQuery.refetch();
-    }
-  };
   const handleSessionUpdated = () => {
     void sessionsQuery.refetch();
     void latestActivityQuery.refetch();
@@ -806,8 +795,6 @@ const LeadDetail = () => {
                   leadId={lead.id}
                   leadName={lead.name}
                   onSessionScheduled={handleSessionScheduled}
-                  disabled={sessions.some(s => (s.status || "").toLowerCase() === "planned")}
-                  disabledTooltip={tPages("leadDetail.tooltips.sessionAlreadyPlanned")}
                 />
 
                 {!settingsLoading &&
@@ -867,6 +854,26 @@ const LeadDetail = () => {
                 )
               },
               {
+                id: "lead-sessions",
+                title: tPages("leadDetail.header.sessions.label"),
+                content: (
+                  <LeadSessionsSection
+                    sessions={sessions}
+                    loading={sessionsQuery.isLoading}
+                    leadId={lead.id}
+                    leadName={lead.name}
+                    onSessionsChanged={handleSessionUpdated}
+                    headerAction={
+                      <ScheduleSessionDialog
+                        leadId={lead.id}
+                        leadName={lead.name}
+                        onSessionScheduled={handleSessionScheduled}
+                      />
+                    }
+                  />
+                )
+              },
+              {
                 id: "lead-activity",
                 title: tPages("leadDetail.header.activity.label"),
                 content: (
@@ -901,59 +908,6 @@ const LeadDetail = () => {
           />
         </div>
       </div>
-
-      {/* Edit Session Dialog */}
-      {editingSessionId && (() => {
-        const session = sessions.find(s => s.id === editingSessionId);
-        return session ? (
-          <EditSessionDialog
-            sessionId={session.id}
-            leadId={lead.id}
-            currentDate={session.session_date}
-            currentTime={session.session_time}
-            currentNotes={session.notes}
-            currentProjectId={session.project_id}
-            currentSessionName={session.session_name ?? undefined}
-            leadName={lead.name}
-            open={!!editingSessionId}
-            onOpenChange={open => {
-              if (!open) {
-                setEditingSessionId(null);
-              }
-            }}
-            onSessionUpdated={() => {
-              handleSessionUpdated();
-              setEditingSessionId(null);
-            }}
-          />
-        ) : null;
-      })()}
-
-      {/* Delete Session Dialog */}
-      <AlertDialog open={!!deletingSessionId} onOpenChange={(open) => !open && setDeletingSessionId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Session?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {tMessages("confirm.deleteSession")} {tMessages("confirm.cannotUndo")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (deletingSessionId) {
-                  handleDeleteSession(deletingSessionId);
-                  setDeletingSessionId(null);
-                }
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete Session
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Delete Lead Confirmation Dialog */}
       <AlertDialog

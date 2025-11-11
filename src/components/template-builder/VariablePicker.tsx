@@ -5,6 +5,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Plus, Check } from "lucide-react";
 import { useTemplateVariables } from "@/hooks/useTemplateVariables";
 import type { TemplateVariable } from "@/types/templateBuilder";
+import { useTranslation } from "react-i18next";
 
 interface VariablePickerProps {
   onVariableSelect: (variable: string) => void;
@@ -14,6 +15,7 @@ interface VariablePickerProps {
 export function VariablePicker({ onVariableSelect, trigger }: VariablePickerProps) {
   const [open, setOpen] = useState(false);
   const { variables, loading } = useTemplateVariables();
+  const { t } = useTranslation("pages");
 
   const handleSelect = (variableKey: string) => {
     onVariableSelect(`{${variableKey}}`);
@@ -28,28 +30,40 @@ export function VariablePicker({ onVariableSelect, trigger }: VariablePickerProp
     return acc;
   }, {});
 
+  type VariableCategory = TemplateVariable["category"];
+  const categoryLabels: Record<VariableCategory, string> = {
+    business: t("templateBuilder.variables.categories.business"),
+    lead: t("templateBuilder.variables.categories.lead"),
+    session: t("templateBuilder.variables.categories.session"),
+    project: t("templateBuilder.variables.categories.project"),
+    custom: t("templateBuilder.variables.categories.custom"),
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         {trigger || (
           <Button variant="outline" size="sm">
             <Plus className="h-3 w-3" />
-            Variable
+            {t("templateBuilder.variablePicker.trigger")}
           </Button>
         )}
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="start">
         <Command>
-          <CommandInput placeholder="Search variables..." />
+          <CommandInput placeholder={t("templateBuilder.variablePicker.search") ?? undefined} />
           <CommandList>
-            <CommandEmpty>No variables found.</CommandEmpty>
+            <CommandEmpty>{t("templateBuilder.variablePicker.empty")}</CommandEmpty>
             {loading ? (
               <div className="p-4 text-center text-muted-foreground">
-                Loading variables...
+                {t("templateBuilder.variablePicker.loading")}
               </div>
             ) : (
               Object.entries(groupedVariables).map(([category, vars]) => (
-                <CommandGroup key={category} heading={category}>
+                <CommandGroup
+                  key={category}
+                  heading={categoryLabels[category as VariableCategory] || category}
+                >
                   {vars.map((variable) => (
                     <CommandItem
                       key={variable.key}

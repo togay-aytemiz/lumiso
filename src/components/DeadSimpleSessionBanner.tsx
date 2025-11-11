@@ -1,5 +1,6 @@
 import { AlertTriangle, Clock, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatTime, cn, getUserLocale, formatLongDate } from "@/lib/utils";
 import { getRelativeDate, isOverdueSession } from "@/lib/dateUtils";
 import { SessionStatusBadge } from "@/components/SessionStatusBadge";
@@ -20,9 +21,10 @@ export type DeadSimpleSession = SessionWithStatus & {
 interface DeadSimpleSessionBannerProps {
   session: DeadSimpleSession;
   onClick: (sessionId: string) => void;
+  onConnectProject?: (sessionId: string) => void;
 }
 
-const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerProps) => {
+const DeadSimpleSessionBanner = ({ session, onClick, onConnectProject }: DeadSimpleSessionBannerProps) => {
   const { settings: orgSettings } = useOrganizationSettings();
   const userLocale = getUserLocale();
   const { t } = useFormsTranslation();
@@ -81,6 +83,8 @@ const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerPr
 
   const timeIndicator = getTimeIndicator(session);
   const isOverdue = isOverdueSession(session.session_date, session.status);
+  const showConnectProject =
+    !session.project_id && typeof onConnectProject === "function";
 
   return (
     <div
@@ -123,12 +127,30 @@ const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerPr
             )}
           </div>
           
-          {session.projects?.name && (
-            <div className="text-xs text-gray-500">
-              {t('sessionLabels.project')}: {session.projects.name}
+          {(session.projects?.name || showConnectProject) && (
+            <div className="text-xs text-gray-500 flex flex-wrap items-center gap-2">
+              <span>{t('sessionLabels.project')}:</span>
+              {session.projects?.name ? (
+                <span>{session.projects.name}</span>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span>{t('sessionSheet.placeholders.project')}</span>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="h-auto px-0 text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onConnectProject?.(session.id);
+                    }}
+                  >
+                    {t('sessionSheet.actions.connectProject')}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
-          
+
           {session.notes && (
             <TruncatedTextWithTooltip
               text={session.notes}

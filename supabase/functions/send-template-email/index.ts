@@ -66,6 +66,16 @@ interface SessionDetailsBlockData {
   showTime?: boolean;
   showLocation?: boolean;
   showNotes?: boolean;
+  showName?: boolean;
+  showType?: boolean;
+  showDuration?: boolean;
+  showStatus?: boolean;
+  showProject?: boolean;
+  showPackage?: boolean;
+  showMeetingLink?: boolean;
+  projectLabel?: string;
+  packageLabel?: string;
+  meetingLabel?: string;
 }
 
 interface DividerBlockData {
@@ -252,6 +262,7 @@ export function generateHTMLContent(
   organizationSettings?: OrganizationSettings | null,
   isPreview: boolean = false
 ): string {
+  const brandColor = organizationSettings?.primary_brand_color || '#1EB29F';
   const baseStyles = `
     <style>
       /* Email client reset styles */
@@ -710,50 +721,59 @@ export function generateHTMLContent(
         }
 
         case 'session-details': {
-          const sessionData = block.data;
-          const customLabel = sessionData.customLabel || "Session Details";
+          const sessionData = block.data as SessionDetailsBlockData;
+          const heading = sessionData.customLabel ? replacePlaceholders(sessionData.customLabel, mockData) : "Session Details";
+          const projectLabel = sessionData.projectLabel ? replacePlaceholders(sessionData.projectLabel, mockData) : "Project";
+          const packageLabel = sessionData.packageLabel ? replacePlaceholders(sessionData.packageLabel, mockData) : "Package";
+          const meetingLabel = sessionData.meetingLabel ? replacePlaceholders(sessionData.meetingLabel, mockData) : "Meeting Link";
+
+          const detailRows = [
+            { visible: sessionData.showName, label: 'Session', value: mockData.session_name || '—' },
+            { visible: sessionData.showType, label: 'Type', value: mockData.session_type || '—' },
+            { visible: sessionData.showDuration, label: 'Duration', value: mockData.session_duration || '—' },
+            { visible: sessionData.showStatus, label: 'Status', value: mockData.session_status || '—' },
+            { visible: sessionData.showDate, label: 'Date', value: mockData.session_date || 'TBD' },
+            { visible: sessionData.showTime, label: 'Time', value: mockData.session_time || 'TBD' },
+            {
+              visible: sessionData.showLocation,
+              label: 'Location',
+              value: replacePlaceholders('{session_location}', mockData) || '—',
+            },
+            {
+              visible: sessionData.showMeetingLink,
+              label: meetingLabel,
+              value: mockData.session_meeting_url
+                ? `<a href="${mockData.session_meeting_url}" target="_blank" rel="noopener" style="color:${brandColor}; text-decoration: underline;">${mockData.session_meeting_url}</a>`
+                : '—',
+            },
+            { visible: sessionData.showProject, label: projectLabel, value: mockData.project_name || '—' },
+            { visible: sessionData.showPackage, label: packageLabel, value: mockData.project_package_name || '—' },
+          ];
 
           htmlContent += `
             <div class="session-details">
-              <h3>${customLabel}</h3>
+              <h3>${heading}</h3>
+              ${detailRows
+                .filter((row) => row.visible)
+                .map(
+                  (row) => `
+                    <div class="session-detail-item">
+                      <span class="session-detail-label">${row.label}:</span>
+                      <span class="session-detail-value">${row.value || '—'}</span>
+                    </div>
+                  `
+                )
+                .join('')}
+              ${sessionData.showNotes && sessionData.customNotes
+                ? `
+                    <div class="session-detail-item">
+                      <span class="session-detail-label">Notes:</span>
+                      <span class="session-detail-value">${replacePlaceholders(sessionData.customNotes, mockData)}</span>
+                    </div>
+                  `
+                : ''}
+            </div>
           `;
-
-          if (sessionData.showDate) {
-            htmlContent += `
-              <div class="session-detail-item">
-                <span class="session-detail-label">Date:</span>
-                <span class="session-detail-value">${mockData.session_date || 'TBD'}</span>
-              </div>
-            `;
-          }
-          if (sessionData.showTime) {
-            htmlContent += `
-              <div class="session-detail-item">
-                <span class="session-detail-label">Time:</span>
-                <span class="session-detail-value">${mockData.session_time || 'TBD'}</span>
-              </div>
-            `;
-          }
-          if (sessionData.showLocation) {
-            const locationValue = replacePlaceholders('{session_location}', mockData);
-            htmlContent += `
-              <div class="session-detail-item">
-                <span class="session-detail-label">Location:</span>
-                <span class="session-detail-value">${locationValue}</span>
-              </div>
-            `;
-          }
-          if (sessionData.showNotes) {
-            const customNotes = sessionData.customNotes || "Please arrive 10 minutes early. Bring comfortable outfits!";
-            htmlContent += `
-              <div class="session-detail-item">
-                <span class="session-detail-label">Notes:</span>
-                <span class="session-detail-value">${replacePlaceholders(customNotes, mockData)}</span>
-              </div>
-            `;
-          }
-
-          htmlContent += `</div>`;
           break;
         }
 
@@ -892,12 +912,24 @@ function generatePlainText(blocks: TemplateBlock[], mockData: Record<string, str
           break;
         }
         case 'session-details': {
-          plainText += 'SESSION DETAILS\n';
-          plainText += '---------------\n';
-          if (block.data.showDate) plainText += `Date: ${mockData.session_date || 'TBD'}\n`;
-          if (block.data.showTime) plainText += `Time: ${mockData.session_time || 'TBD'}\n`;
-          if (block.data.showLocation) plainText += `Location: ${mockData.session_location || 'TBD'}\n`;
-          if (block.data.showNotes) plainText += `Notes: Please arrive 10 minutes early. Bring comfortable outfits!\n`;
+          const data = block.data as SessionDetailsBlockData;
+          const heading = data.customLabel ? replacePlaceholders(data.customLabel, mockData) : 'Session Details';
+          plainText += `${heading.toUpperCase()}\n`;
+          plainText += `${'-'.repeat(heading.length)}\n`;
+          if (data.showName) plainText += `Session: ${mockData.session_name || '—'}\n`;
+          if (data.showType) plainText += `Type: ${mockData.session_type || '—'}\n`;
+          if (data.showDuration) plainText += `Duration: ${mockData.session_duration || '—'}\n`;
+          if (data.showStatus) plainText += `Status: ${mockData.session_status || '—'}\n`;
+          if (data.showDate) plainText += `Date: ${mockData.session_date || 'TBD'}\n`;
+          if (data.showTime) plainText += `Time: ${mockData.session_time || 'TBD'}\n`;
+          if (data.showLocation) plainText += `Location: ${mockData.session_location || '—'}\n`;
+          if (data.showMeetingLink) plainText += `${data.meetingLabel || 'Meeting Link'}: ${mockData.session_meeting_url || '—'}\n`;
+          if (data.showProject) plainText += `${data.projectLabel || 'Project'}: ${mockData.project_name || '—'}\n`;
+          if (data.showPackage) plainText += `${data.packageLabel || 'Package'}: ${mockData.project_package_name || '—'}\n`;
+          if (data.showNotes) {
+            const customNotes = data.customNotes || 'Please arrive 10 minutes early. Bring comfortable outfits!';
+            plainText += `Notes: ${replacePlaceholders(customNotes, mockData)}\n`;
+          }
           plainText += '\n';
           break;
         }

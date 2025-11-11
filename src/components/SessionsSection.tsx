@@ -1,16 +1,14 @@
-import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus, Calendar } from "lucide-react";
-import DeadSimpleSessionBanner from "./DeadSimpleSessionBanner";
-import EditSessionDialog from "./EditSessionDialog";
+import { useMemo, useState } from "react";
+import { Calendar } from "lucide-react";
 import SessionSheetView from "./SessionSheetView";
 import { NewSessionDialogForProject } from "./NewSessionDialogForProject";
 import { useNavigate, useLocation } from "react-router-dom";
-import { sortSessionsByLifecycle } from "@/lib/sessionSorting";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { DeadSimpleSession } from "./DeadSimpleSessionBanner";
+import SessionListCard from "./SessionListCard";
+import EditSessionDialog from "./EditSessionDialog";
+import type { SessionPlanningStepId } from "@/features/session-planning";
 interface SessionsSectionProps {
   sessions: DeadSimpleSession[];
   loading: boolean;
@@ -31,18 +29,14 @@ export function SessionsSection({
   onSessionUpdated,
   onDeleteSession
 }: SessionsSectionProps) {
-  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editingStartStep, setEditingStartStep] = useState<SessionPlanningStepId | undefined>(undefined);
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useFormsTranslation();
   const isMobile = useIsMobile();
-  const handleSessionUpdated = () => {
-    onSessionUpdated();
-    setEditingSessionId(null);
-  };
-
   const handleSessionSheetUpdated = () => {
     onSessionUpdated(); // Propagate updates from session sheet to parent
   };
@@ -78,85 +72,50 @@ export function SessionsSection({
   const handleNavigateToProject = (projectId: string) => {
     navigate(`/projects/${projectId}`);
   };
-  if (loading) {
-    return <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            {t('sessions_form.title')}
-            <div className="w-6 h-6 bg-muted animate-pulse rounded" />
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="w-full h-4 bg-muted animate-pulse rounded" />
-            <div className="w-3/4 h-4 bg-muted animate-pulse rounded" />
-          </div>
-        </CardContent>
-      </Card>;
-  }
-  return <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between text-xl font-semibold">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              {t('sessions_form.title')}
-            </div>
-            <NewSessionDialogForProject leadId={leadId} leadName={leadName} projectName={projectName} projectId={projectId} onSessionScheduled={onSessionUpdated} />
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {sessions.length > 0 ? <div className="space-y-3">
-              {!loading && <p className="text-sm text-muted-foreground mb-3">
-                  {sessions.length === 1 
-                    ? t('sessions_form.project_sessions_count', { count: sessions.length })
-                    : t('sessions_form.project_sessions_count_plural', { count: sessions.length })
-                  }
-                </p>}
-              {sortSessionsByLifecycle(sessions).map(session => (
-                <DeadSimpleSessionBanner
-                  key={session.id}
-                  session={session}
-                  onClick={() => handleSessionClick(session.id)}
-                />
-              ))}
-            </div> : <div className="text-center py-4">
-              <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-muted-foreground text-sm">{t('sessions_form.no_sessions')}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {t('sessions_form.add_sessions_hint')}
-              </p>
-            </div>}
-        </CardContent>
-      </Card>
 
-      {/* Edit Session Dialog */}
-      {editingSessionId && (() => {
-        const session = sessions.find(s => s.id === editingSessionId);
-        return session ? (
-           <EditSessionDialog 
-             sessionId={session.id} 
-             leadId={session.lead_id} 
-             currentDate={session.session_date} 
-             currentTime={session.session_time} 
-             currentNotes={session.notes} 
-             currentProjectId={session.project_id} 
-             currentSessionName={session.session_name}
-             leadName={leadName} 
-             open={!!editingSessionId} 
-             onOpenChange={open => {
-               if (!open) {
-                 setEditingSessionId(null);
-               }
-             }} 
-             onSessionUpdated={handleSessionUpdated} 
-           />
-        ) : null;
-      })()}
+  const handleConnectProject = (sessionId: string) => {
+    setEditingSessionId(sessionId);
+    setEditingStartStep("project");
+  };
 
-      {/* Session Sheet View */}
+  const editingSession = editingSessionId ? sessions.find((s) => s.id === editingSessionId) : null;
+
+  const summary = useMemo(() => {
+    if (loading || sessions.length === 0) {
+      return null;
+    }
+    return sessions.length === 1
+      ? t("sessions_form.project_sessions_count", { count: sessions.length })
+      : t("sessions_form.project_sessions_count_plural", { count: sessions.length });
+  }, [loading, sessions.length, t]);
+  return (
+    <>
+      <SessionListCard
+        title={t("sessions_form.title")}
+        icon={Calendar}
+        sessions={sessions}
+        loading={loading}
+        headerAction={
+          <NewSessionDialogForProject
+            leadId={leadId}
+            leadName={leadName}
+            projectName={projectName}
+            projectId={projectId}
+            onSessionScheduled={onSessionUpdated}
+          />
+        }
+        summary={summary ?? undefined}
+        emptyState={{
+          icon: Calendar,
+          title: t("sessions_form.no_sessions"),
+          description: t("sessions_form.add_sessions_hint")
+        }}
+        onSessionClick={handleSessionClick}
+        onConnectProject={handleConnectProject}
+      />
+
       <SessionSheetView
-        sessionId={selectedSessionId || ''}
+        sessionId={selectedSessionId || ""}
         isOpen={isSessionSheetOpen}
         onOpenChange={handleSessionSheetOpenChange}
         onViewFullDetails={handleViewFullSessionDetails}
@@ -164,5 +123,32 @@ export function SessionsSection({
         onNavigateToProject={handleNavigateToProject}
         onSessionUpdated={handleSessionSheetUpdated}
       />
-    </>;
+
+      {editingSession ? (
+        <EditSessionDialog
+          sessionId={editingSession.id}
+          leadId={editingSession.lead_id || leadId}
+          currentDate={editingSession.session_date}
+          currentTime={editingSession.session_time || ""}
+          currentNotes={editingSession.notes || ""}
+          currentProjectId={editingSession.project_id}
+          currentSessionName={editingSession.session_name ?? undefined}
+          leadName={leadName}
+          open
+          startStep={editingStartStep}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditingSessionId(null);
+              setEditingStartStep(undefined);
+            }
+          }}
+          onSessionUpdated={() => {
+            onSessionUpdated();
+            setEditingSessionId(null);
+            setEditingStartStep(undefined);
+          }}
+        />
+      ) : null}
+    </>
+  );
 }

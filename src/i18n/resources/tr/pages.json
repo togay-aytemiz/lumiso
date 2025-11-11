@@ -1846,9 +1846,16 @@
       },
       "sessionDetails": {
         "defaultLabel": "Seans Detayları",
+        "session": "Seans:",
+        "type": "Tür:",
+        "duration": "Süre:",
+        "status": "Durum:",
         "date": "Tarih:",
         "time": "Saat:",
         "location": "Konum:",
+        "meetingLink": "Bağlantı:",
+        "project": "Proje:",
+        "package": "Paket:",
         "notes": "Notlar:",
         "defaultNote": "Lütfen 10 dakika erken gelin. Rahat kıyafetler getirin."
       }
@@ -1893,11 +1900,37 @@
         "customLabel": "Özel Etiket (isteğe bağlı)",
         "customLabelPlaceholder": "Seans Detayları",
         "showFields": "Alanları Göster",
+        "showFieldsHelper": "Hatırlatmalarda hangi detayların yer alacağını seçin.",
+        "sections": {
+          "session": "Seans özeti",
+          "schedule": "Takvim",
+          "logistics": "Lojistik",
+          "project": "Proje ve Paket",
+          "notes": "Notlar"
+        },
+        "fieldCount": "{{active}}/{{total}} alan açık",
         "fields": {
+          "name": "Seans Adı",
+          "type": "Seans Türü",
+          "duration": "Süre",
+          "status": "Durum",
           "date": "Tarih",
           "time": "Saat",
           "location": "Konum",
+          "meetingLink": "Görüşme Bağlantısı",
+          "project": "Proje Adı",
+          "package": "Paket Adı",
           "notes": "Notlar"
+        },
+        "labels": {
+          "project": "Proje Etiketi",
+          "package": "Paket Etiketi",
+          "meeting": "Toplantı Etiketi"
+        },
+        "placeholders": {
+          "project": "Proje",
+          "package": "Paket",
+          "meeting": "Bağlantı"
         },
         "customNotes": "Özel Notlar (isteğe bağlı)",
         "customNotesPlaceholder": "Lütfen 10 dakika erken gelin. Rahat kıyafetler getirin!"
@@ -2075,6 +2108,44 @@
           "description": "Logo, stüdyo adı, iletişim bilgileri ve uyumluluk metinleri"
         }
       }
+    },
+    "variables": {
+      "categories": {
+        "business": "İşletme",
+        "lead": "Aday",
+        "session": "Seans",
+        "project": "Proje",
+        "custom": "Sistem"
+      },
+      "labels": {
+        "businessName": "İşletme Adı",
+        "leadStatus": "Aday Durumu",
+        "leadDueDate": "Aday Son Tarihi",
+        "leadCreatedDate": "Aday Oluşturma Tarihi",
+        "leadUpdatedDate": "Aday Güncelleme Tarihi",
+        "sessionName": "Seans Adı",
+        "sessionDate": "Seans Tarihi",
+        "sessionTime": "Seans Saati",
+        "sessionLocation": "Seans Konumu",
+        "sessionNotes": "Seans Notları",
+        "sessionStatus": "Seans Durumu",
+        "sessionType": "Seans Türü",
+        "sessionDuration": "Seans Süresi",
+        "sessionMeetingUrl": "Toplantı Bağlantısı",
+        "projectName": "Proje Adı",
+        "projectType": "Proje Türü",
+        "projectStatus": "Proje Durumu",
+        "projectDueDate": "Proje Teslim Tarihi",
+        "projectPackageName": "Proje Paketi",
+        "currentDate": "Bugünün Tarihi",
+        "currentTime": "Şu Anın Saati"
+      }
+    },
+    "variablePicker": {
+      "trigger": "Değişken Ekle",
+      "search": "Değişken ara...",
+      "empty": "Değişken bulunamadı.",
+      "loading": "Değişkenler yükleniyor..."
     },
     "nameDialog": {
       "titleSave": "Şablonu Kaydet",

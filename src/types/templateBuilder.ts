@@ -49,8 +49,18 @@ export interface SessionDetailsBlockData {
   showTime: boolean;
   showLocation: boolean;
   showNotes: boolean;
+  showName?: boolean;
+  showType?: boolean;
+  showDuration?: boolean;
+  showStatus?: boolean;
+  showProject?: boolean;
+  showPackage?: boolean;
+  showMeetingLink?: boolean;
   customLabel?: string;
   customNotes?: string;
+  projectLabel?: string;
+  packageLabel?: string;
+  meetingLabel?: string;
 }
 
 export interface CTABlockData {

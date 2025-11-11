@@ -233,6 +233,13 @@ function getDefaultBlockData(type: TemplateBlock["type"]): BlockData {
         showTime: true,
         showLocation: true,
         showNotes: false,
+        showName: true,
+        showType: true,
+        showDuration: false,
+        showStatus: false,
+        showProject: false,
+        showPackage: false,
+        showMeetingLink: false,
       } as SessionDetailsBlockData;
     case "cta":
       return {

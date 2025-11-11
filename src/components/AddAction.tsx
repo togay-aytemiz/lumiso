@@ -354,7 +354,7 @@ export function AddAction({ className }: AddActionProps) {
           role="dialog"
           aria-modal="true"
           data-state={menuOpen ? "open" : "closed"}
-          className="add-action-overlay fixed inset-0 z-[100] flex items-start justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:justify-end sm:p-4"
+          className="add-action-overlay fixed inset-0 z-[100] flex items-start justify-center bg-slate-950/60 p-3 sm:p-4 sm:justify-end backdrop-blur-sm"
           onClick={(event) => {
             if (event.target === event.currentTarget) {
               closeMenu();
@@ -372,13 +372,13 @@ export function AddAction({ className }: AddActionProps) {
           >
             <div
               data-state={menuOpen ? "open" : "closed"}
-              className="add-action-panel rounded-3xl border border-white/10 bg-gradient-to-br from-white via-white/95 to-white/90 p-5 sm:p-6 shadow-2xl shadow-slate-900/20 ring-1 ring-white/40"
+              className="add-action-panel rounded-3xl border border-white/10 bg-gradient-to-br from-white via-white/95 to-white/90 p-4 sm:p-6 shadow-2xl shadow-slate-900/20 ring-1 ring-white/40"
             >
-              <div className="mb-5 space-y-1">
-                <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              <div className="mb-4 space-y-1 sm:mb-5">
+                <p className="text-sm font-medium uppercase tracking-normal text-muted-foreground sm:tracking-wide">
                   {t("addAction.title", { defaultValue: "Hızlı Ekle" })}
                 </p>
-                <h2 className="text-2xl font-semibold text-foreground">
+                <h2 className="text-xl font-semibold text-foreground sm:text-2xl">
                   {t("addAction.subtitle", {
                     defaultValue: "Kişi ekle, proje başlat ya da seans planla",
                   })}
@@ -398,19 +398,19 @@ export function AddAction({ className }: AddActionProps) {
                         closeMenu();
                       }}
                       className={cn(
-                        "add-action-card group relative flex h-full flex-col rounded-2xl border border-transparent bg-gradient-to-b from-white via-white/90 to-white/80 p-5 text-left shadow-lg shadow-slate-900/5 transition duration-300 ease-out hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary",
+                        "add-action-card group relative flex h-full flex-col rounded-2xl border border-transparent bg-gradient-to-b from-white via-white/90 to-white/80 p-4 text-left shadow-lg shadow-slate-900/5 transition duration-300 ease-out hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary sm:p-5",
                         isRecommended &&
                           "border-primary/40 bg-gradient-to-b from-primary/10 via-white/90 to-white/80 shadow-primary/20"
                       )}
                       style={{ transitionDelay: menuOpen ? `${index * 70}ms` : "0ms" }}
                     >
                       {isRecommended ? (
-                        <span className="absolute right-5 top-5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                        <span className="absolute right-4 top-4 rounded-full bg-primary/15 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-primary sm:right-5 sm:top-5 sm:px-3">
                           {t("addAction.recommended", { defaultValue: "Önerilen" })}
                         </span>
                       ) : null}
-                      <div className="flex w-full flex-1 items-start gap-4 sm:flex-col sm:items-start sm:gap-5">
-                        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all duration-500 group-hover:-translate-y-1 group-hover:rotate-3 group-hover:scale-105">
+                      <div className="flex w-full flex-1 items-start gap-3 sm:flex-col sm:items-start sm:gap-5">
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all duration-500 group-hover:-translate-y-1 group-hover:rotate-3 group-hover:scale-105 sm:h-14 sm:w-14">
                           {item.icon}
                         </span>
                         <div className="flex flex-1 flex-col gap-1.5">

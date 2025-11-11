@@ -94,6 +94,16 @@ export function SettingsImageUploadCard({
   );
 
   const PreviewWrapper = onPreview ? "button" : "div";
+  const previewWrapperClasses = cn(
+    "relative shrink-0 border border-dashed border-border/60 bg-background/60 p-1",
+    shapeClasses,
+    sizeClasses,
+    previewShape === "circle" && "aspect-square"
+  );
+  const previewInnerClasses = cn(
+    "h-full w-full overflow-hidden",
+    shapeClasses
+  );
 
   return (
     <div
@@ -113,27 +123,20 @@ export function SettingsImageUploadCard({
             type={onPreview ? "button" : undefined}
             onClick={onPreview}
             className={cn(
-              "relative border border-dashed border-border/60 bg-background/60 p-1",
-              shapeClasses,
-              sizeClasses,
+              previewWrapperClasses,
               onPreview &&
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             )}
           >
-            <div className={cn("h-full w-full", shapeClasses)}>{previewContent}</div>
+            <div className={previewInnerClasses}>{previewContent}</div>
           </PreviewWrapper>
           <div>
             <p className="text-sm font-medium">{title}</p>
             <p className="text-xs text-muted-foreground">{description}</p>
           </div>
         </div>
-        {helperText && (
-          <div className="text-xs text-muted-foreground md:ml-auto">
-            {helperText}
-          </div>
-        )}
       </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <SettingsActionPills>
           <PillButton
             label={uploadBusy ? uploadingLabel ?? uploadLabel : uploadLabel}
@@ -172,6 +175,11 @@ export function SettingsImageUploadCard({
           )}
           {actionSlot}
         </SettingsActionPills>
+        {helperText && (
+          <p className="text-xs font-medium text-primary sm:ml-auto sm:text-right">
+            {helperText}
+          </p>
+        )}
       </div>
       {inputProps && (
         <input

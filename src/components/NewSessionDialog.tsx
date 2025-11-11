@@ -31,6 +31,8 @@ interface Lead {
 interface NewSessionDialogProps {
   onSessionScheduled?: () => void;
   children?: React.ReactNode;
+  openEvent?: string;
+  showDefaultTrigger?: boolean;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -101,20 +103,36 @@ const NewSessionDialog = (props: NewSessionDialogProps) => {
   return <LegacyNewSessionDialog {...props} />;
 };
 
-const WizardNewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProps) => {
+const WizardNewSessionDialog = ({
+  onSessionScheduled,
+  children,
+  openEvent,
+  showDefaultTrigger = true,
+}: NewSessionDialogProps) => {
   const [open, setOpen] = useState(false);
   const { t: tForms } = useFormsTranslation();
+
+  useEffect(() => {
+    if (!openEvent || typeof window === "undefined") {
+      return;
+    }
+    const handleOpen = () => setOpen(true);
+    window.addEventListener(openEvent, handleOpen as EventListener);
+    return () => {
+      window.removeEventListener(openEvent, handleOpen as EventListener);
+    };
+  }, [openEvent]);
 
   return (
     <>
       {children ? (
         <div onClick={() => setOpen(true)}>{children}</div>
-      ) : (
+      ) : showDefaultTrigger ? (
         <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
           <Plus className="h-4 w-4" />
           {tForms("sessions.schedule_new")}
         </Button>
-      )}
+      ) : null}
       <SessionPlanningWizardSheet
         isOpen={open}
         onOpenChange={setOpen}
@@ -128,7 +146,12 @@ const WizardNewSessionDialog = ({ onSessionScheduled, children }: NewSessionDial
   );
 };
 
-const LegacyNewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProps) => {
+const LegacyNewSessionDialog = ({
+  onSessionScheduled,
+  children,
+  openEvent,
+  showDefaultTrigger = true,
+}: NewSessionDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -139,6 +162,17 @@ const LegacyNewSessionDialog = ({ onSessionScheduled, children }: NewSessionDial
   const { t: tForms } = useFormsTranslation();
   const { t: tCommon } = useCommonTranslation();
   const toast = useI18nToast();
+
+  useEffect(() => {
+    if (!openEvent || typeof window === "undefined") {
+      return;
+    }
+    const handleOpen = () => setOpen(true);
+    window.addEventListener(openEvent, handleOpen as EventListener);
+    return () => {
+      window.removeEventListener(openEvent, handleOpen as EventListener);
+    };
+  }, [openEvent]);
   
   const [sessionData, setSessionData] = useState({
     session_date: "",
@@ -483,12 +517,12 @@ const LegacyNewSessionDialog = ({ onSessionScheduled, children }: NewSessionDial
         <div onClick={() => setOpen(true)}>
           {children}
         </div>
-      ) : (
+      ) : showDefaultTrigger ? (
         <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
           <Plus className="h-4 w-4" />
           {tCommon('buttons.add')}
         </Button>
-      )}
+      ) : null}
 
       <AppSheetModal
         title={tForms('sessions.schedule_new')}

@@ -40,7 +40,9 @@
     "copy": "Kopyala",
     "tryAgain": "Tekrar Dene",
     "reload": "Sayfayı Yenile",
-    "needHelp": "Yardım"
+    "needHelp": "Yardım",
+    "new": "Yeni",
+    "moreOptions": "Daha fazla seçenek"
   },
   "labels": {
     "name": "Ad",

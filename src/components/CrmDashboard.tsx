@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
 import NewSessionDialog from "@/components/NewSessionDialog";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
+import { ADD_ACTION_EVENTS } from "@/constants/addActionEvents";
 import GlobalSearch from "@/components/GlobalSearch";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { getWeekRange, getUserLocale, formatLongDate, formatTime, formatDate } from "@/lib/utils";
@@ -43,6 +44,14 @@ const CrmDashboard = () => {
   const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
   const navigate = useNavigate();
   const { t } = useDashboardTranslation();
+
+  useEffect(() => {
+    const handleAddLead = () => setAddLeadDialogOpen(true);
+    window.addEventListener(ADD_ACTION_EVENTS.lead, handleAddLead);
+    return () => {
+      window.removeEventListener(ADD_ACTION_EVENTS.lead, handleAddLead);
+    };
+  }, []);
 
   const fetchData = useCallback(async () => {
     try {
@@ -463,7 +472,10 @@ const CrmDashboard = () => {
                   <CardTitle className="text-slate-800 dark:text-slate-200">{t('sections.sessions.title')}</CardTitle>
                   <CardDescription className="text-slate-600 dark:text-slate-400">{t('sections.sessions.description')} ({getUserLocale().startsWith('tr') ? t('stats.week_format_intl') : t('stats.week_format_us')})</CardDescription>
                 </div>
-                <NewSessionDialog onSessionScheduled={fetchData} />
+                <NewSessionDialog
+                  onSessionScheduled={fetchData}
+                  openEvent={ADD_ACTION_EVENTS.session}
+                />
               </div>
               <Button 
                 variant="secondary" 

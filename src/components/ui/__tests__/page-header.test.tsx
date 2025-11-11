@@ -28,8 +28,13 @@ describe("PageHeader", () => {
     expect(screen.getAllByText("Dashboard")).toHaveLength(2);
     expect(screen.queryByText("Team overview")).not.toBeInTheDocument();
 
-    const searchContainer = screen.getAllByText("Search content")[0].parentElement;
-    expect(searchContainer).toHaveClass("flex-1 min-w-0 w-full");
+    const searchContent = screen.getAllByText("Search content")[0];
+    const searchContainer = searchContent.parentElement;
+    expect(searchContainer).toHaveClass("flex-1 min-w-0");
+    const addActionButtons = screen.getAllByRole("button", {
+      name: /add lead|leads\.addLead|new/i,
+    });
+    expect(addActionButtons.length).toBeGreaterThan(0);
 
     const actionsContainer = screen.getAllByText("Add item")[0].parentElement;
     expect(actionsContainer).toHaveClass(

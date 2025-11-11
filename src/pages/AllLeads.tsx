@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Filter, FileDown, Loader2 } from "lucide-react";
+import { Filter, FileDown, Loader2 } from "lucide-react";
 import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
 import { useNavigate } from "react-router-dom";
 import GlobalSearch from "@/components/GlobalSearch";
-import { PageHeader, PageHeaderActions, PageHeaderSearch } from "@/components/ui/page-header";
+import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
+import { ADD_ACTION_EVENTS } from "@/constants/addActionEvents";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import {
@@ -178,6 +179,14 @@ const AllLeadsNew = () => {
   const { t } = useTranslation('pages');
   const { t: tCommon } = useTranslation('common');
   const { activeOrganizationId } = useOrganization();
+
+  useEffect(() => {
+    const handleAddLead = () => setAddLeadDialogOpen(true);
+    window.addEventListener(ADD_ACTION_EVENTS.lead, handleAddLead);
+    return () => {
+      window.removeEventListener(ADD_ACTION_EVENTS.lead, handleAddLead);
+    };
+  }, []);
 
   // Server-side paginated leads (scalable like payments)
   const [sortState, setSortState] = useState<AdvancedDataTableSortState>({
@@ -893,17 +902,6 @@ const AllLeadsNew = () => {
         <PageHeaderSearch>
           <GlobalSearch variant="header" />
         </PageHeaderSearch>
-        <PageHeaderActions>
-          <Button
-            size="sm"
-            onClick={() => setAddLeadDialogOpen(true)}
-            className="h-11 px-4"
-            data-testid="add-lead-button"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('leads.addLead')}</span>
-          </Button>
-        </PageHeaderActions>
       </PageHeader>
       
       <div className="space-y-6 p-4 sm:p-6">

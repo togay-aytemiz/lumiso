@@ -40,7 +40,9 @@
     "copy": "Copy",
     "tryAgain": "Try Again",
     "reload": "Reload Page",
-    "needHelp": "Need Help"
+    "needHelp": "Need Help",
+    "new": "New",
+    "moreOptions": "More options"
   },
   "labels": {
     "name": "Name",

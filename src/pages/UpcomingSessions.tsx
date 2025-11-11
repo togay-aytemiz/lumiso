@@ -5,7 +5,6 @@ import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
-  Plus,
   Calendar,
   AlertTriangle,
   CalendarCheck2,
@@ -20,7 +19,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import NewSessionDialog from "@/components/NewSessionDialog";
 import { formatTime, formatLongDate } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
-import { PageHeader, PageHeaderActions, PageHeaderSearch } from "@/components/ui/page-header";
+import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
+import { ADD_ACTION_EVENTS } from "@/constants/addActionEvents";
 // Render project stage inline; no need to import ProjectStatusBadge here
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import SessionSheetView from "@/components/SessionSheetView";
@@ -1095,21 +1095,15 @@ const AllSessions = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
+      <NewSessionDialog
+        onSessionScheduled={fetchSessions}
+        openEvent={ADD_ACTION_EVENTS.session}
+        showDefaultTrigger={false}
+      />
       <PageHeader title={t('sessions.title')}>
         <PageHeaderSearch>
           <GlobalSearch variant="header" />
         </PageHeaderSearch>
-        <PageHeaderActions>
-          <NewSessionDialog onSessionScheduled={fetchSessions}>
-            <Button
-              size="sm"
-              className="h-11 px-4"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('sessions.addButton')}</span>
-            </Button>
-          </NewSessionDialog>
-        </PageHeaderActions>
       </PageHeader>
 
       <div className="p-4 sm:p-6 space-y-6">

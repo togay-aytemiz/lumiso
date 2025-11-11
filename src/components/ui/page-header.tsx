@@ -1,6 +1,7 @@
 import React from "react";
 import { UserMenu } from "@/components/UserMenu";
 import { cn } from "@/lib/utils";
+import { AddAction } from "@/components/AddAction";
 
 interface PageHeaderProps {
   title: string;
@@ -74,9 +75,14 @@ export function PageHeader({
 interface PageHeaderSearchProps {
   children: React.ReactNode;
   className?: string;
+  includeAddAction?: boolean;
 }
 
-export function PageHeaderSearch({ children, className }: PageHeaderSearchProps) {
+export function PageHeaderSearch({
+  children,
+  className,
+  includeAddAction = true,
+}: PageHeaderSearchProps) {
   return (
     <div
       className={cn(
@@ -84,7 +90,10 @@ export function PageHeaderSearch({ children, className }: PageHeaderSearchProps)
         className
       )}
     >
-      {children}
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex-1 min-w-0">{children}</div>
+        {includeAddAction ? <AddAction className="flex-shrink-0" /> : null}
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Plus, LayoutGrid, List, Archive, Settings, FileDown, Loader2 } from "lucide-react";
+import { LayoutGrid, List, Archive, Settings, FileDown, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
@@ -11,7 +11,8 @@ import { ProjectSheetView } from "@/components/ProjectSheetView";
 import ProjectKanbanBoard from "@/components/ProjectKanbanBoard";
 import { ProjectCreationWizardSheet } from "@/features/project-creation";
 import GlobalSearch from "@/components/GlobalSearch";
-import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
+import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
+import { ADD_ACTION_EVENTS } from "@/constants/addActionEvents";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { formatDate, isNetworkError } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -124,6 +125,14 @@ const AllProjects = () => {
   const { data: typeOptions = [] } = useProjectTypes();
   const { data: statusOptions = [], isLoading: statusesLoading } = useProjectStatuses();
   const { data: serviceOptions = [] } = useServices();
+
+  useEffect(() => {
+    const handleAddProject = () => setProjectWizardOpen(true);
+    window.addEventListener(ADD_ACTION_EVENTS.project, handleAddProject);
+    return () => {
+      window.removeEventListener(ADD_ACTION_EVENTS.project, handleAddProject);
+    };
+  }, []);
 
   const typeOptionItems = useMemo(() => toNamedOptions(typeOptions ?? []), [typeOptions]);
   const serviceOptionItems = useMemo(() => toNamedOptions(serviceOptions ?? []), [serviceOptions]);
@@ -1186,17 +1195,6 @@ const formatCurrency = useCallback((amount: string | number | null) => {
           <PageHeaderSearch>
             <GlobalSearch variant="header" />
           </PageHeaderSearch>
-          <PageHeaderActions>
-            <Button
-              size="sm"
-              className="h-11 px-4"
-              data-testid="add-project-button"
-              onClick={() => setProjectWizardOpen(true)}
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('common:buttons.add_project')}</span>
-            </Button>
-          </PageHeaderActions>
         </PageHeader>
       </div>
 

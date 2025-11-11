@@ -1,15 +1,9 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Plus, ChevronDown } from "lucide-react";
+import { Plus, ChevronDown, UserPlus, FolderPlus, CalendarClock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
   ADD_ACTION_EVENTS,
@@ -20,6 +14,8 @@ import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
 import { ProjectCreationWizardSheet } from "@/features/project-creation";
 import NewSessionDialog from "@/components/NewSessionDialog";
 
+import "./AddAction.css";
+
 interface AddActionProps {
   className?: string;
 }
@@ -28,7 +24,6 @@ interface AddActionRouteConfig {
   matcher: (pathname: string) => boolean;
   label: string;
   primaryAction: AddActionType | null;
-  openMenuOnPrimary: boolean;
 }
 
 const matchesRoute = (pathname: string, route: string) => {
@@ -44,9 +39,18 @@ export function AddAction({ className }: AddActionProps) {
   const { t } = useTranslation("pages");
   const { t: tCommon } = useTranslation("common");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const [leadDialogOpen, setLeadDialogOpen] = useState(false);
   const [projectWizardOpen, setProjectWizardOpen] = useState(false);
   const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const firstCardRef = useRef<HTMLButtonElement>(null);
+  const [menuPosition, setMenuPosition] = useState<{
+    top: number;
+    right: number;
+    left: number;
+    strategy: "absolute" | "fixed";
+  }>({ top: 0, right: 16, left: 16, strategy: "absolute" });
 
   const actionLabels = useMemo(
     () => ({
@@ -73,37 +77,31 @@ export function AddAction({ className }: AddActionProps) {
         matcher: (pathname) => matchesRoute(pathname, "/leads"),
         label: actionLabels.lead,
         primaryAction: "lead",
-        openMenuOnPrimary: false,
       },
       {
         matcher: (pathname) => matchesRoute(pathname, "/projects"),
         label: actionLabels.project,
         primaryAction: "project",
-        openMenuOnPrimary: false,
       },
       {
         matcher: (pathname) => matchesRoute(pathname, "/calendar"),
         label: actionLabels.session,
         primaryAction: "session",
-        openMenuOnPrimary: false,
       },
       {
         matcher: (pathname) => matchesRoute(pathname, "/sessions"),
         label: actionLabels.session,
         primaryAction: "session",
-        openMenuOnPrimary: false,
       },
       {
         matcher: (pathname) => matchesRoute(pathname, "/reminders"),
         label: actionLabels.session,
         primaryAction: "session",
-        openMenuOnPrimary: false,
       },
       {
         matcher: (pathname) => addNewRoutes.some((route) => matchesRoute(pathname, route)),
         label: actionLabels.addNew,
         primaryAction: null,
-        openMenuOnPrimary: true,
       },
     ];
   }, [actionLabels]);
@@ -119,11 +117,11 @@ export function AddAction({ className }: AddActionProps) {
       matcher: () => true,
       label: actionLabels.addNew,
       primaryAction: null,
-      openMenuOnPrimary: true,
     };
   }, [routeConfigs, location.pathname, actionLabels.addNew]);
 
   const primaryLabel = currentConfig.label ?? tCommon("buttons.new");
+  const recommendedType = currentConfig.primaryAction;
 
   const openFallbackDialog = useCallback((type: AddActionType) => {
     switch (type) {
@@ -139,16 +137,28 @@ export function AddAction({ className }: AddActionProps) {
     }
   }, []);
 
-  const handlePrimaryButtonClick = () => {
-    if (currentConfig.openMenuOnPrimary) {
-      setMenuOpen((previous) => !previous);
+  const openMenu = useCallback(() => {
+    setMenuVisible(true);
+    requestAnimationFrame(() => {
+      setMenuOpen(true);
+    });
+  }, []);
+
+  const closeMenu = useCallback(() => {
+    setMenuOpen(false);
+  }, []);
+
+  const toggleMenu = useCallback(() => {
+    if (menuOpen) {
+      closeMenu();
       return;
     }
 
-    if (currentConfig.primaryAction) {
-      setMenuOpen(false);
-      handleAction(currentConfig.primaryAction);
-    }
+    openMenu();
+  }, [closeMenu, menuOpen, openMenu]);
+
+  const handlePrimaryButtonClick = () => {
+    toggleMenu();
   };
 
   const handleAction = (type: AddActionType) => {
@@ -167,15 +177,147 @@ export function AddAction({ className }: AddActionProps) {
     }
   };
 
-  const dropdownItems: Array<{ type: AddActionType; label: string }> = [
-    { type: "lead", label: actionLabels.lead },
-    { type: "project", label: actionLabels.project },
-    { type: "session", label: actionLabels.session },
+  const addActionDescriptions = useMemo(
+    () => ({
+      lead: t("addAction.descriptions.lead", {
+        defaultValue: "Yeni kişi kayıtlarıyla müşteri listenizi büyütün.",
+      }),
+      project: t("addAction.descriptions.project", {
+        defaultValue: "Projelerinizi planlayın ve ekibinizi organize edin.",
+      }),
+      session: t("addAction.descriptions.session", {
+        defaultValue: "Takviminize yeni seanslar ekleyin ve ilerlemeyi takip edin.",
+      }),
+    }),
+    [t]
+  );
+
+  const dropdownItems: Array<{
+    type: AddActionType;
+    label: string;
+    description: string;
+    icon: JSX.Element;
+  }> = [
+    {
+      type: "lead",
+      label: actionLabels.lead,
+      description: addActionDescriptions.lead,
+      icon: <UserPlus className="h-6 w-6" aria-hidden="true" />,
+    },
+    {
+      type: "project",
+      label: actionLabels.project,
+      description: addActionDescriptions.project,
+      icon: <FolderPlus className="h-6 w-6" aria-hidden="true" />,
+    },
+    {
+      type: "session",
+      label: actionLabels.session,
+      description: addActionDescriptions.session,
+      icon: <CalendarClock className="h-6 w-6" aria-hidden="true" />,
+    },
   ];
+
+  useEffect(() => {
+    if (!menuVisible) {
+      return;
+    }
+
+    const updateMenuPosition = () => {
+      if (!triggerRef.current) {
+        return;
+      }
+
+      const rect = triggerRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const horizontalPadding = 16;
+      const verticalOffset = 16;
+
+      const computedTop = Math.min(
+        Math.max(rect.bottom + verticalOffset, horizontalPadding),
+        viewportHeight - verticalOffset
+      );
+      const isMobileViewport = viewportWidth < 640;
+
+      if (isMobileViewport) {
+        setMenuPosition({
+          top: computedTop,
+          right: horizontalPadding,
+          left: horizontalPadding,
+          strategy: "fixed",
+        });
+        return;
+      }
+
+      const computedRight = Math.max(viewportWidth - rect.right, horizontalPadding);
+
+      setMenuPosition({
+        top: computedTop,
+        right: computedRight,
+        left: horizontalPadding,
+        strategy: "absolute",
+      });
+    };
+
+    updateMenuPosition();
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
+    };
+  }, [menuVisible]);
+
+  useEffect(() => {
+    if (menuOpen && firstCardRef.current) {
+      firstCardRef.current.focus();
+    }
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeMenu();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [closeMenu, menuOpen]);
+
+  useEffect(() => {
+    closeMenu();
+  }, [closeMenu, location.pathname]);
+
+  useEffect(() => {
+    if (!menuOpen && menuVisible) {
+      const timeout = window.setTimeout(() => {
+        setMenuVisible(false);
+      }, 360);
+
+      return () => {
+        window.clearTimeout(timeout);
+      };
+    }
+
+    if (menuOpen) {
+      setMenuVisible(true);
+    }
+  }, [menuOpen, menuVisible]);
 
   return (
     <>
       <div
+        ref={triggerRef}
         className={cn(
           "flex items-center overflow-hidden rounded-full border border-transparent bg-transparent",
           className
@@ -186,41 +328,112 @@ export function AddAction({ className }: AddActionProps) {
           className="h-12 rounded-l-full rounded-r-none px-3 sm:px-4"
           onClick={handlePrimaryButtonClick}
           aria-label={primaryLabel ?? tCommon("buttons.new")}
-          aria-haspopup={currentConfig.openMenuOnPrimary ? "menu" : undefined}
-          aria-expanded={currentConfig.openMenuOnPrimary ? menuOpen : undefined}
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
         >
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline whitespace-nowrap">
             {primaryLabel ?? tCommon("buttons.new")}
           </span>
         </Button>
-        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-          <DropdownMenuTrigger asChild>
-            <Button
-              type="button"
-              className="h-12 w-10 rounded-l-none rounded-r-full px-0"
-              variant="default"
-              aria-label={tCommon("buttons.moreOptions")}
-            >
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" sideOffset={4} className="w-48">
-            {dropdownItems.map((item) => (
-              <DropdownMenuItem
-                key={item.type}
-                onSelect={() => {
-                  handleAction(item.type);
-                  setMenuOpen(false);
-                }}
-                className="flex items-center justify-between"
-              >
-                <span>{item.label}</span>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button
+          type="button"
+          className="h-12 w-10 rounded-l-none rounded-r-full px-0"
+          variant="default"
+          aria-label={tCommon("buttons.moreOptions")}
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          onClick={toggleMenu}
+        >
+          <ChevronDown className={cn("h-4 w-4 transition-transform", menuOpen && "rotate-180")} />
+        </Button>
       </div>
+
+      {menuVisible ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-state={menuOpen ? "open" : "closed"}
+          className="add-action-overlay fixed inset-0 z-50 flex items-start justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:justify-end sm:p-4"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              closeMenu();
+            }
+          }}
+        >
+          <div
+            className="relative mx-auto w-full max-w-lg sm:max-w-2xl lg:max-w-3xl"
+            style={{
+              top: menuPosition.top,
+              right: menuPosition.right,
+              left: menuPosition.strategy === "fixed" ? menuPosition.left : undefined,
+              position: menuPosition.strategy,
+            }}
+          >
+            <div
+              data-state={menuOpen ? "open" : "closed"}
+              className="add-action-panel rounded-3xl border border-white/10 bg-gradient-to-br from-white via-white/95 to-white/90 p-5 sm:p-6 shadow-2xl shadow-slate-900/20 ring-1 ring-white/40"
+            >
+              <div className="mb-5 space-y-1">
+                <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("addAction.title", { defaultValue: "Hızlı Ekle" })}
+                </p>
+                <h2 className="text-2xl font-semibold text-foreground">
+                  {t("addAction.subtitle", {
+                    defaultValue: "Kişi ekle, proje başlat ya da seans planla",
+                  })}
+                </h2>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+                {dropdownItems.map((item, index) => {
+                  const isRecommended = recommendedType === item.type;
+
+                  return (
+                    <button
+                      key={item.type}
+                      ref={index === 0 ? firstCardRef : undefined}
+                      type="button"
+                      onClick={() => {
+                        handleAction(item.type);
+                        closeMenu();
+                      }}
+                      className={cn(
+                        "add-action-card group relative flex h-full flex-col rounded-2xl border border-transparent bg-gradient-to-b from-white via-white/90 to-white/80 p-5 text-left shadow-lg shadow-slate-900/5 transition duration-300 ease-out hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary",
+                        isRecommended &&
+                          "border-primary/40 bg-gradient-to-b from-primary/10 via-white/90 to-white/80 shadow-primary/20"
+                      )}
+                      style={{ transitionDelay: menuOpen ? `${index * 70}ms` : "0ms" }}
+                    >
+                      {isRecommended ? (
+                        <span className="absolute right-5 top-5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                          {t("addAction.recommended", { defaultValue: "Önerilen" })}
+                        </span>
+                      ) : null}
+                      <div className="flex flex-1 flex-col items-start gap-5">
+                        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-all duration-500 group-hover:-translate-y-1 group-hover:rotate-3 group-hover:scale-105">
+                          {item.icon}
+                        </span>
+                        <div className="flex flex-col gap-2">
+                          <p className="text-base font-semibold leading-tight text-foreground">
+                            {item.label}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {item.description}
+                          </p>
+                        </div>
+                        <span className="mt-auto inline-flex items-center gap-2 text-sm font-semibold text-primary transition group-hover:gap-3">
+                          {t("addAction.cta", { defaultValue: "Ekle" })}
+                          <ChevronDown className="h-3 w-3 -rotate-90" aria-hidden="true" />
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <EnhancedAddLeadDialog
         open={leadDialogOpen}

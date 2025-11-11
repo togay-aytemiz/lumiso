@@ -323,6 +323,98 @@
           }
         ],
         "expected_result": "Preview data setleri arasındaki geçişler anlık çalışır ve eksik alanlarda fallback metinleri göstererek gerçek senaryoları simüle eder."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-208",
+        "title": "Session Details bloğundaki tüm alanların veri doğruluğu",
+        "description": "Session Details bloğunda açılabilen tüm seans, takvim, lojistik, proje ve not satırlarının e-posta/WhatsApp/SMS önizlemelerinde ve test e-postasında gerçek verilerle gösterildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Session Details blok kartını açın ve 'Show Fields' bölümündeki tüm anahtarları (Session basics, Schedule, Logistics, Project & Package, Notes) tek tek Açık konuma getirin.",
+            "expected_result": "Rozet 11/11 alanın açık olduğunu gösterir; Notes anahtarı açıksa blokta özel not alanı belirir."
+          },
+          {
+            "action": "Custom Label alanına \"{session_name} • {session_date}\" yazın ve açılan Notlar kutusuna `{session_notes} – {session_location}` metnini girin.",
+            "expected_result": "Blok başlığı hemen yeni metni gösterir ve not satırı placeholder yerine eklediğiniz değişkenleri kullanır."
+          },
+          {
+            "action": "Email önizlemesini açıp sırasıyla Session Name, Type, Duration, Status, Date, Time, Location, Meeting Link, Project Name, Package Name ve Notes satırlarını mock veriyle karşılaştırın.",
+            "expected_result": "Her satır mock veri setindeki değerlerle dolar; Meeting Link hücresi `{session_meeting_url}` adresine tıklanabilir bağlantı olarak görünür."
+          },
+          {
+            "action": "Kanal sekmesini WhatsApp’a, ardından SMS’e getirin.",
+            "expected_result": "WhatsApp balonunda aynı 11 satır emoji ikonlarıyla listelenir; SMS metninde her satır düz metin halinde aynı sırayı korur."
+          },
+          {
+            "action": "Preview veri setini 'Eksik Alanlar'a çevirip Meeting Link ve Package satırlarını tekrar inceleyin.",
+            "expected_result": "Eksik değerler `—` veya varsayılan not metniyle gösterilir, açtığınız alanların hiçbiri kaybolmaz."
+          },
+          {
+            "action": "'Test e-postası gönder' butonuyla mesajı kendinize gönderin ve gelen kutunuzdaki e-postayı kontrol edin.",
+            "expected_result": "E-postanın başlığı `{session_name} • {session_date}` olarak çözümlenir ve 11 satırlık tüm alanlar (özellikle süre, durum, konum, meeting link ve paket adı) gerçek verilerle aynı sırada görünür."
+          }
+        ],
+        "expected_result": "Session Details bloğundaki tüm satırlar üç kanalda ve test e-postasında doğru verileri gösterir, eksik değerlerde fallback mantığı bozulmaz."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-209",
+        "title": "Subject, preheader ve Text block’ta Variable Picker’daki yeni değişkenleri kullanma",
+        "description": "Variable Picker’ın Business/Lead/Session/Project/Custom gruplarındaki yeni session ve proje değişkenlerini konu, preheader ve Text block içine ekleyip her kanalda doğru çözümlendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Konu satırındaki kalem ikonuna tıklayın ve açılan inline editörde `{…}` butonuna basın.",
+            "expected_result": "Variable picker Business, Lead, Session, Project ve Custom başlıklarıyla açılır; Session grubunda `{session_type}`, `{session_duration}`, `{session_status}`, `{session_meeting_url}` gibi anahtarlar listelenir."
+          },
+          {
+            "action": "Picker’dan `{session_name}` ve `{session_time}` seçip konuya ekleyin, yanındaki emoji butonundan da bir emoji ekleyip kaydedin.",
+            "expected_result": "Konu satırı builder üst kısmında mock verilerle (örn. \"Signature Portrait Session | 2:00 PM ✨\") görüntülenir ve karakter sayaç uyarısı yoktur."
+          },
+          {
+            "action": "Preheader satırının editörünü açıp `{session_location}` ve `{project_name}` değişkenlerini ekleyin, kaydedin.",
+            "expected_result": "Preheader satırı hemen mock konum ve proje adıyla güncellenir."
+          },
+          {
+            "action": "Bir Text block seçin ve Variable Picker’dan sırayla `{session_type}`, `{session_duration}`, `{session_status}`, `{session_meeting_url}`, `{project_type}`, `{project_status}`, `{project_due_date}`, `{current_date}` ve `{lead_status}` değişkenlerini metne ekleyin.",
+            "expected_result": "Metin editöründe tüm placeholder’lar imleç konumunda eklenir; Meeting URL metin içinde görünür."
+          },
+          {
+            "action": "E-posta, WhatsApp ve SMS önizlemelerine bakarak konu, preheader ve Text block içindeki değişkenlerin çözümlenip çözümlenmediğini kontrol edin.",
+            "expected_result": "Hiçbir kanalda `{...}` placeholder kalmaz; WhatsApp/SMS metinleri düz şekilde, e-posta gövdesi ise linkleri tıklanabilir biçimde gösterir."
+          },
+          {
+            "action": "'Test e-postası gönder' diyerek gelen mesajın konu, preheader ve metin paragraflarında eklediğiniz tüm session/project değişkenlerinin gerçek değerlerle geldiğini doğrulayın.",
+            "expected_result": "Test e-postasının konu satırı ve gövdesi builder’da gördüğünüzle bire bir aynıdır; `{session_meeting_url}` linki doğru adrese gider ve proje durum/tarih bilgileri doldurulmuştur."
+          }
+        ],
+        "expected_result": "Variable Picker’dan eklenen yeni session/project değişkenleri konu, preheader ve Text block’ta önizleme/test e-postasında sorunsuz şekilde çözülür."
+      },
+      {
+        "external_id": "CRM-TEMPLATES-210",
+        "title": "Yayınlanan şablonun workflow tetikleyicisinde gerçek verilerle gönderilmesi",
+        "description": "Test e-postasının ötesinde, şablonun bir Session Scheduled/Reminder workflow’unda çalıştırıldığında session ve proje değişkenlerini doğru doldurduğunu doğrular.",
+        "steps": [
+          {
+            "action": "Builder’daki 'Publish Template' butonuna basarak şablonu yayınlayın.",
+            "expected_result": "Üst rozet 'Published' olur ve son kaydetme zamanı güncellenir."
+          },
+          {
+            "action": "Workflows sayfasında 'Session scheduled' veya 'Session reminder' tetikleyicili bir workflow seçip yeni şablonu ilgili e-posta (ve varsa WhatsApp/SMS) aksiyonuna atayın, workflow’u aktif edin.",
+            "expected_result": "Workflow detayında Template alanı seçtiğiniz şablon adını ve aktif kanal ikonlarını gösterir."
+          },
+          {
+            "action": "Kişi/proje kayıtlarında gerçek değerler (benzersiz session adı, türü, süresi, durumu, konumu, meeting linki, proje + paket adı) içeren bir seans planlayın; kişinin e-posta adresini kendi hesabınıza yönlendirin.",
+            "expected_result": "Planlama kaydı oluşturulur ve workflow tetikleyicisi 'Session Scheduled' olayıyla sıraya alınır."
+          },
+          {
+            "action": "Workflow çalışmasını bekleyin ve gönderilen mesajı (e-posta/WhatsApp/SMS) cihazınızda açın.",
+            "expected_result": "Mesaj dakikalar içinde ulaşır; Workflows listesinde ilgili satırın 'Active' durumu korunur."
+          },
+          {
+            "action": "Gerçek mesajdaki konu, preheader, Text block ve Session Details satırlarını builder/test e-postasıyla karşılaştırın.",
+            "expected_result": "Tüm session/project alanları planladığınız gerçek verilerle dolar; Meeting Link satırı canlı URL’ye gider ve hiçbir `{}` placeholder görünmez."
+          }
+        ],
+        "expected_result": "Yayınlanan şablon workflow tetikleyicisiyle gerçek verileri kullanarak mesaj gönderir ve builder’daki içerikle bire bir eşleşir."
       }
     ]
   },

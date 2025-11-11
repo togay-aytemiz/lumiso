@@ -638,7 +638,7 @@ const GlobalSearch = ({ variant = "default", className }: GlobalSearchProps) => 
   const inputClassName = cn(
     "pl-10 pr-10 w-full truncate text-base transition-[width] duration-300 ease-out placeholder:font-light placeholder:text-muted-foreground/70",
     variant === "header" &&
-      "h-12 border-none bg-transparent text-[0.95rem] sm:text-base focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
+      "h-12 border-none bg-transparent text-[0.95rem] sm:text-base lg:text-[1.05rem] lg:placeholder:text-[1.05rem] focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
   );
 
   const searchIconClassName = cn(

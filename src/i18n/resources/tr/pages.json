@@ -1787,7 +1787,9 @@
     "editor": {
       "title": "Şablon Oluşturucu",
       "description": "E posta şablonunuzu oluşturmak için blokları sürükleyip bırakın",
-      "addBlock": "Blok Ekle"
+      "addBlock": "Blok Ekle",
+      "expandBlock": "Bloğu genişlet",
+      "collapseBlock": "Bloğu daralt"
     },
     "preview": {
       "title": "Canlı Önizleme",

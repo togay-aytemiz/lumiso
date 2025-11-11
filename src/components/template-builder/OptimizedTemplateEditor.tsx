@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, GripVertical, Eye, EyeOff } from "lucide-react";
+import { Plus, GripVertical, Eye, EyeOff, ChevronDown, ChevronUp } from "lucide-react";
 import { TemplateBlock, BlockData, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
 import { BlockEditor } from "./BlockEditor";
 import { AddBlockSheet } from "./AddBlockSheet";
 import { useTranslation } from 'react-i18next';
-
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
@@ -61,13 +61,20 @@ const MemoizedBlockCard = React.memo(({
   const { t } = useTranslation('pages');
   
   const handleClick = useCallback(() => {
-    onActivate(block.id);
-  }, [block.id, onActivate]);
+    if (!isActive) {
+      onActivate(block.id);
+    }
+  }, [block.id, isActive, onActivate]);
 
   const handleToggleVisibility = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     onToggleVisibility(block.id);
   }, [block.id, onToggleVisibility]);
+
+  const handleToggleExpand = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onActivate(block.id);
+  }, [block.id, onActivate]);
 
   const handleUpdate = useCallback((data: BlockData) => {
     onUpdate(block.id, data);
@@ -87,59 +94,85 @@ const MemoizedBlockCard = React.memo(({
 
   return (
     <Draggable key={block.id} draggableId={block.id} index={index}>
-      {(provided, snapshot) => (
-        <Card
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          className={cn(
-            "cursor-pointer transition-colors",
-            isActive && "ring-2 ring-primary",
-            !block.visible && "opacity-50",
-            snapshot.isDragging && "shadow-lg"
-          )}
-          onClick={handleClick}
-        >
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <div 
-                  {...provided.dragHandleProps}
-                  className="cursor-grab active:cursor-grabbing"
-                >
-                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+      {(provided, snapshot) => {
+        const { style, ...draggableProps } = provided.draggableProps;
+        return (
+          <Collapsible
+            ref={provided.innerRef}
+            {...draggableProps}
+            style={style}
+            open={isActive}
+            className="w-full"
+          >
+            <Card
+              className={cn(
+                "cursor-pointer transition-colors",
+                isActive && "ring-2 ring-primary",
+                !block.visible && "opacity-50",
+                snapshot.isDragging && "shadow-lg"
+              )}
+              onClick={handleClick}
+            >
+              <CardHeader
+                className={cn(
+                  "space-y-0 transition-all",
+                  isActive ? "pt-4 pb-2" : "py-4 md:py-5 min-h-[72px] justify-center"
+                )}
+              >
+                <div className="flex w-full items-center justify-between gap-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <div 
+                      {...provided.dragHandleProps}
+                      className="cursor-grab active:cursor-grabbing"
+                    >
+                      <GripVertical className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    {t(getBlockTitleKey(block.type))}
+                  </CardTitle>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleToggleExpand}
+                      aria-label={isActive ? t('templateBuilder.editor.collapseBlock') : t('templateBuilder.editor.expandBlock')}
+                    >
+                      {isActive ? (
+                        <ChevronUp className="h-3 w-3" />
+                      ) : (
+                        <ChevronDown className="h-3 w-3" />
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleToggleVisibility}
+                    >
+                      {block.visible ? (
+                        <Eye className="h-3 w-3" />
+                      ) : (
+                        <EyeOff className="h-3 w-3" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
-                {t(getBlockTitleKey(block.type))}
-              </CardTitle>
-              <div className="flex items-center gap-1">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={handleToggleVisibility}
-                >
-                  {block.visible ? (
-                    <Eye className="h-3 w-3" />
-                  ) : (
-                    <EyeOff className="h-3 w-3" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          {isActive && (
-            <CardContent className="pt-0">
-              <BlockEditor
-                block={block}
-                onUpdate={handleUpdate}
-                onRemove={handleRemove}
-                onMoveUp={handleMoveUp}
-                onMoveDown={handleMoveDown}
-                canMoveUp={canMoveUp}
-                canMoveDown={canMoveDown}
-              />
-            </CardContent>
-          )}
-        </Card>
-      )}
+              </CardHeader>
+              <CollapsibleContent className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up data-[state=closed]:opacity-0 data-[state=open]:opacity-100 transition-opacity">
+                <CardContent className="pt-0">
+                  <BlockEditor
+                    block={block}
+                    onUpdate={handleUpdate}
+                    onRemove={handleRemove}
+                    onMoveUp={handleMoveUp}
+                    onMoveDown={handleMoveDown}
+                    canMoveUp={canMoveUp}
+                    canMoveDown={canMoveDown}
+                  />
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+        );
+      }}
     </Draggable>
   );
 });
@@ -153,6 +186,9 @@ export const OptimizedTemplateEditor = React.memo(({
   const { t } = useTranslation('pages');
   const [activeBlock, setActiveBlock] = useState<string | null>(null);
   const [showAddBlock, setShowAddBlock] = useState(false);
+  const handleActivateBlock = useCallback((blockId: string) => {
+    setActiveBlock((current) => current === blockId ? null : blockId);
+  }, []);
 
   const addBlock = useCallback((type: TemplateBlock["type"]) => {
     const newBlock: TemplateBlock = {
@@ -241,7 +277,7 @@ export const OptimizedTemplateEditor = React.memo(({
         block={block}
         index={index}
         isActive={activeBlock === block.id}
-        onActivate={setActiveBlock}
+        onActivate={handleActivateBlock}
         onToggleVisibility={toggleBlockVisibility}
         onUpdate={updateBlock}
         onRemove={removeBlock}
@@ -251,7 +287,7 @@ export const OptimizedTemplateEditor = React.memo(({
         totalBlocks={blocks.length}
       />
     ));
-  }, [blocks, activeBlock, toggleBlockVisibility, updateBlock, removeBlock, moveBlock]);
+  }, [blocks, activeBlock, toggleBlockVisibility, updateBlock, removeBlock, moveBlock, handleActivateBlock]);
 
   return (
     <div className="h-full flex flex-col">

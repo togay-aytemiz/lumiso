@@ -1787,7 +1787,9 @@
     "editor": {
       "title": "Template Builder",
       "description": "Drag and drop blocks to build your email template",
-      "addBlock": "Add Block"
+      "addBlock": "Add Block",
+      "expandBlock": "Expand block",
+      "collapseBlock": "Collapse block"
     },
     "preview": {
       "title": "Live Preview",

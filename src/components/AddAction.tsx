@@ -314,6 +314,10 @@ export function AddAction({ className }: AddActionProps) {
     }
   }, [menuOpen, menuVisible]);
 
+  const isFixedPosition = menuPosition.strategy === "fixed";
+  const totalHorizontalPadding = menuPosition.left + menuPosition.right;
+  const panelWidth = isFixedPosition ? `calc(100vw - ${totalHorizontalPadding}px)` : undefined;
+
   return (
     <>
       <div
@@ -365,8 +369,9 @@ export function AddAction({ className }: AddActionProps) {
             className="relative mx-auto w-full max-w-lg sm:max-w-2xl lg:max-w-3xl"
             style={{
               top: menuPosition.top,
-              right: menuPosition.right,
-              left: menuPosition.strategy === "fixed" ? menuPosition.left : undefined,
+              right: isFixedPosition ? undefined : menuPosition.right,
+              left: isFixedPosition ? menuPosition.left : undefined,
+              width: panelWidth,
               position: menuPosition.strategy,
             }}
           >

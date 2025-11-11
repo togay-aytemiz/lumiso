@@ -155,6 +155,50 @@
         "expected_result": "Hatırlatıcılar takvim seçimleriyle birlikte kaydedilir ve zaman çizelgesinde açıkça gösterilir."
       },
       {
+        "external_id": "CRM-LEADS-270",
+        "title": "Lead aktivitelerinde hatırlatıcı kartı rozetleri ve tamamla/geri al",
+        "description": "Lead detayındaki Aktivite zaman çizelgesinde yeni hatırlatıcı kartlarının durum rozetleri ve aksiyon butonlarıyla doğru çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "Kişi detay sayfasında Aktivite kartının \"Aktivite\" segmentini açık tutun; tarihli bir hatırlatıcı yoksa yukarıdaki formdan bugün veya yarın için bir hatırlatıcı ekleyin.",
+            "expected_result": "Zaman çizelgesinde hatırlatıcı içeriği, \"Gecikmiş/Bugün/Yarın\" rozetlerinden biri ve altında \"Kişi: <isim>\" ile saat bilgisiyle görünür."
+          },
+          {
+            "action": "Karttaki renkli durum rozetini ve saat satırını inceleyin.",
+            "expected_result": "Tarih bugüne denkse \"Bugün\", yarına denkse \"Yarın\", geçmişse kırmızı \"Gecikmiş\" rozeti görünür; saat alanı HH:MM formatında veya \"Saat belirlenmemiş\" metniyle dolar."
+          },
+          {
+            "action": "Aynı kartta yer alan \"Tamamlandı olarak işaretle\" butonuna tıklayın.",
+            "expected_result": "Kart soluklaşır, başlık üstünde yeşil \"Tamamlandı\" rozeti görünür ve içerik üzerine strikethrough uygulanır."
+          },
+          {
+            "action": "Beliren \"Tamamlanmadı olarak işaretle\" butonuna basın.",
+            "expected_result": "Kart tekrar aktif hale gelir, durum rozeti önceki değerine döner ve herhangi bir sayfa yenilemesi gerekmez."
+          }
+        ],
+        "expected_result": "Lead aktivite kartındaki hatırlatıcı bileşenleri tarih temelli rozetleri gösterir ve tamamla/geri al aksiyonlarıyla anında güncellenir."
+      },
+      {
+        "external_id": "CRM-LEADS-271",
+        "title": "Projeye bağlı hatırlatıcıdan proje sheet'ini açma",
+        "description": "Lead detayındaki \"Proje aktiviteleri\" bölümünde görünen hatırlatıcıların ilgili projeyi sheet olarak açtığını doğrular.",
+        "steps": [
+          {
+            "action": "Lead ile ilişkili bir projede (gerekirse projeyi açıp Aktivite formundan hatırlatıcı ekleyin) tarihli bir hatırlatıcı oluşturun ve kişi detayındaki Aktivite kartına geri dönün.",
+            "expected_result": "\"Proje aktiviteleri\" başlığı altında ilgili hatırlatıcı, proje adını gri rozet olarak ve alt bölümde \"Projeyi aç\" butonunu gösterir."
+          },
+          {
+            "action": "\"Projeyi aç\" butonuna tıklayın.",
+            "expected_result": "Sağdan ProjectSheetView kayan paneli açılır; proje adı, statüsü ve sekme menüsü panelde görünür."
+          },
+          {
+            "action": "Sheet'i sağ üstteki kapatma ikonuyla kapatın.",
+            "expected_result": "Panel kapanır, lead detayındaki Aktivite listesi aynı scroll konumunda kalır ve seçili hatırlatıcı hala vurgulanır."
+          }
+        ],
+        "expected_result": "Projeye bağlı hatırlatıcı kartları tek tıkla ilgili projeyi sheet olarak açar ve lead sayfasından ayrılmadan projeyi yönetmeye izin verir."
+      },
+      {
         "external_id": "CRM-LEADS-208",
         "title": "Seans Ekle butonuyla takvimden tarih seçerek seans planlama",
         "description": "Kişi başlığındaki \"Seans Ekle\" düğmesinden açılan planlama sihirbazının tarih/saat seçimlerini kaydettiğini doğrular.",

@@ -991,6 +991,34 @@
           }
         ],
         "expected_result": "Filtre ve anahtar kombinasyonları birlikte çalışır; gecikmiş, tamamlanan ve gizleme kontrolleri karışmadan uygulanır."
+      },
+      {
+        "external_id": "CRM-SESSIONS-452",
+        "title": "Hatırlatmalar sayfasında sonsuz kaydırma ve filtre reseti",
+        "description": "Hatırlatma listesi 25'lik paketler halinde yüklenir; alt kısma indikçe otomatik daha fazla kayıt eklenir ve filtre değiştirildiğinde görünüm başlangıç limitine döner.",
+        "steps": [
+          {
+            "action": "En az 30 aktif hatırlatmanız olduğundan emin olun (gerekirse birkaç lead/projede hatırlatıcı oluşturup kaydedin) ve Hatırlatmalar sayfasını açın.",
+            "expected_result": "Zaman çizelgesinde birden fazla tarih grubu görünür; listenin en altında boş bir alan ve ekran okuyucuya özel \"Load more reminders\" metni bulunur."
+          },
+          {
+            "action": "Scroll veya trackpad ile listenin en altındaki boş alanı görünür hale getirin ve birkaç saniye bekleyin.",
+            "expected_result": "Herhangi bir butona basmadan yeni tarih grupları otomatik olarak listeye eklenir; toplam görünen hatırlatma sayısı artar ve sentinel alanı aşağı taşınır."
+          },
+          {
+            "action": "Liste tekrar uzadığında aynı işlemi tekrarlayın.",
+            "expected_result": "Sonsuz kaydırma tekrar tetiklenir ve 25'lik yeni paket daha eklenir; \"Load more reminders\" alanı yeniden listenin en altına taşınır."
+          },
+          {
+            "action": "Üstteki filtrelerden 'Bugün' çipini seçin.",
+            "expected_result": "Görünüm yalnızca bugünkü grubu göstererek sıfırlanır; az önce yüklenmiş eski tarihli gruplar gizlenir ve scroll konumu başa döner."
+          },
+          {
+            "action": "Tekrar 'Tümü' çipine dönün.",
+            "expected_result": "Liste varsayılan ilk 25 hatırlatmayla yeniden yüklenir; sentinel alanı tekrar listenin sonunda görünür ve gerekirse yeniden tetiklenebilir."
+          }
+        ],
+        "expected_result": "Hatırlatmalar sayfası sonsuz kaydırmayla veri getirir ve filtre değişimlerinde görünür kayıt sayısını tekrar başlangıç limitine çeker."
       }
     ]
   }

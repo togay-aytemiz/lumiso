@@ -935,6 +935,10 @@
     "enterNote": "Notunuzu girin...",
     "addActivity": "Aktivite Ekle",
     "scheduleSession": "Seans Planla",
+    "dayLabels": {
+      "today": "Bugün",
+      "yesterday": "Dün"
+    },
     "historyMessages": {
       "notSet": "Belirtilmedi",
       "changeTemplate": "{{label}} {{oldValue}} → {{newValue}}",

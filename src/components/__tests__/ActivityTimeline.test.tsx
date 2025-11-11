@@ -137,14 +137,15 @@ describe("ActivityTimeline", () => {
   it("renders reminders and notes with project context and forwards completion toggles", async () => {
     const user = userEvent.setup();
     const toggleCompletion = jest.fn();
+    const todayIso = new Date().toISOString();
     const activities: ActivityItem[] = [
       {
         id: "reminder-1",
         type: "reminder",
         content: "Follow up with client",
-        reminder_date: "2025-01-10T12:00:00.000Z",
+        reminder_date: todayIso,
         reminder_time: "12:00",
-        created_at: "2025-01-09T04:00:00.000Z",
+        created_at: todayIso,
         completed: false,
         lead_id: "lead-1",
         user_id: "user-1",
@@ -154,7 +155,7 @@ describe("ActivityTimeline", () => {
         id: "note-1",
         type: "note",
         content: "Client prefers morning calls",
-        created_at: "2025-01-08T12:00:00.000Z",
+        created_at: todayIso,
         completed: true,
         lead_id: "lead-1",
         user_id: "user-1",
@@ -219,5 +220,9 @@ describe("ActivityTimeline", () => {
 
     await user.click(screen.getByTestId("reminder-open-lead-reminder-1"));
     expect(openLead).toHaveBeenCalledWith("lead-1");
+
+    expect(
+      screen.getByText("activitiesHistory.dayLabels.today")
+    ).toBeInTheDocument();
   });
 });

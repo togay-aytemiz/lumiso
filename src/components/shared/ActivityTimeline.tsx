@@ -2,6 +2,7 @@ import { ActivityTimelineItem } from "./ActivityTimelineItem";
 import { ReminderTimelineCard } from "@/components/reminders/ReminderTimelineCard";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { formatGroupDate } from "@/lib/utils";
 
 interface Activity {
   id: string;
@@ -40,7 +41,11 @@ export function ActivityTimeline({
   onReminderProjectNavigate,
   showReminderStatusIndicator = false,
 }: ActivityTimelineProps) {
-  const { t } = useFormsTranslation();
+  const { t, i18n } = useFormsTranslation();
+  const relativeDayLabels = {
+    today: t("activitiesHistory.dayLabels.today"),
+    yesterday: t("activitiesHistory.dayLabels.yesterday"),
+  };
   
   if (activities.length === 0) {
     return <div className="text-sm text-muted-foreground text-center py-8">
@@ -54,9 +59,9 @@ export function ActivityTimeline({
   };
   const formatDayHeader = (date: string) => {
     const activityDate = parseISO(date);
-    if (isToday(activityDate)) return "Today";
-    if (isYesterday(activityDate)) return "Yesterday";
-    return format(activityDate, "MMM d, yyyy");
+    if (isToday(activityDate)) return relativeDayLabels.today;
+    if (isYesterday(activityDate)) return relativeDayLabels.yesterday;
+    return formatGroupDate(activityDate, i18n.language);
   };
 
   // Group activities by day

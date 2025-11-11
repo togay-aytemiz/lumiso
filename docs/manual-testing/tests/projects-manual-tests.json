@@ -360,6 +360,46 @@
         "expected_result": "Kullanıcı aynı panelde yeni not ekleyip Aktivite/Geçmiş sekmeleri arasında geçiş yapabilir, not hemen görünür."
       },
       {
+        "external_id": "CRM-PROJECTS-332",
+        "title": "Proje detay aktivite kartında hatırlatıcı rozetleri ve tamamla/geri al",
+        "description": "ProjectDetail sayfasındaki Aktivite kartında hatırlatıcı kartlarının durum rozetleri ve tamamlanma butonlarıyla çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "/projects listesinden herhangi bir projeyi açarak tam ekran proje detay sayfasına gidin ve \"Aktivite\" kartına kaydırın; tarihli bir hatırlatıcı yoksa kartın üstündeki formdan bugün/yakın tarih için bir hatırlatıcı ekleyin.",
+            "expected_result": "Zaman çizelgesinin en üstünde hatırlatıcı kartı görünür; kartta seçilen tarihe göre \"Gecikmiş/Bugün/Yarın\" rozetlerinden biri, \"Kişi: <isim>\" satırı ve saat bilgisi yer alır."
+          },
+          {
+            "action": "Kartın sağ tarafındaki \"Tamamlandı olarak işaretle\" butonuna tıklayın.",
+            "expected_result": "Kısa süreli başarı tostu çıkar, kart soluklaşır ve üst kısmında yeşil \"Tamamlandı\" rozeti görünür; metin üzerine strikethrough uygulanır."
+          },
+          {
+            "action": "Hemen ardından beliren \"Tamamlanmadı olarak işaretle\" butonuna basın.",
+            "expected_result": "Kart eski renklere döner, tarih bazlı rozet tekrar görünür ve sayfayı yenilemeye gerek kalmaz."
+          }
+        ],
+        "expected_result": "Proje aktivitelerindeki hatırlatıcı kartları tarih rozetlerini doğru gösterir ve tamamla/geri al aksiyonlarıyla tek tıkta güncellenir."
+      },
+      {
+        "external_id": "CRM-PROJECTS-333",
+        "title": "Proje aktivite kartından ilgili kişiyi açma",
+        "description": "Hatırlatıcı kartlarında yer alan \"Kişiyi aç\" kısayolunun kullanıcıyı doğru lead detayına götürdüğünü doğrular.",
+        "steps": [
+          {
+            "action": "Aynı proje detay sayfasında hatırlatıcı kartının altındaki aksiyon satırını inceleyin.",
+            "expected_result": "\"Kişiyi aç\" butonu ve yanında yukarı ok ikonu görünür."
+          },
+          {
+            "action": "\"Kişiyi aç\" butonuna tıklayın.",
+            "expected_result": "Uygulama yeni sekme açmadan `/leads/:id` detay sayfasına gider; başlıkta ilgili lead adı görünür."
+          },
+          {
+            "action": "Tarayıcı geri hareketiyle tekrar proje detay sayfasına dönün.",
+            "expected_result": "Proje aktivite kartı aynı scroll konumunda kalır ve az önce açtığınız hatırlatıcı halen listede görünür."
+          }
+        ],
+        "expected_result": "Hatırlatıcı kartındaki lead kısayolu, proje bağlamından çıkmadan doğru kişi detayına hızlı erişim sağlar."
+      },
+      {
         "external_id": "CRM-PROJECTS-314",
         "title": "Yapılacaklar listesi ve ilerleme çubuğunu güncelleme",
         "description": "Project Todo kartında görev ekleme, tamamlamaya işaretleme ve ilerleme çubuğunun güncellenmesini doğrular.",

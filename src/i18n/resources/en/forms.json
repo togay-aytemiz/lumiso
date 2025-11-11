@@ -1185,6 +1185,10 @@
     "enterNote": "Enter your note...",
     "addActivity": "Add Activity",
     "scheduleSession": "Schedule Session",
+    "dayLabels": {
+      "today": "Today",
+      "yesterday": "Yesterday"
+    },
     "historyMessages": {
       "notSet": "Not set",
       "changeTemplate": "{{label}} {{oldValue}} → {{newValue}}",

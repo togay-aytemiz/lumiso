@@ -334,35 +334,35 @@ export function AddAction({ className }: AddActionProps) {
       <div
         ref={triggerRef}
         className={cn(
-          "group relative flex items-center overflow-hidden rounded-full border border-emerald-400/60 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 text-white shadow-[0_20px_45px_-18px_rgba(13,148,136,0.85)] transition-all duration-300 hover:shadow-[0_26px_55px_-20px_rgba(13,148,136,0.9)] focus-within:ring-2 focus-within:ring-emerald-200/80 focus-within:ring-offset-2 focus-within:ring-offset-background",
+          "group relative flex items-center overflow-hidden rounded-full border border-slate-200/80 bg-gradient-to-r from-slate-50 via-slate-100 to-white text-slate-900 shadow-[0_18px_38px_-20px_rgba(15,23,42,0.35)] transition-all duration-300 hover:shadow-[0_24px_50px_-22px_rgba(15,23,42,0.4)] focus-within:ring-2 focus-within:ring-slate-300/70 focus-within:ring-offset-2 focus-within:ring-offset-background",
           className
         )}
       >
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-white/10"
+          className="pointer-events-none absolute inset-0 bg-slate-950/[0.04]"
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-white/10 opacity-0 transition-opacity duration-300 group-hover:opacity-80 group-focus-within:opacity-80"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/60 via-white/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100"
         />
         <Button
           type="button"
           variant="ghost"
-          className="group/button relative z-10 h-12 rounded-l-full rounded-r-none px-4 text-sm font-semibold tracking-tight text-white transition-all duration-200 hover:bg-white/15 hover:text-white focus-visible:ring-0 focus-visible:ring-offset-0 sm:px-5"
+          className="group/button relative z-10 h-12 rounded-l-full rounded-r-none px-4 text-sm font-semibold tracking-tight text-slate-900 transition-all duration-200 hover:bg-slate-900/5 hover:text-slate-950 focus-visible:ring-0 focus-visible:ring-offset-0 sm:px-5"
           onClick={handlePrimaryButtonClick}
           aria-label={primaryLabel ?? tCommon("buttons.new")}
           aria-haspopup={primaryButtonControlsMenu ? "menu" : undefined}
           aria-expanded={primaryButtonControlsMenu ? menuOpen : undefined}
         >
-          <Plus className="h-4 w-4 transition-transform duration-200 group-hover/button:scale-110 group-focus-visible/button:scale-110" />
-          <span className="hidden whitespace-nowrap text-base sm:inline">
+          <Plus className="h-4 w-4 text-slate-700 transition-transform duration-200 group-hover/button:scale-110 group-hover/button:text-slate-900 group-focus-visible/button:scale-110 group-focus-visible/button:text-slate-900" />
+          <span className="hidden whitespace-nowrap text-base text-slate-800 transition-colors duration-200 group-hover/button:text-slate-950 sm:inline">
             {primaryLabel ?? tCommon("buttons.new")}
           </span>
         </Button>
         <Button
           type="button"
-          className="group/button relative z-10 h-12 w-11 rounded-l-none rounded-r-full px-0 text-white transition-all duration-200 hover:bg-white/15 hover:text-white focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-12"
+          className="group/button relative z-10 h-12 w-11 rounded-l-none rounded-r-full px-0 text-slate-700 transition-all duration-200 hover:bg-slate-900/5 hover:text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-12"
           variant="ghost"
           aria-label={tCommon("buttons.moreOptions")}
           aria-haspopup="menu"
@@ -371,7 +371,7 @@ export function AddAction({ className }: AddActionProps) {
         >
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute left-0 top-1/2 h-7 w-px -translate-y-1/2 bg-white/40"
+            className="pointer-events-none absolute left-0 top-1/2 h-7 w-px -translate-y-1/2 bg-slate-200"
           />
           <ChevronDown
             className={cn(

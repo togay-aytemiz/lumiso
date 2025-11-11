@@ -158,6 +158,15 @@ export function AddAction({ className }: AddActionProps) {
   }, [closeMenu, menuOpen, openMenu]);
 
   const handlePrimaryButtonClick = () => {
+    if (recommendedType) {
+      if (menuOpen) {
+        closeMenu();
+      }
+
+      handleAction(recommendedType);
+      return;
+    }
+
     toggleMenu();
   };
 
@@ -318,6 +327,8 @@ export function AddAction({ className }: AddActionProps) {
   const totalHorizontalPadding = menuPosition.left + menuPosition.right;
   const panelWidth = isFixedPosition ? `calc(100vw - ${totalHorizontalPadding}px)` : undefined;
 
+  const primaryButtonControlsMenu = !recommendedType;
+
   return (
     <>
       <div
@@ -332,8 +343,8 @@ export function AddAction({ className }: AddActionProps) {
           className="h-12 rounded-l-full rounded-r-none px-3 sm:px-4"
           onClick={handlePrimaryButtonClick}
           aria-label={primaryLabel ?? tCommon("buttons.new")}
-          aria-haspopup="menu"
-          aria-expanded={menuOpen}
+          aria-haspopup={primaryButtonControlsMenu ? "menu" : undefined}
+          aria-expanded={primaryButtonControlsMenu ? menuOpen : undefined}
         >
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline whitespace-nowrap">

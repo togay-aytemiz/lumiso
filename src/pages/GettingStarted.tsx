@@ -85,12 +85,12 @@ const GettingStarted = () => {
               <p className="text-sm text-muted-foreground mt-2">{t('onboarding.getting_started.welcome_subtitle')}</p>
             </div>
             <div className="flex items-center justify-center sm:justify-end gap-3">
-              <Button variant="outline" size="sm">
+              <Button variant="surface" size="sm">
                 <HelpCircle className="w-4 h-4 mr-2" />
                 {t('onboarding.getting_started.need_help')}
               </Button>
               <Button 
-                variant="outline" 
+                variant="surface" 
                 size="sm"
                 onClick={() => setShowSampleDataModal(true)}
               >
@@ -104,7 +104,7 @@ const GettingStarted = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-safe">
         {/* Progress Section */}
         <div className={`mb-6 sm:mb-8 ${isAnimating ? 'animate-fade-in' : ''}`}>
-          <Card>
+          <Card className="border-none shadow-lg rounded-2xl">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 {t('onboarding.getting_started.setup_progress')}

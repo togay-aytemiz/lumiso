@@ -362,8 +362,19 @@ const LeadDetail = () => {
   };
 
   // Handle project clicked during tutorial
+  const viewedProjectStorageKey = lead?.id ? `crm:leadTutorial:viewedProject:${lead.id}` : null;
+
+  useEffect(() => {
+    if (viewedProjectStorageKey && sessionStorage.getItem(viewedProjectStorageKey) === "true") {
+      setHasViewedProject(true);
+    }
+  }, [viewedProjectStorageKey]);
+
   const handleProjectClicked = () => {
     setHasViewedProject(true);
+    if (viewedProjectStorageKey) {
+      sessionStorage.setItem(viewedProjectStorageKey, "true");
+    }
   };
 
   const handleSessionScheduled = () => {

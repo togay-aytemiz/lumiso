@@ -227,8 +227,8 @@
           "description": "Filter by lead status and sort by any column to find exactly what you need."
         },
         "customizeColumns": {
-          "title": "Customize Columns",
-          "description": "Customize which columns to show and arrange them to match your workflow."
+          "title": "Monitor Key Stats",
+          "description": "Use the KPI cards above to see new leads, conversion rate, and inactive clients at a glance."
         }
       },
       "addFirstLead": {

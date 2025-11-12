@@ -228,8 +228,8 @@
           "description": "Kişileri durumuna göre filtreleyin ve ihtiyacınızı bulmak için herhangi bir sütuna göre sıralayın."
         },
         "customizeColumns": {
-          "title": "Sütunları Özelleştir",
-          "description": "Hangi sütunların gösterileceğini seçin ve iş akışınıza uygun şekilde düzenleyin."
+          "title": "Önemli Kartları İzleyin",
+          "description": "Üstteki kartlardan yeni kişi, dönüşüm oranı ve pasif kayıtları tek bakışta takip edin."
         }
       },
       "addFirstLead": {
@@ -239,7 +239,7 @@
       },
       "exploreDetails": {
         "title": "Harika. Şimdi Kişi Detaylarını Keşfedelim",
-        "description": "Artık bir kişiniz var. Detaylarını görüntülemek için aşağıdaki tabloda kişiye tıklayın.",
+        "description": "Artık bir kişiniz var. Detaylarını görmek için listeden bu kişiye tıklayabilirsiniz.",
         "disabledTooltip": "Devam etmek için bir kişiye tıklayın"
       },
       "scheduling": {
@@ -370,12 +370,12 @@
       },
       "createProject": {
         "title": "İlk Projenizi Oluşturun",
-        "description": "Harika! Bu kişiyi bir projeye dönüştürmek için aşağıdaki “Proje Ekle” düğmesine tıklayın.",
+        "description": "Harika! Bu kişiyi bir projeye dönüştürmek için “Proje Ekle” düğmesine tıklayın.",
         "disabledTooltip": "Devam etmek için önce bir proje oluşturun"
       },
       "exploreProjects": {
         "title": "Mükemmel! Şimdi Proje Özelliklerini Keşfedin",
-        "description": "Aşağıdaki proje kartını açarak güçlü proje yönetimi araçlarını keşfedin:",
+        "description": "Eklenen proje kartını açarak güçlü proje yönetimi araçlarını keşfedin:",
         "points": [
           "Ödemeleri ve faturaları takip edin",
           "Fotoğraf seanslarını yönetin",
@@ -2298,7 +2298,7 @@
   "onboarding": {
     "getting_started": {
       "welcome_title": "Lumiso'ya Hoş Geldiniz 🎉",
-      "welcome_subtitle": "Fotoğrafçılık işinizi adım adım kuralım",
+      "welcome_subtitle": "Lumiso'yu birlikte adım adım kuralım",
       "need_help": "Yardıma mı ihtiyacınız var",
       "skip_setup": "Kurulumu Atla",
       "setup_progress": "Kurulum İlerlemesi",
@@ -2480,3 +2480,26 @@
     }
   }
 }
+    "tutorial": {
+      "welcome": {
+        "title": "Proje Yönetim Merkezine Hoş Geldiniz",
+        "description": "Fotoğraf projelerini yönetmenin üç güçlü yolunu keşfedelim.",
+        "subtitle": "Bu eğitimde, stüdyolar için akıcı proje yönetimini öğreneceksiniz:",
+        "boardView": "Pano Görünümü - Sürükle-bırak ile görsel iş akışı",
+        "listView": "Liste Görünümü - Sıralanabilir detaylı tablo",
+        "archivedView": "Arşiv Görünümü - Referans için tamamlanan projeler"
+      },
+      "exploreViews": {
+        "title": "Farklı Görünümleri Keşfedin",
+        "description": "Pano, Liste ve Arşivli görünümlerini tıklayarak her birinin nasıl çalıştığını görün.",
+        "subtitle": "💡 Her görünüm projelerinizi düzenli ve verimli tutmak için farklı bir amaç taşır.",
+        "tip": "Pano görünümünde projeleri aşamalar arasında sürüklemeyi deneyin!"
+      },
+      "completion": {
+        "title": "Harika! Artık Projeleri Yönetmeye Hazırsınız",
+        "description": "Artık proje yönetimi arayüzünü öğrendiniz; bu güçlü görünümlerle işinizi daha verimli organize edebilirsiniz.",
+        "dragDrop": "Projeleri aşamalar arasında sürükleyip bırakın",
+        "tableView": "Detaylı tabloyu sıralayıp filtreleyin",
+        "archivedProjects": "Tamamlanan projeleri arşivleyin"
+      }
+    },

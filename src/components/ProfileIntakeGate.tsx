@@ -131,12 +131,11 @@ export function ProfileIntakeGate() {
   const needsDisplayName = !profile?.full_name?.trim();
   const needsBusinessName = !settings?.photography_business_name?.trim();
   const needsProjectTypes = (settings?.preferred_project_types?.length ?? 0) === 0;
+  const hasCompletedIntakeOnce = Boolean(settings?.profile_intake_completed_at);
 
   const intakeComplete =
-    Boolean(settings?.profile_intake_completed_at) &&
-    !needsDisplayName &&
-    !needsBusinessName &&
-    !needsProjectTypes;
+    hasCompletedIntakeOnce ||
+    (!needsDisplayName && !needsBusinessName && !needsProjectTypes);
 
   const shouldShow =
     !profileLoading &&

@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { TemplateErrorBoundary } from "@/components/template-builder/TemplateErrorBoundary";
 import { useTranslation } from "react-i18next";
 import { TemplateVariablesProvider } from "@/contexts/TemplateVariablesContext";
+import { VariableTokenText } from "@/components/template-builder/VariableTokenText";
 
 // Optimized TemplateBuilder component
 const OptimizedTemplateBuilderContent = React.memo(() => {
@@ -275,6 +276,15 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     ...variableFallbacks,
     ...datasetWithAliases
   }), [variableFallbacks, datasetWithAliases]);
+  const variableLabels = useMemo(() => {
+    const map: Record<string, string> = {};
+    templateVariablesState.variables.forEach((variable) => {
+      if (variable?.key) {
+        map[variable.key] = variable.label ?? variable.key;
+      }
+    });
+    return map;
+  }, [templateVariablesState.variables]);
 
   if (loading) {
     return (
@@ -383,7 +393,15 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
                     className="flex h-auto w-full flex-1 items-center justify-between gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 group"
                   >
                     <span className={`text-sm flex-1 ${!subject ? 'text-muted-foreground' : 'text-foreground'}`}>
-                      {subject || t("templateBuilder.email.addSubject")}
+                      {subject ? (
+                        <VariableTokenText
+                          text={subject}
+                          placeholder={t("templateBuilder.email.addSubject")}
+                          variableLabels={variableLabels}
+                        />
+                      ) : (
+                        t("templateBuilder.email.addSubject")
+                      )}
                     </span>
                     <Edit className="h-3 w-3 opacity-70 group-hover:opacity-100" />
                   </Button>
@@ -444,7 +462,15 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
                     className="flex h-auto w-full flex-1 items-center justify-between gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 group"
                   >
                     <span className={`text-sm flex-1 ${!preheader ? 'text-muted-foreground' : 'text-foreground'}`}>
-                      {preheader || t("templateBuilder.email.addPreheader")}
+                      {preheader ? (
+                        <VariableTokenText
+                          text={preheader}
+                          placeholder={t("templateBuilder.email.addPreheader")}
+                          variableLabels={variableLabels}
+                        />
+                      ) : (
+                        t("templateBuilder.email.addPreheader")
+                      )}
                     </span>
                     <Edit className="h-3 w-3 opacity-70 group-hover:opacity-100" />
                   </Button>

@@ -17,8 +17,12 @@ export function VariablePicker({ onVariableSelect, trigger }: VariablePickerProp
   const { variables, loading } = useTemplateVariablesContext();
   const { t } = useTranslation("pages");
 
-  const handleSelect = (variableKey: string) => {
-    onVariableSelect(`{${variableKey}}`);
+  const handleSelect = (variable: TemplateVariable) => {
+    const trimmedLabel = variable.label?.trim();
+    const token = trimmedLabel && trimmedLabel.length > 0
+      ? `{${variable.key}|${trimmedLabel}}`
+      : `{${variable.key}}`;
+    onVariableSelect(token);
     setOpen(false);
   };
 
@@ -67,7 +71,7 @@ export function VariablePicker({ onVariableSelect, trigger }: VariablePickerProp
                   {vars.map((variable) => (
                     <CommandItem
                       key={variable.key}
-                      onSelect={() => handleSelect(variable.key)}
+                      onSelect={() => handleSelect(variable)}
                       className="cursor-pointer"
                     >
                       <Check className="mr-2 h-4 w-4 opacity-0" />

@@ -3,6 +3,7 @@ import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, Im
 import { cn } from "@/lib/utils";
 import { SocialChannel, useOrganizationSettings, OrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useTranslation } from 'react-i18next';
+import { replacePlaceholders as replaceTemplateTokens } from "@/lib/templatePlaceholders";
 
 interface EmailPreviewProps {
   blocks: TemplateBlock[];
@@ -17,11 +18,7 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
   const { settings: organizationSettings } = useOrganizationSettings();
   const previewRecipientName = mockData.lead_name || mockData.customer_name || t('templateBuilder.preview.mockData.customerName');
 
-  const replacePlaceholders = (text: string) => {
-    return text.replace(/\{(\w+)(?:\|([^}]*))?\}/g, (match, key, fallback) => {
-      return mockData[key] || fallback || match;
-    });
-  };
+  const replacePlaceholders = (text: string) => replaceTemplateTokens(text, mockData);
 
   return (
     <div className="bg-white rounded-lg border shadow-lg">

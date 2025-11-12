@@ -1,48 +1,524 @@
 [
   {
-    "suite": "Onboarding (TBD)",
+    "suite": "Onboarding - Intake Akışı",
     "cases": [
       {
-        "external_id": "CRM-ONBOARDING-TBD-001",
-        "title": "Onboarding testleri daha sonra beslenecek",
-        "description": "Onboarding akışı güncellendikten sonra gerçek test senaryoları bu dosyada yer alacak.",
-        "steps": [],
-        "expected_result": "TBD"
+        "external_id": "CRM-ONBOARD-101",
+        "title": "Yeni hesapta intake kapısı açılıyor",
+        "description": "Giriş yapan her yeni kullanıcı için Profile Intake Gate modali uygulamayı kilitliyor.",
+        "steps": [
+          {
+            "action": "Lumiso uygulamasını gizli pencerede açın ve \"Kayıt Ol\" kartına geçin.",
+            "expected_result": "E-posta ve şifre alanlarını içeren kayıt formu görüntülenir."
+          },
+          {
+            "action": "Daha önce kullanılmamış bir e-posta/şifre ile formu doldurup \"Hesap Oluştur\" butonuna basın.",
+            "expected_result": "Hesap oluşturulur ve birkaç saniye sonra \"Stüdyonu tanıtalım\" başlıklı tam ekran modal açılır."
+          },
+          {
+            "action": "Adres çubuğuna /leads gibi başka bir rota yazın veya modalın dışına tıklayın.",
+            "expected_result": "Arka sayfa değişse bile modal kapanmaz; kullanıcı hiçbir tabloyu göremez."
+          },
+          {
+            "action": "Modalın kapatma ikonuna veya Esc tuşuna basmayı deneyin.",
+            "expected_result": "Kapatma girişimleri engellenir; intake tamamlanana kadar modal açık kalır."
+          }
+        ],
+        "expected_result": "Yeni bir hesap oluşturulduğunda kullanıcı Profile Intake modali kapanmadan uygulamayı kullanamaz."
       },
       {
-        "external_id": "CRM-ONBOARDING-TBD-002",
-        "title": "TBD - İlk girişte örnek paketlerin yüklenmesi",
-        "description": "Yeni kullanıcı oluşturulduğunda başlangıç paketlerinin hesabı doldurması beklenen akış.",
-        "steps": [],
-        "expected_result": "TBD"
+        "external_id": "CRM-ONBOARD-102",
+        "title": "Adım 1 - Görünen ad doğrulaması",
+        "description": "\"Sana nasıl hitap edelim?\" adımında zorunlu alan ve hata durumları doğrulanır.",
+        "steps": [
+          {
+            "action": "\"Tercih ettiğin görünen ad\" alanını boş bırakıp sağ alttaki \"Devam et\" butonuna basın.",
+            "expected_result": "Alan altında kırmızı \"Sana nasıl hitap etmemiz gerektiğini yaz.\" uyarısı görünür ve ilerleme olmaz."
+          },
+          {
+            "action": "Alana \"Studio QA\" yazın.",
+            "expected_result": "Hata mesajı kaybolur, yardım metni görünmeye devam eder."
+          },
+          {
+            "action": "Yeniden \"Devam et\" butonuna basın.",
+            "expected_result": "Modal üstünde \"Adım 2 / 4\" etiketi görünür ve İşletme adı adımına geçilir."
+          }
+        ],
+        "expected_result": "Görünen ad boş geçilemez; geçerli değer girildiğinde akış ikinci adıma ilerler."
       },
       {
-        "external_id": "CRM-ONBOARDING-TBD-003",
-        "title": "TBD - İlk girişte örnek seans türleri",
-        "description": "Initial session type seeding tamamlandığında doğrulanacak.",
-        "steps": [],
-        "expected_result": "TBD"
+        "external_id": "CRM-ONBOARD-103",
+        "title": "Adım 2 - İşletme adı doğrulaması",
+        "description": "Faturalarda kullanılacak işletme adının zorunlu olduğu doğrulanır.",
+        "steps": [
+          {
+            "action": "\"İşletme adı\" alanını boş bırakıp \"Devam et\" butonuna basın.",
+            "expected_result": "\"Müşterilere gösterdiğin işletme adını ekle.\" uyarısı kırmızı metinle görünür."
+          },
+          {
+            "action": "Alanı \"QA Weddings\" metni ile doldurun.",
+            "expected_result": "Kırmızı uyarı kaybolur, yardım metni ve footer ipucu görünür."
+          },
+          {
+            "action": "\"Devam et\" butonuna basarak üçüncü adıma ilerleyin.",
+            "expected_result": "\"En sık yaptığın işleri seç\" adımı açılır ve seçim kartları yüklenir."
+          }
+        ],
+        "expected_result": "İşletme adı zorunludur; doğru değerle üçüncü adıma geçilir."
       },
       {
-        "external_id": "CRM-ONBOARDING-TBD-004",
-        "title": "TBD - İlk girişte örnek servis/hizmet kartları",
-        "description": "Katalogun default hizmetlerle dolduğunu gösterecek senaryo.",
-        "steps": [],
-        "expected_result": "TBD"
+        "external_id": "CRM-ONBOARD-104",
+        "title": "Adım 3 - Proje tipi seçimi ve varsayılan sırası",
+        "description": "Minimum seçim, çoklu seçim ve varsayılan rozet davranışları doğrulanır.",
+        "steps": [
+          {
+            "action": "Kartlardan Düğün ve Aile seçeneklerine tıklayın.",
+            "expected_result": "Seçilen kartlar mor çerçeve alır; ilk seçilen kartta \"Varsayılan\" rozeti görünür."
+          },
+          {
+            "action": "Tüm seçimleri kaldırın ve \"Devam et\" butonuna basın.",
+            "expected_result": "\"En az bir proje tipi seç.\" uyarısı görünür ve ilerleme durur."
+          },
+          {
+            "action": "Düğün, Aile ve Ticari kartlarını yeniden seçin.",
+            "expected_result": "Seçimler geri gelir; üstteki ilerleme çubuğu dolmaya devam eder."
+          },
+          {
+            "action": "\"Devam et\" butonuna basın.",
+            "expected_result": "\"Çalışma alanına örnek veriler yüklensin mi?\" adımı açılır."
+          }
+        ],
+        "expected_result": "En az bir proje tipi seçilmeden adım geçilemez; ilk seçim varsayılan olarak işaretlenir."
       },
       {
-        "external_id": "CRM-ONBOARDING-TBD-005",
-        "title": "TBD - İlk girişte KDV ayarlarının set edilmesi",
-        "description": "Varsayılan vergi profili/kdv oranı tohumlama akışı için placeholder.",
-        "steps": [],
-        "expected_result": "TBD"
+        "external_id": "CRM-ONBOARD-105",
+        "title": "Adım 4 - Örnek veri tercihi ve tamamlanma",
+        "description": "Sample data tercih kartları ve kaydetme davranışı doğrulanır.",
+        "steps": [
+          {
+            "action": "Son adımda \"Örnek verileri yükle\" kartına tıklayın.",
+            "expected_result": "Kart seçili görünür ve sağ üstünde \"Önerilen\" etiketi kalır."
+          },
+          {
+            "action": "\"Hayır, temiz başla\" kartına geçiş yapın.",
+            "expected_result": "Seçim durumu yeni karta taşınır; hata mesajı görünmez."
+          },
+          {
+            "action": "Tercihinizi belirledikten sonra \"Kaydet ve ilerle\" butonuna basın.",
+            "expected_result": "Buton \"Kaydediliyor...\" durumuna geçer, ardından modal kapanır ve \"Stüdyo bilgileri kaydedildi.\" tostu görünür."
+          }
+        ],
+        "expected_result": "Sample data tercihi yapılmadan akış bitmez; seçim yapıldığında kayıt tamamlanır ve kullanıcı uygulamaya döner."
       },
       {
-        "external_id": "CRM-ONBOARDING-TBD-006",
-        "title": "TBD - İlk girişte bölge/para birimi ayarları",
-        "description": "Regional settings (para birimi, tarih formatı vb.) varsayılanlarının doğrulanması için placeholder.",
-        "steps": [],
-        "expected_result": "TBD"
+        "external_id": "CRM-ONBOARD-106",
+        "title": "İntake sonrası profil ve işletme bilgilerinin doğrulanması",
+        "description": "Kaydedilen bilgiler Ayarlar ekranlarına işlendiği doğrulanır.",
+        "steps": [
+          {
+            "action": "Modal kapandıktan sonra menüden Ayarlar → Profil sekmesine gidin.",
+            "expected_result": "\"Profil Bilgileri\" kartında ad alanı intake'te girilen değerle doludur."
+          },
+          {
+            "action": "Ayarlar → Genel sekmesine geçin.",
+            "expected_result": "\"İşletme adı\" alanı intake'te girilen değerle gösterilir ve sayfa değişiklik yapılmadığını belirtir."
+          },
+          {
+            "action": "Sayfayı yenileyin.",
+            "expected_result": "Intake modali yeniden açılmaz; yenileme sonrasında da aynı bilgiler korunur."
+          }
+        ],
+        "expected_result": "Intake adımları ayarlar ekranlarına kalıcı olarak yansır ve tekrar doldurulması gerekmez."
+      },
+      {
+        "external_id": "CRM-ONBOARD-107",
+        "title": "Adımlar arası geri/ileri navigasyon verileri korur",
+        "description": "Geri butonuyla adımlar arasında dolaşırken girilen verilerin silinmediği doğrulanır.",
+        "steps": [
+          {
+            "action": "Proje tipi adımında birkaç kart seçili haldeyken \"Geri\" butonuna basın.",
+            "expected_result": "İşletme adı adımı açılır ve önceki değer alan içinde kalır."
+          },
+          {
+            "action": "Tekrar \"Geri\" butonuna basarak ilk adıma dönün.",
+            "expected_result": "Görünen ad alanı daha önce girilen değerle doludur."
+          },
+          {
+            "action": "\"Devam et\" butonlarıyla hızlıca üçüncü adıma geri dönün.",
+            "expected_result": "Proje tipi seçimleri kaybolmaz; kartlar hâlâ seçili görünür."
+          }
+        ],
+        "expected_result": "Intake sırasında adımlar arasında gidip gelirken kullanıcı girdileri korunur."
+      },
+      {
+        "external_id": "CRM-ONBOARD-108",
+        "title": "debugIntake parametresiyle intake'i yeniden açma",
+        "description": "QA sürecinde tamamlanmış hesaplar için intake'in yeniden tetiklenebildiği doğrulanır.",
+        "steps": [
+          {
+            "action": "Intake'i tamamladıktan sonra adres çubuğunda mevcut rota sonuna `?debugIntake=1` ekleyip sayfayı yenileyin.",
+            "expected_result": "\"Stüdyonu tanıtalım\" modali tekrar görünür ve adım 1'den başlar."
+          },
+          {
+            "action": "Modalı yeniden tamamlayın veya kapanmasını sağlayın.",
+            "expected_result": "debug parametresi kaldırılana kadar modal görünür; parametre silinip yenileyince modal tekrar gizlenir."
+          }
+        ],
+        "expected_result": "`debugIntake=1` parametresi QA amaçlı olarak intake modülünü tekrar görünür yapar."
+      }
+    ]
+  },
+  {
+    "suite": "Onboarding - Seeding Doğrulamaları",
+    "cases": [
+      {
+        "external_id": "CRM-ONBOARD-201",
+        "title": "Proje tipi tohumlaması ve sıralaması",
+        "description": "Intake seçimleri Ayarlar → Projeler ve Seanslar → Proje Türleri kartına sıralı olarak yansır.",
+        "steps": [
+          {
+            "action": "Intake tamamlandıktan sonra Ayarlar → Projeler ve Seanslar sekmesini açın.",
+            "expected_result": "\"Proje Türleri\" kartı otomatik olarak listeyi gösterir."
+          },
+          {
+            "action": "Listenin ilk satırına bakın.",
+            "expected_result": "İlk satır intake'te ilk seçilen türdür (örn. \"Düğün\") ve satırda \"Varsayılan\" etiketi görünür."
+          },
+          {
+            "action": "Listenin tamamını gözden geçirin.",
+            "expected_result": "Kalan satırlar Türkçe lokalize adlarla (Aile, Çocuk, Hamilelik, vb.) dolar ve tekrar eden kayıt yoktur."
+          }
+        ],
+        "expected_result": "Proje türleri intake sırasını korur ve tüm şablonlar locale uygun adlarla tohumlanır."
+      },
+      {
+        "external_id": "CRM-ONBOARD-202",
+        "title": "Lead/Proje/Seans durumlarının doğrulanması",
+        "description": "Yeni hesabın ayarlarında tüm statü şablonlarının otomatik oluştuğu kontrol edilir.",
+        "steps": [
+          {
+            "action": "Ayarlar → Potansiyel Müşteriler sekmesinde \"Durumlar\" kartını açın.",
+            "expected_result": "Sırasıyla Yeni, Nitelikli, Teklif Gönderildi, Görüşme, Kazanıldı, Kaybedildi durumları görünür."
+          },
+          {
+            "action": "Ayarlar → Projeler ve Seanslar sekmesinde \"Proje Aşamaları\" kartına geçin.",
+            "expected_result": "Planlandı, Teklif Gönderildi, Sözleşme İmzalandı, Devam Ediyor, Tamamlandı, İptal satırları doğru renklerle listelenir."
+          },
+          {
+            "action": "Aynı sekmede \"Seans Durumları\" kartını kontrol edin.",
+            "expected_result": "Planlandı, Planlandı (Scheduled), Hazırlık, Çekim Sürüyor, Tamamlandı, İptal satırları görünür ve ilk satır \"Varsayılan\" olarak işaretlidir."
+          }
+        ],
+        "expected_result": "Lead, proje ve seans durumları eksiksiz şekilde tohumlanır ve sıraları korur."
+      },
+      {
+        "external_id": "CRM-ONBOARD-203",
+        "title": "Hizmetler, seans türleri ve paketler tohumlaması",
+        "description": "Ayarlar → Hizmetler ekranındaki tüm katalogların otomatik doldurulduğu doğrulanır.",
+        "steps": [
+          {
+            "action": "Ayarlar → Hizmetler sekmesine gidin ve \"Hizmetler\" kartında Ekip/Teslimatlar sekmelerini kontrol edin.",
+            "expected_result": "Ekip sekmesinde \"Baş Fotoğrafçı\" ve \"Asistan Fotoğrafçı\", Teslimatlar sekmesinde \"Prestij Albüm\" ve \"Drone Çekimi\" kartları görünür."
+          },
+          {
+            "action": "Aynı sayfada \"Seans Türleri\" kartına bakın.",
+            "expected_result": "\"Standart Çekim\" (90 dk) ve \"Mini Çekim\" (30 dk) satırları aktiftir; biri varsayılan olarak işaretlidir."
+          },
+          {
+            "action": "\"Paketler\" kartını açın ve ilk iki satırı inceleyin.",
+            "expected_result": "\"Düğün Hikayesi\" paketi tüm çekim + albüm + drone kalemlerini içerir; \"Mini Lifestyle\" paketi daha küçük içeriğe sahiptir ve ikisi de aktif görünür."
+          }
+        ],
+        "expected_result": "Hizmet kataloğu, seans türleri ve paketler locale uygun isimlerle otomatik oluşturulur."
+      },
+      {
+        "external_id": "CRM-ONBOARD-204",
+        "title": "Teslimat yöntemlerinin proje sihirbazında görünmesi",
+        "description": "Delivery method tohumlaması proje oluşturma sihirbazına yansır.",
+        "steps": [
+          {
+            "action": "Projeler sayfasında \"Proje Oluştur\" butonuna basıp sihirbazda Teslimat adımına ilerleyin.",
+            "expected_result": "Teslimat adımı açılır ve yöntem seçimi bileşeni görünür."
+          },
+          {
+            "action": "\"Yöntem seç\" açılır listesini tıklayın.",
+            "expected_result": "Listede \"Dijital Galeri\" ve \"USB Bellek\" seçenekleri bulunur."
+          },
+          {
+            "action": "Her iki yöntemi de seçip kaydedin.",
+            "expected_result": "Seçilen yöntemler çip olarak gösterilir; tekrar eklemeye çalışırsanız sistem \"zaten ekli\" uyarısı verir."
+          }
+        ],
+        "expected_result": "Teslimat yöntemleri yeni projelerde hazır gelir ve tekrar eklenene kadar aktif kalır."
+      },
+      {
+        "external_id": "CRM-ONBOARD-205",
+        "title": "Mesaj şablonlarının tohumlanması",
+        "description": "Şablonlar → E-posta ekranında intake sonrası varsayılan şablonlar doğrulanır.",
+        "steps": [
+          {
+            "action": "Sol menüden Şablonlar sayfasını açın ve \"E-posta\" sekmesini seçin.",
+            "expected_result": "Şablon listesi yüklenir."
+          },
+          {
+            "action": "Listede \"Çekim Onayı\" satırına dikkat edin.",
+            "expected_result": "Satırda konu satırı \"{session_date}\" içeren metin gösterilir ve placeholder listesinde lead_name, session_date, session_time, session_location öğeleri vardır."
+          },
+          {
+            "action": "\"Çekim Hatırlatıcısı (3 gün)\" satırını açın.",
+            "expected_result": "Şablon gövdesi tek paragraf bloklarından oluşur ve placeholders listesi lead_name + session_date + session_time içerir."
+          }
+        ],
+        "expected_result": "Standart onay ve hatırlatma şablonları otomatik olarak aktif halde gelir."
+      },
+      {
+        "external_id": "CRM-ONBOARD-206",
+        "title": "Varsayılan iş akışlarının oluşturulması",
+        "description": "İş Akışları sayfasında otomatik oluşturulan 4 workflow doğrulanır.",
+        "steps": [
+          {
+            "action": "Sol menüden İş Akışları sayfasını açın.",
+            "expected_result": "Liste otomatik olarak iki kategori gösterir."
+          },
+          {
+            "action": "Listede \"Çekim Onayı Otomasyonu\" ve \"3 Gün Önce Hatırlatma\" akışlarını bulun.",
+            "expected_result": "Her iki akış da aktif rozetine sahiptir ve tetikleyici bilgisi (proje statü değişimi / seans planlandı) kartta görünür."
+          },
+          {
+            "action": "Aynı listede \"24 Saatlik Seans Hatırlatıcısı\" ve \"2 Saatlik Seans Hatırlatıcısı\" kartlarını açın.",
+            "expected_result": "Her iki akış da \"session_reminder\" tetikleyicisiyle listelenir ve adımlarında Çekim Hatırlatıcısı şablonunun e-posta veya SMS/WhatsApp kanalında kullanıldığı belirtilir."
+          }
+        ],
+        "expected_result": "Toplam dört varsayılan iş akışı otomatik oluşur ve ilgili şablonlara bağlanır."
+      },
+      {
+        "external_id": "CRM-ONBOARD-207",
+        "title": "Sample data açıkken CRM kayıtları",
+        "description": "Intake'te \"Örnek verileri yükle\" seçildiğinde otomatik eklenen kayıtlar doğrulanır.",
+        "steps": [
+          {
+            "action": "Yeni bir hesapta intake adımlarını tamamlayıp son adımda \"Örnek verileri yükle\" seçeneğini işaretleyin.",
+            "expected_result": "Başarılı toast sonrası uygulamaya yönlendirilirsiniz."
+          },
+          {
+            "action": "Kişiler sayfasını açın.",
+            "expected_result": "Listede Ayşe & Mehmet, Zeynep Kılıç ve Ece & Bora (veya İngilizce karşılıkları) satırları görünür; notlarda \"[Sample Data]\" ön eki yer alır."
+          },
+          {
+            "action": "İlk satırı açıp Projeler kartını inceleyin.",
+            "expected_result": "Projeler kartında en az bir proje yer alır; paket olarak Düğün Hikayesi atanmıştır ve bağlı seans gelecekteki bir tarihtedir."
+          },
+          {
+            "action": "Seanslar sekmesini kontrol edin.",
+            "expected_result": "Üç seansın da tarihi bugünden ileri bir gündür ve durumlar \"Planlandı\" veya \"Tamamlandı\" olarak gelir."
+          }
+        ],
+        "expected_result": "Sample data seçeneğiyle lead, proje ve seans örnekleri yerleşir ve hepsi kolayca ayırt edilir."
+      },
+      {
+        "external_id": "CRM-ONBOARD-208",
+        "title": "Sample data kapalıyken temiz başlangıç",
+        "description": "Intake'te \"Hayır, temiz başla\" seçildiğinde CRM listelerinin boş kaldığı doğrulanır.",
+        "steps": [
+          {
+            "action": "Yeni bir hesap açıp sample data adımında \"Hayır, temiz başla\" kartını seçin ve intake'i bitirin.",
+            "expected_result": "Başarı tostu göründükten sonra uygulamaya geçilir."
+          },
+          {
+            "action": "Kişiler, Projeler ve Seanslar sayfalarına tek tek gidin.",
+            "expected_result": "Her üç liste de boş durum mesajı gösterir; herhangi bir \"[Sample Data]\" kaydı yoktur."
+          },
+          {
+            "action": "Ayarlar → Hizmetler sekmesini kontrol edin.",
+            "expected_result": "Hizmetler, paketler ve seans türleri yine de tohumlanmıştır; yalnızca CRM kayıtları boştur."
+          }
+        ],
+        "expected_result": "Sample data kapalı seçilirse yalnızca yapılandırmalar eklenir, CRM listeleri boş kalır."
+      },
+      {
+        "external_id": "CRM-ONBOARD-209",
+        "title": "CRM modüllerinde statü seçeneklerinin doğrulanması",
+        "description": "Tohumlanan statüler filtreler ve hızlı aksiyonlarda eksiksiz görünür.",
+        "steps": [
+          {
+            "action": "Kişiler sayfasında \"Duruma göre filtrele\" menüsünü açın.",
+            "expected_result": "Yeni, Nitelikli, Teklif Gönderildi, Görüşme, Kazanıldı ve Kaybedildi seçenekleri listelenir."
+          },
+          {
+            "action": "Projeler sayfasında üst filtrede statü seçimini kontrol edin.",
+            "expected_result": "Planlandı, Teklif Gönderildi, Sözleşme İmzalandı, Devam Ediyor, Tamamlandı, İptal seçenekleri mevcuttur."
+          },
+          {
+            "action": "Seanslar sayfasında status filtresini açın.",
+            "expected_result": "Planlandı, Planlandı (Scheduled), Hazırlık, Çekim Sürüyor, Tamamlandı, İptal seçenekleri görünür ve renkleri ayarlarla eşleşir."
+          }
+        ],
+        "expected_result": "Kullanıcı arayüzündeki tüm statü seçimleri tohumlanan değerleri eksiksiz olarak gösterir."
+      }
+    ]
+  },
+  {
+    "suite": "Onboarding - Guided Setup",
+    "cases": [
+      {
+        "external_id": "CRM-ONBOARD-301",
+        "title": "Getting Started sayfası yalnızca yönlendirme modunda açılır",
+        "description": "Guided setup başlatıldıktan sonra /getting-started rotasının erişilebilir olması ve diğer durumlarda ana sayfaya dönülmesi doğrulanır.",
+        "steps": [
+          {
+            "action": "Welcome modalında \"Başla\" butonuna basın ve otomatik olarak /getting-started sayfasına yönlendirilmesini bekleyin.",
+            "expected_result": "Sayfa üstünde \"Hoş geldin\" başlığı, yardım ve \"Kurulumu atla\" butonları görünür."
+          },
+          {
+            "action": "Tarayıcı sekmesini yenileyin.",
+            "expected_result": "Yenileme sonrası yine /getting-started sayfası yüklenir ve ilerleme bileşeni korunur."
+          },
+          {
+            "action": "Ayarlar üzerinden guided mode'u tamamlayıp tekrar /getting-started adresine gitmeyi deneyin.",
+            "expected_result": "Onboarding tamamlandıysa sayfa anında ana tabloya (/) yönlendirir."
+          }
+        ],
+        "expected_result": "Guided setup yalnızca aktifken görüntülenir ve yenilemelerde durum korunur."
+      },
+      {
+        "external_id": "CRM-ONBOARD-302",
+        "title": "Adım 1 - Profil ayarlarına yönlendirme",
+        "description": "İlk görev kartındaki CTA kullanıcıyı Ayarlar → Profil sayfasına götürür ve geri dönünce ilerleme güncel kalır.",
+        "steps": [
+          {
+            "action": "\"Profil ayarlarını tamamla\" kartındaki butona basın.",
+            "expected_result": "Yeni sekme açılmadan uygulama içinde Ayarlar → Profil sayfası açılır."
+          },
+          {
+            "action": "Profil kartında küçük bir değişiklik yapıp kaydedin.",
+            "expected_result": "Kaydetme işlemi başarıyla tamamlandığında yeşil toast görünür."
+          },
+          {
+            "action": "Tarayıcı geri butonuyla /getting-started sayfasına dönün.",
+            "expected_result": "İlerleme göstergesi % birim artar ve Adım 1 kartı \"Tamamlandı\" alanına taşınır."
+          }
+        ],
+        "expected_result": "İlk CTA doğru ekrana götürür ve geri dönüşte adım tamamlanmış görünür."
+      },
+      {
+        "external_id": "CRM-ONBOARD-303",
+        "title": "Adım 2 - İlk kişiyi oluşturma",
+        "description": "İkinci görevdeki buton leads tablosunu açar ve yeni kişi oluşturulduğunda görevin tamamlandığı kontrol edilir.",
+        "steps": [
+          {
+            "action": "/getting-started sayfasında Adım 2 kartındaki \"Kişi oluştur\" butonuna basın.",
+            "expected_result": "Leads tablosu filtrelenmeden açılır."
+          },
+          {
+            "action": "\"Kişi Ekle\" paneliyle yeni bir kişi oluşturun ve paneli kapatın.",
+            "expected_result": "Yeni kişi satırı listenin en üstünde görünür ve başarı tostu çıkar."
+          },
+          {
+            "action": "\"Back\" veya yan menüden tekrar /getting-started sayfasına dönün.",
+            "expected_result": "Adım 2 tamamlandı olarak işaretlenir; kalan görev sayısı azalır."
+          }
+        ],
+        "expected_result": "Leads CTA doğru çalışır ve yeni kişi oluşturulduğunda görev işaretlenir."
+      },
+      {
+        "external_id": "CRM-ONBOARD-304",
+        "title": "Adım 3 - Proje oluşturma sihirbazına geçiş",
+        "description": "Üçüncü görev paketin doğru rota ile proje oluşturma akışına bağlandığını doğrular.",
+        "steps": [
+          {
+            "action": "/getting-started sayfasında Adım 3 kartındaki butona tıklayın.",
+            "expected_result": "Projeler sayfası açılır ve sağ üstteki \"Proje Oluştur\" tuşu vurgulanır."
+          },
+          {
+            "action": "\"Proje Oluştur\" sihirbazını başlatın ve zorunlu alanları doldurarak bir proje kaydedin.",
+            "expected_result": "Sihirbaz başarı tostu gösterir ve yeni proje listenin üstünde yer alır."
+          },
+          {
+            "action": "/getting-started sayfasına dönün.",
+            "expected_result": "Adım 3 tamamlananlar bölümünde görünür."
+          }
+        ],
+        "expected_result": "Proje oluşturma görevi CTA üzerinden tamamlanıp listeye yansır."
+      },
+      {
+        "external_id": "CRM-ONBOARD-305",
+        "title": "Adım 4 - Proje görünümlerini keşfetme",
+        "description": "Board/List/Arşiv görünümleri arasında geçiş yapılabildiği ve görev ilerlediği doğrulanır.",
+        "steps": [
+          {
+            "action": "/getting-started sayfasında Adım 4 kartındaki butona basın.",
+            "expected_result": "Projeler sayfası `?tutorial=true` parametresiyle açılır ve üstte yönlendirme bannerı görünür."
+          },
+          {
+            "action": "Board, Liste ve Arşiv sekmelerine sırayla tıklayın.",
+            "expected_result": "Her sekme kendi veri görünümünü gösterir; parametre kalmaya devam eder."
+          },
+          {
+            "action": "Guided bannerındaki \"Anladım\" veya benzeri tamamla butonuna basın.",
+            "expected_result": "Banner kapanır; /getting-started sayfasına döndüğünüzde Adım 4 tamamlanmıştır."
+          }
+        ],
+        "expected_result": "Kullanıcı üç görünümü ziyaret ettiğinde görev tamamlanır."
+      },
+      {
+        "external_id": "CRM-ONBOARD-306",
+        "title": "Adım 5 - Seans planlama görevinin tamamlanması",
+        "description": "Beşinci görev leads → seans planlama akışını açar ve yeni seans oluşturulduğunda ilerleme kaydedilir.",
+        "steps": [
+          {
+            "action": "/getting-started sayfasında Adım 5 butonuna basın.",
+            "expected_result": "Leads sayfası `?tutorial=scheduling` parametresiyle açılır; üstte takvim rehberi görünür."
+          },
+          {
+            "action": "Herhangi bir lead satırını açıp \"Seans Ekle\" butonuyla yeni bir seans planlayın.",
+            "expected_result": "Seans kaydı oluşturulur, proje/sessions listesinde tarih görünür ve toast mesajı çıkar."
+          },
+          {
+            "action": "Getting Started sayfasına dönün.",
+            "expected_result": "Adım 5 tamamlandı olarak işaretlenir ve kalan adım sayısı güncellenir."
+          }
+        ],
+        "expected_result": "CTA seans planlama rehberini açar ve yeni seans kaydı görevi bitirir."
+      },
+      {
+        "external_id": "CRM-ONBOARD-307",
+        "title": "Adım 6 - Paket yapılandırmasını doğrulama",
+        "description": "Son görevde Ayarlar → Hizmetler sayfası açılır ve paket düzenleme akışıyla tamamlanır.",
+        "steps": [
+          {
+            "action": "/getting-started sayfasında Adım 6 kartındaki butona tıklayın.",
+            "expected_result": "Ayarlar → Hizmetler sekmesi açılır ve \"Paketler\" kartı görünür."
+          },
+          {
+            "action": "Herhangi bir paketi düzenleyip fiyatını güncelleyin veya yeni paket oluşturun.",
+            "expected_result": "Kaydetme sonrası yeşil toast görünür; paket listesi yeni değeri gösterir."
+          },
+          {
+            "action": "/getting-started sayfasına dönüp ilerlemeyi kontrol edin.",
+            "expected_result": "Adım 6 tamamlandı olarak işaretlenir ve tüm görevler tamamlanmışsa üstte \"Kurulum tamamlandı\" mesajı çıkar."
+          }
+        ],
+        "expected_result": "Paket kartı üzerinden yapılan kaydetme işlemi görevi tamamlar."
+      },
+      {
+        "external_id": "CRM-ONBOARD-308",
+        "title": "Guided setup tamamlandığında otomatik yönlendirme",
+        "description": "Tüm adımlar tamamlandıktan sonra bitir butonu ve otomatik yönlendirme davranışı doğrulanır.",
+        "steps": [
+          {
+            "action": "Altı görevin tamamını bitirdikten sonra Getting Started sayfasında görünen \"Kurulumu tamamla\" butonuna tıklayın.",
+            "expected_result": "Buton kısa süre yüklenir ve toast \"Onboarding tamamlandı\" mesajı verir."
+          },
+          {
+            "action": "Butona bastıktan sonra birkaç saniye bekleyin.",
+            "expected_result": "Kullanıcı otomatik olarak ana tablo rotası olan \"/\" adresine yönlendirilir."
+          },
+          {
+            "action": "Adres çubuğuna tekrar /getting-started yazın.",
+            "expected_result": "Onboarding tamamlandığı için tekrar bu sayfaya girmek mümkün olmaz; uygulama hemen ana sayfaya döndürür."
+          }
+        ],
+        "expected_result": "Kurulum tamamlandığında guided sayfa kapanır ve onboarding stage \"completed\" olur."
       }
     ]
   }

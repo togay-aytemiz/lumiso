@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
-const VARIABLE_REGEX = /\{([a-zA-Z0-9_]+)(?:\|([^}]*))?\}/g;
+const VARIABLE_REGEX =
+  /\{\{\s*([a-zA-Z0-9_]+)\s*(?:\|([^}]*))?\s*\}\}|\{\s*([a-zA-Z0-9_]+)\s*(?:\|([^}]*))?\s*\}/g;
 
 interface VariableTokenTextProps {
   text: string;
@@ -16,20 +17,21 @@ interface Token {
 
 function tokenize(text: string, variableLabels: Record<string, string>): Token[] {
   const tokens: Token[] = [];
-  VARIABLE_REGEX.lastIndex = 0;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
   while ((match = VARIABLE_REGEX.exec(text)) !== null) {
-    if (match.index > lastIndex) {
+    const matchIndex = match.index;
+    const matchLength = match[0].length;
+    if (matchIndex > lastIndex) {
       tokens.push({
         type: "text",
-        value: text.slice(lastIndex, match.index),
+        value: text.slice(lastIndex, matchIndex),
       });
     }
 
-    const key = match[1];
-    const fallbackLabel = match[2];
+    const key = match[1] ?? match[3];
+    const fallbackLabel = match[2] ?? match[4];
     const label = variableLabels[key] || fallbackLabel || key;
 
     tokens.push({
@@ -38,7 +40,7 @@ function tokenize(text: string, variableLabels: Record<string, string>): Token[]
       key,
     });
 
-    lastIndex = VARIABLE_REGEX.lastIndex;
+    lastIndex = matchIndex + matchLength;
   }
 
   if (lastIndex < text.length) {

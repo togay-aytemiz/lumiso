@@ -495,7 +495,7 @@ const AllProjects = () => {
       description: tForms('projects.welcomeTutorialDescription'),
       content: <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          In this tutorial, you'll master the art of project management for photographers:
+          {t('projects.tutorial.welcome.subtitle')}
         </p>
         <div className="space-y-3">
           <div className="flex items-center gap-2">
@@ -510,14 +510,10 @@ const AllProjects = () => {
             <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
             <span className="text-sm">{t('projects.archived_view_benefit')}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
-            <span className="text-sm">{t('projects.status_management_benefit')}</span>
-          </div>
         </div>
         <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg mt-4">
           <p className="text-sm text-blue-700 dark:text-blue-300">
-            💡 Each view serves a different purpose to help you stay organized and efficient with your photography projects.
+            {t('projects.tutorial.exploreViews.subtitle')}
           </p>
         </div>
       </div>,
@@ -526,11 +522,11 @@ const AllProjects = () => {
     },
     {
       id: 2,
-      title: "Board View (Kanban Style)",
-      description: isMobile ? "The board view shows your projects organized by stages in columns." : "Try moving a project between stages by dragging and dropping to continue.",
+      title: tForms('projects.boardViewTitle'),
+      description: isMobile ? tForms('projects.boardViewMobileDescription') : tForms('projects.boardViewDescription'),
       content: isMobile 
-        ? "This visual workflow shows projects in different stages. On mobile devices, tap on a project to change its status instead of dragging."
-        : "The board view is perfect for visual project management. You can drag projects between columns to update their status. Try moving at least one project to a different stage to continue the tutorial.",
+        ? tForms('projects.boardViewMobileContent')
+        : tForms('projects.boardViewContent'),
       canProceed: isMobile || hasMovedProject,
       requiresAction: !isMobile,
       disabledTooltip: isMobile ? undefined : tForms('projects.boardViewTooltip'),
@@ -559,10 +555,10 @@ const AllProjects = () => {
     {
       id: 5,
       title: tForms('projects.completionTitle'),
-      description: "Congratulations! You now understand all three project views and how to use them effectively.",
+      description: tForms('projects.completionDescription'),
       content: <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          You've successfully learned how to navigate between different project views:
+          {tForms('projects.completionIntro')}
         </p>
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -580,7 +576,7 @@ const AllProjects = () => {
         </div>
         <div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
           <p className="text-sm text-green-700 dark:text-green-300">
-            🎉 You're ready to continue setting up your photography business and schedule your first session!
+            {tForms('projects.completionCallout')}
           </p>
         </div>
       </div>,

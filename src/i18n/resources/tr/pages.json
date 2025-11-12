@@ -891,7 +891,7 @@
       "welcome": {
         "title": "Proje Yönetim Merkezinize Hoş Geldiniz",
         "description": "Fotoğrafçılık projelerinizi görüntülemenin ve düzenlemenin üç yolunu keşfedelim.",
-        "subtitle": "Bu eğitimde proje yönetiminde hız kazanacaksınız:",
+        "subtitle": "Bu eğitimde, işletmeniz için tasarlanmış akıcı proje yönetimini ustalıkla kullanmayı öğreneceksiniz:",
         "boardView": "Tahta Görünümü Sürükle bırak ile görsel iş akışı",
         "listView": "Liste Görünümü Sıralama ve filtreleme ile tablo",
         "archivedView": "Arşiv Görünümü Referans için tamamlanan projeler"
@@ -899,6 +899,7 @@
       "exploreViews": {
         "title": "Farklı Görünümleri Keşfedin",
         "description": "Pano, Liste ve Arşiv görünümleri arasında geçiş yapın, işleyişlerini görün.",
+        "subtitle": "💡 Her görünüm projelerinizi düzenli ve verimli tutmanıza yardımcı olmak için farklı bir amaç taşır.",
         "tip": "Pano görünümünde bir projeyi farklı aşamalar arasında taşıyın."
       },
       "completion": {
@@ -2478,28 +2479,28 @@
         }
       }
     }
-  }
-}
-    "tutorial": {
+  },
+  "tutorial": {
       "welcome": {
         "title": "Proje Yönetim Merkezine Hoş Geldiniz",
-        "description": "Fotoğraf projelerini yönetmenin üç güçlü yolunu keşfedelim.",
-        "subtitle": "Bu eğitimde, stüdyolar için akıcı proje yönetimini öğreneceksiniz:",
-        "boardView": "Pano Görünümü - Sürükle-bırak ile görsel iş akışı",
-        "listView": "Liste Görünümü - Sıralanabilir detaylı tablo",
-        "archivedView": "Arşiv Görünümü - Referans için tamamlanan projeler"
-      },
-      "exploreViews": {
-        "title": "Farklı Görünümleri Keşfedin",
-        "description": "Pano, Liste ve Arşivli görünümlerini tıklayarak her birinin nasıl çalıştığını görün.",
-        "subtitle": "💡 Her görünüm projelerinizi düzenli ve verimli tutmak için farklı bir amaç taşır.",
-        "tip": "Pano görünümünde projeleri aşamalar arasında sürüklemeyi deneyin!"
-      },
-      "completion": {
-        "title": "Harika! Artık Projeleri Yönetmeye Hazırsınız",
-        "description": "Artık proje yönetimi arayüzünü öğrendiniz; bu güçlü görünümlerle işinizi daha verimli organize edebilirsiniz.",
-        "dragDrop": "Projeleri aşamalar arasında sürükleyip bırakın",
-        "tableView": "Detaylı tabloyu sıralayıp filtreleyin",
-        "archivedProjects": "Tamamlanan projeleri arşivleyin"
-      }
+        "description": "Projelerinizi görüntüleme ve organize etmenin üç güçlü yolunu keşfedelim.",
+      "subtitle": "Bu eğitimde, işletmeniz için tasarlanmış akıcı proje yönetimini ustalıkla kullanmayı öğreneceksiniz:",
+      "boardView": "Pano Görünümü - Sürükle-bırak ile görsel iş akışı",
+      "listView": "Liste Görünümü - Sıralanabilir detaylı tablo",
+      "archivedView": "Arşiv Görünümü - Referans için tamamlanan projeler"
     },
+    "exploreViews": {
+      "title": "Farklı Görünümleri Keşfedin",
+      "description": "Pano, Liste ve Arşivli görünümlerini tıklayarak her birinin nasıl çalıştığını görün.",
+      "subtitle": "💡 Her görünüm projelerinizi düzenli ve verimli tutmak için farklı bir amaç taşır.",
+      "tip": "Pano görünümünde projeleri aşamalar arasında sürüklemeyi deneyin!"
+    },
+    "completion": {
+      "title": "Harika! Artık Projeleri Yönetmeye Hazırsınız",
+      "description": "Artık proje yönetimi arayüzünü öğrendiniz; bu güçlü görünümlerle işinizi daha verimli organize edebilirsiniz.",
+      "dragDrop": "Projeleri aşamalar arasında sürükleyip bırakın",
+      "tableView": "Detaylı tabloyu sıralayıp filtreleyin",
+      "archivedProjects": "Tamamlanan projeleri arşivleyin"
+    }
+  }
+}

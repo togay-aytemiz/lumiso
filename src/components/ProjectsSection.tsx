@@ -127,7 +127,9 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
 
 
   const handleViewProject = (project: Project) => {
-    // Navigate to full project page instead of opening dialog
+    if (onProjectClicked) {
+      onProjectClicked();
+    }
     navigate(`/projects/${project.id}`);
   };
 
@@ -147,6 +149,9 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
 
   const handleViewFullDetails = () => {
     if (viewingProject) {
+      if (onProjectClicked) {
+        onProjectClicked();
+      }
       navigate(`/projects/${viewingProject.id}`);
       setShowViewDialog(false);
     }

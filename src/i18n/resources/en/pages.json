@@ -890,7 +890,7 @@
       "welcome": {
         "title": "Welcome to Your Project Management Hub",
         "description": "Let's explore the three powerful ways to view and organize your photography projects.",
-        "subtitle": "In this tutorial, you'll master the art of project management for photographers:",
+        "subtitle": "In this tutorial, you'll master streamlined project management built for creative studios:",
         "boardView": "Board View - Visual workflow management with drag & drop",
         "listView": "List View - Detailed table with sorting and filtering",
         "archivedView": "Archived View - Completed projects for reference"
@@ -898,6 +898,7 @@
       "exploreViews": {
         "title": "Explore Different Views",
         "description": "Let's try out the different view modes. Click between Board, List, and Archived views to see how each one works.",
+        "subtitle": "💡 Each view serves a different purpose to help you stay organized and efficient across your projects.",
         "tip": "Try moving a project between different stages in board view!"
       },
       "completion": {

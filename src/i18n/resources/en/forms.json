@@ -1871,6 +1871,10 @@
       "request_title": "Password recovery",
       "request_instructions": "Enter your email address and we'll send you a link to reset your password.",
       "request_button": "Send reset link"
+    },
+    "password_visibility": {
+      "show": "Show password",
+      "hide": "Hide password"
     }
   }
 }

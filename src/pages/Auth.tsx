@@ -109,6 +109,10 @@ const Auth = () => {
   };
   const pwdStrength = getPasswordStrength(password);
   const resetPwdStrength = getPasswordStrength(newPassword);
+  const getPasswordToggleLabel = (visible: boolean) =>
+    visible
+      ? tForm("auth.password_visibility.hide", "Hide password")
+      : tForm("auth.password_visibility.show", "Show password");
 
   useEffect(() => {
     const normalizedPath = normalizeAuthPath(location.pathname || "");
@@ -145,13 +149,11 @@ const Auth = () => {
       if (isPasswordResetRequestMode) {
         setIsPasswordResetRequestMode(false);
       }
-      if (showPassword) {
-        setShowPassword(false);
-      }
+      setShowPassword(false);
     } else if (isPasswordResetMode) {
       setIsPasswordResetMode(false);
     }
-  }, [recoveryIntentActive, isPasswordResetMode, isPasswordResetRequestMode, showPassword]);
+  }, [recoveryIntentActive, isPasswordResetMode, isPasswordResetRequestMode]);
 
   // Redirect if already logged in (unless we're handling recovery/invite flows)
   useEffect(() => {
@@ -537,6 +539,7 @@ const Auth = () => {
                         className="absolute inset-y-0 right-1 my-1 flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 hover:bg-primary/10 hover:text-primary"
                         onClick={() => setShowPassword(!showPassword)}
                         disabled={updatingPassword}
+                        aria-label={getPasswordToggleLabel(showPassword)}
                       >
                         {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </Button>
@@ -654,6 +657,7 @@ const Auth = () => {
                           className="absolute inset-y-0 right-1 my-1 flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 hover:bg-primary/10 hover:text-primary"
                           onClick={() => setShowPassword(!showPassword)}
                           disabled={loading}
+                          aria-label={getPasswordToggleLabel(showPassword)}
                         >
                           {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </Button>

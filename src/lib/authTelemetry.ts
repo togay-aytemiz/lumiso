@@ -1,5 +1,17 @@
 import { trackEvent } from "./telemetry";
 
+const isDevEnvironment = () => {
+  if (typeof process !== "undefined" && process.env?.NODE_ENV === "development") {
+    return true;
+  }
+  try {
+    const meta = (0, eval)("import.meta") as { env?: { DEV?: boolean } } | undefined;
+    return Boolean(meta?.env?.DEV);
+  } catch {
+    return false;
+  }
+};
+
 type AuthDebugWindow = Window &
   typeof globalThis & {
     __lumisoAuthEvents?: Array<{
@@ -83,7 +95,7 @@ export const logAuthEvent = (event: AuthEvent, payload: AuthEventPayload = {}) =
 
   appendAuthBreadcrumb(event, safePayload);
 
-  if (import.meta.env.DEV) {
+  if (isDevEnvironment()) {
     console.info("[auth-event]", event, safePayload);
   }
 };

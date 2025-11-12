@@ -34,6 +34,7 @@ jest.mock("@/integrations/supabase/client", () => ({
       signInWithPassword: jest.fn(),
       resetPasswordForEmail: jest.fn(),
       updateUser: jest.fn(),
+      getSession: jest.fn(),
     },
   },
 }));
@@ -58,6 +59,7 @@ type SignInWithPasswordResponse = Awaited<ReturnType<SupabaseAuthMock["signInWit
 type SignUpResponse = Awaited<ReturnType<SupabaseAuthMock["signUp"]>>;
 type ResetPasswordResponse = Awaited<ReturnType<SupabaseAuthMock["resetPasswordForEmail"]>>;
 type UpdateUserResponse = Awaited<ReturnType<SupabaseAuthMock["updateUser"]>>;
+type GetSessionResponse = Awaited<ReturnType<SupabaseAuthMock["getSession"]>>;
 
 const navigateMock = jest.fn();
 const toastMock = { success: jest.fn(), error: jest.fn() };
@@ -99,6 +101,11 @@ beforeEach(() => {
   const authMock = getAuthMock();
   const signOutResponse: SignOutResponse = { error: null };
   authMock.signOut.mockResolvedValue(signOutResponse);
+  const getSessionResponse: GetSessionResponse = {
+    data: { session: { user: { email: "test@example.com" } } },
+    error: null,
+  };
+  authMock.getSession.mockResolvedValue(getSessionResponse);
 });
 
 afterEach(() => {
@@ -353,6 +360,34 @@ describe("Auth page", () => {
     expect(screen.queryByRole("button", { name: "auth.sign_in.button" })).not.toBeInTheDocument();
 
     expect(getAuthMock().signInWithPassword).not.toHaveBeenCalled();
-    expect(navigateMock).not.toHaveBeenCalled();
+    expect(navigateMock).toHaveBeenCalledWith(
+      "/auth/recovery",
+      expect.objectContaining({ replace: true })
+    );
+  });
+
+  it("allows toggling password visibility during recovery reset", async () => {
+    useSafeFakeTimers();
+    const authMock = getAuthMock();
+    authMock.getSession.mockResolvedValueOnce({
+      data: { session: { user: { email: "reset@example.com" } } },
+      error: null,
+    } satisfies GetSessionResponse);
+    window.history.replaceState(null, "", "/auth/recovery#type=recovery");
+
+    render(<Auth />);
+
+    await waitFor(() => {
+      expect(authMock.getSession).toHaveBeenCalled();
+    });
+
+    const passwordField = screen.getByLabelText("labels.password") as HTMLInputElement;
+    expect(passwordField).toHaveAttribute("type", "password");
+
+    fireEvent.click(screen.getByRole("button", { name: "Show password" }));
+    expect(passwordField).toHaveAttribute("type", "text");
+
+    fireEvent.click(screen.getByRole("button", { name: "Hide password" }));
+    expect(passwordField).toHaveAttribute("type", "password");
   });
 });

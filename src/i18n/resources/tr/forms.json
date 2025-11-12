@@ -1870,6 +1870,10 @@
       "request_title": "Şifre kurtarma",
       "request_instructions": "E-posta adresinizi girin, şifrenizi sıfırlamanız için size bir bağlantı gönderelim.",
       "request_button": "Sıfırlama bağlantısı gönder"
+    },
+    "password_visibility": {
+      "show": "Şifreyi göster",
+      "hide": "Şifreyi gizle"
     }
   }
 }

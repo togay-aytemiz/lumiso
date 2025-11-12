@@ -97,14 +97,14 @@
       }
     },
     "sampleData": {
-      "title": "Kickstart things with a guided demo set",
-      "description": "We're about to add a tiny batch of demo leads, projects, and sessions so the workspace feels alive. Toggle it off below if you'd rather start spotless.",
+      "title": "",
+      "description": "",
       "yes": {
-        "title": "Keep the sample data",
+        "title": "Yes, load sample data",
         "description": "Load the guided tour records—you can delete them whenever you want."
       },
       "no": {
-        "title": "Opt out, start clean",
+        "title": "No, start clean",
         "description": "Skip the preload entirely and build every record yourself."
       },
       "recommended": "Recommended",

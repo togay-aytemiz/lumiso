@@ -43,6 +43,7 @@ DECLARE
   session_label2 text;
   session_label3 text;
   notes_prefix text := '[Sample Data] ';
+  start_time timestamptz;
 BEGIN
   SELECT EXISTS(
     SELECT 1
@@ -52,9 +53,34 @@ BEGIN
   ) INTO existing;
 
   IF existing THEN
+    PERFORM public.log_intake_seeding_event(
+      org_id,
+      owner_uuid,
+      'seed_sample_data_for_org',
+      'skipped',
+      'Sample data already exists for org.',
+      jsonb_build_object('reason', 'existing_sample_data')
+    );
     RETURN;
   END IF;
 
+  start_time := clock_timestamp();
+
+  PERFORM public.log_intake_seeding_event(
+    org_id,
+    owner_uuid,
+    'seed_sample_data_for_org',
+    'started',
+    'Creating localized sample data set.',
+    jsonb_build_object(
+      'resolved_locale',
+      locale_code,
+      'preferred_project_type_slugs',
+      preferred_slugs
+    )
+  );
+
+  BEGIN
   IF locale_code LIKE 'tr%' THEN
     lead_name1 := 'Ayşe & Mehmet';
     lead_name2 := 'Zeynep Kılıç';
@@ -310,5 +336,39 @@ BEGIN
       now(),
       now()
     );
+  
+    PERFORM public.log_intake_seeding_event(
+      org_id,
+      owner_uuid,
+      'seed_sample_data_for_org',
+      'succeeded',
+      'Sample data created.',
+      jsonb_build_object(
+        'resolved_locale',
+        locale_code,
+        'preferred_project_type_slugs',
+        preferred_slugs,
+        'duration_ms',
+        FLOOR(EXTRACT(EPOCH FROM (clock_timestamp() - start_time)) * 1000)
+      )
+    );
+  EXCEPTION
+    WHEN OTHERS THEN
+      PERFORM public.log_intake_seeding_event(
+        org_id,
+        owner_uuid,
+        'seed_sample_data_for_org',
+        'failed',
+        'Sample data seeding failed.',
+        jsonb_build_object(
+          'resolved_locale',
+          locale_code,
+          'preferred_project_type_slugs',
+          preferred_slugs
+        ),
+        SQLERRM
+      );
+      RAISE;
+  END;
 END;
 $function$;

@@ -100,11 +100,11 @@
       "title": "",
       "description": "",
       "yes": {
-        "title": "Örnek veriler kalsın",
+        "title": "Örnek verileri yükle",
         "description": "Rehber kayıtları yükleyelim; istediğin zaman silebilirsin."
       },
       "no": {
-        "title": "Vazgeç, temiz başla",
+        "title": "Hayır, temiz başla",
         "description": "Önyüklemeyi atla ve tüm kayıtları kendin oluşturmaya başla."
       },
       "recommended": "Önerilen",

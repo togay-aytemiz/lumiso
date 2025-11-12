@@ -665,7 +665,7 @@ export function ProfileIntakeGate() {
             )}
             <Button
               onClick={handleNext}
-              disabled={submitting}
+              disabled={submitting || (isLastStep && wantsSampleData === null)}
               className="sm:min-w-[160px]"
             >
               {submitting && isLastStep

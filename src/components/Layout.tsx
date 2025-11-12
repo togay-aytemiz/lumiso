@@ -9,6 +9,7 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import OfflineBanner from "@/components/OfflineBanner";
 import RoutePrefetcher from "@/components/RoutePrefetcher";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ProfileIntakeGate } from "@/components/ProfileIntakeGate";
 
 const LAST_NON_SETTINGS_PATH_KEY = "lumiso:last-non-settings-path";
 
@@ -95,6 +96,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       
       {/* Restart Guided Mode Button (only for specific user) */}
       <RestartGuidedModeButton />
+
+      {/* Post-verification intake gate */}
+      <ProfileIntakeGate />
     </SidebarProvider>
   );
 }

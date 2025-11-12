@@ -67,6 +67,33 @@ export type Database = {
           },
         ]
       }
+      default_project_type_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          locale: string
+          name: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          locale?: string
+          name: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          locale?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           created_at: string
@@ -617,8 +644,13 @@ export type Database = {
           organization_id: string
           phone: string | null
           photography_business_name: string | null
+          preferred_project_types: string[] | null
+          preferred_locale: string
           primary_brand_color: string | null
+          profile_intake_completed_at: string | null
+          seed_sample_data_onboarding: boolean
           show_quick_status_buttons: boolean | null
+          service_focus: string[] | null
           social_channels: Json | null
           tax_profile: Json | null
           time_format: string | null
@@ -644,8 +676,13 @@ export type Database = {
           organization_id: string
           phone?: string | null
           photography_business_name?: string | null
+          preferred_project_types?: string[] | null
+          preferred_locale?: string
           primary_brand_color?: string | null
+          profile_intake_completed_at?: string | null
+          seed_sample_data_onboarding?: boolean
           show_quick_status_buttons?: boolean | null
+          service_focus?: string[] | null
           social_channels?: Json | null
           tax_profile?: Json | null
           time_format?: string | null
@@ -671,8 +708,13 @@ export type Database = {
           organization_id?: string
           phone?: string | null
           photography_business_name?: string | null
+          preferred_project_types?: string[] | null
+          preferred_locale?: string
           primary_brand_color?: string | null
+          profile_intake_completed_at?: string | null
+          seed_sample_data_onboarding?: boolean
           show_quick_status_buttons?: boolean | null
+          service_focus?: string[] | null
           social_channels?: Json | null
           tax_profile?: Json | null
           time_format?: string | null
@@ -2122,7 +2164,13 @@ export type Database = {
         Returns: undefined
       }
       ensure_default_project_types_for_org: {
-        Args: { org_id: string; user_uuid: string }
+        Args: {
+          org_id: string
+          user_uuid: string
+          preferred_slugs?: string[] | null
+          locale?: string | null
+          force_replace?: boolean | null
+        }
         Returns: undefined
       }
       ensure_default_services: {
@@ -2151,8 +2199,13 @@ export type Database = {
       }
       ensure_organization_settings: {
         Args:
-          | { detected_timezone?: string; org_id: string }
           | { org_id: string }
+          | {
+              org_id: string
+              detected_timezone?: string | null
+              detected_time_format?: string | null
+              detected_locale?: string | null
+            }
         Returns: string
       }
       ensure_system_lead_statuses: {

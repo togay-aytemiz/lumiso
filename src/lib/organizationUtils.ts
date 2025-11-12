@@ -55,7 +55,9 @@ export async function getUserOrganizationId(): Promise<string | null> {
         try {
           // Create organization settings
           await supabase.rpc('ensure_organization_settings', { 
-            org_id: newOrg.id 
+            org_id: newOrg.id,
+            detected_locale:
+              typeof navigator !== "undefined" ? navigator.language : undefined,
           });
 
           // Create default lead field definitions

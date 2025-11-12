@@ -2,10 +2,10 @@
   "auth": {
     "platformHighlights": "Platform highlights",
     "welcome": {
-      "signIn": "Welcome back 👋🏻",
-      "signUp": "Let's get started 🚀",
-      "recovery": "Reset your password 🔐",
-      "recoveryRequest": "Reset your password 🔐"
+      "signIn": "Welcome back \ud83d\udc4b\ud83c\udffb",
+      "signUp": "Let's get started \ud83d\ude80",
+      "recovery": "Reset your password \ud83d\udd10",
+      "recoveryRequest": "Reset your password \ud83d\udd10"
     },
     "copy": {
       "signIn": "Sign in with your credentials to pick up exactly where your team left off.",
@@ -40,6 +40,100 @@
       "progress": "Progress for feature {{index}}",
       "prev": "Previous feature",
       "next": "Next feature"
+    }
+  },
+  "profileIntake": {
+    "badge": "Before you start",
+    "title": "Tell us about your studio",
+    "subtitle": "We use these basics for outgoing emails and upcoming defaults\u2014no onboarding tricks, just accurate info.",
+    "stepLabel": "Step {{current}} of {{total}}",
+    "steps": {
+      "name": {
+        "title": "What's your preferred name?",
+        "description": "We'll use this on dashboards, emails, and templates so everything feels personal."
+      },
+      "business": {
+        "title": "What should we call your business?",
+        "description": "This appears in invoices, email signatures, and future client portals."
+      },
+      "projects": {
+        "title": "Pick the work you shoot most",
+        "description": "We use this to scaffold default project types and dial in any optional sample data."
+      },
+      "sample": {
+        "title": "Do you want us to preload demo data?",
+        "description": "Choose whether we should add a tiny set of leads, projects, and sessions so you can explore faster."
+      }
+    },
+    "displayName": {
+      "label": "Preferred display name",
+      "placeholder": "e.g. Tayte or Tayte from Lumiso Studios",
+      "helper": "Shown in emails, notifications, and collaborator menus."
+    },
+    "businessName": {
+      "label": "Business name",
+      "placeholder": "e.g. Lumiso Studios",
+      "helper": "Appears on invoices, emails, and future client portals."
+    },
+    "projectTypes": {
+      "label": "Which projects do you shoot most?",
+      "helper": "Pick every service you offer\u2014your first pick becomes the default for new projects and we'll preload matching sample data.",
+      "managementHint": "Need another category? Head to Settings \u2192 Projects & Sessions anytime to edit or add more."
+    },
+    "options": {
+      "projectTypes": {
+        "wedding": "Wedding",
+        "family": "Family",
+        "children": "Children",
+        "maternity": "Maternity",
+        "birth": "Birth",
+        "newborn": "Newborn",
+        "headshots": "Headshots",
+        "senior": "Senior",
+        "commercial": "Commercial",
+        "event": "Event",
+        "pet": "Pet",
+        "realEstate": "Real Estate"
+      }
+    },
+    "sampleData": {
+      "title": "Kickstart things with a guided demo set",
+      "description": "We're about to add a tiny batch of demo leads, projects, and sessions so the workspace feels alive. Toggle it off below if you'd rather start spotless.",
+      "yes": {
+        "title": "Keep the sample data",
+        "description": "Load the guided tour records—you can delete them whenever you want."
+      },
+      "no": {
+        "title": "Opt out, start clean",
+        "description": "Skip the preload entirely and build every record yourself."
+      },
+      "recommended": "Recommended",
+      "error": "Pick how you'd like to start."
+    },
+    "footers": {
+      "name": "Update your preferred name anytime from Settings \u2192 Profile.",
+      "business": "Tweak your business identity under Settings \u2192 General.",
+      "projects": "Adjust your default project types in Settings \u2192 Projects & Sessions.",
+      "sample": "These guided records can be removed later from anywhere in the app."
+    },
+    "footer": "You can update these anytime from Settings \u2192 General.",
+    "actions": {
+      "continue": "Save and continue",
+      "next": "Continue",
+      "finish": "Save & continue",
+      "back": "Back",
+      "saving": "Saving..."
+    },
+    "errors": {
+      "displayName": "Tell us how we should refer to you.",
+      "businessName": "Add the name you share with clients.",
+      "projectTypes": "Choose at least one project type.",
+      "sampleData": "Pick how you'd like to start.",
+      "limit": "Pick up to {{count}} items."
+    },
+    "toast": {
+      "success": "Studio basics saved successfully.",
+      "error": "We couldn't save your preferences. Try again?"
     }
   },
   "leads": {
@@ -93,7 +187,7 @@
       "sectionTitle": "",
       "infoLabel": "Show details about {{metric}}",
       "timeframes": {
-        "newLast7Days": "New clients · This week",
+        "newLast7Days": "New clients \u00b7 This week",
         "recent30Days": "Last 30 days",
         "inactive14Days": "14+ days inactive"
       },
@@ -256,7 +350,7 @@
     },
     "tutorial": {
       "intro": {
-        "title": "Welcome to Lead Details! 📋",
+        "title": "Welcome to Lead Details! \ud83d\udccb",
         "description": "This is where you manage all information about a specific lead. Let's explore what you can see and do here:",
         "sections": [
           {
@@ -275,7 +369,7 @@
       },
       "createProject": {
         "title": "Create Your First Project",
-        "description": "Great! Turn this lead into a project by clicking the “Add Project” button below.",
+        "description": "Great! Turn this lead into a project by clicking the \u201cAdd Project\u201d button below.",
         "disabledTooltip": "Create a project first to continue"
       },
       "exploreProjects": {
@@ -289,15 +383,15 @@
         "disabledTooltip": "Click on your project to continue"
       },
       "complete": {
-        "title": "🎉 Congratulations! Tutorial Complete!",
-        "description": "Amazing work! You've mastered the fundamentals—from creating leads and converting them to projects, to managing client details and tracking progress.",
+        "title": "\ud83c\udf89 Congratulations! Tutorial Complete!",
+        "description": "Amazing work! You've mastered the fundamentals\u2014from creating leads and converting them to projects, to managing client details and tracking progress.",
         "projectsShortcut": "You can access all your projects anytime from the Projects page in the sidebar!"
       }
     },
     "scheduling": {
       "scheduleSession": {
         "title": "Schedule Your Photo Session",
-        "description": "Let’s schedule a photo session for this client. Click “Schedule Session” below to open the form.",
+        "description": "Let\u2019s schedule a photo session for this client. Click \u201cSchedule Session\u201d below to open the form.",
         "sections": [
           {
             "title": "Session Scheduling",
@@ -311,7 +405,7 @@
         "disabledTooltip": "Schedule a session to continue"
       },
       "sessionScheduled": {
-        "title": "🎉 Session Scheduled Successfully!",
+        "title": "\ud83c\udf89 Session Scheduled Successfully!",
         "description": "Excellent! Your session is on the calendar and visible in your session timeline here.",
         "banner": "Your session has been added to your calendar and you can find it in the Calendar page!",
         "tips": [
@@ -920,7 +1014,7 @@
       "schedule": {
         "title": "Today & upcoming sessions",
         "tooltip": "Combines today's non-cancelled sessions with future bookings so you can see everything happening next.",
-        "breakdown": "Today: {{today}} • Upcoming: {{upcoming}}",
+        "breakdown": "Today: {{today}} \u2022 Upcoming: {{upcoming}}",
         "breakdownAria": "{{today}} sessions today, {{upcoming}} upcoming",
         "action": "View upcoming"
       },
@@ -1050,7 +1144,7 @@
     "statsDescriptions": {
       "overdue": "Needs your attention",
       "today": "Scheduled for today",
-      "upcoming": "Tomorrow: {{tomorrow}} • Later: {{later}}",
+      "upcoming": "Tomorrow: {{tomorrow}} \u2022 Later: {{later}}",
       "completed": "Marked as done"
     },
     "kpis": {
@@ -1058,7 +1152,7 @@
       "viewToday": "View Today",
       "completedToday": "Today",
       "allTime": "All time",
-      "completedInfo": "Today: {{today}} • All time: {{allTime}}"
+      "completedInfo": "Today: {{today}} \u2022 All time: {{allTime}}"
     },
     "timeline": {
       "openLead": "Open lead",
@@ -1176,22 +1270,22 @@
         "emailHelp": "Your login email address (cannot be changed here)",
         "deletePhoto": "Delete Profile Photo",
         "deletePhotoConfirm": "Are you sure you want to delete your profile photo? This action cannot be undone.",
-      "deletePhotoButton": "Delete Photo"
-    },
-    "security": {
-      "title": "Password & security",
-      "description": "Send yourself a secure password reset link whenever you need to update your credentials.",
-      "hint": "We email a one-time link to your login address. It expires after 60 minutes for your safety.",
-      "cta": "Send reset email",
-      "ctaLoading": "Sending...",
-      "successTitle": "Reset link sent",
-      "successDescription": "Check {{email}} for the secure link to set a new password.",
-      "errorTitle": "Couldn't send reset link",
-      "errorDescription": "Please try again or contact support if the issue persists.",
-      "missingEmailTitle": "Email unavailable",
-      "missingEmailDescription": "We couldn't find your login email. Refresh the page or sign in again, then try once more."
-    },
-    "workingHours": {
+        "deletePhotoButton": "Delete Photo"
+      },
+      "security": {
+        "title": "Password & security",
+        "description": "Send yourself a secure password reset link whenever you need to update your credentials.",
+        "hint": "We email a one-time link to your login address. It expires after 60 minutes for your safety.",
+        "cta": "Send reset email",
+        "ctaLoading": "Sending...",
+        "successTitle": "Reset link sent",
+        "successDescription": "Check {{email}} for the secure link to set a new password.",
+        "errorTitle": "Couldn't send reset link",
+        "errorDescription": "Please try again or contact support if the issue persists.",
+        "missingEmailTitle": "Email unavailable",
+        "missingEmailDescription": "We couldn't find your login email. Refresh the page or sign in again, then try once more."
+      },
+      "workingHours": {
         "title": "Working Hours",
         "description": "Set your availability for scheduling sessions",
         "day": "Day",
@@ -1217,16 +1311,16 @@
         "completeInfo": {
           "title": "Complete Your Profile Information",
           "description": "Please fill in your full name and phone number, and consider uploading a profile photo. Your full name is required to continue.",
-          "fullNameRequired": "• Full Name: Required for client communications",
-          "phoneOptional": "• Phone Number: Optional but recommended",
-          "profilePhoto": "• Profile Photo: Shows in admin views and client messages"
+          "fullNameRequired": "\u2022 Full Name: Required for client communications",
+          "phoneOptional": "\u2022 Phone Number: Optional but recommended",
+          "profilePhoto": "\u2022 Profile Photo: Shows in admin views and client messages"
         },
         "businessInfo": {
           "title": "Set Up Your Business Information",
           "description": "Let's add your business name in the General settings. This will appear on client communications and invoices.",
-          "businessNameRequired": "• Business Name: Required for professional communications",
-          "usedIn": "• Used in client emails, invoices, and contracts",
-          "canChange": "• Can be changed later in General settings"
+          "businessNameRequired": "\u2022 Business Name: Required for professional communications",
+          "usedIn": "\u2022 Used in client emails, invoices, and contracts",
+          "canChange": "\u2022 Can be changed later in General settings"
         },
         "setupComplete": {
           "title": "Profile Setup Complete!",
@@ -1380,7 +1474,7 @@
             "tip": "Services can be reused across multiple packages"
           },
           "complete": {
-            "title": "🎉 Packages Setup Complete!",
+            "title": "\ud83c\udf89 Packages Setup Complete!",
             "description": "Excellent! You've successfully configured your photography packages and services. Your business is now ready to create professional proposals and manage bookings."
           }
         }
@@ -1567,7 +1661,7 @@
       "totalWorkflows": "Total Workflows",
       "active": "Active",
       "paused": "Paused",
-      "summary": "{{active}} active • {{paused}} paused",
+      "summary": "{{active}} active \u2022 {{paused}} paused",
       "activeDescription": "Automations currently running.",
       "pausedDescription": "Workflows waiting for tweaks or approval.",
       "coverageLabel": "Coverage",
@@ -1638,14 +1732,14 @@
         }
       },
       "critical": {
-        "title": "⚠️ Critical Issues Detected",
-        "stuckExecutions": "• {{count}} workflow execution(s) are stuck",
-        "lowSuccessRate": "• Success rate is below 80% ({{rate}}%)"
+        "title": "\u26a0\ufe0f Critical Issues Detected",
+        "stuckExecutions": "\u2022 {{count}} workflow execution(s) are stuck",
+        "lowSuccessRate": "\u2022 Success rate is below 80% ({{rate}}%)"
       },
       "warning": {
-        "title": "⚠️ Performance Issues",
-        "improveSuccessRate": "• Success rate could be improved ({{rate}}%)",
-        "allPaused": "• All workflows are paused"
+        "title": "\u26a0\ufe0f Performance Issues",
+        "improveSuccessRate": "\u2022 Success rate could be improved ({{rate}}%)",
+        "allPaused": "\u2022 All workflows are paused"
       },
       "metrics": {
         "totalWorkflows": "Total Workflows",
@@ -1820,7 +1914,7 @@
       "emailPreview": "Email Preview",
       "subject": "Subject:",
       "previewText": "Preview:",
-      "defaultSubject": "📸 Your photography session is confirmed!",
+      "defaultSubject": "\ud83d\udcf8 Your photography session is confirmed!",
       "helloCustomer": "Hello {{name}}!",
       "excitedMessage": "We're excited to capture your special moments",
       "lookingForward": "Looking forward to your session!",
@@ -2202,18 +2296,18 @@
   },
   "onboarding": {
     "getting_started": {
-      "welcome_title": "Welcome to Lumiso! 🎉",
+      "welcome_title": "Welcome to Lumiso! \ud83c\udf89",
       "welcome_subtitle": "Let's set up your photography business step by step",
       "need_help": "Need Help?",
       "skip_setup": "Skip Setup",
       "setup_progress": "Setup Progress",
       "now_label": "Now:",
       "next_label": "Next:",
-      "all_tasks_complete": "All tasks complete! 🎉",
+      "all_tasks_complete": "All tasks complete! \ud83c\udf89",
       "your_learning_path": "Your Learning Path",
       "learning_path_subtitle": "Each step teaches you how to use Lumiso naturally.",
       "coming_next": "Coming Next",
-      "congratulations": "Congratulations! 🎉",
+      "congratulations": "Congratulations! \ud83c\udf89",
       "setup_complete": "You've completed the guided setup!",
       "go_to_dashboard": "Go to Dashboard",
       "loading": "Loading..."
@@ -2257,7 +2351,7 @@
       }
     },
     "modal": {
-      "welcome_title": "Welcome to Lumiso! 🎉",
+      "welcome_title": "Welcome to Lumiso! \ud83c\udf89",
       "welcome_subtitle": "We'll guide you through setting up your photography CRM step by step. Each task builds on the previous one, so you'll learn naturally.",
       "what_youll_learn": "What you'll learn:",
       "skip_sample_data": "Skip & Use Sample Data",
@@ -2306,8 +2400,8 @@
       "step_of": "Step {{current}} of {{total}}",
       "step_title": "Step {{current}} of {{total}}: {{title}}",
       "exit_tutorial": "Exit Tutorial",
-      "hold_to_exit": "Hold to exit…",
-      "exiting": "Exiting…",
+      "hold_to_exit": "Hold to exit\u2026",
+      "exiting": "Exiting\u2026",
       "next": "Next",
       "complete": "Complete",
       "continue_setup": "Continue Setup"

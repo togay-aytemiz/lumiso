@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { detectBrowserTimezone } from "@/lib/dateFormatUtils";
+import { detectBrowserTimezone, detectBrowserHourFormat } from "@/lib/dateFormatUtils";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import {
   fetchOrganizationSettingsWithCache,
@@ -35,6 +35,7 @@ export interface SocialChannel {
 export interface OrganizationSettings extends CachedOrganizationSettings {
   socialChannels?: Record<string, SocialChannel>;
   taxProfile?: OrganizationTaxProfile;
+  preferred_locale?: string;
 }
 
 const DEFAULT_SOCIAL_CHANNELS: Record<string, SocialChannel> = {};
@@ -63,10 +64,32 @@ const normalizeSettings = (
     vatExempt: derivedVatExempt,
   };
 
+  const preferredProjectTypes = Array.isArray(settings.preferred_project_types)
+    ? settings.preferred_project_types
+    : [];
+
+  const serviceFocus = Array.isArray(settings.service_focus)
+    ? settings.service_focus
+    : [];
+
+  const seedSampleData =
+    typeof settings.seed_sample_data_onboarding === "boolean"
+      ? settings.seed_sample_data_onboarding
+      : false;
+
+  const preferredLocale =
+    typeof settings.preferred_locale === "string" && settings.preferred_locale.length > 0
+      ? settings.preferred_locale
+      : "tr";
+
   return {
     ...settings,
     socialChannels,
     taxProfile,
+    preferred_project_types: preferredProjectTypes,
+    service_focus: serviceFocus,
+    seed_sample_data_onboarding: seedSampleData,
+    preferred_locale: preferredLocale,
   };
 };
 
@@ -90,8 +113,14 @@ export const useOrganizationSettings = () => {
       if (!activeOrganizationId) return null;
       const detectedTimezone =
         typeof window !== "undefined" ? detectBrowserTimezone() : undefined;
+      const detectedHourFormat =
+        typeof window !== "undefined" ? detectBrowserHourFormat() : undefined;
+      const detectedLocale =
+        typeof navigator !== "undefined" ? navigator.language : undefined;
       return fetchOrganizationSettingsWithCache(activeOrganizationId, {
         detectedTimezone,
+        detectedHourFormat,
+        detectedLocale,
       });
     },
     enabled: !!activeOrganizationId,
@@ -183,9 +212,11 @@ export const useOrganizationSettings = () => {
     if (!activeOrganizationId) return;
     const detectedTimezone =
       typeof window !== "undefined" ? detectBrowserTimezone() : undefined;
+    const detectedHourFormat =
+      typeof window !== "undefined" ? detectBrowserHourFormat() : undefined;
     const latest = await fetchOrganizationSettingsWithCache(
       activeOrganizationId,
-      { force: true, detectedTimezone }
+      { force: true, detectedTimezone, detectedHourFormat }
     );
     setOrganizationSettingsCache(activeOrganizationId, latest);
     queryClient.setQueryData(

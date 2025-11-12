@@ -18,16 +18,17 @@ Use this checklist every time we touch the authentication stack. Record the envi
 | 1 | Email/password sign-in (happy path) | Sign in with a confirmed account. Refresh dashboard. | Redirect to `/`, session persists on refresh, breadcrumb shows `auth_sign_in_success`. | Pending |
 | 2 | Invalid credentials | Enter wrong password. | Toast shows localized error, no redirect, telemetry logs `auth_sign_in_error`. | Pending |
 | 3 | New account sign-up | Create account via `/auth/signup`. | Confirmation toast, Resend email arrives, Supabase pending user flips to confirmed after clicking CTA. | Pending |
+| 4 | Post-verification profile intake gate | Verify a fresh account, land on `/`, and log back in. | Multi-step intake blocks navigation until display name, business name, and project types are saved, captures the sample-data preference, emits `auth_first_profile_intake_start|finish`, and persists the values in `profiles`/`organization_settings`. | Pending |
 
 ## Recovery & Password Management
 
 | # | Scenario | Steps | Expected Result | Status / Notes |
 | --- | --- | --- | --- | --- |
-| 4 | Request password reset | From `/auth`, request reset email. | Toast success, Resend email received with branded copy, link points to `/auth/recovery?email=...`. | Pending |
-| 5 | Recovery link with active session | While logged in, open recovery link. | Stays on `/auth/recovery`, no redirect to `/`, can reset password. | Pending |
-| 6 | Expired or reused link | Use recovery link twice / wait >60 min. | Toast shows invalid-link copy, telemetry logs `auth_recovery_session_missing`. | Pending |
-| 7 | Update password | Complete reset form. | Redirect to `/`, password-change confirmation email received, telemetry logs `auth_password_update_success`. | Pending |
-| 8 | Settings → Change password | Click the security CTA in Profile settings. | Toast success, recovery email arrives, telemetry logs `auth_reset_request_start/success`. | Pending |
+| 5 | Request password reset | From `/auth`, request reset email. | Toast success, Resend email received with branded copy, link points to `/auth/recovery?email=...`. | Pending |
+| 6 | Recovery link with active session | While logged in, open recovery link. | Stays on `/auth/recovery`, no redirect to `/`, can reset password. | Pending |
+| 7 | Expired or reused link | Use recovery link twice / wait >60 min. | Toast shows invalid-link copy, telemetry logs `auth_recovery_session_missing`. | Pending |
+| 8 | Update password | Complete reset form. | Redirect to `/`, password-change confirmation email received, telemetry logs `auth_password_update_success`. | Pending |
+| 9 | Settings → Change password | Click the security CTA in Profile settings. | Toast success, recovery email arrives, telemetry logs `auth_reset_request_start/success`. | Pending |
 
 ## Email Branding + Notifications
 

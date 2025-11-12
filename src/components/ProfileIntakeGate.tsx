@@ -92,7 +92,7 @@ export function ProfileIntakeGate() {
   const { user } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
-  const { t } = useTranslation(["pages", "common"]);
+  const { t, i18n } = useTranslation(["pages", "common"]);
 
   const [displayName, setDisplayName] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -210,12 +210,20 @@ export function ProfileIntakeGate() {
           ) ?? [];
         setProjectTypes(preferred);
       }
+      if (
+        wantsSampleData === null &&
+        typeof settings?.seed_sample_data_onboarding === "boolean"
+      ) {
+        setWantsSampleData(settings.seed_sample_data_onboarding);
+      }
     }
   }, [
     settings?.photography_business_name,
     settings?.preferred_project_types,
+    settings?.seed_sample_data_onboarding,
     settingsLoading,
     debugOverride,
+    wantsSampleData,
   ]);
 
   useEffect(() => {
@@ -351,6 +359,8 @@ export function ProfileIntakeGate() {
         photography_business_name: trimmedBusiness,
         preferred_project_types: projectTypes,
         profile_intake_completed_at: now,
+        seed_sample_data_onboarding: wantsSampleData ?? false,
+        preferred_locale: i18n.language ?? "en",
       });
 
       if (!settingsResult?.success) {
@@ -416,11 +426,12 @@ export function ProfileIntakeGate() {
         type="button"
         onClick={() => toggleProjectType(option.id)}
         className={cn(
-          "flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition",
+          "flex w-full items-center justify-center gap-2 rounded-full border px-3 py-2 text-sm text-center transition-all duration-200 ease-out transform",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary",
+          "sm:justify-start sm:rounded-2xl sm:px-4 sm:py-3 sm:text-left sm:text-base sm:gap-3",
           isSelected
-            ? "border-primary bg-primary/10 shadow-sm"
-            : "border-border/60 bg-muted/30 hover:bg-muted/60"
+            ? "border-primary bg-primary/10 text-primary shadow-md sm:text-foreground sm:shadow-lg sm:translate-y-[-1px] scale-[1.02]"
+            : "border-border/60 bg-muted/30 hover:bg-muted/60 hover:shadow-sm sm:hover:translate-y-[-1px] scale-100"
         )}
         aria-pressed={isSelected}
         data-selected={isSelected}
@@ -428,8 +439,20 @@ export function ProfileIntakeGate() {
       >
         <span
           className={cn(
-            "flex h-12 w-12 shrink-0 items-center justify-center rounded-full border bg-background transition-colors aspect-square",
-            isSelected ? "border-primary bg-primary/20" : "border-transparent"
+            "sm:hidden transition-all duration-200",
+            isSelected ? "scale-100 text-primary" : "scale-95 text-muted-foreground"
+          )}
+        >
+          {isSelected ? (
+            <Check className="h-4 w-4 text-primary" />
+          ) : (
+            <Icon className="h-4 w-4 text-muted-foreground" />
+          )}
+        </span>
+        <span
+          className={cn(
+            "hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border bg-background transition-all duration-200 sm:flex",
+            isSelected ? "border-primary bg-primary/20 scale-100 shadow-sm" : "border-transparent scale-95"
           )}
         >
           {isSelected ? (
@@ -438,11 +461,14 @@ export function ProfileIntakeGate() {
             <Icon className="h-5 w-5 text-muted-foreground" />
           )}
         </span>
-        <div className="flex w-full flex-col">
-          <span className="text-sm font-semibold text-foreground">
-            {t(`pages:profileIntake.options.projectTypes.${option.id}`)}
-          </span>
-        </div>
+        <span
+          className={cn(
+            "font-semibold transition-colors duration-200",
+            isSelected ? "text-primary sm:text-foreground" : "text-foreground"
+          )}
+        >
+          {t(`pages:profileIntake.options.projectTypes.${option.id}`)}
+        </span>
       </button>
     );
   };
@@ -497,7 +523,7 @@ export function ProfileIntakeGate() {
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
             {PROJECT_TYPE_OPTIONS.map((option) => renderOption(option))}
           </div>
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

@@ -8,6 +8,7 @@ import {
   ORGANIZATION_SETTINGS_CACHE_TTL,
   fetchOrganizationSettingsWithCache,
 } from '@/lib/organizationSettingsCache';
+import { detectBrowserTimezone, detectBrowserHourFormat } from "@/lib/dateFormatUtils";
 
 // Hook for fetching organization-specific data with automatic cache invalidation
 export function useOrganizationData<T>(
@@ -228,7 +229,14 @@ export function useOrganizationTaxProfile() {
         return { ...DEFAULT_ORGANIZATION_TAX_PROFILE };
       }
 
-      const settings = await fetchOrganizationSettingsWithCache(activeOrganizationId);
+      const detectedTimezone =
+        typeof window !== "undefined" ? detectBrowserTimezone() : undefined;
+      const detectedHourFormat =
+        typeof window !== "undefined" ? detectBrowserHourFormat() : undefined;
+      const settings = await fetchOrganizationSettingsWithCache(activeOrganizationId, {
+        detectedTimezone,
+        detectedHourFormat,
+      });
       if (!settings) {
         return { ...DEFAULT_ORGANIZATION_TAX_PROFILE };
       }

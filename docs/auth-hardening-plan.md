@@ -99,9 +99,10 @@
 - **Status 2025-11-11:** Settings → Profile now includes a password-reset card (`src/pages/settings/Profile.tsx:456`) that sends the user a branded Supabase recovery link pointing at `/auth/recovery?email=…`.
 
 #### Phase 2b — Post-verification Profile Intake
-- After a user verifies their email and lands in the app for the first time, gate the dashboard with a lightweight intake that captures key details (e.g., preferred display name, preferred project types, service focus). Persist the answers to the existing profile/settings tables so onboarding can reuse them.
+- After a user verifies their email and lands in the app for the first time, gate the dashboard with a lightweight intake that captures key details (e.g., preferred display name, business name, preferred project types). Persist the answers to the existing profile/settings tables so onboarding can reuse them.
 - Reuse or extend the current onboarding context so we only show the intake once per workspace, and add EN/TR copy for the prompts.
 - Emit telemetry (`auth_first_profile_intake_start|finish`) so Support can debug stalled setups, and update the manual QA checklist to cover the new dialog.
+- **Status 2025-11-30:** `/` now mounts `ProfileIntakeGate` (`src/components/ProfileIntakeGate.tsx:1`), which blocks navigation until users supply a display name (`profiles.full_name`), business name (`organization_settings.photography_business_name`), and preferred project types (`organization_settings.preferred_project_types`). Completion timestamps land in `profile_intake_completed_at`, telemetry emits `auth_first_profile_intake_start|finish`, tests cover the gate in `src/components/__tests__/ProfileIntakeGate.test.tsx`, and EN/TR locales include the new copy. Step 3 also captures whether the user wants Lumiso to preload a small batch of sample data, setting us up to trigger the existing seeding workflow.
 
 ### Phase 3 — Google Sign-In *(Paused)*
 - Implementation is on hold while we land the recovery hardening and password-notification milestones. When resumed, this phase will:

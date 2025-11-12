@@ -1,6 +1,8 @@
 import { formatDate as utilsFormatDate } from "@/lib/utils";
 import { formatInTimeZone, toZonedTime, fromZonedTime } from "date-fns-tz";
 
+const FALLBACK_TIMEZONE = "Etc/GMT-3"; // GMT+3 (IANA Etc zones use inverted signs)
+
 export interface DateFormatOptions {
   dateFormat?: string;
   locale?: string;
@@ -53,10 +55,35 @@ export function formatTimeWithOrgSettings(
 // Timezone Detection Utilities
 export function detectBrowserTimezone(): string {
   try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (timeZone) {
+      return timeZone;
+    }
   } catch {
-    return 'UTC';
+    // Ignore errors and fall through to fallback value
   }
+  return FALLBACK_TIMEZONE;
+}
+
+export function detectBrowserHourFormat(): '12-hour' | '24-hour' {
+  try {
+    const formatter = Intl.DateTimeFormat(undefined, { hour: 'numeric' });
+    const options = formatter.resolvedOptions();
+    if (options.hourCycle) {
+      if (options.hourCycle === 'h11' || options.hourCycle === 'h12') {
+        return '12-hour';
+      }
+      if (options.hourCycle === 'h23' || options.hourCycle === 'h24') {
+        return '24-hour';
+      }
+    }
+    if (typeof options.hour12 === 'boolean') {
+      return options.hour12 ? '12-hour' : '24-hour';
+    }
+  } catch {
+    // Ignore detection failures and fall through to default
+  }
+  return '24-hour';
 }
 
 export function getSupportedTimezones(): Array<{ value: string; label: string; region: string }> {

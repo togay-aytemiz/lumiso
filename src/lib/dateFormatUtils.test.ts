@@ -4,6 +4,7 @@ import {
   formatDateWithOrgSettings,
   formatTimeWithOrgSettings,
   detectBrowserTimezone,
+  detectBrowserHourFormat,
   getSupportedTimezones,
   formatDateTimeInTimezone,
   convertToOrgTimezone,
@@ -86,14 +87,14 @@ describe("detectBrowserTimezone", () => {
     mock.mockRestore();
   });
 
-  it("falls back to UTC when detection fails", () => {
+  it("falls back to UTC+3 when detection fails", () => {
     const mock = jest
       .spyOn(Intl, "DateTimeFormat")
       .mockImplementation(() => {
         throw new Error("Intl not available");
       });
 
-    expect(detectBrowserTimezone()).toBe("UTC");
+    expect(detectBrowserTimezone()).toBe("Etc/GMT-3");
     mock.mockRestore();
   });
 });
@@ -114,6 +115,33 @@ describe("getSupportedTimezones", () => {
         }),
       ])
     );
+  });
+});
+
+describe("detectBrowserHourFormat", () => {
+  it("returns 12-hour when hourCycle indicates h12", () => {
+    const mock = jest
+      .spyOn(Intl, "DateTimeFormat")
+      .mockImplementation(
+        () =>
+          ({
+            resolvedOptions: () => ({ hourCycle: "h12" }),
+          } as unknown as Intl.DateTimeFormat)
+      );
+
+    expect(detectBrowserHourFormat()).toBe("12-hour");
+    mock.mockRestore();
+  });
+
+  it("falls back to 24-hour when detection fails", () => {
+    const mock = jest
+      .spyOn(Intl, "DateTimeFormat")
+      .mockImplementation(() => {
+        throw new Error("Intl not available");
+      });
+
+    expect(detectBrowserHourFormat()).toBe("24-hour");
+    mock.mockRestore();
   });
 });
 

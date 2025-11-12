@@ -23,6 +23,11 @@ export interface CachedOrganizationSettings {
   date_format?: string | null;
   time_format?: string | null;
   timezone?: string | null;
+  preferred_project_types?: string[] | null;
+  service_focus?: string[] | null;
+  profile_intake_completed_at?: string | null;
+  seed_sample_data_onboarding?: boolean;
+  preferred_locale?: string | null;
   social_channels?: Record<string, unknown> | null;
   tax_profile?: OrganizationTaxProfile | null;
   [key: string]: unknown;
@@ -111,7 +116,9 @@ export const setOrganizationSettingsCache = (
 
 const fetchOrganizationSettingsFromSupabase = async (
   organizationId: string,
-  detectedTimezone?: string
+  detectedTimezone?: string,
+  detectedHourFormat?: "12-hour" | "24-hour",
+  detectedLocale?: string
 ): Promise<CachedOrganizationSettings | null> => {
   const {
     data: { user },
@@ -134,6 +141,12 @@ const fetchOrganizationSettingsFromSupabase = async (
   const rpcPayload: Record<string, unknown> = { org_id: organizationId };
   if (detectedTimezone) {
     rpcPayload.detected_timezone = detectedTimezone;
+  }
+  if (detectedHourFormat) {
+    rpcPayload.detected_time_format = detectedHourFormat;
+  }
+  if (detectedLocale) {
+    rpcPayload.detected_locale = detectedLocale;
   }
 
   await supabase.rpc("ensure_organization_settings", rpcPayload);
@@ -168,6 +181,11 @@ const fetchOrganizationSettingsFromSupabase = async (
     return {
       organization_id: organizationId,
       social_channels: {},
+      preferred_project_types: [],
+      service_focus: [],
+      profile_intake_completed_at: null,
+      seed_sample_data_onboarding: false,
+      preferred_locale: "tr",
       ...userSettings,
     } as CachedOrganizationSettings;
   }
@@ -179,6 +197,8 @@ interface FetchOptions {
   force?: boolean;
   ttl?: number;
   detectedTimezone?: string;
+  detectedHourFormat?: "12-hour" | "24-hour";
+  detectedLocale?: string;
 }
 
 export const fetchOrganizationSettingsWithCache = async (
@@ -200,7 +220,9 @@ export const fetchOrganizationSettingsWithCache = async (
 
   const requestPromise = fetchOrganizationSettingsFromSupabase(
     organizationId,
-    options.detectedTimezone
+    options.detectedTimezone,
+    options.detectedHourFormat,
+    options.detectedLocale
   )
     .then((data) => {
       setOrganizationSettingsCache(organizationId, data);

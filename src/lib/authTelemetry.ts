@@ -53,7 +53,9 @@ type AuthEvent =
   | "auth_password_update_success"
   | "auth_password_update_error"
   | "auth_toast_triggered"
-  | "auth_recovery_session_missing";
+  | "auth_recovery_session_missing"
+  | "auth_first_profile_intake_start"
+  | "auth_first_profile_intake_finish";
 
 export type AuthEventPayload = {
   email?: string;

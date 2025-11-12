@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { detectBrowserTimezone } from '@/lib/dateFormatUtils';
+import { detectBrowserTimezone, detectBrowserHourFormat } from '@/lib/dateFormatUtils';
 import {
   fetchOrganizationSettingsWithCache,
   ORGANIZATION_SETTINGS_CACHE_TTL,
@@ -264,8 +264,11 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
         queryFn: async () => {
           const detectedTimezone =
             typeof window !== 'undefined' ? detectBrowserTimezone() : undefined;
+          const detectedHourFormat =
+            typeof window !== 'undefined' ? detectBrowserHourFormat() : undefined;
           return fetchOrganizationSettingsWithCache(orgId, {
             detectedTimezone,
+            detectedHourFormat,
           });
         },
         staleTime: ORGANIZATION_SETTINGS_CACHE_TTL,

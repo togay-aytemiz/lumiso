@@ -68,8 +68,9 @@ These defaults must exist for every org immediately after creation, regardless o
   - `default_lead_status_templates(locale text, slug text, name text, color text, sort_order int, lifecycle text, is_default bool, is_system_required bool, is_system_final bool)`
   - `default_project_status_templates(locale text, slug text, name text, color text, sort_order int, lifecycle text, is_system_required bool)`
   - `default_session_status_templates(locale text, slug text, name text, color text, sort_order int, is_system_initial bool)`
-  - `default_service_templates(locale text, slug text, name text, description text, category text, cost_price numeric, selling_price numeric, price numeric, extra boolean, is_sample boolean)`
-  - `default_package_templates(locale text, slug text, name text, description text, price numeric, applicable_types text[], line_items jsonb, default_add_on_slugs text[], is_active bool)`
+  - `default_service_templates(locale text, slug text, name text, description text, category text, service_type text, price numeric, extra boolean, sort_order int)` ✅ (`20260222114500`)
+  - `default_package_templates(locale text, slug text, name text, description text, price numeric, applicable_type_labels text[], line_items jsonb, sort_order int)` ✅ (`20260222114500`)
+  - `default_session_type_templates(locale text, slug text, name text, description text, duration_minutes int, sort_order int)` ✅ (`20260222114500`)
   - `default_delivery_method_templates(locale text, slug text, name text, description text)`
   - `default_email_template_templates(locale text, slug text, subject text, body text, category text, is_active bool)`
   - `default_workflow_templates(locale text, slug text, name text, description text, trigger text, definition jsonb, is_active bool)`
@@ -95,7 +96,8 @@ These defaults must exist for every org immediately after creation, regardless o
 
 ## Implementation Phases
 1. **Schema Setup**
-   - Create template tables with appropriate constraints (`PRIMARY KEY` on `(locale, slug)`).
+   - ✅ Template tables + EN/TR data for service / session-type / package seeds (`20260222114500`).
+   - Create remaining template tables (statuses, delivery methods, email/workflow definitions) with appropriate constraints (`PRIMARY KEY` on `(locale, slug)`).
 - Seed English and Turkish defaults in migrations. Ensure email templates/workflows include localized copy and trigger definitions that align with existing automation.
 2. **Helper Refactor**
    - Update SQL helper signatures and logic to read from template tables and accept locale parameters.

@@ -28,6 +28,7 @@ export type Database = {
           type: string
           updated_at: string
           user_id: string
+          template_slug: string | null
         }
         Insert: {
           completed?: boolean | null
@@ -42,6 +43,7 @@ export type Database = {
           type: string
           updated_at?: string
           user_id: string
+          template_slug?: string | null
         }
         Update: {
           completed?: boolean | null
@@ -56,6 +58,7 @@ export type Database = {
           type?: string
           updated_at?: string
           user_id?: string
+          template_slug?: string | null
         }
         Relationships: [
           {
@@ -66,6 +69,123 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      default_service_templates: {
+        Row: {
+          category: string | null
+          cost_price: number
+          created_at: string
+          default_unit: string | null
+          description: string | null
+          extra: boolean
+          is_people_based: boolean
+          locale: string
+          name: string
+          price: number
+          service_type: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          category?: string | null
+          cost_price?: number
+          created_at?: string
+          default_unit?: string | null
+          description?: string | null
+          extra?: boolean
+          is_people_based?: boolean
+          locale?: string
+          name: string
+          price?: number
+          service_type: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          category?: string | null
+          cost_price?: number
+          created_at?: string
+          default_unit?: string | null
+          description?: string | null
+          extra?: boolean
+          is_people_based?: boolean
+          locale?: string
+          name?: string
+          price?: number
+          service_type?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      default_session_type_templates: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          locale: string
+          name: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          locale?: string
+          name: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          locale?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      default_package_templates: {
+        Row: {
+          applicable_type_labels: string[]
+          created_at: string
+          description: string | null
+          line_items: Json
+          locale: string
+          name: string
+          price: number
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          applicable_type_labels?: string[]
+          created_at?: string
+          description?: string | null
+          line_items?: Json
+          locale?: string
+          name: string
+          price?: number
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          applicable_type_labels?: string[]
+          created_at?: string
+          description?: string | null
+          line_items?: Json
+          locale?: string
+          name?: string
+          price?: number
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
       }
       default_project_type_templates: {
         Row: {
@@ -107,6 +227,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          template_slug: string | null
         }
         Insert: {
           created_at?: string
@@ -120,6 +241,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
+          template_slug?: string | null
         }
         Update: {
           created_at?: string
@@ -133,6 +255,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          template_slug?: string | null
         }
         Relationships: [
           {
@@ -1322,6 +1445,7 @@ export type Database = {
           updated_at: string
           user_id: string
           default_unit: string | null
+          template_slug: string | null
         }
         Insert: {
           category?: string | null
@@ -1344,6 +1468,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           default_unit?: string | null
+          template_slug?: string | null
         }
         Update: {
           category?: string | null
@@ -1366,6 +1491,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           default_unit?: string | null
+          template_slug?: string | null
         }
         Relationships: []
       }
@@ -2206,6 +2332,10 @@ export type Database = {
               detected_time_format?: string | null
               detected_locale?: string | null
             }
+        Returns: string
+      }
+      get_org_locale: {
+        Args: { org_id: string }
         Returns: string
       }
       ensure_system_lead_statuses: {

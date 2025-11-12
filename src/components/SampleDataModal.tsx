@@ -1,11 +1,16 @@
 import { useState } from "react";
-import { CheckCircle, Users, FolderOpen, Calendar, Package } from "lucide-react";
+import { Sparkles, CircleOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { BaseOnboardingModal, type OnboardingAction } from "./shared/BaseOnboardingModal";
 import { useTranslation } from "react-i18next";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SampleDataModalProps {
   open: boolean;
@@ -13,56 +18,55 @@ interface SampleDataModalProps {
   onCloseAll?: () => void;
 }
 
+type SkipChoice = "sample" | "clean";
+
 export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalProps) {
   const { t } = useTranslation('pages');
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<SkipChoice>("sample");
   const { startGuidedSetup, skipOnboarding } = useOnboarding();
+  const { activeOrganizationId } = useOrganization();
+  const { settings, updateSettings, refreshSettings } = useOrganizationSettings();
 
-  const sampleDataItems = [
+  const startOptions: Array<{
+    value: SkipChoice;
+    icon: typeof Sparkles;
+    titleKey: string;
+    descriptionKey: string;
+    recommended?: boolean;
+  }> = [
     {
-      icon: Users,
-      titleKey: "onboarding.sample_data.items.sample_leads.title",
-      descriptionKey: "onboarding.sample_data.items.sample_leads.description"
+      value: "sample",
+      icon: Sparkles,
+      titleKey: "onboarding.sample_data.options.sample.title",
+      descriptionKey: "onboarding.sample_data.options.sample.description",
+      recommended: true
     },
     {
-      icon: FolderOpen, 
-      titleKey: "onboarding.sample_data.items.example_projects.title",
-      descriptionKey: "onboarding.sample_data.items.example_projects.description"
-    },
-    {
-      icon: Calendar,
-      titleKey: "onboarding.sample_data.items.scheduled_sessions.title",
-      descriptionKey: "onboarding.sample_data.items.scheduled_sessions.description"
-    },
-    {
-      icon: Package,
-      titleKey: "onboarding.sample_data.items.photography_packages.title",
-      descriptionKey: "onboarding.sample_data.items.photography_packages.description"
+      value: "clean",
+      icon: CircleOff,
+      titleKey: "onboarding.sample_data.options.clean.title",
+      descriptionKey: "onboarding.sample_data.options.clean.description"
     }
   ];
 
   const handleSkipWithSampleData = async () => {
     if (!user) return;
-    
+
     setIsLoading(true);
     try {
+      await ensureSeedPreference(true);
+      await seedSampleData();
       await skipOnboarding();
-      
+
       toast({
         title: t('onboarding.sample_data.toast.success_title'),
         description: t('onboarding.sample_data.toast.success_description'),
       });
 
-      // Close all modals and redirect to leads page
-      if (onCloseAll) {
-        onCloseAll();
-      } else {
-        onClose();
-      }
-      navigate('/leads');
-      
+      closeAndNavigate();
     } catch (error) {
       console.error('Error skipping setup:', error);
       toast({
@@ -72,6 +76,81 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSkipWithoutSampleData = async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      await ensureSeedPreference(false);
+      await skipOnboarding();
+
+      toast({
+        title: t('onboarding.sample_data.toast.clean_title'),
+        description: t('onboarding.sample_data.toast.clean_description')
+      });
+
+      closeAndNavigate();
+    } catch (error) {
+      console.error('Error skipping setup:', error);
+      toast({
+        title: t('onboarding.sample_data.toast.error_title'),
+        description: t('onboarding.sample_data.toast.error_description'),
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const closeAndNavigate = () => {
+    if (onCloseAll) {
+      onCloseAll();
+    } else {
+      onClose();
+    }
+    navigate('/leads');
+  };
+
+  const ensureSeedPreference = async (value: boolean) => {
+    if (!settings?.organization_id && !activeOrganizationId) {
+      throw new Error("missing-organization");
+    }
+    if (settings?.seed_sample_data_onboarding === value) {
+      return;
+    }
+    const result = await updateSettings({
+      seed_sample_data_onboarding: value,
+    });
+    if (!result?.success) {
+      throw result?.error ?? new Error("failed-to-update-settings");
+    }
+    await refreshSettings();
+  };
+
+  const seedSampleData = async () => {
+    if (!user?.id) {
+      throw new Error("missing-user");
+    }
+    const orgId = settings?.organization_id ?? activeOrganizationId;
+    if (!orgId) {
+      throw new Error("missing-organization");
+    }
+
+    const preferredSlugs = settings?.preferred_project_types ?? [];
+    const locale = settings?.preferred_locale ?? "tr";
+
+    const { error } = await supabase.rpc("seed_sample_data_for_org", {
+      owner_uuid: user.id,
+      org_id: orgId,
+      final_locale: locale,
+      preferred_slugs: preferredSlugs,
+    });
+
+    if (error) {
+      throw error;
     }
   };
 
@@ -99,6 +178,18 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
     }
   };
 
+  const handlePrimaryAction = () => {
+    if (selectedOption === "sample") {
+      return handleSkipWithSampleData();
+    }
+    return handleSkipWithoutSampleData();
+  };
+
+  const primaryLabel =
+    selectedOption === "sample"
+      ? (isLoading ? t('onboarding.sample_data.setting_up') : t('onboarding.sample_data.start_with_sample_data'))
+      : (isLoading ? t('onboarding.sample_data.preparing_clean') : t('onboarding.sample_data.start_clean'));
+
   const actions: OnboardingAction[] = [
     {
       label: isLoading ? t('onboarding.sample_data.starting') : t('onboarding.sample_data.continue_guided_setup'),
@@ -107,8 +198,8 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
       disabled: isLoading
     },
     {
-      label: isLoading ? t('onboarding.sample_data.setting_up') : t('onboarding.sample_data.start_with_sample_data'),
-      onClick: handleSkipWithSampleData,
+      label: primaryLabel,
+      onClick: handlePrimaryAction,
       variant: "cta",
       disabled: isLoading
     }
@@ -122,24 +213,51 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
       description={t('onboarding.sample_data.description')}
       actions={actions}
     >
-      <div className="space-y-4">
-        <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-          {t('onboarding.sample_data.whats_included')}
-        </h4>
-        <div className="space-y-4">
-          {sampleDataItems.map((item, index) => {
-            const Icon = item.icon;
+      <div className="space-y-5">
+        <div className="space-y-3">
+          {startOptions.map((option) => {
+            const Icon = option.icon;
+            const active = selectedOption === option.value;
             return (
-              <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                <Icon className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                <div className="text-left">
-                  <h5 className="font-medium text-sm">{t(item.titleKey)}</h5>
-                  <p className="text-xs text-muted-foreground mt-1">{t(item.descriptionKey)}</p>
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setSelectedOption(option.value)}
+                className={cn(
+                  "w-full rounded-2xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+                  active
+                    ? "border-primary bg-primary/5 ring-offset-background"
+                    : "border-border/70 bg-muted/30 hover:bg-muted/50"
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={cn(
+                    "rounded-full p-2 text-primary bg-primary/10",
+                    option.value === "clean" && "text-muted-foreground"
+                  )}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-sm text-foreground">
+                        {t(option.titleKey)}
+                      </p>
+                      {option.recommended && (
+                        <Badge variant="outline" className="text-xs">
+                          {t('profileIntake.sampleData.recommended')}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {t(option.descriptionKey)}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
+
       </div>
     </BaseOnboardingModal>
   );

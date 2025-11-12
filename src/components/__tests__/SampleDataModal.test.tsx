@@ -4,8 +4,11 @@ import { render, screen, waitFor } from "@/utils/testUtils";
 import { SampleDataModal } from "../SampleDataModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 jest.mock("react-router-dom", () => ({
   ...jest.requireActual("react-router-dom"),
@@ -18,6 +21,20 @@ jest.mock("@/contexts/AuthContext", () => ({
 
 jest.mock("@/contexts/OnboardingContext", () => ({
   useOnboarding: jest.fn(),
+}));
+
+jest.mock("@/contexts/OrganizationContext", () => ({
+  useOrganization: jest.fn(),
+}));
+
+jest.mock("@/hooks/useOrganizationSettings", () => ({
+  useOrganizationSettings: jest.fn(),
+}));
+
+jest.mock("@/integrations/supabase/client", () => ({
+  supabase: {
+    rpc: jest.fn(),
+  },
 }));
 
 jest.mock("@/hooks/use-toast", () => ({
@@ -74,8 +91,11 @@ jest.mock("../shared/BaseOnboardingModal", () => ({
 
 const mockUseAuth = useAuth as jest.Mock;
 const mockUseOnboarding = useOnboarding as jest.Mock;
+const mockUseOrganization = useOrganization as jest.Mock;
+const mockUseOrganizationSettings = useOrganizationSettings as jest.Mock;
 const mockToast = toast as jest.Mock;
 const mockUseNavigate = useNavigate as jest.Mock;
+const mockSupabaseRpc = supabase.rpc as jest.Mock;
 
 describe("SampleDataModal", () => {
   const skipOnboarding = jest.fn();
@@ -83,6 +103,8 @@ describe("SampleDataModal", () => {
   const navigate = jest.fn();
   const onClose = jest.fn();
   const onCloseAll = jest.fn();
+  const updateSettings = jest.fn();
+  const refreshSettings = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -90,22 +112,34 @@ describe("SampleDataModal", () => {
     startGuidedSetup.mockResolvedValue(undefined);
     mockUseAuth.mockReturnValue({ user: { id: "user-1" } });
     mockUseOnboarding.mockReturnValue({ skipOnboarding, startGuidedSetup });
+    mockUseOrganization.mockReturnValue({ activeOrganizationId: "org-1" });
+    updateSettings.mockResolvedValue({ success: true });
+    refreshSettings.mockResolvedValue(undefined);
+    mockUseOrganizationSettings.mockReturnValue({
+      settings: {
+        organization_id: "org-1",
+        preferred_locale: "tr",
+        preferred_project_types: ["wedding"],
+        seed_sample_data_onboarding: false,
+      },
+      updateSettings,
+      refreshSettings,
+      loading: false,
+    });
     mockToast.mockReturnValue(undefined);
     mockUseNavigate.mockReturnValue(navigate);
+    mockSupabaseRpc.mockResolvedValue({ data: null, error: null });
   });
 
-  it("renders sample data information when open", () => {
+  it("renders sample/clean options when open", () => {
     render(<SampleDataModal open onClose={onClose} />);
 
     expect(baseModalRender).toHaveBeenCalled();
     expect(
-      screen.getByText("onboarding.sample_data.items.sample_leads.title")
+      screen.getByText("onboarding.sample_data.options.sample.title")
     ).toBeInTheDocument();
     expect(
-      screen.getByText("onboarding.sample_data.items.example_projects.title")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("onboarding.sample_data.items.scheduled_sessions.title")
+      screen.getByText("onboarding.sample_data.options.clean.title")
     ).toBeInTheDocument();
   });
 
@@ -121,6 +155,15 @@ describe("SampleDataModal", () => {
 
     await waitFor(() => expect(skipOnboarding).toHaveBeenCalledTimes(1));
     expect(skipOnboarding).toHaveBeenCalledWith();
+    expect(updateSettings).toHaveBeenCalledWith({
+      seed_sample_data_onboarding: true,
+    });
+    expect(mockSupabaseRpc).toHaveBeenCalledWith("seed_sample_data_for_org", {
+      owner_uuid: "user-1",
+      org_id: "org-1",
+      final_locale: "tr",
+      preferred_slugs: ["wedding"],
+    });
 
     await waitFor(() =>
       expect(mockToast).toHaveBeenCalledWith({
@@ -129,6 +172,28 @@ describe("SampleDataModal", () => {
       })
     );
 
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledWith("/leads");
+  });
+
+  it("skips without sample data and does not trigger seeding", async () => {
+    const user = userEvent.setup();
+    render(<SampleDataModal open onClose={onClose} />);
+
+    const cleanOption = screen.getByText(
+      "onboarding.sample_data.options.clean.title"
+    );
+    await user.click(cleanOption);
+
+    const startButton = screen.getByRole("button", {
+      name: "onboarding.sample_data.start_clean",
+    });
+
+    await user.click(startButton);
+
+    await waitFor(() => expect(skipOnboarding).toHaveBeenCalledTimes(1));
+    expect(updateSettings).not.toHaveBeenCalled();
+    expect(mockSupabaseRpc).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(navigate).toHaveBeenCalledWith("/leads");
   });

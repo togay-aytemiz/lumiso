@@ -17,6 +17,8 @@ import { TemplateErrorBoundary } from "@/components/template-builder/TemplateErr
 import { Template } from "@/types/template";
 import { useTranslation } from "react-i18next";
 import GlobalSearch from "@/components/GlobalSearch";
+import { VariableTokenText } from "@/components/template-builder/VariableTokenText";
+import { useTemplateVariables } from "@/hooks/useTemplateVariables";
 
 // Optimized Templates component with memoization and error handling
 const OptimizedTemplatesContent = React.memo(() => {
@@ -40,6 +42,56 @@ const OptimizedTemplatesContent = React.memo(() => {
   const [deleting, setDeleting] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 25;
+  const templateVariablesState = useTemplateVariables();
+  const variableLabelMap = useMemo(() => {
+    const map: Record<string, string> = {};
+
+    // first prefer variable labels coming from Supabase/context
+    templateVariablesState.variables.forEach((variable) => {
+      if (variable?.key) {
+        map[variable.key] = variable.label ?? variable.key.replace(/_/g, " ");
+      }
+    });
+
+    // ensure all built-in tokens have localized fallback labels
+    const translationOverrides: Record<string, string> = {
+      lead_name: "leadFullName",
+      lead_email: "leadEmail",
+      lead_phone: "leadPhone",
+      lead_status: "leadStatus",
+      lead_due_date: "leadDueDate",
+      lead_created_date: "leadCreatedDate",
+      lead_updated_date: "leadUpdatedDate",
+      session_name: "sessionName",
+      session_date: "sessionDate",
+      session_time: "sessionTime",
+      session_location: "sessionLocation",
+      session_notes: "sessionNotes",
+      session_status: "sessionStatus",
+      session_type: "sessionType",
+      session_duration: "sessionDuration",
+      session_meeting_url: "sessionMeetingUrl",
+      project_name: "projectName",
+      project_type: "projectType",
+      project_status: "projectStatus",
+      project_due_date: "projectDueDate",
+      project_package_name: "projectPackageName",
+      business_name: "businessName",
+      current_date: "currentDate",
+      current_time: "currentTime",
+    };
+
+    Object.entries(translationOverrides).forEach(([key, translationKey]) => {
+      if (!map[key]) {
+        map[key] =
+          t(`templateBuilder.variables.labels.${translationKey}`, {
+            defaultValue: key.replace(/_/g, " "),
+          }) ?? key.replace(/_/g, " ");
+      }
+    });
+
+    return map;
+  }, [templateVariablesState.variables, t]);
 
   const handleDeleteTemplate = React.useCallback((template: Template) => {
     setDeleteDialog({ open: true, template });
@@ -71,29 +123,33 @@ const OptimizedTemplatesContent = React.memo(() => {
   }, [duplicateTemplate]);
 
   // Helper function to extract preview text from template
+  const stripHtml = (value?: string) =>
+    value?.replace(/<[^>]*>/g, "").trim() ?? "";
+
   const extractPreviewText = React.useCallback((template: Template): string => {
-    // First priority: email subject from channel views
+    // First priority: email content/body from channel views
+    if (template.channels?.email?.content?.trim()) {
+      const plainText = stripHtml(template.channels.email.content);
+      if (plainText) {
+        return plainText;
+      }
+    }
+
+    // Second priority: master content
+    if (template.master_content?.trim()) {
+      const plainText = stripHtml(template.master_content);
+      if (plainText) {
+        return plainText;
+      }
+    }
+
+    // Fallbacks: subject lines
     if (template.channels?.email?.subject?.trim()) {
       return template.channels.email.subject.trim();
     }
     
-    // Second priority: master subject
     if (template.master_subject?.trim()) {
       return template.master_subject.trim();
-    }
-    
-    // Third priority: email content from channel views
-    if (template.channels?.email?.content?.trim()) {
-      const plainText = template.channels.email.content.replace(/<[^>]*>/g, '').trim();
-      if (plainText) {
-        return plainText.length > 60 ? `${plainText.substring(0, 60)}...` : plainText;
-      }
-    }
-    
-    // Fallback: master content
-    if (template.master_content?.trim()) {
-      const plainText = template.master_content.replace(/<[^>]*>/g, '').trim();
-      return plainText.length > 60 ? `${plainText.substring(0, 60)}...` : plainText;
     }
     
     return t("templates.preview.noPreview", { defaultValue: "No preview available" });
@@ -110,13 +166,6 @@ const OptimizedTemplatesContent = React.memo(() => {
         render: (template) => (
           <div className="min-w-0">
             <div className="font-medium text-foreground truncate">{template.name}</div>
-            {template.master_content && (
-              <div className="text-sm text-muted-foreground truncate mt-1">
-                {template.master_content.length > 60
-                  ? `${template.master_content.substring(0, 60)}...`
-                  : template.master_content}
-              </div>
-            )}
           </div>
         ),
       },
@@ -127,10 +176,15 @@ const OptimizedTemplatesContent = React.memo(() => {
         hideable: true,
         minWidth: "240px",
         render: (template) => (
-          <div className="max-w-xs min-w-0">
-            <div className="text-sm text-muted-foreground line-clamp-2">
-              {extractPreviewText(template)}
-            </div>
+          <div className="max-w-xs min-w-0 text-sm text-muted-foreground line-clamp-2">
+            <VariableTokenText
+              text={
+                template.channels?.email?.subject?.trim()
+                  ? template.channels.email.subject.trim()
+                  : extractPreviewText(template)
+              }
+              variableLabels={variableLabelMap}
+            />
           </div>
         ),
       },

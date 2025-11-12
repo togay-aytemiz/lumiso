@@ -137,11 +137,18 @@ export function ProfileIntakeGate() {
     hasCompletedIntakeOnce ||
     (!needsDisplayName && !needsBusinessName && !needsProjectTypes);
 
+  const hasLoadedProfile = !profileLoading;
+  const hasLoadedSettings = !settingsLoading;
+  const dataReady = hasLoadedProfile && hasLoadedSettings;
+
   const shouldShow =
-    !profileLoading &&
-    !settingsLoading &&
+    dataReady &&
     !manualComplete &&
     (debugOverride || !intakeComplete);
+
+  if (!dataReady) {
+    return null;
+  }
 
   const stepDefinitions = useMemo(
     () => [

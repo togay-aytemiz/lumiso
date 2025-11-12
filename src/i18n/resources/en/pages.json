@@ -2363,34 +2363,48 @@
       }
     },
     "sample_data": {
-      "title": "Skip Setup & Use Sample Data?",
-      "description": "We'll populate your CRM with realistic sample data so you can explore all features immediately. You can always customize or clear this data later.",
-      "whats_included": "What's included:",
-      "continue_guided_setup": "Continue Guided Setup",
-      "start_with_sample_data": "Start with Sample Data",
+      "title": "Before you skip the checklist",
+      "description": "Choose how you’d like your workspace to look before leaving the guided steps.",
+      "whats_included": "Sample data includes:",
+      "continue_guided_setup": "Continue guided setup",
+      "start_with_sample_data": "Explore with sample data",
+      "start_clean": "Start with a clean workspace",
       "starting": "Starting...",
-      "setting_up": "Setting up...",
+      "setting_up": "Preparing sample data...",
+      "preparing_clean": "Preparing...",
+      "options": {
+        "sample": {
+          "title": "Explore with sample data",
+          "description": "Dive in with ready-made leads, projects, and sessions."
+        },
+        "clean": {
+          "title": "Clean workspace",
+          "description": "Skip the checklist and create everything yourself."
+        }
+      },
       "items": {
         "sample_leads": {
-          "title": "Sample Leads",
+          "title": "Sample leads",
           "description": "Pre-filled client leads with realistic contact information"
         },
         "example_projects": {
-          "title": "Example Projects",
+          "title": "Example projects",
           "description": "Photography projects in different stages of completion"
         },
         "scheduled_sessions": {
-          "title": "Scheduled Sessions",
+          "title": "Scheduled sessions",
           "description": "Upcoming and past photo sessions to explore"
         },
         "photography_packages": {
-          "title": "Photography Packages",
+          "title": "Photography packages",
           "description": "Ready-to-use service packages with pricing"
         }
       },
       "toast": {
         "success_title": "Setup skipped!",
-        "success_description": "You can start exploring Lumiso. Sample data will be added in a future update.",
+        "success_description": "Sample data will be added shortly.",
+        "clean_title": "Clean workspace ready",
+        "clean_description": "You can now explore Lumiso without guided steps.",
         "error_title": "Error",
         "error_description": "Failed to skip setup. Please try again.",
         "setup_error": "Failed to start guided setup. Please try again."

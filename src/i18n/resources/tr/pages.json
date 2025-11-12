@@ -2364,13 +2364,25 @@
       }
     },
     "sample_data": {
-      "title": "Kurulumu Atla ve Örnek Veri Kullan",
-      "description": "CRM'inizi gerçekçi örnek verilerle dolduracağız. Tüm özellikleri hemen keşfedebilirsiniz. Bu verileri daha sonra özelleştirebilir veya silebilirsiniz.",
-      "whats_included": "Neler dahil:",
-      "continue_guided_setup": "Rehberli Kuruluma Devam Et",
-      "start_with_sample_data": "Örnek Veri ile Başla",
+      "title": "Kurulumu atlamadan önce",
+      "description": "Rehberli adımları kapatmadan önce çalışma alanını nasıl görmek istediğini seç.",
+      "whats_included": "Örnek verilerde neler var:",
+      "continue_guided_setup": "Rehberli kuruluma devam et",
+      "start_with_sample_data": "Örnek verilerle keşfet",
+      "start_clean": "Temiz çalışma alanıyla başla",
       "starting": "Başlatılıyor...",
-      "setting_up": "Kuruluyor...",
+      "setting_up": "Örnek veriler hazırlanıyor...",
+      "preparing_clean": "Hazırlanıyor...",
+      "options": {
+        "sample": {
+          "title": "Örnek verilerle keşfet",
+          "description": "Hazır kişiler, projeler ve seanslarla tüm özellikleri deneyimle."
+        },
+        "clean": {
+          "title": "Temiz çalışma alanı",
+          "description": "Hiç kayıt olmadan sıfırdan kendi akışını oluştur."
+        }
+      },
       "items": {
         "sample_leads": {
           "title": "Örnek Kişiler",
@@ -2392,6 +2404,8 @@
       "toast": {
         "success_title": "Kurulum atlandı",
         "success_description": "Lumiso'yu keşfetmeye başlayabilirsiniz. Örnek veriler yakında eklenecek.",
+        "clean_title": "Temiz çalışma alanı hazır",
+        "clean_description": "Rehberli kurulum olmadan Lumiso'yu keşfetmeye başlayabilirsin.",
         "error_title": "Hata",
         "error_description": "Kurulum atlanamadı. Lütfen tekrar deneyin.",
         "setup_error": "Rehberli kurulum başlatılamadı. Lütfen tekrar deneyin."

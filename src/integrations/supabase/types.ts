@@ -214,6 +214,72 @@ export type Database = {
         }
         Relationships: []
       }
+      default_message_template_templates: {
+        Row: {
+          blocks: Json | null
+          body: string
+          category: string
+          created_at: string
+          locale: string
+          name: string
+          placeholders: string[]
+          slug: string
+          sort_order: number
+          subject: string
+        }
+        Insert: {
+          blocks?: Json | null
+          body: string
+          category: string
+          created_at?: string
+          locale?: string
+          name: string
+          placeholders?: string[]
+          slug: string
+          sort_order?: number
+          subject: string
+        }
+        Update: {
+          blocks?: Json | null
+          body?: string
+          category?: string
+          created_at?: string
+          locale?: string
+          name?: string
+          placeholders?: string[]
+          slug?: string
+          sort_order?: number
+          subject?: string
+        }
+        Relationships: []
+      }
+      default_project_type_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          locale: string
+          name: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          locale?: string
+          name: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          locale?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           created_at: string
@@ -615,6 +681,7 @@ export type Database = {
           placeholders: Json | null
           updated_at: string
           user_id: string
+          template_slug: string | null
         }
         Insert: {
           blocks?: Json | null
@@ -629,6 +696,7 @@ export type Database = {
           placeholders?: Json | null
           updated_at?: string
           user_id: string
+          template_slug?: string | null
         }
         Update: {
           blocks?: Json | null
@@ -643,6 +711,7 @@ export type Database = {
           placeholders?: Json | null
           updated_at?: string
           user_id?: string
+          template_slug?: string | null
         }
         Relationships: []
       }
@@ -1180,6 +1249,7 @@ export type Database = {
           sort_order: number
           updated_at: string
           user_id: string
+          template_slug: string | null
         }
         Insert: {
           created_at?: string
@@ -1190,6 +1260,7 @@ export type Database = {
           sort_order?: number
           updated_at?: string
           user_id: string
+          template_slug?: string | null
         }
         Update: {
           created_at?: string
@@ -1200,6 +1271,7 @@ export type Database = {
           sort_order?: number
           updated_at?: string
           user_id?: string
+          template_slug?: string | null
         }
         Relationships: []
       }
@@ -2312,7 +2384,7 @@ export type Database = {
         Returns: undefined
       }
       ensure_default_session_statuses: {
-        Args: { user_uuid: string }
+        Args: { user_uuid: string; org_id: string }
         Returns: undefined
       }
       ensure_default_session_types_for_org: {

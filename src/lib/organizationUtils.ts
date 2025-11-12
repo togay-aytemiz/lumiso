@@ -80,7 +80,8 @@ export async function getUserOrganizationId(): Promise<string | null> {
 
           // Create default session statuses
           await supabase.rpc('ensure_default_session_statuses', { 
-            user_uuid: user.id 
+            user_uuid: user.id,
+            org_id: newOrg.id 
           });
 
           // Create default project types

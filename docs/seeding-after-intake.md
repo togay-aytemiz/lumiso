@@ -56,13 +56,11 @@
 1. ✅ **Schema change:** add a boolean `seed_sample_data_onboarding` to `organization_settings` (migration `20260222100000`).
 2. ✅ **Client update:** persist `wantsSampleData` into that column when intake finishes (`ProfileIntakeGate` updates).
 3. ✅ **Preferred locale capture:** store `preferred_locale` on `organization_settings` (migration `20260222110000`) and send it from intake so templates can pick the right language.
-4. ✅ **Localized templates:** add canonical service/package/session-type template tables + locale-aware helpers (migration `20260222114500`).
-5. **Seeding engine:** write Supabase trigger or Edge Function to:
-   - Run after intake completion.
-   - Always set up project-type defaults.
-   - Branch into full sample seeding only when the boolean is true.
-6. **Localization:** confirm all seeded entity names/descriptions exist in both EN & TR (and future locales). Store copy in template tables so runtime seeding picks the correct locale (now captured via `organization_settings.preferred_locale`). *(Services/packages/session types done; email/workflow content still pending.)*
-7. **Monitoring:** add telemetry/logs for seeding success/failure.
+4. ✅ **Localized templates:** add canonical service / session-type / package template tables + locale-aware helpers (`20260222114500`), localized message templates (`20260222121500`), and default lead/project/session stage templates (`20260222124500`).
+5. ✅ **Seeding engine trigger:** enqueue/process orgs when intake finishes (`20260222130000_intake_seeding_trigger.sql`). Trigger calls `process_intake_seed`, which seeds project types, statuses, services, session types, packages, message templates, and workflows. Sample-data entity creation is stubbed for the next milestone.
+6. **Localization:** confirm all seeded entity names/descriptions exist in both EN & TR (and future locales). Store copy in template tables so runtime seeding picks the correct locale (now captured via `organization_settings.preferred_locale`). *(Delivery-method + advanced workflow templates still outstanding.)*
+7. ✅ **Sample data injection:** create localized leads/projects/sessions via `seed_sample_data_for_org` when users opt into sample data (`20260222135000_sample_data_seed.sql`).
+8. **Monitoring:** add telemetry/logs for seeding success/failure.
 
 ## Open Questions
 - Exact copy/pricing for services, packages, and templates per locale.

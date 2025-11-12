@@ -63,7 +63,8 @@ const SessionStatusesSection = () => {
       if (!user) return;
 
       await supabase.rpc('ensure_default_session_statuses', {
-        user_uuid: user.id
+        user_uuid: user.id,
+        org_id: activeOrganizationId
       });
 
       await refetch();

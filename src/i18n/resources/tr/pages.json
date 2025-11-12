@@ -1223,25 +1223,25 @@
         "description": "Arayüz için tercih ettiğiniz dili seçin",
         "current": "Mevcut Dil"
       },
-        "tutorial": {
-          "businessInfo": {
-            "title": "İşletme Bilgileri ve Markalaşma",
-            "description": "Bu alanlar başlangıç formunda doldu \u2014 müşteriye görünen ayrıntıları, sosyal kanallarınızı ve hazırladığımız bölgesel ayarları burada kontrol edin.",
-            "setBusinessName": "Stüdyo adınızı gözden geçirin veya güncelleyin",
-            "uploadLogo": "İşletme logonuzu yükleyin",
-            "chooseBrandColors": "Marka renklerinizi seçin",
-            "help": "İşletme bilgileri, sosyal kanallar ve bölgesel ayarlar müşteri iletişimi, faturalar ve sözleşmelerde görünür."
-          },
-          "addBusinessName": {
-            "title": "İşletme kimliğinizi doğrulayın",
-            "description": "Stüdyo adınız kayıtlı. Kamuya açık iletişim + sosyal kanalları ekleyin ve otomatik belirlenen saat dilimi / tarih formatını doğrulayın.",
-            "required": "Başlangıç formundan geldi \u2014 ad, dil veya saat dilimi değiştiyse güncelleyin",
-            "appearsOn": "Faturalar, sözleşmeler, e-postalar ve Sosyal Kanallar bölümünde görünür",
-            "canChange": "Marka, sosyal kanallar veya bölgesel ayarları istediğiniz zaman güncelleyebilirsiniz"
-          },
+      "tutorial": {
+        "businessInfo": {
+          "title": "İşletme Bilgileri ve Markalaşma",
+          "description": "Bu alanlar başlangıç formunda doldu — stüdyo adı, sosyal kanallar ve bölgesel ayarları burada hızlıca kontrol edin.",
+          "setBusinessName": "Stüdyo adınızı gözden geçirin veya güncelleyin",
+          "uploadLogo": "İşletme logonuzu yükleyin",
+          "chooseBrandColors": "Marka renklerinizi seçin",
+          "help": "İşletme bilgileri, sosyal kanallar ve bölgesel ayarlar tüm müşteri temas noktalarında görünür."
+        },
+        "addBusinessName": {
+          "title": "İşletme kimliğinizi doğrulayın",
+          "description": "Stüdyo adınızı biz kaydettik — bu adımda sosyal kanallarını ekleyin ve otomatik saat dilimi/tarih ayarlarını gözden geçirin.",
+          "required": "İşletme adı zaten dolu; değişiklik varsa buradan güncelle.",
+          "appearsOn": "Sosyal kanallarını burada yönetir, müşteriye çıkan her yerde aynen görürsünüz.",
+          "canChange": "Saat dilimi ve tarih formatı gibi bölgesel ayarları kontrol edip dilediğinizde güncelleyebilirsiniz."
+        },
         "setupComplete": {
-          "title": "İşletme Kurulumu Tamamlandı",
-          "description": "Tebrikler. İşletme bilgilerinizi başarıyla kurdunuz. Sonraki adıma hazırsınız."
+          "title": "İşletme Kurulumu Hazır 🎉",
+          "description": "Harika! İşletme bilgileri hazır, rehberli kuruluma bir sonraki adımla devam edebilirsin."
         }
       }
     },
@@ -1311,10 +1311,10 @@
         },
         "completeInfo": {
           "title": "Sadece profilini doğrula",
-          "description": "Görünen adın başlangıç formundan geldi \u2014 farklı bir imza kullanmak istersen güncelle ve istersen fotoğraf yükle.",
-          "fullNameRequired": "\u2022 Görünen ad başlangıç verisinden geldi, dilersen buradan değiştirebilirsin",
-          "workingHours": "\u2022 Çalışma saatleri Takvimin doğru çalışması için uygunluğu belirt",
-          "profilePhoto": "\u2022 Profil fotoğrafı Yönetici görünümlerinde ve müşteri e-postalarında görünür"
+          "description": "Görünen adın başlangıç formundan geldi; istersen burada değiştir ve hızlıca fotoğraf ekle.",
+          "fullNameRequired": "\u2022 Görünen ad hazır \u2014 farklı bir imza istiyorsan burada güncelle.",
+          "workingHours": "\u2022 Çalışma saatleri takvime müsaitliğini anlatır.",
+          "profilePhoto": "\u2022 Profil fotoğrafı yönetici ekranlarında ve müşteri e-postalarında görünür."
         },
         "businessInfo": {
           "title": "Genel ayarlarda stüdyo adın hazır",
@@ -1324,8 +1324,8 @@
           "canChange": "\u2022 Gerektiğinde her zaman düzenleyebilirsin"
         },
         "setupComplete": {
-          "title": "Profil Kurulumu Tamamlandı",
-          "description": "Tebrikler. Profil ve işletme bilgilerinizi kurdunuz. Sonraki adıma hazırsınız.",
+          "title": "👏🏻 Profil Kurulumu Tam!",
+          "description": "Tebrikler. Profil ve işletme bilgilerini başarıyla tamamladın. Sıradaki adıma hazırsın.",
           "success": "Profil kurulumu başarıyla tamamlandı"
         }
       },

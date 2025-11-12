@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Building, Upload, Settings, CheckCircle } from "lucide-react";
+import { Building, Upload, Settings } from "lucide-react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
@@ -198,12 +198,7 @@ export default function General() {
     },
     {
       id: 5,
-      title: (
-        <div className="flex items-center gap-2">
-          <CheckCircle className="h-5 w-5 text-green-600" />
-          <span>{t("settings.general.tutorial.setupComplete.title")}</span>
-        </div>
-      ),
+      title: t("settings.general.tutorial.setupComplete.title"),
       description: t("settings.general.tutorial.setupComplete.description"),
       content: null,
       canProceed: true,

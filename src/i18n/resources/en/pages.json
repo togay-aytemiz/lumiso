@@ -1225,25 +1225,25 @@
         "tutorial": {
           "businessInfo": {
             "title": "Business Information & Branding",
-            "description": "Intake already filled these fields—use this page to refine public details, drop in social channel links, and double-check the regional defaults we pre-configured.",
+            "description": "Intake already filled these fields—use this page to refine public details, add social channel links, and give the pre-configured regional settings a quick look.",
             "setBusinessName": "Review or adjust your studio name",
             "uploadLogo": "Upload your business logo",
             "chooseBrandColors": "Choose your brand colors",
-            "help": "Business info, social channels, and regional settings appear on client communications, invoices, and contracts—give them a quick look."
+            "help": "Business info, social channels, and regional settings appear on every client touchpoint—give them a quick look."
           },
           "addBusinessName": {
             "title": "Verify your business identity",
-            "description": "Your studio name is already saved. Double-check it, add public contact + social links, then confirm the timezone and date formats we pre-filled.",
-            "required": "Pulled from intake—edit if something changed (name, locale, timezone).",
-            "appearsOn": "Appears on invoices, contracts, emails, and the Social Channels list",
-            "canChange": "You can always come back to tweak branding, social links, or regional defaults."
+            "description": "We already saved your studio name—use this step to confirm it, drop in social links, and glance at the timezone/date settings we prepared.",
+            "required": "Pulled from intake—edit only if the name or locale changed.",
+            "appearsOn": "Feeds Social Channels plus every invoice, contract, and email.",
+            "canChange": "Branding, social links, and regional settings stay editable anytime."
           },
-        "setupComplete": {
-          "title": "Business Setup Complete!",
-          "description": "Congratulations! You've successfully set up your business information. You're ready to move on to the next step of your photography CRM setup."
+          "setupComplete": {
+            "title": "🎉 Business Setup Complete!",
+            "description": "Great work! Your business information is ready, and you're clear to continue the guided setup."
+          }
         }
-      }
-    },
+      },
     "profile": {
       "title": "Profile",
       "description": "Personal details and working hours",
@@ -1323,7 +1323,7 @@
           "canChange": "\u2022 Everything here stays editable whenever you need"
         },
         "setupComplete": {
-          "title": "Profile Setup Complete!",
+          "title": "👏🏻 Profile Setup Complete!",
           "description": "Congratulations! You've successfully set up your profile and business information. You're ready to move on to the next step of your photography CRM setup.",
           "success": "Profile setup completed successfully!"
         }

@@ -42,6 +42,101 @@
       "next": "Sonraki özellik"
     }
   },
+  "profileIntake": {
+    "badge": "Başlamadan önce",
+    "title": "Stüdyonu tanıtalım",
+    "subtitle": "Bu bilgiler e-postalar ve yakında gelecek varsayılanlar için kullanılıyor; onboarding'e özel bir sihir yok.",
+    "stepLabel": "Adım {{current}} / {{total}}",
+    "steps": {
+      "name": {
+        "title": "Sana nasıl hitap edelim?",
+        "description": "Panolarda, e-postalarda ve şablonlarda bu adı kullanacağız."
+      },
+      "business": {
+        "title": "İşletme adın nedir?",
+        "description": "Faturalarda, e-posta imzalarında ve yakında gelecek müşteri portallarında görünecek."
+      },
+      "projects": {
+        "title": "En sık yaptığın işleri seç",
+        "description": "Varsayılan proje türlerini ve isteğe bağlı örnek verileri buna göre şekillendiriyoruz."
+      },
+      "sample": {
+        "title": "Çalışma alanına örnek veriler yüklensin mi?",
+        "description": "Keşfetmeyi hızlandırmak için birkaç demo kişi, proje ve oturum ekleyebiliriz."
+      }
+    },
+    "displayName": {
+      "label": "Tercih ettiğin görünen ad",
+      "placeholder": "örn. Tayte veya Lumiso Studios'tan Tayte",
+      "helper": "E-postalarda, bildirimlerde ve ekip menülerinde gösterilir."
+    },
+    "businessName": {
+      "label": "İşletme adı",
+      "placeholder": "örn. Lumiso Studios",
+      "helper": "Faturalarda, e-postalarda ve yakında gelecek müşteri portallarında görünecek."
+    },
+    "projectTypes": {
+      "label": "En sık çektiğin projeler hangileri?",
+      "helper": "İstediğin kadar seç; ilk tercihin yeni projelerde varsayılan olur.",
+      "managementHint": "Yeni tür eklemek istersen Ayarlar \u2192 Projeler ve Seanslar bölümünden her zaman düzenleyebilirsin."
+    },
+    "options": {
+      "projectTypes": {
+        "wedding": "Düğün",
+        "family": "Aile",
+        "children": "Çocuk",
+        "maternity": "Hamilelik",
+        "birth": "Doğum",
+        "newborn": "Yenidoğan",
+        "headshots": "Kurumsal Portre",
+        "senior": "Mezuniyet",
+        "commercial": "Ticari",
+        "event": "Etkinlik",
+        "pet": "Evcil Hayvan",
+        "realEstate": "Gayrimenkul"
+      }
+    },
+    "sampleData": {
+      "title": "",
+      "description": "",
+      "yes": {
+        "title": "Örnek veriler kalsın",
+        "description": "Rehber kayıtları yükleyelim; istediğin zaman silebilirsin."
+      },
+      "no": {
+        "title": "Vazgeç, temiz başla",
+        "description": "Önyüklemeyi atla ve tüm kayıtları kendin oluşturmaya başla."
+      },
+      "recommended": "Önerilen",
+      "error": "Nasıl başlamak istediğini seç."
+    },
+    "footers": {
+      "name": "Adını istediğin zaman Ayarlar → Profil sekmesinden güncelleyebilirsin.",
+      "business": "İşletme bilgilerini Ayarlar → Genel sekmesinden düzenleyebilirsin.",
+      "projects": "",
+
+      "sample": "İstersen örnek kayıtları daha sonra tek tek silebilirsin."
+    },
+    "footer": "Adını istediğin zaman Ayarlar → Profil sekmesinden güncelleyebilirsin.",
+    "actions": {
+      "continue": "Kaydet ve devam et",
+      "next": "Devam et",
+      "finish": "Kaydet ve ilerle",
+      "back": "Geri",
+      "saving": "Kaydediliyor..."
+    },
+    "errors": {
+      "displayName": "Sana nasıl hitap etmemiz gerektiğini yaz.",
+      "businessName": "Müşterilere gösterdiğin işletme adını ekle.",
+      "projectTypes": "En az bir proje tipi seç.",
+      "sampleData": "Nasıl başlamak istediğini seç.",
+      "limit": "En fazla {{count}} öğe seçebilirsin."
+    },
+    "toast": {
+      "success": "Stüdyo bilgileri kaydedildi.",
+      "error": "Tercihleri kaydedemedik. Lütfen yeniden dene."
+    }
+  },
   "leads": {
     "title": "Kişiler",
     "description": "Tüm kişi ve müşterilerinizi yönetin, durumlarını takip edin",
@@ -1176,22 +1271,22 @@
         "emailHelp": "Giriş e-posta adresiniz burada değiştirilemez",
         "deletePhoto": "Profil Fotoğrafını Sil",
         "deletePhotoConfirm": "Profil fotoğrafınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
-      "deletePhotoButton": "Fotoğraf Sil"
-    },
-    "security": {
-      "title": "Şifre ve güvenlik",
-      "description": "Şifrenizi güncellemeniz gerektiğinde kendinize güvenli bir sıfırlama bağlantısı gönderin.",
-      "hint": "Giriş e-posta adresinize tek kullanımlık bir bağlantı gönderiyoruz. Güvenlik için 60 dakika sonra sona erer.",
-      "cta": "Sıfırlama e-postası gönder",
-      "ctaLoading": "Gönderiliyor...",
-      "successTitle": "Sıfırlama bağlantısı gönderildi",
-      "successDescription": "Yeni bir şifre belirlemek için {{email}} adresine gelen talimatları kontrol edin.",
-      "errorTitle": "Sıfırlama bağlantısı gönderilemedi",
-      "errorDescription": "Lütfen tekrar deneyin veya sorun devam ederse destekle iletişime geçin.",
-      "missingEmailTitle": "E-posta bulunamadı",
-      "missingEmailDescription": "Oturum açma e-postanızı bulamadık. Sayfayı yenileyip yeniden giriş yaptıktan sonra tekrar deneyin."
-    },
-    "workingHours": {
+        "deletePhotoButton": "Fotoğraf Sil"
+      },
+      "security": {
+        "title": "Şifre ve güvenlik",
+        "description": "Şifrenizi güncellemeniz gerektiğinde kendinize güvenli bir sıfırlama bağlantısı gönderin.",
+        "hint": "Giriş e-posta adresinize tek kullanımlık bir bağlantı gönderiyoruz. Güvenlik için 60 dakika sonra sona erer.",
+        "cta": "Sıfırlama e-postası gönder",
+        "ctaLoading": "Gönderiliyor...",
+        "successTitle": "Sıfırlama bağlantısı gönderildi",
+        "successDescription": "Yeni bir şifre belirlemek için {{email}} adresine gelen talimatları kontrol edin.",
+        "errorTitle": "Sıfırlama bağlantısı gönderilemedi",
+        "errorDescription": "Lütfen tekrar deneyin veya sorun devam ederse destekle iletişime geçin.",
+        "missingEmailTitle": "E-posta bulunamadı",
+        "missingEmailDescription": "Oturum açma e-postanızı bulamadık. Sayfayı yenileyip yeniden giriş yaptıktan sonra tekrar deneyin."
+      },
+      "workingHours": {
         "title": "Çalışma Saatleri",
         "description": "Seans planlama için müsaitliğinizi ayarlayın",
         "day": "Gün",

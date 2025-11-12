@@ -25,7 +25,7 @@ BEGIN
       created_at = EXCLUDED.created_at,
       processed_at = NULL;
 
-  PERFORM public.process_intake_seed(EXCLUDED.organization_id);
+  PERFORM public.process_intake_seed(NEW.organization_id);
 
   RETURN NEW;
 END;

@@ -17,8 +17,15 @@ import {
   CalendarDays,
   PawPrint,
   Building,
+  Loader2,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +84,13 @@ type IntakeErrors = {
   sampleData?: string;
 };
 
+const FIELD_TO_STEP: Record<keyof IntakeErrors, number> = {
+  displayName: 1,
+  businessName: 2,
+  projectTypes: 3,
+  sampleData: 4,
+};
+
 const preventDialogDismiss = (event: Event) => {
   event.preventDefault();
 };
@@ -104,6 +118,7 @@ export function ProfileIntakeGate() {
   const [wantsSampleData, setWantsSampleData] = useState<boolean | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
+  const [hasEditedProjectTypes, setHasEditedProjectTypes] = useState(false);
   const defaultProjectType = projectTypes[0];
 
   const debugOverride = useMemo(() => {
@@ -202,7 +217,7 @@ export function ProfileIntakeGate() {
   useEffect(() => {
     if (!settingsLoading) {
       setBusinessName(settings?.photography_business_name ?? "");
-      if (!debugOverride) {
+      if (!debugOverride && !hasEditedProjectTypes) {
         const preferred =
           settings?.preferred_project_types?.filter(
             (type): type is ProjectTypeId =>
@@ -224,6 +239,7 @@ export function ProfileIntakeGate() {
     settingsLoading,
     debugOverride,
     wantsSampleData,
+    hasEditedProjectTypes,
   ]);
 
   useEffect(() => {
@@ -260,6 +276,9 @@ export function ProfileIntakeGate() {
   };
 
   const toggleProjectType = (value: ProjectTypeId) => {
+    if (!hasEditedProjectTypes) {
+      setHasEditedProjectTypes(true);
+    }
     setProjectTypes((prev) => {
       if (prev.includes(value)) {
         const next = prev.filter((entry) => entry !== value);
@@ -343,7 +362,22 @@ export function ProfileIntakeGate() {
     }
 
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) {
+    const errorFields = Object.keys(nextErrors) as (keyof IntakeErrors)[];
+    if (errorFields.length > 0) {
+      const firstField = errorFields[0];
+      const targetStep = FIELD_TO_STEP[firstField];
+      if (targetStep && targetStep !== currentStep) {
+        setDirection(targetStep < currentStep ? "backward" : "forward");
+        setCurrentStep(targetStep);
+      }
+      const firstMessage = nextErrors[firstField];
+      if (firstMessage) {
+        toast({
+          title: t("common:toast.error", { defaultValue: "Error" }),
+          description: firstMessage,
+          variant: "destructive",
+        });
+      }
       return;
     }
 
@@ -623,6 +657,10 @@ export function ProfileIntakeGate() {
         onEscapeKeyDown={preventDialogDismiss}
         data-testid="profile-intake-gate"
       >
+        <DialogHeader className="sr-only">
+          <DialogTitle>{t("pages:profileIntake.title")}</DialogTitle>
+          <DialogDescription>{t("pages:profileIntake.subtitle")}</DialogDescription>
+        </DialogHeader>
         <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-primary text-xs font-semibold">
           <Sparkles className="h-4 w-4" />
           {t("pages:profileIntake.badge")}
@@ -668,11 +706,16 @@ export function ProfileIntakeGate() {
               disabled={submitting || (isLastStep && wantsSampleData === null)}
               className="sm:min-w-[160px]"
             >
-              {submitting && isLastStep
-                ? t("pages:profileIntake.actions.saving")
-                : isLastStep
-                ? t("pages:profileIntake.actions.finish")
-                : t("pages:profileIntake.actions.next")}
+              {submitting && isLastStep ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("pages:profileIntake.actions.saving")}
+                </>
+              ) : isLastStep ? (
+                t("pages:profileIntake.actions.finish")
+              ) : (
+                t("pages:profileIntake.actions.next")
+              )}
             </Button>
           </div>
         </div>

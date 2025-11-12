@@ -70,13 +70,14 @@ export function SettingsAnchorRegistryProvider({
 // eslint-disable-next-line react-refresh/only-export-components
 export function useSettingsAnchorRegistry(anchor?: SettingsAnchor | null) {
   const context = useContext(SettingsAnchorRegistryContext);
+  const registerAnchor = context?.registerAnchor;
 
   useEffect(() => {
-    if (!context || !anchor || !anchor.id) {
+    if (!registerAnchor || !anchor || !anchor.id) {
       return;
     }
-    return context.registerAnchor(anchor);
-  }, [context, anchor]);
+    return registerAnchor(anchor);
+  }, [registerAnchor, anchor]);
 }
 
 // eslint-disable-next-line react-refresh/only-export-components

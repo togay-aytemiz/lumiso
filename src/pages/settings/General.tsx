@@ -18,7 +18,6 @@ import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { SocialChannelsSection } from "@/components/settings/SocialChannelsSection";
-import { useOrganization } from "@/contexts/OrganizationContext";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { detectBrowserTimezone } from "@/lib/dateFormatUtils";
@@ -41,7 +40,7 @@ export default function General() {
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { completeCurrentStep, currentStepInfo, nextStepInfo, isInGuidedSetup } = useOnboarding();
+  const { completeCurrentStep, currentStepInfo, isInGuidedSetup } = useOnboarding();
   const { t } = useTranslation(['pages', 'common', 'forms']);
   const { toast } = useToast();
   const {
@@ -63,8 +62,18 @@ export default function General() {
 
   // Check if we're in tutorial mode from Profile onboarding
   const isInTutorial = searchParams.get('tutorial') === 'true';
+  const stepParam = searchParams.get('step');
   const [showTutorial, setShowTutorial] = useState(isInTutorial);
   const [tutorialDismissed, setTutorialDismissed] = useState(false);
+  const computeInitialStepIndex = (value: string | null) => {
+    if (!value) return 0;
+    const parsed = parseInt(value, 10);
+    if (Number.isNaN(parsed)) return 0;
+    return Math.max(0, parsed - 3);
+  };
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(() =>
+    computeInitialStepIndex(stepParam)
+  );
   const onboardingProfileStepActive =
     isInGuidedSetup && currentStepInfo?.route?.startsWith("/settings/profile");
   const onboardingStepRef = useRef<number | null>(null);
@@ -75,6 +84,10 @@ export default function General() {
       setShowTutorial(true);
     }
   }, [isInTutorial]);
+
+  useEffect(() => {
+    setTutorialStepIndex(computeInitialStepIndex(stepParam));
+  }, [stepParam]);
 
   useEffect(() => {
     if (onboardingProfileStepActive) {
@@ -89,63 +102,6 @@ export default function General() {
     }
   }, [onboardingProfileStepActive, currentStepInfo?.id, tutorialDismissed]);
   
-  // Create tutorial steps for General page (steps 3, 4, and 5 from Profile)
-  const tutorialSteps: TutorialStep[] = [
-    {
-      id: 3,
-      title: t("settings.general.tutorial.businessInfo.title"),
-      description: t("settings.general.tutorial.businessInfo.description"),
-      content: (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm">
-            <Building className="h-4 w-4 text-primary" />
-            <span>{t("settings.general.tutorial.businessInfo.setBusinessName")}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Upload className="h-4 w-4 text-primary" />
-            <span>{t("settings.general.tutorial.businessInfo.uploadLogo")}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Settings className="h-4 w-4 text-primary" />
-            <span>{t("settings.general.tutorial.businessInfo.chooseBrandColors")}</span>
-          </div>
-          <div className="text-xs text-muted-foreground mt-2">
-            {t("settings.general.tutorial.businessInfo.help")}
-          </div>
-        </div>
-      ),
-      canProceed: true,
-      mode: 'modal'
-    },
-    {
-      id: 4,
-      title: t("settings.general.tutorial.addBusinessName.title"),
-      description: t("settings.general.tutorial.addBusinessName.description"),
-      content: (
-        <div className="space-y-2 text-sm text-muted-foreground">
-          <p>• {t("settings.general.tutorial.addBusinessName.required")}</p>
-          <p>• {t("settings.general.tutorial.addBusinessName.appearsOn")}</p>
-          <p>• {t("settings.general.tutorial.addBusinessName.canChange")}</p>
-        </div>
-      ),
-      canProceed: !!settings?.photography_business_name?.trim(),
-      mode: 'floating'
-    },
-    {
-      id: 5,
-      title: (
-        <div className="flex items-center gap-2">
-          <CheckCircle className="h-5 w-5 text-green-600" />
-          <span>{t("settings.general.tutorial.setupComplete.title")}</span>
-        </div>
-      ),
-      description: t("settings.general.tutorial.setupComplete.description"),
-      content: null,
-      canProceed: true,
-      mode: 'modal'
-    }
-  ];
-
   // Branding section state
   const brandingSection = useSettingsCategorySection({
     sectionId: "branding",
@@ -196,6 +152,65 @@ export default function General() {
     }
   });
 
+  // Create tutorial steps for General page (steps 3, 4, and 5 of the mission)
+  const tutorialSteps: TutorialStep[] = [
+    {
+      id: 3,
+      title: t("settings.general.tutorial.businessInfo.title"),
+      description: t("settings.general.tutorial.businessInfo.description"),
+      content: (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm">
+            <Building className="h-4 w-4 text-primary" />
+            <span>{t("settings.general.tutorial.businessInfo.setBusinessName")}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Upload className="h-4 w-4 text-primary" />
+            <span>{t("settings.general.tutorial.businessInfo.uploadLogo")}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Settings className="h-4 w-4 text-primary" />
+            <span>{t("settings.general.tutorial.businessInfo.chooseBrandColors")}</span>
+          </div>
+          <div className="text-xs text-muted-foreground mt-2">
+            {t("settings.general.tutorial.businessInfo.help")}
+          </div>
+        </div>
+      ),
+      canProceed: true,
+      mode: 'modal'
+    },
+    {
+      id: 4,
+      title: t("settings.general.tutorial.addBusinessName.title"),
+      description: t("settings.general.tutorial.addBusinessName.description"),
+      content: (
+        <div className="space-y-2 text-sm text-muted-foreground">
+          <p>• {t("settings.general.tutorial.addBusinessName.required")}</p>
+          <p>• {t("settings.general.tutorial.addBusinessName.appearsOn")}</p>
+          <p>• {t("settings.general.tutorial.addBusinessName.canChange")}</p>
+        </div>
+      ),
+      canProceed: !!brandingSection.values.companyName?.trim(),
+      mode: 'floating',
+      requiresAction: true,
+      disabledTooltip: t("settings.general.tutorial.addBusinessName.required")
+    },
+    {
+      id: 5,
+      title: (
+        <div className="flex items-center gap-2">
+          <CheckCircle className="h-5 w-5 text-green-600" />
+          <span>{t("settings.general.tutorial.setupComplete.title")}</span>
+        </div>
+      ),
+      description: t("settings.general.tutorial.setupComplete.description"),
+      content: null,
+      canProceed: true,
+      mode: 'modal'
+    }
+  ];
+
   // Update form values when settings load
   const browserTimezone = useMemo(() => detectBrowserTimezone(), []);
   const setBrandingValues = brandingSection.setValues;
@@ -241,7 +256,7 @@ export default function General() {
   const handleTutorialComplete = async () => {
     // Settings tutorial completed successfully
     try {
-      await completeOnboarding();
+      await completeCurrentStep();
       setTutorialDismissed(true);
       setShowTutorial(false);
       navigate('/getting-started');
@@ -517,7 +532,9 @@ export default function General() {
         onComplete={handleTutorialComplete}
         onExit={handleTutorialExit}
         isVisible={showTutorial}
-        initialStepIndex={0}
+        initialStepIndex={tutorialStepIndex}
+        displayOffset={2}
+        displayTotal={5}
       />
     </SettingsPageWrapper>
   );

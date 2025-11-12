@@ -75,6 +75,26 @@ jest.mock("@/components/ui/loading-presets", () => ({
   ),
 }));
 
+const mockSettingsContext = {
+  dirtySections: new Set<string>(),
+  addDirtySection: jest.fn(),
+  removeDirtySection: jest.fn(),
+  clearAllDirtySections: jest.fn(),
+  hasDirtySections: false,
+  categoryChanges: {},
+  registerSectionHandler: jest.fn(),
+  unregisterSectionHandler: jest.fn(),
+  setSectionDirty: jest.fn(),
+  getCategoryDirtySections: jest.fn(() => []),
+  hasCategoryChanges: jest.fn(() => false),
+  saveCategoryChanges: jest.fn(async () => undefined),
+  cancelCategoryChanges: jest.fn(),
+};
+
+jest.mock("@/contexts/SettingsContext", () => ({
+  useSettingsContext: () => mockSettingsContext,
+}));
+
 jest.mock("@/components/ui/dialog", () => ({
   Dialog: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -486,7 +506,7 @@ describe("Profile settings page", () => {
     fireEvent.click(screen.getByText("complete tutorial"));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/settings/general?tutorial=true");
+      expect(mockNavigate).toHaveBeenCalledWith("/settings/general?tutorial=true&step=3");
     });
 
     searchParamsMock.mockReturnValue([

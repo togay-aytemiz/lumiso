@@ -14,13 +14,12 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { User, Settings, CheckCircle, ShieldCheck } from "lucide-react";
+import { User, Settings, ShieldCheck } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useWorkingHours } from "@/hooks/useWorkingHours";
 import { useToast } from "@/hooks/use-toast";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
-import { useOrganization } from "@/contexts/OrganizationContext";
 import { trimAndNormalizeSpaces, createTrimmedBlurHandler } from "@/lib/inputUtils";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -50,7 +49,6 @@ export default function Profile() {
     updateWorkingHour,
     refetch: refetchWorkingHours,
   } = useWorkingHours();
-  const { activeOrganization } = useOrganization();
   const { completeCurrentStep, currentStepInfo, isInGuidedSetup } = useOnboarding();
   const { toast } = useToast();
   const { t } = useTranslation(['pages', 'common']);
@@ -90,6 +88,15 @@ export default function Profile() {
       setShowTutorial(true);
     }
   }, [isInTutorial]);
+
+  useEffect(() => {
+    if (stepParam) {
+      const parsed = parseInt(stepParam, 10);
+      if (!Number.isNaN(parsed)) {
+        setTutorialStepIndex(Math.max(0, parsed - 1));
+      }
+    }
+  }, [stepParam]);
 
   useEffect(() => {
     if (onboardingProfileStepActive) {
@@ -310,35 +317,9 @@ export default function Profile() {
         </div>
       ),
       canProceed: !!profileSection.values.fullName?.trim(),
-      mode: 'floating'
-    },
-    {
-      id: 3,
-      title: t('settings.profile.tutorial.businessInfo.title'),
-      description: t('settings.profile.tutorial.businessInfo.description'),
-      content: (
-        <div className="space-y-2 text-sm text-muted-foreground">
-          <p>{t('settings.profile.tutorial.businessInfo.businessNameRequired')}</p>
-          <p>{t('settings.profile.tutorial.businessInfo.usedIn')}</p>
-          <p>{t('settings.profile.tutorial.businessInfo.canChange')}</p>
-        </div>
-      ),
-      route: "/settings/general",
-      canProceed: !!activeOrganization?.name?.trim(),
-      mode: 'floating'
-    },
-    {
-      id: 4,
-      title: t('settings.profile.tutorial.setupComplete.title'),
-      description: t('settings.profile.tutorial.setupComplete.description'),
-      content: (
-        <div className="flex items-center gap-2 text-green-600">
-          <CheckCircle className="h-5 w-5" />
-          <span className="font-medium">{t('settings.profile.tutorial.setupComplete.success')}</span>
-        </div>
-      ),
-      canProceed: true,
-      mode: 'modal'
+      mode: 'floating',
+      requiresAction: true,
+      disabledTooltip: t('settings.profile.tutorial.completeInfo.fullNameRequired')
     }
   ];
 
@@ -346,7 +327,7 @@ export default function Profile() {
     // Profile tutorial completed, moving to general settings (same onboarding step)
     setTutorialDismissed(true);
     setShowTutorial(false);
-    navigate("/settings/general?tutorial=true");
+    navigate("/settings/general?tutorial=true&step=3");
   };
 
   const handleTutorialExit = async () => {
@@ -600,6 +581,7 @@ export default function Profile() {
           onExit={handleTutorialExit}
           isVisible={showTutorial}
           initialStepIndex={tutorialStepIndex}
+          displayTotal={5}
         />
       )}
     </SettingsPageWrapper>

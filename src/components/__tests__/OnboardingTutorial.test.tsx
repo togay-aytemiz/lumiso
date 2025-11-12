@@ -111,7 +111,7 @@ describe("OnboardingTutorial", () => {
           "onboarding.tutorial.exiting": "Exiting…",
           "onboarding.tutorial.next": "Next",
           "onboarding.tutorial.continue_setup": "Continue setup",
-          "onboarding.tutorial.step_title": `Step ${options?.current} of ${options?.total} – ${options?.title}`,
+          "onboarding.tutorial.step_title": `Step ${options?.current}/${options?.total} · ${options?.title}`,
         };
         return dictionary[key] ?? key;
       },
@@ -160,7 +160,7 @@ describe("OnboardingTutorial", () => {
       })
     );
 
-    expect(latestModalProps.title).toBe("Step 1 of 2 – Welcome");
+    expect(latestModalProps.title).toBe("Step 1/2 · Welcome");
     expect(screen.getByText("Step 1")).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("modal-action-0"));
@@ -169,7 +169,7 @@ describe("OnboardingTutorial", () => {
     fireEvent.click(screen.getByTestId("modal-action-1"));
 
     await waitFor(() => {
-      expect(latestModalProps.title).toBe("Step 2 of 2 – Next Steps");
+      expect(latestModalProps.title).toBe("Step 2/2 · Next Steps");
     });
 
     expect(navigateMock).toHaveBeenCalledWith(
@@ -221,6 +221,6 @@ describe("OnboardingTutorial", () => {
       />
     );
 
-    expect(latestModalProps.title).toBe("Step 2 of 2 – Next Steps");
+    expect(latestModalProps.title).toBe("Step 2/2 · Next Steps");
   });
 });

@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
+import { render, screen, waitFor } from "@/utils/testUtils";
+import userEvent from "@testing-library/user-event";
 import { ProfileIntakeGate } from "../ProfileIntakeGate";
 import { useProfile } from "@/hooks/useProfile";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
@@ -139,47 +140,48 @@ describe("ProfileIntakeGate", () => {
     );
 
     render(<ProfileIntakeGate />);
+    const user = userEvent.setup();
 
-    fireEvent.change(
-      screen.getByPlaceholderText("pages:profileIntake.displayName.placeholder"),
-      { target: { value: "Tayte" } }
+    const displayNameInput = await screen.findByPlaceholderText(
+      "pages:profileIntake.displayName.placeholder"
     );
-    fireEvent.click(
+    await user.clear(displayNameInput);
+    await user.type(displayNameInput, "Tayte");
+    expect(displayNameInput).toHaveValue("Tayte");
+    await user.click(
       screen.getByRole("button", {
         name: "pages:profileIntake.actions.next",
       })
     );
 
-    fireEvent.change(
-      screen.getByPlaceholderText("pages:profileIntake.businessName.placeholder"),
-      { target: { value: "Lumiso" } }
+    const businessInput = await screen.findByPlaceholderText(
+      "pages:profileIntake.businessName.placeholder"
     );
+    await user.clear(businessInput);
+    await user.type(businessInput, "Lumiso");
+    expect(businessInput).toHaveValue("Lumiso");
 
-    fireEvent.click(
+    await user.click(
       screen.getByRole("button", {
         name: "pages:profileIntake.actions.next",
       })
     );
 
-    fireEvent.click(
-      screen.getByTestId("profile-intake-project-wedding")
-    );
+    await user.click(screen.getByTestId("profile-intake-project-wedding"));
 
-    fireEvent.click(
+    await user.click(
       screen.getByRole("button", {
         name: "pages:profileIntake.actions.next",
       })
     );
 
-    fireEvent.click(
-      screen.getByTestId("profile-intake-sample-yes")
-    );
+    await user.click(screen.getByTestId("profile-intake-sample-yes"));
 
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "pages:profileIntake.actions.finish",
-      })
-    );
+    const finishButton = screen.getByRole("button", {
+      name: "pages:profileIntake.actions.finish",
+    });
+    await waitFor(() => expect(finishButton).toBeEnabled());
+    await user.click(finishButton);
 
     await waitFor(() => {
       expect(updateProfileMock).toHaveBeenCalledWith({

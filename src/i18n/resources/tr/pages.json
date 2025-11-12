@@ -1223,22 +1223,22 @@
         "description": "Arayüz için tercih ettiğiniz dili seçin",
         "current": "Mevcut Dil"
       },
-      "tutorial": {
-        "businessInfo": {
-          "title": "İşletme Bilgileri ve Markalaşma",
-          "description": "Bu alanlar başlangıç formu sırasında doldu \u2014 müşteriye görünen ayrıntıları burada inceleyip güncelleyebilirsiniz.",
-          "setBusinessName": "Stüdyo adınızı gözden geçirin veya güncelleyin",
-          "uploadLogo": "İşletme logonuzu yükleyin",
-          "chooseBrandColors": "Marka renklerinizi seçin",
-          "help": "Bu bilgiler müşteri iletişimleri, faturalar ve sözleşmelerde kullanılır."
-        },
-        "addBusinessName": {
-          "title": "İşletme kimliğinizi doğrulayın",
-          "description": "Stüdyo adınız zaten kayıtlı. Bir göz atın ve isterseniz kamuya açık iletişim bilgileri ekleyin.",
-          "required": "Başlangıç formundan geldi \u2014 değişiklik olduysa güncelleyin",
-          "appearsOn": "Faturalarda, sözleşmelerde ve e-postalarda görünür",
-          "canChange": "İstediğiniz zaman buradan güncelleyebilirsiniz"
-        },
+        "tutorial": {
+          "businessInfo": {
+            "title": "İşletme Bilgileri ve Markalaşma",
+            "description": "Bu alanlar başlangıç formunda doldu \u2014 müşteriye görünen ayrıntıları, sosyal kanallarınızı ve hazırladığımız bölgesel ayarları burada kontrol edin.",
+            "setBusinessName": "Stüdyo adınızı gözden geçirin veya güncelleyin",
+            "uploadLogo": "İşletme logonuzu yükleyin",
+            "chooseBrandColors": "Marka renklerinizi seçin",
+            "help": "İşletme bilgileri, sosyal kanallar ve bölgesel ayarlar müşteri iletişimi, faturalar ve sözleşmelerde görünür."
+          },
+          "addBusinessName": {
+            "title": "İşletme kimliğinizi doğrulayın",
+            "description": "Stüdyo adınız kayıtlı. Kamuya açık iletişim + sosyal kanalları ekleyin ve otomatik belirlenen saat dilimi / tarih formatını doğrulayın.",
+            "required": "Başlangıç formundan geldi \u2014 ad, dil veya saat dilimi değiştiyse güncelleyin",
+            "appearsOn": "Faturalar, sözleşmeler, e-postalar ve Sosyal Kanallar bölümünde görünür",
+            "canChange": "Marka, sosyal kanallar veya bölgesel ayarları istediğiniz zaman güncelleyebilirsiniz"
+          },
         "setupComplete": {
           "title": "İşletme Kurulumu Tamamlandı",
           "description": "Tebrikler. İşletme bilgilerinizi başarıyla kurdunuz. Sonraki adıma hazırsınız."

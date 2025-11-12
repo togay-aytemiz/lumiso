@@ -1222,22 +1222,22 @@
         "description": "Choose your preferred language for the interface",
         "current": "Current Language"
       },
-      "tutorial": {
-        "businessInfo": {
-          "title": "Business Information & Branding",
-          "description": "Intake already filled these fields—use this page to refine your public-facing details.",
-          "setBusinessName": "Review or adjust your studio name",
-          "uploadLogo": "Upload your business logo",
-          "chooseBrandColors": "Choose your brand colors",
-          "help": "These details appear on client communications, invoices, and contracts."
-        },
-        "addBusinessName": {
-          "title": "Verify your business identity",
-          "description": "Your studio name is already saved. Double-check it and add optional public contact details.",
-          "required": "Pulled from intake—edit if something changed",
-          "appearsOn": "Appears on invoices, contracts, and emails",
-          "canChange": "You can always come back and update this"
-        },
+        "tutorial": {
+          "businessInfo": {
+            "title": "Business Information & Branding",
+            "description": "Intake already filled these fields—use this page to refine public details, drop in social channel links, and double-check the regional defaults we pre-configured.",
+            "setBusinessName": "Review or adjust your studio name",
+            "uploadLogo": "Upload your business logo",
+            "chooseBrandColors": "Choose your brand colors",
+            "help": "Business info, social channels, and regional settings appear on client communications, invoices, and contracts—give them a quick look."
+          },
+          "addBusinessName": {
+            "title": "Verify your business identity",
+            "description": "Your studio name is already saved. Double-check it, add public contact + social links, then confirm the timezone and date formats we pre-filled.",
+            "required": "Pulled from intake—edit if something changed (name, locale, timezone).",
+            "appearsOn": "Appears on invoices, contracts, emails, and the Social Channels list",
+            "canChange": "You can always come back to tweak branding, social links, or regional defaults."
+          },
         "setupComplete": {
           "title": "Business Setup Complete!",
           "description": "Congratulations! You've successfully set up your business information. You're ready to move on to the next step of your photography CRM setup."

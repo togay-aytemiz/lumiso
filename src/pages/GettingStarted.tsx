@@ -60,11 +60,15 @@ const GettingStarted = () => {
   }, [currentStep, loading]);
 
   const handleStepAction = (step: (typeof ONBOARDING_STEPS)[number]) => {
-    if (step.id === 1 || step.id === 4 || step.id === 5) {
-      navigate(`${step.route}${step.route.includes('?') ? '' : '?tutorial=true'}`);
-    } else {
-      navigate(step.route);
+    if (step.id === 1) {
+      navigate("/settings/profile?tutorial=true&step=1");
+      return;
     }
+    if (step.id === 4 || step.id === 5) {
+      navigate(step.route);
+      return;
+    }
+    navigate(step.route);
   };
 
   if (loading) {

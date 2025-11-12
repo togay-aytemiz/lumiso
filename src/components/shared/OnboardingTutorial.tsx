@@ -23,6 +23,8 @@ interface OnboardingTutorialProps {
   onExit: () => void;
   isVisible: boolean;
   initialStepIndex?: number;
+  displayOffset?: number;
+  displayTotal?: number;
 }
 
 export function OnboardingTutorial({ 
@@ -30,13 +32,17 @@ export function OnboardingTutorial({
   onComplete, 
   onExit, 
   isVisible,
-  initialStepIndex = 0
+  initialStepIndex = 0,
+  displayOffset = 0,
+  displayTotal
 }: OnboardingTutorialProps) {
   const { t } = useTranslation('pages');
   const [currentStepIndex, setCurrentStepIndex] = useState(initialStepIndex);
   const navigate = useNavigate();
   const currentStep = steps[currentStepIndex];
   const isLastStep = currentStepIndex === steps.length - 1;
+  const effectiveTotal = displayTotal ?? displayOffset + steps.length;
+  const displayStepNumber = displayOffset + currentStepIndex + 1;
 
   const { isExiting, handleExitNow } = useTutorialExit({
     currentStepTitle: typeof currentStep?.title === 'string' ? currentStep.title : 'Current Step',
@@ -95,8 +101,8 @@ export function OnboardingTutorial({
     return (
       <>
         <TutorialFloatingCard
-          stepNumber={currentStepIndex + 1}
-          totalSteps={steps.length}
+          stepNumber={displayStepNumber}
+          totalSteps={effectiveTotal}
           title={typeof currentStep.title === 'string' ? currentStep.title : 'Step'}
           description={currentStep.description}
           content={currentStep.content}
@@ -141,8 +147,8 @@ export function OnboardingTutorial({
         open={isVisible && !isExiting}
         onClose={handleExit}
         title={t('onboarding.tutorial.step_title', { 
-          current: currentStepIndex + 1, 
-          total: steps.length, 
+          current: displayStepNumber, 
+          total: effectiveTotal, 
           title: typeof currentStep.title === 'string' ? currentStep.title : 'Step'
         })}
         description={currentStep.description}

@@ -137,12 +137,18 @@ export function ProfileIntakeGate() {
     hasCompletedIntakeOnce ||
     (!needsDisplayName && !needsBusinessName && !needsProjectTypes);
 
-  const hasLoadedProfile = !profileLoading && profile !== null;
-  const hasLoadedSettings = !settingsLoading && settings !== null;
-  const dataReady = hasLoadedProfile && hasLoadedSettings;
+  const [initialDataLoaded, setInitialDataLoaded] = useState(
+    () => !profileLoading && !settingsLoading
+  );
+
+  useEffect(() => {
+    if (!profileLoading && !settingsLoading && !initialDataLoaded) {
+      setInitialDataLoaded(true);
+    }
+  }, [profileLoading, settingsLoading, initialDataLoaded]);
 
   const shouldShow =
-    dataReady &&
+    initialDataLoaded &&
     !manualComplete &&
     (debugOverride || !intakeComplete);
 
@@ -217,31 +223,37 @@ export function ProfileIntakeGate() {
   }, [profile?.full_name, profileLoading, user?.user_metadata]);
 
   useEffect(() => {
-    if (!settingsLoading) {
-      setBusinessName(settings?.photography_business_name ?? "");
-      if (!debugOverride && !hasEditedProjectTypes) {
-        const preferred =
-          settings?.preferred_project_types?.filter(
-            (type): type is ProjectTypeId =>
-              PROJECT_TYPE_OPTIONS.some((option) => option.id === type)
-          ) ?? [];
-        setProjectTypes(preferred);
-      }
-      if (
-        wantsSampleData === null &&
-        typeof settings?.seed_sample_data_onboarding === "boolean"
-      ) {
-        setWantsSampleData(settings.seed_sample_data_onboarding);
-      }
-    }
+    if (settingsLoading) return;
+    setBusinessName(settings?.photography_business_name ?? "");
+  }, [settings?.photography_business_name, settingsLoading]);
+
+  useEffect(() => {
+    if (settingsLoading) return;
+    if (debugOverride || hasEditedProjectTypes) return;
+
+    const preferred =
+      settings?.preferred_project_types?.filter(
+        (type): type is ProjectTypeId =>
+          PROJECT_TYPE_OPTIONS.some((option) => option.id === type)
+      ) ?? [];
+    setProjectTypes(preferred);
   }, [
-    settings?.photography_business_name,
     settings?.preferred_project_types,
-    settings?.seed_sample_data_onboarding,
     settingsLoading,
     debugOverride,
-    wantsSampleData,
     hasEditedProjectTypes,
+  ]);
+
+  useEffect(() => {
+    if (settingsLoading) return;
+    if (wantsSampleData !== null) return;
+    if (typeof settings?.seed_sample_data_onboarding === "boolean") {
+      setWantsSampleData(settings.seed_sample_data_onboarding);
+    }
+  }, [
+    settings?.seed_sample_data_onboarding,
+    settingsLoading,
+    wantsSampleData,
   ]);
 
   useEffect(() => {
@@ -269,7 +281,7 @@ export function ProfileIntakeGate() {
     debugOverride,
   ]);
 
-  if (!dataReady || !shouldShow) {
+  if (!initialDataLoaded || !shouldShow) {
     return null;
   }
 

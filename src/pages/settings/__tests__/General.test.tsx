@@ -65,6 +65,26 @@ jest.mock("@/components/ui/loading-presets", () => ({
   ),
 }));
 
+const mockSettingsContext = {
+  dirtySections: new Set<string>(),
+  addDirtySection: jest.fn(),
+  removeDirtySection: jest.fn(),
+  clearAllDirtySections: jest.fn(),
+  hasDirtySections: false,
+  categoryChanges: {},
+  registerSectionHandler: jest.fn(),
+  unregisterSectionHandler: jest.fn(),
+  setSectionDirty: jest.fn(),
+  getCategoryDirtySections: jest.fn(() => []),
+  hasCategoryChanges: jest.fn(() => false),
+  saveCategoryChanges: jest.fn(async () => undefined),
+  cancelCategoryChanges: jest.fn(),
+};
+
+jest.mock("@/contexts/SettingsContext", () => ({
+  useSettingsContext: () => mockSettingsContext,
+}));
+
 jest.mock("@/hooks/useOrganizationSettings");
 jest.mock("@/hooks/useSettingsCategorySection");
 jest.mock("@/contexts/OnboardingContext", () => ({

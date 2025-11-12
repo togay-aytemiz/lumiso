@@ -137,18 +137,14 @@ export function ProfileIntakeGate() {
     hasCompletedIntakeOnce ||
     (!needsDisplayName && !needsBusinessName && !needsProjectTypes);
 
-  const hasLoadedProfile = !profileLoading;
-  const hasLoadedSettings = !settingsLoading;
+  const hasLoadedProfile = !profileLoading && profile !== null;
+  const hasLoadedSettings = !settingsLoading && settings !== null;
   const dataReady = hasLoadedProfile && hasLoadedSettings;
 
   const shouldShow =
     dataReady &&
     !manualComplete &&
     (debugOverride || !intakeComplete);
-
-  if (!dataReady) {
-    return null;
-  }
 
   const stepDefinitions = useMemo(
     () => [
@@ -273,7 +269,7 @@ export function ProfileIntakeGate() {
     debugOverride,
   ]);
 
-  if (!shouldShow) {
+  if (!dataReady || !shouldShow) {
     return null;
   }
 

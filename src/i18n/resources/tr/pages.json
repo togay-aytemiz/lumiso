@@ -45,7 +45,7 @@
   "profileIntake": {
     "badge": "Başlamadan önce",
     "title": "Stüdyonu tanıtalım",
-    "subtitle": "Bu bilgiler e-postalar ve yakında gelecek varsayılanlar için kullanılıyor; onboarding'e özel bir sihir yok.",
+    "subtitle": "Bu bilgiler e-postalar ve yakında gelecek varsayılanlar için kullanılıyor; gizli bir sihir yok, sadece kısa bir başlangıç formu.",
     "stepLabel": "Adım {{current}} / {{total}}",
     "steps": {
       "name": {
@@ -1226,18 +1226,18 @@
       "tutorial": {
         "businessInfo": {
           "title": "İşletme Bilgileri ve Markalaşma",
-          "description": "Burası işletme bilgilerinizi ve markalaşmanızı özelleştirebileceğiniz yerdir. Burada yapabileceklerinizi keşfedelim.",
-          "setBusinessName": "Fotoğrafçılık işletme adınızı belirleyin",
+          "description": "Bu alanlar başlangıç formu sırasında doldu \u2014 müşteriye görünen ayrıntıları burada inceleyip güncelleyebilirsiniz.",
+          "setBusinessName": "Stüdyo adınızı gözden geçirin veya güncelleyin",
           "uploadLogo": "İşletme logonuzu yükleyin",
           "chooseBrandColors": "Marka renklerinizi seçin",
-          "help": "Bu bilgiler müşteri iletişimleri, faturalar ve sözleşmelerde görünür."
+          "help": "Bu bilgiler müşteri iletişimleri, faturalar ve sözleşmelerde kullanılır."
         },
         "addBusinessName": {
-          "title": "İşletme Adınızı Ekleyin",
-          "description": "Lütfen aşağıya fotoğrafçılık işletme adınızı girin. Bu devam etmek için gereklidir ve tüm müşteri iletişimlerinde kullanılacaktır.",
-          "required": "Profesyonel iletişimler için gereklidir",
-          "appearsOn": "Faturalar, sözleşmeler ve e-postalarda görünür",
-          "canChange": "Gerekirse daha sonra değiştirilebilir"
+          "title": "İşletme kimliğinizi doğrulayın",
+          "description": "Stüdyo adınız zaten kayıtlı. Bir göz atın ve isterseniz kamuya açık iletişim bilgileri ekleyin.",
+          "required": "Başlangıç formundan geldi \u2014 değişiklik olduysa güncelleyin",
+          "appearsOn": "Faturalarda, sözleşmelerde ve e-postalarda görünür",
+          "canChange": "İstediğiniz zaman buradan güncelleyebilirsiniz"
         },
         "setupComplete": {
           "title": "İşletme Kurulumu Tamamlandı",
@@ -1305,23 +1305,23 @@
       "tutorial": {
         "welcome": {
           "title": "Profil Ayarlarınıza Hoş Geldiniz",
-          "description": "Burada kişisel bilgilerinizi yönetebilir, profil fotoğrafı yükleyebilir ve planlama için çalışma saatlerinizi ayarlayabilirsiniz.",
-          "updateInfo": "Adınızı, telefonunuzu ve profil fotoğrafınızı güncelleyin",
-          "configureHours": "Planlama için çalışma saatlerini yapılandırın"
+          "description": "Tercih ettiğin ad başlangıç formunda kaydedildi. Bu adımı avatarını ve müsaitliğini gözden geçirmek için kullan.",
+          "updateInfo": "Görünen adını kontrol et ve profil fotoğrafı ekle",
+          "configureHours": "Çalışma saatlerini ayarla ki planlama doğru ilerlesin"
         },
         "completeInfo": {
-          "title": "Profil Bilgilerinizi Tamamlayın",
-          "description": "Lütfen ad soyadınızı ve telefon numaranızı doldurun, bir profil fotoğrafı yüklemeyi düşünün. Devam etmek için ad soyadınız gereklidir.",
-          "fullNameRequired": "Ad Soyad Müşteri iletişimleri için gereklidir",
-          "phoneOptional": "Telefon Numarası İsteğe bağlı ancak önerilir",
-          "profilePhoto": "Profil Fotoğrafı Yönetici görünümlerinde ve müşteri mesajlarında gösterilir"
+          "title": "Sadece profilini doğrula",
+          "description": "Görünen adın başlangıç formundan geldi \u2014 farklı bir imza kullanmak istersen güncelle ve istersen fotoğraf yükle.",
+          "fullNameRequired": "\u2022 Görünen ad başlangıç verisinden geldi, dilersen buradan değiştirebilirsin",
+          "workingHours": "\u2022 Çalışma saatleri Takvimin doğru çalışması için uygunluğu belirt",
+          "profilePhoto": "\u2022 Profil fotoğrafı Yönetici görünümlerinde ve müşteri e-postalarında görünür"
         },
         "businessInfo": {
-          "title": "İşletme Bilgilerinizi Ayarlayın",
-          "description": "Genel ayarlarda işletme adınızı ekleyelim. Bu, müşteri iletişimlerinde ve faturalarda görünür.",
-          "businessNameRequired": "İşletme Adı Profesyonel iletişimler için gereklidir",
-          "usedIn": "Müşteri e-postalarında, faturalarda ve sözleşmelerde kullanılır",
-          "canChange": "Daha sonra Genel ayarlardan değiştirilebilir"
+          "title": "Genel ayarlarda stüdyo adın hazır",
+          "description": "Onboarding sırasında verdiğin işletme adı burada kayıtlı. Genel bölümünü logo, renk ve iletişim bilgilerini gözden geçirmek için kullan.",
+          "businessNameRequired": "\u2022 Stüdyo adı zaten dolu, marka değişirse buradan güncelle",
+          "usedIn": "\u2022 Müşteri e-postaları, faturalar ve sözleşmelerde kullanılır",
+          "canChange": "\u2022 Gerektiğinde her zaman düzenleyebilirsin"
         },
         "setupComplete": {
           "title": "Profil Kurulumu Tamamlandı",
@@ -2315,10 +2315,10 @@
     },
     "steps": {
       "step_1": {
-        "title": "Profil Kurulumunu Tamamlayın",
-        "description": "İşletme bilgilerinizi ve iletişim bilgilerinizi ekleyin",
-        "button": "Profili Ayarla",
-        "duration": "3 dk"
+        "title": "Profil ayarlarını gözden geçir",
+        "description": "Başlangıç formunda girdiğin ad ve işletme bilgileri burada. Sadece iş e-postası, marka rengi ve avatarını tamamla.",
+        "button": "Profil sayfasını aç",
+        "duration": "1 dk"
       },
       "step_2": {
         "title": "İlk Kişinizi Oluşturun",
@@ -2327,10 +2327,10 @@
         "duration": "2 dk"
       },
       "step_3": {
-        "title": "Fotoğrafçılık Projesi Oluşturun",
-        "description": "Seansları ve teslimatları organize etmek için ilk projenizi oluşturun",
-        "button": "Proje Oluştur",
-        "duration": "4 dk"
+        "title": "Genel ayarları doğrula",
+        "description": "Başlangıç formunda verdiğin stüdyo adı burada hazır. Yalnızca iletişim bilgilerini ve logo/renk ayarını kontrol et.",
+        "button": "Genel ayarları aç",
+        "duration": "2 dk"
       },
       "step_4": {
         "title": "Projeler Sayfasını Keşfedin",
@@ -2412,8 +2412,8 @@
       }
     },
     "tutorial": {
-      "step_of": "Adım {{current}}  {{total}}",
-      "step_title": "Adım {{current}}  {{total}}  {{title}}",
+      "step_of": "Adım {{current}}/{{total}}",
+      "step_title": "Adım {{current}}/{{total}} · {{title}}",
       "exit_tutorial": "Eğitimden Çık",
       "hold_to_exit": "Çıkmak için basılı tutun…",
       "exiting": "Çıkılıyor…",

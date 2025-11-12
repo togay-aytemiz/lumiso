@@ -305,6 +305,7 @@ export default function Profile() {
       content: (
         <div className="space-y-2 text-sm text-muted-foreground">
           <p>{t('settings.profile.tutorial.completeInfo.fullNameRequired')}</p>
+          <p>{t('settings.profile.tutorial.completeInfo.workingHours')}</p>
           <p>{t('settings.profile.tutorial.completeInfo.profilePhoto')}</p>
         </div>
       ),

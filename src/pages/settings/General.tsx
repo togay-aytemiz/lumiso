@@ -241,18 +241,10 @@ export default function General() {
   const handleTutorialComplete = async () => {
     // Settings tutorial completed successfully
     try {
-      const nextRoute = nextStepInfo?.route;
-      await completeCurrentStep();
+      await completeOnboarding();
       setTutorialDismissed(true);
       setShowTutorial(false);
-      if (nextRoute) {
-        const target = nextRoute.includes("?")
-          ? nextRoute
-          : `${nextRoute}?tutorial=true`;
-        navigate(target);
-      } else {
-        navigate('/getting-started');
-      }
+      navigate('/getting-started');
     } catch (error) {
       console.error('❌ Error completing step:', error);
     }

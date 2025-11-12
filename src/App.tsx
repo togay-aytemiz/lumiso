@@ -62,7 +62,8 @@ const AppRoutes = () => {
   const location = useLocation();
   const state = location.state as { backgroundLocation?: Location } | undefined;
   const settingsOverlayEnabled = isFeatureEnabled(
-    FEATURE_FLAGS.settingsModalOverlayV1
+    FEATURE_FLAGS.settingsModalOverlayV1,
+    true
   );
 
   return (

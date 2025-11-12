@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { type MouseEventHandler, ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { Lock, LucideIcon } from "lucide-react";
 import { SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
@@ -15,7 +15,7 @@ interface SidebarNavItemProps {
   icon: LucideIcon;
   isActive?: boolean;
   isLocked?: boolean;
-  onClick?: () => void;
+  onClick?: MouseEventHandler<HTMLAnchorElement | HTMLButtonElement>;
   onLockedClick?: (e: React.MouseEvent) => void;
   children?: ReactNode;
   className?: string;
@@ -83,6 +83,7 @@ export function SidebarNavItem({
       <NavLink
         to={url}
         state={state}
+        onClick={onClick}
         className="flex items-center gap-2.5 w-full"
       >
         {content}

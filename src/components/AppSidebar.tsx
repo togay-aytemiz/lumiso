@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type MouseEvent as ReactMouseEvent } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -164,6 +164,34 @@ export function AppSidebar() {
     }
   };
 
+  const handleNavClick = () => {
+    if (isMobile) {
+      setBookingsSheetOpen(false);
+      setAutomationSheetOpen(false);
+    }
+  };
+
+  const handleSettingsNav = (event: ReactMouseEvent<HTMLAnchorElement>) => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.shiftKey
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    if (settingsLinkState) {
+      navigate("/settings/profile", { state: settingsLinkState });
+    } else {
+      navigate("/settings/profile");
+    }
+    handleNavClick();
+  };
+
   // Auto-close/open Bookings based on current route
   useEffect(() => {
     setBookingsOpen(isBookingsChildActive);
@@ -173,14 +201,6 @@ export function AppSidebar() {
   useEffect(() => {
     setAutomationOpen(isAutomationChildActive);
   }, [isAutomationChildActive]);
-
-  const handleNavClick = () => {
-    if (isMobile) {
-      // Close any open mobile sheets
-      setBookingsSheetOpen(false);
-      setAutomationSheetOpen(false);
-    }
-  };
 
   return (
     <>
@@ -402,13 +422,13 @@ export function AppSidebar() {
             <SidebarCategory title={t("sections.system")}>
               <SidebarNavItem
                 title={t("menu.settings")}
-                url="/settings"
+                url="/settings/profile"
                 state={settingsLinkState}
                 icon={Settings}
                 isActive={isActive("/settings")}
                 isLocked={isItemLocked("/settings")}
                 onLockedClick={handleLockedItemClick}
-                onClick={handleNavClick}
+                onClick={handleSettingsNav}
               />
               <SidebarNavItem
                 title={t("menu.help")}

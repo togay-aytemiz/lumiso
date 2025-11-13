@@ -32,6 +32,10 @@
             "expected_result": "Kartta tarih etiketi gizlenir ve gri yazıyla 'Lütfen bir tarih aralığı seçin' uyarısı görünür; yanında tarih seçici açılır."
           },
           {
+            "action": "DateRangePicker açıldığında haftalık takvim ızgarasının başlıklarını kontrol edin.",
+            "expected_result": "Hafta günleri workspace diline göre sıralanır; Türkçe dilinde ilk sütun 'Pzt' olarak gelir ve hafta sonu sütunları (Cmt/Paz) sağ kenarda yer alır."
+          },
+          {
             "action": "DateRangePicker bileşeninden başlangıç ve bitiş tarihlerini seçin.",
             "expected_result": "Üst kartta seçtiğiniz günleri içeren \"DD MMM – DD MMM\" formatında metin belirir."
           },

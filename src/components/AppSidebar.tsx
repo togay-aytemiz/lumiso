@@ -41,6 +41,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { SidebarCategory } from "@/components/sidebar/SidebarCategory";
 import { SidebarNavItem } from "@/components/sidebar/SidebarNavItem";
 import { SidebarSubItem } from "@/components/sidebar/SidebarSubItem";
+import { TrialStatusIndicator } from "@/components/sidebar/TrialStatusIndicator";
 import { HelpModal } from "@/components/modals/HelpModal";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useNavigationTranslation } from "@/hooks/useTypedTranslation";
@@ -533,7 +534,8 @@ export function AppSidebar() {
           </SidebarCategory>
         </SidebarContent>
 
-        <SidebarFooter className="p-4 mt-auto shrink-0">
+        <SidebarFooter className="p-4 mt-auto shrink-0 space-y-3">
+          <TrialStatusIndicator />
           {isMobile &&
             !shouldLockNavigation &&
             !location.pathname.startsWith("/getting-started") && (

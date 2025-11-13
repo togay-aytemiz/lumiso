@@ -20,9 +20,10 @@ export function TrialStatusIndicator({
   }
 
   const isExpiringSoon = typeof daysLeft === "number" && daysLeft <= 3;
-  const cappedProgress = Math.min(Math.max(progress ?? 0, 0), 1);
-  const progressPercent = Math.round(cappedProgress * 100);
-  const progressWidth = `${(cappedProgress * 100).toFixed(2)}%`;
+  const usageProgress = Math.min(Math.max(progress ?? 0, 0), 1);
+  const remainingProgress = Math.max(0, Math.min(1, 1 - usageProgress));
+  const progressPercent = Math.round(remainingProgress * 100);
+  const progressWidth = `${(remainingProgress * 100).toFixed(2)}%`;
 
   const daysLabel = (() => {
     if (daysLeft == null) return t("trialIndicator.expired");
@@ -63,8 +64,14 @@ export function TrialStatusIndicator({
       ? ""
       : "text-sidebar-foreground";
 
-  const ProgressIndicator = () => (
-    <div className={cn("relative mt-3 h-2.5 w-full overflow-hidden rounded-full", trackClass)}>
+  const ProgressIndicator = ({ compact = false }: { compact?: boolean }) => (
+    <div
+      className={cn(
+        "relative w-full overflow-hidden rounded-full",
+        compact ? "mt-2 h-2" : "mt-3 h-2.5",
+        trackClass
+      )}
+    >
       <div
         className={cn(
           "relative h-full rounded-full bg-gradient-to-r transition-all duration-300 ease-out",
@@ -80,20 +87,42 @@ export function TrialStatusIndicator({
     </div>
   );
 
-  const IndicatorBody = ({ stacked = false }: { stacked?: boolean }) => (
+  const IndicatorBody = ({
+    stacked = false,
+    compact = false,
+  }: {
+    stacked?: boolean;
+    compact?: boolean;
+  }) => (
     <>
       <div
         className={cn(
           "w-full gap-2",
-          stacked ? "flex flex-col items-start" : "flex items-center justify-between"
+          stacked
+            ? "flex flex-col items-start gap-1.5"
+            : "flex items-center justify-between"
         )}
       >
-        <span className={cn("text-sm font-semibold", titleToneClass)}>
+        <span
+          className={cn(
+            "font-semibold",
+            stacked ? "text-[13px]" : "text-sm",
+            titleToneClass
+          )}
+        >
           {t("trialIndicator.title")}
         </span>
-        <span className={cn("text-xs font-medium", labelToneClass)}>{daysLabel}</span>
+        <span
+          className={cn(
+            "font-medium",
+            stacked ? "text-[11px]" : "text-xs",
+            labelToneClass
+          )}
+        >
+          {daysLabel}
+        </span>
       </div>
-      <ProgressIndicator />
+      <ProgressIndicator compact={compact} />
     </>
   );
 
@@ -111,14 +140,14 @@ export function TrialStatusIndicator({
     <div className={cn("w-full", className)}>
       <div
         className={cn(
-          "flex flex-col rounded-2xl border px-4 py-4 transition-colors group-data-[collapsible=icon]:hidden",
+          "flex flex-col rounded-2xl border px-3.5 py-3 transition-colors group-data-[collapsible=icon]:hidden",
           cardToneClass
         )}
       >
-        <IndicatorBody stacked />
+        <IndicatorBody stacked compact />
       </div>
 
-      <div className="hidden group-data-[collapsible=icon]:flex">
+      <div className="hidden w-full justify-center group-data-[collapsible=icon]:flex">
         <div
           className={cn(
             "mx-auto flex h-24 w-16 flex-col items-center justify-center gap-1.5 rounded-2xl border px-2 py-3 shadow-sm",

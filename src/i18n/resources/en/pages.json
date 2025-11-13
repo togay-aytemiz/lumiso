@@ -1045,11 +1045,56 @@
           "packages": {
             "columns": {
               "name": "Package",
+              "description": "Description",
               "price": "Price",
               "clientTotal": "Client total",
+              "includeAddOns": "Add-ons",
+              "applicableTypes": "Applicable types",
+              "defaultAddOns": "Default add-ons",
+              "services": "Services",
+              "lineItems": "Line items",
+              "delivery": "Delivery",
+              "deposit": "Deposit",
               "status": "Status",
               "updated": "Updated",
               "created": "Created"
+            },
+            "servicesEmpty": "No services configured",
+            "servicesCount": "{{count}} services",
+            "servicesQuantity": "{{quantity}} total units",
+            "lineItemsEmpty": "No line items",
+            "lineItemsMore": "+{{count}} more",
+            "includeAddOns": {
+              "included": "Add-ons included",
+              "excluded": "Add-ons billed separately"
+            },
+            "applicableTypesAny": "Applies to all project types",
+            "applicableTypesRestricted": "Limited to {{count}} project types",
+            "applicableTypesHint": "Configured during package setup",
+            "defaultAddOnsCount": "{{count}} default add-ons",
+            "defaultAddOnsEmpty": "No default add-ons",
+            "delivery": {
+              "single": "Single estimate",
+              "range": "Range estimate",
+              "photosRange": "{{min}}-{{max}} photos",
+              "photosSingle": "{{value}} photos",
+              "leadTime": "{{value}} {{unit}} lead",
+              "unit": {
+                "days": "days",
+                "weeks": "weeks"
+              },
+              "methods": "{{count}} delivery methods",
+              "empty": "No delivery metadata"
+            },
+            "deposit": {
+              "disabled": "No deposit",
+              "percent": "{{value}}% of {{target}}",
+              "fixed": "{{value}} on {{target}}",
+              "amount": "Collects {{amount}}",
+              "target": {
+                "base": "base price",
+                "subtotal": "client total"
+              }
             }
           },
           "sessionTypes": {

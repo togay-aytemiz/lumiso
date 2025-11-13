@@ -1049,11 +1049,56 @@
           "packages": {
             "columns": {
               "name": "Paket",
+              "description": "Açıklama",
               "price": "Fiyat",
               "clientTotal": "Müşteri toplamı",
+              "includeAddOns": "Eklentiler",
+              "applicableTypes": "Geçerli tipler",
+              "defaultAddOns": "Varsayılan eklentiler",
+              "services": "Servisler",
+              "lineItems": "Kalemler",
+              "delivery": "Teslimat",
+              "deposit": "Depozito",
               "status": "Durum",
               "updated": "Güncellendi",
               "created": "Oluşturuldu"
+            },
+            "servicesEmpty": "Hizmet eklenmemiş",
+            "servicesCount": "{{count}} servis",
+            "servicesQuantity": "Toplam {{quantity}} adet",
+            "lineItemsEmpty": "Kalem yok",
+            "lineItemsMore": "+{{count}} tane daha",
+            "includeAddOns": {
+              "included": "Eklentiler dahil",
+              "excluded": "Eklentiler ayrı faturalı"
+            },
+            "applicableTypesAny": "Tüm proje tiplerinde geçerli",
+            "applicableTypesRestricted": "{{count}} proje tipine sınırlı",
+            "applicableTypesHint": "Paket ayarlarında seçildi",
+            "defaultAddOnsCount": "{{count}} varsayılan eklenti",
+            "defaultAddOnsEmpty": "Varsayılan eklenti yok",
+            "delivery": {
+              "single": "Tek tahmin",
+              "range": "Aralık tahmini",
+              "photosRange": "{{min}}-{{max}} fotoğraf",
+              "photosSingle": "{{value}} fotoğraf",
+              "leadTime": "{{value}} {{unit}} teslim",
+              "unit": {
+                "days": "gün",
+                "weeks": "hafta"
+              },
+              "methods": "{{count}} teslimat yöntemi",
+              "empty": "Teslimat bilgisi yok"
+            },
+            "deposit": {
+              "disabled": "Depozito yok",
+              "percent": "{{value}}% {{target}}",
+              "fixed": "{{target}} için {{value}}",
+              "amount": "Tahsilat {{amount}}",
+              "target": {
+                "base": "baz fiyat",
+                "subtotal": "müşteri toplamı"
+              }
             }
           },
           "sessionTypes": {

@@ -28,6 +28,7 @@ type MockBottomSheetMenuProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   items: MockSheetItem[];
+  leadingContent?: ReactNode;
   customContent?: ReactNode;
 };
 
@@ -48,6 +49,7 @@ jest.mock("../BottomSheetMenu", () => ({
     sheetPropsByTitle[props.title] = props;
     return (
       <div data-testid={`sheet-${props.title}`} data-open={props.isOpen ? "true" : "false"}>
+        {props.leadingContent}
         {props.customContent}
       </div>
     );

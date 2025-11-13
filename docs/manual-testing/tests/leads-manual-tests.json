@@ -144,6 +144,10 @@
             "expected_result": "\"Tarih ve Saat\" alanı ve takvim ikonları görünür."
           },
           {
+            "action": "Tarih alanının yanındaki takvim ikonuna tıklayıp açılan haftalık ızgarayı inceleyin.",
+            "expected_result": "Hafta günleri çalışma alanı diline göre lokalizedir; Türkçe dilinde ilk sütun 'Pzt' ile başlar ve hafta sonu günleri (Cmt/Paz) gridin en sağında yer alır."
+          },
+          {
             "action": "Tarih alanına tıklayıp açılan mini takvimden gelecekteki bir gün seçin, ardından saat listesinden uygun bir saat belirleyin.",
             "expected_result": "Alan seçtiğiniz tarih ve saati DD.AA.YYYY HH:MM formatında gösterir."
           },

@@ -18,6 +18,14 @@ interface Organization {
   id: string;
   name: string;
   owner_id: string;
+  membership_status: string | null;
+  trial_started_at: string | null;
+  trial_expires_at: string | null;
+  trial_extended_by_days: number | null;
+  trial_extension_reason: string | null;
+  premium_plan: string | null;
+  premium_activated_at: string | null;
+  premium_expires_at: string | null;
 }
 
 interface OrganizationContextType {
@@ -66,7 +74,21 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
       // Fetch organization details
       const { data: org, error: orgDetailsError } = await supabase
         .from('organizations')
-        .select('id, name, owner_id')
+        .select(
+          [
+            'id',
+            'name',
+            'owner_id',
+            'membership_status',
+            'trial_started_at',
+            'trial_expires_at',
+            'trial_extended_by_days',
+            'trial_extension_reason',
+            'premium_plan',
+            'premium_activated_at',
+            'premium_expires_at',
+          ].join(', ')
+        )
         .eq('id', orgId)
         .single();
 

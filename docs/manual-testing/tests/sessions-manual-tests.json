@@ -16,6 +16,10 @@
             "expected_result": "Ekranın sağından 'Seans planla' başlıklı sheet açılır; 'Kişi' adımı proje sahibinin adıyla doludur."
           },
           {
+            "action": "'Tarih ve saat' adımına geçip tarih alanını açın; haftalık takvim başlıklarını inceleyin.",
+            "expected_result": "Takvim sütunları seçili dile göre lokalizedir; Türkçe dilinde hafta Pazartesi ('Pzt') ile başlar ve hafta sonu günleri (Cmt/Paz) gridin en sağında konumlanır."
+          },
+          {
             "action": "Adımları takip ederek 'Tarih ve saat' ekranında gelecekteki bir tarih ve saat seçin.",
             "expected_result": "Seçilen tarih ve saat üst taraftaki özet satırına eklenir."
           },

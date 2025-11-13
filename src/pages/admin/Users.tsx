@@ -34,7 +34,8 @@ export default function AdminUsers() {
     columnId: "name",
     direction: "asc",
   });
-  const [selectedUser, setSelectedUser] = useState<AdminUserAccount | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserSnapshot, setSelectedUserSnapshot] = useState<AdminUserAccount | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
   const locale = useMemo(() => {
@@ -172,9 +173,18 @@ export default function AdminUsers() {
   }, [filteredUsers, sortState]);
 
   const handleManage = useCallback((user: AdminUserAccount) => {
-    setSelectedUser(user);
+    setSelectedUserId(user.id);
+    setSelectedUserSnapshot(user);
     setDetailOpen(true);
   }, []);
+
+  useEffect(() => {
+    if (!selectedUserId) return;
+    const updated = users.find((candidate) => candidate.id === selectedUserId);
+    if (updated) {
+      setSelectedUserSnapshot(updated);
+    }
+  }, [users, selectedUserId]);
 
   const columns = useMemo<AdvancedTableColumn<AdminUserAccount>[]>(() => {
     return [
@@ -337,12 +347,13 @@ export default function AdminUsers() {
       />
 
       <AdminUserDetailSheet
-        user={selectedUser}
+        user={selectedUserSnapshot}
         open={detailOpen}
         onOpenChange={(open) => {
           setDetailOpen(open);
           if (!open) {
-            setSelectedUser(null);
+            setSelectedUserId(null);
+            setSelectedUserSnapshot(null);
           }
         }}
         onUserUpdated={() => {
@@ -352,10 +363,3 @@ export default function AdminUsers() {
     </div>
   );
 }
-  useEffect(() => {
-    if (!selectedUser) return;
-    const updated = users.find((candidate) => candidate.id === selectedUser.id);
-    if (updated && updated !== selectedUser) {
-      setSelectedUser(updated);
-    }
-  }, [users, selectedUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps

@@ -21,6 +21,14 @@
     "tools": "TOOLS",
     "system": "SYSTEM"
   },
+  "trialIndicator": {
+    "title": "Free trial",
+    "short": "Trial",
+    "daysLeft_one": "{{count}} day left",
+    "daysLeft_other": "{{count}} days left",
+    "endsToday": "Ends today",
+    "expired": "Trial expired"
+  },
   "mobile_sheets": {
     "bookings": "Bookings",
     "automation": "Automation"

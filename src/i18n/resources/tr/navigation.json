@@ -21,6 +21,14 @@
     "tools": "ARAÇLAR",
     "system": "SİSTEM"
   },
+  "trialIndicator": {
+    "title": "Ücretsiz deneme",
+    "short": "Deneme",
+    "daysLeft_one": "{{count}} gün kaldı",
+    "daysLeft_other": "{{count}} gün kaldı",
+    "endsToday": "Bugün sona eriyor",
+    "expired": "Deneme süresi doldu"
+  },
   "mobile_sheets": {
     "bookings": "Rezervasyonlar",
     "automation": "Otomasyon"

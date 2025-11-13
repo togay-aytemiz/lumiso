@@ -247,6 +247,10 @@
             "expected_result": "Adım listesi mobilde \"Adımları göster\" butonuyla açılıp kapanır, seçilen adım vurgulanır."
           },
           {
+            "action": "\"Takvim\" adımında tarih seçiciyi açıp haftalık başlıkların sırasını kontrol edin.",
+            "expected_result": "Hafta sütunları uygulama diline göre lokalizedir; Türkçe dilinde ilk sütun 'Pzt' olarak başlar ve hafta sonu günleri (Cmt/Paz) sağ tarafa yerleşir."
+          },
+          {
             "action": "\"Seans türü\" ve \"Takvim\" adımlarında tür + tarih/saat seçin.",
             "expected_result": "Seçimler özet kutularında görünüp \"İleri\" butonu aktif hale gelir."
           },
@@ -265,6 +269,10 @@
           {
             "action": "Lead detayında aktivite formuna kaydırın ve \"Hatırlatıcı Kur?\" anahtarını açın.",
             "expected_result": "Formda tarih ve saat alanları açılır; takvim/saat seçicileri ekrana sığacak şekilde tam genişlikte görünür."
+          },
+          {
+            "action": "Tarih alanındaki takvim bileşenini açıp haftanın başlangıç sütununu inceleyin.",
+            "expected_result": "Takvim gridindeki gün etiketleri locale'e göre gösterilir; Türkçe dilinde ilk sütun 'Pzt', hafta sonu günleri ise sağ tarafta sıralıdır."
           },
           {
             "action": "Gelecekteki bir tarih ve saat seçip hatırlatma metni yazın.",

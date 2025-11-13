@@ -369,6 +369,10 @@
             "expected_result": "Zaman çizelgesinin en üstünde hatırlatıcı kartı görünür; kartta seçilen tarihe göre \"Gecikmiş/Bugün/Yarın\" rozetlerinden biri, \"Kişi: <isim>\" satırı ve saat bilgisi yer alır."
           },
           {
+            "action": "Hatırlatıcı formundaki tarih alanına tıklayıp açılan takvim ızgarasının gün başlıklarını kontrol edin.",
+            "expected_result": "Haftanın başlangıç günü organizasyon diline göre lokalizedir; Türkçe dilinde ilk sütun 'Pzt' olarak gelir ve hafta sonu günleri en sağda listelenir."
+          },
+          {
             "action": "Kartın sağ tarafındaki \"Tamamlandı olarak işaretle\" butonuna tıklayın.",
             "expected_result": "Kısa süreli başarı tostu çıkar, kart soluklaşır ve üst kısmında yeşil \"Tamamlandı\" rozeti görünür; metin üzerine strikethrough uygulanır."
           },

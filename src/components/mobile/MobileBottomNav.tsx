@@ -25,6 +25,7 @@ import { toast } from '@/hooks/use-toast';
 import { useProfile } from '@/hooks/useProfile';
 import { HelpModal } from '@/components/modals/HelpModal';
 import { UserMenu } from '@/components/UserMenu';
+import { TrialStatusIndicator } from '@/components/sidebar/TrialStatusIndicator';
 
 interface NavTab {
   title: string;
@@ -289,11 +290,12 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
         isOpen={moreOpen}
         onOpenChange={setMoreOpen}
         items={moreItems}
+        leadingContent={<TrialStatusIndicator variant="mobile" />}
         customContent={
           <div className="mt-4 border-t pt-4">
-            <UserMenu 
-              variant="mobile" 
-              onNavigate={() => setMoreOpen(false)} 
+            <UserMenu
+              variant="mobile"
+              onNavigate={() => setMoreOpen(false)}
             />
           </div>
         }

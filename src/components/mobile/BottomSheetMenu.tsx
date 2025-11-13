@@ -15,6 +15,7 @@ interface BottomSheetMenuProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   items: MenuItem[];
+  leadingContent?: React.ReactNode;
   customContent?: React.ReactNode;
 }
 
@@ -23,17 +24,22 @@ export function BottomSheetMenu({
   isOpen,
   onOpenChange,
   items,
+  leadingContent,
   customContent
 }: BottomSheetMenuProps) {
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent 
-        side="bottom" 
+      <SheetContent
+        side="bottom"
         className="max-h-[85vh] rounded-t-xl border-t"
       >
         <SheetHeader className="pb-4">
           <SheetTitle className="text-center text-lg font-semibold">{title}</SheetTitle>
         </SheetHeader>
+
+        {leadingContent && (
+          <div className="px-2 pb-4">{leadingContent}</div>
+        )}
 
         <div className="space-y-2 pb-6 px-2">
           {items.map((item, index) => {

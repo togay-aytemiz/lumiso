@@ -87,6 +87,106 @@ const numberFormatter = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 0,
 });
 const countFormatter = new Intl.NumberFormat();
+const decimalFormatter = new Intl.NumberFormat(undefined, {
+  maximumFractionDigits: 1,
+});
+
+type PackageLineItemRecord = {
+  name?: string;
+  quantity: number;
+};
+
+const coerceNumber = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim().length) {
+    const parsed = Number(value);
+    if (!Number.isNaN(parsed)) {
+      return parsed;
+    }
+  }
+  return null;
+};
+
+const parsePackageLineItems = (value: unknown): PackageLineItemRecord[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") return null;
+      const record = entry as Record<string, unknown>;
+      const name =
+        typeof record.name === "string"
+          ? record.name
+          : typeof record.service === "string"
+          ? record.service
+          : undefined;
+      const quantity = coerceNumber(record.quantity) ?? 0;
+      return {
+        name,
+        quantity: quantity > 0 ? quantity : 0,
+      };
+    })
+    .filter(Boolean) as PackageLineItemRecord[];
+};
+
+const summarizePackageServices = (pkg: AdminUserPackageSummary) => {
+  const items = parsePackageLineItems(pkg.line_items);
+  const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+  return {
+    itemCount: items.length,
+    totalQuantity,
+  };
+};
+
+const buildLineItemPreview = (pkg: AdminUserPackageSummary, limit = 3) => {
+  const items = parsePackageLineItems(pkg.line_items);
+  const names = items
+    .map((item) => item.name?.trim())
+    .filter((name): name is string => Boolean(name));
+  const preview = names.slice(0, limit);
+  return {
+    preview,
+    total: names.length,
+    remaining: Math.max(names.length - preview.length, 0),
+  };
+};
+
+type PackagePricingMetadata = {
+  enableDeposit?: boolean;
+  depositMode?: "fixed" | "percent_base" | "percent_subtotal";
+  depositValue?: number | null;
+  depositAmount?: number | null;
+  depositTarget?: "base" | "subtotal" | null;
+};
+
+const parsePackagePricingMetadata = (
+  value: unknown
+): PackagePricingMetadata | null => {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const depositMode =
+    record.depositMode === "fixed" ||
+    record.depositMode === "percent_base" ||
+    record.depositMode === "percent_subtotal"
+      ? record.depositMode
+      : undefined;
+  const depositTarget =
+    record.depositTarget === "base" || record.depositTarget === "subtotal"
+      ? record.depositTarget
+      : depositMode === "percent_base"
+      ? "base"
+      : depositMode
+      ? "subtotal"
+      : null;
+  return {
+    enableDeposit: Boolean(record.enableDeposit),
+    depositMode,
+    depositValue: coerceNumber(record.depositValue),
+    depositAmount: coerceNumber(record.depositAmount),
+    depositTarget,
+  };
+};
 
 type CollectionType = "packages" | "services" | "sessionTypes";
 
@@ -114,11 +214,14 @@ export function AdminUserDetailSheet({
     (value?: string | null) => formatDateOnly(value, locale),
     [locale]
   );
-  const formatCurrency = (value?: number | null, options?: { withSymbol?: boolean }) => {
-    if (typeof value !== "number") return "—";
-    const withSymbol = options?.withSymbol ?? true;
-    return withSymbol ? currencyFormatter.format(value) : numberFormatter.format(value);
-  };
+  const formatCurrency = useCallback(
+    (value?: number | null, options?: { withSymbol?: boolean }) => {
+      if (typeof value !== "number") return "—";
+      const withSymbol = options?.withSymbol ?? true;
+      return withSymbol ? currencyFormatter.format(value) : numberFormatter.format(value);
+    },
+    []
+  );
 
   const renderActivationBadge = useCallback(
     (isActive?: boolean | null) => (
@@ -343,6 +446,19 @@ export function AdminUserDetailSheet({
         minWidth: "220px",
       },
       {
+        id: "description",
+        label: t("admin.users.detail.tables.packages.columns.description"),
+        render: (pkg) =>
+          pkg.description ? (
+            <p className="text-sm text-muted-foreground line-clamp-3 max-w-xs">
+              {pkg.description}
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">—</p>
+          ),
+        minWidth: "240px",
+      },
+      {
         id: "price",
         label: t("admin.users.detail.tables.packages.columns.price"),
         render: (pkg) => formatCurrency(pkg.price ?? pkg.client_total ?? 0),
@@ -355,6 +471,244 @@ export function AdminUserDetailSheet({
         render: (pkg) => formatCurrency(pkg.client_total),
         align: "right",
         minWidth: "140px",
+      },
+      {
+        id: "include_addons_in_price",
+        label: t("admin.users.detail.tables.packages.columns.includeAddOns"),
+        render: (pkg) => (
+          <Badge
+            variant={pkg.include_addons_in_price ? "default" : "outline"}
+            className="h-5 rounded-full px-2 text-[10px] font-semibold uppercase tracking-wide"
+          >
+            {pkg.include_addons_in_price
+              ? t("admin.users.detail.tables.packages.includeAddOns.included")
+              : t("admin.users.detail.tables.packages.includeAddOns.excluded")}
+          </Badge>
+        ),
+        minWidth: "150px",
+      },
+      {
+        id: "applicable_types",
+        label: t("admin.users.detail.tables.packages.columns.applicableTypes"),
+        render: (pkg) => {
+          const count = Array.isArray(pkg.applicable_types)
+            ? pkg.applicable_types.length
+            : 0;
+          return (
+            <div className="space-y-1">
+              <p className="text-sm font-medium">
+                {count
+                  ? t("admin.users.detail.tables.packages.applicableTypesRestricted", {
+                      count,
+                    })
+                  : t("admin.users.detail.tables.packages.applicableTypesAny")}
+              </p>
+              {count ? (
+                <p className="text-xs text-muted-foreground">
+                  {t("admin.users.detail.tables.packages.applicableTypesHint")}
+                </p>
+              ) : null}
+            </div>
+          );
+        },
+        minWidth: "190px",
+      },
+      {
+        id: "default_add_ons",
+        label: t("admin.users.detail.tables.packages.columns.defaultAddOns"),
+        render: (pkg) => {
+          const count = Array.isArray(pkg.default_add_ons)
+            ? pkg.default_add_ons.length
+            : 0;
+          return (
+            <p className="text-sm font-medium">
+              {count
+                ? t("admin.users.detail.tables.packages.defaultAddOnsCount", {
+                    count,
+                  })
+                : t("admin.users.detail.tables.packages.defaultAddOnsEmpty")}
+            </p>
+          );
+        },
+        minWidth: "170px",
+      },
+      {
+        id: "services_summary",
+        label: t("admin.users.detail.tables.packages.columns.services"),
+        render: (pkg) => {
+          const stats = summarizePackageServices(pkg);
+          if (!stats.itemCount) {
+            return (
+              <p className="text-sm text-muted-foreground">
+                {t("admin.users.detail.tables.packages.servicesEmpty")}
+              </p>
+            );
+          }
+          return (
+            <div className="space-y-1">
+              <p className="text-sm font-medium">
+                {t("admin.users.detail.tables.packages.servicesCount", {
+                  count: stats.itemCount,
+                })}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("admin.users.detail.tables.packages.servicesQuantity", {
+                  quantity: stats.totalQuantity,
+                })}
+              </p>
+            </div>
+          );
+        },
+        minWidth: "180px",
+      },
+      {
+        id: "line_items_preview",
+        label: t("admin.users.detail.tables.packages.columns.lineItems"),
+        render: (pkg) => {
+          const preview = buildLineItemPreview(pkg);
+          if (!preview.total) {
+            return (
+              <p className="text-sm text-muted-foreground">
+                {t("admin.users.detail.tables.packages.lineItemsEmpty")}
+              </p>
+            );
+          }
+          return (
+            <div className="space-y-1">
+              <p className="text-sm font-medium line-clamp-2">
+                {preview.preview.join(", ")}
+              </p>
+              {preview.remaining ? (
+                <p className="text-xs text-muted-foreground">
+                  {t("admin.users.detail.tables.packages.lineItemsMore", {
+                    count: preview.remaining,
+                  })}
+                </p>
+              ) : null}
+            </div>
+          );
+        },
+        minWidth: "220px",
+      },
+      {
+        id: "delivery_summary",
+        label: t("admin.users.detail.tables.packages.columns.delivery"),
+        render: (pkg) => {
+          const lines: string[] = [
+            pkg.delivery_estimate_type === "range"
+              ? t("admin.users.detail.tables.packages.delivery.range")
+              : t("admin.users.detail.tables.packages.delivery.single"),
+          ];
+          const minPhotos = coerceNumber(pkg.delivery_photo_count_min);
+          const maxPhotos = coerceNumber(pkg.delivery_photo_count_max);
+          if (minPhotos || maxPhotos) {
+            if (
+              pkg.delivery_estimate_type === "range" &&
+              minPhotos != null &&
+              maxPhotos != null
+            ) {
+              lines.push(
+                t("admin.users.detail.tables.packages.delivery.photosRange", {
+                  min: minPhotos,
+                  max: maxPhotos,
+                })
+              );
+            } else {
+              const value = minPhotos ?? maxPhotos;
+              if (value != null) {
+                lines.push(
+                  t("admin.users.detail.tables.packages.delivery.photosSingle", {
+                    value,
+                  })
+                );
+              }
+            }
+          }
+          const leadValue = coerceNumber(pkg.delivery_lead_time_value);
+          if (leadValue) {
+            const unitLabel =
+              pkg.delivery_lead_time_unit === "weeks"
+                ? t("admin.users.detail.tables.packages.delivery.unit.weeks")
+                : t("admin.users.detail.tables.packages.delivery.unit.days");
+            lines.push(
+              t("admin.users.detail.tables.packages.delivery.leadTime", {
+                value: leadValue,
+                unit: unitLabel,
+              })
+            );
+          }
+          const deliveryMethods = Array.isArray(pkg.delivery_methods)
+            ? pkg.delivery_methods
+            : [];
+          if (deliveryMethods.length) {
+            lines.push(
+              t("admin.users.detail.tables.packages.delivery.methods", {
+                count: deliveryMethods.length,
+              })
+            );
+          }
+          if (!lines.length) {
+            lines.push(t("admin.users.detail.tables.packages.delivery.empty"));
+          }
+          return (
+            <div className="space-y-1">
+              {lines.map((line, index) => (
+                <p
+                  key={`${pkg.id}-delivery-${index}`}
+                  className={
+                    index === 0 ? "text-sm font-medium" : "text-xs text-muted-foreground"
+                  }
+                >
+                  {line}
+                </p>
+              ))}
+            </div>
+          );
+        },
+        minWidth: "210px",
+      },
+      {
+        id: "deposit_summary",
+        label: t("admin.users.detail.tables.packages.columns.deposit"),
+        render: (pkg) => {
+          const meta = parsePackagePricingMetadata(pkg.pricing_metadata);
+          if (!meta?.enableDeposit) {
+            return (
+              <p className="text-sm text-muted-foreground">
+                {t("admin.users.detail.tables.packages.deposit.disabled")}
+              </p>
+            );
+          }
+          const targetLabel =
+            meta.depositTarget === "base"
+              ? t("admin.users.detail.tables.packages.deposit.target.base")
+              : t("admin.users.detail.tables.packages.deposit.target.subtotal");
+          const primaryLabel =
+            meta.depositMode === "fixed"
+              ? t("admin.users.detail.tables.packages.deposit.fixed", {
+                  value: formatCurrency(meta.depositAmount ?? 0),
+                  target: targetLabel,
+                })
+              : t("admin.users.detail.tables.packages.deposit.percent", {
+                  value: decimalFormatter.format(meta.depositValue ?? 0),
+                  target: targetLabel,
+                });
+          const amountLabel =
+            meta.depositAmount != null
+              ? t("admin.users.detail.tables.packages.deposit.amount", {
+                  amount: formatCurrency(meta.depositAmount, { withSymbol: false }),
+                })
+              : null;
+          return (
+            <div className="space-y-1">
+              <p className="text-sm font-medium">{primaryLabel}</p>
+              {amountLabel ? (
+                <p className="text-xs text-muted-foreground">{amountLabel}</p>
+              ) : null}
+            </div>
+          );
+        },
+        minWidth: "200px",
       },
       {
         id: "is_active",
@@ -375,7 +729,7 @@ export function AdminUserDetailSheet({
         minWidth: "160px",
       },
     ],
-    [formatDateTimeLocalized, renderActivationBadge, t]
+    [formatCurrency, formatDateTimeLocalized, renderActivationBadge, t]
   );
 
   const sessionTypeColumns = useMemo<AdvancedTableColumn<AdminUserSessionTypeSummary>[]>(
@@ -429,7 +783,28 @@ export function AdminUserDetailSheet({
         title: t("admin.users.detail.collections.packages.title"),
         table: "packages",
         query:
-          "id, name, price, client_total, created_at, updated_at, organization_id, is_active",
+          [
+            "id",
+            "name",
+            "description",
+            "price",
+            "client_total",
+            "is_active",
+            "include_addons_in_price",
+            "line_items",
+            "delivery_estimate_type",
+            "delivery_photo_count_min",
+            "delivery_photo_count_max",
+            "delivery_lead_time_value",
+            "delivery_lead_time_unit",
+            "delivery_methods",
+            "pricing_metadata",
+            "default_add_ons",
+            "applicable_types",
+            "organization_id",
+            "created_at",
+            "updated_at",
+          ].join(", "),
         columns: packagesColumns,
         rowKey: (row: AdminUserPackageSummary) => row.id,
       },

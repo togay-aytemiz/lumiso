@@ -333,6 +333,12 @@ const PackagesSection = () => {
     }).format(value);
   };
 
+  const resolveClientPrice = (pkg: Package) => {
+    const basePrice = pkg.price ?? 0;
+    const includeAddOns = pkg.include_addons_in_price ?? true;
+    return includeAddOns ? pkg.client_total ?? basePrice : basePrice;
+  };
+
   const renderPricingHelper = (pkg: Package) => {
     const clientTotal = pkg.client_total ?? pkg.price;
     const basePrice = pkg.price ?? 0;
@@ -356,11 +362,6 @@ const PackagesSection = () => {
       addons: formatCurrency(addOnDelta),
     });
   };
-
-  const resolvePricingBadge = (pkg: Package) =>
-    pkg.include_addons_in_price
-      ? t("packages.pricing_mode_inclusive")
-      : t("packages.pricing_mode_addons");
 
   const extractDepositSummary = (pkg: Package) => {
     const metadata = pkg.pricing_metadata ?? undefined;
@@ -545,14 +546,8 @@ const PackagesSection = () => {
                           </p>
                           <div className="mt-2 flex flex-wrap items-center gap-2">
                             <span className="text-lg font-semibold text-slate-900">
-                              {formatCurrency(pkg.client_total ?? pkg.price)}
+                              {formatCurrency(resolveClientPrice(pkg))}
                             </span>
-                            <Badge
-                              variant="outline"
-                              className="text-[11px] font-semibold uppercase tracking-wide"
-                            >
-                              {resolvePricingBadge(pkg)}
-                            </Badge>
                           </div>
                           <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
                             {renderPricingHelper(pkg)}

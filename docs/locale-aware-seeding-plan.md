@@ -58,8 +58,32 @@ These defaults must exist for every org immediately after creation, regardless o
 7. **Project types**
    - Seed a localized baseline set for every org during bootstrap (independent of the intake flag) so reporting/configs always have defaults.
    - After the intake form, merge the user’s ordered selections into the same dataset (overwrite or append), ensuring the org always has at least the intake-driven types even if sample data is disabled.
+   - `organization_settings.preferred_project_types` must contain **only** the user-selected slugs (ordered). Template slugs that were not selected still live inside `project_types`, so they remain available in the UI without polluting the preference list.
 
 > **Note:** “Sample data” (leads, projects, sessions, services, packages, etc.) remains conditional on the intake preference, but all items listed above are seeded unconditionally.
+
+8. **Session types**
+   - Ensure at least the canonical pair (`signature_session`, `mini_session`) is seeded per locale through `ensure_default_session_types_for_org`.
+   - Backfill `organization_settings.default_session_type_id` whenever it is null so downstream booking flows always have a valid default.
+9. **Services & packages**
+   - Keep the service catalog trimmed to the four starter entries (two Crew, two Deliverables) so seeded packages never introduce ad-hoc categories.
+   - Package templates only reference those services, leave all delivery toggles untouched, and write TR-friendly pricing metadata that includes deposit guidance (40 % base on `wedding_story`, 30 % on `mini_lifestyle`).
+
+## Project-Type-Aware Sample Data Readiness
+- Maintain `sample_project_blueprints` keyed by every supported project-type slug. Each blueprint defines localized project titles, default package slugs, stage/status targets, and preferred session type so we can dynamically instantiate projects for *any* user-selected type.
+- During intake seeding:
+  - Wipe and reapply `organization_settings.preferred_project_types` using only the ordered selections supplied by the user.
+  - Only create sample projects/sessions for those selected slugs (fallback to the TR defaults when the intake list is empty). Unselected slugs remain available in `project_types` but never get sample data until the user selects them.
+- Always seed project stages, lead statuses, and session types **before** invoking sample-data helpers so references (`project_status_id`, `lead_status_id`, `session_type_id`) are valid.
+- Packages and sessions created for demo purposes must reuse preseeded services, service categories, and session types. Do not introduce ad-hoc catalog entries inside `seed_sample_data_for_org`; instead, reference the canonical template slugs so catalog drift cannot occur.
+- Anchor all session/project scheduling to `organization_settings.profile_intake_completed_at` (fallback `organizations.created_at`) and only use future offsets (+1/+3/+7/+14 … days) so reminders never spawn in the past.
+- Every seeded project now writes a localized description, a `deposit_config` snapshot that mirrors its package metadata, and two `activities` (a note plus a reminder scheduled in the future).
+- Sessions always reference the seeded session types, use high-level Turkish location labels (e.g., “Kadıköy Stüdyosu”, “Moda Sahili”), and keep their statuses in a scheduled/planned state to match the future dates.
+
+## Localization & Communication Defaults
+- Treat Turkish as the canonical fallback for every localized copy block tied to sample data (names, notes, email/phone labels). Store TR strings first, then optional translations (`notes_en`, etc.); when a translation is missing, fall back to TR.
+- Phone numbers and email addresses for demo leads always use TR formatting (`+90` / `...@lumiso.app`). Other locales reuse the same contact data so there is never a mismatch between the displayed locale and the stored communication metadata.
+- Ensure notes, workflow copy, and reminder templates are localized in tandem so that demo workflows can run without mixing locales.
 
 ## Target Architecture
 

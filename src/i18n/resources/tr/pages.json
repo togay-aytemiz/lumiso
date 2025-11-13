@@ -716,23 +716,256 @@
       }
     },
     "users": {
-      "title": "Kullanıcı Yönetimi",
-      "subtitle": "Kullanıcı hesaplarını, rolleri ve izinleri yönetin",
-      "badge": "Çok Yakında",
-      "sectionTitle": "Kullanıcı Yönetimi Özellikleri",
-      "sectionDescription": "Bu bölüm kapsamlı kullanıcı yönetimi özellikleri içerecek",
-      "features": {
-        "userList": {
-          "title": "Kullanıcı Listesi ve Arama",
-          "description": "Sistemdeki tüm kullanıcıları görüntüleyin ve arayın"
+      "title": "Üyelik Konsolu",
+      "subtitle": "Trial, premium yükseltmeleri ve CRM sağlığını tek ekranda takip et.",
+      "errors": {
+        "failedToLoad": "Admin kullanıcıları yükleyemedik. Lütfen yenileyin."
+      },
+      "errors": {
+        "failedToLoad": "Admin kullanıcıları yükleyemedik. Lütfen yenileyin."
+      },
+      "summary": {
+        "total": "Toplam hesap",
+        "totalHint": "Aktif tüm organizasyonlar",
+        "premium": "Premium",
+        "premiumHint": "Canlı/ödeyen müşteriler",
+        "trials": "Aktif trial",
+        "trialsHint": "Ücretsiz deneme sürecindeki hesaplar",
+        "expiring": "Yakında bitecek",
+        "expiringHint": "3 gün içinde sona eren trial'lar",
+        "complimentary": "Ücretsiz premium",
+        "complimentaryHint": "Manuel verilen premium erişim",
+        "suspended": "Askıya alınmış",
+        "suspendedHint": "Geçici olarak kapatılan hesaplar"
+      },
+      "filters": {
+        "searchPlaceholder": "İsim, e-posta veya şirket ara",
+        "statusPlaceholder": "Durum seç",
+        "status": {
+          "all": "Tüm durumlar"
         },
-        "roleManagement": {
-          "title": "Rol Yönetimi",
-          "description": "Yönetici, destek veya kullanıcı rolleri atayın"
+        "expiringOnly": "Sadece süresi biten trial'ları göster"
+      },
+      "actions": {
+        "refresh": "Yenile",
+        "export": "CSV dışa aktar"
+      },
+      "status": {
+        "trial": "Trial",
+        "premium": "Premium",
+        "expired": "Süresi doldu",
+        "suspended": "Askıda",
+        "complimentary": "Ücretsiz premium"
+      },
+      "table": {
+        "columns": {
+          "user": "Kullanıcı",
+          "plan": "Plan",
+          "business": "İşletme iletişimi",
+          "trial": "Trial durumu",
+          "metrics": "Öne çıkan metrikler",
+          "lastActive": "Son aktif",
+          "actions": "İşlemler"
         },
-        "impersonation": {
-          "title": "Kullanıcı Taklidi",
-          "description": "Herhangi bir kullanıcı olarak görüntülemek için bağlamı değiştirin"
+        "accountOwner": "Hesap sahibi: {{owner}}",
+        "trialDays": "{{days}} gün kaldı",
+        "trialEnds": "{{date}} tarihinde biter",
+        "trialExpired": "Trial süresi doldu",
+        "notApplicable": "Geçerli değil",
+        "metrics": {
+          "projects": "{{count}} proje",
+          "leads": "{{count}} Kişi",
+          "sessions": "{{count}} seans"
+        },
+        "actions": {
+          "manage": "Yönet"
+        },
+        "empty": "Filtrelerle eşleşen kullanıcı yok."
+      },
+      "detail": {
+        "title": "{{name}} üyelik özeti",
+        "subtitle": "Trial durumu, kullanım, ödemeler ve aksiyonları incele.",
+        "tabs": {
+          "overview": "Genel",
+          "kisiler": "Kişiler",
+          "projects": "Projeler",
+          "sessions": "Seanslar",
+          "calendar": "Takvim",
+          "payments": "Ödemeler",
+          "services": "Servisler",
+          "packages": "Paketler",
+          "sessionTypes": "Seans tipleri"
+        },
+        "membership": {
+          "title": "Üyelik durumu",
+          "subtitle": "Trial + premium zaman çizelgesi",
+          "plan": "Plan: {{plan}}",
+          "trialEnds": "Trial bitişi",
+          "daysRemaining": "{{days}} gün kaldı",
+          "lastActive": "Son aktif",
+          "startedAt": "Trial başlangıcı",
+          "premiumActivatedAt": "Premium aktivasyonu"
+        },
+        "usage": {
+          "title": "Kullanım özeti",
+          "subtitle": "Projeler, seanslar ve ekip aktivitesi",
+          "projects": "Projeler",
+          "activeProjects": "Aktif projeler",
+          "leads": "Lead'ler",
+          "sessions": "Seanslar",
+          "upcomingSessions": "Yaklaşan seanslar",
+          "calendarEvents": "Takvim etkinlikleri",
+          "payments": "Ödemeler",
+          "teamMembers": "Ekip üyeleri"
+        },
+        "account": {
+          "title": "Hesap bilgileri",
+          "subtitle": "Sahiplik, iletişim ve notlar",
+          "owner": "Hesap sahibi",
+          "company": "Şirket",
+          "email": "E-posta",
+          "businessName": "İşletme adı",
+          "businessEmail": "İşletme e-postası",
+          "businessPhone": "İşletme telefonu",
+          "social": "Sosyal kanallar",
+          "emptySocial": "Henüz sosyal link yok.",
+          "timezone": "Zaman dilimi",
+          "notes": "Notlar",
+          "emptyNotes": "Henüz not yok."
+        },
+        "actions": {
+          "title": "Admin aksiyonları",
+          "subtitle": "Bu müşteri için manuel işlemler",
+          "extendTrial": "Trial uzat",
+          "grantPremium": "Premium yap",
+          "addComplimentary": "Ücretsiz premium ver",
+          "suspendAccount": "Hesabı askıya al",
+          "contactUser": "Kullanıcıyla iletişime geç"
+        },
+        "financials": {
+          "title": "Finans göstergeleri",
+          "subtitle": "MRR, LTV ve bekleyen bakiyeler",
+          "monthlyRecurringRevenue": "Aylık tekrar eden gelir",
+          "lifetimeValue": "Lifetime value",
+          "averageDealSize": "Ortalama anlaşma büyüklüğü",
+          "overdueBalance": "Geciken bakiye"
+        },
+        "collections": {
+          "kisiler": {
+            "title": "Kişiler",
+            "description": "Bu organizasyona bağlı tüm Kişi kayıtları",
+            "empty": "Henüz Kişi kayıtı yok."
+          },
+          "projects": {
+            "title": "Projeler",
+            "description": "Aktif ve geçmiş projeler",
+            "empty": "Proje bulunamadı."
+          },
+          "sessions": {
+            "title": "Seanslar",
+            "description": "Yaklaşan veya yakın zamanda yapılan seanslar",
+            "empty": "Planlanmış seans yok."
+          },
+          "calendar": {
+            "title": "Takvim etkinlikleri",
+            "description": "Milestones, incelemeler, operasyon blokları",
+            "empty": "Takvim kaydı yok."
+          },
+          "payments": {
+            "title": "Ödemeler",
+            "description": "Bu hesabın ödeme geçmişi",
+            "empty": "Ödeme görünmüyor."
+          },
+          "services": {
+            "title": "Servisler",
+            "description": "Bu işletmenin sunduğu servisler",
+            "empty": "Servis tanımlı değil."
+          },
+          "packages": {
+            "title": "Paketler",
+            "description": "Organizasyona ait paketler",
+            "empty": "Paket bulunamadı."
+          },
+          "sessionTypes": {
+            "title": "Seans tipleri",
+            "description": "Takımın kullanabildiği seans tipleri",
+            "empty": "Henüz seans tipi yok."
+          }
+        },
+        "tables": {
+          "kisiler": {
+            "columns": {
+              "name": "Kişi",
+              "status": "Durum",
+              "email": "E-posta",
+              "phone": "Telefon",
+              "due": "Vade",
+              "updated": "Güncellendi"
+            }
+          },
+          "projects": {
+            "columns": {
+              "name": "Proje",
+              "status": "Durum",
+              "kisi": "Kişi",
+              "budget": "Bütçe",
+              "updated": "Güncellendi"
+            }
+          },
+          "sessions": {
+            "columns": {
+              "name": "Seans",
+              "status": "Durum",
+              "type": "Seans tipi",
+              "schedule": "Planlanan zaman",
+              "project": "Proje",
+              "updated": "Güncellendi"
+            }
+          },
+          "calendar": {
+            "columns": {
+              "title": "Etkinlik",
+              "type": "Tip",
+              "date": "Tarih",
+              "time": "Saat",
+              "completed": "Tamamlandı"
+            }
+          },
+          "payments": {
+            "columns": {
+              "amount": "Tutar",
+              "status": "Durum",
+              "type": "Tür",
+              "date": "Tarih",
+              "project": "Proje"
+            }
+          },
+          "services": {
+            "columns": {
+              "name": "Servis",
+              "category": "Kategori",
+              "type": "Tür",
+              "price": "Fiyat",
+              "updated": "Güncellendi"
+            }
+          },
+          "packages": {
+            "columns": {
+              "name": "Paket",
+              "price": "Fiyat",
+              "clientTotal": "Müşteri toplamı",
+              "status": "Durum",
+              "updated": "Güncellendi"
+            }
+          },
+          "sessionTypes": {
+            "columns": {
+              "name": "Seans tipi",
+              "category": "Kategori",
+              "duration": "Süre",
+              "updated": "Güncellendi"
+            }
+          }
         }
       }
     },
@@ -865,7 +1098,7 @@
     "resetFilters": "Filtreleri sıfırla",
     "aria": {
       "viewModeSelection": "Görünüm modu seçimi",
-      "openKanbanSettings": "Kanban ayarlarını aç",
+      "openKanbanSettings": "Pano ayarlarını aç",
       "boardView": "Projeler pano görünümü",
       "archivedList": "Arşivlenmiş projeler listesi",
       "listView": "Projeler liste görünümü",

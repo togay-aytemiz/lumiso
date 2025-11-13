@@ -723,8 +723,8 @@
     "completionDescription": "Tebrikler! Artık üç proje görünümünü de biliyor ve nasıl kullanacağınızı anlıyorsunuz.",
     "completionIntro": "Farklı proje görünümleri arasında gezinmeyi başarıyla öğrendiniz:",
     "completionCallout": "🎉 Çalışma alanınızı kurmaya devam etmeye ve ilk seansınızı planlamaya hazırsınız!",
-    "completionContent": "Artık farklı proje görünümleri arasında nasıl gezineceğinizi biliyorsunuz. Her görünümün güçlü yanları var - iş akışı yönetimi için kanbanı, detaylı analiz için listeyi ve tamamlanan projeler için arşivlenmiş görünümü kullanın.",
-    "boardSettings": "Kanban Ayarları",
+    "completionContent": "Artık farklı proje görünümleri arasında nasıl gezineceğinizi biliyorsunuz. Her görünümün güçlü yanları var - iş akışı yönetimi için panoyu, detaylı analiz için listeyi ve tamamlanan projeler için arşivlenmiş görünümü kullanın.",
+    "boardSettings": "Pano Ayarları",
     "pageTitle": "Projeler",
     "pageSubtitle": "Tüm projelerinizi tek yerde yönetin",
     "table_columns": {
@@ -759,7 +759,7 @@
     "edit": "Düzenle",
     "close": "Kapat",
     "more": "Daha Fazla",
-    "board": "Kanban",
+    "board": "Pano",
     "list": "Liste",
     "archived": "Arşivlendi",
     "drop_here": "Projeyi buraya bırakın",
@@ -1318,7 +1318,7 @@
     "no_records": "Henüz ödeme kaydı yok."
   },
   "kanban_settings": {
-    "title": "Kanban Kart Ayarları",
+    "title": "Pano Kart Ayarları",
     "description": "Proje kartlarınızda hangi bilgilerin görüneceğini özelleştirin. Daha temiz bir görünüm isteyen solo fotoğrafçılar için mükemmel.",
     "project_name": "Proje Adı",
     "project_name_description": "Kartlarda proje adlarını göster",

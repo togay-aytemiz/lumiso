@@ -16,6 +16,7 @@ This note captures **everything that `process_intake_seed` currently writes** af
 ### Project types (locale-aware)
 - Function: `ensure_default_project_types_for_org(owner_uuid, org_id, preferred_slugs, locale, force_replace := true)` (`20260222133000_project_type_templates.sql`).
 - Behavior: wipes previous project types, injects the ordered intake selections first, then fills remaining template slugs using `preferred_locale` fallback to EN. First inserted type is flagged `is_default`.
+- `organization_settings.preferred_project_types` stores **only** the ordered intake selections. Unselected template slugs are still inserted into `project_types` (so they remain selectable in the app), but they are not appended back into the org setting or used by sample data unless the user picks them later.
 
 | Slug | EN Label | TR Label | Notes |
 | --- | --- | --- | --- |
@@ -72,6 +73,7 @@ This note captures **everything that `process_intake_seed` currently writes** af
 ### Services (`default_service_templates`)
 - Function: `ensure_default_services_for_org(owner_uuid, org_id)` (`20260222114500_locale_seed_templates.sql`).
 - Injects both coverage and deliverable catalog rows, tagged `is_sample = true`. Prices shown are selling prices (costs also stored).
+- Categories are fixed to the canonical Crew / Deliverables buckets (two services each) so package builders never introduce ad-hoc categories during seeding.
 
 | Slug | EN Name | TR Name | Category | Type | Price | Default Unit |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -87,11 +89,13 @@ This note captures **everything that `process_intake_seed` currently writes** af
 | signature_session | Signature Session | Standart Çekim | 90 min | Photography / Fotoğrafçılık |
 | mini_session | Mini Session | Mini Çekim | 30 min | Photography / Fotoğrafçılık |
 
-- `organization_settings.default_session_type_id` is backfilled to the first seeded type when empty.
+- `organization_settings.default_session_type_id` is backfilled to the first seeded type when empty so booking flows have a default.
 
 ### Packages (`default_package_templates`)
 - Function: `ensure_default_packages_for_org(owner_uuid, org_id)` (same migration).
 - Before inserting, it ensures services exist and maps template line items to the org’s service IDs. `default_add_ons` collects any line items with role `addon`.
+- Delivery settings stay disabled (empty `delivery_methods`, no photo-count estimates) to mirror the “no switch toggled” requirement coming from the UI.
+- `pricing_metadata` encodes deposit guidance pulled through onboarding: `wedding_story` carries a 40 % base deposit suggestion, `mini_lifestyle` carries 30 %.
 
 | Slug | EN Name | TR Name | Price | Intended Types | Contents |
 | --- | --- | --- | --- | --- | --- |
@@ -137,19 +141,47 @@ This note captures **everything that `process_intake_seed` currently writes** af
 ## Sample-Data Seeds (only when `seed_sample_data_onboarding = true`)
 - Function: `seed_sample_data_for_org(owner_uuid, org_id, locale, preferred_slugs)` within the same hotfix migration.
 - Skips if any lead already contains `[Sample Data]` in `notes`.
+- Additional guardrails:
+  - `preferred_slugs` is sanitized to unique, template-backed slugs before seeding. Only those selections drive `organization_settings.preferred_project_types` and sample-data creation; unselected template slugs remain available in `project_types` but never get demo data.
+  - Project stages, lead statuses, services, session types, packages, message templates, and workflows are reseeded by the always-on helpers **before** `seed_sample_data_for_org` runs so that every reference (`project_status_id`, `session_type_id`, `package_id`, etc.) points to known preseeded entities.
+  - Package picks are limited to `wedding_story` and `mini_lifestyle`; the insert clones their pricing metadata (deposit percentage, VAT preferences, etc.) and mirrors it onto each project’s `deposit_config`.
 - Locale-specific fixtures:
-  - **Leads** (3):
-    1. “Ayşe & Mehmet” / “Sarah & Daniel” – status `new`, email `sample+wedding@lumiso.app`, notes “Booked via expo show.”
-    2. “Zeynep Kılıç” / “Olivia Carter” – status `proposal`, notes “Waiting for contract.”
-    3. “Ece & Bora” / “Noah & Emma” – status `won`, notes “Returning client from referral.”
-  - **Projects** (2):
-    - Project 1 uses lead 1, `project_status = in_progress`, `project_type = preferred_slugs[1] (fallback wedding)`, package `wedding_story`, price pulled from package.
-    - Project 2 uses lead 2, `project_status = completed`, `project_type = preferred_slugs[2] fallback family`, package `mini_lifestyle`.
-  - **Sessions** (3):
-    - Session labels: locale-specific (“Düğün Çekimi”, “Aile Lifestyle”, “Mini Çekim” or EN equivalents).
-    - Dates scheduled at +3, +10, +18 days from `now()` (UTC) to avoid past events.
-    - Session types: `signature_session` for first two, `mini_session` for the add-on.
-    - Locations: “Old Town”, “City Park”, “Studio Loft” (shared across locales).
+  - **Localization & communication policy**
+    - Turkish (`tr`) copy is the canonical source for names, notes, and contact details. Every lead stores TR emails/phones (e.g., `sample+wedding.tr@lumiso.app`, `+90 532 ...`), and other locales reuse those values unless an explicit translation exists.
+    - Notes / descriptions are stored as `[Sample Data] <TR message>` and optionally `notes_en`. Whenever a translation is missing we fall back to the TR string so nothing ships in English-only.
+  - **Leads** (6 total, all localized):
+
+    | # | TR Name | EN Name | Status slug | Email | Phone | Notes (TR → EN) |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | 1 | Ayşe & Mehmet | Sarah & Daniel | `new` | `sample+wedding.tr@lumiso.app` | `+90 532 000 0010` | `[Sample Data] Fuar standında tanışıldı, hızlı teklif istedi.` → “Met at the expo, expecting a fast quote.” |
+    | 2 | Zeynep Kılıç | Olivia Carter | `proposal` | `sample+family.tr@lumiso.app` | `+90 532 000 0011` | `[Sample Data] Sözleşme taslağı gönderildi, onay bekliyor.` → “Draft contract sent, waiting on approval.” |
+    | 3 | Ece & Bora | Noah & Emma | `won` | `sample+referral.tr@lumiso.app` | `+90 532 000 0012` | `[Sample Data] Referans müşteri, albüm yükseltmesi istedi.` → “Referral client requesting album upgrade.” |
+    | 4 | Deniz & Kerem | Lucas & Mia | `negotiation` | `sample+event.tr@lumiso.app` | `+90 532 000 0013` | `[Sample Data] Çift bütçe güncellemesi istedi, yeni teklif hazırlandı.` → “Couple asked for budget revision; new quote drafted.” |
+    | 5 | Selin Aksoy | Emily Parker | `qualified` | `sample+portrait.tr@lumiso.app` | `+90 532 000 0014` | `[Sample Data] Portre konsepti netleşti, çekim tarihi bekleniyor.` → “Portrait concept approved, waiting for shoot date.” |
+    | 6 | Burcu & Tolga | Grace & Ethan | `lost` | `sample+mini.tr@lumiso.app` | `+90 532 000 0015` | `[Sample Data] Rakip çekim paketini seçti, değerlendirme notu bırakıldı.` → “Chose a competitor package; captured follow-up note.” |
+
+  - **Projects (selected-type aware)**:
+    - Maintain `sample_project_blueprints` keyed by project-type slug (e.g., `wedding`, `family`, `commercial`, etc.). Each blueprint defines localized titles, default package slug, stage, primary lead, and which services must be attached.
+    - When seeding, iterate over `preferred_slugs` (ordered) and create one project per slug (cap at four to keep datasets manageable). If the intake list is empty, fall back to `wedding` and `family`.
+    - Example blueprints:
+
+      | Project type slug | Project title (TR / EN) | Default package | Default stage |
+      | --- | --- | --- | --- |
+      | wedding | “Boğaz Düğünü” / “Bosphorus Wedding” | `wedding_story` | `in_progress` |
+      | family | “Aile Lifestyle Çekimi” / “Lifestyle Family Session” | `mini_lifestyle` | `in_progress` |
+      | commercial | “Marka Lansman Çekimi” / “Brand Launch Shoot” | `wedding_story` (fallback) | `proposal` |
+      | newborn | “Yenidoğan Belgeseli” / “Newborn Documentary” | `mini_lifestyle` | `planned` |
+
+    - Every project attaches exactly one seeded package; package line items always resolve back to the preseeded services (`lead_photographer`, `assistant_photographer`, etc.), ensuring catalog consistency.
+    - `projects.description` stores a localized `[Sample Data]` note describing status, and each project records a `deposit_config` snapshot (40 % for wedding_story, 30 % for mini_lifestyle) so payment workflows have data to display.
+    - For every project we insert two `activities`: one `note` describing current context and one `reminder` scheduled `+N` days from intake completion (default anchor is `profile_intake_completed_at`, falling back to org creation) so teams immediately see future follow-ups.
+  - **Sessions**
+    - Each seeded project creates one session scheduled relative to the anchor timestamp at +1, +3, +7 days (then +14, +21, +30 if we have more projects). All sessions stay in the future, regardless of locale or time of day.
+    - Session labels mirror the project type (“Düğün Çekimi”, “Kurumsal Çekim”, …) with locale-specific copy and reuse the seeded session types (`signature_session` for long form, `mini_session` for short form).
+    - Locations intentionally stay high level for Turkish orgs (e.g., “Kadıköy Stüdyosu”, “Moda Sahili”, “Galata Meydanı”) so the sample data feels local without exposing exact addresses.
+  - **Packages / services / workflows**
+    - Packages referenced above are seeded via `ensure_default_packages_for_org` and therefore only use existing service categories (Crew, Deliverables). No ad-hoc services are created during sample-data seeding.
+    - Sessions/projects automatically link to the workflow + message templates that were inserted earlier so reminders fire without extra setup.
 - All inserted rows carry `[Sample Data]` prefix in `notes` so reruns short-circuit.
 
 ## Telemetry & Monitoring Touchpoints

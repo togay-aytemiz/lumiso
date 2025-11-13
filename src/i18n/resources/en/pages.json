@@ -715,23 +715,253 @@
       }
     },
     "users": {
-      "title": "User Management",
-      "subtitle": "Manage user accounts, roles, and permissions",
-      "badge": "Coming Soon",
-      "sectionTitle": "User Management Features",
-      "sectionDescription": "This section will include comprehensive user management capabilities",
-      "features": {
-        "userList": {
-          "title": "User List & Search",
-          "description": "Browse and search all users in the system"
+      "title": "User Membership Console",
+      "subtitle": "Monitor trials, premium upgrades, and CRM health in one place.",
+      "errors": {
+        "failedToLoad": "Could not load admin users. Please refresh."
+      },
+      "summary": {
+        "total": "Total accounts",
+        "totalHint": "All active organizations",
+        "premium": "Premium",
+        "premiumHint": "Live paying customers",
+        "trials": "Active trials",
+        "trialsHint": "Accounts in their free trial window",
+        "expiring": "Expiring soon",
+        "expiringHint": "Trials ending within 3 days",
+        "complimentary": "Complimentary",
+        "complimentaryHint": "Manually granted premium access",
+        "suspended": "Suspended",
+        "suspendedHint": "Access temporarily disabled"
+      },
+      "filters": {
+        "searchPlaceholder": "Search name, email, or company",
+        "statusPlaceholder": "Select a status",
+        "status": {
+          "all": "All statuses"
         },
-        "roleManagement": {
-          "title": "Role Management",
-          "description": "Assign admin, support, or user roles"
+        "expiringOnly": "Show only expiring trials"
+      },
+      "actions": {
+        "refresh": "Refresh",
+        "export": "Export CSV"
+      },
+      "status": {
+        "trial": "Trial",
+        "premium": "Premium",
+        "expired": "Expired",
+        "suspended": "Suspended",
+        "complimentary": "Complimentary"
+      },
+      "table": {
+        "columns": {
+          "user": "User",
+          "plan": "Plan",
+          "business": "Business contact",
+          "trial": "Trial status",
+          "metrics": "Key metrics",
+          "lastActive": "Last active",
+          "actions": "Actions"
         },
-        "impersonation": {
-          "title": "User Impersonation",
-          "description": "Switch context to view as any user"
+        "accountOwner": "Owner: {{owner}}",
+        "trialDays": "{{days}} days left",
+        "trialEnds": "Ends {{date}}",
+        "trialExpired": "Trial expired",
+        "notApplicable": "Not applicable",
+        "metrics": {
+          "projects": "{{count}} projects",
+          "leads": "{{count}} Kişi",
+          "sessions": "{{count}} sessions"
+        },
+        "actions": {
+          "manage": "Manage"
+        },
+        "empty": "No users match the current filters."
+      },
+      "detail": {
+        "title": "{{name}} membership",
+        "subtitle": "Drill into trial status, usage, payments, and admin actions.",
+        "tabs": {
+          "overview": "Overview",
+          "kisiler": "Kişiler",
+          "projects": "Projects",
+          "sessions": "Sessions",
+          "calendar": "Calendar",
+          "payments": "Payments",
+          "services": "Services",
+          "packages": "Packages",
+          "sessionTypes": "Session types"
+        },
+        "membership": {
+          "title": "Membership status",
+          "subtitle": "Trial + premium state with key timestamps",
+          "plan": "Plan: {{plan}}",
+          "trialEnds": "Trial ends",
+          "daysRemaining": "{{days}} days remaining",
+          "lastActive": "Last active",
+          "startedAt": "Trial started",
+          "premiumActivatedAt": "Premium activated"
+        },
+        "usage": {
+          "title": "Usage snapshot",
+          "subtitle": "Projects, sessions, and workflow activity",
+          "projects": "Projects",
+          "activeProjects": "Active projects",
+          "leads": "Leads",
+          "sessions": "Sessions",
+          "upcomingSessions": "Upcoming sessions",
+          "calendarEvents": "Calendar events",
+          "payments": "Payments",
+          "teamMembers": "Team members"
+        },
+        "account": {
+          "title": "Account context",
+          "subtitle": "Ownership, contact, and notes",
+          "owner": "Account owner",
+          "company": "Company",
+          "email": "Email",
+          "businessName": "Business name",
+          "businessEmail": "Business email",
+          "businessPhone": "Business phone",
+          "social": "Social channels",
+          "emptySocial": "No social links yet.",
+          "timezone": "Timezone",
+          "notes": "Notes",
+          "emptyNotes": "No notes yet."
+        },
+        "actions": {
+          "title": "Admin actions",
+          "subtitle": "Manual interventions for this customer",
+          "extendTrial": "Extend trial",
+          "grantPremium": "Grant premium",
+          "addComplimentary": "Add complimentary",
+          "suspendAccount": "Suspend account",
+          "contactUser": "Contact user"
+        },
+        "financials": {
+          "title": "Financial signals",
+          "subtitle": "MRR, LTV, and outstanding balances",
+          "monthlyRecurringRevenue": "Monthly recurring revenue",
+          "lifetimeValue": "Lifetime value",
+          "averageDealSize": "Average deal size",
+          "overdueBalance": "Overdue balance"
+        },
+        "collections": {
+          "kisiler": {
+            "title": "Kişiler",
+            "description": "All Kişi records owned by this organization",
+            "empty": "No Kişi records logged yet."
+          },
+          "projects": {
+            "title": "Projects",
+            "description": "Active and historical projects",
+            "empty": "No projects found."
+          },
+          "sessions": {
+            "title": "Sessions",
+            "description": "Upcoming or recent sessions",
+            "empty": "No sessions scheduled."
+          },
+          "calendar": {
+            "title": "Calendar events",
+            "description": "Milestones, reviews, and operational blocks",
+            "empty": "No calendar events recorded."
+          },
+          "payments": {
+            "title": "Payments",
+            "description": "Payment history for this account",
+            "empty": "No payments yet."
+          },
+          "services": {
+            "title": "Services",
+            "description": "Billable services configured by this business",
+            "empty": "No services defined."
+          },
+          "packages": {
+            "title": "Packages",
+            "description": "Bundled offerings for this organization",
+            "empty": "No packages configured."
+          },
+          "sessionTypes": {
+            "title": "Session types",
+            "description": "Custom session archetypes available to the team",
+            "empty": "No session types available."
+          }
+        },
+        "tables": {
+          "kisiler": {
+            "columns": {
+              "name": "Kişi",
+              "status": "Status",
+              "email": "Email",
+              "phone": "Phone",
+              "due": "Due date",
+              "updated": "Updated"
+            }
+          },
+          "projects": {
+            "columns": {
+              "name": "Project",
+              "status": "Status",
+              "kisi": "Kişi",
+              "budget": "Budget",
+              "updated": "Updated"
+            }
+          },
+          "sessions": {
+            "columns": {
+              "name": "Session",
+              "status": "Status",
+              "type": "Session type",
+              "schedule": "Scheduled for",
+              "project": "Project",
+              "updated": "Updated"
+            }
+          },
+          "calendar": {
+            "columns": {
+              "title": "Event",
+              "type": "Type",
+              "date": "Date",
+              "time": "Time",
+              "completed": "Completed"
+            }
+          },
+          "payments": {
+            "columns": {
+              "amount": "Amount",
+              "status": "Status",
+              "type": "Type",
+              "date": "Date",
+              "project": "Project"
+            }
+          },
+          "services": {
+            "columns": {
+              "name": "Service",
+              "category": "Category",
+              "type": "Type",
+              "price": "Price",
+              "updated": "Updated"
+            }
+          },
+          "packages": {
+            "columns": {
+              "name": "Package",
+              "price": "Price",
+              "clientTotal": "Client total",
+              "status": "Status",
+              "updated": "Updated"
+            }
+          },
+          "sessionTypes": {
+            "columns": {
+              "name": "Session type",
+              "category": "Category",
+              "duration": "Duration",
+              "updated": "Updated"
+            }
+          }
         }
       }
     },

@@ -423,8 +423,12 @@
       {
         "external_id": "CRM-ONBOARD-304",
         "title": "Adım 3 - Proje oluşturma sihirbazına geçiş",
-        "description": "Üçüncü görev paketin doğru rota ile proje oluşturma akışına bağlandığını doğrular.",
+        "description": "Üçüncü görev kartının yeni kopyasıyla projeler akışına bağlandığını doğrular.",
         "steps": [
+          {
+            "action": "/getting-started sayfasında Adım 3 kartının başlık ve açıklamasını inceleyin.",
+            "expected_result": "Kartta \"İlk Projenizi Oluşturun\" başlığı ve \"Seansları, görevleri ve teslimatları tek yerde toplayın\" benzeri açıklama görünür."
+          },
           {
             "action": "/getting-started sayfasında Adım 3 kartındaki butona tıklayın.",
             "expected_result": "Projeler sayfası açılır ve sağ üstteki \"Proje Oluştur\" tuşu vurgulanır."
@@ -519,6 +523,46 @@
           }
         ],
         "expected_result": "Kurulum tamamlandığında guided sayfa kapanır ve onboarding stage \"completed\" olur."
+      },
+      {
+        "external_id": "CRM-ONBOARD-309",
+        "title": "Tamamlanan görevler listesi yeni sırayı takip eder",
+        "description": "Profil görevini bitirdikten sonra tamamlanan kartların görsel sırasının 1 ➝ 3 ➝ 2 ➝ 4 ➝ 5 ➝ 6 şeklinde olduğunu doğrular.",
+        "steps": [
+          {
+            "action": "Adım 1 ve Adım 2 görevlerini tamamlayın, ardından Getting Started sayfasına dönün.",
+            "expected_result": "\"Tamamlananlar\" bölümünde ilk satır \"Profil ayarlarını gözden geçir\" olarak görünür."
+          },
+          {
+            "action": "Adım 3 görevini de tamamlayın ve sayfayı yenileyin.",
+            "expected_result": "Tamamlananlar listesinde ikinci satır \"İlk Projenizi Oluşturun\", üçüncü satır ise \"İlk Kişinizi Oluşturun\" olarak sıralanır."
+          },
+          {
+            "action": "Kalan görevleri tamamlayın.",
+            "expected_result": "Liste 4, 5 ve 6 numaralı görevlerle devam eder; sıralama tamamlandıkça değişmez."
+          }
+        ],
+        "expected_result": "Tamamlanan görevler her zaman sabit görev sırasına göre gösterilir ve metinler yeni kopyayla eşleşir."
+      },
+      {
+        "external_id": "CRM-ONBOARD-310",
+        "title": "Tüm görevler tamamlanınca kutlama bannerı ve Gösterge Paneli CTA'sı görünür",
+        "description": "Son görevin ardından sayfanın otomatik olarak kutlama kartına kaydırıldığını, konfeti animasyonunun çalıştığını ve CTA metninin güncel olduğunu doğrular.",
+        "steps": [
+          {
+            "action": "Altı görevin hepsini tamamlayın ve Getting Started sayfasına dönün.",
+            "expected_result": "Sayfa kısa süre içinde alt bölümdeki kutlama kartına kayar ve arka planda konfeti animasyonu belirir."
+          },
+          {
+            "action": "Kutlama kartındaki buton metnini kontrol edin.",
+            "expected_result": "Butonda \"Gösterge Paneline Git\" yazısı görünür."
+          },
+          {
+            "action": "Butona tıklayın.",
+            "expected_result": "Kullanıcı ana kontrol paneli rotasına yönlendirilir ve confetti katmanı artık görünmez."
+          }
+        ],
+        "expected_result": "Tamamlanan guided setup kutlama kartını, Gösterge Paneli CTA'sını ve konfeti animasyonunu gösterir."
       }
     ]
   }

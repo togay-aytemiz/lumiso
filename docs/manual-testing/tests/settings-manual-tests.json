@@ -1126,6 +1126,30 @@
           }
         ],
         "expected_result": "Paket sihirbazı kirli kapatılmaya çalışıldığında kullanıcıya düzenlemeye devam etme veya tüm değişiklikleri silme seçenekleri sunar."
+      },
+      {
+        "external_id": "CRM-SERVICES-010",
+        "title": "Paket kartlarında müşteri fiyatı özeti",
+        "description": "Paket kartındaki 'Müşteri fiyatı' panelinin fiyatlama moduna göre doğru tutarı ve metni gösterdiğini doğrular.",
+        "steps": [
+          {
+            "action": "'Paket ekle' sihirbazını açıp Hizmetler adımında en az bir ek hizmet seçin, Fiyatlandırma adımında 'Fiyatın içerisinde' seçeneğini işaretleyip sihirbazı tamamlayın.",
+            "expected_result": "Özet adımı müşteri toplamını hizmetleri içeren tek tutar olarak gösterir."
+          },
+          {
+            "action": "/settings/services sayfasına dönüp oluşturduğunuz paket kartındaki 'Müşteri fiyatı' panelini inceleyin.",
+            "expected_result": "Panelde yalnızca tutar ve açıklama yer alır, 'Her şey dahil' rozeti görünmez ve yardımcı metin 'Hizmetler fiyata dahil · ...' formatındadır."
+          },
+          {
+            "action": "Aynı paketi düzenleyip Fiyatlandırma adımında 'Fiyata ek olarak' modunu seçin ve kaydedin.",
+            "expected_result": "Özet adımı müşteri tutarını paket + hizmetler kırılımıyla gösterir."
+          },
+          {
+            "action": "Kartı yeniden kontrol etmek için /settings/services sayfasını yenileyin.",
+            "expected_result": "'Müşteri fiyatı' alanı yalnızca paket tutarını gösterir, yardımcı metin 'Paket: ... · Eklentiler: ...' biçimindedir ve herhangi bir rozet görünmez."
+          }
+        ],
+        "expected_result": "Hangi mod seçilirse seçilsin paket kartlarındaki müşteri fiyatı alanı doğru rakamı ve açıklamayı gösterir."
       }
     ]
   },

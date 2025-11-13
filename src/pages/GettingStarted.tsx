@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type CSSProperties } from "react";
+import { useState, useEffect, useRef, useMemo, type CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";  
 import { HelpCircle, ArrowRight, CheckCircle, Clock } from "lucide-react";
@@ -39,6 +39,8 @@ const createConfettiPieces = (count = 36): ConfettiPiece[] =>
     size: 0.6 + Math.random() * 0.8
   }));
 
+const COMPLETED_DISPLAY_ORDER = [1, 3, 2, 4, 5, 6];
+
 // Remove duplicate step definitions - now using centralized ones from hook
 
 const GettingStarted = () => {
@@ -63,6 +65,16 @@ const GettingStarted = () => {
     completeOnboarding
   } = useOnboarding();
   const completionBannerRef = useRef<HTMLDivElement | null>(null);
+  const orderedCompletedSteps = useMemo(() => {
+    if (!completedSteps.length) return [];
+    const orderMap = new Map(COMPLETED_DISPLAY_ORDER.map((stepId, index) => [stepId, index]));
+    const fallbackStart = COMPLETED_DISPLAY_ORDER.length;
+    return [...completedSteps].sort((a, b) => {
+      const indexA = orderMap.get(a.id) ?? fallbackStart + a.id;
+      const indexB = orderMap.get(b.id) ?? fallbackStart + b.id;
+      return indexA - indexB;
+    });
+  }, [completedSteps]);
 
   // If guided setup is complete, redirect to dashboard
   useEffect(() => {
@@ -195,10 +207,10 @@ const GettingStarted = () => {
         </div>
 
         {/* Completed Steps */}
-        {completedSteps.length > 0 && (
+        {orderedCompletedSteps.length > 0 && (
           <div className={`mb-4 ${isAnimating ? 'animate-scale-in' : ''}`}>
             <div className="space-y-2">
-              {completedSteps.map((step, index) => (
+              {orderedCompletedSteps.map((step) => (
                 <div key={step.id} className="flex items-center gap-3 py-2 px-3 rounded-lg bg-muted/30 border border-border/50">
                   <div className="flex items-center justify-center w-6 h-6 rounded-full bg-green-500 text-white flex-shrink-0">
                     <CheckCircle className="w-3 h-3" />

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
 import { enUS, tr as trLocale } from "date-fns/locale";
@@ -345,7 +345,17 @@ export default function AdminUsers() {
             setSelectedUser(null);
           }
         }}
+        onUserUpdated={() => {
+          void refetch();
+        }}
       />
     </div>
   );
 }
+  useEffect(() => {
+    if (!selectedUser) return;
+    const updated = users.find((candidate) => candidate.id === selectedUser.id);
+    if (updated && updated !== selectedUser) {
+      setSelectedUser(updated);
+    }
+  }, [users, selectedUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps

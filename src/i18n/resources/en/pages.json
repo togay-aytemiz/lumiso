@@ -883,7 +883,54 @@
           "grantPremium": "Grant premium",
           "addComplimentary": "Add complimentary",
           "suspendAccount": "Suspend account",
-          "contactUser": "Contact user"
+          "contactUser": "Contact user",
+          "membershipModals": {
+            "cancel": "Cancel",
+            "saving": "Saving...",
+            "saved": "Membership data refreshed",
+            "validationError": "Please fill in the required fields.",
+            "extendTrial": {
+              "title": "Extend trial period",
+              "description": "Add extra days to the customer's free trial.",
+              "daysLabel": "Days to add",
+              "reasonLabel": "Reason (optional)",
+              "reasonPlaceholder": "Internal note for the audit log",
+              "submit": "Extend trial",
+              "success": "Trial extended successfully",
+              "error": "We couldn't extend the trial. Please try again."
+            },
+            "grantPremium": {
+              "title": "Grant premium",
+              "description": "Activate premium access for this customer immediately.",
+              "planLabel": "Plan label",
+              "expiresLabel": "Expiration date (optional)",
+              "noteLabel": "Note (optional)",
+              "notePlaceholder": "Why are you granting premium?",
+              "submit": "Grant premium",
+              "success": "Premium access granted",
+              "error": "Could not grant premium. Please try again."
+            },
+            "complimentary": {
+              "title": "Add complimentary premium",
+              "description": "Give time-limited premium access without billing the customer.",
+              "planLabel": "Label",
+              "expiresLabel": "Expires on (optional)",
+              "noteLabel": "Note (optional)",
+              "notePlaceholder": "Internal context for this complimentary grant",
+              "submit": "Save complimentary access",
+              "success": "Complimentary premium granted",
+              "error": "Could not update complimentary access."
+            },
+            "suspend": {
+              "title": "Suspend account",
+              "description": "Temporarily block access to the workspace.",
+              "reasonLabel": "Reason",
+              "notePlaceholder": "Explain why the account is being suspended",
+              "submit": "Suspend account",
+              "success": "Account suspended",
+              "error": "Could not suspend the account."
+            }
+          }
         },
         "financials": {
           "title": "Financial signals",

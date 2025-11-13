@@ -887,7 +887,54 @@
           "grantPremium": "Premium yap",
           "addComplimentary": "Ücretsiz premium ver",
           "suspendAccount": "Hesabı askıya al",
-          "contactUser": "Kullanıcıyla iletişime geç"
+          "contactUser": "Kullanıcıyla iletişime geç",
+          "membershipModals": {
+            "cancel": "Vazgeç",
+            "saving": "Kaydediliyor...",
+            "saved": "Üyelik bilgileri güncellendi",
+            "validationError": "Lütfen gerekli alanları doldurun.",
+            "extendTrial": {
+              "title": "Trial süresini uzat",
+              "description": "Müşterinin deneme süresine ekstra gün ekle.",
+              "daysLabel": "Eklenecek gün",
+              "reasonLabel": "Not (opsiyonel)",
+              "reasonPlaceholder": "Deneme uzatma sebebi",
+              "submit": "Trial uzat",
+              "success": "Trial süresi uzatıldı",
+              "error": "Trial uzatılamadı, tekrar deneyin."
+            },
+            "grantPremium": {
+              "title": "Premium tanımla",
+              "description": "Müşteriye hemen premium erişimi ver.",
+              "planLabel": "Plan etiketi",
+              "expiresLabel": "Bitiş tarihi (opsiyonel)",
+              "noteLabel": "Not (opsiyonel)",
+              "notePlaceholder": "Premium neden tanımlanıyor?",
+              "submit": "Premium tanımla",
+              "success": "Premium erişim verildi",
+              "error": "Premium tanımlanamadı, tekrar deneyin."
+            },
+            "complimentary": {
+              "title": "Ücretsiz premium ekle",
+              "description": "Faturalandırmadan premium erişim ver.",
+              "planLabel": "Etiket",
+              "expiresLabel": "Bitiş tarihi (opsiyonel)",
+              "noteLabel": "Not (opsiyonel)",
+              "notePlaceholder": "Ücretsiz premium notu",
+              "submit": "Ücretsiz premium kaydet",
+              "success": "Ücretsiz premium tanımlandı",
+              "error": "Ücretsiz premium güncellenemedi."
+            },
+            "suspend": {
+              "title": "Hesabı askıya al",
+              "description": "Workspace erişimini geçici olarak kapat.",
+              "reasonLabel": "Sebep",
+              "notePlaceholder": "Askıya alma gerekçesi",
+              "submit": "Hesabı askıya al",
+              "success": "Hesap askıya alındı",
+              "error": "Hesap askıya alınamadı."
+            }
+          }
         },
         "financials": {
           "title": "Finans göstergeleri",

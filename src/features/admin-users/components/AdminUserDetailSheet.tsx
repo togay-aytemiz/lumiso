@@ -32,6 +32,7 @@ import type {
   AdminUserPackageSummary,
   AdminUserSessionTypeSummary,
 } from "../types";
+import { MembershipActions } from "./MembershipActions";
 import { AdvancedDataTable, type AdvancedTableColumn } from "@/components/data-table";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { SegmentedControl } from "@/components/ui/segmented-control";
@@ -42,6 +43,7 @@ interface AdminUserDetailSheetProps {
   user: AdminUserAccount | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onUserUpdated?: () => void;
 }
 
 const formatDateTime = (value?: string | null, locale?: string) => {
@@ -92,6 +94,7 @@ export function AdminUserDetailSheet({
   user,
   open,
   onOpenChange,
+  onUserUpdated,
 }: AdminUserDetailSheetProps) {
   const { t, i18n } = useTranslation("pages");
   const { t: tCommon } = useTranslation("common");
@@ -912,19 +915,8 @@ export function AdminUserDetailSheet({
                     {t("admin.users.detail.actions.subtitle")}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-wrap gap-2">
-                  <Button variant="default">
-                    {t("admin.users.detail.actions.extendTrial")}
-                  </Button>
-                  <Button variant="secondary">
-                    {t("admin.users.detail.actions.grantPremium")}
-                  </Button>
-                  <Button variant="outline">
-                    {t("admin.users.detail.actions.addComplimentary")}
-                  </Button>
-                  <Button variant="outline">
-                    {t("admin.users.detail.actions.suspendAccount")}
-                  </Button>
+                <CardContent className="space-y-3">
+                  <MembershipActions user={user} onUserUpdated={onUserUpdated} />
                   <Button variant="ghost">
                     {t("admin.users.detail.actions.contactUser")}
                   </Button>

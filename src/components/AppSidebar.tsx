@@ -217,7 +217,10 @@ export function AppSidebar() {
 
   return (
     <>
-      <Sidebar className="border-r border-border/60" collapsible="icon">
+      <Sidebar
+        className="border-r border-border/60 [&_[data-sidebar=sidebar]]:!rounded-l-none [&_[data-sidebar=sidebar]]:!rounded-bl-none [&_[data-sidebar=sidebar]]:!rounded-tl-none"
+        collapsible="icon"
+      >
         <SidebarHeader className="p-6 pb-4 transition-[padding] duration-300 group-data-[collapsible=icon]:p-3">
           <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:justify-center">
             <div className="flex items-center gap-3 overflow-hidden group-data-[collapsible=icon]:hidden">
@@ -230,7 +233,7 @@ export function AppSidebar() {
             <button
               type="button"
               onClick={toggleSidebar}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-sidebar-border/60 bg-white/90 text-sidebar-foreground shadow-sm transition-all duration-300 hover:translate-x-[2px] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-12 group-data-[collapsible=icon]:hover:translate-x-0 group-data-[collapsible=icon]:focus-visible:translate-x-0"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[hsl(var(--sidebar-primary))] bg-transparent text-[hsl(var(--sidebar-primary))] transition-all duration-300 hover:translate-x-[2px] hover:bg-[hsl(var(--sidebar-primary)_/_0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--sidebar-primary))] focus-visible:ring-offset-2 focus-visible:ring-offset-background group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-12 group-data-[collapsible=icon]:hover:translate-x-0 group-data-[collapsible=icon]:focus-visible:translate-x-0"
               aria-label={tCommon("sidebar.toggle")}
               title={tCommon("sidebar.toggle")}
             >

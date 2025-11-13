@@ -762,7 +762,10 @@
           "user": "Kullanıcı",
           "plan": "Plan",
           "business": "İşletme iletişimi",
-          "trial": "Trial durumu",
+          "businessEmail": "İşletme e-postası",
+          "businessPhone": "İşletme telefonu",
+          "trialStatus": "Trial statüsü",
+          "trial": "Trial zaman çizelgesi",
           "metrics": "Öne çıkan metrikler",
           "lastActive": "Son aktif",
           "actions": "İşlemler"
@@ -775,7 +778,10 @@
         "metrics": {
           "projects": "{{count}} proje",
           "leads": "{{count}} Kişi",
-          "sessions": "{{count}} seans"
+          "sessions": "{{count}} seans",
+          "projectsLabel": "Projeler",
+          "leadsLabel": "Kişi",
+          "sessionsLabel": "Seanslar"
         },
         "actions": {
           "manage": "Yönet"

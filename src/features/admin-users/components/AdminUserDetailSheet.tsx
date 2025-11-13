@@ -447,7 +447,7 @@ export function AdminUserDetailSheet({ user, open, onOpenChange }: AdminUserDeta
                     <InfoLine label={t("admin.users.detail.account.timezone")} value={user.timezone ?? "—"} />
                     <InfoLine label={t("admin.users.detail.account.businessName")} value={user.business.businessName ?? "—"} />
                     <InfoLine label={t("admin.users.detail.account.businessEmail")} value={user.business.businessEmail ?? "—"} />
-                    <InfoLine label={t("admin.users.detail.account.businessPhone")} value={user.business.phone ?? "—"} />
+                    <InfoLine label={t("admin.users.detail.account.businessPhone")} value={user.business.businessPhone ?? "—"} />
                   </div>
                   <div>
                     <p className="text-sm font-medium">{t("admin.users.detail.account.social")}</p>

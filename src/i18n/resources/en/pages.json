@@ -758,7 +758,10 @@
           "user": "User",
           "plan": "Plan",
           "business": "Business contact",
-          "trial": "Trial status",
+          "businessEmail": "Business email",
+          "businessPhone": "Business phone",
+          "trialStatus": "Trial status",
+          "trial": "Trial timeline",
           "metrics": "Key metrics",
           "lastActive": "Last active",
           "actions": "Actions"
@@ -771,7 +774,10 @@
         "metrics": {
           "projects": "{{count}} projects",
           "leads": "{{count}} Kişi",
-          "sessions": "{{count}} sessions"
+          "sessions": "{{count}} sessions",
+          "projectsLabel": "Projects",
+          "leadsLabel": "Leads",
+          "sessionsLabel": "Sessions"
         },
         "actions": {
           "manage": "Manage"

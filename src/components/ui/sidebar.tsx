@@ -294,7 +294,7 @@ const Sidebar = React.forwardRef<
         >
           <div
             data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-white dark:bg-white transition-colors duration-300 group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow group-data-[collapsible=icon]:bg-[hsl(var(--accent-900))] group-data-[collapsible=icon]:text-[hsl(var(--accent-200))] dark:group-data-[collapsible=icon]:bg-[hsl(var(--accent-200))] dark:group-data-[collapsible=icon]:text-[hsl(var(--accent-900))]"
+            className="flex h-full w-full flex-col rounded-none bg-white dark:bg-white transition-colors duration-300 group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow group-data-[collapsible=icon]:bg-[hsl(var(--accent-900))] group-data-[collapsible=icon]:text-[hsl(var(--accent-200))] dark:group-data-[collapsible=icon]:bg-[hsl(var(--accent-200))] dark:group-data-[collapsible=icon]:text-[hsl(var(--accent-900))]"
           >
             {children}
           </div>

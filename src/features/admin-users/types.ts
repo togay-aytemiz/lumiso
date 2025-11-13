@@ -19,7 +19,7 @@ export type AdminUserSessionTypeSummary = Database["public"]["Tables"]["session_
 export interface AdminUserBusinessProfile {
   businessName?: string | null;
   businessEmail?: string | null;
-  phone?: string | null;
+  businessPhone?: string | null;
   socialChannels?: Record<string, string>;
 }
 

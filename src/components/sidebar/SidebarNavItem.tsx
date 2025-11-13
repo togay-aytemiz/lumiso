@@ -80,10 +80,10 @@ export function SidebarNavItem({
     >
       <Icon
         className={cn(
-          "h-5 w-5 text-sidebar-foreground/80 transition-colors group-hover/item:text-[hsl(var(--accent-600))] group-data-[active=true]/item:text-[hsl(var(--accent-600))]",
+          "h-5 w-5 text-sidebar-foreground/80 transition-colors group-hover/item:text-[hsl(var(--accent-600))] group-data-[active=true]/item:text-[hsl(var(--accent-900))]",
           "group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6",
           isCollapsed &&
-            "text-[hsl(var(--accent-200))] group-hover/item:text-[hsl(var(--accent-50))] group-data-[active=true]/item:text-white dark:text-[hsl(var(--accent-800))] dark:group-hover/item:text-[hsl(var(--accent-900))] dark:group-data-[active=true]/item:text-[hsl(var(--accent-900))]"
+            "text-[hsl(var(--accent-200))] group-hover/item:text-[hsl(var(--accent-50))] group-data-[active=true]/item:text-[hsl(var(--accent-900))] dark:text-[hsl(var(--accent-800))] dark:group-hover/item:text-[hsl(var(--accent-900))] dark:group-data-[active=true]/item:text-[hsl(var(--accent-900))]"
         )}
       />
       <span className="text-sidebar-foreground/90 transition-colors group-hover/item:text-[hsl(var(--accent-800))] group-data-[active=true]/item:text-[hsl(var(--accent-900))] group-data-[collapsible=icon]:hidden">

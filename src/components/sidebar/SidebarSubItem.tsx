@@ -42,7 +42,7 @@ export function SidebarSubItem({
       )}
       onClick={isLocked ? onLockedClick : undefined}
     >
-      <Icon className="h-4 w-4 text-sidebar-foreground/75 transition-colors group-hover/item:text-[hsl(var(--accent-600))] group-data-[active=true]/item:text-[hsl(var(--accent-600))]" />
+      <Icon className="h-4 w-4 text-sidebar-foreground/75 transition-colors group-hover/item:text-[hsl(var(--accent-600))] group-data-[active=true]/item:text-[hsl(var(--accent-900))]" />
       <span className="text-sidebar-foreground/80 transition-colors group-hover/item:text-[hsl(var(--accent-800))] group-data-[active=true]/item:text-[hsl(var(--accent-900))]">
         {title}
       </span>

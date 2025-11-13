@@ -110,8 +110,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     const nextStep = preferences.currentOnboardingStep + 1;
     // Completing current step and advancing to next
 
-    // Bulletproof: Prevent completing beyond total steps
-    if (preferences.currentOnboardingStep >= TOTAL_STEPS) {
+    // Bulletproof: Prevent completing beyond total steps (but allow final step to advance to TOTAL_STEPS + 1)
+    if (preferences.currentOnboardingStep > TOTAL_STEPS) {
       console.warn("🚫 completeCurrentStep: Attempted to complete step beyond total steps");
       return;
     }
@@ -131,7 +131,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     // Completing multiple steps in batch
 
     // Prevent completing beyond total steps
-    if (preferences.currentOnboardingStep >= TOTAL_STEPS) {
+    if (preferences.currentOnboardingStep > TOTAL_STEPS) {
       console.warn("🚫 completeMultipleSteps: Already at or beyond total steps");
       return;
     }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";  
 import { HelpCircle, ArrowRight, CheckCircle, Clock } from "lucide-react";
@@ -12,6 +12,33 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useTranslation } from "react-i18next";
 import { ONBOARDING_STEPS } from "@/constants/onboarding";
 
+type ConfettiPiece = {
+  id: number;
+  left: number;
+  delay: number;
+  duration: number;
+  drift: number;
+  color: string;
+  size: number;
+};
+
+type ConfettiPieceStyle = CSSProperties & {
+  "--confetti-drift"?: string;
+};
+
+const CONFETTI_COLORS = ["#1EB29F", "#34D399", "#FBBF24", "#F472B6", "#60A5FA"];
+
+const createConfettiPieces = (count = 36): ConfettiPiece[] =>
+  Array.from({ length: count }, (_, id) => ({
+    id,
+    left: Math.random() * 100,
+    delay: Math.random() * 0.5,
+    duration: 2.6 + Math.random() * 1.4,
+    drift: (Math.random() - 0.5) * 60,
+    color: CONFETTI_COLORS[id % CONFETTI_COLORS.length],
+    size: 0.6 + Math.random() * 0.8
+  }));
+
 // Remove duplicate step definitions - now using centralized ones from hook
 
 const GettingStarted = () => {
@@ -20,6 +47,9 @@ const GettingStarted = () => {
   const navigate = useNavigate();
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [confettiPieces, setConfettiPieces] = useState<ConfettiPiece[]>([]);
+  const [hasCelebrated, setHasCelebrated] = useState(false);
   const { 
     loading, 
     isInGuidedSetup, 
@@ -32,6 +62,7 @@ const GettingStarted = () => {
     currentStep,
     completeOnboarding
   } = useOnboarding();
+  const completionBannerRef = useRef<HTMLDivElement | null>(null);
 
   // If guided setup is complete, redirect to dashboard
   useEffect(() => {
@@ -58,6 +89,23 @@ const GettingStarted = () => {
       return () => clearTimeout(timer);
     }
   }, [currentStep, loading]);
+
+  // Celebrate when onboarding steps are all complete
+  useEffect(() => {
+    if (!isAllStepsComplete || hasCelebrated) {
+      return;
+    }
+
+    setHasCelebrated(true);
+    completionBannerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    setConfettiPieces(createConfettiPieces());
+    setShowConfetti(true);
+
+    const timer = window.setTimeout(() => setShowConfetti(false), 4500);
+
+    return () => clearTimeout(timer);
+  }, [isAllStepsComplete, hasCelebrated]);
 
   const handleStepAction = (step: (typeof ONBOARDING_STEPS)[number]) => {
     if (step.id === 1) {
@@ -261,7 +309,7 @@ const GettingStarted = () => {
 
         {/* Completion */}
         {isAllStepsComplete && (
-          <div className={`text-center ${isAnimating ? 'animate-scale-in' : ''}`}>
+          <div className={`text-center ${isAnimating ? 'animate-scale-in' : ''}`} ref={completionBannerRef}>
             <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
               <CardContent className="py-12">
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4 animate-pulse" />
@@ -292,6 +340,23 @@ const GettingStarted = () => {
 
       <RestartGuidedModeButton />
       <ExitGuidanceModeButton />
+      {showConfetti && (
+        <div className="confetti-container" aria-hidden="true">
+          {confettiPieces.map((piece) => {
+            const pieceStyle: ConfettiPieceStyle = {
+              left: `${piece.left}%`,
+              animationDelay: `${piece.delay}s`,
+              animationDuration: `${piece.duration}s`,
+              backgroundColor: piece.color,
+              width: `${piece.size * 8}px`,
+              height: `${piece.size * 14}px`,
+              "--confetti-drift": `${piece.drift}vw`
+            };
+
+            return <span key={piece.id} className="confetti-piece" style={pieceStyle} />;
+          })}
+        </div>
+      )}
     </div>
   );
 };

@@ -14,10 +14,10 @@ import {
   Settings,
   HelpCircle,
   ChevronDown,
+  ChevronLeft,
   FileText,
   Zap,
   Shield,
-  Activity,
 } from "lucide-react";
 import logo from "@/assets/Logo.png";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -27,6 +27,8 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
+  SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   Sheet,
@@ -42,6 +44,8 @@ import { SidebarSubItem } from "@/components/sidebar/SidebarSubItem";
 import { HelpModal } from "@/components/modals/HelpModal";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useNavigationTranslation } from "@/hooks/useTypedTranslation";
+import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 // Module items - main navigation
 const moduleItems = [
@@ -78,10 +82,13 @@ export function AppSidebar() {
   const { isAdminOrSupport } = useUserRole();
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const { t } = useNavigationTranslation();
+  const { t: tCommon } = useTranslation("common");
   const settingsLinkState =
     !isMobile && !currentPath.startsWith("/settings")
       ? { backgroundLocation: location }
       : undefined;
+  const { state: sidebarState, toggleSidebar } = useSidebar();
+  const isCollapsed = sidebarState === "collapsed";
 
   // Mobile sheet states
   const [bookingsSheetOpen, setBookingsSheetOpen] = useState(false);
@@ -137,6 +144,9 @@ export function AppSidebar() {
   const handleBookingsClick = () => {
     if (isMobile) {
       setBookingsSheetOpen(true);
+    } else if (isCollapsed) {
+      toggleSidebar();
+      setBookingsOpen(true);
     } else {
       if (!bookingsOpen) {
         setBookingsOpen(true);
@@ -152,6 +162,9 @@ export function AppSidebar() {
   const handleAutomationClick = () => {
     if (isMobile) {
       setAutomationSheetOpen(true);
+    } else if (isCollapsed) {
+      toggleSidebar();
+      setAutomationOpen(true);
     } else {
       if (!automationOpen) {
         setAutomationOpen(true);
@@ -205,17 +218,34 @@ export function AppSidebar() {
   return (
     <>
       <Sidebar className="border-r border-border/60" collapsible="icon">
-        <SidebarHeader className="p-6">
-          <div className="flex items-center">
-            <img
-              src={logo}
-              alt="Lumiso CRM"
-              className="h-10 w-auto object-contain"
-            />
+        <SidebarHeader className="p-6 pb-4 transition-[padding] duration-300 group-data-[collapsible=icon]:p-3">
+          <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:justify-center">
+            <div className="flex items-center gap-3 overflow-hidden group-data-[collapsible=icon]:hidden">
+              <img
+                src={logo}
+                alt="Lumiso CRM"
+                className="h-10 w-auto object-contain transition-opacity group-data-[collapsible=icon]:hidden"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-sidebar-border/60 bg-white/90 text-sidebar-foreground shadow-sm transition-all duration-300 hover:translate-x-[2px] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-12 group-data-[collapsible=icon]:hover:translate-x-0 group-data-[collapsible=icon]:focus-visible:translate-x-0"
+              aria-label={tCommon("sidebar.toggle")}
+              title={tCommon("sidebar.toggle")}
+            >
+              <ChevronLeft
+                className={cn(
+                  "h-4 w-4 transition-transform duration-300 group-data-[collapsible=icon]:size-5",
+                  isCollapsed && "rotate-180"
+                )}
+              />
+              <span className="sr-only">{tCommon("sidebar.toggle")}</span>
+            </button>
           </div>
         </SidebarHeader>
 
-        <SidebarContent className="px-3 flex-1 overflow-y-auto">
+        <SidebarContent className="px-3 flex-1 overflow-y-auto group-data-[collapsible=icon]:px-1.5">
           {/* Getting Started - Always visible when on getting-started page OR in guided setup */}
           {(location.pathname === "/getting-started" ||
             shouldLockNavigation) && (
@@ -283,13 +313,39 @@ export function AppSidebar() {
                   />
                 ) : undefined
               }
+              collapsedItems={bookingItems.map((item) => {
+                let translationKey: string;
+                switch (item.title) {
+                  case "Calendar":
+                    translationKey = t("menu.calendar");
+                    break;
+                  case "Sessions":
+                    translationKey = t("menu.sessions");
+                    break;
+                  case "Reminders":
+                    translationKey = t("menu.reminders");
+                    break;
+                  default:
+                    translationKey = item.title;
+                }
+
+                return {
+                  title: translationKey,
+                  url: item.url,
+                  icon: item.icon,
+                  isActive: isActive(item.url),
+                  isLocked: isItemLocked(item.url),
+                  onLockedClick: handleLockedItemClick,
+                  onClick: handleNavClick,
+                };
+              })}
             >
               <div
                 className={`overflow-hidden transition-all duration-300 ease-out ${
                   bookingsOpen && !isItemLocked("/calendar") && !isMobile
                     ? "max-h-40 opacity-100"
                     : "max-h-0 opacity-0"
-                }`}
+                } group-data-[collapsible=icon]:hidden`}
               >
                 <SidebarMenu className="space-y-0.5 pt-1">
                   {bookingItems.map((item) => {
@@ -326,129 +382,152 @@ export function AppSidebar() {
             </SidebarNavItem>
           </SidebarCategory>
 
+          <SidebarSeparator className="my-4 opacity-70 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:w-8" />
+
           {/* TOOLS Category */}
-          <div className="mt-2">
-            <SidebarCategory title={t("sections.tools")}>
-              {toolItems.map((item) => {
+          <SidebarCategory title={t("sections.tools")}>
+            {toolItems.map((item) => {
+              let translationKey: string;
+              switch (item.title) {
+                case "Analytics":
+                  translationKey = t("menu.analytics");
+                  break;
+                case "Payments":
+                  translationKey = t("menu.payments");
+                  break;
+                default:
+                  translationKey = item.title;
+              }
+
+              return (
+                <SidebarNavItem
+                  key={item.title}
+                  title={translationKey}
+                  url={item.url}
+                  icon={item.icon}
+                  isActive={isActive(item.url)}
+                  isLocked={isItemLocked(item.url)}
+                  onLockedClick={handleLockedItemClick}
+                  onClick={handleNavClick}
+                />
+              );
+            })}
+
+            <SidebarNavItem
+              title={t("menu.workflows")}
+              icon={Zap}
+              isActive={isAutomationChildActive}
+              isLocked={isItemLocked("/workflows")}
+              onLockedClick={handleLockedItemClick}
+              onClick={
+                !isItemLocked("/workflows")
+                  ? handleAutomationClick
+                  : undefined
+              }
+              badge={
+                !isItemLocked("/workflows") && !isMobile ? (
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform duration-200 ${
+                      automationOpen ? "rotate-180" : "rotate-0"
+                    }`}
+                  />
+                ) : undefined
+              }
+              collapsedItems={automationItems.map((item) => {
                 let translationKey: string;
                 switch (item.title) {
-                  case "Analytics":
-                    translationKey = t("menu.analytics");
+                  case "Workflows":
+                    translationKey = t("menu.workflows");
                     break;
-                  case "Payments":
-                    translationKey = t("menu.payments");
+                  case "Templates":
+                    translationKey = t("menu.templates");
                     break;
                   default:
                     translationKey = item.title;
                 }
 
-                return (
-                  <SidebarNavItem
-                    key={item.title}
-                    title={translationKey}
-                    url={item.url}
-                    icon={item.icon}
-                    isActive={isActive(item.url)}
-                    isLocked={isItemLocked(item.url)}
-                    onLockedClick={handleLockedItemClick}
-                    onClick={handleNavClick}
-                  />
-                );
+                return {
+                  title: translationKey,
+                  url: item.url,
+                  icon: item.icon,
+                  isActive: isActive(item.url),
+                  isLocked: isItemLocked(item.url),
+                  onLockedClick: handleLockedItemClick,
+                  onClick: handleNavClick,
+                };
               })}
-
-              <SidebarNavItem
-                title={t("menu.workflows")}
-                icon={Zap}
-                isActive={isAutomationChildActive}
-                isLocked={isItemLocked("/workflows")}
-                onLockedClick={handleLockedItemClick}
-                onClick={
-                  !isItemLocked("/workflows")
-                    ? handleAutomationClick
-                    : undefined
-                }
-                badge={
-                  !isItemLocked("/workflows") && !isMobile ? (
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform duration-200 ${
-                        automationOpen ? "rotate-180" : "rotate-0"
-                      }`}
-                    />
-                  ) : undefined
-                }
+            >
+              <div
+                className={`overflow-hidden transition-all duration-300 ease-out ${
+                  automationOpen && !isItemLocked("/workflows") && !isMobile
+                    ? "max-h-40 opacity-100"
+                    : "max-h-0 opacity-0"
+                } group-data-[collapsible=icon]:hidden`}
               >
-                <div
-                  className={`overflow-hidden transition-all duration-300 ease-out ${
-                    automationOpen && !isItemLocked("/workflows") && !isMobile
-                      ? "max-h-40 opacity-100"
-                      : "max-h-0 opacity-0"
-                  }`}
-                >
-                  <SidebarMenu className="space-y-0.5 pt-1">
-                    {automationItems.map((item) => {
-                      let translationKey: string;
-                      switch (item.title) {
-                        case "Workflows":
-                          translationKey = t("menu.workflows");
-                          break;
-                        case "Templates":
-                          translationKey = t("menu.templates");
-                          break;
-                        default:
-                          translationKey = item.title;
-                      }
+                <SidebarMenu className="space-y-0.5 pt-1">
+                  {automationItems.map((item) => {
+                    let translationKey: string;
+                    switch (item.title) {
+                      case "Workflows":
+                        translationKey = t("menu.workflows");
+                        break;
+                      case "Templates":
+                        translationKey = t("menu.templates");
+                        break;
+                      default:
+                        translationKey = item.title;
+                    }
 
-                      return (
-                        <SidebarSubItem
-                          key={item.title}
-                          title={translationKey}
-                          url={item.url}
-                          icon={item.icon}
-                          isActive={isActive(item.url)}
-                          isLocked={isItemLocked(item.url)}
-                          onLockedClick={handleLockedItemClick}
-                          onClick={handleNavClick}
-                        />
-                      );
-                    })}
-                  </SidebarMenu>
-                </div>
-              </SidebarNavItem>
-            </SidebarCategory>
-          </div>
+                    return (
+                      <SidebarSubItem
+                        key={item.title}
+                        title={translationKey}
+                        url={item.url}
+                        icon={item.icon}
+                        isActive={isActive(item.url)}
+                        isLocked={isItemLocked(item.url)}
+                        onLockedClick={handleLockedItemClick}
+                        onClick={handleNavClick}
+                      />
+                    );
+                  })}
+                </SidebarMenu>
+              </div>
+            </SidebarNavItem>
+          </SidebarCategory>
+
+          <SidebarSeparator className="my-4 opacity-70 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:w-8" />
 
           {/* SYSTEM Category */}
-          <div className="mt-2">
-            <SidebarCategory title={t("sections.system")}>
+          <SidebarCategory title={t("sections.system")}>
+            <SidebarNavItem
+              title={t("menu.settings")}
+              url="/settings/profile"
+              state={settingsLinkState}
+              icon={Settings}
+              isActive={isActive("/settings")}
+              isLocked={isItemLocked("/settings")}
+              onLockedClick={handleLockedItemClick}
+              onClick={handleSettingsNav}
+            />
+            <SidebarNavItem
+              title={t("menu.help")}
+              icon={HelpCircle}
+              onClick={() => setHelpModalOpen(true)}
+            />
+            {/* Administration - Only for admin/support users */}
+            {isAdminOrSupport() && (
               <SidebarNavItem
-                title={t("menu.settings")}
-                url="/settings/profile"
-                state={settingsLinkState}
-                icon={Settings}
-                isActive={isActive("/settings")}
-                isLocked={isItemLocked("/settings")}
+                title={t("menu.administration")}
+                url="/admin"
+                icon={Shield}
+                isActive={isActive("/admin")}
+                isLocked={isItemLocked("/admin")}
                 onLockedClick={handleLockedItemClick}
-                onClick={handleSettingsNav}
+                onClick={handleNavClick}
               />
-              <SidebarNavItem
-                title={t("menu.help")}
-                icon={HelpCircle}
-                onClick={() => setHelpModalOpen(true)}
-              />
-              {/* Administration - Only for admin/support users */}
-              {isAdminOrSupport() && (
-                <SidebarNavItem
-                  title={t("menu.administration")}
-                  url="/admin"
-                  icon={Shield}
-                  isActive={isActive("/admin")}
-                  isLocked={isItemLocked("/admin")}
-                  onLockedClick={handleLockedItemClick}
-                  onClick={handleNavClick}
-                />
-              )}
-            </SidebarCategory>
-          </div>
+            )}
+          </SidebarCategory>
         </SidebarContent>
 
         <SidebarFooter className="p-4 mt-auto shrink-0">

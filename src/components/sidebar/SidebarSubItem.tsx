@@ -27,7 +27,8 @@ export function SidebarSubItem({
   onClick
 }: SidebarSubItemProps) {
   const buttonClasses = cn(
-    "group/item w-full h-8 border border-transparent",
+    "group/item w-full h-8 border border-transparent pl-9 pr-3",
+    "group-data-[collapsible=icon]:pl-0 group-data-[collapsible=icon]:pr-0",
     "data-[active=true]:bg-[linear-gradient(135deg,_hsl(var(--accent-100)),_hsl(var(--accent-300)))]",
     "data-[active=true]:border-[hsl(var(--accent-300))]",
     "data-[active=true]:shadow-[0_20px_36px_-28px_hsl(var(--accent-400)_/_0.85)]"
@@ -55,7 +56,7 @@ export function SidebarSubItem({
         <Tooltip>
           <TooltipTrigger asChild>
             <SidebarMenuButton
-              className="group/item w-full h-8 cursor-not-allowed rounded-lg border border-transparent bg-[linear-gradient(135deg,_hsl(var(--accent-50)),_hsl(var(--accent-100)))] text-[hsl(var(--accent-800))]"
+              className="group/item w-full h-8 cursor-not-allowed rounded-lg border border-transparent bg-[linear-gradient(135deg,_hsl(var(--accent-50)),_hsl(var(--accent-100)))] pl-9 pr-3 text-[hsl(var(--accent-800))] group-data-[collapsible=icon]:pl-0 group-data-[collapsible=icon]:pr-0"
             >
               {content}
             </SidebarMenuButton>

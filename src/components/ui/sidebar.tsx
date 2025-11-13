@@ -1,66 +1,66 @@
-import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { VariantProps, cva } from "class-variance-authority"
-import { PanelLeft } from "lucide-react"
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { VariantProps, cva } from "class-variance-authority";
+import { PanelLeft } from "lucide-react";
 
-import { useIsMobile } from "@/hooks/use-mobile"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
-import { Skeleton } from "@/components/ui/skeleton"
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { useTranslation } from "react-i18next"
+} from "@/components/ui/tooltip";
+import { useTranslation } from "react-i18next";
 
-const SIDEBAR_COOKIE_NAME = "sidebar:state"
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-const SIDEBAR_WIDTH = "16rem"
-const SIDEBAR_WIDTH_MOBILE = "18rem"
-const SIDEBAR_WIDTH_ICON = "3rem"
-const SIDEBAR_KEYBOARD_SHORTCUT = "b"
+const SIDEBAR_COOKIE_NAME = "sidebar:state";
+const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+const SIDEBAR_STORAGE_KEY = "lumiso:sidebar-state";
+const SIDEBAR_WIDTH = "16rem";
+const SIDEBAR_WIDTH_MOBILE = "18rem";
+const SIDEBAR_WIDTH_ICON = "5rem";
+const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
 type SidebarContext = {
-  state: "expanded" | "collapsed"
-  open: boolean
-  setOpen: (open: boolean) => void
-  openMobile: boolean
-  setOpenMobile: (open: boolean) => void
-  isMobile: boolean
-  toggleSidebar: () => void
-}
+  state: "expanded" | "collapsed";
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  openMobile: boolean;
+  setOpenMobile: (open: boolean) => void;
+  isMobile: boolean;
+  toggleSidebar: () => void;
+};
 
-const SidebarContext = React.createContext<SidebarContext | null>(null)
+const SidebarContext = React.createContext<SidebarContext | null>(null);
 
 type SidebarMenuHoverContextValue = {
-  hoveringMenuId: string | null
-  setHoveringMenuId: (id: string | null) => void
-}
+  hoveringMenuId: string | null;
+  setHoveringMenuId: (id: string | null) => void;
+};
 
-const SidebarMenuHoverContext = React.createContext<
-  SidebarMenuHoverContextValue | null
->(null)
+const SidebarMenuHoverContext =
+  React.createContext<SidebarMenuHoverContextValue | null>(null);
 
 function useSidebar() {
-  const context = React.useContext(SidebarContext)
+  const context = React.useContext(SidebarContext);
   if (!context) {
-    throw new Error("useSidebar must be used within a SidebarProvider.")
+    throw new Error("useSidebar must be used within a SidebarProvider.");
   }
 
-  return context
+  return context;
 }
 
 const SidebarProvider = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
-    defaultOpen?: boolean
-    open?: boolean
-    onOpenChange?: (open: boolean) => void
+    defaultOpen?: boolean;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
   }
 >(
   (
@@ -75,37 +75,65 @@ const SidebarProvider = React.forwardRef<
     },
     ref
   ) => {
-    const isMobile = useIsMobile()
-    const [openMobile, setOpenMobile] = React.useState(false)
+    const isMobile = useIsMobile();
+    const [openMobile, setOpenMobile] = React.useState(false);
     const [hoveringMenuId, setHoveringMenuId] = React.useState<string | null>(
       null
-    )
+    );
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
-    const [_open, _setOpen] = React.useState(defaultOpen)
-    const open = openProp ?? _open
+    const [_open, _setOpen] = React.useState(() => {
+      if (typeof window === "undefined") {
+        return defaultOpen;
+      }
+
+      const storedPreference = window.localStorage.getItem(SIDEBAR_STORAGE_KEY);
+      if (storedPreference != null) {
+        return storedPreference === "expanded";
+      }
+
+      const cookieMatch = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`));
+      if (cookieMatch) {
+        const value = cookieMatch.split("=")[1];
+        if (value === "expanded" || value === "collapsed") {
+          return value === "expanded";
+        }
+        return value === "true";
+      }
+
+      return defaultOpen;
+    });
+    const open = openProp ?? _open;
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
-        const openState = typeof value === "function" ? value(open) : value
+        const openState = typeof value === "function" ? value(open) : value;
         if (setOpenProp) {
-          setOpenProp(openState)
+          setOpenProp(openState);
         } else {
-          _setOpen(openState)
+          _setOpen(openState);
         }
 
         // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        const stringifiedState = openState ? "expanded" : "collapsed";
+        document.cookie = `${SIDEBAR_COOKIE_NAME}=${stringifiedState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+        try {
+          window.localStorage.setItem(SIDEBAR_STORAGE_KEY, stringifiedState);
+        } catch (_error) {
+          /* noop - storage might be unavailable */
+        }
       },
       [setOpenProp, open]
-    )
+    );
 
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
       return isMobile
         ? setOpenMobile((open) => !open)
-        : setOpen((open) => !open)
-    }, [isMobile, setOpen, setOpenMobile])
+        : setOpen((open) => !open);
+    }, [isMobile, setOpen, setOpenMobile]);
 
     // Adds a keyboard shortcut to toggle the sidebar.
     React.useEffect(() => {
@@ -114,18 +142,18 @@ const SidebarProvider = React.forwardRef<
           event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
           (event.metaKey || event.ctrlKey)
         ) {
-          event.preventDefault()
-          toggleSidebar()
+          event.preventDefault();
+          toggleSidebar();
         }
-      }
+      };
 
-      window.addEventListener("keydown", handleKeyDown)
-      return () => window.removeEventListener("keydown", handleKeyDown)
-    }, [toggleSidebar])
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [toggleSidebar]);
 
     // We add a state so that we can do data-state="expanded" or "collapsed".
     // This makes it easier to style the sidebar with Tailwind classes.
-    const state = open ? "expanded" : "collapsed"
+    const state = open ? "expanded" : "collapsed";
 
     const contextValue = React.useMemo<SidebarContext>(
       () => ({
@@ -138,12 +166,12 @@ const SidebarProvider = React.forwardRef<
         toggleSidebar,
       }),
       [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
-    )
+    );
 
     const hoverContextValue = React.useMemo<SidebarMenuHoverContextValue>(
       () => ({ hoveringMenuId, setHoveringMenuId }),
       [hoveringMenuId]
-    )
+    );
 
     return (
       <SidebarContext.Provider value={contextValue}>
@@ -169,17 +197,17 @@ const SidebarProvider = React.forwardRef<
           </TooltipProvider>
         </SidebarMenuHoverContext.Provider>
       </SidebarContext.Provider>
-    )
+    );
   }
-)
-SidebarProvider.displayName = "SidebarProvider"
+);
+SidebarProvider.displayName = "SidebarProvider";
 
 const Sidebar = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
-    side?: "left" | "right"
-    variant?: "sidebar" | "floating" | "inset"
-    collapsible?: "offcanvas" | "icon" | "none"
+    side?: "left" | "right";
+    variant?: "sidebar" | "floating" | "inset";
+    collapsible?: "offcanvas" | "icon" | "none";
   }
 >(
   (
@@ -193,7 +221,7 @@ const Sidebar = React.forwardRef<
     },
     ref
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+    const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
     if (collapsible === "none") {
       return (
@@ -207,7 +235,7 @@ const Sidebar = React.forwardRef<
         >
           {children}
         </div>
-      )
+      );
     }
 
     if (isMobile) {
@@ -227,7 +255,7 @@ const Sidebar = React.forwardRef<
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
         </Sheet>
-      )
+      );
     }
 
     return (
@@ -266,23 +294,23 @@ const Sidebar = React.forwardRef<
         >
           <div
             data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-white dark:bg-white group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+            className="flex h-full w-full flex-col bg-white dark:bg-white transition-colors duration-300 group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow group-data-[collapsible=icon]:bg-[hsl(var(--accent-900))] group-data-[collapsible=icon]:text-[hsl(var(--accent-200))] dark:group-data-[collapsible=icon]:bg-[hsl(var(--accent-200))] dark:group-data-[collapsible=icon]:text-[hsl(var(--accent-900))]"
           >
             {children}
           </div>
         </div>
       </div>
-    )
+    );
   }
-)
-Sidebar.displayName = "Sidebar"
+);
+Sidebar.displayName = "Sidebar";
 
 const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
-  const { t } = useTranslation("common")
+  const { toggleSidebar } = useSidebar();
+  const { t } = useTranslation("common");
 
   return (
     <Button
@@ -290,26 +318,31 @@ const SidebarTrigger = React.forwardRef<
       data-sidebar="trigger"
       variant="ghost"
       size="icon"
-      className={cn("h-7 w-7", className)}
+      className={cn(
+        "h-7 w-7 text-sidebar-foreground/80 transition-colors",
+        "group-data-[collapsible=icon]:text-[hsl(var(--accent-200))] group-data-[collapsible=icon]:hover:bg-[hsl(var(--accent-700)_/_0.7)] group-data-[collapsible=icon]:hover:text-[hsl(var(--accent-50))] group-data-[collapsible=icon]:focus-visible:bg-[hsl(var(--accent-700)_/_0.8)] group-data-[collapsible=icon]:focus-visible:text-[hsl(var(--accent-50))]",
+        "dark:group-data-[collapsible=icon]:text-[hsl(var(--accent-800))] dark:group-data-[collapsible=icon]:hover:bg-[hsl(var(--accent-300)_/_0.55)] dark:group-data-[collapsible=icon]:hover:text-[hsl(var(--accent-900))] dark:group-data-[collapsible=icon]:focus-visible:bg-[hsl(var(--accent-300)_/_0.65)] dark:group-data-[collapsible=icon]:focus-visible:text-[hsl(var(--accent-900))]",
+        className
+      )}
       onClick={(event) => {
-        onClick?.(event)
-        toggleSidebar()
+        onClick?.(event);
+        toggleSidebar();
       }}
       {...props}
     >
       <PanelLeft />
       <span className="sr-only">{t("sidebar.toggle")}</span>
     </Button>
-  )
-})
-SidebarTrigger.displayName = "SidebarTrigger"
+  );
+});
+SidebarTrigger.displayName = "SidebarTrigger";
 
 const SidebarRail = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button">
 >(({ className, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
-  const { t } = useTranslation("common")
+  const { toggleSidebar } = useSidebar();
+  const { t } = useTranslation("common");
 
   return (
     <button
@@ -330,9 +363,9 @@ const SidebarRail = React.forwardRef<
       )}
       {...props}
     />
-  )
-})
-SidebarRail.displayName = "SidebarRail"
+  );
+});
+SidebarRail.displayName = "SidebarRail";
 
 const SidebarInset = React.forwardRef<
   HTMLDivElement,
@@ -348,9 +381,9 @@ const SidebarInset = React.forwardRef<
       )}
       {...props}
     />
-  )
-})
-SidebarInset.displayName = "SidebarInset"
+  );
+});
+SidebarInset.displayName = "SidebarInset";
 
 const SidebarInput = React.forwardRef<
   React.ElementRef<typeof Input>,
@@ -366,9 +399,9 @@ const SidebarInput = React.forwardRef<
       )}
       {...props}
     />
-  )
-})
-SidebarInput.displayName = "SidebarInput"
+  );
+});
+SidebarInput.displayName = "SidebarInput";
 
 const SidebarHeader = React.forwardRef<
   HTMLDivElement,
@@ -381,9 +414,9 @@ const SidebarHeader = React.forwardRef<
       className={cn("flex flex-col gap-2 p-2", className)}
       {...props}
     />
-  )
-})
-SidebarHeader.displayName = "SidebarHeader"
+  );
+});
+SidebarHeader.displayName = "SidebarHeader";
 
 const SidebarFooter = React.forwardRef<
   HTMLDivElement,
@@ -396,9 +429,9 @@ const SidebarFooter = React.forwardRef<
       className={cn("flex flex-col gap-2 p-2", className)}
       {...props}
     />
-  )
-})
-SidebarFooter.displayName = "SidebarFooter"
+  );
+});
+SidebarFooter.displayName = "SidebarFooter";
 
 const SidebarSeparator = React.forwardRef<
   React.ElementRef<typeof Separator>,
@@ -411,9 +444,9 @@ const SidebarSeparator = React.forwardRef<
       className={cn("mx-2 w-auto bg-sidebar-border", className)}
       {...props}
     />
-  )
-})
-SidebarSeparator.displayName = "SidebarSeparator"
+  );
+});
+SidebarSeparator.displayName = "SidebarSeparator";
 
 const SidebarContent = React.forwardRef<
   HTMLDivElement,
@@ -429,9 +462,9 @@ const SidebarContent = React.forwardRef<
       )}
       {...props}
     />
-  )
-})
-SidebarContent.displayName = "SidebarContent"
+  );
+});
+SidebarContent.displayName = "SidebarContent";
 
 const SidebarGroup = React.forwardRef<
   HTMLDivElement,
@@ -444,15 +477,15 @@ const SidebarGroup = React.forwardRef<
       className={cn("relative flex w-full min-w-0 flex-col p-2", className)}
       {...props}
     />
-  )
-})
-SidebarGroup.displayName = "SidebarGroup"
+  );
+});
+SidebarGroup.displayName = "SidebarGroup";
 
 const SidebarGroupLabel = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & { asChild?: boolean }
 >(({ className, asChild = false, ...props }, ref) => {
-  const Comp = asChild ? Slot : "div"
+  const Comp = asChild ? Slot : "div";
 
   return (
     <Comp
@@ -465,15 +498,15 @@ const SidebarGroupLabel = React.forwardRef<
       )}
       {...props}
     />
-  )
-})
-SidebarGroupLabel.displayName = "SidebarGroupLabel"
+  );
+});
+SidebarGroupLabel.displayName = "SidebarGroupLabel";
 
 const SidebarGroupAction = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button"> & { asChild?: boolean }
 >(({ className, asChild = false, ...props }, ref) => {
-  const Comp = asChild ? Slot : "button"
+  const Comp = asChild ? Slot : "button";
 
   return (
     <Comp
@@ -488,9 +521,9 @@ const SidebarGroupAction = React.forwardRef<
       )}
       {...props}
     />
-  )
-})
-SidebarGroupAction.displayName = "SidebarGroupAction"
+  );
+});
+SidebarGroupAction.displayName = "SidebarGroupAction";
 
 const SidebarGroupContent = React.forwardRef<
   HTMLDivElement,
@@ -502,40 +535,40 @@ const SidebarGroupContent = React.forwardRef<
     className={cn("w-full text-sm", className)}
     {...props}
   />
-))
-SidebarGroupContent.displayName = "SidebarGroupContent"
+));
+SidebarGroupContent.displayName = "SidebarGroupContent";
 
-type SidebarMenuHighlightMode = "active" | "hover"
+type SidebarMenuHighlightMode = "active" | "hover";
 
 interface SidebarMenuHighlightContextValue {
-  setActive: (node: HTMLElement | null) => void
-  unsetActive: (node: HTMLElement | null) => void
-  setHover: (node: HTMLElement | null) => void
-  clearHover: (node: HTMLElement | null) => void
-  unregister: (node: HTMLElement | null) => void
+  setActive: (node: HTMLElement | null) => void;
+  unsetActive: (node: HTMLElement | null) => void;
+  setHover: (node: HTMLElement | null) => void;
+  clearHover: (node: HTMLElement | null) => void;
+  unregister: (node: HTMLElement | null) => void;
 }
 
 const SidebarMenuHighlightContext =
-  React.createContext<SidebarMenuHighlightContextValue | null>(null)
+  React.createContext<SidebarMenuHighlightContextValue | null>(null);
 
 const SidebarMenu = React.forwardRef<
   HTMLUListElement,
   React.ComponentProps<"ul">
 >(({ className, children, ...props }, ref) => {
-  const menuRef = React.useRef<HTMLUListElement | null>(null)
-  const activeNodeRef = React.useRef<HTMLElement | null>(null)
-  const hoverNodeRef = React.useRef<HTMLElement | null>(null)
-  const rafRef = React.useRef<number | null>(null)
-  const hoverContext = React.useContext(SidebarMenuHoverContext)
-  const menuId = React.useId()
+  const menuRef = React.useRef<HTMLUListElement | null>(null);
+  const activeNodeRef = React.useRef<HTMLElement | null>(null);
+  const hoverNodeRef = React.useRef<HTMLElement | null>(null);
+  const rafRef = React.useRef<number | null>(null);
+  const hoverContext = React.useContext(SidebarMenuHoverContext);
+  const menuId = React.useId();
   const [indicator, setIndicator] = React.useState<{
-    x: number
-    y: number
-    width: number
-    height: number
-    borderRadius: string
-    opacity: number
-    mode: SidebarMenuHighlightMode
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    borderRadius: string;
+    opacity: number;
+    mode: SidebarMenuHighlightMode;
   }>({
     x: 0,
     y: 0,
@@ -544,15 +577,15 @@ const SidebarMenu = React.forwardRef<
     borderRadius: "0px",
     opacity: 0,
     mode: "active",
-  })
+  });
 
   const applyIndicator = React.useCallback(
     (node: HTMLElement, mode: SidebarMenuHighlightMode) => {
-      if (!menuRef.current) return
+      if (!menuRef.current) return;
 
-      const menuRect = menuRef.current.getBoundingClientRect()
-      const nodeRect = node.getBoundingClientRect()
-      const styles = window.getComputedStyle(node)
+      const menuRect = menuRef.current.getBoundingClientRect();
+      const nodeRect = node.getBoundingClientRect();
+      const styles = window.getComputedStyle(node);
 
       setIndicator({
         x: nodeRect.left - menuRect.left + menuRef.current.scrollLeft,
@@ -562,196 +595,196 @@ const SidebarMenu = React.forwardRef<
         borderRadius: styles.borderRadius,
         opacity: mode === "hover" ? 0.92 : 1,
         mode,
-      })
+      });
     },
     []
-  )
+  );
 
   const scheduleIndicator = React.useCallback(
     (node: HTMLElement, mode: SidebarMenuHighlightMode) => {
-      if (!menuRef.current) return
+      if (!menuRef.current) return;
       if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current)
+        cancelAnimationFrame(rafRef.current);
       }
       rafRef.current = window.requestAnimationFrame(() => {
-        applyIndicator(node, mode)
-      })
+        applyIndicator(node, mode);
+      });
     },
     [applyIndicator]
-  )
+  );
 
   const resetIndicator = React.useCallback(() => {
     if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = null
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
     }
     setIndicator((prev) => ({
       ...prev,
       opacity: 0,
-    }))
-  }, [])
+    }));
+  }, []);
 
   const setActive = React.useCallback(
     (node: HTMLElement | null) => {
-      activeNodeRef.current = node
+      activeNodeRef.current = node;
       if (!node) {
         if (!hoverNodeRef.current) {
-          resetIndicator()
+          resetIndicator();
         }
-        return
+        return;
       }
       if (hoverNodeRef.current && hoverNodeRef.current !== node) {
-        return
+        return;
       }
       if (
         hoverContext?.hoveringMenuId &&
         hoverContext.hoveringMenuId !== menuId
       ) {
-        return
+        return;
       }
-      scheduleIndicator(node, "active")
+      scheduleIndicator(node, "active");
     },
     [hoverContext?.hoveringMenuId, menuId, resetIndicator, scheduleIndicator]
-  )
+  );
 
   const unsetActive = React.useCallback(
     (node: HTMLElement | null) => {
-      if (!node) return
-      if (activeNodeRef.current !== node) return
-      activeNodeRef.current = null
+      if (!node) return;
+      if (activeNodeRef.current !== node) return;
+      activeNodeRef.current = null;
       if (hoverNodeRef.current) {
         scheduleIndicator(
           hoverNodeRef.current,
           hoverNodeRef.current === node ? "active" : "hover"
-        )
+        );
       } else {
-        resetIndicator()
+        resetIndicator();
       }
     },
     [resetIndicator, scheduleIndicator]
-  )
+  );
 
   const setHover = React.useCallback(
     (node: HTMLElement | null) => {
-      hoverNodeRef.current = node
+      hoverNodeRef.current = node;
       if (!node) {
         if (activeNodeRef.current) {
-          scheduleIndicator(activeNodeRef.current, "active")
+          scheduleIndicator(activeNodeRef.current, "active");
         } else {
-          resetIndicator()
+          resetIndicator();
         }
         if (hoverContext?.hoveringMenuId === menuId) {
-          hoverContext.setHoveringMenuId(null)
+          hoverContext.setHoveringMenuId(null);
         }
-        return
+        return;
       }
-      hoverContext?.setHoveringMenuId(menuId)
+      hoverContext?.setHoveringMenuId(menuId);
       const mode =
         activeNodeRef.current && activeNodeRef.current === node
           ? "active"
-          : "hover"
-      scheduleIndicator(node, mode)
+          : "hover";
+      scheduleIndicator(node, mode);
     },
     [hoverContext, menuId, resetIndicator, scheduleIndicator]
-  )
+  );
 
   const clearHover = React.useCallback(
     (node: HTMLElement | null) => {
-      if (!node) return
-      if (hoverNodeRef.current !== node) return
-      hoverNodeRef.current = null
+      if (!node) return;
+      if (hoverNodeRef.current !== node) return;
+      hoverNodeRef.current = null;
       if (hoverContext?.hoveringMenuId === menuId) {
-        hoverContext.setHoveringMenuId(null)
+        hoverContext.setHoveringMenuId(null);
       }
       if (activeNodeRef.current) {
-        scheduleIndicator(activeNodeRef.current, "active")
+        scheduleIndicator(activeNodeRef.current, "active");
       } else {
-        resetIndicator()
+        resetIndicator();
       }
     },
     [hoverContext, menuId, resetIndicator, scheduleIndicator]
-  )
+  );
 
   const unregister = React.useCallback(
     (node: HTMLElement | null) => {
-      if (!node) return
+      if (!node) return;
       if (hoverNodeRef.current === node) {
-        hoverNodeRef.current = null
+        hoverNodeRef.current = null;
       }
       if (activeNodeRef.current === node) {
-        activeNodeRef.current = null
+        activeNodeRef.current = null;
         if (hoverNodeRef.current) {
           scheduleIndicator(
             hoverNodeRef.current,
             hoverNodeRef.current === node ? "active" : "hover"
-          )
+          );
         } else {
-          resetIndicator()
+          resetIndicator();
         }
       }
       if (hoverContext?.hoveringMenuId === menuId) {
-        hoverContext.setHoveringMenuId(null)
+        hoverContext.setHoveringMenuId(null);
       }
     },
     [hoverContext, menuId, resetIndicator, scheduleIndicator]
-  )
+  );
 
   React.useEffect(() => {
     return () => {
       if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current)
+        cancelAnimationFrame(rafRef.current);
       }
-    }
-  }, [])
+    };
+  }, []);
 
   React.useLayoutEffect(() => {
-    if (typeof window === "undefined") return
+    if (typeof window === "undefined") return;
 
     const handleResize = () => {
-      const target = hoverNodeRef.current ?? activeNodeRef.current
+      const target = hoverNodeRef.current ?? activeNodeRef.current;
       if (target && menuRef.current) {
         scheduleIndicator(
           target,
           target === activeNodeRef.current ? "active" : "hover"
-        )
+        );
       }
-    }
+    };
 
-    window.addEventListener("resize", handleResize)
+    window.addEventListener("resize", handleResize);
     return () => {
-      window.removeEventListener("resize", handleResize)
-    }
-  }, [scheduleIndicator])
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [scheduleIndicator]);
 
   React.useLayoutEffect(() => {
-    const menu = menuRef.current
-    if (!menu || typeof ResizeObserver === "undefined") return
+    const menu = menuRef.current;
+    if (!menu || typeof ResizeObserver === "undefined") return;
 
     const observer = new ResizeObserver(() => {
-      const target = hoverNodeRef.current ?? activeNodeRef.current
+      const target = hoverNodeRef.current ?? activeNodeRef.current;
       if (target) {
         scheduleIndicator(
           target,
           target === activeNodeRef.current ? "active" : "hover"
-        )
+        );
       }
-    })
+    });
 
-    observer.observe(menu)
+    observer.observe(menu);
     return () => {
-      observer.disconnect()
-    }
-  }, [scheduleIndicator])
+      observer.disconnect();
+    };
+  }, [scheduleIndicator]);
 
   React.useEffect(() => {
-    if (!hoverContext) return
+    if (!hoverContext) return;
     if (
       hoverContext.hoveringMenuId &&
       hoverContext.hoveringMenuId !== menuId &&
       !hoverNodeRef.current
     ) {
-      resetIndicator()
-      return
+      resetIndicator();
+      return;
     }
     if (
       (!hoverContext.hoveringMenuId ||
@@ -759,21 +792,21 @@ const SidebarMenu = React.forwardRef<
       !hoverNodeRef.current &&
       activeNodeRef.current
     ) {
-      scheduleIndicator(activeNodeRef.current, "active")
+      scheduleIndicator(activeNodeRef.current, "active");
     }
-  }, [hoverContext, menuId, resetIndicator, scheduleIndicator])
+  }, [hoverContext, menuId, resetIndicator, scheduleIndicator]);
 
   const setMenuRef = React.useCallback(
     (node: HTMLUListElement | null) => {
-      menuRef.current = node
+      menuRef.current = node;
       if (typeof ref === "function") {
-        ref(node)
+        ref(node);
       } else if (ref) {
-        ;(ref as React.MutableRefObject<HTMLUListElement | null>).current = node
+        (ref as React.MutableRefObject<HTMLUListElement | null>).current = node;
       }
     },
     [ref]
-  )
+  );
 
   const contextValue = React.useMemo<SidebarMenuHighlightContextValue>(
     () => ({
@@ -784,52 +817,43 @@ const SidebarMenu = React.forwardRef<
       unregister,
     }),
     [clearHover, setActive, setHover, unregister, unsetActive]
-  )
+  );
 
   const handleMenuPointerLeave = React.useCallback(() => {
     if (hoverNodeRef.current) {
-      setHover(null)
-      return
+      setHover(null);
+      return;
     }
 
     if (!hoverContext) {
-      return
+      return;
     }
 
     if (hoverContext.hoveringMenuId !== menuId) {
-      return
+      return;
     }
 
-    hoverContext.setHoveringMenuId(null)
+    hoverContext.setHoveringMenuId(null);
     if (activeNodeRef.current) {
-      scheduleIndicator(activeNodeRef.current, "active")
+      scheduleIndicator(activeNodeRef.current, "active");
     } else {
-      resetIndicator()
+      resetIndicator();
     }
-  }, [
-    hoverContext,
-    menuId,
-    resetIndicator,
-    scheduleIndicator,
-    setHover,
-  ])
+  }, [hoverContext, menuId, resetIndicator, scheduleIndicator, setHover]);
 
   return (
     <SidebarMenuHighlightContext.Provider value={contextValue}>
       <ul
         ref={setMenuRef}
         data-sidebar="menu"
-        className={cn(
-          "relative flex w-full min-w-0 flex-col gap-1",
-          className
-        )}
+        className={cn("relative flex w-full min-w-0 flex-col gap-1", className)}
         onPointerLeave={handleMenuPointerLeave}
         {...props}
       >
         <li
           aria-hidden="true"
           data-sidebar="menu-highlight"
-          className="pointer-events-none absolute left-0 top-0 z-0 list-none border border-[hsl(var(--accent-200))] bg-[linear-gradient(135deg,_hsl(var(--accent-100)),_hsl(var(--accent-300)))] shadow-[0_20px_36px_-26px_hsl(var(--accent-400)_/_0.85)] transition-[opacity,transform,width,height] duration-300 ease-out will-change-transform data-[mode=hover]:border-[hsl(var(--accent-300))] data-[mode=hover]:shadow-[0_24px_40px_-24px_hsl(var(--accent-400)_/_0.92)] data-[mode=active]:border-[hsl(var(--accent-300))] data-[mode=active]:shadow-[0_24px_40px_-24px_hsl(var(--accent-400)_/_0.92)]"
+          className="pointer-events-none absolute left-0 top-0 z-0 list-none border border-[hsl(var(--accent-200))] bg-[linear-gradient(135deg,_hsl(var(--accent-100)),_hsl(var(--accent-300)))] shadow-[0_20px_36px_-26px_hsl(var(--accent-400)_/_0.85)] transition-colors transition-[opacity,transform,width,height] duration-300 ease-out will-change-transform group-data-[collapsible=icon]:hidden data-[mode=hover]:border-[hsl(var(--accent-300))] data-[mode=hover]:shadow-[0_24px_40px_-24px_hsl(var(--accent-400)_/_0.92)] data-[mode=active]:border-[hsl(var(--accent-300))] data-[mode=active]:shadow-[0_24px_40px_-24px_hsl(var(--accent-400)_/_0.92)]"
           data-mode={indicator.mode}
           style={{
             transform: `translate3d(${indicator.x}px, ${indicator.y}px, 0)`,
@@ -842,9 +866,9 @@ const SidebarMenu = React.forwardRef<
         {children}
       </ul>
     </SidebarMenuHighlightContext.Provider>
-  )
-})
-SidebarMenu.displayName = "SidebarMenu"
+  );
+});
+SidebarMenu.displayName = "SidebarMenu";
 
 const SidebarMenuItem = React.forwardRef<
   HTMLLIElement,
@@ -856,11 +880,16 @@ const SidebarMenuItem = React.forwardRef<
     className={cn("group/menu-item relative z-10", className)}
     {...props}
   />
-))
-SidebarMenuItem.displayName = "SidebarMenuItem"
+));
+SidebarMenuItem.displayName = "SidebarMenuItem";
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button relative z-[1] isolate flex w-full items-center gap-2 overflow-hidden rounded-xl px-3 py-2 text-left text-sm font-medium text-sidebar-foreground/85 outline-none ring-sidebar-ring transition-all duration-300 ease-out hover:translate-x-[4px] hover:text-sidebar-accent-foreground focus-visible:translate-x-[4px] focus-visible:ring-2 focus-visible:ring-offset-0 focus-visible:ring-[hsl(var(--accent-300))] active:translate-x-[2px] disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-9 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-semibold data-[active=true]:text-[hsl(var(--accent-900))] data-[state=open]:text-[hsl(var(--accent-900))] group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:transition-colors",
+  [
+    "peer/menu-button relative z-[1] isolate flex w-full items-center gap-2 overflow-hidden rounded-xl px-3 py-2 text-left text-sm font-medium text-sidebar-foreground/85 outline-none ring-sidebar-ring transition-all duration-300 ease-out hover:translate-x-[4px] hover:text-sidebar-accent-foreground focus-visible:translate-x-[4px] focus-visible:ring-2 focus-visible:ring-offset-0 focus-visible:ring-[hsl(var(--accent-300))] active:translate-x-[2px] disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-9 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-semibold data-[active=true]:text-[hsl(var(--accent-900))] data-[state=open]:text-[hsl(var(--accent-900))] [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:transition-colors",
+    "group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:!size-12 group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:hover:translate-x-0 group-data-[collapsible=icon]:focus-visible:translate-x-0 group-data-[collapsible=icon]:active:translate-x-0",
+    "group-data-[collapsible=icon]:text-[hsl(var(--accent-200))] group-data-[collapsible=icon]:hover:bg-[hsl(var(--accent-700)_/_0.75)] group-data-[collapsible=icon]:hover:text-[hsl(var(--accent-50))] group-data-[collapsible=icon]:focus-visible:bg-[hsl(var(--accent-700)_/_0.82)] group-data-[collapsible=icon]:focus-visible:text-[hsl(var(--accent-50))] group-data-[collapsible=icon]:active:bg-[hsl(var(--accent-600)_/_0.85)] group-data-[collapsible=icon]:active:text-[hsl(var(--accent-50))] group-data-[collapsible=icon]:data-[active=true]:bg-[hsl(var(--accent-600)_/_0.88)] group-data-[collapsible=icon]:data-[active=true]:text-white group-data-[collapsible=icon]:data-[state=open]:bg-[hsl(var(--accent-600)_/_0.88)] group-data-[collapsible=icon]:data-[state=open]:text-white",
+    "dark:group-data-[collapsible=icon]:text-[hsl(var(--accent-800))] dark:group-data-[collapsible=icon]:hover:bg-[hsl(var(--accent-300)_/_0.55)] dark:group-data-[collapsible=icon]:hover:text-[hsl(var(--accent-900))] dark:group-data-[collapsible=icon]:focus-visible:bg-[hsl(var(--accent-300)_/_0.65)] dark:group-data-[collapsible=icon]:focus-visible:text-[hsl(var(--accent-900))] dark:group-data-[collapsible=icon]:active:bg-[hsl(var(--accent-200)_/_0.65)] dark:group-data-[collapsible=icon]:active:text-[hsl(var(--accent-900))] dark:group-data-[collapsible=icon]:data-[active=true]:bg-[hsl(var(--accent-200)_/_0.75)] dark:group-data-[collapsible=icon]:data-[active=true]:text-[hsl(var(--accent-900))] dark:group-data-[collapsible=icon]:data-[state=open]:bg-[hsl(var(--accent-200)_/_0.75)] dark:group-data-[collapsible=icon]:data-[state=open]:text-[hsl(var(--accent-900))]",
+  ].join(" "),
   {
     variants: {
       variant: {
@@ -879,14 +908,14 @@ const sidebarMenuButtonVariants = cva(
       size: "default",
     },
   }
-)
+);
 
 const SidebarMenuButton = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button"> & {
-    asChild?: boolean
-    isActive?: boolean
-    tooltip?: string | React.ComponentProps<typeof TooltipContent>
+    asChild?: boolean;
+    isActive?: boolean;
+    tooltip?: string | React.ComponentProps<typeof TooltipContent>;
   } & VariantProps<typeof sidebarMenuButtonVariants>
 >(
   (
@@ -905,94 +934,95 @@ const SidebarMenuButton = React.forwardRef<
     },
     ref
   ) => {
-    const Comp = asChild ? Slot : "button"
-    const { isMobile, state } = useSidebar()
-    const highlight = React.useContext(SidebarMenuHighlightContext)
-    const localRef =
-      React.useRef<HTMLButtonElement | HTMLAnchorElement | null>(null)
-    const lastAssignedRef = React.useRef<HTMLElement | null>(null)
+    const Comp = asChild ? Slot : "button";
+    const { isMobile, state } = useSidebar();
+    const highlight = React.useContext(SidebarMenuHighlightContext);
+    const localRef = React.useRef<HTMLButtonElement | HTMLAnchorElement | null>(
+      null
+    );
+    const lastAssignedRef = React.useRef<HTMLElement | null>(null);
 
     const setRefs = React.useCallback(
       (node: HTMLElement | null) => {
-        localRef.current = node as HTMLButtonElement | HTMLAnchorElement | null
+        localRef.current = node as HTMLButtonElement | HTMLAnchorElement | null;
         if (node) {
-          lastAssignedRef.current = node
+          lastAssignedRef.current = node;
         }
 
         if (typeof ref === "function") {
-          ref(node as HTMLButtonElement | null)
+          ref(node as HTMLButtonElement | null);
         } else if (ref) {
-          ;(ref as React.MutableRefObject<HTMLButtonElement | null>).current =
-            node as HTMLButtonElement | null
+          (ref as React.MutableRefObject<HTMLButtonElement | null>).current =
+            node as HTMLButtonElement | null;
         }
       },
       [ref]
-    )
+    );
 
     React.useLayoutEffect(() => {
-      if (!highlight) return
-      const node = localRef.current as unknown as HTMLElement | null
-      if (!node) return
+      if (!highlight) return;
+      const node = localRef.current as unknown as HTMLElement | null;
+      if (!node) return;
 
       if (isActive) {
-        highlight.setActive(node)
+        highlight.setActive(node);
         return () => {
-          highlight.unsetActive(node)
-        }
+          highlight.unsetActive(node);
+        };
       }
 
-      highlight.unsetActive(node)
-    }, [highlight, isActive])
+      highlight.unsetActive(node);
+    }, [highlight, isActive]);
 
     React.useEffect(() => {
-      if (!highlight) return
-      const node = lastAssignedRef.current
-      if (!node) return
+      if (!highlight) return;
+      const node = lastAssignedRef.current;
+      if (!node) return;
 
       return () => {
-        highlight.unregister(node)
-      }
-    }, [highlight])
+        highlight.unregister(node);
+      };
+    }, [highlight]);
 
     const handleMouseEnter = React.useCallback(
       (event: React.MouseEvent<HTMLElement>) => {
-        onMouseEnter?.(event as React.MouseEvent<HTMLButtonElement>)
+        onMouseEnter?.(event as React.MouseEvent<HTMLButtonElement>);
         if (highlight && localRef.current) {
-          highlight.setHover(localRef.current as unknown as HTMLElement)
+          highlight.setHover(localRef.current as unknown as HTMLElement);
         }
       },
       [highlight, onMouseEnter]
-    )
+    );
 
     const handleMouseLeave = React.useCallback(
       (event: React.MouseEvent<HTMLElement>) => {
-        onMouseLeave?.(event as React.MouseEvent<HTMLButtonElement>)
+        onMouseLeave?.(event as React.MouseEvent<HTMLButtonElement>);
         if (highlight && localRef.current) {
-          highlight.clearHover(localRef.current as unknown as HTMLElement)
+          highlight.clearHover(localRef.current as unknown as HTMLElement);
         }
       },
       [highlight, onMouseLeave]
-    )
+    );
 
     const handleFocus = React.useCallback(
       (event: React.FocusEvent<HTMLElement>) => {
-        onFocus?.(event as React.FocusEvent<HTMLButtonElement>)
+        onFocus?.(event as React.FocusEvent<HTMLButtonElement>);
         if (highlight && localRef.current) {
-          highlight.setHover(localRef.current as unknown as HTMLElement)
+          highlight.setHover(localRef.current as unknown as HTMLElement);
         }
       },
       [highlight, onFocus]
-    )
+    );
 
     const handleBlur = React.useCallback(
       (event: React.FocusEvent<HTMLElement>) => {
-        onBlur?.(event as React.FocusEvent<HTMLButtonElement>)
+        onBlur?.(event as React.FocusEvent<HTMLButtonElement>);
         if (highlight && localRef.current) {
-          highlight.clearHover(localRef.current as unknown as HTMLElement)
+          highlight.clearHover(localRef.current as unknown as HTMLElement);
         }
       },
       [highlight, onBlur]
-    )
+    );
 
     const button = (
       <Comp
@@ -1007,16 +1037,16 @@ const SidebarMenuButton = React.forwardRef<
         className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
         {...props}
       />
-    )
+    );
 
     if (!tooltip) {
-      return button
+      return button;
     }
 
     if (typeof tooltip === "string") {
       tooltip = {
         children: tooltip,
-      }
+      };
     }
 
     return (
@@ -1029,19 +1059,19 @@ const SidebarMenuButton = React.forwardRef<
           {...tooltip}
         />
       </Tooltip>
-    )
+    );
   }
-)
-SidebarMenuButton.displayName = "SidebarMenuButton"
+);
+SidebarMenuButton.displayName = "SidebarMenuButton";
 
 const SidebarMenuAction = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button"> & {
-    asChild?: boolean
-    showOnHover?: boolean
+    asChild?: boolean;
+    showOnHover?: boolean;
   }
 >(({ className, asChild = false, showOnHover = false, ...props }, ref) => {
-  const Comp = asChild ? Slot : "button"
+  const Comp = asChild ? Slot : "button";
 
   return (
     <Comp
@@ -1061,9 +1091,9 @@ const SidebarMenuAction = React.forwardRef<
       )}
       {...props}
     />
-  )
-})
-SidebarMenuAction.displayName = "SidebarMenuAction"
+  );
+});
+SidebarMenuAction.displayName = "SidebarMenuAction";
 
 const SidebarMenuBadge = React.forwardRef<
   HTMLDivElement,
@@ -1083,19 +1113,19 @@ const SidebarMenuBadge = React.forwardRef<
     )}
     {...props}
   />
-))
-SidebarMenuBadge.displayName = "SidebarMenuBadge"
+));
+SidebarMenuBadge.displayName = "SidebarMenuBadge";
 
 const SidebarMenuSkeleton = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
-    showIcon?: boolean
+    showIcon?: boolean;
   }
 >(({ className, showIcon = false, ...props }, ref) => {
   // Random width between 50 to 90%.
   const width = React.useMemo(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`
-  }, [])
+    return `${Math.floor(Math.random() * 40) + 50}%`;
+  }, []);
 
   return (
     <div
@@ -1120,9 +1150,9 @@ const SidebarMenuSkeleton = React.forwardRef<
         }
       />
     </div>
-  )
-})
-SidebarMenuSkeleton.displayName = "SidebarMenuSkeleton"
+  );
+});
+SidebarMenuSkeleton.displayName = "SidebarMenuSkeleton";
 
 const SidebarMenuSub = React.forwardRef<
   HTMLUListElement,
@@ -1138,24 +1168,24 @@ const SidebarMenuSub = React.forwardRef<
     )}
     {...props}
   />
-))
-SidebarMenuSub.displayName = "SidebarMenuSub"
+));
+SidebarMenuSub.displayName = "SidebarMenuSub";
 
 const SidebarMenuSubItem = React.forwardRef<
   HTMLLIElement,
   React.ComponentProps<"li">
->(({ ...props }, ref) => <li ref={ref} {...props} />)
-SidebarMenuSubItem.displayName = "SidebarMenuSubItem"
+>(({ ...props }, ref) => <li ref={ref} {...props} />);
+SidebarMenuSubItem.displayName = "SidebarMenuSubItem";
 
 const SidebarMenuSubButton = React.forwardRef<
   HTMLAnchorElement,
   React.ComponentProps<"a"> & {
-    asChild?: boolean
-    size?: "sm" | "md"
-    isActive?: boolean
+    asChild?: boolean;
+    size?: "sm" | "md";
+    isActive?: boolean;
   }
 >(({ asChild = false, size = "md", isActive, className, ...props }, ref) => {
-  const Comp = asChild ? Slot : "a"
+  const Comp = asChild ? Slot : "a";
 
   return (
     <Comp
@@ -1173,9 +1203,12 @@ const SidebarMenuSubButton = React.forwardRef<
       )}
       {...props}
     />
-  )
-})
-SidebarMenuSubButton.displayName = "SidebarMenuSubButton"
+  );
+});
+SidebarMenuSubButton.displayName = "SidebarMenuSubButton";
+
+// eslint-disable-next-line react-refresh/only-export-components
+export { useSidebar };
 
 export {
   Sidebar,
@@ -1201,4 +1234,4 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-}
+};

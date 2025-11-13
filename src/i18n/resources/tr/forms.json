@@ -1620,11 +1620,24 @@
     "custom_categories_label": "Özel kategoriler",
     "new_category_placeholder": "Yeni kategori adı girin",
     "categories": {
-      "albums": "Albümler",
-      "prints": "Baskılar",
-      "digital": "Dijital",
-      "retouching": "Rötuş",
-      "frames": "Çerçeveler"
+      "deliverable": {
+        "albums": "Albümler",
+        "prints": "Baskılar",
+        "digital": "Dijital",
+        "retouching": "Rötuş",
+        "frames": "Çerçeveler",
+        "extras": "Ekstralar",
+        "packages": "Paketler"
+      },
+      "coverage": {
+        "lead_photographer": "Baş Fotoğrafçı",
+        "second_photographer": "İkinci Fotoğrafçı",
+        "assistant_photographer": "Asistan Fotoğrafçı",
+        "videographer": "Videograf",
+        "drone_operator": "Drone Operatörü",
+        "production_crew": "Prodüksiyon Ekibi",
+        "hair_makeup": "Saç & Makyaj"
+      }
     },
     "new_category": "Yeni kategori oluştur: ",
     "errors": {

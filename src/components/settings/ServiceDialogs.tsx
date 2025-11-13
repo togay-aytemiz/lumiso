@@ -34,9 +34,35 @@ interface ServiceFormState {
   is_active: boolean;
 }
 
+type DefaultCategoryDefinition = {
+  value: string;
+  translationKey: string;
+};
+
+const DEFAULT_CATEGORY_DEFINITIONS: Record<ServiceType, DefaultCategoryDefinition[]> = {
+  coverage: [
+    { value: "Lead Photographer", translationKey: "service.categories.coverage.lead_photographer" },
+    { value: "Second Photographer", translationKey: "service.categories.coverage.second_photographer" },
+    { value: "Assistant Photographer", translationKey: "service.categories.coverage.assistant_photographer" },
+    { value: "Videographer", translationKey: "service.categories.coverage.videographer" },
+    { value: "Drone Operator", translationKey: "service.categories.coverage.drone_operator" },
+    { value: "Production Crew", translationKey: "service.categories.coverage.production_crew" },
+    { value: "Hair & Makeup", translationKey: "service.categories.coverage.hair_makeup" },
+  ],
+  deliverable: [
+    { value: "Albums", translationKey: "service.categories.deliverable.albums" },
+    { value: "Prints", translationKey: "service.categories.deliverable.prints" },
+    { value: "Digital", translationKey: "service.categories.deliverable.digital" },
+    { value: "Retouching", translationKey: "service.categories.deliverable.retouching" },
+    { value: "Frames", translationKey: "service.categories.deliverable.frames" },
+    { value: "Extras", translationKey: "service.categories.deliverable.extras" },
+    { value: "Packages", translationKey: "service.categories.deliverable.packages" },
+  ],
+};
+
 const DEFAULT_CATEGORIES: Record<ServiceType, string[]> = {
-  coverage: ["Lead Photographer", "Second Shooter", "Videographer", "Assistant", "Production Crew", "Styling"],
-  deliverable: ["Albums", "Prints", "Digital", "Retouching", "Frames", "Extras", "Packages"],
+  coverage: DEFAULT_CATEGORY_DEFINITIONS.coverage.map((definition) => definition.value),
+  deliverable: DEFAULT_CATEGORY_DEFINITIONS.deliverable.map((definition) => definition.value),
 };
 
 interface ServiceVatDefaults {
@@ -349,8 +375,12 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
     setNewCategoryName("");
   }, []);
 
-  const defaultCategories = useMemo(
+  const defaultCategoryValues = useMemo(
     () => (selectedType ? DEFAULT_CATEGORIES[selectedType] : []),
+    [selectedType]
+  );
+  const defaultCategoryDefinitions = useMemo(
+    () => (selectedType ? DEFAULT_CATEGORY_DEFINITIONS[selectedType] : []),
     [selectedType]
   );
   const customCategories = useMemo(() => {
@@ -358,8 +388,8 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
       return [];
     }
     const categories = categoriesByType[selectedType] ?? [];
-    return categories.filter((category) => !DEFAULT_CATEGORIES[selectedType].includes(category));
-  }, [categoriesByType, selectedType]);
+    return categories.filter((category) => !defaultCategoryValues.includes(category));
+  }, [categoriesByType, selectedType, defaultCategoryValues]);
 
   const hasSelectedType = selectedType !== null;
   const hasSelectedCategory = hasSelectedType && Boolean(formData.category.trim());
@@ -642,9 +672,9 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded, initialTy
                   <div className="px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     {t("service.default_categories_label")}
                   </div>
-                  {defaultCategories.map((category) => (
-                    <SelectItem key={category} value={category} className="hover:bg-accent hover:text-accent-foreground">
-                      {category}
+                  {defaultCategoryDefinitions.map(({ value, translationKey }) => (
+                    <SelectItem key={value} value={value} className="hover:bg-accent hover:text-accent-foreground">
+                      {t(translationKey, { defaultValue: value })}
                     </SelectItem>
                   ))}
 
@@ -883,10 +913,11 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
   }, []);
 
   const activeType: ServiceType = (selectedType ?? formData.service_type ?? "deliverable") as ServiceType;
-  const defaultCategories = useMemo(() => DEFAULT_CATEGORIES[activeType], [activeType]);
+  const defaultCategoryValues = useMemo(() => DEFAULT_CATEGORIES[activeType], [activeType]);
+  const defaultCategoryDefinitions = useMemo(() => DEFAULT_CATEGORY_DEFINITIONS[activeType], [activeType]);
   const customCategories = useMemo(
-    () => (categoriesByType[activeType] ?? []).filter((category) => !defaultCategories.includes(category)),
-    [categoriesByType, activeType, defaultCategories]
+    () => (categoriesByType[activeType] ?? []).filter((category) => !defaultCategoryValues.includes(category)),
+    [categoriesByType, activeType, defaultCategoryValues]
   );
 
   const hasSelectedType = selectedType !== null;
@@ -1247,9 +1278,9 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
                   <div className="px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     {t("service.default_categories_label")}
                   </div>
-                  {defaultCategories.map((category) => (
-                    <SelectItem key={category} value={category} className="hover:bg-accent hover:text-accent-foreground">
-                      {category}
+                  {defaultCategoryDefinitions.map(({ value, translationKey }) => (
+                    <SelectItem key={value} value={value} className="hover:bg-accent hover:text-accent-foreground">
+                      {t(translationKey, { defaultValue: value })}
                     </SelectItem>
                   ))}
 

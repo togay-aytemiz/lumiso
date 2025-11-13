@@ -1621,11 +1621,24 @@
     "custom_categories_label": "Custom categories",
     "new_category_placeholder": "Enter new category name",
     "categories": {
-      "albums": "Albums",
-      "prints": "Prints",
-      "digital": "Digital",
-      "retouching": "Retouching",
-      "frames": "Frames"
+      "deliverable": {
+        "albums": "Albums",
+        "prints": "Prints",
+        "digital": "Digital",
+        "retouching": "Retouching",
+        "frames": "Frames",
+        "extras": "Extras",
+        "packages": "Packages"
+      },
+      "coverage": {
+        "lead_photographer": "Lead Photographer",
+        "second_photographer": "Second Photographer",
+        "assistant_photographer": "Assistant Photographer",
+        "videographer": "Videographer",
+        "drone_operator": "Drone Operator",
+        "production_crew": "Production Crew",
+        "hair_makeup": "Hair & Makeup"
+      }
     },
     "new_category": "Create a new category: ",
     "errors": {

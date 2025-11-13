@@ -166,6 +166,20 @@ const translations: Record<string, string> = {
   "service.category_placeholder": "Select category",
   "service.new_category": "New category",
   "service.new_category_placeholder": "Enter new category name",
+  "forms:service.categories.deliverable.albums": "Albums",
+  "forms:service.categories.deliverable.prints": "Prints",
+  "forms:service.categories.deliverable.digital": "Digital",
+  "forms:service.categories.deliverable.retouching": "Retouching",
+  "forms:service.categories.deliverable.frames": "Frames",
+  "forms:service.categories.deliverable.extras": "Extras",
+  "forms:service.categories.deliverable.packages": "Packages",
+  "forms:service.categories.coverage.lead_photographer": "Lead Photographer",
+  "forms:service.categories.coverage.second_photographer": "Second Photographer",
+  "forms:service.categories.coverage.assistant_photographer": "Assistant Photographer",
+  "forms:service.categories.coverage.videographer": "Videographer",
+  "forms:service.categories.coverage.drone_operator": "Drone Operator",
+  "forms:service.categories.coverage.production_crew": "Production Crew",
+  "forms:service.categories.coverage.hair_makeup": "Hair & Makeup",
   "service.default_categories_label": "Default categories",
   "service.custom_categories_label": "Custom categories",
   "service.errors.name_required": "Service name is required",
@@ -222,10 +236,10 @@ const resolveNamespace = (namespace?: string | string[], override?: string) => {
 
 jest.mock("react-i18next", () => ({
   useTranslation: (namespace?: string | string[]) => ({
-    t: (key: string, options?: { ns?: string }) => {
+    t: (key: string, options?: { ns?: string; defaultValue?: string }) => {
       const resolvedNamespace = resolveNamespace(namespace, options?.ns);
       const compositeKey = resolvedNamespace ? `${resolvedNamespace}:${key}` : key;
-      return translations[compositeKey] ?? translations[key] ?? compositeKey;
+      return translations[compositeKey] ?? translations[key] ?? options?.defaultValue ?? compositeKey;
     },
   }),
 }));

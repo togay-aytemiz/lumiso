@@ -961,25 +961,55 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          manual_flag: boolean
+          manual_flag_reason: string | null
+          membership_status: string
           name: string
           owner_id: string
+          premium_activated_at: string | null
+          premium_expires_at: string | null
+          premium_plan: string | null
           settings: Json | null
+          trial_extended_by_days: number
+          trial_extension_reason: string | null
+          trial_expires_at: string
+          trial_started_at: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           id?: string
+          manual_flag?: boolean
+          manual_flag_reason?: string | null
+          membership_status?: string
           name?: string
           owner_id: string
+          premium_activated_at?: string | null
+          premium_expires_at?: string | null
+          premium_plan?: string | null
           settings?: Json | null
+          trial_extended_by_days?: number
+          trial_extension_reason?: string | null
+          trial_expires_at?: string
+          trial_started_at?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
+          manual_flag?: boolean
+          manual_flag_reason?: string | null
+          membership_status?: string
           name?: string
           owner_id?: string
+          premium_activated_at?: string | null
+          premium_expires_at?: string | null
+          premium_plan?: string | null
           settings?: Json | null
+          trial_extended_by_days?: number
+          trial_extension_reason?: string | null
+          trial_expires_at?: string
+          trial_started_at?: string
           updated_at?: string
         }
         Relationships: []

@@ -1,9 +1,11 @@
+import { addDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
 // Cache for organization ID to reduce database calls
 let cachedOrganizationId: string | null = null;
 let cacheExpiry: number = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const DEFAULT_TRIAL_DAYS = 14;
 
 export async function getUserOrganizationId(): Promise<string | null> {
   try {
@@ -36,11 +38,18 @@ export async function getUserOrganizationId(): Promise<string | null> {
     // If no organization exists, create one for the single photographer
     if (orgError?.code === 'PGRST116') { // No rows returned
       console.log('Creating organization for single photographer:', user.id);
+      const now = new Date();
+      const nowIso = now.toISOString();
+      const trialExpires = addDays(now, DEFAULT_TRIAL_DAYS).toISOString();
       const { data: newOrg, error: createError } = await supabase
         .from('organizations')
         .insert({
           name: 'My Photography Business',
-          owner_id: user.id
+          owner_id: user.id,
+          membership_status: 'trial',
+          trial_started_at: nowIso,
+          trial_expires_at: trialExpires,
+          trial_extended_by_days: 0,
         })
         .select('id')
         .single();

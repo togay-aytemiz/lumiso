@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { addDays, differenceInCalendarDays, parseISO } from "date-fns";
+import { addDays, differenceInCalendarDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,7 +22,6 @@ type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 type OrganizationSettingsRow = Database["public"]["Tables"]["organization_settings"]["Row"];
 
 const TRIAL_LENGTH_DAYS = 14;
-const PAYMENT_SUCCESS_STATUSES = new Set(["paid", "completed", "succeeded", "settled"]);
 const getFirstError = (...results: Array<{ error: unknown | null }>) =>
   results.find((result) => result.error)?.error ?? null;
 
@@ -58,35 +57,40 @@ const computeLastActiveAt = (
   });
 };
 
+const MEMBERSHIP_PLAN_LABELS: Record<MembershipStatus, string> = {
+  trial: "Trial",
+  premium: "Premium",
+  expired: "Trial expired",
+  suspended: "Suspended",
+  complimentary: "Complimentary",
+};
+
 const determineStatus = (
-  org: OrganizationRow,
-  payments: AdminUserPaymentSummary[]
+  org: OrganizationRow
 ): {
   status: MembershipStatus;
   trialEndsAt: string;
   trialDaysRemaining: number;
+  trialStartedAt: string;
 } => {
-  const membershipStartedAt = parseISO(org.created_at);
-  const trialEnds = addDays(membershipStartedAt, TRIAL_LENGTH_DAYS);
   const now = new Date();
-  const daysElapsed = differenceInCalendarDays(now, membershipStartedAt);
-  const trialDaysRemaining = Math.max(0, TRIAL_LENGTH_DAYS - daysElapsed);
+  const trialStartedAt = org.trial_started_at ?? org.created_at;
+  const trialStartDate = new Date(trialStartedAt);
+  const fallbackTrialEnd = addDays(trialStartDate, TRIAL_LENGTH_DAYS);
+  const trialEndDate = new Date(org.trial_expires_at ?? fallbackTrialEnd.toISOString());
+  let status = (org.membership_status as MembershipStatus | null) ?? "trial";
 
-  const hasSuccessfulPayment = payments.some((payment) =>
-    payment.status ? PAYMENT_SUCCESS_STATUSES.has(payment.status.toLowerCase()) : false
-  );
-
-  let status: MembershipStatus = "trial";
-  if (hasSuccessfulPayment) {
-    status = "premium";
-  } else if (daysElapsed > TRIAL_LENGTH_DAYS) {
+  if (status === "trial" && now.getTime() > trialEndDate.getTime()) {
     status = "expired";
   }
 
+  const trialDaysRemaining = Math.max(0, differenceInCalendarDays(trialEndDate, now));
+
   return {
     status,
-    trialEndsAt: trialEnds.toISOString(),
+    trialEndsAt: trialEndDate.toISOString(),
     trialDaysRemaining,
+    trialStartedAt: trialStartDate.toISOString(),
   };
 };
 
@@ -168,7 +172,25 @@ const fetchAdminAccounts = async ({
 
   let organizationsQuery = supabase
     .from("organizations")
-    .select("id, name, owner_id, created_at, updated_at")
+    .select(
+      [
+        "id",
+        "name",
+        "owner_id",
+        "created_at",
+        "updated_at",
+        "membership_status",
+        "trial_started_at",
+        "trial_expires_at",
+        "trial_extended_by_days",
+        "trial_extension_reason",
+        "premium_activated_at",
+        "premium_plan",
+        "premium_expires_at",
+        "manual_flag",
+        "manual_flag_reason",
+      ].join(", ")
+    )
     .order("created_at", { ascending: true });
 
   if (!isAdmin) {
@@ -420,7 +442,8 @@ const fetchAdminAccounts = async ({
     const services = servicesByOrg[organization.id] ?? [];
     const sessionTypes = sessionTypesByOrg[organization.id] ?? [];
     const lastActiveAt = computeLastActiveAt(organization, [], [], [], [], payments);
-    const { status, trialEndsAt, trialDaysRemaining } = determineStatus(organization, payments);
+    const { status, trialEndsAt, trialDaysRemaining, trialStartedAt } = determineStatus(organization);
+    const planName = MEMBERSHIP_PLAN_LABELS[status] ?? "Trial";
 
     const collectedPayments = payments.filter((payment) => {
       if ((payment.entry_kind ?? "recorded") === "scheduled") {
@@ -486,8 +509,9 @@ const fetchAdminAccounts = async ({
       email: organizationEmail ?? "",
       company: organization.name,
       status,
-      planName: status === "premium" ? "Premium" : "Trial",
-      membershipStartedAt: organization.created_at,
+      planName,
+      membershipStartedAt: trialStartedAt,
+      premiumActivatedAt: organization.premium_activated_at ?? undefined,
       trialEndsAt,
       trialDaysRemaining,
       lastActiveAt,

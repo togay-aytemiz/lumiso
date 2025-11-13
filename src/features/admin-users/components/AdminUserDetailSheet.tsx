@@ -81,6 +81,9 @@ const currencyFormatter = new Intl.NumberFormat(undefined, {
   currency: "TRY",
   maximumFractionDigits: 0,
 });
+const numberFormatter = new Intl.NumberFormat(undefined, {
+  maximumFractionDigits: 0,
+});
 const countFormatter = new Intl.NumberFormat();
 
 type CollectionType = "packages" | "services" | "sessionTypes";
@@ -108,8 +111,11 @@ export function AdminUserDetailSheet({
     (value?: string | null) => formatDateOnly(value, locale),
     [locale]
   );
-  const formatCurrency = (value?: number | null) =>
-    typeof value === "number" ? currencyFormatter.format(value) : "—";
+  const formatCurrency = (value?: number | null, options?: { withSymbol?: boolean }) => {
+    if (typeof value !== "number") return "—";
+    const withSymbol = options?.withSymbol ?? true;
+    return withSymbol ? currencyFormatter.format(value) : numberFormatter.format(value);
+  };
 
   const renderActivationBadge = useCallback(
     (isActive?: boolean | null) => (
@@ -185,7 +191,7 @@ export function AdminUserDetailSheet({
         header: t("admin.users.detail.tables.projects.columns.budget"),
         render: (project) =>
           project.base_price
-            ? currencyFormatter.format(project.base_price)
+            ? formatCurrency(project.base_price)
             : "—",
       },
       {
@@ -244,7 +250,7 @@ export function AdminUserDetailSheet({
       {
         key: "amount",
         header: t("admin.users.detail.tables.payments.columns.amount"),
-        render: (payment) => currencyFormatter.format(payment.amount ?? 0),
+        render: (payment) => formatCurrency(payment.amount ?? 0),
       },
       {
         key: "status",
@@ -603,24 +609,23 @@ export function AdminUserDetailSheet({
     },
     {
       key: "payments",
-      title: t("admin.users.detail.usage.cards.payments.title"),
-      metricVariant: "boxed",
+      title: `${t("admin.users.detail.usage.cards.payments.title")} (TRY)`,
       metrics: [
         {
           label: t("admin.users.detail.usage.cards.payments.billed"),
-          value: currencyFormatter.format(user.financials.totalBilled),
+          value: formatCurrency(user.financials.totalBilled, { withSymbol: false }),
         },
         {
           label: t("admin.users.detail.usage.cards.payments.collected"),
-          value: currencyFormatter.format(user.financials.totalCollected),
+          value: formatCurrency(user.financials.totalCollected, { withSymbol: false }),
         },
         {
           label: t("admin.users.detail.usage.cards.payments.pending"),
-          value: currencyFormatter.format(pendingPayments),
+          value: formatCurrency(pendingPayments, { withSymbol: false }),
         },
         {
           label: t("admin.users.detail.usage.cards.payments.refunded"),
-          value: currencyFormatter.format(user.financials.refundedTotal),
+          value: formatCurrency(user.financials.refundedTotal, { withSymbol: false }),
         },
       ],
     },
@@ -963,7 +968,7 @@ export function AdminUserDetailSheet({
                         {t(`admin.users.detail.financials.${financial.key}`)}
                       </p>
                       <p className="text-2xl font-semibold">
-                        {currencyFormatter.format(financial.value)}
+                        {formatCurrency(financial.value)}
                       </p>
                     </div>
                   ))}

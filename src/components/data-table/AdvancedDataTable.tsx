@@ -121,6 +121,7 @@ export interface AdvancedDataTableProps<T> {
   hasMore?: boolean;
   isLoadingMore?: boolean;
   loadMoreOffset?: number;
+  variant?: "card" | "plain";
 }
 
 function getNestedValue(
@@ -170,6 +171,7 @@ export function AdvancedDataTable<T>({
   hasMore,
   isLoadingMore,
   loadMoreOffset,
+  variant = "card",
 }: AdvancedDataTableProps<T>) {
   const { t } = useTranslation("common");
   const isMobile = useIsMobile();
@@ -381,15 +383,26 @@ export function AdvancedDataTable<T>({
     return () => observer.disconnect();
   }, [canLazyLoad, isLoading, isLoadingMore, loadMoreOffsetPx, onLoadMore]);
 
+  const isPlain = variant === "plain";
+  const RootComponent: React.ElementType = isPlain ? "div" : Card;
+  const HeaderComponent: React.ElementType = isPlain ? "div" : CardHeader;
+  const ContentComponent: React.ElementType = isPlain ? "div" : CardContent;
+  const FooterComponent: React.ElementType = isPlain ? "div" : CardFooter;
+
   return (
-    <Card
+    <RootComponent
       className={cn(
-        "border border-border/60 shadow-sm",
+        isPlain ? "border-none bg-transparent p-0 shadow-none" : "border border-border/60 shadow-sm",
         className
       )}
     >
       {(title || description || actions || toolbar || filters || onSearchChange) && (
-        <CardHeader className="space-y-0.5 px-4 pt-2.5 pb-2 sm:px-6 sm:pt-3 sm:pb-3">
+        <HeaderComponent
+          className={cn(
+            "space-y-0.5",
+            isPlain ? "px-0 pt-0 pb-3" : "px-4 pt-2.5 pb-2 sm:px-6 sm:pt-3 sm:pb-3"
+          )}
+        >
           {/* Title + controls */}
           <div className="flex flex-col gap-1.5 lg:flex-row lg:items-center lg:justify-between">
             {(title || description) && (
@@ -434,7 +447,12 @@ export function AdvancedDataTable<T>({
             const shouldShow = hasText || hasChips || (filters && hasActive);
             if (!shouldShow) return null;
             return (
-              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+              <div
+                className={cn(
+                  "flex flex-wrap items-center gap-x-2.5 gap-y-1",
+                  isPlain ? "pt-1" : undefined
+                )}
+              >
                 {hasText && (
                   <span className="text-sm text-muted-foreground">{summary!.text}</span>
                 )}
@@ -471,7 +489,7 @@ export function AdvancedDataTable<T>({
               </div>
             );
           })()}
-        </CardHeader>
+        </HeaderComponent>
       )}
 
       {filters && isMobile && (
@@ -505,10 +523,12 @@ export function AdvancedDataTable<T>({
         </Sheet>
       )}
 
-      <CardContent className={cn(
-        "px-4 md:px-6 pt-2 pb-0",
-        mobileSummaryPresent ? "mt-0" : "mt-2 sm:mt-1"
-      )}>
+      <ContentComponent
+        className={cn(
+          isPlain ? "px-0 pt-0" : "px-4 md:px-6 pt-2 pb-0",
+          mobileSummaryPresent ? "mt-0" : "mt-2 sm:mt-1"
+        )}
+      >
         {isLoading ? (
           loadingState || <TableLoadingSkeleton />
         ) : (
@@ -679,17 +699,17 @@ export function AdvancedDataTable<T>({
           </div>
         </div>
       )}
-      </CardContent>
+      </ContentComponent>
 
       {pagination && paginationInfo && (
-        <CardFooter className="p-0">
+        <FooterComponent className={cn(isPlain ? "mt-4 p-0" : "p-0")}>
           <AdvancedDataTablePaginationFooter
             pagination={pagination}
             paginationInfo={paginationInfo}
             className="w-full"
           />
-        </CardFooter>
+        </FooterComponent>
       )}
-    </Card>
+    </RootComponent>
   );
 }

@@ -88,6 +88,14 @@
 - Dashboard KPI’ları: günlük trial → premium dönüşüm, ortalama trial süresi, manuel uzatma sayısı, premium retention.
 - Alerting: trial expirations > 5 dakika kilit ekranı alamazsa uyarı; upgrade webhook başarısızlığı; admin extension failure.
 
+## Yeni Kullanıcı Üyelik Akışı Planı
+- **Varsayılan trial statüsü**: Kullanıcı e-postasını doğrulayıp kaydı tamamladığı anda `status = "trial"` atanacak ve `trial_started_at = now` belirlenecek. Web/mobil/onboarding tüm akışları aynı post-verification handler üzerinden geçirerek bypass engellenecek.
+- **Trial veri takibi**: `trial_expires_at = trial_started_at + TRIAL_LENGTH` hesaplanacak; gece koşan job, süresi dolanları `expired`e çekecek ve tetikleyicileri çalıştıracak.
+- **Manuel müdahaleler**: Admin panelinde trial uzat (gün + neden), premium’a geçir (plan seçimi) ve complimentary premium tanımla işlemleri için aynı mutasyon kullanılacak; her aksiyon `admin_action_log`’a kim/ne zaman/neden olarak yazılacak.
+- **Ödeme ile otomatik premium**: Stripe/Supabase ödeme eventi “subscription active” olduğunda aynı premium geçiş rotası tetiklenecek (`status = "premium"`, `premium_activated_at = now`, gerekirse `trial_expires_at` temizlenecek). İptaller için ters akış planlanacak (policy’e göre trial/expired).
+- **İletişim yüzeyleri**: Trial başlangıcında, sürenin yarısında ve son 3/1 gün kala in-app + e-posta bildirimleri tetiklenecek; premium’a geçince CTA’lar gizlenip “hoş geldin” maili gönderilecek.
+- **Gözlemleme**: Trial → premium dönüşüm oranı, manuel müdahale sayısı ve otomatik premium event’leri için dashboard ve alarm setleri oluşturulacak; beklenmeyen durumlar (ör. premium event’i gelmeyen ödeme) uyarı üretmeli.
+
 ## Yol Haritası & Yapılacaklar
 1. **Admin Deneyimi (öncelikli)**
    - `/admin/users` tabloyu yeniden kur (filtreleme, sıralama, bulk aksiyonlar).

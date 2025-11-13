@@ -1,11 +1,25 @@
-import { useMemo } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo, useState, useEffect, useCallback } from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { TableLoadingSkeleton } from "@/components/ui/loading-presets";
 import { formatDistanceToNow } from "date-fns";
-import { Mail, Clock, Crown, AlarmClockCheck, Gift } from "lucide-react";
+import { Mail, Clock, Crown, AlarmClockCheck, Gift, ArrowUpRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { UserStatusBadge } from "./UserStatusBadge";
 import type {
@@ -13,13 +27,16 @@ import type {
   AdminUserLeadSummary,
   AdminUserProjectSummary,
   AdminUserSessionSummary,
-  AdminUserCalendarEventSummary,
   AdminUserPaymentSummary,
   AdminUserServiceSummary,
   AdminUserPackageSummary,
   AdminUserSessionTypeSummary,
 } from "../types";
+import { AdvancedDataTable, type AdvancedTableColumn } from "@/components/data-table";
 import { DataTable, type Column } from "@/components/ui/data-table";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { AppSheetModal } from "@/components/ui/app-sheet-modal";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AdminUserDetailSheetProps {
   user: AdminUserAccount | null;
@@ -27,10 +44,10 @@ interface AdminUserDetailSheetProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const formatDateTime = (value?: string | null) => {
+const formatDateTime = (value?: string | null, locale?: string) => {
   if (!value) return "—";
   try {
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(locale ?? undefined, {
       dateStyle: "medium",
       timeStyle: "short",
     }).format(new Date(value));
@@ -39,10 +56,10 @@ const formatDateTime = (value?: string | null) => {
   }
 };
 
-const formatDateOnly = (value?: string | null) => {
+const formatDateOnly = (value?: string | null, locale?: string) => {
   if (!value) return "—";
   try {
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(locale ?? undefined, {
       dateStyle: "medium",
     }).format(new Date(value));
   } catch {
@@ -64,320 +81,646 @@ const currencyFormatter = new Intl.NumberFormat(undefined, {
   currency: "TRY",
   maximumFractionDigits: 0,
 });
+const countFormatter = new Intl.NumberFormat();
 
-export function AdminUserDetailSheet({ user, open, onOpenChange }: AdminUserDetailSheetProps) {
-  const { t } = useTranslation("pages");
+type CollectionType = "packages" | "services" | "sessionTypes";
+
+export function AdminUserDetailSheet({
+  user,
+  open,
+  onOpenChange,
+}: AdminUserDetailSheetProps) {
+  const { t, i18n } = useTranslation("pages");
   const { t: tCommon } = useTranslation("common");
-
-  const kisiColumns = useMemo<Column<AdminUserLeadSummary>[]>(() => [
-    {
-      key: "name",
-      header: t("admin.users.detail.tables.kisiler.columns.name"),
-      sortable: true,
-    },
-    {
-      key: "status",
-      header: t("admin.users.detail.tables.kisiler.columns.status"),
-      sortable: true,
-      render: (lead) => lead.status || "—",
-    },
-    {
-      key: "email",
-      header: t("admin.users.detail.tables.kisiler.columns.email"),
-      render: (_, value) => value || "—",
-    },
-    {
-      key: "phone",
-      header: t("admin.users.detail.tables.kisiler.columns.phone"),
-      render: (_, value) => value || "—",
-    },
-    {
-      key: "due_date",
-      header: t("admin.users.detail.tables.kisiler.columns.due"),
-      render: (lead) => formatDateOnly(lead.due_date),
-    },
-    {
-      key: "updated_at",
-      header: t("admin.users.detail.tables.kisiler.columns.updated"),
-      render: (lead) => formatDateTime(lead.updated_at),
-    },
-  ], [t]);
-
-  const projectColumns = useMemo<Column<AdminUserProjectSummary>[]>(() => [
-    {
-      key: "name",
-      header: t("admin.users.detail.tables.projects.columns.name"),
-      sortable: true,
-    },
-    {
-      key: "status_label",
-      header: t("admin.users.detail.tables.projects.columns.status"),
-      render: (project) => project.status_label || "—",
-    },
-    {
-      key: "lead_name",
-      header: t("admin.users.detail.tables.projects.columns.kisi"),
-      render: (project) => project.lead_name || "—",
-    },
-    {
-      key: "base_price",
-      header: t("admin.users.detail.tables.projects.columns.budget"),
-      render: (project) => (project.base_price ? currencyFormatter.format(project.base_price) : "—"),
-    },
-    {
-      key: "updated_at",
-      header: t("admin.users.detail.tables.projects.columns.updated"),
-      render: (project) => formatDateTime(project.updated_at),
-    },
-  ], [t]);
-
-  const sessionColumns = useMemo<Column<AdminUserSessionSummary>[]>(() => [
-    {
-      key: "session_name",
-      header: t("admin.users.detail.tables.sessions.columns.name"),
-      sortable: true,
-      render: (session) => session.session_name || "—",
-    },
-    {
-      key: "status",
-      header: t("admin.users.detail.tables.sessions.columns.status"),
-      render: (session) => session.status || "—",
-    },
-    {
-      key: "session_type_label",
-      header: t("admin.users.detail.tables.sessions.columns.type"),
-      render: (session) => session.session_type_label || "—",
-    },
-    {
-      key: "session_date",
-      header: t("admin.users.detail.tables.sessions.columns.schedule"),
-      render: (session) =>
-        session.session_date
-          ? `${formatDateOnly(session.session_date)} ${session.session_time ?? ""}`.trim()
-          : "—",
-    },
-    {
-      key: "project_id",
-      header: t("admin.users.detail.tables.sessions.columns.project"),
-      render: (session) => session.project_id || "—",
-    },
-    {
-      key: "updated_at",
-      header: t("admin.users.detail.tables.sessions.columns.updated"),
-      render: (session) => formatDateTime(session.updated_at),
-    },
-  ], [t]);
-
-  const calendarColumns = useMemo<Column<AdminUserCalendarEventSummary>[]>(() => [
-    {
-      key: "content",
-      header: t("admin.users.detail.tables.calendar.columns.title"),
-      sortable: true,
-    },
-    {
-      key: "type",
-      header: t("admin.users.detail.tables.calendar.columns.type"),
-    },
-    {
-      key: "reminder_date",
-      header: t("admin.users.detail.tables.calendar.columns.date"),
-      render: (event) => formatDateOnly(event.reminder_date),
-    },
-    {
-      key: "reminder_time",
-      header: t("admin.users.detail.tables.calendar.columns.time"),
-      render: (_, value) => value || "—",
-    },
-    {
-      key: "completed",
-      header: t("admin.users.detail.tables.calendar.columns.completed"),
-      render: (event) => (event.completed ? tCommon("yes") : tCommon("no")),
-    },
-  ], [t, tCommon]);
-
-  const paymentColumns = useMemo<Column<AdminUserPaymentSummary>[]>(() => [
-    {
-      key: "amount",
-      header: t("admin.users.detail.tables.payments.columns.amount"),
-      render: (payment) => currencyFormatter.format(payment.amount ?? 0),
-    },
-    {
-      key: "status",
-      header: t("admin.users.detail.tables.payments.columns.status"),
-    },
-    {
-      key: "type",
-      header: t("admin.users.detail.tables.payments.columns.type"),
-    },
-    {
-      key: "date_paid",
-      header: t("admin.users.detail.tables.payments.columns.date"),
-      render: (payment) => formatDateOnly(payment.date_paid ?? payment.created_at),
-    },
-    {
-      key: "project_id",
-      header: t("admin.users.detail.tables.payments.columns.project"),
-      render: (payment) => payment.project_id || "—",
-    },
-  ], [t]);
-
-  const servicesColumns = useMemo<Column<AdminUserServiceSummary>[]>(() => [
-    {
-      key: "name",
-      header: t("admin.users.detail.tables.services.columns.name"),
-      sortable: true,
-    },
-    {
-      key: "category",
-      header: t("admin.users.detail.tables.services.columns.category"),
-      render: (_, value) => value || "—",
-    },
-    {
-      key: "service_type",
-      header: t("admin.users.detail.tables.services.columns.type"),
-      render: (_, value) => value || "—",
-    },
-    {
-      key: "price",
-      header: t("admin.users.detail.tables.services.columns.price"),
-      render: (service) => (service.price ? currencyFormatter.format(service.price) : "—"),
-    },
-    {
-      key: "updated_at",
-      header: t("admin.users.detail.tables.services.columns.updated"),
-      render: (service) => formatDateTime(service.updated_at),
-    },
-  ], [t]);
-
-  const packagesColumns = useMemo<Column<AdminUserPackageSummary>[]>(() => [
-    {
-      key: "name",
-      header: t("admin.users.detail.tables.packages.columns.name"),
-      sortable: true,
-    },
-    {
-      key: "price",
-      header: t("admin.users.detail.tables.packages.columns.price"),
-      render: (pkg) => currencyFormatter.format(pkg.price ?? pkg.client_total ?? 0),
-    },
-    {
-      key: "client_total",
-      header: t("admin.users.detail.tables.packages.columns.clientTotal"),
-      render: (pkg) => (pkg.client_total ? currencyFormatter.format(pkg.client_total) : "—"),
-    },
-    {
-      key: "is_active",
-      header: t("admin.users.detail.tables.packages.columns.status"),
-      render: (pkg) => (pkg.is_active ? tCommon("yes") : tCommon("no")),
-    },
-    {
-      key: "updated_at",
-      header: t("admin.users.detail.tables.packages.columns.updated"),
-      render: (pkg) => formatDateTime(pkg.updated_at),
-    },
-  ], [t, tCommon]);
-
-  const sessionTypeColumns = useMemo<Column<AdminUserSessionTypeSummary>[]>(() => [
-    {
-      key: "name",
-      header: t("admin.users.detail.tables.sessionTypes.columns.name"),
-      sortable: true,
-    },
-    {
-      key: "category",
-      header: t("admin.users.detail.tables.sessionTypes.columns.category"),
-      render: (_, value) => value || "—",
-    },
-    {
-      key: "duration_minutes",
-      header: t("admin.users.detail.tables.sessionTypes.columns.duration"),
-      render: (sessionType) => `${sessionType.duration_minutes} min`,
-    },
-    {
-      key: "updated_at",
-      header: t("admin.users.detail.tables.sessionTypes.columns.updated"),
-      render: (sessionType) => formatDateTime(sessionType.updated_at),
-    },
-  ], [t]);
-
-  const tabDisabledMap = useMemo(
-    () => ({
-      kisiler: !user?.detail.leads.length,
-      projects: !user?.detail.projects.length,
-      sessions: !user?.detail.sessions.length,
-      calendar: !user?.detail.calendar.length,
-      payments: !user?.detail.payments.length,
-      services: !user?.detail.services.length,
-      packages: !user?.detail.packages.length,
-      sessionTypes: !user?.detail.sessionTypes.length,
-    }),
-    [user]
+  const [activeTab, setActiveTab] = useState("overview");
+  const [collectionViewer, setCollectionViewer] = useState<null | {
+    type: "packages" | "services" | "sessionTypes";
+  }>(null);
+  const [collectionData, setCollectionData] = useState<any[]>([]);
+  const [collectionLoading, setCollectionLoading] = useState(false);
+  const [collectionError, setCollectionError] = useState<string | null>(null);
+  const locale = i18n.language || undefined;
+  const formatDateTimeLocalized = useCallback(
+    (value?: string | null) => formatDateTime(value, locale),
+    [locale]
   );
+  const formatDateOnlyLocalized = useCallback(
+    (value?: string | null) => formatDateOnly(value, locale),
+    [locale]
+  );
+  const formatCurrency = (value?: number | null) =>
+    typeof value === "number" ? currencyFormatter.format(value) : "—";
+
+  const renderActivationBadge = useCallback(
+    (isActive?: boolean | null) => (
+      <Badge
+        variant={isActive ? "default" : "outline"}
+        className={cn(
+          "h-5 rounded-full px-2 text-[10px] font-semibold uppercase tracking-wide",
+          isActive ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
+        )}
+      >
+        {isActive ? tCommon("status.active") : tCommon("status.inactive")}
+      </Badge>
+    ),
+    [tCommon]
+  );
+
+  const kisiColumns = useMemo<Column<AdminUserLeadSummary>[]>(
+    () => [
+      {
+        key: "name",
+        header: t("admin.users.detail.tables.kisiler.columns.name"),
+        sortable: true,
+      },
+      {
+        key: "status",
+        header: t("admin.users.detail.tables.kisiler.columns.status"),
+        sortable: true,
+        render: (lead) => lead.status || "—",
+      },
+      {
+        key: "email",
+        header: t("admin.users.detail.tables.kisiler.columns.email"),
+        render: (_, value) => value || "—",
+      },
+      {
+        key: "phone",
+        header: t("admin.users.detail.tables.kisiler.columns.phone"),
+        render: (_, value) => value || "—",
+      },
+      {
+        key: "due_date",
+        header: t("admin.users.detail.tables.kisiler.columns.due"),
+        render: (lead) => formatDateOnlyLocalized(lead.due_date),
+      },
+      {
+        key: "updated_at",
+        header: t("admin.users.detail.tables.kisiler.columns.updated"),
+        render: (lead) => formatDateTimeLocalized(lead.updated_at),
+      },
+    ],
+    [formatDateOnlyLocalized, formatDateTimeLocalized, t]
+  );
+
+  const projectColumns = useMemo<Column<AdminUserProjectSummary>[]>(
+    () => [
+      {
+        key: "name",
+        header: t("admin.users.detail.tables.projects.columns.name"),
+        sortable: true,
+      },
+      {
+        key: "status_label",
+        header: t("admin.users.detail.tables.projects.columns.status"),
+        render: (project) => project.status_label || "—",
+      },
+      {
+        key: "lead_name",
+        header: t("admin.users.detail.tables.projects.columns.kisi"),
+        render: (project) => project.lead_name || "—",
+      },
+      {
+        key: "base_price",
+        header: t("admin.users.detail.tables.projects.columns.budget"),
+        render: (project) =>
+          project.base_price
+            ? currencyFormatter.format(project.base_price)
+            : "—",
+      },
+      {
+        key: "updated_at",
+        header: t("admin.users.detail.tables.projects.columns.updated"),
+        render: (project) => formatDateTimeLocalized(project.updated_at),
+      },
+    ],
+    [formatDateTimeLocalized, t]
+  );
+
+  const sessionColumns = useMemo<Column<AdminUserSessionSummary>[]>(
+    () => [
+      {
+        key: "session_name",
+        header: t("admin.users.detail.tables.sessions.columns.name"),
+        sortable: true,
+        render: (session) => session.session_name || "—",
+      },
+      {
+        key: "status",
+        header: t("admin.users.detail.tables.sessions.columns.status"),
+        render: (session) => session.status || "—",
+      },
+      {
+        key: "session_type_label",
+        header: t("admin.users.detail.tables.sessions.columns.type"),
+        render: (session) => session.session_type_label || "—",
+      },
+      {
+        key: "session_date",
+        header: t("admin.users.detail.tables.sessions.columns.schedule"),
+        render: (session) =>
+          session.session_date
+            ? `${formatDateOnlyLocalized(session.session_date)} ${
+                session.session_time ?? ""
+              }`.trim()
+            : "—",
+      },
+      {
+        key: "project_id",
+        header: t("admin.users.detail.tables.sessions.columns.project"),
+        render: (session) => session.project_id || "—",
+      },
+      {
+        key: "updated_at",
+        header: t("admin.users.detail.tables.sessions.columns.updated"),
+        render: (session) => formatDateTimeLocalized(session.updated_at),
+      },
+    ],
+    [formatDateOnlyLocalized, formatDateTimeLocalized, t]
+  );
+
+  const paymentColumns = useMemo<Column<AdminUserPaymentSummary>[]>(
+    () => [
+      {
+        key: "amount",
+        header: t("admin.users.detail.tables.payments.columns.amount"),
+        render: (payment) => currencyFormatter.format(payment.amount ?? 0),
+      },
+      {
+        key: "status",
+        header: t("admin.users.detail.tables.payments.columns.status"),
+      },
+      {
+        key: "type",
+        header: t("admin.users.detail.tables.payments.columns.type"),
+      },
+      {
+        key: "date_paid",
+        header: t("admin.users.detail.tables.payments.columns.date"),
+        render: (payment) =>
+          formatDateOnlyLocalized(payment.date_paid ?? payment.created_at),
+      },
+      {
+        key: "project_id",
+        header: t("admin.users.detail.tables.payments.columns.project"),
+        render: (payment) => payment.project_id || "—",
+      },
+    ],
+    [formatDateOnlyLocalized, t]
+  );
+
+  const servicesColumns = useMemo<AdvancedTableColumn<AdminUserServiceSummary>[]>(
+    () => [
+      {
+        id: "name",
+        label: t("admin.users.detail.tables.services.columns.name"),
+        sortable: true,
+        accessor: (service) => service.name,
+        minWidth: "200px",
+      },
+      {
+        id: "category",
+        label: t("admin.users.detail.tables.services.columns.category"),
+        accessor: (service) => service.category,
+      },
+      {
+        id: "service_type",
+        label: t("admin.users.detail.tables.services.columns.type"),
+        accessor: (service) => service.service_type,
+      },
+      {
+        id: "selling_price",
+        label: t("admin.users.detail.tables.services.columns.sellingPrice"),
+        render: (service) => formatCurrency(service.selling_price ?? service.price),
+        align: "right",
+        minWidth: "140px",
+      },
+      {
+        id: "cost_price",
+        label: t("admin.users.detail.tables.services.columns.costPrice"),
+        render: (service) => formatCurrency(service.cost_price),
+        align: "right",
+        minWidth: "140px",
+      },
+      {
+        id: "is_active",
+        label: t("admin.users.detail.tables.services.columns.status"),
+        render: (service) => renderActivationBadge(service.is_active),
+        minWidth: "130px",
+      },
+      {
+        id: "updated_at",
+        label: t("admin.users.detail.tables.services.columns.updated"),
+        render: (service) => formatDateTimeLocalized(service.updated_at),
+        minWidth: "160px",
+      },
+      {
+        id: "created_at",
+        label: t("admin.users.detail.tables.services.columns.created"),
+        render: (service) => formatDateTimeLocalized(service.created_at),
+        minWidth: "160px",
+      },
+    ],
+    [formatDateTimeLocalized, renderActivationBadge, t]
+  );
+
+  const packagesColumns = useMemo<AdvancedTableColumn<AdminUserPackageSummary>[]>(
+    () => [
+      {
+        id: "name",
+        label: t("admin.users.detail.tables.packages.columns.name"),
+        sortable: true,
+        accessor: (pkg) => pkg.name,
+        minWidth: "220px",
+      },
+      {
+        id: "price",
+        label: t("admin.users.detail.tables.packages.columns.price"),
+        render: (pkg) => formatCurrency(pkg.price ?? pkg.client_total ?? 0),
+        align: "right",
+        minWidth: "140px",
+      },
+      {
+        id: "client_total",
+        label: t("admin.users.detail.tables.packages.columns.clientTotal"),
+        render: (pkg) => formatCurrency(pkg.client_total),
+        align: "right",
+        minWidth: "140px",
+      },
+      {
+        id: "is_active",
+        label: t("admin.users.detail.tables.packages.columns.status"),
+        render: (pkg) => renderActivationBadge(pkg.is_active),
+        minWidth: "130px",
+      },
+      {
+        id: "updated_at",
+        label: t("admin.users.detail.tables.packages.columns.updated"),
+        render: (pkg) => formatDateTimeLocalized(pkg.updated_at),
+        minWidth: "160px",
+      },
+      {
+        id: "created_at",
+        label: t("admin.users.detail.tables.packages.columns.created"),
+        render: (pkg) => formatDateTimeLocalized(pkg.created_at),
+        minWidth: "160px",
+      },
+    ],
+    [formatDateTimeLocalized, renderActivationBadge, t]
+  );
+
+  const sessionTypeColumns = useMemo<AdvancedTableColumn<AdminUserSessionTypeSummary>[]>(
+    () => [
+      {
+        id: "name",
+        label: t("admin.users.detail.tables.sessionTypes.columns.name"),
+        sortable: true,
+        accessor: (sessionType) => sessionType.name,
+        minWidth: "220px",
+      },
+      {
+        id: "duration_minutes",
+        label: t("admin.users.detail.tables.sessionTypes.columns.duration"),
+        render: (sessionType) => `${sessionType.duration_minutes} min`,
+        minWidth: "120px",
+      },
+      {
+        id: "is_active",
+        label: t("admin.users.detail.tables.sessionTypes.columns.status"),
+        render: (sessionType) => renderActivationBadge(sessionType.is_active),
+        minWidth: "130px",
+      },
+      {
+        id: "updated_at",
+        label: t("admin.users.detail.tables.sessionTypes.columns.updated"),
+        render: (sessionType) => formatDateTimeLocalized(sessionType.updated_at),
+        minWidth: "160px",
+      },
+      {
+        id: "created_at",
+        label: t("admin.users.detail.tables.sessionTypes.columns.created"),
+        render: (sessionType) => formatDateTimeLocalized(sessionType.created_at),
+        minWidth: "160px",
+      },
+    ],
+    [formatDateTimeLocalized, renderActivationBadge, t]
+  );
+
+  type CollectionConfig = {
+    title: string;
+    table: string;
+    query: string;
+    columns: AdvancedTableColumn<any>[];
+    rowKey: (row: any) => string;
+  };
+
+  const collectionConfigs = useMemo<Record<CollectionType, CollectionConfig>>(
+    () => ({
+      packages: {
+        title: t("admin.users.detail.collections.packages.title"),
+        table: "packages",
+        query:
+          "id, name, price, client_total, created_at, updated_at, organization_id, is_active",
+        columns: packagesColumns,
+        rowKey: (row: AdminUserPackageSummary) => row.id,
+      },
+      services: {
+        title: t("admin.users.detail.collections.services.title"),
+        table: "services",
+        query:
+          "id, name, category, service_type, price, selling_price, cost_price, created_at, updated_at, organization_id, is_active",
+        columns: servicesColumns,
+        rowKey: (row: AdminUserServiceSummary) => row.id,
+      },
+      sessionTypes: {
+        title: t("admin.users.detail.collections.sessionTypes.title"),
+        table: "session_types",
+        query:
+          "id, name, duration_minutes, created_at, updated_at, organization_id, is_active",
+        columns: sessionTypeColumns,
+        rowKey: (row: AdminUserSessionTypeSummary) => row.id,
+      },
+    }),
+    [packagesColumns, servicesColumns, sessionTypeColumns, t]
+  );
+
+  const segmentedOptions = useMemo(
+    () => [
+      { value: "overview", label: t("admin.users.detail.tabs.overview") },
+      { value: "kisiler", label: t("admin.users.detail.tabs.kisiler") },
+      { value: "projects", label: t("admin.users.detail.tabs.projects") },
+      { value: "sessions", label: t("admin.users.detail.tabs.sessions") },
+      { value: "payments", label: t("admin.users.detail.tabs.payments") },
+    ],
+    [t]
+  );
+
+  const organizationId = user?.id ?? null;
+
+  useEffect(() => {
+    if (open) {
+      setActiveTab("overview");
+    } else {
+      setCollectionViewer(null);
+      setCollectionData([]);
+      setCollectionError(null);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    const fetchCollectionData = async () => {
+      if (!collectionViewer || !organizationId) return;
+      const config = collectionConfigs[collectionViewer.type];
+      if (!config) return;
+      setCollectionLoading(true);
+      setCollectionError(null);
+      const { data, error } = await supabase
+        .from(config.table)
+        .select(config.query)
+        .eq("organization_id", organizationId)
+        .order("updated_at", { ascending: false })
+        .limit(500);
+      if (error) {
+        setCollectionError(error.message);
+        setCollectionData([]);
+      } else {
+        setCollectionData(data ?? []);
+      }
+      setCollectionLoading(false);
+    };
+    fetchCollectionData();
+  }, [collectionViewer, collectionConfigs, organizationId]);
 
   if (!user) {
     return null;
   }
 
-  const socialEntries = Object.entries(user.business.socialChannels ?? {});
+  const socialEntries = user.business.socialChannels ?? [];
+  const formatCount = (value: number) => countFormatter.format(value);
+  const handleOpenCollection = (type: CollectionType) => {
+    setCollectionViewer({ type });
+  };
+  const pendingPayments = Math.max(user.financials.overdueBalance ?? 0, 0);
+
+  const getMetricLabelLines = (label: string): [string, string] => {
+    const words = label.split(/\s+/).filter(Boolean);
+    if (words.length === 0) return ["", ""];
+    if (words.length === 1) return [words[0], ""];
+    if (words.length === 2) return [words[0], words[1]];
+    const mid = Math.ceil(words.length / 2);
+    return [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
+  };
+
+  const renderMetricLabel = (label: string) => {
+    const [line1, line2] = getMetricLabelLines(label);
+    return (
+      <div className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground leading-tight min-h-[36px]">
+        <span className="block">{line1}</span>
+        <span className="block">{line2 || "\u00A0"}</span>
+      </div>
+    );
+  };
+
+  type UsageMetric = {
+    label: string;
+    value: string;
+    action?: () => void;
+  };
+
+  type UsageCardDefinition = {
+    key: string;
+    title: string;
+    metrics: UsageMetric[];
+    metricVariant?: "boxed";
+  };
+
+  const usageCards: UsageCardDefinition[] = [
+    {
+      key: "leads",
+      title: t("admin.users.detail.usage.cards.leads.title"),
+      metrics: [
+        {
+          label: t("admin.users.detail.usage.cards.leads.total"),
+          value: formatCount(user.stats.leads),
+        },
+        {
+          label: t("admin.users.detail.usage.cards.leads.active"),
+          value: formatCount(user.stats.activeLeads),
+        },
+        {
+          label: t("admin.users.detail.usage.cards.leads.completed"),
+          value: formatCount(user.stats.completedLeads),
+        },
+        {
+          label: t("admin.users.detail.usage.cards.leads.cancelled"),
+          value: formatCount(user.stats.cancelledLeads),
+        },
+      ],
+    },
+    {
+      key: "projects",
+      title: t("admin.users.detail.usage.cards.projects.title"),
+      metrics: [
+        {
+          label: t("admin.users.detail.usage.cards.projects.total"),
+          value: formatCount(user.stats.projects),
+        },
+        {
+          label: t("admin.users.detail.usage.cards.projects.active"),
+          value: formatCount(user.stats.activeProjects),
+        },
+        {
+          label: t("admin.users.detail.usage.cards.projects.completed"),
+          value: formatCount(user.stats.completedProjects),
+        },
+        {
+          label: t("admin.users.detail.usage.cards.projects.cancelled"),
+          value: formatCount(user.stats.cancelledProjects),
+        },
+      ],
+    },
+    {
+      key: "sessions",
+      title: t("admin.users.detail.usage.cards.sessions.title"),
+      metrics: [
+        {
+          label: t("admin.users.detail.usage.cards.sessions.total"),
+          value: formatCount(user.stats.sessions),
+        },
+        {
+          label: t("admin.users.detail.usage.cards.sessions.active"),
+          value: formatCount(user.stats.activeSessions),
+        },
+        {
+          label: t("admin.users.detail.usage.cards.sessions.completed"),
+          value: formatCount(user.stats.completedSessions),
+        },
+        {
+          label: t("admin.users.detail.usage.cards.sessions.cancelled"),
+          value: formatCount(user.stats.cancelledSessions),
+        },
+      ],
+    },
+    {
+      key: "payments",
+      title: t("admin.users.detail.usage.cards.payments.title"),
+      metricVariant: "boxed",
+      metrics: [
+        {
+          label: t("admin.users.detail.usage.cards.payments.billed"),
+          value: currencyFormatter.format(user.financials.totalBilled),
+        },
+        {
+          label: t("admin.users.detail.usage.cards.payments.collected"),
+          value: currencyFormatter.format(user.financials.totalCollected),
+        },
+        {
+          label: t("admin.users.detail.usage.cards.payments.pending"),
+          value: currencyFormatter.format(pendingPayments),
+        },
+        {
+          label: t("admin.users.detail.usage.cards.payments.refunded"),
+          value: currencyFormatter.format(user.financials.refundedTotal),
+        },
+      ],
+    },
+    {
+      key: "automations",
+      title: t("admin.users.detail.usage.cards.automations.title"),
+      metrics: [
+        {
+          label: t("admin.users.detail.usage.cards.automations.templates"),
+          value: formatCount(user.stats.templates),
+        },
+        {
+          label: t("admin.users.detail.usage.cards.automations.workflows"),
+          value: formatCount(user.stats.workflows),
+        },
+      ],
+    },
+    {
+      key: "catalog",
+      title: t("admin.users.detail.usage.cards.catalog.title"),
+      metrics: [
+        {
+          label: t("admin.users.detail.usage.cards.catalog.packages"),
+          value: formatCount(user.stats.packages),
+          action: () => handleOpenCollection("packages"),
+        },
+        {
+          label: t("admin.users.detail.usage.cards.catalog.services"),
+          value: formatCount(user.stats.services),
+          action: () => handleOpenCollection("services"),
+        },
+        {
+          label: t("admin.users.detail.usage.cards.catalog.sessionTypes"),
+          value: formatCount(user.stats.sessionTypes),
+          action: () => handleOpenCollection("sessionTypes"),
+        },
+      ],
+    },
+  ];
+
+  const closeCollectionViewer = (open: boolean) => {
+    if (!open) {
+      setCollectionViewer(null);
+      setCollectionData([]);
+      setCollectionError(null);
+    }
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-4xl">
-        <SheetHeader className="space-y-2 text-left">
-          <SheetTitle>{t("admin.users.detail.title", { name: user.name })}</SheetTitle>
-          <p className="text-sm text-muted-foreground">{t("admin.users.detail.subtitle")}</p>
+      <SheetContent className="w-[95vw] sm:w-full sm:max-w-[85vw] md:max-w-[80vw] lg:max-w-[78vw] xl:max-w-[75vw] 2xl:max-w-[70vw] overflow-y-auto">
+        <SheetHeader className="space-y-1.5 text-left">
+          <SheetTitle className="text-2xl font-semibold">
+            {user.accountOwner ?? user.name}
+          </SheetTitle>
+          <p className="text-sm text-muted-foreground">
+            {user.business.businessName ?? user.company ?? user.name}
+          </p>
+          <p className="text-xs text-muted-foreground/80">
+            {t("admin.users.detail.subtitle")}
+          </p>
         </SheetHeader>
 
         <div className="mt-6">
-          <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList className="grid grid-cols-3 gap-2 md:grid-cols-6">
-              <TabsTrigger value="overview">{t("admin.users.detail.tabs.overview")}</TabsTrigger>
-              <TabsTrigger value="kisiler" disabled={tabDisabledMap.kisiler}>
-                {t("admin.users.detail.tabs.kisiler")}
-              </TabsTrigger>
-              <TabsTrigger value="projects" disabled={tabDisabledMap.projects}>
-                {t("admin.users.detail.tabs.projects")}
-              </TabsTrigger>
-              <TabsTrigger value="sessions" disabled={tabDisabledMap.sessions}>
-                {t("admin.users.detail.tabs.sessions")}
-              </TabsTrigger>
-              <TabsTrigger value="calendar" disabled={tabDisabledMap.calendar}>
-                {t("admin.users.detail.tabs.calendar")}
-              </TabsTrigger>
-              <TabsTrigger value="payments" disabled={tabDisabledMap.payments}>
-                {t("admin.users.detail.tabs.payments")}
-              </TabsTrigger>
-              <TabsTrigger value="services" disabled={tabDisabledMap.services}>
-                {t("admin.users.detail.tabs.services")}
-              </TabsTrigger>
-              <TabsTrigger value="packages" disabled={tabDisabledMap.packages}>
-                {t("admin.users.detail.tabs.packages")}
-              </TabsTrigger>
-              <TabsTrigger value="sessionTypes" disabled={tabDisabledMap.sessionTypes}>
-                {t("admin.users.detail.tabs.sessionTypes")}
-              </TabsTrigger>
-            </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <SegmentedControl
+              value={activeTab}
+              onValueChange={setActiveTab}
+              options={segmentedOptions}
+              className="w-full"
+            />
 
             <TabsContent value="overview" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-baseline gap-2">
                     <Crown className="h-4 w-4 text-primary" />
                     {t("admin.users.detail.membership.title")}
                   </CardTitle>
-                  <CardDescription>{t("admin.users.detail.membership.subtitle")}</CardDescription>
+                  <CardDescription>
+                    {t("admin.users.detail.membership.subtitle")}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex flex-wrap gap-3">
                     <UserStatusBadge status={user.status} />
                     <div className="text-sm text-muted-foreground">
-                      {t("admin.users.detail.membership.plan", { plan: user.planName })}
+                      {t("admin.users.detail.membership.plan", {
+                        plan: user.planName,
+                      })}
                     </div>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">{t("admin.users.detail.membership.trialEnds")}</p>
-                      <p className="text-sm text-muted-foreground">{formatDateTime(user.trialEndsAt)}</p>
+                      <p className="text-sm font-medium">
+                        {t("admin.users.detail.membership.trialEnds")}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatDateTimeLocalized(user.trialEndsAt)}
+                      </p>
                       {user.trialDaysRemaining != null && (
                         <p className="text-xs text-amber-700">
                           {t("admin.users.detail.membership.daysRemaining", {
@@ -387,16 +730,28 @@ export function AdminUserDetailSheet({ user, open, onOpenChange }: AdminUserDeta
                       )}
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">{t("admin.users.detail.membership.lastActive")}</p>
-                      <p className="text-sm text-muted-foreground">{formatRelativeTime(user.lastActiveAt)}</p>
+                      <p className="text-sm font-medium">
+                        {t("admin.users.detail.membership.lastActive")}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatRelativeTime(user.lastActiveAt)}
+                      </p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">{t("admin.users.detail.membership.startedAt")}</p>
-                      <p className="text-sm text-muted-foreground">{formatDateTime(user.membershipStartedAt)}</p>
+                      <p className="text-sm font-medium">
+                        {t("admin.users.detail.membership.startedAt")}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatDateTimeLocalized(user.membershipStartedAt)}
+                      </p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">{t("admin.users.detail.membership.premiumActivatedAt")}</p>
-                      <p className="text-sm text-muted-foreground">{formatDateTime(user.premiumActivatedAt)}</p>
+                      <p className="text-sm font-medium">
+                        {t("admin.users.detail.membership.premiumActivatedAt")}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatDateTimeLocalized(user.premiumActivatedAt)}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -404,28 +759,54 @@ export function AdminUserDetailSheet({ user, open, onOpenChange }: AdminUserDeta
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-baseline gap-2">
                     <Clock className="h-4 w-4 text-primary" />
                     {t("admin.users.detail.usage.title")}
                   </CardTitle>
-                  <CardDescription>{t("admin.users.detail.usage.subtitle")}</CardDescription>
+                  <CardDescription>
+                    {t("admin.users.detail.usage.subtitle")}
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="grid gap-3 sm:grid-cols-2">
-                  {[
-                    { key: "projects", value: user.stats.projects },
-                    { key: "activeProjects", value: user.stats.activeProjects },
-                    { key: "leads", value: user.stats.leads },
-                    { key: "sessions", value: user.stats.sessions },
-                    { key: "upcomingSessions", value: user.stats.upcomingSessions },
-                    { key: "calendarEvents", value: user.stats.calendarEvents },
-                    { key: "payments", value: user.stats.payments },
-                    { key: "teamMembers", value: user.stats.teamMembers },
-                  ].map((stat) => (
-                    <div key={stat.key} className="space-y-1 rounded-md border p-3">
-                      <p className="text-sm font-medium">
-                        {t(`admin.users.detail.usage.${stat.key}`)}
+                <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {usageCards.map((card) => (
+                    <div
+                      key={card.key}
+                      className="space-y-3 rounded-xl border bg-card/80 p-4 shadow-sm"
+                    >
+                      <p className="text-sm font-semibold text-foreground">
+                        {card.title}
                       </p>
-                      <p className="text-2xl font-semibold">{stat.value.toLocaleString()}</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {card.metrics.map((metric) => (
+                          <div
+                            key={`${card.key}-${metric.label}`}
+                            className={cn(
+                              "rounded-xl border bg-background p-4 shadow-sm",
+                              card.metricVariant === "boxed"
+                                ? "border-primary/30"
+                                : "border-border/60"
+                            )}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              {renderMetricLabel(metric.label)}
+                              {metric.action ? (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 rounded-full"
+                                  onClick={metric.action}
+                                >
+                                  <ArrowUpRight className="h-4 w-4" />
+                                </Button>
+                              ) : null}
+                            </div>
+                            <p className="mt-2 text-2xl font-semibold text-foreground whitespace-nowrap">
+                              {metric.value}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </CardContent>
@@ -433,51 +814,81 @@ export function AdminUserDetailSheet({ user, open, onOpenChange }: AdminUserDeta
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-baseline gap-2">
                     <Mail className="h-4 w-4 text-primary" />
                     {t("admin.users.detail.account.title")}
                   </CardTitle>
-                  <CardDescription>{t("admin.users.detail.account.subtitle")}</CardDescription>
+                  <CardDescription>
+                    {t("admin.users.detail.account.subtitle")}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <InfoLine label={t("admin.users.detail.account.owner")} value={user.accountOwner ?? "—"} />
-                    <InfoLine label={t("admin.users.detail.account.company")} value={user.company ?? "—"} />
-                    <InfoLine label={t("admin.users.detail.account.email")} value={user.email} />
-                    <InfoLine label={t("admin.users.detail.account.timezone")} value={user.timezone ?? "—"} />
-                    <InfoLine label={t("admin.users.detail.account.businessName")} value={user.business.businessName ?? "—"} />
-                    <InfoLine label={t("admin.users.detail.account.businessEmail")} value={user.business.businessEmail ?? "—"} />
-                    <InfoLine label={t("admin.users.detail.account.businessPhone")} value={user.business.businessPhone ?? "—"} />
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <InfoLine
+                      label={t("admin.users.detail.account.owner")}
+                      value={user.accountOwner ?? "—"}
+                    />
+                    <InfoLine
+                      label={t("admin.users.detail.account.email")}
+                      value={user.email}
+                    />
+                    <InfoLine
+                      label={t("admin.users.detail.account.timezone")}
+                      value={user.timezone ?? "—"}
+                    />
+                    <InfoLine
+                      label={t("admin.users.detail.account.businessName")}
+                      value={user.business.businessName ?? "—"}
+                    />
+                    <InfoLine
+                      label={t("admin.users.detail.account.businessEmail")}
+                      value={user.business.businessEmail ?? "—"}
+                    />
+                    <InfoLine
+                      label={t("admin.users.detail.account.businessPhone")}
+                      value={user.business.businessPhone ?? "—"}
+                    />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">{t("admin.users.detail.account.social")}</p>
+                    <p className="text-sm font-medium">
+                      {t("admin.users.detail.account.social")}
+                    </p>
                     {socialEntries.length ? (
                       <div className="mt-2 flex flex-wrap gap-2">
-                        {socialEntries.map(([channel, url]) => (
+                        {socialEntries.map((channel) => (
                           <a
-                            key={channel}
-                            href={ensureUrl(String(url))}
+                            key={channel.key}
+                            href={ensureUrl(channel.url)}
                             target="_blank"
                             rel="noreferrer noopener"
                             className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
                           >
-                            {channel}
+                            {channel.label}
                           </a>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground">{t("admin.users.detail.account.emptySocial")}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {t("admin.users.detail.account.emptySocial")}
+                      </p>
                     )}
                   </div>
                   <Separator />
                   <div>
-                    <p className="text-sm font-medium">{t("admin.users.detail.account.notes")}</p>
-                    <p className="text-sm text-muted-foreground mt-1">{user.notes ?? t("admin.users.detail.account.emptyNotes")}</p>
+                    <p className="text-sm font-medium">
+                      {t("admin.users.detail.account.notes")}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {user.notes ?? t("admin.users.detail.account.emptyNotes")}
+                    </p>
                   </div>
                   {user.tags?.length ? (
                     <div className="flex flex-wrap gap-2">
                       {user.tags.map((tag) => (
-                        <span key={tag} className="rounded-full bg-muted px-3 py-1 text-xs font-medium">
+                        <span
+                          key={tag}
+                          className="rounded-full bg-muted px-3 py-1 text-xs font-medium"
+                        >
                           {tag}
                         </span>
                       ))}
@@ -488,41 +899,70 @@ export function AdminUserDetailSheet({ user, open, onOpenChange }: AdminUserDeta
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-baseline gap-2">
                     <AlarmClockCheck className="h-4 w-4 text-primary" />
                     {t("admin.users.detail.actions.title")}
                   </CardTitle>
-                  <CardDescription>{t("admin.users.detail.actions.subtitle")}</CardDescription>
+                  <CardDescription>
+                    {t("admin.users.detail.actions.subtitle")}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-2">
-                  <Button variant="default">{t("admin.users.detail.actions.extendTrial")}</Button>
-                  <Button variant="secondary">{t("admin.users.detail.actions.grantPremium")}</Button>
-                  <Button variant="outline">{t("admin.users.detail.actions.addComplimentary")}</Button>
-                  <Button variant="outline">{t("admin.users.detail.actions.suspendAccount")}</Button>
-                  <Button variant="ghost">{t("admin.users.detail.actions.contactUser")}</Button>
+                  <Button variant="default">
+                    {t("admin.users.detail.actions.extendTrial")}
+                  </Button>
+                  <Button variant="secondary">
+                    {t("admin.users.detail.actions.grantPremium")}
+                  </Button>
+                  <Button variant="outline">
+                    {t("admin.users.detail.actions.addComplimentary")}
+                  </Button>
+                  <Button variant="outline">
+                    {t("admin.users.detail.actions.suspendAccount")}
+                  </Button>
+                  <Button variant="ghost">
+                    {t("admin.users.detail.actions.contactUser")}
+                  </Button>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-baseline gap-2">
                     <Gift className="h-4 w-4 text-primary" />
                     {t("admin.users.detail.financials.title")}
                   </CardTitle>
-                  <CardDescription>{t("admin.users.detail.financials.subtitle")}</CardDescription>
+                  <CardDescription>
+                    {t("admin.users.detail.financials.subtitle")}
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="grid gap-3 sm:grid-cols-2">
+                <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {[
-                    { key: "monthlyRecurringRevenue", value: user.financials.monthlyRecurringRevenue },
-                    { key: "lifetimeValue", value: user.financials.lifetimeValue },
-                    { key: "averageDealSize", value: user.financials.averageDealSize },
-                    { key: "overdueBalance", value: user.financials.overdueBalance },
+                    {
+                      key: "monthlyRecurringRevenue",
+                      value: user.financials.monthlyRecurringRevenue,
+                    },
+                    {
+                      key: "lifetimeValue",
+                      value: user.financials.lifetimeValue,
+                    },
+                    {
+                      key: "averageDealSize",
+                      value: user.financials.averageDealSize,
+                    },
+                    {
+                      key: "overdueBalance",
+                      value: pendingPayments,
+                    },
                   ].map((financial) => (
-                    <div key={financial.key} className="rounded-md border p-3">
-                      <p className="text-sm font-medium">
+                    <div
+                      key={financial.key}
+                      className="rounded-2xl border bg-card/90 p-4 shadow-sm"
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         {t(`admin.users.detail.financials.${financial.key}`)}
                       </p>
-                      <p className="text-xl font-semibold">
+                      <p className="text-2xl font-semibold">
                         {currencyFormatter.format(financial.value)}
                       </p>
                     </div>
@@ -534,7 +974,9 @@ export function AdminUserDetailSheet({ user, open, onOpenChange }: AdminUserDeta
             <DetailTab
               value="kisiler"
               title={t("admin.users.detail.collections.kisiler.title")}
-              description={t("admin.users.detail.collections.kisiler.description")}
+              description={t(
+                "admin.users.detail.collections.kisiler.description"
+              )}
               emptyLabel={t("admin.users.detail.collections.kisiler.empty")}
               data={user.detail.leads}
               columns={kisiColumns}
@@ -543,7 +985,9 @@ export function AdminUserDetailSheet({ user, open, onOpenChange }: AdminUserDeta
             <DetailTab
               value="projects"
               title={t("admin.users.detail.collections.projects.title")}
-              description={t("admin.users.detail.collections.projects.description")}
+              description={t(
+                "admin.users.detail.collections.projects.description"
+              )}
               emptyLabel={t("admin.users.detail.collections.projects.empty")}
               data={user.detail.projects}
               columns={projectColumns}
@@ -552,61 +996,56 @@ export function AdminUserDetailSheet({ user, open, onOpenChange }: AdminUserDeta
             <DetailTab
               value="sessions"
               title={t("admin.users.detail.collections.sessions.title")}
-              description={t("admin.users.detail.collections.sessions.description")}
+              description={t(
+                "admin.users.detail.collections.sessions.description"
+              )}
               emptyLabel={t("admin.users.detail.collections.sessions.empty")}
               data={user.detail.sessions}
               columns={sessionColumns}
             />
 
             <DetailTab
-              value="calendar"
-              title={t("admin.users.detail.collections.calendar.title")}
-              description={t("admin.users.detail.collections.calendar.description")}
-              emptyLabel={t("admin.users.detail.collections.calendar.empty")}
-              data={user.detail.calendar}
-              columns={calendarColumns}
-            />
-
-            <DetailTab
               value="payments"
               title={t("admin.users.detail.collections.payments.title")}
-              description={t("admin.users.detail.collections.payments.description")}
+              description={t(
+                "admin.users.detail.collections.payments.description"
+              )}
               emptyLabel={t("admin.users.detail.collections.payments.empty")}
               data={user.detail.payments}
               columns={paymentColumns}
             />
-
-            <DetailTab
-              value="services"
-              title={t("admin.users.detail.collections.services.title")}
-              description={t("admin.users.detail.collections.services.description")}
-              emptyLabel={t("admin.users.detail.collections.services.empty")}
-              data={user.detail.services}
-              columns={servicesColumns}
-              itemsPerPage={6}
-            />
-
-            <DetailTab
-              value="packages"
-              title={t("admin.users.detail.collections.packages.title")}
-              description={t("admin.users.detail.collections.packages.description")}
-              emptyLabel={t("admin.users.detail.collections.packages.empty")}
-              data={user.detail.packages}
-              columns={packagesColumns}
-              itemsPerPage={6}
-            />
-
-            <DetailTab
-              value="sessionTypes"
-              title={t("admin.users.detail.collections.sessionTypes.title")}
-              description={t("admin.users.detail.collections.sessionTypes.description")}
-              emptyLabel={t("admin.users.detail.collections.sessionTypes.empty")}
-              data={user.detail.sessionTypes}
-              columns={sessionTypeColumns}
-              itemsPerPage={6}
-            />
           </Tabs>
         </div>
+
+        <AppSheetModal
+          title={
+            collectionViewer
+            ? collectionConfigs[collectionViewer.type].title
+            : ""
+          }
+          isOpen={Boolean(collectionViewer)}
+          onOpenChange={closeCollectionViewer}
+          size="wide"
+        >
+          {collectionLoading ? (
+            <TableLoadingSkeleton />
+          ) : collectionError ? (
+            <p className="text-sm text-destructive">{collectionError}</p>
+          ) : collectionViewer ? (
+            <AdvancedDataTable
+              data={collectionData as any[]}
+              columns={collectionConfigs[collectionViewer.type].columns}
+              rowKey={collectionConfigs[collectionViewer.type].rowKey}
+              variant="plain"
+              className="max-h-[70vh] overflow-y-auto"
+              emptyState={
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                  {tCommon("messages.info.no_data")}
+                </div>
+              }
+            />
+          ) : null}
+        </AppSheetModal>
       </SheetContent>
     </Sheet>
   );
@@ -647,7 +1086,11 @@ function DetailTab<T>({
               columns={columns}
               itemsPerPage={itemsPerPage}
               className="max-w-full overflow-x-auto"
-              emptyState={<span className="text-sm text-muted-foreground">{emptyLabel}</span>}
+              emptyState={
+                <span className="text-sm text-muted-foreground">
+                  {emptyLabel}
+                </span>
+              }
             />
           )}
         </CardContent>

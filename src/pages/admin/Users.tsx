@@ -1,75 +1,248 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Card } from "@/components/ui/card";
-import { DataTable, type Column } from "@/components/ui/data-table";
-import { useAdminUsersData } from "@/features/admin-users/hooks/useAdminUsersData";
-import type { AdminUserAccount } from "@/features/admin-users/types";
-import { UserStatusBadge } from "@/features/admin-users/components/UserStatusBadge";
+import { formatDistanceToNow } from "date-fns";
+import { enUS, tr as trLocale } from "date-fns/locale";
+import {
+  AdvancedDataTable,
+  type AdvancedDataTableSortState,
+  type AdvancedTableColumn,
+} from "@/components/data-table";
+import { Button } from "@/components/ui/button";
 import { TableLoadingSkeleton } from "@/components/ui/loading-presets";
+import { useAdminUsersData } from "@/features/admin-users/hooks/useAdminUsersData";
+import type {
+  AdminUserAccount,
+  AdminUsersSummaryMetrics,
+  MembershipStatus,
+} from "@/features/admin-users/types";
+import { UsersSummaryCards } from "@/features/admin-users/components/UsersSummaryCards";
+import { UserStatusBadge } from "@/features/admin-users/components/UserStatusBadge";
+import { AdminUserDetailSheet } from "@/features/admin-users/components/AdminUserDetailSheet";
 
 export default function AdminUsers() {
-  const { t } = useTranslation("pages");
+  const { t, i18n } = useTranslation("pages");
   const {
     users,
     isLoading,
     isError,
     error,
+    refetch,
   } = useAdminUsersData();
 
-  const columns = useMemo<Column<AdminUserAccount>[]>(() => {
+  const [searchValue, setSearchValue] = useState("");
+  const [sortState, setSortState] = useState<AdvancedDataTableSortState>({
+    columnId: "name",
+    direction: "asc",
+  });
+  const [selectedUser, setSelectedUser] = useState<AdminUserAccount | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+
+  const locale = useMemo(() => {
+    if (i18n.language?.toLowerCase().startsWith("tr")) {
+      return trLocale;
+    }
+    return enUS;
+  }, [i18n.language]);
+
+  const formatRelativeTime = useCallback(
+    (value?: string) => {
+      if (!value) return "—";
+      try {
+        return formatDistanceToNow(new Date(value), {
+          addSuffix: true,
+          locale,
+        });
+      } catch {
+        return value;
+      }
+    },
+    [locale]
+  );
+
+  const formatLocalizedDate = useCallback(
+    (value?: string | null) => {
+      if (!value) return "—";
+      try {
+        return new Intl.DateTimeFormat(i18n.language ?? undefined, {
+          dateStyle: "medium",
+        }).format(new Date(value));
+      } catch {
+        return "—";
+      }
+    },
+    [i18n.language]
+  );
+
+  const metrics = useMemo<AdminUsersSummaryMetrics>(() => {
+    const EXPIRING_THRESHOLD_DAYS = 3;
+    return users.reduce<AdminUsersSummaryMetrics>(
+      (acc, user) => {
+        acc.totalUsers += 1;
+        if (user.status === "premium") acc.premiumUsers += 1;
+        if (user.status === "trial") {
+          acc.activeTrials += 1;
+          if ((user.trialDaysRemaining ?? Infinity) <= EXPIRING_THRESHOLD_DAYS) {
+            acc.expiringTrials += 1;
+          }
+        }
+        if (user.status === "complimentary") acc.complimentaryUsers += 1;
+        if (user.status === "suspended") acc.suspendedUsers += 1;
+        return acc;
+      },
+      {
+        totalUsers: 0,
+        premiumUsers: 0,
+        activeTrials: 0,
+        expiringTrials: 0,
+        complimentaryUsers: 0,
+        suspendedUsers: 0,
+      }
+    );
+  }, [users]);
+
+  const filteredUsers = useMemo(() => {
+    const query = searchValue.trim().toLowerCase();
+    const numericQuery = searchValue.replace(/\D/g, "");
+    if (!query && !numericQuery) {
+      return users;
+    }
+    return users.filter((user) => {
+      const haystacks = [
+        user.name,
+        user.email,
+        user.company,
+        user.accountOwner,
+        user.business.businessName,
+        user.business.businessEmail,
+      ];
+      if (query && haystacks.some((value) => value?.toLowerCase().includes(query))) {
+        return true;
+      }
+      const phoneRaw = user.business.businessPhone ?? "";
+      if (query && phoneRaw.toLowerCase().includes(query)) {
+        return true;
+      }
+      if (numericQuery) {
+        const phoneDigits = phoneRaw.replace(/\D/g, "");
+        if (phoneDigits.includes(numericQuery)) {
+          return true;
+        }
+      }
+      return false;
+    });
+  }, [users, searchValue]);
+
+  const sortedUsers = useMemo(() => {
+    const data = [...filteredUsers];
+    if (!sortState.columnId) return data;
+
+    const compareValues = (a?: string | number | null, b?: string | number | null) => {
+      if (a == null && b == null) return 0;
+      if (a == null) return 1;
+      if (b == null) return -1;
+      if (typeof a === "number" && typeof b === "number") {
+        return a - b;
+      }
+      return String(a).localeCompare(String(b), undefined, { sensitivity: "base" });
+    };
+
+    const getValue = (user: AdminUserAccount) => {
+      switch (sortState.columnId) {
+        case "name":
+          return user.name;
+        case "status":
+          return user.status;
+        case "trial":
+          return user.trialEndsAt ? new Date(user.trialEndsAt).getTime() : null;
+        case "lastActive":
+          return user.lastActiveAt ? new Date(user.lastActiveAt).getTime() : null;
+        case "leads":
+          return user.stats.leads;
+        default:
+          return user.name;
+      }
+    };
+
+    data.sort((a, b) => {
+      const result = compareValues(getValue(a), getValue(b));
+      return sortState.direction === "asc" ? result : -result;
+    });
+
+    return data;
+  }, [filteredUsers, sortState]);
+
+  const handleManage = useCallback((user: AdminUserAccount) => {
+    setSelectedUser(user);
+    setDetailOpen(true);
+  }, []);
+
+  const columns = useMemo<AdvancedTableColumn<AdminUserAccount>[]>(() => {
     return [
       {
-        key: "name",
-        header: t("admin.users.table.columns.user"),
+        id: "user",
+        label: t("admin.users.table.columns.user"),
         sortable: true,
+        sortId: "name",
         render: (user) => (
           <div>
-            <p className="font-semibold">{user.name}</p>
-            <p className="text-xs text-muted-foreground">{user.email}</p>
-            <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
-              {user.company ? <span>{user.company}</span> : null}
-              <UserStatusBadge status={user.status} />
-            </div>
+            <p className="font-semibold">
+              {user.accountOwner ?? user.name}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {user.business.businessName ?? user.company ?? "—"}
+            </p>
           </div>
         ),
       },
       {
-        key: "businessEmail",
-        header: t("admin.users.table.columns.businessEmail"),
-        sortable: true,
+        id: "contact",
+        label: t("admin.users.table.columns.business"),
         render: (user) => (
           <div className="space-y-1">
             <p className="text-sm font-medium">{user.business.businessEmail ?? "—"}</p>
-            {user.business.businessName ? (
-              <p className="text-xs text-muted-foreground">{user.business.businessName}</p>
-            ) : null}
+            <p className="text-xs text-muted-foreground">
+              {user.business.businessPhone ?? "—"}
+            </p>
           </div>
         ),
       },
       {
-        key: "businessPhone",
-        header: t("admin.users.table.columns.businessPhone"),
-        render: (user) => (
-          <p className="text-sm text-muted-foreground">{user.business.businessPhone ?? "—"}</p>
-        ),
-      },
-      {
-        key: "status",
-        header: t("admin.users.table.columns.trialStatus"),
+        id: "status",
+        label: t("admin.users.table.columns.status"),
         sortable: true,
-        accessor: (user) => user.status,
-        render: (user) => (
-          <div className="flex items-center gap-2">
-            <UserStatusBadge status={user.status} />
-            <span className="text-sm font-medium">
-              {t(`admin.users.status.${user.status}`)}
-            </span>
-          </div>
-        ),
+        render: (user) => {
+          const normalizedStatus: MembershipStatus = user.status === "premium" ? "premium" : "trial";
+          return <UserStatusBadge status={normalizedStatus} />;
+        },
       },
       {
-        key: "stats.projects",
-        header: t("admin.users.table.columns.metrics"),
+        id: "trial",
+        label: t("admin.users.table.columns.trial"),
+        sortable: true,
+        render: (user) => {
+          if (user.status === "trial") {
+            return (
+              <div className="space-y-1">
+                <p className="font-medium">
+                  {t("admin.users.table.trialDays", { days: user.trialDaysRemaining ?? 0 })}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t("admin.users.table.trialEnds", {
+                    date: formatLocalizedDate(user.trialEndsAt),
+                  })}
+                </p>
+              </div>
+            );
+          }
+          if (user.status === "expired") {
+            return <p className="text-sm text-muted-foreground">{t("admin.users.table.trialExpired")}</p>;
+          }
+          return <p className="text-sm text-muted-foreground">{t("admin.users.table.notApplicable")}</p>;
+        },
+      },
+      {
+        id: "leads",
+        label: t("admin.users.table.columns.metrics"),
         render: (user) => (
           <div className="flex flex-wrap gap-6 text-xs text-muted-foreground">
             <div>
@@ -87,12 +260,40 @@ export default function AdminUsers() {
           </div>
         ),
       },
+      {
+        id: "lastActive",
+        label: t("admin.users.table.columns.lastActive"),
+        sortable: true,
+        render: (user) => (
+          <div className="space-y-1">
+            <p className="font-medium">{formatRelativeTime(user.lastActiveAt)}</p>
+            <p className="text-xs text-muted-foreground">{user.timezone ?? "—"}</p>
+          </div>
+        ),
+      },
     ];
-  }, [t]);
+  }, [t, formatLocalizedDate, formatRelativeTime]);
+
+  const rowActions = useCallback(
+    (user: AdminUserAccount) => (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={(event) => {
+          event.stopPropagation();
+          handleManage(user);
+        }}
+      >
+        {t("admin.users.table.actions.manage")}
+      </Button>
+    ),
+    [handleManage, t]
+  );
 
   return (
-    <div className="container mx-auto space-y-6 py-6">
-      <div>
+    <div className="space-y-6 py-6">
+      <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">{t("admin.users.title")}</h1>
         <p className="text-muted-foreground">{t("admin.users.subtitle")}</p>
       </div>
@@ -104,21 +305,47 @@ export default function AdminUsers() {
         </div>
       ) : null}
 
-      <Card className="p-6">
-        {isLoading ? (
-          <TableLoadingSkeleton />
-        ) : (
-          <DataTable
-            data={users}
-            columns={columns}
-            emptyState={
-              <div className="py-10 text-center text-sm text-muted-foreground">
-                {t("admin.users.table.empty")}
-              </div>
-            }
-          />
-        )}
-      </Card>
+      <UsersSummaryCards metrics={metrics} isLoading={isLoading} />
+
+      <AdvancedDataTable
+        title={t("admin.users.tableTitle", { defaultValue: t("admin.users.title") })}
+        description={t("admin.users.tableSubtitle", {
+          defaultValue: t("admin.users.subtitle"),
+        })}
+        data={sortedUsers}
+        columns={columns}
+        rowKey={(user) => user.id}
+        isLoading={isLoading}
+        loadingState={<TableLoadingSkeleton />}
+        searchPlaceholder={t("admin.users.filters.searchPlaceholder")}
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        sortState={sortState}
+        onSortChange={setSortState}
+        onRowClick={handleManage}
+        rowActions={rowActions}
+        actions={
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            {t("admin.users.actions.refresh")}
+          </Button>
+        }
+        emptyState={
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            {t("admin.users.table.empty")}
+          </div>
+        }
+      />
+
+      <AdminUserDetailSheet
+        user={selectedUser}
+        open={detailOpen}
+        onOpenChange={(open) => {
+          setDetailOpen(open);
+          if (!open) {
+            setSelectedUser(null);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import type { PaymentSummaryMetrics } from "@/lib/payments/metrics";
+
 export interface Payment {
   id: string;
   amount: number;
@@ -31,13 +33,7 @@ export interface Payment {
   } | null;
 }
 
-export interface PaymentMetrics {
-  totalPaid: number;
-  totalInvoiced: number;
-  totalRefunded: number;
-  remainingBalance: number;
-  collectionRate: number;
-}
+export type PaymentMetrics = PaymentSummaryMetrics;
 
 export type PaymentView = "recorded" | "scheduled";
 

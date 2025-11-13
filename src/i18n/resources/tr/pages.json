@@ -764,7 +764,7 @@
           "business": "İşletme iletişimi",
           "businessEmail": "İşletme e-postası",
           "businessPhone": "İşletme telefonu",
-          "trialStatus": "Trial statüsü",
+          "status": "Durum",
           "trial": "Trial zaman çizelgesi",
           "metrics": "Öne çıkan metrikler",
           "lastActive": "Son aktif",
@@ -822,8 +822,49 @@
           "upcomingSessions": "Yaklaşan seanslar",
           "calendarEvents": "Takvim etkinlikleri",
           "payments": "Ödemeler",
-          "teamMembers": "Ekip üyeleri"
-        },
+          "teamMembers": "Ekip üyeleri",
+        "cards": {
+          "leads": {
+            "title": "Kişiler",
+            "total": "Toplam oluşturulan",
+            "active": "Aktif yaşam döngüsünde",
+            "completed": "Tamamlanan",
+            "cancelled": "İptal edilen"
+          },
+          "projects": {
+            "title": "Projeler",
+            "total": "Toplam oluşturulan",
+            "active": "Aktif yaşam döngüsünde",
+            "completed": "Tamamlanan",
+            "cancelled": "İptal edilen"
+          },
+          "sessions": {
+            "title": "Seanslar",
+            "total": "Toplam planlanan",
+            "active": "Aktif yaşam döngüsünde",
+            "completed": "Tamamlanan",
+            "cancelled": "İptal edilen"
+          },
+          "payments": {
+            "title": "Ödemeler",
+            "billed": "Toplam faturalanan",
+            "collected": "Toplam tahsilat",
+            "pending": "Bekleyen ödemeler",
+            "refunded": "İade edilen"
+          },
+          "automations": {
+            "title": "Şablonlar ve iş akışları",
+            "templates": "Şablonlar",
+            "workflows": "İş akışları"
+          },
+          "catalog": {
+            "title": "Teklif envanteri",
+            "packages": "Paketler",
+            "services": "Servisler",
+            "sessionTypes": "Seans tipleri"
+          }
+        }
+      },
         "account": {
           "title": "Hesap bilgileri",
           "subtitle": "Sahiplik, iletişim ve notlar",
@@ -951,8 +992,11 @@
               "name": "Servis",
               "category": "Kategori",
               "type": "Tür",
-              "price": "Fiyat",
-              "updated": "Güncellendi"
+              "sellingPrice": "Satış fiyatı",
+              "costPrice": "Maliyet",
+              "status": "Durum",
+              "updated": "Güncellendi",
+              "created": "Oluşturuldu"
             }
           },
           "packages": {
@@ -961,15 +1005,17 @@
               "price": "Fiyat",
               "clientTotal": "Müşteri toplamı",
               "status": "Durum",
-              "updated": "Güncellendi"
+              "updated": "Güncellendi",
+              "created": "Oluşturuldu"
             }
           },
           "sessionTypes": {
             "columns": {
               "name": "Seans tipi",
-              "category": "Kategori",
               "duration": "Süre",
-              "updated": "Güncellendi"
+              "status": "Durum",
+              "updated": "Güncellendi",
+              "created": "Oluşturuldu"
             }
           }
         }

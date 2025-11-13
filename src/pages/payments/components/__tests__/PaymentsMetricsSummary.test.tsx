@@ -32,8 +32,10 @@ describe("PaymentsMetricsSummary", () => {
         metrics={{
           totalInvoiced: 12345,
           totalPaid: 8900,
+          totalRefunded: 1200,
           remainingBalance: 345,
           collectionRate: 0.72,
+          netCollected: 7700,
         }}
         formatCurrency={formatCurrency}
         formatPercent={formatPercent}

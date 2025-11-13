@@ -92,10 +92,10 @@ const AppRoutes = () => {
           <Route path="templates" element={<Templates />} />
           <Route path="template-builder" element={<TemplateBuilder />} />
           <Route path="admin" element={<AdminLayout />}>
-            <Route path="localization" element={<AdminLocalization />} />
             <Route path="users" element={<AdminUsers />} />
+            <Route path="localization" element={<AdminLocalization />} />
             <Route path="system" element={<AdminSystem />} />
-            <Route index element={<Navigate to="/admin/localization" replace />} />
+            <Route index element={<Navigate to="/admin/users" replace />} />
           </Route>
           {renderSettingsRoutes(settingsOverlayEnabled)}
         </Route>

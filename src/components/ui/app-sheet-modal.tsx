@@ -128,13 +128,18 @@ export function AppSheetModal({
 
   const sideVariant = isMobile ? 'bottom' : 'right';
 
+  const sizeClassMap: Record<NonNullable<AppSheetModalProps["size"]>, string> = {
+    content: "sm:max-w-md",
+    default: "sm:max-w-4xl",
+    lg: "sm:max-w-5xl",
+    wide: "sm:max-w-[90vw]",
+    xl: "sm:max-w-[96vw]",
+  };
+
   const sheetContentClass = cn(
-    "flex flex-col overflow-visible",
-    !isMobile && "sm:max-w-6xl w-full",
-    isMobile && "max-h-[85vh] rounded-t-xl",
-    size === 'content' && !isMobile && "sm:max-w-md",
-    size === 'lg' && !isMobile && "sm:max-w-2xl",
-    size === 'wide' && !isMobile && "sm:max-w-4xl"
+    "flex flex-col overflow-visible w-full",
+    !isMobile && sizeClassMap[size],
+    isMobile && "max-h-[85vh] rounded-t-xl"
   );
 
   return (

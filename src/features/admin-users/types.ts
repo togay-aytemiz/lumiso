@@ -16,27 +16,49 @@ export type AdminUserServiceSummary = Database["public"]["Tables"]["services"]["
 export type AdminUserPackageSummary = Database["public"]["Tables"]["packages"]["Row"];
 export type AdminUserSessionTypeSummary = Database["public"]["Tables"]["session_types"]["Row"];
 
+export interface AdminUserSocialChannel {
+  key: string;
+  label: string;
+  url: string;
+}
+
 export interface AdminUserBusinessProfile {
   businessName?: string | null;
   businessEmail?: string | null;
   businessPhone?: string | null;
-  socialChannels?: Record<string, string>;
+  socialChannels?: AdminUserSocialChannel[];
 }
 
 export interface AdminUserUsageSnapshot {
   projects: number;
   activeProjects: number;
+  completedProjects: number;
+  cancelledProjects: number;
   leads: number;
+  activeLeads: number;
+  completedLeads: number;
+  cancelledLeads: number;
   sessions: number;
+  activeSessions: number;
+  completedSessions: number;
+  cancelledSessions: number;
   upcomingSessions: number;
   calendarEvents: number;
   payments: number;
   teamMembers: number;
+  templates: number;
+  workflows: number;
+  packages: number;
+  services: number;
+  sessionTypes: number;
 }
 
 export interface AdminUserFinancials {
   monthlyRecurringRevenue: number;
   lifetimeValue: number;
+  totalBilled: number;
+  totalCollected: number;
+  refundedTotal: number;
   averageDealSize: number;
   overdueBalance: number;
 }

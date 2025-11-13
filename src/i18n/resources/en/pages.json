@@ -760,7 +760,7 @@
           "business": "Business contact",
           "businessEmail": "Business email",
           "businessPhone": "Business phone",
-          "trialStatus": "Trial status",
+          "status": "Status",
           "trial": "Trial timeline",
           "metrics": "Key metrics",
           "lastActive": "Last active",
@@ -818,8 +818,49 @@
           "upcomingSessions": "Upcoming sessions",
           "calendarEvents": "Calendar events",
           "payments": "Payments",
-          "teamMembers": "Team members"
-        },
+          "teamMembers": "Team members",
+          "cards": {
+            "leads": {
+            "title": "Leads",
+            "total": "Total created",
+            "active": "Active lifecycle",
+            "completed": "Completed",
+            "cancelled": "Cancelled"
+          },
+            "projects": {
+            "title": "Projects",
+            "total": "Total created",
+            "active": "Active lifecycle",
+            "completed": "Completed",
+            "cancelled": "Cancelled"
+          },
+            "sessions": {
+            "title": "Sessions",
+            "total": "Total scheduled",
+            "active": "Active lifecycle",
+            "completed": "Completed",
+            "cancelled": "Cancelled"
+          },
+            "payments": {
+            "title": "Payments",
+            "billed": "Total invoiced",
+            "collected": "Total collected",
+            "pending": "Pending payments",
+            "refunded": "Refunded"
+          },
+            "automations": {
+            "title": "Templates & workflows",
+            "templates": "Templates",
+            "workflows": "Workflows"
+          },
+            "catalog": {
+            "title": "Catalog coverage",
+            "packages": "Packages",
+            "services": "Services",
+            "sessionTypes": "Session types"
+          }
+        }
+      },
         "account": {
           "title": "Account context",
           "subtitle": "Ownership, contact, and notes",
@@ -947,8 +988,11 @@
               "name": "Service",
               "category": "Category",
               "type": "Type",
-              "price": "Price",
-              "updated": "Updated"
+              "sellingPrice": "Selling price",
+              "costPrice": "Cost price",
+              "status": "Status",
+              "updated": "Updated",
+              "created": "Created"
             }
           },
           "packages": {
@@ -957,15 +1001,17 @@
               "price": "Price",
               "clientTotal": "Client total",
               "status": "Status",
-              "updated": "Updated"
+              "updated": "Updated",
+              "created": "Created"
             }
           },
           "sessionTypes": {
             "columns": {
               "name": "Session type",
-              "category": "Category",
               "duration": "Duration",
-              "updated": "Updated"
+              "status": "Status",
+              "updated": "Updated",
+              "created": "Created"
             }
           }
         }

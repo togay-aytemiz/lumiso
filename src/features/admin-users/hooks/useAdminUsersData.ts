@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { addDays, differenceInCalendarDays, isAfter, parseISO } from "date-fns";
+import { addDays, differenceInCalendarDays, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
+import { computePaymentSummaryMetrics } from "@/lib/payments/metrics";
 import type {
   AdminUserAccount,
   AdminUserLeadSummary,
@@ -12,6 +13,7 @@ import type {
   AdminUserServiceSummary,
   AdminUserSessionSummary,
   AdminUserSessionTypeSummary,
+  AdminUserSocialChannel,
   MembershipStatus,
 } from "../types";
 
@@ -20,7 +22,7 @@ type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 type OrganizationSettingsRow = Database["public"]["Tables"]["organization_settings"]["Row"];
 
 const TRIAL_LENGTH_DAYS = 14;
-
+const PAYMENT_SUCCESS_STATUSES = new Set(["paid", "completed", "succeeded", "settled"]);
 const getFirstError = (...results: Array<{ error: unknown | null }>) =>
   results.find((result) => result.error)?.error ?? null;
 
@@ -70,9 +72,8 @@ const determineStatus = (
   const daysElapsed = differenceInCalendarDays(now, membershipStartedAt);
   const trialDaysRemaining = Math.max(0, TRIAL_LENGTH_DAYS - daysElapsed);
 
-  const successfulPaymentStatuses = new Set(["paid", "completed", "succeeded"]);
   const hasSuccessfulPayment = payments.some((payment) =>
-    payment.status ? successfulPaymentStatuses.has(payment.status.toLowerCase()) : false
+    payment.status ? PAYMENT_SUCCESS_STATUSES.has(payment.status.toLowerCase()) : false
   );
 
   let status: MembershipStatus = "trial";
@@ -89,11 +90,68 @@ const determineStatus = (
   };
 };
 
-const sumPayments = (
-  payments: AdminUserPaymentSummary[],
-  predicate: (payment: AdminUserPaymentSummary) => boolean
-) =>
-  payments.reduce((sum, payment) => (predicate(payment) ? sum + (payment.amount ?? 0) : sum), 0);
+const SOCIAL_LABEL_OVERRIDES: Record<string, string> = {
+  website: "Website",
+  instagram: "Instagram",
+  youtube: "YouTube",
+  facebook: "Facebook",
+  linkedin: "LinkedIn",
+  pinterest: "Pinterest",
+  twitter: "Twitter",
+  x: "X",
+};
+
+const prettifySocialLabel = (key: string): string => {
+  if (!key) return "";
+  const normalized = key.toLowerCase();
+  if (SOCIAL_LABEL_OVERRIDES[normalized]) {
+    return SOCIAL_LABEL_OVERRIDES[normalized];
+  }
+  const customMatch = normalized.match(/^custom[_-](.+)$/);
+  const labelSource = customMatch ? customMatch[1] : key;
+  return labelSource
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+    .trim();
+};
+
+const parseSocialChannels = (raw: unknown): AdminUserSocialChannel[] => {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
+  return Object.entries(raw as Record<string, unknown>).reduce<AdminUserSocialChannel[]>(
+    (acc, [key, value]) => {
+      if (value == null) return acc;
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (!trimmed) return acc;
+        acc.push({
+          key,
+          label: prettifySocialLabel(key),
+          url: trimmed,
+        });
+        return acc;
+      }
+      if (typeof value === "object") {
+        const obj = value as Record<string, unknown>;
+        const maybeUrl =
+          typeof obj.url === "string"
+            ? obj.url
+            : typeof obj.value === "string"
+            ? obj.value
+            : "";
+        const trimmed = maybeUrl.trim();
+        if (!trimmed) return acc;
+        const maybeLabel = typeof obj.label === "string" ? obj.label : "";
+        acc.push({
+          key,
+          label: maybeLabel.trim() || prettifySocialLabel(key),
+          url: trimmed,
+        });
+      }
+      return acc;
+    },
+    []
+  );
+};
 
 interface FetchAdminAccountsOptions {
   userId: string;
@@ -153,12 +211,34 @@ const fetchAdminAccounts = async ({
     leadsResult,
     projectsResult,
     sessionsResult,
+    templatesResult,
+    workflowsResult,
+    packagesResult,
+    servicesResult,
+    sessionTypesResult,
+    leadStatusesResult,
+    projectStatusesResult,
   ] = await Promise.all([
     supabase.from("profiles").select("user_id, full_name"),
     supabase
       .from("payments")
       .select(
-        "id, amount, status, type, description, date_paid, created_at, updated_at, organization_id, project_id, user_id"
+        [
+          "id",
+          "amount",
+          "status",
+          "entry_kind",
+          "type",
+          "description",
+          "date_paid",
+          "created_at",
+          "updated_at",
+          "organization_id",
+          "project_id",
+          "user_id",
+          "scheduled_initial_amount",
+          "scheduled_remaining_amount",
+        ].join(", ")
       )
       .in("organization_id", organizationIds),
     supabase
@@ -167,9 +247,31 @@ const fetchAdminAccounts = async ({
         "organization_id, email, phone, photography_business_name, social_channels, timezone"
       )
       .in("organization_id", organizationIds),
-    supabase.from("leads").select("id, organization_id").in("organization_id", organizationIds),
-    supabase.from("projects").select("id, organization_id").in("organization_id", organizationIds),
-    supabase.from("sessions").select("id, organization_id").in("organization_id", organizationIds),
+    supabase
+      .from("leads")
+      .select("id, organization_id, status, status_id")
+      .in("organization_id", organizationIds),
+    supabase
+      .from("projects")
+      .select("id, organization_id, status_id")
+      .in("organization_id", organizationIds),
+    supabase
+      .from("sessions")
+      .select("id, organization_id, status")
+      .in("organization_id", organizationIds),
+    supabase.from("message_templates").select("id, organization_id").in("organization_id", organizationIds),
+    supabase.from("workflows").select("id, organization_id").in("organization_id", organizationIds),
+    supabase.from("packages").select("id, organization_id").in("organization_id", organizationIds),
+    supabase.from("services").select("id, organization_id").in("organization_id", organizationIds),
+    supabase.from("session_types").select("id, organization_id").in("organization_id", organizationIds),
+    supabase
+      .from("lead_statuses")
+      .select("id, lifecycle, is_system_final, name")
+      .in("organization_id", organizationIds),
+    supabase
+      .from("project_statuses")
+      .select("id, lifecycle, name")
+      .in("organization_id", organizationIds),
   ]);
 
   const firstError = getFirstError(
@@ -178,7 +280,14 @@ const fetchAdminAccounts = async ({
     organizationSettingsResult,
     leadsResult,
     projectsResult,
-    sessionsResult
+    sessionsResult,
+    templatesResult,
+    workflowsResult,
+    packagesResult,
+    servicesResult,
+    sessionTypesResult,
+    leadStatusesResult,
+    projectStatusesResult
   );
   if (firstError) {
     throw firstError;
@@ -196,47 +305,180 @@ const fetchAdminAccounts = async ({
   );
   const paymentsByOrg = groupByOrganization(paymentsResult.data);
   const leadsByOrg = groupByOrganization(leadsResult.data);
-  const projectsByOrg = groupByOrganization(projectsResult.data);
+  const allProjects = projectsResult.data ?? [];
+  const projectsByOrg = groupByOrganization(allProjects);
   const sessionsByOrg = groupByOrganization(sessionsResult.data);
+  const templatesByOrg = groupByOrganization(templatesResult.data);
+  const workflowsByOrg = groupByOrganization(workflowsResult.data);
+  const packagesByOrg = groupByOrganization(packagesResult.data);
+  const servicesByOrg = groupByOrganization(servicesResult.data);
+  const sessionTypesByOrg = groupByOrganization(sessionTypesResult.data);
+  const leadStatusMap = new Map(
+    (leadStatusesResult.data ?? []).map((status) => [status.id, status])
+  );
+  const projectStatuses = projectStatusesResult.data ?? [];
+  const projectStatusMap = new Map(projectStatuses.map((status) => [status.id, status]));
+  const isArchivedStatusName = (name?: string | null) => {
+    if (!name) return false;
+    const normalized = name.toLowerCase();
+    return normalized.includes("archive") || normalized.includes("arşiv");
+  };
+  const archivedProjectStatusIds = new Set(
+    projectStatuses.filter((status) => isArchivedStatusName(status.name)).map((status) => status.id)
+  );
+  const archivedProjectsByOrg = allProjects.reduce<Record<string, Set<string>>>((acc, project) => {
+    if (!project.organization_id || !project.status_id) {
+      return acc;
+    }
+    if (!archivedProjectStatusIds.has(project.status_id)) {
+      return acc;
+    }
+    if (!acc[project.organization_id]) {
+      acc[project.organization_id] = new Set<string>();
+    }
+    acc[project.organization_id].add(project.id);
+    return acc;
+  }, {});
+
+  type LifecycleState = "active" | "completed" | "cancelled";
+  const normalizeLifecycle = (
+    value?: string | null,
+    options?: { isFinal?: boolean }
+  ): LifecycleState => {
+    if (!value) {
+      return options?.isFinal ? "completed" : "active";
+    }
+    const normalized = value.toLowerCase();
+    const includesAny = (keywords: string[]) =>
+      keywords.some((keyword) => normalized.includes(keyword));
+
+    if (
+      includesAny([
+        "cancel",
+        "closed_lost",
+        "lost",
+        "declin",
+        "aband",
+        "fail",
+        "not interested",
+        "inactive",
+        "void",
+      ])
+    ) {
+      return "cancelled";
+    }
+    if (
+      includesAny([
+        "complete",
+        "deliver",
+        "finish",
+        "done",
+        "closed_won",
+        "won",
+        "fulfilled",
+      ])
+    ) {
+      return "completed";
+    }
+    if (
+      includesAny([
+        "active",
+        "progress",
+        "plan",
+        "booked",
+        "confirm",
+        "edit",
+        "schedule",
+        "open",
+      ])
+    ) {
+      return "active";
+    }
+    if (options?.isFinal) {
+      return "completed";
+    }
+    return "active";
+  };
+
 
   return organizations.map<AdminUserAccount>((organization) => {
     const owner = profileMap.get(organization.owner_id) as ProfileRow | undefined;
     const settings = organizationSettingsMap.get(organization.id) as OrganizationSettingsRow | undefined;
     const organizationEmail = settings?.email ?? null;
-    const payments = paymentsByOrg[organization.id] ?? [];
+    const archivedProjectIds = archivedProjectsByOrg[organization.id];
+    const payments = (paymentsByOrg[organization.id] ?? []).filter((payment) => {
+      if (!archivedProjectIds || !archivedProjectIds.size) return true;
+      if (!payment.project_id) return true;
+      return !archivedProjectIds.has(payment.project_id);
+    });
     const leads = leadsByOrg[organization.id] ?? [];
     const projects = projectsByOrg[organization.id] ?? [];
     const sessions = sessionsByOrg[organization.id] ?? [];
+    const templates = templatesByOrg[organization.id] ?? [];
+    const workflows = workflowsByOrg[organization.id] ?? [];
+    const packages = packagesByOrg[organization.id] ?? [];
+    const services = servicesByOrg[organization.id] ?? [];
+    const sessionTypes = sessionTypesByOrg[organization.id] ?? [];
     const lastActiveAt = computeLastActiveAt(organization, [], [], [], [], payments);
     const { status, trialEndsAt, trialDaysRemaining } = determineStatus(organization, payments);
 
-    const successfulPayments = payments.filter((payment) =>
-      payment.status ? ["paid", "completed", "succeeded"].includes(payment.status.toLowerCase()) : false
-    );
-    const lifetimeValue = sumPayments(successfulPayments, () => true);
-    const paymentsLast30d = sumPayments(successfulPayments, (payment) => {
-      if (!payment.date_paid) return false;
+    const collectedPayments = payments.filter((payment) => {
+      if ((payment.entry_kind ?? "recorded") === "scheduled") {
+        return false;
+      }
+      const status = payment.status?.toLowerCase() ?? "";
+      if (status === "paid" && Number(payment.amount ?? 0) > 0) {
+        return true;
+      }
+      return false;
+    });
+    const paymentMetrics = computePaymentSummaryMetrics(payments);
+    const totalCollected = paymentMetrics.totalPaid;
+    const totalBilled = paymentMetrics.totalInvoiced;
+    const refundedTotal = paymentMetrics.totalRefunded;
+    const paymentsLast30d = collectedPayments.reduce((sum, payment) => {
+      if (!payment.date_paid) return sum;
       const paidDate = new Date(payment.date_paid);
       const threshold = addDays(new Date(), -30);
-      return paidDate >= threshold;
-    });
-    const overdueBalance = sumPayments(
-      payments,
-      (payment) => payment.status ? ["pending", "scheduled"].includes(payment.status.toLowerCase()) : false
-    );
+      if (paidDate >= threshold) {
+        return sum + Math.abs(payment.amount ?? 0);
+      }
+      return sum;
+    }, 0);
+    const overdueBalance = paymentMetrics.remainingBalance;
 
-    const businessSocialChannels = (() => {
-      const raw = settings?.social_channels;
-      if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
-      return Object.entries(raw as Record<string, unknown>).reduce<Record<string, string>>(
-        (acc, [key, value]) => {
-          if (value == null) return acc;
-          acc[key] = String(value);
-          return acc;
-        },
-        {}
-      );
-    })();
+    const businessSocialChannels = parseSocialChannels(settings?.social_channels);
+
+    const leadLifecycleCounts = { active: 0, completed: 0, cancelled: 0 };
+    leads.forEach((lead) => {
+      const lifecycle = (() => {
+        if (lead.status_id) {
+          const meta = leadStatusMap.get(lead.status_id);
+          return normalizeLifecycle(meta?.lifecycle ?? meta?.name ?? lead.status, {
+            isFinal: meta?.is_system_final ?? undefined,
+          });
+        }
+        return normalizeLifecycle(lead.status);
+      })();
+      leadLifecycleCounts[lifecycle] += 1;
+    });
+
+    const projectLifecycleCounts = { active: 0, completed: 0, cancelled: 0 };
+    projects.forEach((project) => {
+      const lifecycle = project.status_id
+        ? normalizeLifecycle(
+            projectStatusMap.get(project.status_id)?.lifecycle ??
+              projectStatusMap.get(project.status_id)?.name
+          )
+        : "active";
+      projectLifecycleCounts[lifecycle] += 1;
+    });
+
+    const sessionLifecycleCounts = { active: 0, completed: 0, cancelled: 0 };
+    sessions.forEach((session) => {
+      const lifecycle = normalizeLifecycle(session.status);
+      sessionLifecycleCounts[lifecycle] += 1;
+    });
 
     return {
       id: organization.id,
@@ -255,23 +497,39 @@ const fetchAdminAccounts = async ({
         businessName: settings?.photography_business_name ?? organization.name,
         businessEmail: organizationEmail,
         businessPhone: settings?.phone ?? null,
-        socialChannels: businessSocialChannels,
+        socialChannels: businessSocialChannels.length ? businessSocialChannels : undefined,
       },
       stats: {
         projects: projects.length,
-        activeProjects: projects.length,
+        activeProjects: projectLifecycleCounts.active,
+        completedProjects: projectLifecycleCounts.completed,
+        cancelledProjects: projectLifecycleCounts.cancelled,
         leads: leads.length,
+        activeLeads: leadLifecycleCounts.active,
+        completedLeads: leadLifecycleCounts.completed,
+        cancelledLeads: leadLifecycleCounts.cancelled,
         sessions: sessions.length,
+        activeSessions: sessionLifecycleCounts.active,
+        completedSessions: sessionLifecycleCounts.completed,
+        cancelledSessions: sessionLifecycleCounts.cancelled,
         upcomingSessions: 0,
         calendarEvents: 0,
         payments: payments.length,
         teamMembers: 1,
+        templates: templates.length,
+        workflows: workflows.length,
+        packages: packages.length,
+        services: services.length,
+        sessionTypes: sessionTypes.length,
       },
       financials: {
         monthlyRecurringRevenue: paymentsLast30d,
-        lifetimeValue,
-        averageDealSize: successfulPayments.length
-          ? Math.round(lifetimeValue / successfulPayments.length)
+        lifetimeValue: totalCollected,
+        totalBilled,
+        totalCollected,
+        refundedTotal,
+        averageDealSize: collectedPayments.length
+          ? Math.round(totalCollected / collectedPayments.length)
           : 0,
         overdueBalance,
       },

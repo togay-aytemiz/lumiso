@@ -41,6 +41,7 @@ import { Progress } from "@/components/ui/progress";
 import { FileDown, Loader2, Check } from "lucide-react";
 import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
 import { PAYMENT_COLORS } from "@/lib/paymentColors";
+import { computePaymentSummaryMetrics } from "@/lib/payments/metrics";
 import {
   AdvancedDataTable,
   type AdvancedDataTableSortState,
@@ -874,49 +875,10 @@ const pageSize = PAGE_SIZE;
       }));
   }, [metricsPayments, selectedDateRange, trendGrouping, dateLocale]);
 
-  const metrics = useMemo((): PaymentMetrics => {
-    const recordedEntries = metricsPayments.filter(
-      (payment) => (payment.entry_kind ?? "recorded") !== "scheduled"
-    );
-    const scheduledEntries = metricsPayments.filter(
-      (payment) => (payment.entry_kind ?? "recorded") === "scheduled"
-    );
-
-    const totalPaid = recordedEntries
-      .filter((payment) => (payment.status || "").toLowerCase() === "paid" && Number(payment.amount) > 0)
-      .reduce((sum, payment) => sum + Number(payment.amount), 0);
-
-    const totalRefunded = recordedEntries
-      .filter((payment) => Number(payment.amount) < 0)
-      .reduce((sum, payment) => sum + Math.abs(Number(payment.amount)), 0);
-
-    const manualDueTotal = recordedEntries
-      .filter((payment) => (payment.status || "").toLowerCase() !== "paid")
-      .reduce((sum, payment) => sum + Number(payment.amount), 0);
-
-    const scheduledInitialTotal = scheduledEntries.reduce(
-      (sum, payment) => sum + Number(payment.scheduled_initial_amount ?? payment.amount ?? 0),
-      0
-    );
-
-    const scheduledRemainingTotal = scheduledEntries.reduce(
-      (sum, payment) => sum + Number(payment.scheduled_remaining_amount ?? payment.amount ?? 0),
-      0
-    );
-
-    const totalInvoiced = scheduledInitialTotal + manualDueTotal;
-    const remainingBalance = scheduledRemainingTotal + manualDueTotal;
-    const netCollected = Math.max(totalPaid - totalRefunded, 0);
-    const collectionRate = totalInvoiced > 0 ? netCollected / totalInvoiced : 0;
-
-    return {
-      totalPaid,
-      totalInvoiced,
-      totalRefunded,
-      remainingBalance,
-      collectionRate,
-    };
-  }, [metricsPayments]);
+  const metrics = useMemo(
+    (): PaymentMetrics => computePaymentSummaryMetrics(metricsPayments),
+    [metricsPayments]
+  );
 
   const formatPercent = (value: number) => {
     return new Intl.NumberFormat("tr-TR", {

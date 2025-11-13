@@ -76,8 +76,10 @@ export default function AdminLayout() {
       </div>
 
       {/* Admin Content */}
-      <div className="flex-1">
-        <Outlet />
+      <div className="flex-1 overflow-y-auto bg-background">
+        <div className="w-full px-4 py-4 sm:px-6 lg:px-10">
+          <Outlet />
+        </div>
       </div>
     </div>
   );

@@ -186,7 +186,7 @@
           },
           {
             "action": "Listenin tamamını gözden geçirin.",
-            "expected_result": "Kalan satırlar Türkçe lokalize adlarla (Aile, Çocuk, Hamilelik, vb.) dolar ve tekrar eden kayıt yoktur."
+            "expected_result": "Toplam 12 satır görünür ve TR etiketler envanterdeki listeyle birebir eşleşir (sıra intake'te seçtiğiniz kartlara göre değişebilir): Düğün, Aile, Çocuk, Hamilelik, Doğum, Yenidoğan, Portre, Mezuniyet, Ticari, Etkinlik, Evcil Hayvan, Gayrimenkul."
           }
         ],
         "expected_result": "Proje türleri intake sırasını korur ve tüm şablonlar locale uygun adlarla tohumlanır."
@@ -218,18 +218,18 @@
         "steps": [
           {
             "action": "Ayarlar → Hizmetler sekmesine gidin ve \"Hizmetler\" kartında Ekip/Teslimatlar sekmelerini kontrol edin.",
-            "expected_result": "Ekip sekmesinde \"Baş Fotoğrafçı\" ve \"Asistan Fotoğrafçı\", Teslimatlar sekmesinde \"Prestij Albüm\" ve \"Drone Çekimi\" kartları görünür."
+            "expected_result": "Ekip sekmesinde \"Baş Fotoğrafçı\" (lead_photographer, 6000 TL/gün) ve \"Asistan Fotoğrafçı\" (assistant_photographer, 3500 TL/gün) satırları; Teslimatlar sekmesinde \"Prestij Albüm\" (signature_album, 3000 TL) ve \"Drone Çekimi\" (drone_addon, 1800 TL/saat) görünür."
           },
           {
             "action": "Aynı sayfada \"Seans Türleri\" kartına bakın.",
-            "expected_result": "\"Standart Çekim\" (90 dk) ve \"Mini Çekim\" (30 dk) satırları aktiftir; biri varsayılan olarak işaretlidir."
+            "expected_result": "\"Standart Çekim\" (signature_session, 90 dk) ve \"Mini Çekim\" (mini_session, 30 dk) satırları aktiftir; signature_session varsayılan olarak işaretlidir."
           },
           {
             "action": "\"Paketler\" kartını açın ve ilk iki satırı inceleyin.",
-            "expected_result": "\"Düğün Hikayesi\" paketi tüm çekim + albüm + drone kalemlerini içerir; \"Mini Lifestyle\" paketi daha küçük içeriğe sahiptir ve ikisi de aktif görünür."
+            "expected_result": "\"Düğün Hikayesi\" paketi (wedding_story, 15.000 TL) Baş Fotoğrafçı + Asistan Fotoğrafçı ile Prestij Albüm + Drone Çekimi add-onlarını içerir; \"Mini Lifestyle\" paketi (mini_lifestyle, 4.500 TL) Baş Fotoğrafçı + Prestij Albüm kombinasyonunu gösterir ve ikisi de aktif görünür."
           }
         ],
-        "expected_result": "Hizmet kataloğu, seans türleri ve paketler locale uygun isimlerle otomatik oluşturulur."
+        "expected_result": "Hizmet kataloğu, seans türleri ve paketler inventory tablosundaki slug/ad/ücret bilgileriyle birebir eşleşir."
       },
       {
         "external_id": "CRM-ONBOARD-204",
@@ -242,7 +242,7 @@
           },
           {
             "action": "\"Yöntem seç\" açılır listesini tıklayın.",
-            "expected_result": "Listede \"Dijital Galeri\" ve \"USB Bellek\" seçenekleri bulunur."
+            "expected_result": "Listede slug'ları digital_gallery ve usb_drive olan \"Dijital Galeri\" ve \"USB Bellek\" seçenekleri portal/USB teslim açıklamalarıyla birlikte görünür."
           },
           {
             "action": "Her iki yöntemi de seçip kaydedin.",
@@ -258,18 +258,18 @@
         "steps": [
           {
             "action": "Sol menüden Şablonlar sayfasını açın ve \"E-posta\" sekmesini seçin.",
-            "expected_result": "Şablon listesi yüklenir."
+            "expected_result": "Liste otomatik olarak \"Çekim Onayı\" (session_confirmation) ve \"Çekim Hatırlatıcısı (3 gün)\" (session_reminder) satırlarını gösterir."
           },
           {
             "action": "Listede \"Çekim Onayı\" satırına dikkat edin.",
-            "expected_result": "Satırda konu satırı \"{session_date}\" içeren metin gösterilir ve placeholder listesinde lead_name, session_date, session_time, session_location öğeleri vardır."
+            "expected_result": "\"Çekim Onayı\" satırı session_confirmation slug'ı ile görünür, konu başlığı \"{session_date}\" içeren TR kopyadır ve placeholder listesi lead_name, session_date, session_time, session_location değerlerini içerir."
           },
           {
             "action": "\"Çekim Hatırlatıcısı (3 gün)\" satırını açın.",
-            "expected_result": "Şablon gövdesi tek paragraf bloklarından oluşur ve placeholders listesi lead_name + session_date + session_time içerir."
+            "expected_result": "\"Çekim Hatırlatıcısı (3 gün)\" satırı session_reminder slug'ına bağlıdır; placeholder listesi lead_name, session_date ve session_time içerir ve gövde inventory'deki tek paragraf hatırlatma metnini gösterir."
           }
         ],
-        "expected_result": "Standart onay ve hatırlatma şablonları otomatik olarak aktif halde gelir."
+        "expected_result": "Standart onay ve hatırlatma şablonları inventory tablosundaki slug/subject/placeholder kombinasyonlarıyla otomatik olarak aktif hale gelir."
       },
       {
         "external_id": "CRM-ONBOARD-206",
@@ -278,18 +278,18 @@
         "steps": [
           {
             "action": "Sol menüden İş Akışları sayfasını açın.",
-            "expected_result": "Liste otomatik olarak iki kategori gösterir."
+            "expected_result": "Liste otomatik olarak iki kategori gösterir ve toplam dört varsayılan akış kartını yükler."
           },
           {
             "action": "Listede \"Çekim Onayı Otomasyonu\" ve \"3 Gün Önce Hatırlatma\" akışlarını bulun.",
-            "expected_result": "Her iki akış da aktif rozetine sahiptir ve tetikleyici bilgisi (proje statü değişimi / seans planlandı) kartta görünür."
+            "expected_result": "\"Çekim Onayı Otomasyonu\" kartı session_confirmation slug'ı ile `project_status_changed` tetikleyicisini ve hedef statü `planned` bilgisini gösterir; \"3 Gün Önce Hatırlatma\" kartı session_reminder_workflow slug'ı ile `session_scheduled` tetikleyicisini ve +72 saat ofsetini gösterir. İkisi de aktif rozetine sahiptir."
           },
           {
             "action": "Aynı listede \"24 Saatlik Seans Hatırlatıcısı\" ve \"2 Saatlik Seans Hatırlatıcısı\" kartlarını açın.",
-            "expected_result": "Her iki akış da \"session_reminder\" tetikleyicisiyle listelenir ve adımlarında Çekim Hatırlatıcısı şablonunun e-posta veya SMS/WhatsApp kanalında kullanıldığı belirtilir."
+            "expected_result": "Her iki akış da legacy `session_reminder` tetikleyicisiyle listelenir; parametrik alanlarda reminder_hours değerleri sırasıyla 24 ve 2 görünür ve adımları Çekim Hatırlatıcısı şablonunu e-posta (24s) veya SMS/WhatsApp (2s) kanalında kullanır."
           }
         ],
-        "expected_result": "Toplam dört varsayılan iş akışı otomatik oluşur ve ilgili şablonlara bağlanır."
+        "expected_result": "Toplam dört varsayılan iş akışı (session_confirmation, session_reminder_workflow, 24h ve 2h session_reminder) inventory detaylarıyla oluşturulur ve ilgili şablonlara bağlanır."
       },
       {
         "external_id": "CRM-ONBOARD-207",
@@ -302,18 +302,18 @@
           },
           {
             "action": "Kişiler sayfasını açın.",
-            "expected_result": "Listede Ayşe & Mehmet, Zeynep Kılıç ve Ece & Bora (veya İngilizce karşılıkları) satırları görünür; notlarda \"[Sample Data]\" ön eki yer alır."
+            "expected_result": "Listede altı adet \"[Sample Data]\" notu içeren kayıt görünür: Ayşe & Mehmet, Zeynep Kılıç, Ece & Bora, Deniz & Kerem, Selin Aksoy ve Burcu & Tolga (yanlarında İngilizce karşılıkları çıkabilir). Statüleri inventory sırasına göre Yeni, Teklif Gönderildi, Kazanıldı, Görüşme, Nitelikli ve Kaybedildi olarak set edilmiştir."
           },
           {
             "action": "İlk satırı açıp Projeler kartını inceleyin.",
-            "expected_result": "Projeler kartında en az bir proje yer alır; paket olarak Düğün Hikayesi atanmıştır ve bağlı seans gelecekteki bir tarihtedir."
+            "expected_result": "Projeler kartında intake'te seçilen türlere göre en fazla dört proje görünür; örnek olarak \"Boğaz Düğünü\" wedding_story paketini, \"Aile Lifestyle Çekimi\" mini_lifestyle paketini kullanır. Her proje `[Sample Data]` notu taşır ve pakete bağlı Baş/Asistan Fotoğrafçı + Prestij Albüm/Drone kalemleri inventory'deki içeriklerle eşleşir."
           },
           {
             "action": "Seanslar sekmesini kontrol edin.",
-            "expected_result": "Üç seansın da tarihi bugünden ileri bir gündür ve durumlar \"Planlandı\" veya \"Tamamlandı\" olarak gelir."
+            "expected_result": "Her projeye bağlı seans tarihlerinin tamamı intake tamamlanma tarihinden +1/+3/+7 gün (gerekirse +14/+21/+30) ileriye ayarlanmıştır ve durumları \"Planlandı\" veya \"Tamamlandı\" olarak görünür."
           }
         ],
-        "expected_result": "Sample data seçeneğiyle lead, proje ve seans örnekleri yerleşir ve hepsi kolayca ayırt edilir."
+        "expected_result": "Sample data seçeneği inventory'de listelenen 6 lead + blueprint projeleri + gelecekteki seansları `[Sample Data]` etiketleriyle ekler ve hepsi kolayca ayırt edilir."
       },
       {
         "external_id": "CRM-ONBOARD-208",

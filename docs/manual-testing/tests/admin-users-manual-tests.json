@@ -1,0 +1,730 @@
+[
+  {
+    "suite": "Admin Kullanıcılar - Liste ve Özet",
+    "cases": [
+      {
+        "external_id": "ADMIN-USERS-LIST-001",
+        "title": "Yavaş ağda özet kartları ve tablo iskeleti",
+        "description": "Üyelik Konsolu açılırken özet kartlar ile kullanıcı tablosunun yüklenme durumlarını doğrular.",
+        "steps": [
+          {
+            "action": "Admin veya destek rolüyle oturum açıp sol menüden 'Yönetim > Kullanıcılar' bağlantısını açın.",
+            "expected_result": "Sayfa başlığı 'Üyelik Konsolu' ve alt açıklama görünür, özet kartlar ile tablo veriyi istemeye başlar."
+          },
+          {
+            "action": "Tarayıcı geliştirici araçlarında ağ sekmesini açıp 'Slow 3G' benzeri yavaş bağlantı profilini etkinleştirin.",
+            "expected_result": "Yeni istekler kısıtlı bant genişliğiyle yapılacak şekilde ayarlanır."
+          },
+          {
+            "action": "Sayfayı yenileyin ve içeriğin yüklenmesini izleyin.",
+            "expected_result": "Başlığın altında 6 adet gri iskelet kartı görünür, kullanıcı tablosunda satır yerine çizgili yüklenme iskeleti çıkar."
+          },
+          {
+            "action": "Ağ profilini tekrar 'Online' hâline getirip birkaç saniye bekleyin.",
+            "expected_result": "İskeletler kaybolur; özet kartlarında sayılar, tabloda satırlar ve 'Yönet' butonları görünür."
+          }
+        ],
+        "expected_result": "Yavaş bağlantıda hem özet kartları hem de kullanıcı tablosu yüklenme iskeleti gösterir ve bağlantı normale döndüğünde gerçek veriler otomatik dolar."
+      },
+      {
+        "external_id": "ADMIN-USERS-LIST-002",
+        "title": "Özet kartlarının tablo verileriyle eşleşmesi",
+        "description": "Ön koşul: Test verisinde en az bir trial, bir premium, bir complimentary ve bir askıya alınmış hesap bulunsun.",
+        "steps": [
+          {
+            "action": "'Üyelik Konsolu' ekranı tamamen yüklendiğinde 'Toplam hesap' kartındaki sayıyı not alın.",
+            "expected_result": "Kartta görünen sayı güncel satır sayısını temsil eder."
+          },
+          {
+            "action": "Tablonun altına kadar inip sayfadaki satır adedini sayın veya tüm satırları seçip Excel'e kopyalayın.",
+            "expected_result": "Satır sayısı 'Toplam hesap' kartındaki değerle aynıdır."
+          },
+          {
+            "action": "'Durum' sütununda 'Premium' etiketi taşıyan satırları sayın.",
+            "expected_result": "Bulduğunuz sayı 'Premium' özet kartındaki değerle eşleşir."
+          },
+          {
+            "action": "Trial etiketi taşıyan satır sayısını hesaplayın ve kartlarda 'Aktif trial' ile 'Yakında bitecek' değerlerini ayrı ayrı kontrol edin.",
+            "expected_result": "Trial toplamı 'Aktif trial' kartıyla, kalan gün sayısı 3 ve altı olan satırlar da 'Yakında bitecek' değerine uyar."
+          },
+          {
+            "action": "Complimentary veya 'Askıda' gibi özel durumlu satırları bulun ve karttaki 'Ücretsiz premium' ile 'Askıya alınmış' değerleriyle karşılaştırın.",
+            "expected_result": "Kartlarda görülen sayılar tablo satırlarında gözlenen durumlarla uyumludur; fark varsa rapor edin."
+          }
+        ],
+        "expected_result": "Özet kartlar tabloyla aynı veriyi gösterir ve premium/trial/complimentary/askıya alınmış sayıları hızlıca doğrulanabilir."
+      },
+      {
+        "external_id": "ADMIN-USERS-LIST-003",
+        "title": "Metin araması ile satırların filtrelenmesi",
+        "description": "Arama alanının isim, şirket veya e-posta üzerinden satırları filtrelediğini doğrular.",
+        "steps": [
+          {
+            "action": "Tabloda benzersiz bir şirket veya kişi adını gözlemleyip kopyalayın.",
+            "expected_result": "Arayacağınız değer belirlenir."
+          },
+          {
+            "action": "Tablonun üstündeki arama alanına (placeholder: 'İsim, e-posta veya şirket ara') kopyaladığınız değeri yazın.",
+            "expected_result": "Arama alanı turuncu çerçeveli hâle gelir ve liste yeniden yüklenir."
+          },
+          {
+            "action": "Filtreleme tamamlandıktan sonra görünen tek satırı kontrol edin.",
+            "expected_result": "Eşleşen kayıt görüntülenir, arama kriterine uymayan satırlar gizlenir."
+          },
+          {
+            "action": "Arama alanını temizlemek için çarpı ikonuna basın veya metni silin.",
+            "expected_result": "Liste tüm kullanıcıları yeniden gösterir ve satır sayısı eski hâline döner."
+          }
+        ],
+        "expected_result": "Arama alanına girilen metinle ad, e-posta veya şirket değeri eşleşen tek satır kalır; filtre temizlendiğinde tam liste geri gelir."
+      },
+      {
+        "external_id": "ADMIN-USERS-LIST-004",
+        "title": "Telefon numarasındaki rakamlarla arama",
+        "description": "Temizlenmiş rakamların aranabildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Bir kullanıcının 'İşletme iletişimi' alanındaki telefon numarasını bulun ve sadece rakamlardan oluşan kısmı not alın.",
+            "expected_result": "Örnek: '+90 555 111 22 33' için '5551112233' değerini elde edersiniz."
+          },
+          {
+            "action": "Arama alanına yalnızca rakamları yazın.",
+            "expected_result": "Tablo birkaç saniyeliğine yeniden yüklenir."
+          },
+          {
+            "action": "Filtre sonucunu kontrol edin.",
+            "expected_result": "Numarası eşleşen satır görünür, diğer satırlar gizlenir."
+          }
+        ],
+        "expected_result": "Kullanıcı telefonu rakamlara çevrilip arandığında ilgili satır bulunur; nokta, boşluk veya artı işaretlerinin olmaması filtreyi etkilemez."
+      },
+      {
+        "external_id": "ADMIN-USERS-LIST-005",
+        "title": "Sütun başlıklarıyla sıralama",
+        "description": "Kullanıcı adını, durumu ve son aktif tarihini artan/azalan sıralamada görebilmeyi doğrular.",
+        "steps": [
+          {
+            "action": "'Kullanıcı' sütunu başlığına tıklayın.",
+            "expected_result": "Sütun başlığında artan sıralama ikonu belirir ve satırlar alfabetik olarak A-Z sıraya girer."
+          },
+          {
+            "action": "Aynı başlığa tekrar tıklayın.",
+            "expected_result": "İkon tersine döner ve satırlar Z-A olarak sıralanır."
+          },
+          {
+            "action": "'Üyelik zaman çizelgesi' veya 'Son aktif' başlığına tıklayın.",
+            "expected_result": "Tablo seçilen kolondaki tarihe göre yeniden sıralanır; en yeni veya en eski kayıtlar üst sıraya gelir."
+          }
+        ],
+        "expected_result": "Tablodaki sıralanabilir sütunlar kullanıcı etkileşimine göre artan veya azalan şekilde çalışır ve ikonlar sıralama yönünü gösterir."
+      },
+      {
+        "external_id": "ADMIN-USERS-LIST-006",
+        "title": "Satır ve 'Yönet' butonu ile detay sheet açılması",
+        "description": "Satırın tamamına tıklamak ile 'Yönet' butonunun aynı sheet'i açtığını doğrular.",
+        "steps": [
+          {
+            "action": "Tablodaki herhangi bir satıra (boş bir hücreye değil, satırın arka planına) tıklayın.",
+            "expected_result": "Sağdan genişleyen bir detay sheet açılır, üstünde seçilen kullanıcının adı ve durum etiketi görünür."
+          },
+          {
+            "action": "Sheet'i kapatıp aynı satırdaki 'Yönet' butonuna basın.",
+            "expected_result": "Aynı sheet tekrar açılır ve içerik seçilen kullanıcıya göre doldurulur."
+          }
+        ],
+        "expected_result": "Satır tıklaması ve 'Yönet' butonu aynı detay sheet'i tetikler, bu sayede kullanıcıyı farklı yollarla yönetmek mümkündür."
+      },
+      {
+        "external_id": "ADMIN-USERS-LIST-007",
+        "title": "Üyelik zaman çizelgesi sütununun içeriği",
+        "description": "Trial ve premium satırlarında kalan gün ve tarih bilgilerini kontrol eder.",
+        "steps": [
+          {
+            "action": "Durumu Trial olan bir satır bulun.",
+            "expected_result": "'Üyelik zaman çizelgesi' sütununda kalın yazılı '{{gün}} gün kaldı' ve altında '[[tarih]] tarihinde biter' metni görünür."
+          },
+          {
+            "action": "Durumu Premium olan başka bir satır bulun.",
+            "expected_result": "Aynı sütunda 'Premium [[tarih]] tarihinde biter' veya 'Bitiş tarihi tanımlanmadı' metni gösterilir ve alt satırda aktivasyon tarihi yer alır."
+          }
+        ],
+        "expected_result": "Trial satırları kalan gün + bitiş tarihini, premium satırları ise bitiş veya 'Bitiş tarihi tanımlanmadı' mesajını ve aktivasyon bilgisini gösterir."
+      },
+      {
+        "external_id": "ADMIN-USERS-LIST-008",
+        "title": "Arama sonucunda boş durum ekranı",
+        "description": "Hiçbir kayıt bulunmadığında gösterilen mesajı doğrular.",
+        "steps": [
+          {
+            "action": "Arama alanına rastgele ve benzersiz bir karakter dizisi yazın (ör. 'xyz123!').",
+            "expected_result": "Tablo boşalır ve birkaç saniye sonra boş durum mesajı belirir."
+          },
+          {
+            "action": "Tablonun ortasında çıkan metni okuyun.",
+            "expected_result": "'Filtrelerle eşleşen kullanıcı yok.' yazısı görünür."
+          }
+        ],
+        "expected_result": "Eşleşen kayıt olmadığında tablo boş durum mesajını gösterir ve kullanıcı filtreyi temizleyene kadar satır listelemez."
+      },
+      {
+        "external_id": "ADMIN-USERS-LIST-009",
+        "title": "Hata durumundan 'Yenile' ile toparlanma",
+        "description": "Ağ hatası sonrası görünen uyarı ve tekrar yükleme davranışını doğrular.",
+        "steps": [
+          {
+            "action": "Tarayıcıda 'Offline' modunu açın ve 'Yönetim > Kullanıcılar' sayfasını yenileyin.",
+            "expected_result": "Sayfanın üst kısmında kırmızı arka planlı 'Admin kullanıcıları yükleyemedik. Lütfen yenileyin.' uyarısı görünür."
+          },
+          {
+            "action": "Offline modunu kapatın ve tablodaki 'Yenile' butonuna tıklayın.",
+            "expected_result": "Hata mesajı kaybolur, tablo ve özet kartlar yeniden yüklenir."
+          }
+        ],
+        "expected_result": "Bağlantı koptuğunda hata mesajı gösterilir; ağ geri geldiğinde 'Yenile' butonu veriyi yeniden çeker ve ekran normal hâle döner."
+      },
+      {
+        "external_id": "ADMIN-USERS-LIST-010",
+        "title": "'Öne çıkan metrikler' alanlarının doğruluğu",
+        "description": "Satırdaki proje, kişi ve seans sayılarını hızlıca kontrol eder.",
+        "steps": [
+          {
+            "action": "Herhangi bir satırdaki 'Öne çıkan metrikler' bölümüne bakın.",
+            "expected_result": "Üç blokta sırasıyla sayılar ve altında 'Kişi', 'Projeler', 'Seanslar' etiketleri görünür."
+          },
+          {
+            "action": "Aynı satır için detay sheet'i açın ve 'Kullanım özeti' kartlarında ilgili değerleri kontrol edin.",
+            "expected_result": "Sheet'teki 'Kişiler', 'Projeler' ve 'Seanslar' kartlarındaki sayılar tabloyla uyumludur."
+          }
+        ],
+        "expected_result": "Tablodaki metrikler kullanıcı detayındaki kullanım kartlarıyla eşleşir ve hızlı kıyaslama için güvenilirdir."
+      }
+    ]
+  },
+  {
+    "suite": "Admin Kullanıcılar - Detay Sheet ve Sekmeler",
+    "cases": [
+      {
+        "external_id": "ADMIN-USERS-DETAIL-001",
+        "title": "Detay sheet'in Genel sekmesiyle açılması",
+        "description": "Sheet varsayılan olarak 'Genel' sekmesini ve sekmeli denetimi göstermelidir.",
+        "steps": [
+          {
+            "action": "Tabloda herhangi bir satırı açın.",
+            "expected_result": "Sağdan gelen sheet üstünde kullanıcı adı, şirket bilgisi ve durum rozeti görünür."
+          },
+          {
+            "action": "Sheet üstündeki sekmeli kontrolü inceleyin.",
+            "expected_result": "'Genel', 'Kişiler', 'Projeler', 'Seanslar', 'Ödemeler' seçeneklerini içeren sekme çubuğu aktif olur ve 'Genel' seçili gelir."
+          }
+        ],
+        "expected_result": "Sheet açıldığında 'Genel' sekmesi aktiftir ve diğer sekmelere tek tıklamayla geçilebilir."
+      },
+      {
+        "external_id": "ADMIN-USERS-DETAIL-002",
+        "title": "Genel sekmesindeki çapa navigasyonu",
+        "description": "Üstteki küçük butonlarla ilgili bölümlere kaydırmanın çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "Sheet'te 'Üyelik durumu', 'Üyelik geçmişi', 'Kullanım özeti', 'Hesap bilgileri', 'Finansallar' etiketli pilleri inceleyin.",
+            "expected_result": "Pillerden ilki (Üyelik durumu) vurgulanmış olur."
+          },
+          {
+            "action": "'Kullanım özeti' pilline tıklayın.",
+            "expected_result": "Sheet otomatik olarak ilgili bölüme kayar ve tıklanan pill turuncu vurgulanır."
+          },
+          {
+            "action": "'Finansallar' pilline tıklayın.",
+            "expected_result": "Bölüm başlığına kaydırılır ve aktif çapa göstergesi Finanaslar üzerinde kalır."
+          }
+        ],
+        "expected_result": "Çapa butonları, sheet içindeki ilgili bölüme kaydırır ve hangi bölümde olunduğunu vurgular."
+      },
+      {
+        "external_id": "ADMIN-USERS-DETAIL-003",
+        "title": "Üyelik zaman çizelgesi tablosu",
+        "description": "Üyelik kartındaki satırların tarih ve kalan gün bilgilerini doğrular.",
+        "steps": [
+          {
+            "action": "'Üyelik durumu' bölümünde tabloyu bulun.",
+            "expected_result": "'Trial başlangıcı', 'Trial bitişi', 'Premium aktivasyonu', 'Son aktif' başlıklı hücreler görünür."
+          },
+          {
+            "action": "Trial bitiş satırında gösterilen tarihi, listede gördüğünüz trial kalan gün bilgisiyle karşılaştırın.",
+            "expected_result": "Her iki bilgi de aynı tarihe işaret eder ve kalan gün sayısı satırda ikinci satır olarak yer alır."
+          },
+          {
+            "action": "Premium aktif bir kullanıcıda 'Premium aktivasyonu' hücresini kontrol edin.",
+            "expected_result": "Premium tanımlandığı tarih 'Üyelik zaman çizelgesi' sütunundaki bilgiyle aynıdır."
+          }
+        ],
+        "expected_result": "Üyelik tablosu trial/premium tarihlerini okunabilir biçimde listeler ve listede görünen değerlerle tutarlıdır."
+      },
+      {
+        "external_id": "ADMIN-USERS-DETAIL-004",
+        "title": "Üyelik geçmişi (membership events) listesi",
+        "description": "Yapılan manuel işlemlerin doğru sırada listelendiğini doğrular.",
+        "steps": [
+          {
+            "action": "'Üyelik geçmişi' bölümünü açın.",
+            "expected_result": "Üstte açıklama metni, altında sütun başlıkları (İşlem, Kim, Önceki, Sonraki, Zaman, Detaylar) görünür."
+          },
+          {
+            "action": "Listedeki ilk satırın zaman damgasını inceleyin.",
+            "expected_result": "Son yapılan işlem en üstte yer alır ve relative zaman + tam tarih aynı hücrede gösterilir."
+          },
+          {
+            "action": "Bir satırdaki 'Detaylar' alanında bulunan ek bilgileri okuyun.",
+            "expected_result": "Trial uzatma ise eklenen gün sayısı, premium tanımı ise plan adı/bitiş bilgisi listelenir."
+          }
+        ],
+        "expected_result": "Üyelik geçmişi, en yeni işlemi üstte gösterir ve detay sütunu işlemde kullanılan notları içerir."
+      },
+      {
+        "external_id": "ADMIN-USERS-DETAIL-005",
+        "title": "Kullanım kartlarındaki metrikler",
+        "description": "Leads, projeler, seanslar, ödemeler ve katalog kartlarındaki sayıları doğrular.",
+        "steps": [
+          {
+            "action": "'Kullanım özeti' bölümüne kaydırın.",
+            "expected_result": "6 adet kart görünür ve her biri iki sütunlu küçük metrik kutularına sahiptir."
+          },
+          {
+            "action": "'Kişiler' kartındaki toplam/aktif/tamamlanan/iptal edilen değerleri not edin.",
+            "expected_result": "Sayfa altındaki 'Kişiler' sekmesine geçtiğinizde tablo satır sayılarıyla uyumludur."
+          },
+          {
+            "action": "'Teklif envanteri' kartındaki 'Paketler', 'Servisler' veya 'Seans tipleri' kutularının yanında görünen ok butonlarından birine basın.",
+            "expected_result": "Kutu tıklanınca modala benzeyen 'Teklif envanteri' listesi açılır (bu davranış ayrı testte detaylandırılır)."
+          }
+        ],
+        "expected_result": "Kullanım kartları CRM istatistiklerini doğru gösterir ve katalog kutularındaki kısayollar derin listeyi açar."
+      },
+      {
+        "external_id": "ADMIN-USERS-DETAIL-006",
+        "title": "Hesap bilgileri ve sosyal linkler",
+        "description": "Hesap sahibi ve işletme iletişim alanlarının doldurulmasını, boşsa yer tutucu göstermesini doğrular.",
+        "steps": [
+          {
+            "action": "'Hesap bilgileri' bölümünü inceleyin.",
+            "expected_result": "6 kutucukta Hesap Sahibi, E-posta, Zaman dilimi, İşletme adı/e-posta/telefon bilgileri gösterilir; boş alanlar '—' ile listelenir."
+          },
+          {
+            "action": "Aynı bölümde 'Sosyal kanallar' başlığını kontrol edin.",
+            "expected_result": "Sosyal link varsa rozetler listelenir ve yeni sekmede açılır, yoksa 'Henüz sosyal link yok.' mesajı görünür."
+          },
+          {
+            "action": "Notlar alanının altını kontrol edin.",
+            "expected_result": "Kayıtlı not varsa metin, yoksa 'Henüz not yok.' mesajı görünür; varsa etiketler (tag'ler) hemen altında rozet şeklinde listelenir."
+          }
+        ],
+        "expected_result": "Hesap bilgileri bölümü iletişim/kanaal/tag bilgilerini doğru gösterir ve boş alanlar anlaşılır placeholder ile belirtilir."
+      },
+      {
+        "external_id": "ADMIN-USERS-DETAIL-007",
+        "title": "Finansal kartların para formatı",
+        "description": "Metriklerin TL simgesiyle gösterildiğini ve rakamların yuvarlandığını doğrular.",
+        "steps": [
+          {
+            "action": "'Finansallar' bölümüne kayın.",
+            "expected_result": "4 kartta 'Aylık tekrar eden gelir', 'Yaşam boyu değer', 'Ortalama anlaşma', 'Bekleyen bakiye' gibi başlıklar görünür."
+          },
+          {
+            "action": "Her karttaki tutarları inceleyin.",
+            "expected_result": "Tutarlar '₺' simgesiyle ve binlik ayraçlarla gösterilir."
+          }
+        ],
+        "expected_result": "Finansal değerler TL formatında sunulur ve okunması kolaydır."
+      },
+      {
+        "external_id": "ADMIN-USERS-DETAIL-008",
+        "title": "'Kişiler' sekmesi tablosu",
+        "description": "Kişiler sekmesindeki tablo kılavuz satırları ve sayfalama kontrolünü doğrular.",
+        "steps": [
+          {
+            "action": "Sekme çubuğu üzerinden 'Kişiler' sekmesine geçin.",
+            "expected_result": "Kart başlığı 'Kişiler' olur ve tablo görünür."
+          },
+          {
+            "action": "Sütun başlıklarını kontrol edin.",
+            "expected_result": "'Ad', 'Durum', 'E-posta', 'Telefon', 'Termin', 'Güncellendi' başlıkları görünür."
+          },
+          {
+            "action": "Tablonun altındaki sayfalama düğmelerini deneyin.",
+            "expected_result": "Sayfa numarası değişir ve satırlar güncellenir."
+          }
+        ],
+        "expected_result": "'Kişiler' sekmesinde sütunlar doğru başlıklarla listelenir ve tablo sayfalama yapabilir."
+      },
+      {
+        "external_id": "ADMIN-USERS-DETAIL-009",
+        "title": "'Projeler' sekmesi tablosu",
+        "description": "Projeler için gösterilen sütunları ve para formatını doğrular.",
+        "steps": [
+          {
+            "action": "'Projeler' sekmesine geçin.",
+            "expected_result": "Başlık ve açıklama projelerden bahseder; tablo görünür."
+          },
+          {
+            "action": "'Bütçe' sütunundaki değeri kontrol edin.",
+            "expected_result": "₺ simgesiyle gösterilen rakamlar kullanıcı finansallarıyla uyumludur; veri yoksa '—' görünür."
+          }
+        ],
+        "expected_result": "Projeler sekmesi proje adı, durum, kişi, bütçe ve güncelleme tarihini doğru listeler."
+      },
+      {
+        "external_id": "ADMIN-USERS-DETAIL-010",
+        "title": "'Seanslar' sekmesi tablosu",
+        "description": "Seans adı, durum, tip ve takvim bilgilerinin okunabilir olduğunu doğrular.",
+        "steps": [
+          {
+            "action": "'Seanslar' sekmesine geçin.",
+            "expected_result": "Kart başlığında seanslara dair açıklama görünür."
+          },
+          {
+            "action": "'Takvim' sütunundaki değere bakın.",
+            "expected_result": "Tarih '12 May 2024 15:00' gibi tarih + saat formatında listelenir; değer yoksa '—' görünür."
+          }
+        ],
+        "expected_result": "Seans tablosu seans adını, durumunu, tipini, tarihini ve bağlı projeyi eksiksiz gösterir."
+      },
+      {
+        "external_id": "ADMIN-USERS-DETAIL-011",
+        "title": "'Ödemeler' sekmesi tablosu",
+        "description": "Ödeme tutarı, durum ve proje bilgisini doğrular.",
+        "steps": [
+          {
+            "action": "'Ödemeler' sekmesine geçin.",
+            "expected_result": "Tabloda 'Tutar', 'Durum', 'Tür', 'Tarih', 'Proje' sütunları görünür."
+          },
+          {
+            "action": "Bir satırdaki 'Tutar' alanını inceleyin.",
+            "expected_result": "₺ formatında listelenir ve 'Ödemeler' kullanım kartındaki tahsilat toplamının bir parçasıdır."
+          }
+        ],
+        "expected_result": "Ödemeler sekmesi ilgili kolonları gösterir ve tutarlar TL formatında listelenir."
+      }
+    ]
+  },
+  {
+    "suite": "Admin Kullanıcılar - Üyelik Aksiyonları ve Katalog Modalları",
+    "cases": [
+      {
+        "external_id": "ADMIN-USERS-ACTIONS-001",
+        "title": "Trial uzatma akışı",
+        "description": "'Trial uzat' diyalogunun başarıyla çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "Detay sheet'te 'Üyelik durumu' bölümündeki 'Trial uzat' butonuna tıklayın.",
+            "expected_result": "'Trial süresini uzat' başlıklı dialog açılır ve gün girilecek alan görünür."
+          },
+          {
+            "action": "'Eklenecek gün' alanına 7 yazın, opsiyonel gerekçeyi doldurun ve 'Trial uzat' butonuna basın.",
+            "expected_result": "Buton kısa süreli 'Kaydediliyor...' durumuna geçer, dialog kapanır."
+          },
+          {
+            "action": "Üstteki kullanım kartlarında kalan gün bilgisini ve üyelik tablosunu kontrol edin.",
+            "expected_result": "Trial bitiş tarihi 7 gün ileri gider, kalan gün bilgisi artar ve sağ altta yeşil bildirimin içinde 'Trial süresi uzatıldı' mesajı çıkar."
+          }
+        ],
+        "expected_result": "Trial uzatma dialogu gün sayısı girildiğinde veriyi günceller, bildirim gösterir ve sheet içinde kalan günler artar."
+      },
+      {
+        "external_id": "ADMIN-USERS-ACTIONS-002",
+        "title": "Trial uzatma validasyonları",
+        "description": "0 veya boş gün değeri girildiğinde hata mesajını doğrular.",
+        "steps": [
+          {
+            "action": "'Trial uzat' dialogunu tekrar açın.",
+            "expected_result": "Alanlar önceki değerlerle gelir."
+          },
+          {
+            "action": "Gün alanına 0 yazıp 'Trial uzat' butonuna basın.",
+            "expected_result": "Dialog kapanmaz; kırmızı bildirimde 'Lütfen gerekli alanları doldurun.' mesajı çıkar."
+          }
+        ],
+        "expected_result": "Pozitif sayı girilmediğinde işlem iptal olur ve kullanıcı uyarılır."
+      },
+      {
+        "external_id": "ADMIN-USERS-ACTIONS-003",
+        "title": "Premium tanımlama süreci",
+        "description": "'Premium yap' butonuyla planın premiuma çevrilmesini doğrular.",
+        "steps": [
+          {
+            "action": "'Premium yap' butonuna basın.",
+            "expected_result": "Plan etiketi, bitiş tarihi ve not alanları olan dialog açılır."
+          },
+          {
+            "action": "Plan adını 'Premium Yıllık', bitiş tarihini gelecek aya ait bir gün olarak girin, opsiyonel not ekleyin.",
+            "expected_result": "Alanlar valid görünür."
+          },
+          {
+            "action": "'Premium tanımla' butonuna basın.",
+            "expected_result": "Dialog kapanır, sheet başlığındaki durum rozeti 'Premium' olur ve bildirimde 'Premium erişim verildi' mesajı gösterilir."
+          }
+        ],
+        "expected_result": "Premium tanımlama hem sheet üstündeki rozet hem de tablo satırıyla eşleşecek şekilde güncellenir."
+      },
+      {
+        "external_id": "ADMIN-USERS-ACTIONS-004",
+        "title": "Ücretsiz premium (complimentary) verme",
+        "description": "Complimentary plan dialogunun çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "'Ücretsiz premium ver' butonuna tıklayın.",
+            "expected_result": "Plan adı, bitiş tarihi ve not içeren dialog açılır."
+          },
+          {
+            "action": "Plan adını 'VIP Complimentary' olarak yazın, bitiş tarihini boş bırakıp açıklama girin.",
+            "expected_result": "Alanlar doldurulduktan sonra 'Ücretsiz premium ver' butonu aktif kalır."
+          },
+          {
+            "action": "Dialogu onaylayın.",
+            "expected_result": "Bildirimde 'Ücretsiz premium verildi' mesajı gösterilir ve sheet'te plan adı yeni değerle listelenir."
+          }
+        ],
+        "expected_result": "Complimentary tanımı kayıtlı plan adı/not ile saklanır ve kullanıcı durumu 'Ücretsiz premium' olarak güncellenir."
+      },
+      {
+        "external_id": "ADMIN-USERS-ACTIONS-005",
+        "title": "Hesabı askıya alma validasyonu",
+        "description": "Sebep girilmeden askıya alma yapılamadığını doğrular.",
+        "steps": [
+          {
+            "action": "'Hesabı askıya al' butonuna basın.",
+            "expected_result": "Tek metin alanı olan dialog açılır."
+          },
+          {
+            "action": "Sebep alanını boş bırakarak 'Askıya al' butonuna tıklayın.",
+            "expected_result": "Bildirimde 'Lütfen gerekli alanları doldurun.' mesajı görünür, dialog açık kalır."
+          },
+          {
+            "action": "Geçerli bir sebep yazıp tekrar onaylayın.",
+            "expected_result": "Dialog kapanır, sheet başlığındaki rozet 'Askıda' olur ve kırmızı tonlu bildirimde 'Hesap askıya alındı' metni gösterilir."
+          }
+        ],
+        "expected_result": "Sebep girilmeden askıya alma gerçekleşmez; metin girildiğinde durum 'Askıda' olarak güncellenir."
+      },
+      {
+        "external_id": "ADMIN-USERS-ACTIONS-006",
+        "title": "Aksiyon sonrası geçmiş kaydı",
+        "description": "Yapılan manuel işlemlerin 'Üyelik geçmişi' tablosuna eklendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Herhangi bir aksiyonu (ör. trial uzatma) tamamlayın.",
+            "expected_result": "Ekranın sağ alt köşesinde başarı bildirimi görünür."
+          },
+          {
+            "action": "'Üyelik geçmişi' bölümüne inip listenin en üstüne bakın.",
+            "expected_result": "Az önce yaptığınız işlem türü, yeni/önceki durum ve not bilgisiyle birlikte ilk satırda görünür."
+          }
+        ],
+        "expected_result": "Her manuel aksiyon anında geçmiş tablosuna düşer ve hangisinin kim tarafından yapıldığı izlenebilir."
+      },
+      {
+        "external_id": "ADMIN-USERS-ACTIONS-007",
+        "title": "Katalog kartından paketler modalını açma",
+        "description": "'Teklif envanteri' kartındaki Paketler kısayolunun geniş listeyi açtığını doğrular.",
+        "steps": [
+          {
+            "action": "'Kullanım özeti' bölümünde 'Teklif envanteri' kartını bulun.",
+            "expected_result": "Kartta 'Paketler', 'Servisler', 'Seans tipleri' metrikleri yer alır ve her biri sağ üstte ok simgesine sahiptir."
+          },
+          {
+            "action": "'Paketler' kutusundaki ok simgesine tıklayın.",
+            "expected_result": "Ekranın ortasında tam ekran modal açılır ve 'Paketler' başlığı ile kapsamlı tablo gösterilir."
+          },
+          {
+            "action": "Tablodaki kolonları inceleyip 'Kapat' ikonuyla modalı kapatın.",
+            "expected_result": "Kolonlar Paket adı, fiyat, açıklama, durum vb. içerir; modal kapatılınca sheet görünümü eski hâline döner."
+          }
+        ],
+        "expected_result": "Katalog kartındaki kısayol paket listesini modalda açar, tablo satırları Supabase verileriyle doldurulur."
+      },
+      {
+        "external_id": "ADMIN-USERS-ACTIONS-008",
+        "title": "Katalog kartından servisler modalı",
+        "description": "Servisler metrik kutusu tıklandığında ilgili tabloyu açtığını doğrular.",
+        "steps": [
+          {
+            "action": "'Servisler' kutusundaki ok simgesine tıklayın.",
+            "expected_result": "Modal bu kez 'Servisler' başlığıyla açılır ve kategori, fiyat, güncelleme tarihi sütunlarını gösterir."
+          },
+          {
+            "action": "'Kapalı/Aktif' sütunundaki badge'leri kontrol edin.",
+            "expected_result": "Servis aktifse yeşil, pasifse gri rozet gösterilir."
+          }
+        ],
+        "expected_result": "Servisler kısayolu ilgili modalı açar ve kayıtların aktif/pasif durumları okunabilir."
+      },
+      {
+        "external_id": "ADMIN-USERS-ACTIONS-009",
+        "title": "Katalog kartından seans tipi modalı",
+        "description": "Seans tipleri listesinin açılıp kapandığını doğrular.",
+        "steps": [
+          {
+            "action": "'Seans tipleri' kutusundaki ok simgesine basın.",
+            "expected_result": "Modal 'Seans tipleri' başlığıyla açılır ve isim, süre, durum, oluşturulma tarihi gibi sütunlar listelenir."
+          },
+          {
+            "action": "Modalda herhangi bir satırı kaydırarak scrollbar'ı test edin.",
+            "expected_result": "Modal yüksekliği 70vh ile sınırlandığından kaydırma çubuğu çalışır."
+          }
+        ],
+        "expected_result": "Seans tipi kısayolu modalı açar, tablo kaydırılabilir ve kapatınca sheet görünümü eski hâline döner."
+      },
+      {
+        "external_id": "ADMIN-USERS-ACTIONS-010",
+        "title": "Modal kapanınca state'in sıfırlanması",
+        "description": "Katalog modalı kapatıldığında veri/cache temizlendiğini doğrular.",
+        "steps": [
+          {
+            "action": "Herhangi bir katalog modalını açın ve yüklenmesini bekleyin.",
+            "expected_result": "Tablo veriyle dolar."
+          },
+          {
+            "action": "Modalı kapatın ve hemen ardından başka bir katalog kutusunu açın.",
+            "expected_result": "Yeni modal açıldığında önce yükleniyor iskeleti görünür, eski veriler kısa süreliğine gösterilmez."
+          }
+        ],
+        "expected_result": "Her modal kapanınca state temizlenir; başka modal açıldığında eski veriler sızmaz ve yeniden yükleme yapılır."
+      }
+    ]
+  },
+  {
+    "suite": "Navigasyon - Trial Rozeti ve Premium Avatar",
+    "cases": [
+      {
+        "external_id": "NAV-TRIAL-001",
+        "title": "Trial durumunda sidebar göstergesi",
+        "description": "Aktif trial hesapta sol sidebar altındaki 'Ücretsiz deneme' kartının görünmesini doğrular.",
+        "steps": [
+          {
+            "action": "Üyeliği 'trial' olan bir organizasyonla oturum açın.",
+            "expected_result": "Sol sidebar altındaki kartta 'Ücretsiz deneme' başlığı belirir."
+          },
+          {
+            "action": "Kartın altındaki ilerleme çubuğunu inceleyin.",
+            "expected_result": "Çubuk mor bir degrade ile dolar ve kalan gün sayısını gösteren küçük bir etiket görünür."
+          }
+        ],
+        "expected_result": "Trial statüsünde sidebar kartı otomatik çıkar, kalan gün ve ilerleme yüzdesi okunur."
+      },
+      {
+        "external_id": "NAV-TRIAL-002",
+        "title": "3 günden az kaldığında uyarı tonu",
+        "description": "Trialın bitimine ≤3 gün kaldığında kartın amber tonuna dönmesini doğrular.",
+        "steps": [
+          {
+            "action": "Test organizasyonunun trial bitiş tarihini 2 gün sonraya ayarlayın veya böyle bir organizasyonla oturum açın.",
+            "expected_result": "Sidebar kartındaki kalan gün etiketi 2 olarak güncellenir."
+          },
+          {
+            "action": "Sidebar kartını gözlemleyin.",
+            "expected_result": "Arka plan amber tonuna döner, etiket '2 gün kaldı' metniyle uyarı rengiyle gösterilir."
+          }
+        ],
+        "expected_result": "Trial süresi az kaldığında sidebar kartı sıcak sarı/amber tasarıma geçer ve kullanıcıyı uyarır."
+      },
+      {
+        "external_id": "NAV-TRIAL-003",
+        "title": "Son gün mesajı",
+        "description": "Trialın son gününde 'Bugün sona eriyor' mesajının çıktığını doğrular.",
+        "steps": [
+          {
+            "action": "Trial bitiş tarihini bugüne çekin veya son gününde olan bir hesapla giriş yapın.",
+            "expected_result": "daysLeft = 0 olur."
+          },
+          {
+            "action": "Sidebar kartındaki metni okuyun.",
+            "expected_result": "Üst satır yine 'Ücretsiz deneme', alt satır 'Bugün sona eriyor' olarak görünür."
+          }
+        ],
+        "expected_result": "Trialın son gününde kalan gün etiketi yerine 'Bugün sona eriyor' mesajı gösterilir."
+      },
+      {
+        "external_id": "NAV-TRIAL-004",
+        "title": "Premium/complimentary statüsünde kartın gizlenmesi",
+        "description": "Üyelik Premium veya Complimentary olduğunda trial kartı çıkmamalıdır.",
+        "steps": [
+          {
+            "action": "Premium statüsünde bir organizasyon seçin.",
+            "expected_result": "Sidebar footer alanında trial kartı görünmez; yerinde boşluk kalır."
+          }
+        ],
+        "expected_result": "Trial kartı yalnızca membership_status 'trial' ise görünür, diğer statülerde saklıdır."
+      },
+      {
+        "external_id": "NAV-TRIAL-005",
+        "title": "Mobil 'More' sheet'te trial göstergesi",
+        "description": "Mobil alt menüde 'More' sheet açıldığında trial kartının mobil varyantının gösterildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Tarayıcı genişliğini mobil kırılımına çekip alttaki 'More' tabına dokunun.",
+            "expected_result": "More sheet açılır ve üst kısmında kart tonuyla 'Ücretsiz deneme' başlığı görünür."
+          },
+          {
+            "action": "Kartın altındaki çubuğu gözlemleyin.",
+            "expected_result": "Desktop ile aynı kalan gün etiketi ve ilerleme çubuğu mobil tasarımla gösterilir."
+          }
+        ],
+        "expected_result": "Mobil sheet'te trial kartının mobil varyantı gösterilir ve veriler tutarlıdır."
+      },
+      {
+        "external_id": "NAV-TRIAL-006",
+        "title": "Premiuma geçince trial kartının kaybolması ve taç rozetinin görünmesi",
+        "description": "Trial hesabı Premium yaptığınızda navigasyondaki değişikliklerin yansıtıldığını doğrular.",
+        "steps": [
+          {
+            "action": "Admin Konsolu'ndan aynı organizasyonu 'Premium yap' butonuyla premium statüsüne yükseltin.",
+            "expected_result": "Üyelik Konsolu 'Premium erişim verildi' bildirimini gösterir."
+          },
+          {
+            "action": "Ana uygulama sekmesine dönüp sayfayı yenileyin.",
+            "expected_result": "Sidebar altındaki trial kartı artık görünmez, sağ üstteki kullanıcı avatarının köşesinde sarı taç (crown) ikonu belirir."
+          }
+        ],
+        "expected_result": "Üyelik Premium olduğunda trial göstergesi kaybolur ve kullanıcı menüsü taç rozetiyle premium olduğunu belirtir."
+      },
+      {
+        "external_id": "NAV-TRIAL-007",
+        "title": "Premium durum kartı ve tarih bilgisi",
+        "description": "Kullanıcı menüsü açıldığında premium uyarı kutusunun bitiş tarihini göstermesini doğrular.",
+        "steps": [
+          {
+            "action": "Sidebar veya header'daki avatar butonuna tıklayarak kullanıcı menüsünü açın.",
+            "expected_result": "Menünün üst kısmında amber tonlu küçük bir kart görünür."
+          },
+          {
+            "action": "Kart metnini okuyun.",
+            "expected_result": "'Premium erişimi' başlığı, altında '[[tarih]] tarihinde sona erer' mesajı ve 'Abonelik ayarlarını görüntüle' bağlantısı yer alır."
+          }
+        ],
+        "expected_result": "Premium hesaplarda kullanıcı menüsü, bitiş tarihini belirten amber kart gösterir."
+      },
+      {
+        "external_id": "NAV-TRIAL-008",
+        "title": "'Abonelik ayarlarını görüntüle' bağlantısı",
+        "description": "Premium kartındaki linkin abonelik ayarlarını açtığını doğrular.",
+        "steps": [
+          {
+            "action": "Premium durum kartında 'Abonelik ayarlarını görüntüle' linkine tıklayın.",
+            "expected_result": "Kullanıcı Ayarlar > Faturalandırma > Abonelik ekranına yönlendirilir ve URL '/settings/billing/subscription' olur."
+          }
+        ],
+        "expected_result": "Link abonelik ayarlarına gider ve kullanıcı menüsü kapanır."
+      },
+      {
+        "external_id": "NAV-TRIAL-009",
+        "title": "Premium olmayan kullanıcıda taç rozeti görünmemesi",
+        "description": "Trial veya ücretsiz olmayan hesaplarda avatar çevresinde taç ikonunun çıkmadığını doğrular.",
+        "steps": [
+          {
+            "action": "Trial statüsünde bir organizasyon seçip kullanıcı menüsünü açın.",
+            "expected_result": "Avatarın köşesinde herhangi bir taç ikonu yoktur ve premium kartı gösterilmez."
+          }
+        ],
+        "expected_result": "Premium statüsü olmayan hesaplarda da menü çalışır fakat taç ve premium kartı gösterilmez."
+      }
+    ]
+  }
+]

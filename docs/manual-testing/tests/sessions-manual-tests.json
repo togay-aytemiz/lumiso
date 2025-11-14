@@ -404,7 +404,7 @@
         "expected_result": "Kişide seans kalmadığında özet kartı kullanıcıyı yeni seans planlamaya yönlendirir."
       },
       {
-        "external_id": "CRM-SESSIONS-452",
+        "external_id": "CRM-SESSIONS-455",
         "title": "Session detay sayfasında sticky sekme navigasyonu",
         "description": "Genel Bakış / Galeri sekmelerine tıklandığında başlıkların sticky çubuk altında kalmadan göründüğünü doğrular.",
         "steps": [

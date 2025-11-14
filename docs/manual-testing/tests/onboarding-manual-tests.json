@@ -293,7 +293,7 @@
       },
       {
         "external_id": "CRM-ONBOARD-207",
-        "title": "Sample data açıkken CRM kayıtları",
+        "title": "Sample data açıkken CRM kayıtları kontrolü",
         "description": "Intake'te \"Örnek verileri yükle\" seçildiğinde otomatik eklenen kayıtlar doğrulanır.",
         "steps": [
           {

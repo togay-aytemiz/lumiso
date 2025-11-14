@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { AdminUserAccount } from "../types";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -21,11 +22,12 @@ import { useToast } from "@/hooks/use-toast";
 interface MembershipActionsProps {
   user: AdminUserAccount;
   onUserUpdated?: () => void;
+  buttonRowClassName?: string;
 }
 
 const ADMIN_USERS_QUERY_KEY = "admin-users";
 
-export function MembershipActions({ user, onUserUpdated }: MembershipActionsProps) {
+export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: MembershipActionsProps) {
   const { t } = useTranslation("pages");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -195,17 +197,25 @@ export function MembershipActions({ user, onUserUpdated }: MembershipActionsProp
 
   return (
     <>
-      <div className="flex flex-wrap gap-2">
+      <div className={cn("flex flex-wrap gap-2", buttonRowClassName)}>
         <Button variant="default" onClick={() => setExtendOpen(true)}>
           {t("admin.users.detail.actions.extendTrial")}
         </Button>
         <Button variant="secondary" onClick={() => setPremiumOpen(true)}>
           {t("admin.users.detail.actions.grantPremium")}
         </Button>
-        <Button variant="outline" onClick={() => setComplimentaryOpen(true)}>
+        <Button
+          variant="surface"
+          className="border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100 hover:text-amber-950 focus-visible:ring-amber-200/70"
+          onClick={() => setComplimentaryOpen(true)}
+        >
           {t("admin.users.detail.actions.addComplimentary")}
         </Button>
-        <Button variant="outline" onClick={() => setSuspendOpen(true)}>
+        <Button
+          variant="surface"
+          className="border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100 hover:text-rose-950 focus-visible:ring-rose-200/70"
+          onClick={() => setSuspendOpen(true)}
+        >
           {t("admin.users.detail.actions.suspendAccount")}
         </Button>
       </div>

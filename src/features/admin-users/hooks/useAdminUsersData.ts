@@ -475,7 +475,19 @@ const fetchAdminAccounts = async ({
       newStatus: (event.new_status ?? undefined) as MembershipStatus | undefined,
       metadata: (event.metadata as Record<string, unknown> | null) ?? null,
     }));
-    const lastActiveAt = computeLastActiveAt(organization, [], [], [], [], payments);
+    const lastActiveAt = computeLastActiveAt(
+      organization,
+      leads,
+      projects,
+      sessions,
+      templates,
+      workflows,
+      packages,
+      services,
+      sessionTypes,
+      payments,
+      membershipEventsRaw
+    );
     const { status, trialEndsAt, trialDaysRemaining, trialStartedAt } = determineStatus(organization);
     const planName = MEMBERSHIP_PLAN_LABELS[status] ?? "Trial";
 

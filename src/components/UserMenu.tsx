@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Settings, LogOut, ChevronUp, ChevronDown, User, Crown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useOptionalOrganization } from "@/contexts/OrganizationContext";
+import { Separator } from "@/components/ui/separator";
 
 interface UserMenuProps {
   variant?: "sidebar" | "mobile" | "minimal" | "header";
@@ -16,7 +17,7 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
-  const { t } = useFormsTranslation();
+  const { t, i18n } = useFormsTranslation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
@@ -26,6 +27,17 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
   const isPremiumAccount =
     organizationContext?.activeOrganization?.membership_status === "premium" ||
     organizationContext?.activeOrganization?.membership_status === "complimentary";
+  const premiumExpiresAt = organizationContext?.activeOrganization?.premium_expires_at ?? null;
+  const formattedPremiumEndsAt = useMemo(() => {
+    if (!premiumExpiresAt) return null;
+    try {
+      return new Intl.DateTimeFormat(i18n.language || undefined, {
+        dateStyle: "medium",
+      }).format(new Date(premiumExpiresAt));
+    } catch {
+      return null;
+    }
+  }, [premiumExpiresAt, i18n.language]);
 
   const handleSignOut = async () => {
     try {
@@ -45,6 +57,17 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
       ? { backgroundLocation: location }
       : undefined;
     navigate("/settings/profile", state ? { state } : undefined);
+    setIsOpen(false);
+    onNavigate?.();
+  };
+
+  const handleSubscription = () => {
+    const shouldAttachBackground =
+      variant !== "mobile" && !location.pathname.startsWith("/settings");
+    const state = shouldAttachBackground
+      ? { backgroundLocation: location }
+      : undefined;
+    navigate("/settings/billing/subscription", state ? { state } : undefined);
     setIsOpen(false);
     onNavigate?.();
   };
@@ -163,6 +186,26 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
           sideOffset={8}
         >
           <div className="flex flex-col gap-1">
+            {isPremiumAccount && formattedPremiumEndsAt ? (
+              <>
+                <div className="space-y-1 rounded-lg border border-amber-200 bg-amber-50/90 px-3 py-2 text-xs text-amber-900 shadow-inner">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                    {t("userMenu.premiumStatus")}
+                  </p>
+                  <p className="text-xs font-medium text-foreground">
+                    {t("userMenu.premiumEnds", { date: formattedPremiumEndsAt })}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleSubscription}
+                    className="text-[11px] font-semibold text-amber-800 underline-offset-2 hover:underline"
+                  >
+                    {t("userMenu.manageSubscription")}
+                  </button>
+                </div>
+                <Separator className="my-1" />
+              </>
+            ) : null}
             <Button
               variant="ghost"
               onClick={handleSettings}

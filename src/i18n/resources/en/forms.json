@@ -1080,7 +1080,10 @@
   },
   "userMenu": {
     "profileSettings": "Profile settings",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "premiumStatus": "Premium access",
+    "premiumEnds": "Ends {{date}}",
+    "manageSubscription": "View subscription settings"
   },
   "project": {
     "archived": "Archived",

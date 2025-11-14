@@ -1,9 +1,10 @@
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback, type ReactNode } from "react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TableLoadingSkeleton } from "@/components/ui/loading-presets";
 import { formatDistanceToNow } from "date-fns";
-import { AlarmClockCheck, Mail, Clock, Crown, Gift, ArrowUpRight } from "lucide-react";
+import type { Locale } from "date-fns";
+import { enUS, tr as trLocale } from "date-fns/locale";
+import { AlarmClockCheck, Mail, Clock, Crown, Gift, ArrowUpRight, type LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { UserStatusBadge } from "./UserStatusBadge";
 import type {
@@ -40,6 +43,7 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { supabase } from "@/integrations/supabase/client";
+import { settingsClasses, settingsTokens } from "@/theme/settingsTokens";
 
 interface AdminUserDetailSheetProps {
   user: AdminUserAccount | null;
@@ -71,10 +75,10 @@ const formatDateOnly = (value?: string | null, locale?: string) => {
   }
 };
 
-const formatRelativeTime = (value?: string) => {
+const formatRelativeTime = (value?: string, locale?: Locale) => {
   if (!value) return "—";
   try {
-    return formatDistanceToNow(new Date(value), { addSuffix: true });
+    return formatDistanceToNow(new Date(value), { addSuffix: true, locale });
   } catch {
     return value;
   }
@@ -196,6 +200,19 @@ type AdminUserDetailSheetContentProps = Omit<AdminUserDetailSheetProps, "user"> 
   user: AdminUserAccount;
 };
 
+type MembershipDetailCell = {
+  value: ReactNode;
+  context?: ReactNode;
+};
+
+type MembershipDetailRow = {
+  id: string;
+  trialEnds: MembershipDetailCell;
+  lastActive: MembershipDetailCell;
+  startedAt: MembershipDetailCell;
+  premiumActivatedAt: MembershipDetailCell;
+};
+
 export function AdminUserDetailSheet({
   user,
   ...rest
@@ -223,6 +240,12 @@ function AdminUserDetailSheetContent({
   const [collectionLoading, setCollectionLoading] = useState(false);
   const [collectionError, setCollectionError] = useState<string | null>(null);
   const locale = i18n.language || undefined;
+  const dateFnsLocale = useMemo<Locale | undefined>(() => {
+    if (!i18n.language) return undefined;
+    const lang = i18n.language.toLowerCase();
+    if (lang.startsWith("tr")) return trLocale;
+    return enUS;
+  }, [i18n.language]);
   const formatDateTimeLocalized = useCallback(
     (value?: string | null) => formatDateTime(value, locale),
     [locale]
@@ -230,6 +253,10 @@ function AdminUserDetailSheetContent({
   const formatDateOnlyLocalized = useCallback(
     (value?: string | null) => formatDateOnly(value, locale),
     [locale]
+  );
+  const formatRelativeTimeLocalized = useCallback(
+    (value?: string) => formatRelativeTime(value, dateFnsLocale),
+    [dateFnsLocale]
   );
   const formatCurrency = useCallback(
     (value?: number | null, options?: { withSymbol?: boolean }) => {
@@ -856,6 +883,34 @@ function AdminUserDetailSheetContent({
     [t]
   );
 
+  const overviewAnchors = useMemo(
+    () => [
+      { id: "membership", label: t("admin.users.detail.membership.title") },
+      { id: "membership-history", label: t("admin.users.detail.membershipEvents.title") },
+      { id: "usage", label: t("admin.users.detail.usage.title") },
+      { id: "account", label: t("admin.users.detail.account.title") },
+      { id: "financials", label: t("admin.users.detail.financials.title") },
+    ],
+    [t]
+  );
+
+  const [activeOverviewAnchor, setActiveOverviewAnchor] = useState<string | null>(
+    () => overviewAnchors[0]?.id ?? null
+  );
+
+  useEffect(() => {
+    setActiveOverviewAnchor((prev) => prev ?? overviewAnchors[0]?.id ?? null);
+  }, [overviewAnchors]);
+
+  const handleAnchorNav = useCallback((sectionId: string) => {
+    setActiveOverviewAnchor(sectionId);
+    if (typeof document === "undefined") return;
+    const target = document.getElementById(sectionId);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
+
   const organizationId = user?.id ?? null;
 
   const membershipEventLabels = useMemo(
@@ -1144,6 +1199,160 @@ function AdminUserDetailSheetContent({
     },
   ];
 
+  const membershipDetailRows = useMemo<MembershipDetailRow[]>(
+    () => [
+      {
+        id: "timeline",
+        trialEnds: {
+          value: formatDateTimeLocalized(user.trialEndsAt),
+          context:
+            user.trialDaysRemaining != null
+              ? t("admin.users.detail.membership.daysRemaining", {
+                  days: user.trialDaysRemaining,
+                })
+              : undefined,
+        },
+        lastActive: {
+          value: formatRelativeTimeLocalized(user.lastActiveAt),
+        },
+        startedAt: {
+          value: formatDateTimeLocalized(user.membershipStartedAt),
+        },
+        premiumActivatedAt: {
+          value: formatDateTimeLocalized(user.premiumActivatedAt),
+        },
+      },
+    ],
+    [formatDateTimeLocalized, formatRelativeTimeLocalized, t, user]
+  );
+
+  const membershipDetailColumns = useMemo<AdvancedTableColumn<MembershipDetailRow>[]>(
+    () => [
+      {
+        id: "startedAt",
+        label: t("admin.users.detail.membership.startedAt"),
+        render: (row) => (
+          <div className="space-y-1">
+            <p className="text-sm text-foreground">{row.startedAt.value ?? "—"}</p>
+            {row.startedAt.context ? (
+              <p className="text-xs font-semibold text-amber-700">{row.startedAt.context}</p>
+            ) : null}
+          </div>
+        ),
+        sortable: false,
+      },
+      {
+        id: "trialEnds",
+        label: t("admin.users.detail.membership.trialEnds"),
+        render: (row) => (
+          <div className="space-y-1">
+            <p className="text-sm text-foreground">{row.trialEnds.value ?? "—"}</p>
+            {row.trialEnds.context ? (
+              <p className="text-xs font-semibold text-amber-700">{row.trialEnds.context}</p>
+            ) : null}
+          </div>
+        ),
+        sortable: false,
+      },
+      {
+        id: "premiumActivatedAt",
+        label: t("admin.users.detail.membership.premiumActivatedAt"),
+        render: (row) => (
+          <div className="space-y-1">
+            <p className="text-sm text-foreground">{row.premiumActivatedAt.value ?? "—"}</p>
+            {row.premiumActivatedAt.context ? (
+              <p className="text-xs font-semibold text-amber-700">{row.premiumActivatedAt.context}</p>
+            ) : null}
+          </div>
+        ),
+        sortable: false,
+      },
+      {
+        id: "lastActive",
+        label: t("admin.users.detail.membership.lastActive"),
+        render: (row) => (
+          <div className="space-y-1">
+            <p className="text-sm text-foreground">{row.lastActive.value ?? "—"}</p>
+            {row.lastActive.context ? (
+              <p className="text-xs font-semibold text-amber-700">{row.lastActive.context}</p>
+            ) : null}
+          </div>
+        ),
+        sortable: false,
+      },
+    ],
+    [t]
+  );
+
+  const membershipEventsColumns = useMemo<AdvancedTableColumn<AdminUserMembershipEvent>[]>(
+    () => [
+      {
+        id: "action",
+        label: t("admin.users.detail.membershipEvents.table.action"),
+        render: (event) => (
+          <p className="text-sm font-semibold text-foreground">
+            {getMembershipEventLabel(event.action)}
+          </p>
+        ),
+        minWidth: "160px",
+      },
+      {
+        id: "actor",
+        label: t("admin.users.detail.membershipEvents.table.actor"),
+        render: (event) => (
+          <p className="text-sm text-foreground">
+            {event.adminName ?? t("admin.users.detail.membershipEvents.systemActor")}
+          </p>
+        ),
+        minWidth: "140px",
+      },
+      {
+        id: "previous",
+        label: t("admin.users.detail.membershipEvents.table.previous"),
+        render: (event) => (
+          <p className="text-sm text-muted-foreground">
+            {formatStatusLabel(event.previousStatus)}
+          </p>
+        ),
+        minWidth: "140px",
+      },
+      {
+        id: "next",
+        label: t("admin.users.detail.membershipEvents.table.next"),
+        render: (event) => (
+          <p className="text-sm text-foreground">
+            {formatStatusLabel(event.newStatus)}
+          </p>
+        ),
+        minWidth: "140px",
+      },
+      {
+        id: "timestamp",
+        label: t("admin.users.detail.membershipEvents.table.timestamp"),
+        render: (event) => (
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium text-foreground">
+              {formatRelativeTimeLocalized(event.createdAt)}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {formatDateTimeLocalized(event.createdAt)}
+            </p>
+          </div>
+        ),
+        minWidth: "160px",
+      },
+      {
+        id: "details",
+        label: t("admin.users.detail.membershipEvents.table.details"),
+        render: (event) => renderEventMetadata(event) ?? (
+          <span className="text-sm text-muted-foreground">—</span>
+        ),
+        minWidth: "200px",
+      },
+    ],
+    [formatDateTimeLocalized, formatRelativeTimeLocalized, formatStatusLabel, getMembershipEventLabel, renderEventMetadata, t]
+  );
+
   const closeCollectionViewer = (open: boolean) => {
     if (!open) {
       setCollectionViewer(null);
@@ -1154,165 +1363,109 @@ function AdminUserDetailSheetContent({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[95vw] sm:w-full sm:max-w-[85vw] md:max-w-[80vw] lg:max-w-[78vw] xl:max-w-[75vw] 2xl:max-w-[70vw] overflow-y-auto">
-        <SheetHeader className="space-y-1.5 text-left">
-          <SheetTitle className="flex flex-wrap items-center gap-2">
-            <span className="text-2xl font-semibold">
+      <SheetContent className="w-[95vw] sm:w-full sm:max-w-[85vw] md:max-w-[80vw] lg:max-w-[78vw] xl:max-w-[75vw] 2xl:max-w-[70vw] overflow-y-auto p-0">
+        <div className="sticky top-0 z-40 border-b border-border/60 bg-background/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+          <SheetHeader className="settings-header-motion space-y-3 text-left">
+            <SheetTitle
+              className={cn(
+                settingsClasses.headerTitle,
+                "flex flex-wrap items-center gap-3 text-left"
+              )}
+            >
               {user.accountOwner ?? user.name}
-            </span>
-            <UserStatusBadge status={user.status} />
-          </SheetTitle>
-          <p className="text-sm text-muted-foreground">
-            {user.business.businessName ?? user.company ?? user.name}
-          </p>
-        </SheetHeader>
+              <UserStatusBadge status={user.status} />
+            </SheetTitle>
+            <SheetDescription className={cn(settingsClasses.headerDescription, "text-left")}>
+              {user.business.businessName ?? user.company ?? user.name}
+            </SheetDescription>
+          </SheetHeader>
+          {activeTab === "overview" && (
+            <div className="mt-3">
+              <nav className="flex flex-wrap gap-2">
+                {overviewAnchors.map((anchor) => (
+                  <button
+                    key={anchor.id}
+                    type="button"
+                    onClick={() => handleAnchorNav(anchor.id)}
+                    className={cn(
+                      settingsClasses.anchorPill,
+                      "text-xs font-semibold tracking-wide text-muted-foreground transition-colors",
+                      activeOverviewAnchor === anchor.id && settingsClasses.anchorPillActive
+                    )}
+                  >
+                    {anchor.label}
+                  </button>
+                ))}
+              </nav>
+            </div>
+          )}
+        </div>
 
-        <div className="mt-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <SegmentedControl
-              value={activeTab}
-              onValueChange={setActiveTab}
-              options={segmentedOptions}
-              className="w-full"
-            />
+        <div className="mt-4 px-6">
+          <SegmentedControl
+            value={activeTab}
+            onValueChange={setActiveTab}
+            options={segmentedOptions}
+            className="w-full"
+          />
+        </div>
 
-            <TabsContent value="overview" className="space-y-4">
-              <Card>
-                <CardHeader className="space-y-3">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
-                    <div className="space-y-1">
-                      <CardTitle className="flex items-baseline gap-2">
-                        <Crown className="h-4 w-4 text-primary" />
-                        {t("admin.users.detail.membership.title")}
-                      </CardTitle>
-                      <CardDescription>
-                        {t("admin.users.detail.membership.subtitle")}
-                      </CardDescription>
-                    </div>
-                    <MembershipActions
-                      user={user}
-                      onUserUpdated={onUserUpdated}
-                      buttonRowClassName="justify-start lg:justify-end"
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">
-                        {t("admin.users.detail.membership.trialEnds")}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDateTimeLocalized(user.trialEndsAt)}
-                      </p>
-                      {user.trialDaysRemaining != null && (
-                        <p className="text-xs text-amber-700">
-                          {t("admin.users.detail.membership.daysRemaining", {
-                            days: user.trialDaysRemaining,
-                          })}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">
-                        {t("admin.users.detail.membership.lastActive")}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatRelativeTime(user.lastActiveAt)}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">
-                        {t("admin.users.detail.membership.startedAt")}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDateTimeLocalized(user.membershipStartedAt)}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">
-                        {t("admin.users.detail.membership.premiumActivatedAt")}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDateTimeLocalized(user.premiumActivatedAt)}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-baseline gap-2">
-                    <AlarmClockCheck className="h-4 w-4 text-primary" />
-                    {t("admin.users.detail.membershipEvents.title")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("admin.users.detail.membershipEvents.description")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {membershipEvents.length === 0 ? (
+        <div className="px-6 pt-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-0">
+            <TabsContent value="overview" className="space-y-6 pb-6">
+              <OverviewSection
+                id="membership"
+                icon={Crown}
+                title={t("admin.users.detail.membership.title")}
+                description={t("admin.users.detail.membership.subtitle")}
+                actions={
+                  <MembershipActions
+                    user={user}
+                    onUserUpdated={onUserUpdated}
+                    buttonRowClassName="justify-end"
+                  />
+                }
+              >
+                <AdvancedDataTable
+                  data={membershipDetailRows}
+                  columns={membershipDetailColumns}
+                  rowKey={(row) => row.id}
+                  zebra={false}
+                  variant="plain"
+                />
+              </OverviewSection>
+
+              <OverviewSection
+                id="membership-history"
+                icon={AlarmClockCheck}
+                title={t("admin.users.detail.membershipEvents.title")}
+                description={t("admin.users.detail.membershipEvents.description")}
+              >
+                <AdvancedDataTable
+                  data={membershipEvents}
+                  columns={membershipEventsColumns}
+                  rowKey={(event) => event.id}
+                  zebra={false}
+                  variant="plain"
+                  emptyState={
                     <p className="text-sm text-muted-foreground">
                       {t("admin.users.detail.membershipEvents.empty")}
                     </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {membershipEvents.slice(0, 8).map((event) => {
-                        const statusLine =
-                          event.previousStatus || event.newStatus
-                            ? t("admin.users.detail.membershipEvents.statusChange", {
-                                previous: formatStatusLabel(event.previousStatus),
-                                next: formatStatusLabel(event.newStatus),
-                              })
-                            : null;
-                        return (
-                          <div key={event.id} className="rounded-xl border bg-background/70 p-3 shadow-sm">
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <p className="text-sm font-semibold text-foreground">
-                                  {getMembershipEventLabel(event.action)}
-                                </p>
-                                {event.adminName ? (
-                                  <p className="text-xs text-muted-foreground">
-                                    {t("admin.users.detail.membershipEvents.by", {
-                                      admin: event.adminName,
-                                    })}
-                                  </p>
-                                ) : null}
-                              </div>
-                              <p className="text-xs text-muted-foreground">
-                                {formatRelativeTime(event.createdAt)}
-                              </p>
-                            </div>
-                            {statusLine ? (
-                              <p className="mt-1 text-xs font-medium text-muted-foreground">
-                                {statusLine}
-                              </p>
-                            ) : null}
-                            {renderEventMetadata(event)}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                  }
+                />
+              </OverviewSection>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-baseline gap-2">
-                    <Clock className="h-4 w-4 text-primary" />
-                    {t("admin.users.detail.usage.title")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("admin.users.detail.usage.subtitle")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <OverviewSection
+                id="usage"
+                icon={Clock}
+                title={t("admin.users.detail.usage.title")}
+                description={t("admin.users.detail.usage.subtitle")}
+              >
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {usageCards.map((card) => (
                     <div
                       key={card.key}
-                      className="space-y-3 rounded-xl border bg-card/80 p-4 shadow-sm"
+                      className="space-y-3 rounded-2xl border border-border/40 bg-background/95 p-4 shadow-sm"
                     >
                       <p className="text-sm font-semibold text-foreground">
                         {card.title}
@@ -1322,10 +1475,8 @@ function AdminUserDetailSheetContent({
                           <div
                             key={`${card.key}-${metric.label}`}
                             className={cn(
-                              "rounded-xl border bg-background p-4 shadow-sm",
-                              card.metricVariant === "boxed"
-                                ? "border-primary/30"
-                                : "border-border/60"
+                              "rounded-xl border border-border/60 bg-card p-4 shadow-sm",
+                              card.metricVariant === "boxed" && "border-primary/30"
                             )}
                           >
                             <div className="flex items-start justify-between gap-2">
@@ -1342,7 +1493,7 @@ function AdminUserDetailSheetContent({
                                 </Button>
                               ) : null}
                             </div>
-                            <p className="mt-2 text-2xl font-semibold text-foreground whitespace-nowrap">
+                            <p className="mt-2 whitespace-nowrap text-2xl font-semibold text-foreground">
                               {metric.value}
                             </p>
                           </div>
@@ -1350,20 +1501,16 @@ function AdminUserDetailSheetContent({
                       </div>
                     </div>
                   ))}
-                </CardContent>
-              </Card>
+                </div>
+              </OverviewSection>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-baseline gap-2">
-                    <Mail className="h-4 w-4 text-primary" />
-                    {t("admin.users.detail.account.title")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("admin.users.detail.account.subtitle")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
+              <OverviewSection
+                id="account"
+                icon={Mail}
+                title={t("admin.users.detail.account.title")}
+                description={t("admin.users.detail.account.subtitle")}
+              >
+                <div className="space-y-4">
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <InfoLine
                       label={t("admin.users.detail.account.owner")}
@@ -1419,7 +1566,7 @@ function AdminUserDetailSheetContent({
                     <p className="text-sm font-medium">
                       {t("admin.users.detail.account.notes")}
                     </p>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {user.notes ?? t("admin.users.detail.account.emptyNotes")}
                     </p>
                   </div>
@@ -1435,20 +1582,16 @@ function AdminUserDetailSheetContent({
                       ))}
                     </div>
                   ) : null}
-                </CardContent>
-              </Card>
+                </div>
+              </OverviewSection>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-baseline gap-2">
-                    <Gift className="h-4 w-4 text-primary" />
-                    {t("admin.users.detail.financials.title")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("admin.users.detail.financials.subtitle")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <OverviewSection
+                id="financials"
+                icon={Gift}
+                title={t("admin.users.detail.financials.title")}
+                description={t("admin.users.detail.financials.subtitle")}
+              >
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {[
                     {
                       key: "monthlyRecurringRevenue",
@@ -1469,7 +1612,7 @@ function AdminUserDetailSheetContent({
                   ].map((financial) => (
                     <div
                       key={financial.key}
-                      className="rounded-2xl border bg-card/90 p-4 shadow-sm"
+                      className="rounded-2xl border border-border/40 bg-card/90 p-4 shadow-sm"
                     >
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         {t(`admin.users.detail.financials.${financial.key}`)}
@@ -1479,8 +1622,8 @@ function AdminUserDetailSheetContent({
                       </p>
                     </div>
                   ))}
-                </CardContent>
-              </Card>
+                </div>
+              </OverviewSection>
             </TabsContent>
 
             <DetailTab
@@ -1560,6 +1703,53 @@ function AdminUserDetailSheetContent({
         </AppSheetModal>
       </SheetContent>
     </Sheet>
+  );
+}
+
+interface OverviewSectionProps {
+  id: string;
+  icon: LucideIcon;
+  title: string;
+  description?: string;
+  actions?: ReactNode;
+  children: ReactNode;
+}
+
+function OverviewSection({ id, icon: Icon, title, description, actions, children }: OverviewSectionProps) {
+  return (
+    <section
+      id={id}
+      className={cn(
+        "settings-section-surface scroll-mt-32",
+        settingsTokens.section.padding
+      )}
+    >
+      <div className="space-y-5">
+        <div className="space-y-3">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <Icon className="h-4 w-4" />
+              </span>
+              <div className="space-y-1">
+                <p className={cn(settingsClasses.sectionTitle, "m-0")}>{title}</p>
+                {description ? (
+                  <p className={cn(settingsClasses.sectionDescription, "m-0")}>
+                    {description}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+            {actions ? (
+              <div className="flex w-full flex-wrap justify-start gap-2 lg:w-auto lg:justify-end">
+                {actions}
+              </div>
+            ) : null}
+          </div>
+        </div>
+        <div className={cn(settingsTokens.section.contentGap, "w-full")}>{children}</div>
+      </div>
+    </section>
   );
 }
 

@@ -761,7 +761,7 @@
           "businessEmail": "Business email",
           "businessPhone": "Business phone",
           "status": "Status",
-          "trial": "Trial timeline",
+          "planTimeline": "Membership timeline",
           "metrics": "Key metrics",
           "lastActive": "Last active",
           "actions": "Actions"
@@ -769,6 +769,10 @@
         "accountOwner": "Owner: {{owner}}",
         "trialDays": "{{days}} days left",
         "trialEnds": "Ends {{date}}",
+        "premiumEnds": "Premium ends {{date}}",
+        "premiumNoExpiration": "Premium end date not set",
+        "premiumActivated": "Activated {{date}}",
+        "planActive": "Active membership",
         "trialExpired": "Trial expired",
         "notApplicable": "Not applicable",
         "metrics": {
@@ -937,6 +941,7 @@
           "description": "Recent membership changes and manual overrides",
           "empty": "No membership activity yet.",
           "by": "by {{admin}}",
+          "systemActor": "System",
           "unknownStatus": "Unknown status",
           "statusChange": "{{previous}} → {{next}}",
           "actions": {
@@ -945,6 +950,14 @@
             "grant_complimentary": "Complimentary premium granted",
             "suspend_account": "Account suspended",
             "default": "Membership updated"
+          },
+          "table": {
+            "action": "Action",
+            "actor": "Performed by",
+            "previous": "Previous status",
+            "next": "New status",
+            "timestamp": "When",
+            "details": "Details"
           },
           "meta": {
             "daysAdded": "+{{days}} days added",

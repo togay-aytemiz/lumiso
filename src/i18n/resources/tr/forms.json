@@ -654,7 +654,10 @@
   },
   "userMenu": {
     "profileSettings": "Profil ayarları",
-    "signOut": "Çıkış yap"
+    "signOut": "Çıkış yap",
+    "premiumStatus": "Premium erişimi",
+    "premiumEnds": "{{date}} tarihinde sona erer",
+    "manageSubscription": "Abonelik ayarlarını görüntüle"
   },
   "project": {
     "archived": "Arşivlendi",

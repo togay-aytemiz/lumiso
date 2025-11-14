@@ -50,7 +50,8 @@ Aşağıdaki JSON dosyaları güncel durumda kapsam sağlıyor:
 - `leads-manual-tests.json`, `projects-manual-tests.json`, `sessions-manual-tests.json`, `payments-manual-tests.json`: CRM ana modüllerinin tablo, detay, sheet ve export akışları.
 - `templates-manual-tests.json`, `workflows-manual-tests.json`: Şablon builder, görsel havuzu, workflow oluşturma/durum yönetimi, guard akışları.
 - `global-search-manual-tests.json`: Header araması için lead/proje/seans/custom field kapsamı.
-- `auth-manual-tests.json`, `onboarding-manual-tests.json`: Şimdilik TBD yer tutucuları; onboarding/Auth tamamlandığında ayrıntılandırılacak.
+- `auth-manual-tests.json`: E-posta/şifre giriş, kayıt, kurtarma, güvenlik e-postaları ve destek telemetry kontrolleri için detaylı senaryolar içerir.
+- `onboarding-manual-tests.json`: Intake modalı, seeding doğrulamaları ve Getting Started guided setup görevlerini uçtan uca kapsar.
 - `mobile-manual-tests.json`: Navigasyon sheet’leri, mobil ayarlar deneyimi, AppSheetModal davranışları ve builder/workflow akışlarının mobil doğrulamaları.
 
 Aşağıdaki bölümler ayarlar modülüne özel kapsam notlarını listeler:
@@ -103,6 +104,13 @@ Aşağıdaki bölümler ayarlar modülüne özel kapsam notlarını listeler:
 
 - Kırmızı uyarı kartındaki “Tüm verileri sil” butonunun parola girmeden çalışmadığını, onay penceresinde hangi verilerin silineceğinin listelendiğini ve işlem sırasında butonların kilitlendiğini test edin.
 - İşlem iptal edildiğinde parola alanının temizlendiğini ve başarılı silme sonrasında kırmızı bildirim çıktığını not edin.
+
+### Navigasyon ve Modal Kabuğu
+
+- Ayarlar ikonuna tıklayınca açılan overlay’in arka planı karartıp sol menüyle geldiğini, sol menünün son ziyaret edilen kategoriyi hatırladığını doğrulayın.
+- Başlık altındaki yapışkan anchor çiplerinin bölüm isimlerini gösterdiğini, scroll sırasında aktif çipin otomatik değiştiğini ve çipe tıklayınca ilgili karta atladığını kontrol edin.
+- Herhangi bir bölüm kirliyken Escape/dış tıklama yapıldığında guard diyalogunun çıktığını, “Kal” seçeneğinin değişiklikleri koruduğunu, “Çık”ın her şeyi sıfırladığını doğrulayın.
+- Mobil kırılımda ayarlar önce ikon+başlık listesini göstermeli; bir kategoriye girince üstte geri ok + başlık barı ve anchor çipleri görünür kalmalı, geri ok listesine sorunsuz dönmelidir.
 
 ## Adım Yazma İpuçları
 

@@ -227,7 +227,7 @@ export default function AdminUsers() {
       },
       {
         id: "trial",
-        label: t("admin.users.table.columns.trial"),
+        label: t("admin.users.table.columns.planTimeline"),
         sortable: true,
         render: (user) => {
           if (user.status === "trial") {
@@ -240,6 +240,27 @@ export default function AdminUsers() {
                   {t("admin.users.table.trialEnds", {
                     date: formatLocalizedDate(user.trialEndsAt),
                   })}
+                </p>
+              </div>
+            );
+          }
+          if (user.status === "premium" || user.status === "complimentary") {
+            const premiumActivationReference = user.premiumActivatedAt ?? user.membershipStartedAt;
+            return (
+              <div className="space-y-1">
+                <p className="font-medium">
+                  {user.premiumExpiresAt
+                    ? t("admin.users.table.premiumEnds", {
+                        date: formatLocalizedDate(user.premiumExpiresAt),
+                      })
+                    : t("admin.users.table.premiumNoExpiration")}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {premiumActivationReference
+                    ? t("admin.users.table.premiumActivated", {
+                        date: formatLocalizedDate(premiumActivationReference),
+                      })
+                    : t("admin.users.table.planActive")}
                 </p>
               </div>
             );

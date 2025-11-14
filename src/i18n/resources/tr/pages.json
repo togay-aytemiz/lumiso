@@ -765,7 +765,7 @@
           "businessEmail": "İşletme e-postası",
           "businessPhone": "İşletme telefonu",
           "status": "Durum",
-          "trial": "Trial zaman çizelgesi",
+          "planTimeline": "Üyelik zaman çizelgesi",
           "metrics": "Öne çıkan metrikler",
           "lastActive": "Son aktif",
           "actions": "İşlemler"
@@ -773,6 +773,10 @@
         "accountOwner": "Hesap sahibi: {{owner}}",
         "trialDays": "{{days}} gün kaldı",
         "trialEnds": "{{date}} tarihinde biter",
+        "premiumEnds": "Premium {{date}} tarihinde biter",
+        "premiumNoExpiration": "Bitiş tarihi tanımlanmadı",
+        "premiumActivated": "{{date}} tarihinde aktif edildi",
+        "planActive": "Aktif üyelik",
         "trialExpired": "Trial süresi doldu",
         "notApplicable": "Geçerli değil",
         "metrics": {
@@ -808,7 +812,7 @@
           "plan": "Plan: {{plan}}",
           "trialEnds": "Trial bitişi",
           "daysRemaining": "{{days}} gün kaldı",
-          "lastActive": "Son aktif",
+          "lastActive": "Son Aktif",
           "startedAt": "Trial başlangıcı",
           "premiumActivatedAt": "Premium aktivasyonu"
         },
@@ -941,6 +945,7 @@
           "description": "Son üyelik değişiklikleri ve manuel müdahaleler",
           "empty": "Henüz bir üyelik kaydı yok.",
           "by": "{{admin}} tarafından",
+          "systemActor": "Sistem",
           "unknownStatus": "Bilinmeyen durum",
           "statusChange": "{{previous}} → {{next}}",
           "actions": {
@@ -949,6 +954,14 @@
             "grant_complimentary": "Ücretsiz premium tanımlandı",
             "suspend_account": "Hesap askıya alındı",
             "default": "Üyelik güncellendi"
+          },
+          "table": {
+            "action": "Aksiyon",
+            "actor": "Kim yaptı",
+            "previous": "Önceki durum",
+            "next": "Yeni durum",
+            "timestamp": "Ne zaman",
+            "details": "Detaylar"
           },
           "meta": {
             "daysAdded": "+{{days}} gün eklendi",

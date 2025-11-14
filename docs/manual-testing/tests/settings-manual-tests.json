@@ -1319,6 +1319,111 @@
     ]
   },
   {
+    "suite": "Ayarlar - Navigasyon ve Modal Kabuğu",
+    "cases": [
+      {
+        "external_id": "CRM-SETTINGS-SHELL-001",
+        "title": "Overlay arka planı karartır ve sol menü son seçimi hatırlar",
+        "description": "Yeni modal kabuğun blur'lu arka plan ve sol navigasyon davranışını doğrular.",
+        "steps": [
+          {
+            "action": "Üst çubuktaki Ayarlar ikonuna tıklayın.",
+            "expected_result": "Uygulama ekranı karartılır, arka plan hafif blur olur ve sol menülü ayarlar modali açılır."
+          },
+          {
+            "action": "Sol menüden 'Genel' kategorisini seçin.",
+            "expected_result": "Sol menüde ilgili satır vurgulanır, başlık ve içerik Genel sekmesine kayar."
+          },
+          {
+            "action": "Üst sağdaki kapatma ikonuna basarak modalı kapatın.",
+            "expected_result": "Overlay kapanır ve arka plan normale döner."
+          },
+          {
+            "action": "Aynı ikonla ayarları yeniden açın.",
+            "expected_result": "Sol menü en son ziyaret edilen 'Genel' kategorisini otomatik seçili gösterir."
+          }
+        ],
+        "expected_result": "Modal kabuk uygulamayı karartır ve sol navigasyon kullanıcı tercihini saklar."
+      },
+      {
+        "external_id": "CRM-SETTINGS-SHELL-002",
+        "title": "Yapışkan anchor çipleri aktif bölümü gösterir ve atlama yapar",
+        "description": "Başlık altındaki çip navigasyonunun hangi bölüm görünürse onu vurguladığını ve tıklanınca ilgili karta kaydırdığını doğrular.",
+        "steps": [
+          {
+            "action": "Genel kategorisi açıkken başlık altındaki çip satırını inceleyin.",
+            "expected_result": "Çipler 'Marka Bilgileri', 'Sosyal Bağlantılar', 'Bölgesel Tercihler' gibi bölüm adlarıyla listelenir ve header'a yapışık kalır."
+          },
+          {
+            "action": "Sayfayı aşağı kaydırarak 'Bölgesel Tercihler' kartını görünür hale getirin.",
+            "expected_result": "Çip satırı ekranda kalır ve 'Bölgesel Tercihler' çipi kendiliğinden vurgulanır."
+          },
+          {
+            "action": "'Sosyal Bağlantılar' çipine tıklayın.",
+            "expected_result": "İçerik bu bölüme atlar; kart başlığı üst kenara hizalanır ve çip vurgusu ona geçer."
+          },
+          {
+            "action": "Kaydırmaya devam ederken çip satırının davranışını gözlemleyin.",
+            "expected_result": "Çip satırı tüm scroll boyunca görünür kalır ve aktif bölüm değiştikçe vurgular otomatik güncellenir."
+          }
+        ],
+        "expected_result": "Anchor çipleri bölüm konumuna göre güncellenir ve hızlı geçişler sırasında sabit kalır."
+      },
+      {
+        "external_id": "CRM-SETTINGS-SHELL-003",
+        "title": "Kirli değişiklikler kapatılırken uyarı verir",
+        "description": "Değişiklik yapılmışken modalı kapatmaya çalıştığınızda guard diyalogunun çıktığını doğrular.",
+        "steps": [
+          {
+            "action": "Genel sayfasında bir alanı değiştirin ve kaydetmeyin.",
+            "expected_result": "Alt kısımda 'Değişiklikleri Kaydet' çubuğu, anchor çiplerinde ise küçük nokta rozetleri görünür."
+          },
+          {
+            "action": "Escape tuşuna basın veya modalın dışına tıklayın.",
+            "expected_result": "Modal kapanmaz; bunun yerine 'Değişiklikleri kaydetmeden çıkmak ister misiniz?' şeklinde iki butonlu bir uyarı açılır."
+          },
+          {
+            "action": "Uyarıdaki 'Vazgeç' / 'Kal' seçeneğine tıklayın.",
+            "expected_result": "Uyarı kapanır, modal açık kalır ve yaptığınız değişiklikler alanlarda durur."
+          },
+          {
+            "action": "Tekrar kapatmayı deneyin ve bu kez 'Değişiklikleri sil' / 'Çık' butonunu seçin.",
+            "expected_result": "Modal kapanır; ayarları tekrar açtığınızda alan eski değerine dönmüş ve kirli göstergeler kaybolmuş olur."
+          }
+        ],
+        "expected_result": "Kirli bir kategori kapatılmadan önce kullanıcıdan onay alınır; kal seçeneği değişiklikleri korur, çık seçeneği her şeyi sıfırlar."
+      },
+      {
+        "external_id": "CRM-SETTINGS-SHELL-004",
+        "title": "Mobil ayarlar index ekranı ve geri navigasyonu",
+        "description": "Mobil kırılımda ayarlar liste görünümünün, yakın kenar boşluklarının ve geri çubuğunun doğru çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "Tarayıcı genişliğini ~400 px'e düşürüp uygulamayı yenileyin.",
+            "expected_result": "Üst çubuk mobil görünüme geçer ve Ayarlar ikonu erişilebilir kalır."
+          },
+          {
+            "action": "Ayarlar ikonuna dokunarak modalı açın.",
+            "expected_result": "Tam ekran bir index listesi açılır; her satırda ikon + başlık bulunur ve içerik kenarlardan eşit boşluk bırakır."
+          },
+          {
+            "action": "Listeden 'Hizmetler' satırına dokunun.",
+            "expected_result": "Detay sayfası animasyonla açılır, üstte geri oku ve başlığı olan yapışkan bir bar görünür."
+          },
+          {
+            "action": "Sayfayı kaydırıp anchor çiplerinin davranışını kontrol edin.",
+            "expected_result": "Çipler header altında yatay olarak görünür, aktif bölüm değiştikçe vurgulanır ve kaybolmaz."
+          },
+          {
+            "action": "Üstteki geri okuna basın.",
+            "expected_result": "Liste ekranına dönülür ve en son ziyaret edilen satır halen seçili/odaklı görünür."
+          }
+        ],
+        "expected_result": "Mobilde ayarlar listesi → detay → geri akışı sorunsuz çalışır ve anchor çipleri küçültülmüş düzenlerde de görünür kalır."
+      }
+    ]
+  },
+  {
     "suite": "Ayarlar - Tehlike Bölgesi",
     "cases": [
       {

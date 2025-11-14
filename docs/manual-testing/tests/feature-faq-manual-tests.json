@@ -102,40 +102,40 @@
     "cases": [
       {
         "external_id": "CRM-FAQ-006",
-        "title": "Arama sonuç kartlarının metni doğru",
-        "description": "Search input'u soru başlıklarını döndürdüğünde başlık + kategori rozetinin kopyası kontrol edilir.",
+        "title": "Arama sonuç kartları net beklenti yaratıyor",
+        "description": "Search input'u kullanıldığında çıkan başlık/kategori rozetinin kullanıcının hangi cevabı açacağını anlamasını sağlayıp sağlamadığına bakılır.",
         "steps": [
           {
             "action": "Sheet üstündeki arama alanına \"rehberi\" yazın.",
-            "expected_result": "Liste, \"Görevleri bitirdikten sonra...\" sorusunu tek sonuç olarak gösterir ve kategori rozeti Başlarken yazar."
+            "expected_result": "Liste, \"Görevleri bitirdikten sonra...\" sorusunu tek sonuç olarak gösterir ve Başlarken rozeti sayesinde kullanıcı hangi bağlamda olduğunu bilir."
           },
           {
             "action": "Sonucu açıp cevabı görüntüleyin.",
-            "expected_result": "Accordion içeriği kategori görünümünde görülen cevapla aynıdır."
+            "expected_result": "Cevap metni aranan ifadeyi bağlamıyla birlikte anlatır; kullanıcı \"bulduğum cevap gerçekten bunu söylüyor\" diyebilir."
           }
         ],
-        "expected_result": "Arama metni soru başlığına göre filtreleme yapar."
+        "expected_result": "Arama kartları, kullanıcı tıklamadan önce ne okuyacağını tahmin edebileceği şekilde yazılmıştır."
       },
       {
         "external_id": "CRM-FAQ-007",
-        "title": "Arama cevap metnini de yakalıyor",
-        "description": "Bu vaka teknik aramanın çalışmasını değil, cevap metninde geçen ifadelerin sonuç listesinde göründüğünü doğrulamak içindir.",
+        "title": "Arama cevap metnindeki kritik ifadeleri bulduğunda da anlamlı kalıyor",
+        "description": "Cevap gövdesinde geçen özel kelimelerle arama yaptığınızda sonuç listesi hâlâ okunabilir ve kullanıcıyı doğru kontekste tutuyor mu kontrol edin.",
         "steps": [
           {
             "action": "Arama kutusuna \"support@lumiso.com\" yazın.",
-            "expected_result": "Arama sonuçları en azından restart rehber sorusunu döndürür; çünkü bu ifade sadece cevapta geçer."
+            "expected_result": "Sonuç kartı bu adresin neden önemli olduğunu (rehber reset talebi) ima eden başlık/açıklama taşır; kullanıcı \"bu bilgi iletişim\" diye anlayabilir."
           },
           {
             "action": "Aynı işlemi \"Kapora takibi\" ifadesiyle tekrarlayın.",
-            "expected_result": "Ödemeler kategorisindeki ilgili soru sonuçlarda görünür."
+            "expected_result": "Ödemeler kategorisindeki ilgili sonuçta kapora yönetimiyle ilgili kelimeler yer alır; genel ifadelerle geçiştirilmez."
           }
         ],
-        "expected_result": "Arama hem soru başlıklarını hem cevap gövdesini tarar."
+        "expected_result": "Arama çıktısı sadece eşleşen kelimeyi göstermekle kalmaz, kullanıcıya bağlamı hatırlatır."
       },
       {
         "external_id": "CRM-FAQ-008",
-        "title": "Arama temizlendikten sonra varsayılan kopya geri geliyor",
-        "description": "Clear ikonuna basıldığında kategori kartlarındaki başlık/sayaç metinlerinin tekrar göründüğü kontrol edilir.",
+        "title": "Arama temizlenince varsayılan metinler yeniden yol gösteriyor",
+        "description": "Clear ikonuna bastığınızda kategori kartlarının başlık ve açıklamaları yeniden görünüyor mu; kullanıcı \"şimdi ne yapmalıyım\" sorusunu cevaplayabiliyor mu kontrol edin.",
         "steps": [
           {
             "action": "Arama kutusuna kısa bir sorgu yazın ve sonuçların geldiğini doğrulayın.",
@@ -143,10 +143,10 @@
           },
           {
             "action": "Input'taki X ikonuna basarak alanı temizleyin.",
-            "expected_result": "Arama sonuçları kapanır ve kategori grid'i tekrar görünür."
+            "expected_result": "Kategori grid'i geri geldiğinde kart başlıkları hâlâ okunaklıdır ve sayacın gösterdiği rakam kullanıcıya içerik hacmini anlatır."
           }
         ],
-        "expected_result": "Arama alanı temizlendiğinde sayfa varsayılan kategori görünümüne döner."
+        "expected_result": "Arama kapatılınca kullanıcıyı yönlendiren ana metinler yeniden sahneye çıkar."
       }
     ]
   }

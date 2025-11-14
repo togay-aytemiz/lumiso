@@ -7,10 +7,22 @@
         "title": "E-posta/şifre ile giriş başarılı ve oturum korunuyor",
         "description": "Mutlu senaryodaki giriş akışını doğrulayın ve tarayıcıdaki breadcrumb tamponuna olayın düştüğünü kontrol edin.",
         "steps": [
-          "/auth/signin adresine gidin.",
-          "Onaylı bir kullanıcı bilgisi ile formu doldurup gönderin.",
-          "Yönlendirme sonrası / sayfasını bir kez yenileyin.",
-          "Geliştirici araçlarını açıp `window.__lumisoAuthEvents` komutunu çalıştırın."
+          {
+            "action": "/auth/signin adresine gidin.",
+            "expected_result": "Giriş formu e-posta ve şifre alanlarıyla yüklenir."
+          },
+          {
+            "action": "Onaylı bir kullanıcı bilgisi ile formu doldurup gönderin.",
+            "expected_result": "Form hata vermeden gönderilir ve kullanıcı kök (/) sayfasına yönlendirilir."
+          },
+          {
+            "action": "Yönlendirme sonrası / sayfasını bir kez yenileyin.",
+            "expected_result": "Sayfa yenilendikten sonra kullanıcı hala oturum açık olarak kalır."
+          },
+          {
+            "action": "Geliştirici araçlarını açıp `window.__lumisoAuthEvents` komutunu çalıştırın.",
+            "expected_result": "Konsol maskelenmiş e-posta ile auth_sign_in_success içeren son olayları listeler."
+          }
         ],
         "expected_result": "Kullanıcı / sayfasına yönlendirilir, yenilemeden sonra oturum açık kalır ve breadcrumb tamponunda son auth_sign_in_success olayı görünür."
       },
@@ -19,9 +31,18 @@
         "title": "Geçersiz bilgiler yerelleştirilmiş hata gösteriyor",
         "description": "Hatalı şifrelerin oturum oluşturmadığından ve telemetriye hata olarak işlendiğinden emin olun.",
         "steps": [
-          "/auth/signin adresine gidin.",
-          "Doğru e-posta fakat yanlış şifre girip gönderin.",
-          "Toast mesajını gözlemleyin, DevTools üzerinden breadcrumb güncellemelerini kontrol edin."
+          {
+            "action": "/auth/signin adresine gidin.",
+            "expected_result": "Sayfa e-posta ve şifre alanlarını gösterir ve giriş denemesi için hazırdır."
+          },
+          {
+            "action": "Doğru e-posta fakat yanlış şifre girip gönderin.",
+            "expected_result": "Form aynı sayfa üzerinde kalır ve toast yerelleştirilmiş hata mesajı gösterir."
+          },
+          {
+            "action": "Toast mesajını gözlemleyin, DevTools üzerinden breadcrumb güncellemelerini kontrol edin.",
+            "expected_result": "Toast'ta hata kopyası görünür ve breadcrumb auth_sign_in_error olayını kaydeder."
+          }
         ],
         "expected_result": "Form /auth üzerinde kalır, toast yerelleştirilmiş hata gösterir ve yönlendirme olmadan auth_sign_in_error olayı kaydedilir."
       },
@@ -30,10 +51,22 @@
         "title": "Yeni kayıt markalı doğrulama e-postasını tetikliyor",
         "description": "Kayıt doğrulama hattının (Supabase admin link + Resend) uçtan uca çalıştığını doğrulayın.",
         "steps": [
-          "/auth/signup adresine gidin.",
-          "Yeni bir e-posta ve geçerli şifre ile kayıt olun.",
-          "Toast mesajının e-postayı kontrol edin dediğini doğrulayın.",
-          "Resend üzerinden gelen e-postayı, konu/CTA bilgilerini inceleyin ve bağlantıya tıklayarak hesabı onaylayın."
+          {
+            "action": "/auth/signup adresine gidin.",
+            "expected_result": "Kayıt formu e-posta, şifre ve onay alanlarıyla açılır."
+          },
+          {
+            "action": "Yeni bir e-posta ve geçerli şifre ile kayıt olun.",
+            "expected_result": "Kayıt isteği işlenir ve kullanıcıya e-postasını kontrol etmesini söyleyen toast tetiklenir."
+          },
+          {
+            "action": "Toast mesajının e-postayı kontrol edin dediğini doğrulayın.",
+            "expected_result": "Toast kopyası doğrulama e-postasının gönderildiğini açıkça belirtir."
+          },
+          {
+            "action": "Resend üzerinden gelen e-postayı, konu/CTA bilgilerini inceleyin ve bağlantıya tıklayarak hesabı onaylayın.",
+            "expected_result": "E-posta Lumiso markası taşır; CTA /auth?mode=confirmed adresini açar ve hesap aktivasyonu tamamlanır."
+          }
         ],
         "expected_result": "Bekleyen kullanıcı yalnızca bir kez Lumiso markalı doğrulama e-postası alır, CTA /auth?mode=confirmed adresini açar ve aktivasyonu tamamlar."
       }
@@ -47,9 +80,18 @@
         "title": "Şifre sıfırlama isteği markalı kurtarma e-postası gönderiyor",
         "description": "/auth üzerinden doğru CTA ve telemetriyle Resend e-postası üretildiğini doğrulayın.",
         "steps": [
-          "/auth/signin sayfasında \"Şifremi unuttum\" bağlantısına tıklayın ve bilinen bir e-posta girin.",
-          "Toast + breadcrumb çıktılarında auth_reset_request_success kaydını kontrol edin.",
-          "Gelen e-postadaki metin ve CTA URL'sini (/auth/recovery?email=...) doğrulayın."
+          {
+            "action": "/auth/signin sayfasında \"Şifremi unuttum\" bağlantısına tıklayın ve bilinen bir e-posta girin.",
+            "expected_result": "Kurtarma formu e-postayı kabul eder ve istek gönderilir."
+          },
+          {
+            "action": "Toast + breadcrumb çıktılarında auth_reset_request_success kaydını kontrol edin.",
+            "expected_result": "Toast gönderimin başarılı olduğunu gösterir ve breadcrumb auth_reset_request_success olayı üretir."
+          },
+          {
+            "action": "Gelen e-postadaki metin ve CTA URL'sini (/auth/recovery?email=...) doğrulayın.",
+            "expected_result": "E-posta locale uygun kopya içerir ve CTA parametreli /auth/recovery adresini açar."
+          }
         ],
         "expected_result": "Toast gönderimin başarılı olduğunu gösterir, e-posta yerelleştirilmiş metin içerir ve CTA önceden doldurulmuş e-posta ile /auth/recovery adresine gider."
       },
@@ -58,9 +100,18 @@
         "title": "Aktif oturum varken kurtarma bağlantısı çalışıyor",
         "description": "Oturumu açık kullanıcılar reset bağlantısını açtığında /auth/recovery üzerinde kalmalı.",
         "steps": [
-          "/auth üzerinden giriş yapın.",
-          "E-postadaki kurtarma bağlantısını aynı tarayıcıda açın.",
-          "Şifre sıfırlama formunu tamamlayın."
+          {
+            "action": "/auth üzerinden giriş yapın.",
+            "expected_result": "Kullanıcı başarılı şekilde oturum açar ve uygulamanın ana sayfasına yönlendirilir."
+          },
+          {
+            "action": "E-postadaki kurtarma bağlantısını aynı tarayıcıda açın.",
+            "expected_result": "Bağlantı /auth/recovery sayfasını açar ve mevcut oturum kapanmaz."
+          },
+          {
+            "action": "Şifre sıfırlama formunu tamamlayın.",
+            "expected_result": "Yeni şifre kabul edilir ve breadcrumb auth_password_update_success olayını kaydeder."
+          }
         ],
         "expected_result": "Sayfa / yerine /auth/recovery üzerinde kalır, sıfırlama başarılı olur ve breadcrumb auth_password_update_success kaydeder."
       },
@@ -69,9 +120,18 @@
         "title": "Süresi dolmuş/yeniden kullanılan bağlantı dostça hata veriyor",
         "description": "Geçersiz bağlantı korumasını ve telemetriyi doğrulayın.",
         "steps": [
-          "Bir kurtarma bağlantısını kullanarak şifreyi sıfırlayın.",
-          "Aynı bağlantıyı tekrar kullanmayı deneyin.",
-          "Toast/breadcrumb çıktısını gözlemleyin."
+          {
+            "action": "Bir kurtarma bağlantısını kullanarak şifreyi sıfırlayın.",
+            "expected_result": "İlk kullanımda şifre güncellenir ve hesap başarıyla doğrulanır."
+          },
+          {
+            "action": "Kurtarma bağlantısının tek kullanımlık olduğunu ve 60 dakika içinde zaman aşımına uğradığını hatırlayın; ilk sıfırlamadan sonra minimum 60 dakika bekleyip aynı bağlantıyı tekrar açmayı deneyin.",
+            "expected_result": "Süre dolduktan veya bağlantı ilk kullanımdan sonra yeniden açıldığında geçersiz oturum uyarısı tetiklenir."
+          },
+          {
+            "action": "Toast/breadcrumb çıktısını gözlemleyin.",
+            "expected_result": "Toast bağlantının geçersiz olduğunu belirtir ve breadcrumb auth_recovery_session_missing olayını kaydeder."
+          }
         ],
         "expected_result": "Kullanıcı bağlantının geçersiz olduğunu öğrenir, /auth/signin sayfasında kalır ve breadcrumb auth_recovery_session_missing olayı kaydeder."
       },
@@ -80,9 +140,18 @@
         "title": "Şifre güncellemesi güvenlik e-postası tetikliyor",
         "description": "Başarılı reset sonrası güvenlik bildiriminin gönderildiğini doğrulayın.",
         "steps": [
-          "/auth/recovery üzerinden şifre sıfırlayın.",
-          "Güvenlik bildirimi için gelen kutusunu kontrol edin.",
-          "Breadcrumb üzerinde auth_password_update_notification_success kaydını inceleyin."
+          {
+            "action": "/auth/recovery üzerinden şifre sıfırlayın.",
+            "expected_result": "Sayfa başarı mesajı gösterir ve oturum yeni şifreyle güncellenir."
+          },
+          {
+            "action": "Güvenlik bildirimi için gelen kutusunu kontrol edin.",
+            "expected_result": "Lumiso güvenlik e-postası tek bir defa gelir ve şifre değişikliğini bildirir."
+          },
+          {
+            "action": "Breadcrumb üzerinde auth_password_update_notification_success kaydını inceleyin.",
+            "expected_result": "DevTools'ta bildirim olayının success girdisi görünür."
+          }
         ],
         "expected_result": "Doğru metinle yalnızca bir güvenlik e-postası gelir, telemetri hem güncelleme hem de bildirim başarısını kaydeder."
       },
@@ -91,9 +160,18 @@
         "title": "Profil ayarları \"Sıfırlama e-postası gönder\" CTA'sı çalışıyor",
         "description": "Ayarlar sayfasındaki güvenlik kartının aynı davranışı gösterdiğini doğrulayın.",
         "steps": [
-          "Giriş yapmışken /settings/profile sayfasına gidin.",
-          "Güvenlik kartındaki şifre sıfırlama CTA'sına tıklayın.",
-          "Toast + e-posta + breadcrumb çıktılarının geldiğini doğrulayın."
+          {
+            "action": "Giriş yapmışken /settings/profile sayfasına gidin.",
+            "expected_result": "Profil sayfası ve güvenlik kartı tamamen yüklenir."
+          },
+          {
+            "action": "Güvenlik kartındaki şifre sıfırlama CTA'sına tıklayın.",
+            "expected_result": "CTA kurtarma isteğini tetikler ve başarılı toast gösterir."
+          },
+          {
+            "action": "Toast + e-posta + breadcrumb çıktılarının geldiğini doğrulayın.",
+            "expected_result": "Toast gönderimi onaylar, kurtarma e-postası gelir ve breadcrumb auth_reset_request_start/success olaylarını kaydeder."
+          }
         ],
         "expected_result": "CTA aktif olur, toast gönderimi onaylar, kurtarma e-postası gelir ve breadcrumb mevcut kullanıcı e-postasıyla auth_reset_request_start/success kaydeder."
       }
@@ -107,8 +185,14 @@
         "title": "Tarayıcı içi breadcrumb tamponu Destek için kullanılabilir",
         "description": "Bu debug kancasının tüm ortamda çalıştığını doğrulayın.",
         "steps": [
-          "Herhangi bir auth sayfasını açın ve basit bir eylem yapın (ör. şifre sıfırla modalını aç/kapat).",
-          "DevTools konsolunda `window.__lumisoAuthEvents` komutunu çalıştırın."
+          {
+            "action": "Herhangi bir auth sayfasını açın ve basit bir eylem yapın (ör. şifre sıfırla modalını aç/kapat).",
+            "expected_result": "Auth sayfası olay üretecek şekilde yüklenir ve yaptığınız eylem yeni bir auth olayı tetikler."
+          },
+          {
+            "action": "DevTools konsolunda `window.__lumisoAuthEvents` komutunu çalıştırın.",
+            "expected_result": "Komut son (≤50) auth olayını maskelenmiş e-posta ve zaman damgasıyla listeler."
+          }
         ],
         "expected_result": "Konsol maskelenmiş e-posta ve zaman damgası içeren son (≤50) auth olayını listeler."
       },
@@ -117,8 +201,14 @@
         "title": "Destek CLI ile edge function üzerinden auth e-postası yeniden gönderilebiliyor",
         "description": "Belirtilen npx komutunun manuel kurtarma/kayıt e-postası gönderebildiğini doğrulayın.",
         "steps": [
-          "Repo kökünden `npx supabase functions invoke send-template-email --project-ref rifdykpdubrowzbylffe --no-verify-jwt --body '{\"authIntent\":\"password_recovery\",\"email\":\"tester@example.com\"}'` komutunu dev ortamına karşı çalıştırın.",
-          "Function loglarını izleyin ve e-posta teslimini doğrulayın."
+          {
+            "action": "Repo kökünden `npx supabase functions invoke send-template-email --project-ref rifdykpdubrowzbylffe --no-verify-jwt --body '{\"authIntent\":\"password_recovery\",\"email\":\"tester@example.com\"}'` komutunu dev ortamına karşı çalıştırın.",
+            "expected_result": "Komut başarılı şekilde tamamlanır ve CLI'da function çıktısı görünür."
+          },
+          {
+            "action": "Function loglarını izleyin ve e-posta teslimini doğrulayın.",
+            "expected_result": "Loglar auth intent parametresini gösterir ve Resend paneli/gelen kutusunda e-posta teslimi doğrulanır."
+          }
         ],
         "expected_result": "Komut başarıyla tamamlanır, loglar auth intent bilgisini gösterir ve Resend test e-postasını teslim eder (gelen kutusu veya Resend panelinden doğrulanır)."
       }

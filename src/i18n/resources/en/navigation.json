@@ -38,18 +38,34 @@
     "description": "Need assistance? Choose from the options below to get help.",
     "close": "Close",
     "options": {
-      "documentation": {
-        "title": "Documentation",
-        "description": "Browse our guides, tutorials, and best practices."
+      "faq": {
+        "title": "Feature FAQ",
+        "description": "Read quick answers to our most common questions."
       },
-      "support": {
-        "title": "Contact Support",
-        "description": "Get help from our support team via email."
+      "email": {
+        "title": "Email Support",
+        "description": "Reach our support team via support@lumiso.com."
       },
-      "chat": {
-        "title": "Live Chat",
-        "description": "Chat with our support team in real-time."
+      "whatsapp": {
+        "title": "WhatsApp",
+        "description": "Chat with our support team on WhatsApp."
       }
+    },
+    "faq_sheet": {
+      "title": "Frequently Asked Questions",
+      "description": "Browse the most common Lumiso questions by category.",
+      "search_label": "Search FAQ",
+      "search_placeholder": "Search question or answer",
+      "categories_heading": "Categories",
+      "question_count_one": "{{count}} question",
+      "question_count_other": "{{count}} questions",
+      "back_to_categories": "Back to all categories",
+      "search_results_one": "{{count}} result",
+      "search_results_other": "{{count}} results",
+      "clear_search": "Clear",
+      "no_results": "No matching answers found.",
+      "empty_state": "No FAQ entries available yet.",
+      "empty_category_state": "This category does not have any questions yet."
     }
   },
   "settings": {

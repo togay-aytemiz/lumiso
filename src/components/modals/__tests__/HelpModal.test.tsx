@@ -21,6 +21,16 @@ jest.mock("@/hooks/use-mobile", () => ({
   useIsMobile: jest.fn(),
 }));
 
+jest.mock("@/components/support/FeatureFAQSheet", () => ({
+  FeatureFAQSheet: ({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) =>
+    open ? (
+      <div data-testid="faq-sheet">
+        FAQ Sheet
+        <button onClick={() => onOpenChange(false)}>Close FAQ</button>
+      </div>
+    ) : null,
+}));
+
 jest.mock("@/components/ui/dialog", () => {
   const renderDialogChildren = (
     children: DialogComponentProps["children"],
@@ -58,12 +68,12 @@ jest.mock("@/components/ui/dialog", () => {
 const translations: Record<string, string> = {
   "help.title": "Need a hand?",
   "help.description": "Choose how you want to reach us.",
-  "help.options.documentation.title": "Documentation",
-  "help.options.documentation.description": "Read the Lumiso handbook.",
-  "help.options.support.title": "Email Support",
-  "help.options.support.description": "Drop a note to our support inbox.",
-  "help.options.chat.title": "Live Chat",
-  "help.options.chat.description": "Ping the team in real time.",
+  "help.options.faq.title": "Feature FAQ",
+  "help.options.faq.description": "Browse the latest answers.",
+  "help.options.email.title": "Email Support",
+  "help.options.email.description": "Drop a note to our inbox.",
+  "help.options.whatsapp.title": "WhatsApp",
+  "help.options.whatsapp.description": "Chat with the team.",
   "help.close": "Close",
 };
 
@@ -76,20 +86,16 @@ jest.mock("react-i18next", () => ({
 const useIsMobileMock = useIsMobile as jest.Mock;
 
 describe("HelpModal", () => {
-let consoleSpy: jest.SpyInstance;
-let windowOpenSpy: jest.SpyInstance;
-let initialHref: string;
-
+  let windowOpenSpy: jest.SpyInstance;
+  let initialHref: string;
 
   beforeEach(() => {
     useIsMobileMock.mockReturnValue(false);
-    consoleSpy = jest.spyOn(console, "log").mockImplementation(() => {});
     windowOpenSpy = jest.spyOn(window, "open").mockImplementation(() => null);
     initialHref = window.location.href;
   });
 
   afterEach(() => {
-    consoleSpy.mockRestore();
     windowOpenSpy.mockRestore();
     window.location.href = initialHref;
     jest.clearAllMocks();
@@ -106,27 +112,33 @@ let initialHref: string;
       screen.getByText("Choose how you want to reach us.")
     ).toBeInTheDocument();
 
-    // Documentation option
+    // FAQ option opens the sheet
     fireEvent.click(
-      screen.getByText("Documentation").closest("button") as HTMLButtonElement
+      screen.getByText("Feature FAQ").closest("button") as HTMLButtonElement
     );
-    expect(windowOpenSpy).toHaveBeenCalledWith(
-      "https://docs.lumiso.com",
-      "_blank"
-    );
+    expect(screen.getByTestId("faq-sheet")).toBeInTheDocument();
     expect(onOpenChange).toHaveBeenCalledWith(false);
 
     // Email support option
     fireEvent.click(
       screen.getByText("Email Support").closest("button") as HTMLButtonElement
     );
+    expect(windowOpenSpy).toHaveBeenNthCalledWith(
+      1,
+      "mailto:support@lumiso.com",
+      "_self"
+    );
     expect(onOpenChange).toHaveBeenCalledWith(false);
 
-    // Live chat option
+    // WhatsApp option
     fireEvent.click(
-      screen.getByText("Live Chat").closest("button") as HTMLButtonElement
+      screen.getByText("WhatsApp").closest("button") as HTMLButtonElement
     );
-    expect(consoleSpy).toHaveBeenCalledWith("Opening live chat...");
+    expect(windowOpenSpy).toHaveBeenNthCalledWith(
+      2,
+      "https://wa.me/905551234567",
+      "_blank"
+    );
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 

@@ -1,0 +1,716 @@
+{
+  "meta": {
+    "title": "Lumiso Özellik SSS",
+    "last_updated": "2025-11-14",
+    "usage_notes": [
+      "Bu dosya Lumiso'da zorlandığınızda hızlıca cevap bulmanız için hazırlandı.",
+      "Aramak için tarayıcınızın bul kısayolunu kullanabilirsiniz (Cmd/Ctrl + F).",
+      "Sorular herkesin anlayacağı sade bir dille yazılmıştır; teknik terimlere ihtiyaç duymazsınız."
+    ]
+  },
+  "status_tracker": [
+    {
+      "module": "Giriş ve Başlangıç",
+      "status": "ready",
+      "summary": "Giriş, e-posta doğrulama ve Stüdyonu Tanıyalım adımları sorunsuz çalışıyor.",
+      "resources": [
+        "docs/manual-testing/tests/auth-manual-tests.json",
+        "docs/manual-testing/tests/onboarding-manual-tests.json",
+        "src/components/ProfileIntakeGate.tsx",
+        "src/pages/GettingStarted.tsx"
+      ]
+    },
+    {
+      "module": "CRM (Kişiler, Projeler, Seanslar)",
+      "status": "in_progress",
+      "summary": "Kişi, proje ve seans oluşturma yardımcıları aktif; rapor ve takvim kısmı genişletiliyor.",
+      "resources": [
+        "docs/manual-testing/tests/leads-manual-tests.json",
+        "docs/manual-testing/tests/projects-manual-tests.json",
+        "docs/manual-testing/tests/sessions-manual-tests.json",
+        "docs/project-creation-wizard-plan.md",
+        "docs/session-planning-roadmap.md"
+      ]
+    },
+    {
+      "module": "Hizmetler, Paketler ve KDV",
+      "status": "in_progress",
+      "summary": "Hizmet listesi ve paket oluşturma adımları yeni KDV alanlarıyla uyumlu.",
+      "resources": [
+        "docs/services-and-packages-plan.md",
+        "docs/package-creation-wizard-plan.md",
+        "supabase/migrations/20251109120000_services_vat_profile.sql",
+        "supabase/migrations/20251109161000_tax_profile_defaults_include.sql"
+      ]
+    },
+    {
+      "module": "Ödemeler ve Kapora",
+      "status": "in_progress",
+      "summary": "Kapora takibi ve iade akışları yenilendi; canlı veritabanı geçişi planlanıyor.",
+      "resources": [
+        "docs/deposit-mini-plan.md",
+        "docs/manual-testing/tests/payments-manual-tests.json",
+        "src/components/ProjectPaymentsSection.tsx"
+      ]
+    },
+    {
+      "module": "Takvim ve Hatırlatıcılar",
+      "status": "in_progress",
+      "summary": "Gün/hafta/ay görünümleri hazır, harici takvim paylaşımı sırada.",
+      "resources": [
+        "src/pages/Calendar.tsx",
+        "src/pages/ReminderDetails.tsx",
+        "src/hooks/useSessionReminderScheduling.ts"
+      ]
+    },
+    {
+      "module": "Şablonlar ve İş Akışları",
+      "status": "ready",
+      "summary": "E-posta/WhatsApp/SMS şablonları ve otomatik iş akışları iki dilde kullanılabilir.",
+      "resources": [
+        "docs/manual-testing/tests/templates-manual-tests.json",
+        "docs/manual-testing/tests/workflows-manual-tests.json",
+        "src/pages/TemplateBuilder.tsx",
+        "src/components/CreateWorkflowSheet.tsx"
+      ]
+    },
+    {
+      "module": "Bildirimler ve Günlük Özet",
+      "status": "in_progress",
+      "summary": "Bildirim anahtarları ve gönderim saatleri ayarlar ekranında yönetiliyor.",
+      "resources": [
+        "docs/manual-testing/tests/settings-manual-tests.json",
+        "supabase/migrations/20251109120000_services_vat_profile.sql"
+      ]
+    },
+    {
+      "module": "Mobil ve Navigasyon",
+      "status": "in_progress",
+      "summary": "Mobil alt menü ve tam ekran formlar stabil, analitik sekmesi hazırlanıyor.",
+      "resources": [
+        "docs/manual-testing/tests/mobile-manual-tests.json",
+        "src/components/MobileBottomNav.tsx",
+        "src/components/navigation/BottomSheetMenu.tsx"
+      ]
+    }
+  ],
+  "faq_categories": [
+    {
+      "category": "Başlarken",
+      "entries": [
+        {
+          "id": "welcome-form",
+          "question": "Yeni hesap açınca karşıma çıkan \"Stüdyonu Tanıyalım\" ekranı ne işe yarar?",
+          "answer": "Bu ekran Lumiso'nun size uygun ayarları hazırlaması için birkaç basit soru sorar (adınız, işletme adı, yaptığınız işler ve örnek veri tercihi). Tüm adımları tamamlayınca otomatik kapanır ve uygulamayı kullanmaya başlarsınız. Gerekirse adres çubuğuna `?debugIntake=1` ekleyerek formu yeniden açabilirsiniz.",
+          "related_features": [
+            "src/components/ProfileIntakeGate.tsx",
+            "docs/manual-testing/tests/onboarding-manual-tests.json"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/onboarding-manual-tests.json#CRM-ONBOARD-101"
+          ]
+        },
+        {
+          "id": "getting-started",
+          "question": "Getting Started (Başlangıç) sayfasında ne yapmalıyım?",
+          "answer": "Bu sayfa size hazır görev listesi verir. Her kart hangi adımda olduğunuzu, sıradaki görevi ve ilgili sayfaya gitme butonunu gösterir. Tüm görevler tamamlanınca kutlama animasyonu görür ve ana panele yönlendirilirsiniz.",
+          "related_features": [
+            "src/pages/GettingStarted.tsx",
+            "src/components/GuidedStepProgress.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/onboarding-manual-tests.json"
+          ]
+        },
+        {
+          "id": "seeding",
+          "question": "Başlangıçtaki seçimlerim (proje türleri, örnek hizmetler) nereye kaydediliyor?",
+          "answer": "Seçtiğiniz proje türleri Ayarlar > Projeler bölümündeki listenin sırasını belirler ve ilk seçtiğiniz tür otomatik \"varsayılan\" olur. Örnek hizmetler de aynı ayarlarda KDV bilgisiyle birlikte hazır gelir; dilediğiniz zaman düzenleyebilirsiniz.",
+          "related_features": [
+            "supabase/migrations/20251109161000_tax_profile_defaults_include.sql",
+            "docs/locale-aware-seeding-plan.md"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/onboarding-manual-tests.json"
+          ]
+        },
+        {
+          "id": "restart-guide",
+          "question": "Görevleri bitirdikten sonra rehberi tekrar görmek istersem ne yapmalıyım?",
+          "answer": "Şu anda Getting Started rehberini uygulama içinden yeniden başlatma seçeneği geçici olarak kapalı. Rehberi tekrar açmamız gerekiyorsa destek ekibine `support@lumiso.com` üzerinden yazmanız yeterli; hesabınız için rehberi manuel olarak sıfırlarız ve size geri dönüş yaparız.",
+          "related_features": [
+            "src/components/RestartGuidedModeButton.tsx",
+            "src/components/ExitGuidanceModeButton.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/onboarding-manual-tests.json"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Giriş ve Güvenlik",
+      "entries": [
+        {
+          "id": "auth-login",
+          "question": "Giriş yaparken arka planda neler olur?",
+          "answer": "E-posta ve şifrenizi girip gönderince Lumiso hesabınızı doğrular, doğruysa sizi ana sayfaya taşır ve oturumunuz açık kalır. Yanlış bilgi girerseniz ekranın sağında hata mesajı görürsünüz. Destek ekibi sorunları inceleyebilmesi için giriş denemeleriniz gizli şekilde kaydedilir.",
+          "related_features": [
+            "docs/manual-testing/tests/auth-manual-tests.json",
+            "src/components/PerformanceMonitor.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/auth-manual-tests.json#CRM-AUTH-001"
+          ]
+        },
+        {
+          "id": "auth-recovery",
+          "question": "\"Şifremi unuttum\" bağlantısına basınca ne olur?",
+          "answer": "E-postanızı yazdıktan sonra Lumiso size Türkçe açıklamalı bir şifre sıfırlama e-postası gönderir. İçindeki bağlantıya tıklayarak yeni şifre belirler ve dilerseniz Ayarlar > Profil bölümünden tekrar gönderebilirsiniz. Şifreyi değiştirdiğinizde güvenlik bilgilendirmesi de e-postanıza gelir.",
+          "related_features": [
+            "docs/manual-testing/tests/auth-manual-tests.json",
+            "src/pages/settings/Profile.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/auth-manual-tests.json#CRM-AUTH-004"
+          ]
+        },
+        {
+          "id": "auth-multi-device",
+          "question": "Aynı hesabı bilgisayarda ve telefonda aynı anda kullanabilir miyim?",
+          "answer": "Evet. Lumiso hesabınız giriş yaptığınız her cihazda açık kalır; bir cihazda çıkış yapmadan diğerinde kullanmaya devam edebilirsiniz. Güvenlik için ortak cihazlardan çıktıktan sonra sağ üstteki kullanıcı menüsünden \"Çıkış yap\" seçeneğini kullanmanız yeterlidir.",
+          "related_features": [
+            "src/components/UserMenu.tsx",
+            "src/components/ProtectedRoute.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/auth-manual-tests.json"
+          ]
+        },
+        {
+          "id": "auth-email-change",
+          "question": "E-posta adresim değişti, Lumiso'da nasıl güncellerim?",
+          "answer": "Ayarlar > Profil sayfasındaki e-posta alanı güvenlik nedeniyle kilitlidir. Aynı kartta bulunan \"Destekle iletişime geç\" bağlantısına tıklayıp yeni adresinizi bildirmeniz yeterlidir; ekip kısa süre içinde hesabınızı doğrular ve e-posta alanınız güncellenir.",
+          "related_features": [
+            "src/pages/settings/Profile.tsx",
+            "docs/manual-testing/tests/settings-manual-tests.json"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/auth-manual-tests.json"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Kişiler, Projeler ve Seanslar",
+      "entries": [
+        {
+          "id": "lead-creation",
+          "question": "Yeni bir kişi eklerken hangi bilgileri girmeliyim?",
+          "answer": "\"Kişi Ekle\" paneli isim, e-posta, telefon gibi temel alanları ve stüdyonuzun tanımladığı özel alanları gösterir. Alan adları uygulamada gördüğünüzle aynıdır. Daha sonra Ayarlar > Potansiyel Müşteriler bölümünden yeni alanlar ekleyip sıralamayı değiştirebilirsiniz.",
+          "related_features": [
+            "src/components/AddLeadDialog.tsx",
+            "src/components/LeadFieldsSection.tsx",
+            "docs/manual-testing/tests/leads-manual-tests.json"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/leads-manual-tests.json"
+          ]
+        },
+        {
+          "id": "project-session-link",
+          "question": "Projelerim ve seanslarım nasıl birbirine bağlanıyor?",
+          "answer": "Yeni proje oluştururken kişi seçimi, proje bilgileri ve paket/hizmet seçimi adım adım sorulur. Bir projeye bağlı seans planladığınızda aynı kişi ve proje detayları otomatik gelir. Proje detay kartında seanslar, hizmetler ve ödemeler tek ekranda görünür.",
+          "related_features": [
+            "docs/project-creation-wizard-plan.md",
+            "docs/session-planning-roadmap.md",
+            "src/components/ProjectSheetView.tsx",
+            "src/components/SessionSheetView.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/projects-manual-tests.json",
+            "docs/manual-testing/tests/sessions-manual-tests.json"
+          ]
+        },
+        {
+          "id": "project-board",
+          "question": "Projeler neden sütunlara ayrılmış kartlarla gösteriliyor?",
+          "answer": "Bu görünüm her proje durumunu ayrı bir sütunda toplar ve kartları sürükleyerek aşamalar arasında taşımanızı sağlar. Kart üzerinde seçilen paket, yaklaşan seans ve ödeme durumu gibi özetler yer alır. İsterseniz aynı sayfanın üstündeki filtreyle tablo görünümüne geçebilirsiniz.",
+          "related_features": [
+            "src/components/ProjectKanbanBoard.tsx",
+            "src/components/ProjectStagePipeline.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/projects-manual-tests.json"
+          ]
+        },
+        {
+          "id": "project-stage-settings",
+          "question": "Proje aşama isimlerini ve sırasını nereden değiştirebilirim?",
+          "answer": "Ayarlar > Projeler bölümünde \"Proje Aşamaları\" kartını açarak yeni aşama ekleyebilir, mevcut olanları yeniden adlandırabilir ve sürükleyerek sıralayabilirsiniz. Burada yaptığınız değişiklikler pano görünümüne ve yeni projelere otomatik yansır.",
+          "related_features": [
+            "src/pages/settings/Projects.tsx",
+            "docs/manual-testing/tests/settings-manual-tests.json"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/settings-manual-tests.json"
+          ]
+        },
+        {
+          "id": "session-scheduling",
+          "question": "Takvime yeni seans eklemek için hangi adımı izlemeliyim?",
+          "answer": "Takvimde üstteki \"Seans Ekle\" butonuna veya istediğiniz gün/hire tıklayın. Açılan pencerede kişi, proje, seans türü ve saat seçersiniz; süre ve bitiş zamanı otomatik hesaplanır. Kaydedince seans takvimde görünür ve ilgili kişiye bağlanır.",
+          "related_features": [
+            "src/components/ScheduleSessionDialog.tsx",
+            "src/pages/Sessions.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/sessions-manual-tests.json"
+          ]
+        },
+        {
+          "id": "lead-filters",
+          "question": "Kişi listesini nasıl daraltırım?",
+          "answer": "Leads sayfasının üstündeki filtre çubuğunda durum, etiket, kaynak ve tarih gibi seçenekler bulunur. İhtiyacınız olan filtreleri açıp seçim yaptığınızda liste anında güncellenir. Filtreler aktifken buton üzerinde sayı rozeti görürsünüz; \"Temizle\" diyerek tüm seçimleri sıfırlayabilirsiniz.",
+          "related_features": [
+            "src/pages/AllLeads.tsx",
+            "src/components/FilterBar.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/leads-manual-tests.json"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Hizmetler ve Paketler",
+      "entries": [
+        {
+          "id": "service-vat",
+          "question": "Hizmet kartlarında gördüğüm KDV bilgisi neyi ifade ediyor?",
+          "answer": "Her hizmette KDV yüzdesi ve \"KDV fiyatın içinde\" seçeneği bulunur. Organizasyon ayarlarınızda belirlediğiniz varsayılan oran buraya otomatik gelir, dilerseniz hizmet bazında değiştirebilirsiniz. Bu bilgiler paket ve proje toplamlarında da kullanılır.",
+          "related_features": [
+            "docs/services-and-packages-plan.md",
+            "src/components/ServicesSection.tsx",
+            "supabase/migrations/20251109120000_services_vat_profile.sql"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/settings-manual-tests.json"
+          ]
+        },
+        {
+          "id": "packages-addons",
+          "question": "Paketlere ekstra hizmet veya özel satır ekleyebilir miyim?",
+          "answer": "Evet. Paket veya proje oluştururken hizmet listesine göz atabilir, dilediğiniz satırı seçip miktar belirleyebilir ya da tamamen yeni bir satır ekleyebilirsiniz. Eklediğiniz öğeler o pakete veya projeye özel kalır, diğer kayıtlar etkilenmez.",
+          "related_features": [
+            "docs/package-creation-wizard-plan.md",
+            "src/components/PackagesSection.tsx",
+            "src/components/ServiceInventorySelector.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/projects-manual-tests.json"
+          ]
+        },
+        {
+          "id": "package-edit",
+          "question": "Var olan bir paketi nasıl düzenlerim?",
+          "answer": "Paketler sayfasında düzenlemek istediğiniz paketi seçip \"Düzenle\" butonuna basabilirsiniz. Aynı çok adımlı sihirbaz açılır ve adımları hızlıca gözden geçirip kaydedersiniz; değişiklikler paketi kullanan yeni projelere uygulanır, mevcut projeler isterseniz ayrı olarak güncellenir.",
+          "related_features": [
+            "src/features/package-creation/components/PackageCreationWizard.tsx",
+            "docs/package-creation-wizard-plan.md"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/projects-manual-tests.json"
+          ]
+        },
+        {
+          "id": "tax-defaults",
+          "question": "KDV varsayılanlarını nereden güncellerim?",
+          "answer": "Ayarlar > Genel bölümündeki Vergi & Faturalama kartı şirket türünüzü, vergi numaranızı ve varsayılan KDV yüzdesini saklar. Burada yaptığınız değişiklikler yeni oluşturulan hizmet ve paketlerde otomatik kullanılır.",
+          "related_features": [
+            "src/pages/settings/General.tsx",
+            "src/components/settings/TaxProfileCard.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/settings-manual-tests.json"
+          ]
+        },
+        {
+          "id": "service-hide",
+          "question": "Artık satmadığım bir hizmeti müşterilere göstermeden saklayabilir miyim?",
+          "answer": "Hizmetler listesindeki her kartta \"Aktif\" anahtarı bulunur. Anahtarı kapattığınızda hizmet katalogda pasif olur, paket veya proje oluştururken varsayılan listede görünmez. Dilediğinizde tekrar açarak aynı bilgileri kullanmaya devam edebilirsiniz.",
+          "related_features": [
+            "src/components/ServicesSection.tsx",
+            "docs/services-and-packages-plan.md"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/settings-manual-tests.json"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Ödemeler ve Kapora",
+      "entries": [
+        {
+          "id": "payments-dashboard",
+          "question": "Ödemeler sayfasında nasıl filtreleme yaparım?",
+          "answer": "Sayfanın üstünden Son 7 Gün, Bu Ay gibi hazır aralıkları seçebilir veya özel tarih aralığı belirleyebilirsiniz. Grafikte Gün/Hafta/Ay görünümleri arasında geçebilir, ayrıca tutar aralığı ve ödeme türü filtreleriyle tabloyu daraltabilirsiniz. En son seçtiğiniz görünüm sayfayı yenileseniz bile hatırlanır.",
+          "related_features": [
+            "docs/manual-testing/tests/payments-manual-tests.json",
+            "src/pages/Payments.tsx",
+            "src/components/CrmDashboard.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/payments-manual-tests.json#CRM-PAYMENTS-501"
+          ]
+        },
+        {
+          "id": "deposit-flow",
+          "question": "Kapora ödemelerini Lumiso'da nasıl takip ederim?",
+          "answer": "Proje ödemeleri kartında kaporanız ayrı bir bölümde gösterilir. \"Kapora ödemesi\" butonu kalan tutarı doldurmanıza yardım eder, \"Ödeme ekle\" kapora dışındaki tahsilatlar içindir ve \"İade\" butonu gerektiğinde parayı geri yazmanızı sağlar. Kaporanın ne kadarı ödendiği bu kartta anlık olarak görünür.",
+          "related_features": [
+            "docs/deposit-mini-plan.md",
+            "src/components/ProjectPaymentsSection.tsx",
+            "src/components/ProjectDepositDialogs.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/payments-manual-tests.json",
+            "docs/manual-testing/tests/projects-manual-tests.json"
+          ]
+        },
+        {
+          "id": "refund-flow",
+          "question": "Bir ödemeyi iade etmek istersem hangi adımları izlerim?",
+          "answer": "Proje ödemeleri kartında \"İade\" butonuna basarak iade formunu açarsınız. Tutarı yazıp \"Kapora iadesi olarak say\" seçeneğini işaretleyebilirsiniz. Kaydedince listede negatif bir satır görünür ve kapora/kalem toplamları otomatik güncellenir.",
+          "related_features": [
+            "src/components/RefundPaymentDialog.tsx",
+            "docs/deposit-mini-plan.md"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/projects-manual-tests.json"
+          ]
+        },
+        {
+          "id": "payment-shortcuts",
+          "question": "Kalan bakiyeyi tek tıkla doldurabilir miyim?",
+          "answer": "\"Ödeme ekle\" penceresinde tutar alanının yanında \"Kalan tutarı doldur\" bağlantısı bulunur. Buna bastığınızda tüm kalan tutar otomatik yazılır; gerekirse düzenleyip kaydedebilirsiniz. Bu özellik hem zaman kazandırır hem de hesap hatalarını azaltır.",
+          "related_features": [
+            "src/components/GeneralPaymentDialog.tsx",
+            "docs/deposit-mini-plan.md"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/projects-manual-tests.json"
+          ]
+        },
+        {
+          "id": "deposit-lock",
+          "question": "Kapora tutarını sabitleyip ilerideki değişikliklerden koruyabilir miyim?",
+          "answer": "Projeler sayfasındaki kapora kartında \"Kapora tutarını sabitle\" seçeneği bulunur. Bu seçeneği kullanınca o anki toplam tutar kaydedilir ve yeni hizmet ekleseniz bile kapora aynı kalır. Dilerseniz karttaki \"Güncelle\" bağlantısıyla sabit tutarı yeniden belirleyebilirsiniz.",
+          "related_features": [
+            "src/components/ProjectDepositDialogs.tsx",
+            "docs/deposit-mini-plan.md"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/projects-manual-tests.json"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Takvim ve Hatırlatmalar",
+      "entries": [
+        {
+          "id": "calendar-views",
+          "question": "Takvimde gün, hafta ve ay görünümlerini nasıl değiştiririm?",
+          "answer": "Takvimin üstündeki üçlü seçimden istediğiniz görünümü seçebilirsiniz. Mobilde varsayılan olarak gün, bilgisayarda ay görünümü açılır. Seanslar ve hatırlatıcılar aynı kareler içinde gösterilir; isterseniz bu katmanları kapatıp sadece ihtiyacınız olan kayıtları görebilirsiniz.",
+          "related_features": [
+            "src/pages/Calendar.tsx",
+            "src/hooks/useOptimizedCalendarData.ts",
+            "src/components/calendar/CalendarWeek.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/manual-test-case-rules.md#Takvim"
+          ]
+        },
+        {
+          "id": "reminders",
+          "question": "Hatırlatıcılar sayfası bana ne sağlar?",
+          "answer": "Hatırlatıcılar tarih başlıklarıyla gruplanır ve her kartta görev metni, ilgili kişi/proje ve tamamlandı bilgisi yer alır. Üstteki rozetler \"Bugün\", \"Bu Hafta\" gibi filtreler sunar. Bir hatırlatıcıya tıklayarak metni düzenleyebilir veya tamamlandı olarak işaretleyebilirsiniz.",
+          "related_features": [
+            "src/pages/ReminderDetails.tsx",
+            "src/components/reminders/ReminderTimelineCard.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/mobile-manual-tests.json",
+            "docs/manual-testing/tests/projects-manual-tests.json"
+          ]
+        },
+        {
+          "id": "session-reminders-workflows",
+          "question": "Seans hatırlatma mesajları nasıl planlanıyor?",
+          "answer": "Bir iş akışı oluştururken \"Seans Hatırlatması\" tetikleyicisini seçip gönderim zamanını belirleyebilirsiniz. Seans tarihi yaklaştığında Lumiso seçtiğiniz kanal üzerinden (e-posta, WhatsApp veya SMS) otomatik olarak hatırlatma gönderir.",
+          "related_features": [
+            "src/hooks/useSessionReminderScheduling.ts",
+            "src/components/CreateWorkflowSheet.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/workflows-manual-tests.json#CRM-WORKFLOWS-104"
+          ]
+        },
+        {
+          "id": "calendar-filters",
+          "question": "Takvimde sadece seansları veya sadece hatırlatıcıları görmek mümkün mü?",
+          "answer": "Takvimin sağ üst köşesinde \"Seansları Göster\" ve \"Hatırlatıcıları Göster\" anahtarları bulunur. İstemediğiniz katmanı kapatarak görünümü sadeleştirebilir ve Lumiso bu tercihi hatırlar, bir sonraki ziyaretinizde aynı ayarlar geçerli olur.",
+          "related_features": [
+            "src/pages/Calendar.tsx",
+            "src/hooks/useOptimizedCalendarEvents.ts"
+          ],
+          "related_docs": [
+            "docs/manual-testing/manual-test-case-rules.md#Takvim"
+          ]
+        },
+        {
+          "id": "calendar-today",
+          "question": "\"Bugüne dön\" düğmesi ne işe yarar?",
+          "answer": "Takvimin üst çubuğunda bulunan \"Bugün\" düğmesi sizi hangi tarihi görüntülüyor olursanız olun hızlıca mevcut güne taşır. Tarihi kaybettiğinizde veya ileri/geri çok gittiğinizde tek tıkla geri dönmeniz için tasarlandı.",
+          "related_features": [
+            "src/pages/Calendar.tsx",
+            "src/hooks/useOptimizedCalendarNavigation.ts"
+          ],
+          "related_docs": [
+            "docs/manual-testing/manual-test-case-rules.md#Takvim"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Şablonlar ve Otomasyon",
+      "entries": [
+        {
+          "id": "template-builder",
+          "question": "Şablon düzenleyicide neler yapabilirim?",
+          "answer": "E-posta, WhatsApp ve SMS için ayrı sekmeler bulunur. Konu ve ön yazı alanlarını hızlıca düzenleyebilir, sürükle-bırak bloklarla metni değiştirebilir ve önizlemeyi anında görürsünüz. Kaydetmeden çıkmak isterseniz Lumiso sizi uyarır.",
+          "related_features": [
+            "src/pages/TemplateBuilder.tsx",
+            "src/components/template-builder/OptimizedTemplateEditor.tsx",
+            "src/hooks/useTemplateBuilder.ts"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/templates-manual-tests.json"
+          ]
+        },
+        {
+          "id": "workflow-automation",
+          "question": "İş akışları listesinde hangi kontroller var?",
+          "answer": "Arama kutusu, durum filtresi (Aktif/Duraklatıldı) ve üstteki sayı kartlarıyla kayıtları hızla bulabilirsiniz. Her satırda seçilen kanallar ikon olarak görünür ve yanındaki anahtarı açıp kapatarak akışı anında aktif/pasif yapabilirsiniz.",
+          "related_features": [
+            "src/components/CreateWorkflowSheet.tsx",
+            "docs/manual-testing/tests/workflows-manual-tests.json"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/workflows-manual-tests.json"
+          ]
+        },
+        {
+          "id": "template-publish",
+          "question": "Hazırladığım şablonu nasıl yayınlarım?",
+          "answer": "Düzenleme ekranında sağ üstteki \"Yayınla\" seçeneğine basarak şablonu canlı kullanıma alabilirsiniz. Eğer adı boşsa Lumiso önce size bir isim sorar, ardından şablonun son halini kaydedip diğer ekip arkadaşlarına da açar.",
+          "related_features": [
+            "src/pages/TemplateBuilder.tsx",
+            "src/components/template-builder/TemplateNameDialog.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/templates-manual-tests.json"
+          ]
+        },
+        {
+          "id": "workflow-guard",
+          "question": "İş akışını doldururken pencereyi kapatırsam bilgilerim silinir mi?",
+          "answer": "Hayır. Değişiklik yapıp kapanış ikonuna bastığınızda Lumiso sizi uyarır ve \"Kaydet ve çık\", \"Vazgeç\" veya \"Devam et\" seçeneklerinden birini seçmenizi ister. Böylece yanlışlıkla yaptığınız değişiklikleri kaybetmezsiniz.",
+          "related_features": [
+            "src/components/settings/NavigationGuardDialog.tsx",
+            "docs/manual-testing/tests/workflows-manual-tests.json"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/workflows-manual-tests.json"
+          ]
+        },
+        {
+          "id": "template-preview-data",
+          "question": "Şablonu gerçek müşteri bilgisiyle görmeden önce nasıl test ederim?",
+          "answer": "Şablon düzenleyicide sağ üstteki \"Önizleme verisi\" menüsünden farklı örnek setleri seçebilirsiniz. Bu setler isim, etkinlik tarihi veya proje bilgisi gibi alanları doldurur; böylece mesajınız müşterinin gözünden nasıl görünecek anında ortaya çıkar.",
+          "related_features": [
+            "src/components/template-builder/OptimizedTemplatePreview.tsx",
+            "src/components/template-builder/InlineSubjectEditor.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/templates-manual-tests.json"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Bildirimler ve Günlük Özetler",
+      "entries": [
+        {
+          "id": "notifications-page",
+          "question": "Bildirim ayarlarında hangi seçenekler var?",
+          "answer": "Sayfanın en üstündeki ana anahtar tüm bildirimleri açıp kapatır. Altındaki kartlarda günlük özet, proje aşamaları veya hatırlatıcı gibi başlıklar için ayrı anahtarlar ve test gönderme butonları bulunur. Değişiklik kaydedildiğinde ekranın sağında yeşil bir onay mesajı görürsünüz.",
+          "related_features": [
+            "docs/manual-testing/tests/settings-manual-tests.json",
+            "src/pages/settings/Notifications.tsx",
+            "src/hooks/useNotificationSettings.ts"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/settings-manual-tests.json"
+          ]
+        },
+        {
+          "id": "daily-summary",
+          "question": "Günlük özet e-postası ne içerir ve saatini nasıl değiştiririm?",
+          "answer": "Günlük özet, son 24 saatlik yeni kişiler, projeler ve yaklaşan seansları listeler. Ayarlar > Genel bölümünden saat seçebilir ve anahtarı açıp kapatabilirsiniz. Seçtiğiniz saat kaydedilir ve Lumiso o saatte otomatik mail gönderir.",
+          "related_features": [
+            "src/hooks/useOrganizationSettings.ts",
+            "supabase/migrations/20251109120000_services_vat_profile.sql"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/settings-manual-tests.json"
+          ]
+        },
+        {
+          "id": "notifications-test",
+          "question": "Test bildirimi gönder butonu ne yapar?",
+          "answer": "Bildirim ayarlarında \"Test gönder\" düğmesine bastığınızda kendinize örnek bir e-posta gönderilir. Bu sayede gerçek müşterileri rahatsız etmeden şablonun nasıl gözüktüğünü ve mailin ulaşıp ulaşmadığını kontrol edebilirsiniz.",
+          "related_features": [
+            "docs/manual-testing/tests/settings-manual-tests.json",
+            "src/pages/settings/Notifications.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/settings-manual-tests.json"
+          ]
+        },
+        {
+          "id": "quiet-hours",
+          "question": "Bildirimlerin belirli saatlerde gitmesini isteyebilir miyim?",
+          "answer": "Evet. Günlük özet ve hatırlatıcı kartlarında gönderim saati seçicisi vardır. Buradan belirlediğiniz saatten önce mesaj gönderilmez; böylece gece saatlerinde müşteri rahatsız etmezsiniz.",
+          "related_features": [
+            "src/hooks/useNotificationSettings.ts",
+            "src/pages/settings/Notifications.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/settings-manual-tests.json"
+          ]
+        },
+        {
+          "id": "notification-language",
+          "question": "Bildirimler hangi dilde gider?",
+          "answer": "Lumiso bildirimleri çalışma alanınızın dil ayarına göre hazırlanır. Ayarlar > Genel sayfasında Türkçe veya İngilizce seçtiğinizde günlük özetler, hatırlatmalar ve test e-postaları aynı dilde gönderilir.",
+          "related_features": [
+            "src/hooks/useOrganizationSettings.ts",
+            "src/i18n/index.ts"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/settings-manual-tests.json"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "Arama ve Mobil Deneyim",
+      "entries": [
+        {
+          "id": "global-search",
+          "question": "Üstteki arama kutusu hangi kayıtları bulur?",
+          "answer": "En az üç harf yazınca kişiler, projeler ve seanslar arasında arama yapar. Sonuç listesinde hangi türde kayıt olduğuna dair başlık, kısa açıklama ve durum rozetleri görünür. Ok tuşlarıyla gezip Enter'a basarak ilgili sayfayı açabilirsiniz.",
+          "related_features": [
+            "docs/manual-testing/tests/global-search-manual-tests.json",
+            "src/components/GlobalSearch.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/global-search-manual-tests.json"
+          ]
+        },
+        {
+          "id": "mobile-nav",
+          "question": "Mobilde alt menü nasıl çalışıyor?",
+          "answer": "Telefon görünümünde ekranın altında Dashboard, Leads, Projects, Bookings ve More sekmeleri bulunur. Bookings veya Automation'a bastığınızda alttan seçenekler açılır ve istediğiniz sayfaya geçebilirsiniz. Yazı yazarken klavye ekranı kaplamasın diye bu alt menü geçici olarak gizlenir.",
+          "related_features": [
+            "docs/manual-testing/tests/mobile-manual-tests.json",
+            "src/components/MobileBottomNav.tsx",
+            "src/components/navigation/BottomSheetMenu.tsx"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/mobile-manual-tests.json"
+          ]
+        },
+        {
+          "id": "mobile-forms",
+          "question": "Telefon veya tablette uzun formları doldurmak zor mu?",
+          "answer": "Hayır. Lumiso mobilde formları tam ekran açar, üstte kolayca kapatma butonu ve altta kaydet butonları bulunur. Bir alanı değiştirdiğinizde kaydetmeden çıkmak isterseniz uygulama size sorar; böylece yanlışlıkla verinizi kaybetmezsiniz.",
+          "related_features": [
+            "src/components/AppSheetModal.tsx",
+            "docs/manual-testing/tests/mobile-manual-tests.json"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/mobile-manual-tests.json"
+          ]
+        },
+        {
+          "id": "offline-banner",
+          "question": "İnternetim giderse uygulama ne yapar?",
+          "answer": "Bağlantı koptuğunda ekranın üstünde sarı bir uyarı çıkar ve \"Offline çalışıyorsunuz\" mesajı görürsünüz. İnternet geri geldiğinde banner otomatik kapanır ve verileriniz yeniden senkron olur.",
+          "related_features": [
+            "src/components/OfflineBanner.tsx",
+            "src/hooks/useThrottledRefetchOnFocus.ts"
+          ],
+          "related_docs": [
+            "docs/manual-testing/tests/mobile-manual-tests.json"
+          ]
+        }
+      ]
+    }
+  ],
+  "known_limitations": [
+    {
+      "id": "analytics-suite",
+      "description": "Analitik ekranları için ayrı bir manuel test listesi henüz yazılmadı; yeni kartlar geldiğinde eklenecek.",
+      "source": "docs/manual-testing/manual-test-case-rules.md#Sonraki-Adımlar"
+    },
+    {
+      "id": "calendar-sync",
+      "description": "Şimdilik yalnızca Lumiso takvimi gösteriliyor; Google veya Outlook ile paylaşma henüz hazır değil.",
+      "source": "docs/session-planning-roadmap.md#Out-Of-Scope"
+    },
+    {
+      "id": "wizard-parity",
+      "description": "Paket ve proje oluşturucularında kullanılan adım göstergesi tamamen aynı değil; kısa vadede birleştirilecek.",
+      "source": "docs/project-creation-wizard-plan.md#Package-Wizard-Parity-Audit"
+    },
+    {
+      "id": "vat-rollout",
+      "description": "Yeni KDV alanları tüm raporlara yansıtılmadı; raporlar güncellendiğinde bu not kaldırılacak.",
+      "source": "docs/services-and-packages-plan.md#Phase-1"
+    },
+    {
+      "id": "deposit-migration",
+      "description": "Kapora sistemi için hazırlanan veritabanı güncellemesi canlı ortama aktarılmadan önce son kontrol bekliyor.",
+      "source": "docs/deposit-mini-plan.md#Devam-Eden-/-Bekleyen"
+    },
+    {
+      "id": "session-roadmap",
+      "description": "Seans planlama ekranında taslak kaydetme ve gelişmiş bildirim ayarları ileride eklenecek.",
+      "source": "docs/session-planning-roadmap.md#Out-Of-Scope"
+    },
+    {
+      "id": "search-coverage",
+      "description": "Global arama şimdilik kişiler, projeler ve seanslarla sınırlı; şablon ve ödeme aramaları planlanıyor.",
+      "source": "docs/manual-testing/tests/global-search-manual-tests.json"
+    },
+    {
+      "id": "mobile-analytics",
+      "description": "Mobil alt menüde analitik sekmesi yerini bekliyor; ekran hazır olduğunda açılacak.",
+      "source": "docs/manual-testing/tests/mobile-manual-tests.json"
+    }
+  ]
+}

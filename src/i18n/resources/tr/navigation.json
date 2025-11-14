@@ -38,18 +38,34 @@
     "description": "Destek mi lazım? Aşağıdaki seçeneklerden birini seçerek yardım alın.",
     "close": "Kapat",
     "options": {
-      "documentation": {
-        "title": "Dokümantasyon",
-        "description": "Kılavuzlarımızı, eğitimlerimizi ve en iyi uygulamalarımızı inceleyin."
+      "faq": {
+        "title": "Sıkça Sorulan Sorular",
+        "description": "En güncel özellik SSS listemize göz atın."
       },
-      "support": {
-        "title": "Destek ile İletişim",
-        "description": "Destek ekibimizle e-posta üzerinden iletişime geçin."
+      "email": {
+        "title": "E-posta ile İletişim",
+        "description": "support@lumiso.com adresine mesaj gönderin."
       },
-      "chat": {
-        "title": "Canlı Sohbet",
-        "description": "Destek ekibimizle gerçek zamanlı sohbet başlatın."
+      "whatsapp": {
+        "title": "WhatsApp",
+        "description": "Destek ekibimizle WhatsApp üzerinden sohbet başlatın."
       }
+    },
+    "faq_sheet": {
+      "title": "Sıkça Sorulan Sorular",
+      "description": "Lumiso'da en sık sorulan soruları kategori bazlı keşfedin.",
+      "search_label": "SSS'de ara",
+      "search_placeholder": "Soru veya cevap arayın",
+      "categories_heading": "Kategoriler",
+      "question_count_one": "{{count}} soru",
+      "question_count_other": "{{count}} soru",
+      "back_to_categories": "Tüm kategorilere dön",
+      "search_results_one": "{{count}} sonuç bulundu",
+      "search_results_other": "{{count}} sonuç bulundu",
+      "clear_search": "Temizle",
+      "no_results": "Sonuç bulunamadı",
+      "empty_state": "Henüz paylaşılmış bir SSS kaydı yok.",
+      "empty_category_state": "Bu kategoride gösterilecek soru yok."
     }
   },
   "settings": {

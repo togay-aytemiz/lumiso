@@ -1,0 +1,153 @@
+[
+  {
+    "suite": "SSS Sheet - Açılış ve Genel Görünüm",
+    "cases": [
+      {
+        "external_id": "CRM-FAQ-001",
+        "title": "Yardım modalinden SSS sheet açılıyor",
+        "description": "Yeni Feature FAQ sheet'i Help → \"Sıkça Sorulan Sorular\" seçeneği üzerinden kaydırmalı panelde açılabiliyor.",
+        "steps": [
+          {
+            "action": "Lumiso uygulamasında sağ üst Yardım ikonuna tıklayın ve Help modalini açın.",
+            "expected_result": "\"Yardım ve Destek\" başlığı ve üç seçenek (SSS, E-posta, WhatsApp) görünür."
+          },
+          {
+            "action": "\"Sıkça Sorulan Sorular\" kartına tıklayın.",
+            "expected_result": "Help modalı kapanır ve sağdan (mobilde alttan) yeni bir sheet açılır."
+          },
+          {
+            "action": "Sheet üst bilgisini inceleyin.",
+            "expected_result": "Başlık \"Sıkça Sorulan Sorular\", açıklama ise \"Lumiso'da en sık sorulan soruları kategori bazlı keşfedin.\" metnini içerir."
+          }
+        ],
+        "expected_result": "SSS seçeneği sheet'i açar ve üst bilgi i18n girdileriyle birebir eşleşir."
+      },
+      {
+        "external_id": "CRM-FAQ-002",
+        "title": "Kategori kartları docs/lumiso-feature-faq.json ile eşleşiyor",
+        "description": "Sheet'te gösterilen kategori isimleri ve soru sayıları JSON kaynağıyla doğrulanır.",
+        "steps": [
+          {
+            "action": "SSS sheet'i açıkken kategori ızgarasına bakın.",
+            "expected_result": "Kartlarda sırasıyla Başlarken, Giriş ve Güvenlik, Kişiler, Projeler ve Seanslar, Hizmetler ve Paketler, Ödemeler ve Kapora, Takvim ve Hatırlatmalar, Şablonlar ve Otomasyon, Bildirimler ve Günlük Özetler, Arama ve Mobil Deneyim başlıkları görünür."
+          },
+          {
+            "action": "Yan tarafta docs/lumiso-feature-faq.json dosyasını açın ve `faq_categories` listesindeki sıra ile sheet'teki sırayı karşılaştırın.",
+            "expected_result": "Her kategori adı birebir eşleşir."
+          },
+          {
+            "action": "JSON'daki herhangi iki kategori için `entries` dizisindeki eleman sayısını sayın ve sheet kartındaki \"{{count}} soru\" metniyle karşılaştırın.",
+            "expected_result": "Karttaki sayı JSON'daki entry miktarıyla aynıdır."
+          }
+        ],
+        "expected_result": "Kategori isimleri ve soru sayıları manuel olarak doğrulanır."
+      }
+    ]
+  },
+  {
+    "suite": "SSS Sheet - İçerik Doğrulama",
+    "cases": [
+      {
+        "external_id": "CRM-FAQ-003",
+        "title": "\"Stüdyonu Tanıyalım\" sorusu JSON ile uyumlu",
+        "description": "Başlarken kategorisindeki ilk soru/cevap birebir eşleşiyor mu kontrol edilir.",
+        "steps": [
+          {
+            "action": "Sheet'te Başlarken kartına tıklayın.",
+            "expected_result": "Kategori detayı açılır ve accordion listesi görünür."
+          },
+          {
+            "action": "\"Yeni hesap açınca karşıma çıkan \\\"Stüdyonu Tanıyalım\\\" ekranı ne işe yarar?\" sorusunu genişletin.",
+            "expected_result": "Cevap metni docs/lumiso-feature-faq.json içindeki `faq_categories[0].entries[0].answer` değeriyle (ör: formun ne için olduğuna dair açıklama) birebir aynıdır."
+          }
+        ],
+        "expected_result": "Başlarken > welcome-form girdisi ekrandaki içerikle eşleşir."
+      },
+      {
+        "external_id": "CRM-FAQ-004",
+        "title": "\"Görevleri bitirdikten sonra rehberi tekrar görmek istersem\" sorusu güncel metni gösteriyor",
+        "description": "Restart guide cevabının destek ekibine yönlendiren yeni içerik olduğunu doğrular.",
+        "steps": [
+          {
+            "action": "Başlarken kategorisinde \"Görevleri bitirdikten sonra rehberi tekrar görmek istersem ne yapmalıyım?\" sorusunu açın.",
+            "expected_result": "Cevap metni sheet'te \"Şu anda ... destek ekibine support@lumiso.com üzerinden yazmanız yeterli\" mesajını içerir."
+          },
+          {
+            "action": "Aynı sorunun JSON karşılığını kontrol edin.",
+            "expected_result": "Cevap stringi uygulamadakiyle birebir aynıdır; eski \"Yeniden Başlat\" düğmesi metni görünmez."
+          }
+        ],
+        "expected_result": "Rehber yeniden başlatma cevabı hem JSON'da hem sheet'te destek e-postasına yönlendirir."
+      },
+      {
+        "external_id": "CRM-FAQ-005",
+        "title": "Ödemeler ve Kapora soruları doğru içerik gösteriyor",
+        "description": "Ödemeler kategorisindeki ilk soru/cevap (örn. kapora kart davranışı) doğrulanır.",
+        "steps": [
+          {
+            "action": "Kategori listesinden \"Ödemeler ve Kapora\" kartını açın.",
+            "expected_result": "Accordion soruları listelenir."
+          },
+          {
+            "action": "\"Kapora takibi nasıl yönetiliyor?\" (JSON'da `payments-deposit-tracking` id'li) sorusunu genişletin.",
+            "expected_result": "Metin docs/lumiso-feature-faq.json'daki karşılığıyla aynı: kapora kartının nasıl göründüğü, buton isimleri vb."
+          }
+        ],
+        "expected_result": "Ödeme kategorisindeki içerik kaynak dosyayla uyuşur."
+      }
+    ]
+  },
+  {
+    "suite": "SSS Sheet - Arama ve Filtreler",
+    "cases": [
+      {
+        "external_id": "CRM-FAQ-006",
+        "title": "Arama sorularda çalışıyor",
+        "description": "Search input'u soru başlıklarında eşleşme bulur.",
+        "steps": [
+          {
+            "action": "Sheet üstündeki arama alanına \"rehberi\" yazın.",
+            "expected_result": "Liste, \"Görevleri bitirdikten sonra...\" sorusunu tek sonuç olarak gösterir ve kategori rozeti Başlarken yazar."
+          },
+          {
+            "action": "Sonucu açıp cevabı görüntüleyin.",
+            "expected_result": "Accordion içeriği kategori görünümünde görülen cevapla aynıdır."
+          }
+        ],
+        "expected_result": "Arama metni soru başlığına göre filtreleme yapar."
+      },
+      {
+        "external_id": "CRM-FAQ-007",
+        "title": "Arama cevap metninde de eşleşme buluyor",
+        "description": "Search input'u yalnızca başlıklarda değil cevap gövdesinde de arama yapar.",
+        "steps": [
+          {
+            "action": "Arama kutusuna \"support@lumiso.com\" yazın.",
+            "expected_result": "Arama sonuçları en azından restart rehber sorusunu döndürür; çünkü bu ifade sadece cevapta geçer."
+          },
+          {
+            "action": "Aynı işlemi \"Kapora takibi\" ifadesiyle tekrarlayın.",
+            "expected_result": "Ödemeler kategorisindeki ilgili soru sonuçlarda görünür."
+          }
+        ],
+        "expected_result": "Arama hem soru başlıklarını hem cevap gövdesini tarar."
+      },
+      {
+        "external_id": "CRM-FAQ-008",
+        "title": "Arama temizlendiğinde kategori listesine dönülüyor",
+        "description": "Clear ikonuna basılınca varsayılan kategori görünümü geri gelmeli.",
+        "steps": [
+          {
+            "action": "Arama kutusuna kısa bir sorgu yazın ve sonuçların geldiğini doğrulayın.",
+            "expected_result": "Sonuç listesi accordion modunda görünür."
+          },
+          {
+            "action": "Input'taki X ikonuna basarak alanı temizleyin.",
+            "expected_result": "Arama sonuçları kapanır ve kategori grid'i tekrar görünür."
+          }
+        ],
+        "expected_result": "Arama alanı temizlendiğinde sayfa varsayılan kategori görünümüne döner."
+      }
+    ]
+  }
+]

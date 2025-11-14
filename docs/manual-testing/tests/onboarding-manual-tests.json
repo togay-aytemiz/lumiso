@@ -242,7 +242,7 @@
           },
           {
             "action": "\"Yöntem seç\" açılır listesini tıklayın.",
-            "expected_result": "Listede slug'ları digital_gallery ve usb_drive olan \"Dijital Galeri\" ve \"USB Bellek\" seçenekleri portal/USB teslim açıklamalarıyla birlikte görünür."
+            "expected_result": "Listede \"Dijital Galeri\" ve \"USB Bellek\" seçenekleri bulunur."
           },
           {
             "action": "Her iki yöntemi de seçip kaydedin.",

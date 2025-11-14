@@ -4,6 +4,7 @@ import { ProfileIntakeGate } from "../ProfileIntakeGate";
 import { useProfile } from "@/hooks/useProfile";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { useToast } from "@/hooks/use-toast";
 import { logAuthEvent } from "@/lib/authTelemetry";
 
@@ -17,6 +18,10 @@ jest.mock("@/hooks/useOrganizationSettings", () => ({
 
 jest.mock("@/contexts/AuthContext", () => ({
   useAuth: jest.fn(),
+}));
+
+jest.mock("@/contexts/OrganizationContext", () => ({
+  useOrganization: jest.fn(),
 }));
 
 jest.mock("@/hooks/use-toast", () => ({
@@ -39,6 +44,8 @@ const mockUseProfile = useProfile as jest.MockedFunction<typeof useProfile>;
 const mockUseOrganizationSettings =
   useOrganizationSettings as jest.MockedFunction<typeof useOrganizationSettings>;
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
+const mockUseOrganization =
+  useOrganization as jest.MockedFunction<typeof useOrganization>;
 const mockUseToast = useToast as jest.MockedFunction<typeof useToast>;
 const logAuthEventMock = logAuthEvent as jest.MockedFunction<typeof logAuthEvent>;
 
@@ -76,6 +83,18 @@ const createSettingsReturn = (
     ...overrides,
   }) as ReturnType<typeof useOrganizationSettings>;
 
+const createOrganizationReturn = (
+  overrides: Partial<ReturnType<typeof useOrganization>> = {}
+) =>
+  ({
+    activeOrganizationId: "org-123",
+    activeOrganization: null,
+    loading: false,
+    refreshOrganization: jest.fn().mockResolvedValue(undefined),
+    setActiveOrganization: jest.fn().mockResolvedValue(undefined),
+    ...overrides,
+  }) as ReturnType<typeof useOrganization>;
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockUseAuth.mockReturnValue({
@@ -88,6 +107,7 @@ beforeEach(() => {
   mockUseToast.mockReturnValue({ toast: jest.fn() });
   mockUseProfile.mockReturnValue(createProfileReturn());
   mockUseOrganizationSettings.mockReturnValue(createSettingsReturn());
+  mockUseOrganization.mockReturnValue(createOrganizationReturn());
 });
 
 describe("ProfileIntakeGate", () => {

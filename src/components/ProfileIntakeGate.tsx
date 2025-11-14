@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProfile } from "@/hooks/useProfile";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
@@ -103,6 +104,7 @@ export function ProfileIntakeGate() {
     updateSettings,
     refreshSettings,
   } = useOrganizationSettings();
+  const { activeOrganizationId, loading: organizationLoading } = useOrganization();
   const { user } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
@@ -137,15 +139,32 @@ export function ProfileIntakeGate() {
     hasCompletedIntakeOnce ||
     (!needsDisplayName && !needsBusinessName && !needsProjectTypes);
 
-  const [initialDataLoaded, setInitialDataLoaded] = useState(
-    () => !profileLoading && !settingsLoading
-  );
+  const hasResolvedOrganization = Boolean(activeOrganizationId) && !organizationLoading;
+  const readyForInitialData = hasResolvedOrganization && !profileLoading && !settingsLoading;
+  const [initialDataLoaded, setInitialDataLoaded] = useState(() => readyForInitialData);
 
   useEffect(() => {
-    if (!profileLoading && !settingsLoading && !initialDataLoaded) {
+    if (!initialDataLoaded && readyForInitialData) {
       setInitialDataLoaded(true);
     }
-  }, [profileLoading, settingsLoading, initialDataLoaded]);
+  }, [initialDataLoaded, readyForInitialData]);
+
+  const lastOrganizationIdRef = useRef<string | null>(activeOrganizationId ?? null);
+
+  useEffect(() => {
+    const previousOrgId = lastOrganizationIdRef.current;
+    const currentOrgId = activeOrganizationId ?? null;
+
+    if (previousOrgId === currentOrgId) {
+      return;
+    }
+
+    lastOrganizationIdRef.current = currentOrgId;
+
+    if ((previousOrgId && previousOrgId !== currentOrgId) || !currentOrgId) {
+      setInitialDataLoaded(false);
+    }
+  }, [activeOrganizationId]);
 
   const shouldShow =
     initialDataLoaded &&

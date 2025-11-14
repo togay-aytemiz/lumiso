@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthApiError } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -325,16 +326,24 @@ const Auth = () => {
     } catch (error: unknown) {
       console.error("Auth error:", error);
       const fallbackKey = 'auth.auth_error';
-      const message =
-        error instanceof Error && error.message
-          ? error.message
-          : tMsg(fallbackKey);
+      let messageKey: string | undefined;
+      let message: string;
+
+      if (!isSignUp && error instanceof AuthApiError && error.status === 400) {
+        messageKey = 'auth.invalid_credentials';
+        message = tMsg(messageKey);
+      } else if (error instanceof Error && error.message) {
+        message = error.message;
+      } else {
+        messageKey = fallbackKey;
+        message = tMsg(fallbackKey);
+      }
       logAuthEvent(isSignUp ? "auth_sign_up_error" : "auth_sign_in_error", {
         email,
         errorMessage: message,
       });
       toast.error(message);
-      recordToast("error", error instanceof Error && error.message ? undefined : fallbackKey, message);
+      recordToast("error", messageKey, message);
       setLoading(false);
     }
   };

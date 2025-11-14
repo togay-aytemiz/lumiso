@@ -116,6 +116,15 @@ def map_payload(case, suite_id):
         "automation": False
     }
 
+def normalize_step_list(steps):
+    normalized = []
+    for s in steps or []:
+        if not isinstance(s, dict): continue
+        action = str(s.get("action") or "").strip()
+        expected = str(s.get("expected_result") or "").strip()
+        normalized.append((action, expected))
+    return normalized
+
 def create_case(payload):
     r = requests.post(f"{BASE_URL}/case/{PROJECT}", headers=HEADERS, data=json.dumps(payload))
     if r.status_code in (400,401,404,409,422):
@@ -137,8 +146,19 @@ def update_case(case_id, payload):
         fail(f"case_update_failed id={case_id} {r.status_code} {r.text[:400]}")
     fresh = get_case_detail(case_id)
     fresh_title = (fresh.get("title") or "").strip()
+    payload_steps = payload.get("steps") or []
+    fresh_steps = fresh.get("steps") or []
+    payload_norm = normalize_step_list(payload_steps)
+    fresh_norm = normalize_step_list(fresh_steps)
+    recreate_reason = None
     if fresh_title != payload.get("title"):
-        print(f"[qase-sync] warn_title_mismatch id={case_id} wanted={payload.get('title')} got={fresh_title} -> recreate")
+        recreate_reason = f"title mismatch wanted={payload.get('title')} got={fresh_title}"
+    elif payload_norm and len(fresh_norm) != len(payload_norm):
+        recreate_reason = f"steps mismatch wanted={len(payload_norm)} got={len(fresh_norm)}"
+    elif payload_norm and fresh_norm != payload_norm:
+        recreate_reason = "step content mismatch"
+    if recreate_reason:
+        print(f"[qase-sync] warn_recreate id={case_id} reason={recreate_reason}")
         delete_case(case_id)
         return create_case(payload)
     else:

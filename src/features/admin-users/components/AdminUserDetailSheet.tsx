@@ -1156,14 +1156,14 @@ function AdminUserDetailSheetContent({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[95vw] sm:w-full sm:max-w-[85vw] md:max-w-[80vw] lg:max-w-[78vw] xl:max-w-[75vw] 2xl:max-w-[70vw] overflow-y-auto">
         <SheetHeader className="space-y-1.5 text-left">
-          <SheetTitle className="text-2xl font-semibold">
-            {user.accountOwner ?? user.name}
+          <SheetTitle className="flex flex-wrap items-center gap-2">
+            <span className="text-2xl font-semibold">
+              {user.accountOwner ?? user.name}
+            </span>
+            <UserStatusBadge status={user.status} />
           </SheetTitle>
           <p className="text-sm text-muted-foreground">
             {user.business.businessName ?? user.company ?? user.name}
-          </p>
-          <p className="text-xs text-muted-foreground/80">
-            {t("admin.users.detail.subtitle")}
           </p>
         </SheetHeader>
 
@@ -1197,14 +1197,6 @@ function AdminUserDetailSheetContent({
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex flex-wrap gap-3">
-                    <UserStatusBadge status={user.status} />
-                    <div className="text-sm text-muted-foreground">
-                      {t("admin.users.detail.membership.plan", {
-                        plan: user.planName,
-                      })}
-                    </div>
-                  </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1">
                       <p className="text-sm font-medium">

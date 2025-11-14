@@ -261,16 +261,28 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
   return (
     <>
       <div className={cn("flex flex-wrap gap-2", buttonRowClassName)}>
-        <Button variant="default" onClick={() => setExtendOpen(true)}>
+        <Button variant="surface" onClick={() => setExtendOpen(true)}>
           {t("admin.users.detail.actions.extendTrial")}
         </Button>
-        <Button variant="secondary" onClick={() => setPremiumOpen(true)}>
+        <Button
+          variant="surface"
+          className="btn-surface-amber"
+          onClick={() => setPremiumOpen(true)}
+        >
           {t("admin.users.detail.actions.grantPremium")}
         </Button>
-        <Button variant="outline" onClick={() => setComplimentaryOpen(true)}>
+        <Button
+          variant="surface"
+          className="btn-surface-amber"
+          onClick={() => setComplimentaryOpen(true)}
+        >
           {t("admin.users.detail.actions.addComplimentary")}
         </Button>
-        <Button variant="outline" onClick={() => setSuspendOpen(true)}>
+        <Button
+          variant="surface"
+          className="btn-surface-destructive"
+          onClick={() => setSuspendOpen(true)}
+        >
           {t("admin.users.detail.actions.suspendAccount")}
         </Button>
       </div>

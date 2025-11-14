@@ -64,7 +64,7 @@
             "expected_result": "Arayacağınız değer belirlenir."
           },
           {
-            "action": "Tablonun üstündeki arama alanına (placeholder: 'İsim, e-posta veya şirket ara') kopyaladığınız değeri yazın.",
+            "action": "Tablonun üstündeki 'İsim, e-posta veya şirket ara' alanına kopyaladığınız değeri yazın.",
             "expected_result": "Arama alanı turuncu çerçeveli hâle gelir ve liste yeniden yüklenir."
           },
           {
@@ -234,7 +234,7 @@
           },
           {
             "action": "'Finansallar' pilline tıklayın.",
-            "expected_result": "Bölüm başlığına kaydırılır ve aktif çapa göstergesi Finanaslar üzerinde kalır."
+            "expected_result": "Bölüm başlığına kaydırılır ve aktif çapa göstergesi Finansallar üzerinde kalır."
           }
         ],
         "expected_result": "Çapa butonları, sheet içindeki ilgili bölüme kaydırır ve hangi bölümde olunduğunu vurgular."
@@ -317,7 +317,7 @@
             "expected_result": "Kayıtlı not varsa metin, yoksa 'Henüz not yok.' mesajı görünür; varsa etiketler (tag'ler) hemen altında rozet şeklinde listelenir."
           }
         ],
-        "expected_result": "Hesap bilgileri bölümü iletişim/kanaal/tag bilgilerini doğru gösterir ve boş alanlar anlaşılır placeholder ile belirtilir."
+        "expected_result": "Hesap bilgileri bölümü iletişim/kanal/tag bilgilerini doğru gösterir ve boş alanlar anlaşılır yer tutucularla belirtilir."
       },
       {
         "external_id": "ADMIN-USERS-DETAIL-007",
@@ -538,7 +538,7 @@
             "expected_result": "Kolonlar Paket adı, fiyat, açıklama, durum vb. içerir; modal kapatılınca sheet görünümü eski hâline döner."
           }
         ],
-        "expected_result": "Katalog kartındaki kısayol paket listesini modalda açar, tablo satırları Supabase verileriyle doldurulur."
+        "expected_result": "Katalog kartındaki kısayol paket listesini modalda açar, tablo satırları ilgili paket kayıtlarıyla doldurulur."
       },
       {
         "external_id": "ADMIN-USERS-ACTIONS-008",

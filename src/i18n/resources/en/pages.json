@@ -932,6 +932,28 @@
             }
           }
         },
+        "membershipEvents": {
+          "title": "Membership history",
+          "description": "Recent membership changes and manual overrides",
+          "empty": "No membership activity yet.",
+          "by": "by {{admin}}",
+          "unknownStatus": "Unknown status",
+          "statusChange": "{{previous}} → {{next}}",
+          "actions": {
+            "extend_trial": "Trial extended",
+            "grant_premium": "Premium granted",
+            "grant_complimentary": "Complimentary premium granted",
+            "suspend_account": "Account suspended",
+            "default": "Membership updated"
+          },
+          "meta": {
+            "daysAdded": "+{{days}} days added",
+            "newTrialEnd": "New trial end: {{date}}",
+            "plan": "Plan: {{plan}}",
+            "expires": "Expires: {{date}}",
+            "note": "Note: {{note}}"
+          }
+        },
         "financials": {
           "title": "Financial signals",
           "subtitle": "MRR, LTV, and outstanding balances",

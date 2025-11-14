@@ -16,6 +16,17 @@ export type AdminUserServiceSummary = Database["public"]["Tables"]["services"]["
 export type AdminUserPackageSummary = Database["public"]["Tables"]["packages"]["Row"];
 export type AdminUserSessionTypeSummary = Database["public"]["Tables"]["session_types"]["Row"];
 
+export interface AdminUserMembershipEvent {
+  id: string;
+  action: string;
+  createdAt: string;
+  adminId?: string | null;
+  adminName?: string;
+  previousStatus?: MembershipStatus;
+  newStatus?: MembershipStatus;
+  metadata?: Record<string, unknown> | null;
+}
+
 export interface AdminUserSocialChannel {
   key: string;
   label: string;
@@ -72,6 +83,7 @@ export interface AdminUserDetailCollections {
   services: AdminUserServiceSummary[];
   packages: AdminUserPackageSummary[];
   sessionTypes: AdminUserSessionTypeSummary[];
+  membershipEvents: AdminUserMembershipEvent[];
 }
 
 export interface AdminUserAccount {

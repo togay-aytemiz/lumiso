@@ -3,7 +3,7 @@ import { addDays } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { AdminUserAccount } from "../types";
+import type { AdminUserAccount, MembershipStatus } from "../types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -58,11 +58,39 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
     onUserUpdated?.();
   }, [onUserUpdated, queryClient]);
 
+  const logMembershipEvent = useCallback(
+    async (action: string, newStatus: MembershipStatus, metadata?: Record<string, unknown> | null) => {
+      try {
+        const {
+          data: { user: adminUser },
+        } = await supabase.auth.getUser();
+        await supabase.from("membership_events").insert({
+          organization_id: user.id,
+          admin_id: adminUser?.id ?? null,
+          action,
+          previous_status: user.status,
+          new_status: newStatus,
+          metadata: metadata ?? null,
+        });
+      } catch (error) {
+        console.warn("Failed to log membership event", error);
+      }
+    },
+    [user.id, user.status]
+  );
+
   const handleSupabaseUpdate = useCallback(
-    async (payload: Record<string, unknown>, successMessage: string) => {
+    async (
+      payload: Record<string, unknown>,
+      successMessage: string,
+      logArgs?: { action: string; newStatus: MembershipStatus; metadata?: Record<string, unknown> | null }
+    ) => {
       const { error } = await supabase.from("organizations").update(payload).eq("id", user.id);
       if (error) {
         throw error;
+      }
+      if (logArgs) {
+        await logMembershipEvent(logArgs.action, logArgs.newStatus, logArgs.metadata ?? null);
       }
       await invalidateUsers();
       toast({
@@ -70,7 +98,7 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
         description: t("admin.users.detail.actions.membershipModals.saved"),
       });
     },
-    [invalidateUsers, toast, t, user.id]
+    [invalidateUsers, logMembershipEvent, toast, t, user.id]
   );
 
   const handleExtendTrial = async () => {
@@ -86,14 +114,24 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
       const baseTrialEnd = user.trialEndsAt ? new Date(user.trialEndsAt) : new Date();
       const startDate = baseTrialEnd.getTime() < Date.now() ? new Date() : baseTrialEnd;
       const newTrialEnd = addDays(startDate, extendDays);
+      const nextStatus: MembershipStatus = user.status === "expired" ? "trial" : user.status;
       await handleSupabaseUpdate(
         {
           trial_expires_at: newTrialEnd.toISOString(),
           trial_extended_by_days: (user.trialExtendedByDays ?? 0) + extendDays,
           trial_extension_reason: extendReason || null,
-          membership_status: user.status === "expired" ? "trial" : user.status,
+          membership_status: nextStatus,
         },
-        t("admin.users.detail.actions.membershipModals.extendTrial.success")
+        t("admin.users.detail.actions.membershipModals.extendTrial.success"),
+        {
+          action: "extend_trial",
+          newStatus: nextStatus,
+          metadata: {
+            daysAdded: extendDays,
+            reason: extendReason || null,
+            newTrialEndsAt: newTrialEnd.toISOString(),
+          },
+        }
       );
       setExtendOpen(false);
     } catch (error) {
@@ -121,7 +159,16 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
           manual_flag: true,
           manual_flag_reason: premiumNote || null,
         },
-        t("admin.users.detail.actions.membershipModals.grantPremium.success")
+        t("admin.users.detail.actions.membershipModals.grantPremium.success"),
+        {
+          action: "grant_premium",
+          newStatus: "premium",
+          metadata: {
+            plan: premiumPlan || "Premium",
+            expiresAt: expiresIso,
+            note: premiumNote || null,
+          },
+        }
       );
       setPremiumOpen(false);
     } catch (error) {
@@ -151,7 +198,16 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
           manual_flag: true,
           manual_flag_reason: complimentaryNote || null,
         },
-        t("admin.users.detail.actions.membershipModals.complimentary.success")
+        t("admin.users.detail.actions.membershipModals.complimentary.success"),
+        {
+          action: "grant_complimentary",
+          newStatus: "complimentary",
+          metadata: {
+            plan: complimentaryPlan || "Complimentary",
+            expiresAt: expiresIso,
+            note: complimentaryNote || null,
+          },
+        }
       );
       setComplimentaryOpen(false);
     } catch (error) {
@@ -181,7 +237,14 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
           manual_flag: true,
           manual_flag_reason: suspendReason.trim(),
         },
-        t("admin.users.detail.actions.membershipModals.suspend.success")
+        t("admin.users.detail.actions.membershipModals.suspend.success"),
+        {
+          action: "suspend_account",
+          newStatus: "suspended",
+          metadata: {
+            reason: suspendReason.trim(),
+          },
+        }
       );
       setSuspendOpen(false);
     } catch (error) {
@@ -204,18 +267,10 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
         <Button variant="secondary" onClick={() => setPremiumOpen(true)}>
           {t("admin.users.detail.actions.grantPremium")}
         </Button>
-        <Button
-          variant="surface"
-          className="border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100 hover:text-amber-950 focus-visible:ring-amber-200/70"
-          onClick={() => setComplimentaryOpen(true)}
-        >
+        <Button variant="outline" onClick={() => setComplimentaryOpen(true)}>
           {t("admin.users.detail.actions.addComplimentary")}
         </Button>
-        <Button
-          variant="surface"
-          className="border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100 hover:text-rose-950 focus-visible:ring-rose-200/70"
-          onClick={() => setSuspendOpen(true)}
-        >
+        <Button variant="outline" onClick={() => setSuspendOpen(true)}>
           {t("admin.users.detail.actions.suspendAccount")}
         </Button>
       </div>

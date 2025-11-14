@@ -545,6 +545,14 @@ All colors MUST be HSL.
     @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-transparent bg-muted text-sm font-semibold text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 hover:bg-[hsl(var(--accent-100))] hover:text-[hsl(var(--accent-800))];
   }
 
+  .btn-surface-action.btn-surface-amber {
+    @apply border border-amber-200 bg-amber-100 text-amber-900 hover:bg-amber-200 hover:text-amber-950 focus-visible:ring-amber-200/60;
+  }
+
+  .btn-surface-action.btn-surface-destructive {
+    @apply border border-rose-200 bg-rose-100 text-rose-900 hover:bg-rose-200 hover:text-rose-950 focus-visible:ring-rose-200/60;
+  }
+
   .text-2xs {
     font-size: var(--font-2xs);
     line-height: 1rem;

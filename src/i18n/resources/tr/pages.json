@@ -936,6 +936,28 @@
             }
           }
         },
+        "membershipEvents": {
+          "title": "Üyelik geçmişi",
+          "description": "Son üyelik değişiklikleri ve manuel müdahaleler",
+          "empty": "Henüz bir üyelik kaydı yok.",
+          "by": "{{admin}} tarafından",
+          "unknownStatus": "Bilinmeyen durum",
+          "statusChange": "{{previous}} → {{next}}",
+          "actions": {
+            "extend_trial": "Trial uzatıldı",
+            "grant_premium": "Premium verildi",
+            "grant_complimentary": "Ücretsiz premium tanımlandı",
+            "suspend_account": "Hesap askıya alındı",
+            "default": "Üyelik güncellendi"
+          },
+          "meta": {
+            "daysAdded": "+{{days}} gün eklendi",
+            "newTrialEnd": "Yeni trial bitişi: {{date}}",
+            "plan": "Plan: {{plan}}",
+            "expires": "Bitiş: {{date}}",
+            "note": "Not: {{note}}"
+          }
+        },
         "financials": {
           "title": "Finans göstergeleri",
           "subtitle": "MRR, LTV ve bekleyen bakiyeler",

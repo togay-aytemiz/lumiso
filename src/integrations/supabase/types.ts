@@ -957,6 +957,47 @@ export type Database = {
         }
         Relationships: []
       }
+      membership_events: {
+        Row: {
+          action: string
+          admin_id: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          new_status: string | null
+          organization_id: string
+          previous_status: string | null
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          new_status?: string | null
+          organization_id: string
+          previous_status?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          new_status?: string | null
+          organization_id?: string
+          previous_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       organizations: {
         Row: {
           created_at: string

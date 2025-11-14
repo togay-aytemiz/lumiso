@@ -20,6 +20,7 @@ import type {
 type OrganizationRow = Database["public"]["Tables"]["organizations"]["Row"];
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 type OrganizationSettingsRow = Database["public"]["Tables"]["organization_settings"]["Row"];
+type MembershipEventRow = Database["public"]["Tables"]["membership_events"]["Row"];
 
 const TRIAL_LENGTH_DAYS = 14;
 const getFirstError = (...results: Array<{ error: unknown | null }>) =>
@@ -240,6 +241,7 @@ const fetchAdminAccounts = async ({
     sessionTypesResult,
     leadStatusesResult,
     projectStatusesResult,
+    membershipEventsResult,
   ] = await Promise.all([
     supabase.from("profiles").select("user_id, full_name"),
     supabase
@@ -294,7 +296,26 @@ const fetchAdminAccounts = async ({
       .from("project_statuses")
       .select("id, lifecycle, name")
       .in("organization_id", organizationIds),
+    supabase
+      .from("membership_events")
+      .select("id, organization_id, admin_id, action, metadata, previous_status, new_status, created_at")
+      .in("organization_id", organizationIds)
+      .order("created_at", { ascending: false })
   ]);
+
+  const isMembershipEventsTableMissing =
+    membershipEventsResult.error &&
+    typeof membershipEventsResult.error === "object" &&
+    "code" in membershipEventsResult.error &&
+    (membershipEventsResult.error as { code?: string }).code === "PGRST205";
+
+  const safeMembershipEventsResult = isMembershipEventsTableMissing
+    ? { ...membershipEventsResult, error: null, data: [] as MembershipEventRow[] }
+    : membershipEventsResult;
+
+  if (isMembershipEventsTableMissing) {
+    console.warn("membership_events table missing; continuing without historical membership data.");
+  }
 
   const firstError = getFirstError(
     profilesResult,
@@ -309,7 +330,8 @@ const fetchAdminAccounts = async ({
     servicesResult,
     sessionTypesResult,
     leadStatusesResult,
-    projectStatusesResult
+    projectStatusesResult,
+    safeMembershipEventsResult
   );
   if (firstError) {
     throw firstError;
@@ -335,6 +357,7 @@ const fetchAdminAccounts = async ({
   const packagesByOrg = groupByOrganization(packagesResult.data);
   const servicesByOrg = groupByOrganization(servicesResult.data);
   const sessionTypesByOrg = groupByOrganization(sessionTypesResult.data);
+  const membershipEventsByOrg = groupByOrganization(safeMembershipEventsResult.data);
   const leadStatusMap = new Map(
     (leadStatusesResult.data ?? []).map((status) => [status.id, status])
   );
@@ -441,6 +464,17 @@ const fetchAdminAccounts = async ({
     const packages = packagesByOrg[organization.id] ?? [];
     const services = servicesByOrg[organization.id] ?? [];
     const sessionTypes = sessionTypesByOrg[organization.id] ?? [];
+    const membershipEventsRaw = membershipEventsByOrg[organization.id] ?? [];
+    const membershipEvents = membershipEventsRaw.slice(0, 25).map((event) => ({
+      id: event.id,
+      action: event.action,
+      createdAt: event.created_at,
+      adminId: event.admin_id ?? undefined,
+      adminName: event.admin_id ? profileMap.get(event.admin_id)?.full_name ?? undefined : undefined,
+      previousStatus: (event.previous_status ?? undefined) as MembershipStatus | undefined,
+      newStatus: (event.new_status ?? undefined) as MembershipStatus | undefined,
+      metadata: (event.metadata as Record<string, unknown> | null) ?? null,
+    }));
     const lastActiveAt = computeLastActiveAt(organization, [], [], [], [], payments);
     const { status, trialEndsAt, trialDaysRemaining, trialStartedAt } = determineStatus(organization);
     const planName = MEMBERSHIP_PLAN_LABELS[status] ?? "Trial";
@@ -572,6 +606,7 @@ const fetchAdminAccounts = async ({
         services: [] as AdminUserServiceSummary[],
         packages: [] as AdminUserPackageSummary[],
         sessionTypes: [] as AdminUserSessionTypeSummary[],
+        membershipEvents,
       },
     };
   });

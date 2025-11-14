@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Settings, LogOut, ChevronUp, ChevronDown, User } from "lucide-react";
+import { Settings, LogOut, ChevronUp, ChevronDown, User, Crown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -8,6 +8,7 @@ import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useOptionalOrganization } from "@/contexts/OrganizationContext";
 
 interface UserMenuProps {
   variant?: "sidebar" | "mobile" | "minimal" | "header";
@@ -19,8 +20,12 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
+  const organizationContext = useOptionalOrganization();
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const isPremiumAccount =
+    organizationContext?.activeOrganization?.membership_status === "premium" ||
+    organizationContext?.activeOrganization?.membership_status === "complimentary";
 
   const handleSignOut = async () => {
     try {
@@ -69,13 +74,12 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
   const displayName = getDisplayName();
   const initials = getInitials();
 
-  // Minimal variant - just avatar
-  if (variant === "minimal") {
-    return (
-      <Avatar className="h-8 w-8 shrink-0">
+  const renderAvatar = (className: string) => (
+    <div className="relative inline-flex">
+      <Avatar className={className}>
         {profile?.profile_photo_url && (
-          <AvatarImage 
-            src={profile.profile_photo_url} 
+          <AvatarImage
+            src={profile.profile_photo_url}
             alt={displayName}
             className="object-cover"
           />
@@ -84,7 +88,17 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
           {initials}
         </AvatarFallback>
       </Avatar>
-    );
+      {isPremiumAccount && (
+        <span className="absolute -top-1 -right-1 rounded-full bg-amber-500 p-1 text-background shadow-lg">
+          <Crown className="h-3 w-3" />
+        </span>
+      )}
+    </div>
+  );
+
+  // Minimal variant - just avatar
+  if (variant === "minimal") {
+    return renderAvatar("h-8 w-8 shrink-0");
   }
 
   // Mobile variant - for mobile bottom sheet menus
@@ -94,18 +108,7 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
         onClick={handleSettings}
         className="flex items-center gap-3 p-3 mx-3 mb-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors w-[calc(100%-24px)]"
       >
-        <Avatar className="h-10 w-10 shrink-0">
-          {profile?.profile_photo_url && (
-            <AvatarImage 
-              src={profile.profile_photo_url} 
-              alt={displayName}
-              className="object-cover"
-            />
-          )}
-          <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
+        {renderAvatar("h-10 w-10 shrink-0")}
         <div className="flex-1 min-w-0">
           <div className="font-medium text-sm text-foreground leading-tight line-clamp-2">
             {displayName}
@@ -133,18 +136,7 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
               "focus-visible:ring-2 focus-visible:ring-ring/50"
             )}
           >
-            <Avatar className="h-10 w-10 shrink-0">
-              {profile?.profile_photo_url && (
-                <AvatarImage
-                  src={profile.profile_photo_url}
-                  alt={displayName}
-                  className="object-cover"
-                />
-              )}
-              <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            {renderAvatar("h-10 w-10 shrink-0")}
             <div className="flex-1 min-w-0 text-left">
               <div className="font-medium text-sm text-foreground leading-tight truncate">
                 {displayName}
@@ -199,18 +191,7 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <div className="flex items-center gap-3 p-3 border border-sidebar-border rounded-lg hover:bg-sidebar-accent/50 cursor-pointer transition-colors w-full">
-          <Avatar className="h-10 w-10 shrink-0">
-            {profile?.profile_photo_url && (
-              <AvatarImage 
-                src={profile.profile_photo_url} 
-                alt={displayName}
-                className="object-cover"
-              />
-            )}
-            <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+          {renderAvatar("h-10 w-10 shrink-0")}
           <div className="flex-1 min-w-0">
             <div className="font-medium text-sm text-sidebar-foreground leading-tight line-clamp-1">
               {displayName}

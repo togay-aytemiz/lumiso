@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TableLoadingSkeleton } from "@/components/ui/loading-presets";
 import { formatDistanceToNow } from "date-fns";
-import { Mail, Clock, Crown, AlarmClockCheck, Gift, ArrowUpRight } from "lucide-react";
+import { AlarmClockCheck, Mail, Clock, Crown, Gift, ArrowUpRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { UserStatusBadge } from "./UserStatusBadge";
 import type {
@@ -31,6 +31,8 @@ import type {
   AdminUserServiceSummary,
   AdminUserPackageSummary,
   AdminUserSessionTypeSummary,
+  AdminUserMembershipEvent,
+  MembershipStatus,
 } from "../types";
 import { MembershipActions } from "./MembershipActions";
 import { AdvancedDataTable, type AdvancedTableColumn } from "@/components/data-table";
@@ -190,12 +192,27 @@ const parsePackagePricingMetadata = (
 
 type CollectionType = "packages" | "services" | "sessionTypes";
 
+type AdminUserDetailSheetContentProps = Omit<AdminUserDetailSheetProps, "user"> & {
+  user: AdminUserAccount;
+};
+
 export function AdminUserDetailSheet({
+  user,
+  ...rest
+}: AdminUserDetailSheetProps) {
+  if (!user) {
+    return null;
+  }
+
+  return <AdminUserDetailSheetContent {...rest} user={user} />;
+}
+
+function AdminUserDetailSheetContent({
   user,
   open,
   onOpenChange,
   onUserUpdated,
-}: AdminUserDetailSheetProps) {
+}: AdminUserDetailSheetContentProps) {
   const { t, i18n } = useTranslation("pages");
   const { t: tCommon } = useTranslation("common");
   const [activeTab, setActiveTab] = useState("overview");
@@ -841,6 +858,92 @@ export function AdminUserDetailSheet({
 
   const organizationId = user?.id ?? null;
 
+  const membershipEventLabels = useMemo(
+    () => ({
+      extend_trial: t("admin.users.detail.membershipEvents.actions.extend_trial"),
+      grant_premium: t("admin.users.detail.membershipEvents.actions.grant_premium"),
+      grant_complimentary: t("admin.users.detail.membershipEvents.actions.grant_complimentary"),
+      suspend_account: t("admin.users.detail.membershipEvents.actions.suspend_account"),
+    }),
+    [t]
+  );
+
+  const getMembershipEventLabel = useCallback(
+    (action: string) =>
+      membershipEventLabels[action as keyof typeof membershipEventLabels] ??
+      t("admin.users.detail.membershipEvents.actions.default"),
+    [membershipEventLabels, t]
+  );
+
+  const formatStatusLabel = useCallback(
+    (status?: MembershipStatus) => {
+      if (!status) {
+        return t("admin.users.detail.membershipEvents.unknownStatus");
+      }
+      return t(`admin.users.status.${status}` as const);
+    },
+    [t]
+  );
+
+  const renderEventMetadata = useCallback(
+    (event: AdminUserMembershipEvent) => {
+      const meta = event.metadata;
+      if (!meta || typeof meta !== "object") return null;
+      const metaRecord = meta as Record<string, unknown>;
+      const rows: string[] = [];
+      if (typeof metaRecord.daysAdded === "number") {
+        rows.push(
+          t("admin.users.detail.membershipEvents.meta.daysAdded", {
+            days: metaRecord.daysAdded,
+          })
+        );
+      }
+      if (typeof metaRecord.newTrialEndsAt === "string") {
+        rows.push(
+          t("admin.users.detail.membershipEvents.meta.newTrialEnd", {
+            date: formatDateOnlyLocalized(metaRecord.newTrialEndsAt),
+          })
+        );
+      }
+      if (typeof metaRecord.plan === "string") {
+        rows.push(
+          t("admin.users.detail.membershipEvents.meta.plan", {
+            plan: metaRecord.plan,
+          })
+        );
+      }
+      if (typeof metaRecord.expiresAt === "string") {
+        rows.push(
+          t("admin.users.detail.membershipEvents.meta.expires", {
+            date: formatDateOnlyLocalized(metaRecord.expiresAt),
+          })
+        );
+      }
+      const noteValue =
+        typeof metaRecord.note === "string"
+          ? metaRecord.note
+          : typeof metaRecord.reason === "string"
+          ? metaRecord.reason
+          : null;
+      if (noteValue) {
+        rows.push(
+          t("admin.users.detail.membershipEvents.meta.note", {
+            note: noteValue,
+          })
+        );
+      }
+      if (!rows.length) return null;
+      return (
+        <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+          {rows.map((row, index) => (
+            <li key={`${event.id}-meta-${index}`}>{row}</li>
+          ))}
+        </ul>
+      );
+    },
+    [formatDateOnlyLocalized, t]
+  );
+
   useEffect(() => {
     if (open) {
       setActiveTab("overview");
@@ -875,16 +978,13 @@ export function AdminUserDetailSheet({
     fetchCollectionData();
   }, [collectionViewer, collectionConfigs, organizationId]);
 
-  if (!user) {
-    return null;
-  }
-
   const socialEntries = user.business.socialChannels ?? [];
   const formatCount = (value: number) => countFormatter.format(value);
   const handleOpenCollection = (type: CollectionType) => {
     setCollectionViewer({ type });
   };
   const pendingPayments = Math.max(user.financials.overdueBalance ?? 0, 0);
+  const membershipEvents = user.detail.membershipEvents ?? [];
 
   const getMetricLabelLines = (label: string): [string, string] => {
     const words = label.split(/\s+/).filter(Boolean);
@@ -1078,14 +1178,23 @@ export function AdminUserDetailSheet({
 
             <TabsContent value="overview" className="space-y-4">
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-baseline gap-2">
-                    <Crown className="h-4 w-4 text-primary" />
-                    {t("admin.users.detail.membership.title")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("admin.users.detail.membership.subtitle")}
-                  </CardDescription>
+                <CardHeader className="space-y-3">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
+                    <div className="space-y-1">
+                      <CardTitle className="flex items-baseline gap-2">
+                        <Crown className="h-4 w-4 text-primary" />
+                        {t("admin.users.detail.membership.title")}
+                      </CardTitle>
+                      <CardDescription>
+                        {t("admin.users.detail.membership.subtitle")}
+                      </CardDescription>
+                    </div>
+                    <MembershipActions
+                      user={user}
+                      onUserUpdated={onUserUpdated}
+                      buttonRowClassName="justify-start lg:justify-end"
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex flex-wrap gap-3">
@@ -1137,6 +1246,63 @@ export function AdminUserDetailSheet({
                       </p>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-baseline gap-2">
+                    <AlarmClockCheck className="h-4 w-4 text-primary" />
+                    {t("admin.users.detail.membershipEvents.title")}
+                  </CardTitle>
+                  <CardDescription>
+                    {t("admin.users.detail.membershipEvents.description")}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {membershipEvents.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      {t("admin.users.detail.membershipEvents.empty")}
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {membershipEvents.slice(0, 8).map((event) => {
+                        const statusLine =
+                          event.previousStatus || event.newStatus
+                            ? t("admin.users.detail.membershipEvents.statusChange", {
+                                previous: formatStatusLabel(event.previousStatus),
+                                next: formatStatusLabel(event.newStatus),
+                              })
+                            : null;
+                        return (
+                          <div key={event.id} className="rounded-xl border bg-background/70 p-3 shadow-sm">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold text-foreground">
+                                  {getMembershipEventLabel(event.action)}
+                                </p>
+                                {event.adminName ? (
+                                  <p className="text-xs text-muted-foreground">
+                                    {t("admin.users.detail.membershipEvents.by", {
+                                      admin: event.adminName,
+                                    })}
+                                  </p>
+                                ) : null}
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                {formatRelativeTime(event.createdAt)}
+                              </p>
+                            </div>
+                            {statusLine ? (
+                              <p className="mt-1 text-xs font-medium text-muted-foreground">
+                                {statusLine}
+                              </p>
+                            ) : null}
+                            {renderEventMetadata(event)}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -1277,24 +1443,6 @@ export function AdminUserDetailSheet({
                       ))}
                     </div>
                   ) : null}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-baseline gap-2">
-                    <AlarmClockCheck className="h-4 w-4 text-primary" />
-                    {t("admin.users.detail.actions.title")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("admin.users.detail.actions.subtitle")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <MembershipActions user={user} onUserUpdated={onUserUpdated} />
-                  <Button variant="ghost">
-                    {t("admin.users.detail.actions.contactUser")}
-                  </Button>
                 </CardContent>
               </Card>
 

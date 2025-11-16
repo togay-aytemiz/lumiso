@@ -14,7 +14,14 @@ export async function getUserOrganizationId(): Promise<string | null> {
       return cachedOrganizationId;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError) {
+      console.error("Error fetching authenticated user:", authError);
+      clearOrganizationCache();
+      return null;
+    }
+
+    const user = authData?.user;
     if (!user) {
       clearOrganizationCache();
       return null;

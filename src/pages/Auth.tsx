@@ -221,27 +221,33 @@ const Auth = () => {
 
   const featureSlides = [
     {
-      title: tPages('auth.features.0.title', 'Streamline every client interaction'),
+      chip: tPages('auth.features.0.chip', 'Quick start'),
+      title: tPages('auth.features.0.title', 'Stay organized from day one'),
       description: tPages(
         'auth.features.0.description',
-        'Centralize your communication, notes, and deal status in one intuitive workspace designed for modern agencies.'
+        'Use a short onboarding guide to define your clients, shoot types, and packages. The to-do list walks you through every step so you never miss a critical setting.'
       ),
     },
     {
-      title: tPages('auth.features.1.title', 'Forecast revenue with confidence'),
+      chip: tPages('auth.features.1.chip', 'Automation'),
+      title: tPages('auth.features.1.title', 'Send the right message at the right time'),
       description: tPages(
         'auth.features.1.description',
-        "Track conversion insights, build predictable pipelines, and unlock powerful reporting without leaving Lumiso."
+        "Define pre-shoot briefings, prep lists, and thank-you notes once. Templates and workflows reach your clients automatically so you don't have to chase every touchpoint."
       ),
     },
     {
-      title: tPages('auth.features.2.title', 'Automate onboarding with ease'),
+      chip: tPages('auth.features.2.chip', 'Daily flow'),
+      title: tPages('auth.features.2.title', 'Keep your shoot schedule crystal clear'),
       description: tPages(
         'auth.features.2.description',
-        'Launch tailored workflows, automate reminders, and deliver delightful client experiences from day one.'
+        'See every session and reminder in day, week, or month view at a glance. Planning shoots, delivery dates, and to-dos becomes much easier.'
       ),
     },
   ];
+
+  const currentFeatureChip =
+    featureSlides[activeFeatureIndex]?.chip || tPages('auth.platformHighlights', 'Platform highlights');
 
   // Animate progress for feature slides and auto-advance
   useEffect(() => {
@@ -817,7 +823,7 @@ const Auth = () => {
           <div className="relative flex flex-1 flex-col px-12 py-14">
             <div className="mb-12 flex flex-col gap-3">
               <span className="w-fit rounded-full bg-white/15 px-4 py-1 text-sm font-medium text-white/85 backdrop-blur">
-                {tPages('auth.platformHighlights', 'Platform highlights')}
+                {currentFeatureChip}
               </span>
               <div className="relative h-[96px] max-w-xl">
                 {featureSlides.map((slide, index) => (

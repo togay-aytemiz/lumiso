@@ -19,16 +19,19 @@
     },
     "features": [
       {
-        "title": "Streamline every client interaction",
-        "description": "Centralize your communication, notes, and deal status in one intuitive workspace designed for modern agencies."
+        "chip": "Quick start",
+        "title": "Stay organized from day one",
+        "description": "Use a short onboarding guide to define your clients, shoot types, and packages. The to-do list walks you through every step so you never miss a critical setting."
       },
       {
-        "title": "Forecast revenue with confidence",
-        "description": "Track conversion insights, build predictable pipelines, and unlock powerful reporting without leaving Lumiso."
+        "chip": "Automation",
+        "title": "Send the right message at the right time",
+        "description": "Define pre-shoot briefings, prep lists, and thank-you notes once. Templates and workflows reach your clients automatically so you don't have to chase every touchpoint."
       },
       {
-        "title": "Automate onboarding with ease",
-        "description": "Launch tailored workflows, automate reminders, and deliver delightful client experiences from day one."
+        "chip": "Daily flow",
+        "title": "Keep your shoot schedule crystal clear",
+        "description": "See every session and reminder in day, week, or month view at a glance. Planning shoots, delivery dates, and to-dos becomes much easier."
       }
     ],
     "toggle": {

@@ -19,16 +19,19 @@
     },
     "features": [
       {
-        "title": "Tüm müşteri etkileşimlerini kolaylaştırın",
-        "description": "İletişimi, notları ve fırsat durumlarını modern ekipler için tasarlanmış tek bir sezgisel çalışma alanında toplayın."
+        "chip": "Hızlı başlangıç",
+        "title": "İlk günden düzenli çalışın",
+        "description": "Kısa bir yönlendirme ile kişilerinizi, çekim türlerinizi ve paketlerinizi tanımlayın. Yapılacaklar listesi sizi adım adım ilerletirken hiçbir kritik ayarı atlamazsınız."
       },
       {
-        "title": "Güvenle gelir tahmini yapın",
-        "description": "Dönüşüm içgörülerini takip edin, öngörülebilir boru hatları oluşturun ve Lumiso'dan ayrılmadan güçlü raporlar elde edin."
+        "chip": "Otomasyon",
+        "title": "Doğru mesaj doğru zamanda gitsin",
+        "description": "Çekim öncesi bilgilendirmeler, hazırlık listeleri ve teşekkür mesajlarını bir kez tanımlayın. Şablonlar ve iş akışları müşterilerinize otomatik gider, siz tek tek takip etmek zorunda kalmazsınız."
       },
       {
-        "title": "Kolayca otomatik karşılama",
-        "description": "Özelleştirilmiş iş akışları başlatın, hatırlatıcıları otomatikleştirin ve ilk günden itibaren harika müşteri deneyimleri sunun."
+        "chip": "Günlük akış",
+        "title": "Çekim takviminiz her zaman net",
+        "description": "Gün hafta ay görünümünde tüm çekimleri ve hatırlatmaları tek bakışta görün. Yaklaşan çekimleri, teslim tarihlerini ve yapılacakları planlamak çok daha kolay hale gelir."
       }
     ],
     "toggle": {

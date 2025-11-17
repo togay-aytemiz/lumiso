@@ -1442,21 +1442,21 @@
     "project_sessions_count_plural": "Bu proje için {{count}} seans",
     "add_session": "Seans Ekle",
     "emptyState": {
-      "learnMore": "Planlamanın neleri açtığını gör",
-      "sheetTitle": "Seanslar çekim gününü kontrol altında tutar",
-      "sheetDescription": "Her çekimi tarih, saat ve lojistiğiyle kaydedin ki hatırlatıcılar, iş akışları ve faturalar doğru kalsın.",
+      "learnMore": "Seans planı ne kazandırır?",
+      "sheetTitle": "Seans planı çekim gününü güvenceye alır",
+      "sheetDescription": "Kişi, proje, konum ve saat bilgilerini tek seferde kaydedin ki takvim, iş akışları ve hatırlatıcılar aynı doğrulukta çalışsın.",
       "sections": [
         {
-          "title": "Bir kez hazırlayıp tekrar kullan",
-          "description": "Seansa formlarını, çekim listelerini veya iş akışlarını bağla; rezervasyon yapıldığı anda kurulum çalışsın."
+          "title": "Projeye bağlı tüm detayı tek adımda hazırla",
+          "description": "Seansı lead, proje ya da takvimden başlattığınızda ilgili kişi, paket ve hizmetler otomatik eşleşir; adres defteri ve kayıtlı not kalıplarıyla en sevdiğiniz kurulumları tekrar kullanırsınız."
         },
         {
-          "title": "Mesajları ve ödemeleri otomatikleştir",
-          "description": "Onaylanan seanslar teyit mailleri, gün öncesi hatırlatmalar ve bakiye uyarılarını ekstra iş olmadan tetikler."
+          "title": "Teyit ve hatırlatmaları otomatik gönder",
+          "description": "Seans onaylanır onaylanmaz iş akışlarında seçtiğiniz e-posta, WhatsApp veya SMS mesajları tetiklenir; ödeme adımlarını ise proje ödemeleri kartından manuel yönetirsiniz."
         },
         {
-          "title": "Sıradaki işi anında gör",
-          "description": "Seans kartları tarih, saat, konum ve durumu gösterir; haftanı planlamak birkaç saniye sürer."
+          "title": "Takvimde sıradaki çekimi anında yakalayın",
+          "description": "Gün/hafta/ay görünümlerinde seans blokları tarih, saat ve konumla çıkar; seans ve hatırlatıcı katmanlarını açıp kapayarak haftanızı birkaç saniyede planlayabilirsiniz."
         }
       ]
     }

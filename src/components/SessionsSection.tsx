@@ -125,10 +125,12 @@ export function SessionsSection({
             <Button
               variant="link"
               size="sm"
-              className="h-auto px-0 text-sm text-amber-700 underline underline-offset-4 decoration-amber-400 hover:text-amber-900"
+              className="h-auto w-full px-0 text-sm text-amber-700 underline underline-offset-4 decoration-amber-400 hover:text-amber-900 sm:w-auto"
               onClick={() => setShowSessionInfo(true)}
             >
-              {t("sessions_form.emptyState.learnMore")}
+              <span className="whitespace-normal leading-snug text-center">
+                {t("sessions_form.emptyState.learnMore")}
+              </span>
             </Button>
           ),
           action: !hasSessions ? renderNewSessionButton() : undefined

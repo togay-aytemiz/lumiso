@@ -31,6 +31,8 @@ interface Project {
   id: string;
   name: string;
   lead_id: string;
+  package_id?: string | null;
+  package_snapshot?: unknown;
 }
 
 interface Lead {
@@ -187,7 +189,7 @@ export function useOptimizedCalendarData(currentDate: Date, viewMode: 'day' | 'w
       const [projectsResult, leadsResult] = await Promise.all([
         supabase
           .from("projects")
-          .select("id,name,lead_id")
+          .select("id,name,lead_id,package_id,package_snapshot")
           .eq('organization_id', organizationId),
         
         supabase

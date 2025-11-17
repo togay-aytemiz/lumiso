@@ -261,6 +261,13 @@ export const ProjectCreationWizard = ({
     goToStep(summaryIndex);
   };
 
+  const finalActionLabel = isEditing
+    ? t("wizard.finish")
+    : t("wizard.createProject");
+  const finalActionLoadingLabel = isEditing
+    ? t("wizard.finishing")
+    : t("wizard.creating");
+
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-slate-50">
       <div className="grid flex-1 grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)]">
@@ -384,9 +391,7 @@ export const ProjectCreationWizard = ({
                     aria-busy={isCompleting}
                     className="w-full sm:w-auto sm:px-8"
                   >
-                    {isCompleting
-                      ? t("wizard.creating")
-                      : t("wizard.createProject")}
+                    {isCompleting ? finalActionLoadingLabel : finalActionLabel}
                   </Button>
                 )}
                 {isEditing && meta.currentStep !== "summary" ? (

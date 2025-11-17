@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback, type ReactNode } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, type ReactNode, type CSSProperties } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-import { Calendar, CheckCircle, FolderPlus, User, Activity, CheckSquare, CreditCard } from "lucide-react";
+import { Calendar, CheckCircle, FolderPlus, User, Activity, CheckSquare, CreditCard, XCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
@@ -25,6 +25,7 @@ import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 // AssigneesList removed - single user organization
 import { formatDate, formatTime, getDateFnsLocale } from "@/lib/utils";
+import { getBadgeColorTokens } from "@/lib/statusBadgeStyles";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
 // Permissions removed for single photographer mode
@@ -54,6 +55,30 @@ const safeFormatTime = (value?: string | null) => {
     return null;
   }
 };
+
+const DEFAULT_COMPLETED_COLOR = "#16a34a";
+const DEFAULT_LOST_COLOR = "#dc2626";
+
+const createQuickStatusButtonStyle = (
+  color?: string,
+  fallback: string = "#6b7280"
+): CSSProperties => {
+  const resolvedColor = color && color.trim().length > 0 ? color : fallback;
+  const tokens = getBadgeColorTokens(resolvedColor);
+
+  return {
+    "--quick-action-bg": tokens.background,
+    "--quick-action-hover-bg": tokens.hoverBackground,
+    "--quick-action-active-bg": tokens.activeBackground,
+    "--quick-action-border": tokens.border,
+    "--quick-action-text": tokens.color,
+    "--quick-action-ring": tokens.ring
+  } as CSSProperties;
+};
+
+const QUICK_ACTION_BUTTON_CLASS =
+  "min-w-[2.5rem] sm:min-w-[120px] px-2 sm:px-4 border-[var(--quick-action-border)] bg-[var(--quick-action-bg)] text-[var(--quick-action-text)] hover:bg-[var(--quick-action-hover-bg)] hover:text-[var(--quick-action-text)] focus-visible:ring-[var(--quick-action-ring)] active:bg-[var(--quick-action-active-bg)]";
+
 const LeadDetail = () => {
   const {
     id
@@ -401,6 +426,30 @@ const LeadDetail = () => {
   const completedStatus = leadStatuses.find(s => s.is_system_final && (s.name.toLowerCase().includes('completed') || s.name.toLowerCase().includes('delivered'))) || leadStatuses.find(s => s.name === 'Completed');
   const lostStatus = leadStatuses.find(s => s.is_system_final && (s.name.toLowerCase().includes('lost') || s.name.toLowerCase().includes('not interested'))) || leadStatuses.find(s => s.name === 'Lost');
 
+  const completedQuickActionStyle = useMemo(
+    () => createQuickStatusButtonStyle(completedStatus?.color, DEFAULT_COMPLETED_COLOR),
+    [completedStatus?.color]
+  );
+  const lostQuickActionStyle = useMemo(
+    () => createQuickStatusButtonStyle(lostStatus?.color, DEFAULT_LOST_COLOR),
+    [lostStatus?.color]
+  );
+
+  const shouldShowCompletedQuickAction =
+    !settingsLoading &&
+    Boolean(
+      userSettings?.show_quick_status_buttons &&
+        completedStatus &&
+        lead.status !== completedStatus.name
+    );
+  const shouldShowLostQuickAction =
+    !settingsLoading &&
+    Boolean(
+      userSettings?.show_quick_status_buttons && lostStatus && lead.status !== lostStatus.name
+    );
+  const hasQuickStatusActions = shouldShowCompletedQuickAction || shouldShowLostQuickAction;
+  const completedButtonLabel = isUpdating ? "Updating..." : completedStatus?.name ?? "";
+  const lostButtonLabel = isUpdating ? "Updating..." : lostStatus?.name ?? "";
 
   const formatRelativeTime = (dateString?: string | null) => {
     if (!dateString) return null;
@@ -771,6 +820,39 @@ const LeadDetail = () => {
     activitySummary,
     tPages
   ]);
+  const quickStatusButtons = hasQuickStatusActions ? (
+    <div className="ml-auto flex items-center gap-2 sm:ml-0">
+      {shouldShowCompletedQuickAction && (
+        <Button
+          onClick={handleMarkAsCompleted}
+          disabled={isUpdating}
+          variant="outline"
+          className={QUICK_ACTION_BUTTON_CLASS}
+          size="sm"
+          style={completedQuickActionStyle}
+          aria-label={completedButtonLabel}
+        >
+          <CheckCircle className="h-4 w-4" />
+          <span className="hidden sm:inline">{completedButtonLabel}</span>
+        </Button>
+      )}
+      {shouldShowLostQuickAction && (
+        <Button
+          onClick={handleMarkAsLost}
+          disabled={isUpdating}
+          variant="outline"
+          size="sm"
+          style={lostQuickActionStyle}
+          className={QUICK_ACTION_BUTTON_CLASS}
+          aria-label={lostButtonLabel}
+        >
+          <XCircle className="h-4 w-4" />
+          <span className="hidden sm:inline">{lostButtonLabel}</span>
+        </Button>
+      )}
+    </div>
+  ) : null;
+
   if (detailLoading) {
     return <DetailPageLoadingSkeleton />;
   }
@@ -810,37 +892,14 @@ const LeadDetail = () => {
             summaryItems={summaryItems}
             fallbackInitials="LD"
             actions={
-              <>
+              <div className="flex w-full items-center gap-2 sm:w-auto">
                 <ScheduleSessionDialog
                   leadId={lead.id}
                   leadName={lead.name}
                   onSessionScheduled={handleSessionScheduled}
                 />
-
-                {!settingsLoading &&
-                  userSettings.show_quick_status_buttons &&
-                  completedStatus &&
-                  lead.status !== completedStatus.name && (
-                    <Button
-                      onClick={handleMarkAsCompleted}
-                      disabled={isUpdating}
-                      className="h-10 bg-green-600 text-white hover:bg-green-700"
-                      size="sm"
-                    >
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      {isUpdating ? "Updating..." : completedStatus.name}
-                    </Button>
-                  )}
-
-                {!settingsLoading &&
-                  userSettings.show_quick_status_buttons &&
-                  lostStatus &&
-                  lead.status !== lostStatus.name && (
-                    <Button onClick={handleMarkAsLost} disabled={isUpdating} variant="destructive" size="sm" className="h-10">
-                      {isUpdating ? "Updating..." : lostStatus.name}
-                    </Button>
-                  )}
-              </>
+                {quickStatusButtons}
+              </div>
             }
           />
 

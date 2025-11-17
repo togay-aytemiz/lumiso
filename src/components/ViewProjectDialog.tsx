@@ -580,6 +580,7 @@ export function ViewProjectDialog({
                    {project && (
                      <ProjectPackageSummaryCard
                        projectId={project.id}
+                       packageId={project.package_id ?? null}
                        snapshot={packageSnapshot}
                        servicesVersion={servicesVersion}
                        onEditDetails={() => openEditWizard("details")}

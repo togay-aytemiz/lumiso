@@ -239,10 +239,10 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
             <Button
               size="sm"
               variant="outline"
-              className="w-full md:w-auto border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 hover:text-indigo-950"
+              className="w-full min-w-[140px] gap-2 border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 hover:text-indigo-950 md:w-auto"
               onClick={() => setProjectWizardOpen(true)}
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4" />
               {t('pages:projects.addProject')}
             </Button>
           )}
@@ -276,10 +276,11 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
             action={
               <Button
                 variant="outline"
-                className="border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 hover:text-indigo-950"
+                size="sm"
+                className="min-w-[140px] gap-2 border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 hover:text-indigo-950"
                 onClick={() => setProjectWizardOpen(true)}
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4" />
                 {t('pages:projects.addProject')}
               </Button>
             }

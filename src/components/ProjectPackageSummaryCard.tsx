@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Camera, Clock, PackageCheck, Send } from "lucide-react";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import type { ProjectPackageSnapshot } from "@/lib/projects/projectPackageSnapshot";
+import { supabase } from "@/integrations/supabase/client";
 import {
   fetchProjectServiceRecords,
   type ProjectServiceRecord,
@@ -11,6 +12,7 @@ import {
 
 interface ProjectPackageSummaryCardProps {
   projectId: string;
+  packageId?: string | null;
   snapshot: ProjectPackageSnapshot | null;
   servicesVersion?: number;
   onEditDetails: () => void;
@@ -114,6 +116,7 @@ const hasServiceDifferences = (
 
 export function ProjectPackageSummaryCard({
   projectId,
+  packageId,
   snapshot,
   servicesVersion,
   onEditDetails,
@@ -123,6 +126,47 @@ export function ProjectPackageSummaryCard({
   const [customized, setCustomized] = useState(false);
   const [serviceRecords, setServiceRecords] = useState<ProjectServiceRecord[] | null>(null);
   const [servicesLoading, setServicesLoading] = useState(false);
+  const [resolvedPackageName, setResolvedPackageName] = useState<string | null>(snapshot?.name ?? null);
+
+  useEffect(() => {
+    if (snapshot?.name) {
+      setResolvedPackageName(snapshot.name);
+      return;
+    }
+    setResolvedPackageName(null);
+  }, [packageId, snapshot?.name]);
+
+  useEffect(() => {
+    if (snapshot?.name || !packageId || resolvedPackageName) {
+      return;
+    }
+    let active = true;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("packages")
+          .select("name")
+          .eq("id", packageId)
+          .single();
+        if (!active) return;
+        if (error) {
+          console.error("Failed to resolve package name:", error);
+          return;
+        }
+        setResolvedPackageName(data?.name ?? null);
+      } catch (error) {
+        if (!active) return;
+        console.error("Failed to resolve package name:", error);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [packageId, resolvedPackageName, snapshot?.name]);
+
+  const packageLabel =
+    resolvedPackageName ??
+    t("project_package_card.custom_label", { defaultValue: "Custom plan" });
 
   const lineItemsSignature = useMemo(() => {
     if (!snapshot) return "";
@@ -248,10 +292,7 @@ export function ProjectPackageSummaryCard({
               </svg>
             }
             label={t("project_package_card.package_label", { defaultValue: "Package" })}
-            value={
-              snapshot?.name ??
-              t("project_package_card.custom_label", { defaultValue: "Custom plan" })
-            }
+            value={packageLabel}
           />
           <InfoRow
             icon={<Send className="h-4 w-4 text-primary" />}

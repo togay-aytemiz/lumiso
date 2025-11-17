@@ -196,6 +196,32 @@ const parsePackagePricingMetadata = (
 
 type CollectionType = "packages" | "services" | "sessionTypes";
 
+type CollectionRowMap = {
+  packages: AdminUserPackageSummary;
+  services: AdminUserServiceSummary;
+  sessionTypes: AdminUserSessionTypeSummary;
+};
+
+type CollectionViewerState = { type: CollectionType } | null;
+
+type CollectionDataState =
+  | { type: "packages"; rows: AdminUserPackageSummary[] }
+  | { type: "services"; rows: AdminUserServiceSummary[] }
+  | { type: "sessionTypes"; rows: AdminUserSessionTypeSummary[] }
+  | null;
+
+type CollectionConfig<T> = {
+  title: string;
+  table: string;
+  query: string;
+  columns: AdvancedTableColumn<T>[];
+  rowKey: (row: T) => string;
+};
+
+type CollectionConfigMap = {
+  [K in CollectionType]: CollectionConfig<CollectionRowMap[K]>;
+};
+
 type AdminUserDetailSheetContentProps = Omit<AdminUserDetailSheetProps, "user"> & {
   user: AdminUserAccount;
 };
@@ -233,10 +259,8 @@ function AdminUserDetailSheetContent({
   const { t, i18n } = useTranslation("pages");
   const { t: tCommon } = useTranslation("common");
   const [activeTab, setActiveTab] = useState("overview");
-  const [collectionViewer, setCollectionViewer] = useState<null | {
-    type: "packages" | "services" | "sessionTypes";
-  }>(null);
-  const [collectionData, setCollectionData] = useState<any[]>([]);
+  const [collectionViewer, setCollectionViewer] = useState<CollectionViewerState>(null);
+  const [collectionData, setCollectionData] = useState<CollectionDataState>(null);
   const [collectionLoading, setCollectionLoading] = useState(false);
   const [collectionError, setCollectionError] = useState<string | null>(null);
   const locale = i18n.language || undefined;
@@ -350,7 +374,7 @@ function AdminUserDetailSheetContent({
         render: (project) => formatDateTimeLocalized(project.updated_at),
       },
     ],
-    [formatDateTimeLocalized, t]
+    [formatCurrency, formatDateTimeLocalized, t]
   );
 
   const sessionColumns = useMemo<Column<AdminUserSessionSummary>[]>(
@@ -422,7 +446,7 @@ function AdminUserDetailSheetContent({
         render: (payment) => payment.project_id || "—",
       },
     ],
-    [formatDateOnlyLocalized, t]
+    [formatCurrency, formatDateOnlyLocalized, t]
   );
 
   const servicesColumns = useMemo<AdvancedTableColumn<AdminUserServiceSummary>[]>(
@@ -477,7 +501,7 @@ function AdminUserDetailSheetContent({
         minWidth: "160px",
       },
     ],
-    [formatDateTimeLocalized, renderActivationBadge, t]
+    [formatCurrency, formatDateTimeLocalized, renderActivationBadge, t]
   );
 
   const packagesColumns = useMemo<AdvancedTableColumn<AdminUserPackageSummary>[]>(
@@ -813,15 +837,7 @@ function AdminUserDetailSheetContent({
     [formatDateTimeLocalized, renderActivationBadge, t]
   );
 
-  type CollectionConfig = {
-    title: string;
-    table: string;
-    query: string;
-    columns: AdvancedTableColumn<any>[];
-    rowKey: (row: any) => string;
-  };
-
-  const collectionConfigs = useMemo<Record<CollectionType, CollectionConfig>>(
+  const collectionConfigs = useMemo<CollectionConfigMap>(
     () => ({
       packages: {
         title: t("admin.users.detail.collections.packages.title"),
@@ -850,7 +866,7 @@ function AdminUserDetailSheetContent({
             "updated_at",
           ].join(", "),
         columns: packagesColumns,
-        rowKey: (row: AdminUserPackageSummary) => row.id,
+        rowKey: (row) => row.id,
       },
       services: {
         title: t("admin.users.detail.collections.services.title"),
@@ -858,7 +874,7 @@ function AdminUserDetailSheetContent({
         query:
           "id, name, category, service_type, price, selling_price, cost_price, created_at, updated_at, organization_id, is_active",
         columns: servicesColumns,
-        rowKey: (row: AdminUserServiceSummary) => row.id,
+        rowKey: (row) => row.id,
       },
       sessionTypes: {
         title: t("admin.users.detail.collections.sessionTypes.title"),
@@ -866,7 +882,7 @@ function AdminUserDetailSheetContent({
         query:
           "id, name, duration_minutes, created_at, updated_at, organization_id, is_active",
         columns: sessionTypeColumns,
-        rowKey: (row: AdminUserSessionTypeSummary) => row.id,
+        rowKey: (row) => row.id,
       },
     }),
     [packagesColumns, servicesColumns, sessionTypeColumns, t]
@@ -1004,33 +1020,81 @@ function AdminUserDetailSheetContent({
       setActiveTab("overview");
     } else {
       setCollectionViewer(null);
-      setCollectionData([]);
+      setCollectionData(null);
       setCollectionError(null);
     }
   }, [open]);
 
   useEffect(() => {
-    const fetchCollectionData = async () => {
-      if (!collectionViewer || !organizationId) return;
-      const config = collectionConfigs[collectionViewer.type];
-      if (!config) return;
+    if (!collectionViewer || !organizationId) return;
+    let isMounted = true;
+
+    const loadCollection = async () => {
+      const type = collectionViewer.type;
       setCollectionLoading(true);
       setCollectionError(null);
-      const { data, error } = await supabase
-        .from(config.table)
-        .select(config.query)
-        .eq("organization_id", organizationId)
-        .order("updated_at", { ascending: false })
-        .limit(500);
-      if (error) {
-        setCollectionError(error.message);
-        setCollectionData([]);
-      } else {
-        setCollectionData(data ?? []);
+      setCollectionData(null);
+
+      try {
+        if (type === "packages") {
+          const config = collectionConfigs.packages;
+          const { data, error } = await supabase
+            .from("packages")
+            .select(config.query)
+            .eq("organization_id", organizationId)
+            .order("updated_at", { ascending: false })
+            .limit(500);
+          if (!isMounted) return;
+          if (error) {
+            setCollectionError(error.message);
+            return;
+          }
+          setCollectionData({ type: "packages", rows: data ?? [] });
+          return;
+        }
+
+        if (type === "services") {
+          const config = collectionConfigs.services;
+          const { data, error } = await supabase
+            .from("services")
+            .select(config.query)
+            .eq("organization_id", organizationId)
+            .order("updated_at", { ascending: false })
+            .limit(500);
+          if (!isMounted) return;
+          if (error) {
+            setCollectionError(error.message);
+            return;
+          }
+          setCollectionData({ type: "services", rows: data ?? [] });
+          return;
+        }
+
+        const config = collectionConfigs.sessionTypes;
+        const { data, error } = await supabase
+          .from("session_types")
+          .select(config.query)
+          .eq("organization_id", organizationId)
+          .order("updated_at", { ascending: false })
+          .limit(500);
+        if (!isMounted) return;
+        if (error) {
+          setCollectionError(error.message);
+          return;
+        }
+        setCollectionData({ type: "sessionTypes", rows: data ?? [] });
+      } finally {
+        if (isMounted) {
+          setCollectionLoading(false);
+        }
       }
-      setCollectionLoading(false);
     };
-    fetchCollectionData();
+
+    loadCollection();
+
+    return () => {
+      isMounted = false;
+    };
   }, [collectionViewer, collectionConfigs, organizationId]);
 
   const socialEntries = user.business.socialChannels ?? [];
@@ -1040,6 +1104,65 @@ function AdminUserDetailSheetContent({
   };
   const pendingPayments = Math.max(user.financials.overdueBalance ?? 0, 0);
   const membershipEvents = user.detail.membershipEvents ?? [];
+  const collectionEmptyState = (
+    <div className="py-8 text-center text-sm text-muted-foreground">
+      {tCommon("messages.info.no_data")}
+    </div>
+  );
+
+  const renderCollectionTable = () => {
+    if (!collectionViewer) return null;
+
+    const baseTableProps = {
+      variant: "plain" as const,
+      className: "max-h-[70vh] overflow-y-auto",
+      emptyState: collectionEmptyState,
+    };
+
+    switch (collectionViewer.type) {
+      case "packages": {
+        const rows: AdminUserPackageSummary[] =
+          collectionData?.type === "packages" ? collectionData.rows : [];
+        const config = collectionConfigs.packages;
+        return (
+          <AdvancedDataTable
+            data={rows}
+            columns={config.columns}
+            rowKey={config.rowKey}
+            {...baseTableProps}
+          />
+        );
+      }
+      case "services": {
+        const rows: AdminUserServiceSummary[] =
+          collectionData?.type === "services" ? collectionData.rows : [];
+        const config = collectionConfigs.services;
+        return (
+          <AdvancedDataTable
+            data={rows}
+            columns={config.columns}
+            rowKey={config.rowKey}
+            {...baseTableProps}
+          />
+        );
+      }
+      case "sessionTypes": {
+        const rows: AdminUserSessionTypeSummary[] =
+          collectionData?.type === "sessionTypes" ? collectionData.rows : [];
+        const config = collectionConfigs.sessionTypes;
+        return (
+          <AdvancedDataTable
+            data={rows}
+            columns={config.columns}
+            rowKey={config.rowKey}
+            {...baseTableProps}
+          />
+        );
+      }
+      default:
+        return null;
+    }
+  };
 
   const getMetricLabelLines = (label: string): [string, string] => {
     const words = label.split(/\s+/).filter(Boolean);
@@ -1687,18 +1810,7 @@ function AdminUserDetailSheetContent({
           ) : collectionError ? (
             <p className="text-sm text-destructive">{collectionError}</p>
           ) : collectionViewer ? (
-            <AdvancedDataTable
-              data={collectionData as any[]}
-              columns={collectionConfigs[collectionViewer.type].columns}
-              rowKey={collectionConfigs[collectionViewer.type].rowKey}
-              variant="plain"
-              className="max-h-[70vh] overflow-y-auto"
-              emptyState={
-                <div className="py-8 text-center text-sm text-muted-foreground">
-                  {tCommon("messages.info.no_data")}
-                </div>
-              }
-            />
+            renderCollectionTable()
           ) : null}
         </AppSheetModal>
       </SheetContent>

@@ -52,10 +52,6 @@ export function useOrganization() {
   return context;
 }
 
-export function useOptionalOrganization() {
-  return useContext(OrganizationContext);
-}
-
 interface OrganizationProviderProps {
   children: ReactNode;
 }

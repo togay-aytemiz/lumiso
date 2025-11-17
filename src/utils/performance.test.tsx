@@ -3,12 +3,9 @@ import { render, act } from "@testing-library/react";
 import { performanceMonitor, measurePerformance, useMeasureRender, checkMemoryUsage } from "./performance";
 
 const withFreshMonitor = (fn: (monitor: typeof performanceMonitor) => void) => {
-  jest.isolateModules(() => {
-    const module = require("./performance") as typeof import("./performance");
-    const MonitorClass = module.performanceMonitor.constructor as new () => typeof module.performanceMonitor;
-    const monitor = new MonitorClass();
-    fn(monitor);
-  });
+  const MonitorClass = performanceMonitor.constructor as new () => typeof performanceMonitor;
+  const monitor = new MonitorClass();
+  fn(monitor);
 };
 
 describe("performanceMonitor", () => {

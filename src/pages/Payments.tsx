@@ -661,7 +661,6 @@ const pageSize = PAGE_SIZE;
     exporting,
     fetchPaymentsData,
     formatCurrency,
-    formatDate,
     paginatedPayments.length,
     paymentsView,
     scheduledSortedPayments,

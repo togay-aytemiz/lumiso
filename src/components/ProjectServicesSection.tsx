@@ -324,7 +324,17 @@ export function ProjectServicesSection({ projectId, onServicesUpdated, refreshTo
         });
       }
     },
-    [onServicesUpdated, projectId, refreshServiceRecords, serviceRecords, t, toast, vatUiEnabled]
+    [
+      extraTotals,
+      includedTotals,
+      onServicesUpdated,
+      projectId,
+      refreshServiceRecords,
+      serviceRecords,
+      t,
+      toast,
+      vatUiEnabled,
+    ]
   );
 
   const includedServices = useMemo(

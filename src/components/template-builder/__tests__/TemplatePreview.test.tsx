@@ -6,6 +6,7 @@ import { SMSPreview } from "../previews/SMSPreview";
 import { WhatsAppPreview } from "../previews/WhatsAppPreview";
 import { EmailPreview } from "../previews/EmailPreview";
 import type { TemplateBlock } from "@/types/templateBuilder";
+import type { SegmentedOption } from "@/components/ui/segmented-control";
 
 const toastMock = jest.fn();
 const invokeMock = jest.fn();
@@ -40,7 +41,7 @@ jest.mock("@/lib/templateUtils", () => ({
 }));
 
 jest.mock("@/components/ui/segmented-control", () => ({
-  SegmentedControl: ({ options, onValueChange }: { options: any[]; onValueChange: (value: string) => void }) => (
+  SegmentedControl: ({ options, onValueChange }: { options: SegmentedOption[]; onValueChange: (value: string) => void }) => (
     <div>
       {options.map((option) => (
         <button

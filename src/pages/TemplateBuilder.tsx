@@ -35,7 +35,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   // Backend hooks
   const { template, loading, saving, lastSaved, isDirty, saveTemplate, publishTemplate, updateTemplate, resetDirtyState } = useTemplateBuilder(templateId || undefined);
   const templateVariablesState = useTemplateVariables();
-  const { getVariableValue } = templateVariablesState;
+  const { getVariableValue, variables: templateVariables } = templateVariablesState;
 
   // Local state for UI
   const [activeChannel, setActiveChannel] = useState<'email' | 'whatsapp' | 'sms'>('email');
@@ -267,24 +267,24 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   }, [selectedPreviewDataset]);
   const variableFallbacks = useMemo(() => {
     const map: Record<string, string> = {};
-    templateVariablesState.variables.forEach((variable) => {
-      map[variable.key] = templateVariablesState.getVariableValue(variable.key);
+    templateVariables.forEach((variable) => {
+      map[variable.key] = getVariableValue(variable.key);
     });
     return map;
-  }, [templateVariablesState.variables, templateVariablesState.getVariableValue]);
+  }, [getVariableValue, templateVariables]);
   const previewMockData = useMemo(() => ({
     ...variableFallbacks,
     ...datasetWithAliases
   }), [variableFallbacks, datasetWithAliases]);
   const variableLabels = useMemo(() => {
     const map: Record<string, string> = {};
-    templateVariablesState.variables.forEach((variable) => {
+    templateVariables.forEach((variable) => {
       if (variable?.key) {
         map[variable.key] = variable.label ?? variable.key;
       }
     });
     return map;
-  }, [templateVariablesState.variables]);
+  }, [templateVariables]);
 
   if (loading) {
     return (

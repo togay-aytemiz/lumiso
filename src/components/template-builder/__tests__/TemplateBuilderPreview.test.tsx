@@ -7,6 +7,7 @@ import { OptimizedTemplatePreview } from "../OptimizedTemplatePreview";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { TemplateBlock } from "@/types/templateBuilder";
+import type { SegmentedOption } from "@/components/ui/segmented-control";
 
 const toastMock = jest.fn();
 const emailPreviewMock = jest.fn();
@@ -72,7 +73,7 @@ jest.mock("@/lib/utils", () => ({
 }));
 
 jest.mock("@/components/ui/segmented-control", () => ({
-  SegmentedControl: ({ options, onValueChange }: { options: any[]; onValueChange: (value: string) => void }) => (
+  SegmentedControl: ({ options, onValueChange }: { options: SegmentedOption[]; onValueChange: (value: string) => void }) => (
     <div data-testid="segmented-control">
       {options.map((option) => (
         <button

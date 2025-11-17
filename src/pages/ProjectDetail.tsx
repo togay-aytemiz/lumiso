@@ -495,9 +495,9 @@ export default function ProjectDetail() {
     await checkArchiveStatus(updatedProject);
   };
 
-  const triggerSummaryRefresh = () => {
-    setSummaryRefreshToken(prev => prev + 1);
-  };
+  const triggerSummaryRefresh = useCallback(() => {
+    setSummaryRefreshToken((prev) => prev + 1);
+  }, []);
 
   const openEditWizard = useCallback((step: ProjectCreationStepId) => {
     setEditWizardStartStep(step);

@@ -660,7 +660,7 @@ export function ProjectServicesQuickEditDialog({
     } finally {
       setIsSaving(false);
     }
-  }, [mode, onOpenChange, onSubmit, selectionMap]);
+  }, [mode, onOpenChange, onSubmit, selectionMap, vatUiEnabled]);
 
   return (
     <>

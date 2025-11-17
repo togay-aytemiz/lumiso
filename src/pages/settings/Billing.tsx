@@ -370,7 +370,7 @@ export default function Billing() {
       }
       handleAutoSaveField(updates, "legalEntityType");
     },
-    [formState.defaultVatRate, formState.legalEntityType, handleAutoSaveField]
+    [formState.legalEntityType, handleAutoSaveField]
   );
 
   const handleVatModeChange = useCallback(

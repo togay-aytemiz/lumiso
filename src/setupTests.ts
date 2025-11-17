@@ -3,6 +3,50 @@ import '@testing-library/jest-dom';
 // Mock Supabase client
 type SupabaseQueryResult = { data: unknown; error: unknown };
 
+const SUPABASE_CHAINABLE_METHODS = [
+  'select',
+  'insert',
+  'upsert',
+  'update',
+  'delete',
+  'eq',
+  'neq',
+  'gte',
+  'lte',
+  'gt',
+  'lt',
+  'ilike',
+  'like',
+  'in',
+  'not',
+  'or',
+  'contains',
+  'filter',
+  'match',
+  'order',
+  'limit',
+  'range',
+  'overlaps',
+  'textSearch',
+  'throwOnError',
+] as const;
+
+type ChainableMethod = typeof SUPABASE_CHAINABLE_METHODS[number];
+
+type MockQueryBuilder = {
+  __setResponse: (result: Partial<SupabaseQueryResult>) => MockQueryBuilder;
+  then: (onFulfilled: (value: SupabaseQueryResult) => unknown, onRejected?: (reason: unknown) => unknown) => Promise<unknown>;
+  catch: (onRejected: (reason: unknown) => unknown) => Promise<unknown>;
+  finally: (onFinally: () => void) => Promise<unknown>;
+  single: jest.Mock<Promise<SupabaseQueryResult>, []>;
+  maybeSingle: jest.Mock<Promise<SupabaseQueryResult>, []>;
+  returns: jest.Mock<MockQueryBuilder, [Partial<SupabaseQueryResult>]>;
+  clone: jest.Mock<MockQueryBuilder, []>;
+  execute: jest.Mock<Promise<SupabaseQueryResult>, []>;
+} & {
+  [K in ChainableMethod]: jest.Mock<MockQueryBuilder, []>;
+};
+
 const createQueryResult = (overrides?: Partial<SupabaseQueryResult>): SupabaseQueryResult => ({
   data: null,
   error: null,
@@ -11,6 +55,7 @@ const createQueryResult = (overrides?: Partial<SupabaseQueryResult>): SupabaseQu
 
 const createQueryBuilder = (initialResult?: Partial<SupabaseQueryResult>) => {
   let resolved = createQueryResult(initialResult);
+  const builder = {} as MockQueryBuilder;
 
   const resolveWith = (result: Partial<SupabaseQueryResult>) => {
     resolved = createQueryResult(result);
@@ -19,43 +64,12 @@ const createQueryBuilder = (initialResult?: Partial<SupabaseQueryResult>) => {
 
   const asPromise = () => Promise.resolve(resolved);
 
-  const builder: any = {
-    __setResponse: resolveWith,
-    then: (onFulfilled: (value: SupabaseQueryResult) => unknown, onRejected?: (reason: unknown) => unknown) =>
-      asPromise().then(onFulfilled, onRejected),
-    catch: (onRejected: (reason: unknown) => unknown) => asPromise().catch(onRejected),
-    finally: (onFinally: () => void) => asPromise().finally(onFinally),
-  };
+  builder.__setResponse = resolveWith;
+  builder.then = (onFulfilled, onRejected) => asPromise().then(onFulfilled, onRejected);
+  builder.catch = (onRejected) => asPromise().catch(onRejected);
+  builder.finally = (onFinally) => asPromise().finally(onFinally);
 
-  const chainableMethods = [
-    'select',
-    'insert',
-    'upsert',
-    'update',
-    'delete',
-    'eq',
-    'neq',
-    'gte',
-    'lte',
-    'gt',
-    'lt',
-    'ilike',
-    'like',
-    'in',
-    'not',
-    'or',
-    'contains',
-    'filter',
-    'match',
-    'order',
-    'limit',
-    'range',
-    'overlaps',
-    'textSearch',
-    'throwOnError',
-  ] as const;
-
-  chainableMethods.forEach((method) => {
+  SUPABASE_CHAINABLE_METHODS.forEach((method) => {
     builder[method] = jest.fn().mockImplementation(() => builder);
   });
 
@@ -76,7 +90,7 @@ const createStorageBucket = () => ({
 });
 
 const createSupabaseMock = () => {
-  const mock: any = {
+  const mock = {
     from: jest.fn(() => createQueryBuilder()),
     auth: {
       getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),

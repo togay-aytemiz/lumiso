@@ -740,7 +740,7 @@ export const PackagesStep = () => {
         isCustom: false,
       };
     });
-  }, [existingItems, getUnitLabel, includedItemIds, serviceMap, t, tForms]);
+  }, [existingItems, getUnitLabel, includedItemIds, serviceMap, t]);
 
   useEffect(() => {
     if (!actionsRef.current) return;

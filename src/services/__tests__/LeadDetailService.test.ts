@@ -43,7 +43,7 @@ beforeEach(() => {
 });
 
 const createSelectEqMaybeSingleChain = (result: { data: unknown; error: unknown }) => {
-  const chain: any = {
+  const chain = {
     select: jest.fn().mockImplementation(() => chain),
     eq: jest.fn().mockImplementation(() => chain),
     maybeSingle: jest.fn().mockResolvedValue(result),
@@ -88,7 +88,7 @@ describe("fetchLeadById", () => {
 });
 
 const createSessionsChain = (result: { data: unknown; error: unknown }) => {
-  const chain: any = {
+  const chain = {
     select: jest.fn().mockImplementation(() => chain),
     eq: jest.fn().mockImplementation(() => chain),
     order: jest.fn().mockResolvedValue(result),
@@ -98,7 +98,7 @@ const createSessionsChain = (result: { data: unknown; error: unknown }) => {
 };
 
 const createProjectStatusesChain = (result: { data: unknown; error: unknown }) => {
-  const chain: any = {
+  const chain = {
     select: jest.fn().mockImplementation(() => chain),
     eq: jest.fn().mockResolvedValue(result),
   };
@@ -179,7 +179,7 @@ describe("fetchLeadSessions", () => {
 
 const createProjectsChain = (result: { data: unknown; error: unknown }) => {
   let eqCalls = 0;
-  const chain: any = {
+  const chain = {
     select: jest.fn().mockImplementation(() => chain),
     eq: jest.fn().mockImplementation(() => {
       eqCalls += 1;
@@ -191,7 +191,7 @@ const createProjectsChain = (result: { data: unknown; error: unknown }) => {
 };
 
 const createTodosChain = (result: { data: unknown; error: unknown }) => {
-  const chain: any = {
+  const chain = {
     select: jest.fn().mockImplementation(() => chain),
     in: jest.fn().mockImplementation(() => chain),
     order: jest.fn().mockImplementation(() => chain),
@@ -408,7 +408,7 @@ describe("fetchLeadProjectSummary", () => {
 });
 
 const createActivitiesChain = (result: { data: unknown; error: unknown }) => {
-  const chain: any = {
+  const chain = {
     select: jest.fn().mockImplementation(() => chain),
     eq: jest.fn().mockImplementation(() => chain),
     order: jest.fn().mockImplementation(() => chain),

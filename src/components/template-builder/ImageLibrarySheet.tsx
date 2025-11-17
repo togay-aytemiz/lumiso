@@ -67,7 +67,7 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
     } finally {
       setLoading(false);
     }
-  }, [activeOrganization?.id, toast]);
+  }, [activeOrganization?.id, t, tCommon, toast]);
 
   useEffect(() => {
     if (open) {

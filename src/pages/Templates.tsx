@@ -218,7 +218,7 @@ const OptimizedTemplatesContent = React.memo(() => {
         ),
       },
     ],
-    [dateLocale, extractPreviewText, t]
+    [dateLocale, extractPreviewText, t, variableLabelMap]
   );
 
   const emptyState = useMemo(() => (

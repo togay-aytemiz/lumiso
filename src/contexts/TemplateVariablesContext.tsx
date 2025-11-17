@@ -1,4 +1,5 @@
-import { createContext, useContext } from "react";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, type ReactNode } from "react";
 import type { TemplateVariable } from "@/types/templateBuilder";
 
 interface TemplateVariablesValue {
@@ -19,10 +20,22 @@ const defaultValue: TemplateVariablesValue = {
 
 const TemplateVariablesContext = createContext<TemplateVariablesValue>(defaultValue);
 
-export const TemplateVariablesProvider = TemplateVariablesContext.Provider;
+interface TemplateVariablesProviderProps {
+  value?: TemplateVariablesValue;
+  children: ReactNode;
+}
+
+export function TemplateVariablesProvider({
+  value = defaultValue,
+  children,
+}: TemplateVariablesProviderProps) {
+  return (
+    <TemplateVariablesContext.Provider value={value}>
+      {children}
+    </TemplateVariablesContext.Provider>
+  );
+}
 
 export function useTemplateVariablesContext() {
   return useContext(TemplateVariablesContext);
 }
-
-export { TemplateVariablesContext };

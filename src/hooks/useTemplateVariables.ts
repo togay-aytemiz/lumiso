@@ -19,7 +19,7 @@ export function useTemplateVariables() {
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const { activeOrganization } = useOrganization();
-  const { t, i18n } = useTranslation("pages");
+  const { t } = useTranslation("pages");
 
   const fetchVariables = useCallback(async () => {
     if (!activeOrganization?.id) return;
@@ -200,7 +200,7 @@ export function useTemplateVariables() {
     } finally {
       setLoading(false);
     }
-  }, [activeOrganization?.id, t, i18n.language]);
+  }, [activeOrganization?.id, t]);
 
   useEffect(() => {
     if (activeOrganization?.id) {

@@ -191,7 +191,7 @@ export default function Profile() {
     setWorkingHoursValues({
       workingHours,
     });
-  }, [workingHoursSignature, setWorkingHoursValues]);
+  }, [workingHours, workingHoursSignature, setWorkingHoursValues]);
 
   const handleWorkingHourUpdate = async (
     dayOfWeek: number,

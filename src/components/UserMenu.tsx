@@ -8,7 +8,7 @@ import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { useOptionalOrganization } from "@/contexts/OrganizationContext";
+import { useOptionalOrganization } from "@/hooks/useOptionalOrganization";
 import { Separator } from "@/components/ui/separator";
 
 interface UserMenuProps {

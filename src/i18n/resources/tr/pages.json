@@ -1792,13 +1792,13 @@
         "expired": "Deneme süreniz sona erdi. Çalışma alanını açık tutmak için plan seçin.",
         "suspended": "Bu çalışma alanı askıya alındı. Destek ekibimizle görüşerek tekrar açabilirsiniz.",
         "locked": "Deneme ve ücretsiz premium süresi bitti. Plan aktifleştirene kadar sadece faturalandırma ayarları açıktır.",
-        "generic": "Deneme → premium yolculuğunuzu buradan takip edin.",
+        "generic": "Üyelik durumunuzu buradan takip edin.",
         "unknown": "Üyelik durumunu belirleyemedik."
       },
       "lockedWarning": "Çalışma alanı kilitlendi. Bir plan aktifleştirilene kadar sadece abonelik ayarları kullanılabilir.",
       "trialSection": {
         "title": "Deneme zaman çizelgesi",
-        "subtitle": "Ücretsiz denemenizin ne zaman başlayıp biteceğini izleyin.",
+        "subtitle": "Ücretsiz denemenizin ne zaman başlayıp biteceğini takip edin.",
         "starts": "Başlangıç",
         "ends": "Bitiş",
         "notStarted": "Başlamadı",
@@ -1810,7 +1810,7 @@
       },
       "premiumSection": {
         "title": "Premium erişim",
-        "subtitle": "Ücretli veya ücretsiz premium dönemler.",
+        "subtitle": "Premium erişiminizin ayrıntılarını görüntüleyin.",
         "planLabel": "Plan",
         "planPlaceholder": "Belirtilmedi",
         "activated": "Aktif edildi",

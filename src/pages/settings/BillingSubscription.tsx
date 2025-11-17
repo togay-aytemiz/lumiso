@@ -158,6 +158,7 @@ export default function BillingSubscription() {
 
   const premiumActive = membershipStatus ? PREMIUM_STATUSES.includes(membershipStatus) : false;
   const isTrialActive = trialStatus.isTrial;
+  const showTrialSection = isTrialActive;
   const showPremiumSection = !isTrialActive;
   const premiumCardRows = [
     {
@@ -409,55 +410,57 @@ export default function BillingSubscription() {
             </div>
           </SettingsTwoColumnSection>
 
-          <SettingsTwoColumnSection
-            sectionId="trial-timeline"
-            title={t("settings.billingSubscription.trialSection.title")}
-            description={t("settings.billingSubscription.trialSection.subtitle")}
-          >
-            <div className="rounded-2xl border border-border/60 bg-card p-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    {t("settings.billingSubscription.trialSection.title")}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {t("settings.billingSubscription.trialSection.progressLabel")}
-                  </p>
+          {showTrialSection ? (
+            <SettingsTwoColumnSection
+              sectionId="trial-timeline"
+              title={t("settings.billingSubscription.trialSection.title")}
+              description={t("settings.billingSubscription.trialSection.subtitle")}
+            >
+              <div className="rounded-2xl border border-border/60 bg-card p-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      {t("settings.billingSubscription.trialSection.title")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {t("settings.billingSubscription.trialSection.progressLabel")}
+                    </p>
+                  </div>
+                  <Badge variant={trialStatus.trialExpiresAt ? "info" : "secondary"}>
+                    {trialStatus.trialExpiresAt
+                      ? trialDaysText
+                      : t("settings.billingSubscription.trialSection.notAvailable")}
+                  </Badge>
                 </div>
-                <Badge variant={trialStatus.trialExpiresAt ? "info" : "secondary"}>
-                  {trialStatus.trialExpiresAt
-                    ? trialDaysText
-                    : t("settings.billingSubscription.trialSection.notAvailable")}
-                </Badge>
+                <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      {t("settings.billingSubscription.trialSection.starts")}
+                    </p>
+                    <p className="mt-2 text-base font-semibold text-foreground">{trialStartLabel}</p>
+                  </div>
+                  <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      {t("settings.billingSubscription.trialSection.ends")}
+                    </p>
+                    <p className="mt-2 text-base font-semibold text-foreground">{trialEndLabel}</p>
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{t("settings.billingSubscription.trialSection.progressLabel")}</span>
+                    <span>{trialProgressPercent}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted">
+                    <div
+                      className="h-2 rounded-full bg-primary transition-all"
+                      style={{ width: trialProgressWidth }}
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {t("settings.billingSubscription.trialSection.starts")}
-                  </p>
-                  <p className="mt-2 text-base font-semibold text-foreground">{trialStartLabel}</p>
-                </div>
-                <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {t("settings.billingSubscription.trialSection.ends")}
-                  </p>
-                  <p className="mt-2 text-base font-semibold text-foreground">{trialEndLabel}</p>
-                </div>
-              </div>
-              <div className="mt-6">
-                <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{t("settings.billingSubscription.trialSection.progressLabel")}</span>
-                  <span>{trialProgressPercent}%</span>
-                </div>
-                <div className="h-2 rounded-full bg-muted">
-                  <div
-                    className="h-2 rounded-full bg-primary transition-all"
-                    style={{ width: trialProgressWidth }}
-                  />
-                </div>
-              </div>
-            </div>
-          </SettingsTwoColumnSection>
+            </SettingsTwoColumnSection>
+          ) : null}
 
           {showPremiumSection ? (
             <SettingsTwoColumnSection

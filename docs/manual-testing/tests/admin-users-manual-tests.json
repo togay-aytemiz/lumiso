@@ -410,39 +410,47 @@
     "cases": [
       {
         "external_id": "ADMIN-USERS-ACTIONS-001",
-        "title": "Trial uzatma akışı",
-        "description": "'Trial uzat' diyalogunun başarıyla çalıştığını doğrular.",
+        "title": "Trial yönet modali ile tarih uzatma",
+        "description": "'Trial yönet' diyalogunda yeni bitiş tarihi seçildiğinde sheet içindeki timeline ve kartların güncellendiğini doğrular.",
         "steps": [
           {
-            "action": "Detay sheet'te 'Üyelik durumu' bölümündeki 'Trial uzat' butonuna tıklayın.",
-            "expected_result": "'Trial süresini uzat' başlıklı dialog açılır ve gün girilecek alan görünür."
+            "action": "Detay sheet'te 'Admin aksiyonları' bölümündeki 'Trial yönet' butonuna tıklayın.",
+            "expected_result": "'Trial süresini yönet' başlıklı dialog açılır; üstte trial başlangıcı/bitişi kutuları, altta tarih alanı ve not kutusu görünür."
           },
           {
-            "action": "'Eklenecek gün' alanına 7 yazın, opsiyonel gerekçeyi doldurun ve 'Trial uzat' butonuna basın.",
-            "expected_result": "Buton kısa süreli 'Kaydediliyor...' durumuna geçer, dialog kapanır."
+            "action": "Tarih alanından bugünden 7 gün ileri bir tarih seçin ve not alanına kısa bir açıklama yazın.",
+            "expected_result": "Alanlar geçerli görünür, 'Kaydet' butonu aktif kalır."
           },
           {
-            "action": "Üstteki kullanım kartlarında kalan gün bilgisini ve üyelik tablosunu kontrol edin.",
-            "expected_result": "Trial bitiş tarihi 7 gün ileri gider, kalan gün bilgisi artar ve sağ altta yeşil bildirimin içinde 'Trial süresi uzatıldı' mesajı çıkar."
+            "action": "'Kaydet' butonuna basın.",
+            "expected_result": "Buton kısa süreli 'Kaydediliyor...' durumuna geçer, dialog kapanır ve sağ altta yeşil 'Trial güncellendi' bildirimi görünür."
+          },
+          {
+            "action": "Sheet'teki 'Üyelik durumu' kutusundaki 'Trial bitişi' satırını ve kullanım kartlarındaki kalan gün etiketini kontrol edin.",
+            "expected_result": "Bitiş tarihi seçtiğiniz tarihe güncellenir, kalan gün sayısı artar ve girilen not 'Üyelik geçmişi' tablosunun en üst satırına eklenir."
           }
         ],
-        "expected_result": "Trial uzatma dialogu gün sayısı girildiğinde veriyi günceller, bildirim gösterir ve sheet içinde kalan günler artar."
+        "expected_result": "Trial yönet dialogu yeni bitiş tarihini ve notu kaydedip hem zaman çizelgesini hem de üyelik geçmişini günceller."
       },
       {
         "external_id": "ADMIN-USERS-ACTIONS-002",
-        "title": "Trial uzatma validasyonları",
-        "description": "0 veya boş gün değeri girildiğinde hata mesajını doğrular.",
+        "title": "Trial yönet modali validasyonları",
+        "description": "Geçersiz tarih veya trial başlangıcından eski bir tarih seçildiğinde işlemin reddedildiğini doğrular.",
         "steps": [
           {
-            "action": "'Trial uzat' dialogunu tekrar açın.",
-            "expected_result": "Alanlar önceki değerlerle gelir."
+            "action": "'Trial yönet' dialogunu tekrar açın.",
+            "expected_result": "Özet kutuları önceki değerleri gösterir, tarih alanı son kaydedilen değeri doldurur."
           },
           {
-            "action": "Gün alanına 0 yazıp 'Trial uzat' butonuna basın.",
-            "expected_result": "Dialog kapanmaz; kırmızı bildirimde 'Lütfen gerekli alanları doldurun.' mesajı çıkar."
+            "action": "Tarih alanını boş bırakın veya trial başlangıcından daha eski bir tarih seçip 'Kaydet' butonuna basın.",
+            "expected_result": "Dialog kapanmaz; kırmızı 'Lütfen gerekli alanları doldurun.' tostu görünür ve alan kırmızı kenarlık alır."
+          },
+          {
+            "action": "Dialogu 'Vazgeç' butonuyla kapatın.",
+            "expected_result": "Sheet'teki değerler değişmeden kalır."
           }
         ],
-        "expected_result": "Pozitif sayı girilmediğinde işlem iptal olur ve kullanıcı uyarılır."
+        "expected_result": "Geçerli bir tarih seçilmediğinde trial yönetimi kaydedilmez ve kullanıcı toast ile uyarılır."
       },
       {
         "external_id": "ADMIN-USERS-ACTIONS-003",
@@ -587,6 +595,34 @@
           }
         ],
         "expected_result": "Her modal kapanınca state temizlenir; başka modal açıldığında eski veriler sızmaz ve yeniden yükleme yapılır."
+      },
+      {
+        "external_id": "ADMIN-USERS-ACTIONS-011",
+        "title": "'Trial'ı bugün bitir' ile kilitleme",
+        "description": "Trial yönet dialogundan denemeyi hemen bitirince üyelik statüsünün 'Kilitli' olduğunu doğrular.",
+        "steps": [
+          {
+            "action": "Aktif trial durumundaki bir kullanıcı için detay sheet'i açıp 'Trial yönet' dialogunu başlatın.",
+            "expected_result": "Dialog üstte trial başlangıç/bitiş bilgilerini gösteren özet kutularıyla açılır."
+          },
+          {
+            "action": "Dialogdaki 'Trial'ı bugün bitir' bağlantısına tıklayın.",
+            "expected_result": "Sistem işlemi kaydeder, dialog kapanır ve sağ altta yeşil 'Trial güncellendi' bildirimi görünür."
+          },
+          {
+            "action": "Sheet başlığındaki durum rozetini ve 'Üyelik durumu' bölümündeki satırları kontrol edin.",
+            "expected_result": "Durum rozeti 'Kilitli' olur, 'Trial bitişi' bugünün tarihiyle güncellenir ve kalan gün bilgisi 0 olarak görünür."
+          },
+          {
+            "action": "'Üyelik geçmişi' tablosunun ilk satırına bakın.",
+            "expected_result": "En üstteki satır 'Trial güncellendi' aksiyonunu gösterir ve yeni durum olarak 'Kilitli' yazılır."
+          },
+          {
+            "action": "Sheet'i kapatıp aynı satırı tabloda bulun.",
+            "expected_result": "'Üyelik zaman çizelgesi' sütununda kırmızı metinle 'Erişim kilitli — plan seçin' mesajı görünür."
+          }
+        ],
+        "expected_result": "'Trial'ı bugün bitir' aksiyonu hesabı kilitler, sheet ve tablo statüsü eşleşir ve geçmiş kaydı oluşur."
       }
     ]
   },

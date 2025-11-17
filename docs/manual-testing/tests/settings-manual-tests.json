@@ -1319,6 +1319,127 @@
     ]
   },
   {
+    "suite": "Ayarlar - Abonelik ve Üyelik Durumu",
+    "cases": [
+      {
+        "external_id": "CRM-SUB-001",
+        "title": "Üyelik durumu kartında kilit uyarısı",
+        "description": "Kilitli workspace'te üst kartın ikon, rozet ve uyarı metinlerini gösterdiğini doğrular.",
+        "steps": [
+          {
+            "action": "membership_status değeri 'locked' olan bir organizasyonla Ayarlar > Faturalandırma > Abonelik sayfasını açın.",
+            "expected_result": "Sayfanın üst kısmında 'Üyelik durumu' başlıklı iki sütunlu bölüm görünür ve karttaki simge kilit ikonudur."
+          },
+          {
+            "action": "Karttaki başlık ve rozet etiketine bakın.",
+            "expected_result": "Hem başlıkta hem de rozet üzerinde 'Kilitli' metni yer alır ve badge amber tonundadır."
+          },
+          {
+            "action": "Durum açıklaması ve altındaki uyarı kutusunu okuyun.",
+            "expected_result": "Açıklama 'Deneme ve ücretsiz premium süresi bitti...' mesajını, uyarı kutusu ise 'Çalışma alanı kilitlendi...' metnini gösterir."
+          }
+        ],
+        "expected_result": "Kilitli durumunda durum kartı kilit ikonunu, amber rozetini ve uyarı metnini eksiksiz gösterir."
+      },
+      {
+        "external_id": "CRM-SUB-002",
+        "title": "Deneme zaman çizelgesi kartı ve ilerleme",
+        "description": "Aktif trial workspace'te zaman çizelgesi kartının başlangıç/bitiş kutuları ve kalan gün rozetini doğru gösterdiğini doğrular.",
+        "steps": [
+          {
+            "action": "membership_status 'trial' olan bir organizasyonla aynı sayfayı açın ve 'Deneme zaman çizelgesi' bölümüne kaydırın.",
+            "expected_result": "Kartta üstte başlık ve 'Kalan deneme süresi' açıklaması, sağda da kalan gün sayısını gösteren bir rozet görünür."
+          },
+          {
+            "action": "Kartın içindeki 'Başlangıç' ve 'Bitiş' kutularını kontrol edin.",
+            "expected_result": "Kutular trial_started_at ve trial_expires_at tarihlerini yerel formatta gösterir."
+          },
+          {
+            "action": "Alt kısımdaki ilerleme çubuğuna bakın.",
+            "expected_result": "Çubuk 'Kalan deneme süresi' yüzdesi kadar dolar ve yanında yüzdelik değer yazılır."
+          }
+        ],
+        "expected_result": "Trial zaman çizelgesi kartı tarihleri, kalan gün rozetini ve ilerleme çubuğunu güncel verilerle doğru gösterir."
+      },
+      {
+        "external_id": "CRM-SUB-003",
+        "title": "Premium erişim kartı plan ve tarih bilgisi",
+        "description": "Premium workspace'te kartın plan adı, aktivasyon ve bitiş tarihlerini doğru gösterdiğini doğrular.",
+        "steps": [
+          {
+            "action": "membership_status 'premium' olan bir workspace seçip kartın 'Premium erişim' bölümüne kaydırın.",
+            "expected_result": "Kartta plan etiketi satırı görünür ve badge 'Premium' olarak gösterilir."
+          },
+          {
+            "action": "'Aktif edildi' ve 'Bitiş' kutularını okuyun.",
+            "expected_result": "Kutular premium_activated_at ile premium_expires_at tarihlerini veya 'Bitiş tarihi yok' mesajını gösterir."
+          }
+        ],
+        "expected_result": "Premium kartı seçilen plan etiketini, aktivasyon tarihini ve varsa bitiş tarihini doğru gösterir."
+      },
+      {
+        "external_id": "CRM-SUB-004",
+        "title": "Admin kontrolleri ile deneme tarihini uzatma",
+        "description": "Admin kullanıcıların 'Denemeyi ayarla' dialogunu kullanarak yeni bitiş tarihi ve not kaydedebildiğini doğrular.",
+        "steps": [
+          {
+            "action": "Admin rolüyle aynı sayfanın 'Admin kontrolleri' kartına inip 'Denemeyi ayarla' butonuna tıklayın.",
+            "expected_result": "Başlığında 'Trial süresini yönet' yazan dialog açılır; üstte başlangıç/bitiş özet kutuları, altta tarih ve not alanları bulunur."
+          },
+          {
+            "action": "Tarih alanından bugünden ileri bir tarih seçin, not alanına açıklama yazın ve 'Kaydet' butonuna basın.",
+            "expected_result": "Buton kısa süre 'Kaydediliyor...' durumuna geçer, dialog kapanır ve 'Deneme süresi güncellendi' başlıklı yeşil toast, altında 'Üyelik verileri güncellendi' açıklamasıyla görünür."
+          },
+          {
+            "action": "Sayfadaki 'Deneme zaman çizelgesi' kartını tekrar kontrol edin.",
+            "expected_result": "Bitiş kutusu seçtiğiniz yeni tarih ile güncellenir ve rozet kalan gün sayısını artırır."
+          }
+        ],
+        "expected_result": "Denemeyi ayarlama dialogu seçilen tarih ve notu kaydeder; başarı tostu çıkar ve zaman çizelgesi yeni değeri gösterir."
+      },
+      {
+        "external_id": "CRM-SUB-005",
+        "title": "'Denemeyi bugün bitir' ile kilitleme",
+        "description": "Dialogtaki hızlı aksiyonun denemeyi hemen sonlandırıp durumu 'Kilitli' yaptığını doğrular.",
+        "steps": [
+          {
+            "action": "'Denemeyi ayarla' dialogunu yeniden açın.",
+            "expected_result": "Özet kutuları güncel değerlerle gelir ve alt çubukta 'Denemeyi bugün bitir' linki görünür."
+          },
+          {
+            "action": "'Denemeyi bugün bitir' linkine tıklayın ve işlemin tamamlanmasını bekleyin.",
+            "expected_result": "Dialog kapanır, tekrar yeşil 'Deneme süresi güncellendi' tostu görünür."
+          },
+          {
+            "action": "Üstteki 'Üyelik durumu' kartını kontrol edin.",
+            "expected_result": "Kartta statü 'Kilitli' olur ve amber uyarı kutusu görünür; trial kartındaki rozet 'Gün kalmadı' mesajını gösterir."
+          }
+        ],
+        "expected_result": "Denemeyi bugün bitir aksiyonu workspace'i kilitleyip hem durum kartını hem deneme zaman çizelgesini anında günceller."
+      },
+      {
+        "external_id": "CRM-SUB-006",
+        "title": "Admin kontrolleri ile premium tanımlama",
+        "description": "'Premium tanımla' dialogunun plan etiketi, bitiş tarihi ve not kaydedip kartlara yansıttığını doğrular.",
+        "steps": [
+          {
+            "action": "Admin kontrolleri kartındaki 'Premium tanımla' butonuna tıklayın.",
+            "expected_result": "Plan etiketi, bitiş tarihi ve not alanları bulunan yeni bir dialog açılır."
+          },
+          {
+            "action": "Plan alanını 'Premium Yıllık', bitiş tarihini gelecek ay, not alanını kısa bir açıklama ile doldurun ve 'Premium tanımla' butonuna basın.",
+            "expected_result": "Dialog kapanır, 'Premium erişim verildi' başlıklı toast 'Üyelik verileri güncellendi' açıklamasıyla çıkar."
+          },
+          {
+            "action": "Sayfanın 'Premium erişim' kartını kontrol edin.",
+            "expected_result": "Plan etiketi satırı 'Premium Yıllık' olarak güncellenir, 'Aktif edildi' bugünün tarihi olur ve 'Bitiş' kutusu seçtiğiniz tarihi gösterir."
+          }
+        ],
+        "expected_result": "Premium tanımlama dialogu plan/bitiş/not bilgilerini kaydeder, başarı tostu gösterir ve premium kartı yeni değerlerle günceller."
+      }
+    ]
+  },
+  {
     "suite": "Ayarlar - Navigasyon ve Modal Kabuğu",
     "cases": [
       {

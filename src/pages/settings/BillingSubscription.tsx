@@ -6,6 +6,7 @@ import { useOrganizationTrialStatus } from "@/hooks/useOrganizationTrialStatus";
 import { Lock, ShieldAlert, Sparkles } from "lucide-react";
 import { PREMIUM_STATUSES } from "@/types/membership";
 import type { MembershipStatus } from "@/types/membership";
+import { MEMBERSHIP_DEFAULT_TRIAL_DAYS } from "@/lib/membershipStatus";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -233,7 +234,7 @@ export default function BillingSubscription() {
           0,
           differenceInCalendarDays(normalizedTarget, trialStartDate)
         );
-        const newExtension = totalDays - MEMBERSHIP_DEFAULT_TRIAL_DAYS;
+        const newExtension = Math.max(0, totalDays - MEMBERSHIP_DEFAULT_TRIAL_DAYS);
         const payload: Record<string, unknown> = {
           trial_expires_at: normalizedTarget.toISOString(),
           trial_extended_by_days: newExtension,

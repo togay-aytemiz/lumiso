@@ -3,6 +3,7 @@ import {
   type MouseEventHandler,
   ReactNode,
   type MouseEvent,
+  type HTMLAttributes,
 } from "react";
 import { NavLink } from "react-router-dom";
 import { Lock, LucideIcon } from "lucide-react";
@@ -28,7 +29,7 @@ interface CollapsedSubItem {
   onLockedClick?: (e: MouseEvent) => void;
 }
 
-interface SidebarNavItemProps {
+interface SidebarNavItemProps extends HTMLAttributes<HTMLLIElement> {
   title: string;
   url?: string;
   icon: LucideIcon;
@@ -56,6 +57,7 @@ export function SidebarNavItem({
   badge,
   state,
   collapsedItems = [],
+  ...rest
 }: SidebarNavItemProps) {
   const { state: sidebarState } = useSidebar();
   const isCollapsed = sidebarState === "collapsed";
@@ -230,7 +232,7 @@ export function SidebarNavItem({
       );
 
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem {...rest}>
       {renderedButton}
       {!isCollapsed && children && (
         <Fragment>{children}</Fragment>

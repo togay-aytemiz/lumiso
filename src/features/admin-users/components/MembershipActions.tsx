@@ -182,7 +182,7 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
           0,
           differenceInCalendarDays(normalizedTarget, trialStartDate)
         );
-        const newExtension = totalDays - MEMBERSHIP_DEFAULT_TRIAL_DAYS;
+        const newExtension = Math.max(0, totalDays - MEMBERSHIP_DEFAULT_TRIAL_DAYS);
         const payload: Record<string, unknown> = {
           trial_expires_at: normalizedTarget.toISOString(),
           trial_extended_by_days: newExtension,

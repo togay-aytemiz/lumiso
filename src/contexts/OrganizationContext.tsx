@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { detectBrowserTimezone, detectBrowserHourFormat } from '@/lib/dateFormatUtils';
+import { resolveMembershipStatus, shouldPersistMembershipStatus } from '@/lib/membershipStatus';
+import type { MembershipStatus } from '@/types/membership';
 import {
   fetchOrganizationSettingsWithCache,
   ORGANIZATION_SETTINGS_CACHE_TTL,
@@ -18,7 +20,7 @@ interface Organization {
   id: string;
   name: string;
   owner_id: string;
-  membership_status: string | null;
+  membership_status: MembershipStatus | null;
   trial_started_at: string | null;
   trial_expires_at: string | null;
   trial_extended_by_days: number | null;
@@ -26,6 +28,10 @@ interface Organization {
   premium_plan: string | null;
   premium_activated_at: string | null;
   premium_expires_at: string | null;
+  created_at: string | null;
+  computed_trial_started_at: string | null;
+  computed_trial_ends_at: string | null;
+  membership_access_blocked: boolean;
 }
 
 interface OrganizationContextType {
@@ -81,6 +87,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
         .select(
           [
             'id',
+            'created_at',
             'name',
             'owner_id',
             'membership_status',
@@ -101,8 +108,44 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
         return;
       }
 
+      if (!org) {
+        setActiveOrganizationId(null);
+        setActiveOrganization(null);
+        return;
+      }
+
+      let normalizedOrg: Organization = {
+        ...org,
+        membership_status: (org.membership_status as MembershipStatus | null) ?? null,
+        computed_trial_started_at: null,
+        computed_trial_ends_at: null,
+        membership_access_blocked: false,
+      };
+      const resolution = resolveMembershipStatus(normalizedOrg);
+
+      if (shouldPersistMembershipStatus(normalizedOrg, resolution)) {
+        const { error: statusUpdateError } = await supabase
+          .from('organizations')
+          .update({ membership_status: resolution.status })
+          .eq('id', org.id);
+
+        if (statusUpdateError) {
+          console.error('Failed to persist membership status:', statusUpdateError);
+        } else {
+          normalizedOrg = { ...normalizedOrg, membership_status: resolution.status };
+        }
+      }
+
+      normalizedOrg = {
+        ...normalizedOrg,
+        membership_status: resolution.status,
+        computed_trial_started_at: resolution.trialStartedAt,
+        computed_trial_ends_at: resolution.trialEndsAt,
+        membership_access_blocked: resolution.shouldBlockAccess,
+      };
+
       setActiveOrganizationId(orgId);
-      setActiveOrganization(org);
+      setActiveOrganization(normalizedOrg);
     } catch (error) {
       console.error('Error in fetchActiveOrganization:', error);
     } finally {

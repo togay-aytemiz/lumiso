@@ -13,6 +13,7 @@ const STATUS_VARIANTS: Record<MembershipStatus, string> = {
   expired: "bg-rose-100 text-rose-900 border-rose-200",
   suspended: "bg-slate-200 text-slate-800 border-slate-300",
   complimentary: "bg-indigo-100 text-indigo-900 border-indigo-200",
+  locked: "bg-rose-50 text-rose-900 border-rose-200",
 };
 
 export function UserStatusBadge({ status }: UserStatusBadgeProps) {

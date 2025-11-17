@@ -220,10 +220,7 @@ export default function AdminUsers() {
         id: "status",
         label: t("admin.users.table.columns.status"),
         sortable: true,
-        render: (user) => {
-          const normalizedStatus: MembershipStatus = user.status === "premium" ? "premium" : "trial";
-          return <UserStatusBadge status={normalizedStatus} />;
-        },
+        render: (user) => <UserStatusBadge status={user.status} />,
       },
       {
         id: "trial",
@@ -267,6 +264,9 @@ export default function AdminUsers() {
           }
           if (user.status === "expired") {
             return <p className="text-sm text-muted-foreground">{t("admin.users.table.trialExpired")}</p>;
+          }
+          if (user.status === "locked") {
+            return <p className="text-sm text-destructive">{t("admin.users.table.locked")}</p>;
           }
           return <p className="text-sm text-muted-foreground">{t("admin.users.table.notApplicable")}</p>;
         },

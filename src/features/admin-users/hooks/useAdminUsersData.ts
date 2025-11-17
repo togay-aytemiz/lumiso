@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { computePaymentSummaryMetrics } from "@/lib/payments/metrics";
+import { resolveMembershipStatus } from "@/lib/membershipStatus";
 import type {
   AdminUserAccount,
   AdminUserLeadSummary,
@@ -22,7 +23,6 @@ type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 type OrganizationSettingsRow = Database["public"]["Tables"]["organization_settings"]["Row"];
 type MembershipEventRow = Database["public"]["Tables"]["membership_events"]["Row"];
 
-const TRIAL_LENGTH_DAYS = 14;
 const getFirstError = (...results: Array<{ error: unknown | null }>) =>
   results.find((result) => result.error)?.error ?? null;
 
@@ -64,35 +64,7 @@ const MEMBERSHIP_PLAN_LABELS: Record<MembershipStatus, string> = {
   expired: "Trial expired",
   suspended: "Suspended",
   complimentary: "Complimentary",
-};
-
-const determineStatus = (
-  org: OrganizationRow
-): {
-  status: MembershipStatus;
-  trialEndsAt: string;
-  trialDaysRemaining: number;
-  trialStartedAt: string;
-} => {
-  const now = new Date();
-  const trialStartedAt = org.trial_started_at ?? org.created_at;
-  const trialStartDate = new Date(trialStartedAt);
-  const fallbackTrialEnd = addDays(trialStartDate, TRIAL_LENGTH_DAYS);
-  const trialEndDate = new Date(org.trial_expires_at ?? fallbackTrialEnd.toISOString());
-  let status = (org.membership_status as MembershipStatus | null) ?? "trial";
-
-  if (status === "trial" && now.getTime() > trialEndDate.getTime()) {
-    status = "expired";
-  }
-
-  const trialDaysRemaining = Math.max(0, differenceInCalendarDays(trialEndDate, now));
-
-  return {
-    status,
-    trialEndsAt: trialEndDate.toISOString(),
-    trialDaysRemaining,
-    trialStartedAt: trialStartDate.toISOString(),
-  };
+  locked: "Locked",
 };
 
 const SOCIAL_LABEL_OVERRIDES: Record<string, string> = {
@@ -488,8 +460,24 @@ const fetchAdminAccounts = async ({
       payments,
       membershipEventsRaw
     );
-    const { status, trialEndsAt, trialDaysRemaining, trialStartedAt } = determineStatus(organization);
+    const membershipResolution = resolveMembershipStatus(organization);
+    const status = membershipResolution.status;
     const planName = MEMBERSHIP_PLAN_LABELS[status] ?? "Trial";
+    const trialEndsAt = membershipResolution.trialEndsAt;
+    const trialStartedAt =
+      membershipResolution.trialStartedAt ??
+      organization.trial_started_at ??
+      organization.created_at ??
+      new Date().toISOString();
+    const trialDaysRemaining = membershipResolution.trialEndsAt
+      ? Math.max(
+          0,
+          differenceInCalendarDays(
+            new Date(membershipResolution.trialEndsAt),
+            new Date()
+          )
+        )
+      : 0;
 
     const collectedPayments = payments.filter((payment) => {
       if ((payment.entry_kind ?? "recorded") === "scheduled") {
@@ -560,7 +548,7 @@ const fetchAdminAccounts = async ({
       premiumActivatedAt: organization.premium_activated_at ?? undefined,
       premiumPlan: organization.premium_plan ?? null,
       premiumExpiresAt: organization.premium_expires_at ?? null,
-      trialEndsAt,
+      trialEndsAt: trialEndsAt ?? undefined,
       trialDaysRemaining,
       trialExtendedByDays: organization.trial_extended_by_days ?? 0,
       trialExtensionReason: organization.trial_extension_reason ?? null,

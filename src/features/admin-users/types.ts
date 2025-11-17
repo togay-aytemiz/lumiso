@@ -1,6 +1,6 @@
 import type { Database } from "@/integrations/supabase/types";
-
-export type MembershipStatus = "trial" | "premium" | "expired" | "suspended" | "complimentary";
+import type { MembershipStatus } from "@/types/membership";
+export type { MembershipStatus } from "@/types/membership";
 
 export type AdminUserLeadSummary = Database["public"]["Tables"]["leads"]["Row"];
 export type AdminUserProjectSummary = Database["public"]["Tables"]["projects"]["Row"] & {

@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import Layout from "./Layout";
 import { useTranslation } from "react-i18next";
 
@@ -11,10 +12,11 @@ type ProtectedRouteProps = {
 const ProtectedRoute = ({ disableLayout = false }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   const { shouldLockNavigation, loading: onboardingLoading } = useOnboarding();
+  const { activeOrganization, loading: organizationLoading } = useOrganization();
   const location = useLocation();
   const { t } = useTranslation("common");
 
-  if (loading || onboardingLoading) {
+  if (loading || onboardingLoading || organizationLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -44,6 +46,18 @@ const ProtectedRoute = ({ disableLayout = false }: ProtectedRouteProps) => {
   // Redirect to getting-started if user is in guided setup mode and not on an allowed page
   if (shouldLockNavigation && !onboardingStepPaths.some(path => location.pathname.startsWith(path))) {
     return <Navigate to="/getting-started" replace />;
+  }
+
+  const isMembershipLocked =
+    activeOrganization?.membership_status === "locked" ||
+    activeOrganization?.membership_access_blocked;
+  const billingSubscriptionPath = "/settings/billing/subscription";
+
+  if (
+    isMembershipLocked &&
+    !location.pathname.startsWith(billingSubscriptionPath)
+  ) {
+    return <Navigate to={billingSubscriptionPath} replace state={{ from: location.pathname }} />;
   }
 
   if (disableLayout) {

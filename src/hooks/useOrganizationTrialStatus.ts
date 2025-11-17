@@ -29,12 +29,12 @@ export function useOrganizationTrialStatus(): TrialStatus {
     }
 
     const membershipStatus = activeOrganization.membership_status ?? null;
-    const trialExpiresAt = activeOrganization.trial_expires_at
-      ? new Date(activeOrganization.trial_expires_at)
-      : null;
-    const trialStartedAt = activeOrganization.trial_started_at
-      ? new Date(activeOrganization.trial_started_at)
-      : null;
+    const trialExpiresSource =
+      activeOrganization.computed_trial_ends_at ?? activeOrganization.trial_expires_at;
+    const trialStartedSource =
+      activeOrganization.computed_trial_started_at ?? activeOrganization.trial_started_at;
+    const trialExpiresAt = trialExpiresSource ? new Date(trialExpiresSource) : null;
+    const trialStartedAt = trialStartedSource ? new Date(trialStartedSource) : null;
 
     let daysLeft: number | null = null;
     if (trialExpiresAt) {

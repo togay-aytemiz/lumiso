@@ -754,7 +754,8 @@
         "premium": "Premium",
         "expired": "Expired",
         "suspended": "Suspended",
-        "complimentary": "Complimentary"
+        "complimentary": "Complimentary",
+        "locked": "Locked"
       },
       "table": {
         "columns": {
@@ -777,6 +778,7 @@
         "premiumActivated": "Activated {{date}}",
         "planActive": "Active membership",
         "trialExpired": "Trial expired",
+        "locked": "Access locked — upgrade required",
         "notApplicable": "Not applicable",
         "metrics": {
           "projects": "{{count}} projects",
@@ -886,25 +888,26 @@
         "actions": {
           "title": "Admin actions",
           "subtitle": "Manual interventions for this customer",
-          "extendTrial": "Extend trial",
-          "grantPremium": "Grant premium",
-          "addComplimentary": "Add complimentary",
-          "suspendAccount": "Suspend account",
-          "contactUser": "Contact user",
-          "membershipModals": {
+        "manageTrial": "Manage trial",
+        "grantPremium": "Grant premium",
+        "addComplimentary": "Add complimentary",
+        "suspendAccount": "Suspend account",
+        "contactUser": "Contact user",
+        "membershipModals": {
             "cancel": "Cancel",
             "saving": "Saving...",
             "saved": "Membership data refreshed",
             "validationError": "Please fill in the required fields.",
-            "extendTrial": {
-              "title": "Extend trial period",
-              "description": "Add extra days to the customer's free trial.",
-              "daysLabel": "Days to add",
-              "reasonLabel": "Reason (optional)",
-              "reasonPlaceholder": "Internal note for the audit log",
-              "submit": "Extend trial",
-              "success": "Trial extended successfully",
-              "error": "We couldn't extend the trial. Please try again."
+            "manageTrial": {
+              "title": "Manage trial period",
+              "description": "Adjust the trial end date or end access immediately.",
+              "dateLabel": "Trial end date",
+              "reasonLabel": "Internal note (optional)",
+              "reasonPlaceholder": "Visible only to admins",
+              "submit": "Save changes",
+              "endToday": "End trial today",
+              "success": "Trial updated successfully",
+              "error": "We couldn't update the trial. Please try again."
             },
             "grantPremium": {
               "title": "Grant premium",
@@ -952,6 +955,7 @@
             "grant_premium": "Premium granted",
             "grant_complimentary": "Complimentary premium granted",
             "suspend_account": "Account suspended",
+            "manage_trial": "Trial updated",
             "default": "Membership updated"
           },
           "table": {
@@ -1766,7 +1770,85 @@
     "billingSubscription": {
       "title": "Lumiso subscription",
       "description": "Manage your Lumiso plan, invoices, and billing contacts.",
-      "comingSoon": "Workspace subscription management is coming soon."
+      "statusHeading": "Membership status",
+      "loading": "Loading subscription data...",
+      "statusLabels": {
+        "trial": "Trial",
+        "premium": "Premium",
+        "complimentary": "Complimentary premium",
+        "expired": "Trial expired",
+        "suspended": "Suspended",
+        "locked": "Locked",
+        "unknown": "Unknown"
+      },
+      "statusMessages": {
+        "trial": "Your free trial is active. {{days}} days remaining.",
+        "premium": "Your premium access is active. Billing remains current until {{date}}.",
+        "complimentary": "Complimentary premium access is active. When it ends, we fall back to your trial if time remains.",
+        "expired": "The trial window ended. Choose a plan to keep your workspace online.",
+        "suspended": "This workspace is suspended. Contact support to restore access.",
+        "locked": "Trial and complimentary access ended. Only billing settings are available until you upgrade.",
+        "generic": "Review where you are in the trial → premium lifecycle.",
+        "unknown": "We couldn't determine the workspace status."
+      },
+      "lockedWarning": "Workspace navigation is locked. Only subscription settings stay available until you activate a plan.",
+      "trialSection": {
+        "title": "Trial timeline",
+        "subtitle": "Track when your free trial started and when it ends.",
+        "starts": "Started",
+        "ends": "Ends",
+        "notStarted": "Not started",
+        "notAvailable": "Not available",
+        "daysLeft_zero": "No days left",
+        "daysLeft_one": "{{count}} day left",
+        "daysLeft_other": "{{count}} days left",
+        "progressLabel": "Remaining trial"
+      },
+      "premiumSection": {
+        "title": "Premium access",
+        "subtitle": "Complimentary or paid access windows.",
+        "planLabel": "Plan",
+        "planPlaceholder": "Not specified",
+        "activated": "Activated",
+        "expires": "Expires",
+        "noActivation": "Not activated",
+        "noExpiration": "No expiration date",
+        "inactive": "No premium access is active."
+      },
+      "adminActions": {
+        "title": "Admin controls",
+        "description": "Extend trials or grant premium on locked workspaces. Only admins see these controls.",
+        "saved": "Membership data refreshed",
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "manageTrial": {
+          "button": "Manage trial",
+          "title": "Manage trial period",
+          "description": "Adjust the end date or end trial immediately.",
+          "startLabel": "Trial started",
+          "endLabel": "Trial ends",
+          "dateLabel": "Trial end date",
+          "reasonLabel": "Internal note (optional)",
+          "reasonPlaceholder": "Visible only to admins",
+          "submit": "Save changes",
+          "endToday": "End trial today",
+          "success": "Trial updated successfully",
+          "error": "We couldn't update the trial. Please try again.",
+          "validationError": "Please choose a valid trial end date."
+        },
+        "grantPremium": {
+          "button": "Grant premium",
+          "title": "Grant premium access",
+          "description": "Activate premium access immediately.",
+          "planLabel": "Plan label",
+          "expiresLabel": "Expiration date (optional)",
+          "noteLabel": "Note (optional)",
+          "notePlaceholder": "Internal context for this grant",
+          "submit": "Grant premium",
+          "success": "Premium access granted",
+          "error": "Could not grant premium. Please try again."
+        }
+      }
     },
     "integrations": {
       "title": "Integrations",

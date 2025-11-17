@@ -1,9 +1,10 @@
-import { useState, useCallback } from "react";
-import { addDays } from "date-fns";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { differenceInCalendarDays, format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { AdminUserAccount, MembershipStatus } from "../types";
+import { MEMBERSHIP_DEFAULT_TRIAL_DAYS } from "@/lib/membershipStatus";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -19,6 +20,27 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
+const formatDateInputValue = (value?: string | null) => {
+  if (!value) return "";
+  try {
+    return format(new Date(value), "yyyy-MM-dd");
+  } catch {
+    return "";
+  }
+};
+
+const normalizeTrialTargetDate = (value: Date) => {
+  const result = new Date(value);
+  result.setUTCHours(23, 59, 59, 999);
+  return result;
+};
+
+const parseDateInputValue = (value: string) => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 interface MembershipActionsProps {
   user: AdminUserAccount;
   onUserUpdated?: () => void;
@@ -28,14 +50,14 @@ interface MembershipActionsProps {
 const ADMIN_USERS_QUERY_KEY = "admin-users";
 
 export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: MembershipActionsProps) {
-  const { t } = useTranslation("pages");
+  const { t, i18n } = useTranslation("pages");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [extendOpen, setExtendOpen] = useState(false);
-  const [extendDays, setExtendDays] = useState(7);
-  const [extendReason, setExtendReason] = useState("");
-  const [extendLoading, setExtendLoading] = useState(false);
+  const [trialModalOpen, setTrialModalOpen] = useState(false);
+  const [trialEndDate, setTrialEndDate] = useState(() => formatDateInputValue(user.trialEndsAt));
+  const [trialReason, setTrialReason] = useState("");
+  const [trialLoading, setTrialLoading] = useState(false);
 
   const [premiumOpen, setPremiumOpen] = useState(false);
   const [premiumPlan, setPremiumPlan] = useState("Premium");
@@ -52,6 +74,47 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
   const [suspendOpen, setSuspendOpen] = useState(false);
   const [suspendReason, setSuspendReason] = useState("");
   const [suspendLoading, setSuspendLoading] = useState(false);
+
+  useEffect(() => {
+    setTrialEndDate(formatDateInputValue(user.trialEndsAt));
+  }, [user.trialEndsAt]);
+
+  const dateFormatter = useMemo(() => {
+    try {
+      return new Intl.DateTimeFormat(i18n.language ?? undefined, { dateStyle: "medium" });
+    } catch {
+      return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
+    }
+  }, [i18n.language]);
+
+  const formatDisplayDate = useCallback(
+    (value?: Date | null) => {
+      if (!value) return "—";
+      try {
+        return dateFormatter.format(value);
+      } catch {
+        return value.toISOString().slice(0, 10);
+      }
+    },
+    [dateFormatter]
+  );
+
+  const trialStartDate = useMemo(
+    () => (user.membershipStartedAt ? new Date(user.membershipStartedAt) : null),
+    [user.membershipStartedAt]
+  );
+  const currentTrialEnd = useMemo(
+    () => (user.trialEndsAt ? new Date(user.trialEndsAt) : null),
+    [user.trialEndsAt]
+  );
+  const trialStartLabel = formatDisplayDate(trialStartDate);
+  const trialEndLabel = formatDisplayDate(currentTrialEnd);
+  const trialMinDate = useMemo(
+    () => (trialStartDate ? formatDateInputValue(trialStartDate.toISOString()) : undefined),
+    [trialStartDate]
+  );
+  const trialDaysRemainingLabel =
+    typeof user.trialDaysRemaining === "number" ? user.trialDaysRemaining : null;
 
   const invalidateUsers = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: [ADMIN_USERS_QUERY_KEY], exact: false });
@@ -101,49 +164,98 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
     [invalidateUsers, logMembershipEvent, toast, t, user.id]
   );
 
-  const handleExtendTrial = async () => {
-    if (!extendDays || extendDays < 1) {
+  const updateTrialEnd = useCallback(
+    async (rawTarget: Date, immediateChange: boolean) => {
+      if (!trialStartDate) {
+        toast({
+          variant: "destructive",
+          title: t("admin.users.detail.actions.membershipModals.validationError"),
+        });
+        return;
+      }
+      setTrialLoading(true);
+      try {
+        const normalizedTarget = immediateChange
+          ? new Date(rawTarget)
+          : normalizeTrialTargetDate(rawTarget);
+        const totalDays = Math.max(
+          0,
+          differenceInCalendarDays(normalizedTarget, trialStartDate)
+        );
+        const newExtension = totalDays - MEMBERSHIP_DEFAULT_TRIAL_DAYS;
+        const payload: Record<string, unknown> = {
+          trial_expires_at: normalizedTarget.toISOString(),
+          trial_extended_by_days: newExtension,
+          trial_extension_reason: trialReason || null,
+        };
+        let nextStatus: MembershipStatus | undefined;
+        if (["trial", "expired", "locked"].includes(user.status)) {
+          nextStatus = normalizedTarget.getTime() >= Date.now() ? "trial" : "locked";
+          payload.membership_status = nextStatus;
+        }
+        await handleSupabaseUpdate(
+          payload,
+          t("admin.users.detail.actions.membershipModals.manageTrial.success"),
+          {
+            action: "manage_trial",
+            newStatus: nextStatus ?? user.status,
+            metadata: {
+              previousTrialEndsAt: user.trialEndsAt ?? null,
+              newTrialEndsAt: normalizedTarget.toISOString(),
+              changeDays:
+                currentTrialEnd && trialStartDate
+                  ? differenceInCalendarDays(normalizedTarget, currentTrialEnd)
+                  : null,
+              reason: trialReason || null,
+              immediate: immediateChange,
+            },
+          }
+        );
+        setTrialModalOpen(false);
+      } catch (error) {
+        console.error(error);
+        toast({
+          variant: "destructive",
+          title: t("admin.users.detail.actions.membershipModals.manageTrial.error"),
+        });
+      } finally {
+        setTrialLoading(false);
+      }
+    },
+    [
+      currentTrialEnd,
+      handleSupabaseUpdate,
+      t,
+      toast,
+      trialReason,
+      trialStartDate,
+      user.status,
+      user.trialEndsAt,
+    ]
+  );
+
+  const handleSaveTrialChanges = useCallback(async () => {
+    const parsed = parseDateInputValue(trialEndDate);
+    if (!parsed) {
       toast({
         variant: "destructive",
         title: t("admin.users.detail.actions.membershipModals.validationError"),
       });
       return;
     }
-    setExtendLoading(true);
-    try {
-      const baseTrialEnd = user.trialEndsAt ? new Date(user.trialEndsAt) : new Date();
-      const startDate = baseTrialEnd.getTime() < Date.now() ? new Date() : baseTrialEnd;
-      const newTrialEnd = addDays(startDate, extendDays);
-      const nextStatus: MembershipStatus = user.status === "expired" ? "trial" : user.status;
-      await handleSupabaseUpdate(
-        {
-          trial_expires_at: newTrialEnd.toISOString(),
-          trial_extended_by_days: (user.trialExtendedByDays ?? 0) + extendDays,
-          trial_extension_reason: extendReason || null,
-          membership_status: nextStatus,
-        },
-        t("admin.users.detail.actions.membershipModals.extendTrial.success"),
-        {
-          action: "extend_trial",
-          newStatus: nextStatus,
-          metadata: {
-            daysAdded: extendDays,
-            reason: extendReason || null,
-            newTrialEndsAt: newTrialEnd.toISOString(),
-          },
-        }
-      );
-      setExtendOpen(false);
-    } catch (error) {
-      console.error(error);
+    if (trialStartDate && parsed.getTime() < trialStartDate.getTime()) {
       toast({
         variant: "destructive",
-        title: t("admin.users.detail.actions.membershipModals.extendTrial.error"),
+        title: t("admin.users.detail.actions.membershipModals.validationError"),
       });
-    } finally {
-      setExtendLoading(false);
+      return;
     }
-  };
+    await updateTrialEnd(parsed, false);
+  }, [t, toast, trialEndDate, trialStartDate, updateTrialEnd]);
+
+  const handleEndTrialNow = useCallback(async () => {
+    await updateTrialEnd(new Date(), true);
+  }, [updateTrialEnd]);
 
   const handleGrantPremium = async () => {
     setPremiumLoading(true);
@@ -261,8 +373,8 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
   return (
     <>
       <div className={cn("flex flex-wrap gap-2", buttonRowClassName)}>
-        <Button variant="surface" onClick={() => setExtendOpen(true)}>
-          {t("admin.users.detail.actions.extendTrial")}
+        <Button variant="surface" onClick={() => setTrialModalOpen(true)}>
+          {t("admin.users.detail.actions.manageTrial")}
         </Button>
         <Button
           variant="surface"
@@ -287,50 +399,86 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
         </Button>
       </div>
 
-      <Dialog open={extendOpen} onOpenChange={setExtendOpen}>
+      <Dialog open={trialModalOpen} onOpenChange={setTrialModalOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {t("admin.users.detail.actions.membershipModals.extendTrial.title")}
+              {t("admin.users.detail.actions.membershipModals.manageTrial.title")}
             </DialogTitle>
             <DialogDescription>
-              {t("admin.users.detail.actions.membershipModals.extendTrial.description")}
+              {t("admin.users.detail.actions.membershipModals.manageTrial.description")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            <div className="rounded-2xl border border-border/60 bg-muted/40 p-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">
+                  {t("admin.users.detail.membership.startedAt")}
+                </span>
+                <span className="font-medium text-foreground">{trialStartLabel}</span>
+              </div>
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-muted-foreground">
+                  {t("admin.users.detail.membership.trialEnds")}
+                </span>
+                <span className="font-medium text-foreground">{trialEndLabel}</span>
+              </div>
+              {typeof trialDaysRemainingLabel === "number" ? (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {t("admin.users.detail.membership.daysRemaining", {
+                    days: Math.max(0, trialDaysRemainingLabel),
+                  })}
+                </p>
+              ) : null}
+            </div>
             <div className="space-y-2">
-              <Label htmlFor="extend-days">
-                {t("admin.users.detail.actions.membershipModals.extendTrial.daysLabel")}
+              <Label htmlFor="trial-end-date">
+                {t("admin.users.detail.actions.membershipModals.manageTrial.dateLabel")}
               </Label>
               <Input
-                id="extend-days"
-                type="number"
-                min={1}
-                value={extendDays}
-                onChange={(event) => setExtendDays(Number(event.target.value))}
+                id="trial-end-date"
+                type="date"
+                value={trialEndDate}
+                min={trialMinDate}
+                onChange={(event) => setTrialEndDate(event.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="extend-reason">
-                {t("admin.users.detail.actions.membershipModals.extendTrial.reasonLabel")}
+              <Label htmlFor="trial-reason">
+                {t("admin.users.detail.actions.membershipModals.manageTrial.reasonLabel")}
               </Label>
               <Textarea
-                id="extend-reason"
-                value={extendReason}
-                onChange={(event) => setExtendReason(event.target.value)}
-                placeholder={t("admin.users.detail.actions.membershipModals.extendTrial.reasonPlaceholder")}
+                id="trial-reason"
+                value={trialReason}
+                onChange={(event) => setTrialReason(event.target.value)}
+                placeholder={t("admin.users.detail.actions.membershipModals.manageTrial.reasonPlaceholder")}
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setExtendOpen(false)}>
-              {t("admin.users.detail.actions.membershipModals.cancel")}
+          <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <Button
+              type="button"
+              variant="ghost"
+              className="justify-start text-destructive hover:text-destructive sm:order-1"
+              onClick={handleEndTrialNow}
+              disabled={trialLoading}
+            >
+              {t("admin.users.detail.actions.membershipModals.manageTrial.endToday")}
             </Button>
-            <Button onClick={handleExtendTrial} disabled={extendLoading}>
-              {extendLoading
-                ? t("admin.users.detail.actions.membershipModals.saving")
-                : t("admin.users.detail.actions.membershipModals.extendTrial.submit")}
-            </Button>
+            <div className="flex w-full flex-1 justify-end gap-2 sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={() => setTrialModalOpen(false)}
+                disabled={trialLoading}
+              >
+                {t("admin.users.detail.actions.membershipModals.cancel")}
+              </Button>
+              <Button onClick={handleSaveTrialChanges} disabled={trialLoading}>
+                {trialLoading
+                  ? t("admin.users.detail.actions.membershipModals.saving")
+                  : t("admin.users.detail.actions.membershipModals.manageTrial.submit")}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

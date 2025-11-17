@@ -8,6 +8,7 @@ import { PREMIUM_STATUSES } from "@/types/membership";
 import type { MembershipStatus } from "@/types/membership";
 import { MEMBERSHIP_DEFAULT_TRIAL_DAYS } from "@/lib/membershipStatus";
 import { Button } from "@/components/ui/button";
+import { SettingsTwoColumnSection } from "@/components/settings/SettingsSections";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInCalendarDays, format } from "date-fns";
+import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
+import { Badge } from "@/components/ui/badge";
 
 const formatDateInputValue = (value?: string | null) => {
   if (!value) return "";
@@ -120,13 +123,19 @@ export default function BillingSubscription() {
   const statusMessage = t(statusMessageKey, {
     defaultValue: t("settings.billingSubscription.statusMessages.generic"),
     days: trialDaysLeft ?? 0,
-    date: premiumExpiresAt ? formatDate(premiumExpiresAt) : t("settings.billingSubscription.premiumSection.noExpiration"),
+    date: premiumExpiresAt
+      ? formatDate(premiumExpiresAt)
+      : t("settings.billingSubscription.premiumSection.noExpiration"),
   });
 
   const isLocked = membershipStatus === "locked";
   const isSuspended = membershipStatus === "suspended";
   const StatusIcon = isLocked || isSuspended ? (isLocked ? Lock : ShieldAlert) : Sparkles;
-  const statusIconClasses = isLocked || isSuspended ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary";
+  const statusIconClasses = isSuspended
+    ? "bg-destructive/10 text-destructive"
+    : isLocked
+      ? "bg-amber-100 text-amber-900"
+      : "bg-primary/10 text-primary";
 
   const trialStartLabel = trialStatus.trialStartedAt
     ? formatDate(trialStatus.trialStartedAt)
@@ -148,11 +157,9 @@ export default function BillingSubscription() {
     : t("settings.billingSubscription.trialSection.notAvailable");
 
   const premiumActive = membershipStatus ? PREMIUM_STATUSES.includes(membershipStatus) : false;
+  const isTrialActive = trialStatus.isTrial;
+  const showPremiumSection = !isTrialActive;
   const premiumCardRows = [
-    {
-      label: t("settings.billingSubscription.premiumSection.planLabel"),
-      value: premiumPlan ?? t("settings.billingSubscription.premiumSection.planPlaceholder"),
-    },
     {
       label: t("settings.billingSubscription.premiumSection.activated"),
       value: premiumActivatedAt
@@ -358,128 +365,167 @@ export default function BillingSubscription() {
   return (
     <SettingsPageWrapper>
       {isLoadingState ? (
-        <div className="rounded-2xl border border-dashed border-muted-foreground/30 bg-muted/10 p-10 text-center text-sm text-muted-foreground">
-          {t("settings.billingSubscription.loading")}
-        </div>
+        <SettingsLoadingSkeleton rows={4} />
       ) : (
-        <div className="space-y-6">
-          <section className="rounded-2xl bg-card p-6 shadow-sm">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div className="flex flex-1 items-start gap-4">
+        <div className="flex flex-col gap-8">
+          <SettingsTwoColumnSection
+            sectionId="membership-status"
+            title={t("settings.billingSubscription.statusHeading")}
+            description={t("settings.billingSubscription.statusMessages.generic")}
+          >
+            <div className="rounded-2xl border border-border/60 bg-card p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                 <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${statusIconClasses}`}>
                   <StatusIcon className="h-6 w-6" />
                 </div>
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t("settings.billingSubscription.statusHeading")}
-                  </p>
-                  <h2 className="text-xl font-semibold text-foreground">{statusLabel}</h2>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h2 className="text-2xl font-semibold text-foreground">{statusLabel}</h2>
+                    <Badge
+                      variant={
+                        isSuspended ? "destructive" : isLocked ? "warning" : premiumActive ? "success" : "secondary"
+                      }
+                      className="text-xs"
+                    >
+                      {statusLabel}
+                    </Badge>
+                  </div>
                   <p className="text-sm text-muted-foreground">{statusMessage}</p>
                 </div>
               </div>
-            </div>
-
-            {isLocked ? (
-              <div className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-                {t("settings.billingSubscription.lockedWarning")}
-              </div>
-            ) : null}
-          </section>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <section className="rounded-2xl bg-card p-5 shadow-sm">
-              <header className="flex items-center justify-between">
-                <div>
-                  <p className="text-base font-semibold">{t("settings.billingSubscription.trialSection.title")}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t("settings.billingSubscription.trialSection.subtitle")}
-                  </p>
-                </div>
-                <div className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {trialStatus.trialExpiresAt ? trialDaysText : t("settings.billingSubscription.trialSection.notAvailable")}
-                </div>
-              </header>
-
-              <div className="mt-6 space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    {t("settings.billingSubscription.trialSection.starts")}
-                  </span>
-                  <span className="font-medium">{trialStartLabel}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    {t("settings.billingSubscription.trialSection.ends")}
-                  </span>
-                  <span className="font-medium">{trialEndLabel}</span>
-                </div>
-                <div>
-                  <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{t("settings.billingSubscription.trialSection.progressLabel")}</span>
-                    <span>{trialProgressPercent}%</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-muted">
-                    <div
-                      className="h-2 rounded-full bg-primary transition-all"
-                      style={{ width: trialProgressWidth }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="rounded-2xl bg-card p-5 shadow-sm">
-              <header className="flex items-center justify-between">
-                <div>
-                  <p className="text-base font-semibold">{t("settings.billingSubscription.premiumSection.title")}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t("settings.billingSubscription.premiumSection.subtitle")}
-                  </p>
-                </div>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${
-                    premiumActive ? "bg-emerald-100 text-emerald-900" : "bg-muted text-muted-foreground"
+              {(isLocked || isSuspended) && (
+                <div
+                  className={`mt-5 rounded-xl border px-4 py-3 text-sm ${
+                    isSuspended
+                      ? "border-destructive/40 bg-destructive/10 text-destructive"
+                      : "border-amber-200 bg-amber-50 text-amber-900"
                   }`}
                 >
-                  {premiumActive ? statusLabel : t("settings.billingSubscription.premiumSection.inactive")}
-                </span>
-              </header>
+                  {isLocked
+                    ? t("settings.billingSubscription.lockedWarning")
+                    : t("settings.billingSubscription.statusMessages.suspended")}
+                </div>
+              )}
+            </div>
+          </SettingsTwoColumnSection>
 
-              <div className="mt-6 space-y-3 text-sm">
-                {premiumCardRows.map((row) => (
-                  <div key={row.label} className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{row.label}</span>
-                    <span className="font-medium text-foreground">{row.value}</span>
-                  </div>
-                ))}
+          <SettingsTwoColumnSection
+            sectionId="trial-timeline"
+            title={t("settings.billingSubscription.trialSection.title")}
+            description={t("settings.billingSubscription.trialSection.subtitle")}
+          >
+            <div className="rounded-2xl border border-border/60 bg-card p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    {t("settings.billingSubscription.trialSection.title")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("settings.billingSubscription.trialSection.progressLabel")}
+                  </p>
+                </div>
+                <Badge variant={trialStatus.trialExpiresAt ? "info" : "secondary"}>
+                  {trialStatus.trialExpiresAt
+                    ? trialDaysText
+                    : t("settings.billingSubscription.trialSection.notAvailable")}
+                </Badge>
               </div>
-            </section>
-          </div>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    {t("settings.billingSubscription.trialSection.starts")}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-foreground">{trialStartLabel}</p>
+                </div>
+                <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    {t("settings.billingSubscription.trialSection.ends")}
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-foreground">{trialEndLabel}</p>
+                </div>
+              </div>
+              <div className="mt-6">
+                <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{t("settings.billingSubscription.trialSection.progressLabel")}</span>
+                  <span>{trialProgressPercent}%</span>
+                </div>
+                <div className="h-2 rounded-full bg-muted">
+                  <div
+                    className="h-2 rounded-full bg-primary transition-all"
+                    style={{ width: trialProgressWidth }}
+                  />
+                </div>
+              </div>
+            </div>
+          </SettingsTwoColumnSection>
+
+          {showPremiumSection ? (
+            <SettingsTwoColumnSection
+              sectionId="premium-access"
+              title={t("settings.billingSubscription.premiumSection.title")}
+              description={t("settings.billingSubscription.premiumSection.subtitle")}
+            >
+              <div className="rounded-2xl border border-border/60 bg-card p-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {t("settings.billingSubscription.premiumSection.planLabel")}
+                    </p>
+                    <p className="text-xl font-semibold text-foreground">
+                      {premiumPlan ?? t("settings.billingSubscription.premiumSection.planPlaceholder")}
+                    </p>
+                  </div>
+                  <Badge variant={premiumActive ? "success" : "secondary"}>
+                    {premiumActive
+                      ? statusLabel
+                      : t("settings.billingSubscription.premiumSection.inactive")}
+                  </Badge>
+                </div>
+                <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                  {premiumCardRows.map((row) => (
+                    <div key={row.label} className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">{row.label}</p>
+                      <p className="mt-2 text-base font-semibold text-foreground">{row.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </SettingsTwoColumnSection>
+          ) : null}
+
+          {isAdminUser ? (
+            <SettingsTwoColumnSection
+              sectionId="admin-controls"
+              title={t("settings.billingSubscription.adminActions.title")}
+              description={t("settings.billingSubscription.adminActions.description")}
+            >
+              <div className="rounded-2xl border border-border/60 bg-card p-6">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                  <span>{t("settings.billingSubscription.statusHeading")}:</span>
+                  <Badge
+                    variant={
+                      isSuspended ? "destructive" : isLocked ? "warning" : premiumActive ? "success" : "secondary"
+                    }
+                  >
+                    {statusLabel}
+                  </Badge>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Button onClick={() => setTrialModalOpen(true)}>
+                    {t("settings.billingSubscription.adminActions.manageTrial.button")}
+                  </Button>
+                  <Button variant="secondary" onClick={() => setPremiumOpen(true)}>
+                    {t("settings.billingSubscription.adminActions.grantPremium.button")}
+                  </Button>
+                </div>
+                <p className="mt-4 text-xs text-muted-foreground">
+                  {t("settings.billingSubscription.adminActions.saved")}
+                </p>
+              </div>
+            </SettingsTwoColumnSection>
+          ) : null}
         </div>
       )}
-
-      {isAdminUser && !isLoadingState ? (
-        <div className="space-y-4">
-          <section className="rounded-2xl bg-card p-5 shadow-sm">
-            <div className="space-y-1">
-              <p className="text-base font-semibold">
-                {t("settings.billingSubscription.adminActions.title")}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {t("settings.billingSubscription.adminActions.description")}
-              </p>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Button onClick={() => setTrialModalOpen(true)}>
-                {t("settings.billingSubscription.adminActions.manageTrial.button")}
-              </Button>
-              <Button variant="secondary" onClick={() => setPremiumOpen(true)}>
-                {t("settings.billingSubscription.adminActions.grantPremium.button")}
-              </Button>
-            </div>
-          </section>
-        </div>
-      ) : null}
 
       <Dialog open={trialModalOpen} onOpenChange={setTrialModalOpen}>
         <DialogContent>

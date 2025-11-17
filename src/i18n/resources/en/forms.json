@@ -1507,7 +1507,6 @@
     "title": "To-do List",
     "add_placeholder": "Add a new to-do...",
     "no_todos": "No to-do items yet",
-    "add_first_todo": "Add your first to-do to get started",
     "add_todo": "Add to-do",
     "todo": "To-do",
     "completed": "completed",
@@ -1518,7 +1517,26 @@
     "error_loading": "Error loading to-dos",
     "error_adding": "Error adding to-do",
     "error_updating": "Error updating to-do",
-    "error_deleting": "Error deleting to-do"
+    "error_deleting": "Error deleting to-do",
+    "emptyState": {
+      "learnMore": "Why use project to-dos?",
+      "sheetTitle": "To-dos keep project follow-ups on track",
+      "sheetDescription": "Use lightweight reminders tied directly to the project so prep, delivery, and follow-up steps aren’t forgotten.",
+      "sections": [
+        {
+          "title": "Capture quick follow-ups",
+          "description": "Jot down editing tasks, album approvals, or delivery notes while they’re fresh so nothing slips."
+        },
+        {
+          "title": "See progress in context",
+          "description": "Each item sits beside project payments, sessions, and notes—no separate task app to check."
+        },
+        {
+          "title": "Plan handoffs with confidence",
+          "description": "Cross items off as you deliver previews, final galleries, or prints so clients always get what was promised."
+        }
+      ]
+    }
   },
   "archivedProject": {
     "banner": "This project is archived. Most actions are disabled. While archived, sessions and reminders are hidden from calendars, the Sessions page, and activity lists. Use More → Restore to enable editing and visibility again.",

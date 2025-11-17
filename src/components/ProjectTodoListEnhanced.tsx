@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CheckSquare, Trash2, Plus, Edit, Check, X } from "lucide-react";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { EmptyState } from "@/components/EmptyState";
+import { EmptyStateInfoSheet } from "@/components/empty-states/EmptyStateInfoSheet";
 import { useFormsTranslation, useCommonTranslation } from '@/hooks/useTypedTranslation';
 import { logAuditEvent } from "@/lib/auditLog";
 import type { Json } from "@/integrations/supabase/types";
@@ -33,6 +35,8 @@ export function ProjectTodoListEnhanced({
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [showTodoInfo, setShowTodoInfo] = useState(false);
+  const addInputRef = useRef<HTMLInputElement>(null);
   const {
     toast
   } = useToast();
@@ -245,6 +249,16 @@ export function ProjectTodoListEnhanced({
   const completedCount = todos.filter(todo => todo.is_completed).length;
   const totalCount = todos.length;
   const progressPercentage = totalCount > 0 ? Math.round(completedCount / totalCount * 100) : 0;
+  const todoInfoSectionsRaw = tForms("todos.emptyState.sections", {
+    returnObjects: true,
+    defaultValue: []
+  });
+  const todoInfoSections = Array.isArray(todoInfoSectionsRaw)
+    ? (todoInfoSectionsRaw as { title: string; description: string }[])
+    : [];
+  const handleFocusNewTodo = () => {
+    addInputRef.current?.focus();
+  };
   return <Card>
       <CardHeader className="pb-3">
          <CardTitle className="flex items-center gap-2 text-xl font-semibold">
@@ -258,7 +272,7 @@ export function ProjectTodoListEnhanced({
       <CardContent className="space-y-4">
         {/* Add Todo Input */}
         <div className="flex gap-2">
-          <Input placeholder={tForms('todos.add_placeholder')} value={newTodoContent} onChange={e => setNewTodoContent(e.target.value)} onKeyDown={e => {
+          <Input ref={addInputRef} placeholder={tForms('todos.add_placeholder')} value={newTodoContent} onChange={e => setNewTodoContent(e.target.value)} onKeyDown={e => {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleAddTodo();
@@ -302,13 +316,37 @@ export function ProjectTodoListEnhanced({
                     </div>}
                 </div>)}
             </div>
-          </> : <div className="text-center py-6">
-            <CheckSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-muted-foreground text-sm">{tForms('todos.no_todos')}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {tForms('todos.add_first_todo')}
-            </p>
-          </div>}
+          </> : <EmptyState
+            icon={CheckSquare}
+            title={tForms('todos.no_todos')}
+            helperAction={
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto px-0 text-sm text-emerald-700 underline underline-offset-4 decoration-emerald-400 hover:text-emerald-900"
+                onClick={() => setShowTodoInfo(true)}
+              >
+                {tForms('todos.emptyState.learnMore')}
+              </Button>
+            }
+            action={
+              <Button
+                variant="outline"
+                className="border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 hover:text-emerald-950"
+                onClick={handleFocusNewTodo}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {tForms('todos.add_todo')}
+              </Button>
+            }
+          />}
       </CardContent>
+      <EmptyStateInfoSheet
+        open={showTodoInfo}
+        onOpenChange={setShowTodoInfo}
+        title={tForms('todos.emptyState.sheetTitle')}
+        description={tForms('todos.emptyState.sheetDescription')}
+        sections={todoInfoSections}
+      />
     </Card>;
 }

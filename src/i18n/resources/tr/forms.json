@@ -1363,7 +1363,7 @@
     "payments_tab": "Ödemeler",
     "services_tab": "Hizmetler",
     "sessions_tab": "Seanslar",
-    "activities_tab": "Activiteler",
+    "activities_tab": "Aktiviteler",
     "archived_banner_title": "Bu proje arşivlendi",
     "archived_banner_description": "Çoğu işlem devre dışı. Arşivlendiği sürece seanslar ve hatırlatmalar takvimlerden, Seanslar sayfasından ve etkinlik listelerinden gizlenir. Düzenleme ve görünürlüğü yeniden etkinleştirmek için Daha Fazla → Geri Yükle'yi kullanın.",
     "archived_banner": "Bu proje arşivlendi. Çoğu işlem devre dışı. Arşivlenmiş durumda, seansları ve hatırlatmaları takvimlerden, Seanslar sayfasından ve etkinlik listelerinden gizlenir. Düzenleme ve görünürlüğü yeniden etkinleştirmek için Daha Fazla → Geri Yükle'yi kullanın.",
@@ -1507,7 +1507,6 @@
     "add_placeholder": "Yeni yapılacak ekle...",
     "add_todo": "Yapılacak Ekle",
     "no_todos": "Henüz yapılacak yok",
-    "add_first_todo": "Başlamak için ilk yapılacağınızı ekleyin",
     "todo": "Yapılacak",
     "completed": "tamamlandı",
     "reopened": "yeniden açıldı",
@@ -1517,7 +1516,26 @@
     "error_loading": "Yapılacaklar yüklenirken hata",
     "error_adding": "Yapılacak eklenirken hata",
     "error_updating": "Yapılacak güncellenirken hata",
-    "error_deleting": "Yapılacak silinirken hata"
+    "error_deleting": "Yapılacak silinirken hata",
+    "emptyState": {
+      "learnMore": "Projeler için yapılacaklar neden önemli?",
+      "sheetTitle": "Yapılacaklar proje takiplerini rayında tutar",
+      "sheetDescription": "Hazırlık, teslim ve takip adımlarını doğrudan projeye bağlayın ki hiçbiri unutulmasın.",
+      "sections": [
+        {
+          "title": "Hızlı notları yakalayın",
+          "description": "Kurgu, albüm onayı veya teslim notlarını anında yazın; akıldayken kayıt altına alın."
+        },
+        {
+          "title": "Bağlamı kaybetmeden ilerleyin",
+          "description": "Her madde ödemelerin, seansların ve notların yanında durur; ayrı bir görev uygulaması açmanıza gerek kalmaz."
+        },
+        {
+          "title": "Teslimleri güvenle planlayın",
+          "description": "Ön izleme, nihai galeri veya baskı teslimlerini tamamladıkça işaretleyin; verdiğiniz sözler eksiksiz yerine gelsin."
+        }
+      ]
+    }
   },
   "archivedProject": {
     "banner": "Bu proje arşivlenmiş durumda. Çoğu işlem devre dışı bırakılmıştır. Arşivlenmiş durumdayken seansları ve hatırlatıcıları takvimlerden, Seanslar sayfasından ve aktivite listelerinden gizlenir. Düzenleme ve görünürlüğü yeniden etkinleştirmek için Daha Fazla → Geri Yükle'yi kullanın.",

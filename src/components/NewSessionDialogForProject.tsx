@@ -29,7 +29,7 @@ export function NewSessionDialogForProject({
         size="sm"
         variant="outline"
         className={cn(
-          "min-w-[140px] gap-2 border-indigo-500 bg-indigo-100 text-indigo-800 hover:bg-indigo-200 hover:text-indigo-900"
+          "min-w-[140px] gap-2 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 hover:text-amber-900"
         )}
         onClick={() => setOpen(true)}
       >

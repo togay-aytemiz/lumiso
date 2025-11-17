@@ -132,8 +132,8 @@ export function AppSheetModal({
     content: "sm:max-w-md",
     default: "sm:max-w-4xl",
     lg: "sm:max-w-5xl",
+    xl: "sm:max-w-6xl",
     wide: "sm:max-w-[90vw]",
-    xl: "sm:max-w-[96vw]",
   };
 
   const sheetContentClass = cn(

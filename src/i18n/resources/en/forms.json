@@ -622,21 +622,21 @@
     "add_sessions_hint": "Schedule your first session to get started",
     "add_session": "Add Session",
     "emptyState": {
-      "learnMore": "Why schedule a session?",
-      "sheetTitle": "Sessions are the moments you commit to clients",
-      "sheetDescription": "Each scheduled session represents a shoot, meeting, or milestone so timelines, reminders, and invoices stay accurate.",
+      "learnMore": "See what scheduling unlocks",
+      "sheetTitle": "Sessions keep the shoot day under control",
+      "sheetDescription": "Log each shoot with its date, time, and logistics so reminders, workflows, and invoices stay accurate.",
       "sections": [
         {
-          "title": "Build a reliable timeline",
-          "description": "Scheduling sessions keeps your calendar, reminders, and availability in sync for the whole team."
+          "title": "Prep once, reuse effortlessly",
+          "description": "Attach questionnaires, shot lists, or workflows to the session so setup runs itself the moment it's booked."
         },
         {
-          "title": "Align teammates and vendors",
-          "description": "Share confirmed times so assistants, speakers, or contractors know exactly where to be."
+          "title": "Automate messages and payments",
+          "description": "Confirmed sessions can trigger confirmations, day-before nudges, and balance reminders without extra work."
         },
         {
-          "title": "Trigger automations",
-          "description": "Workflows, emails, and payment nudges can fire automatically once a session is confirmed."
+          "title": "Always know what's next",
+          "description": "Session cards surface date, time, location, and status so you can glance at the week and make confident plans."
         }
       ]
     }

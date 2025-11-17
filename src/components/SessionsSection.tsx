@@ -91,10 +91,13 @@ export function SessionsSection({
       ? t("sessions_form.project_sessions_count", { count: sessions.length })
       : t("sessions_form.project_sessions_count_plural", { count: sessions.length });
   }, [loading, sessions.length, t]);
-  const sessionInfoSections = (t("sessions_form.emptyState.sections", {
+  const sessionInfoSectionsRaw = t("sessions_form.emptyState.sections", {
     returnObjects: true,
     defaultValue: []
-  }) as { title: string; description: string }[]) || [];
+  });
+  const sessionInfoSections = Array.isArray(sessionInfoSectionsRaw)
+    ? (sessionInfoSectionsRaw as { title: string; description: string }[])
+    : [];
   const hasSessions = sessions.length > 0;
   const renderNewSessionButton = () => (
     <NewSessionDialogForProject
@@ -122,7 +125,7 @@ export function SessionsSection({
             <Button
               variant="link"
               size="sm"
-              className="h-auto px-0 text-sm text-muted-foreground"
+              className="h-auto px-0 text-sm text-amber-700 underline underline-offset-4 decoration-amber-400 hover:text-amber-900"
               onClick={() => setShowSessionInfo(true)}
             >
               {t("sessions_form.emptyState.learnMore")}

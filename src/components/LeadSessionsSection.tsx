@@ -41,10 +41,13 @@ export function LeadSessionsSection({
   const { t: tForms } = useFormsTranslation();
   const { t: tPages } = useTranslation("pages");
   const isMobile = useIsMobile();
-  const sessionInfoSections = (tForms("sessions_form.emptyState.sections", {
+  const sessionInfoSectionsRaw = tForms("sessions_form.emptyState.sections", {
     returnObjects: true,
     defaultValue: []
-  }) as { title: string; description: string }[]) || [];
+  });
+  const sessionInfoSections = Array.isArray(sessionInfoSectionsRaw)
+    ? (sessionInfoSectionsRaw as { title: string; description: string }[])
+    : [];
 
   const summary = useMemo(() => {
     if (loading || sessions.length === 0) {
@@ -109,7 +112,7 @@ export function LeadSessionsSection({
             <Button
               variant="link"
               size="sm"
-              className="h-auto px-0 text-sm text-muted-foreground"
+              className="h-auto px-0 text-sm text-amber-700 underline underline-offset-4 decoration-amber-400 hover:text-amber-900"
               onClick={() => setShowSessionInfo(true)}
             >
               {tForms("sessions_form.emptyState.learnMore")}

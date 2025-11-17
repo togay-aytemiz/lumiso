@@ -1,4 +1,4 @@
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 
 interface InfoSection {
   title: string;
@@ -21,22 +21,17 @@ export function EmptyStateInfoSheet({
   sections
 }: EmptyStateInfoSheetProps) {
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="w-full sm:max-w-xl">
-        <SheetHeader className="text-left">
-          <SheetTitle>{title}</SheetTitle>
-          <SheetDescription>{description}</SheetDescription>
-        </SheetHeader>
-        <div className="mt-6 space-y-4">
-          {sections.map((section) => (
-            <div key={section.title} className="rounded-lg border border-border/60 bg-muted/30 p-4 space-y-2">
-              <p className="text-base font-semibold text-foreground">{section.title}</p>
-              <p className="text-sm text-muted-foreground">{section.description}</p>
-            </div>
-          ))}
-        </div>
-      </SheetContent>
-    </Sheet>
+    <AppSheetModal title={title} isOpen={open} onOpenChange={onOpenChange} size="content">
+      <p className="text-sm text-muted-foreground">{description}</p>
+      <div className="mt-4 space-y-4">
+        {sections.map((section) => (
+          <div key={section.title} className="rounded-lg border border-border/60 bg-muted/30 p-4 space-y-2">
+            <p className="text-base font-semibold text-foreground">{section.title}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">{section.description}</p>
+          </div>
+        ))}
+      </div>
+    </AppSheetModal>
   );
 }
 

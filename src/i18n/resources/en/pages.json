@@ -1186,21 +1186,21 @@
     "archivedProjects": "Archived Projects",
     "noProjectsYet": "No projects yet for this lead.",
     "emptyState": {
-      "learnMore": "What is a project?",
-      "sheetTitle": "Projects keep every deliverable in one place",
-      "sheetDescription": "Each project bundles sessions, services, tasks, and payments for a lead so you can understand progress at a glance.",
+      "learnMore": "See how projects help",
+      "sheetTitle": "Projects keep every promise organized",
+      "sheetDescription": "Open a project when you want one place for pricing, sessions, files, and invoices tied to a client.",
       "sections": [
         {
-          "title": "Connect sessions and services",
-          "description": "Attach the shoots you plan plus the services you promised so the full scope stays together."
+          "title": "Track scope and money together",
+          "description": "Link services, packages, and payments so you always know what was sold and what remains outstanding."
         },
         {
-          "title": "Track budget and billing",
-          "description": "Projects show totals, deposits, and the outstanding balance while keeping every payment in context."
+          "title": "Prep shoots with context",
+          "description": "Projects list upcoming sessions, locations, and deliverables so prep and follow‑through stay effortless."
         },
         {
-          "title": "Share context with your team",
-          "description": "Notes, activities, and todos around the project live here so anyone can pick up where you left off."
+          "title": "Keep notes and follow-ups handy",
+          "description": "Drop reminders, todos, and quick updates inside the project instead of spreading them across random apps."
         }
       ]
     },

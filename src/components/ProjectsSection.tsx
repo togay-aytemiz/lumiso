@@ -238,7 +238,8 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
           {projects.length > 0 && (
             <Button
               size="sm"
-              className="w-full md:w-auto"
+              variant="outline"
+              className="w-full md:w-auto border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 hover:text-indigo-950"
               onClick={() => setProjectWizardOpen(true)}
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -266,7 +267,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
               <Button
                 variant="link"
                 size="sm"
-                className="h-auto px-0 text-sm text-muted-foreground"
+                className="h-auto px-0 text-sm text-indigo-700 underline underline-offset-4 decoration-indigo-400 hover:text-indigo-900"
                 onClick={() => setShowProjectInfo(true)}
               >
                 {t('pages:projects.emptyState.learnMore')}
@@ -275,7 +276,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
             action={
               <Button
                 variant="outline"
-                className="border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100"
+                className="border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 hover:text-indigo-950"
                 onClick={() => setProjectWizardOpen(true)}
               >
                 <Plus className="h-4 w-4 mr-2" />

@@ -1190,21 +1190,21 @@
     "archivedProjects": "Arşivlenmiş Projeler",
     "noProjectsYet": "Bu kişi için henüz proje yok.",
     "emptyState": {
-      "learnMore": "Projeler nedir?",
-      "sheetTitle": "Projeler tüm süreci tek yerde toplar",
-      "sheetDescription": "Her proje, ilgili kişi için seansları, hizmetleri, görevleri ve ödemeleri bir araya getirir; ilerlemeyi tek bakışta görürsünüz.",
+      "learnMore": "Projeler nasıl yardımcı olur?",
+      "sheetTitle": "Projeler verdiğin tüm sözleri toplar",
+      "sheetDescription": "Bir müşteri için fiyatı, seansları, dosyaları ve faturaları tek yerde tutmak istediğinde bir proje aç.",
       "sections": [
         {
-          "title": "Seansları ve hizmetleri bağlayın",
-          "description": "Planlanan çekimleri, seçilen hizmetleri ve teslimatları aynı projeye ekleyin ki kapsam her zaman net kalsın."
+          "title": "Kapsam ve ödemeyi birlikte izle",
+          "description": "Hizmetleri, paketleri ve ödemeleri bağla; ne sattığını ve ne kadar kaldığını her an bil."
         },
         {
-          "title": "Bütçeyi ve ödemeleri izleyin",
-          "description": "Projeler toplam tutarı, depozitoyu ve kalan bakiyeyi gösterir; her ödeme aynı bağlamda tutulur."
+          "title": "Çekim hazırlığını kolaylaştır",
+          "description": "Projeler yaklaşan seansları, konumları ve teslimleri listeler; hazırlık ve takip kendiliğinden ilerler."
         },
         {
-          "title": "Ekiple bağlam paylaşın",
-          "description": "Notlar, aktiviteler ve görevler projede yaşar; ekip arkadaşlarınız kaldığınız yerden devam edebilir."
+          "title": "Notlarını ve aksiyonlarını yakın tut",
+          "description": "Hatırlatıcılarını, yapılacaklarını ve hızlı notlarını projede sakla; farklı uygulamalarda kaybolmasın."
         }
       ]
     },

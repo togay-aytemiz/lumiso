@@ -1442,21 +1442,21 @@
     "project_sessions_count_plural": "Bu proje için {{count}} seans",
     "add_session": "Seans Ekle",
     "emptyState": {
-      "learnMore": "Neden seans planlamalıyım?",
-      "sheetTitle": "Seanslar müşteriye söz verdiğiniz buluşmalardır",
-      "sheetDescription": "Her planlanan seans; çekimleri, toplantıları ve kilometre taşlarını temsil eder, böylece takvimler ve hatırlatıcılar doğru kalır.",
+      "learnMore": "Planlamanın neleri açtığını gör",
+      "sheetTitle": "Seanslar çekim gününü kontrol altında tutar",
+      "sheetDescription": "Her çekimi tarih, saat ve lojistiğiyle kaydedin ki hatırlatıcılar, iş akışları ve faturalar doğru kalsın.",
       "sections": [
         {
-          "title": "Güvenilir bir zaman çizelgesi oluşturun",
-          "description": "Seans planlamak takviminizi, hatırlatıcıları ve uygunluk durumunuzu ekip genelinde senkron tutar."
+          "title": "Bir kez hazırlayıp tekrar kullan",
+          "description": "Seansa formlarını, çekim listelerini veya iş akışlarını bağla; rezervasyon yapıldığı anda kurulum çalışsın."
         },
         {
-          "title": "Ekip ve iş ortaklarını hizalayın",
-          "description": "Asistanlar, konuşmacılar veya tedarikçiler onaylı zamanı bilir ve hazırlıklı olur."
+          "title": "Mesajları ve ödemeleri otomatikleştir",
+          "description": "Onaylanan seanslar teyit mailleri, gün öncesi hatırlatmalar ve bakiye uyarılarını ekstra iş olmadan tetikler."
         },
         {
-          "title": "Otomasyonları tetikleyin",
-          "description": "İş akışları, e-postalar ve ödeme hatırlatıcıları seans onaylandığında otomatik olarak devreye girebilir."
+          "title": "Sıradaki işi anında gör",
+          "description": "Seans kartları tarih, saat, konum ve durumu gösterir; haftanı planlamak birkaç saniye sürer."
         }
       ]
     }

@@ -1440,7 +1440,26 @@
     "add_sessions_hint": "Başlamak için ilk seansınızı planlayın",
     "project_sessions_count": "Bu proje için {{count}} seans",
     "project_sessions_count_plural": "Bu proje için {{count}} seans",
-    "add_session": "Seans Ekle"
+    "add_session": "Seans Ekle",
+    "emptyState": {
+      "learnMore": "Neden seans planlamalıyım?",
+      "sheetTitle": "Seanslar müşteriye söz verdiğiniz buluşmalardır",
+      "sheetDescription": "Her planlanan seans; çekimleri, toplantıları ve kilometre taşlarını temsil eder, böylece takvimler ve hatırlatıcılar doğru kalır.",
+      "sections": [
+        {
+          "title": "Güvenilir bir zaman çizelgesi oluşturun",
+          "description": "Seans planlamak takviminizi, hatırlatıcıları ve uygunluk durumunuzu ekip genelinde senkron tutar."
+        },
+        {
+          "title": "Ekip ve iş ortaklarını hizalayın",
+          "description": "Asistanlar, konuşmacılar veya tedarikçiler onaylı zamanı bilir ve hazırlıklı olur."
+        },
+        {
+          "title": "Otomasyonları tetikleyin",
+          "description": "İş akışları, e-postalar ve ödeme hatırlatıcıları seans onaylandığında otomatik olarak devreye girebilir."
+        }
+      ]
+    }
   },
   "sessionSheet": {
     "fullDetails": "Tam Detaylar",
@@ -1557,6 +1576,12 @@
     "add_field": "Özel Alan Ekle",
     "no_fields": "Henüz özel alan yapılandırılmamış.",
     "no_fields_description": "Ek kişi bilgilerini toplamaya başlamak için ilk özel alanınızı ekleyin.",
+    "helper": {
+      "title": "Daha fazla müşteri veya faturalama alanına mı ihtiyacınız var?",
+      "description": "Fatura adresi ya da ihtiyacınız olan diğer bilgileri toplamak için özel kişi alanları ekleyin.",
+      "action": "Alanları yönet",
+      "dismiss": "Yardımı kapat"
+    },
     "table": {
       "field_name": "Alan Adı",
       "type": "Tür",

@@ -1185,6 +1185,25 @@
     "showArchived": "Show Archived",
     "archivedProjects": "Archived Projects",
     "noProjectsYet": "No projects yet for this lead.",
+    "emptyState": {
+      "learnMore": "What is a project?",
+      "sheetTitle": "Projects keep every deliverable in one place",
+      "sheetDescription": "Each project bundles sessions, services, tasks, and payments for a lead so you can understand progress at a glance.",
+      "sections": [
+        {
+          "title": "Connect sessions and services",
+          "description": "Attach the shoots you plan plus the services you promised so the full scope stays together."
+        },
+        {
+          "title": "Track budget and billing",
+          "description": "Projects show totals, deposits, and the outstanding balance while keeping every payment in context."
+        },
+        {
+          "title": "Share context with your team",
+          "description": "Notes, activities, and todos around the project live here so anyone can pick up where you left off."
+        }
+      ]
+    },
     "deleteProject": "Delete Project",
     "deleteProjectConfirm": "This action cannot be undone. This will permanently delete the project and all associated data.",
     "deleting": "Deleting...",

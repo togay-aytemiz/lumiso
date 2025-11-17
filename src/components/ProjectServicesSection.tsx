@@ -208,6 +208,24 @@ export function ProjectServicesSection({ projectId, onServicesUpdated, refreshTo
     [fetchAvailableServices]
   );
 
+  const includedServices = useMemo(
+    () => serviceRecords.filter((record) => record.billingType === "included"),
+    [serviceRecords]
+  );
+  const extraServices = useMemo(
+    () => serviceRecords.filter((record) => record.billingType === "extra"),
+    [serviceRecords]
+  );
+
+  const includedTotals = useMemo(
+    () => aggregatePricing(includedServices, vatUiEnabled),
+    [includedServices, vatUiEnabled]
+  );
+  const extraTotals = useMemo(
+    () => aggregatePricing(extraServices, vatUiEnabled),
+    [extraServices, vatUiEnabled]
+  );
+
   const handleServiceQuickEditSubmit = useCallback(
     async (mode: "included" | "extra", results: ProjectServiceQuickEditResult[]) => {
       try {
@@ -335,24 +353,6 @@ export function ProjectServicesSection({ projectId, onServicesUpdated, refreshTo
       toast,
       vatUiEnabled,
     ]
-  );
-
-  const includedServices = useMemo(
-    () => serviceRecords.filter((record) => record.billingType === "included"),
-    [serviceRecords]
-  );
-  const extraServices = useMemo(
-    () => serviceRecords.filter((record) => record.billingType === "extra"),
-    [serviceRecords]
-  );
-
-  const includedTotals = useMemo(
-    () => aggregatePricing(includedServices, vatUiEnabled),
-    [includedServices, vatUiEnabled]
-  );
-  const extraTotals = useMemo(
-    () => aggregatePricing(extraServices, vatUiEnabled),
-    [extraServices, vatUiEnabled]
   );
 
   const includedCardItems = useMemo(

@@ -620,7 +620,26 @@
     "project_sessions_count_plural": "{{count}} sessions for this project",
     "no_sessions": "No sessions scheduled yet",
     "add_sessions_hint": "Schedule your first session to get started",
-    "add_session": "Add Session"
+    "add_session": "Add Session",
+    "emptyState": {
+      "learnMore": "Why schedule a session?",
+      "sheetTitle": "Sessions are the moments you commit to clients",
+      "sheetDescription": "Each scheduled session represents a shoot, meeting, or milestone so timelines, reminders, and invoices stay accurate.",
+      "sections": [
+        {
+          "title": "Build a reliable timeline",
+          "description": "Scheduling sessions keeps your calendar, reminders, and availability in sync for the whole team."
+        },
+        {
+          "title": "Align teammates and vendors",
+          "description": "Share confirmed times so assistants, speakers, or contractors know exactly where to be."
+        },
+        {
+          "title": "Trigger automations",
+          "description": "Workflows, emails, and payment nudges can fire automatically once a session is confirmed."
+        }
+      ]
+    }
   },
   "sessions": {
     "schedule_new": "Schedule New Session",
@@ -1558,6 +1577,12 @@
     "add_field": "Add Custom Field",
     "no_fields": "No custom fields configured yet.",
     "no_fields_description": "Add your first custom field to start collecting additional lead details.",
+    "helper": {
+      "title": "Need more client or billing fields?",
+      "description": "Add custom lead fields to capture invoice addresses or any other details you need from clients.",
+      "action": "Manage lead fields",
+      "dismiss": "Dismiss helper"
+    },
     "table": {
       "field_name": "Field Name",
       "type": "Type",

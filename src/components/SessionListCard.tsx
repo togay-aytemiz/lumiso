@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { sortSessionsByLifecycle } from "@/lib/sessionSorting";
 import DeadSimpleSessionBanner, { type DeadSimpleSession } from "@/components/DeadSimpleSessionBanner";
 import type { LucideIcon } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 
 interface SessionListCardProps {
   title: string;
@@ -13,8 +14,10 @@ interface SessionListCardProps {
   summary?: ReactNode;
   emptyState?: {
     icon?: LucideIcon;
-    title: string;
-    description?: string;
+    title: ReactNode;
+    description?: ReactNode;
+    action?: ReactNode;
+    helperAction?: ReactNode;
   };
   onSessionClick: (sessionId: string) => void;
   onConnectProject?: (sessionId: string) => void;
@@ -31,7 +34,6 @@ export function SessionListCard({
   onSessionClick,
   onConnectProject
 }: SessionListCardProps) {
-  const EmptyIcon = emptyState?.icon;
   const sortedSessions = loading ? [] : sortSessionsByLifecycle(sessions);
   const shouldShowSummary = !loading && summary != null;
 
@@ -69,15 +71,14 @@ export function SessionListCard({
             ))}
           </div>
         ) : (
-          <div className="text-center py-4">
-            {EmptyIcon ? <EmptyIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" /> : null}
-            {emptyState?.title ? (
-              <p className="text-muted-foreground text-sm">{emptyState.title}</p>
-            ) : null}
-            {emptyState?.description ? (
-              <p className="text-xs text-muted-foreground mt-1">{emptyState.description}</p>
-            ) : null}
-          </div>
+          <EmptyState
+            icon={emptyState?.icon}
+            title={emptyState?.title ?? ""}
+            description={emptyState?.description}
+            action={emptyState?.action}
+            helperAction={emptyState?.helperAction}
+            className="py-6"
+          />
         )}
       </CardContent>
     </Card>

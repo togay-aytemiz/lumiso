@@ -11,7 +11,13 @@ import { useSessionActions } from "@/hooks/useSessionActions";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 
 jest.mock("@/hooks/useLeadDetailData");
-jest.mock("@/hooks/use-toast", () => ({ toast: jest.fn() }));
+jest.mock("@/hooks/use-toast", () => {
+  const toastMock = jest.fn();
+  return {
+    toast: toastMock,
+    useToast: () => ({ toast: toastMock }),
+  };
+});
 jest.mock("@/hooks/useOrganizationQuickSettings", () => ({
   useOrganizationQuickSettings: jest.fn(),
 }));
@@ -362,7 +368,7 @@ describe("LeadDetail", () => {
     expect(markAsCompletedMock).toHaveBeenCalledTimes(1);
     expect(markAsLostMock).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByTestId("schedule-session"));
+    fireEvent.click(screen.getAllByTestId("schedule-session")[0]);
     expect(response.refetchAll).toHaveBeenCalledTimes(1);
   });
 

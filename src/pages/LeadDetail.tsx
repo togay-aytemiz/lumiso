@@ -609,6 +609,7 @@ const LeadDetail = () => {
     : tPages("leadDetail.header.projects.hint");
 
   const sessionsCount = sessions.length;
+  const hasSessions = sessionsCount > 0;
   const sessionsPrimary = sessionsCount
     ? tPages("leadDetail.header.sessions.count", { count: sessionsCount })
     : tPages("leadDetail.header.sessions.none");
@@ -776,6 +777,14 @@ const LeadDetail = () => {
   if (!lead) {
     return null;
   }
+
+  const renderScheduleSessionButton = () => (
+    <ScheduleSessionDialog
+      leadId={lead.id}
+      leadName={lead.name}
+      onSessionScheduled={handleSessionScheduled}
+    />
+  );
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-full px-4 py-4 md:px-8 md:py-8">
@@ -875,11 +884,10 @@ const LeadDetail = () => {
                     leadName={lead.name}
                     onSessionsChanged={handleSessionUpdated}
                     headerAction={
-                      <ScheduleSessionDialog
-                        leadId={lead.id}
-                        leadName={lead.name}
-                        onSessionScheduled={handleSessionScheduled}
-                      />
+                      hasSessions ? renderScheduleSessionButton() : undefined
+                    }
+                    emptyStateAction={
+                      hasSessions ? undefined : renderScheduleSessionButton()
                     }
                   />
                 )

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Plus } from "lucide-react";
+import { FolderPlus, Plus } from "lucide-react";
 import { ProjectCard } from "./ProjectCard";
 import { ProjectSheetView } from "./ProjectSheetView";
 import {
@@ -21,6 +21,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { ProjectCreationWizardSheet } from "@/features/project-creation";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { EmptyStateInfoSheet } from "@/components/empty-states/EmptyStateInfoSheet";
+import { EmptyState } from "@/components/EmptyState";
 
 interface Project {
   id: string;
@@ -59,7 +61,15 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   const [archivedStatusId, setArchivedStatusId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isProjectWizardOpen, setProjectWizardOpen] = useState(false);
+  const [showProjectInfo, setShowProjectInfo] = useState(false);
   const { toast } = useToast();
+  const projectInfoSectionsRaw = t("pages:projects.emptyState.sections", {
+    returnObjects: true,
+    defaultValue: []
+  });
+  const projectInfoSections = Array.isArray(projectInfoSectionsRaw)
+    ? (projectInfoSectionsRaw as { title: string; description: string }[])
+    : [];
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -249,16 +259,30 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
             ))}
           </div>
         ) : projects.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">
-            <p className="mb-4">{t('pages:projects.noProjectsYet')}</p>
-            <Button
-              variant="outline"
-              onClick={() => setProjectWizardOpen(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              {t('pages:projects.addProject')}
-            </Button>
-          </div>
+          <EmptyState
+            icon={FolderPlus}
+            title={t('pages:projects.noProjectsYet')}
+            helperAction={
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto px-0 text-sm text-muted-foreground"
+                onClick={() => setShowProjectInfo(true)}
+              >
+                {t('pages:projects.emptyState.learnMore')}
+              </Button>
+            }
+            action={
+              <Button
+                variant="outline"
+                className="border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100"
+                onClick={() => setProjectWizardOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {t('pages:projects.addProject')}
+              </Button>
+            }
+          />
         ) : (
           <div className="space-y-6">
             <div className="space-y-4">
@@ -331,6 +355,14 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <EmptyStateInfoSheet
+        open={showProjectInfo}
+        onOpenChange={setShowProjectInfo}
+        title={t('pages:projects.emptyState.sheetTitle')}
+        description={t('pages:projects.emptyState.sheetDescription')}
+        sections={projectInfoSections}
+      />
     </Card>
     </>
   );

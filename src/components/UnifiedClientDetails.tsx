@@ -1,13 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Mail,
   MessageCircle,
   MessageSquare,
   ChevronDown,
   Pencil,
+  AlertTriangle,
+  X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLeadFieldDefinitions } from "@/hooks/useLeadFieldDefinitions";
@@ -32,6 +35,7 @@ import { validateFieldValue } from "@/lib/leadFieldValidation";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { cn } from "@/lib/utils";
 import type { LeadFieldDefinition } from "@/types/leadFields";
+import { useOptionalOrganization } from "@/hooks/useOptionalOrganization";
 
 interface Lead {
   id: string;
@@ -136,6 +140,41 @@ export function UnifiedClientDetails({
   const [editingField, setEditingField] = useState<string | null>(null);
   const navigate = useNavigate();
   const { t: tForms } = useFormsTranslation();
+  const optionalOrganization = useOptionalOrganization();
+  const activeOrganizationId =
+    optionalOrganization?.activeOrganizationId ??
+    optionalOrganization?.activeOrganization?.id ??
+    null;
+  const leadFieldHelperStorageKey = useMemo(
+    () => `lead-fields-tip:${activeOrganizationId ?? "global"}`,
+    [activeOrganizationId]
+  );
+  const [showFieldHelper, setShowFieldHelper] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const stored = window.localStorage.getItem(leadFieldHelperStorageKey);
+      setShowFieldHelper(stored !== "dismissed");
+    } catch {
+      setShowFieldHelper(true);
+    }
+  }, [leadFieldHelperStorageKey]);
+
+  const dismissLeadFieldHelper = () => {
+    setShowFieldHelper(false);
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(leadFieldHelperStorageKey, "dismissed");
+    } catch {
+      // Ignore storage failures
+    }
+  };
+
+  const handleManageLeadFields = () => {
+    dismissLeadFieldHelper();
+    navigate("/settings/leads#lead-fields");
+  };
 
   const { updateCoreField, updateCustomField } = useLeadUpdate({
     leadId: lead.id,
@@ -240,6 +279,7 @@ export function UnifiedClientDetails({
   // Show all fields regardless of whether they have values
   const coreFields = allFields.filter((field) => field.type === "core");
   const customFields = allFields.filter((field) => field.type === "custom");
+  const shouldShowFieldHelper = showFieldHelper && !loading;
 
   // Handle inline editing - Single photographer has full edit access
   const canEdit = true;
@@ -634,45 +674,77 @@ export function UnifiedClientDetails({
               </div>
             )}
 
-            {/* Custom Fields Section */}
-            {customFields.length > 0 && (
-              <div className="pt-3 border-t">
-                <div className="space-y-3">
-                  {customFields.map((field) => (
-                    <div
-                      key={field.key}
-                      className="grid grid-cols-3 gap-3 items-start"
+            {(shouldShowFieldHelper || customFields.length > 0) && (
+              <div className="pt-3 border-t space-y-3">
+                {shouldShowFieldHelper && (
+                  <Alert className="relative border-amber-300/70 bg-amber-50 text-amber-900">
+                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                    <button
+                      type="button"
+                      onClick={dismissLeadFieldHelper}
+                      className="absolute right-2 top-2 rounded-full p-1 text-amber-800/70 transition hover:bg-amber-200/60 hover:text-amber-900"
+                      aria-label={tForms("lead_fields.helper.dismiss")}
                     >
-                      <label className="text-sm font-medium text-muted-foreground">
-                        {field.label}
-                      </label>
-                      <div className="col-span-2 text-sm">
-                        <InlineEditField
-                          value={field.value}
-                          isEditing={editingField === field.key}
-                          onStartEdit={() => setEditingField(field.key)}
-                          onSave={(value) =>
-                            handleFieldSave(field.key, value, true)
-                          }
-                          onCancel={() => setEditingField(null)}
-                          disabled={!canEdit}
-                          disableOutsideCancel={
-                            field.fieldDefinition?.field_type === "select"
-                          }
-                          editComponent={getInlineEditor(field)}
-                        >
-                          <CustomFieldDisplayWithEmpty
-                            fieldDefinition={field.fieldDefinition!}
-                            value={field.value}
-                            showCopyButtons={false}
-                            allowTruncation={true}
-                            maxLines={2}
-                          />
-                        </InlineEditField>
-                      </div>
+                      <X className="h-4 w-4" />
+                    </button>
+                    <AlertTitle className="text-sm font-semibold text-amber-900">
+                      {tForms("lead_fields.helper.title")}
+                    </AlertTitle>
+                    <AlertDescription className="mt-1 text-sm text-amber-900/90">
+                      {tForms("lead_fields.helper.description")}
+                    </AlertDescription>
+                    <div className="mt-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto px-0 text-sm font-semibold text-amber-900 hover:bg-transparent hover:underline"
+                        onClick={handleManageLeadFields}
+                      >
+                        {tForms("lead_fields.helper.action")}
+                      </Button>
                     </div>
-                  ))}
-                </div>
+                  </Alert>
+                )}
+
+                {customFields.length > 0 && (
+                  <div className="space-y-3">
+                    {customFields.map((field) => (
+                      <div
+                        key={field.key}
+                        className="grid grid-cols-3 gap-3 items-start"
+                      >
+                        <label className="text-sm font-medium text-muted-foreground">
+                          {field.label}
+                        </label>
+                        <div className="col-span-2 text-sm">
+                          <InlineEditField
+                            value={field.value}
+                            isEditing={editingField === field.key}
+                            onStartEdit={() => setEditingField(field.key)}
+                            onSave={(value) =>
+                              handleFieldSave(field.key, value, true)
+                            }
+                            onCancel={() => setEditingField(null)}
+                            disabled={!canEdit}
+                            disableOutsideCancel={
+                              field.fieldDefinition?.field_type === "select"
+                            }
+                            editComponent={getInlineEditor(field)}
+                          >
+                            <CustomFieldDisplayWithEmpty
+                              fieldDefinition={field.fieldDefinition!}
+                              value={field.value}
+                              showCopyButtons={false}
+                              allowTruncation={true}
+                              maxLines={2}
+                            />
+                          </InlineEditField>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

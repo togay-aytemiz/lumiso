@@ -9,6 +9,8 @@ import SessionListCard from "@/components/SessionListCard";
 import SessionSheetView from "@/components/SessionSheetView";
 import EditSessionDialog from "@/components/EditSessionDialog";
 import type { SessionPlanningStepId } from "@/features/session-planning";
+import { Button } from "@/components/ui/button";
+import { EmptyStateInfoSheet } from "@/components/empty-states/EmptyStateInfoSheet";
 
 interface LeadSessionsSectionProps {
   sessions: DeadSimpleSession[];
@@ -17,6 +19,7 @@ interface LeadSessionsSectionProps {
   leadName: string;
   onSessionsChanged: () => void;
   headerAction?: ReactNode;
+  emptyStateAction?: ReactNode;
 }
 
 export function LeadSessionsSection({
@@ -25,17 +28,23 @@ export function LeadSessionsSection({
   leadId,
   leadName,
   onSessionsChanged,
-  headerAction
+  headerAction,
+  emptyStateAction
 }: LeadSessionsSectionProps) {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingStartStep, setEditingStartStep] = useState<SessionPlanningStepId | undefined>(undefined);
+  const [showSessionInfo, setShowSessionInfo] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { t: tForms } = useFormsTranslation();
   const { t: tPages } = useTranslation("pages");
   const isMobile = useIsMobile();
+  const sessionInfoSections = (tForms("sessions_form.emptyState.sections", {
+    returnObjects: true,
+    defaultValue: []
+  }) as { title: string; description: string }[]) || [];
 
   const summary = useMemo(() => {
     if (loading || sessions.length === 0) {
@@ -96,7 +105,17 @@ export function LeadSessionsSection({
         emptyState={{
           icon: Calendar,
           title: tForms("sessions_form.no_sessions"),
-          description: tForms("sessions_form.add_sessions_hint")
+          helperAction: (
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto px-0 text-sm text-muted-foreground"
+              onClick={() => setShowSessionInfo(true)}
+            >
+              {tForms("sessions_form.emptyState.learnMore")}
+            </Button>
+          ),
+          action: emptyStateAction
         }}
         onSessionClick={handleSessionClick}
         onConnectProject={handleConnectProject}
@@ -144,6 +163,14 @@ export function LeadSessionsSection({
           />
         );
       })() : null}
+
+      <EmptyStateInfoSheet
+        open={showSessionInfo}
+        onOpenChange={setShowSessionInfo}
+        title={tForms("sessions_form.emptyState.sheetTitle")}
+        description={tForms("sessions_form.emptyState.sheetDescription")}
+        sections={sessionInfoSections}
+      />
     </>
   );
 }

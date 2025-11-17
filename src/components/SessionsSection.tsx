@@ -9,6 +9,8 @@ import type { DeadSimpleSession } from "./DeadSimpleSessionBanner";
 import SessionListCard from "./SessionListCard";
 import EditSessionDialog from "./EditSessionDialog";
 import type { SessionPlanningStepId } from "@/features/session-planning";
+import { Button } from "@/components/ui/button";
+import { EmptyStateInfoSheet } from "@/components/empty-states/EmptyStateInfoSheet";
 interface SessionsSectionProps {
   sessions: DeadSimpleSession[];
   loading: boolean;
@@ -33,6 +35,7 @@ export function SessionsSection({
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingStartStep, setEditingStartStep] = useState<SessionPlanningStepId | undefined>(undefined);
+  const [showSessionInfo, setShowSessionInfo] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useFormsTranslation();
@@ -88,6 +91,21 @@ export function SessionsSection({
       ? t("sessions_form.project_sessions_count", { count: sessions.length })
       : t("sessions_form.project_sessions_count_plural", { count: sessions.length });
   }, [loading, sessions.length, t]);
+  const sessionInfoSections = (t("sessions_form.emptyState.sections", {
+    returnObjects: true,
+    defaultValue: []
+  }) as { title: string; description: string }[]) || [];
+  const hasSessions = sessions.length > 0;
+  const renderNewSessionButton = () => (
+    <NewSessionDialogForProject
+      leadId={leadId}
+      leadName={leadName}
+      projectName={projectName}
+      projectId={projectId}
+      onSessionScheduled={onSessionUpdated}
+    />
+  );
+
   return (
     <>
       <SessionListCard
@@ -95,20 +113,22 @@ export function SessionsSection({
         icon={Calendar}
         sessions={sessions}
         loading={loading}
-        headerAction={
-          <NewSessionDialogForProject
-            leadId={leadId}
-            leadName={leadName}
-            projectName={projectName}
-            projectId={projectId}
-            onSessionScheduled={onSessionUpdated}
-          />
-        }
+        headerAction={hasSessions ? renderNewSessionButton() : undefined}
         summary={summary ?? undefined}
         emptyState={{
           icon: Calendar,
           title: t("sessions_form.no_sessions"),
-          description: t("sessions_form.add_sessions_hint")
+          helperAction: (
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto px-0 text-sm text-muted-foreground"
+              onClick={() => setShowSessionInfo(true)}
+            >
+              {t("sessions_form.emptyState.learnMore")}
+            </Button>
+          ),
+          action: !hasSessions ? renderNewSessionButton() : undefined
         }}
         onSessionClick={handleSessionClick}
         onConnectProject={handleConnectProject}
@@ -149,6 +169,14 @@ export function SessionsSection({
           }}
         />
       ) : null}
+
+      <EmptyStateInfoSheet
+        open={showSessionInfo}
+        onOpenChange={setShowSessionInfo}
+        title={t("sessions_form.emptyState.sheetTitle")}
+        description={t("sessions_form.emptyState.sheetDescription")}
+        sections={sessionInfoSections}
+      />
     </>
   );
 }

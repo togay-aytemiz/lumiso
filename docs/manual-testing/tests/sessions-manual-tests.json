@@ -43,6 +43,26 @@
         "expected_result": "Projeden başlatılan seans sihirbazı tamamlandığında kayıt kart listesine eklenir ve sayaç doğru sayıyı gösterir."
       },
       {
+        "external_id": "CRM-SESSIONS-432",
+        "title": "Seans sihirbazında üst+alt aksiyon satırları",
+        "description": "Uzun içerikli adımlarda Geri/İleri/Onayla butonlarının hem içerik kartının hemen üstünde hem de sheet altına sabitlenmiş şekilde bulunduğunu ve tüm ekran genişliklerinde çalıştığını doğrular.",
+        "steps": [
+          {
+            "action": "'Yeni Seans Planla' sheet'ini açın ve 'Tarih & Saat' adımına ilerleyin.",
+            "expected_result": "Kartın üst kısmında Geri/İleri butonları görünür; scroll alanının en altında aynı buton grubu yapışkan olarak durur."
+          },
+          {
+            "action": "Takvimi aşağı kaydırırken alt butonlardan 'İleri' ve 'Geri'yi kullanın.",
+            "expected_result": "Alt satır scroll boyunca sabit kalır ve adımlar arasında geçiş aynı şekilde çalışır; üst satır da görünür durumda kalır."
+          },
+          {
+            "action": "Tarayıcı genişliğini mobil ölçülere (~375px) düşürüp aynı adımları tekrar oynayın.",
+            "expected_result": "Alt buton satırı mobilde de görünür ve dokunmaya tepki verir; kullanıcı hiçbir anda butonlara erişim kaybetmez."
+          }
+        ],
+        "expected_result": "Seans planlama sheet'i hem masaüstü hem mobilde çift konumlu aksiyon satırları sayesinde her zaman erişilebilir kontroller sunar."
+      },
+      {
         "external_id": "CRM-SESSIONS-402",
         "title": "Kişi detayından seans planlama",
         "description": "Kişi başlığındaki 'Seans Ekle' düğmesinin sihirbazı otomatik olarak kişiyle başlatmasını ve seans sayacını güncellemesini doğrular.",

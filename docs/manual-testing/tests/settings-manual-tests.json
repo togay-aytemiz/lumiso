@@ -1024,6 +1024,26 @@
         "expected_result": "Paketler yalnızca sihirbaz üzerinden eklenir ve tamamlandığında listeye düşer."
       },
       {
+        "external_id": "CRM-SERVICES-010",
+        "title": "Paket sihirbazında çift aksiyon satırı",
+        "description": "Temeller/Paketler adımlarında kontrollere kaydırma yapılırken Geri/İleri/Bitir butonlarının hem üstte hem de sticky alt satırda bulunduğunu doğrular.",
+        "steps": [
+          {
+            "action": "'Paket ekle' sihirbazını açın ve Temeller adımını doldurarak Hizmetler adımına geçin.",
+            "expected_result": "Kartın üstündeki aksiyon satırı (Geri/İleri) görünür; aynı buton grubu sheet'in altına pinlenmiştir."
+          },
+          {
+            "action": "Hizmet kartlarını aşağı kaydırın ve alt satırdaki 'İleri'ye tıklayın.",
+            "expected_result": "Alt satır scroll sırasında sabit kalır ve tıklandığında sıradaki adıma geçer; üst satır da yerinde kalır."
+          },
+          {
+            "action": "Tarayıcı genişliğini mobil ölçüye getirin ve aynı davranışı tekrar test edin.",
+            "expected_result": "Alt aksiyon satırı mobilde de görünür ve butonlar dokunmayla çalışır; kullanıcı hiçbir anda butonlara erişimi kaybetmez."
+          }
+        ],
+        "expected_result": "Paket sihirbazı boyunca aksiyon butonları hem üstte hem de yapışkan alt satırda bulunur, masaüstü ve mobilde aynı işlevi sağlar."
+      },
+      {
         "external_id": "CRM-SERVICES-005",
         "title": "Paketleri pasif yapmak ve silmek",
         "description": "Silme diyalogundaki iki seçeneğin davranışını doğrular.",

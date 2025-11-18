@@ -19,6 +19,11 @@ export default function Notifications() {
   const { t } = useTranslation('pages');
   const { settings, loading, updateSettings } = useNotificationSettings();
   const [autoSaveStates, setAutoSaveStates] = useState<{[key: string]: 'idle' | 'saving'}>({});
+  const notificationTypeLabels: Record<string, string> = {
+    'daily-summary': t('settings.notifications.testTypes.dailySummary'),
+    'daily-summary-empty': t('settings.notifications.testTypes.dailySummaryEmpty'),
+    'project-milestone': t('settings.notifications.testTypes.projectMilestone'),
+  };
 
   // Generate time options every 30 minutes in 24h format
   const generateTimeOptions = () => {
@@ -104,9 +109,10 @@ export default function Notifications() {
         throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
       }
 
+      const typeLabel = notificationTypeLabels[type] ?? type;
       toast({
         title: t('settings.notifications.toasts.testSent'),
-        description: `${type} ${t('settings.notifications.toasts.testSentDesc')}`,
+        description: `${typeLabel} ${t('settings.notifications.toasts.testSentDesc')}`,
       });
     } catch (error) {
       console.error('Error testing notification:', error);

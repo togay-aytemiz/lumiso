@@ -141,50 +141,50 @@ export function generateEmptyDailySummaryEmail(
 
   // Business Growth Tips Section
   const tipAccentColors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
-  const tipsColumnWidth = tips.length ? Math.floor(100 / tips.length) : 100;
   const tipsContent = tips
     .map((tip, index) => {
       const color = tipAccentColors[index % tipAccentColors.length];
       return `
-        <td width="${tipsColumnWidth}%" style="padding: 0 6px; vertical-align: top;">
-          <div style="
-            background: #ffffff;
-            border-radius: 18px;
-            padding: 24px;
-            box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
-            border: 1px solid #e4e8f1;
-            height: 100%;
-          ">
+        <tr>
+          <td width="100%" style="padding-bottom: 16px;">
             <div style="
-              display: flex;
-              align-items: center;
-              gap: 10px;
-              margin-bottom: 12px;
+              background: #ffffff;
+              border-radius: 18px;
+              padding: 24px;
+              box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+              border: 1px solid #e4e8f1;
             ">
-              <span style="
-                display: inline-flex;
+              <div style="
+                display: flex;
                 align-items: center;
-                justify-content: center;
-                width: 12px;
-                height: 12px;
-                background: ${color};
-                border-radius: 999px;
-              "></span>
-              <h4 style="
-                color: #0f172a;
-                font-size: 16px;
-                font-weight: 600;
+                gap: 10px;
+                margin-bottom: 12px;
+              ">
+                <span style="
+                  display: inline-flex;
+                  align-items: center;
+                  justify-content: center;
+                  width: 12px;
+                  height: 12px;
+                  background: ${color};
+                  border-radius: 999px;
+                "></span>
+                <h4 style="
+                  color: #0f172a;
+                  font-size: 16px;
+                  font-weight: 600;
+                  margin: 0;
+                ">${tip.title}</h4>
+              </div>
+              <p style="
+                color: #475569;
+                font-size: 14px;
                 margin: 0;
-              ">${tip.title}</h4>
+                line-height: 1.6;
+              ">${tip.description}</p>
             </div>
-            <p style="
-              color: #475569;
-              font-size: 14px;
-              margin: 0;
-              line-height: 1.6;
-            ">${tip.description}</p>
-          </div>
-        </td>
+          </td>
+        </tr>
       `;
     })
     .join('');
@@ -201,10 +201,10 @@ export function generateEmptyDailySummaryEmail(
         ${tipsTitle}
       </h3>
 
-      <table role="presentation" width="100%" style="border-collapse: separate; border-spacing: 0; table-layout: fixed;">
-        <tr>
+      <table role="presentation" width="100%" style="border-collapse: separate; border-spacing: 0;">
+        <tbody>
           ${tipsContent}
-        </tr>
+        </tbody>
       </table>
     </div>
   `;

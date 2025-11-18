@@ -1908,6 +1908,11 @@
       "sendTest": "Send test",
       "sendEmptyTest": "Send empty test",
       "testing": "Testing...",
+      "testTypes": {
+        "dailySummary": "Daily summary",
+        "dailySummaryEmpty": "Empty-day summary",
+        "projectMilestone": "Project milestone"
+      },
       "toasts": {
         "allEnabled": "All Notifications Enabled",
         "allDisabled": "All Notifications Disabled",

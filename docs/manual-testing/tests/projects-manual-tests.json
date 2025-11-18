@@ -55,6 +55,26 @@
         "expected_result": "Mevcut bir kişiyle başlatılan proje hem /projects listesinde hem de ilgili kişi detayında görünür."
       },
       {
+        "external_id": "CRM-PROJECTS-360",
+        "title": "Proje sihirbazı aksiyon butonları hem üstte hem altta görünür",
+        "description": "Scroll gerektiren uzun adımlarda Geri/İleri/İncele butonlarının hem içerik kartının üstünde hem de sticky alt çubuğunda sunulduğunu ve mobilde de sabit kaldığını doğrular.",
+        "steps": [
+          {
+            "action": "Projeler sayfasında \"Proje Ekle\" deyip Kişi ve Detaylar adımlarını doldurarak Paketler adımına gelin.",
+            "expected_result": "Kartın üst kısmında Geri/İleri butonları görünür, aynı buton grubu ekranın altına pinlenmiş şekilde yinelenir."
+          },
+          {
+            "action": "İçeriği sonuna kadar kaydırın ve pencereyi aşağı-yukarı hareket ettirin.",
+            "expected_result": "Alt kısımdaki buton grubu scroll boyunca sabit kalır ve tıklanabilirliğini korur; üstteki grup yerinde kalır."
+          },
+          {
+            "action": "Tarayıcıyı mobil genişliğe daraltın (≈390px) ve sihirbazda tekrar gezin.",
+            "expected_result": "Alt buton satırı mobil görünümde de yapışkan kalır; tıklayınca doğru adımlar arasında geçiş yapılır."
+          }
+        ],
+        "expected_result": "Kullanıcılar uzun adımlarda dahi geri/ileri butonlarını her zaman ekranın üstünde ve altında görebilir; alt satır hem masaüstü hem mobilde sabitlenmiştir."
+      },
+      {
         "external_id": "CRM-PROJECTS-302",
         "title": "Detaylar adımında proje adı ve türü zorunludur",
         "description": "Detaylar ekranında zorunlu alanlar boş bırakıldığında gösterilen hata mesajlarını doğrular.",

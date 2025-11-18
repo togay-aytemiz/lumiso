@@ -323,44 +323,44 @@ export const SessionPlanningWizard = ({
         </aside>
 
         <div className="flex flex-1 min-h-0 min-w-0 flex-col">
-          <div className="border-b border-slate-200 bg-white/90 px-4 py-4 backdrop-blur lg:hidden">
+          <div className="border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur lg:hidden">
             <Collapsible
               open={mobileStepsOpen}
               onOpenChange={setMobileStepsOpen}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 space-y-2">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                     {t("stepper.progressLabel", {
                       current: currentIndex + 1,
                       total: totalSteps,
                     })}
                   </p>
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-900">
-                      {currentStepLabel}
-                    </h2>
-                    <p className="text-sm text-slate-600">
-                      {t(`steps.${meta.currentStep}.description`)}
-                    </p>
-                  </div>
+                  <CollapsibleTrigger asChild>
+                    <button
+                      type="button"
+                      className="group flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-slate-100"
+                    >
+                      <span>
+                        {mobileStepsOpen
+                          ? t("stepper.hideSteps")
+                          : t("stepper.showSteps")}
+                      </span>
+                      <ChevronDown className="h-4 w-4 transition group-data-[state=open]:rotate-180" />
+                    </button>
+                  </CollapsibleTrigger>
                 </div>
-                <CollapsibleTrigger asChild>
-                  <button
-                    type="button"
-                    className="group flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-slate-100"
-                  >
-                    <span>
-                      {mobileStepsOpen
-                        ? t("stepper.hideSteps")
-                        : t("stepper.showSteps")}
-                    </span>
-                    <ChevronDown className="h-4 w-4 transition group-data-[state=open]:rotate-180" />
-                  </button>
-                </CollapsibleTrigger>
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">
+                    {currentStepLabel}
+                  </h2>
+                  <p className="text-sm text-slate-600">
+                    {t(`steps.${meta.currentStep}.description`)}
+                  </p>
+                </div>
               </div>
-              <Progress value={progressValue} className="mt-4" />
-              <CollapsibleContent className="mt-6 space-y-3 overflow-x-hidden">
+              <Progress value={progressValue} className="mt-3" />
+              <CollapsibleContent className="mt-4 space-y-3 overflow-x-hidden">
                 <StepList
                   currentIndex={currentIndex}
                   onSelectStep={handleMobileSelect}
@@ -373,36 +373,38 @@ export const SessionPlanningWizard = ({
             </Collapsible>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 py-10 sm:px-6 lg:px-8">
-            <div className="mx-auto w-full max-w-3xl space-y-6">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => goToStep(Math.max(0, currentIndex - 1))}
-                  disabled={isFirstStep}
-                  className="w-full sm:w-auto sm:px-6"
-                >
-                  {t("wizard.back")}
-                </Button>
-                {!isLastStep ? (
+          <div className="flex-1 overflow-y-auto px-3 py-6 sm:px-6 sm:py-10 lg:px-8">
+            <div className="mx-auto w-full max-w-3xl space-y-5 sm:space-y-6">
+              <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-end sm:gap-3">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end sm:gap-3">
                   <Button
-                    onClick={handleNextStep}
-                    className="w-full sm:w-auto sm:px-8"
+                    variant="outline"
+                    onClick={() => goToStep(Math.max(0, currentIndex - 1))}
+                    disabled={isFirstStep}
+                    className="w-full sm:w-auto sm:px-6"
                   >
-                    {t("wizard.next")}
+                    {t("wizard.back")}
                   </Button>
-                ) : (
-                  <Button
-                    onClick={onComplete}
-                    disabled={isCompleting}
-                    aria-busy={isCompleting}
-                    className="w-full sm:w-auto sm:px-8"
-                  >
-                    {isCompleting
-                      ? t("wizard.confirming")
-                      : t("wizard.confirm")}
-                  </Button>
-                )}
+                  {!isLastStep ? (
+                    <Button
+                      onClick={handleNextStep}
+                      className="w-full sm:w-auto sm:px-8"
+                    >
+                      {t("wizard.next")}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={onComplete}
+                      disabled={isCompleting}
+                      aria-busy={isCompleting}
+                      className="w-full sm:w-auto sm:px-8"
+                    >
+                      {isCompleting
+                        ? t("wizard.confirming")
+                        : t("wizard.confirm")}
+                    </Button>
+                  )}
+                </div>
                 {state.meta.mode === "edit" && meta.currentStep !== "summary" ? (
                   <Button
                     variant="secondary"
@@ -415,7 +417,7 @@ export const SessionPlanningWizard = ({
               </div>
               <div
                 key={meta.currentStep}
-                className="animate-in fade-in slide-in-from-bottom-3 rounded-3xl border border-slate-200/70 bg-white/95 p-6 shadow-xl shadow-slate-900/5 backdrop-blur transition-all duration-300 ease-out"
+                className="animate-in fade-in slide-in-from-bottom-3 rounded-3xl border border-slate-200/70 bg-white/95 p-4 shadow-xl shadow-slate-900/5 backdrop-blur transition-all duration-300 ease-out sm:p-6"
               >
                 {meta.currentStep === "project" ? (
                   <ProjectStep onContinue={() => goToStep(Math.min(SESSION_PLANNING_STEPS.length - 1, currentIndex + 1))} />

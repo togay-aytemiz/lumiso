@@ -3,7 +3,6 @@ import {
   Bell,
   CreditCard,
   Crown,
-  FileText,
   FolderOpen,
   Package,
   Settings,
@@ -60,12 +59,6 @@ export const organizationSettingsItems: SettingsNavItem[] = [
     testId: "services-section",
   },
   {
-    title: "contracts",
-    href: "/settings/contracts",
-    icon: FileText,
-    testId: "contracts-section",
-  },
-  {
     title: "billing",
     href: "/settings/billing",
     icon: CreditCard,
@@ -118,10 +111,6 @@ export const pageMetadata: Record<
   "/settings/services": {
     titleKey: "settings.services.title",
     descriptionKey: "settings.services.description",
-  },
-  "/settings/contracts": {
-    titleKey: "settings.contracts.title",
-    descriptionKey: "settings.contracts.description",
   },
   "/settings/billing": {
     titleKey: "settings.billing.title",

@@ -3,7 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Camera, Clock, PackageCheck, Send } from "lucide-react";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
-import type { ProjectPackageSnapshot } from "@/lib/projects/projectPackageSnapshot";
+import {
+  parseProjectPackageSnapshot,
+  type ProjectPackageSnapshot,
+} from "@/lib/projects/projectPackageSnapshot";
 import { supabase } from "@/integrations/supabase/client";
 import {
   fetchProjectServiceRecords,
@@ -126,18 +129,40 @@ export function ProjectPackageSummaryCard({
   const [customized, setCustomized] = useState(false);
   const [serviceRecords, setServiceRecords] = useState<ProjectServiceRecord[] | null>(null);
   const [servicesLoading, setServicesLoading] = useState(false);
+  const [packageSnapshotOverride, setPackageSnapshotOverride] = useState<ProjectPackageSnapshot | null>(null);
+  const [packageIdOverride, setPackageIdOverride] = useState<string | null>(null);
   const [resolvedPackageName, setResolvedPackageName] = useState<string | null>(snapshot?.name ?? null);
 
   useEffect(() => {
-    if (snapshot?.name) {
-      setResolvedPackageName(snapshot.name);
+    setPackageSnapshotOverride(null);
+    setPackageIdOverride(null);
+  }, [projectId]);
+
+  useEffect(() => {
+    if (snapshot) {
+      setPackageSnapshotOverride(null);
+    }
+  }, [snapshot]);
+
+  useEffect(() => {
+    if (packageId) {
+      setPackageIdOverride(null);
+    }
+  }, [packageId]);
+
+  const effectiveSnapshot = snapshot ?? packageSnapshotOverride;
+  const effectivePackageId = packageId ?? packageIdOverride;
+
+  useEffect(() => {
+    if (effectiveSnapshot?.name) {
+      setResolvedPackageName(effectiveSnapshot.name);
       return;
     }
     setResolvedPackageName(null);
-  }, [packageId, snapshot?.name]);
+  }, [effectiveSnapshot?.name]);
 
   useEffect(() => {
-    if (snapshot?.name || !packageId || resolvedPackageName) {
+    if (effectiveSnapshot?.name || !effectivePackageId || resolvedPackageName) {
       return;
     }
     let active = true;
@@ -146,7 +171,7 @@ export function ProjectPackageSummaryCard({
         const { data, error } = await supabase
           .from("packages")
           .select("name")
-          .eq("id", packageId)
+          .eq("id", effectivePackageId)
           .single();
         if (!active) return;
         if (error) {
@@ -162,18 +187,51 @@ export function ProjectPackageSummaryCard({
     return () => {
       active = false;
     };
-  }, [packageId, resolvedPackageName, snapshot?.name]);
+  }, [effectivePackageId, effectiveSnapshot?.name, resolvedPackageName]);
+
+  useEffect(() => {
+    if (
+      !projectId ||
+      snapshot ||
+      packageSnapshotOverride ||
+      packageId ||
+      packageIdOverride
+    ) {
+      return;
+    }
+    let active = true;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("package_id, package_snapshot")
+          .eq("id", projectId)
+          .single();
+        if (!active) return;
+        if (error) throw error;
+        setPackageIdOverride(data?.package_id ?? null);
+        setPackageSnapshotOverride(parseProjectPackageSnapshot(data?.package_snapshot));
+      } catch (error) {
+        if (active) {
+          console.error("Failed to resolve project package snapshot:", error);
+        }
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [packageId, packageIdOverride, packageSnapshotOverride, projectId, snapshot]);
 
   const packageLabel =
     resolvedPackageName ??
     t("project_package_card.custom_label", { defaultValue: "Custom plan" });
 
   const lineItemsSignature = useMemo(() => {
-    if (!snapshot) return "";
-    return snapshot.lineItems
+    if (!effectiveSnapshot) return "";
+    return effectiveSnapshot.lineItems
       .map((item) => `${item.serviceId ?? item.name}:${item.quantity}`)
       .join("|");
-  }, [snapshot]);
+  }, [effectiveSnapshot]);
 
   useEffect(() => {
     let active = true;
@@ -182,8 +240,8 @@ export function ProjectPackageSummaryCard({
       .then((records) => {
         if (!active) return;
         setServiceRecords(records);
-        if (snapshot) {
-          setCustomized(hasServiceDifferences(records, snapshot));
+        if (effectiveSnapshot) {
+          setCustomized(hasServiceDifferences(records, effectiveSnapshot));
         } else {
           setCustomized(false);
         }
@@ -203,11 +261,11 @@ export function ProjectPackageSummaryCard({
     return () => {
       active = false;
     };
-  }, [projectId, snapshot, lineItemsSignature, servicesVersion]);
+  }, [effectiveSnapshot, lineItemsSignature, projectId, servicesVersion]);
 
-  const photoLabel = useMemo(() => formatPhotoEstimate(snapshot, t), [snapshot, t]);
-  const leadTimeLabel = useMemo(() => formatLeadTime(snapshot, t), [snapshot, t]);
-  const methodsLabel = useMemo(() => formatMethods(snapshot, t), [snapshot, t]);
+  const photoLabel = useMemo(() => formatPhotoEstimate(effectiveSnapshot, t), [effectiveSnapshot, t]);
+  const leadTimeLabel = useMemo(() => formatLeadTime(effectiveSnapshot, t), [effectiveSnapshot, t]);
+  const methodsLabel = useMemo(() => formatMethods(effectiveSnapshot, t), [effectiveSnapshot, t]);
   const deliveryItems = useMemo(
     () => [
       {
@@ -256,7 +314,7 @@ export function ProjectPackageSummaryCard({
               onClick={onEditPackage}
               className="min-w-[110px]"
             >
-              {snapshot
+              {effectiveSnapshot
                 ? t("project_package_card.change_package", { defaultValue: "Paketi değiştir" })
                 : t("project_package_card.select_package", { defaultValue: "Paket seç" })}
             </Button>
@@ -270,7 +328,7 @@ export function ProjectPackageSummaryCard({
           </Button>
           </div>
         </div>
-        {snapshot && customized ? (
+        {effectiveSnapshot && customized ? (
           <p className="text-xs text-muted-foreground">
             {t("project_package_card.customized_hint", {
               defaultValue: "Services were adjusted after applying this package.",

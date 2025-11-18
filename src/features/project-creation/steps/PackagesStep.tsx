@@ -1302,34 +1302,36 @@ export const PackagesStep = () => {
         {(state.services.packageId || showCustomSetup) && (
           <div
             ref={actionsRef}
-            className="flex items-center justify-end gap-2 rounded-full bg-slate-100/80 px-3 py-1.5 transition-opacity duration-200"
+            className="mx-1 flex flex-col gap-2 rounded-2xl bg-slate-100/80 px-3 py-2 transition-opacity duration-200 sm:mx-0 sm:flex-row sm:items-center sm:justify-end sm:gap-2"
           >
             {state.services.packageLabel ? (
               <Badge
                 variant="secondary"
-                className="mr-auto h-7 rounded-full bg-emerald-100 px-3 text-xs font-medium text-emerald-700"
+                className="w-full rounded-full bg-emerald-100 px-3 text-left text-xs font-medium text-emerald-700 sm:mr-auto sm:w-auto sm:text-center"
               >
                 {t("steps.packages.selectedSummary", { name: state.services.packageLabel })}
               </Badge>
             ) : null}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClearPackage}
-              disabled={!state.services.packageId}
-              className="h-8 rounded-full px-3 text-xs text-slate-600 hover:bg-slate-200 hover:text-slate-900"
-            >
-              {t("steps.packages.clearPackage")}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleResetCustom}
-              disabled={!showCustomSetup}
-              className="h-8 rounded-full px-3 text-xs text-slate-600 hover:bg-slate-200 hover:text-slate-900"
-            >
-              {t("steps.packages.resetCustom")}
-            </Button>
+            <div className="flex items-center justify-end gap-4 text-xs font-semibold text-slate-600 sm:gap-2">
+              <Button
+                variant="textGhost"
+                size="sm"
+                onClick={handleClearPackage}
+                disabled={!state.services.packageId}
+                className="h-auto px-0 text-xs text-slate-600 underline decoration-transparent underline-offset-4 hover:text-slate-900 hover:decoration-current disabled:text-slate-300 sm:h-8 sm:rounded-full sm:px-3 sm:no-underline sm:hover:bg-slate-200 sm:hover:text-slate-900"
+              >
+                {t("steps.packages.clearPackage")}
+              </Button>
+              <Button
+                variant="textGhost"
+                size="sm"
+                onClick={handleResetCustom}
+                disabled={!showCustomSetup}
+                className="h-auto px-0 text-xs text-slate-600 underline decoration-transparent underline-offset-4 hover:text-slate-900 hover:decoration-current disabled:text-slate-300 sm:h-8 sm:rounded-full sm:px-3 sm:no-underline sm:hover:bg-slate-200 sm:hover:text-slate-900"
+              >
+                {t("steps.packages.resetCustom")}
+              </Button>
+            </div>
           </div>
         )}
       </div>

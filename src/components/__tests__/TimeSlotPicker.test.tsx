@@ -12,6 +12,10 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
   useMessagesTranslation: () => ({ t: (key: string) => key }),
 }));
 
+jest.mock("@/hooks/use-mobile", () => ({
+  useIsMobile: () => false,
+}));
+
 const mockUseWorkingHours = useWorkingHoursMock as jest.Mock;
 
 beforeAll(() => {

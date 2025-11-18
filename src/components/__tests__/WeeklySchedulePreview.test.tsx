@@ -11,6 +11,9 @@ import {
 jest.mock("@/hooks/useTypedTranslation", () => ({
   useFormsTranslation: () => ({ t: (key: string) => key }),
 }));
+jest.mock("@/hooks/use-mobile", () => ({
+  useIsMobile: () => false,
+}));
 
 describe("WeeklySchedulePreview", () => {
   const monday = new Date("2024-05-20T09:00:00Z");

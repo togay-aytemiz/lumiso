@@ -27,7 +27,6 @@ import NotificationsSettings from "./pages/settings/Notifications";
 import ProjectsSettings from "./pages/settings/Projects";
 import LeadsSettings from "./pages/settings/Leads";
 import ServicesSettings from "./pages/settings/Services";
-import ContractsSettings from "./pages/settings/Contracts";
 import BillingSettings from "./pages/settings/Billing";
 import BillingSubscriptionSettings from "./pages/settings/BillingSubscription";
 import DangerZoneSettings from "./pages/settings/DangerZone";
@@ -51,7 +50,6 @@ const renderSettingsRoutes = (enableOverlay: boolean) => (
     <Route path="projects" element={<ProjectsSettings />} />
     <Route path="leads" element={<LeadsSettings />} />
     <Route path="services" element={<ServicesSettings />} />
-    <Route path="contracts" element={<ContractsSettings />} />
     <Route path="billing" element={<BillingSettings />} />
     <Route path="billing/subscription" element={<BillingSubscriptionSettings />} />
     <Route path="danger-zone" element={<DangerZoneSettings />} />

@@ -6,6 +6,7 @@ import { Clock } from "lucide-react";
 import { useWorkingHours } from "@/hooks/useWorkingHours";
 import { cn } from "@/lib/utils";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TimeSlotPickerProps {
   selectedDate?: Date;
@@ -60,6 +61,7 @@ export function TimeSlotPicker({ selectedDate, selectedTime, onTimeSelect, class
   const { t } = useFormsTranslation();
   const { workingHours, loading } = useWorkingHours();
   const userLocale = navigator.language;
+  const isMobile = useIsMobile();
   
   if (loading) {
     return (
@@ -114,6 +116,10 @@ export function TimeSlotPicker({ selectedDate, selectedTime, onTimeSelect, class
     );
   }
 
+  const gridClasses = isMobile
+    ? "grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-8"
+    : "grid grid-cols-4 gap-2";
+
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex items-center justify-between">
@@ -123,14 +129,17 @@ export function TimeSlotPicker({ selectedDate, selectedTime, onTimeSelect, class
         </Badge>
       </div>
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+      <div className={gridClasses}>
         {timeSlots.map((slot) => (
           <Button
             key={slot}
             variant="outline"
             size="sm"
             className={cn(
-              "justify-center text-xs h-8 transition-colors text-center",
+              "justify-center transition-colors text-center",
+              isMobile
+                ? "text-[11px] h-8 font-medium"
+                : "h-9 rounded-full text-xs font-medium shadow-sm border-slate-200 text-slate-700",
               selectedTime?.trim().startsWith(slot.trim())
                 ? "bg-primary text-primary-foreground hover:bg-primary/90"
                 : "hover:bg-primary/10 hover:text-primary"

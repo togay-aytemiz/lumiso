@@ -323,7 +323,7 @@ export const SessionPlanningWizard = ({
         </aside>
 
         <div className="flex flex-1 min-h-0 min-w-0 flex-col">
-          <div className="border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur lg:hidden">
+          <div className="border-b border-slate-200 bg-white/90 px-3 py-3 backdrop-blur lg:hidden">
             <Collapsible
               open={mobileStepsOpen}
               onOpenChange={setMobileStepsOpen}
@@ -373,9 +373,9 @@ export const SessionPlanningWizard = ({
             </Collapsible>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-3 py-6 sm:px-6 sm:py-10 lg:px-8">
-            <div className="mx-auto w-full max-w-3xl space-y-5 sm:space-y-6">
-              <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-end sm:gap-3">
+          <div className="flex-1 overflow-y-auto px-2 py-5 sm:px-6 sm:py-10 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="mx-auto w-full max-w-3xl space-y-3 sm:space-y-6">
+              <div className="space-y-1.5 sm:space-y-0 sm:flex sm:items-center sm:justify-end sm:gap-3">
                 <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end sm:gap-3">
                   <Button
                     variant="outline"

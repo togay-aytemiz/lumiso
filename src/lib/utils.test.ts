@@ -97,6 +97,11 @@ describe("date and time formatting helpers", () => {
     const locale = getDateFnsLocale();
     expect(locale).toBe(tr);
   });
+
+  it("allows overriding locale resolution manually", () => {
+    expect(getDateFnsLocale("tr")).toBe(tr);
+    expect(getDateFnsLocale("en")).toBe(enUS);
+  });
 });
 
 describe("week boundary helpers", () => {

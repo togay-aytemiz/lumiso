@@ -11,9 +11,15 @@ jest.mock("@/lib/organizationUtils", () => ({
   getUserOrganizationId: jest.fn(() => Promise.resolve("org-1")),
 }));
 jest.mock("@/hooks/useTypedTranslation", () => ({
-  useFormsTranslation: () => ({ t: (key: string) => key }),
+  useFormsTranslation: () => ({
+    t: (key: string) => key,
+    i18n: { language: "en-US" },
+  }),
   useCommonTranslation: () => ({ t: (key: string) => key }),
   useMessagesTranslation: () => ({ t: (key: string) => key }),
+}));
+jest.mock("@/hooks/use-mobile", () => ({
+  useIsMobile: () => false,
 }));
 
 const scrollIntoViewMock = jest.fn();

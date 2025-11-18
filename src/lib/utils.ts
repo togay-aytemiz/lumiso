@@ -9,17 +9,20 @@ export function cn(...inputs: ClassValue[]) {
 
 // Locale utilities for consistent date/time formatting
 export const getUserLocale = (): string => {
-  return navigator.language || "en-US";
+  if (typeof navigator !== "undefined" && navigator.language) {
+    return navigator.language;
+  }
+  return "en-US";
 };
 
 // Get date-fns locale object based on user's locale
-export const getDateFnsLocale = (): Locale => {
-  const userLocale = getUserLocale();
-  
+export const getDateFnsLocale = (localeCode?: string): Locale => {
+  const userLocale = localeCode ?? getUserLocale();
+
   if (userLocale.startsWith('tr')) {
     return tr;
   }
-  
+
   return enUS;
 };
 

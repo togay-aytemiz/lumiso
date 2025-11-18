@@ -46,10 +46,10 @@ export function CalendarTimePicker({
   selectedSessionDurationMinutes,
   enableDraftPreview = true,
 }: CalendarTimePickerProps) {
-  const { t } = useFormsTranslation();
+  const { t, i18n } = useFormsTranslation();
   const [visibleMonth, setVisibleMonth] = useState<Date>(new Date());
   const [plannedSessions, setPlannedSessions] = useState<PlannedSessionRecord[]>([]);
-  const browserLocale = getUserLocale();
+  const browserLocale = i18n.language || getUserLocale();
   const plannedSessionsRef = useRef<HTMLDivElement | null>(null);
   const previousSelectedKeyRef = useRef<string | undefined>();
 

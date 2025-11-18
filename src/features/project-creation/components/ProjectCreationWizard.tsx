@@ -133,7 +133,8 @@ export const ProjectCreationWizard = ({
     const hasDetails = Boolean(projectName && state.details.projectTypeId);
     const detailsSummary = projectName ?? projectTypeLabel;
 
-    const lineItemCount = state.services.includedItems.length + state.services.extraItems.length;
+    const lineItemCount =
+      state.services.includedItems.length + state.services.extraItems.length;
 
     const packageSummary = state.services.packageLabel
       ? state.services.packageLabel
@@ -144,8 +145,7 @@ export const ProjectCreationWizard = ({
           count: lineItemCount,
         })
       : undefined;
-    const hasPackages =
-      Boolean(state.services.packageId) || lineItemCount > 0;
+    const hasPackages = Boolean(state.services.packageId) || lineItemCount > 0;
 
     const summaryNotes = state.details.description?.trim();
 
@@ -155,7 +155,8 @@ export const ProjectCreationWizard = ({
         return t("steps.delivery.stepSummary.disabled");
       }
       if (deliveryState.enableLeadTime && deliveryState.leadTimeValue) {
-        const unitKey = deliveryState.leadTimeUnit === "weeks" ? "weeks" : "days";
+        const unitKey =
+          deliveryState.leadTimeUnit === "weeks" ? "weeks" : "days";
         return t("steps.delivery.stepSummary.leadTime", {
           value: deliveryState.leadTimeValue,
           unit: t(`steps.delivery.leadTime.${unitKey}`),
@@ -310,7 +311,7 @@ export const ProjectCreationWizard = ({
         </aside>
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <div className="border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur lg:hidden">
+          <div className="border-b border-slate-200 bg-white/90 px-3 py-3 backdrop-blur lg:hidden">
             <Collapsible
               open={mobileStepsOpen}
               onOpenChange={setMobileStepsOpen}
@@ -365,11 +366,11 @@ export const ProjectCreationWizard = ({
 
           <div
             ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto px-3 py-6 sm:px-6 sm:py-10 lg:px-8"
+            className="flex-1 overflow-y-auto px-2 py-5 sm:px-6 sm:py-10 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            <div className="mx-auto w-full max-w-3xl space-y-5 sm:space-y-6">
-              <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-end sm:gap-3">
-                <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end sm:gap-3">
+            <div className="mx-auto w-full max-w-3xl space-y-3 sm:space-y-6">
+              <div className="space-y-1.5 sm:space-y-0 sm:flex sm:items-center sm:justify-end sm:gap-1">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end sm:gap-1">
                   <Button
                     variant="outline"
                     onClick={() => goToStep(Math.max(0, currentIndex - 1))}

@@ -841,7 +841,7 @@ const SummaryDeliveryCard = ({
       <Button
         variant="link"
         size="sm"
-        className="h-auto px-0 text-xs font-semibold"
+        className="h-auto px-0 text-xs font-semibold self-start md:self-auto md:ml-auto"
         onClick={onEdit}
       >
         {actionLabel}

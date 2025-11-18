@@ -129,10 +129,58 @@ export function LegacyProjectSheetView({
   const isMobile = useIsMobile();
   const { summary: headerSummary } = useProjectHeaderSummary(project?.id || null, summaryRefreshToken);
   const { summary: sessionsSummary } = useProjectSessionsSummary(project?.id ?? "", summaryRefreshToken);
-  const packageSnapshot = useMemo(
+  const parsedPackageSnapshot = useMemo(
     () => parseProjectPackageSnapshot(project?.package_snapshot),
     [project?.package_snapshot]
   );
+  const [packageSnapshotOverride, setPackageSnapshotOverride] = useState<ProjectPackageSnapshot | null>(null);
+  useEffect(() => {
+    if (!project?.id) {
+      if (packageSnapshotOverride) {
+        setPackageSnapshotOverride(null);
+      }
+      return;
+    }
+    if (project.package_snapshot) {
+      if (packageSnapshotOverride) {
+        setPackageSnapshotOverride(null);
+      }
+      return;
+    }
+    if (!project.package_id) {
+      if (packageSnapshotOverride) {
+        setPackageSnapshotOverride(null);
+      }
+      return;
+    }
+    if (packageSnapshotOverride) {
+      return;
+    }
+
+    let active = true;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("package_snapshot")
+          .eq("id", project.id)
+          .single();
+        if (!active) return;
+        if (error) throw error;
+        setPackageSnapshotOverride(parseProjectPackageSnapshot(data?.package_snapshot));
+      } catch (error) {
+        if (active) {
+          console.error("Failed to resolve project package snapshot:", error);
+          setPackageSnapshotOverride(null);
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [project?.id, project?.package_id, project?.package_snapshot, packageSnapshotOverride]);
+  const packageSnapshot = packageSnapshotOverride ?? parsedPackageSnapshot;
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const plannedSessionsCount = useMemo(() => {

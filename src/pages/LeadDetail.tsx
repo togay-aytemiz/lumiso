@@ -440,12 +440,12 @@ const LeadDetail = () => {
     Boolean(
       userSettings?.show_quick_status_buttons &&
         completedStatus &&
-        lead.status !== completedStatus.name
+        lead?.status !== completedStatus.name
     );
   const shouldShowLostQuickAction =
     !settingsLoading &&
     Boolean(
-      userSettings?.show_quick_status_buttons && lostStatus && lead.status !== lostStatus.name
+      userSettings?.show_quick_status_buttons && lostStatus && lead?.status !== lostStatus.name
     );
   const hasQuickStatusActions = shouldShowCompletedQuickAction || shouldShowLostQuickAction;
   const completedButtonLabel = isUpdating ? "Updating..." : completedStatus?.name ?? "";

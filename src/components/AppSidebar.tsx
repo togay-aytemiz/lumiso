@@ -145,36 +145,32 @@ export function AppSidebar() {
   const handleBookingsClick = () => {
     if (isMobile) {
       setBookingsSheetOpen(true);
-    } else if (isCollapsed) {
-      toggleSidebar();
+      return;
+    }
+
+    if (!bookingsOpen) {
       setBookingsOpen(true);
-    } else {
-      if (!bookingsOpen) {
-        setBookingsOpen(true);
-        if (!isBookingsChildActive) {
-          navigate("/calendar");
-        }
-      } else {
-        setBookingsOpen(false);
+      if (!isBookingsChildActive) {
+        navigate("/calendar");
       }
+    } else {
+      setBookingsOpen(false);
     }
   };
 
   const handleAutomationClick = () => {
     if (isMobile) {
       setAutomationSheetOpen(true);
-    } else if (isCollapsed) {
-      toggleSidebar();
+      return;
+    }
+
+    if (!automationOpen) {
       setAutomationOpen(true);
-    } else {
-      if (!automationOpen) {
-        setAutomationOpen(true);
-        if (!isAutomationChildActive) {
-          navigate("/workflows");
-        }
-      } else {
-        setAutomationOpen(false);
+      if (!isAutomationChildActive) {
+        navigate("/workflows");
       }
+    } else {
+      setAutomationOpen(false);
     }
   };
 

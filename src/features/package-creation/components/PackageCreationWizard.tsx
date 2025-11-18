@@ -27,6 +27,7 @@ import {
   WizardStepList,
   type WizardStepListSupportingTextArgs,
 } from "@/features/wizard/components/WizardStepList";
+import { cn } from "@/lib/utils";
 
 const STEP_COMPONENTS: Record<PackageCreationStepId, () => JSX.Element> = {
   basics: BasicsStep,
@@ -63,6 +64,7 @@ export const PackageCreationWizard = ({
   );
   const [mobileStepsOpen, setMobileStepsOpen] = useState(false);
   const viewedStepRef = useRef<PackageCreationStepId | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const rawIndex = useMemo(
     () =>
@@ -290,6 +292,47 @@ export const PackageCreationWizard = ({
     if (state.meta.currentStep === "summary") return;
     goToStep(summaryIndex);
   };
+  const actionLayoutClass =
+    "space-y-1.5 sm:space-y-0 sm:flex sm:items-center sm:justify-end sm:gap-3";
+  const renderActionButtons = () => (
+    <>
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end sm:gap-3">
+        <Button
+          variant="outline"
+          onClick={handlePreviousStep}
+          disabled={isFirstStep}
+          className="w-full sm:w-auto sm:px-6"
+        >
+          {t("actions.previous", "Previous")}
+        </Button>
+        {!isLastStep ? (
+          <Button onClick={handleNextStep} className="w-full sm:w-auto sm:px-8">
+            {t("actions.next", "Next")}
+          </Button>
+        ) : (
+          <Button
+            onClick={handleNextStep}
+            disabled={isCompleting}
+            aria-busy={isCompleting}
+            className="w-full sm:w-auto sm:px-8"
+          >
+            {isCompleting
+              ? t("actions.finishing", "Finishing…")
+              : t("actions.finish", "Finish")}
+          </Button>
+        )}
+      </div>
+      {isEditing && state.meta.currentStep !== "summary" ? (
+        <Button
+          variant="secondary"
+          onClick={handleReview}
+          className="w-full sm:w-auto sm:px-6"
+        >
+          {t("actions.reviewSummary", "Review summary")}
+        </Button>
+      ) : null}
+    </>
+  );
 
   const currentStepConfig = PACKAGE_CREATION_STEPS[currentIndex];
   const currentStepLabel =
@@ -337,9 +380,9 @@ export const PackageCreationWizard = ({
           </div>
         </aside>
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <div className="border-b border-slate-200 bg-white/90 px-3 py-3 backdrop-blur lg:hidden">
-            <Collapsible open={mobileStepsOpen} onOpenChange={setMobileStepsOpen}>
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <div className="border-b border-slate-200 bg-white/90 px-3 py-3 backdrop-blur lg:hidden">
+              <Collapsible open={mobileStepsOpen} onOpenChange={setMobileStepsOpen}>
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -388,53 +431,20 @@ export const PackageCreationWizard = ({
             </Collapsible>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-2 py-5 sm:px-6 sm:py-10 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="mx-auto w-full max-w-3xl space-y-3 sm:space-y-6">
-              <div className="space-y-1.5 sm:space-y-0 sm:flex sm:items-center sm:justify-end sm:gap-3">
-                <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end sm:gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={handlePreviousStep}
-                    disabled={isFirstStep}
-                    className="w-full sm:w-auto sm:px-6"
-                  >
-                    {t("actions.previous", "Previous")}
-                  </Button>
-                  {!isLastStep ? (
-                    <Button
-                      onClick={handleNextStep}
-                      className="w-full sm:w-auto sm:px-8"
-                    >
-                      {t("actions.next", "Next")}
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={handleNextStep}
-                      disabled={isCompleting}
-                      aria-busy={isCompleting}
-                      className="w-full sm:w-auto sm:px-8"
-                    >
-                      {isCompleting
-                        ? t("actions.finishing", "Finishing…")
-                        : t("actions.finish", "Finish")}
-                    </Button>
-                  )}
-                </div>
-                {isEditing && state.meta.currentStep !== "summary" ? (
-                  <Button
-                    variant="secondary"
-                    onClick={handleReview}
-                    className="w-full sm:w-auto sm:px-6"
-                  >
-                    {t("actions.reviewSummary", "Review summary")}
-                  </Button>
-                ) : null}
-              </div>
+          <div
+            ref={scrollContainerRef}
+            className="flex-1 overflow-y-auto px-2 py-5 sm:px-6 sm:py-10 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            <div className="mx-auto w-full max-w-3xl space-y-3 sm:space-y-6 pb-10">
+              <div className={actionLayoutClass}>{renderActionButtons()}</div>
               <div
                 key={state.meta.currentStep}
                 className="animate-in fade-in slide-in-from-bottom-3 rounded-3xl border border-slate-200/70 bg-white/95 p-4 shadow-xl shadow-slate-900/5 backdrop-blur transition-all duration-300 ease-out sm:p-6"
               >
                 <CurrentStepComponent />
+              </div>
+              <div className="sticky bottom-0 z-10 pb-4 pt-4">
+                <div className={actionLayoutClass}>{renderActionButtons()}</div>
               </div>
             </div>
           </div>

@@ -56,6 +56,7 @@ export const SessionPlanningWizard = ({
   const [visitedSteps, setVisitedSteps] = useState<
     Set<SessionPlanningStepId>
   >(() => new Set());
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const rawIndex = useMemo(
     () =>
@@ -286,6 +287,48 @@ export const SessionPlanningWizard = ({
     if (meta.currentStep === "summary") return;
     goToStep(summaryIndex);
   };
+  const actionLayoutClass =
+    "space-y-1.5 sm:space-y-0 sm:flex sm:items-center sm:justify-end sm:gap-3";
+  const renderActionButtons = () => (
+    <>
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end sm:gap-3">
+        <Button
+          variant="outline"
+          onClick={() => goToStep(Math.max(0, currentIndex - 1))}
+          disabled={isFirstStep}
+          className="w-full sm:w-auto sm:px-6"
+        >
+          {t("wizard.back")}
+        </Button>
+        {!isLastStep ? (
+          <Button
+            onClick={handleNextStep}
+            className="w-full sm:w-auto sm:px-8"
+          >
+            {t("wizard.next")}
+          </Button>
+        ) : (
+          <Button
+            onClick={onComplete}
+            disabled={isCompleting}
+            aria-busy={isCompleting}
+            className="w-full sm:w-auto sm:px-8"
+          >
+            {isCompleting ? t("wizard.confirming") : t("wizard.confirm")}
+          </Button>
+        )}
+      </div>
+      {state.meta.mode === "edit" && meta.currentStep !== "summary" ? (
+        <Button
+          variant="secondary"
+          onClick={handleReview}
+          className="w-full sm:w-auto sm:px-6"
+        >
+          {t("wizard.review")}
+        </Button>
+      ) : null}
+    </>
+  );
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-slate-50 lg:p-0">
@@ -373,57 +416,33 @@ export const SessionPlanningWizard = ({
             </Collapsible>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-2 py-5 sm:px-6 sm:py-10 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="mx-auto w-full max-w-3xl space-y-3 sm:space-y-6">
-              <div className="space-y-1.5 sm:space-y-0 sm:flex sm:items-center sm:justify-end sm:gap-3">
-                <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end sm:gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => goToStep(Math.max(0, currentIndex - 1))}
-                    disabled={isFirstStep}
-                    className="w-full sm:w-auto sm:px-6"
-                  >
-                    {t("wizard.back")}
-                  </Button>
-                  {!isLastStep ? (
-                    <Button
-                      onClick={handleNextStep}
-                      className="w-full sm:w-auto sm:px-8"
-                    >
-                      {t("wizard.next")}
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={onComplete}
-                      disabled={isCompleting}
-                      aria-busy={isCompleting}
-                      className="w-full sm:w-auto sm:px-8"
-                    >
-                      {isCompleting
-                        ? t("wizard.confirming")
-                        : t("wizard.confirm")}
-                    </Button>
-                  )}
-                </div>
-                {state.meta.mode === "edit" && meta.currentStep !== "summary" ? (
-                  <Button
-                    variant="secondary"
-                    onClick={handleReview}
-                    className="w-full sm:w-auto sm:px-6"
-                  >
-                    {t("wizard.review")}
-                  </Button>
-                ) : null}
-              </div>
+          <div
+            ref={scrollContainerRef}
+            className="flex-1 overflow-y-auto px-2 py-5 sm:px-6 sm:py-10 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            <div className="mx-auto w-full max-w-3xl space-y-3 sm:space-y-6 pb-10">
+              <div className={actionLayoutClass}>{renderActionButtons()}</div>
               <div
                 key={meta.currentStep}
                 className="animate-in fade-in slide-in-from-bottom-3 rounded-3xl border border-slate-200/70 bg-white/95 p-4 shadow-xl shadow-slate-900/5 backdrop-blur transition-all duration-300 ease-out sm:p-6"
               >
                 {meta.currentStep === "project" ? (
-                  <ProjectStep onContinue={() => goToStep(Math.min(SESSION_PLANNING_STEPS.length - 1, currentIndex + 1))} />
+                  <ProjectStep
+                    onContinue={() =>
+                      goToStep(
+                        Math.min(
+                          SESSION_PLANNING_STEPS.length - 1,
+                          currentIndex + 1
+                        )
+                      )
+                    }
+                  />
                 ) : (
                   <CurrentStepComponent />
                 )}
+              </div>
+              <div className="sticky bottom-0 z-10 pb-4 pt-4">
+                <div className={actionLayoutClass}>{renderActionButtons()}</div>
               </div>
             </div>
           </div>

@@ -778,8 +778,6 @@
         "premiumActivated": "Activated {{date}}",
         "planActive": "Active membership",
         "suspendedTitle": "Access suspended",
-        "suspendedReason": "Reason: {{reason}}",
-        "suspendedNoReason": "Suspension reason not provided",
         "suspendedDate": "Suspended on {{date}}",
         "trialExpired": "Trial expired",
         "locked": "Access locked — upgrade required",

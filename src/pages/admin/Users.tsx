@@ -239,11 +239,6 @@ export default function AdminUsers() {
                 <p className="text-sm font-semibold text-destructive">
                   {t("admin.users.table.suspendedTitle")}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  {user.manualFlagReason
-                    ? t("admin.users.table.suspendedReason", { reason: user.manualFlagReason })
-                    : t("admin.users.table.suspendedNoReason")}
-                </p>
                 {suspendedAtLabel ? (
                   <p className="text-xs text-muted-foreground">
                     {t("admin.users.table.suspendedDate", {

@@ -43,6 +43,12 @@ const normalizeSettings = (
   settings: CachedOrganizationSettings | null
 ): OrganizationSettings | null => {
   if (!settings) return null;
+  const fallbackTimeFormat =
+    typeof window !== "undefined" ? detectBrowserHourFormat() : "24-hour";
+  const normalizedTimeFormat =
+    settings.time_format === "12-hour" || settings.time_format === "24-hour"
+      ? settings.time_format
+      : fallbackTimeFormat;
   const socialChannels =
     (settings.social_channels as Record<string, SocialChannel> | null) ||
     DEFAULT_SOCIAL_CHANNELS;
@@ -84,6 +90,7 @@ const normalizeSettings = (
 
   return {
     ...settings,
+    time_format: normalizedTimeFormat,
     socialChannels,
     taxProfile,
     preferred_project_types: preferredProjectTypes,

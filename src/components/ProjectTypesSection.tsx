@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useProjectTypes } from "@/hooks/useOrganizationData";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useTranslation } from "react-i18next";
 import { SettingsTwoColumnSection } from "@/components/settings/SettingsSections";
@@ -20,6 +21,7 @@ interface ProjectType {
   is_default: boolean;
   created_at: string;
   updated_at: string;
+  template_slug: string | null;
 }
 
 const ProjectTypesSection = () => {
@@ -29,7 +31,20 @@ const ProjectTypesSection = () => {
   const toast = useI18nToast();
   const { activeOrganizationId, loading: orgLoading } = useOrganization();
   const { data: types = [], isLoading, refetch } = useProjectTypes();
+  const { settings: orgSettings } = useOrganizationSettings();
   const { t } = useTranslation("forms");
+  const preferredSlugs = orgSettings?.preferred_project_types ?? [];
+  const displayTypes = useMemo(() => {
+    if (!types.length) return [];
+    if (!preferredSlugs.length) return types;
+    const selected = new Set(preferredSlugs);
+    return types.filter((type) => {
+      if (!type.template_slug) {
+        return true;
+      }
+      return selected.has(type.template_slug);
+    });
+  }, [types, preferredSlugs]);
 
   const createDefaultTypes = useCallback(async () => {
     try {
@@ -133,7 +148,7 @@ const ProjectTypesSection = () => {
               {t("project_types.description")}
             </p>
           </div>
-          {types.length === 0 ? (
+          {displayTypes.length === 0 ? (
             <div className="flex flex-col items-center gap-3 text-center text-sm text-muted-foreground">
               <p>
                 {t("project_types.empty_state", {
@@ -147,7 +162,7 @@ const ProjectTypesSection = () => {
             </div>
           ) : (
             <div className="flex flex-wrap gap-3">
-              {types.map((type) => (
+              {displayTypes.map((type) => (
                 <button
                   key={type.id}
                   type="button"

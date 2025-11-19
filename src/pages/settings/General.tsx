@@ -20,7 +20,7 @@ import { OnboardingTutorial, TutorialStep } from "@/components/shared/Onboarding
 import { SocialChannelsSection } from "@/components/settings/SocialChannelsSection";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
-import { detectBrowserTimezone } from "@/lib/dateFormatUtils";
+import { detectBrowserTimezone, detectBrowserHourFormat } from "@/lib/dateFormatUtils";
 import { emailSchema, phoneSchema } from "@/lib/validation";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
@@ -102,6 +102,9 @@ export default function General() {
     }
   }, [onboardingProfileStepActive, currentStepInfo?.id, tutorialDismissed]);
   
+  const browserTimezone = useMemo(() => detectBrowserTimezone(), []);
+  const browserHourFormat = useMemo(() => detectBrowserHourFormat(), []);
+
   // Branding section state
   const brandingSection = useSettingsCategorySection({
     sectionId: "branding",
@@ -135,8 +138,8 @@ export default function General() {
     autoSave: true,
     initialValues: {
       dateFormat: settings?.date_format || "DD/MM/YYYY",
-      timeFormat: settings?.time_format || "12-hour",
-      timezone: settings?.timezone || detectBrowserTimezone()
+      timeFormat: settings?.time_format || browserHourFormat,
+      timezone: settings?.timezone || browserTimezone
     },
     onSave: async (values) => {
       const updates = {
@@ -207,7 +210,6 @@ export default function General() {
   ];
 
   // Update form values when settings load
-  const browserTimezone = useMemo(() => detectBrowserTimezone(), []);
   const setBrandingValues = brandingSection.setValues;
   const setRegionalValues = regionalSection.setValues;
 
@@ -216,7 +218,7 @@ export default function General() {
   const businessPhoneSetting = settings?.phone ?? "";
   const brandColorSetting = settings?.primary_brand_color ?? "#1EB29F";
   const dateFormatSetting = settings?.date_format ?? "DD/MM/YYYY";
-  const timeFormatSetting = settings?.time_format ?? "12-hour";
+  const timeFormatSetting = settings?.time_format ?? browserHourFormat;
   const timezoneSetting = settings?.timezone ?? browserTimezone;
 
   useEffect(() => {

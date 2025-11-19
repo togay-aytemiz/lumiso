@@ -14,7 +14,7 @@ const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   globalEnabled: true,
   scheduledTime: "09:00",
   dailySummaryEnabled: true,
-  projectMilestoneEnabled: true,
+  projectMilestoneEnabled: false,
 };
 
 const notificationSettingsQueryKey = (userId?: string | null) =>

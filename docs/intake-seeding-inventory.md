@@ -54,7 +54,7 @@ This note captures **everything that `process_intake_seed` currently writes** af
 | --- | --- | --- | --- | --- |
 | planned | Planned | Planlandı | `#6B7280` / `#4B5563` | active (initial, system required). |
 | proposal | Proposal Sent | Teklif Gönderildi | `#FBBF24` | active. |
-| contract | Contract Signed | Sözleşme İmzalandı | `#22C55E` | active. |
+| contract | Contract Signed | Sözleşme İmzalandı | `#3B82F6` | active. |
 | in_progress | In Progress | Devam Ediyor | `#A855F7` | active. |
 | completed | Completed | Tamamlandı | `#16A34A` | completed. |
 | cancelled | Cancelled | İptal | `#DC2626` | cancelled. |
@@ -64,7 +64,6 @@ This note captures **everything that `process_intake_seed` currently writes** af
 | Slug | EN Label | TR Label | Color | Lifecycle |
 | --- | --- | --- | --- | --- |
 | planned | Planned | Planlandı | `#6B7280` / `#4B5563` | active (initial + `is_system_initial`). |
-| scheduled | Scheduled | Planlandı | `#0EA5E9` | active. |
 | preparing | Preparing | Hazırlık | `#FACC15` | active. |
 | in_progress | In Progress | Çekim Sürüyor | `#8B5CF6` | active. |
 | completed | Completed | Tamamlandı | `#22C55E` | completed. |
@@ -93,9 +92,10 @@ This note captures **everything that `process_intake_seed` currently writes** af
 
 ### Packages (`default_package_templates`)
 - Function: `ensure_default_packages_for_org(owner_uuid, org_id)` (same migration).
-- Before inserting, it ensures services exist and maps template line items to the org’s service IDs. `default_add_ons` collects any line items with role `addon`.
+- Locale detection now normalizes the browser language (e.g. `tr-TR` → `tr`) so Turkish copy is seeded whenever the org prefers Turkish.
+- Before inserting, it ensures services exist and maps template line items to the org’s service IDs. If a template service is missing it is created on the fly so packages always reference the catalog. `default_add_ons` collects any line items with role `addon`.
 - Delivery settings stay disabled (empty `delivery_methods`, no photo-count estimates) to mirror the “no switch toggled” requirement coming from the UI.
-- `pricing_metadata` encodes deposit guidance pulled through onboarding: `wedding_story` carries a 40 % base deposit suggestion, `mini_lifestyle` carries 30 %.
+- `pricing_metadata` encodes deposit guidance pulled through onboarding: `wedding_story` carries a 40 % base deposit suggestion, `mini_lifestyle` carries 30 %, and the computed deposit amount is stored so package cards surface the same numbers shown inside the builder.
 
 | Slug | EN Name | TR Name | Price | Intended Types | Contents |
 | --- | --- | --- | --- | --- | --- |
@@ -111,12 +111,12 @@ This note captures **everything that `process_intake_seed` currently writes** af
 
 ### Message templates (`default_message_template_templates`)
 - Function: `ensure_default_message_templates(owner_uuid, org_id)` (`20260222121500_message_workflow_templates.sql` + placeholder fix `20260222155000`).
-- Blocks now follow the template-builder schema and use single-brace placeholders (`{lead_name}`, `{session_date}`, etc.).
+- Blocks now follow the template-builder schema and use single-brace placeholders (`{lead_name}`, `{session_date}`, etc.). Each confirmation/reminder ships with a Session Details block that only shows the name, type, date, time, and notes toggles so the default template isn’t cluttered with other switches.
 
 | Slug | EN Name / Subject | TR Name / Subject | Placeholders | Body Highlights |
 | --- | --- | --- | --- | --- |
-| session_confirmation | “Session Confirmation” / “Your session is booked for {session_date}” | “Çekim Onayı” / “{session_date} tarihli çekiminiz onaylandı” | `{lead_name, session_date, session_time, session_location}` | Friendly confirmation text with location + reply CTA. |
-| session_reminder | “Session Reminder (3 days)” / “Reminder: session on {session_date}” | “Çekim Hatırlatıcısı (3 gün)” / “{session_date} tarihli çekiminiz yaklaşıyor” | `{lead_name, session_date, session_time}` | Reminder to confirm timing; TR copy mirrors EN tone. |
+| session_confirmation | “Session Scheduled Confirmation” / “Your session is booked for {session_date}” | “Seans Planlandı Onayı” / “{session_date} tarihli çekiminiz onaylandı” | `{lead_name, session_name, session_date, session_time, session_type, session_notes}` | Intro text + localized Session Details block with the required switches enabled. |
+| session_reminder | “Session Reminder (3 days)” / “Reminder: session on {session_date}” | “Seans Hatırlatıcısı (3 gün)” / “{session_date} tarihli çekiminiz yaklaşıyor” | `{session_name, session_date, session_time, session_type, session_notes}` | Light reminder copy followed by the same Session Details block. |
 
 ### Workflow seeds
 
@@ -125,13 +125,11 @@ This note captures **everything that `process_intake_seed` currently writes** af
 
 | Slug | Name | Trigger | Conditions | Steps |
 | --- | --- | --- | --- | --- |
-| session_confirmation | Auto-confirm session / Çekim Onayı Otomasyonu | `project_status_changed` | `target_status_slug = 'planned'` | Single `send_notification` step referencing `session_confirmation` template via email. |
-| session_reminder_workflow | Reminder 3 days before / 3 Gün Önce Hatırlatma | `session_scheduled` | `offset_hours = 72` | Single `send_notification` step referencing `session_reminder` template via email. |
+| session_confirmation | Session Scheduled Confirmation / Seans Planlandı Onayı | `session_scheduled` | — | Single `send_notification` step referencing `session_confirmation` template via email. |
+| session_reminder_workflow | Session Reminder (3 days) / Seans Hatırlatıcısı (3 gün) | `session_reminder` | `reminder_hours = 72` | Single `send_notification` step referencing `session_reminder` template via email. |
 
-**Legacy reminder workflows (`ensure_default_session_reminder_workflows`, `20250909194528_a6d29024….sql`):**
-- Still runs (called before template workflows). Only seeds when no existing `trigger_type = 'session_reminder'` rows.
-  - *24-Hour Session Reminder*: trigger `session_reminder` with `{"reminder_hours":24}`, sends email via the `session_reminder` template.
-  - *2-Hour Session Reminder*: same trigger with `{"reminder_hours":2}`, sends SMS + WhatsApp through the same template.
+**Dedicated reminder workflow (`ensure_default_session_reminder_workflows`, `20260322120000_onboarding_polish.sql`):**
+- Seeds a single `session_reminder` workflow (email only) that fires 72 hours before the session, so the Workflow list only shows the confirmation + 3-day reminder pair.
 
 ### Other defaults touched indirectly
 - `ensure_default_message_templates` and `ensure_default_session_reminder_workflows` are called before workflows to guarantee dependent assets exist.

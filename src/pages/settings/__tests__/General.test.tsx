@@ -95,6 +95,7 @@ jest.mock("@/contexts/OnboardingContext", () => ({
 
 jest.mock("@/lib/dateFormatUtils", () => ({
   detectBrowserTimezone: () => "UTC",
+  detectBrowserHourFormat: () => "24-hour",
 }));
 
 jest.mock("react-i18next", () => ({

@@ -111,12 +111,12 @@ This note captures **everything that `process_intake_seed` currently writes** af
 
 ### Message templates (`default_message_template_templates`)
 - Function: `ensure_default_message_templates(owner_uuid, org_id)` (`20260222121500_message_workflow_templates.sql` + placeholder fix `20260222155000`).
-- Blocks now follow the template-builder schema and use single-brace placeholders (`{lead_name}`, `{session_date}`, etc.). Each confirmation/reminder ships with a Session Details block that only shows the name, type, date, time, and notes toggles so the default template isn’t cluttered with other switches.
+- Blocks now follow the template-builder schema and use single-brace placeholders (`{lead_name}`, `{session_date}`, etc.). Each confirmation/reminder ships with a Session Details block that only shows the name, type, date, time, notes, and location toggles so the default template isn’t cluttered with other switches.
 
 | Slug | EN Name / Subject | TR Name / Subject | Placeholders | Body Highlights |
 | --- | --- | --- | --- | --- |
-| session_confirmation | “Session Scheduled Confirmation” / “Your session is booked for {session_date}” | “Seans Planlandı Onayı” / “{session_date} tarihli çekiminiz onaylandı” | `{lead_name, session_name, session_date, session_time, session_type, session_notes}` | Intro text + localized Session Details block with the required switches enabled. |
-| session_reminder | “Session Reminder (3 days)” / “Reminder: session on {session_date}” | “Seans Hatırlatıcısı (3 gün)” / “{session_date} tarihli çekiminiz yaklaşıyor” | `{session_name, session_date, session_time, session_type, session_notes}` | Light reminder copy followed by the same Session Details block. |
+| session_confirmation | “Session Scheduled Confirmation” / “Your session is booked for {session_date}” | “Seans Planlandı Onayı” / “{session_date} tarihli çekiminiz onaylandı” | `{lead_name, session_name, session_date, session_time, session_type, session_notes, session_location}` | Intro text + localized Session Details block with the required switches enabled. |
+| session_reminder | “Session Reminder (3 days)” / “Reminder: session on {session_date}” | “Seans Hatırlatıcısı (3 gün)” / “{session_date} tarihli çekiminiz yaklaşıyor” | `{session_name, session_date, session_time, session_type, session_notes, session_location}` | Light reminder copy followed by the same Session Details block. |
 
 ### Workflow seeds
 

@@ -4,7 +4,6 @@ import {
   Activity,
   AlertCircle,
   AlertTriangle,
-  ArrowRight,
   Briefcase,
   Calendar as CalendarIcon,
   CheckCircle2,
@@ -19,6 +18,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { formatTime, getUserLocale } from "@/lib/utils";
 import { useDashboardTranslation } from "@/hooks/useTypedTranslation";
 import { ADD_ACTION_EVENTS, type AddActionType, type AddActionEventDetail } from "@/constants/addActionEvents";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
@@ -33,6 +33,7 @@ interface DashboardDailyFocusProps {
   activities: ActivityRow[];
   loading: boolean;
   userName?: string | null;
+  inactiveLeadCount: number;
 }
 
 type TimelineItem =
@@ -61,8 +62,6 @@ type TimelineItem =
     };
 
 type DaySegment = "night" | "morning" | "midday" | "evening";
-
-const STALE_STATUSES = new Set(["contacted", "qualified", "proposal_sent"]);
 
 const parseTimeToMinutes = (timeString: string) => {
   const [hours, minutes] = timeString.split(":").map((value) => parseInt(value, 10));
@@ -157,10 +156,12 @@ const DashboardDailyFocus = ({
   sessions,
   activities,
   loading,
-  userName
+  userName,
+  inactiveLeadCount
 }: DashboardDailyFocusProps) => {
   const [now, setNow] = useState(new Date());
   const { t, i18n } = useDashboardTranslation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 60_000);
@@ -292,16 +293,6 @@ const DashboardDailyFocus = ({
     );
   }, [allDayLabel, hasScheduleItems, leadLookup, nowDisplayTime, nowMinutes, todayTasks, todaysSessions]);
 
-  const inactiveLeads = useMemo(() => {
-    return leads.filter((lead) => {
-      const normalizedStatus = lead.status?.toLowerCase().replace(/\s+/g, "_");
-      if (!STALE_STATUSES.has(normalizedStatus)) return false;
-      const updatedAt = new Date(lead.updated_at);
-      const diffDays = Math.floor((now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60 * 24));
-      return diffDays >= 3;
-    });
-  }, [leads, now]);
-
   const greeting = useMemo(() => {
     if (daySegment === "midday" && isTurkish) {
       if (middayVariants.length > 0) {
@@ -337,6 +328,23 @@ const DashboardDailyFocus = ({
       cancelable: true
     });
     window.dispatchEvent(event);
+  };
+
+  const goToReminders = (params: Record<string, string>) => {
+    const search = new URLSearchParams(params);
+    navigate(`/reminders?${search.toString()}`);
+  };
+
+  const handleOverdueClick = () => {
+    goToReminders({ filter: "overdue" });
+  };
+
+  const handleDueTodayClick = () => {
+    goToReminders({ filter: "today", hideOverdue: "1" });
+  };
+
+  const handleInactiveLeadsClick = () => {
+    navigate("/leads");
   };
 
   if (loading) {
@@ -424,7 +432,11 @@ const DashboardDailyFocus = ({
           )}
 
           <div className="space-y-3 mt-auto">
-            <button className="w-full group bg-slate-900/40 backdrop-blur-sm border border-white/5 hover:bg-white/10 hover:border-rose-500/30 rounded-xl p-4 flex items-center justify-between text-left">
+            <button
+              type="button"
+              onClick={handleOverdueClick}
+              className="w-full group bg-slate-900/40 backdrop-blur-sm border border-white/5 hover:bg-white/10 hover:border-rose-500/30 rounded-xl p-4 flex items-center justify-between text-left"
+            >
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
                   <AlertCircle className="w-5 h-5" />
@@ -436,32 +448,46 @@ const DashboardDailyFocus = ({
                   </div>
                 </div>
               </div>
-              <ArrowRight className="w-5 h-5 text-slate-600 group-hover:text-white transition-all" />
+              <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-white transition-all" />
             </button>
 
             <div className="grid grid-cols-2 gap-3">
-              <button className="w-full group bg-slate-900/40 backdrop-blur-sm border border-white/5 hover:bg-white/10 hover:border-amber-500/30 rounded-xl p-3 flex items-center gap-3 text-left">
-                <div className="w-9 h-9 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                  <AlertTriangle className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-lg font-bold text-white leading-none mb-1">{inactiveLeads.length}</div>
-                  <div className="text-[10px] font-bold text-amber-400/80 uppercase tracking-wider truncate">
-                    {t("daily_focus.inactive_leads")}
+              <button
+                type="button"
+                onClick={handleInactiveLeadsClick}
+                className="w-full group bg-slate-900/40 backdrop-blur-sm border border-white/5 hover:bg-white/10 hover:border-amber-500/30 rounded-xl p-3 flex items-center justify-between text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                  <div className="text-lg font-bold text-white leading-none mb-1">{inactiveLeadCount}</div>
+                    <div className="text-[10px] font-bold text-amber-400/80 uppercase tracking-wider truncate">
+                      {t("daily_focus.inactive_leads")}
+                    </div>
                   </div>
                 </div>
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-all" />
               </button>
 
-              <button className="w-full group bg-slate-900/40 backdrop-blur-sm border border-white/5 hover:bg-white/10 hover:border-indigo-500/30 rounded-xl p-3 flex items-center gap-3 text-left">
-                <div className="w-9 h-9 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-                  <CheckCircle2 className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-lg font-bold text-white leading-none mb-1">{todayTasks.length}</div>
-                  <div className="text-[10px] font-bold text-indigo-400/80 uppercase tracking-wider truncate">
-                    {t("daily_focus.due_today")}
+              <button
+                type="button"
+                onClick={handleDueTodayClick}
+                className="w-full group bg-slate-900/40 backdrop-blur-sm border border-white/5 hover:bg-white/10 hover:border-indigo-500/30 rounded-xl p-3 flex items-center justify-between text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-lg font-bold text-white leading-none mb-1">{todayTasks.length}</div>
+                    <div className="text-[10px] font-bold text-indigo-400/80 uppercase tracking-wider truncate">
+                      {t("daily_focus.due_today")}
+                    </div>
                   </div>
                 </div>
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-all" />
               </button>
             </div>
           </div>
@@ -621,13 +647,11 @@ const DashboardDailyFocus = ({
             })
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center gap-5">
-              <div className="w-20 h-20 rounded-full bg-white/70 flex items-center justify-center shadow-inner ring-1 ring-white/60">
-                <img
-                  src="/timeline.png"
-                  alt={t("daily_focus.empty_alt")}
-                  className="w-10 h-10 object-contain"
-                />
-              </div>
+              <img
+                src="/timeline.png"
+                alt={t("daily_focus.empty_alt")}
+                className="w-14 h-14 object-contain opacity-90 drop-shadow-lg"
+              />
               <div className="space-y-2 max-w-md">
                 <h3 className="text-xl font-bold text-slate-800">{t("daily_focus.empty_title")}</h3>
                 <p className="text-slate-500 text-sm">{t("daily_focus.empty_subtitle")}</p>
@@ -655,7 +679,7 @@ const DashboardDailyFocus = ({
                 <Button
                   type="button"
                   variant="surface"
-                  className="flex-1 sm:flex-none rounded-full bg-indigo-600 text-white shadow-md hover:bg-indigo-500"
+                  className="flex-1 sm:flex-none rounded-full !bg-indigo-600 !text-white shadow-md hover:!bg-indigo-500"
                   onClick={() => triggerAddAction("session")}
                 >
                   {t("daily_focus.cta_session")}

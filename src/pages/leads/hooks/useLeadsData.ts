@@ -784,9 +784,6 @@ export function useLeadsData({
       setTotalCount(count);
       lastFetchedPageRef.current = page;
 
-      const since = new Date();
-      since.setDate(since.getDate() - 60);
-
       if (typeof window !== "undefined" && page === 1) {
         try {
           const cacheKey = `prefetch:leads:metrics:${organizationId}`;
@@ -816,8 +813,7 @@ export function useLeadsData({
           .select(
             `id, created_at, updated_at, status, lead_statuses ( id, name, color, is_system_final )`
           )
-          .eq("organization_id", organizationId)
-          .gte("created_at", since.toISOString());
+          .eq("organization_id", organizationId);
         if (statusIds && statusIds.length) {
           metricsQuery = metricsQuery.in("status_id", statusIds);
         }

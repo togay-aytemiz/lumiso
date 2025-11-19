@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,8 +19,15 @@ import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import type { Database } from "@/integrations/supabase/types";
 import DashboardDailyFocus, { type SessionWithLead } from "@/components/DashboardDailyFocus";
 import { ProjectCreationWizardSheet } from "@/features/project-creation";
+import { countInactiveLeads } from "@/lib/leadLifecycle";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
+type LeadWithStatusRow = LeadRow & {
+  lead_statuses?: {
+    is_system_final: boolean | null;
+    name: string | null;
+  } | null;
+};
 type AppointmentRow = Database["public"]["Tables"]["appointments"]["Row"];
 type SessionRow = Database["public"]["Tables"]["sessions"]["Row"];
 type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
@@ -36,7 +43,7 @@ const getErrorMessage = (error: unknown): string => {
 };
 
 const CrmDashboard = () => {
-  const [leads, setLeads] = useState<LeadRow[]>([]);
+  const [leads, setLeads] = useState<LeadWithStatusRow[]>([]);
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [upcomingSessions, setUpcomingSessions] = useState<SessionWithLead[]>([]);
   const [activities, setActivities] = useState<ActivityRow[]>([]);
@@ -108,7 +115,7 @@ const CrmDashboard = () => {
       // Fetch leads
       const { data: leadsData, error: leadsError } = await supabase
         .from<LeadRow>('leads')
-        .select('*')
+        .select('*, lead_statuses ( is_system_final, name )')
         .order('created_at', { ascending: false });
 
       if (leadsError) throw leadsError;
@@ -163,7 +170,7 @@ const CrmDashboard = () => {
         setUpcomingSessions([]);
       }
 
-      setLeads(leadsData ?? []);
+      setLeads((leadsData as LeadWithStatusRow[]) ?? []);
       setAppointments(appointmentsData ?? []);
       setActivities(activitiesData ?? []);
     } catch (error) {
@@ -183,6 +190,8 @@ const CrmDashboard = () => {
 
   // Throttle refresh on window focus / visibility changes
   useThrottledRefetchOnFocus(fetchData, 30_000);
+
+  const inactiveLeadCount = useMemo(() => countInactiveLeads(leads, 14), [leads]);
 
   
 
@@ -262,6 +271,7 @@ const CrmDashboard = () => {
           activities={activities}
           loading={loading}
           userName={userName}
+          inactiveLeadCount={inactiveLeadCount}
         />
         {loading ? (
           <DashboardLoadingSkeleton />

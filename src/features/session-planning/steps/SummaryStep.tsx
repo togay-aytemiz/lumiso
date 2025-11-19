@@ -11,7 +11,6 @@ import { sanitizeNotesInput } from "../utils/sanitizeNotes";
 import { useSessionWorkflowCatalog } from "../context/sessionWorkflowContext";
 import type { WorkflowSummary } from "../context/sessionWorkflowTypes";
 import type { SessionPlanningNotifications } from "../types";
-import { Link } from "react-router-dom";
 import { useSessionPlanningOriginalState } from "../context/SessionPlanningOriginalStateContext";
 import { cn } from "@/lib/utils";
 
@@ -240,6 +239,9 @@ const NotificationPreview = ({
 }) => {
   const { t } = useTranslation("sessionPlanning");
   const { loading, reminderWorkflows, summaryEmailWorkflows, otherWorkflows } = useSessionWorkflowCatalog();
+  const openInNewTab = useCallback((url: string) => {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }, []);
 
   type WorkflowCategory = "reminder" | "summary" | "other";
   interface PreviewEntry {
@@ -391,63 +393,74 @@ const NotificationPreview = ({
     [t]
   );
 
-  return (
-    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-      <div className="space-y-1">
-        <h4 className="text-sm font-semibold text-amber-900">{t("summary.notifications.title")}</h4>
-        <p className="text-xs text-amber-800">{t("summary.notifications.subtitle")}</p>
-      </div>
-      {hasConfiguredWorkflows ? (
-        <div className="mt-4 space-y-3">
-          {items.map((item) => {
-            const enabled = notifications[item.key];
-            return (
-              <div
-                key={item.key}
-                className="flex flex-col gap-3 rounded-xl border border-amber-100 bg-white/70 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`mt-0.5 rounded-full p-2 ${item.iconClass}`}>{item.icon}</div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-amber-900">{item.label}</p>
-                    <p className="text-xs text-amber-800 leading-relaxed">{item.description}</p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between gap-3 sm:justify-end">
-                  <span className="text-xs font-medium uppercase tracking-wide text-amber-800">
-                    {t(enabled ? "summary.status.on" : "summary.status.off")}
-                  </span>
-                  <Switch
-                    checked={enabled}
-                    onCheckedChange={(checked) => onToggle(item.key, checked)}
-                    aria-label={t("summary.notifications.switchLabel", { notification: item.label })}
-                  />
-                </div>
-              </div>
-            );
-          })}
+  if (!hasConfiguredWorkflows) {
+    return (
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+        <div className="space-y-1">
+          <h4 className="text-sm font-semibold text-amber-900">{t("summary.notifications.title")}</h4>
+          <p className="text-xs text-amber-800">{t("summary.notifications.subtitle")}</p>
         </div>
-      ) : (
         <div className="mt-4 space-y-2 rounded-xl border border-amber-100 bg-white/70 p-4 text-sm text-amber-900">
           <p>{t("summary.notifications.noWorkflowsConfigured")}</p>
           <p className="text-xs text-amber-800">
             {t("summary.notifications.noWorkflowsInstructions")}
           </p>
           <div className="flex flex-wrap gap-4 text-xs font-semibold">
-            <Link
-              to="/workflows"
-              target="_blank"
-              rel="noreferrer"
+            <button
+              type="button"
+              onClick={() => openInNewTab("/workflows")}
               className="underline underline-offset-4 hover:text-amber-950"
             >
               {t("summary.notifications.manageLink")}
-            </Link>
-            <Link to="/templates" className="underline underline-offset-4 hover:text-amber-950">
+            </button>
+            <button
+              type="button"
+              onClick={() => openInNewTab("/templates")}
+              className="underline underline-offset-4 hover:text-amber-950"
+            >
               {t("summary.notifications.manageTemplatesLink")}
-            </Link>
+            </button>
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+      <div className="space-y-1">
+        <h4 className="text-sm font-semibold text-amber-900">{t("summary.notifications.title")}</h4>
+        <p className="text-xs text-amber-800">{t("summary.notifications.subtitle")}</p>
+      </div>
+      <div className="mt-4 space-y-3">
+        {items.map((item) => {
+          const enabled = notifications[item.key];
+          return (
+            <div
+              key={item.key}
+              className="flex flex-col gap-3 rounded-xl border border-amber-100 bg-white/70 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="flex items-start gap-3">
+                <div className={`mt-0.5 rounded-full p-2 ${item.iconClass}`}>{item.icon}</div>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-amber-900">{item.label}</p>
+                  <p className="text-xs text-amber-800 leading-relaxed">{item.description}</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-3 sm:justify-end">
+                <span className="text-xs font-medium uppercase tracking-wide text-amber-800">
+                  {t(enabled ? "summary.status.on" : "summary.status.off")}
+                </span>
+                <Switch
+                  checked={enabled}
+                  onCheckedChange={(checked) => onToggle(item.key, checked)}
+                  aria-label={t("summary.notifications.switchLabel", { notification: item.label })}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
       <div className="mt-4 space-y-2 text-xs leading-relaxed text-amber-900">
         <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">
           {t("summary.notifications.workflowHeading")}
@@ -500,23 +513,21 @@ const NotificationPreview = ({
         ))}
         <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] text-amber-900">
           <span>{t("summary.notifications.manageHelp")}</span>
-          <Link
-            to="/workflows"
-            target="_blank"
-            rel="noreferrer"
+          <button
+            type="button"
+            onClick={() => openInNewTab("/workflows")}
             className="font-semibold underline underline-offset-4 hover:text-amber-950"
           >
             {t("summary.notifications.manageLink")}
-          </Link>
+          </button>
           <span className="text-amber-700">•</span>
-          <Link
-            to="/templates"
-            target="_blank"
-            rel="noreferrer"
+          <button
+            type="button"
+            onClick={() => openInNewTab("/templates")}
             className="font-semibold underline underline-offset-4 hover:text-amber-950"
           >
             {t("summary.notifications.manageTemplatesLink")}
-          </Link>
+          </button>
         </div>
       </div>
     </div>

@@ -13,7 +13,7 @@ import GlobalSearch from "@/components/GlobalSearch";
 import { FilterBar } from "@/components/FilterBar";
 import { ListLoadingSkeleton } from "@/components/ui/loading-presets";
 import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ProjectSheetView } from "@/components/ProjectSheetView";
 import {
   ReminderTimelineCard,
@@ -87,6 +87,15 @@ const filterPillBadgeActiveClasses =
   "border-primary/30 bg-primary/15 text-primary";
 
 const INITIAL_REMINDER_BATCH = 25;
+const FILTER_OPTIONS: FilterType[] = [
+  "all",
+  "overdue",
+  "today",
+  "tomorrow",
+  "thisWeek",
+  "nextWeek",
+  "thisMonth",
+];
 
 // Legacy summary card removed in favor of shared <KpiCard /> component used across the app
 
@@ -177,6 +186,8 @@ const ReminderDetails = () => {
   const [showCompleted, setShowCompleted] = useState(false);
   const [hideOverdue, setHideOverdue] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const appliedInitialFiltersRef = useRef(false);
   const reminderLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const reminderLoadPendingRef = useRef(false);
   const prevLoadingRef = useRef(true);
@@ -257,6 +268,22 @@ const ReminderDetails = () => {
   useEffect(() => {
     setVisibleReminderCount(INITIAL_REMINDER_BATCH);
   }, [selectedFilter, hideOverdue]);
+
+  useEffect(() => {
+    if (appliedInitialFiltersRef.current) return;
+    const filterParam = searchParams.get("filter");
+    if (
+      filterParam &&
+      FILTER_OPTIONS.includes(filterParam as FilterType)
+    ) {
+      setSelectedFilter(filterParam as FilterType);
+    }
+    const hideParam = searchParams.get("hideOverdue");
+    if (hideParam && (hideParam === "1" || hideParam === "true")) {
+      setHideOverdue(true);
+    }
+    appliedInitialFiltersRef.current = true;
+  }, [searchParams]);
 
   const getLeadName = useCallback(
     (leadId: string) => {

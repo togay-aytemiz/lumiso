@@ -38,6 +38,13 @@ import { KpiCard } from "@/components/ui/kpi-card";
 import { getKpiIconPreset } from "@/components/ui/kpi-presets";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import {
+  CONVERTED_STATUS_KEYWORDS,
+  CLOSED_STATUS_KEYWORDS,
+  LOST_STATUS_KEYWORDS,
+  getLeadLastActivityMs,
+  isLeadClosedForLifecycle,
+} from "@/lib/leadLifecycle";
 
 type LeadStatusOption = {
   id: string;
@@ -310,26 +317,6 @@ const AllLeadsNew = () => {
     const inactiveThreshold = now - 14 * dayInMs;
     const inactivePreviousThreshold = now - 21 * dayInMs;
 
-    const normalizeStatus = (status: string | null | undefined) =>
-      (status ?? "").toLowerCase();
-
-    const toMs = (value: string | null | undefined) => {
-      if (!value) return null;
-      const date = new Date(value);
-      const ms = date.getTime();
-      return Number.isNaN(ms) ? null : ms;
-    };
-
-    const convertedKeywords = [
-      "booked",
-      "completed",
-      "won",
-      "converted",
-      "signed",
-    ];
-    const lostKeywords = ["lost", "canceled", "cancelled"];
-    const closedKeywords = ["closed", "finished"];
-
     let newCurrent = 0;
     let newPrevious = 0;
     let currentEligible = 0;
@@ -342,7 +329,7 @@ const AllLeadsNew = () => {
     let closedPrevious = 0;
 
     metricsLeads.forEach((lead) => {
-      const createdMs = toMs(lead.created_at);
+      const createdMs = getLeadLastActivityMs({ created_at: lead.created_at });
       if (createdMs != null) {
         if (createdMs >= startOfThisWeek) {
           newCurrent += 1;
@@ -351,22 +338,22 @@ const AllLeadsNew = () => {
         }
       }
 
-      const updatedMs = toMs(lead.updated_at) ?? createdMs;
+      const updatedMs = getLeadLastActivityMs(lead) ?? createdMs;
       if (updatedMs == null) {
         return;
       }
 
-      const statusName = normalizeStatus(lead.lead_statuses?.name ?? lead.status);
-      const isLost = lostKeywords.some((keyword) => statusName.includes(keyword));
+      const statusName = (lead.lead_statuses?.name ?? lead.status ?? "").toLowerCase();
+      const isLost = LOST_STATUS_KEYWORDS.some((keyword) => statusName.includes(keyword));
       const isCompleted = statusName.includes("completed");
-      const isConverted = convertedKeywords.some((keyword) =>
+      const isConverted = CONVERTED_STATUS_KEYWORDS.some((keyword) =>
         statusName.includes(keyword),
       );
       const isClosed =
         Boolean(lead.lead_statuses?.is_system_final) ||
         isLost ||
         isCompleted ||
-        closedKeywords.some((keyword) => statusName.includes(keyword)) ||
+        CLOSED_STATUS_KEYWORDS.some((keyword) => statusName.includes(keyword)) ||
         isConverted;
 
       if (updatedMs >= last30Start) {
@@ -391,10 +378,12 @@ const AllLeadsNew = () => {
         }
       }
 
-      if (!isCompleted && !isLost) {
-        if (updatedMs < inactiveThreshold) {
+      const isLifecycleClosed = isLeadClosedForLifecycle(lead);
+
+      if (!isLifecycleClosed) {
+        if (updatedMs <= inactiveThreshold) {
           inactiveCurrent += 1;
-          if (updatedMs < inactivePreviousThreshold) {
+          if (updatedMs <= inactivePreviousThreshold) {
             inactivePrevious += 1;
           }
         }

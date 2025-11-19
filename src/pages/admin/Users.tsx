@@ -227,6 +227,25 @@ export default function AdminUsers() {
         label: t("admin.users.table.columns.planTimeline"),
         sortable: true,
         render: (user) => {
+          if (user.status === "suspended") {
+            return (
+              <div className="space-y-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3">
+                <p className="text-sm font-semibold text-destructive">
+                  {t("admin.users.table.suspendedTitle")}
+                </p>
+                <p className="text-xs text-destructive">
+                  {user.manualFlagReason
+                    ? t("admin.users.table.suspendedReason", {
+                        reason: user.manualFlagReason,
+                      })
+                    : t("admin.users.table.suspendedNoReason")}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t("admin.users.table.suspendedInstruction")}
+                </p>
+              </div>
+            );
+          }
           if (user.status === "trial") {
             return (
               <div className="space-y-1">

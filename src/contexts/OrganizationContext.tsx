@@ -65,9 +65,12 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const fetchActiveOrganization = async () => {
+  const fetchActiveOrganization = useCallback(async (options?: { silent?: boolean }) => {
+    const skipLoadingState = options?.silent ?? false;
     try {
-      setLoading(true);
+      if (!skipLoadingState) {
+        setLoading(true);
+      }
       
       // Use the organization utils function
       const { getUserOrganizationId } = await import('@/lib/organizationUtils');
@@ -149,9 +152,11 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     } catch (error) {
       console.error('Error in fetchActiveOrganization:', error);
     } finally {
-      setLoading(false);
+      if (!skipLoadingState) {
+        setLoading(false);
+      }
     }
-  };
+  }, []);
 
   const refreshOrganization = async () => {
     await fetchActiveOrganization();
@@ -235,7 +240,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchActiveOrganization]);
 
   // Prefetch common organization-scoped data to speed up first paint across pages
   const prefetchOrgData = useCallback(async (orgId: string) => {
@@ -410,6 +415,49 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
       prefetchOrgData(activeOrganizationId);
     }
   }, [activeOrganizationId, prefetchOrgData]);
+
+  useEffect(() => {
+    if (!activeOrganizationId) {
+      return;
+    }
+
+    const channel = supabase
+      .channel(`org-membership:${activeOrganizationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'organizations',
+          filter: `id=eq.${activeOrganizationId}`,
+        },
+        (payload) => {
+          const relevantFields = [
+            'membership_status',
+            'manual_flag',
+            'manual_flag_reason',
+            'trial_started_at',
+            'trial_expires_at',
+            'trial_extended_by_days',
+            'premium_activated_at',
+            'premium_expires_at',
+          ] as const;
+
+          const hasRelevantChange = relevantFields.some((field) => {
+            return payload.old?.[field] !== payload.new?.[field];
+          });
+
+          if (hasRelevantChange) {
+            void fetchActiveOrganization({ silent: true });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeOrganizationId, fetchActiveOrganization]);
 
   return (
     <OrganizationContext.Provider

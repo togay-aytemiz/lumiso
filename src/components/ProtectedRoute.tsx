@@ -48,13 +48,13 @@ const ProtectedRoute = ({ disableLayout = false }: ProtectedRouteProps) => {
     return <Navigate to="/getting-started" replace />;
   }
 
-  const isMembershipLocked =
-    activeOrganization?.membership_status === "locked" ||
-    activeOrganization?.membership_access_blocked;
+  const membershipStatus = activeOrganization?.membership_status;
+  const shouldRedirectToBilling =
+    activeOrganization?.membership_access_blocked && membershipStatus !== "suspended";
   const billingSubscriptionPath = "/settings/billing/subscription";
 
   if (
-    isMembershipLocked &&
+    shouldRedirectToBilling &&
     !location.pathname.startsWith(billingSubscriptionPath)
   ) {
     return <Navigate to={billingSubscriptionPath} replace state={{ from: location.pathname }} />;

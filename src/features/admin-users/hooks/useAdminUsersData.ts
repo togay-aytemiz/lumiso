@@ -503,6 +503,7 @@ const fetchAdminAccounts = async ({
       membershipEventsRaw
     );
     const membershipResolution = resolveMembershipStatus(organization);
+    const manualFlagReason = organization.manual_flag_reason?.trim() || null;
     const status = membershipResolution.status;
     const planName = MEMBERSHIP_PLAN_LABELS[status] ?? "Trial";
     const trialEndsAt = membershipResolution.trialEndsAt;
@@ -609,7 +610,7 @@ const fetchAdminAccounts = async ({
       accountOwner: owner?.full_name ?? undefined,
       timezone: settings?.timezone ?? undefined,
       manualFlag: organization.manual_flag ?? false,
-      manualFlagReason: organization.manual_flag_reason ?? null,
+      manualFlagReason,
       business: {
         businessName: settings?.photography_business_name ?? organization.name,
         businessEmail: organizationEmail,

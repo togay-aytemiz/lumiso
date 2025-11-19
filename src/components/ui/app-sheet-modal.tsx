@@ -86,6 +86,11 @@ export function AppSheetModal({
 
   const handleOutsideInteraction = useCallback(
     (event: PointerDownOutsideEvent | FocusOutsideEvent) => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        event.preventDefault();
+        return;
+      }
+
       const target = getDismissableEventTarget(event);
       if (target?.closest('[role="dialog"],[role="alertdialog"]')) {
         event.preventDefault();

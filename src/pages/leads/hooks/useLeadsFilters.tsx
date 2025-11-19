@@ -63,6 +63,7 @@ interface UseLeadsFiltersResult {
   filtersConfig: AdvancedDataTableFiltersConfig;
   activeCount: number;
   isDirty: boolean;
+  setInactiveOnlyFilter: (value: boolean) => void;
 }
 
 const DEFAULT_STATE: LeadFiltersState = {
@@ -255,7 +256,6 @@ export function useLeadsFilters({
     draft,
     updateDraft,
     apply: commitDraft,
-    reset: resetDraft,
   } = useDraftFilters<LeadFiltersState>({
     initialState: initialFiltersState,
     isEqual: areLeadFiltersEqual,
@@ -463,20 +463,27 @@ export function useLeadsFilters({
     [requestAutoApply, setFieldFilter]
   );
 
-  const handleInactiveToggle = useCallback(
-    (checked: boolean) => {
+  const setInactiveOnlyFilter = useCallback(
+    (value: boolean) => {
       updateDraft((prev) => {
-        if (prev.inactiveOnly === checked) {
+        if (prev.inactiveOnly === value) {
           return prev;
         }
         return {
           ...prev,
-          inactiveOnly: checked,
+          inactiveOnly: value,
         };
       });
       requestAutoApply();
     },
     [requestAutoApply, updateDraft]
+  );
+
+  const handleInactiveToggle = useCallback(
+    (checked: boolean) => {
+      setInactiveOnlyFilter(checked);
+    },
+    [setInactiveOnlyFilter]
   );
 
   const autoOpenSections = useMemo(() => {
@@ -505,8 +512,13 @@ export function useLeadsFilters({
   }, [autoOpenSections]);
 
   const handleResetFilters = useCallback(() => {
-    resetDraft();
-  }, [resetDraft]);
+    updateDraft(() => ({
+      status: [],
+      customFields: {},
+      inactiveOnly: false,
+    }));
+    requestAutoApply();
+  }, [requestAutoApply, updateDraft]);
 
   const activeCount = useMemo(() => {
     let count = appliedState.status.length;
@@ -1018,5 +1030,6 @@ export function useLeadsFilters({
     filtersConfig,
     activeCount,
     isDirty: activeCount > 0,
+    setInactiveOnlyFilter,
   };
 }

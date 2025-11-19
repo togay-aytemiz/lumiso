@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Filter, FileDown, Loader2 } from "lucide-react";
@@ -188,7 +188,7 @@ const AllLeadsNew = () => {
   const { t } = useTranslation('pages');
   const { t: tCommon } = useTranslation('common');
   const { activeOrganizationId } = useOrganization();
-  const inactiveParam = searchParams.get("inactive") === "1";
+  const [initialInactiveFilter] = useState(() => searchParams.get("inactive") === "1");
 
   useEffect(() => {
     const handleAddLead = (event: Event) => {
@@ -217,9 +217,9 @@ const AllLeadsNew = () => {
     () => ({
       status: [],
       customFields: {},
-      inactiveOnly: inactiveParam,
+      inactiveOnly: initialInactiveFilter,
     }),
-    [inactiveParam]
+    [initialInactiveFilter]
   );
 
   const {
@@ -236,11 +236,34 @@ const AllLeadsNew = () => {
     state: filtersState,
     filtersConfig,
     activeCount: activeFilterCount,
+    setInactiveOnlyFilter,
   } = useLeadsFilters({
     statuses: leadStatuses,
     fieldDefinitions,
     initialState: initialFilterState,
   });
+
+  const tableSectionRef = useRef<HTMLElement | null>(null);
+
+  const scrollToTable = useCallback(() => {
+    if (tableSectionRef.current) {
+      const rect = tableSectionRef.current.getBoundingClientRect();
+      const offset = window.scrollY + rect.top - 80;
+      window.scrollTo({
+        top: Math.max(offset, 0),
+        behavior: "smooth",
+      });
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const handleInactiveMetricAction = useCallback(() => {
+    if (!filtersState.inactiveOnly) {
+      setInactiveOnlyFilter(true);
+    }
+    scrollToTable();
+  }, [filtersState.inactiveOnly, scrollToTable, setInactiveOnlyFilter]);
 
   const [page, setPage] = useState(1);
   const pageSize = 25;
@@ -615,15 +638,20 @@ const AllLeadsNew = () => {
   }, [fetchLeadStatuses]);
 
   useEffect(() => {
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      if (filtersState.inactiveOnly) {
-        next.set("inactive", "1");
-      } else {
-        next.delete("inactive");
-      }
-      return next;
-    }, { replace: true });
+    if (typeof window === "undefined") {
+      return;
+    }
+    const next = new URLSearchParams(window.location.search);
+    const hasParam = next.get("inactive") === "1";
+    if (filtersState.inactiveOnly) {
+      next.set("inactive", "1");
+    } else {
+      next.delete("inactive");
+    }
+    if (hasParam === filtersState.inactiveOnly) {
+      return;
+    }
+    setSearchParams(next, { replace: true });
   }, [filtersState.inactiveOnly, setSearchParams]);
 
   const handleSortChange = useCallback(
@@ -1014,14 +1042,7 @@ const AllLeadsNew = () => {
                     variant="ghost"
                     size="sm"
                     className="h-7 rounded-full px-3 text-xs font-semibold text-amber-600 hover:text-amber-700"
-                    onClick={() => {
-                      setFiltersState((prev) => ({
-                        ...prev,
-                        inactiveOnly: true,
-                      }));
-                      setSearchParams({ inactive: "1" });
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
+                    onClick={handleInactiveMetricAction}
                   >
                     {t('leads.kpis.noActivity.viewButton')}
                   </Button>
@@ -1071,7 +1092,7 @@ const AllLeadsNew = () => {
           )}
         </section>
 
-        <section>
+        <section ref={tableSectionRef}>
           {columnsLoading ? (
             <TableLoadingSkeleton />
           ) : (

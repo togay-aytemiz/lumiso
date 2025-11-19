@@ -208,7 +208,8 @@
       "noActivity": {
         "title": "No recent activity",
         "tooltip": "Clients with no updates in the last 14 days, excluding those marked as completed or lost. Follow up to keep your pipeline healthy.",
-        "trendAria": "Inactive clients changed by {{delta}} compared with the previous week ({{current}} vs {{previous}})."
+        "trendAria": "Inactive clients changed by {{delta}} compared with the previous week ({{current}} vs {{previous}}).",
+        "viewButton": "View"
       },
       "lost": {
         "title": "Lost / closed",

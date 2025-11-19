@@ -209,7 +209,8 @@
       "noActivity": {
         "title": "Etkin olmayan kişiler",
         "tooltip": "Son 14 günde güncellenmeyen kişiler; tamamlandı veya kaybedildi durumunda olanlar hariçtir. Pipeline'ı canlı tutmak için takip edin.",
-        "trendAria": "Pasif kişi sayısı önceki haftaya göre {{delta}} değişti ({{current}} / {{previous}})."
+        "trendAria": "Pasif kişi sayısı önceki haftaya göre {{delta}} değişti ({{current}} / {{previous}}).",
+        "viewButton": "Gör"
       },
       "lost": {
         "title": "Kaybedilen / kapanan",

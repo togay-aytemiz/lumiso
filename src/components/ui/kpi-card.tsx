@@ -148,6 +148,10 @@ export interface KpiCardProps
    */
   value: React.ReactNode;
   /**
+   * Optional inline action placed next to the KPI value (e.g., quick filter button).
+   */
+  action?: React.ReactNode;
+  /**
    * Supporting description text.
    */
   description?: React.ReactNode;
@@ -205,6 +209,7 @@ export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
       title,
       headingLevel = "h3",
       value,
+      action,
       description,
       progress,
       footer,
@@ -435,6 +440,7 @@ export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
                       )}
                     </Badge>
                   )}
+                  {action && <div className="flex-shrink-0">{action}</div>}
                 </div>
               </div>
             </div>

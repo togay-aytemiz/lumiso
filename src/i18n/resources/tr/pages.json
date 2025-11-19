@@ -2268,6 +2268,9 @@
     "channels": {
       "noChannels": "Kanal yok"
     },
+    "warnings": {
+      "missingTemplate": "Şablon seçilmedi. İş akışını düzenleyerek bir mesaj şablonu seçin."
+    },
     "health": {
       "unableToLoad": "İş akışı sağlık verileri yüklenemedi",
       "status": {

@@ -219,6 +219,12 @@ export default function Workflows() {
                 {workflow.description}
               </div>
             )}
+            {!workflow.template_id && (
+              <div className="mt-1 flex items-center gap-1 text-xs text-amber-600">
+                <AlertTriangle className="h-3 w-3" />
+                <span>{t("workflows.warnings.missingTemplate")}</span>
+              </div>
+            )}
           </div>
         ),
       },

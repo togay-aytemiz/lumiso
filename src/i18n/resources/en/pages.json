@@ -2264,6 +2264,9 @@
     "channels": {
       "noChannels": "No channels"
     },
+    "warnings": {
+      "missingTemplate": "Template not selected. Edit the workflow to choose a message template."
+    },
     "health": {
       "unableToLoad": "Unable to load workflow health data",
       "status": {

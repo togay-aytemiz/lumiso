@@ -1,4 +1,4 @@
--- Keep seeded workflows paused until a template is explicitly selected
+-- Reapply workflow activation safeguards with a fresh migration
 
 CREATE OR REPLACE FUNCTION public.ensure_default_workflows_for_org(owner_uuid uuid, org_id uuid)
 RETURNS void
@@ -95,7 +95,6 @@ BEGIN
 END;
 $function$;
 
--- Pause existing workflows that lack a selected template
 UPDATE public.workflows w
 SET is_active = false
 FROM public.workflow_steps ws

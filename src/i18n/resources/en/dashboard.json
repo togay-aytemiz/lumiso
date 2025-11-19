@@ -39,6 +39,52 @@
       "unknown_client": "Unknown Client"
     }
   },
+  "daily_focus": {
+    "greetings": {
+      "morning": "Good Morning",
+      "afternoon": "Good Afternoon",
+      "evening": "Good Evening",
+      "night": "Good Night",
+      "midday_default": "Hello",
+      "midday_variants": [
+        "Hello",
+        "Hi there",
+        "Welcome back",
+        "Good day",
+        "Great to see you",
+        "Ready to make progress",
+        "Hope your day is going smoothly",
+        "Let's keep the momentum going",
+        "Let's plan the rest of the day",
+        "Checking in",
+        "Hey there",
+        "Let's stay focused"
+      ]
+    },
+    "active_tasks": "You have <highlight>{{count}}</highlight> active tasks today.",
+    "up_next": "Up Next",
+    "session_fallback": "Session",
+    "status_fallback": "Scheduled",
+    "location_fallback": "To be decided",
+    "client_placeholder": "Client",
+    "more_sessions": "+{{count}} more sessions following",
+    "no_sessions_today": "No sessions scheduled for today.",
+    "overdue_items": "Overdue Items",
+    "inactive_leads": "Inactive Leads",
+    "due_today": "Due Today",
+    "schedule_heading": "Today's Schedule",
+    "schedule_summary": "{{sessions}} sessions · {{reminders}} reminders",
+    "now_label": "Now",
+    "payment_tag": "Payment",
+    "empty_title": "Plan the rest of your day",
+    "empty_subtitle": "You don’t have any sessions or reminders scheduled yet.",
+    "empty_description": "Start with a quick action below",
+    "empty_alt": "Timeline illustration",
+    "cta_lead": "Add Lead",
+    "cta_project": "Add Project",
+    "cta_session": "Schedule Session",
+    "all_day": "All Day"
+  },
   "buttons": {
     "add_lead": "Add Lead",
     "view_all": "View All",

@@ -4,11 +4,11 @@
     "subtitle": "Hoş geldiniz! Fotoğrafçılık işinizin genel görünümü"
   },
   "stats": {
-    "total_leads": "Toplam Müşteri Adayları",
+    "total_leads": "Toplam Kişi",
     "this_weeks_sessions": "Bu Haftanın Seansları",
-    "booked_leads": "Rezerve Edilen Müşteri Adayları",
-    "completed_leads": "Tamamlanan Müşteri Adayları", 
-    "lost_leads": "Kaybedilen Müşteri Adayları",
+    "booked_leads": "Rezerve Edilen Kişiler",
+    "completed_leads": "Tamamlanan Kişiler", 
+    "lost_leads": "Kaybedilen Kişiler",
     "this_week": "bu hafta",
     "this_month": "Bu ay",
     "ready_for_shoots": "Çekimlere hazır",
@@ -27,22 +27,69 @@
       "more_tasks": "daha fazla"
     },
     "recent_leads": {
-      "title": "Son Müşteri Adayları",
-      "description": "En son potansiyel müşterileriniz",
-      "no_leads": "Henüz müşteri adayı yok. Başlamak için ilk müşteri adayınızı ekleyin!",
+      "title": "Son Kişiler",
+      "description": "En yeni kişi kayıtlarınız",
+      "no_leads": "Henüz kişi yok. Başlamak için ilk kişiyi ekleyin!",
       "due_label": "Teslim"
     },
     "sessions": {
       "title": "Bu Haftanın Seansları",
       "description": "Bu hafta için planlanan seanslar",
       "no_sessions": "Yaklaşan seans yok",
-      "unknown_client": "Bilinmeyen Müşteri"
+      "unknown_client": "Bilinmeyen Kişi"
     }
   },
+  "daily_focus": {
+    "greetings": {
+      "morning": "Günaydın",
+      "afternoon": "İyi günler",
+      "evening": "İyi akşamlar",
+      "night": "İyi geceler",
+      "midday_default": "Merhaba",
+      "midday_variants": [
+        "Merhaba",
+        "İyi günler",
+        "Selam",
+        "Tekrar hoş geldin",
+        "Haydi işleri rayına oturtalım",
+        "Günün nasıl gidiyor",
+        "Enerjin çok iyi görünüyor",
+        "Hazırsan başlayalım",
+        "Bugün harika görünüyorsun",
+        "Hadi planları gözden geçirelim",
+        "Selam, devam edelim",
+        "Günümüze güç katmaya hazır mısın?",
+        "Hoş geldin, işlere dalalım"
+      ]
+    },
+    "active_tasks": "Bugün <highlight>{{count}}</highlight> aktif görevin var.",
+    "up_next": "Sıradaki",
+    "session_fallback": "Seans",
+    "status_fallback": "Planlandı",
+    "location_fallback": "Belirlenecek",
+    "client_placeholder": "Kişi",
+    "more_sessions": "+{{count}} seans daha",
+    "no_sessions_today": "Bugün planlanmış seans yok.",
+    "overdue_items": "Geciken Öğeler",
+    "inactive_leads": "Hareketsiz Kişiler",
+    "due_today": "Bugün Yapılacaklar",
+    "schedule_heading": "Bugünün Planı",
+    "schedule_summary": "{{sessions}} seans · {{reminders}} hatırlatma",
+    "now_label": "Şimdi",
+    "payment_tag": "Ödeme",
+    "empty_title": "Günün geri kalanını planla",
+    "empty_subtitle": "Henüz planlanmış seans veya hatırlatma yok.",
+    "empty_description": "Aşağıdaki hızlı aksiyonlarla başlayabilirsin",
+    "empty_alt": "Zaman çizelgesi illüstrasyonu",
+    "cta_lead": "Kişi Ekle",
+    "cta_project": "Proje Ekle",
+    "cta_session": "Seans Planla",
+    "all_day": "Tüm Gün"
+  },
   "buttons": {
-    "add_lead": "Müşteri Adayı Ekle",
+    "add_lead": "Kişi Ekle",
     "view_all": "Tümünü Görüntüle",
-    "see_all_leads": "Tüm Müşteri Adaylarını Gör",
+    "see_all_leads": "Tüm Kişileri Gör",
     "view_all_sessions": "Tüm Seansları Görüntüle"
   },
   "errors": {

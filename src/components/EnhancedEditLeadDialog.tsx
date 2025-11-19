@@ -323,7 +323,7 @@ export function EnhancedEditLeadDialog({
             onOpenChange(true);
           }
         }}
-        size="lg"
+        size="content"
         footerActions={[]}
       >
         <FormLoadingSkeleton rows={4} />
@@ -343,7 +343,7 @@ export function EnhancedEditLeadDialog({
             onOpenChange(true);
           }
         }}
-        size="lg"
+        size="content"
         dirty={isDirty}
         onDirtyClose={handleDirtyClose}
         footerActions={footerActions}

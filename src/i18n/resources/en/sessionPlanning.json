@@ -254,6 +254,9 @@
       "workflowHeading": "Workflows triggered",
       "workflowLoading": "Loading available workflows...",
       "workflowNoneConfigured": "No workflows are configured for this notification yet.",
+      "noWorkflowsConfigured": "No active workflows were found for these notifications.",
+      "noWorkflowsInstructions": "Turn on or create the workflows you need, then publish the matching message templates so they can send updates automatically.",
+      "noActiveWorkflows": "No active workflows are configured yet.",
       "workflowMissingReminder": "Reminders are enabled, but no reminder workflows are configured.",
       "workflowMissingSummary": "Summary is enabled, but no summary workflows are configured.",
       "workflowOptOut": "Disabled above, so we will not run it.",
@@ -272,7 +275,8 @@
         "days_plural": "Runs {{count}} days before start."
       },
       "manageHelp": "Need a different cadence?",
-      "manageLink": "Manage workflows"
+      "manageLink": "Manage workflows",
+      "manageTemplatesLink": "Manage templates"
     },
     "status": {
       "on": "On",

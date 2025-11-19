@@ -2238,7 +2238,8 @@
       "deleteError": "Failed to delete workflow",
       "toggleActive": "Workflow activated successfully",
       "togglePaused": "Workflow paused successfully",
-      "toggleError": "Failed to update workflow status"
+      "toggleError": "Failed to update workflow status",
+      "templateRequired": "Select a message template before activating the workflow."
     },
     "table": {
       "workflowName": "Workflow Name",

@@ -2,8 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Plus, LogOut, Calendar, Users, CheckCircle, XCircle, Bell, AlertTriangle } from "lucide-react";
+import { Plus, Calendar, Users, CheckCircle, XCircle, Bell, AlertTriangle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -18,12 +17,13 @@ import { DashboardLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useDashboardTranslation } from "@/hooks/useTypedTranslation";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import type { Database } from "@/integrations/supabase/types";
+import DashboardDailyFocus, { type SessionWithLead } from "@/components/DashboardDailyFocus";
+import { ProjectCreationWizardSheet } from "@/features/project-creation";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
 type AppointmentRow = Database["public"]["Tables"]["appointments"]["Row"];
 type SessionRow = Database["public"]["Tables"]["sessions"]["Row"];
 type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
-type SessionWithLead = SessionRow & { lead_name?: string };
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
@@ -42,6 +42,8 @@ const CrmDashboard = () => {
   const [activities, setActivities] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
+  const [projectWizardOpen, setProjectWizardOpen] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
   const navigate = useNavigate();
   const { t } = useDashboardTranslation();
 
@@ -53,6 +55,51 @@ const CrmDashboard = () => {
     window.addEventListener(ADD_ACTION_EVENTS.lead, handleAddLead);
     return () => {
       window.removeEventListener(ADD_ACTION_EVENTS.lead, handleAddLead);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleAddProject = (event: Event) => {
+      event.preventDefault();
+      setProjectWizardOpen(true);
+    };
+
+    window.addEventListener(ADD_ACTION_EVENTS.project, handleAddProject);
+    return () => {
+      window.removeEventListener(ADD_ACTION_EVENTS.project, handleAddProject);
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!isMounted) return;
+      const metadata =
+        (data.user?.user_metadata as {
+          full_name?: string;
+          name?: string;
+          first_name?: string;
+          last_name?: string;
+          username?: string;
+          preferred_name?: string;
+        }) || {};
+      const constructedName = [metadata.first_name, metadata.last_name].filter(Boolean).join(" ").trim();
+      const derivedName =
+        metadata.full_name ||
+        metadata.preferred_name ||
+        metadata.name ||
+        constructedName ||
+        metadata.username ||
+        null;
+      setUserName(derivedName || null);
+    };
+
+    loadUser();
+
+    return () => {
+      isMounted = false;
     };
   }, []);
 
@@ -209,10 +256,17 @@ const CrmDashboard = () => {
       </PageHeader>
 
       <main className="px-4 sm:px-6 lg:px-8 py-6">
+        <DashboardDailyFocus
+          leads={leads}
+          sessions={upcomingSessions}
+          activities={activities}
+          loading={loading}
+          userName={userName}
+        />
         {loading ? (
           <DashboardLoadingSkeleton />
         ) : (
-        <div>
+          <>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-8">
           <Card className={`${getStatCardGradient('leads')} border-0 shadow-md hover:shadow-lg transition-shadow`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -519,7 +573,7 @@ const CrmDashboard = () => {
             </CardContent>
           </Card>
         </div>
-        </div>
+          </>
         )}
       </main>
       
@@ -528,6 +582,15 @@ const CrmDashboard = () => {
         open={addLeadDialogOpen}
         onOpenChange={setAddLeadDialogOpen}
         onClose={() => setAddLeadDialogOpen(false)}
+      />
+      <ProjectCreationWizardSheet
+        isOpen={projectWizardOpen}
+        onOpenChange={setProjectWizardOpen}
+        entrySource="dashboard_daily_focus"
+        onProjectCreated={() => {
+          setProjectWizardOpen(false);
+          fetchData();
+        }}
       />
     </div>
   );

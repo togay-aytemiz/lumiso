@@ -259,6 +259,9 @@
       "workflowHeading": "Çalışacak iş akışları",
       "workflowLoading": "İş akışları yükleniyor...",
       "workflowNoneConfigured": "Bu bildirim için henüz bir iş akışı tanımlanmadı.",
+      "noWorkflowsConfigured": "Bu bildirimler için aktif iş akışı bulunamadı.",
+      "noWorkflowsInstructions": "Önce İş Akışları bölümünden gerekli otomasyonları etkinleştirin veya oluşturun; ardından ilgili mesaj şablonlarını düzenleyerek yayınlayın.",
+      "noActiveWorkflows": "Henüz aktif bir iş akışı tanımlı değil.",
       "workflowMissingReminder": "Hatırlatıcı açık ancak hatırlatma iş akışı tanımlı değil.",
       "workflowMissingSummary": "Özet açık ancak özet iş akışı tanımlı değil.",
       "workflowOptOut": "Yukarıdan kapatıldığı için çalıştırılmayacak.",
@@ -277,7 +280,8 @@
         "days_plural": "Başlangıçtan {{count}} gün önce çalışır."
       },
       "manageHelp": "Farklı bir düzen mi lazım?",
-      "manageLink": "İş akışlarını yönet"
+      "manageLink": "İş akışlarını yönet",
+      "manageTemplatesLink": "Şablonları yönet"
     },
     "status": {
       "on": "Açık",

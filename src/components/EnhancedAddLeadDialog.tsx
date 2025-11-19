@@ -349,7 +349,7 @@ export function EnhancedAddLeadDialog({
             onOpenChange(true);
           }
         }}
-        size="lg"
+        size="content"
         footerActions={[]}
       >
         <FormLoadingSkeleton rows={4} />
@@ -369,7 +369,7 @@ export function EnhancedAddLeadDialog({
             onOpenChange(true);
           }
         }}
-        size="lg"
+        size="content"
         dirty={hasDirtyValue}
         onDirtyClose={handleDirtyClose}
         footerActions={footerActions}

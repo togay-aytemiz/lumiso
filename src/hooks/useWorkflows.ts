@@ -295,6 +295,12 @@ export function useWorkflows() {
 
   const toggleWorkflowStatus = useCallback(async (id: string, isActive: boolean) => {
     try {
+      const targetWorkflow = workflows.find(workflow => workflow.id === id);
+      if (isActive && (!targetWorkflow?.template_id || targetWorkflow.template_id.trim() === '')) {
+        showErrorToast('toggleError', t('workflows.toasts.templateRequired'));
+        return;
+      }
+
       const { error } = await supabase
         .from('workflows')
         .update({ is_active: isActive, updated_at: new Date().toISOString() })
@@ -309,7 +315,7 @@ export function useWorkflows() {
       console.error('Error toggling workflow:', error);
       showErrorToast('toggleError', getErrorMessage(error));
     }
-  }, [fetchWorkflows, showErrorToast, showSuccessToast]);
+  }, [fetchWorkflows, showErrorToast, showSuccessToast, workflows, t]);
 
   useEffect(() => {
     void fetchWorkflows();

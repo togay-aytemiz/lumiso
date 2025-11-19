@@ -2242,7 +2242,8 @@
       "deleteError": "İş akışı silinemedi",
       "toggleActive": "İş akışı etkinleştirildi",
       "togglePaused": "İş akışı duraklatıldı",
-      "toggleError": "İş akışı durumu güncellenemedi"
+      "toggleError": "İş akışı durumu güncellenemedi",
+      "templateRequired": "İş akışını etkinleştirmeden önce bir mesaj şablonu seçmelisiniz."
     },
     "table": {
       "workflowName": "İş Akışı Adı",

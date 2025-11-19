@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
-import type { WorkflowStep } from "@/types/workflow";
+import type { TriggerType, WorkflowStep } from "@/types/workflow";
 import {
   SessionWorkflowContext,
 } from "./sessionWorkflowContext";
@@ -47,6 +47,22 @@ const hasSummaryEmailStep = (workflow: WorkflowSummary) =>
     }
     return false;
   });
+
+const stepHasRequiredTemplate = (step: WorkflowStep) => {
+  if (step.action_type !== "send_notification") {
+    return true;
+  }
+  const config = step.action_config as
+    | {
+        template_id?: unknown;
+        templateId?: unknown;
+      }
+    | undefined;
+  const templateId =
+    (typeof config?.template_id === "string" && config.template_id.trim().length > 0 && config.template_id) ||
+    (typeof config?.templateId === "string" && config.templateId.trim().length > 0 && config.templateId);
+  return typeof templateId === "string";
+};
 
 const categorizeWorkflows = (workflows: WorkflowSummary[]) => {
   const reminderIds = new Set<string>();
@@ -123,30 +139,41 @@ export const SessionWorkflowProvider = ({ children }: { children: ReactNode }) =
       if (error) throw error;
 
       const summaries: WorkflowSummary[] =
-        ((data ?? []) as WorkflowRow[]).map((workflow) => {
-          const steps = (workflow.workflow_steps ?? []).filter(
-            (step): step is WorkflowStep => step.is_active !== false
-          );
+        ((data ?? []) as WorkflowRow[])
+          .map((workflow) => {
+            const steps = (workflow.workflow_steps ?? []).filter(
+              (step): step is WorkflowStep => step.is_active !== false
+            );
 
-          const stepReminderType =
-            steps.find((step) => typeof step.action_config?.reminder_type === "string")
-              ?.action_config?.reminder_type ?? null;
-          const reminderType =
-            getReminderType(workflow.trigger_conditions) ??
-            (typeof stepReminderType === "string" ? stepReminderType : null);
-          const delayMinutes = getDelayMinutes(steps);
+            if (!steps.length) {
+              return null;
+            }
 
-          return {
-            id: workflow.id,
-            name: workflow.name,
-            description: workflow.description,
-            delayMinutes,
-            steps,
-            triggerConditions: workflow.trigger_conditions ?? null,
-            reminderType,
-            triggerType: workflow.trigger_type as TriggerType,
-          };
-        }) ?? [];
+            const missingTemplates = steps.some((step) => !stepHasRequiredTemplate(step));
+            if (missingTemplates) {
+              return null;
+            }
+
+            const stepReminderType =
+              steps.find((step) => typeof step.action_config?.reminder_type === "string")
+                ?.action_config?.reminder_type ?? null;
+            const reminderType =
+              getReminderType(workflow.trigger_conditions) ??
+              (typeof stepReminderType === "string" ? stepReminderType : null);
+            const delayMinutes = getDelayMinutes(steps);
+
+            return {
+              id: workflow.id,
+              name: workflow.name,
+              description: workflow.description,
+              delayMinutes,
+              steps,
+              triggerConditions: workflow.trigger_conditions ?? null,
+              reminderType,
+              triggerType: workflow.trigger_type as TriggerType,
+            };
+          })
+          .filter((workflow): workflow is WorkflowSummary => workflow !== null);
 
       setWorkflows(summaries);
     } catch (error) {

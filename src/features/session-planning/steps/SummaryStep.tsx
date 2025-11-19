@@ -324,6 +324,8 @@ const NotificationPreview = ({
     notifications.sendSummaryEmail,
   ]);
 
+  const hasConfiguredWorkflows = aggregatedWorkflows.length > 0;
+
   const missingMessages = useMemo(() => {
     if (loading) return [] as string[];
     const messages: string[] = [];
@@ -395,35 +397,57 @@ const NotificationPreview = ({
         <h4 className="text-sm font-semibold text-amber-900">{t("summary.notifications.title")}</h4>
         <p className="text-xs text-amber-800">{t("summary.notifications.subtitle")}</p>
       </div>
-      <div className="mt-4 space-y-3">
-        {items.map((item) => {
-          const enabled = notifications[item.key];
-          return (
-            <div
-              key={item.key}
-              className="flex flex-col gap-3 rounded-xl border border-amber-100 bg-white/70 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="flex items-start gap-3">
-                <div className={`mt-0.5 rounded-full p-2 ${item.iconClass}`}>{item.icon}</div>
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-amber-900">{item.label}</p>
-                  <p className="text-xs text-amber-800 leading-relaxed">{item.description}</p>
+      {hasConfiguredWorkflows ? (
+        <div className="mt-4 space-y-3">
+          {items.map((item) => {
+            const enabled = notifications[item.key];
+            return (
+              <div
+                key={item.key}
+                className="flex flex-col gap-3 rounded-xl border border-amber-100 bg-white/70 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`mt-0.5 rounded-full p-2 ${item.iconClass}`}>{item.icon}</div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-amber-900">{item.label}</p>
+                    <p className="text-xs text-amber-800 leading-relaxed">{item.description}</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-3 sm:justify-end">
+                  <span className="text-xs font-medium uppercase tracking-wide text-amber-800">
+                    {t(enabled ? "summary.status.on" : "summary.status.off")}
+                  </span>
+                  <Switch
+                    checked={enabled}
+                    onCheckedChange={(checked) => onToggle(item.key, checked)}
+                    aria-label={t("summary.notifications.switchLabel", { notification: item.label })}
+                  />
                 </div>
               </div>
-              <div className="flex items-center justify-between gap-3 sm:justify-end">
-                <span className="text-xs font-medium uppercase tracking-wide text-amber-800">
-                  {t(enabled ? "summary.status.on" : "summary.status.off")}
-                </span>
-                <Switch
-                  checked={enabled}
-                  onCheckedChange={(checked) => onToggle(item.key, checked)}
-                  aria-label={t("summary.notifications.switchLabel", { notification: item.label })}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="mt-4 space-y-2 rounded-xl border border-amber-100 bg-white/70 p-4 text-sm text-amber-900">
+          <p>{t("summary.notifications.noWorkflowsConfigured")}</p>
+          <p className="text-xs text-amber-800">
+            {t("summary.notifications.noWorkflowsInstructions")}
+          </p>
+          <div className="flex flex-wrap gap-4 text-xs font-semibold">
+            <Link
+              to="/workflows"
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-4 hover:text-amber-950"
+            >
+              {t("summary.notifications.manageLink")}
+            </Link>
+            <Link to="/templates" className="underline underline-offset-4 hover:text-amber-950">
+              {t("summary.notifications.manageTemplatesLink")}
+            </Link>
+          </div>
+        </div>
+      )}
       <div className="mt-4 space-y-2 text-xs leading-relaxed text-amber-900">
         <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">
           {t("summary.notifications.workflowHeading")}
@@ -431,7 +455,7 @@ const NotificationPreview = ({
         {loading && aggregatedWorkflows.length === 0 ? (
           <p className="text-amber-700">{t("summary.notifications.workflowLoading")}</p>
         ) : aggregatedWorkflows.length === 0 ? (
-          <p className="text-amber-700">{t("summary.notifications.workflowNoneConfigured")}</p>
+          <p className="text-amber-700">{t("summary.notifications.noActiveWorkflows")}</p>
         ) : (
           aggregatedWorkflows.map((entry) => {
             const { workflow, categories, enabled, reminderType } = entry;
@@ -474,13 +498,24 @@ const NotificationPreview = ({
             {message}
           </p>
         ))}
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-amber-900">
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] text-amber-900">
           <span>{t("summary.notifications.manageHelp")}</span>
           <Link
             to="/workflows"
+            target="_blank"
+            rel="noreferrer"
             className="font-semibold underline underline-offset-4 hover:text-amber-950"
           >
             {t("summary.notifications.manageLink")}
+          </Link>
+          <span className="text-amber-700">•</span>
+          <Link
+            to="/templates"
+            target="_blank"
+            rel="noreferrer"
+            className="font-semibold underline underline-offset-4 hover:text-amber-950"
+          >
+            {t("summary.notifications.manageTemplatesLink")}
           </Link>
         </div>
       </div>

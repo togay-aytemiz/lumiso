@@ -344,7 +344,7 @@ const DashboardDailyFocus = ({
   };
 
   const handleInactiveLeadsClick = () => {
-    navigate("/leads");
+    navigate("/leads?inactive=1");
   };
 
   if (loading) {

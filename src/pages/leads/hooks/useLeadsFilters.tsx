@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import type { AdvancedDataTableFiltersConfig } from "@/components/data-table";
 import { useDraftFilters } from "@/components/data-table";
 import type { LeadFieldDefinition, LeadFieldType } from "@/types/leadFields";
@@ -35,6 +36,7 @@ export type CustomFieldFilterValue =
 export interface LeadFiltersState {
   status: string[];
   customFields: Record<string, CustomFieldFilterValue>;
+  inactiveOnly: boolean;
 }
 
 export type LeadsFiltersChangeReason = "apply" | "reset";
@@ -66,6 +68,7 @@ interface UseLeadsFiltersResult {
 const DEFAULT_STATE: LeadFiltersState = {
   status: [],
   customFields: {},
+  inactiveOnly: false,
 };
 
 const FILTER_INPUT_CLASS =
@@ -195,6 +198,7 @@ const areCustomFieldFilterValuesEqual = (
 
 const areLeadFiltersEqual = (a: LeadFiltersState, b: LeadFiltersState) => {
   if (!arraysMatch(a.status, b.status)) return false;
+  if (a.inactiveOnly !== b.inactiveOnly) return false;
   const keys = new Set([
     ...Object.keys(a.customFields),
     ...Object.keys(b.customFields),
@@ -240,6 +244,7 @@ export function useLeadsFilters({
         ? {
             status: initialState.status ?? [],
             customFields: { ...initialState.customFields },
+            inactiveOnly: Boolean(initialState.inactiveOnly),
           }
         : { ...DEFAULT_STATE },
     [initialState]
@@ -458,6 +463,22 @@ export function useLeadsFilters({
     [requestAutoApply, setFieldFilter]
   );
 
+  const handleInactiveToggle = useCallback(
+    (checked: boolean) => {
+      updateDraft((prev) => {
+        if (prev.inactiveOnly === checked) {
+          return prev;
+        }
+        return {
+          ...prev,
+          inactiveOnly: checked,
+        };
+      });
+      requestAutoApply();
+    },
+    [requestAutoApply, updateDraft]
+  );
+
   const autoOpenSections = useMemo(() => {
     // Always show Status section by default (high priority filter)
     const sections: string[] = ["status"]; 
@@ -494,6 +515,9 @@ export function useLeadsFilters({
         count += 1;
       }
     });
+    if (appliedState.inactiveOnly) {
+      count += 1;
+    }
     return count;
   }, [appliedState]);
 
@@ -512,6 +536,7 @@ export function useLeadsFilters({
     );
 
     return (
+      <>
       <Accordion
         type="multiple"
         value={accordionValue}
@@ -916,6 +941,22 @@ export function useLeadsFilters({
           );
         })}
       </Accordion>
+      <div className="mt-6 rounded-2xl border border-border/50 bg-muted/40 p-4 space-y-2">
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-sm font-semibold text-foreground">
+            {tPages("leads.inactiveFilter.label")}
+          </p>
+          <Switch
+            checked={draft.inactiveOnly}
+            onCheckedChange={handleInactiveToggle}
+            aria-label={tPages("leads.inactiveFilter.label")}
+          />
+        </div>
+        <p className="text-xs text-muted-foreground w-full">
+          {tPages("leads.inactiveFilter.description")}
+        </p>
+      </div>
+      </>
     );
   }, [
     accordionValue,

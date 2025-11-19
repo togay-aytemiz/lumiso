@@ -217,6 +217,10 @@
         "trendAria": "Kaybedilen veya kapanan kişi sayısı önceki 30 güne göre {{delta}} değişti ({{current}} / {{previous}})."
       }
     },
+    "inactiveFilter": {
+      "label": "14+ gündür pasif olanları göster",
+      "description": "Son 14 günde güncellenmeyen ve tamamlandı/kaybedildi durumda olmayan kişileri göster."
+    },
     "tableTitle": "Kişi Kayıtları",
     "tutorial": {
       "welcome": {

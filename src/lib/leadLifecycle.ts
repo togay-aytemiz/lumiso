@@ -56,3 +56,17 @@ export const countInactiveLeads = (leads: LeadLifecycleLike[], inactiveDays = 14
     return updatedMs <= threshold ? count + 1 : count;
   }, 0);
 };
+
+export const isLeadInactive = (lead: LeadLifecycleLike, inactiveDays = 14) => {
+  if (isLeadClosedForLifecycle(lead)) {
+    return false;
+  }
+
+  const threshold = Date.now() - inactiveDays * DAY_IN_MS;
+  const updatedMs = getLeadLastActivityMs(lead);
+  if (updatedMs == null) {
+    return false;
+  }
+
+  return updatedMs <= threshold;
+};

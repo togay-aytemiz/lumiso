@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Filter, FileDown, Loader2 } from "lucide-react";
 import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { ADD_ACTION_EVENTS } from "@/constants/addActionEvents";
@@ -44,6 +44,7 @@ import {
   LOST_STATUS_KEYWORDS,
   getLeadLastActivityMs,
   isLeadClosedForLifecycle,
+  isLeadInactive,
 } from "@/lib/leadLifecycle";
 
 type LeadStatusOption = {
@@ -182,10 +183,12 @@ const AllLeadsNew = () => {
   const [isSchedulingTutorial, setIsSchedulingTutorial] = useState(false);
   const [exporting, setExporting] = useState(false);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { currentStep, completeCurrentStep } = useOnboarding();
   const { t } = useTranslation('pages');
   const { t: tCommon } = useTranslation('common');
   const { activeOrganizationId } = useOrganization();
+  const inactiveParam = searchParams.get("inactive") === "1";
 
   useEffect(() => {
     const handleAddLead = (event: Event) => {
@@ -210,6 +213,15 @@ const AllLeadsNew = () => {
     return "updated_at" as const;
   }, [sortState.columnId]);
 
+  const initialFilterState = useMemo(
+    () => ({
+      status: [],
+      customFields: {},
+      inactiveOnly: inactiveParam,
+    }),
+    [inactiveParam]
+  );
+
   const {
     advancedColumns,
     fieldDefinitions,
@@ -227,6 +239,7 @@ const AllLeadsNew = () => {
   } = useLeadsFilters({
     statuses: leadStatuses,
     fieldDefinitions,
+    initialState: initialFilterState,
   });
 
   const [page, setPage] = useState(1);
@@ -601,6 +614,18 @@ const AllLeadsNew = () => {
     fetchLeadStatuses();
   }, [fetchLeadStatuses]);
 
+  useEffect(() => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (filtersState.inactiveOnly) {
+        next.set("inactive", "1");
+      } else {
+        next.delete("inactive");
+      }
+      return next;
+    }, { replace: true });
+  }, [filtersState.inactiveOnly, setSearchParams]);
+
   const handleSortChange = useCallback(
     (next: AdvancedDataTableSortState) => {
       setSortState(next);
@@ -609,7 +634,12 @@ const AllLeadsNew = () => {
   );
 
   // All custom-field filtering is applied server-side; no client fallback
-  const filteredLeads = useMemo(() => pageLeads, [pageLeads]);
+  const filteredLeads = useMemo(() => {
+    if (!filtersState.inactiveOnly) {
+      return pageLeads;
+    }
+    return pageLeads.filter((lead) => isLeadInactive(lead, 14));
+  }, [filtersState.inactiveOnly, pageLeads]);
 
   const { columnId, direction } = sortState;
 
@@ -979,6 +1009,23 @@ const AllLeadsNew = () => {
                 subtitle={timeframeInactive}
                 title={t('leads.kpis.noActivity.title')}
                 value={formatNumber(inactivity.current)}
+                action={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 rounded-full px-3 text-xs font-semibold text-amber-600 hover:text-amber-700"
+                    onClick={() => {
+                      setFiltersState((prev) => ({
+                        ...prev,
+                        inactiveOnly: true,
+                      }));
+                      setSearchParams({ inactive: "1" });
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                  >
+                    {t('leads.kpis.noActivity.viewButton')}
+                  </Button>
+                }
                 trend={{
                   value: inactivity.delta,
                   direction: getTrendDirection(inactivity.delta),

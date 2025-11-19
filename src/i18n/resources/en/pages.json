@@ -216,6 +216,10 @@
         "trendAria": "Lost or closed clients changed by {{delta}} compared with the previous 30 days ({{current}} vs {{previous}})."
       }
     },
+    "inactiveFilter": {
+      "label": "Show inactive (14+ days)",
+      "description": "Only show leads whose last update was at least 14 days ago and aren't completed or lost."
+    },
     "tableTitle": "Client Records",
     "tutorial": {
       "welcome": {

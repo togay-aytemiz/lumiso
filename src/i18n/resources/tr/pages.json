@@ -883,11 +883,15 @@
           "businessName": "İşletme adı",
           "businessEmail": "İşletme e-postası",
           "businessPhone": "İşletme telefonu",
-          "social": "Sosyal kanallar",
-          "emptySocial": "Henüz sosyal link yok.",
-          "timezone": "Zaman dilimi",
-          "notes": "Notlar",
-          "emptyNotes": "Henüz not yok."
+        "social": "Sosyal kanallar",
+        "emptySocial": "Henüz sosyal link yok.",
+        "timezone": "Zaman dilimi",
+        "notes": "Notlar",
+        "emptyNotes": "Henüz not yok."
+        },
+        "suspension": {
+          "activeBadge": "Askıya alındı",
+          "reasonTitle": "Askıya alma nedeni"
         },
         "actions": {
           "title": "Admin aksiyonları",
@@ -896,6 +900,7 @@
         "grantPremium": "Premium yap",
         "addComplimentary": "Ücretsiz premium ver",
         "suspendAccount": "Hesabı askıya al",
+        "removeSuspension": "Askıyı kaldır",
         "contactUser": "Kullanıcıyla iletişime geç",
         "membershipModals": {
             "cancel": "Vazgeç",
@@ -943,6 +948,16 @@
               "submit": "Hesabı askıya al",
               "success": "Hesap askıya alındı",
               "error": "Hesap askıya alınamadı."
+            },
+            "liftSuspension": {
+              "title": "Askıyı kaldır",
+              "description": "Bu çalışma alanının erişimini hemen geri yükleyin.",
+              "reasonLabel": "Önceki neden",
+              "noReason": "Herhangi bir neden kaydedilmedi",
+              "restoredStatusLabel": "Kaldırma sonrası durum",
+              "submit": "Erişimi aç",
+              "success": "Hesap yeniden açıldı",
+              "error": "Askı kaldırılamadı."
             }
           }
         },
@@ -959,6 +974,7 @@
             "grant_premium": "Premium verildi",
             "grant_complimentary": "Ücretsiz premium tanımlandı",
             "suspend_account": "Hesap askıya alındı",
+            "lift_suspension": "Askı kaldırıldı",
             "manage_trial": "Trial güncellendi",
             "default": "Üyelik güncellendi"
           },
@@ -975,7 +991,8 @@
             "newTrialEnd": "Yeni trial bitişi: {{date}}",
             "plan": "Plan: {{plan}}",
             "expires": "Bitiş: {{date}}",
-            "note": "Not: {{note}}"
+            "note": "Not: {{note}}",
+            "restoredStatus": "Yeniden açılan durum: {{status}}"
           }
         },
         "financials": {
@@ -1154,6 +1171,12 @@
           }
         }
       }
+    },
+    "suspensionOverlay": {
+      "title": "Bu çalışma alanı askıya alındı",
+      "description": "Erişim geçici olarak kapatıldı. Devam etmek için destek ekibimizle iletişime geçin.",
+      "reasonLabel": "Yönetici notu",
+      "contactSupport": "Destekle iletişime geç"
     },
     "system": {
       "title": "Sistem Genel Bakış",

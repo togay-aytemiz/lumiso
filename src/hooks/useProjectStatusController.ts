@@ -117,26 +117,21 @@ export function useProjectStatusController({
 
         if (updateError) throw updateError;
 
-        if (organizationId && currentStatus) {
-          const { error: activityError } = await supabase
-            .from("activities")
-            .insert({
-              content: `Status changed from "${currentStatus.name}" to "${nextStatus.name}"`,
-              type: "status_change",
-              project_id: projectId,
-              lead_id: projectData.lead_id,
-              user_id: userData.user.id,
-              organization_id: organizationId
-            });
+        if (organizationId) {
+          const notSetLabel = tForms("activitiesHistory.historyMessages.notSet");
+          const statusMessage = currentStatus
+            ? tForms("activities.status_changed", {
+                old: currentStatus.name || notSetLabel,
+                next: nextStatus.name || notSetLabel
+              })
+            : tForms("activities.status_set", {
+                status: nextStatus.name || notSetLabel
+              });
 
-          if (activityError) {
-            console.error("Error logging activity:", activityError);
-          }
-        } else if (organizationId) {
           const { error: activityError } = await supabase
             .from("activities")
             .insert({
-              content: `Status set to "${nextStatus.name}"`,
+              content: statusMessage,
               type: "status_change",
               project_id: projectId,
               lead_id: projectData.lead_id,
@@ -152,9 +147,19 @@ export function useProjectStatusController({
         setCurrentStatus(nextStatus);
         onStatusChange?.();
 
+        const notSetLabel = tForms("activitiesHistory.historyMessages.notSet");
+        const description = currentStatus
+          ? tForms("activities.status_changed", {
+              old: currentStatus.name || notSetLabel,
+              next: nextStatus.name || notSetLabel
+            })
+          : tForms("activities.status_set", {
+              status: nextStatus.name || notSetLabel
+            });
+
         toast({
           title: tForms("status.statusUpdated"),
-          description: `Project status ${currentStatus ? "changed" : "set"} to "${nextStatus.name}"`
+          description
         });
 
         if (organizationId && currentStatus?.id) {

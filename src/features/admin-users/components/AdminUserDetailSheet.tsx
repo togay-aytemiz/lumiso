@@ -263,6 +263,9 @@ function AdminUserDetailSheetContent({
   const [collectionData, setCollectionData] = useState<CollectionDataState>(null);
   const [collectionLoading, setCollectionLoading] = useState(false);
   const [collectionError, setCollectionError] = useState<string | null>(null);
+  const isSuspended = user.status === "suspended";
+  const manualFlagReason = user.manualFlagReason?.trim() || null;
+  const showSuspensionBadges = isSuspended || Boolean(manualFlagReason);
   const locale = i18n.language || undefined;
   const dateFnsLocale = useMemo<Locale | undefined>(() => {
     if (!i18n.language) return undefined;
@@ -935,6 +938,7 @@ function AdminUserDetailSheetContent({
       grant_premium: t("admin.users.detail.membershipEvents.actions.grant_premium"),
       grant_complimentary: t("admin.users.detail.membershipEvents.actions.grant_complimentary"),
       suspend_account: t("admin.users.detail.membershipEvents.actions.suspend_account"),
+      lift_suspension: t("admin.users.detail.membershipEvents.actions.lift_suspension"),
     }),
     [t]
   );
@@ -1003,6 +1007,13 @@ function AdminUserDetailSheetContent({
           })
         );
       }
+      if (typeof metaRecord.restoredStatus === "string") {
+        rows.push(
+          t("admin.users.detail.membershipEvents.meta.restoredStatus", {
+            status: formatStatusLabel(metaRecord.restoredStatus as MembershipStatus),
+          })
+        );
+      }
       if (!rows.length) return null;
       return (
         <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
@@ -1012,7 +1023,7 @@ function AdminUserDetailSheetContent({
         </ul>
       );
     },
-    [formatDateOnlyLocalized, t]
+    [formatDateOnlyLocalized, formatStatusLabel, t]
   );
 
   useEffect(() => {
@@ -1479,7 +1490,7 @@ function AdminUserDetailSheetContent({
   const closeCollectionViewer = (open: boolean) => {
     if (!open) {
       setCollectionViewer(null);
-      setCollectionData([]);
+      setCollectionData(null);
       setCollectionError(null);
     }
   };
@@ -1501,6 +1512,20 @@ function AdminUserDetailSheetContent({
             <SheetDescription className={cn(settingsClasses.headerDescription, "text-left")}>
               {user.business.businessName ?? user.company ?? user.name}
             </SheetDescription>
+            {showSuspensionBadges ? (
+              <div className="flex flex-wrap gap-2">
+                {isSuspended ? (
+                  <Badge className="rounded-full bg-destructive/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-destructive border border-destructive/40">
+                    {t("admin.users.detail.suspension.activeBadge")}
+                  </Badge>
+                ) : null}
+                {manualFlagReason ? (
+                  <span className="inline-flex items-center rounded-full border border-border/60 bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                    {manualFlagReason}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
           </SheetHeader>
           {activeTab === "overview" && (
             <div className="mt-3">
@@ -1660,6 +1685,14 @@ function AdminUserDetailSheetContent({
                       value={user.business.businessPhone ?? "—"}
                     />
                   </div>
+                  {manualFlagReason ? (
+                    <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-destructive">
+                        {t("admin.users.detail.suspension.reasonTitle")}
+                      </p>
+                      <p className="mt-1 text-sm text-destructive">{manualFlagReason}</p>
+                    </div>
+                  ) : null}
                   <div>
                     <p className="text-sm font-medium">
                       {t("admin.users.detail.account.social")}

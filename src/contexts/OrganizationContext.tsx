@@ -21,6 +21,8 @@ interface Organization {
   name: string;
   owner_id: string;
   membership_status: MembershipStatus | null;
+  manual_flag: boolean;
+  manual_flag_reason: string | null;
   trial_started_at: string | null;
   trial_expires_at: string | null;
   trial_extended_by_days: number | null;
@@ -87,6 +89,8 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
             'name',
             'owner_id',
             'membership_status',
+            'manual_flag',
+            'manual_flag_reason',
             'trial_started_at',
             'trial_expires_at',
             'trial_extended_by_days',

@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { formatDate, formatTime } from "@/lib/utils";
@@ -17,10 +18,6 @@ export interface CreateSessionPayload {
 }
 
 export interface CreateSessionOptions {
-  /**
-   * When true we update the lead status to `booked` (default: true when no projectId).
-   */
-  updateLeadStatus?: boolean;
   /**
    * When true we create a lead activity entry summarising the scheduled session
    * (default: true when no projectId).
@@ -52,30 +49,6 @@ export async function createSession(
     throw new Error("Organization required");
   }
 
-  const shouldUpdateLeadStatus = options.updateLeadStatus ?? !payload.projectId;
-  if (shouldUpdateLeadStatus) {
-    const { data: leadData, error: leadFetchError } = await supabase
-      .from("leads")
-      .select("status")
-      .eq("id", payload.leadId)
-      .single();
-
-    if (leadFetchError) {
-      throw leadFetchError;
-    }
-
-    if (leadData && !["completed", "lost"].includes(leadData.status)) {
-      const { error: leadUpdateError } = await supabase
-        .from("leads")
-        .update({ status: "booked" })
-        .eq("id", payload.leadId);
-
-      if (leadUpdateError) {
-        throw leadUpdateError;
-      }
-    }
-  }
-
   const { data: newSession, error: sessionError } = await supabase
     .from("sessions")
     .insert({
@@ -102,9 +75,13 @@ export async function createSession(
   if (shouldCreateActivity && payload.leadName) {
     const sessionDate = payload.sessionDate ? formatDate(payload.sessionDate) : "";
     const sessionTime = payload.sessionTime ? formatTime(payload.sessionTime) : "";
-    const activityContent = sessionDate && sessionTime
-      ? `Photo session scheduled for ${sessionDate} at ${sessionTime}`
-      : "Photo session scheduled";
+    const activityKey = sessionDate && sessionTime
+      ? "forms:activities.session_scheduled_with_time"
+      : "forms:activities.session_scheduled";
+    const activityContent = i18n.t(activityKey, {
+      date: sessionDate,
+      time: sessionTime
+    });
 
     const { error: activityError } = await supabase
       .from("activities")

@@ -371,21 +371,12 @@ const LegacyNewSessionDialog = ({
             email: newLeadData.email.trim() || null,
             phone: newLeadData.phone.trim() || null,
             notes: newLeadData.notes.trim() || null,
-            status: "booked",
           })
           .select("id")
           .single();
 
         if (leadError) throw leadError;
         leadId = newLead.id;
-      } else {
-        // Update existing lead status to booked
-        const { error: updateError } = await supabase
-          .from("leads")
-          .update({ status: "booked" })
-          .eq("id", selectedLeadId);
-
-        if (updateError) throw updateError;
       }
 
       // Create session

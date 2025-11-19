@@ -881,9 +881,13 @@
           "businessPhone": "Business phone",
           "social": "Social channels",
           "emptySocial": "No social links yet.",
-          "timezone": "Timezone",
-          "notes": "Notes",
-          "emptyNotes": "No notes yet."
+        "timezone": "Timezone",
+        "notes": "Notes",
+        "emptyNotes": "No notes yet."
+        },
+        "suspension": {
+          "activeBadge": "Suspended",
+          "reasonTitle": "Suspension reason"
         },
         "actions": {
           "title": "Admin actions",
@@ -892,6 +896,7 @@
         "grantPremium": "Grant premium",
         "addComplimentary": "Add complimentary",
         "suspendAccount": "Suspend account",
+        "removeSuspension": "Remove suspension",
         "contactUser": "Contact user",
         "membershipModals": {
             "cancel": "Cancel",
@@ -939,6 +944,16 @@
               "submit": "Suspend account",
               "success": "Account suspended",
               "error": "Could not suspend the account."
+            },
+            "liftSuspension": {
+              "title": "Remove suspension",
+              "description": "Restore access for this workspace immediately.",
+              "reasonLabel": "Original reason",
+              "noReason": "No reason recorded",
+              "restoredStatusLabel": "Status after removal",
+              "submit": "Restore access",
+              "success": "Suspension removed",
+              "error": "Could not remove the suspension."
             }
           }
         },
@@ -955,6 +970,7 @@
             "grant_premium": "Premium granted",
             "grant_complimentary": "Complimentary premium granted",
             "suspend_account": "Account suspended",
+            "lift_suspension": "Suspension removed",
             "manage_trial": "Trial updated",
             "default": "Membership updated"
           },
@@ -971,7 +987,8 @@
             "newTrialEnd": "New trial end: {{date}}",
             "plan": "Plan: {{plan}}",
             "expires": "Expires: {{date}}",
-            "note": "Note: {{note}}"
+            "note": "Note: {{note}}",
+            "restoredStatus": "Restored status: {{status}}"
           }
         },
         "financials": {
@@ -1150,6 +1167,12 @@
           }
         }
       }
+    },
+    "suspensionOverlay": {
+      "title": "This workspace is suspended",
+      "description": "Access is temporarily blocked. Please resolve the issue with support to continue.",
+      "reasonLabel": "Reason from admin",
+      "contactSupport": "Contact support"
     },
     "system": {
       "title": "System Overview",

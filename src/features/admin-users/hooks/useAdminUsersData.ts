@@ -245,15 +245,55 @@ const fetchAdminAccounts = async ({
       .in("organization_id", organizationIds),
     supabase
       .from("leads")
-      .select("id, organization_id, status, status_id")
+      .select(
+        [
+          "id",
+          "organization_id",
+          "name",
+          "email",
+          "phone",
+          "status",
+          "status_id",
+          "due_date",
+          "created_at",
+          "updated_at",
+          "user_id",
+        ].join(", ")
+      )
       .in("organization_id", organizationIds),
     supabase
       .from("projects")
-      .select("id, organization_id, status_id")
+      .select(
+        [
+          "id",
+          "organization_id",
+          "name",
+          "lead_id",
+          "base_price",
+          "status_id",
+          "created_at",
+          "updated_at",
+          "user_id",
+        ].join(", ")
+      )
       .in("organization_id", organizationIds),
     supabase
       .from("sessions")
-      .select("id, organization_id, status")
+      .select(
+        [
+          "id",
+          "organization_id",
+          "status",
+          "session_name",
+          "session_date",
+          "session_time",
+          "project_id",
+          "session_type_id",
+          "lead_id",
+          "created_at",
+          "updated_at",
+        ].join(", ")
+      )
       .in("organization_id", organizationIds),
     supabase.from("message_templates").select("id, organization_id").in("organization_id", organizationIds),
     supabase.from("workflows").select("id, organization_id").in("organization_id", organizationIds),
@@ -429,6 +469,7 @@ const fetchAdminAccounts = async ({
       return !archivedProjectIds.has(payment.project_id);
     });
     const leads = leadsByOrg[organization.id] ?? [];
+    const leadsById = new Map(leads.map((lead) => [lead.id, lead]));
     const projects = projectsByOrg[organization.id] ?? [];
     const sessions = sessionsByOrg[organization.id] ?? [];
     const templates = templatesByOrg[organization.id] ?? [];
@@ -436,6 +477,7 @@ const fetchAdminAccounts = async ({
     const packages = packagesByOrg[organization.id] ?? [];
     const services = servicesByOrg[organization.id] ?? [];
     const sessionTypes = sessionTypesByOrg[organization.id] ?? [];
+    const sessionTypeMap = new Map(sessionTypes.map((sessionType) => [sessionType.id, sessionType]));
     const membershipEventsRaw = membershipEventsByOrg[organization.id] ?? [];
     const membershipEvents = membershipEventsRaw.slice(0, 25).map((event) => ({
       id: event.id,
@@ -521,7 +563,7 @@ const fetchAdminAccounts = async ({
     });
 
     const projectLifecycleCounts = { active: 0, completed: 0, cancelled: 0 };
-    projects.forEach((project) => {
+    const projectSummaries = projects.map((project) => {
       const lifecycle = project.status_id
         ? normalizeLifecycle(
             projectStatusMap.get(project.status_id)?.lifecycle ??
@@ -529,12 +571,23 @@ const fetchAdminAccounts = async ({
           )
         : "active";
       projectLifecycleCounts[lifecycle] += 1;
+      return {
+        ...project,
+        status_label: project.status_id ? projectStatusMap.get(project.status_id)?.name ?? null : null,
+        lead_name: project.lead_id ? leadsById.get(project.lead_id)?.name ?? null : null,
+      };
     });
 
     const sessionLifecycleCounts = { active: 0, completed: 0, cancelled: 0 };
-    sessions.forEach((session) => {
+    const sessionSummaries = sessions.map((session) => {
       const lifecycle = normalizeLifecycle(session.status);
       sessionLifecycleCounts[lifecycle] += 1;
+      return {
+        ...session,
+        session_type_label: session.session_type_id
+          ? sessionTypeMap.get(session.session_type_id)?.name ?? null
+          : null,
+      };
     });
 
     return {
@@ -598,14 +651,14 @@ const fetchAdminAccounts = async ({
         overdueBalance,
       },
       detail: {
-        leads: [] as AdminUserLeadSummary[],
-        projects: [] as AdminUserProjectSummary[],
-        sessions: [] as AdminUserSessionSummary[],
+        leads: leads as AdminUserLeadSummary[],
+        projects: projectSummaries as AdminUserProjectSummary[],
+        sessions: sessionSummaries as AdminUserSessionSummary[],
         calendar: [],
         payments: payments as AdminUserPaymentSummary[],
-        services: [] as AdminUserServiceSummary[],
-        packages: [] as AdminUserPackageSummary[],
-        sessionTypes: [] as AdminUserSessionTypeSummary[],
+        services: services as AdminUserServiceSummary[],
+        packages: packages as AdminUserPackageSummary[],
+        sessionTypes: sessionTypes as AdminUserSessionTypeSummary[],
         membershipEvents,
       },
     };

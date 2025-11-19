@@ -678,30 +678,37 @@ export function UnifiedClientDetails({
               <div className="pt-3 border-t space-y-3">
                 {shouldShowFieldHelper && (
                   <Alert className="relative border-amber-300/70 bg-amber-50 text-amber-900">
-                    <AlertTriangle className="h-4 w-4 text-amber-600" />
-                    <button
-                      type="button"
-                      onClick={dismissLeadFieldHelper}
-                      className="absolute right-2 top-2 rounded-full p-1 text-amber-800/70 transition hover:bg-amber-200/60 hover:text-amber-900"
-                      aria-label={tForms("lead_fields.helper.dismiss")}
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                    <AlertTitle className="text-sm font-semibold text-amber-900">
-                      {tForms("lead_fields.helper.title")}
-                    </AlertTitle>
-                    <AlertDescription className="mt-1 text-sm text-amber-900/90">
-                      {tForms("lead_fields.helper.description")}
-                    </AlertDescription>
-                    <div className="mt-2">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="h-4 w-4 flex-shrink-0 text-amber-600" />
+                      <div className="flex-1">
+                        <AlertTitle className="text-sm font-semibold text-amber-900">
+                          {tForms("lead_fields.helper.title")}
+                        </AlertTitle>
+                        <AlertDescription className="mt-1 text-sm text-amber-900/90">
+                          {tForms("lead_fields.helper.description")}
+                        </AlertDescription>
+                        <div className="mt-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto px-0 text-sm font-semibold text-amber-900 hover:bg-transparent hover:underline"
+                            onClick={handleManageLeadFields}
+                          >
+                            {tForms("lead_fields.helper.action")}
+                          </Button>
+                        </div>
+                      </div>
                       <Button
                         type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-auto px-0 text-sm font-semibold text-amber-900 hover:bg-transparent hover:underline"
-                        onClick={handleManageLeadFields}
+                        variant="tinted"
+                        colorScheme="amber"
+                        size="icon"
+                        className="ml-2 shrink-0"
+                        onClick={dismissLeadFieldHelper}
+                        aria-label={tForms("lead_fields.helper.dismiss")}
                       >
-                        {tForms("lead_fields.helper.action")}
+                        <X className="h-4 w-4" />
                       </Button>
                     </div>
                   </Alert>

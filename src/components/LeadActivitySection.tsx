@@ -157,6 +157,13 @@ const formatLogValue = (value: unknown): string => {
     return String(value);
   }
 };
+
+const toSentenceCase = (value?: string) => {
+  if (!value) return "";
+  return value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
 interface LeadActivitySectionProps {
   leadId: string;
   leadName: string;
@@ -631,6 +638,39 @@ export function LeadActivitySection({
   useEffect(() => {
     void fetchData();
   }, [fetchData]);
+
+  const getLeadFieldLabel = (log: AuditLogEntry) => {
+    const rawLabel =
+      getStringValue(log.new_values, "field_label") ??
+      getStringValue(log.old_values, "field_label") ??
+      undefined;
+    const fieldKey =
+      getStringValue(log.new_values, "field_key") ??
+      getStringValue(log.old_values, "field_key") ??
+      undefined;
+    const normalizedKey = (fieldKey ?? rawLabel)?.toLowerCase();
+    switch (normalizedKey) {
+      case "status":
+        return t("leadFormFields.status");
+      case "name":
+      case "full_name":
+      case "full name":
+        return t("leadFormFields.full_name");
+      case "email":
+      case "email_address":
+      case "email address":
+        return t("leadFormFields.email_address");
+      case "phone":
+      case "phone_number":
+      case "phone number":
+        return t("leadFormFields.phone_number");
+      case "notes":
+        return t("leadFormFields.notes");
+      default:
+        return rawLabel ?? t("leadFormFields.notes");
+    }
+  };
+
   const handleSaveActivity = async (
     content: string,
     isReminderMode: boolean,
@@ -638,24 +678,24 @@ export function LeadActivitySection({
   ) => {
     if (!content.trim()) {
       toast({
-        title: "Validation error",
-        description: "Content is required.",
-        variant: "destructive"
+        title: t("error.validation"),
+        description: t("validation.content_required"),
+        variant: "destructive",
       });
       return;
     }
     if (isReminderMode && !reminderDateTime) {
       toast({
-        title: "Validation error",
-        description: "Date and time are required for reminders.",
-        variant: "destructive"
+        title: t("error.validation"),
+        description: t("validation.datetime_required_for_reminders"),
+        variant: "destructive",
       });
       return;
     }
     setSaving(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error('Not authenticated');
+      if (!userData.user) throw new Error("User not authenticated");
 
       const organizationId = await getUserOrganizationId();
       if (!organizationId) {
@@ -682,9 +722,10 @@ export function LeadActivitySection({
         throw error;
       }
 
+      const activityLabel = isReminderMode ? t("activity.reminder") : t("activity.note");
       toast({
-        title: "Success",
-        description: `${isReminderMode ? 'Reminder' : 'Note'} added successfully.`
+        title: t("success.saved"),
+        description: `${activityLabel} ${t("activity.added_to_lead")}.`,
       });
 
       // Refresh data
@@ -696,9 +737,9 @@ export function LeadActivitySection({
       onActivityUpdated?.();
     } catch (error) {
       toast({
-        title: "Error",
+        title: t("error.generic"),
         description: getErrorMessage(error),
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setSaving(false);
@@ -739,63 +780,117 @@ export function LeadActivitySection({
     }
   };
   const getActivityDescription = (log: AuditLogEntry): string => {
-    if (log.entity_type === 'lead') {
-      if (log.action === 'created') return t('activityLogs.lead_created');
-      if (log.action === 'archived') return t('activityLogs.lead_archived');
-      if (log.action === 'restored') return t('activityLogs.lead_restored');
-      if (log.action === 'updated') {
+    const notSet = t("activitiesHistory.historyMessages.notSet");
+
+    if (log.entity_type === "lead") {
+      if (log.action === "created") return t("activityLogs.lead_created");
+      if (log.action === "archived") return t("activityLogs.lead_archived");
+      if (log.action === "restored") return t("activityLogs.lead_restored");
+      if (log.action === "updated") {
         const changes: string[] = [];
 
-        // Check for status changes
         const oldStatus = getStringValue(log.old_values, "status");
         const newStatus = getStringValue(log.new_values, "status");
         if (oldStatus !== newStatus) {
-          changes.push(t('activityLogs.status_changed_from_to', { oldStatus, newStatus }));
+          changes.push(
+            t("activityLogs.status_changed_from_to", {
+              oldStatus: oldStatus ?? notSet,
+              newStatus: newStatus ?? notSet
+            })
+          );
         }
+
         if (changes.length > 0) {
-          return t('activityLogs.lead_updated_with_changes', { changes: changes.join(', ') });
+          return t("activityLogs.lead_updated_with_changes", {
+            changes: changes.join(", ")
+          });
         }
-        return t('activityLogs.lead_updated');
+        return t("activityLogs.lead_updated");
       }
-    } else if (log.entity_type === 'lead_field_value') {
-      const fieldLabel =
-        getStringValue(log.new_values, 'field_label') ??
-        getStringValue(log.old_values, 'field_label') ??
-        'Field';
-      if (log.action === 'created') {
-        const value = formatLogValue(getValue(log.new_values, 'value'));
-        return t('activityLogs.field_added', { field: fieldLabel, value });
+    }
+
+    if (log.entity_type === "lead_field_value") {
+      const fieldLabel = getLeadFieldLabel(log);
+      if (log.action === "created") {
+        const value = formatLogValue(getValue(log.new_values, "value"));
+        return t("activityLogs.field_added", { field: fieldLabel, value });
       }
-      if (log.action === 'updated') {
-        const oldValue = formatLogValue(getValue(log.old_values, 'value'));
-        const newValue = formatLogValue(getValue(log.new_values, 'value'));
-        return `${fieldLabel} changed from "${oldValue}" to "${newValue}"`;
+      if (log.action === "updated") {
+        const newValue = formatLogValue(getValue(log.new_values, "value"));
+        return t("activityLogs.field_updated", { field: fieldLabel, value: newValue });
       }
-      if (log.action === 'deleted') {
-        const value = formatLogValue(getValue(log.old_values, 'value'));
-        return t('activityLogs.field_removed', { field: fieldLabel, value });
+      if (log.action === "deleted") {
+        const value = formatLogValue(getValue(log.old_values, "value"));
+        return t("activityLogs.field_removed", { field: fieldLabel, value });
       }
-    } else if (log.entity_type === 'project') {
+    }
+
+    if (log.entity_type === "project") {
       const name =
-        getStringValue(log.new_values, 'name') ??
-        getStringValue(log.old_values, 'name') ??
-        null;
-      if (log.action === 'created') return name ? `Project "${name}" created` : 'Project created';
-      if (log.action === 'updated') return name ? `Project "${name}" updated` : 'Project updated';
-      if (log.action === 'archived') return name ? `Project "${name}" archived` : 'Project archived';
-      if (log.action === 'restored') return name ? `Project "${name}" restored` : 'Project restored';
-    } else if (log.entity_type === 'session') {
-      const name =
-        getStringValue(log.new_values, 'session_name') ??
-        getStringValue(log.old_values, 'session_name') ??
-        null;
-      if (log.action === 'created') return name ? `Session "${name}" created` : 'Session created';
-      if (log.action === 'updated') return name ? `Session "${name}" updated` : 'Session updated';
-      if (log.action === 'archived') return name ? `Session "${name}" archived` : 'Session archived';
-      if (log.action === 'restored') return name ? `Session "${name}" restored` : 'Session restored';
-  }
-  return `${log.entity_type} ${log.action}`;
-};
+        getStringValue(log.new_values, "name") ??
+        getStringValue(log.old_values, "name") ??
+        t("activitiesHistory.historyMessages.projectUnnamed");
+
+      if (log.action === "created") {
+        return name
+          ? t("activitiesHistory.historyMessages.projectCreated", { name })
+          : t("activitiesHistory.historyMessages.projectCreatedUnnamed");
+      }
+      if (log.action === "updated") {
+        return name
+          ? t("activitiesHistory.historyMessages.projectUpdated", { name })
+          : t("activitiesHistory.historyMessages.projectUpdated");
+      }
+      if (log.action === "archived") {
+        return name
+          ? t("activitiesHistory.historyMessages.projectArchived", { name })
+          : t("activitiesHistory.historyMessages.projectArchivedUnnamed");
+      }
+      if (log.action === "restored") {
+        return name
+          ? t("activitiesHistory.historyMessages.projectRestored", { name })
+          : t("activitiesHistory.historyMessages.projectRestoredUnnamed");
+      }
+    }
+
+    if (log.entity_type === "session") {
+      const sessionName =
+        getStringValue(log.new_values, "session_name") ??
+        getStringValue(log.old_values, "session_name") ??
+        t("activitiesHistory.historyMessages.sessionUntitled");
+
+      if (log.action === "created") {
+        return t("activitiesHistory.historyMessages.sessionCreated", {
+          name: sessionName
+        });
+      }
+      if (log.action === "updated") {
+        return t("activitiesHistory.historyMessages.sessionUpdatedSimple", {
+          name: sessionName
+        });
+      }
+      if (log.action === "deleted") {
+        return t("activitiesHistory.historyMessages.sessionDeleted", {
+          name: sessionName
+        });
+      }
+      if (log.action === "archived") {
+        return t("activitiesHistory.historyMessages.sessionArchived", {
+          name: sessionName
+        });
+      }
+      if (log.action === "restored") {
+        return t("activitiesHistory.historyMessages.sessionRestored", {
+          name: sessionName
+        });
+      }
+    }
+
+    return t("activitiesHistory.historyMessages.genericChange", {
+      entity: toSentenceCase(log.entity_type) || log.entity_type,
+      action: log.action
+    });
+  };
 
   const handleProjectDialogUpdated = useCallback(() => {
     void fetchLeadActivities();

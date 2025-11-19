@@ -74,6 +74,32 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
   const [suspendOpen, setSuspendOpen] = useState(false);
   const [suspendReason, setSuspendReason] = useState("");
   const [suspendLoading, setSuspendLoading] = useState(false);
+  const [liftSuspensionOpen, setLiftSuspensionOpen] = useState(false);
+  const [liftSuspensionLoading, setLiftSuspensionLoading] = useState(false);
+
+  const isSuspended = user.status === "suspended";
+  const lastSuspensionEvent = useMemo(
+    () => user.detail.membershipEvents.find((event) => event.action === "suspend_account"),
+    [user.detail.membershipEvents]
+  );
+  const previousStatusBeforeSuspension = lastSuspensionEvent?.previousStatus;
+  const restoredStatus = useMemo<MembershipStatus>(() => {
+    if (previousStatusBeforeSuspension && previousStatusBeforeSuspension !== "suspended") {
+      return previousStatusBeforeSuspension;
+    }
+    const now = Date.now();
+    const premiumExpiry = user.premiumExpiresAt ? new Date(user.premiumExpiresAt).getTime() : null;
+    const hasActivePremium = Boolean(user.premiumPlan) && (!premiumExpiry || premiumExpiry >= now);
+    if (hasActivePremium) {
+      const planLabel = user.premiumPlan?.toLowerCase() ?? "";
+      return planLabel.includes("complimentary") ? "complimentary" : "premium";
+    }
+    const trialExpiry = user.trialEndsAt ? new Date(user.trialEndsAt).getTime() : null;
+    if (trialExpiry && trialExpiry >= now) {
+      return "trial";
+    }
+    return "locked";
+  }, [previousStatusBeforeSuspension, user.premiumExpiresAt, user.premiumPlan, user.trialEndsAt]);
 
   useEffect(() => {
     setTrialEndDate(formatDateInputValue(user.trialEndsAt));
@@ -370,6 +396,38 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
     }
   };
 
+  const handleLiftSuspension = async () => {
+    setLiftSuspensionLoading(true);
+    try {
+      await handleSupabaseUpdate(
+        {
+          membership_status: restoredStatus,
+          manual_flag: false,
+          manual_flag_reason: null,
+        },
+        t("admin.users.detail.actions.membershipModals.liftSuspension.success"),
+        {
+          action: "lift_suspension",
+          newStatus: restoredStatus,
+          metadata: {
+            restoredStatus,
+            previousStatus: previousStatusBeforeSuspension ?? null,
+            previousReason: user.manualFlagReason ?? null,
+          },
+        }
+      );
+      setLiftSuspensionOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: t("admin.users.detail.actions.membershipModals.liftSuspension.error"),
+      });
+    } finally {
+      setLiftSuspensionLoading(false);
+    }
+  };
+
   return (
     <>
       <div className={cn("flex flex-wrap gap-2", buttonRowClassName)}>
@@ -383,20 +441,30 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
         >
           {t("admin.users.detail.actions.grantPremium")}
         </Button>
-        <Button
-          variant="surface"
-          className="btn-surface-amber"
-          onClick={() => setComplimentaryOpen(true)}
-        >
-          {t("admin.users.detail.actions.addComplimentary")}
-        </Button>
-        <Button
-          variant="surface"
-          className="btn-surface-destructive"
-          onClick={() => setSuspendOpen(true)}
-        >
-          {t("admin.users.detail.actions.suspendAccount")}
-        </Button>
+      <Button
+        variant="surface"
+        className="btn-surface-amber"
+        onClick={() => setComplimentaryOpen(true)}
+      >
+        {t("admin.users.detail.actions.addComplimentary")}
+      </Button>
+        {isSuspended ? (
+          <Button
+            variant="tinted"
+            colorScheme="emerald"
+            onClick={() => setLiftSuspensionOpen(true)}
+          >
+            {t("admin.users.detail.actions.removeSuspension")}
+          </Button>
+        ) : (
+          <Button
+            variant="surface"
+            className="btn-surface-destructive"
+            onClick={() => setSuspendOpen(true)}
+          >
+            {t("admin.users.detail.actions.suspendAccount")}
+          </Button>
+        )}
       </div>
 
       <Dialog open={trialModalOpen} onOpenChange={setTrialModalOpen}>
@@ -628,6 +696,47 @@ export function MembershipActions({ user, onUserUpdated, buttonRowClassName }: M
               {suspendLoading
                 ? t("admin.users.detail.actions.membershipModals.saving")
                 : t("admin.users.detail.actions.membershipModals.suspend.submit")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={liftSuspensionOpen} onOpenChange={setLiftSuspensionOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {t("admin.users.detail.actions.membershipModals.liftSuspension.title")}
+            </DialogTitle>
+            <DialogDescription>
+              {t("admin.users.detail.actions.membershipModals.liftSuspension.description")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-left">
+              <p className="text-xs font-semibold uppercase tracking-wide text-destructive">
+                {t("admin.users.detail.actions.membershipModals.liftSuspension.reasonLabel")}
+              </p>
+              <p className="mt-1 text-sm text-destructive">
+                {user.manualFlagReason ?? t("admin.users.detail.actions.membershipModals.liftSuspension.noReason")}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/50 bg-muted/30 p-3 text-left">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("admin.users.detail.actions.membershipModals.liftSuspension.restoredStatusLabel")}
+              </p>
+              <p className="mt-1 text-sm font-medium">
+                {t(`admin.users.status.${restoredStatus}`)}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLiftSuspensionOpen(false)}>
+              {t("admin.users.detail.actions.membershipModals.cancel")}
+            </Button>
+            <Button onClick={handleLiftSuspension} disabled={liftSuspensionLoading}>
+              {liftSuspensionLoading
+                ? t("admin.users.detail.actions.membershipModals.saving")
+                : t("admin.users.detail.actions.membershipModals.liftSuspension.submit")}
             </Button>
           </DialogFooter>
         </DialogContent>

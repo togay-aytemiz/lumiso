@@ -10,6 +10,7 @@ import OfflineBanner from "@/components/OfflineBanner";
 import RoutePrefetcher from "@/components/RoutePrefetcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ProfileIntakeGate } from "@/components/ProfileIntakeGate";
+import { SuspendedAccountOverlay } from "@/components/SuspendedAccountOverlay";
 
 const LAST_NON_SETTINGS_PATH_KEY = "lumiso:last-non-settings-path";
 
@@ -99,6 +100,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Post-verification intake gate */}
       <ProfileIntakeGate />
+      <SuspendedAccountOverlay />
     </SidebarProvider>
   );
 }

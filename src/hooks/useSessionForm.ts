@@ -92,7 +92,6 @@ export function useSessionForm({ leadId, leadName, projectId, onSuccess }: UseSe
           projectId: resolvedProjectId
         },
         {
-          updateLeadStatus: !resolvedProjectId,
           createActivity: !resolvedProjectId
         }
       );

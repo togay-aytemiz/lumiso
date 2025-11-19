@@ -278,10 +278,15 @@ const ProjectKanbanBoard = ({
           const newStatus = statuses.find(s => s.id === (dstStatusId || ""));
           
           // Insert activity log
+          const noStatusLabel = t('pages:projects.noStatus');
+          const statusChangeContent = t('activities.status_changed', {
+            old: oldStatus?.name || noStatusLabel,
+            next: newStatus?.name || noStatusLabel,
+          });
           const activityPromise = organizationId
             ? supabase.from("activities").insert({
                 type: "status_change",
-                content: `Status changed from '${oldStatus?.name || "No Status"}' to '${newStatus?.name || "No Status"}'`,
+                content: statusChangeContent,
                 project_id: projectId,
                 lead_id: moving.lead_id,
                 user_id: user.id,

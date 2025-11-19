@@ -31,8 +31,7 @@ export async function createLead(payload: CreateLeadPayload): Promise<CreateLead
       name: payload.name.trim(),
       email: payload.email?.trim() || null,
       phone: payload.phone?.trim() || null,
-      notes: payload.notes?.trim() || null,
-      status: "booked"
+      notes: payload.notes?.trim() || null
     })
     .select("id, name")
     .single();

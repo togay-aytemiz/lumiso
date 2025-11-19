@@ -889,7 +889,6 @@ const SessionPlanningWizardSheetInner = ({
           status: "planned",
         },
         {
-          updateLeadStatus: !projectId,
           createActivity: !projectId,
         }
       );

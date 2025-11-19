@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 
@@ -113,7 +114,7 @@ export async function onArchiveToggle(project: ProjectArchiveInput) {
 
     await supabase.from("activities").insert({
       type: "status_change",
-      content: "Project archived",
+      content: i18n.t("forms:activities.project_archived"),
       project_id: project.id,
       lead_id: proj.lead_id,
       user_id: userData.user.id,
@@ -163,7 +164,7 @@ export async function onArchiveToggle(project: ProjectArchiveInput) {
 
   await supabase.from("activities").insert({
     type: "status_change",
-    content: "Project restored",
+    content: i18n.t("forms:activities.project_restored"),
     project_id: project.id,
     lead_id: proj.lead_id,
     user_id: userData.user.id,

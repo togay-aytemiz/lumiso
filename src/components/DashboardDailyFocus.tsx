@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Trans } from "react-i18next";
 import {
   Activity,
@@ -18,8 +18,10 @@ import type { Database } from "@/integrations/supabase/types";
 import { formatTime, getUserLocale } from "@/lib/utils";
 import { useDashboardTranslation } from "@/hooks/useTypedTranslation";
 import { ADD_ACTION_EVENTS, type AddActionType, type AddActionEventDetail } from "@/constants/addActionEvents";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import SessionSheetView from "@/components/SessionSheetView";
+import { computeLeadInitials } from "@/components/leadInitialsUtils";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
 type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
@@ -162,6 +164,13 @@ const DashboardDailyFocus = ({
   const [now, setNow] = useState(new Date());
   const { t, i18n } = useDashboardTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
+  const getLeadInitials = useCallback(
+    (name?: string | null) => computeLeadInitials(name, "??", 2),
+    []
+  );
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 60_000);
@@ -347,6 +356,32 @@ const DashboardDailyFocus = ({
     navigate("/leads?inactive=1");
   };
 
+  const handleSessionCardClick = (sessionId: string) => {
+    setSelectedSessionId(sessionId);
+    setIsSessionSheetOpen(true);
+  };
+
+  const handleSessionSheetOpenChange = (open: boolean) => {
+    setIsSessionSheetOpen(open);
+    if (!open) {
+      setSelectedSessionId(null);
+    }
+  };
+
+  const handleViewFullSessionDetails = () => {
+    if (!selectedSessionId) return;
+    const currentPath = `${location.pathname}${location.search}${location.hash}`;
+    navigate(`/sessions/${selectedSessionId}`, { state: { from: currentPath } });
+  };
+
+  const handleNavigateToLead = (leadId: string) => {
+    navigate(`/leads/${leadId}`);
+  };
+
+  const handleNavigateToProject = (projectId: string) => {
+    navigate(`/projects/${projectId}`);
+  };
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -357,9 +392,10 @@ const DashboardDailyFocus = ({
   }
 
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-      <div className="lg:col-span-1 relative overflow-hidden rounded-2xl p-8 text-white flex flex-col shadow-2xl min-h-[440px] border border-white/5 bg-slate-950">
-        <AuroraBackground />
+    <>
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="lg:col-span-1 relative overflow-hidden rounded-2xl p-8 text-white flex flex-col shadow-2xl min-h-[440px] border border-white/5 bg-slate-950">
+          <AuroraBackground />
 
         <div className="relative z-10 flex-1 flex flex-col">
           <div className="flex items-center justify-between mb-8">
@@ -393,17 +429,36 @@ const DashboardDailyFocus = ({
               <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-5 transition-all group shadow-lg relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-purple-500" />
                 <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-bold text-lg leading-tight text-white group-hover:text-indigo-200 transition-colors">
+                  <h3 className="font-semibold text-base leading-tight text-white/95 group-hover:text-indigo-200 transition-colors">
                     {nextSession.session_name || nextSession.lead_name || sessionFallbackLabel}
                   </h3>
                   <span className="bg-indigo-500/40 border border-indigo-500/30 text-indigo-100 text-[11px] font-bold px-2 py-1 rounded">
                     {formatTime(nextSession.session_time.slice(0, 5))}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-slate-300">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="truncate">{nextSession.location || locationFallbackLabel}</span>
-                </div>
+                {nextSession.lead_name && (
+                  <div className="flex items-center gap-3 text-sm text-slate-200 mb-2 flex-wrap">
+                    <div className="w-6 h-6 rounded-full border border-white/20 bg-white/10 text-white/80 text-[11px] font-semibold flex items-center justify-center">
+                      {getLeadInitials(nextSession.lead_name)}
+                    </div>
+                    <div className="flex items-center gap-3 text-slate-100 text-sm w-full">
+                      <span className="truncate flex-1 min-w-0">{nextSession.lead_name}</span>
+                      <span className="block w-px h-5 bg-white/25" />
+                      <span className="flex items-center gap-1 text-slate-200">
+                        <MapPin className="w-3.5 h-3.5 text-slate-200" />
+                        <span className="truncate max-w-[140px]">
+                          {nextSession.location || locationFallbackLabel}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {!nextSession.lead_name && (
+                  <div className="flex items-center gap-2 text-sm text-slate-300">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                    <span className="truncate">{nextSession.location || locationFallbackLabel}</span>
+                  </div>
+                )}
               </div>
 
               {laterSessions.length > 0 && (
@@ -414,7 +469,7 @@ const DashboardDailyFocus = ({
                         key={session.id}
                         className="w-6 h-6 rounded-full border border-slate-800 bg-indigo-900 text-indigo-200 text-[9px] flex items-center justify-center font-bold"
                       >
-                        {(session.lead_name || clientPlaceholder).charAt(0)}
+                        {getLeadInitials(session.lead_name || clientPlaceholder)}
                       </div>
                     ))}
                   </div>
@@ -518,30 +573,39 @@ const DashboardDailyFocus = ({
 
         <div className="relative z-10 px-6 py-6">
           {hasScheduleItems ? (
-            timelineItems.map((item, index) => {
-              const isLast = index === timelineItems.length - 1;
+            <div className="relative">
+              <div className="absolute left-[5.75rem] top-0 bottom-0 hidden sm:block w-px bg-gradient-to-b from-indigo-100 via-slate-200 to-transparent pointer-events-none" />
+              {timelineItems.map((item, index) => {
+                const isLast = index === timelineItems.length - 1;
 
-              if (item.type === "now") {
-                return (
-                  <div key={item.id} className="flex items-center gap-4 mb-6">
-                    <div className="hidden sm:flex w-20 justify-end">
-                      <span className="text-xs font-mono text-slate-400">{item.displayTime}</span>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-slate-400">
-                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-                        <span>{t("daily_focus.now_label")}</span>
-                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                if (item.type === "now") {
+                  return (
+                    <div key={item.id} className="relative flex flex-col sm:flex-row gap-6 items-center mb-6 mt-2">
+                      <div className="sm:w-20 flex-shrink-0 flex justify-end items-center">
+                        <div className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm shadow-rose-200">
+                          {item.displayTime}
+                        </div>
+                      </div>
+                      <div className="hidden sm:flex absolute left-[5.75rem] -translate-x-1/2 z-20 items-center justify-center">
+                        <div className="absolute w-3 h-3 bg-rose-400 rounded-full animate-ping opacity-60" />
+                        <div className="relative w-2.5 h-2.5 bg-rose-600 rounded-full ring-2 ring-white shadow-sm" />
+                      </div>
+                      <div className="flex-1 w-full flex items-center relative pl-2">
+                        <div className="w-full">
+                          <div className="w-full border-t border-dashed border-rose-400/70" />
+                        </div>
+                        <div className="absolute right-0 -top-3 text-[10px] font-bold text-rose-500 uppercase tracking-[0.35em] bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded border border-rose-100 shadow-sm">
+                          {t("daily_focus.now_label")}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              }
+                  );
+                }
 
-              if (item.type === "session") {
-                const theme = getSessionTheme(item.data);
-                const displayLeadName = item.data.lead_name || clientPlaceholder;
-                const displaySessionName =
+                if (item.type === "session") {
+                  const theme = getSessionTheme(item.data);
+                  const displayLeadName = item.data.lead_name || clientPlaceholder;
+                  const displaySessionName =
                   item.data.session_name || item.data.lead_name || sessionFallbackLabel;
                 const displayStatus = item.data.status || statusFallbackLabel;
                 const displayLocation = item.data.location || locationFallbackLabel;
@@ -555,16 +619,23 @@ const DashboardDailyFocus = ({
                       <span className="text-xl font-bold text-slate-800 leading-none">{item.displayTime}</span>
                     </div>
 
-                    <div className="hidden sm:flex absolute left-[5.75rem] -translate-x-1/2 z-10 items-center justify-center">
+                    <div
+                      className="hidden sm:flex absolute left-[5.75rem] -translate-x-1/2 z-10 items-center justify-center"
+                      style={{ top: "0.65rem" }}
+                    >
                       <div className="w-3 h-3 rounded-full bg-indigo-600 shadow-[0_0_0_4px_rgba(199,210,254,0.5)]" />
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-all relative flex items-center p-3 pl-4 gap-4">
+                    <div className="flex-1 min-w-0 relative sm:pl-6">
+                      <button
+                        type="button"
+                        onClick={() => handleSessionCardClick(item.data.id)}
+                        className="w-full bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-all relative flex items-center p-3 pl-4 gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                      >
                         <div className={`absolute left-0 top-0 bottom-0 w-1 ${theme.border}`} />
                         <div className="flex-1 min-w-0 flex flex-col gap-1">
                           <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-bold text-slate-900 truncate">
+                            <h3 className="text-sm font-semibold text-slate-900/90 truncate">
                               {displaySessionName}
                             </h3>
                             <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${theme.badge}`}>
@@ -574,7 +645,7 @@ const DashboardDailyFocus = ({
                           <div className="flex items-center gap-3 text-xs text-slate-500">
                             <div className="flex items-center gap-1.5 text-slate-700 font-medium">
                               <div className="w-4 h-4 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[9px] font-bold text-slate-500">
-                                {displayLeadName.charAt(0)}
+                                {getLeadInitials(displayLeadName)}
                               </div>
                               <span className="truncate max-w-[140px]">{displayLeadName}</span>
                             </div>
@@ -596,10 +667,10 @@ const DashboardDailyFocus = ({
                             )}
                           </div>
                         </div>
-                        <button className="p-1.5 rounded-full text-slate-300 hover:text-indigo-600 hover:bg-slate-50 transition-all">
+                        <div className="p-1.5 rounded-full text-slate-300 group-hover:text-indigo-600 group-hover:bg-slate-50 transition-all">
                           <ChevronRight className="w-5 h-5" />
-                        </button>
-                      </div>
+                        </div>
+                      </button>
                     </div>
                   </div>
                 );
@@ -614,11 +685,14 @@ const DashboardDailyFocus = ({
                     <span className="text-xs font-medium text-slate-400 font-mono">{item.displayTime}</span>
                   </div>
 
-                  <div className="hidden sm:flex absolute left-[5.75rem] -translate-x-1/2 z-10 items-center justify-center">
+                  <div
+                    className="hidden sm:flex absolute left-[5.75rem] -translate-x-1/2 z-10 items-center justify-center"
+                    style={{ top: "0.35rem" }}
+                  >
                     <div className="w-2 h-2 rounded-full bg-slate-300 ring-4 ring-white/60" />
                   </div>
 
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 relative sm:pl-6">
                     <div className="flex items-center justify-between pt-0.5 pr-2 pl-2 py-1 rounded-lg group hover:bg-white/40 transition-all">
                       <div className="flex items-center gap-3 min-w-0">
                         <span className="text-sm text-slate-600 font-medium truncate">
@@ -644,7 +718,8 @@ const DashboardDailyFocus = ({
                   </div>
                 </div>
               );
-            })
+            })}
+              </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center gap-5">
               <img
@@ -690,6 +765,17 @@ const DashboardDailyFocus = ({
         </div>
       </div>
     </section>
+      {selectedSessionId && (
+        <SessionSheetView
+          sessionId={selectedSessionId}
+          isOpen={isSessionSheetOpen}
+          onOpenChange={handleSessionSheetOpenChange}
+          onViewFullDetails={handleViewFullSessionDetails}
+          onNavigateToLead={handleNavigateToLead}
+          onNavigateToProject={handleNavigateToProject}
+        />
+      )}
+    </>
   );
 };
 

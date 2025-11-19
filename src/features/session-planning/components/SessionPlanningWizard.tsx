@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -29,6 +30,8 @@ interface SessionPlanningWizardProps {
   onCancel: () => void;
   onComplete: () => void;
   isCompleting?: boolean;
+  actionPlacement?: "inline" | "header";
+  headerActionContainer?: HTMLElement | null;
 }
 
 const STEP_COMPONENTS: Record<SessionPlanningStepId, () => JSX.Element> = {
@@ -44,6 +47,8 @@ const STEP_COMPONENTS: Record<SessionPlanningStepId, () => JSX.Element> = {
 export const SessionPlanningWizard = ({
   onComplete,
   isCompleting,
+  actionPlacement = "inline",
+  headerActionContainer,
 }: SessionPlanningWizardProps) => {
   const { state } = useSessionPlanningContext();
   const { meta } = state;
@@ -291,7 +296,7 @@ export const SessionPlanningWizard = ({
     "space-y-1.5 sm:space-y-0 sm:flex sm:items-center sm:justify-end sm:gap-3";
   const renderActionButtons = () => (
     <>
-      <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end sm:gap-3">
+      <div className="grid grid-cols-1 gap-2 sm:flex sm:items-center sm:justify-end sm:gap-3">
         <Button
           variant="outline"
           onClick={() => goToStep(Math.max(0, currentIndex - 1))}
@@ -330,7 +335,22 @@ export const SessionPlanningWizard = ({
     </>
   );
 
+  const actionButtons = renderActionButtons();
+  const shouldRenderInlineActions =
+    actionPlacement !== "header" || !headerActionContainer;
+  const headerActionPortal =
+    actionPlacement === "header" && headerActionContainer
+      ? createPortal(
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+            {actionButtons}
+          </div>,
+          headerActionContainer
+        )
+      : null;
+
   return (
+    <>
+      {headerActionPortal}
     <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-slate-50 lg:p-0">
       <div className="grid flex-1 grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)]">
         <aside className="relative hidden h-full flex-col overflow-hidden text-slate-100 transition-all duration-300 ease-out lg:flex lg:rounded-l-3xl">
@@ -416,39 +436,45 @@ export const SessionPlanningWizard = ({
             </Collapsible>
           </div>
 
-          <div
-            ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto px-2 py-5 sm:px-6 sm:py-10 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            <div className="mx-auto w-full max-w-3xl space-y-3 sm:space-y-6 pb-10">
-              <div className={actionLayoutClass}>{renderActionButtons()}</div>
-              <div
-                key={meta.currentStep}
-                className="animate-in fade-in slide-in-from-bottom-3 rounded-3xl border border-slate-200/70 bg-white/95 p-4 shadow-xl shadow-slate-900/5 backdrop-blur transition-all duration-300 ease-out sm:p-6"
-              >
-                {meta.currentStep === "project" ? (
-                  <ProjectStep
-                    onContinue={() =>
-                      goToStep(
-                        Math.min(
-                          SESSION_PLANNING_STEPS.length - 1,
-                          currentIndex + 1
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div
+              ref={scrollContainerRef}
+              className="flex-1 overflow-y-auto px-2 py-5 sm:px-6 sm:py-10 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              <div className="mx-auto w-full max-w-3xl space-y-3 sm:space-y-6 pb-10">
+                <div
+                  key={meta.currentStep}
+                  className="animate-in fade-in slide-in-from-bottom-3 rounded-3xl border border-slate-200/70 bg-white/95 p-4 shadow-xl shadow-slate-900/5 backdrop-blur transition-all duration-300 ease-out sm:p-6"
+                >
+                  {meta.currentStep === "project" ? (
+                    <ProjectStep
+                      onContinue={() =>
+                        goToStep(
+                          Math.min(
+                            SESSION_PLANNING_STEPS.length - 1,
+                            currentIndex + 1
+                          )
                         )
-                      )
-                    }
-                  />
-                ) : (
-                  <CurrentStepComponent />
-                )}
-              </div>
-              <div className="sticky bottom-0 z-10 pb-4 pt-4">
-                <div className={actionLayoutClass}>{renderActionButtons()}</div>
+                      }
+                    />
+                  ) : (
+                    <CurrentStepComponent />
+                  )}
+                </div>
               </div>
             </div>
+            {shouldRenderInlineActions ? (
+              <div className="border-t border-slate-200 bg-white/95 px-2 py-4 sm:px-6 lg:px-8">
+                <div className="mx-auto w-full max-w-3xl">
+                  <div className={actionLayoutClass}>{actionButtons}</div>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
     </div>
+    </>
   );
 };
 

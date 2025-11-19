@@ -72,23 +72,38 @@ export function useWorkflows() {
       const organizationId = await getUserOrganizationId();
       if (!organizationId) return;
 
-      const { data: workflowsData, error } = await supabase
-        .from('workflows')
-        .select(`
-          *,
-          workflow_steps (
-            id,
-            step_order,
-            action_type,
-            action_config,
-            delay_minutes,
-            is_active
-          )
-        `)
-        .eq('organization_id', organizationId)
-        .order('created_at', { ascending: false });
+      const [{ data: workflowsData, error }, { data: templatesData, error: templatesError }] = await Promise.all([
+        supabase
+          .from('workflows')
+          .select(`
+            *,
+            workflow_steps (
+              id,
+              step_order,
+              action_type,
+              action_config,
+              delay_minutes,
+              is_active
+            )
+          `)
+          .eq('organization_id', organizationId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('message_templates')
+          .select('id, template_slug')
+          .eq('organization_id', organizationId)
+      ]);
 
       if (error) throw error;
+      if (templatesError) throw templatesError;
+
+      const templateSlugMap = new Map<string, string>();
+      (templatesData ?? []).forEach(template => {
+        const slug = template.template_slug;
+        if (slug) {
+          templateSlugMap.set(slug, template.id);
+        }
+      });
       
       // Transform workflows to include template data from steps
       const transformedWorkflows: WorkflowWithMetadata[] = (workflowsData || []).map((workflow) => {
@@ -96,10 +111,13 @@ export function useWorkflows() {
         const firstStep = workflowWithSteps.workflow_steps?.[0];
         const actionConfig = firstStep?.action_config ?? {};
         const channels = actionConfig.channels ?? ['email'];
+        const templateSlug = actionConfig.template_slug ?? actionConfig.templateSlug;
+        const templateIdFromSlug = typeof templateSlug === 'string' ? templateSlugMap.get(templateSlug) : undefined;
+        const templateId = actionConfig.template_id ?? actionConfig.templateId ?? templateIdFromSlug ?? '';
 
         return {
           ...workflowWithSteps,
-          template_id: actionConfig.template_id ?? '',
+          template_id: templateId,
           channels,
           reminder_delay_minutes: firstStep?.delay_minutes ?? 0,
           email_enabled: channels.includes('email'),

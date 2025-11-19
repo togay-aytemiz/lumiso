@@ -98,21 +98,16 @@ export function useTemplates() {
   }, [toast]);
 
   const getSessionTemplates = () => {
-    const sessionFiltered = templates.filter(template => 
-      template.category === 'session_scheduled' || 
-      template.category === 'session_reminder' ||
-      template.category === 'session_rescheduled' ||
-      template.category === 'session_cancelled' ||
-      template.category === 'session_completed' ||
-      template.category === 'session' || 
-      template.category === 'sessions' ||
-      template.category === 'client-communication' ||
-      template.name.toLowerCase().includes('session') ||
-      template.name.toLowerCase().includes('appointment') ||
-      template.name.toLowerCase().includes('booking') ||
-      template.name.toLowerCase().includes('reminder') ||
-      template.name.toLowerCase().includes('confirmation')
-    );
+    const sessionKeywords = ['session', 'appointment', 'booking', 'reminder', 'confirmation'];
+    const sessionFiltered = templates.filter(template => {
+      const category = template.category?.toLowerCase() ?? '';
+      const name = template.name?.toLowerCase() ?? '';
+      const matchesSessionCategory = category.startsWith('session');
+      const matchesAllowedCategory = category === 'client-communication';
+      const matchesName = sessionKeywords.some(keyword => name.includes(keyword));
+
+      return matchesSessionCategory || matchesAllowedCategory || matchesName;
+    });
     
     // If no session-specific templates found, show all general templates as fallback
     const result = sessionFiltered.length > 0 ? sessionFiltered : templates;

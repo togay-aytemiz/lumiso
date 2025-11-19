@@ -24,7 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SettingsCollectionSection } from "@/components/settings/SettingsSectionVariants";
 import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 // Permissions removed for single photographer mode
-import { usePackages, useServices } from "@/hooks/useOrganizationData";
+import { usePackages, useProjectTypes, useServices } from "@/hooks/useOrganizationData";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCommonTranslation } from "@/hooks/useTypedTranslation";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -45,13 +45,7 @@ interface Package {
   is_active: boolean;
   include_addons_in_price?: boolean | null;
   line_items: unknown;
-  pricing_metadata?: {
-    enableDeposit?: boolean;
-    depositAmount?: number;
-    depositMode?: "percent_subtotal" | "percent_base" | "fixed";
-    depositValue?: number;
-    depositTarget?: "subtotal" | "base" | null;
-  } | null;
+  pricing_metadata?: Record<string, unknown> | null;
 }
 
 type LineItemLookup = {
@@ -126,6 +120,100 @@ const buildLineItemLookup = (
   return lookup;
 };
 
+type ProjectTypeRecord = {
+  id: string;
+  name?: string | null;
+  template_slug?: string | null;
+};
+
+type ParsedPricingMetadata = {
+  enableDeposit: boolean;
+  depositMode: "fixed" | "percent_base" | "percent_subtotal";
+  depositValue: number;
+  depositAmount: number;
+  depositTarget: "base" | "subtotal";
+};
+
+const roundCurrency = (value: number): number => {
+  if (!Number.isFinite(value)) return 0;
+  return Math.round(value * 100) / 100;
+};
+
+const coerceNumber = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim().length) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const parsePackagePricingMetadata = (
+  value: unknown
+): ParsedPricingMetadata => {
+  if (!value || typeof value !== "object") {
+    return {
+      enableDeposit: false,
+      depositMode: "percent_subtotal",
+      depositValue: 0,
+      depositAmount: 0,
+      depositTarget: "subtotal",
+    };
+  }
+
+  const record = value as Record<string, unknown>;
+  const enableDeposit = Boolean(record.enableDeposit);
+  const rawMode = record.depositMode;
+  const depositMode =
+    rawMode === "fixed" || rawMode === "percent_base"
+      ? rawMode
+      : "percent_subtotal";
+  const depositTarget =
+    record.depositTarget === "base"
+      ? "base"
+      : record.depositTarget === "subtotal"
+      ? "subtotal"
+      : depositMode === "percent_base"
+      ? "base"
+      : "subtotal";
+  const depositValue = coerceNumber(record.depositValue) ?? 0;
+  const depositAmount = coerceNumber(record.depositAmount) ?? 0;
+
+  return {
+    enableDeposit,
+    depositMode,
+    depositValue,
+    depositAmount,
+    depositTarget:
+      depositMode === "percent_base" ? "base" : depositTarget,
+  };
+};
+
+const computeDepositAmountFromMetadata = (
+  pkg: Package,
+  metadata: ParsedPricingMetadata
+) => {
+  const basePrice = pkg.price ?? 0;
+  const includeAddOns = pkg.include_addons_in_price ?? true;
+  const subtotal = includeAddOns ? pkg.client_total ?? basePrice : basePrice;
+  const targetAmount =
+    metadata.depositTarget === "base" ? basePrice : subtotal;
+
+  if (metadata.depositMode === "fixed") {
+    const fixedAmount =
+      metadata.depositValue > 0
+        ? metadata.depositValue
+        : metadata.depositAmount;
+    return roundCurrency(fixedAmount);
+  }
+
+  if (!metadata.depositValue || targetAmount <= 0) {
+    return metadata.depositAmount;
+  }
+
+  return roundCurrency((targetAmount * metadata.depositValue) / 100);
+};
+
 const PackagesSection = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [packageToDelete, setPackageToDelete] = useState<Package | null>(null);
@@ -143,6 +231,7 @@ const PackagesSection = () => {
   // Use cached data
   const { data: packages = [], isLoading, error } = usePackages();
   const { data: services = [] } = useServices();
+  const { data: projectTypes = [] } = useProjectTypes();
 
   const serviceNameMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -167,6 +256,45 @@ const PackagesSection = () => {
     });
     return map;
   }, [services]);
+
+  const projectTypeLookups = useMemo(() => {
+    const byId = new Map<string, string>();
+    const bySlug = new Map<string, string>();
+    const byName = new Map<string, string>();
+
+    (projectTypes as ProjectTypeRecord[]).forEach((type) => {
+      if (!type?.id) return;
+      const normalizedName =
+        typeof type.name === "string" && type.name.trim().length
+          ? type.name.trim()
+          : type.id;
+
+      byId.set(type.id, normalizedName);
+      byName.set(normalizedName.toLowerCase(), normalizedName);
+
+      if (typeof type.template_slug === "string" && type.template_slug.trim().length) {
+        const slug = type.template_slug.trim();
+        bySlug.set(slug, normalizedName);
+        bySlug.set(slug.toLowerCase(), normalizedName);
+      }
+    });
+
+    return { byId, bySlug, byName };
+  }, [projectTypes]);
+
+  const resolveProjectTypeLabel = (rawValue: string) => {
+    if (typeof rawValue !== "string") return "";
+    const trimmed = rawValue.trim();
+    if (!trimmed.length) return "";
+    const lowered = trimmed.toLowerCase();
+    return (
+      projectTypeLookups.byId.get(trimmed) ??
+      projectTypeLookups.bySlug.get(trimmed) ??
+      projectTypeLookups.bySlug.get(lowered) ??
+      projectTypeLookups.byName.get(lowered) ??
+      trimmed
+    );
+  };
 
   const handleDeleteClick = (pkg: Package) => {
     setPackageToDelete(pkg);
@@ -364,12 +492,16 @@ const PackagesSection = () => {
   };
 
   const extractDepositSummary = (pkg: Package) => {
-    const metadata = pkg.pricing_metadata ?? undefined;
-    if (!metadata || !metadata.enableDeposit) {
+    const metadata = parsePackagePricingMetadata(pkg.pricing_metadata);
+    if (!metadata.enableDeposit) {
       return { label: "—", helper: t("packages.deposit_none") };
     }
 
-    const amount = metadata.depositAmount ?? 0;
+    const amount =
+      metadata.depositAmount > 0
+        ? metadata.depositAmount
+        : computeDepositAmountFromMetadata(pkg, metadata);
+
     if (amount <= 0) {
       return { label: "—", helper: t("packages.deposit_none") };
     }
@@ -510,6 +642,9 @@ const PackagesSection = () => {
                 const remainingAddOnCount =
                   addOnBadges.length - displayedAddOns.length;
                 const showAllTypes = pkg.applicable_types.length === 0;
+                const applicableTypeBadges = pkg.applicable_types
+                  .map((type) => resolveProjectTypeLabel(String(type)))
+                  .filter((label): label is string => Boolean(label));
 
                 return (
                   <Card
@@ -576,13 +711,13 @@ const PackagesSection = () => {
                           </Badge>
                         ) : (
                           <div className="flex flex-wrap gap-2">
-                            {pkg.applicable_types.map((type) => (
+                            {applicableTypeBadges.map((label, index) => (
                               <Badge
-                                key={type}
+                                key={`${pkg.id}-type-${index}`}
                                 variant="secondary"
                                 className="text-xs"
                               >
-                                {type}
+                                {label}
                               </Badge>
                             ))}
                           </div>

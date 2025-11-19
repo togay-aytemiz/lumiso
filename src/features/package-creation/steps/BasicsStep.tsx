@@ -16,6 +16,7 @@ import { Link } from "react-router-dom";
 interface ProjectTypeRecord {
   id: string;
   name: string;
+  template_slug?: string | null;
 }
 
 export const BasicsStep = () => {
@@ -26,6 +27,7 @@ export const BasicsStep = () => {
   const { data: projectTypes = [], isLoading, error, refetch } = useProjectTypes();
   const { settings, loading: settingsLoading } = useOrganizationSettings();
   const taxProfile = settings?.taxProfile ?? null;
+  const preferredProjectTypeSlugs = settings?.preferred_project_types ?? [];
 
   const projectTypeMap = useMemo(
     () =>
@@ -34,6 +36,27 @@ export const BasicsStep = () => {
       ),
     [projectTypes]
   );
+
+  const displayProjectTypes = useMemo(() => {
+    const preferredSlugs = preferredProjectTypeSlugs.filter(
+      (slug): slug is string => typeof slug === "string" && slug.trim().length > 0
+    );
+    const records = projectTypes as ProjectTypeRecord[];
+
+    if (!preferredSlugs.length) {
+      return records;
+    }
+
+    const orderedPreferred = preferredSlugs
+      .map((slug) => records.find((record) => record.template_slug === slug))
+      .filter((record): record is ProjectTypeRecord => Boolean(record));
+
+    if (orderedPreferred.length > 0) {
+      return orderedPreferred;
+    }
+
+    return records;
+  }, [preferredProjectTypeSlugs, projectTypes]);
 
   const handleBasicsChange = (field: "name" | "description") => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     updateBasics({ [field]: event.target.value });
@@ -177,13 +200,13 @@ export const BasicsStep = () => {
                 </button>
               </div>
             </div>
-          ) : (projectTypes as ProjectTypeRecord[]).length === 0 ? (
+          ) : (displayProjectTypes as ProjectTypeRecord[]).length === 0 ? (
             <div className="rounded-md border border-dashed px-3 py-4 text-sm text-muted-foreground">
               {t("steps.basics.fields.types.empty")}
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {(projectTypes as ProjectTypeRecord[]).map((type) => {
+              {(displayProjectTypes as ProjectTypeRecord[]).map((type) => {
                 const isSelected = state.basics.applicableTypeIds.includes(type.id);
                 return (
                   <Badge
@@ -202,7 +225,8 @@ export const BasicsStep = () => {
             </div>
           )}
 
-          {selectedTypeNames.length === 0 && (projectTypes as ProjectTypeRecord[]).length > 0 ? (
+          {selectedTypeNames.length === 0 &&
+          (displayProjectTypes as ProjectTypeRecord[]).length > 0 ? (
             <p className="text-xs text-muted-foreground">
               {t("steps.basics.fields.types.all")}
             </p>

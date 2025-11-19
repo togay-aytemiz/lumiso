@@ -57,6 +57,7 @@ const CrmDashboard = () => {
   const { activeOrganization } = useOrganization();
   const navigate = useNavigate();
   const { t } = useDashboardTranslation();
+  const organizationId = activeOrganization?.id;
 
   useEffect(() => {
     const handleAddLead = (event: Event) => {
@@ -153,11 +154,16 @@ const CrmDashboard = () => {
   }, [activeOrganization?.owner_id, profile?.full_name, profile?.user_id]);
 
   const fetchData = useCallback(async () => {
+    if (!organizationId) {
+      return;
+    }
+
     try {
       // Fetch leads
       const { data: leadsData, error: leadsError } = await supabase
         .from<LeadRow>('leads')
         .select('*, lead_statuses ( is_system_final, name )')
+        .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
       if (leadsError) throw leadsError;
@@ -174,6 +180,7 @@ const CrmDashboard = () => {
       const { data: activitiesData, error: activitiesError } = await supabase
         .from<ActivityRow>('activities')
         .select('*')
+        .eq('organization_id', organizationId)
         .not('reminder_date', 'is', null)
         .order('reminder_date', { ascending: true });
 
@@ -186,6 +193,7 @@ const CrmDashboard = () => {
       const { data: sessionsData, error: sessionsError } = await supabase
         .from<SessionRow>('sessions')
         .select('*')
+        .eq('organization_id', organizationId)
         .gte('session_date', startOfWeek.toISOString().split('T')[0])
         .lte('session_date', endOfWeek.toISOString().split('T')[0])
         .order('session_date', { ascending: true })
@@ -200,6 +208,7 @@ const CrmDashboard = () => {
         const { data: leadNamesData } = await supabase
           .from<LeadSummary>('leads')
           .select('id, name, status')
+          .eq('organization_id', organizationId)
           .in('id', leadIds);
 
         const sessionSummaries: SessionWithLead[] = sessionsData.map(session => ({
@@ -224,7 +233,7 @@ const CrmDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [organizationId]);
 
   useEffect(() => {
     fetchData();

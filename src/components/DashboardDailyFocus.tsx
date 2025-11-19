@@ -29,6 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useProjectSheetController } from "@/hooks/useProjectSheetController";
 import { ProjectSheetView } from "@/components/ProjectSheetView";
+import { useOrganizationTimezone } from "@/hooks/useOrganizationTimezone";
 import {
   Tooltip,
   TooltipContent,
@@ -36,6 +37,7 @@ import {
   TooltipTrigger
 } from "@/components/ui/tooltip";
 import { useProfile } from "@/hooks/useProfile";
+import { formatInTimeZone } from "date-fns-tz";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
 type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
@@ -80,6 +82,11 @@ type TimelineItem =
 type DaySegment = "night" | "morning" | "midday" | "evening";
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+const isoDateToUtcMs = (iso: string) => {
+  const [year, month, day] = iso.split("-").map((value) => parseInt(value, 10));
+  return Date.UTC(year, month - 1, day);
+};
 
 const parseTimeToMinutes = (timeString: string) => {
   const [hours, minutes] = timeString.split(":").map((value) => parseInt(value, 10));
@@ -177,6 +184,7 @@ const DashboardDailyFocus = ({
   userName,
   inactiveLeadCount
 }: DashboardDailyFocusProps) => {
+  const { timezone, timeFormat } = useOrganizationTimezone();
   const [now, setNow] = useState(new Date());
   const { t, i18n } = useDashboardTranslation();
   const navigate = useNavigate();
@@ -202,8 +210,16 @@ const DashboardDailyFocus = ({
     return () => clearInterval(interval);
   }, []);
 
-  const todayIso = useMemo(() => now.toISOString().split("T")[0], [now]);
   const locale = i18n.language || getUserLocale();
+  const todayIso = useMemo(
+    () => formatInTimeZone(now, timezone, "yyyy-MM-dd"),
+    [now, timezone]
+  );
+  const tomorrowIso = useMemo(() => {
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return formatInTimeZone(tomorrow, timezone, "yyyy-MM-dd");
+  }, [now, timezone]);
 
   const middayVariants = useMemo(() => {
     const phrases = t("daily_focus.greetings.midday_variants", {
@@ -228,7 +244,9 @@ const DashboardDailyFocus = ({
     [sortedSessions, todayIso]
   );
 
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const currentHour = Number(formatInTimeZone(now, timezone, "H"));
+  const currentMinute = Number(formatInTimeZone(now, timezone, "m"));
+  const nowMinutes = currentHour * 60 + currentMinute;
 
   const nextSession = useMemo(() => {
     return sortedSessions.find((session) => {
@@ -257,28 +275,24 @@ const DashboardDailyFocus = ({
     if (nextSession.session_date === todayIso) {
       return t("daily_focus.up_next_labels.today", { defaultValue: "Today" });
     }
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowIso = tomorrow.toISOString().split("T")[0];
     if (nextSession.session_date === tomorrowIso) {
       return t("daily_focus.up_next_labels.tomorrow", { defaultValue: "Tomorrow" });
     }
-    const sessionDate = new Date(`${nextSession.session_date}T00:00:00`);
-    const todayStart = new Date(now);
-    todayStart.setHours(0, 0, 0, 0);
     const diffInDays = Math.round(
-      (sessionDate.getTime() - todayStart.getTime()) / MS_PER_DAY
+      (isoDateToUtcMs(nextSession.session_date) - isoDateToUtcMs(todayIso)) / MS_PER_DAY
     );
     const formatOptions: Intl.DateTimeFormatOptions =
       Number.isFinite(diffInDays) && diffInDays <= 6
         ? { weekday: "long" }
         : { month: "short", day: "numeric" };
     try {
-      return sessionDate.toLocaleDateString(locale, formatOptions);
+      return new Intl.DateTimeFormat(locale, { ...formatOptions, timeZone: "UTC" }).format(
+        new Date(isoDateToUtcMs(nextSession.session_date))
+      );
     } catch {
       return nextSession.session_date;
     }
-  }, [locale, nextSession, now, t, todayIso]);
+  }, [locale, nextSession, t, todayIso, tomorrowIso]);
 
   const leadLookup = useMemo(() => {
     return leads.reduce<Record<string, string>>((acc, lead) => {
@@ -368,11 +382,16 @@ const DashboardDailyFocus = ({
   );
 
   const totalActiveTasks = overdueTasks.length + todayTasks.length;
-  const nowDisplayTime = now.toLocaleTimeString(locale, {
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-  const daySegment = getDaySegment(now.getHours());
+  const nowDisplayTime = useMemo(() => {
+    const uses24Hour = timeFormat === "24-hour";
+    return new Intl.DateTimeFormat(locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: !uses24Hour,
+      timeZone: timezone
+    }).format(now);
+  }, [locale, now, timeFormat, timezone]);
+  const daySegment = getDaySegment(currentHour);
   const isTurkish = locale?.toLowerCase().startsWith("tr");
   const hasScheduleItems = todaysSessions.length > 0 || todayScheduleReminders.length > 0;
 
@@ -482,11 +501,16 @@ const DashboardDailyFocus = ({
     });
   }, [baseGreeting, firstName, t]);
 
-  const formattedDate = now.toLocaleDateString(locale, {
-    weekday: "long",
-    month: "long",
-    day: "numeric"
-  });
+  const formattedDate = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        timeZone: timezone
+      }).format(now),
+    [locale, now, timezone]
+  );
 
   const triggerAddAction = (type: AddActionType) => {
     if (typeof window === "undefined") return;

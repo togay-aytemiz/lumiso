@@ -435,6 +435,17 @@ const LeadDetail = () => {
     [lostStatus?.color]
   );
 
+  const unifiedClientLead = useMemo(() => {
+    if (!lead) return null;
+    return {
+      id: lead.id,
+      name: lead.name ?? "",
+      email: lead.email ?? null,
+      phone: lead.phone ?? null,
+      notes: lead.notes ?? null
+    };
+  }, [lead]);
+
   const shouldShowCompletedQuickAction =
     !settingsLoading &&
     Boolean(
@@ -907,8 +918,9 @@ const LeadDetail = () => {
             header={null}
             left={
               <div className="space-y-6">
-                <UnifiedClientDetails
-                  lead={lead}
+                {unifiedClientLead && (
+                  <UnifiedClientDetails
+                    lead={unifiedClientLead}
                   createdAt={lead.created_at}
                   showQuickActions={true}
                   showLeadNameInHeader={false}
@@ -916,6 +928,7 @@ const LeadDetail = () => {
                     void refetchAll();
                   }}
                 />
+                )}
               </div>
             }
             sections={[

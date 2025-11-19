@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -27,7 +28,6 @@ import {
   type WizardStepListSupportingTextArgs,
 } from "@/features/wizard/components/WizardStepList";
 import { createDefaultProjectDeliveryState } from "../state/projectDeliveryState";
-import { cn } from "@/lib/utils";
 
 const STEP_COMPONENTS: Record<ProjectCreationStepId, () => JSX.Element> = {
   lead: LeadStep,
@@ -40,11 +40,15 @@ const STEP_COMPONENTS: Record<ProjectCreationStepId, () => JSX.Element> = {
 interface ProjectCreationWizardProps {
   onComplete: () => void;
   isCompleting?: boolean;
+  actionPlacement?: "inline" | "header";
+  headerActionContainer?: HTMLElement | null;
 }
 
 export const ProjectCreationWizard = ({
   onComplete,
   isCompleting,
+  actionPlacement = "inline",
+  headerActionContainer,
 }: ProjectCreationWizardProps) => {
   const { state } = useProjectCreationContext();
   const { meta } = state;
@@ -309,10 +313,25 @@ export const ProjectCreationWizard = ({
     </>
   );
 
+  const actionButtons = renderActionButtons();
+  const shouldRenderInlineActions =
+    actionPlacement !== "header" || !headerActionContainer;
+  const headerActionPortal =
+    actionPlacement === "header" && headerActionContainer
+      ? createPortal(
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+            {actionButtons}
+          </div>,
+          headerActionContainer
+        )
+      : null;
+
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-slate-50">
-      <div className="grid flex-1 grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <aside className="relative hidden h-full w-full flex-col text-slate-100 transition-all duration-300 ease-out lg:flex lg:rounded-l-3xl">
+    <>
+      {headerActionPortal}
+      <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-slate-50">
+        <div className="grid flex-1 grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)]">
+          <aside className="relative hidden h-full w-full flex-col text-slate-100 transition-all duration-300 ease-out lg:flex lg:rounded-l-3xl">
           <div
             className="pointer-events-none absolute inset-0 rounded-l-3xl overflow-hidden"
             aria-hidden="true"
@@ -404,26 +423,32 @@ export const ProjectCreationWizard = ({
             </Collapsible>
           </div>
 
-          <div
-            ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto px-2 py-5 sm:px-6 sm:py-10 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            <div className="mx-auto w-full max-w-3xl space-y-3 sm:space-y-6 pb-10">
-              <div className={actionLayoutClass}>{renderActionButtons()}</div>
-              <div
-                key={meta.currentStep}
-                className="animate-in fade-in slide-in-from-bottom-3 rounded-3xl border border-slate-200/70 bg-white/95 p-4 shadow-xl shadow-slate-900/5 backdrop-blur overflow-visible transition-all duration-300 ease-out sm:p-6"
-              >
-                <CurrentStepComponent />
-              </div>
-              <div className="sticky bottom-0 z-10 pb-4 pt-4">
-                <div className={actionLayoutClass}>{renderActionButtons()}</div>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div
+              ref={scrollContainerRef}
+              className="flex-1 overflow-y-auto px-2 py-5 sm:px-6 sm:py-10 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              <div className="mx-auto w-full max-w-3xl space-y-3 sm:space-y-6 pb-10">
+                <div
+                  key={meta.currentStep}
+                  className="animate-in fade-in slide-in-from-bottom-3 rounded-3xl border border-slate-200/70 bg-white/95 p-4 shadow-xl shadow-slate-900/5 backdrop-blur overflow-visible transition-all duration-300 ease-out sm:p-6"
+                >
+                  <CurrentStepComponent />
+                </div>
               </div>
             </div>
+            {shouldRenderInlineActions ? (
+              <div className="border-t border-slate-200 bg-white/95 px-2 py-4 sm:px-6 lg:px-8">
+                <div className="mx-auto w-full max-w-3xl">
+                  <div className={actionLayoutClass}>{actionButtons}</div>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
     </div>
+    </>
   );
 };
 

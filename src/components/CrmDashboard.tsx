@@ -20,6 +20,8 @@ import type { Database } from "@/integrations/supabase/types";
 import DashboardDailyFocus, { type SessionWithLead } from "@/components/DashboardDailyFocus";
 import { ProjectCreationWizardSheet } from "@/features/project-creation";
 import { countInactiveLeads } from "@/lib/leadLifecycle";
+import { useProfile } from "@/hooks/useProfile";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
 type LeadWithStatusRow = LeadRow & {
@@ -51,6 +53,8 @@ const CrmDashboard = () => {
   const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
   const [projectWizardOpen, setProjectWizardOpen] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
+  const { profile } = useProfile();
+  const { activeOrganization } = useOrganization();
   const navigate = useNavigate();
   const { t } = useDashboardTranslation();
 
@@ -109,6 +113,44 @@ const CrmDashboard = () => {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    const fullName = profile?.full_name?.trim();
+    if (!fullName) return;
+    setUserName(fullName);
+  }, [profile?.full_name]);
+
+  useEffect(() => {
+    const ownerId = activeOrganization?.owner_id;
+    if (!ownerId) return;
+    if (profile?.user_id === ownerId && profile?.full_name) {
+      // Already handled by the profile effect above
+      return;
+    }
+
+    let isMounted = true;
+    const fetchOwnerName = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", ownerId)
+        .maybeSingle();
+      if (error) {
+        console.error("Failed to fetch account owner name", error);
+        return;
+      }
+      if (!isMounted) return;
+      const ownerName = data?.full_name?.trim();
+      if (ownerName) {
+        setUserName(ownerName);
+      }
+    };
+
+    void fetchOwnerName();
+    return () => {
+      isMounted = false;
+    };
+  }, [activeOrganization?.owner_id, profile?.full_name, profile?.user_id]);
 
   const fetchData = useCallback(async () => {
     try {

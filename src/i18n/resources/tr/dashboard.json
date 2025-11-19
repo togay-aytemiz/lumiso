@@ -60,10 +60,15 @@
         "Selam, devam edelim",
         "Günümüze güç katmaya hazır mısın?",
         "Hoş geldin, işlere dalalım"
-      ]
+      ],
+      "personalized": "{{greeting}}, {{name}}"
     },
     "active_tasks": "Bugün <highlight>{{count}}</highlight> aktif görevin var.",
     "up_next": "Sıradaki",
+    "up_next_labels": {
+      "today": "Bugün",
+      "tomorrow": "Yarın"
+    },
     "session_fallback": "Seans",
     "status_fallback": "Planlandı",
     "location_fallback": "Belirlenecek",
@@ -84,7 +89,11 @@
     "cta_lead": "Kişi Ekle",
     "cta_project": "Proje Ekle",
     "cta_session": "Seans Planla",
-    "all_day": "Tüm Gün"
+    "all_day": "Tüm Gün",
+    "completed_reminder": "Tamamlandı",
+    "reminder_tooltip_complete": "Bu hatırlatmayı tamamlandı olarak işaretle",
+    "reminder_tooltip_reopen": "Hatırlatmayı bugüne geri getir",
+    "reminder_action_complete": "Tamamlandı olarak işaretle"
   },
   "buttons": {
     "add_lead": "Kişi Ekle",

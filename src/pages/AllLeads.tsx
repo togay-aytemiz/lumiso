@@ -245,6 +245,8 @@ const AllLeadsNew = () => {
 
   const tableSectionRef = useRef<HTMLElement | null>(null);
 
+  const scrollAnimationRef = useRef<number | null>(null);
+
   const scrollToTable = useCallback(() => {
     if (tableSectionRef.current) {
       const rect = tableSectionRef.current.getBoundingClientRect();
@@ -258,12 +260,31 @@ const AllLeadsNew = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  const scheduleScrollToTable = useCallback(() => {
+    if (scrollAnimationRef.current != null) {
+      cancelAnimationFrame(scrollAnimationRef.current);
+    }
+    scrollAnimationRef.current = requestAnimationFrame(() => {
+      scrollAnimationRef.current = requestAnimationFrame(() => {
+        scrollToTable();
+      });
+    });
+  }, [scrollToTable]);
+
+  useEffect(() => {
+    return () => {
+      if (scrollAnimationRef.current != null) {
+        cancelAnimationFrame(scrollAnimationRef.current);
+      }
+    };
+  }, []);
+
   const handleInactiveMetricAction = useCallback(() => {
     if (!filtersState.inactiveOnly) {
       setInactiveOnlyFilter(true);
     }
-    scrollToTable();
-  }, [filtersState.inactiveOnly, scrollToTable, setInactiveOnlyFilter]);
+    scheduleScrollToTable();
+  }, [filtersState.inactiveOnly, scheduleScrollToTable, setInactiveOnlyFilter]);
 
   const [page, setPage] = useState(1);
   const pageSize = 25;

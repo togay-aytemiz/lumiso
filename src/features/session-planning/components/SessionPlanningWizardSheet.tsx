@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { SessionPlanningProvider } from "../context/SessionPlanningProvider";
@@ -183,6 +183,10 @@ const SessionPlanningWizardSheetInner = ({
   const [resumeDraft, setResumeDraft] = useState<SessionPlanningDraft | null>(null);
   const [isResolvingEntryContext, setIsResolvingEntryContext] = useState(false);
   const [completionSummary, setCompletionSummary] = useState<CompletionSummary | null>(null);
+  const [headerActionElement, setHeaderActionElement] = useState<HTMLDivElement | null>(null);
+  const handleHeaderActionRef = useCallback((node: HTMLDivElement | null) => {
+    setHeaderActionElement(node);
+  }, []);
   const draftKeyRef = useRef<string | null>(null);
   const skipNextSaveRef = useRef(false);
   const saveTimerRef = useRef<number | null>(null);
@@ -1023,6 +1027,12 @@ const SessionPlanningWizardSheetInner = ({
         size="xl"
         dirty={state.meta.isDirty}
         onDirtyClose={handleClose}
+        headerAccessory={
+          <div
+            ref={handleHeaderActionRef}
+            className="flex flex-wrap items-center justify-end gap-2"
+          />
+        }
       >
         {shouldShowContextLoader ? (
           <div className="flex h-[360px] flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
@@ -1046,7 +1056,13 @@ const SessionPlanningWizardSheetInner = ({
         ) : (
           <SessionPlanningOriginalStateProvider value={initialSessionSnapshotRef.current}>
             <SessionSavedResourcesProvider>
-              <SessionPlanningWizard onCancel={handleClose} onComplete={handleComplete} isCompleting={isCompleting} />
+              <SessionPlanningWizard
+                onCancel={handleClose}
+                onComplete={handleComplete}
+                isCompleting={isCompleting}
+                actionPlacement="header"
+                headerActionContainer={headerActionElement}
+              />
             </SessionSavedResourcesProvider>
           </SessionPlanningOriginalStateProvider>
         )}

@@ -29,6 +29,7 @@ interface AppSheetModalProps {
   footerActions?: FooterAction[];
   dirty?: boolean;
   onDirtyClose?: () => void;
+  headerAccessory?: ReactNode;
 }
 
 const RECENT_OPEN_GUARD_MS = 200;
@@ -65,7 +66,8 @@ export function AppSheetModal({
   size = 'default',
   footerActions = [],
   dirty = false,
-  onDirtyClose
+  onDirtyClose,
+  headerAccessory
 }: AppSheetModalProps) {
   const isMobile = useIsMobile();
   const lastOpenedRef = useRef(0);
@@ -156,16 +158,19 @@ export function AppSheetModal({
         onInteractOutside={handleInteractOutside}
       >
         <SheetHeader className="border-b pb-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <SheetTitle className="text-lg font-semibold">{title}</SheetTitle>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleCloseClick} 
-              className="h-8 w-8 p-0 rounded-full"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {headerAccessory}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleCloseClick} 
+                className="h-8 w-8 p-0 rounded-full"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </SheetHeader>
 

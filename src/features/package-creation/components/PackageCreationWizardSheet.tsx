@@ -90,6 +90,10 @@ const PackageCreationWizardSheetInner = ({
   const isEditing = Boolean(packageId);
   const [isLoadingPackage, setIsLoadingPackage] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [headerActionElement, setHeaderActionElement] = useState<HTMLDivElement | null>(null);
+  const handleHeaderActionRef = useCallback((node: HTMLDivElement | null) => {
+    setHeaderActionElement(node);
+  }, []);
 
   const forceClose = useCallback(() => {
     onOpenChange(false);
@@ -310,6 +314,12 @@ const PackageCreationWizardSheetInner = ({
         size="xl"
         dirty={state.meta.isDirty}
         onDirtyClose={requestClose}
+        headerAccessory={
+          <div
+            ref={handleHeaderActionRef}
+            className="flex flex-wrap items-center justify-end gap-2"
+          />
+        }
       >
         {isOpen ? (
           <div className="flex h-full flex-col">
@@ -329,6 +339,8 @@ const PackageCreationWizardSheetInner = ({
                 key={isEditing ? packageId ?? "edit" : "create"}
                 onComplete={handleComplete}
                 isCompleting={isCompleting}
+                actionPlacement="header"
+                headerActionContainer={headerActionElement}
               />
             )}
           </div>

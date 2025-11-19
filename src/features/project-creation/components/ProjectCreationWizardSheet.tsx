@@ -147,6 +147,11 @@ const ProjectCreationWizardSheetInner = ({
   const sheetTitle = isEditMode
     ? tProject("wizard.editTitle", { defaultValue: "Proje düzenle" })
     : tProject("wizard.title");
+  const [headerActionElement, setHeaderActionElement] =
+    useState<HTMLDivElement | null>(null);
+  const handleHeaderActionRef = useCallback((node: HTMLDivElement | null) => {
+    setHeaderActionElement(node);
+  }, []);
 
   const forceClose = useCallback(() => {
     onOpenChange(false);
@@ -668,6 +673,12 @@ const ProjectCreationWizardSheetInner = ({
         size="xl"
         dirty={state.meta.isDirty}
         onDirtyClose={requestClose}
+        headerAccessory={
+          <div
+            ref={handleHeaderActionRef}
+            className="flex flex-wrap items-center justify-end gap-2"
+          />
+        }
       >
         {isOpen ? (
           <div className="flex h-full flex-col">
@@ -681,7 +692,12 @@ const ProjectCreationWizardSheetInner = ({
                 </span>
               </div>
             ) : (
-              <ProjectCreationWizard onComplete={handleComplete} isCompleting={isCreating} />
+              <ProjectCreationWizard
+                onComplete={handleComplete}
+                isCompleting={isCreating}
+                actionPlacement="header"
+                headerActionContainer={headerActionElement}
+              />
             )}
           </div>
         ) : null}

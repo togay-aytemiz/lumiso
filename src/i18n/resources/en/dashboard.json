@@ -59,10 +59,15 @@
         "Checking in",
         "Hey there",
         "Let's stay focused"
-      ]
+      ],
+      "personalized": "{{greeting}}, {{name}}"
     },
     "active_tasks": "You have <highlight>{{count}}</highlight> active tasks today.",
     "up_next": "Up Next",
+    "up_next_labels": {
+      "today": "Today",
+      "tomorrow": "Tomorrow"
+    },
     "session_fallback": "Session",
     "status_fallback": "Scheduled",
     "location_fallback": "To be decided",
@@ -83,7 +88,11 @@
     "cta_lead": "Add Lead",
     "cta_project": "Add Project",
     "cta_session": "Schedule Session",
-    "all_day": "All Day"
+    "all_day": "All Day",
+    "completed_reminder": "Completed",
+    "reminder_tooltip_complete": "Click to mark this reminder as done",
+    "reminder_tooltip_reopen": "Click to bring this reminder back to today",
+    "reminder_action_complete": "Click to complete"
   },
   "buttons": {
     "add_lead": "Add Lead",

@@ -1,18 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { KeyboardEvent } from "react";
 import { Trans } from "react-i18next";
 import {
   Activity,
   AlertCircle,
   AlertTriangle,
-  Briefcase,
   Calendar as CalendarIcon,
   CheckCircle2,
   CheckSquare,
   ChevronRight,
   DollarSign,
+  FolderOpen,
+  Loader2,
   MapPin,
   Sparkles,
-  StickyNote
+  StickyNote,
+  Users
 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { formatTime, getUserLocale } from "@/lib/utils";
@@ -22,6 +25,17 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import SessionSheetView from "@/components/SessionSheetView";
 import { computeLeadInitials } from "@/components/leadInitialsUtils";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useProjectSheetController } from "@/hooks/useProjectSheetController";
+import { ProjectSheetView } from "@/components/ProjectSheetView";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
+import { useProfile } from "@/hooks/useProfile";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
 type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
@@ -53,7 +67,7 @@ type TimelineItem =
       time: string;
       displayTime: string;
       sortValue: number;
-      data: ActivityRow & { leadName?: string | null };
+      data: ActivityRow & { leadName?: string | null; projectName?: string | null };
     }
   | {
       type: "now";
@@ -64,6 +78,8 @@ type TimelineItem =
     };
 
 type DaySegment = "night" | "morning" | "midday" | "evening";
+
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 const parseTimeToMinutes = (timeString: string) => {
   const [hours, minutes] = timeString.split(":").map((value) => parseInt(value, 10));
@@ -165,12 +181,21 @@ const DashboardDailyFocus = ({
   const { t, i18n } = useDashboardTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const { profile } = useProfile();
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
+  const [completingReminderId, setCompletingReminderId] = useState<string | null>(null);
+  const [projectLookup, setProjectLookup] = useState<Record<string, string>>({});
   const getLeadInitials = useCallback(
     (name?: string | null) => computeLeadInitials(name, "??", 2),
     []
   );
+  const { toast } = useToast();
+  const [activityList, setActivityList] = useState<ActivityRow[]>(activities);
+
+  useEffect(() => {
+    setActivityList(activities);
+  }, [activities]);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 60_000);
@@ -187,33 +212,73 @@ const DashboardDailyFocus = ({
     return Array.isArray(phrases) ? phrases : [];
   }, [i18n.language, t]);
 
-  const todaysSessions = useMemo(
+  const sortedSessions = useMemo(
     () =>
-      sessions
-        .filter((session) => session.session_date === todayIso)
-        .sort((a, b) => a.session_time.localeCompare(b.session_time)),
-    [sessions, todayIso]
+      [...sessions].sort((a, b) => {
+        if (a.session_date === b.session_date) {
+          return a.session_time.localeCompare(b.session_time);
+        }
+        return a.session_date.localeCompare(b.session_date);
+      }),
+    [sessions]
+  );
+
+  const todaysSessions = useMemo(
+    () => sortedSessions.filter((session) => session.session_date === todayIso),
+    [sortedSessions, todayIso]
   );
 
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
   const nextSession = useMemo(() => {
-    if (todaysSessions.length === 0) {
-      return undefined;
-    }
-    return (
-      todaysSessions.find((session) => parseTimeToMinutes(session.session_time) > nowMinutes) ||
-      todaysSessions[0]
-    );
-  }, [todaysSessions, nowMinutes]);
+    return sortedSessions.find((session) => {
+      if (session.session_date > todayIso) {
+        return true;
+      }
+      if (session.session_date < todayIso) {
+        return false;
+      }
+      return parseTimeToMinutes(session.session_time) >= nowMinutes;
+    });
+  }, [sortedSessions, todayIso, nowMinutes]);
 
   const laterSessions = useMemo(() => {
     if (!nextSession) return [];
     const nextSessionMinutes = parseTimeToMinutes(nextSession.session_time);
-    return todaysSessions.filter(
-      (session) => parseTimeToMinutes(session.session_time) > nextSessionMinutes
+    return sortedSessions.filter(
+      (session) =>
+        session.session_date === nextSession.session_date &&
+        parseTimeToMinutes(session.session_time) > nextSessionMinutes
     );
-  }, [nextSession, todaysSessions]);
+  }, [nextSession, sortedSessions]);
+
+  const nextSessionTimingLabel = useMemo(() => {
+    if (!nextSession) return null;
+    if (nextSession.session_date === todayIso) {
+      return t("daily_focus.up_next_labels.today", { defaultValue: "Today" });
+    }
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowIso = tomorrow.toISOString().split("T")[0];
+    if (nextSession.session_date === tomorrowIso) {
+      return t("daily_focus.up_next_labels.tomorrow", { defaultValue: "Tomorrow" });
+    }
+    const sessionDate = new Date(`${nextSession.session_date}T00:00:00`);
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const diffInDays = Math.round(
+      (sessionDate.getTime() - todayStart.getTime()) / MS_PER_DAY
+    );
+    const formatOptions: Intl.DateTimeFormatOptions =
+      Number.isFinite(diffInDays) && diffInDays <= 6
+        ? { weekday: "long" }
+        : { month: "short", day: "numeric" };
+    try {
+      return sessionDate.toLocaleDateString(locale, formatOptions);
+    } catch {
+      return nextSession.session_date;
+    }
+  }, [locale, nextSession, now, t, todayIso]);
 
   const leadLookup = useMemo(() => {
     return leads.reduce<Record<string, string>>((acc, lead) => {
@@ -222,9 +287,56 @@ const DashboardDailyFocus = ({
     }, {});
   }, [leads]);
 
+  useEffect(() => {
+    const projectIds = Array.from(
+      new Set(
+        activityList
+          .map((activity) => activity.project_id)
+          .filter((id): id is string => Boolean(id))
+      )
+    );
+    if (projectIds.length === 0) {
+      setProjectLookup({});
+      return;
+    }
+    let isMounted = true;
+    const fetchProjects = async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("id, name")
+        .in("id", projectIds);
+      if (error) {
+        console.error("Failed to fetch project names", error);
+        return;
+      }
+      if (!isMounted || !data) return;
+      const lookup = data.reduce<Record<string, string>>((acc, project) => {
+        if (project.id) {
+          acc[project.id] = project.name ?? "";
+        }
+        return acc;
+      }, {});
+      setProjectLookup(lookup);
+    };
+    void fetchProjects();
+    return () => {
+      isMounted = false;
+    };
+  }, [activityList]);
+
+  const {
+    viewingProject,
+    projectSheetOpen,
+    onProjectSheetOpenChange,
+    projectSheetLeadName,
+    openProjectSheet
+  } = useProjectSheetController({
+    resolveLeadName: (leadId) => leadLookup[leadId]
+  });
+
   const activeActivities = useMemo(
-    () => activities.filter((activity) => !activity.completed && activity.reminder_date),
-    [activities]
+    () => activityList.filter((activity) => !activity.completed && activity.reminder_date),
+    [activityList]
   );
 
   const todayTasks = useMemo(
@@ -245,6 +357,16 @@ const DashboardDailyFocus = ({
     [activeActivities, todayIso]
   );
 
+  const todayScheduleReminders = useMemo(
+    () =>
+      activityList.filter((activity) => {
+        if (!activity.reminder_date) return false;
+        const date = activity.reminder_date.split("T")[0];
+        return date === todayIso;
+      }),
+    [activityList, todayIso]
+  );
+
   const totalActiveTasks = overdueTasks.length + todayTasks.length;
   const nowDisplayTime = now.toLocaleTimeString(locale, {
     hour: "2-digit",
@@ -252,20 +374,34 @@ const DashboardDailyFocus = ({
   });
   const daySegment = getDaySegment(now.getHours());
   const isTurkish = locale?.toLowerCase().startsWith("tr");
-  const hasScheduleItems = todaysSessions.length > 0 || todayTasks.length > 0;
+  const hasScheduleItems = todaysSessions.length > 0 || todayScheduleReminders.length > 0;
 
   const allDayLabel = t("daily_focus.all_day");
   const sessionFallbackLabel = t("daily_focus.session_fallback");
   const statusFallbackLabel = t("daily_focus.status_fallback");
   const locationFallbackLabel = t("daily_focus.location_fallback");
   const clientPlaceholder = t("daily_focus.client_placeholder");
+  const projectPlaceholder = t("daily_focus.project_placeholder", { defaultValue: "Project" });
   const paymentTagLabel = t("daily_focus.payment_tag");
+  const reminderCompletedLabel = t("daily_focus.completed_reminder", {
+    defaultValue: "Completed"
+  });
+  const reminderCompleteTooltip = t("daily_focus.reminder_tooltip_complete", {
+    defaultValue: "Click to mark this reminder as done"
+  });
+  const reminderReopenTooltip = t("daily_focus.reminder_tooltip_reopen", {
+    defaultValue: "Click to bring this reminder back to today"
+  });
+  const reminderCompleteLabel = t("daily_focus.reminder_action_complete", {
+    defaultValue: "Click to complete"
+  });
+  const greetingName = userName ?? profile?.full_name ?? null;
   const firstName = useMemo(() => {
-    if (!userName) return null;
-    const trimmed = userName.trim();
+    if (!greetingName) return null;
+    const trimmed = greetingName.trim();
     if (!trimmed) return null;
     return trimmed.split(/\s+/)[0];
-  }, [userName]);
+  }, [greetingName]);
 
   const timelineItems: TimelineItem[] = useMemo(() => {
     if (!hasScheduleItems) {
@@ -280,13 +416,17 @@ const DashboardDailyFocus = ({
       data: session
     }));
 
-    const reminderItems: TimelineItem[] = todayTasks.map((task) => ({
+    const reminderItems: TimelineItem[] = todayScheduleReminders.map((task) => ({
       type: "reminder",
       id: task.id,
       time: task.reminder_time ?? allDayLabel,
       displayTime: formatReminderTime(task.reminder_time, allDayLabel),
       sortValue: getReminderSortValue(task.reminder_time),
-      data: { ...task, leadName: leadLookup[task.lead_id] }
+      data: {
+        ...task,
+        leadName: leadLookup[task.lead_id],
+        projectName: task.project_id ? projectLookup[task.project_id] : undefined
+      }
     }));
 
     const nowItem: TimelineItem = {
@@ -300,9 +440,18 @@ const DashboardDailyFocus = ({
     return [...sessionItems, ...reminderItems, nowItem].sort(
       (a, b) => a.sortValue - b.sortValue
     );
-  }, [allDayLabel, hasScheduleItems, leadLookup, nowDisplayTime, nowMinutes, todayTasks, todaysSessions]);
+  }, [
+    allDayLabel,
+    hasScheduleItems,
+    leadLookup,
+    nowDisplayTime,
+    nowMinutes,
+    projectLookup,
+    todayScheduleReminders,
+    todaysSessions
+  ]);
 
-  const greeting = useMemo(() => {
+  const baseGreeting = useMemo(() => {
     if (daySegment === "midday" && isTurkish) {
       if (middayVariants.length > 0) {
         const randomIndex = Math.floor(Math.random() * middayVariants.length);
@@ -323,6 +472,16 @@ const DashboardDailyFocus = ({
         return t("daily_focus.greetings.night");
     }
   }, [daySegment, isTurkish, middayVariants, t]);
+
+  const greeting = useMemo(() => {
+    if (!firstName) return baseGreeting;
+    return t("daily_focus.greetings.personalized", {
+      greeting: baseGreeting,
+      name: firstName,
+      defaultValue: `${baseGreeting}, ${firstName}`
+    });
+  }, [baseGreeting, firstName, t]);
+
   const formattedDate = now.toLocaleDateString(locale, {
     weekday: "long",
     month: "long",
@@ -354,6 +513,53 @@ const DashboardDailyFocus = ({
 
   const handleInactiveLeadsClick = () => {
     navigate("/leads?inactive=1");
+  };
+
+  const handleReminderLeadClick = (leadId?: string | null) => {
+    if (!leadId) return;
+    navigate(`/leads/${leadId}`);
+  };
+
+  const handleReminderProjectClick = (projectId?: string | null) => {
+    if (!projectId) return;
+    void openProjectSheet(projectId);
+  };
+
+  const handleToggleReminderCompletion = async (
+    reminderId: string,
+    nextCompletedState: boolean
+  ) => {
+    if (completingReminderId) return;
+    setCompletingReminderId(reminderId);
+    try {
+      const { error } = await supabase
+        .from("activities")
+        .update({ completed: nextCompletedState })
+        .eq("id", reminderId);
+      if (error) throw error;
+      setActivityList((current) =>
+        current.map((activity) =>
+          activity.id === reminderId ? { ...activity, completed: nextCompletedState } : activity
+        )
+      );
+      const toastTitle = nextCompletedState ? "Reminder completed" : "Reminder reopened";
+      const toastDescription = nextCompletedState
+        ? "We'll keep it visible in today's schedule."
+        : "It's back in your active reminders.";
+      toast({
+        title: toastTitle,
+        description: toastDescription
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not complete reminder.";
+      toast({
+        title: "Error marking reminder",
+        description: message,
+        variant: "destructive"
+      });
+    } finally {
+      setCompletingReminderId(null);
+    }
   };
 
   const handleSessionCardClick = (sessionId: string) => {
@@ -408,7 +614,6 @@ const DashboardDailyFocus = ({
 
           <h1 className="text-3xl font-bold tracking-tight mb-2 drop-shadow-sm">
             {greeting}
-            {firstName ? `, ${firstName}` : ""}
           </h1>
           <p className="text-slate-300 text-sm mb-8">
             <Trans
@@ -423,7 +628,15 @@ const DashboardDailyFocus = ({
             <div className="mb-6">
               <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
                 <Sparkles className="w-3 h-3 text-amber-400" />
-                {t("daily_focus.up_next")}
+                <span>
+                  {t("daily_focus.up_next")}
+                  {nextSessionTimingLabel ? (
+                    <>
+                      {" \u00b7 "}
+                      {nextSessionTimingLabel}
+                    </>
+                  ) : null}
+                </span>
               </div>
 
               <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-5 transition-all group shadow-lg relative overflow-hidden">
@@ -437,20 +650,29 @@ const DashboardDailyFocus = ({
                   </span>
                 </div>
                 {nextSession.lead_name && (
-                  <div className="flex items-center gap-3 text-sm text-slate-200 mb-2 flex-wrap">
-                    <div className="w-6 h-6 rounded-full border border-white/20 bg-white/10 text-white/80 text-[11px] font-semibold flex items-center justify-center">
-                      {getLeadInitials(nextSession.lead_name)}
-                    </div>
-                    <div className="flex items-center gap-3 text-slate-100 text-sm w-full">
+                  <div className="flex items-center gap-3 text-sm text-slate-200 mb-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="w-6 h-6 rounded-full border border-white/20 bg-white/10 text-white/80 text-[11px] font-semibold flex items-center justify-center">
+                        {getLeadInitials(nextSession.lead_name)}
+                      </div>
                       <span className="truncate flex-1 min-w-0">{nextSession.lead_name}</span>
-                      <span className="block w-px h-5 bg-white/25" />
-                      <span className="flex items-center gap-1 text-slate-200">
-                        <MapPin className="w-3.5 h-3.5 text-slate-200" />
-                        <span className="truncate max-w-[140px]">
-                          {nextSession.location || locationFallbackLabel}
-                        </span>
-                      </span>
                     </div>
+                    <span className="block w-px h-5 bg-white/25" />
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-1 text-slate-200 min-w-0 cursor-default">
+                            <MapPin className="w-3.5 h-3.5 text-slate-200" />
+                            <span className="truncate max-w-[140px]">
+                              {nextSession.location || locationFallbackLabel}
+                            </span>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs">
+                          {nextSession.location || locationFallbackLabel}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 )}
                 {!nextSession.lead_name && (
@@ -506,7 +728,7 @@ const DashboardDailyFocus = ({
               <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-white transition-all" />
             </button>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
                 type="button"
                 onClick={handleInactiveLeadsClick}
@@ -580,7 +802,10 @@ const DashboardDailyFocus = ({
 
                 if (item.type === "now") {
                   return (
-                    <div key={item.id} className="relative flex flex-col sm:flex-row gap-6 items-center mb-6 mt-2">
+                    <div
+                      key={item.id}
+                      className="relative flex w-full flex-row items-center gap-3 sm:gap-6 mb-6 mt-2"
+                    >
                       <div className="sm:w-20 flex-shrink-0 flex justify-end items-center">
                         <div className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm shadow-rose-200">
                           {item.displayTime}
@@ -606,120 +831,220 @@ const DashboardDailyFocus = ({
                   const theme = getSessionTheme(item.data);
                   const displayLeadName = item.data.lead_name || clientPlaceholder;
                   const displaySessionName =
-                  item.data.session_name || item.data.lead_name || sessionFallbackLabel;
-                const displayStatus = item.data.status || statusFallbackLabel;
-                const displayLocation = item.data.location || locationFallbackLabel;
+                    item.data.session_name || item.data.lead_name || sessionFallbackLabel;
+                  const displayStatus = item.data.status || statusFallbackLabel;
+                  const displayLocation = item.data.location || locationFallbackLabel;
 
+                  return (
+                    <div
+                      key={item.id}
+                      className={`relative flex flex-row gap-3 sm:gap-6 items-start group mb-8 ${isLast ? "!mb-0" : ""}`}
+                    >
+                      <div className="w-16 sm:w-20 flex-shrink-0 flex flex-col items-start sm:items-end text-left sm:text-right pt-1">
+                        <span className="text-base sm:text-xl font-bold text-slate-800 leading-none">
+                          {item.displayTime}
+                        </span>
+                      </div>
+
+                      <div
+                        className="hidden sm:flex absolute left-[5.75rem] -translate-x-1/2 z-10 items-center justify-center"
+                        style={{ top: "0.65rem" }}
+                      >
+                        <div className="w-3 h-3 rounded-full bg-indigo-600 shadow-[0_0_0_4px_rgba(199,210,254,0.5)]" />
+                      </div>
+
+                      <div className="flex-1 min-w-0 relative sm:pl-6">
+                        <button
+                          type="button"
+                          onClick={() => handleSessionCardClick(item.data.id)}
+                          className="w-full bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-all relative flex items-center p-3 pl-4 gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                        >
+                          <div className={`absolute left-0 top-0 bottom-0 w-1 ${theme.border}`} />
+                          <div className="flex-1 min-w-0 flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-sm font-semibold text-slate-900/90 truncate">
+                                {displaySessionName}
+                              </h3>
+                              <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${theme.badge}`}>
+                                {displayStatus}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-slate-500">
+                              <div className="flex items-center gap-1.5 text-slate-700 font-medium">
+                                <div className="w-4 h-4 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[9px] font-bold text-slate-500">
+                                  {getLeadInitials(displayLeadName)}
+                                </div>
+                                <span className="truncate">{displayLeadName}</span>
+                              </div>
+                              <div className="w-px h-3 bg-slate-200" />
+                              <TooltipProvider delayDuration={0}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-1.5 text-slate-500 cursor-default min-w-0">
+                                      <MapPin className={`w-3.5 h-3.5 ${theme.icon}`} />
+                                      <span className="truncate max-w-[140px]">{displayLocation}</span>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-xs">
+                                    {displayLocation}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              {item.data.notes && (
+                                <>
+                                  <div className="w-px h-3 bg-slate-200" />
+                                  <div className="flex items-center gap-1.5 text-slate-500">
+                                    <StickyNote className="w-3.5 h-3.5 text-amber-500" />
+                                    <span className="truncate max-w-[140px]">{item.data.notes}</span>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <div className="p-1.5 rounded-full text-slate-300 group-hover:text-indigo-600 group-hover:bg-slate-50 transition-all">
+                            <ChevronRight className="w-5 h-5" />
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+
+                const reminder = item.data;
+                const isReminderCompleted = reminder.completed;
+                const reminderRowClass = `flex items-center justify-between pt-0.5 pr-2 pl-2 py-1 rounded-lg group transition-all ${
+                  isReminderCompleted
+                    ? "bg-white/60 opacity-80 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    : "hover:bg-white/40"
+                }`;
+                const reminderTextClass = `text-sm font-medium truncate ${
+                  isReminderCompleted
+                    ? "text-slate-400 line-through decoration-slate-400/70"
+                    : "text-slate-600"
+                }`;
+                const reminderRowProps = isReminderCompleted
+                  ? {
+                      role: "button" as const,
+                      tabIndex: 0,
+                      onClick: () => handleToggleReminderCompletion(reminder.id, false),
+                      onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          handleToggleReminderCompletion(reminder.id, false);
+                        }
+                      }
+                    }
+                  : undefined;
+
+                const reminderRowInner = (
+                  <div className={reminderRowClass} {...(reminderRowProps ?? {})}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className={reminderTextClass}>{reminder.content}</span>
+                      {reminder.leadName && (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleReminderLeadClick(reminder.lead_id);
+                          }}
+                          className="hidden sm:inline-flex items-center gap-1 text-xs text-slate-400 hover:text-indigo-600 underline decoration-dotted decoration-slate-400/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
+                        >
+                          <Users className="w-3 h-3" />
+                          <span className="truncate max-w-[120px]">{reminder.leadName}</span>
+                        </button>
+                      )}
+                      {reminder.project_id && (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleReminderProjectClick(reminder.project_id);
+                          }}
+                          className="hidden sm:inline-flex items-center gap-1 text-xs text-slate-400 hover:text-indigo-600 underline decoration-dotted decoration-slate-400/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
+                        >
+                          <FolderOpen className="w-3 h-3" />
+                          <span className="truncate max-w-[120px]">
+                            {reminder.projectName || projectPlaceholder}
+                          </span>
+                        </button>
+                      )}
+                      {reminder.type === "payment" && (
+                        <span className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                          <DollarSign className="w-2.5 h-2.5" />
+                          {paymentTagLabel}
+                        </span>
+                      )}
+                    </div>
+                    {isReminderCompleted ? (
+                      <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                        <CheckCircle2 className="w-4 h-4" />
+                        {reminderCompletedLabel}
+                      </span>
+                    ) : (
+                      <TooltipProvider delayDuration={0}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleToggleReminderCompletion(reminder.id, true);
+                              }}
+                              disabled={completingReminderId === reminder.id}
+                              className="flex items-center gap-2 text-xs font-semibold text-slate-400 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-50"
+                            >
+                              <span className="hidden sm:inline text-[10px] uppercase tracking-[0.25em]">
+                                {reminderCompleteLabel}
+                              </span>
+                              {completingReminderId === reminder.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
+                              ) : (
+                                <CheckSquare className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+                              )}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs">
+                            {reminderCompleteTooltip}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
+                );
                 return (
                   <div
                     key={item.id}
-                    className={`relative flex flex-col sm:flex-row gap-6 group mb-8 ${isLast ? "!mb-0" : ""}`}
+                    className={`relative flex flex-col sm:flex-row sm:items-center gap-6 group mb-3 ${isLast ? "!mb-0" : ""}`}
                   >
-                    <div className="sm:w-20 flex-shrink-0 flex flex-col items-start sm:items-end text-left sm:text-right pt-1">
-                      <span className="text-xl font-bold text-slate-800 leading-none">{item.displayTime}</span>
+                    <div className="sm:w-20 flex-shrink-0 flex items-center text-left sm:justify-end sm:text-right">
+                      <span className="text-xs font-medium text-slate-400 font-mono">{item.displayTime}</span>
                     </div>
 
                     <div
-                      className="hidden sm:flex absolute left-[5.75rem] -translate-x-1/2 z-10 items-center justify-center"
-                      style={{ top: "0.65rem" }}
+                      className="hidden sm:flex absolute left-[5.75rem] -translate-x-1/2 -translate-y-1/2 z-10 items-center justify-center"
+                      style={{ top: "50%" }}
                     >
-                      <div className="w-3 h-3 rounded-full bg-indigo-600 shadow-[0_0_0_4px_rgba(199,210,254,0.5)]" />
+                      <div className="w-2 h-2 rounded-full bg-slate-300 ring-4 ring-white/60" />
                     </div>
 
                     <div className="flex-1 min-w-0 relative sm:pl-6">
-                      <button
-                        type="button"
-                        onClick={() => handleSessionCardClick(item.data.id)}
-                        className="w-full bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-all relative flex items-center p-3 pl-4 gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                      >
-                        <div className={`absolute left-0 top-0 bottom-0 w-1 ${theme.border}`} />
-                        <div className="flex-1 min-w-0 flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-semibold text-slate-900/90 truncate">
-                              {displaySessionName}
-                            </h3>
-                            <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${theme.badge}`}>
-                              {displayStatus}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 text-xs text-slate-500">
-                            <div className="flex items-center gap-1.5 text-slate-700 font-medium">
-                              <div className="w-4 h-4 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[9px] font-bold text-slate-500">
-                                {getLeadInitials(displayLeadName)}
-                              </div>
-                              <span className="truncate max-w-[140px]">{displayLeadName}</span>
-                            </div>
-                            <div className="w-px h-3 bg-slate-200" />
-                            <div className="flex items-center gap-1.5 text-slate-500">
-                              <MapPin className={`w-3.5 h-3.5 ${theme.icon}`} />
-                              <span className="truncate max-w-[140px]">
-                                {displayLocation}
-                              </span>
-                            </div>
-                            {item.data.notes && (
-                              <>
-                                <div className="w-px h-3 bg-slate-200" />
-                                <div className="flex items-center gap-1.5 text-slate-500">
-                                  <StickyNote className="w-3.5 h-3.5 text-amber-500" />
-                                  <span className="truncate max-w-[140px]">{item.data.notes}</span>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <div className="p-1.5 rounded-full text-slate-300 group-hover:text-indigo-600 group-hover:bg-slate-50 transition-all">
-                          <ChevronRight className="w-5 h-5" />
-                        </div>
-                      </button>
+                      {isReminderCompleted ? (
+                        <TooltipProvider delayDuration={0}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>{reminderRowInner}</TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs">
+                              {reminderReopenTooltip}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        reminderRowInner
+                      )}
                     </div>
                   </div>
                 );
-              }
-
-              return (
-                <div
-                  key={item.id}
-                  className={`relative flex flex-col sm:flex-row gap-6 group mb-3 ${isLast ? "!mb-0" : ""}`}
-                >
-                  <div className="sm:w-20 flex-shrink-0 flex flex-col items-start sm:items-end text-left sm:text-right pt-0.5">
-                    <span className="text-xs font-medium text-slate-400 font-mono">{item.displayTime}</span>
-                  </div>
-
-                  <div
-                    className="hidden sm:flex absolute left-[5.75rem] -translate-x-1/2 z-10 items-center justify-center"
-                    style={{ top: "0.35rem" }}
-                  >
-                    <div className="w-2 h-2 rounded-full bg-slate-300 ring-4 ring-white/60" />
-                  </div>
-
-                  <div className="flex-1 min-w-0 relative sm:pl-6">
-                    <div className="flex items-center justify-between pt-0.5 pr-2 pl-2 py-1 rounded-lg group hover:bg-white/40 transition-all">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="text-sm text-slate-600 font-medium truncate">
-                          {item.data.content}
-                        </span>
-                        {item.data.leadName && (
-                          <span className="hidden sm:flex items-center gap-1 text-xs text-slate-400">
-                            <Briefcase className="w-3 h-3" />
-                            <span className="truncate max-w-[120px]">{item.data.leadName}</span>
-                          </span>
-                        )}
-                        {item.data.type === "payment" && (
-                          <span className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
-                            <DollarSign className="w-2.5 h-2.5" />
-                            {paymentTagLabel}
-                          </span>
-                        )}
-                      </div>
-                      <button className="text-slate-400 hover:text-indigo-600 transition-all">
-                        <CheckSquare className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-              </div>
+              })}
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center gap-5">
               <img
@@ -775,6 +1100,20 @@ const DashboardDailyFocus = ({
           onNavigateToProject={handleNavigateToProject}
         />
       )}
+      <ProjectSheetView
+        project={viewingProject}
+        open={projectSheetOpen}
+        onOpenChange={onProjectSheetOpenChange}
+        onProjectUpdated={() => undefined}
+        leadName={projectSheetLeadName}
+        mode="sheet"
+        onViewFullDetails={() => {
+          if (viewingProject) {
+            onProjectSheetOpenChange(false);
+            navigate(`/projects/${viewingProject.id}`);
+          }
+        }}
+      />
     </>
   );
 };

@@ -228,21 +228,29 @@ export default function AdminUsers() {
         sortable: true,
         render: (user) => {
           if (user.status === "suspended") {
+            const suspensionEvent = user.detail.membershipEvents.find(
+              (event) => event.action === "suspend_account"
+            );
+            const suspendedAtLabel = suspensionEvent?.createdAt
+              ? formatLocalizedDate(suspensionEvent.createdAt)
+              : null;
             return (
-              <div className="space-y-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3">
+              <div className="space-y-1">
                 <p className="text-sm font-semibold text-destructive">
                   {t("admin.users.table.suspendedTitle")}
                 </p>
-                <p className="text-xs text-destructive">
+                <p className="text-sm text-muted-foreground">
                   {user.manualFlagReason
-                    ? t("admin.users.table.suspendedReason", {
-                        reason: user.manualFlagReason,
-                      })
+                    ? t("admin.users.table.suspendedReason", { reason: user.manualFlagReason })
                     : t("admin.users.table.suspendedNoReason")}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  {t("admin.users.table.suspendedInstruction")}
-                </p>
+                {suspendedAtLabel ? (
+                  <p className="text-xs text-muted-foreground">
+                    {t("admin.users.table.suspendedDate", {
+                      date: suspendedAtLabel,
+                    })}
+                  </p>
+                ) : null}
               </div>
             );
           }

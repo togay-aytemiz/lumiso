@@ -780,7 +780,7 @@
         "suspendedTitle": "Access suspended",
         "suspendedReason": "Reason: {{reason}}",
         "suspendedNoReason": "Suspension reason not provided",
-        "suspendedInstruction": "Remove the suspension to restore access.",
+        "suspendedDate": "Suspended on {{date}}",
         "trialExpired": "Trial expired",
         "locked": "Access locked — upgrade required",
         "notApplicable": "Not applicable",

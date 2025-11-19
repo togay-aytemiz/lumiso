@@ -228,6 +228,16 @@ WHERE slug = 'session_reminder' AND locale = 'tr';
 
 -- Backfill reminder templates so the location placeholder exists for already-seeded orgs
 UPDATE public.message_templates AS mt
+SET placeholders = to_jsonb(ARRAY['client_first_name','session_name','session_type','session_date','session_time','session_notes','location'])
+WHERE mt.template_slug = 'session_confirmation'
+  AND mt.placeholders::jsonb = '["client_first_name","session_date","session_time","location"]'::jsonb;
+
+UPDATE public.message_templates AS mt
+SET placeholders = to_jsonb(ARRAY['session_name','session_type','session_date','session_time','session_notes','location'])
+WHERE mt.template_slug = 'session_reminder'
+  AND mt.placeholders::jsonb = '["session_date","session_time"]'::jsonb;
+
+UPDATE public.message_templates AS mt
 SET placeholders = (
       CASE
         WHEN mt.placeholders::jsonb @> '["location"]'::jsonb THEN mt.placeholders
@@ -255,6 +265,65 @@ WHERE mt.template_slug IN ('session_confirmation','session_reminder')
     WHERE existing->>'type' = 'session-details'
       AND COALESCE(existing->'data'->>'showLocation', 'false') <> 'true'
   );
+
+WITH template_locales AS (
+  SELECT mt.id,
+         public.normalize_locale_code(public.get_org_locale(mt.organization_id), 'tr') AS final_locale
+  FROM public.message_templates mt
+  WHERE mt.template_slug IN ('session_confirmation','session_reminder')
+)
+UPDATE public.message_templates AS mt
+SET blocks = (
+      SELECT jsonb_agg(
+               jsonb_set(elem, '{order}', to_jsonb(ord - 1), true)
+               ORDER BY ord
+             )
+      FROM jsonb_array_elements(
+             jsonb_insert(
+               COALESCE(mt.blocks, '[]'::jsonb),
+               '{2}',
+               jsonb_build_object(
+                 'id', CASE
+                   WHEN mt.template_slug = 'session_confirmation' AND template_locales.final_locale = 'tr' THEN 'session-details-tr'
+                   WHEN mt.template_slug = 'session_confirmation' THEN 'session-details'
+                   WHEN mt.template_slug = 'session_reminder' AND template_locales.final_locale = 'tr' THEN 'reminder-session-details-tr'
+                   ELSE 'reminder-session-details'
+                 END,
+                 'type','session-details',
+                 'visible',true,
+                 'order',2,
+                 'data',jsonb_build_object(
+                   'customLabel', CASE WHEN template_locales.final_locale = 'tr' THEN 'Seans Detayları' ELSE 'Session Details' END,
+                   'showName',true,
+                   'showType',true,
+                   'showDate',true,
+                   'showTime',true,
+                   'showNotes',true,
+                   'showDuration',false,
+                   'showStatus',false,
+                   'showLocation',true,
+                   'showMeetingLink',false,
+                   'showProject',false,
+                   'showPackage',false
+                 )
+               ),
+               false
+             )
+           ) WITH ORDINALITY AS elems(elem, ord)
+    )
+FROM template_locales
+WHERE mt.id = template_locales.id
+  AND mt.template_slug IN ('session_confirmation','session_reminder')
+  AND NOT EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements(COALESCE(mt.blocks, '[]'::jsonb)) AS existing
+        WHERE existing->>'type' = 'session-details'
+      )
+  AND NOT EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements(COALESCE(mt.blocks, '[]'::jsonb)) AS existing
+        WHERE existing->>'type' <> 'text'
+      );
 
 -- Ensure workflow template definitions expose the template slug for easier linkage
 UPDATE public.default_workflow_templates
@@ -428,6 +497,25 @@ BEGIN
   END LOOP;
 END;
 $function$;
+
+-- Ensure workflow steps also store the template slug when only the template ID exists
+WITH missing_slug AS (
+  SELECT
+    ws.id AS workflow_step_id,
+    mt.template_slug
+  FROM public.workflow_steps ws
+  CROSS JOIN LATERAL (
+    SELECT (ws.action_config->>'template_id')::uuid AS template_uuid
+  ) cfg
+  JOIN public.message_templates mt ON mt.id = cfg.template_uuid
+  WHERE ws.action_type = 'send_notification'
+    AND NOT ws.action_config ? 'template_slug'
+    AND cfg.template_uuid IS NOT NULL
+)
+UPDATE public.workflow_steps ws
+SET action_config = COALESCE(ws.action_config, '{}'::jsonb) || jsonb_build_object('template_slug', missing_slug.template_slug)
+FROM missing_slug
+WHERE ws.id = missing_slug.workflow_step_id;
 
 -- Attach template IDs to already-seeded workflow steps so the builder sees the default templates
 WITH missing_template AS (

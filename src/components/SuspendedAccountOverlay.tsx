@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 export function SuspendedAccountOverlay() {
   const { activeOrganization } = useOrganization();
-  const { t } = useTranslation("pages");
+  const { t } = useTranslation("pages", { keyPrefix: "admin.suspensionOverlay" });
 
   if (activeOrganization?.membership_status !== "suspended") {
     return null;
@@ -20,17 +20,17 @@ export function SuspendedAccountOverlay() {
           <ShieldAlert className="h-12 w-12 text-destructive" />
           <div className="space-y-2">
             <p className="text-2xl font-semibold text-foreground">
-              {t("suspensionOverlay.title")}
+              {t("title")}
             </p>
             <p className="text-sm text-muted-foreground">
-              {t("suspensionOverlay.description")}
+              {t("description")}
             </p>
           </div>
         </div>
         {reason ? (
           <div className="rounded-2xl border border-destructive/40 bg-destructive/10 p-4 text-left">
             <p className="text-xs font-semibold uppercase tracking-wide text-destructive">
-              {t("suspensionOverlay.reasonLabel")}
+              {t("reasonLabel")}
             </p>
             <p className="mt-2 text-sm text-destructive">{reason}</p>
           </div>
@@ -42,7 +42,7 @@ export function SuspendedAccountOverlay() {
             window.open("mailto:support@lumiso.com", "_self");
           }}
         >
-          {t("suspensionOverlay.contactSupport")}
+          {t("contactSupport")}
         </Button>
       </div>
     </div>

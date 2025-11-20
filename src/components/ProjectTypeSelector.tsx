@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,14 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 interface ProjectType {
   id: string;
   name: string;
   is_default: boolean;
+  template_slug?: string | null;
+  sort_order?: number | null;
 }
 
 interface ProjectTypeSelectorProps {
@@ -37,6 +40,30 @@ export function ProjectTypeSelector({
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const toast = useI18nToast();
+  const { settings: orgSettings, loading: settingsLoading } = useOrganizationSettings();
+
+  const preferredSlugs = useMemo(
+    () => (orgSettings?.preferred_project_types ?? []).map((slug) => slug.toLowerCase()),
+    [orgSettings?.preferred_project_types]
+  );
+
+  const preferredSlugOrder = useMemo(
+    () => new Map(preferredSlugs.map((slug, index) => [slug, index])),
+    [preferredSlugs]
+  );
+
+  const preferredDefaultSlug = preferredSlugs[0];
+
+  const normalizeTypeSlug = (type: ProjectType) => {
+    if (type.template_slug) return type.template_slug.toLowerCase();
+    return type.name.trim().toLowerCase().replace(/[^a-z0-9]+/gi, "_");
+  };
+
+  const isPreferredDefault = (type: ProjectType) =>
+    Boolean(preferredDefaultSlug && normalizeTypeSlug(type) === preferredDefaultSlug);
+
+  const isDefaultType = (type: ProjectType) =>
+    isPreferredDefault(type) || (preferredSlugs.length === 0 && type.is_default);
 
   useEffect(() => {
     let isMounted = true;
@@ -53,7 +80,7 @@ export function ProjectTypeSelector({
 
         const { data, error } = await supabase
           .from('project_types')
-          .select('id, name, is_default')
+          .select('id, name, is_default, template_slug, sort_order')
           .eq('organization_id', organizationId)
           .order('is_default', { ascending: false }) // Default types first
           .order('name', { ascending: true });
@@ -83,23 +110,55 @@ export function ProjectTypeSelector({
     };
   }, [toast]);
 
+  const visibleTypes = useMemo(() => {
+    if (types.length === 0) return [];
+
+    const sourceTypes =
+      preferredSlugs.length === 0
+        ? types
+        : types.filter((type) => preferredSlugs.includes(normalizeTypeSlug(type)));
+
+    return sourceTypes.sort((a, b) => {
+      const aDefault = isPreferredDefault(a);
+      const bDefault = isPreferredDefault(b);
+      if (aDefault !== bDefault) return aDefault ? -1 : 1;
+
+      const aSlug = normalizeTypeSlug(a);
+      const bSlug = normalizeTypeSlug(b);
+      const aOrder = preferredSlugOrder.has(aSlug)
+        ? preferredSlugOrder.get(aSlug)!
+        : Number.MAX_SAFE_INTEGER;
+      const bOrder = preferredSlugOrder.has(bSlug)
+        ? preferredSlugOrder.get(bSlug)!
+        : Number.MAX_SAFE_INTEGER;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+
+      const aSortOrder = a.sort_order ?? Number.MAX_SAFE_INTEGER;
+      const bSortOrder = b.sort_order ?? Number.MAX_SAFE_INTEGER;
+      if (aSortOrder !== bSortOrder) return aSortOrder - bSortOrder;
+
+      return a.name.localeCompare(b.name);
+    });
+  }, [types, preferredSlugs, preferredSlugOrder]);
+
   useEffect(() => {
-    if (!value && types.length > 0) {
-      const defaultType = types.find(type => type.is_default);
+    if (!value && visibleTypes.length > 0) {
+      const defaultType = visibleTypes.find((type) => isDefaultType(type)) ?? visibleTypes[0];
       if (defaultType) {
         onValueChange(defaultType.id, { isAutomatic: true });
       }
     }
-  }, [value, types, onValueChange]);
+  }, [value, visibleTypes, onValueChange]);
 
-  const filteredTypes = types.filter(type =>
+  const filteredTypes = visibleTypes.filter(type =>
     type.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const selectedType = types.find(type => type.id === value);
+  const selectedType =
+    visibleTypes.find((type) => type.id === value) || types.find((type) => type.id === value);
 
   // Check if user has no project types
-  if (!loading && types.length === 0) {
+  if (!loading && !settingsLoading && visibleTypes.length === 0) {
     return (
       <div className="text-sm text-muted-foreground p-2 border rounded">
         No project types configured. Please add project types in Settings first.
@@ -119,19 +178,19 @@ export function ProjectTypeSelector({
             !selectedType && "text-muted-foreground",
             className
           )}
-          disabled={disabled || loading}
+          disabled={disabled || loading || settingsLoading}
         >
-          {loading ? (
+          {loading || settingsLoading ? (
             "Loading types..."
           ) : selectedType ? (
             <div className="flex items-center gap-2">
               <Badge 
-                variant={selectedType.is_default ? "default" : "secondary"}
+                variant={isDefaultType(selectedType) ? "default" : "secondary"}
                 className="text-xs"
               >
                 {selectedType.name.toUpperCase()}
               </Badge>
-              {selectedType.is_default && (
+              {isDefaultType(selectedType) && (
                 <span className="text-xs text-muted-foreground">(Default)</span>
               )}
             </div>

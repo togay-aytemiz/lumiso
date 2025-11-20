@@ -1329,7 +1329,7 @@ const DashboardDailyFocus = ({
                                 event.stopPropagation();
                                 handleReminderLeadClick(reminder.lead_id);
                               }}
-                              className="inline-flex items-center gap-1.5 text-left text-slate-500 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded-md px-0.5 py-0.5 transition-colors min-h-0"
+                              className="inline-flex touch-target-compact items-center gap-1.5 text-left text-slate-500 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded-md px-0.5 py-0.5 transition-colors"
                             >
                               <Users className="w-3.5 h-3.5" />
                               <span className="truncate">{reminder.leadName}</span>
@@ -1342,7 +1342,7 @@ const DashboardDailyFocus = ({
                                 event.stopPropagation();
                                 handleReminderProjectClick(reminder.project_id);
                               }}
-                              className="inline-flex items-center gap-1.5 text-left text-slate-500 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded-md px-0.5 py-0.5 transition-colors min-h-0"
+                              className="inline-flex touch-target-compact items-center gap-1.5 text-left text-slate-500 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded-md px-0.5 py-0.5 transition-colors"
                             >
                               <FolderOpen className="w-3.5 h-3.5" />
                               <span className="truncate">
@@ -1363,14 +1363,14 @@ const DashboardDailyFocus = ({
                         <TooltipProvider delayDuration={0}>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <button
+                            <button
                               type="button"
                               onClick={(event) => {
                                 event.stopPropagation();
                                 handleToggleReminderCompletion(reminder.id, true);
                               }}
                               disabled={completingReminderId === reminder.id}
-                              className="flex h-8 w-8 min-h-0 items-center justify-center rounded-full border border-slate-200 bg-white/30 text-slate-400 transition-all hover:border-indigo-300 hover:text-indigo-600 disabled:opacity-60 sm:opacity-0 sm:group-hover:opacity-100"
+                              className="flex h-8 w-8 touch-target-compact items-center justify-center rounded-full border border-slate-200 bg-white/30 text-slate-400 transition-all hover:border-indigo-300 hover:text-indigo-600 disabled:opacity-60 sm:opacity-0 sm:group-hover:opacity-100"
                             >
                               {completingReminderId === reminder.id ? (
                                 <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />

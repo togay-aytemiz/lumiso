@@ -614,11 +614,16 @@ All colors MUST be HSL.
   }
 
   /* Preserve compact size for custom toggles/controls while keeping other buttons accessible */
-  button:not(:where([role="switch"], [role="radio"], [role="checkbox"])),
+  button:not(:where([role="switch"], [role="radio"], [role="checkbox"], [data-touch-target="compact"], .touch-target-compact)),
   select,
   input[type="button"],
   input[type="submit"] {
     min-height: 44px;
+  }
+
+  button.touch-target-compact,
+  [data-touch-target="compact"] {
+    min-height: 0;
   }
 
   /* Prevent zoom on input focus */

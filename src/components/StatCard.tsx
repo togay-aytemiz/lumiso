@@ -15,7 +15,7 @@ interface StatCardChip {
 
 interface StatCardProps {
   context: string;
-  label: string;
+  label: React.ReactNode;
   value: string;
   icon: LucideIcon;
   color?: "indigo" | "amber" | "violet" | "rose" | "blue";
@@ -88,7 +88,7 @@ const StatCard: React.FC<StatCardProps> = ({
   };
 
   return (
-    <div className="flex items-start gap-4 rounded-[24px] border border-white/75 bg-gradient-to-b from-white via-white to-[#F3F6FB] p-5 shadow-[0_20px_45px_rgba(20,35,70,0.12)] transition-all hover:-translate-y-0.5 hover:shadow-[0_26px_60px_rgba(20,35,70,0.16)]">
+    <div className="flex items-start gap-4 rounded-[24px] border border-white/75 bg-gradient-to-b from-white via-white to-[#F3F6FB] p-5 shadow-[0_20px_45px_rgba(20,35,70,0.12)]">
       <div
         className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${iconTheme.bg} text-white shadow-lg ${iconTheme.glow}`}
       >
@@ -96,8 +96,8 @@ const StatCard: React.FC<StatCardProps> = ({
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="mb-1 flex items-center justify-between gap-3">
-          <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">
+        <div className="mb-0.5 flex items-center justify-between gap-3">
+          <span className="text-[11px] font-bold uppercase text-slate-400">
             {context}
           </span>
           {timeframe && onTimeframeChange && (
@@ -137,7 +137,7 @@ const StatCard: React.FC<StatCardProps> = ({
         </div>
 
         <div className="mb-1 flex items-center gap-1.5">
-          <h3 className="text-[15px] font-semibold text-slate-800">{label}</h3>
+          <h3 className="text-[15px] font-medium text-slate-800">{label}</h3>
           {info && (
             <HelpCircle
               className="h-3.5 w-3.5 text-slate-300"
@@ -147,15 +147,16 @@ const StatCard: React.FC<StatCardProps> = ({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-start gap-2">
           <span className="text-[34px] font-black leading-none tracking-tight text-slate-900">
             {value}
           </span>
           {chip && (
             <span
-              className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${
+              className={cn(
+                "inline-flex max-w-[220px] flex-wrap items-start gap-1 rounded-full px-3 py-1 text-left text-xs font-semibold leading-tight whitespace-normal",
                 CHIP_TONES[chip.tone ?? "neutral"]
-              }`}
+              )}
             >
               {chip.icon}
               {chip.label}

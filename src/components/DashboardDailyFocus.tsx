@@ -386,6 +386,12 @@ const DashboardDailyFocus = ({
     []
   );
 
+  const currencySymbol = useMemo(() => {
+    const parts = currencyFormatter.formatToParts(0);
+    const symbol = parts.find((part) => part.type === "currency")?.value;
+    return symbol || currencyFormatter.resolvedOptions().currency || "TRY";
+  }, [currencyFormatter]);
+
   const formatCurrencyValue = (value: number) => currencyFormatter.format(Math.round(value));
 
   const formatSignedCurrency = (value: number) => {
@@ -1493,7 +1499,12 @@ const DashboardDailyFocus = ({
 
         <StatCard
           context={`${getSectionLabel("finance")} · ${getTimeframeLabel(revenueTimeframe)}`}
-          label={t("daily_focus.stats.titles.total_revenue")}
+          label={
+            <span className="flex items-baseline gap-1 leading-tight">
+              {t("daily_focus.stats.titles.total_revenue")}
+              <span className="text-[12px] font-medium text-slate-400">({currencySymbol})</span>
+            </span>
+          }
           value={formatCurrencyValue(revenueValue)}
           icon={DollarSign}
           color="violet"
@@ -1517,7 +1528,12 @@ const DashboardDailyFocus = ({
 
         <StatCard
           context={`${getSectionLabel("action")} · ${t("daily_focus.stats.labels.overdue")}`}
-          label={t("daily_focus.stats.titles.outstanding")}
+          label={
+            <span className="flex items-baseline gap-1 leading-tight">
+              {t("daily_focus.stats.titles.outstanding")}
+              <span className="text-[12px] font-medium text-slate-400">({currencySymbol})</span>
+            </span>
+          }
           value={outstandingFormatted}
           icon={AlertTriangle}
           color="rose"

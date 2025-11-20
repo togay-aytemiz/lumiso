@@ -8,8 +8,8 @@ import {
   ArrowRight,
   Calendar as CalendarIcon,
   CheckCircle2,
-  CheckSquare,
   ChevronRight,
+  Circle,
   Coins,
   FolderOpen,
   Loader2,
@@ -1284,15 +1284,15 @@ const DashboardDailyFocus = ({
 
                 const reminder = item.data;
                 const isReminderCompleted = reminder.completed;
-                const reminderRowClass = `flex items-center justify-between pt-0.5 pr-2 pl-2 py-1 rounded-lg group transition-all ${
+                const reminderRowClass = `flex items-start gap-3 sm:gap-4 rounded-2xl px-2 py-1.5 sm:px-3 sm:py-2 w-full group transition-all ${
                   isReminderCompleted
-                    ? "bg-white/60 opacity-80 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                    : "hover:bg-white/40"
+                    ? "opacity-70 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    : "hover:bg-white/30"
                 }`;
-                const reminderTextClass = `text-sm font-medium truncate ${
+                const reminderTextClass = `text-sm font-semibold truncate ${
                   isReminderCompleted
                     ? "text-slate-400 line-through decoration-slate-400/70"
-                    : "text-slate-600"
+                    : "text-slate-800"
                 }`;
                 const reminderRowProps = isReminderCompleted
                   ? {
@@ -1310,97 +1310,102 @@ const DashboardDailyFocus = ({
 
                 const reminderRowInner = (
                   <div className={reminderRowClass} {...(reminderRowProps ?? {})}>
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className={reminderTextClass}>{reminder.content}</span>
-                      {reminder.leadName && (
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleReminderLeadClick(reminder.lead_id);
-                          }}
-                          className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-indigo-600 underline decoration-dotted decoration-slate-400/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
-                        >
-                          <Users className="w-3 h-3" />
-                          <span className="truncate max-w-[120px]">{reminder.leadName}</span>
-                        </button>
-                      )}
-                      {reminder.project_id && (
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleReminderProjectClick(reminder.project_id);
-                          }}
-                          className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-indigo-600 underline decoration-dotted decoration-slate-400/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
-                        >
-                          <FolderOpen className="w-3 h-3" />
-                          <span className="truncate max-w-[120px]">
-                            {reminder.projectName || projectPlaceholder}
+                    <div className="min-w-0 sm:flex-1">
+                      <div className="flex items-start gap-3">
+                        <p className={`${reminderTextClass} flex-1 min-w-0`}>{reminder.content}</p>
+                        {reminder.type === "payment" && (
+                          <span className="flex items-center gap-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-50/90 px-1.5 py-0.5 rounded-full whitespace-nowrap border border-emerald-100">
+                            <Coins className="w-2.5 h-2.5" />
+                            {paymentTagLabel}
                           </span>
-                        </button>
-                      )}
-                      {reminder.type === "payment" && (
-                        <span className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
-                          <Coins className="w-2.5 h-2.5" />
-                          {paymentTagLabel}
-                        </span>
+                        )}
+                      </div>
+                      {(reminder.leadName || reminder.project_id) && (
+                        <div className="mt-1.5 flex flex-col gap-1 text-xs text-slate-500">
+                          {reminder.leadName && (
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleReminderLeadClick(reminder.lead_id);
+                              }}
+                              className="inline-flex items-center gap-1.5 text-left text-slate-500 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded-md px-0.5 py-0.5 transition-colors min-h-0"
+                            >
+                              <Users className="w-3.5 h-3.5" />
+                              <span className="truncate">{reminder.leadName}</span>
+                            </button>
+                          )}
+                          {reminder.project_id && (
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleReminderProjectClick(reminder.project_id);
+                              }}
+                              className="inline-flex items-center gap-1.5 text-left text-slate-500 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded-md px-0.5 py-0.5 transition-colors min-h-0"
+                            >
+                              <FolderOpen className="w-3.5 h-3.5" />
+                              <span className="truncate">
+                                {reminder.projectName || projectPlaceholder}
+                              </span>
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                     {isReminderCompleted ? (
-                      <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                      <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 sm:ml-auto sm:mt-0 mt-1">
                         <CheckCircle2 className="w-4 h-4" />
                         {reminderCompletedLabel}
                       </span>
                     ) : (
-                      <TooltipProvider delayDuration={0}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
+                      <div className="flex-shrink-0 sm:ml-auto sm:mt-0 mt-1">
+                        <TooltipProvider delayDuration={0}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
                               type="button"
                               onClick={(event) => {
                                 event.stopPropagation();
                                 handleToggleReminderCompletion(reminder.id, true);
                               }}
                               disabled={completingReminderId === reminder.id}
-                              className="flex items-center gap-2 text-xs font-semibold text-slate-400 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all disabled:opacity-50"
+                              className="flex h-8 w-8 min-h-0 items-center justify-center rounded-full border border-slate-200 bg-white/30 text-slate-400 transition-all hover:border-indigo-300 hover:text-indigo-600 disabled:opacity-60 sm:opacity-0 sm:group-hover:opacity-100"
                             >
-                              <span className="hidden sm:inline text-[10px] uppercase tracking-[0.25em]">
-                                {reminderCompleteLabel}
-                              </span>
                               {completingReminderId === reminder.id ? (
                                 <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
                               ) : (
-                                <CheckSquare className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
-                              )}
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="text-xs">
-                            {reminderCompleteTooltip}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                                <Circle className="w-4 h-4" />
+                                )}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs">
+                              {reminderCompleteTooltip}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                     )}
                   </div>
                 );
                 return (
                   <div
                     key={item.id}
-                    className={`relative flex flex-col sm:flex-row sm:items-center gap-6 group mb-3 ${isLast ? "!mb-0" : ""}`}
+                    className={`relative flex flex-row items-start gap-6 group mb-4 ${isLast ? "!mb-0" : ""}`}
                   >
-                    <div className="sm:w-20 flex-shrink-0 flex items-center text-left sm:justify-end sm:text-right">
-                      <span className="text-xs font-medium text-slate-400 font-mono">{item.displayTime}</span>
+                    <div className="w-16 sm:w-20 flex-shrink-0 flex justify-end text-right pt-1.5">
+                      <span className="text-xs font-semibold text-slate-400 font-mono">{item.displayTime}</span>
                     </div>
 
                     <div
                       className="flex sm:hidden absolute left-16 -translate-x-1/2 -translate-y-1/2 z-10 items-center justify-center"
-                      style={{ top: "50%" }}
+                      style={{ top: "1.4rem" }}
                     >
                       <div className="w-2 h-2 rounded-full bg-slate-300 ring-4 ring-white/60" />
                     </div>
                     <div
                       className="hidden sm:flex absolute left-[5.75rem] -translate-x-1/2 -translate-y-1/2 z-10 items-center justify-center"
-                      style={{ top: "50%" }}
+                      style={{ top: "1.4rem" }}
                     >
                       <div className="w-2 h-2 rounded-full bg-slate-300 ring-4 ring-white/60" />
                     </div>

@@ -273,39 +273,55 @@ export const ProjectCreationWizard = ({
   const finalActionLoadingLabel = isEditing
     ? t("wizard.finishing")
     : t("wizard.creating");
-  const actionLayoutClass =
-    "space-y-1.5 sm:space-y-0 sm:flex sm:items-center sm:justify-end sm:gap-1";
-  const renderActionButtons = () => (
+  const isReviewVisible = isEditing && meta.currentStep !== "summary";
+  const isHeaderPlacement = actionPlacement === "header";
+  const actionLayoutClass = isHeaderPlacement
+    ? "flex flex-wrap items-center justify-end gap-2 sm:gap-3"
+    : "grid w-full grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-2 sm:flex sm:w-auto sm:flex-nowrap sm:items-center sm:justify-end sm:gap-3";
+  const buttonWidthClass = isHeaderPlacement
+    ? "min-w-[104px] flex-1 sm:flex-none sm:w-auto"
+    : "w-full sm:w-auto";
+  const touchTarget = isHeaderPlacement ? "compact" : undefined;
+  const actionButtons = (
     <>
-      <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end sm:gap-1">
+      <Button
+        variant="outline"
+        size="sm"
+        touchTarget={touchTarget}
+        onClick={() => goToStep(Math.max(0, currentIndex - 1))}
+        disabled={isFirstStep}
+        className={`${buttonWidthClass} sm:h-10 sm:px-6`}
+      >
+        {t("wizard.back")}
+      </Button>
+      {!isLastStep ? (
         <Button
-          variant="outline"
-          onClick={() => goToStep(Math.max(0, currentIndex - 1))}
-          disabled={isFirstStep}
-          className="w-full sm:w-auto sm:px-6"
+          size="sm"
+          touchTarget={touchTarget}
+          onClick={handleNextStep}
+          className={`${buttonWidthClass} sm:h-10 sm:px-8`}
         >
-          {t("wizard.back")}
+          {t("wizard.next")}
         </Button>
-        {!isLastStep ? (
-          <Button onClick={handleNextStep} className="w-full sm:w-auto sm:px-8">
-            {t("wizard.next")}
-          </Button>
-        ) : (
-          <Button
-            onClick={onComplete}
-            disabled={isCompleting}
-            aria-busy={isCompleting}
-            className="w-full sm:w-auto sm:px-8"
-          >
-            {isCompleting ? finalActionLoadingLabel : finalActionLabel}
-          </Button>
-        )}
-      </div>
-      {isEditing && meta.currentStep !== "summary" ? (
+      ) : (
+        <Button
+          size="sm"
+          touchTarget={touchTarget}
+          onClick={onComplete}
+          disabled={isCompleting}
+          aria-busy={isCompleting}
+          className={`${buttonWidthClass} sm:h-10 sm:px-8`}
+        >
+          {isCompleting ? finalActionLoadingLabel : finalActionLabel}
+        </Button>
+      )}
+      {isReviewVisible ? (
         <Button
           variant="secondary"
+          size="sm"
+          touchTarget={touchTarget}
           onClick={handleReview}
-          className="w-full sm:w-auto sm:px-6"
+          className={`${buttonWidthClass} sm:h-10 sm:px-6`}
         >
           {t("wizard.review")}
         </Button>
@@ -313,15 +329,12 @@ export const ProjectCreationWizard = ({
     </>
   );
 
-  const actionButtons = renderActionButtons();
   const shouldRenderInlineActions =
     actionPlacement !== "header" || !headerActionContainer;
   const headerActionPortal =
     actionPlacement === "header" && headerActionContainer
       ? createPortal(
-          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
-            {actionButtons}
-          </div>,
+          <div className={actionLayoutClass}>{actionButtons}</div>,
           headerActionContainer
         )
       : null;

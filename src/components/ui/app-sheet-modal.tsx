@@ -71,6 +71,7 @@ export function AppSheetModal({
 }: AppSheetModalProps) {
   const isMobile = useIsMobile();
   const lastOpenedRef = useRef(0);
+  const hasHeaderAccessory = Boolean(headerAccessory);
 
   useEffect(() => {
     if (isOpen) {
@@ -157,8 +158,14 @@ export function AppSheetModal({
         onPointerDownOutside={handlePointerDownOutside}
         onInteractOutside={handleInteractOutside}
       >
-        <SheetHeader className="border-b pb-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <SheetHeader className={cn("border-b", hasHeaderAccessory ? "pb-4" : "pb-3")}>
+          <div
+            className={cn(
+              hasHeaderAccessory
+                ? "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                : "flex items-center justify-between"
+            )}
+          >
             <SheetTitle className="text-lg font-semibold">{title}</SheetTitle>
             <div className="flex flex-wrap items-center justify-end gap-2">
               {headerAccessory}

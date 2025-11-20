@@ -79,6 +79,7 @@
     "due_today": "Due Today",
     "schedule_heading": "Today's Schedule",
     "weekly_schedule_title": "Weekly Schedule",
+    "revenue_overview_title": "Revenue Overview",
     "view_calendar": "See calendar",
     "view_payments": "See payments",
     "weekly_schedule_today": "Back to current week",
@@ -93,6 +94,11 @@
     "no_reminders": "no reminders",
     "no_sessions": "no sessions",
     "weekly_schedule_empty_helper": "No sessions or reminders this week.",
+    "revenue_chart": {
+      "label": "Revenue",
+      "range_6m": "Last 6 Months",
+      "range_12m": "Last 12 Months"
+    },
     "now_label": "Now",
     "payment_tag": "Payment",
     "empty_title": "Plan the rest of your day",

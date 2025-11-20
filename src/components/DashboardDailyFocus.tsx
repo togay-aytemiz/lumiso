@@ -22,7 +22,7 @@ import {
   Users
 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
-import { formatTime, getEndOfWeek, getStartOfWeek, getUserLocale } from "@/lib/utils";
+import { formatTime, getDateFnsLocale, getEndOfWeek, getStartOfWeek, getUserLocale } from "@/lib/utils";
 import { useDashboardTranslation } from "@/hooks/useTypedTranslation";
 import { ADD_ACTION_EVENTS, type AddActionType, type AddActionEventDetail } from "@/constants/addActionEvents";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -279,6 +279,7 @@ const DashboardDailyFocus = ({
   }, []);
 
   const locale = i18n.language || getUserLocale();
+  const dateFnsLocale = useMemo(() => getDateFnsLocale(locale), [locale]);
   const todayIso = useMemo(
     () => formatInTimeZone(now, timezone, "yyyy-MM-dd"),
     [now, timezone]
@@ -633,8 +634,8 @@ const DashboardDailyFocus = ({
       return {
         key,
         monthDate,
-        label: formatInTimeZone(monthDate, timezone, "MMM"),
-        tooltipLabel: formatInTimeZone(monthDate, timezone, "LLLL yyyy"),
+        label: formatInTimeZone(monthDate, timezone, "MMM", { locale: dateFnsLocale }),
+        tooltipLabel: formatInTimeZone(monthDate, timezone, "LLLL yyyy", { locale: dateFnsLocale }),
         revenue: 0
       };
     });
@@ -655,7 +656,7 @@ const DashboardDailyFocus = ({
     });
 
     return buckets;
-  }, [dateBoundaries.now, paymentStats, revenueRangeMonths, timezone]);
+  }, [dateBoundaries.now, dateFnsLocale, paymentStats, revenueRangeMonths, timezone]);
 
   const revenueTrendMax = useMemo(
     () => revenueTrendData.reduce((max, point) => Math.max(max, point.revenue), 0),
@@ -731,14 +732,14 @@ const DashboardDailyFocus = ({
   const weekBoundaries = useMemo(() => {
     const start = getStartOfWeek(weekReference, locale);
     const end = getEndOfWeek(weekReference, locale);
-    const startLabel = formatInTimeZone(start, timezone, "MMM d");
-    const endLabel = formatInTimeZone(end, timezone, "MMM d");
+    const startLabel = formatInTimeZone(start, timezone, "MMM d", { locale: dateFnsLocale });
+    const endLabel = formatInTimeZone(end, timezone, "MMM d", { locale: dateFnsLocale });
     return {
       start,
       end,
       label: `${startLabel} – ${endLabel}`
     };
-  }, [locale, timezone, weekReference]);
+  }, [dateFnsLocale, locale, timezone, weekReference]);
 
   const currentWeekBoundaries = useMemo(() => {
     const start = getStartOfWeek(new Date(), locale);

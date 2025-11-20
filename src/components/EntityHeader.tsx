@@ -72,7 +72,7 @@ export function EntityHeader({
               colorScheme="slate"
               size="icon"
               onClick={onBack}
-              className="h-10 w-10"
+              className="h-10 w-10 shrink-0 rounded-full"
             >
               <ArrowLeft className="h-4 w-4" />
               <span className="sr-only">{backLabel}</span>

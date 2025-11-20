@@ -52,9 +52,9 @@ const buttonVariants = cva(
           "border border-transparent bg-muted text-muted-foreground hover:bg-muted/80",
         link: "text-accent underline-offset-4 hover:underline",
         textAccent:
-          "bg-transparent text-accent hover:bg-transparent hover:underline hover:underline-offset-4 hover:decoration-current",
+          "touch-target-compact bg-transparent text-accent hover:bg-transparent hover:underline hover:underline-offset-4 hover:decoration-current h-auto p-0",
         textGhost:
-          "bg-transparent text-muted-foreground hover:bg-transparent hover:underline hover:underline-offset-4 hover:decoration-current",
+          "touch-target-compact bg-transparent text-muted-foreground hover:bg-transparent hover:underline hover:underline-offset-4 hover:decoration-current h-auto p-0",
         cta: "bg-accent text-accent-foreground hover:bg-accent/90 h-11 px-6 rounded-md border border-input shadow-sm transition-colors",
         dangerOutline: "border border-destructive text-destructive hover:bg-destructive/10",
         chip:
@@ -80,7 +80,7 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  VariantProps<typeof buttonVariants> {
   asChild?: boolean
   colorScheme?: keyof typeof buttonColorSchemes
 }
@@ -102,6 +102,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ? buttonColorSchemes[colorScheme]
         : undefined
 
+    // Add compact touch target for text-style buttons to prevent 44px min-height on mobile
+    const isTextVariant = variant === "textAccent" || variant === "textGhost"
+
     return (
       <Comp
         className={cn(
@@ -112,6 +115,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           className
         )}
         ref={ref}
+        {...(isTextVariant ? { "data-touch-target": "compact" } : {})}
         {...props}
       />
     )

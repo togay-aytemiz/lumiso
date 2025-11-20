@@ -24,6 +24,7 @@ import { formatTime, getUserLocale } from "@/lib/utils";
 import { useDashboardTranslation } from "@/hooks/useTypedTranslation";
 import { ADD_ACTION_EVENTS, type AddActionType, type AddActionEventDetail } from "@/constants/addActionEvents";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import SessionSheetView from "@/components/SessionSheetView";
 import { computeLeadInitials } from "@/components/leadInitialsUtils";
@@ -67,7 +68,7 @@ type PaymentSummaryRow = Pick<
   | "scheduled_remaining_amount"
 >;
 
-export type SessionWithLead = SessionRow & { lead_name?: string };
+export type SessionWithLead = SessionRow & { lead_name?: string; duration_minutes?: number | null };
 
 interface DashboardDailyFocusProps {
   leads: LeadWithLifecycleRow[];
@@ -84,28 +85,28 @@ interface DashboardDailyFocusProps {
 
 type TimelineItem =
   | {
-      type: "session";
-      id: string;
-      time: string;
-      displayTime: string;
-      sortValue: number;
-      data: SessionWithLead;
-    }
+    type: "session";
+    id: string;
+    time: string;
+    displayTime: string;
+    sortValue: number;
+    data: SessionWithLead;
+  }
   | {
-      type: "reminder";
-      id: string;
-      time: string;
-      displayTime: string;
-      sortValue: number;
-      data: ActivityRow & { leadName?: string | null; projectName?: string | null };
-    }
+    type: "reminder";
+    id: string;
+    time: string;
+    displayTime: string;
+    sortValue: number;
+    data: ActivityRow & { leadName?: string | null; projectName?: string | null };
+  }
   | {
-      type: "now";
-      id: string;
-      time: string;
-      displayTime: string;
-      sortValue: number;
-    };
+    type: "now";
+    id: string;
+    time: string;
+    displayTime: string;
+    sortValue: number;
+  };
 
 type DaySegment = "night" | "morning" | "midday" | "evening";
 
@@ -125,6 +126,16 @@ const formatReminderTime = (timeString?: string | null, fallbackLabel?: string) 
   if (!timeString) return fallbackLabel ?? "All Day";
   const [hours, minutes] = timeString.split(":");
   return formatTime(`${hours?.padStart(2, "0")}:${minutes?.padStart(2, "0")}`);
+};
+
+const calculateEndTime = (startTime: string, durationMinutes?: number | null) => {
+  if (!durationMinutes) return null;
+  const [hours, minutes] = startTime.split(":").map((v) => parseInt(v, 10));
+  const startMinutes = hours * 60 + (minutes || 0);
+  const endMinutes = startMinutes + durationMinutes;
+  const endHours = Math.floor(endMinutes / 60);
+  const endMins = endMinutes % 60;
+  return formatTime(`${endHours.toString().padStart(2, "0")}:${endMins.toString().padStart(2, "0")}`);
 };
 
 const getReminderSortValue = (timeString?: string | null) => {
@@ -921,9 +932,18 @@ const DashboardDailyFocus = ({
     }
   };
 
+  const isMobile = useIsMobile();
+
   const handleSessionCardClick = (sessionId: string) => {
-    setSelectedSessionId(sessionId);
-    setIsSessionSheetOpen(true);
+    if (isMobile) {
+      // On mobile, navigate directly to session details page
+      const currentPath = `${location.pathname}${location.search}${location.hash}`;
+      navigate(`/sessions/${sessionId}`, { state: { from: currentPath } });
+    } else {
+      // On desktop, open the session sheet
+      setSelectedSessionId(sessionId);
+      setIsSessionSheetOpen(true);
+    }
   };
 
   const handleSessionSheetOpenChange = (open: boolean) => {
@@ -962,340 +982,336 @@ const DashboardDailyFocus = ({
         <div className="lg:col-span-1 relative overflow-hidden rounded-2xl p-8 text-white flex flex-col shadow-2xl min-h-[440px] border border-white/5 bg-slate-950">
           <AuroraBackground />
 
-        <div className="relative z-10 flex-1 flex flex-col">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-cyan-200 font-bold text-xs uppercase tracking-[0.35em]">
-              <Activity className="w-4 h-4 text-cyan-400" />
-              Lumiso Pulse
-            </div>
-            <div className="text-indigo-300/60 text-[11px] font-mono">{formattedDate}</div>
-          </div>
-
-          <h1 className="text-3xl font-bold tracking-tight mb-2 drop-shadow-sm">
-            {greeting}
-          </h1>
-          <p className="text-slate-300 text-sm mb-8">
-            <Trans
-              i18nKey="daily_focus.active_tasks"
-              ns="dashboard"
-              values={{ count: totalActiveTasks }}
-              components={{ highlight: <span className="text-cyan-300 font-semibold" /> }}
-            />
-          </p>
-
-          {nextSession ? (
-            <div className="mb-6">
-              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3 text-amber-400" />
-                <span>
-                  {t("daily_focus.up_next")}
-                  {nextSessionTimingLabel ? (
-                    <>
-                      {" \u00b7 "}
-                      {nextSessionTimingLabel}
-                    </>
-                  ) : null}
-                </span>
+          <div className="relative z-10 flex-1 flex flex-col">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-cyan-200 font-bold text-xs uppercase tracking-[0.35em]">
+                <Activity className="w-4 h-4 text-cyan-400" />
+                Lumiso Pulse
               </div>
+              <div className="text-indigo-300/60 text-[11px] font-mono">{formattedDate}</div>
+            </div>
 
-              <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-5 transition-all group shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-purple-500" />
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-semibold text-base leading-tight text-white/95 group-hover:text-indigo-200 transition-colors">
-                    {nextSession.session_name || nextSession.lead_name || sessionFallbackLabel}
-                  </h3>
-                  <span className="bg-indigo-500/40 border border-indigo-500/30 text-indigo-100 text-[11px] font-bold px-2 py-1 rounded">
-                    {formatTime(nextSession.session_time.slice(0, 5))}
+            <h1 className="text-3xl font-bold tracking-tight mb-2 drop-shadow-sm">
+              {greeting}
+            </h1>
+            <p className="text-slate-300 text-sm mb-8">
+              <Trans
+                i18nKey="daily_focus.active_tasks"
+                ns="dashboard"
+                values={{ count: totalActiveTasks }}
+                components={{ highlight: <span className="text-cyan-300 font-semibold" /> }}
+              />
+            </p>
+
+            {nextSession ? (
+              <div className="mb-6">
+                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  <span>
+                    {t("daily_focus.up_next")}
+                    {nextSessionTimingLabel ? (
+                      <>
+                        {" \u00b7 "}
+                        {nextSessionTimingLabel}
+                      </>
+                    ) : null}
                   </span>
                 </div>
-                {nextSession.lead_name && (
-                  <div className="flex flex-col gap-2 text-sm text-slate-200 mb-2 sm:flex-row sm:items-center sm:gap-3">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <div className="w-6 h-6 rounded-full border border-white/20 bg-white/10 text-white/80 text-[11px] font-semibold flex items-center justify-center">
-                        {getLeadInitials(nextSession.lead_name)}
+
+                <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-5 transition-all group shadow-lg relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-purple-500" />
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="font-semibold text-base leading-tight text-white/95 group-hover:text-indigo-200 transition-colors">
+                      {nextSession.session_name || nextSession.lead_name || sessionFallbackLabel}
+                    </h3>
+                    <span className="bg-indigo-500/40 border border-indigo-500/30 text-indigo-100 text-[11px] font-bold px-2 py-1 rounded">
+                      {formatTime(nextSession.session_time.slice(0, 5))}
+                    </span>
+                  </div>
+                  {nextSession.lead_name && (
+                    <div className="flex flex-col gap-2 text-sm text-slate-200 mb-2 sm:flex-row sm:items-center sm:gap-3">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="w-6 h-6 rounded-full border border-white/20 bg-white/10 text-white/80 text-[11px] font-semibold flex items-center justify-center">
+                          {getLeadInitials(nextSession.lead_name)}
+                        </div>
+                        <span className="truncate flex-1 min-w-0">{nextSession.lead_name}</span>
                       </div>
-                      <span className="truncate flex-1 min-w-0">{nextSession.lead_name}</span>
-                    </div>
-                    <span className="hidden sm:block w-px h-5 bg-white/25" />
-                    <TooltipProvider delayDuration={0}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="flex items-center gap-1 text-slate-200 min-w-0 cursor-default w-full sm:w-auto">
-                            <MapPin className="w-3.5 h-3.5 text-slate-200" />
-                            <span className="truncate w-full sm:w-auto sm:max-w-[140px]">
-                              {nextSession.location || locationFallbackLabel}
+                      <span className="hidden sm:block w-px h-5 bg-white/25" />
+                      <TooltipProvider delayDuration={0}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="flex items-center gap-1 text-slate-200 min-w-0 cursor-default w-full sm:w-auto">
+                              <MapPin className="w-3.5 h-3.5 text-slate-200" />
+                              <span className="truncate w-full sm:w-auto sm:max-w-[140px]">
+                                {nextSession.location || locationFallbackLabel}
+                              </span>
                             </span>
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="text-xs">
-                          {nextSession.location || locationFallbackLabel}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                )}
-                {!nextSession.lead_name && (
-                  <div className="flex items-center gap-2 text-sm text-slate-300">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                    <span className="truncate">{nextSession.location || locationFallbackLabel}</span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs">
+                            {nextSession.location || locationFallbackLabel}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  )}
+                  {!nextSession.lead_name && (
+                    <div className="flex items-center gap-2 text-sm text-slate-300">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="truncate">{nextSession.location || locationFallbackLabel}</span>
+                    </div>
+                  )}
+                </div>
+
+                {laterSessions.length > 0 && (
+                  <div className="mt-3 flex items-center gap-3 px-1">
+                    <div className="flex -space-x-2">
+                      {laterSessions.slice(0, 3).map((session) => (
+                        <div
+                          key={session.id}
+                          className="w-6 h-6 rounded-full border border-slate-800 bg-indigo-900 text-indigo-200 text-[9px] flex items-center justify-center font-bold"
+                        >
+                          {getLeadInitials(session.lead_name || clientPlaceholder)}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+                      <span className="w-1 h-1 rounded-full bg-slate-500" />
+                      <span>{t("daily_focus.more_sessions", { count: laterSessions.length })}</span>
+                    </div>
                   </div>
                 )}
               </div>
+            ) : (
+              <div className="mb-6 rounded-xl border border-white/5 bg-white/5 p-5 backdrop-blur-md">
+                <div className="text-sm text-slate-300">{t("daily_focus.no_sessions_today")}</div>
+              </div>
+            )}
 
-              {laterSessions.length > 0 && (
-                <div className="mt-3 flex items-center gap-3 px-1">
-                  <div className="flex -space-x-2">
-                    {laterSessions.slice(0, 3).map((session) => (
-                      <div
-                        key={session.id}
-                        className="w-6 h-6 rounded-full border border-slate-800 bg-indigo-900 text-indigo-200 text-[9px] flex items-center justify-center font-bold"
-                      >
-                        {getLeadInitials(session.lead_name || clientPlaceholder)}
+            <div className="space-y-3 mt-auto">
+              <button
+                type="button"
+                onClick={handleOverdueClick}
+                className="w-full group bg-slate-900/40 backdrop-blur-sm border border-white/5 hover:bg-white/10 hover:border-rose-500/30 rounded-xl p-4 flex items-center justify-between text-left"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+                    <AlertCircle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold text-white leading-none mb-1">{overdueTasks.length}</div>
+                    <div className="text-[10px] font-bold text-rose-400/80 uppercase tracking-wider">
+                      {t("daily_focus.overdue_items")}
+                    </div>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-white transition-all" />
+              </button>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={handleInactiveLeadsClick}
+                  className="w-full group bg-slate-900/40 backdrop-blur-sm border border-white/5 hover:bg-white/10 hover:border-amber-500/30 rounded-xl p-3 flex items-center justify-between text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                      <AlertTriangle className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-lg font-bold text-white leading-none mb-1">{inactiveLeadCount}</div>
+                      <div className="text-[10px] font-bold text-amber-400/80 uppercase tracking-wider truncate">
+                        {t("daily_focus.inactive_leads")}
                       </div>
-                    ))}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-                    <span className="w-1 h-1 rounded-full bg-slate-500" />
-                    <span>{t("daily_focus.more_sessions", { count: laterSessions.length })}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="mb-6 rounded-xl border border-white/5 bg-white/5 p-5 backdrop-blur-md">
-              <div className="text-sm text-slate-300">{t("daily_focus.no_sessions_today")}</div>
-            </div>
-          )}
+                  <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-all" />
+                </button>
 
-          <div className="space-y-3 mt-auto">
-            <button
-              type="button"
-              onClick={handleOverdueClick}
-              className="w-full group bg-slate-900/40 backdrop-blur-sm border border-white/5 hover:bg-white/10 hover:border-rose-500/30 rounded-xl p-4 flex items-center justify-between text-left"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
-                  <AlertCircle className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-xl font-bold text-white leading-none mb-1">{overdueTasks.length}</div>
-                  <div className="text-[10px] font-bold text-rose-400/80 uppercase tracking-wider">
-                    {t("daily_focus.overdue_items")}
+                <button
+                  type="button"
+                  onClick={handleDueTodayClick}
+                  className="w-full group bg-slate-900/40 backdrop-blur-sm border border-white/5 hover:bg-white/10 hover:border-indigo-500/30 rounded-xl p-3 flex items-center justify-between text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-lg font-bold text-white leading-none mb-1">{todayTasks.length}</div>
+                      <div className="text-[10px] font-bold text-indigo-400/80 uppercase tracking-wider truncate">
+                        {t("daily_focus.due_today")}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                  <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-all" />
+                </button>
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-white transition-all" />
-            </button>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={handleInactiveLeadsClick}
-                className="w-full group bg-slate-900/40 backdrop-blur-sm border border-white/5 hover:bg-white/10 hover:border-amber-500/30 rounded-xl p-3 flex items-center justify-between text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                    <AlertTriangle className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                  <div className="text-lg font-bold text-white leading-none mb-1">{inactiveLeadCount}</div>
-                    <div className="text-[10px] font-bold text-amber-400/80 uppercase tracking-wider truncate">
-                      {t("daily_focus.inactive_leads")}
-                    </div>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-all" />
-              </button>
-
-              <button
-                type="button"
-                onClick={handleDueTodayClick}
-                className="w-full group bg-slate-900/40 backdrop-blur-sm border border-white/5 hover:bg-white/10 hover:border-indigo-500/30 rounded-xl p-3 flex items-center justify-between text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-                    <CheckCircle2 className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-lg font-bold text-white leading-none mb-1">{todayTasks.length}</div>
-                    <div className="text-[10px] font-bold text-indigo-400/80 uppercase tracking-wider truncate">
-                      {t("daily_focus.due_today")}
-                    </div>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-all" />
-              </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="lg:col-span-2 relative overflow-hidden rounded-2xl flex flex-col bg-white/60 border border-slate-100 shadow-sm">
-        <LightAuroraBackground />
+        <div className="lg:col-span-2 relative overflow-hidden rounded-2xl flex flex-col bg-white/60 border border-slate-100 shadow-sm">
+          <LightAuroraBackground />
 
-        <div className="relative z-10 px-6 pt-6 pb-2 flex justify-between items-center">
-          <h2 className="font-bold text-slate-800 flex items-center gap-2 text-lg">
-            <CalendarIcon className="w-5 h-5 text-indigo-600" />
-            {t("daily_focus.schedule_heading")}
-          </h2>
-          {hasScheduleItems && (
-            <span className="text-sm text-slate-500">
-              {t("daily_focus.schedule_summary", {
-                sessions: todaysSessions.length,
-                reminders: todayTasks.length
-              })}
-            </span>
-          )}
-        </div>
+          <div className="relative z-10 px-6 pt-6 pb-2 flex justify-between items-center">
+            <h2 className="font-bold text-slate-800 flex items-center gap-2 text-lg">
+              <CalendarIcon className="w-5 h-5 text-indigo-600" />
+              {t("daily_focus.schedule_heading")}
+            </h2>
+            <button
+              onClick={() => window.location.href = '/calendar'}
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline transition-colors"
+            >
+              {t("daily_focus.view_calendar", { defaultValue: "View Calendar" })}
+            </button>
+          </div>
 
-        <div className="relative z-10 px-6">
-          <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-        </div>
+          <div className="relative z-10 px-4 sm:px-6">
+            <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+          </div>
 
-        <div className="relative z-10 px-6 py-6">
-          {hasScheduleItems ? (
-            <div className="relative">
-              <div className="absolute left-16 top-0 bottom-0 block sm:hidden w-px bg-gradient-to-b from-indigo-100 via-slate-200 to-transparent pointer-events-none" />
-              <div className="absolute left-[5.75rem] top-0 bottom-0 hidden sm:block w-px bg-gradient-to-b from-indigo-100 via-slate-200 to-transparent pointer-events-none" />
-              {timelineItems.map((item, index) => {
-                const isLast = index === timelineItems.length - 1;
+          <div className="relative z-10 px-4 sm:px-6 py-6">
+            {hasScheduleItems ? (
+              <div className="relative">
+                <div className="absolute left-[3.75rem] top-0 bottom-0 block sm:hidden w-px bg-gradient-to-b from-indigo-100 via-slate-200 to-transparent pointer-events-none" />
+                <div className="absolute left-28 top-0 bottom-0 hidden sm:block w-px bg-gradient-to-b from-indigo-100 via-slate-200 to-transparent pointer-events-none" />
+                {timelineItems.map((item, index) => {
+                  const isLast = index === timelineItems.length - 1;
 
-                if (item.type === "now") {
-                  return (
-                    <div
-                      key={item.id}
-                      className="relative flex w-full flex-row items-center gap-3 sm:gap-6 mb-6 mt-2"
-                    >
-                      <div className="sm:w-20 flex-shrink-0 flex justify-end items-center">
-                        <div className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm shadow-rose-200">
-                          {item.displayTime}
-                        </div>
-                      </div>
-                      <div className="flex sm:hidden absolute left-16 -translate-x-1/2 z-20 items-center justify-center">
-                        <div className="absolute w-3 h-3 bg-rose-400 rounded-full animate-ping opacity-60" />
-                        <div className="relative w-2.5 h-2.5 bg-rose-600 rounded-full ring-2 ring-white shadow-sm" />
-                      </div>
-                      <div className="hidden sm:flex absolute left-[5.75rem] -translate-x-1/2 z-20 items-center justify-center">
-                        <div className="absolute w-3 h-3 bg-rose-400 rounded-full animate-ping opacity-60" />
-                        <div className="relative w-2.5 h-2.5 bg-rose-600 rounded-full ring-2 ring-white shadow-sm" />
-                      </div>
-                      <div className="flex-1 w-full flex items-center relative pl-2">
-                        <div className="w-full">
-                          <div className="w-full border-t border-dashed border-rose-400/70" />
-                        </div>
-                        <div className="absolute right-0 -top-3 text-[10px] font-bold text-rose-500 uppercase tracking-[0.35em] bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded border border-rose-100 shadow-sm">
-                          {t("daily_focus.now_label")}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
-
-                if (item.type === "session") {
-                  const theme = getSessionTheme(item.data);
-                  const displayLeadName = item.data.lead_name || clientPlaceholder;
-                  const displaySessionName =
-                    item.data.session_name || item.data.lead_name || sessionFallbackLabel;
-                  const displayStatus = item.data.status || statusFallbackLabel;
-                  const displayLocation = item.data.location || locationFallbackLabel;
-
-                  return (
-                    <div
-                      key={item.id}
-                      className={`relative flex flex-row gap-3 sm:gap-6 items-start group mb-8 ${isLast ? "!mb-0" : ""}`}
-                    >
-                      <div className="w-16 sm:w-20 flex-shrink-0 flex flex-col items-start sm:items-end text-left sm:text-right pt-1">
-                        <span className="text-base sm:text-xl font-bold text-slate-800 leading-none">
-                          {item.displayTime}
-                        </span>
-                      </div>
-
+                  if (item.type === "now") {
+                    return (
                       <div
-                        className="flex sm:hidden absolute left-16 -translate-x-1/2 z-10 items-center justify-center"
-                        style={{ top: "0.65rem" }}
+                        key={item.id}
+                        className="relative flex w-full flex-row items-center gap-3 sm:gap-6 mb-6 mt-2"
                       >
-                        <div className="w-3 h-3 rounded-full bg-indigo-600 shadow-[0_0_0_4px_rgba(199,210,254,0.5)]" />
+                        <div className="w-12 sm:w-24 flex-shrink-0 flex justify-end items-center">
+                          <div className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm shadow-rose-200">
+                            {item.displayTime}
+                          </div>
+                        </div>
+                        <div className="flex sm:hidden absolute left-[3.75rem] -translate-x-1/2 z-20 items-center justify-center">
+                          <div className="absolute w-3 h-3 bg-rose-400 rounded-full animate-ping opacity-60" />
+                          <div className="relative w-2.5 h-2.5 bg-rose-600 rounded-full ring-2 ring-white shadow-sm" />
+                        </div>
+                        <div className="hidden sm:flex absolute left-28 -translate-x-1/2 z-20 items-center justify-center">
+                          <div className="absolute w-3 h-3 bg-rose-400 rounded-full animate-ping opacity-60" />
+                          <div className="relative w-2.5 h-2.5 bg-rose-600 rounded-full ring-2 ring-white shadow-sm" />
+                        </div>
+                        <div className="flex-1 w-full flex items-center relative pl-4">
+                          <div className="w-full">
+                            <div className="w-full h-px bg-rose-400/50" />
+                          </div>
+                          <div className="absolute right-0 -top-3 text-[10px] font-bold text-rose-500 uppercase tracking-[0.35em] bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded border border-rose-100 shadow-sm">
+                            {t("daily_focus.now_label")}
+                          </div>
+                        </div>
                       </div>
-                      <div
-                        className="hidden sm:flex absolute left-[5.75rem] -translate-x-1/2 z-10 items-center justify-center"
-                        style={{ top: "0.65rem" }}
-                      >
-                        <div className="w-3 h-3 rounded-full bg-indigo-600 shadow-[0_0_0_4px_rgba(199,210,254,0.5)]" />
-                      </div>
+                    );
+                  }
 
-                      <div className="flex-1 min-w-0 relative sm:pl-6">
-                        <button
-                          type="button"
-                          onClick={() => handleSessionCardClick(item.data.id)}
-                          className="w-full bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-all relative flex items-center p-3 pl-4 gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                  if (item.type === "session") {
+                    const theme = getSessionTheme(item.data);
+                    const displayLeadName = item.data.lead_name || clientPlaceholder;
+                    const displaySessionName =
+                      item.data.session_name || item.data.lead_name || sessionFallbackLabel;
+                    const displayStatus = item.data.status || statusFallbackLabel;
+                    const displayLocation = item.data.location || locationFallbackLabel;
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={`relative flex flex-row gap-3 sm:gap-6 items-center group mb-8 ${isLast ? "!mb-0" : ""}`}
+                      >
+                        <div className="w-12 sm:w-24 flex-shrink-0 flex flex-col items-end text-right">
+                          <span className="text-sm sm:text-xl font-semibold text-slate-700 leading-none">
+                            {item.displayTime}
+                          </span>
+                          {item.data.duration_minutes && (
+                            <span className="text-xs font-medium text-slate-400 mt-0.5">
+                              {calculateEndTime(item.data.session_time, item.data.duration_minutes)}
+                            </span>
+                          )}
+                        </div>
+
+                        <div
+                          className="flex sm:hidden absolute left-[3.75rem] -translate-x-1/2 z-10 items-center justify-center"
                         >
-                          <div className={`absolute left-0 top-0 bottom-0 w-1 ${theme.border}`} />
-                          <div className="flex-1 min-w-0 flex flex-col gap-1">
-                            <div className="flex items-center gap-2">
-                              <h3 className="text-sm font-semibold text-slate-900/90 truncate">
-                                {displaySessionName}
-                              </h3>
-                              <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${theme.badge}`}>
-                                {displayStatus}
-                              </span>
-                            </div>
-                            <div className="flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:gap-3">
-                              <div className="flex items-center gap-1.5 text-slate-700 font-medium">
-                                <div className="w-4 h-4 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[9px] font-bold text-slate-500">
-                                  {getLeadInitials(displayLeadName)}
-                                </div>
-                                <span className="truncate">{displayLeadName}</span>
-                              </div>
-                              <div className="hidden sm:block w-px h-3 bg-slate-200" />
-                              <TooltipProvider delayDuration={0}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-1.5 text-slate-500 cursor-default min-w-0 w-full sm:w-auto">
-                                      <MapPin className={`w-3.5 h-3.5 ${theme.icon}`} />
-                                      <span className="truncate w-full sm:w-auto sm:max-w-[140px]">
-                                        {displayLocation}
-                                      </span>
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top" className="text-xs">
-                                    {displayLocation}
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                              {item.data.notes && (
-                                <>
-                                  <div className="w-px h-3 bg-slate-200" />
-                                  <div className="flex items-center gap-1.5 text-slate-500">
-                                    <StickyNote className="w-3.5 h-3.5 text-amber-500" />
-                                    <span className="truncate max-w-[140px]">{item.data.notes}</span>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                          <div className="p-1.5 rounded-full text-slate-300 group-hover:text-indigo-600 group-hover:bg-slate-50 transition-all">
-                            <ChevronRight className="w-5 h-5" />
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                }
+                          <div className="w-3.5 h-3.5 rounded-full bg-white border-[3px] border-indigo-500 shadow-sm" />
+                        </div>
+                        <div
+                          className="hidden sm:flex absolute left-28 -translate-x-1/2 z-10 items-center justify-center"
+                        >
+                          <div className="w-3.5 h-3.5 rounded-full bg-white border-[3px] border-indigo-500 shadow-sm" />
+                        </div>
 
-                const reminder = item.data;
-                const isReminderCompleted = reminder.completed;
-                const reminderRowClass = `flex items-start gap-3 sm:gap-4 rounded-2xl px-2 py-1.5 sm:px-3 sm:py-2 w-full group transition-all ${
-                  isReminderCompleted
+                        <div className="flex-1 min-w-0 relative pl-4 sm:pl-6">
+                          <button
+                            type="button"
+                            onClick={() => handleSessionCardClick(item.data.id)}
+                            className="w-full bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-all relative flex items-center p-3 pl-4 gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                          >
+                            <div className={`absolute left-0 top-0 bottom-0 w-1 ${theme.border}`} />
+                            <div className="flex-1 min-w-0 flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-sm font-semibold text-slate-900/90 truncate">
+                                  {displaySessionName}
+                                </h3>
+                              </div>
+                              <div className="flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:gap-3">
+                                <div className="flex items-center gap-1.5 text-slate-700 font-medium">
+                                  <div className="w-4 h-4 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[9px] font-bold text-slate-500">
+                                    {getLeadInitials(displayLeadName)}
+                                  </div>
+                                  <span className="truncate">{displayLeadName}</span>
+                                </div>
+                                <div className="hidden sm:block w-px h-3 bg-slate-200" />
+                                <TooltipProvider delayDuration={0}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="flex items-center gap-1.5 text-slate-500 cursor-default min-w-0 w-full sm:w-auto">
+                                        <MapPin className={`w-3.5 h-3.5 ${theme.icon}`} />
+                                        <span className="truncate w-full sm:w-auto sm:max-w-[140px]">
+                                          {displayLocation}
+                                        </span>
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="text-xs">
+                                      {displayLocation}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                {item.data.notes && (
+                                  <>
+                                    <div className="w-px h-3 bg-slate-200" />
+                                    <div className="flex items-center gap-1.5 text-slate-500">
+                                      <StickyNote className="w-3.5 h-3.5 text-amber-500" />
+                                      <span className="truncate max-w-[140px]">{item.data.notes}</span>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <div className="p-1.5 rounded-full text-slate-300 group-hover:text-indigo-600 group-hover:bg-slate-50 transition-all">
+                              <ChevronRight className="w-5 h-5" />
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  const reminder = item.data;
+                  const isReminderCompleted = reminder.completed;
+                  const reminderRowClass = `flex items-center gap-3 sm:gap-4 rounded-2xl px-2 py-1.5 sm:px-3 sm:py-2 w-full group transition-all ${isReminderCompleted
                     ? "opacity-70 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                     : "hover:bg-white/30"
-                }`;
-                const reminderTextClass = `text-sm font-semibold truncate ${
-                  isReminderCompleted
+                    }`;
+                  const reminderTextClass = `text-sm font-semibold ${isReminderCompleted
                     ? "text-slate-400 line-through decoration-slate-400/70"
                     : "text-slate-800"
-                }`;
-                const reminderRowProps = isReminderCompleted
-                  ? {
+                    }`;
+                  const reminderRowProps = isReminderCompleted
+                    ? {
                       role: "button" as const,
                       tabIndex: 0,
                       onClick: () => handleToggleReminderCompletion(reminder.id, false),
@@ -1306,173 +1322,172 @@ const DashboardDailyFocus = ({
                         }
                       }
                     }
-                  : undefined;
+                    : undefined;
 
-                const reminderRowInner = (
-                  <div className={reminderRowClass} {...(reminderRowProps ?? {})}>
-                    <div className="min-w-0 sm:flex-1">
-                      <div className="flex items-start gap-3">
-                        <p className={`${reminderTextClass} flex-1 min-w-0`}>{reminder.content}</p>
-                        {reminder.type === "payment" && (
-                          <span className="flex items-center gap-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-50/90 px-1.5 py-0.5 rounded-full whitespace-nowrap border border-emerald-100">
-                            <Coins className="w-2.5 h-2.5" />
-                            {paymentTagLabel}
-                          </span>
+                  const reminderRowInner = (
+                    <div className={reminderRowClass} {...(reminderRowProps ?? {})}>
+                      <div className="min-w-0 sm:flex-1">
+                        <div className="flex items-center gap-3">
+                          <p className={`${reminderTextClass} flex-1 min-w-0 line-clamp-2`}>{reminder.content}</p>
+                          {reminder.type === "payment" && (
+                            <span className="flex items-center gap-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-50/90 px-1.5 py-0.5 rounded-full whitespace-nowrap border border-emerald-100">
+                              <Coins className="w-2.5 h-2.5" />
+                              {paymentTagLabel}
+                            </span>
+                          )}
+                        </div>
+                        {(reminder.leadName || reminder.project_id) && (
+                          <div className="mt-1.5 flex flex-col gap-1 text-xs text-slate-500">
+                            {reminder.leadName && (
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleReminderLeadClick(reminder.lead_id);
+                                }}
+                                className="inline-flex touch-target-compact items-center gap-1.5 text-left text-slate-500 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded-md px-0.5 py-0.5 transition-colors"
+                              >
+                                <Users className="w-3.5 h-3.5" />
+                                <span className="truncate">{reminder.leadName}</span>
+                              </button>
+                            )}
+                            {reminder.project_id && (
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleReminderProjectClick(reminder.project_id);
+                                }}
+                                className="inline-flex touch-target-compact items-center gap-1.5 text-left text-slate-500 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded-md px-0.5 py-0.5 transition-colors"
+                              >
+                                <FolderOpen className="w-3.5 h-3.5" />
+                                <span className="truncate">
+                                  {reminder.projectName || projectPlaceholder}
+                                </span>
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
-                      {(reminder.leadName || reminder.project_id) && (
-                        <div className="mt-1.5 flex flex-col gap-1 text-xs text-slate-500">
-                          {reminder.leadName && (
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                handleReminderLeadClick(reminder.lead_id);
-                              }}
-                              className="inline-flex touch-target-compact items-center gap-1.5 text-left text-slate-500 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded-md px-0.5 py-0.5 transition-colors"
-                            >
-                              <Users className="w-3.5 h-3.5" />
-                              <span className="truncate">{reminder.leadName}</span>
-                            </button>
-                          )}
-                          {reminder.project_id && (
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                handleReminderProjectClick(reminder.project_id);
-                              }}
-                              className="inline-flex touch-target-compact items-center gap-1.5 text-left text-slate-500 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded-md px-0.5 py-0.5 transition-colors"
-                            >
-                              <FolderOpen className="w-3.5 h-3.5" />
-                              <span className="truncate">
-                                {reminder.projectName || projectPlaceholder}
-                              </span>
-                            </button>
-                          )}
+                      {isReminderCompleted ? (
+                        <div className="flex-shrink-0 ml-auto">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-slate-100 cursor-pointer">
+                            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex-shrink-0 ml-auto">
+                          <TooltipProvider delayDuration={0}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    handleToggleReminderCompletion(reminder.id, true);
+                                  }}
+                                  disabled={completingReminderId === reminder.id}
+                                  className="flex h-8 w-8 touch-target-compact items-center justify-center rounded-full text-slate-300 transition-all hover:text-indigo-500 hover:bg-slate-100 disabled:opacity-60"
+                                >
+                                  {completingReminderId === reminder.id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
+                                  ) : (
+                                    <Circle className="w-5 h-5" />
+                                  )}
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs">
+                                {reminderCompleteTooltip}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       )}
                     </div>
-                    {isReminderCompleted ? (
-                      <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 sm:ml-auto sm:mt-0 mt-1">
-                        <CheckCircle2 className="w-4 h-4" />
-                        {reminderCompletedLabel}
-                      </span>
-                    ) : (
-                      <div className="flex-shrink-0 sm:ml-auto sm:mt-0 mt-1">
-                        <TooltipProvider delayDuration={0}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                handleToggleReminderCompletion(reminder.id, true);
-                              }}
-                              disabled={completingReminderId === reminder.id}
-                              className="flex h-8 w-8 touch-target-compact items-center justify-center rounded-full border border-slate-200 bg-white/30 text-slate-400 transition-all hover:border-indigo-300 hover:text-indigo-600 disabled:opacity-60 sm:opacity-0 sm:group-hover:opacity-100"
-                            >
-                              {completingReminderId === reminder.id ? (
-                                <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
-                              ) : (
-                                <Circle className="w-4 h-4" />
-                                )}
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="text-xs">
-                              {reminderCompleteTooltip}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                  );
+                  return (
+                    <div
+                      key={item.id}
+                      className={`relative flex flex-row items-center gap-3 sm:gap-6 group mb-4 ${isLast ? "!mb-0" : ""}`}
+                    >
+                      <div className="w-12 sm:w-24 flex-shrink-0 flex justify-end text-right">
+                        <span className="text-sm font-semibold text-slate-500">{item.displayTime}</span>
                       </div>
-                    )}
-                  </div>
-                );
-                return (
-                  <div
-                    key={item.id}
-                    className={`relative flex flex-row items-start gap-6 group mb-4 ${isLast ? "!mb-0" : ""}`}
+
+                      <div
+                        className="flex sm:hidden absolute left-[3.75rem] -translate-x-1/2 z-10 items-center justify-center"
+                      >
+                        <div className="w-3 h-3 rounded-full bg-white border-2 border-slate-300" />
+                      </div>
+                      <div
+                        className="hidden sm:flex absolute left-28 -translate-x-1/2 z-10 items-center justify-center"
+                      >
+                        <div className="w-3 h-3 rounded-full bg-white border-2 border-slate-300" />
+                      </div>
+
+                      <div className="flex-1 min-w-0 relative pl-4 sm:pl-6">
+                        {isReminderCompleted ? (
+                          <TooltipProvider delayDuration={0}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>{reminderRowInner}</TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs">
+                                {reminderReopenTooltip}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          reminderRowInner
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center gap-5">
+                <img
+                  src="/timeline.png"
+                  alt={t("daily_focus.empty_alt")}
+                  className="w-14 h-14 object-contain opacity-90 drop-shadow-lg"
+                />
+                <div className="space-y-2 max-w-md">
+                  <h3 className="text-xl font-bold text-slate-800">{t("daily_focus.empty_title")}</h3>
+                  <p className="text-slate-500 text-sm">{t("daily_focus.empty_subtitle")}</p>
+                </div>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-slate-400">
+                  {t("daily_focus.empty_description")}
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <Button
+                    type="button"
+                    variant="surface"
+                    className="flex-1 sm:flex-none rounded-full bg-white text-slate-900 shadow-md hover:bg-slate-50 hover:text-slate-900"
+                    onClick={() => triggerAddAction("lead")}
                   >
-                    <div className="w-16 sm:w-20 flex-shrink-0 flex justify-end text-right pt-1.5">
-                      <span className="text-xs font-semibold text-slate-400 font-mono">{item.displayTime}</span>
-                    </div>
-
-                    <div
-                      className="flex sm:hidden absolute left-16 -translate-x-1/2 -translate-y-1/2 z-10 items-center justify-center"
-                      style={{ top: "1.4rem" }}
-                    >
-                      <div className="w-2 h-2 rounded-full bg-slate-300 ring-4 ring-white/60" />
-                    </div>
-                    <div
-                      className="hidden sm:flex absolute left-[5.75rem] -translate-x-1/2 -translate-y-1/2 z-10 items-center justify-center"
-                      style={{ top: "1.4rem" }}
-                    >
-                      <div className="w-2 h-2 rounded-full bg-slate-300 ring-4 ring-white/60" />
-                    </div>
-
-                    <div className="flex-1 min-w-0 relative sm:pl-6">
-                      {isReminderCompleted ? (
-                        <TooltipProvider delayDuration={0}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>{reminderRowInner}</TooltipTrigger>
-                            <TooltipContent side="top" className="text-xs">
-                              {reminderReopenTooltip}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      ) : (
-                        reminderRowInner
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-16 text-center gap-5">
-              <img
-                src="/timeline.png"
-                alt={t("daily_focus.empty_alt")}
-                className="w-14 h-14 object-contain opacity-90 drop-shadow-lg"
-              />
-              <div className="space-y-2 max-w-md">
-                <h3 className="text-xl font-bold text-slate-800">{t("daily_focus.empty_title")}</h3>
-                <p className="text-slate-500 text-sm">{t("daily_focus.empty_subtitle")}</p>
+                    {t("daily_focus.cta_lead")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="surface"
+                    className="flex-1 sm:flex-none rounded-full bg-white text-slate-900 shadow-md hover:bg-slate-50 hover:text-slate-900"
+                    onClick={() => triggerAddAction("project")}
+                  >
+                    {t("daily_focus.cta_project")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="surface"
+                    className="flex-1 sm:flex-none rounded-full !bg-indigo-600 !text-white shadow-md hover:!bg-indigo-500"
+                    onClick={() => triggerAddAction("session")}
+                  >
+                    {t("daily_focus.cta_session")}
+                  </Button>
+                </div>
               </div>
-              <p className="text-[11px] uppercase tracking-[0.3em] text-slate-400">
-                {t("daily_focus.empty_description")}
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                <Button
-                  type="button"
-                  variant="surface"
-                  className="flex-1 sm:flex-none rounded-full bg-white text-slate-900 shadow-md hover:bg-slate-50 hover:text-slate-900"
-                  onClick={() => triggerAddAction("lead")}
-                >
-                  {t("daily_focus.cta_lead")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="surface"
-                  className="flex-1 sm:flex-none rounded-full bg-white text-slate-900 shadow-md hover:bg-slate-50 hover:text-slate-900"
-                  onClick={() => triggerAddAction("project")}
-                >
-                  {t("daily_focus.cta_project")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="surface"
-                  className="flex-1 sm:flex-none rounded-full !bg-indigo-600 !text-white shadow-md hover:!bg-indigo-500"
-                  onClick={() => triggerAddAction("session")}
-                >
-                  {t("daily_focus.cta_session")}
-                </Button>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
-    </section>
+      </section >
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 mb-8">
         <StatCard
@@ -1579,16 +1594,18 @@ const DashboardDailyFocus = ({
           }}
         />
       </section>
-      {selectedSessionId && (
-        <SessionSheetView
-          sessionId={selectedSessionId}
-          isOpen={isSessionSheetOpen}
-          onOpenChange={handleSessionSheetOpenChange}
-          onViewFullDetails={handleViewFullSessionDetails}
-          onNavigateToLead={handleNavigateToLead}
-          onNavigateToProject={handleNavigateToProject}
-        />
-      )}
+      {
+        selectedSessionId && (
+          <SessionSheetView
+            sessionId={selectedSessionId}
+            isOpen={isSessionSheetOpen}
+            onOpenChange={handleSessionSheetOpenChange}
+            onViewFullDetails={handleViewFullSessionDetails}
+            onNavigateToLead={handleNavigateToLead}
+            onNavigateToProject={handleNavigateToProject}
+          />
+        )
+      }
       <ProjectSheetView
         project={viewingProject}
         open={projectSheetOpen}

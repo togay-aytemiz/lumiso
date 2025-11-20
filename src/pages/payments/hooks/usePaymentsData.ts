@@ -85,6 +85,11 @@ interface UsePaymentsDataResult {
 type EnrichedPayment = Payment & { projects: ProjectDetails | null };
 
 const LOG_TIMESTAMP_FIELD = "log_timestamp";
+const paymentSchemaEnhancementsEnabled =
+  (typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env.VITE_ENABLE_PAYMENT_SCHEMA_ENHANCEMENTS === "true") ||
+  false;
 
 const isLogTimestampMissingError = (error: unknown): boolean => {
   if (!error || typeof error !== "object") {
@@ -224,7 +229,11 @@ export function usePaymentsData({
 
   const archivedStatusIdRef = useRef<string | null>(null);
   const logTimestampSupportedRef = useRef<boolean | null>(
-    process.env.NODE_ENV === "test" ? true : null
+    process.env.NODE_ENV === "test"
+      ? true
+      : paymentSchemaEnhancementsEnabled
+        ? null
+        : false
   );
   const logTimestampSupportPromiseRef = useRef<Promise<boolean> | null>(null);
 
@@ -252,6 +261,9 @@ export function usePaymentsData({
   }, []);
 
   const ensureLogTimestampSupport = useCallback(async () => {
+    if (!paymentSchemaEnhancementsEnabled) {
+      return false;
+    }
     if (logTimestampSupportedRef.current !== null) {
       return logTimestampSupportedRef.current;
     }

@@ -6,6 +6,100 @@ let cachedOrganizationId: string | null = null;
 let cacheExpiry: number = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const DEFAULT_TRIAL_DAYS = 14;
+let membershipTableUnavailable = false;
+const MEMBERSHIP_ENFORCEMENT_ENABLED =
+  (typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env.VITE_ENABLE_MEMBERSHIP_ENFORCEMENT === "true") ||
+  false;
+
+type MembershipUpdates = {
+  status?: string;
+  role?: string;
+  system_role?: string;
+};
+
+const handleMembershipTableError = (error: unknown) => {
+  const code = typeof error === 'object' && error !== null ? (error as { code?: string }).code : undefined;
+  if (code === 'PGRST205') {
+    membershipTableUnavailable = true;
+    console.warn('organization_members table not available; skipping membership enforcement until schema sync completes.');
+    return true;
+  }
+  return false;
+};
+
+const ensureOwnerMembership = async (userId: string, organizationId: string) => {
+  if (!MEMBERSHIP_ENFORCEMENT_ENABLED || membershipTableUnavailable) {
+    return;
+  }
+
+  try {
+    const { data: membership, error: membershipError } = await supabase
+      .from('organization_members')
+      .select('id, status, role, system_role')
+      .eq('user_id', userId)
+      .eq('organization_id', organizationId)
+      .maybeSingle();
+
+    if (membershipError) {
+      if (membershipError.code === 'PGRST116') {
+        // no rows, continue to insert
+      } else if (handleMembershipTableError(membershipError)) {
+        return;
+      } else {
+        console.error('Failed to verify organization membership:', membershipError);
+        return;
+      }
+    }
+
+    if (!membership) {
+      const { error: insertError } = await supabase.from('organization_members').insert({
+        organization_id: organizationId,
+        user_id: userId,
+        role: 'Owner',
+        system_role: 'Owner',
+        status: 'active',
+      });
+
+      if (insertError) {
+        if (handleMembershipTableError(insertError)) {
+          return;
+        }
+        console.error('Failed to seed owner membership:', insertError);
+      }
+      return;
+    }
+
+    const pendingUpdates: MembershipUpdates = {};
+    if (membership.status !== 'active') {
+      pendingUpdates.status = 'active';
+    }
+    if (!membership.role) {
+      pendingUpdates.role = 'Owner';
+    }
+    if (!membership.system_role) {
+      pendingUpdates.system_role = 'Owner';
+    }
+
+    if (Object.keys(pendingUpdates).length > 0) {
+      const { error: updateError } = await supabase
+        .from('organization_members')
+        .update(pendingUpdates)
+        .eq('id', membership.id);
+      if (updateError) {
+        if (handleMembershipTableError(updateError)) {
+          return;
+        }
+        console.error('Failed to normalize owner membership:', updateError);
+      }
+    }
+  } catch (error) {
+    if (!handleMembershipTableError(error)) {
+      console.error('Error ensuring owner membership:', error);
+    }
+  }
+};
 
 export async function getUserOrganizationId(): Promise<string | null> {
   try {
@@ -36,6 +130,7 @@ export async function getUserOrganizationId(): Promise<string | null> {
       .single();
 
     if (!orgError && organization?.id) {
+      await ensureOwnerMembership(user.id, organization.id);
       cachedOrganizationId = organization.id;
       cacheExpiry = Date.now() + CACHE_DURATION;
       console.log('Found organization ID for single user:', cachedOrganizationId);
@@ -111,6 +206,7 @@ export async function getUserOrganizationId(): Promise<string | null> {
           console.warn('Some default data initialization failed:', initError);
         }
 
+        await ensureOwnerMembership(user.id, newOrg.id);
         cachedOrganizationId = newOrg.id;
         cacheExpiry = Date.now() + CACHE_DURATION;
         return newOrg.id;
@@ -128,4 +224,5 @@ export async function getUserOrganizationId(): Promise<string | null> {
 export function clearOrganizationCache() {
   cachedOrganizationId = null;
   cacheExpiry = 0;
+  membershipTableUnavailable = false;
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,7 @@ import type { Database } from "@/integrations/supabase/types";
 import DashboardDailyFocus, { type SessionWithLead } from "@/components/DashboardDailyFocus";
 import { ProjectCreationWizardSheet } from "@/features/project-creation";
 import { countInactiveLeads } from "@/lib/leadLifecycle";
+import { computePaymentSummaryMetrics } from "@/lib/payments/metrics";
 import { useProfile } from "@/hooks/useProfile";
 import { useOrganization } from "@/contexts/OrganizationContext";
 
@@ -36,6 +37,7 @@ type SessionRow = Database["public"]["Tables"]["sessions"]["Row"];
 type SessionSummaryRow = Pick<SessionRow, "id" | "session_date" | "status" | "created_at">;
 type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
 type PaymentRow = Database["public"]["Tables"]["payments"]["Row"];
+type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
 type PaymentSummaryRow = Pick<
   PaymentRow,
   | "id"
@@ -47,7 +49,26 @@ type PaymentSummaryRow = Pick<
   | "created_at"
   | "scheduled_initial_amount"
   | "scheduled_remaining_amount"
+  | "project_id"
 >;
+type PaymentMetricsRow = Pick<
+  PaymentRow,
+  | "id"
+  | "amount"
+  | "status"
+  | "entry_kind"
+  | "scheduled_initial_amount"
+  | "scheduled_remaining_amount"
+  | "project_id"
+>;
+
+type PaymentTimestampColumn = "created_at" | "date_paid" | "log_timestamp";
+type OptionalPaymentColumn =
+  | "date_paid"
+  | "log_timestamp"
+  | "scheduled_initial_amount"
+  | "scheduled_remaining_amount"
+  | "entry_kind";
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
@@ -59,6 +80,12 @@ const getErrorMessage = (error: unknown): string => {
   return "An unexpected error occurred";
 };
 
+const paymentSchemaEnhancementsEnabled =
+  (typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env.VITE_ENABLE_PAYMENT_SCHEMA_ENHANCEMENTS === "true") ||
+  false;
+
 const CrmDashboard = () => {
   const [leads, setLeads] = useState<LeadWithStatusRow[]>([]);
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
@@ -67,10 +94,19 @@ const CrmDashboard = () => {
   const [sessionStats, setSessionStats] = useState<SessionSummaryRow[]>([]);
   const [paymentStats, setPaymentStats] = useState<PaymentSummaryRow[]>([]);
   const [scheduledPayments, setScheduledPayments] = useState<PaymentSummaryRow[]>([]);
+  const [outstandingBalance, setOutstandingBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
   const [projectWizardOpen, setProjectWizardOpen] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
+  const paymentColumnSupportRef = useRef<Record<PaymentTimestampColumn | OptionalPaymentColumn, boolean>>({
+    created_at: true,
+    date_paid: paymentSchemaEnhancementsEnabled,
+    log_timestamp: paymentSchemaEnhancementsEnabled,
+    scheduled_initial_amount: true,
+    scheduled_remaining_amount: true,
+    entry_kind: true,
+  });
   const { profile } = useProfile();
   const { activeOrganization } = useOrganization();
   const navigate = useNavigate();
@@ -252,32 +288,242 @@ const CrmDashboard = () => {
 
       if (sessionStatsError) throw sessionStatsError;
 
-      let paymentStatsQuery = supabase
-        .from<PaymentSummaryRow>('payments')
-        .select('id, amount, status, entry_kind, log_timestamp, date_paid, created_at, scheduled_initial_amount, scheduled_remaining_amount')
-        .eq('organization_id', organizationId)
-        .eq('entry_kind', 'recorded');
+      const basePaymentColumns = ['id', 'amount', 'status', 'created_at', 'project_id'];
 
-      const quotedTimestamp = `"${statsStartDateTime}"`;
-      paymentStatsQuery = paymentStatsQuery.or(
-        [
-          `log_timestamp.gte.${quotedTimestamp}`,
-          `date_paid.gte.${quotedTimestamp}`,
-          `created_at.gte.${quotedTimestamp}`
-        ].join(',')
+      const buildPaymentSelectColumns = () => {
+        const columns = [...basePaymentColumns];
+        (['entry_kind', 'date_paid', 'log_timestamp', 'scheduled_initial_amount', 'scheduled_remaining_amount'] as OptionalPaymentColumn[])
+          .forEach((column) => {
+            if (paymentColumnSupportRef.current[column]) {
+              columns.push(column);
+            }
+          });
+        return columns;
+      };
+
+      const detectMissingPaymentColumn = (error: unknown): (PaymentTimestampColumn | OptionalPaymentColumn) | null => {
+        if (!error || typeof error !== 'object') return null;
+        const code = (error as { code?: string }).code;
+        if (code !== '42703') return null;
+        const message = typeof (error as { message?: string }).message === 'string'
+          ? (error as { message?: string }).message
+          : '';
+        if (message?.includes('log_timestamp')) return 'log_timestamp';
+        if (message?.includes('date_paid')) return 'date_paid';
+        if (message?.includes('created_at')) return 'created_at';
+        if (message?.includes('entry_kind')) return 'entry_kind';
+        if (message?.includes('scheduled_initial_amount')) return 'scheduled_initial_amount';
+        if (message?.includes('scheduled_remaining_amount')) return 'scheduled_remaining_amount';
+        return null;
+      };
+
+      let archivedStatusIdCache: string | null | undefined;
+
+      const getArchivedStatusId = async (): Promise<string | null> => {
+        if (archivedStatusIdCache !== undefined) {
+          return archivedStatusIdCache;
+        }
+        const { data, error } = await supabase
+          .from('project_statuses')
+          .select('id')
+          .eq('organization_id', organizationId)
+          .ilike('name', 'archived')
+          .maybeSingle();
+        if (error) {
+          console.warn('Failed to fetch archived status id', error);
+          archivedStatusIdCache = null;
+          return archivedStatusIdCache;
+        }
+        archivedStatusIdCache = data?.id ?? null;
+        return archivedStatusIdCache;
+      };
+
+      const filterOutArchivedPayments = async <T extends { project_id?: string | null }>(
+        payments: T[]
+      ): Promise<T[]> => {
+        if (!payments.length) {
+          return payments;
+        }
+        const archivedStatusId = await getArchivedStatusId();
+        if (!archivedStatusId) {
+          return payments;
+        }
+        const projectIds = Array.from(
+          new Set(
+            payments
+              .map((payment) => payment.project_id)
+              .filter((id): id is string => Boolean(id))
+          )
+        );
+        if (!projectIds.length) {
+          return payments;
+        }
+
+        const { data: projects, error: projectsError } = await supabase
+          .from<Pick<ProjectRow, 'id' | 'status_id'>>('projects')
+          .select('id, status_id')
+          .eq('organization_id', organizationId)
+          .in('id', projectIds);
+
+        if (projectsError) {
+          console.warn('Failed to fetch project statuses while filtering archived payments', projectsError);
+          return payments;
+        }
+
+        const archivedProjects = new Set(
+          (projects ?? [])
+            .filter((project) => project.status_id === archivedStatusId)
+            .map((project) => project.id)
+        );
+
+        if (!archivedProjects.size) {
+          return payments;
+        }
+
+        return payments.filter((payment) => {
+          const projectId = payment.project_id ?? null;
+          return !projectId || !archivedProjects.has(projectId);
+        });
+      };
+
+      const fetchPaymentsSince = async (column: PaymentTimestampColumn): Promise<PaymentSummaryRow[]> => {
+        if (!paymentColumnSupportRef.current[column]) {
+          return [];
+        }
+
+        const selectColumns = buildPaymentSelectColumns();
+        let query = supabase
+          .from<PaymentSummaryRow>('payments')
+          .select(selectColumns.join(', '))
+          .eq('organization_id', organizationId);
+
+        if (paymentColumnSupportRef.current.entry_kind) {
+          query = query.eq('entry_kind', 'recorded');
+        }
+
+        if (column !== 'created_at') {
+          query = query.not(column, 'is', null);
+        }
+
+        const { data, error } = await query.gte(column, statsStartDateTime);
+
+        if (error) {
+          const missingColumn = detectMissingPaymentColumn(error);
+          if (missingColumn) {
+            paymentColumnSupportRef.current[missingColumn] = false;
+            console.warn(
+              `[dashboard] Column ${missingColumn} missing in payments table. Falling back without it.`
+            );
+            if (missingColumn === 'entry_kind') {
+              // Rebuild query without entry_kind filter by recursing
+              return fetchPaymentsSince(column);
+            }
+            if (missingColumn === column) {
+              return fetchPaymentsSince(column);
+            }
+            // For select-only optional columns, simply retry the same column now that it is disabled
+            if (
+              missingColumn === 'scheduled_initial_amount' ||
+              missingColumn === 'scheduled_remaining_amount' ||
+              missingColumn === 'date_paid' ||
+              missingColumn === 'log_timestamp'
+            ) {
+              return fetchPaymentsSince(column);
+            }
+          }
+          throw error;
+        }
+
+        return data ?? [];
+      };
+
+      const createdPayments = await fetchPaymentsSince('created_at');
+      const paidPayments = await fetchPaymentsSince('date_paid');
+      const loggedPayments = await fetchPaymentsSince('log_timestamp');
+
+      const paymentStatsDataRaw = Array.from(
+        new Map(
+          [...createdPayments, ...paidPayments, ...loggedPayments].map((payment) => [payment.id, payment])
+        ).values()
       );
+      const paymentStatsData = await filterOutArchivedPayments(paymentStatsDataRaw);
 
-      const { data: paymentStatsData, error: paymentStatsError } = await paymentStatsQuery;
+      const fetchScheduledPayments = async (): Promise<PaymentSummaryRow[]> => {
+        if (!paymentColumnSupportRef.current.entry_kind) {
+          return [];
+        }
 
-      if (paymentStatsError) throw paymentStatsError;
+        const selectColumns = buildPaymentSelectColumns();
+        let scheduledQuery = supabase
+          .from<PaymentSummaryRow>('payments')
+          .select(selectColumns.join(', '))
+          .eq('organization_id', organizationId)
+          .eq('entry_kind', 'scheduled');
 
-      const { data: scheduledPaymentsData, error: scheduledPaymentsError } = await supabase
-        .from<PaymentSummaryRow>('payments')
-        .select('id, amount, scheduled_remaining_amount, scheduled_initial_amount, status, entry_kind, created_at')
-        .eq('organization_id', organizationId)
-        .eq('entry_kind', 'scheduled');
+        if (paymentColumnSupportRef.current.scheduled_remaining_amount) {
+          scheduledQuery = scheduledQuery.gt('scheduled_remaining_amount', 0);
+        }
 
-      if (scheduledPaymentsError) throw scheduledPaymentsError;
+        const { data, error } = await scheduledQuery;
+
+        if (error) {
+          const missingColumn = detectMissingPaymentColumn(error);
+          if (missingColumn) {
+            paymentColumnSupportRef.current[missingColumn] = false;
+            console.warn(
+              `[dashboard] Column ${missingColumn} missing in payments table while fetching scheduled payments.`
+            );
+            if (missingColumn === 'entry_kind') {
+              return [];
+            }
+            return fetchScheduledPayments();
+          }
+          throw error;
+        }
+
+        const positivePayments =
+          data?.filter((payment) => {
+            const remaining =
+              Number(payment.scheduled_remaining_amount ?? payment.amount ?? 0) || 0;
+            return remaining > 0;
+          }) ?? [];
+
+        return filterOutArchivedPayments(positivePayments);
+      };
+
+      const scheduledPaymentsData = await fetchScheduledPayments();
+
+      const fetchOutstandingBalance = async (): Promise<number> => {
+        const selectColumns = ['id', 'amount', 'status', 'entry_kind', 'project_id'];
+        if (paymentColumnSupportRef.current.scheduled_initial_amount) {
+          selectColumns.push('scheduled_initial_amount');
+        }
+        if (paymentColumnSupportRef.current.scheduled_remaining_amount) {
+          selectColumns.push('scheduled_remaining_amount');
+        }
+        const { data, error } = await supabase
+          .from<PaymentMetricsRow>('payments')
+          .select(selectColumns.join(', '))
+          .eq('organization_id', organizationId);
+
+        if (error) {
+          const missingColumn = detectMissingPaymentColumn(error);
+          if (missingColumn) {
+            paymentColumnSupportRef.current[missingColumn] = false;
+            console.warn(
+              `[dashboard] Column ${missingColumn} missing in payments table while fetching outstanding balance.`
+            );
+            return fetchOutstandingBalance();
+          }
+          throw error;
+        }
+
+        const filteredPayments = await filterOutArchivedPayments(data ?? []);
+        const metrics = computePaymentSummaryMetrics(filteredPayments);
+        return metrics.remainingBalance;
+      };
+
+      const outstandingBalanceValue = await fetchOutstandingBalance();
 
       setLeads((leadsData as LeadWithStatusRow[]) ?? []);
       setAppointments(appointmentsData ?? []);
@@ -285,6 +531,7 @@ const CrmDashboard = () => {
       setSessionStats(sessionStatsData ?? []);
       setPaymentStats(paymentStatsData ?? []);
       setScheduledPayments(scheduledPaymentsData ?? []);
+      setOutstandingBalance(outstandingBalanceValue);
     } catch (error) {
       toast({
         title: "Error",
@@ -387,6 +634,7 @@ const CrmDashboard = () => {
           sessionStats={sessionStats}
           paymentStats={paymentStats}
           scheduledPayments={scheduledPayments}
+          outstandingBalance={outstandingBalance}
         />
         {loading ? (
           <DashboardLoadingSkeleton />

@@ -79,6 +79,7 @@ interface DashboardDailyFocusProps {
   sessionStats: SessionSummaryRow[];
   paymentStats: PaymentSummaryRow[];
   scheduledPayments: PaymentSummaryRow[];
+  outstandingBalance: number;
 }
 
 type TimelineItem =
@@ -214,7 +215,8 @@ const DashboardDailyFocus = ({
   inactiveLeadCount,
   sessionStats,
   paymentStats,
-  scheduledPayments
+  scheduledPayments,
+  outstandingBalance
 }: DashboardDailyFocusProps) => {
   const { timezone, timeFormat } = useOrganizationTimezone();
   const [now, setNow] = useState(new Date());
@@ -509,17 +511,6 @@ const DashboardDailyFocus = ({
     };
   }, [paymentStats, dateBoundaries]);
 
-  const outstandingTotal = useMemo(() => {
-    return scheduledPayments.reduce((sum, payment) => {
-      if ((payment.entry_kind || "recorded") !== "scheduled") {
-        return sum;
-      }
-      const remaining =
-        Number(payment.scheduled_remaining_amount ?? payment.scheduled_initial_amount ?? payment.amount ?? 0) || 0;
-      return sum + Math.max(0, remaining);
-    }, 0);
-  }, [scheduledPayments]);
-
   const leadValue =
     leadTimeframe === "mtd" ? leadMetrics.activeLeadsThisMonth : leadMetrics.totalLeadsYtd;
   const leadComparison =
@@ -541,7 +532,7 @@ const DashboardDailyFocus = ({
       ? revenueMetrics.paidThisMonth - revenueMetrics.paidPreviousMonth
       : revenueMetrics.paidYtd - revenueMetrics.paidLastYear;
 
-  const outstandingFormatted = formatCurrencyValue(outstandingTotal);
+  const outstandingFormatted = formatCurrencyValue(outstandingBalance);
   const timeframeToggleLabels = useMemo(
     () => ({
       month: t("daily_focus.stats.toggle.month_short"),

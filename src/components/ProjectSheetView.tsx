@@ -1019,7 +1019,7 @@ export function LegacyProjectSheetView({
         <Sheet open={open} onOpenChange={handleDialogOpenChange}>
           <SheetContent
             side={isMobile ? "bottom" : "right"}
-            className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none' : isMobile ? 'h-[100vh] max-w-none w-full' : 'sm:max-w-6xl lg:max-w-7xl h-[100vh]'} overflow-hidden p-0`}
+            className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none' : isMobile ? 'h-[100vh] max-w-none w-full' : 'sm:max-w-7xl lg:max-w-[1400px] h-[100vh]'} overflow-hidden p-0`}
           >
             <div className="flex h-full flex-col bg-muted/40">
               <div

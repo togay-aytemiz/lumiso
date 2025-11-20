@@ -83,6 +83,7 @@ export interface ButtonProps
   VariantProps<typeof buttonVariants> {
   asChild?: boolean
   colorScheme?: keyof typeof buttonColorSchemes
+  touchTarget?: "default" | "compact"
 }
 
 type ButtonComponent = React.ForwardRefExoticComponent<
@@ -93,7 +94,7 @@ type ButtonComponent = React.ForwardRefExoticComponent<
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { className, variant, size, colorScheme, asChild = false, ...props },
+    { className, variant, size, colorScheme, asChild = false, touchTarget, ...props },
     ref
   ) => {
     const Comp = asChild ? Slot : "button"
@@ -104,6 +105,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     // Add compact touch target for text-style buttons to prevent 44px min-height on mobile
     const isTextVariant = variant === "textAccent" || variant === "textGhost"
+    const shouldUseCompactTouchTarget =
+      touchTarget === "compact" || (!touchTarget && (isTextVariant || variant === "link"))
 
     return (
       <Comp
@@ -115,7 +118,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           className
         )}
         ref={ref}
-        {...(isTextVariant ? { "data-touch-target": "compact" } : {})}
+        data-touch-target={shouldUseCompactTouchTarget ? "compact" : undefined}
         {...props}
       />
     )

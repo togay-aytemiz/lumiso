@@ -92,7 +92,47 @@
     "completed_reminder": "Completed",
     "reminder_tooltip_complete": "Click to mark this reminder as done",
     "reminder_tooltip_reopen": "Click to bring this reminder back to today",
-    "reminder_action_complete": "Click to complete"
+    "reminder_action_complete": "Click to complete",
+    "stats": {
+      "sections": {
+        "leads": "Leads",
+        "schedule": "Schedule",
+        "finance": "Finance",
+        "action": "Action"
+      },
+      "labels": {
+        "this_month": "This Month",
+        "year_to_date": "Year to Date",
+        "overdue": "Overdue"
+      },
+      "titles": {
+        "active_leads": "Active Leads",
+        "total_leads": "Total Leads",
+        "scheduled_sessions": "Scheduled Sessions",
+        "sessions_created": "Sessions Created",
+        "total_revenue": "Total Revenue",
+        "outstanding": "Outstanding"
+      },
+      "chips": {
+        "upcoming_sessions": "{{count}} total upcoming",
+        "needs_action": "Needs Action"
+      },
+      "trend": {
+        "month": "{{value}} vs last month",
+        "year": "{{value}} vs last year"
+      },
+      "toggle": {
+        "month_short": "M",
+        "year_short": "Y",
+        "month_aria": "Switch to month-to-date",
+        "year_aria": "Switch to year-to-date"
+      },
+      "tooltips": {
+        "active_leads": "Count of leads whose lifecycle is still active for the selected timeframe.",
+        "sessions": "Total planned sessions compared with the previous period.",
+        "revenue": "Sum of paid payments in the selected window."
+      }
+    }
   },
   "buttons": {
     "add_lead": "Add Lead",

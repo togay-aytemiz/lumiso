@@ -93,7 +93,47 @@
     "completed_reminder": "Tamamlandı",
     "reminder_tooltip_complete": "Bu hatırlatmayı tamamlandı olarak işaretle",
     "reminder_tooltip_reopen": "Hatırlatmayı bugüne geri getir",
-    "reminder_action_complete": "Tamamlandı olarak işaretle"
+    "reminder_action_complete": "Tamamlandı olarak işaretle",
+    "stats": {
+      "sections": {
+        "leads": "Kişiler",
+        "schedule": "Plan",
+        "finance": "Finans",
+        "action": "Aksiyon"
+      },
+      "labels": {
+        "this_month": "Bu Ay",
+        "year_to_date": "Yıl Başından Beri",
+        "overdue": "Gecikmiş"
+      },
+      "titles": {
+        "active_leads": "Aktif Kişiler",
+        "total_leads": "Toplam Kişi",
+        "scheduled_sessions": "Planlanan Seanslar",
+        "sessions_created": "Oluşturulan Seanslar",
+        "total_revenue": "Toplam Tahsilat",
+        "outstanding": "Bekleyen Ödemeler"
+      },
+      "chips": {
+        "upcoming_sessions": "{{count}} yaklaşan seans",
+        "needs_action": "Aksiyon Gerekli"
+      },
+      "trend": {
+        "month": "{{value}} geçtiğimiz aya göre",
+        "year": "{{value}} geçen yıla göre"
+      },
+      "toggle": {
+        "month_short": "A",
+        "year_short": "Y",
+        "month_aria": "Ay başından bugüne göster",
+        "year_aria": "Yıl başından bugüne göster"
+      },
+      "tooltips": {
+        "active_leads": "Seçili zaman diliminde hâlâ aktif yaşam döngüsünde olan kişi sayısı.",
+        "sessions": "Geçmiş dönemle kıyaslanan planlanmış seans toplamı.",
+        "revenue": "Seçili aralıkta tahsil edilen ödemelerin toplamı."
+      }
+    }
   },
   "buttons": {
     "add_lead": "Kişi Ekle",

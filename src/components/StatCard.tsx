@@ -88,7 +88,7 @@ const StatCard: React.FC<StatCardProps> = ({
   };
 
   return (
-    <div className="flex items-start gap-4 rounded-[24px] border border-white/75 bg-gradient-to-b from-white via-white to-[#F3F6FB] p-5 shadow-[0_20px_45px_rgba(20,35,70,0.12)]">
+    <div className="flex items-start gap-4 rounded-[24px] border border-white/75 bg-gradient-to-b from-white via-white to-[#F3F6FB] p-5 shadow-[0_20px_45px_rgba(20,35,70,0.12)] transition-all hover:-translate-y-0.5 hover:shadow-[0_26px_60px_rgba(20,35,70,0.16)]">
       <div
         className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${iconTheme.bg} text-white shadow-lg ${iconTheme.glow}`}
       >

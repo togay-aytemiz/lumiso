@@ -28,11 +28,26 @@ type LeadWithStatusRow = LeadRow & {
   lead_statuses?: {
     is_system_final: boolean | null;
     name: string | null;
+    lifecycle?: string | null;
   } | null;
 };
 type AppointmentRow = Database["public"]["Tables"]["appointments"]["Row"];
 type SessionRow = Database["public"]["Tables"]["sessions"]["Row"];
+type SessionSummaryRow = Pick<SessionRow, "id" | "session_date" | "status" | "created_at">;
 type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
+type PaymentRow = Database["public"]["Tables"]["payments"]["Row"];
+type PaymentSummaryRow = Pick<
+  PaymentRow,
+  | "id"
+  | "amount"
+  | "status"
+  | "entry_kind"
+  | "log_timestamp"
+  | "date_paid"
+  | "created_at"
+  | "scheduled_initial_amount"
+  | "scheduled_remaining_amount"
+>;
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
@@ -49,6 +64,9 @@ const CrmDashboard = () => {
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [upcomingSessions, setUpcomingSessions] = useState<SessionWithLead[]>([]);
   const [activities, setActivities] = useState<ActivityRow[]>([]);
+  const [sessionStats, setSessionStats] = useState<SessionSummaryRow[]>([]);
+  const [paymentStats, setPaymentStats] = useState<PaymentSummaryRow[]>([]);
+  const [scheduledPayments, setScheduledPayments] = useState<PaymentSummaryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
   const [projectWizardOpen, setProjectWizardOpen] = useState(false);
@@ -162,7 +180,7 @@ const CrmDashboard = () => {
       // Fetch leads
       const { data: leadsData, error: leadsError } = await supabase
         .from<LeadRow>('leads')
-        .select('*, lead_statuses ( is_system_final, name )')
+        .select('*, lead_statuses ( is_system_final, name, lifecycle )')
         .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
@@ -221,9 +239,52 @@ const CrmDashboard = () => {
         setUpcomingSessions([]);
       }
 
+      const now = new Date();
+      const statsStartDate = new Date(now.getFullYear() - 1, 0, 1);
+      const statsStartDateIso = statsStartDate.toISOString().split('T')[0];
+      const statsStartDateTime = statsStartDate.toISOString();
+
+      const { data: sessionStatsData, error: sessionStatsError } = await supabase
+        .from<SessionSummaryRow>('sessions')
+        .select('id, session_date, status, created_at')
+        .eq('organization_id', organizationId)
+        .gte('session_date', statsStartDateIso);
+
+      if (sessionStatsError) throw sessionStatsError;
+
+      let paymentStatsQuery = supabase
+        .from<PaymentSummaryRow>('payments')
+        .select('id, amount, status, entry_kind, log_timestamp, date_paid, created_at, scheduled_initial_amount, scheduled_remaining_amount')
+        .eq('organization_id', organizationId)
+        .eq('entry_kind', 'recorded');
+
+      const quotedTimestamp = `"${statsStartDateTime}"`;
+      paymentStatsQuery = paymentStatsQuery.or(
+        [
+          `log_timestamp.gte.${quotedTimestamp}`,
+          `date_paid.gte.${quotedTimestamp}`,
+          `created_at.gte.${quotedTimestamp}`
+        ].join(',')
+      );
+
+      const { data: paymentStatsData, error: paymentStatsError } = await paymentStatsQuery;
+
+      if (paymentStatsError) throw paymentStatsError;
+
+      const { data: scheduledPaymentsData, error: scheduledPaymentsError } = await supabase
+        .from<PaymentSummaryRow>('payments')
+        .select('id, amount, scheduled_remaining_amount, scheduled_initial_amount, status, entry_kind, created_at')
+        .eq('organization_id', organizationId)
+        .eq('entry_kind', 'scheduled');
+
+      if (scheduledPaymentsError) throw scheduledPaymentsError;
+
       setLeads((leadsData as LeadWithStatusRow[]) ?? []);
       setAppointments(appointmentsData ?? []);
       setActivities(activitiesData ?? []);
+      setSessionStats(sessionStatsData ?? []);
+      setPaymentStats(paymentStatsData ?? []);
+      setScheduledPayments(scheduledPaymentsData ?? []);
     } catch (error) {
       toast({
         title: "Error",
@@ -323,6 +384,9 @@ const CrmDashboard = () => {
           loading={loading}
           userName={userName}
           inactiveLeadCount={inactiveLeadCount}
+          sessionStats={sessionStats}
+          paymentStats={paymentStats}
+          scheduledPayments={scheduledPayments}
         />
         {loading ? (
           <DashboardLoadingSkeleton />

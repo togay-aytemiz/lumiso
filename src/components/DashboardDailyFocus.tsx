@@ -5,6 +5,7 @@ import {
   Activity,
   AlertCircle,
   AlertTriangle,
+  ArrowRight,
   Calendar as CalendarIcon,
   CheckCircle2,
   CheckSquare,
@@ -15,6 +16,7 @@ import {
   MapPin,
   Sparkles,
   StickyNote,
+  TrendingUp,
   Users
 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
@@ -36,22 +38,47 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "@/components/ui/tooltip";
+import StatCard from "@/components/StatCard";
 import { useProfile } from "@/hooks/useProfile";
 import { formatInTimeZone } from "date-fns-tz";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
+type LeadWithLifecycleRow = LeadRow & {
+  lead_statuses?: {
+    lifecycle?: string | null;
+    is_system_final?: boolean | null;
+    name?: string | null;
+  } | null;
+};
 type ActivityRow = Database["public"]["Tables"]["activities"]["Row"];
 type SessionRow = Database["public"]["Tables"]["sessions"]["Row"];
+type SessionSummaryRow = Pick<SessionRow, "id" | "session_date" | "status" | "created_at">;
+type PaymentRow = Database["public"]["Tables"]["payments"]["Row"];
+type PaymentSummaryRow = Pick<
+  PaymentRow,
+  | "id"
+  | "amount"
+  | "status"
+  | "entry_kind"
+  | "log_timestamp"
+  | "date_paid"
+  | "created_at"
+  | "scheduled_initial_amount"
+  | "scheduled_remaining_amount"
+>;
 
 export type SessionWithLead = SessionRow & { lead_name?: string };
 
 interface DashboardDailyFocusProps {
-  leads: LeadRow[];
+  leads: LeadWithLifecycleRow[];
   sessions: SessionWithLead[];
   activities: ActivityRow[];
   loading: boolean;
   userName?: string | null;
   inactiveLeadCount: number;
+  sessionStats: SessionSummaryRow[];
+  paymentStats: PaymentSummaryRow[];
+  scheduledPayments: PaymentSummaryRow[];
 }
 
 type TimelineItem =
@@ -159,6 +186,8 @@ const getSessionTheme = (session: SessionWithLead) => {
   };
 };
 
+const PLANNED_SESSION_STATUSES = new Set(["planned", "scheduled", "upcoming", "confirmed"]);
+
 const AuroraBackground = () => (
   <div className="absolute inset-0 bg-slate-900">
     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,#4f46e5_0%,transparent_60%)] opacity-40 mix-blend-screen" />
@@ -182,7 +211,10 @@ const DashboardDailyFocus = ({
   activities,
   loading,
   userName,
-  inactiveLeadCount
+  inactiveLeadCount,
+  sessionStats,
+  paymentStats,
+  scheduledPayments
 }: DashboardDailyFocusProps) => {
   const { timezone, timeFormat } = useOrganizationTimezone();
   const [now, setNow] = useState(new Date());
@@ -194,6 +226,9 @@ const DashboardDailyFocus = ({
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
   const [completingReminderId, setCompletingReminderId] = useState<string | null>(null);
   const [projectLookup, setProjectLookup] = useState<Record<string, string>>({});
+  const [leadTimeframe, setLeadTimeframe] = useState<"mtd" | "ytd">("mtd");
+  const [sessionTimeframe, setSessionTimeframe] = useState<"mtd" | "ytd">("mtd");
+  const [revenueTimeframe, setRevenueTimeframe] = useState<"mtd" | "ytd">("mtd");
   const getLeadInitials = useCallback(
     (name?: string | null) => computeLeadInitials(name, "??", 2),
     []
@@ -226,7 +261,304 @@ const DashboardDailyFocus = ({
       returnObjects: true
     }) as string[] | string;
     return Array.isArray(phrases) ? phrases : [];
-  }, [i18n.language, t]);
+  }, [t]);
+
+  const dateBoundaries = useMemo(() => {
+    const reference = now;
+    const startOfMonth = new Date(reference.getFullYear(), reference.getMonth(), 1);
+    const startOfPrevMonth = new Date(reference.getFullYear(), reference.getMonth() - 1, 1);
+    const endOfPrevMonth = new Date(reference.getFullYear(), reference.getMonth(), 0, 23, 59, 59, 999);
+    const startOfYear = new Date(reference.getFullYear(), 0, 1);
+    const startOfLastYear = new Date(reference.getFullYear() - 1, 0, 1);
+    const endOfLastYear = new Date(reference.getFullYear() - 1, 11, 31, 23, 59, 59, 999);
+    return {
+      startOfMonth,
+      startOfPrevMonth,
+      endOfPrevMonth,
+      startOfYear,
+      startOfLastYear,
+      endOfLastYear,
+      now: reference
+    };
+  }, [now]);
+
+  const sessionBoundaryIsos = useMemo(() => {
+    const isoFor = (date: Date) => formatInTimeZone(date, timezone, "yyyy-MM-dd");
+    const reference = now;
+    const startOfMonth = new Date(reference.getFullYear(), reference.getMonth(), 1);
+    const startOfPrevMonth = new Date(reference.getFullYear(), reference.getMonth() - 1, 1);
+    const endOfPrevMonth = new Date(reference.getFullYear(), reference.getMonth(), 0);
+    const startOfYear = new Date(reference.getFullYear(), 0, 1);
+    const startOfLastYear = new Date(reference.getFullYear() - 1, 0, 1);
+    const endOfLastYear = new Date(reference.getFullYear() - 1, 11, 31);
+    return {
+      monthStartIso: isoFor(startOfMonth),
+      previousMonthStartIso: isoFor(startOfPrevMonth),
+      previousMonthEndIso: isoFor(endOfPrevMonth),
+      yearStartIso: isoFor(startOfYear),
+      lastYearStartIso: isoFor(startOfLastYear),
+      lastYearEndIso: isoFor(endOfLastYear)
+    };
+  }, [now, timezone]);
+
+  const isDateWithinRange = (value: string | null | undefined, start: Date, end: Date) => {
+    if (!value) return false;
+    const timestamp = new Date(value).getTime();
+    if (Number.isNaN(timestamp)) return false;
+    return timestamp >= start.getTime() && timestamp <= end.getTime();
+  };
+
+  const deriveLeadLifecycle = (lead: LeadWithLifecycleRow) => {
+    const lifecycle = lead.lead_statuses?.lifecycle?.toLowerCase().trim();
+    if (lifecycle) {
+      return lifecycle;
+    }
+    if (lead.lead_statuses?.is_system_final) {
+      return "closed";
+    }
+    const normalizedStatus = (lead.status || "").toLowerCase();
+    if (
+      ["lost", "completed", "archived", "inactive", "closed", "cancelled"].some((keyword) =>
+        normalizedStatus.includes(keyword)
+      )
+    ) {
+      return "closed";
+    }
+    return "active";
+  };
+
+  const isLeadActive = useCallback(
+    (lead: LeadWithLifecycleRow) => deriveLeadLifecycle(lead) === "active",
+    []
+  );
+
+  const isPlannedSession = (status?: string | null) =>
+    PLANNED_SESSION_STATUSES.has((status || "").toLowerCase());
+
+  const getPaymentTimestamp = (payment: PaymentSummaryRow): number | null => {
+    const rawDate = payment.log_timestamp || payment.date_paid || payment.created_at;
+    if (!rawDate) return null;
+    const parsed = new Date(rawDate).getTime();
+    return Number.isNaN(parsed) ? null : parsed;
+  };
+
+  const isPaidPayment = (payment: PaymentSummaryRow) => {
+    const normalizedStatus = (payment.status || "").toLowerCase();
+    return normalizedStatus === "paid" && Number(payment.amount ?? 0) > 0;
+  };
+
+  const isTimestampWithin = (timestamp: number | null, start: Date, end: Date) => {
+    if (timestamp == null) return false;
+    return timestamp >= start.getTime() && timestamp <= end.getTime();
+  };
+
+  const getTrendDirection = (value: number): "up" | "down" | "flat" => {
+    if (value > 0) return "up";
+    if (value < 0) return "down";
+    return "flat";
+  };
+
+  const getTrendTone = (value: number): "positive" | "negative" | "neutral" => {
+    if (value > 0) return "positive";
+    if (value < 0) return "negative";
+    return "neutral";
+  };
+
+  const formatInteger = (value: number) =>
+    value.toLocaleString(locale, { maximumFractionDigits: 0 });
+
+  const formatSignedInteger = (value: number) => {
+    if (value === 0) return "0";
+    const formatted = formatInteger(Math.abs(value));
+    return value > 0 ? `+${formatted}` : `-${formatted}`;
+  };
+
+  const currencyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat("tr-TR", {
+        style: "currency",
+        currency: "TRY",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }),
+    []
+  );
+
+  const formatCurrencyValue = (value: number) => currencyFormatter.format(Math.round(value));
+
+  const formatSignedCurrency = (value: number) => {
+    if (value === 0) return currencyFormatter.format(0);
+    const formatted = currencyFormatter.format(Math.round(Math.abs(value)));
+    return value > 0 ? `+${formatted}` : `-${formatted}`;
+  };
+
+  const leadMetrics = useMemo(() => {
+    const {
+      startOfMonth,
+      startOfPrevMonth,
+      endOfPrevMonth,
+      startOfYear,
+      startOfLastYear,
+      endOfLastYear,
+      now: current
+    } = dateBoundaries;
+
+    let activeLeadsThisMonth = 0;
+    let activeLeadsPreviousMonth = 0;
+    let totalLeadsYtd = 0;
+    let totalLeadsLastYear = 0;
+
+    leads.forEach((lead) => {
+      if (isLeadActive(lead)) {
+        if (isDateWithinRange(lead.created_at, startOfMonth, current)) {
+          activeLeadsThisMonth += 1;
+        } else if (isDateWithinRange(lead.created_at, startOfPrevMonth, endOfPrevMonth)) {
+          activeLeadsPreviousMonth += 1;
+        }
+      }
+
+      if (isDateWithinRange(lead.created_at, startOfYear, current)) {
+        totalLeadsYtd += 1;
+      } else if (isDateWithinRange(lead.created_at, startOfLastYear, endOfLastYear)) {
+        totalLeadsLastYear += 1;
+      }
+    });
+
+    return {
+      activeLeadsThisMonth,
+      activeLeadsPreviousMonth,
+      totalLeadsYtd,
+      totalLeadsLastYear
+    };
+  }, [leads, dateBoundaries, isLeadActive]);
+
+  const sessionMetrics = useMemo(() => {
+    const {
+      monthStartIso,
+      previousMonthStartIso,
+      previousMonthEndIso,
+      yearStartIso,
+      lastYearStartIso,
+      lastYearEndIso
+    } = sessionBoundaryIsos;
+
+    let plannedThisMonth = 0;
+    let plannedPreviousMonth = 0;
+    let createdYtd = 0;
+    let createdLastYear = 0;
+    let upcomingPlanned = 0;
+
+    sessionStats.forEach((session) => {
+      const date = session.session_date;
+      if (date >= yearStartIso && date <= todayIso) {
+        createdYtd += 1;
+      } else if (date >= lastYearStartIso && date <= lastYearEndIso) {
+        createdLastYear += 1;
+      }
+
+      if (isPlannedSession(session.status)) {
+        if (date >= monthStartIso && date <= todayIso) {
+          plannedThisMonth += 1;
+        } else if (date >= previousMonthStartIso && date <= previousMonthEndIso) {
+          plannedPreviousMonth += 1;
+        }
+
+        if (date >= todayIso) {
+          upcomingPlanned += 1;
+        }
+      }
+    });
+
+    return {
+      plannedThisMonth,
+      plannedPreviousMonth,
+      createdYtd,
+      createdLastYear,
+      upcomingPlanned
+    };
+  }, [sessionStats, sessionBoundaryIsos, todayIso]);
+
+  const revenueMetrics = useMemo(() => {
+    const {
+      startOfMonth,
+      startOfPrevMonth,
+      endOfPrevMonth,
+      startOfYear,
+      startOfLastYear,
+      endOfLastYear,
+      now: current
+    } = dateBoundaries;
+
+    const sumInRange = (start: Date, end: Date) =>
+      paymentStats.reduce((sum, payment) => {
+        if (!isPaidPayment(payment)) {
+          return sum;
+        }
+        const timestamp = getPaymentTimestamp(payment);
+        if (!isTimestampWithin(timestamp, start, end)) {
+          return sum;
+        }
+        return sum + Number(payment.amount ?? 0);
+      }, 0);
+
+    return {
+      paidThisMonth: sumInRange(startOfMonth, current),
+      paidPreviousMonth: sumInRange(startOfPrevMonth, endOfPrevMonth),
+      paidYtd: sumInRange(startOfYear, current),
+      paidLastYear: sumInRange(startOfLastYear, endOfLastYear)
+    };
+  }, [paymentStats, dateBoundaries]);
+
+  const outstandingTotal = useMemo(() => {
+    return scheduledPayments.reduce((sum, payment) => {
+      if ((payment.entry_kind || "recorded") !== "scheduled") {
+        return sum;
+      }
+      const remaining =
+        Number(payment.scheduled_remaining_amount ?? payment.scheduled_initial_amount ?? payment.amount ?? 0) || 0;
+      return sum + Math.max(0, remaining);
+    }, 0);
+  }, [scheduledPayments]);
+
+  const leadValue =
+    leadTimeframe === "mtd" ? leadMetrics.activeLeadsThisMonth : leadMetrics.totalLeadsYtd;
+  const leadComparison =
+    leadTimeframe === "mtd"
+      ? leadMetrics.activeLeadsThisMonth - leadMetrics.activeLeadsPreviousMonth
+      : leadMetrics.totalLeadsYtd - leadMetrics.totalLeadsLastYear;
+
+  const sessionValue =
+    sessionTimeframe === "mtd" ? sessionMetrics.plannedThisMonth : sessionMetrics.createdYtd;
+  const sessionComparison =
+    sessionTimeframe === "mtd"
+      ? sessionMetrics.plannedThisMonth - sessionMetrics.plannedPreviousMonth
+      : sessionMetrics.createdYtd - sessionMetrics.createdLastYear;
+
+  const revenueValue =
+    revenueTimeframe === "mtd" ? revenueMetrics.paidThisMonth : revenueMetrics.paidYtd;
+  const revenueComparison =
+    revenueTimeframe === "mtd"
+      ? revenueMetrics.paidThisMonth - revenueMetrics.paidPreviousMonth
+      : revenueMetrics.paidYtd - revenueMetrics.paidLastYear;
+
+  const outstandingFormatted = formatCurrencyValue(outstandingTotal);
+  const timeframeToggleLabels = useMemo(
+    () => ({
+      month: t("daily_focus.stats.toggle.month_short"),
+      year: t("daily_focus.stats.toggle.year_short"),
+      monthAria: t("daily_focus.stats.toggle.month_aria"),
+      yearAria: t("daily_focus.stats.toggle.year_aria")
+    }),
+    [t]
+  );
+
+  const getTimeframeLabel = (timeframe: "mtd" | "ytd") =>
+    timeframe === "mtd"
+      ? t("daily_focus.stats.labels.this_month")
+      : t("daily_focus.stats.labels.year_to_date");
+
+  const getSectionLabel = (section: "leads" | "schedule" | "finance" | "action") =>
+    t(`daily_focus.stats.sections.${section}`);
 
   const sortedSessions = useMemo(
     () =>
@@ -1114,6 +1446,97 @@ const DashboardDailyFocus = ({
         </div>
       </div>
     </section>
+
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 mb-8">
+        <StatCard
+          context={`${getSectionLabel("leads")} · ${getTimeframeLabel(leadTimeframe)}`}
+          label={
+            leadTimeframe === "mtd"
+              ? t("daily_focus.stats.titles.active_leads")
+              : t("daily_focus.stats.titles.total_leads")
+          }
+          value={formatInteger(leadValue)}
+          icon={Users}
+          color="blue"
+          chip={{
+            tone: getTrendTone(leadComparison) === "negative" ? "negative" : "positive",
+            icon: <TrendingUp className="h-3 w-3" />,
+            label: t(
+              leadTimeframe === "mtd"
+                ? "daily_focus.stats.trend.month"
+                : "daily_focus.stats.trend.year",
+              { value: formatSignedInteger(leadComparison) }
+            )
+          }}
+          timeframe={leadTimeframe === "mtd" ? "month" : "year"}
+          onTimeframeChange={(next) => setLeadTimeframe(next === "month" ? "mtd" : "ytd")}
+          info={t("daily_focus.stats.tooltips.active_leads", {
+            defaultValue: "Active lead count based on lifecycle status."
+          })}
+          timeframeLabels={timeframeToggleLabels}
+        />
+
+        <StatCard
+          context={`${getSectionLabel("schedule")} · ${getTimeframeLabel(sessionTimeframe)}`}
+          label={
+            sessionTimeframe === "mtd"
+              ? t("daily_focus.stats.titles.scheduled_sessions")
+              : t("daily_focus.stats.titles.sessions_created")
+          }
+          value={formatInteger(sessionValue)}
+          icon={CalendarIcon}
+          color="amber"
+          chip={{
+            tone: "neutral",
+            label: t("daily_focus.stats.chips.upcoming_sessions", {
+              count: formatInteger(sessionMetrics.upcomingPlanned)
+            })
+          }}
+          timeframe={sessionTimeframe === "mtd" ? "month" : "year"}
+          onTimeframeChange={(next) => setSessionTimeframe(next === "month" ? "mtd" : "ytd")}
+          info={t("daily_focus.stats.tooltips.sessions", {
+            defaultValue: "Planned sessions compared with historical period."
+          })}
+          timeframeLabels={timeframeToggleLabels}
+        />
+
+        <StatCard
+          context={`${getSectionLabel("finance")} · ${getTimeframeLabel(revenueTimeframe)}`}
+          label={t("daily_focus.stats.titles.total_revenue")}
+          value={formatCurrencyValue(revenueValue)}
+          icon={DollarSign}
+          color="violet"
+          chip={{
+            tone: getTrendTone(revenueComparison),
+            icon: <TrendingUp className="h-3 w-3" />,
+            label: t(
+              revenueTimeframe === "mtd"
+                ? "daily_focus.stats.trend.month"
+                : "daily_focus.stats.trend.year",
+              { value: formatSignedCurrency(revenueComparison) }
+            )
+          }}
+          timeframe={revenueTimeframe === "mtd" ? "month" : "year"}
+          onTimeframeChange={(next) => setRevenueTimeframe(next === "month" ? "mtd" : "ytd")}
+          info={t("daily_focus.stats.tooltips.revenue", {
+            defaultValue: "Total paid amounts for the selected window."
+          })}
+          timeframeLabels={timeframeToggleLabels}
+        />
+
+        <StatCard
+          context={`${getSectionLabel("action")} · ${t("daily_focus.stats.labels.overdue")}`}
+          label={t("daily_focus.stats.titles.outstanding")}
+          value={outstandingFormatted}
+          icon={AlertTriangle}
+          color="rose"
+          chip={{
+            tone: "negative",
+            icon: <ArrowRight className="h-3 w-3" />,
+            label: t("daily_focus.stats.chips.needs_action")
+          }}
+        />
+      </section>
       {selectedSessionId && (
         <SessionSheetView
           sessionId={selectedSessionId}

@@ -114,7 +114,7 @@ const AppRoutes = () => {
 const App = () => (
   <ErrorBoundary>
     <TooltipProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AppRoutes />
       </BrowserRouter>
     </TooltipProvider>

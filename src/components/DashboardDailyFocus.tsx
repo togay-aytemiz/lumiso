@@ -10,7 +10,7 @@ import {
   CheckCircle2,
   CheckSquare,
   ChevronRight,
-  DollarSign,
+  Coins,
   FolderOpen,
   Loader2,
   MapPin,
@@ -392,13 +392,20 @@ const DashboardDailyFocus = ({
     return symbol || currencyFormatter.resolvedOptions().currency || "TRY";
   }, [currencyFormatter]);
 
-  const formatCurrencyValue = (value: number) => currencyFormatter.format(Math.round(value));
+  const formatCurrencyValue = (value: number) => formatInteger(Math.round(value));
 
   const formatSignedCurrency = (value: number) => {
     if (value === 0) return currencyFormatter.format(0);
     const formatted = currencyFormatter.format(Math.round(Math.abs(value)));
     return value > 0 ? `+${formatted}` : `-${formatted}`;
   };
+
+  const renderCurrencyValue = (value: number) => (
+    <span className="inline-flex items-baseline gap-1">
+      <span className="text-xl font-semibold text-slate-500">{currencySymbol}</span>
+      <span>{formatCurrencyValue(value)}</span>
+    </span>
+  );
 
   const leadMetrics = useMemo(() => {
     const {
@@ -538,7 +545,6 @@ const DashboardDailyFocus = ({
       ? revenueMetrics.paidThisMonth - revenueMetrics.paidPreviousMonth
       : revenueMetrics.paidYtd - revenueMetrics.paidLastYear;
 
-  const outstandingFormatted = formatCurrencyValue(outstandingBalance);
   const timeframeToggleLabels = useMemo(
     () => ({
       month: t("daily_focus.stats.toggle.month_short"),
@@ -1003,20 +1009,20 @@ const DashboardDailyFocus = ({
                   </span>
                 </div>
                 {nextSession.lead_name && (
-                  <div className="flex items-center gap-3 text-sm text-slate-200 mb-2">
+                  <div className="flex flex-col gap-2 text-sm text-slate-200 mb-2 sm:flex-row sm:items-center sm:gap-3">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <div className="w-6 h-6 rounded-full border border-white/20 bg-white/10 text-white/80 text-[11px] font-semibold flex items-center justify-center">
                         {getLeadInitials(nextSession.lead_name)}
                       </div>
                       <span className="truncate flex-1 min-w-0">{nextSession.lead_name}</span>
                     </div>
-                    <span className="block w-px h-5 bg-white/25" />
+                    <span className="hidden sm:block w-px h-5 bg-white/25" />
                     <TooltipProvider delayDuration={0}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="flex items-center gap-1 text-slate-200 min-w-0 cursor-default">
+                          <span className="flex items-center gap-1 text-slate-200 min-w-0 cursor-default w-full sm:w-auto">
                             <MapPin className="w-3.5 h-3.5 text-slate-200" />
-                            <span className="truncate max-w-[140px]">
+                            <span className="truncate w-full sm:w-auto sm:max-w-[140px]">
                               {nextSession.location || locationFallbackLabel}
                             </span>
                           </span>
@@ -1222,20 +1228,22 @@ const DashboardDailyFocus = ({
                                 {displayStatus}
                               </span>
                             </div>
-                            <div className="flex items-center gap-3 text-xs text-slate-500">
+                            <div className="flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:gap-3">
                               <div className="flex items-center gap-1.5 text-slate-700 font-medium">
                                 <div className="w-4 h-4 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[9px] font-bold text-slate-500">
                                   {getLeadInitials(displayLeadName)}
                                 </div>
                                 <span className="truncate">{displayLeadName}</span>
                               </div>
-                              <div className="w-px h-3 bg-slate-200" />
+                              <div className="hidden sm:block w-px h-3 bg-slate-200" />
                               <TooltipProvider delayDuration={0}>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-1.5 text-slate-500 cursor-default min-w-0">
+                                    <div className="flex items-center gap-1.5 text-slate-500 cursor-default min-w-0 w-full sm:w-auto">
                                       <MapPin className={`w-3.5 h-3.5 ${theme.icon}`} />
-                                      <span className="truncate max-w-[140px]">{displayLocation}</span>
+                                      <span className="truncate w-full sm:w-auto sm:max-w-[140px]">
+                                        {displayLocation}
+                                      </span>
                                     </div>
                                   </TooltipTrigger>
                                   <TooltipContent side="top" className="text-xs">
@@ -1323,7 +1331,7 @@ const DashboardDailyFocus = ({
                       )}
                       {reminder.type === "payment" && (
                         <span className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
-                          <DollarSign className="w-2.5 h-2.5" />
+                          <Coins className="w-2.5 h-2.5" />
                           {paymentTagLabel}
                         </span>
                       )}
@@ -1467,9 +1475,13 @@ const DashboardDailyFocus = ({
           }}
           timeframe={leadTimeframe === "mtd" ? "month" : "year"}
           onTimeframeChange={(next) => setLeadTimeframe(next === "month" ? "mtd" : "ytd")}
-          info={t("daily_focus.stats.tooltips.active_leads", {
-            defaultValue: "Active lead count based on lifecycle status."
-          })}
+          info={{
+            content: t(
+              leadTimeframe === "mtd"
+                ? "daily_focus.stats.tooltips.active_leads.month"
+                : "daily_focus.stats.tooltips.active_leads.year"
+            )
+          }}
           timeframeLabels={timeframeToggleLabels}
         />
 
@@ -1491,22 +1503,21 @@ const DashboardDailyFocus = ({
           }}
           timeframe={sessionTimeframe === "mtd" ? "month" : "year"}
           onTimeframeChange={(next) => setSessionTimeframe(next === "month" ? "mtd" : "ytd")}
-          info={t("daily_focus.stats.tooltips.sessions", {
-            defaultValue: "Planned sessions compared with historical period."
-          })}
+          info={{
+            content: t(
+              sessionTimeframe === "mtd"
+                ? "daily_focus.stats.tooltips.sessions.month"
+                : "daily_focus.stats.tooltips.sessions.year"
+            )
+          }}
           timeframeLabels={timeframeToggleLabels}
         />
 
         <StatCard
           context={`${getSectionLabel("finance")} · ${getTimeframeLabel(revenueTimeframe)}`}
-          label={
-            <span className="flex items-baseline gap-1 leading-tight">
-              {t("daily_focus.stats.titles.total_revenue")}
-              <span className="text-[12px] font-medium text-slate-400">({currencySymbol})</span>
-            </span>
-          }
-          value={formatCurrencyValue(revenueValue)}
-          icon={DollarSign}
+          label={t("daily_focus.stats.titles.total_revenue")}
+          value={renderCurrencyValue(revenueValue)}
+          icon={Coins}
           color="violet"
           chip={{
             tone: getTrendTone(revenueComparison),
@@ -1520,27 +1531,29 @@ const DashboardDailyFocus = ({
           }}
           timeframe={revenueTimeframe === "mtd" ? "month" : "year"}
           onTimeframeChange={(next) => setRevenueTimeframe(next === "month" ? "mtd" : "ytd")}
-          info={t("daily_focus.stats.tooltips.revenue", {
-            defaultValue: "Total paid amounts for the selected window."
-          })}
+          info={{
+            content: t(
+              revenueTimeframe === "mtd"
+                ? "daily_focus.stats.tooltips.revenue.month"
+                : "daily_focus.stats.tooltips.revenue.year"
+            )
+          }}
           timeframeLabels={timeframeToggleLabels}
         />
 
         <StatCard
           context={`${getSectionLabel("action")} · ${t("daily_focus.stats.labels.overdue")}`}
-          label={
-            <span className="flex items-baseline gap-1 leading-tight">
-              {t("daily_focus.stats.titles.outstanding")}
-              <span className="text-[12px] font-medium text-slate-400">({currencySymbol})</span>
-            </span>
-          }
-          value={outstandingFormatted}
+          label={t("daily_focus.stats.titles.outstanding")}
+          value={renderCurrencyValue(outstandingBalance)}
           icon={AlertTriangle}
           color="rose"
           chip={{
             tone: "negative",
             icon: <ArrowRight className="h-3 w-3" />,
             label: t("daily_focus.stats.chips.needs_action")
+          }}
+          info={{
+            content: t("daily_focus.stats.tooltips.outstanding")
           }}
         />
       </section>

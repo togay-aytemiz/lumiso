@@ -118,8 +118,8 @@
         "needs_action": "Needs Action"
       },
       "trend": {
-        "month": "{{value}} vs last month",
-        "year": "{{value}} vs last year"
+        "month": "{{value}}",
+        "year": "{{value}}"
       },
       "toggle": {
         "month_short": "M",
@@ -128,9 +128,19 @@
         "year_aria": "Switch to year-to-date"
       },
       "tooltips": {
-        "active_leads": "Count of leads whose lifecycle is still active for the selected timeframe.",
-        "sessions": "Total planned sessions compared with the previous period.",
-        "revenue": "Sum of paid payments in the selected window."
+        "active_leads": {
+          "month": "Counts leads with an active lifecycle created since the start of the month.",
+          "year": "Counts leads with an active lifecycle created since the start of the year."
+        },
+        "sessions": {
+          "month": "Planned sessions scheduled to happen this month. The upcoming chip counts every planned session dated today or later—no comparison.",
+          "year": "Sessions created since January 1. The upcoming chip still counts all planned sessions scheduled for today or later."
+        },
+        "revenue": {
+          "month": "Total collected this month versus last month, rounded to the nearest lira.",
+          "year": "Total collected since January 1 compared with the same period last year."
+        },
+        "outstanding": "Sum of overdue payments that still require action."
       }
     }
   },

@@ -119,8 +119,8 @@
         "needs_action": "Aksiyon Gerekli"
       },
       "trend": {
-        "month": "{{value}} geçtiğimiz aya göre",
-        "year": "{{value}} geçen yıla göre"
+        "month": "{{value}}",
+        "year": "{{value}}"
       },
       "toggle": {
         "month_short": "A",
@@ -129,9 +129,19 @@
         "year_aria": "Yıl başından bugüne göster"
       },
       "tooltips": {
-        "active_leads": "Seçili zaman diliminde hâlâ aktif yaşam döngüsünde olan kişi sayısı.",
-        "sessions": "Geçmiş dönemle kıyaslanan planlanmış seans toplamı.",
-        "revenue": "Seçili aralıkta tahsil edilen ödemelerin toplamı."
+        "active_leads": {
+          "month": "Ay başından beri oluşturulan ve hâlâ aktif olan kişiler.",
+          "year": "Yıl başından beri oluşturulan ve hâlâ aktif olan kişiler."
+        },
+        "sessions": {
+          "month": "Bu ay gerçekleşecek planlı seansların toplamı. Yaklaşan rozetinde bugün veya sonrasında planlanan tüm seanslar gösterilir; herhangi bir kıyas yoktur.",
+          "year": "Yıl başından beri oluşturulan seansların toplamı. Yaklaşan rozetinde yine bugün ve sonrasına planlanan tüm seanslar gösterilir."
+        },
+        "revenue": {
+          "month": "Bu ay tahsil edilen toplam tutar, geçen ayla kıyaslanır.",
+          "year": "Yıl başından beri tahsil edilen toplam tutar, geçen yılın aynı dönemiyle kıyaslanır."
+        },
+        "outstanding": "Gecikmiş ve hâlâ tahsil edilmemiş ödemelerin toplamı."
       }
     }
   },

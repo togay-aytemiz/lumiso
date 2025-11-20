@@ -2,6 +2,12 @@ import React from "react";
 import type { LucideIcon } from "lucide-react";
 import { HelpCircle } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 type Timeframe = "month" | "year";
@@ -13,13 +19,18 @@ interface StatCardChip {
   tone?: ChipTone;
 }
 
+interface StatCardInfo {
+  content: React.ReactNode;
+  ariaLabel?: string;
+}
+
 interface StatCardProps {
   context: string;
   label: React.ReactNode;
-  value: string;
+  value: React.ReactNode;
   icon: LucideIcon;
   color?: "indigo" | "amber" | "violet" | "rose" | "blue";
-  info?: string;
+  info?: StatCardInfo;
   chip?: StatCardChip;
   timeframe?: Timeframe;
   onTimeframeChange?: (timeframe: Timeframe) => void;
@@ -67,6 +78,7 @@ const StatCard: React.FC<StatCardProps> = ({
     monthAria: "Show month view",
     yearAria: "Show year view"
   };
+  const infoAriaLabel = info?.ariaLabel ?? "Show metric details";
 
   const renderToggleButton = (key: Timeframe, display: string) => {
     const isActive = timeframe === key;
@@ -96,7 +108,7 @@ const StatCard: React.FC<StatCardProps> = ({
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="mb-0.5 flex items-center justify-between gap-3">
+        <div className="mb-0.5 flex min-h-[26px] items-end justify-between gap-3">
           <span className="text-[11px] font-bold uppercase text-slate-400">
             {context}
           </span>
@@ -108,7 +120,7 @@ const StatCard: React.FC<StatCardProps> = ({
                 if (!next) return;
                 onTimeframeChange(next as Timeframe);
               }}
-              className="inline-flex rounded-full bg-slate-100 p-0.5 text-slate-500 shadow-inner"
+              className="inline-flex self-center rounded-full bg-slate-100 p-0.5 text-slate-500 shadow-inner"
             >
               <ToggleGroupItem
                 value="month"
@@ -139,22 +151,37 @@ const StatCard: React.FC<StatCardProps> = ({
         <div className="mb-1 flex items-center gap-1.5">
           <h3 className="text-[15px] font-medium text-slate-800">{label}</h3>
           {info && (
-            <HelpCircle
-              className="h-3.5 w-3.5 text-slate-300"
-              aria-label={info}
-              title={info}
-            />
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex h-5 w-5 items-center justify-center rounded-full text-slate-500 transition-colors hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                    aria-label={infoAriaLabel}
+                  >
+                    <HelpCircle className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="top"
+                  align="start"
+                  className="max-w-xs text-sm font-medium leading-snug text-slate-900"
+                >
+                  {info.content}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
         </div>
 
-        <div className="flex flex-wrap items-start gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-[34px] font-black leading-none tracking-tight text-slate-900">
             {value}
           </span>
           {chip && (
             <span
               className={cn(
-                "inline-flex max-w-[220px] flex-wrap items-start gap-1 rounded-full px-3 py-1 text-left text-xs font-semibold leading-tight whitespace-normal",
+                "inline-flex max-w-[220px] flex-wrap items-center gap-1 rounded-full px-3 py-1 text-left text-xs font-semibold leading-tight whitespace-normal",
                 CHIP_TONES[chip.tone ?? "neutral"]
               )}
             >

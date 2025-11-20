@@ -13,6 +13,7 @@ interface Session {
   session_time: string;
   status: string;
   notes?: string;
+  location?: string | null;
   lead_id: string;
   project_id?: string | null;
   duration_minutes?: number | null;
@@ -35,6 +36,7 @@ interface CalendarWeekProps {
   activities: Activity[];
   showSessions: boolean;
   showReminders: boolean;
+  maxHeight?: string | number;
   leadsMap: Record<string, { id: string; name: string }>;
   projectsMap: Record<string, { id: string; name: string; lead_id: string }>;
   isMobile: boolean;
@@ -61,6 +63,7 @@ interface PositionedLayout<T> {
   endMinutes: number;
   columnIndex: number;
   columnCount: number;
+  isAllDay?: boolean;
 }
 
 function assignColumnLayout<T>(items: PositionedLayout<T>[]) {
@@ -105,6 +108,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   activities,
   showSessions,
   showReminders,
+  maxHeight,
   leadsMap,
   projectsMap,
   isMobile,
@@ -152,6 +156,10 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   }, [weekDays, getEventsForDate, timeSlots, getSlotIndex]);
   const eventSlotCount = eventsByDayAndSlot.size;
   const currentDateTimestamp = currentDate.getTime();
+  const containerMaxHeight = useMemo(() => {
+    if (typeof maxHeight === 'number') return `${maxHeight}px`;
+    return maxHeight ?? '60vh';
+  }, [maxHeight]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || isMobile) return;
@@ -379,9 +387,10 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
 
       dayEvents.activities.forEach(activity => {
         const startMinutes = parseTimeToMinutes(activity.reminder_time);
-        if (startMinutes == null) return;
+        const isAllDay = startMinutes == null;
+        const effectiveStartMinutes = isAllDay ? rangeStartMinutes : startMinutes;
 
-        const clampedStart = Math.min(Math.max(startMinutes, rangeStartMinutes), rangeEndMinutes);
+        const clampedStart = Math.min(Math.max(effectiveStartMinutes, rangeStartMinutes), rangeEndMinutes);
         const clampedEnd = Math.min(clampedStart + 30, rangeEndMinutes);
 
         if (clampedEnd <= rangeStartMinutes || clampedStart >= rangeEndMinutes) {
@@ -398,12 +407,17 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
           startMinutes: clampedStart,
           endMinutes: clampedEnd,
           columnIndex: 0,
-          columnCount: 1
+          columnCount: 1,
+          isAllDay
         });
       });
 
-      assignColumnLayout(sessionLayouts);
-      assignColumnLayout(activityLayouts);
+      const unifiedLayouts: Array<PositionedLayout<Session> | PositionedLayout<Activity>> = [
+        ...sessionLayouts,
+        ...activityLayouts
+      ];
+
+      assignColumnLayout(unifiedLayouts);
 
       acc.set(dayKey, { sessions: sessionLayouts, activities: activityLayouts });
       return acc;
@@ -429,7 +443,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
           ))}
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto">
+        <div className="overflow-y-auto" style={{ maxHeight: containerMaxHeight }}>
           {Array.from({ length: 24 }).map((_, r) => (
             <div
               key={r}
@@ -616,7 +630,11 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
         })}
       </div>
 
-      <div ref={scrollContainerRef} className="max-h-[70vh] overflow-y-auto relative">
+      <div
+        ref={scrollContainerRef}
+        className="overflow-y-auto relative"
+        style={{ maxHeight: containerMaxHeight }}
+      >
         <div ref={gridRef} className="relative">
           {timeSlots.map((slot, slotIndex) => {
             const isHour = slot.minute === 0;
@@ -689,6 +707,8 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                         const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
                         const startLabel = formatOrgTime(minutesToTimeString(startMinutes));
                         const endLabel = formatOrgTime(minutesToTimeString(endMinutes));
+                        const dateLabel = format(day, 'PPP', { locale: dateFnsLocale });
+                        const timeLabel = `${startLabel} – ${endLabel}`;
                         const safeColumnCount = columnCount > 0 ? columnCount : 1;
                         const widthPercent = 100 / safeColumnCount;
                         const leftPercent = widthPercent * columnIndex;
@@ -697,46 +717,79 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                         const insetValue = horizontalInset.toFixed(3);
                         const leftValue = `calc(${leftPercent.toFixed(3)}% + ${insetValue}px)`;
                         const widthValue = `calc(${widthPercent.toFixed(3)}% - ${(horizontalInset * 2).toFixed(3)}px)`;
-                        const tooltipDetails = [
-                          projectName || t('calendar.labels.session'),
-                          leadName,
-                          `${startLabel} – ${endLabel}`
-                        ].filter(Boolean);
+                        const sessionTitle =
+                          session.session_name ||
+                          session.status ||
+                          projectName ||
+                          t('calendar.labels.session');
+                        const tooltipDetails = [sessionTitle, leadName, timeLabel].filter(Boolean);
                         const ariaLabel = tooltipDetails.join(' • ');
 
                         return (
-                          <button
-                            type="button"
-                            key={session.id}
-                            className="absolute z-20 pointer-events-auto overflow-hidden rounded-xl border border-emerald-300/80 bg-emerald-50 py-2 pl-3 pr-2 text-left text-[11px] text-emerald-900 shadow-[0_16px_28px_rgba(15,118,110,0.08)] transition-all hover:border-emerald-400 hover:bg-emerald-100/90 hover:shadow-[0_20px_34px_rgba(15,118,110,0.15)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
-                            style={{ top, height, left: leftValue, width: widthValue }}
-                            onClick={() => onSessionClick(session)}
-                            aria-label={ariaLabel}
-                          >
-                            <span
-                              aria-hidden="true"
-                              className="pointer-events-none absolute bottom-1 left-0 top-1 w-[3px] rounded-full bg-emerald-400 shadow-[0_0_0_1px_rgba(16,185,129,0.35)]"
-                            />
-                            <div className="space-y-1 leading-snug">
-                              <p className="font-medium line-clamp-3">
-                                {projectName || t('calendar.labels.session')}
+                          <Tooltip key={session.id}>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                className="absolute z-20 pointer-events-auto overflow-hidden rounded-xl border border-emerald-300/80 bg-emerald-50 py-2 pl-3 pr-2 text-left text-[11px] text-emerald-900 shadow-[0_16px_28px_rgba(15,118,110,0.08)] transition-all hover:border-emerald-400 hover:bg-emerald-100/90 hover:shadow-[0_20px_34px_rgba(15,118,110,0.15)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
+                                style={{ top, height, left: leftValue, width: widthValue }}
+                                onClick={() => onSessionClick(session)}
+                                aria-label={ariaLabel}
+                              >
+                                <span
+                                  aria-hidden="true"
+                                  className="pointer-events-none absolute bottom-1 left-0 top-1 w-[3px] rounded-full bg-emerald-400 shadow-[0_0_0_1px_rgba(16,185,129,0.35)]"
+                                />
+                                <div className="space-y-1 leading-snug">
+                                  <p className="font-medium line-clamp-3">
+                                    {projectName || t('calendar.labels.session')}
+                                  </p>
+                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                                    {leadName}
+                                  </p>
+                                  <p className="text-[10px] font-medium text-emerald-600">
+                                    {startLabel} – {endLabel}
+                                  </p>
+                                </div>
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs space-y-1 text-sm">
+                              <p className="font-semibold text-foreground">
+                                {sessionTitle}
                               </p>
-                              <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
-                                {leadName}
+                              <p className="text-foreground">
+                                {t('calendar.labels.lead')}: {leadName}
                               </p>
-                              <p className="text-[10px] font-medium text-emerald-600">
-                                {startLabel} – {endLabel}
+                              {projectName ? (
+                                <p className="text-foreground">
+                                  {t('calendar.labels.project')}: {projectName}
+                                </p>
+                              ) : null}
+                              {session.location ? (
+                                <p className="text-foreground">
+                                  {t('calendar.labels.location', { defaultValue: 'Location' })}: {session.location}
+                                </p>
+                              ) : null}
+                              <p className="text-foreground">
+                                {dateLabel} • {timeLabel}
                               </p>
-                            </div>
-                          </button>
+                              {session.notes ? <div className="h-px bg-slate-200 my-2" /> : null}
+                              {session.notes ? (
+                                <p className="text-foreground">{session.notes}</p>
+                              ) : null}
+                            </TooltipContent>
+                          </Tooltip>
                         );
                       })}
 
                     {showReminders &&
-                      layoutActivities.map(({ entity: activity, top, height, startMinutes, columnCount, columnIndex }) => {
+                      layoutActivities.map(({ entity: activity, top, height, startMinutes, columnCount, columnIndex, isAllDay }) => {
                         const leadName = leadsMap[activity.lead_id]?.name || t('calendar.labels.lead');
                         const projectName = activity.project_id ? projectsMap[activity.project_id]?.name : undefined;
-                        const startLabel = formatOrgTime(minutesToTimeString(startMinutes));
+                        const dateLabel = format(day, 'PPP', { locale: dateFnsLocale });
+                        const startLabel = isAllDay
+                          ? t('calendar.labels.allDay')
+                          : formatOrgTime(minutesToTimeString(startMinutes));
+                        const timeLabel = isAllDay ? t('calendar.labels.allDay') : startLabel;
                         const safeColumnCount = columnCount > 0 ? columnCount : 1;
                         const widthPercent = 100 / safeColumnCount;
                         const leftPercent = widthPercent * columnIndex;
@@ -745,7 +798,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                         const insetValue = horizontalInset.toFixed(3);
                         const leftValue = `calc(${leftPercent.toFixed(3)}% + ${insetValue}px)`;
                         const widthValue = `calc(${widthPercent.toFixed(3)}% - ${(horizontalInset * 2).toFixed(3)}px)`;
-                        const ariaLabel = [activity.content, projectName || leadName, startLabel].filter(Boolean).join(' • ');
+                        const ariaLabel = [activity.content, projectName || leadName, timeLabel].filter(Boolean).join(' • ');
 
                         return (
                           <Tooltip key={activity.id}>
@@ -775,15 +828,18 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                                 </div>
                               </button>
                             </TooltipTrigger>
-                            <TooltipContent className="max-w-xs space-y-1 text-[11px]">
-                              <p className="font-medium text-foreground">{activity.content}</p>
-                              <p className="text-muted-foreground">
-                                {projectName
-                                  ? `${t('calendar.labels.project')}: ${projectName}`
-                                  : `${t('calendar.labels.lead')}: ${leadName}`}
+                            <TooltipContent className="max-w-xs space-y-1 text-sm">
+                              <p className="font-semibold text-foreground">{activity.content}</p>
+                              <p className="text-foreground">
+                                {t('calendar.labels.lead')}: {leadName}
                               </p>
-                              <p className="text-muted-foreground">
-                                {t('calendar.labels.time')}: {activity.reminder_time ? startLabel : t('calendar.labels.allDay')}
+                              {projectName ? (
+                                <p className="text-foreground">
+                                  {t('calendar.labels.project')}: {projectName}
+                                </p>
+                              ) : null}
+                              <p className="text-foreground">
+                                {dateLabel} • {timeLabel}
                               </p>
                             </TooltipContent>
                           </Tooltip>
@@ -829,6 +885,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
     p.showSessions === n.showSessions &&
     p.showReminders === n.showReminders &&
     p.isMobile === n.isMobile &&
+    p.maxHeight === n.maxHeight &&
     JSON.stringify(p.sessions) === JSON.stringify(n.sessions) &&
     JSON.stringify(p.activities) === JSON.stringify(n.activities)
   );

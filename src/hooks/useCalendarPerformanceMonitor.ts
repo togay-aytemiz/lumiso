@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { performanceMonitor } from '@/utils/performance';
 
 interface PerformanceMetrics {
@@ -47,42 +47,42 @@ export function useCalendarPerformanceMonitor() {
   metricsRef.current = metrics;
 
   // Start timing for calendar render
-  const startRenderTiming = () => {
+  const startRenderTiming = useCallback(() => {
     performanceMonitor.startTiming('calendar-render');
-  };
+  }, []);
 
   // End timing for calendar render
-  const endRenderTiming = () => {
+  const endRenderTiming = useCallback(() => {
     const renderTime = performanceMonitor.endTiming('calendar-render');
     
     setMetrics(prev => ({
       ...prev,
       renderTime
     }));
-  };
+  }, []);
 
   // Start timing for data queries
-  const startQueryTiming = () => {
+  const startQueryTiming = useCallback(() => {
     performanceMonitor.startTiming('calendar-query');
-  };
+  }, []);
 
   // End timing for data queries
-  const endQueryTiming = () => {
+  const endQueryTiming = useCallback(() => {
     const queryTime = performanceMonitor.endTiming('calendar-query');
     
     setMetrics(prev => ({
       ...prev,
       queryTime
     }));
-  };
+  }, []);
 
   // Start timing for event processing
-  const startEventProcessing = () => {
+  const startEventProcessing = useCallback(() => {
     performanceMonitor.startTiming('calendar-event-processing');
-  };
+  }, []);
 
   // End timing for event processing
-  const endEventProcessing = (eventCount: number) => {
+  const endEventProcessing = useCallback((eventCount: number) => {
     const eventProcessingTime = performanceMonitor.endTiming('calendar-event-processing');
     
     setMetrics(prev => ({
@@ -90,10 +90,10 @@ export function useCalendarPerformanceMonitor() {
       eventProcessingTime,
       totalEvents: eventCount
     }));
-  };
+  }, []);
 
   // Update memory usage
-  const updateMemoryUsage = () => {
+  const updateMemoryUsage = useCallback(() => {
     // Browser-compatible memory usage check
     const memoryUsage =
       typeof performance !== 'undefined' && hasPerformanceMemory(performance)
@@ -108,7 +108,7 @@ export function useCalendarPerformanceMonitor() {
       ...prev,
       memoryUsage
     }));
-  };
+  }, []);
 
   // Performance warnings
   useEffect(() => {
@@ -143,7 +143,7 @@ export function useCalendarPerformanceMonitor() {
       const interval = setInterval(updateMemoryUsage, 5000);
       return () => clearInterval(interval);
     }
-  }, []);
+  }, [updateMemoryUsage]);
 
   // Performance summary
   const getPerformanceSummary = () => {

@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { Trans } from "react-i18next";
+import { format } from "date-fns";
 import {
   Activity,
   AlertCircle,
   AlertTriangle,
   ArrowRight,
   Calendar as CalendarIcon,
+  ChevronLeft,
   CheckCircle2,
   ChevronRight,
   Circle,
@@ -20,12 +22,19 @@ import {
   Users
 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
-import { formatTime, getUserLocale } from "@/lib/utils";
+import { formatTime, getEndOfWeek, getStartOfWeek, getUserLocale } from "@/lib/utils";
 import { useDashboardTranslation } from "@/hooks/useTypedTranslation";
 import { ADD_ACTION_EVENTS, type AddActionType, type AddActionEventDetail } from "@/constants/addActionEvents";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import SessionSheetView from "@/components/SessionSheetView";
 import { computeLeadInitials } from "@/components/leadInitialsUtils";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,9 +48,13 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "@/components/ui/tooltip";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import StatCard from "@/components/StatCard";
 import { useProfile } from "@/hooks/useProfile";
 import { formatInTimeZone } from "date-fns-tz";
+import { CalendarWeek } from "@/components/calendar/CalendarWeek";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
 type LeadWithLifecycleRow = LeadRow & {
@@ -75,6 +88,8 @@ interface DashboardDailyFocusProps {
   sessions: SessionWithLead[];
   activities: ActivityRow[];
   loading: boolean;
+  sessionWindowRange?: { startIso: string; endIso: string };
+  onWeekReferenceOutOfRange?: (anchor: Date) => void;
   userName?: string | null;
   inactiveLeadCount: number;
   sessionStats: SessionSummaryRow[];
@@ -222,6 +237,8 @@ const DashboardDailyFocus = ({
   sessions,
   activities,
   loading,
+  sessionWindowRange,
+  onWeekReferenceOutOfRange,
   userName,
   inactiveLeadCount,
   sessionStats,
@@ -231,6 +248,7 @@ const DashboardDailyFocus = ({
 }: DashboardDailyFocusProps) => {
   const { timezone, timeFormat } = useOrganizationTimezone();
   const [now, setNow] = useState(new Date());
+  const lastRangeRequestRef = useRef<string | null>(null);
   const { t, i18n } = useDashboardTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -242,6 +260,8 @@ const DashboardDailyFocus = ({
   const [leadTimeframe, setLeadTimeframe] = useState<"mtd" | "ytd">("mtd");
   const [sessionTimeframe, setSessionTimeframe] = useState<"mtd" | "ytd">("mtd");
   const [revenueTimeframe, setRevenueTimeframe] = useState<"mtd" | "ytd">("mtd");
+  const [revenueRangeMonths, setRevenueRangeMonths] = useState<6 | 12>(6);
+  const [weekReference, setWeekReference] = useState<Date>(() => new Date());
   const getLeadInitials = useCallback(
     (name?: string | null) => computeLeadInitials(name, "??", 2),
     []
@@ -418,6 +438,17 @@ const DashboardDailyFocus = ({
     </span>
   );
 
+  const compactCurrencyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: currencyFormatter.resolvedOptions().currency,
+        notation: "compact",
+        maximumFractionDigits: 1
+      }),
+    [currencyFormatter, locale]
+  );
+
   const leadMetrics = useMemo(() => {
     const {
       startOfMonth,
@@ -574,6 +605,63 @@ const DashboardDailyFocus = ({
   const getSectionLabel = (section: "leads" | "schedule" | "finance" | "action") =>
     t(`daily_focus.stats.sections.${section}`);
 
+  const revenueChartConfig = useMemo<ChartConfig>(
+    () => ({
+      revenue: {
+        label: t("daily_focus.revenue_chart.label", { defaultValue: "Revenue" }),
+        color: "#4f46e5"
+      }
+    }),
+    [t]
+  );
+
+  const revenueRangeLabel =
+    revenueRangeMonths === 6
+      ? t("daily_focus.revenue_chart.range_6m", { defaultValue: "Last 6 Months" })
+      : t("daily_focus.revenue_chart.range_12m", { defaultValue: "Last 12 Months" });
+
+  const revenueTrendData = useMemo(() => {
+    const monthsBack = revenueRangeMonths;
+    const lastDate = dateBoundaries.now;
+    const buckets = Array.from({ length: monthsBack }, (_, index) => {
+      const monthDate = new Date(
+        lastDate.getFullYear(),
+        lastDate.getMonth() - (monthsBack - 1 - index),
+        1
+      );
+      const key = formatInTimeZone(monthDate, timezone, "yyyy-MM");
+      return {
+        key,
+        monthDate,
+        label: formatInTimeZone(monthDate, timezone, "MMM"),
+        tooltipLabel: formatInTimeZone(monthDate, timezone, "LLLL yyyy"),
+        revenue: 0
+      };
+    });
+
+    const bucketLookup = new Map(buckets.map((bucket) => [bucket.key, bucket]));
+
+    paymentStats.forEach((payment) => {
+      if (!isPaidPayment(payment)) return;
+      const timestamp = getPaymentTimestamp(payment);
+      if (timestamp == null) return;
+
+      const paymentDate = new Date(timestamp);
+      const bucketKey = formatInTimeZone(paymentDate, timezone, "yyyy-MM");
+      const bucket = bucketLookup.get(bucketKey);
+      if (!bucket) return;
+
+      bucket.revenue += Number(payment.amount ?? 0);
+    });
+
+    return buckets;
+  }, [dateBoundaries.now, paymentStats, revenueRangeMonths, timezone]);
+
+  const revenueTrendMax = useMemo(
+    () => revenueTrendData.reduce((max, point) => Math.max(max, point.revenue), 0),
+    [revenueTrendData]
+  );
+
   const sortedSessions = useMemo(
     () =>
       [...sessions].sort((a, b) => {
@@ -640,6 +728,143 @@ const DashboardDailyFocus = ({
     }
   }, [locale, nextSession, t, todayIso, tomorrowIso]);
 
+  const weekBoundaries = useMemo(() => {
+    const start = getStartOfWeek(weekReference, locale);
+    const end = getEndOfWeek(weekReference, locale);
+    const startLabel = formatInTimeZone(start, timezone, "MMM d");
+    const endLabel = formatInTimeZone(end, timezone, "MMM d");
+    return {
+      start,
+      end,
+      label: `${startLabel} – ${endLabel}`
+    };
+  }, [locale, timezone, weekReference]);
+
+  const currentWeekBoundaries = useMemo(() => {
+    const start = getStartOfWeek(new Date(), locale);
+    const end = getEndOfWeek(new Date(), locale);
+    return { start, end };
+  }, [locale]);
+
+  const isViewingCurrentWeek = useMemo(() => {
+    return (
+      weekBoundaries.start.getTime() === currentWeekBoundaries.start.getTime() &&
+      weekBoundaries.end.getTime() === currentWeekBoundaries.end.getTime()
+    );
+  }, [currentWeekBoundaries.end, currentWeekBoundaries.start, weekBoundaries.end, weekBoundaries.start]);
+
+  const weekDays = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, index) => {
+        const date = new Date(weekBoundaries.start);
+        date.setDate(date.getDate() + index);
+        return date;
+      }),
+    [weekBoundaries.start]
+  );
+
+  useEffect(() => {
+    if (!sessionWindowRange || !onWeekReferenceOutOfRange) return;
+
+    const rangeStart = new Date(sessionWindowRange.startIso);
+    const rangeEnd = new Date(sessionWindowRange.endIso);
+    const { start, end } = weekBoundaries;
+
+    const outsideRange = start < rangeStart || end > rangeEnd;
+    const weekStartKey = start.toISOString().slice(0, 10);
+
+    if (outsideRange && lastRangeRequestRef.current !== weekStartKey) {
+      lastRangeRequestRef.current = weekStartKey;
+      onWeekReferenceOutOfRange(weekReference);
+    }
+  }, [onWeekReferenceOutOfRange, sessionWindowRange, weekBoundaries, weekReference]);
+
+  const weeklySessions = useMemo(() => {
+    const startMs = weekBoundaries.start.getTime();
+    const endMs = weekBoundaries.end.getTime();
+
+    return sessions.filter((session) => {
+      if (!session.session_date) return false;
+      const sessionDate = new Date(`${session.session_date}T00:00:00`).getTime();
+      return sessionDate >= startMs && sessionDate <= endMs;
+    });
+  }, [sessions, weekBoundaries.end, weekBoundaries.start]);
+
+  const weeklyActivities = useMemo(() => {
+    const startMs = weekBoundaries.start.getTime();
+    const endMs = weekBoundaries.end.getTime();
+
+    return activityList.filter((activity) => {
+      if (activity.completed) return false;
+      if (!activity.reminder_date) return false;
+      const reminderDate = new Date(activity.reminder_date);
+      const normalized = new Date(
+        reminderDate.getFullYear(),
+        reminderDate.getMonth(),
+        reminderDate.getDate()
+      ).getTime();
+      return normalized >= startMs && normalized <= endMs;
+    });
+  }, [activityList, weekBoundaries.end, weekBoundaries.start]);
+
+  const weeklyCounts = useMemo(() => {
+    const scheduledCount = weeklySessions.filter((session) => Boolean(session.session_time)).length;
+    const unscheduledCount = weeklySessions.length - scheduledCount;
+    return { scheduledCount, unscheduledCount };
+  }, [weeklySessions]);
+
+  const weeklyMetaLabel = useMemo(() => {
+    const sessionCount = weeklySessions.length;
+    const reminderCount = weeklyActivities.length;
+    const sessionLabel = sessionCount === 1 ? t("daily_focus.session_single", { defaultValue: "session" }) : t("daily_focus.session_plural", { defaultValue: "sessions" });
+    const reminderLabel = reminderCount === 1 ? t("daily_focus.reminder_single", { defaultValue: "reminder" }) : t("daily_focus.reminder_plural", { defaultValue: "reminders" });
+
+    if (sessionCount === 0 && reminderCount === 0) {
+      return t("daily_focus.weekly_schedule_empty_helper", { defaultValue: "No sessions or reminders this week." });
+    }
+    if (sessionCount > 0 && reminderCount === 0) {
+      return `${sessionCount} ${sessionLabel} · ${t("daily_focus.no_reminders", { defaultValue: "no reminders" })}`;
+    }
+    if (sessionCount === 0 && reminderCount > 0) {
+      return `${reminderCount} ${reminderLabel} · ${t("daily_focus.no_sessions", { defaultValue: "no sessions" })}`;
+    }
+    return `${sessionCount} ${sessionLabel} · ${reminderCount} ${reminderLabel}`;
+  }, [t, weeklyActivities.length, weeklySessions.length]);
+
+  const weeklyEventsByDate = useMemo(() => {
+    const map = new Map<string, { sessions: SessionWithLead[]; activities: ActivityRow[] }>();
+
+    weekDays.forEach((day) => {
+      map.set(format(day, "yyyy-MM-dd"), { sessions: [], activities: [] });
+    });
+
+    weeklySessions.forEach((session) => {
+      if (!session.session_date) return;
+      const key = session.session_date;
+      const bucket = map.get(key) ?? { sessions: [], activities: [] };
+      bucket.sessions.push(session);
+      map.set(key, bucket);
+    });
+
+    weeklyActivities.forEach((activity) => {
+      if (!activity.reminder_date) return;
+      const key = format(new Date(activity.reminder_date), "yyyy-MM-dd");
+      const bucket = map.get(key) ?? { sessions: [], activities: [] };
+      bucket.activities.push(activity);
+      map.set(key, bucket);
+    });
+
+    return map;
+  }, [weekDays, weeklyActivities, weeklySessions]);
+
+  const getWeeklyEventsForDate = useCallback(
+    (date: Date) => {
+      const key = format(date, "yyyy-MM-dd");
+      return weeklyEventsByDate.get(key) ?? { sessions: [], activities: [] };
+    },
+    [weeklyEventsByDate]
+  );
+
   const leadLookup = useMemo(() => {
     return leads.reduce<Record<string, string>>((acc, lead) => {
       acc[lead.id] = lead.name;
@@ -650,9 +875,10 @@ const DashboardDailyFocus = ({
   useEffect(() => {
     const projectIds = Array.from(
       new Set(
-        activityList
-          .map((activity) => activity.project_id)
-          .filter((id): id is string => Boolean(id))
+        [
+          ...activityList.map((activity) => activity.project_id),
+          ...weeklySessions.map((session) => session.project_id)
+        ].filter((id): id is string => Boolean(id))
       )
     );
     if (projectIds.length === 0) {
@@ -682,7 +908,7 @@ const DashboardDailyFocus = ({
     return () => {
       isMounted = false;
     };
-  }, [activityList]);
+  }, [activityList, weeklySessions]);
 
   const {
     viewingProject,
@@ -760,6 +986,33 @@ const DashboardDailyFocus = ({
   const reminderCompleteLabel = t("daily_focus.reminder_action_complete", {
     defaultValue: "Click to complete"
   });
+
+  const calendarLeadsMap = useMemo(
+    () =>
+      leads.reduce<Record<string, { id: string; name: string }>>((acc, lead) => {
+        if (!lead.id) return acc;
+        acc[lead.id] = { id: lead.id, name: lead.name || clientPlaceholder };
+        return acc;
+      }, {}),
+    [clientPlaceholder, leads]
+  );
+
+  const calendarProjectsMap = useMemo(() => {
+    const map: Record<string, { id: string; name: string; lead_id: string }> = {};
+    const registerProject = (projectId?: string | null, leadId?: string | null) => {
+      if (!projectId) return;
+      map[projectId] = {
+        id: projectId,
+        name: projectLookup[projectId] ?? projectPlaceholder,
+        lead_id: leadId ?? ""
+      };
+    };
+
+    weeklySessions.forEach((session) => registerProject(session.project_id, session.lead_id));
+    weeklyActivities.forEach((activity) => registerProject(activity.project_id, activity.lead_id));
+    return map;
+  }, [projectLookup, projectPlaceholder, weeklyActivities, weeklySessions]);
+
   const greetingName = userName ?? profile?.full_name ?? null;
   const firstName = useMemo(() => {
     if (!greetingName) return null;
@@ -873,6 +1126,18 @@ const DashboardDailyFocus = ({
     navigate(`/reminders?${search.toString()}`);
   };
 
+  const handleWeekChange = (direction: -1 | 1) => {
+    setWeekReference((current) => {
+      const next = new Date(current);
+      next.setDate(next.getDate() + direction * 7);
+      return next;
+    });
+  };
+
+  const handleViewCalendar = () => {
+    navigate("/calendar");
+  };
+
   const handleOverdueClick = () => {
     goToReminders({ filter: "overdue" });
   };
@@ -966,6 +1231,8 @@ const DashboardDailyFocus = ({
   const handleNavigateToProject = (projectId: string) => {
     navigate(`/projects/${projectId}`);
   };
+
+  const weeklyHasSessions = weeklyCounts.scheduledCount + weeklyCounts.unscheduledCount > 0;
 
   if (loading) {
     return (
@@ -1159,7 +1426,7 @@ const DashboardDailyFocus = ({
               {t("daily_focus.schedule_heading")}
             </h2>
             <button
-              onClick={() => window.location.href = '/calendar'}
+              onClick={handleViewCalendar}
               className="text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline transition-colors"
             >
               {t("daily_focus.view_calendar", { defaultValue: "View Calendar" })}
@@ -1593,6 +1860,180 @@ const DashboardDailyFocus = ({
             content: t("daily_focus.stats.tooltips.outstanding")
           }}
         />
+      </section>
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-2 mb-10">
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader className="pb-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-3">
+                  <CardTitle className="text-lg font-semibold text-slate-900">
+                    {t("daily_focus.weekly_schedule_title", { defaultValue: "Weekly Schedule" })}
+                  </CardTitle>
+                  <button
+                    onClick={handleViewCalendar}
+                    className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 hover:underline transition-colors"
+                  >
+                    {t("daily_focus.view_calendar", { defaultValue: "See calendar" })}
+                  </button>
+                </div>
+                <p className="text-sm text-slate-500">{weeklyMetaLabel}</p>
+              </div>
+              <div className="flex flex-col gap-2 items-end">
+                <div className="flex items-center gap-3">
+                  {!isViewingCurrentWeek && (
+                    <Button
+                      variant="surface"
+                      size="sm"
+                      className="border-slate-200 text-slate-700 hover:text-slate-900"
+                      onClick={() => setWeekReference(new Date())}
+                    >
+                      {t("daily_focus.weekly_schedule_today", { defaultValue: "Back to current week" })}
+                    </Button>
+                  )}
+                  <div className="inline-flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-full border border-slate-200 text-slate-600 hover:border-slate-300"
+                      onClick={() => handleWeekChange(-1)}
+                      aria-label={t("daily_focus.weekly_schedule_prev", { defaultValue: "Previous week" })}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-semibold text-slate-700">
+                      {weekBoundaries.label}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-full border border-slate-200 text-slate-600 hover:border-slate-300"
+                      onClick={() => handleWeekChange(1)}
+                      aria-label={t("daily_focus.weekly_schedule_next", { defaultValue: "Next week" })}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" />
+
+            {weeklyHasSessions ? (
+              <div className="mt-2">
+                <CalendarWeek
+                  currentDate={weekReference}
+                  sessions={weeklySessions}
+                  activities={weeklyActivities}
+                  showSessions
+                  showReminders
+                  maxHeight={380}
+                  leadsMap={calendarLeadsMap}
+                  projectsMap={calendarProjectsMap}
+                  isMobile={isMobile}
+                  getEventsForDate={getWeeklyEventsForDate}
+                  onSessionClick={(session) => handleSessionCardClick(session.id)}
+                  onActivityClick={(activity) => handleReminderLeadClick(activity.lead_id)}
+                  onDayClick={(date) => setWeekReference(date)}
+                />
+              </div>
+            ) : (
+              <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
+                {t("daily_focus.weekly_schedule_empty_helper", {
+                  defaultValue: "Add a session to see it appear on this weekly view."
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-200 shadow-sm flex flex-col">
+          <CardHeader className="pb-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <CardTitle className="text-lg font-semibold text-slate-900">
+                  {t("daily_focus.revenue_overview_title", { defaultValue: "Revenue Overview" })}
+                </CardTitle>
+                <button
+                  onClick={() => navigate("/payments")}
+                  className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 hover:underline transition-colors"
+                >
+                  {t("daily_focus.view_payments", { defaultValue: "See payments" })}
+                </button>
+              </div>
+              <Select
+                value={String(revenueRangeMonths)}
+                onValueChange={(value) => setRevenueRangeMonths((value === "12" ? 12 : 6))}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder={revenueRangeLabel} />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value="6">
+                    {t("daily_focus.revenue_chart.range_6m", { defaultValue: "Last 6 Months" })}
+                  </SelectItem>
+                  <SelectItem value="12">
+                    {t("daily_focus.revenue_chart.range_12m", { defaultValue: "Last 12 Months" })}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1">
+            <ChartContainer config={revenueChartConfig} className="h-full min-h-[420px] w-full">
+              <AreaChart
+                data={revenueTrendData}
+                margin={{ top: 10, right: 4, left: -10, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="var(--color-revenue)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis
+                  dataKey="label"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#64748b", fontSize: 12 }}
+                  tickMargin={8}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tickMargin={10}
+                  width={72}
+                  tickFormatter={(value) => compactCurrencyFormatter.format(Number(value))}
+                  domain={[
+                    0,
+                    (dataMax: number) =>
+                      Math.max(dataMax || 0, revenueTrendMax || 0, 1) * 1.1
+                  ]}
+                />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      labelKey="tooltipLabel"
+                      formatter={(value) => currencyFormatter.format(Number(value))}
+                    />
+                  }
+                />
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  name="revenue"
+                  stroke="var(--color-revenue)"
+                  strokeWidth={2}
+                  fill="url(#revenueGradient)"
+                  activeDot={{ r: 5 }}
+                />
+              </AreaChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
       </section>
       {
         selectedSessionId && (

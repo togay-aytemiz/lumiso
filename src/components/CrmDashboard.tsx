@@ -91,6 +91,7 @@ const CrmDashboard = () => {
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [upcomingSessions, setUpcomingSessions] = useState<SessionWithLead[]>([]);
   const [activities, setActivities] = useState<ActivityRow[]>([]);
+  const [sessionWindowRange, setSessionWindowRange] = useState<{ startIso: string; endIso: string } | null>(null);
   const [sessionStats, setSessionStats] = useState<SessionSummaryRow[]>([]);
   const [paymentStats, setPaymentStats] = useState<PaymentSummaryRow[]>([]);
   const [scheduledPayments, setScheduledPayments] = useState<PaymentSummaryRow[]>([]);
@@ -207,7 +208,7 @@ const CrmDashboard = () => {
     };
   }, [activeOrganization?.owner_id, profile?.full_name, profile?.user_id]);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (anchorDate?: Date) => {
     if (!organizationId) {
       return;
     }
@@ -240,16 +241,24 @@ const CrmDashboard = () => {
 
       if (activitiesError) throw activitiesError;
 
-      // Fetch this week's sessions
-      const today = new Date();
-      const { start: startOfWeek, end: endOfWeek } = getWeekRange(today);
+      // Fetch sessions within a broader rolling window so dashboard week nav can move without empty data
+      const referenceDate = anchorDate ?? new Date();
+      const pastBufferDate = new Date(referenceDate);
+      pastBufferDate.setDate(pastBufferDate.getDate() - 84); // ~12 weeks back
+      const futureBufferDate = new Date(referenceDate);
+      futureBufferDate.setDate(futureBufferDate.getDate() + 84); // ~12 weeks forward
+
+      const { start: startOfWindow } = getWeekRange(pastBufferDate);
+      const { end: endOfWindow } = getWeekRange(futureBufferDate);
+      const startIso = startOfWindow.toISOString().split('T')[0];
+      const endIso = endOfWindow.toISOString().split('T')[0];
 
       const { data: sessionsData, error: sessionsError } = await supabase
         .from<SessionRow>('sessions')
         .select('*, session_types(duration_minutes)')
         .eq('organization_id', organizationId)
-        .gte('session_date', startOfWeek.toISOString().split('T')[0])
-        .lte('session_date', endOfWeek.toISOString().split('T')[0])
+        .gte('session_date', startIso)
+        .lte('session_date', endIso)
         .order('session_date', { ascending: true })
         .order('session_time', { ascending: true });
 
@@ -534,8 +543,9 @@ const CrmDashboard = () => {
       setActivities(activitiesData ?? []);
       setSessionStats(sessionStatsData ?? []);
       setPaymentStats(paymentStatsData ?? []);
-      setScheduledPayments(scheduledPaymentsData ?? []);
-      setOutstandingBalance(outstandingBalanceValue);
+        setScheduledPayments(scheduledPaymentsData ?? []);
+        setOutstandingBalance(outstandingBalanceValue);
+        setSessionWindowRange({ startIso, endIso });
     } catch (error) {
       toast({
         title: "Error",
@@ -633,6 +643,8 @@ const CrmDashboard = () => {
           sessions={upcomingSessions}
           activities={activities}
           loading={loading}
+          sessionWindowRange={sessionWindowRange || undefined}
+          onWeekReferenceOutOfRange={(anchor) => fetchData(anchor)}
           userName={userName}
           inactiveLeadCount={inactiveLeadCount}
           sessionStats={sessionStats}

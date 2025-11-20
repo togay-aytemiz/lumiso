@@ -1155,6 +1155,7 @@ const DashboardDailyFocus = ({
         <div className="relative z-10 px-6 py-6">
           {hasScheduleItems ? (
             <div className="relative">
+              <div className="absolute left-16 top-0 bottom-0 block sm:hidden w-px bg-gradient-to-b from-indigo-100 via-slate-200 to-transparent pointer-events-none" />
               <div className="absolute left-[5.75rem] top-0 bottom-0 hidden sm:block w-px bg-gradient-to-b from-indigo-100 via-slate-200 to-transparent pointer-events-none" />
               {timelineItems.map((item, index) => {
                 const isLast = index === timelineItems.length - 1;
@@ -1169,6 +1170,10 @@ const DashboardDailyFocus = ({
                         <div className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm shadow-rose-200">
                           {item.displayTime}
                         </div>
+                      </div>
+                      <div className="flex sm:hidden absolute left-16 -translate-x-1/2 z-20 items-center justify-center">
+                        <div className="absolute w-3 h-3 bg-rose-400 rounded-full animate-ping opacity-60" />
+                        <div className="relative w-2.5 h-2.5 bg-rose-600 rounded-full ring-2 ring-white shadow-sm" />
                       </div>
                       <div className="hidden sm:flex absolute left-[5.75rem] -translate-x-1/2 z-20 items-center justify-center">
                         <div className="absolute w-3 h-3 bg-rose-400 rounded-full animate-ping opacity-60" />
@@ -1205,6 +1210,12 @@ const DashboardDailyFocus = ({
                         </span>
                       </div>
 
+                      <div
+                        className="flex sm:hidden absolute left-16 -translate-x-1/2 z-10 items-center justify-center"
+                        style={{ top: "0.65rem" }}
+                      >
+                        <div className="w-3 h-3 rounded-full bg-indigo-600 shadow-[0_0_0_4px_rgba(199,210,254,0.5)]" />
+                      </div>
                       <div
                         className="hidden sm:flex absolute left-[5.75rem] -translate-x-1/2 z-10 items-center justify-center"
                         style={{ top: "0.65rem" }}
@@ -1308,7 +1319,7 @@ const DashboardDailyFocus = ({
                             event.stopPropagation();
                             handleReminderLeadClick(reminder.lead_id);
                           }}
-                          className="hidden sm:inline-flex items-center gap-1 text-xs text-slate-400 hover:text-indigo-600 underline decoration-dotted decoration-slate-400/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
+                          className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-indigo-600 underline decoration-dotted decoration-slate-400/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
                         >
                           <Users className="w-3 h-3" />
                           <span className="truncate max-w-[120px]">{reminder.leadName}</span>
@@ -1321,7 +1332,7 @@ const DashboardDailyFocus = ({
                             event.stopPropagation();
                             handleReminderProjectClick(reminder.project_id);
                           }}
-                          className="hidden sm:inline-flex items-center gap-1 text-xs text-slate-400 hover:text-indigo-600 underline decoration-dotted decoration-slate-400/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
+                          className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-indigo-600 underline decoration-dotted decoration-slate-400/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
                         >
                           <FolderOpen className="w-3 h-3" />
                           <span className="truncate max-w-[120px]">
@@ -1352,7 +1363,7 @@ const DashboardDailyFocus = ({
                                 handleToggleReminderCompletion(reminder.id, true);
                               }}
                               disabled={completingReminderId === reminder.id}
-                              className="flex items-center gap-2 text-xs font-semibold text-slate-400 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-50"
+                              className="flex items-center gap-2 text-xs font-semibold text-slate-400 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all disabled:opacity-50"
                             >
                               <span className="hidden sm:inline text-[10px] uppercase tracking-[0.25em]">
                                 {reminderCompleteLabel}
@@ -1381,6 +1392,12 @@ const DashboardDailyFocus = ({
                       <span className="text-xs font-medium text-slate-400 font-mono">{item.displayTime}</span>
                     </div>
 
+                    <div
+                      className="flex sm:hidden absolute left-16 -translate-x-1/2 -translate-y-1/2 z-10 items-center justify-center"
+                      style={{ top: "50%" }}
+                    >
+                      <div className="w-2 h-2 rounded-full bg-slate-300 ring-4 ring-white/60" />
+                    </div>
                     <div
                       className="hidden sm:flex absolute left-[5.75rem] -translate-x-1/2 -translate-y-1/2 z-10 items-center justify-center"
                       style={{ top: "50%" }}

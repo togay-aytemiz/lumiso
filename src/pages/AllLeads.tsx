@@ -38,6 +38,7 @@ import { KpiCard } from "@/components/ui/kpi-card";
 import { getKpiIconPreset } from "@/components/ui/kpi-presets";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { EmptyState } from "@/components/EmptyState";
 import {
   CONVERTED_STATUS_KEYWORDS,
   CLOSED_STATUS_KEYWORDS,
@@ -950,8 +951,34 @@ const AllLeadsNew = () => {
     : t("leads.noLeadsAllStatuses");
 
   const emptyState = (
-    <div className="py-8 text-center text-muted-foreground">
-      {emptyStateMessage}
+    <div className="py-10">
+      <EmptyState
+        icon={Users}
+        title={
+          hasAnyFilters
+            ? t("leads.emptyState.filteredTitle")
+            : t("leads.emptyState.title")
+        }
+        description={emptyStateMessage}
+        action={
+          <Button onClick={() => setAddLeadDialogOpen(true)}>
+            {t("leads.addLead")}
+          </Button>
+        }
+        helperAction={
+          hasAnyFilters ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 px-3"
+              onClick={handleToolbarReset}
+            >
+              {tCommon("buttons.clearAll")}
+            </Button>
+          ) : null
+        }
+      />
     </div>
   );
 

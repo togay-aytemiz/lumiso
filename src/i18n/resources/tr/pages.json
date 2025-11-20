@@ -145,6 +145,10 @@
     "description": "Tüm kişi ve müşterilerinizi yönetin, durumlarını takip edin",
     "filterByStatus": "Duruma göre filtrele:",
     "allStatuses": "Tüm Durumlar",
+    "emptyState": {
+      "title": "Tüm talepleri tek yerden yönetin",
+      "filteredTitle": "Bu filtrelere uyan kişi yok"
+    },
     "noLeadsAllStatuses": "Henüz kişi eklenmemiş. Başlamak için ilk kişinizi ekleyin!",
     "noLeadsWithStatus": "\"{{status}}\" durumunda kişi bulunamadı.",
     "noLeadsWithFilters": "Mevcut filtrelerinizle eşleşen kişi bulunmuyor.",
@@ -1237,6 +1241,12 @@
           "description": "Hatırlatıcılarını, yapılacaklarını ve hızlı notlarını projede sakla; farklı uygulamalarda kaybolmasın."
         }
       ]
+    },
+    "listEmptyState": {
+      "title": "İlk projeni başlat",
+      "description": "Seansları, ödemeleri ve müşteri notlarını tek yerde toplamak için bir proje oluştur.",
+      "archivedTitle": "Henüz arşivde proje yok",
+      "archivedDescription": "Arşivlediğin projeler referans için burada görünecek."
     },
     "deleteProject": "Projeyi Sil",
     "deleteProjectConfirm": "Bu işlem geri alınamaz. Bu, projeyi ve tüm ilgili verileri kalıcı olarak silecektir.",

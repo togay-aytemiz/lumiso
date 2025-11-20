@@ -1012,14 +1012,12 @@ export function useLeadsFilters({
       ),
       activeCount,
       onReset: activeCount > 0 ? handleResetFilters : undefined,
-      collapsedByDefault:
-        filterableFields.length + 1 > 4 ? activeCount === 0 : false,
+      collapsedByDefault: activeCount === 0,
     }),
     [
       activeCount,
       filterContent,
       handleResetFilters,
-      filterableFields.length,
       tCommon,
       tPages,
     ]

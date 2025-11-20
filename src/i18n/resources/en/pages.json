@@ -144,6 +144,10 @@
     "description": "Manage and track all your potential clients",
     "filterByStatus": "Filter by status:",
     "allStatuses": "All Statuses",
+    "emptyState": {
+      "title": "Track every inquiry from one place",
+      "filteredTitle": "No leads match these filters"
+    },
     "noLeadsAllStatuses": "No leads found. Add your first lead to get started!",
     "noLeadsWithStatus": "No leads found with status \"{{status}}\".",
     "noLeadsWithFilters": "No leads match your current filters.",
@@ -1233,6 +1237,12 @@
           "description": "Drop reminders, todos, and quick updates inside the project instead of spreading them across random apps."
         }
       ]
+    },
+    "listEmptyState": {
+      "title": "Start your first project",
+      "description": "Create a project to connect sessions, payments, and client notes in one place.",
+      "archivedTitle": "No archived projects yet",
+      "archivedDescription": "Projects you archive will appear here for reference."
     },
     "deleteProject": "Delete Project",
     "deleteProjectConfirm": "This action cannot be undone. This will permanently delete the project and all associated data.",

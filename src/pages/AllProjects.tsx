@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { LayoutGrid, List, Archive, Settings, FileDown, Loader2 } from "lucide-react";
+import { LayoutGrid, List, Archive, Settings, FileDown, Loader2, FolderPlus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
@@ -44,6 +44,7 @@ import { startTimer } from "@/lib/debug";
 import { promoteProjectToTop } from "@/lib/projects/sortOrder";
 import { useConnectivity } from "@/contexts/useConnectivity";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
+import { EmptyState } from "@/components/EmptyState";
 
 const VIEW_MODES = ["board", "list", "archived"] as const;
 type ViewMode = (typeof VIEW_MODES)[number];
@@ -88,11 +89,18 @@ const toNamedOptions = (items: unknown[]): NamedOption[] =>
 
 const AllProjects = () => {
   const [boardProjects, setBoardProjects] = useState<ProjectListItem[]>([]);
-  // Default to list to avoid initial board mount flicker
+  // Default to board during tutorial; otherwise respect URL or saved preference
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window !== 'undefined') {
-      const urlView = parseViewMode(new URLSearchParams(window.location.search).get('view'));
+      const searchParams = new URLSearchParams(window.location.search);
+      const tutorialParam = searchParams.get('tutorial');
+      if (tutorialParam?.includes('true')) {
+        return 'board';
+      }
+
+      const urlView = parseViewMode(searchParams.get('view'));
       if (urlView) return urlView;
+
       const stored = parseViewMode(localStorage.getItem('projects:viewMode'));
       if (stored) return stored;
     }
@@ -199,6 +207,13 @@ const AllProjects = () => {
       navigate('/projects?tutorial=true', { replace: true });
     }
   }, [shouldLockNavigation, currentStepInfo, showTutorial, navigate]);
+
+  useEffect(() => {
+    const tutorialParam = searchParams.get('tutorial');
+    if ((tutorialParam?.includes('true') || showTutorial) && viewMode !== 'board') {
+      setViewMode('board');
+    }
+  }, [searchParams, showTutorial, viewMode]);
 
   const handleTableSortChange = (next: AdvancedDataTableSortState) => {
     setSortState(next);
@@ -685,6 +700,27 @@ const formatCurrency = useCallback((amount: string | number | null) => {
       : undefined;
     return { text, chips: archivedSummaryChips };
   }, [archivedActiveCount, archivedProjects.length, archivedSummaryChips, archivedTotalCount, t]);
+
+  const listEmptyState = (
+    <EmptyState
+      icon={FolderPlus}
+      title={t('projects.listEmptyState.title')}
+      description={t('projects.listEmptyState.description')}
+      action={
+        <Button onClick={() => setProjectWizardOpen(true)}>
+          {t('projects.addProject')}
+        </Button>
+      }
+    />
+  );
+
+  const archivedEmptyState = (
+    <EmptyState
+      icon={Archive}
+      title={t('projects.listEmptyState.archivedTitle')}
+      description={t('projects.listEmptyState.archivedDescription')}
+    />
+  );
 
   const handleExportProjects = useCallback(
     async (mode: 'list' | 'archived') => {
@@ -1283,6 +1319,7 @@ const formatCurrency = useCallback((amount: string | number | null) => {
                 filters={listFiltersConfig}
                 actions={listExportActions}
                 summary={listHeaderSummary}
+                emptyState={listEmptyState}
                 onLoadMore={listHasMore ? handleListLoadMore : undefined}
                 hasMore={listHasMore}
                 isLoadingMore={listIsLoadingMore}
@@ -1302,6 +1339,7 @@ const formatCurrency = useCallback((amount: string | number | null) => {
                 filters={archivedFiltersConfig}
                 actions={archivedExportActions}
                 summary={archivedHeaderSummary}
+                emptyState={archivedEmptyState}
                 onLoadMore={archivedHasMore ? handleArchivedLoadMore : undefined}
                 hasMore={archivedHasMore}
                 isLoadingMore={archivedIsLoadingMore}

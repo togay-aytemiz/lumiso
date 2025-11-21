@@ -11,6 +11,7 @@ import { useDashboardTranslation } from "@/hooks/useTypedTranslation";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import type { Database } from "@/integrations/supabase/types";
 import DashboardDailyFocus, { type SessionWithLead } from "@/components/DashboardDailyFocus";
+import NewSessionDialog from "@/components/NewSessionDialog";
 import { ProjectCreationWizardSheet } from "@/features/project-creation";
 import { countInactiveLeads } from "@/lib/leadLifecycle";
 import { computePaymentSummaryMetrics } from "@/lib/payments/metrics";
@@ -595,6 +596,11 @@ const CrmDashboard = () => {
           setProjectWizardOpen(false);
           fetchData();
         }}
+      />
+      <NewSessionDialog
+        onSessionScheduled={() => fetchData()}
+        openEvent={ADD_ACTION_EVENTS.session}
+        showDefaultTrigger={false}
       />
     </div>
   );

@@ -78,6 +78,9 @@
     "overdue_items": "Geciken Öğeler",
     "inactive_leads": "Hareketsiz Kişiler",
     "due_today": "Bugün Yapılacaklar",
+    "no_overdue_items": "Gecikmiş görev yok",
+    "all_leads_active": "Tüm kişiler aktif",
+    "no_tasks_today": "Bugün görev yok",
     "schedule_heading": "Bugünün Planı",
     "weekly_schedule_title": "Haftalık Takvim",
     "revenue_overview_title": "Gelir Özeti",
@@ -87,6 +90,9 @@
     "weekly_schedule_prev": "Önceki hafta",
     "weekly_schedule_next": "Sonraki hafta",
     "schedule_summary": "{{sessions}} seans · {{reminders}} hatırlatma",
+    "no_active_tasks_clear": "Bugün programın boş.",
+    "no_active_tasks_caught_up": "Görevlerinde tamamen güncelsin.",
+    "no_leads_yet": "Henüz kişi yok",
     "session_single": "seans",
     "session_plural": "seans",
     "reminder_single": "hatırlatma",
@@ -94,6 +100,11 @@
     "no_reminders": "hatırlatma yok",
     "no_sessions": "seans yok",
     "weekly_schedule_empty_helper": "Bu hafta seans veya hatırlatma yok.",
+    "weekly_schedule_empty_title": "Bu hafta seans yok",
+    "weekly_schedule_empty_description": "Bu hafta programın boş. Plan yapmaya ne dersin?",
+    "weekly_schedule_empty_action": "Seans Planla",
+    "revenue_empty_title": "Bu aralıkta ödeme yok",
+    "revenue_empty_description": "Seçilen tarih aralığı için kayıtlı ödeme bulunmuyor.",
     "revenue_chart": {
       "label": "Gelir",
       "range_6m": "Son 6 Ay",
@@ -135,7 +146,8 @@
       },
       "chips": {
         "upcoming_sessions": "{{count}} yaklaşan seans",
-        "needs_action": "Aksiyon Gerekli"
+        "needs_action": "Aksiyon Gerekli",
+        "all_caught_up": "Her şey güncel"
       },
       "trend": {
         "month": "{{value}}",

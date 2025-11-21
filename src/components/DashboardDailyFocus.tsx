@@ -753,20 +753,11 @@ const DashboardDailyFocus = ({
   );
 
   const revenueGroupingLabels = useMemo(() => {
-    const day = toInitial(
-      tPages("payments.chart.grouping.day", { defaultValue: "Day" }),
-      "D"
-    );
-    const week = toInitial(
-      tPages("payments.chart.grouping.week", { defaultValue: "Week" }),
-      "W"
-    );
-    const month = toInitial(
-      tPages("payments.chart.grouping.month", { defaultValue: "Month" }),
-      "M"
-    );
+    const day = tPages("payments.chart.grouping.day", { defaultValue: "Gün" }) || "Gün";
+    const week = tPages("payments.chart.grouping.week", { defaultValue: "Hafta" }) || "Hafta";
+    const month = tPages("payments.chart.grouping.month", { defaultValue: "Ay" }) || "Ay";
     return { day, week, month };
-  }, [tPages, toInitial]);
+  }, [tPages]);
 
   const revenueTrendData = useMemo(() => {
     if (!selectedRevenueDateRange) {
@@ -2242,10 +2233,7 @@ const DashboardDailyFocus = ({
                   </button>
                 </div>
                 {!isMobile && (
-                  <div className="flex flex-col gap-1 sm:items-end">
-                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      {tPages("payments.chart.groupingLabel", { defaultValue: "Grouping" })}
-                    </span>
+                  <div className="flex items-center justify-end">
                     <ToggleGroup
                       type="single"
                       value={revenueTrendGrouping}
@@ -2253,13 +2241,13 @@ const DashboardDailyFocus = ({
                         if (!next) return;
                         setRevenueTrendGrouping(next as TrendGrouping);
                       }}
-                      className="inline-flex items-center rounded-full bg-slate-100 p-0.5 text-slate-500 shadow-inner"
+                      className="inline-flex w-full items-center rounded-full bg-slate-100 p-0.5 text-slate-500 shadow-inner"
                     >
                       <ToggleGroupItem
                         value="day"
                         aria-label={tPages("payments.chart.grouping.day", { defaultValue: "Day" })}
                         className={cn(
-                          "h-6 min-w-[30px] rounded-full px-0 text-[11px] font-semibold",
+                          "h-8 min-w-[72px] flex-1 justify-center rounded-full px-4 text-sm font-semibold whitespace-nowrap",
                           "data-[state=on]:bg-white data-[state=on]:text-[#6F6FFB] data-[state=on]:shadow-sm",
                           "text-slate-500"
                         )}
@@ -2270,7 +2258,7 @@ const DashboardDailyFocus = ({
                         value="week"
                         aria-label={tPages("payments.chart.grouping.week", { defaultValue: "Week" })}
                         className={cn(
-                          "h-6 min-w-[30px] rounded-full px-0 text-[11px] font-semibold",
+                          "h-8 min-w-[72px] flex-1 justify-center rounded-full px-4 text-sm font-semibold whitespace-nowrap",
                           "data-[state=on]:bg-white data-[state=on]:text-[#6F6FFB] data-[state=on]:shadow-sm",
                           "text-slate-500"
                         )}
@@ -2281,7 +2269,7 @@ const DashboardDailyFocus = ({
                         value="month"
                         aria-label={tPages("payments.chart.grouping.month", { defaultValue: "Month" })}
                         className={cn(
-                          "h-6 min-w-[30px] rounded-full px-0 text-[11px] font-semibold",
+                          "h-8 min-w-[72px] flex-1 justify-center rounded-full px-4 text-sm font-semibold whitespace-nowrap",
                           "data-[state=on]:bg-white data-[state=on]:text-[#6F6FFB] data-[state=on]:shadow-sm",
                           "text-slate-500"
                         )}
@@ -2312,13 +2300,13 @@ const DashboardDailyFocus = ({
                         if (!next) return;
                         setRevenueTrendGrouping(next as TrendGrouping);
                       }}
-                      className="inline-flex items-center rounded-full bg-slate-100 p-0.5 text-slate-500 shadow-inner"
+                      className="inline-flex w-full items-center rounded-full bg-slate-100 p-0.5 text-slate-500 shadow-inner"
                     >
                       <ToggleGroupItem
                         value="day"
                         aria-label={tPages("payments.chart.grouping.day", { defaultValue: "Day" })}
                         className={cn(
-                          "h-6 min-w-[30px] rounded-full px-0 text-[11px] font-semibold",
+                          "h-8 min-w-[72px] flex-1 justify-center rounded-full px-4 text-sm font-semibold whitespace-nowrap",
                           "data-[state=on]:bg-white data-[state=on]:text-[#6F6FFB] data-[state=on]:shadow-sm",
                           "text-slate-500"
                         )}
@@ -2329,7 +2317,7 @@ const DashboardDailyFocus = ({
                         value="week"
                         aria-label={tPages("payments.chart.grouping.week", { defaultValue: "Week" })}
                         className={cn(
-                          "h-6 min-w-[30px] rounded-full px-0 text-[11px] font-semibold",
+                          "h-8 min-w-[72px] flex-1 justify-center rounded-full px-4 text-sm font-semibold whitespace-nowrap",
                           "data-[state=on]:bg-white data-[state=on]:text-[#6F6FFB] data-[state=on]:shadow-sm",
                           "text-slate-500"
                         )}
@@ -2340,7 +2328,7 @@ const DashboardDailyFocus = ({
                         value="month"
                         aria-label={tPages("payments.chart.grouping.month", { defaultValue: "Month" })}
                         className={cn(
-                          "h-6 min-w-[30px] rounded-full px-0 text-[11px] font-semibold",
+                          "h-8 min-w-[72px] flex-1 justify-center rounded-full px-4 text-sm font-semibold whitespace-nowrap",
                           "data-[state=on]:bg-white data-[state=on]:text-[#6F6FFB] data-[state=on]:shadow-sm",
                           "text-slate-500"
                         )}
@@ -2353,7 +2341,7 @@ const DashboardDailyFocus = ({
                     value={revenueDateFilter}
                     onValueChange={(value) => setRevenueDateFilter(value as DateFilterType)}
                   >
-                    <SelectTrigger className="w-48">
+                    <SelectTrigger className="w-full sm:w-48">
                       <SelectValue placeholder={tPages("payments.selectPeriod", { defaultValue: "Select period" })} />
                     </SelectTrigger>
                     <SelectContent align="end">

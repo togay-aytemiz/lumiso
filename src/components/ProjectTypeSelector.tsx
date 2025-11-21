@@ -63,7 +63,7 @@ export function ProjectTypeSelector({
     Boolean(preferredDefaultSlug && normalizeTypeSlug(type) === preferredDefaultSlug);
 
   const isDefaultType = (type: ProjectType) =>
-    isPreferredDefault(type) || (preferredSlugs.length === 0 && type.is_default);
+    isPreferredDefault(type) || type.is_default;
 
   useEffect(() => {
     let isMounted = true;
@@ -113,25 +113,29 @@ export function ProjectTypeSelector({
   const visibleTypes = useMemo(() => {
     if (types.length === 0) return [];
 
-    const sourceTypes =
-      preferredSlugs.length === 0
-        ? types
-        : types.filter((type) => preferredSlugs.includes(normalizeTypeSlug(type)));
+    const rankedTypes = [...types];
 
-    return sourceTypes.sort((a, b) => {
-      const aDefault = isPreferredDefault(a);
-      const bDefault = isPreferredDefault(b);
-      if (aDefault !== bDefault) return aDefault ? -1 : 1;
-
+    return rankedTypes.sort((a, b) => {
       const aSlug = normalizeTypeSlug(a);
       const bSlug = normalizeTypeSlug(b);
-      const aOrder = preferredSlugOrder.has(aSlug)
-        ? preferredSlugOrder.get(aSlug)!
-        : Number.MAX_SAFE_INTEGER;
-      const bOrder = preferredSlugOrder.has(bSlug)
-        ? preferredSlugOrder.get(bSlug)!
-        : Number.MAX_SAFE_INTEGER;
-      if (aOrder !== bOrder) return aOrder - bOrder;
+      const aPreferredIndex = preferredSlugOrder.get(aSlug);
+      const bPreferredIndex = preferredSlugOrder.get(bSlug);
+
+      const aIsPreferred = typeof aPreferredIndex === "number";
+      const bIsPreferred = typeof bPreferredIndex === "number";
+
+      if (aIsPreferred || bIsPreferred) {
+        if (aIsPreferred && bIsPreferred && aPreferredIndex !== bPreferredIndex) {
+          return (aPreferredIndex ?? 0) - (bPreferredIndex ?? 0);
+        }
+        if (aIsPreferred !== bIsPreferred) {
+          return aIsPreferred ? -1 : 1;
+        }
+      }
+
+      const aDefault = isDefaultType(a);
+      const bDefault = isDefaultType(b);
+      if (aDefault !== bDefault) return aDefault ? -1 : 1;
 
       const aSortOrder = a.sort_order ?? Number.MAX_SAFE_INTEGER;
       const bSortOrder = b.sort_order ?? Number.MAX_SAFE_INTEGER;
@@ -139,7 +143,7 @@ export function ProjectTypeSelector({
 
       return a.name.localeCompare(b.name);
     });
-  }, [types, preferredSlugs, preferredSlugOrder]);
+  }, [types, preferredDefaultSlug, preferredSlugOrder]);
 
   useEffect(() => {
     if (!value && visibleTypes.length > 0) {
@@ -170,6 +174,7 @@ export function ProjectTypeSelector({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           variant="outline"
           role="combobox"
           aria-expanded={open}
@@ -246,12 +251,12 @@ export function ProjectTypeSelector({
                     />
                     <div className="flex items-center gap-2">
                       <Badge 
-                        variant={type.is_default ? "default" : "secondary"}
+                        variant={isDefaultType(type) ? "default" : "secondary"}
                         className="text-xs"
                       >
                         {type.name.toUpperCase()}
                       </Badge>
-                      {type.is_default && (
+                      {isDefaultType(type) && (
                         <span className="text-xs text-muted-foreground">(Default)</span>
                       )}
                     </div>

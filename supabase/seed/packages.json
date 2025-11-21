@@ -5,26 +5,30 @@
     "price": 15000,
     "applicable_types": [],
     "default_add_ons": [
-      "Standard Wedding Album",
-      "Parent Album (smaller copy)",
-      "Basic Retouch (per photo)"
+      "Signature Album",
+      "Drone Coverage"
     ],
     "delivery_methods": [
       "Çevrim içi galeri"
     ],
     "line_items": [
       {
-        "service": "Standard Wedding Album",
+        "service": "Lead Photographer",
+        "role": "base",
+        "quantity": 1
+      },
+      {
+        "service": "Assistant Photographer",
+        "role": "base",
+        "quantity": 1
+      },
+      {
+        "service": "Signature Album",
         "role": "addon",
         "quantity": 1
       },
       {
-        "service": "Parent Album (smaller copy)",
-        "role": "addon",
-        "quantity": 1
-      },
-      {
-        "service": "Basic Retouch (per photo)",
+        "service": "Drone Coverage",
         "role": "addon",
         "quantity": 1
       }
@@ -36,20 +40,19 @@
     "price": 4500,
     "applicable_types": [],
     "default_add_ons": [
-      "USB with High-Resolution Photos",
-      "Small Print (13x18cm)"
+      "Signature Album"
     ],
     "delivery_methods": [
       "Baskılı albüm"
     ],
     "line_items": [
       {
-        "service": "USB with High-Resolution Photos",
-        "role": "addon",
+        "service": "Lead Photographer",
+        "role": "base",
         "quantity": 1
       },
       {
-        "service": "Small Print (13x18cm)",
+        "service": "Signature Album",
         "role": "addon",
         "quantity": 1
       }

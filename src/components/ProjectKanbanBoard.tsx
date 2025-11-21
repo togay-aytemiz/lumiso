@@ -375,10 +375,10 @@ const ProjectKanbanBoard = ({
         key={statusId}
         className="flex w-72 flex-shrink-0 flex-col rounded-2xl border border-border/40 bg-muted/30"
       >
-        <div className="flex items-center justify-between gap-1.5 px-2.5 pt-3 pb-2">
-          <div className="flex items-center gap-1.5">
+        <div className="flex items-center justify-between gap-1.5 px-2.5 pt-3 pb-2 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0">
             <button
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80 min-w-0 max-w-[220px]"
               style={{
                 backgroundColor: statusColor + "20",
                 color: statusColor,
@@ -386,7 +386,9 @@ const ProjectKanbanBoard = ({
               }}
             >
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColor }} />
-              <span className="uppercase tracking-wide font-semibold">{statusName}</span>
+              <span className="block max-w-full truncate uppercase tracking-wide font-semibold">
+                {statusName}
+              </span>
             </button>
             <Badge variant="secondary" className="text-xs">
               {ordered.length}

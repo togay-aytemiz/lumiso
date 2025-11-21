@@ -66,7 +66,7 @@ These defaults must exist for every org immediately after creation, regardless o
    - Ensure at least the canonical pair (`signature_session`, `mini_session`) is seeded per locale through `ensure_default_session_types_for_org`.
    - Backfill `organization_settings.default_session_type_id` whenever it is null so downstream booking flows always have a valid default.
 9. **Services & packages**
-   - Keep the service catalog trimmed to the four starter entries (two Crew, two Deliverables) so seeded packages never introduce ad-hoc categories.
+- Keep the service catalog trimmed to the four starter entries (Lead Photographer, Assistant Photographer, Albums, Drone Operator) so seeded packages never introduce ad-hoc categories.
    - Package templates only reference those services, leave all delivery toggles untouched, and write TR-friendly pricing metadata that includes deposit guidance (40 % base on `wedding_story`, 30 % on `mini_lifestyle`).
 
 ## Project-Type-Aware Sample Data Readiness

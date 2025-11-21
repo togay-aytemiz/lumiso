@@ -72,14 +72,14 @@ This note captures **everything that `process_intake_seed` currently writes** af
 ### Services (`default_service_templates`)
 - Function: `ensure_default_services_for_org(owner_uuid, org_id)` (`20260222114500_locale_seed_templates.sql`).
 - Injects both coverage and deliverable catalog rows, tagged `is_sample = true`. Prices shown are selling prices (costs also stored).
-- Categories are fixed to the canonical Crew / Deliverables buckets (two services each) so package builders never introduce ad-hoc categories during seeding.
+- Categories reuse the default service form buckets (Lead Photographer, Assistant Photographer, Albums, Drone Operator) so seeding never creates new custom categories.
 
 | Slug | EN Name | TR Name | Category | Type | Price | Default Unit |
 | --- | --- | --- | --- | --- | --- | --- |
-| lead_photographer | Lead Photographer | Baş Fotoğrafçı | Crew / Ekip | coverage | 6000 | day / gün |
-| assistant_photographer | Assistant Photographer | Asistan Fotoğrafçı | Crew / Ekip | coverage | 3500 | day / gün |
-| signature_album | Signature Album | Prestij Albüm | Deliverables / Teslimatlar | deliverable | 3000 | — |
-| drone_addon | Drone Coverage | Drone Çekimi | Deliverables / Teslimatlar | coverage (addon) | 1800 | hour / saat |
+| lead_photographer | Lead Photographer | Baş Fotoğrafçı | Lead Photographer | coverage | 6000 | day / gün |
+| assistant_photographer | Assistant Photographer | Asistan Fotoğrafçı | Assistant Photographer | coverage | 3500 | day / gün |
+| signature_album | Signature Album | Prestij Albüm | Albums | deliverable | 3000 | — |
+| drone_addon | Drone Coverage | Drone Çekimi | Drone Operator | coverage (addon) | 1800 | hour / saat |
 
 ### Session types (`default_session_type_templates`)
 
@@ -178,7 +178,7 @@ This note captures **everything that `process_intake_seed` currently writes** af
     - Session labels mirror the project type (“Düğün Çekimi”, “Kurumsal Çekim”, …) with locale-specific copy and reuse the seeded session types (`signature_session` for long form, `mini_session` for short form).
     - Locations intentionally stay high level for Turkish orgs (e.g., “Kadıköy Stüdyosu”, “Moda Sahili”, “Galata Meydanı”) so the sample data feels local without exposing exact addresses.
   - **Packages / services / workflows**
-    - Packages referenced above are seeded via `ensure_default_packages_for_org` and therefore only use existing service categories (Crew, Deliverables). No ad-hoc services are created during sample-data seeding.
+    - Packages referenced above are seeded via `ensure_default_packages_for_org` and therefore only use the default service categories (Lead Photographer, Assistant Photographer, Albums, Drone Operator). No ad-hoc services are created during sample-data seeding.
     - Sessions/projects automatically link to the workflow + message templates that were inserted earlier so reminders fire without extra setup.
 - All inserted rows carry `[Sample Data]` prefix in `notes` so reruns short-circuit.
 

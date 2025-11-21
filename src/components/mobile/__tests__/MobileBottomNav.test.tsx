@@ -3,6 +3,7 @@ import { act } from "@testing-library/react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import { MobileBottomNav } from "../MobileBottomNav";
 import { useProfile } from "@/hooks/useProfile";
+import i18n from "@/i18n";
 
 const navigateMock = jest.fn();
 const useNavigateMock = jest.fn(() => navigateMock);
@@ -74,6 +75,13 @@ jest.mock("@/components/UserMenu", () => ({
   },
 }));
 
+jest.mock("@/components/sidebar/TrialStatusIndicator", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  return {
+    TrialStatusIndicator: () => <div data-testid="trial-status-indicator" />,
+  };
+});
+
 const toastMock = jest.fn();
 
 jest.mock("@/hooks/use-toast", () => ({
@@ -126,6 +134,14 @@ Object.defineProperty(window, "confirm", {
 });
 
 describe("MobileBottomNav", () => {
+  const labels = {
+    projects: i18n.t("navigation:menu.projects"),
+    more: i18n.t("navigation:menu.more"),
+    signOut: i18n.t("navigation:menu.sign_out"),
+    signOutConfirm: i18n.t("navigation:menu.sign_out_confirm"),
+    signOutError: i18n.t("navigation:menu.sign_out_error"),
+  };
+
   const renderNav = async () => {
     const result = render(<MobileBottomNav />);
     await waitFor(() => expect(getUserMock).toHaveBeenCalled());
@@ -150,7 +166,7 @@ describe("MobileBottomNav", () => {
     useLocationMock.mockReturnValue({ pathname: "/leads" });
 
     await renderNav();
-    fireEvent.click(screen.getByRole("button", { name: "Projects" }));
+    fireEvent.click(screen.getByRole("button", { name: labels.projects }));
 
     expect(navigateMock).toHaveBeenCalledWith("/projects");
     expect(scrollToMock).not.toHaveBeenCalled();
@@ -160,7 +176,7 @@ describe("MobileBottomNav", () => {
     useLocationMock.mockReturnValue({ pathname: "/projects" });
 
     await renderNav();
-    fireEvent.click(screen.getByRole("button", { name: "Projects" }));
+    fireEvent.click(screen.getByRole("button", { name: labels.projects }));
 
     expect(navigateMock).not.toHaveBeenCalledWith("/projects");
     expect(scrollToMock).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
@@ -171,9 +187,9 @@ describe("MobileBottomNav", () => {
 
     await renderNav();
 
-    fireEvent.click(screen.getByRole("button", { name: "More" }));
+    fireEvent.click(screen.getByRole("button", { name: labels.more }));
     await waitFor(() => {
-      expect(sheetPropsByTitle["More"]?.isOpen).toBe(true);
+      expect(sheetPropsByTitle[labels.more]?.isOpen).toBe(true);
     });
     expect(userMenuMock).toHaveBeenCalled();
 
@@ -184,23 +200,23 @@ describe("MobileBottomNav", () => {
     });
 
     await waitFor(() => {
-      expect(sheetPropsByTitle["More"]?.isOpen).toBe(false);
+      expect(sheetPropsByTitle[labels.more]?.isOpen).toBe(false);
     });
   });
 
   it("invokes Supabase sign out and navigates to auth when confirmed", async () => {
     await renderNav();
 
-    const moreSheet = sheetPropsByTitle["More"];
+    const moreSheet = sheetPropsByTitle[labels.more];
     expect(moreSheet).toBeDefined();
-    const signOutItem = moreSheet?.items.find((item) => item.title === "Sign Out");
+    const signOutItem = moreSheet?.items.find((item) => item.title === labels.signOut);
     expect(signOutItem).toBeDefined();
 
     await act(async () => {
       await signOutItem?.onClick();
     });
 
-    expect(confirmMock).toHaveBeenCalledWith("Are you sure you want to sign out?");
+    expect(confirmMock).toHaveBeenCalledWith(labels.signOutConfirm);
     expect(signOutMock).toHaveBeenCalledWith();
     expect(navigateMock).toHaveBeenCalledWith("/auth");
     expect(toastMock).not.toHaveBeenCalled();
@@ -211,9 +227,9 @@ describe("MobileBottomNav", () => {
     signOutMock.mockRejectedValue(error);
 
     await renderNav();
-    const moreSheet = sheetPropsByTitle["More"];
+    const moreSheet = sheetPropsByTitle[labels.more];
     expect(moreSheet).toBeDefined();
-    const signOutItem = moreSheet?.items.find((item) => item.title === "Sign Out");
+    const signOutItem = moreSheet?.items.find((item) => item.title === labels.signOut);
     expect(signOutItem).toBeDefined();
 
     await act(async () => {
@@ -221,7 +237,7 @@ describe("MobileBottomNav", () => {
     });
 
     expect(toastMock).toHaveBeenCalledWith({
-      title: "Error signing out",
+      title: labels.signOutError,
       description: error.message,
       variant: "destructive",
     });

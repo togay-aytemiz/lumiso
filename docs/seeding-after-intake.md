@@ -11,12 +11,12 @@
 ## Entities To Seed When Sample Data Is Enabled
 
 ### Services (`/settings/services`)
-- Maintain two categories (Crew, Deliverables).
-- Add two services per category (total 4) with localized names/descriptions.
-- Price points should be realistic (e.g., Crew: “Baş Fotoğrafçı” and “Asistan”; Deliverables: “Drone Çekimi”, “Fotoğraf Albümü” in TR, English equivalents in EN).
+- Reuse the default service form categories (Lead Photographer, Assistant Photographer, Albums, Drone Operator) so seeding never adds custom buckets.
+- Seed four services with localized names/descriptions.
+- Price points should be realistic (e.g., Lead/Assistant: “Baş Fotoğrafçı” and “Asistan”; Deliverables: “Drone Çekimi”, “Fotoğraf Albümü” in TR, English equivalents in EN).
 - Tag each service with the default project type for filtering.
-- Reuse the exact entries seeded by `ensure_default_services_for_org` (Crew / Deliverables categories). Sample-data creation should not insert new service categories or bespoke services.
-- Keep the category values tied to the canonical labels (`Crew`, `Deliverables`) so downstream filters and package builders never see ad-hoc buckets.
+- Reuse the exact entries seeded by `ensure_default_services_for_org` (canonical default categories). Sample-data creation should not insert new service categories or bespoke services.
+- Keep the category values tied to the canonical labels (`Lead Photographer`, `Assistant Photographer`, `Albums`, `Drone Operator`) so downstream filters and package builders never see ad-hoc buckets.
 
 ### Packages (`/settings/services`, Packages section)
 - Create two packages that bundle the seeded services.

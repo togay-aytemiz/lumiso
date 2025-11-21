@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import './i18n';
 
 // Mock Supabase client
 type SupabaseQueryResult = { data: unknown; error: unknown };

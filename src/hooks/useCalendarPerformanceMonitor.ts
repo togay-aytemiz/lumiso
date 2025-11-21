@@ -110,30 +110,73 @@ export function useCalendarPerformanceMonitor() {
     }));
   }, []);
 
-  // Performance warnings
+  const warnStateRef = useRef({
+    render: 0,
+    query: 0,
+    event: 0,
+    memoryWarned: false,
+  });
+
+  // Performance warnings (development only, throttled per metric)
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      const { renderTime, queryTime, eventProcessingTime, totalEvents, memoryUsage } = metrics;
-      
-      // Warn about slow renders
-      if (renderTime > 100) {
-        console.warn(`[Calendar Performance] Slow render detected: ${renderTime.toFixed(2)}ms`);
+    if (process.env.NODE_ENV !== 'development') return;
+
+    const { renderTime, queryTime, eventProcessingTime, totalEvents, memoryUsage } =
+      metrics;
+    const warnState = warnStateRef.current;
+
+    const maybeWarn = (
+      shouldWarn: boolean,
+      key: 'render' | 'query' | 'event',
+      message: string,
+      deltaThreshold = 150
+    ) => {
+      if (!shouldWarn) return;
+      if (metrics[key === 'event' ? 'eventProcessingTime' : `${key}Time` as keyof typeof metrics] === undefined) {
+        return;
       }
-      
-      // Warn about slow queries
-      if (queryTime > 500) {
-        console.warn(`[Calendar Performance] Slow query detected: ${queryTime.toFixed(2)}ms`);
-      }
-      
-      // Warn about slow event processing
-      if (eventProcessingTime > 50 && totalEvents > 0) {
-        console.warn(`[Calendar Performance] Slow event processing: ${eventProcessingTime.toFixed(2)}ms for ${totalEvents} events`);
-      }
-      
-      // Warn about high memory usage
-      if (memoryUsage && memoryUsage.used > memoryUsage.limit * 0.8) {
-        console.warn(`[Calendar Performance] High memory usage: ${memoryUsage.used}MB / ${memoryUsage.limit}MB`);
-      }
+      const latest =
+        key === 'render'
+          ? renderTime
+          : key === 'query'
+          ? queryTime
+          : eventProcessingTime;
+      if (latest - warnState[key] < deltaThreshold) return;
+      warnState[key] = latest;
+      console.warn(message);
+    };
+
+    maybeWarn(
+      renderTime > 300,
+      'render',
+      `[Calendar Performance] Slow render detected: ${renderTime.toFixed(2)}ms`
+    );
+
+    maybeWarn(
+      queryTime > 800,
+      'query',
+      `[Calendar Performance] Slow query detected: ${queryTime.toFixed(2)}ms`,
+      200
+    );
+
+    maybeWarn(
+      eventProcessingTime > 120 && totalEvents > 0,
+      'event',
+      `[Calendar Performance] Slow event processing: ${eventProcessingTime.toFixed(
+        2
+      )}ms for ${totalEvents} events`,
+      120
+    );
+
+    if (
+      memoryUsage &&
+      !warnState.memoryWarned &&
+      memoryUsage.used > memoryUsage.limit * 0.85
+    ) {
+      warnState.memoryWarned = true;
+      console.warn(
+        `[Calendar Performance] High memory usage: ${memoryUsage.used}MB / ${memoryUsage.limit}MB`
+      );
     }
   }, [metrics]);
 

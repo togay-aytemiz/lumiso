@@ -120,9 +120,9 @@ describe("useCalendarPerformanceMonitor", () => {
     });
 
     endTimingMock
-      .mockReturnValueOnce(150) // render
-      .mockReturnValueOnce(600) // query
-      .mockReturnValueOnce(80); // event processing
+      .mockReturnValueOnce(350) // render
+      .mockReturnValueOnce(900) // query
+      .mockReturnValueOnce(150); // event processing
 
     const { result, unmount } = renderHook(() => useCalendarPerformanceMonitor());
 

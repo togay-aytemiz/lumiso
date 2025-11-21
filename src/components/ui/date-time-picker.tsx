@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useId } from "react";
 import { format } from "date-fns";
 import { CalendarIcon, Clock } from "lucide-react";
 
@@ -9,13 +9,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn, getUserLocale, getDateFnsLocale } from "@/lib/utils";
 import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
@@ -77,6 +70,9 @@ export function DateTimePicker({
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(initialDate);
   const [hours, setHours] = useState<number>(initialHours);
   const [minutes, setMinutes] = useState<number>(initialMinutes);
+  const pickerId = useId();
+  const hourSelectId = `${pickerId}-hour`;
+  const minuteSelectId = `${pickerId}-minute`;
 
   useEffect(() => {
     const parsed = parseIsoLocal(value);
@@ -88,6 +84,11 @@ export function DateTimePicker({
   const browserLocale = getUserLocale();
   const hourOptions = Array.from({ length: 24 }, (_, i) => i);
   const minuteOptions = [0, 5, 10, 15, 20, 30, 45];
+  const timeSelectClassName = cn(
+    "h-9 w-full rounded-md border border-input bg-background px-3 text-sm",
+    "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background",
+    "disabled:cursor-not-allowed disabled:opacity-50"
+  );
 
   return (
     <div className={className}>
@@ -131,44 +132,52 @@ export function DateTimePicker({
                 <Clock className="h-3 w-3" /> {timeLabel}
               </Label>
               <div className="mt-2 grid grid-cols-2 gap-2">
-                <Select value={String(hours)} onValueChange={(v) => {
-                  const newHours = parseInt(v);
-                  setHours(newHours);
-                  // Automatically emit the change when hours change
-                  if (selectedDate) {
-                    onChange(toIsoLocal(selectedDate, newHours, minutes));
-                  }
-                }}>
-                  <SelectTrigger className="h-9 rounded-md">
-                    <SelectValue placeholder="Hour" />
-                  </SelectTrigger>
-                  <SelectContent align="start" className="max-h-64">
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor={hourSelectId} className="sr-only">
+                    Hour
+                  </Label>
+                  <select
+                    id={hourSelectId}
+                    className={timeSelectClassName}
+                    value={String(hours)}
+                    onChange={(event) => {
+                      const newHours = parseInt(event.target.value, 10);
+                      setHours(newHours);
+                      if (selectedDate) {
+                        onChange(toIsoLocal(selectedDate, newHours, minutes));
+                      }
+                    }}
+                  >
                     {hourOptions.map((h) => (
-                      <SelectItem key={h} value={String(h)}>
+                      <option key={h} value={h}>
                         {String(h).padStart(2, "0")}
-                      </SelectItem>
+                      </option>
                     ))}
-                  </SelectContent>
-                </Select>
-                <Select value={String(minutes)} onValueChange={(v) => {
-                  const newMinutes = parseInt(v);
-                  setMinutes(newMinutes);
-                  // Automatically emit the change when minutes change
-                  if (selectedDate) {
-                    onChange(toIsoLocal(selectedDate, hours, newMinutes));
-                  }
-                }}>
-                  <SelectTrigger className="h-9 rounded-md">
-                    <SelectValue placeholder="Min" />
-                  </SelectTrigger>
-                  <SelectContent align="start" className="max-h-64">
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor={minuteSelectId} className="sr-only">
+                    Minutes
+                  </Label>
+                  <select
+                    id={minuteSelectId}
+                    className={timeSelectClassName}
+                    value={String(minutes)}
+                    onChange={(event) => {
+                      const newMinutes = parseInt(event.target.value, 10);
+                      setMinutes(newMinutes);
+                      if (selectedDate) {
+                        onChange(toIsoLocal(selectedDate, hours, newMinutes));
+                      }
+                    }}
+                  >
                     {minuteOptions.map((m) => (
-                      <SelectItem key={m} value={String(m)}>
+                      <option key={m} value={m}>
                         {String(m).padStart(2, "0")}
-                      </SelectItem>
+                      </option>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </select>
+                </div>
               </div>
               <div className="mt-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">

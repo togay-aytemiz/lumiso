@@ -3,11 +3,9 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
-import { Upload } from "lucide-react";
-import {
-  SettingsActionPills,
-  PillButton,
-} from "@/components/settings/SettingsActionPills";
+import { Upload, Loader2 } from "lucide-react";
+import { SettingsActionPills } from "@/components/settings/SettingsActionPills";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -138,21 +136,27 @@ export function SettingsImageUploadCard({
       </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <SettingsActionPills>
-          <PillButton
-            label={uploadBusy ? uploadingLabel ?? uploadLabel : uploadLabel}
+          <Button
             onClick={onUploadClick}
-            loading={uploadBusy}
-            icon={<Upload className="h-4 w-4" />}
+            disabled={uploadBusy}
+            variant="pill"
+            size="sm"
+            className="flex items-center gap-2 text-sm"
             aria-label={uploadLabel}
-          />
+          >
+            {uploadBusy ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <Upload className="h-4 w-4" aria-hidden="true" />
+            )}
+            {uploadBusy ? uploadingLabel ?? uploadLabel : uploadLabel}
+          </Button>
           {deleteAction && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <PillButton
-                  label={deleteAction.label}
-                  variant="pillDanger"
-                  size="sm"
-                />
+                <Button variant="pillDanger" size="sm">
+                  {deleteAction.label}
+                </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>

@@ -185,19 +185,16 @@ const AllProjects = () => {
     setSortDirection('desc');
   }, [viewMode]);
 
-  // Handle tutorial launch (run once; avoid re-render loops)
-  const tutorialInitRef = useRef(false);
+  // Handle tutorial launch (respond whenever query param is present)
   useEffect(() => {
-    if (tutorialInitRef.current) return;
-    tutorialInitRef.current = true;
-    const tutorial = new URLSearchParams(window.location.search).get('tutorial');
+    const tutorial = searchParams.get('tutorial');
     if (tutorial?.includes('true')) {
       setShowTutorial(true);
       const url = new URL(window.location.href);
       url.searchParams.delete('tutorial');
       window.history.replaceState({}, '', url.toString());
     }
-  }, []);
+  }, [searchParams]);
 
   // Check if user is in guided mode but missing tutorial parameter
   const { shouldLockNavigation, currentStepInfo } = useOnboarding();

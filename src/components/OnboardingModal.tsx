@@ -8,14 +8,14 @@ import { toast as toastFn } from "@/hooks/use-toast";
 import { BaseOnboardingModal, type OnboardingAction } from "./shared/BaseOnboardingModal";
 import { SampleDataModal } from "./SampleDataModal";
 import { useTranslation } from "react-i18next";
+import { CalendarClock, FolderCheck, ListChecks, Settings2, Sparkles, Users } from "lucide-react";
 
 interface OnboardingModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-// Use the centralized steps from the hook
-const onboardingStepsDisplay = ONBOARDING_STEPS.map(step => step.title);
+const onboardingStepIcons = [Users, ListChecks, Settings2, CalendarClock, FolderCheck, Sparkles];
 
 export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   const { t } = useTranslation('pages');
@@ -60,6 +60,16 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
     onClose(); // Simple close, no special handling needed
   };
 
+  const onboardingHighlights = ONBOARDING_STEPS.map((_, index) => {
+    const Icon = onboardingStepIcons[index % onboardingStepIcons.length];
+    return {
+      Icon,
+      title: t(`onboarding.steps.step_${index + 1}.title`),
+      description: t(`onboarding.steps.step_${index + 1}.description`),
+      duration: t(`onboarding.steps.step_${index + 1}.duration`)
+    };
+  });
+
   const actions: OnboardingAction[] = [
     {
       label: t('onboarding.modal.skip_sample_data'),
@@ -85,16 +95,40 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
         actions={actions}
       >
         <div className="space-y-4">
-          <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-            {t('onboarding.modal.what_youll_learn')}
-          </h4>
+          <div className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/30 p-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-semibold text-foreground">
+                {t('onboarding.modal.what_youll_learn')}
+              </p>
+              <p className="text-xs text-muted-foreground">{t('onboarding.getting_started.learning_path_subtitle')}</p>
+            </div>
+          </div>
+
           <div className="space-y-3">
-            {onboardingStepsDisplay.map((_, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-sm font-medium text-primary">{index + 1}</span>
+            {onboardingHighlights.map(({ Icon, title, description, duration }, index) => (
+              <div key={index} className="flex items-center gap-3 rounded-xl border border-border/70 bg-background/80 p-3 sm:p-4 shadow-sm">
+                <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center">
+                  <div className="absolute inset-0 rounded-2xl bg-emerald-50" />
+                  <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl text-emerald-600">
+                    <Icon className="h-5 w-5" />
+                  </div>
                 </div>
-                <span className="text-sm text-foreground">{t(`onboarding.steps.step_${index + 1}.title`)}</span>
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-start gap-2">
+                    <p className="text-sm font-semibold text-foreground">
+                      {title}
+                    </p>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                      {duration}
+                    </span>
+                  </div>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {description}
+                  </p>
+                </div>
               </div>
             ))}
           </div>

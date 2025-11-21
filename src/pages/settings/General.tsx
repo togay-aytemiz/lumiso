@@ -20,6 +20,7 @@ import { OnboardingTutorial, TutorialStep } from "@/components/shared/Onboarding
 import { SocialChannelsSection } from "@/components/settings/SocialChannelsSection";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
+import { OnboardingChecklistItem } from "@/components/shared/OnboardingChecklistItem";
 import { detectBrowserTimezone, detectBrowserHourFormat } from "@/lib/dateFormatUtils";
 import { emailSchema, phoneSchema } from "@/lib/validation";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -101,6 +102,12 @@ export default function General() {
       }
     }
   }, [onboardingProfileStepActive, currentStepInfo?.id, tutorialDismissed]);
+
+  const businessInfoChecklist = [
+    { icon: Building, label: t("settings.general.tutorial.businessInfo.setBusinessName") },
+    { icon: Upload, label: t("settings.general.tutorial.businessInfo.uploadLogo") },
+    { icon: Settings, label: t("settings.general.tutorial.businessInfo.chooseBrandColors") },
+  ];
   
   const browserTimezone = useMemo(() => detectBrowserTimezone(), []);
   const browserHourFormat = useMemo(() => detectBrowserHourFormat(), []);
@@ -162,20 +169,17 @@ export default function General() {
       title: t("settings.general.tutorial.businessInfo.title"),
       description: t("settings.general.tutorial.businessInfo.description"),
       content: (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm">
-            <Building className="h-4 w-4 text-primary" />
-            <span>{t("settings.general.tutorial.businessInfo.setBusinessName")}</span>
+        <div className="space-y-4">
+          <div className="space-y-3">
+            {businessInfoChecklist.map(({ icon, label }) => (
+              <OnboardingChecklistItem
+                key={label}
+                icon={icon}
+                title={label}
+              />
+            ))}
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Upload className="h-4 w-4 text-primary" />
-            <span>{t("settings.general.tutorial.businessInfo.uploadLogo")}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Settings className="h-4 w-4 text-primary" />
-            <span>{t("settings.general.tutorial.businessInfo.chooseBrandColors")}</span>
-          </div>
-          <div className="text-xs text-muted-foreground mt-2">
+          <div className="text-xs text-muted-foreground">
             {t("settings.general.tutorial.businessInfo.help")}
           </div>
         </div>

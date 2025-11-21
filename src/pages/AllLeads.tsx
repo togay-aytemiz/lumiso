@@ -18,6 +18,7 @@ import {
   AlertCircle,
   XCircle,
 } from "lucide-react";
+import { OnboardingChecklistItem } from "@/components/shared/OnboardingChecklistItem";
 import { type LeadWithCustomFields } from "@/hooks/useLeadsWithCustomFields";
 import { useLeadsData } from "@/pages/leads/hooks/useLeadsData";
 import { useLeadTableColumns } from "@/hooks/useLeadTableColumns";
@@ -497,27 +498,24 @@ const AllLeadsNew = () => {
       description: t('leads.tutorial.welcome.description'),
       content: (
         <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <Users className="w-5 h-5 text-primary mt-0.5" />
-            <div>
-              <h4 className="font-medium">{t('leads.tutorial.welcome.trackLeads.title')}</h4>
-              <p className="text-sm text-muted-foreground">{t('leads.tutorial.welcome.trackLeads.description')}</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <Filter className="w-5 h-5 text-primary mt-0.5" />
-            <div>
-              <h4 className="font-medium">{t('leads.tutorial.welcome.filterSort.title')}</h4>
-              <p className="text-sm text-muted-foreground">{t('leads.tutorial.welcome.filterSort.description')}</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <FileText className="w-5 h-5 text-primary mt-0.5" />
-            <div>
-              <h4 className="font-medium">{t('leads.tutorial.welcome.customizeColumns.title')}</h4>
-              <p className="text-sm text-muted-foreground">{t('leads.tutorial.welcome.customizeColumns.description')}</p>
-            </div>
-          </div>
+          <OnboardingChecklistItem
+            icon={Users}
+            title={t('leads.tutorial.welcome.trackLeads.title')}
+            description={t('leads.tutorial.welcome.trackLeads.description')}
+            titleClassName="font-medium"
+          />
+          <OnboardingChecklistItem
+            icon={Filter}
+            title={t('leads.tutorial.welcome.filterSort.title')}
+            description={t('leads.tutorial.welcome.filterSort.description')}
+            titleClassName="font-medium"
+          />
+          <OnboardingChecklistItem
+            icon={FileText}
+            title={t('leads.tutorial.welcome.customizeColumns.title')}
+            description={t('leads.tutorial.welcome.customizeColumns.description')}
+            titleClassName="font-medium"
+          />
         </div>
       ),
       mode: "modal",
@@ -552,27 +550,24 @@ const AllLeadsNew = () => {
       description: t('leads.tutorial.scheduling.description'),
       content: (
         <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <Calendar className="w-5 h-5 text-primary mt-0.5" />
-            <div>
-              <h4 className="font-medium">{t('leads.tutorial.scheduling.chooseDateTime.title')}</h4>
-              <p className="text-sm text-muted-foreground">{t('leads.tutorial.scheduling.chooseDateTime.description')}</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <Users className="w-5 h-5 text-primary mt-0.5" />
-            <div>
-              <h4 className="font-medium">{t('leads.tutorial.scheduling.selectClient.title')}</h4>
-              <p className="text-sm text-muted-foreground">{t('leads.tutorial.scheduling.selectClient.description')}</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <MessageSquare className="w-5 h-5 text-primary mt-0.5" />
-            <div>
-              <h4 className="font-medium">{t('leads.tutorial.scheduling.addDetails.title')}</h4>
-              <p className="text-sm text-muted-foreground">{t('leads.tutorial.scheduling.addDetails.description')}</p>
-            </div>
-          </div>
+          <OnboardingChecklistItem
+            icon={Calendar}
+            title={t('leads.tutorial.scheduling.chooseDateTime.title')}
+            description={t('leads.tutorial.scheduling.chooseDateTime.description')}
+            titleClassName="font-medium"
+          />
+          <OnboardingChecklistItem
+            icon={Users}
+            title={t('leads.tutorial.scheduling.selectClient.title')}
+            description={t('leads.tutorial.scheduling.selectClient.description')}
+            titleClassName="font-medium"
+          />
+          <OnboardingChecklistItem
+            icon={MessageSquare}
+            title={t('leads.tutorial.scheduling.addDetails.title')}
+            description={t('leads.tutorial.scheduling.addDetails.description')}
+            titleClassName="font-medium"
+          />
         </div>
       ),
       mode: "modal",

@@ -58,7 +58,7 @@ describe("BaseOnboardingModal", () => {
     longPressSpy.mockClear();
   });
 
-  it("renders title, description, children, and regular actions", () => {
+  it("renders title, description, eyebrow, children, and regular actions", () => {
     const handlePrimary = jest.fn();
     const actions: OnboardingAction[] = [
       {
@@ -78,6 +78,7 @@ describe("BaseOnboardingModal", () => {
         onClose={jest.fn()}
         title="Modal Title"
         description="Helpful description"
+        eyebrow={<span>Eyebrow Text</span>}
         actions={actions}
       >
         <div>Custom content</div>
@@ -85,6 +86,7 @@ describe("BaseOnboardingModal", () => {
     );
 
     expect(screen.getByText("Modal Title")).toBeInTheDocument();
+    expect(screen.getByText("Eyebrow Text")).toBeInTheDocument();
     expect(screen.getByText("Helpful description")).toBeInTheDocument();
     expect(screen.getByText("Custom content")).toBeInTheDocument();
 
@@ -125,7 +127,7 @@ describe("BaseOnboardingModal", () => {
         holdingLabel: "Holding…",
         completeLabel: "Done",
         disabled: false,
-        className: "w-full h-11",
+        className: "h-11 w-full sm:w-auto sm:min-w-[200px]",
       })
     );
 

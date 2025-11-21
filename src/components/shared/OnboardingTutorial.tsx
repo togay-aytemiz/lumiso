@@ -119,6 +119,14 @@ export function OnboardingTutorial({
 
   // Modal tutorial rendering
   const actions: OnboardingAction[] = [];
+
+  const stepLabel = t('onboarding.tutorial.step_of', { current: displayStepNumber, total: effectiveTotal });
+
+  const eyebrowContent = (
+    <div className="flex items-center gap-2 uppercase">
+      <span className="text-[11px] font-semibold tracking-wide text-muted-foreground">{stepLabel}</span>
+    </div>
+  );
   
   // Only show Exit Tutorial button if not the last step
   if (!isLastStep) {
@@ -146,11 +154,8 @@ export function OnboardingTutorial({
       <BaseOnboardingModal
         open={isVisible && !isExiting}
         onClose={handleExit}
-        title={t('onboarding.tutorial.step_title', { 
-          current: displayStepNumber, 
-          total: effectiveTotal, 
-          title: typeof currentStep.title === 'string' ? currentStep.title : 'Step'
-        })}
+        eyebrow={eyebrowContent}
+        title={typeof currentStep.title === 'string' ? currentStep.title : stepLabel}
         description={currentStep.description}
         actions={actions}
       >

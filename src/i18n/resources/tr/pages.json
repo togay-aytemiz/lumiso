@@ -1715,7 +1715,7 @@
           "title": "İşletme kimliğinizi doğrulayın",
           "description": "Stüdyo adınızı biz kaydettik — bu adımda sosyal kanallarını ekleyin ve otomatik saat dilimi/tarih ayarlarını gözden geçirin.",
           "required": "İşletme adı zaten dolu; değişiklik varsa buradan güncelle.",
-          "appearsOn": "Sosyal kanallarını burada yönetir, müşteriye çıkan her yerde aynen görürsünüz.",
+          "appearsOn": "Sosyal kanallarını burada ekle; e-postalarda, imzalarda ve müşteri tarafındaki tüm alanlarda aynı şekilde gösterilir.",
           "canChange": "Saat dilimi ve tarih formatı gibi bölgesel ayarları kontrol edip dilediğinizde güncelleyebilirsiniz."
         },
         "setupComplete": {
@@ -2888,7 +2888,7 @@
       },
       "step_2": {
         "title": "İlk Kişinizi Oluşturun",
-        "description": "Fırsatları takip etmek için bir kişi ekleyin",
+        "description": "Mevcut ve potansiyel müşterileri düzenli takip etmek için ilk kişi kaydınızı oluşturun",
         "button": "Kişilere Git",
         "duration": "2 dk"
       },

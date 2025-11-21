@@ -10,7 +10,6 @@ import {
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import type { Location } from "react-router-dom";
 import {
-  ArrowUp,
   ChevronLeft,
   ChevronRight,
   LifeBuoy,
@@ -215,9 +214,6 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
   const [showHelp, setShowHelp] = useState(false);
   const closeTimeoutRef = useRef<ReturnType<typeof window.setTimeout> | undefined>();
   const contentRef = useRef<HTMLElement | null>(null);
-  const [showScrollTop, setShowScrollTop] = useState(false);
-  const [scrollTopRightOffset, setScrollTopRightOffset] = useState(24);
-  const [scrollTopBottomOffset, setScrollTopBottomOffset] = useState<number | null>(null);
   const [domSectionNavItems, setDomSectionNavItems] = useState<
     StickySectionNavItem[]
   >([]);
@@ -250,40 +246,6 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
       exitSettings();
     }, 180);
   }, [exitSettings]);
-
-  const hasChangesRef = useRef(hasChanges);
-  useEffect(() => {
-    hasChangesRef.current = hasChanges;
-  }, [hasChanges]);
-
-  const updateScrollTopPosition = useCallback(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    if (isMobile) {
-      setScrollTopRightOffset(16);
-      const navEl = document.querySelector<HTMLElement>(".mobile-bottom-nav");
-      const navHeight = navEl?.getBoundingClientRect().height ?? 0;
-      const baseBottom = hasChangesRef.current ? 96 : 20;
-      const computedBottom =
-        navHeight > 0 ? navHeight + baseBottom : baseBottom + 12;
-      setScrollTopBottomOffset(computedBottom);
-      return;
-    }
-
-    setScrollTopBottomOffset(null);
-    const container = contentRef.current;
-    if (!container) return;
-
-    const rect = container.getBoundingClientRect();
-    const offset = Math.max(window.innerWidth - rect.right + 24, 16);
-    setScrollTopRightOffset(offset);
-  }, [isMobile]);
-
-  useEffect(() => {
-    updateScrollTopPosition();
-  }, [hasChanges, updateScrollTopPosition]);
 
   const refreshDomSectionNavItems = useCallback(() => {
     const container = contentRef.current;
@@ -355,27 +317,8 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
       return;
     }
 
-    const handleScroll = () => {
-      setShowScrollTop(container.scrollTop > 240);
-    };
-
     container.scrollTo({ top: 0 });
-    handleScroll();
-    updateScrollTopPosition();
     refreshDomSectionNavItems();
-
-    container.addEventListener("scroll", handleScroll);
-    window.addEventListener("resize", updateScrollTopPosition);
-
-    let navResizeObserver: ResizeObserver | null = null;
-    const navEl = document.querySelector(".mobile-bottom-nav");
-    if (navEl && "ResizeObserver" in window) {
-      navResizeObserver = new ResizeObserver(() => updateScrollTopPosition());
-      navResizeObserver.observe(navEl);
-    }
-    const navCheckTimeout = window.setTimeout(() => {
-      updateScrollTopPosition();
-    }, 250);
 
     let frame = 0;
     let observer: MutationObserver | null = null;
@@ -403,24 +346,13 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
       if (frame) {
         window.cancelAnimationFrame(frame);
       }
-      container.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", updateScrollTopPosition);
-      navResizeObserver?.disconnect();
-      window.clearTimeout(navCheckTimeout);
     };
   }, [
     currentPath,
     isMobile,
     isSettingsRoot,
     refreshDomSectionNavItems,
-    updateScrollTopPosition,
   ]);
-
-  const handleScrollToTop = useCallback(() => {
-    const container = contentRef.current;
-    if (!container) return;
-    container.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
 
   const {
     showGuard,
@@ -840,8 +772,6 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
   }, [contextSectionNavItems, domSectionNavItems, registeredAnchors]);
 
   const hasMultipleSections = sectionNavItems.length > 1;
-  const shouldShowScrollTopButton =
-    showScrollTop && !(isMobile && isSettingsRoot);
 
   const sectionNavIds = useMemo(
     () => sectionNavItems.map((item) => item.id),
@@ -1287,30 +1217,6 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
               <Outlet />
             </div>
           </main>
-          {shouldShowScrollTopButton && (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={handleScrollToTop}
-              onMouseDown={(event) => event.stopPropagation()}
-              className={cn(
-                "fixed z-[60] h-11 w-11 rounded-full border-transparent bg-[hsl(var(--accent-200))] text-[hsl(var(--accent-900))] shadow-lg transition-all hover:bg-[hsl(var(--accent-300))] hover:shadow-xl focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2",
-                hasChanges ? "bottom-24 md:bottom-28" : "bottom-5 md:bottom-6"
-              )}
-              style={{
-                right: `${scrollTopRightOffset}px`,
-                ...(scrollTopBottomOffset !== null
-                  ? { bottom: `${scrollTopBottomOffset}px` }
-                  : undefined),
-              }}
-              aria-label={tCommon("buttons.backToTop", {
-                defaultValue: "Back to top",
-              })}
-            >
-              <ArrowUp className="h-5 w-5" />
-            </Button>
-          )}
         </div>
         {helpSheet}
         {guardDialog}
@@ -1380,32 +1286,6 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
           ) : (
             <>
               <Outlet />
-              {shouldShowScrollTopButton && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={handleScrollToTop}
-                  onMouseDown={(event) => event.stopPropagation()}
-                  className={cn(
-                    "fixed z-[60] h-11 w-11 rounded-full border-transparent bg-[hsl(var(--accent-200))] text-[hsl(var(--accent-900))] shadow-lg transition-all hover:bg-[hsl(var(--accent-300))] hover:shadow-xl focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent-400))] focus-visible:ring-offset-2",
-                    hasChanges
-                      ? "bottom-24 md:bottom-28"
-                      : "bottom-5 md:bottom-6"
-                  )}
-                  style={{
-                    right: `${scrollTopRightOffset}px`,
-                    ...(scrollTopBottomOffset !== null
-                      ? { bottom: `${scrollTopBottomOffset}px` }
-                      : undefined),
-                  }}
-                  aria-label={tCommon("buttons.backToTop", {
-                    defaultValue: "Back to top",
-                  })}
-                >
-                  <ArrowUp className="h-5 w-5" />
-                </Button>
-              )}
             </>
           )}
         </div>

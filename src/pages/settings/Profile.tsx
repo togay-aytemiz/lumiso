@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { trimAndNormalizeSpaces, createTrimmedBlurHandler } from "@/lib/inputUtils";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
+import { OnboardingChecklistItem } from "@/components/shared/OnboardingChecklistItem";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useTranslation } from "react-i18next";
 import { useSettingsFileUploader } from "@/hooks/useSettingsFileUploader";
@@ -292,14 +293,18 @@ export default function Profile() {
       description: t('settings.profile.tutorial.welcome.description'),
       content: (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm">
-            <User className="h-4 w-4 text-primary" />
-            <span>{t('settings.profile.tutorial.welcome.updateInfo')}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Settings className="h-4 w-4 text-primary" />
-            <span>{t('settings.profile.tutorial.welcome.configureHours')}</span>
-          </div>
+          <OnboardingChecklistItem
+            icon={User}
+            title={t('settings.profile.tutorial.welcome.updateInfo')}
+            className="text-sm"
+            titleClassName="text-sm font-medium"
+          />
+          <OnboardingChecklistItem
+            icon={Settings}
+            title={t('settings.profile.tutorial.welcome.configureHours')}
+            className="text-sm"
+            titleClassName="text-sm font-medium"
+          />
         </div>
       ),
       canProceed: true,

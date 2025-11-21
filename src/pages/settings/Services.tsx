@@ -7,6 +7,7 @@ import ServicesSection from "@/components/ServicesSection";
 // Permissions removed for single photographer mode
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
+import { OnboardingChecklistItem } from "@/components/shared/OnboardingChecklistItem";
 import { Package, DollarSign, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -19,10 +20,12 @@ const createPackagesSetupSteps = (t: TFunction<"pages">): TutorialStep[] => [
     description: t("settings.services.tutorial.steps.reviewTemplates.description"),
     content: (
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Package className="w-4 h-4" />
-          <span>{t("settings.services.highlights.reviewPackages")}</span>
-        </div>
+        <OnboardingChecklistItem
+          icon={Package}
+          title={t("settings.services.highlights.reviewPackages")}
+          className="text-sm text-muted-foreground"
+          titleClassName="text-sm font-medium text-muted-foreground"
+        />
         <div className="text-xs text-muted-foreground">
           {t("settings.services.tutorial.steps.reviewTemplates.tip")}
         </div>
@@ -37,10 +40,12 @@ const createPackagesSetupSteps = (t: TFunction<"pages">): TutorialStep[] => [
     description: t("settings.services.tutorial.steps.setPricing.description"),
     content: (
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <DollarSign className="w-4 h-4" />
-          <span>{t("settings.services.highlights.setPrices")}</span>
-        </div>
+        <OnboardingChecklistItem
+          icon={DollarSign}
+          title={t("settings.services.highlights.setPrices")}
+          className="text-sm text-muted-foreground"
+          titleClassName="text-sm font-medium text-muted-foreground"
+        />
         <div className="text-xs text-muted-foreground">
           {t("settings.services.tutorial.steps.setPricing.tip")}
         </div>
@@ -55,10 +60,12 @@ const createPackagesSetupSteps = (t: TFunction<"pages">): TutorialStep[] => [
     description: t("settings.services.tutorial.steps.configureServices.description"),
     content: (
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Target className="w-4 h-4" />
-          <span>{t("settings.services.highlights.customizeOfferings")}</span>
-        </div>
+        <OnboardingChecklistItem
+          icon={Target}
+          title={t("settings.services.highlights.customizeOfferings")}
+          className="text-sm text-muted-foreground"
+          titleClassName="text-sm font-medium text-muted-foreground"
+        />
         <div className="text-xs text-muted-foreground">
           {t("settings.services.tutorial.steps.configureServices.tip")}
         </div>

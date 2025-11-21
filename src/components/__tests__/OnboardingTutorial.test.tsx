@@ -160,7 +160,7 @@ describe("OnboardingTutorial", () => {
       })
     );
 
-    expect(latestModalProps.title).toBe("Step 1/2 · Welcome");
+    expect(latestModalProps.title).toBe("Welcome");
     expect(screen.getByText("Step 1")).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("modal-action-0"));
@@ -169,7 +169,7 @@ describe("OnboardingTutorial", () => {
     fireEvent.click(screen.getByTestId("modal-action-1"));
 
     await waitFor(() => {
-      expect(latestModalProps.title).toBe("Step 2/2 · Next Steps");
+      expect(latestModalProps.title).toBe("Next Steps");
     });
 
     expect(navigateMock).toHaveBeenCalledWith(
@@ -221,6 +221,6 @@ describe("OnboardingTutorial", () => {
       />
     );
 
-    expect(latestModalProps.title).toBe("Step 2/2 · Next Steps");
+    expect(latestModalProps.title).toBe("Next Steps");
   });
 });

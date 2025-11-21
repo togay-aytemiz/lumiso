@@ -30,6 +30,7 @@ import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettin
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
 // Permissions removed for single photographer mode
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
+import { OnboardingChecklistItem } from "@/components/shared/OnboardingChecklistItem";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { DetailPageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useMessagesTranslation, useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
@@ -199,13 +200,13 @@ const LeadDetail = () => {
             {introSections.map((section, index) => {
               const Icon = introIcons[index] ?? User;
               return (
-                <div key={section.title} className="flex items-start gap-3">
-                  <Icon className="w-5 h-5 text-primary mt-0.5" />
-                  <div>
-                    <h4 className="font-medium">{section.title}</h4>
-                    <p className="text-sm text-muted-foreground">{section.description}</p>
-                  </div>
-                </div>
+                <OnboardingChecklistItem
+                  key={section.title}
+                  icon={Icon}
+                  title={section.title}
+                  description={section.description}
+                  titleClassName="font-medium"
+                />
               );
             })}
           </div>

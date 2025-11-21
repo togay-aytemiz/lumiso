@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Check, ChevronDown, Search } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18nToast } from "@/lib/toastHelpers";
@@ -27,10 +26,10 @@ interface ProjectTypeSelectorProps {
   required?: boolean;
 }
 
-export function ProjectTypeSelector({ 
-  value, 
-  onValueChange, 
-  placeholder = "Select project type...", 
+export function ProjectTypeSelector({
+  value,
+  onValueChange,
+  placeholder = "Select project type...",
   disabled = false,
   className,
   required = false
@@ -38,7 +37,6 @@ export function ProjectTypeSelector({
   const [types, setTypes] = useState<ProjectType[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const toast = useI18nToast();
   const { settings: orgSettings, loading: settingsLoading } = useOrganizationSettings();
 
@@ -154,9 +152,12 @@ export function ProjectTypeSelector({
     }
   }, [value, visibleTypes, onValueChange]);
 
-  const filteredTypes = visibleTypes.filter(type =>
-    type.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTypes = useMemo(() => {
+    if (preferredSlugs.length > 0) {
+      return visibleTypes.filter(type => preferredSlugs.includes(normalizeTypeSlug(type)));
+    }
+    return visibleTypes;
+  }, [visibleTypes, preferredSlugs]);
 
   const selectedType =
     visibleTypes.find((type) => type.id === value) || types.find((type) => type.id === value);
@@ -189,7 +190,7 @@ export function ProjectTypeSelector({
             "Loading types..."
           ) : selectedType ? (
             <div className="flex items-center gap-2">
-              <Badge 
+              <Badge
                 variant={isDefaultType(selectedType) ? "default" : "secondary"}
                 className="text-xs"
               >
@@ -206,18 +207,6 @@ export function ProjectTypeSelector({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0 z-50 bg-popover" align="start">
-        <div className="p-3 border-b">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search project types..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-              autoFocus
-            />
-          </div>
-        </div>
         <div className="max-h-64 overflow-y-auto">
           <div className="py-1">
             {loading ? (
@@ -226,7 +215,7 @@ export function ProjectTypeSelector({
               </div>
             ) : filteredTypes.length === 0 ? (
               <div className="p-4 text-center text-sm text-muted-foreground">
-                {searchTerm ? 'No types match your search' : 'No project types found'}
+                No project types found
               </div>
             ) : (
               filteredTypes.map((type) => (
@@ -235,7 +224,6 @@ export function ProjectTypeSelector({
                   onClick={() => {
                     onValueChange(type.id);
                     setOpen(false);
-                    setSearchTerm("");
                   }}
                   className={cn(
                     "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0",
@@ -250,7 +238,7 @@ export function ProjectTypeSelector({
                       )}
                     />
                     <div className="flex items-center gap-2">
-                      <Badge 
+                      <Badge
                         variant={isDefaultType(type) ? "default" : "secondary"}
                         className="text-xs"
                       >

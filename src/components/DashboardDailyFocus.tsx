@@ -33,7 +33,10 @@ import {
   MapPin,
   Sparkles,
   StickyNote,
+  Check,
+  CheckCircle,
   TrendingUp,
+  UserPlus,
   Users
 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
@@ -1526,7 +1529,7 @@ const DashboardDailyFocus = ({
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-cyan-200 font-bold text-xs uppercase tracking-[0.35em]">
                 <Activity className="w-4 h-4 text-cyan-400" />
-                Lumiso Pulse
+                {t("daily_focus.lumiso_pulse", { defaultValue: "Lumiso Pulse" })}
               </div>
               <div className="text-indigo-300/60 text-[11px] font-mono">{formattedDate}</div>
             </div>
@@ -1535,12 +1538,20 @@ const DashboardDailyFocus = ({
               {greeting}
             </h1>
             <p className="text-slate-300 text-sm mb-8">
-              <Trans
-                i18nKey="daily_focus.active_tasks"
-                ns="dashboard"
-                values={{ count: totalActiveTasks }}
-                components={{ highlight: <span className="text-cyan-300 font-semibold" /> }}
-              />
+              {totalActiveTasks === 0 ? (
+                todaysSessions.length === 0 ? (
+                  t("daily_focus.no_active_tasks_clear")
+                ) : (
+                  t("daily_focus.no_active_tasks_caught_up")
+                )
+              ) : (
+                <Trans
+                  i18nKey="daily_focus.active_tasks"
+                  ns="dashboard"
+                  values={{ count: totalActiveTasks }}
+                  components={{ highlight: <span className="text-cyan-300 font-semibold" /> }}
+                />
+              )}
             </p>
 
             {nextSession ? (
@@ -1628,64 +1639,100 @@ const DashboardDailyFocus = ({
             )}
 
             <div className="space-y-3 mt-auto">
-              <button
-                type="button"
-                onClick={handleOverdueClick}
-                className="w-full group bg-slate-900/40 backdrop-blur-sm border border-white/5 hover:bg-white/10 hover:border-rose-500/30 rounded-xl p-4 flex items-center justify-between text-left"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
-                    <AlertCircle className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-xl font-bold text-white leading-none mb-1">{overdueTasks.length}</div>
-                    <div className="text-[10px] font-bold text-rose-400/80 uppercase tracking-wider">
-                      {t("daily_focus.overdue_items")}
+              {overdueTasks.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleOverdueClick}
+                  className="w-full group backdrop-blur-sm border border-white/5 rounded-xl p-4 flex items-center justify-between text-left transition-all bg-slate-900/40 hover:bg-white/10 hover:border-rose-500/30"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full border flex items-center justify-center bg-rose-500/10 border-rose-500/20 text-rose-400">
+                      <AlertCircle className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-xl font-bold leading-none mb-1 text-white">
+                        {overdueTasks.length}
+                      </div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-rose-400/80">
+                        {t("daily_focus.overdue_items")}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-white transition-all" />
-              </button>
+                  <ChevronRight className="w-5 h-5 transition-all text-slate-600 group-hover:text-white" />
+                </button>
+              )}
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={handleInactiveLeadsClick}
-                  className="w-full group bg-slate-900/40 backdrop-blur-sm border border-white/5 hover:bg-white/10 hover:border-amber-500/30 rounded-xl p-3 flex items-center justify-between text-left"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                      <AlertTriangle className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-lg font-bold text-white leading-none mb-1">{inactiveLeadCount}</div>
-                      <div className="text-[10px] font-bold text-amber-400/80 uppercase tracking-wider truncate">
-                        {t("daily_focus.inactive_leads")}
+                {leads.length > 0 && inactiveLeadCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleInactiveLeadsClick}
+                    className="w-full group backdrop-blur-sm border border-white/5 rounded-xl p-3 flex items-center justify-between text-left transition-all bg-slate-900/40 hover:bg-white/10 hover:border-amber-500/30"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full border flex items-center justify-center bg-amber-500/10 border-amber-500/20 text-amber-400">
+                        <AlertTriangle className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-lg font-bold leading-none mb-1 text-white">
+                          {inactiveLeadCount}
+                        </div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider truncate text-amber-400/80">
+                          {t("daily_focus.inactive_leads")}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-all" />
-                </button>
+                    <ChevronRight className="w-4 h-4 transition-all text-slate-500 group-hover:text-white" />
+                  </button>
+                )}
 
-                <button
-                  type="button"
-                  onClick={handleDueTodayClick}
-                  className="w-full group bg-slate-900/40 backdrop-blur-sm border border-white/5 hover:bg-white/10 hover:border-indigo-500/30 rounded-xl p-3 flex items-center justify-between text-left"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-                      <CheckCircle2 className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-lg font-bold text-white leading-none mb-1">{todayTasks.length}</div>
-                      <div className="text-[10px] font-bold text-indigo-400/80 uppercase tracking-wider truncate">
-                        {t("daily_focus.due_today")}
+                {todayTasks.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleDueTodayClick}
+                    className="w-full group backdrop-blur-sm border border-white/5 rounded-xl p-3 flex items-center justify-between text-left transition-all bg-slate-900/40 hover:bg-white/10 hover:border-indigo-500/30"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full border flex items-center justify-center bg-indigo-500/10 border-indigo-500/20 text-indigo-400">
+                        <CheckCircle2 className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-lg font-bold leading-none mb-1 text-white">
+                          {todayTasks.length}
+                        </div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider truncate text-indigo-400/80">
+                          {t("daily_focus.due_today")}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-all" />
-                </button>
+                    <ChevronRight className="w-4 h-4 transition-all text-slate-500 group-hover:text-white" />
+                  </button>
+                )}
               </div>
+
+              {/* Compact Status Footer */}
+              {(overdueTasks.length === 0 || todayTasks.length === 0 || (leads.length > 0 && inactiveLeadCount === 0)) && (
+                <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 px-2">
+                  {overdueTasks.length === 0 && (
+                    <div className="flex items-center gap-2 text-sm font-medium text-indigo-400/80">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>{t("daily_focus.no_overdue_items", { defaultValue: "No Overdue Items" })}</span>
+                    </div>
+                  )}
+                  {todayTasks.length === 0 && (
+                    <div className="flex items-center gap-2 text-sm font-medium text-indigo-400/80">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>{t("daily_focus.no_tasks_today", { defaultValue: "No Tasks Today" })}</span>
+                    </div>
+                  )}
+                  {leads.length > 0 && inactiveLeadCount === 0 && (
+                    <div className="flex items-center gap-2 text-sm font-medium text-indigo-400/80">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>{t("daily_focus.all_leads_active")}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -2075,7 +2122,7 @@ const DashboardDailyFocus = ({
           chip={{
             tone: "neutral",
             label: t("daily_focus.stats.chips.upcoming_sessions", {
-              count: formatInteger(sessionMetrics.upcomingPlanned)
+              count: sessionMetrics.upcomingPlanned
             })
           }}
           timeframe={sessionTimeframe === "mtd" ? "month" : "year"}
@@ -2122,12 +2169,14 @@ const DashboardDailyFocus = ({
           context={`${getSectionLabel("action")} · ${t("daily_focus.stats.labels.overdue")}`}
           label={t("daily_focus.stats.titles.outstanding")}
           value={renderCurrencyValue(outstandingBalance)}
-          icon={AlertTriangle}
-          color="rose"
+          icon={outstandingBalance === 0 ? CheckCircle : AlertTriangle}
+          color={outstandingBalance === 0 ? "emerald" : "rose"}
           chip={{
-            tone: "negative",
-            icon: <ArrowRight className="h-3 w-3" />,
-            label: t("daily_focus.stats.chips.needs_action")
+            tone: outstandingBalance === 0 ? "positive" : "negative",
+            icon: outstandingBalance === 0 ? <Check className="h-3 w-3" /> : <ArrowRight className="h-3 w-3" />,
+            label: outstandingBalance === 0
+              ? t("daily_focus.stats.chips.all_caught_up", { defaultValue: "All caught up" })
+              : t("daily_focus.stats.chips.needs_action")
           }}
           info={{
             content: t("daily_focus.stats.tooltips.outstanding")
@@ -2135,10 +2184,11 @@ const DashboardDailyFocus = ({
         />
       </section>
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-2 mb-10">
-        <Card className="border-slate-200 shadow-sm">
-          <CardHeader className="pb-2">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-col gap-1">
+        <Card className="border-slate-200 shadow-sm flex flex-col h-full">
+          <CardHeader className="pb-0 sm:pb-1">
+            <div className="flex flex-col gap-3 sm:gap-2">
+              {/* Title row */}
+              <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <CardTitle className="text-lg font-semibold text-slate-900">
                     {t("daily_focus.weekly_schedule_title", { defaultValue: "Weekly Schedule" })}
@@ -2150,25 +2200,13 @@ const DashboardDailyFocus = ({
                     {t("daily_focus.view_calendar", { defaultValue: "See calendar" })}
                   </button>
                 </div>
-                <p className="text-sm text-slate-500">{weeklyMetaLabel}</p>
-              </div>
-              <div className="flex flex-col gap-2 items-end">
-                <div className="flex items-center gap-3">
-                  {!isViewingCurrentWeek && (
-                    <Button
-                      variant="surface"
-                      size="sm"
-                      className="border-slate-200 text-slate-700 hover:text-slate-900"
-                      onClick={() => setWeekReference(new Date())}
-                    >
-                      {t("daily_focus.weekly_schedule_today", { defaultValue: "Back to current week" })}
-                    </Button>
-                  )}
-                  <div className="inline-flex items-center gap-2">
+                {/* Week selector - desktop only (same row as title) */}
+                <div className="hidden sm:flex flex-col items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-9 w-9 rounded-full border border-slate-200 text-slate-600 hover:border-slate-300"
+                      className="h-8 w-8 min-h-8 min-w-8 rounded-full border border-slate-200 text-slate-600 hover:border-slate-300 shrink-0"
                       onClick={() => handleWeekChange(-1)}
                       aria-label={t("daily_focus.weekly_schedule_prev", { defaultValue: "Previous week" })}
                     >
@@ -2180,18 +2218,73 @@ const DashboardDailyFocus = ({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-9 w-9 rounded-full border border-slate-200 text-slate-600 hover:border-slate-300"
+                      className="h-8 w-8 min-h-8 min-w-8 rounded-full border border-slate-200 text-slate-600 hover:border-slate-300 shrink-0"
                       onClick={() => handleWeekChange(1)}
                       aria-label={t("daily_focus.weekly_schedule_next", { defaultValue: "Next week" })}
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
+                  {/* "Back to current week" button - desktop only, centered under week selector with transition */}
+                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${!isViewingCurrentWeek ? 'max-h-12 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <Button
+                      variant="surface"
+                      size="sm"
+                      className="border-slate-200 text-slate-700 hover:text-slate-900"
+                      onClick={() => setWeekReference(new Date())}
+                    >
+                      {t("daily_focus.weekly_schedule_today", { defaultValue: "Back to current week" })}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Meta label - only shown when there are sessions/activities */}
+              {weeklyHasSessions && (
+                <p className="text-sm text-slate-500">{weeklyMetaLabel}</p>
+              )}
+
+              {/* Week selector - mobile only (full width) */}
+              <div className="flex sm:hidden flex-col gap-2">
+                <div className="flex items-center justify-center gap-2 w-full">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 min-h-8 min-w-8 rounded-full border border-slate-200 text-slate-600 hover:border-slate-300 shrink-0"
+                    onClick={() => handleWeekChange(-1)}
+                    aria-label={t("daily_focus.weekly_schedule_prev", { defaultValue: "Previous week" })}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="flex-1 text-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-semibold text-slate-700">
+                    {weekBoundaries.label}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 min-h-8 min-w-8 rounded-full border border-slate-200 text-slate-600 hover:border-slate-300 shrink-0"
+                    onClick={() => handleWeekChange(1)}
+                    aria-label={t("daily_focus.weekly_schedule_next", { defaultValue: "Next week" })}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* "Back to current week" button - mobile only, full width below week selector with transition */}
+                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${!isViewingCurrentWeek ? 'max-h-12 opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <Button
+                    variant="surface"
+                    size="sm"
+                    className="w-full border-slate-200 text-slate-700 hover:text-slate-900 h-9"
+                    onClick={() => setWeekReference(new Date())}
+                  >
+                    {t("daily_focus.weekly_schedule_today", { defaultValue: "Back to current week" })}
+                  </Button>
                 </div>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-2">
+          <CardContent className="pt-2 flex flex-col flex-1">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" />
 
             {weeklyHasSessions ? (
@@ -2217,10 +2310,26 @@ const DashboardDailyFocus = ({
                 />
               </div>
             ) : (
-              <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
-                {t("daily_focus.weekly_schedule_empty_helper", {
-                  defaultValue: "Add a session to see it appear on this weekly view."
-                })}
+              <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-12 text-center flex-1">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-500 ring-4 ring-indigo-50/50">
+                  <CalendarIcon className="h-6 w-6" />
+                </div>
+                <h3 className="mb-1 text-sm font-semibold text-slate-900">
+                  {t("daily_focus.weekly_schedule_empty_title", { defaultValue: "No sessions this week" })}
+                </h3>
+                <p className="mb-6 text-sm text-slate-500 max-w-[240px]">
+                  {t("daily_focus.weekly_schedule_empty_description", {
+                    defaultValue: "Your schedule is clear for this week. Time to plan ahead?"
+                  })}
+                </p>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => triggerAddAction("session")}
+                  className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+                >
+                  {t("daily_focus.weekly_schedule_empty_action", { defaultValue: "Schedule Session" })}
+                </Button>
               </div>
             )}
           </CardContent>
@@ -2295,7 +2404,7 @@ const DashboardDailyFocus = ({
                     <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       {tPages("payments.range.label", { defaultValue: "Date range" })}
                     </span>
-                    <span className="text-lg font-semibold text-foreground">{revenueRangeLabel}</span>
+                    <span className="text-sm font-semibold text-foreground">{revenueRangeLabel}</span>
                   </div>
                 ) : (
                   <span className="text-sm text-muted-foreground">{revenueRangeNotice}</span>
@@ -2450,10 +2559,18 @@ const DashboardDailyFocus = ({
                 </ComposedChart>
               </ChartContainer>
             ) : (
-              <div className="flex h-full min-h-[340px] items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500">
-                {t("daily_focus.revenue_chart.empty_state", {
-                  defaultValue: "No payments in this range yet."
-                })}
+              <div className="flex h-full min-h-[420px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-4 text-center">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-500 ring-4 ring-indigo-50/50">
+                  <Coins className="h-6 w-6" />
+                </div>
+                <h3 className="mb-1 text-sm font-semibold text-slate-900">
+                  {t("daily_focus.revenue_empty_title", { defaultValue: "No payments in this range" })}
+                </h3>
+                <p className="text-sm text-slate-500 max-w-[240px]">
+                  {t("daily_focus.revenue_empty_description", {
+                    defaultValue: "There are no recorded payments for the selected date range."
+                  })}
+                </p>
               </div>
             )}
           </CardContent>

@@ -48,6 +48,7 @@ import {
   SunMedium,
 } from "lucide-react";
 import { cn, formatGroupDate, getWeekRange } from "@/lib/utils";
+import { EmptyState } from "@/components/EmptyState";
 
 interface Activity {
   id: string;
@@ -818,11 +819,11 @@ const ReminderDetails = () => {
           prev.map((activity) =>
             activity.id === editingReminder.id
               ? {
-                  ...activity,
-                  content: values.content,
-                  reminder_date: date,
-                  reminder_time: time,
-                }
+                ...activity,
+                content: values.content,
+                reminder_date: date,
+                reminder_time: time,
+              }
               : activity
           )
         );
@@ -1004,7 +1005,7 @@ const ReminderDetails = () => {
                         className={cn(
                           filterPillBadgeBaseClasses,
                           selectedFilter === option.key &&
-                            filterPillBadgeActiveClasses
+                          filterPillBadgeActiveClasses
                         )}
                       >
                         {option.count}
@@ -1032,18 +1033,13 @@ const ReminderDetails = () => {
             </div>
 
             {groupedActiveActivities.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border/70 bg-card/50 p-12 text-center text-muted-foreground">
-                <Bell
-                  className="mx-auto mb-4 h-12 w-12 opacity-60"
-                  aria-hidden="true"
-                />
-                <h3 className="text-lg font-medium text-foreground">
-                  {t("reminders.emptyState.title")}
-                </h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {t("reminders.emptyState.description")}
-                </p>
-              </div>
+              <EmptyState
+                icon={Bell}
+                iconVariant="pill"
+                iconColor="emerald"
+                title={t("reminders.emptyState.title")}
+                description={t("reminders.emptyState.description")}
+              />
             ) : (
               <div className="space-y-6">
                 {visibleActiveGroups.map((group) => {
@@ -1167,8 +1163,8 @@ const ReminderDetails = () => {
                                   onOpenProject={
                                     activity.project_id
                                       ? () => openProjectSheet(
-                                          activity.project_id
-                                        )
+                                        activity.project_id
+                                      )
                                       : undefined
                                   }
                                   showStatusIndicator

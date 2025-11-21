@@ -121,7 +121,7 @@ const AllProjects = () => {
   const archivedPageSize = 25;
   const [exporting, setExporting] = useState(false);
   const [boardLoading, setBoardLoading] = useState(false);
-  const refreshAllRef = useRef<() => Promise<void> | void>(() => {});
+  const refreshAllRef = useRef<() => Promise<void> | void>(() => { });
   const { reportNetworkError, reportRecovery, registerRetry } = useConnectivity();
   const { activeOrganizationId } = useOrganization();
   const navigate = useNavigate();
@@ -169,7 +169,7 @@ const AllProjects = () => {
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   const [tutorialInitiated, setTutorialInitiated] = useState(false);
-  
+
   // Tutorial interaction tracking
   const [hasMovedProject, setHasMovedProject] = useState(false);
   const [hasClickedListView, setHasClickedListView] = useState(false);
@@ -336,8 +336,8 @@ const AllProjects = () => {
     const textClass = total === 0
       ? "text-muted-foreground"
       : pending === 0
-      ? "text-green-600 font-medium"
-      : "text-foreground";
+        ? "text-green-600 font-medium"
+        : "text-foreground";
 
     const label = `${completed}/${total}`;
 
@@ -421,17 +421,17 @@ const AllProjects = () => {
     [formatServicesList]
   );
 
-const formatCurrency = useCallback((amount: string | number | null) => {
-  const value = Number(amount || 0);
-  try {
-    return new Intl.NumberFormat("tr-TR", {
-      style: "currency",
-      currency: "TRY",
-    }).format(value);
-  } catch {
-    return `${value.toFixed(2)} TRY`;
-  }
-}, []);
+  const formatCurrency = useCallback((amount: string | number | null) => {
+    const value = Number(amount || 0);
+    try {
+      return new Intl.NumberFormat("tr-TR", {
+        style: "currency",
+        currency: "TRY",
+      }).format(value);
+    } catch {
+      return `${value.toFixed(2)} TRY`;
+    }
+  }, []);
 
   const handleStatusRefresh = useCallback(() => {
     refreshAllRef.current?.();
@@ -701,10 +701,15 @@ const formatCurrency = useCallback((amount: string | number | null) => {
   const listEmptyState = (
     <EmptyState
       icon={FolderPlus}
+      iconVariant="pill"
+      iconColor="emerald"
       title={t('projects.listEmptyState.title')}
       description={t('projects.listEmptyState.description')}
       action={
-        <Button onClick={() => setProjectWizardOpen(true)}>
+        <Button
+          onClick={() => setProjectWizardOpen(true)}
+          className="group flex h-11 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-5 text-sm font-semibold text-emerald-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100"
+        >
           {t('projects.addProject')}
         </Button>
       }
@@ -714,6 +719,8 @@ const formatCurrency = useCallback((amount: string | number | null) => {
   const archivedEmptyState = (
     <EmptyState
       icon={Archive}
+      iconVariant="pill"
+      iconColor="emerald"
       title={t('projects.listEmptyState.archivedTitle')}
       description={t('projects.listEmptyState.archivedDescription')}
     />
@@ -1144,7 +1151,7 @@ const formatCurrency = useCallback((amount: string | number | null) => {
       id: 2,
       title: tForms('projects.boardViewTitle'),
       description: isMobile ? tForms('projects.boardViewMobileDescription') : tForms('projects.boardViewDescription'),
-      content: isMobile 
+      content: isMobile
         ? tForms('projects.boardViewMobileContent')
         : tForms('projects.boardViewContent'),
       canProceed: isMobile || hasMovedProject,
@@ -1239,167 +1246,164 @@ const formatCurrency = useCallback((amount: string | number | null) => {
       />
 
       <div className="flex flex-col h-screen overflow-x-hidden">
-      {/* Header */}
-      <div className="flex-shrink-0">
-        <PageHeader title={tForms('projects.pageTitle')}>
-          <PageHeaderSearch>
-            <GlobalSearch variant="header" />
-          </PageHeaderSearch>
-        </PageHeader>
-      </div>
+        {/* Header */}
+        <div className="flex-shrink-0">
+          <PageHeader title={tForms('projects.pageTitle')}>
+            <PageHeaderSearch>
+              <GlobalSearch variant="header" />
+            </PageHeaderSearch>
+          </PageHeader>
+        </div>
 
-      {/* Global offline banner lives in Layout */}
+        {/* Global offline banner lives in Layout */}
 
-      {/* View Toggle - mobile friendly tabs */}
-      <div className="flex-shrink-0 px-4 sm:px-6 pb-2">
-        <div className="border-b border-border">
-          <div className="flex items-center justify-between pb-0 overflow-x-auto">
-            <div className="flex items-center gap-0">
-              <button
-                onClick={() => handleViewChange('board')}
-                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                  viewMode === 'board'
-                    ? 'border-primary text-primary' 
+        {/* View Toggle - mobile friendly tabs */}
+        <div className="flex-shrink-0 px-4 sm:px-6 pb-2">
+          <div className="border-b border-border">
+            <div className="flex items-center justify-between pb-0 overflow-x-auto">
+              <div className="flex items-center gap-0">
+                <button
+                  onClick={() => handleViewChange('board')}
+                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${viewMode === 'board'
+                    ? 'border-primary text-primary'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <LayoutGrid className="h-4 w-4" />
-                <span className="hidden sm:inline">{tForms('projects.board')}</span>
-              </button>
-              <button
-                onClick={() => handleViewChange('list')}
-                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                  viewMode === 'list' 
-                    ? 'border-primary text-primary' 
+                    }`}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                  <span className="hidden sm:inline">{tForms('projects.board')}</span>
+                </button>
+                <button
+                  onClick={() => handleViewChange('list')}
+                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${viewMode === 'list'
+                    ? 'border-primary text-primary'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <List className="h-4 w-4" />
-                <span className="hidden sm:inline">{tForms('projects.list')}</span>
-              </button>
-              <button
-                onClick={() => handleViewChange('archived')}
-                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                  viewMode === 'archived' 
-                    ? 'border-primary text-primary' 
+                    }`}
+                >
+                  <List className="h-4 w-4" />
+                  <span className="hidden sm:inline">{tForms('projects.list')}</span>
+                </button>
+                <button
+                  onClick={() => handleViewChange('archived')}
+                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${viewMode === 'archived'
+                    ? 'border-primary text-primary'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <Archive className="h-4 w-4" />
-                <span className="hidden sm:inline">{tForms('projects.archived')}</span>
-                <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded ml-1">
-                  {archivedTotalCount}
-                </span>
-              </button>
+                    }`}
+                >
+                  <Archive className="h-4 w-4" />
+                  <span className="hidden sm:inline">{tForms('projects.archived')}</span>
+                  <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded ml-1">
+                    {archivedTotalCount}
+                  </span>
+                </button>
+              </div>
+
+              {viewMode === 'board' && (
+                <KanbanSettingsSheet>
+                  <Button variant="ghost" size="sm" className="flex items-center gap-2 h-8 px-2 text-muted-foreground hover:bg-accent/5 hover:text-accent">
+                    <Settings className="h-4 w-4" />
+                    <span className="hidden md:inline text-sm">{tForms('projects.boardSettings')}</span>
+                  </Button>
+                </KanbanSettingsSheet>
+              )}
             </div>
-            
-            {viewMode === 'board' && (
-              <KanbanSettingsSheet>
-                <Button variant="ghost" size="sm" className="flex items-center gap-2 h-8 px-2 text-muted-foreground hover:bg-accent/5 hover:text-accent">
-                  <Settings className="h-4 w-4" />
-                  <span className="hidden md:inline text-sm">{tForms('projects.boardSettings')}</span>
-                </Button>
-              </KanbanSettingsSheet>
-            )}
           </div>
         </div>
-      </div>
 
-      {/* Content area - board manages its own scroll, lists get contained scroll */}
-      <div className="flex-1 min-h-0">
-        {viewMode === 'board' ? (
-          <ProjectKanbanBoard
-            projects={boardProjects}
-            projectStatuses={projectStatuses}
-            onProjectsChange={refreshAll}
-            onProjectUpdate={handleProjectUpdate}
-            onQuickView={handleQuickView}
-            isLoading={boardLoading || statusesLoading}
-            hasMore={boardHasMore}
-            onLoadMore={boardHasMore ? loadMoreBoard : undefined}
-            isLoadingMore={boardLoadingMore}
-          />
-        ) : (
-          <div className="h-full overflow-y-auto p-4 sm:p-6">
-            {viewMode === 'list' && (
-              <AdvancedDataTable
-                title={t('projects.list_view')}
-                data={paginatedListRows}
-                columns={listTableColumns}
-                rowKey={(row) => row.id}
-                onRowClick={handleProjectClick}
-                sortState={sortState}
-                onSortChange={handleTableSortChange}
-                isLoading={listLoading && listPage === 1 && paginatedListRows.length === 0}
-                filters={listFiltersConfig}
-                actions={listExportActions}
-                summary={listHeaderSummary}
-                emptyState={listEmptyState}
-                onLoadMore={listHasMore ? handleListLoadMore : undefined}
-                hasMore={listHasMore}
-                isLoadingMore={listIsLoadingMore}
-              />
-            )}
+        {/* Content area - board manages its own scroll, lists get contained scroll */}
+        <div className="flex-1 min-h-0">
+          {viewMode === 'board' ? (
+            <ProjectKanbanBoard
+              projects={boardProjects}
+              projectStatuses={projectStatuses}
+              onProjectsChange={refreshAll}
+              onProjectUpdate={handleProjectUpdate}
+              onQuickView={handleQuickView}
+              isLoading={boardLoading || statusesLoading}
+              hasMore={boardHasMore}
+              onLoadMore={boardHasMore ? loadMoreBoard : undefined}
+              isLoadingMore={boardLoadingMore}
+            />
+          ) : (
+            <div className="h-full overflow-y-auto p-4 sm:p-6">
+              {viewMode === 'list' && (
+                <AdvancedDataTable
+                  title={t('projects.list_view')}
+                  data={paginatedListRows}
+                  columns={listTableColumns}
+                  rowKey={(row) => row.id}
+                  onRowClick={handleProjectClick}
+                  sortState={sortState}
+                  onSortChange={handleTableSortChange}
+                  isLoading={listLoading && listPage === 1 && paginatedListRows.length === 0}
+                  filters={listFiltersConfig}
+                  actions={listExportActions}
+                  summary={listHeaderSummary}
+                  emptyState={listEmptyState}
+                  onLoadMore={listHasMore ? handleListLoadMore : undefined}
+                  hasMore={listHasMore}
+                  isLoadingMore={listIsLoadingMore}
+                />
+              )}
 
-            {viewMode === 'archived' && (
-              <AdvancedDataTable
-                title={t('projects.archived_view')}
-                data={paginatedArchivedRows}
-                columns={archivedTableColumns}
-                rowKey={(row) => row.id}
-                onRowClick={handleProjectClick}
-                sortState={sortState}
-                onSortChange={handleTableSortChange}
-                isLoading={archivedLoading && archivedPage === 1 && paginatedArchivedRows.length === 0}
-                filters={archivedFiltersConfig}
-                actions={archivedExportActions}
-                summary={archivedHeaderSummary}
-                emptyState={archivedEmptyState}
-                onLoadMore={archivedHasMore ? handleArchivedLoadMore : undefined}
-                hasMore={archivedHasMore}
-                isLoadingMore={archivedIsLoadingMore}
+              {viewMode === 'archived' && (
+                <AdvancedDataTable
+                  title={t('projects.archived_view')}
+                  data={paginatedArchivedRows}
+                  columns={archivedTableColumns}
+                  rowKey={(row) => row.id}
+                  onRowClick={handleProjectClick}
+                  sortState={sortState}
+                  onSortChange={handleTableSortChange}
+                  isLoading={archivedLoading && archivedPage === 1 && paginatedArchivedRows.length === 0}
+                  filters={archivedFiltersConfig}
+                  actions={archivedExportActions}
+                  summary={archivedHeaderSummary}
+                  emptyState={archivedEmptyState}
+                  onLoadMore={archivedHasMore ? handleArchivedLoadMore : undefined}
+                  hasMore={archivedHasMore}
+                  isLoadingMore={archivedIsLoadingMore}
+                />
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Project Sheet View */}
+        <ProjectSheetView
+          project={quickViewProject}
+          open={showQuickView}
+          onOpenChange={setShowQuickView}
+          onProjectUpdated={refreshAll}
+          leadName={quickViewProject?.lead?.name || ""}
+          mode="sheet"
+          onViewFullDetails={handleViewFullDetails}
+        />
+
+        {/* View Project Dialog */}
+        <ViewProjectDialog
+          project={viewingProject}
+          open={showViewDialog}
+          onOpenChange={setShowViewDialog}
+          onProjectUpdated={refreshAll}
+          onActivityUpdated={() => { }} // Not needed in this context
+          leadName={viewingProject?.lead?.name || ""}
+        />
+
+        {/* Tutorial Component - positioned to not block view selector */}
+        {showTutorial && (
+          <div className="fixed inset-0 z-[100] pointer-events-none">
+            <div className="pointer-events-auto">
+              <OnboardingTutorial
+                steps={tutorialSteps}
+                isVisible={showTutorial}
+                onComplete={handleTutorialComplete}
+                onExit={handleTutorialExit}
+                initialStepIndex={currentTutorialStep}
               />
-            )}
+            </div>
           </div>
         )}
       </div>
-
-      {/* Project Sheet View */}
-      <ProjectSheetView
-        project={quickViewProject}
-        open={showQuickView}
-        onOpenChange={setShowQuickView}
-        onProjectUpdated={refreshAll}
-        leadName={quickViewProject?.lead?.name || ""}
-        mode="sheet"
-        onViewFullDetails={handleViewFullDetails}
-      />
-
-      {/* View Project Dialog */}
-      <ViewProjectDialog
-        project={viewingProject}
-        open={showViewDialog}
-        onOpenChange={setShowViewDialog}
-        onProjectUpdated={refreshAll}
-        onActivityUpdated={() => {}} // Not needed in this context
-        leadName={viewingProject?.lead?.name || ""}
-      />
-
-      {/* Tutorial Component - positioned to not block view selector */}
-      {showTutorial && (
-        <div className="fixed inset-0 z-[100] pointer-events-none">
-          <div className="pointer-events-auto">
-            <OnboardingTutorial
-              steps={tutorialSteps}
-              isVisible={showTutorial}
-              onComplete={handleTutorialComplete}
-              onExit={handleTutorialExit}
-              initialStepIndex={currentTutorialStep}
-            />
-          </div>
-        </div>
-      )}
-    </div>
     </>
   );
 };

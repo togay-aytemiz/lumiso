@@ -30,6 +30,7 @@ import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
 import {
   AdvancedDataTable,
   type AdvancedDataTableSortState,
+  type SortDirection,
 } from "@/components/data-table";
 import { useLeadsFilters, type CustomFieldFilterValue } from "@/pages/leads/hooks/useLeadsFilters";
 import type { LeadFieldDefinition } from "@/types/leadFields";
@@ -589,7 +590,7 @@ const AllLeadsNew = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const isSchedulingTutorialParam = urlParams.get('tutorial') === 'scheduling';
-    
+
     if (isSchedulingTutorialParam) {
       setIsSchedulingTutorial(true);
       setShowTutorial(true);
@@ -618,7 +619,7 @@ const AllLeadsNew = () => {
     } catch (error) {
       console.error(t('leads.messages.errorCompletingTutorial'), error);
       toast({
-        title: "Error", 
+        title: "Error",
         description: t('leads.messages.failedToSaveProgress'),
         variant: "destructive"
       });
@@ -917,7 +918,7 @@ const AllLeadsNew = () => {
 
   const handleRowClick = (lead: LeadWithCustomFields) => {
     const state: LeadNavigationState = { from: "all-leads" };
-    
+
     if (showTutorial) {
       if (isSchedulingTutorial && currentTutorialStep === 1) {
         state.continueTutorial = true;
@@ -928,7 +929,7 @@ const AllLeadsNew = () => {
         state.tutorialStep = 4;
       }
     }
-    
+
     navigate(`/leads/${lead.id}`, { state });
   };
 
@@ -942,13 +943,15 @@ const AllLeadsNew = () => {
       ? t("leads.noLeadsWithStatus", { status: filtersState.status[0] })
       : t("leads.noLeadsWithStatuses", { statuses: filtersState.status.join(", ") })
     : hasAnyFilters
-    ? t("leads.noLeadsWithFilters")
-    : t("leads.noLeadsAllStatuses");
+      ? t("leads.noLeadsWithFilters")
+      : t("leads.noLeadsAllStatuses");
 
   const emptyState = (
     <div className="py-10">
       <EmptyState
         icon={Users}
+        iconVariant="pill"
+        iconColor="emerald"
         title={
           hasAnyFilters
             ? t("leads.emptyState.filteredTitle")
@@ -956,7 +959,10 @@ const AllLeadsNew = () => {
         }
         description={emptyStateMessage}
         action={
-          <Button onClick={() => setAddLeadDialogOpen(true)}>
+          <Button
+            onClick={() => setAddLeadDialogOpen(true)}
+            className="group flex h-11 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-5 text-sm font-semibold text-emerald-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100"
+          >
             {t("leads.addLead")}
           </Button>
         }
@@ -996,7 +1002,7 @@ const AllLeadsNew = () => {
           <GlobalSearch variant="header" />
         </PageHeaderSearch>
       </PageHeader>
-      
+
       <div className="space-y-6 p-4 sm:p-6">
         <section className="space-y-4">
           {(leadsInitialLoading || leadsTableLoading) ? (
@@ -1139,7 +1145,7 @@ const AllLeadsNew = () => {
           {columnsLoading ? (
             <TableLoadingSkeleton />
           ) : (
-          <AdvancedDataTable
+            <AdvancedDataTable
               title={t('leads.tableTitle')}
               data={paginatedLeads}
               columns={advancedColumns}
@@ -1160,9 +1166,9 @@ const AllLeadsNew = () => {
           )}
         </section>
       </div>
-      
-      <EnhancedAddLeadDialog 
-        onSuccess={() => refreshLeads()} 
+
+      <EnhancedAddLeadDialog
+        onSuccess={() => refreshLeads()}
         open={addLeadDialogOpen}
         onOpenChange={handleAddLeadDialogChange}
         onClose={() => handleAddLeadDialogChange(false)}

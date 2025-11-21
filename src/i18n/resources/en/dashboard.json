@@ -5,7 +5,7 @@
   },
   "stats": {
     "total_leads": "Total Leads",
-    "this_weeks_sessions": "This Week's Sessions", 
+    "this_weeks_sessions": "This Week's Sessions",
     "booked_leads": "Booked Leads",
     "completed_leads": "Completed Leads",
     "lost_leads": "Lost Leads",
@@ -22,7 +22,7 @@
       "description": "Task reminders and notifications",
       "no_tasks": "No tasks scheduled. Enjoy your day 👏",
       "today": "Today",
-      "overdue": "Overdue", 
+      "overdue": "Overdue",
       "upcoming": "Upcoming",
       "more_tasks": "more"
     },
@@ -77,16 +77,21 @@
     "overdue_items": "Overdue Items",
     "inactive_leads": "Inactive Leads",
     "due_today": "Due Today",
+    "no_overdue_items": "No Overdue Items",
+    "all_leads_active": "All Leads Active",
+    "no_tasks_today": "No Tasks Today",
     "schedule_heading": "Today's Schedule",
     "weekly_schedule_title": "Weekly Schedule",
     "revenue_overview_title": "Revenue Overview",
     "view_calendar": "See calendar",
     "view_payments": "See payments",
     "weekly_schedule_today": "Back to current week",
-    
     "weekly_schedule_prev": "Previous week",
     "weekly_schedule_next": "Next week",
     "schedule_summary": "{{sessions}} sessions · {{reminders}} reminders",
+    "no_active_tasks_clear": "Your schedule is clear today.",
+    "no_active_tasks_caught_up": "You're all caught up on tasks.",
+    "no_leads_yet": "No Leads Yet",
     "session_single": "session",
     "session_plural": "sessions",
     "reminder_single": "reminder",
@@ -94,6 +99,11 @@
     "no_reminders": "no reminders",
     "no_sessions": "no sessions",
     "weekly_schedule_empty_helper": "No sessions or reminders this week.",
+    "weekly_schedule_empty_title": "No sessions this week",
+    "weekly_schedule_empty_description": "Your schedule is clear for this week. Time to plan ahead?",
+    "weekly_schedule_empty_action": "Schedule Session",
+    "revenue_empty_title": "No payments in this range",
+    "revenue_empty_description": "There are no recorded payments for the selected date range.",
     "revenue_chart": {
       "label": "Revenue",
       "range_6m": "Last 6 Months",
@@ -135,7 +145,8 @@
       },
       "chips": {
         "upcoming_sessions": "{{count}} total upcoming",
-        "needs_action": "Needs Action"
+        "needs_action": "Needs Action",
+        "all_caught_up": "All caught up"
       },
       "trend": {
         "month": "{{value}}",

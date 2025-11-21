@@ -38,6 +38,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useSessionStatuses } from "@/hooks/useOrganizationData";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { EmptyState } from "@/components/EmptyState";
 
 interface Session {
   id: string;
@@ -313,10 +314,10 @@ const AllSessions = () => {
           project_status_id: projectStatus?.id ?? project?.status_id ?? null,
           project_status: projectStatus
             ? {
-                id: projectStatus.id,
-                name: projectStatus.name ?? '',
-                color: projectStatus.color ?? '#A0AEC0',
-              }
+              id: projectStatus.id,
+              name: projectStatus.name ?? '',
+              color: projectStatus.color ?? '#A0AEC0',
+            }
             : null,
         };
       });
@@ -982,14 +983,65 @@ const AllSessions = () => {
     []
   );
 
-  const emptyState = (
-    <div className="text-center py-12 text-muted-foreground">
-      <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-      <h3 className="text-lg font-medium mb-2">{tForms('sessions.noSessionsFound')}</h3>
-      <p>{tForms('sessions.noSessionsYet')}</p>
-      <p className="text-sm mt-2">{tForms('sessions.clickToSchedule')}</p>
-    </div>
-  );
+  const emptyState = useMemo(() => {
+    const getEmptyStateContent = () => {
+      switch (activeSegment) {
+        case 'upcoming':
+          return {
+            title: tForms('sessions.noUpcomingSessions', { defaultValue: 'No upcoming sessions found' }),
+            description: tForms('sessions.clickToSchedule'),
+          };
+        case 'in_progress':
+          return {
+            title: tForms('sessions.noInProgressSessions', { defaultValue: 'No in progress sessions found' }),
+            description: tForms('sessions.clickToSchedule'),
+          };
+        case 'pending':
+          return {
+            title: tForms('sessions.noPendingSessions', { defaultValue: 'No pending sessions found' }),
+            description: tForms('sessions.clickToSchedule'),
+          };
+        case 'past':
+          return {
+            title: tForms('sessions.noPastSessions', { defaultValue: 'No past sessions found' }),
+            description: '',
+          };
+        case 'cancelled':
+          return {
+            title: tForms('sessions.noCancelledSessions', { defaultValue: 'No cancelled sessions found' }),
+            description: '',
+          };
+        default: // 'all'
+          return {
+            title: tForms('sessions.noSessionsYet'),
+            description: tForms('sessions.clickToSchedule'),
+          };
+      }
+    };
+
+    const content = getEmptyStateContent();
+    const showButton = activeSegment !== 'past' && activeSegment !== 'cancelled';
+
+    return (
+      <EmptyState
+        icon={Calendar}
+        iconVariant="pill"
+        iconColor="emerald"
+        title={content.title}
+        description={content.description}
+        action={
+          showButton ? (
+            <Button
+              onClick={() => window.dispatchEvent(new CustomEvent(ADD_ACTION_EVENTS.session))}
+              className="group flex h-11 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-5 text-sm font-semibold text-emerald-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100"
+            >
+              {tForms('buttons.scheduleSession')}
+            </Button>
+          ) : undefined
+        }
+      />
+    );
+  }, [activeSegment, tForms]);
 
   const handleExportSessions = useCallback(async () => {
     if (exporting) return;

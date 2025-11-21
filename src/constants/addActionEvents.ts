@@ -1,7 +1,7 @@
 export type AddActionType = "lead" | "project" | "session";
 
 export interface AddActionEventDetail {
-  source: "header";
+  source: "header" | "dashboard";
   type: AddActionType;
 }
 

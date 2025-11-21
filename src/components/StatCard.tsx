@@ -29,7 +29,7 @@ interface StatCardProps {
   label: React.ReactNode;
   value: React.ReactNode;
   icon: LucideIcon;
-  color?: "indigo" | "amber" | "violet" | "rose" | "blue";
+  color?: "indigo" | "amber" | "violet" | "rose" | "blue" | "emerald";
   info?: StatCardInfo;
   chip?: StatCardChip;
   timeframe?: Timeframe;
@@ -50,7 +50,8 @@ const COLOR_STYLES: Record<
   blue: { bg: "from-[#4BA1FB] via-[#2D8CF6] to-[#2477EE]", glow: "shadow-sky-200/40" },
   amber: { bg: "from-[#FFBA42] via-[#FFA325] to-[#F18B00]", glow: "shadow-amber-200/40" },
   violet: { bg: "from-[#9F7BFF] via-[#8863F7] to-[#704FF0]", glow: "shadow-violet-200/40" },
-  rose: { bg: "from-[#FF5E72] via-[#F94D64] to-[#E6384D]", glow: "shadow-rose-200/40" }
+  rose: { bg: "from-[#FF5E72] via-[#F94D64] to-[#E6384D]", glow: "shadow-rose-200/40" },
+  emerald: { bg: "from-[#34D399] via-[#10B981] to-[#059669]", glow: "shadow-emerald-200/40" }
 };
 
 const CHIP_TONES: Record<ChipTone, string> = {
@@ -86,11 +87,10 @@ const StatCard: React.FC<StatCardProps> = ({
       <button
         type="button"
         onClick={() => onTimeframeChange?.(key)}
-        className={`h-[26px] w-[26px] rounded-full text-[11px] font-semibold transition-colors ${
-          isActive
-            ? "bg-white text-[#6F6FFB] shadow-sm"
-            : "text-slate-400 hover:text-slate-600"
-        }`}
+        className={`h-[26px] w-[26px] rounded-full text-[11px] font-semibold transition-colors ${isActive
+          ? "bg-white text-[#6F6FFB] shadow-sm"
+          : "text-slate-400 hover:text-slate-600"
+          }`}
         aria-pressed={isActive}
         aria-label={`Show ${display === "M" ? "month" : "year"} view`}
       >

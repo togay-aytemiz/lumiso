@@ -1,7 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
-import { Trans } from "react-i18next";
-import { format } from "date-fns";
+import { Trans, useTranslation } from "react-i18next";
+import {
+  eachDayOfInterval,
+  eachMonthOfInterval,
+  eachWeekOfInterval,
+  endOfDay,
+  endOfMonth,
+  format,
+  startOfDay,
+  startOfMonth,
+  startOfQuarter,
+  startOfYear,
+  subDays,
+  subMonths,
+  endOfWeek as dfEndOfWeek,
+  startOfWeek as dfStartOfWeek
+} from "date-fns";
 import {
   Activity,
   AlertCircle,
@@ -35,6 +50,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import SessionSheetView from "@/components/SessionSheetView";
 import { computeLeadInitials } from "@/components/leadInitialsUtils";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,11 +66,16 @@ import {
 } from "@/components/ui/tooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Area, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts";
 import StatCard from "@/components/StatCard";
 import { useProfile } from "@/hooks/useProfile";
 import { formatInTimeZone } from "date-fns-tz";
 import { CalendarWeek } from "@/components/calendar/CalendarWeek";
+import { DateRangePicker } from "@/components/DateRangePicker";
+import type { DateRange } from "react-day-picker";
+import { PAYMENT_COLORS } from "@/lib/paymentColors";
+import type { DateFilterType, TrendGrouping } from "@/pages/payments/types";
+import { cn } from "@/lib/utils";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
 type LeadWithLifecycleRow = LeadRow & {
@@ -250,6 +271,7 @@ const DashboardDailyFocus = ({
   const [now, setNow] = useState(new Date());
   const lastRangeRequestRef = useRef<string | null>(null);
   const { t, i18n } = useDashboardTranslation();
+  const { t: tPages } = useTranslation("pages");
   const navigate = useNavigate();
   const location = useLocation();
   const { profile } = useProfile();
@@ -260,7 +282,9 @@ const DashboardDailyFocus = ({
   const [leadTimeframe, setLeadTimeframe] = useState<"mtd" | "ytd">("mtd");
   const [sessionTimeframe, setSessionTimeframe] = useState<"mtd" | "ytd">("mtd");
   const [revenueTimeframe, setRevenueTimeframe] = useState<"mtd" | "ytd">("mtd");
-  const [revenueRangeMonths, setRevenueRangeMonths] = useState<6 | 12>(6);
+  const [revenueDateFilter, setRevenueDateFilter] = useState<DateFilterType>("monthToDate");
+  const [revenueCustomDateRange, setRevenueCustomDateRange] = useState<DateRange | undefined>();
+  const [revenueTrendGrouping, setRevenueTrendGrouping] = useState<TrendGrouping>("week");
   const [weekReference, setWeekReference] = useState<Date>(() => new Date());
   const getLeadInitials = useCallback(
     (name?: string | null) => computeLeadInitials(name, "??", 2),
@@ -334,6 +358,98 @@ const DashboardDailyFocus = ({
       lastYearEndIso: isoFor(endOfLastYear)
     };
   }, [now, timezone]);
+
+  const getRevenueDateRange = useCallback(
+    (filter: DateFilterType): { start: Date; end: Date } | null => {
+      const now = new Date();
+      const endToday = endOfDay(now);
+
+      switch (filter) {
+        case "last7days":
+          return { start: startOfDay(subDays(endToday, 6)), end: endToday };
+        case "last4weeks":
+          return { start: startOfDay(subDays(endToday, 27)), end: endToday };
+        case "last3months":
+          return { start: startOfDay(subMonths(endToday, 3)), end: endToday };
+        case "last12months":
+          return { start: startOfDay(subMonths(endToday, 12)), end: endToday };
+        case "monthToDate":
+          return { start: startOfDay(startOfMonth(now)), end: endToday };
+        case "quarterToDate":
+          return { start: startOfDay(startOfQuarter(now)), end: endToday };
+        case "yearToDate":
+          return { start: startOfDay(startOfYear(now)), end: endToday };
+        case "lastMonth": {
+          const lastMonth = subMonths(now, 1);
+          const monthStart = startOfMonth(lastMonth);
+          return { start: startOfDay(monthStart), end: endOfDay(endOfMonth(monthStart)) };
+        }
+        case "allTime":
+        case "custom":
+          if (revenueCustomDateRange?.from) {
+            return {
+              start: startOfDay(revenueCustomDateRange.from),
+              end: endOfDay(revenueCustomDateRange.to ?? revenueCustomDateRange.from)
+            };
+          }
+          return null;
+        default:
+          return null;
+      }
+    },
+    [revenueCustomDateRange]
+  );
+
+  const selectedRevenueDateRange = useMemo(() => {
+    const activeRange = getRevenueDateRange(revenueDateFilter);
+    if (activeRange) {
+      return activeRange;
+    }
+
+    const sortedDates = paymentStats
+      .map((payment) => {
+        const rawDate = payment.log_timestamp || payment.date_paid || payment.created_at;
+        if (!rawDate) return null;
+        const parsed = new Date(rawDate);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      })
+      .filter((date): date is Date => Boolean(date))
+      .sort((a, b) => a.getTime() - b.getTime());
+
+    if (!sortedDates.length) {
+      return null;
+    }
+
+    const earliest = startOfDay(sortedDates[0]);
+    const latest =
+      revenueDateFilter === "allTime"
+        ? endOfDay(new Date())
+        : endOfDay(sortedDates[sortedDates.length - 1]);
+
+    return { start: earliest, end: latest };
+  }, [getRevenueDateRange, paymentStats, revenueDateFilter]);
+
+  const revenueRangeLabel = useMemo(() => {
+    if (!selectedRevenueDateRange) {
+      return "";
+    }
+    const { start, end } = selectedRevenueDateRange;
+    const startLabel = formatInTimeZone(start, timezone, "dd MMM yyyy", { locale: dateFnsLocale });
+    const endLabel = formatInTimeZone(end, timezone, "dd MMM yyyy", { locale: dateFnsLocale });
+    return startLabel === endLabel ? startLabel : `${startLabel} – ${endLabel}`;
+  }, [dateFnsLocale, selectedRevenueDateRange, timezone]);
+
+  const revenueRangeNotice = useMemo(() => {
+    if (revenueDateFilter === "custom" && !revenueCustomDateRange?.from) {
+      return tPages("payments.range.noSelection", {
+        defaultValue: "Select a date range to see revenue"
+      });
+    }
+    if (!revenueRangeLabel) {
+      return tPages("payments.range.noData", { defaultValue: "No date range selected" });
+    }
+    return "";
+  }, [revenueCustomDateRange?.from, revenueDateFilter, revenueRangeLabel, tPages]);
 
   const isDateWithinRange = (value: string | null | undefined, start: Date, end: Date) => {
     if (!value) return false;
@@ -588,15 +704,22 @@ const DashboardDailyFocus = ({
       ? revenueMetrics.paidThisMonth - revenueMetrics.paidPreviousMonth
       : revenueMetrics.paidYtd - revenueMetrics.paidLastYear;
 
-  const timeframeToggleLabels = useMemo(
-    () => ({
-      month: t("daily_focus.stats.toggle.month_short"),
-      year: t("daily_focus.stats.toggle.year_short"),
+  const toInitial = useCallback((value: string, fallback: string) => {
+    const initial = value.trim().charAt(0).toUpperCase();
+    return initial || fallback;
+  }, []);
+
+  const timeframeToggleLabels = useMemo(() => {
+    const monthLabel = t("daily_focus.stats.toggle.month_short", { defaultValue: "A" });
+    const yearLabel = t("daily_focus.stats.toggle.year_short", { defaultValue: "Y" });
+
+    return {
+      month: toInitial(monthLabel, "A"),
+      year: toInitial(yearLabel, "Y"),
       monthAria: t("daily_focus.stats.toggle.month_aria"),
       yearAria: t("daily_focus.stats.toggle.year_aria")
-    }),
-    [t]
-  );
+    };
+  }, [t, toInitial]);
 
   const getTimeframeLabel = (timeframe: "mtd" | "ytd") =>
     timeframe === "mtd"
@@ -608,58 +731,211 @@ const DashboardDailyFocus = ({
 
   const revenueChartConfig = useMemo<ChartConfig>(
     () => ({
-      revenue: {
-        label: t("daily_focus.revenue_chart.label", { defaultValue: "Revenue" }),
-        color: "#4f46e5"
+      paid: {
+        label: tPages("payments.chart.legend.paid", { defaultValue: "Tahsil" }),
+        color: PAYMENT_COLORS.paid.hex
+      },
+      refund: {
+        label: tPages("payments.chart.legend.refund", { defaultValue: "İade" }),
+        color: PAYMENT_COLORS.refund.hex
       }
     }),
-    [t]
+    [tPages]
   );
 
-  const revenueRangeLabel =
-    revenueRangeMonths === 6
-      ? t("daily_focus.revenue_chart.range_6m", { defaultValue: "Last 6 Months" })
-      : t("daily_focus.revenue_chart.range_12m", { defaultValue: "Last 12 Months" });
+  const resolveRevenueLegendLabel = useCallback(
+    (name: string) => {
+      const normalized = name.toLowerCase();
+      const entry = revenueChartConfig[normalized];
+      return entry?.label ?? name;
+    },
+    [revenueChartConfig]
+  );
+
+  const revenueGroupingLabels = useMemo(() => {
+    const day = toInitial(
+      tPages("payments.chart.grouping.day", { defaultValue: "Day" }),
+      "D"
+    );
+    const week = toInitial(
+      tPages("payments.chart.grouping.week", { defaultValue: "Week" }),
+      "W"
+    );
+    const month = toInitial(
+      tPages("payments.chart.grouping.month", { defaultValue: "Month" }),
+      "M"
+    );
+    return { day, week, month };
+  }, [tPages, toInitial]);
 
   const revenueTrendData = useMemo(() => {
-    const monthsBack = revenueRangeMonths;
-    const lastDate = dateBoundaries.now;
-    const buckets = Array.from({ length: monthsBack }, (_, index) => {
-      const monthDate = new Date(
-        lastDate.getFullYear(),
-        lastDate.getMonth() - (monthsBack - 1 - index),
-        1
-      );
-      const key = formatInTimeZone(monthDate, timezone, "yyyy-MM");
-      return {
-        key,
-        monthDate,
-        label: formatInTimeZone(monthDate, timezone, "MMM", { locale: dateFnsLocale }),
-        tooltipLabel: formatInTimeZone(monthDate, timezone, "LLLL yyyy", { locale: dateFnsLocale }),
-        revenue: 0
-      };
+    if (!selectedRevenueDateRange) {
+      return [];
+    }
+
+    const { start, end } = selectedRevenueDateRange;
+    if (start > end) {
+      return [];
+    }
+
+    const interval =
+      revenueTrendGrouping === "day"
+        ? eachDayOfInterval({ start, end })
+        : revenueTrendGrouping === "week"
+          ? eachWeekOfInterval({ start, end }, { locale: dateFnsLocale })
+          : eachMonthOfInterval({ start, end });
+
+    if (!interval.length) {
+      return [];
+    }
+
+    type RevenueBucket = {
+      paid: number;
+      refund: number;
+      labelStart: Date;
+      labelEnd: Date;
+      key: string;
+    };
+
+    const getBucketDescriptor = (date: Date) => {
+      switch (revenueTrendGrouping) {
+        case "day": {
+          const labelStart = startOfDay(date);
+          const labelEnd = endOfDay(date);
+          return {
+            key: format(labelStart, "yyyy-MM-dd"),
+            labelStart,
+            labelEnd
+          };
+        }
+        case "week": {
+          const weekStart = dfStartOfWeek(date, { locale: dateFnsLocale });
+          const weekEnd = dfEndOfWeek(weekStart, { locale: dateFnsLocale });
+          return {
+            key: format(weekStart, "yyyy-MM-dd"),
+            labelStart: weekStart,
+            labelEnd: weekEnd
+          };
+        }
+        default: {
+          const monthStart = startOfMonth(date);
+          const monthEnd = endOfMonth(monthStart);
+          return {
+            key: format(monthStart, "yyyy-MM"),
+            labelStart: monthStart,
+            labelEnd: monthEnd
+          };
+        }
+      }
+    };
+
+    const buckets = new Map<string, RevenueBucket>();
+    interval.forEach((date) => {
+      const descriptor = getBucketDescriptor(date);
+      if (!buckets.has(descriptor.key)) {
+        buckets.set(descriptor.key, { paid: 0, refund: 0, ...descriptor });
+      }
     });
 
-    const bucketLookup = new Map(buckets.map((bucket) => [bucket.key, bucket]));
+    const actualPayments = paymentStats.filter((payment) => {
+      const entryKind = payment.entry_kind ?? "recorded";
+      if (entryKind !== "recorded") {
+        return false;
+      }
+      const amount = Number(payment.amount) || 0;
+      if (amount < 0) {
+        return true;
+      }
+      return (payment.status || "").toLowerCase() === "paid";
+    });
 
-    paymentStats.forEach((payment) => {
-      if (!isPaidPayment(payment)) return;
+    actualPayments.forEach((payment) => {
       const timestamp = getPaymentTimestamp(payment);
       if (timestamp == null) return;
-
       const paymentDate = new Date(timestamp);
-      const bucketKey = formatInTimeZone(paymentDate, timezone, "yyyy-MM");
-      const bucket = bucketLookup.get(bucketKey);
+      if (Number.isNaN(paymentDate.getTime())) {
+        return;
+      }
+      if (paymentDate < start || paymentDate > end) {
+        return;
+      }
+
+      const { key } = getBucketDescriptor(paymentDate);
+      const bucket = buckets.get(key);
       if (!bucket) return;
 
-      bucket.revenue += Number(payment.amount ?? 0);
+      const amount = Number(payment.amount) || 0;
+      if (amount < 0) {
+        bucket.refund += Math.abs(amount);
+      } else {
+        bucket.paid += amount;
+      }
     });
 
-    return buckets;
-  }, [dateBoundaries.now, dateFnsLocale, paymentStats, revenueRangeMonths, timezone]);
+    const clampToRange = (date: Date) => {
+      if (date < start) return start;
+      if (date > end) return end;
+      return date;
+    };
+
+    const formatLabel = (bucket: RevenueBucket) => {
+      const labelStart = clampToRange(bucket.labelStart);
+      const labelEnd = clampToRange(bucket.labelEnd);
+
+      if (revenueTrendGrouping === "day") {
+        return formatInTimeZone(labelStart, timezone, "dd MMM", { locale: dateFnsLocale });
+      }
+
+      if (revenueTrendGrouping === "week") {
+        const startLabel = formatInTimeZone(labelStart, timezone, "dd MMM", { locale: dateFnsLocale });
+        const endLabel = formatInTimeZone(labelEnd, timezone, "dd MMM", { locale: dateFnsLocale });
+        return startLabel === endLabel ? startLabel : `${startLabel} – ${endLabel}`;
+      }
+
+      return formatInTimeZone(labelStart, timezone, "LLL yy", { locale: dateFnsLocale });
+    };
+
+    const formatTooltipLabel = (bucket: RevenueBucket) => {
+      const labelStart = clampToRange(bucket.labelStart);
+      const labelEnd = clampToRange(bucket.labelEnd);
+
+      if (revenueTrendGrouping === "day") {
+        return formatInTimeZone(labelStart, timezone, "dd MMM yyyy", { locale: dateFnsLocale });
+      }
+
+      if (revenueTrendGrouping === "week") {
+        const startLabel = formatInTimeZone(labelStart, timezone, "dd MMM", { locale: dateFnsLocale });
+        const endLabel = formatInTimeZone(labelEnd, timezone, "dd MMM", { locale: dateFnsLocale });
+        return `${startLabel} – ${endLabel}`;
+      }
+
+      return formatInTimeZone(labelStart, timezone, "LLLL yyyy", { locale: dateFnsLocale });
+    };
+
+    return Array.from(buckets.entries())
+      .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+      .map(([, bucket]) => ({
+        period: formatLabel(bucket),
+        tooltipLabel: formatTooltipLabel(bucket),
+        paid: bucket.paid,
+        refund: bucket.refund
+      }));
+  }, [dateFnsLocale, paymentStats, revenueTrendGrouping, selectedRevenueDateRange, timezone]);
 
   const revenueTrendMax = useMemo(
-    () => revenueTrendData.reduce((max, point) => Math.max(max, point.revenue), 0),
+    () =>
+      revenueTrendData.reduce(
+        (max, point) => Math.max(max, point.paid, point.refund),
+        0
+      ),
+    [revenueTrendData]
+  );
+
+  const revenueTrendHasData = useMemo(
+    () =>
+      revenueTrendData.some(
+        (point) => Math.abs(point.paid) > 0 || Math.abs(point.refund) > 0
+      ),
     [revenueTrendData]
   );
 
@@ -1952,87 +2228,237 @@ const DashboardDailyFocus = ({
 
         <Card className="border-slate-200 shadow-sm flex flex-col">
           <CardHeader className="pb-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <CardTitle className="text-lg font-semibold text-slate-900">
-                  {t("daily_focus.revenue_overview_title", { defaultValue: "Revenue Overview" })}
-                </CardTitle>
-                <button
-                  onClick={() => navigate("/payments")}
-                  className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 hover:underline transition-colors"
-                >
-                  {t("daily_focus.view_payments", { defaultValue: "See payments" })}
-                </button>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <CardTitle className="text-lg font-semibold text-slate-900">
+                    {t("daily_focus.revenue_overview_title", { defaultValue: "Revenue Overview" })}
+                  </CardTitle>
+                  <button
+                    onClick={() => navigate("/payments")}
+                    className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 hover:underline transition-colors"
+                  >
+                    {t("daily_focus.view_payments", { defaultValue: "See payments" })}
+                  </button>
+                </div>
+                {!isMobile && (
+                  <div className="flex flex-col gap-1 sm:items-end">
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {tPages("payments.chart.groupingLabel", { defaultValue: "Grouping" })}
+                    </span>
+                    <ToggleGroup
+                      type="single"
+                      value={revenueTrendGrouping}
+                      onValueChange={(next) => {
+                        if (!next) return;
+                        setRevenueTrendGrouping(next as TrendGrouping);
+                      }}
+                      className="inline-flex items-center rounded-full bg-slate-100 p-0.5 text-slate-500 shadow-inner"
+                    >
+                      <ToggleGroupItem
+                        value="day"
+                        aria-label={tPages("payments.chart.grouping.day", { defaultValue: "Day" })}
+                        className={cn(
+                          "h-6 min-w-[30px] rounded-full px-0 text-[11px] font-semibold",
+                          "data-[state=on]:bg-white data-[state=on]:text-[#6F6FFB] data-[state=on]:shadow-sm",
+                          "text-slate-500"
+                        )}
+                      >
+                        {revenueGroupingLabels.day}
+                      </ToggleGroupItem>
+                      <ToggleGroupItem
+                        value="week"
+                        aria-label={tPages("payments.chart.grouping.week", { defaultValue: "Week" })}
+                        className={cn(
+                          "h-6 min-w-[30px] rounded-full px-0 text-[11px] font-semibold",
+                          "data-[state=on]:bg-white data-[state=on]:text-[#6F6FFB] data-[state=on]:shadow-sm",
+                          "text-slate-500"
+                        )}
+                      >
+                        {revenueGroupingLabels.week}
+                      </ToggleGroupItem>
+                      <ToggleGroupItem
+                        value="month"
+                        aria-label={tPages("payments.chart.grouping.month", { defaultValue: "Month" })}
+                        className={cn(
+                          "h-6 min-w-[30px] rounded-full px-0 text-[11px] font-semibold",
+                          "data-[state=on]:bg-white data-[state=on]:text-[#6F6FFB] data-[state=on]:shadow-sm",
+                          "text-slate-500"
+                        )}
+                      >
+                        {revenueGroupingLabels.month}
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+                )}
               </div>
-              <Select
-                value={String(revenueRangeMonths)}
-                onValueChange={(value) => setRevenueRangeMonths((value === "12" ? 12 : 6))}
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder={revenueRangeLabel} />
-                </SelectTrigger>
-                <SelectContent align="end">
-                  <SelectItem value="6">
-                    {t("daily_focus.revenue_chart.range_6m", { defaultValue: "Last 6 Months" })}
-                  </SelectItem>
-                  <SelectItem value="12">
-                    {t("daily_focus.revenue_chart.range_12m", { defaultValue: "Last 12 Months" })}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                {revenueRangeLabel ? (
+                  <div className="inline-flex flex-col rounded-md border border-slate-200 bg-slate-50 px-4 py-2">
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {tPages("payments.range.label", { defaultValue: "Date range" })}
+                    </span>
+                    <span className="text-lg font-semibold text-foreground">{revenueRangeLabel}</span>
+                  </div>
+                ) : (
+                  <span className="text-sm text-muted-foreground">{revenueRangeNotice}</span>
+                )}
+                <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
+                  {isMobile && (
+                    <ToggleGroup
+                      type="single"
+                      value={revenueTrendGrouping}
+                      onValueChange={(next) => {
+                        if (!next) return;
+                        setRevenueTrendGrouping(next as TrendGrouping);
+                      }}
+                      className="inline-flex items-center rounded-full bg-slate-100 p-0.5 text-slate-500 shadow-inner"
+                    >
+                      <ToggleGroupItem
+                        value="day"
+                        aria-label={tPages("payments.chart.grouping.day", { defaultValue: "Day" })}
+                        className={cn(
+                          "h-6 min-w-[30px] rounded-full px-0 text-[11px] font-semibold",
+                          "data-[state=on]:bg-white data-[state=on]:text-[#6F6FFB] data-[state=on]:shadow-sm",
+                          "text-slate-500"
+                        )}
+                      >
+                        {revenueGroupingLabels.day}
+                      </ToggleGroupItem>
+                      <ToggleGroupItem
+                        value="week"
+                        aria-label={tPages("payments.chart.grouping.week", { defaultValue: "Week" })}
+                        className={cn(
+                          "h-6 min-w-[30px] rounded-full px-0 text-[11px] font-semibold",
+                          "data-[state=on]:bg-white data-[state=on]:text-[#6F6FFB] data-[state=on]:shadow-sm",
+                          "text-slate-500"
+                        )}
+                      >
+                        {revenueGroupingLabels.week}
+                      </ToggleGroupItem>
+                      <ToggleGroupItem
+                        value="month"
+                        aria-label={tPages("payments.chart.grouping.month", { defaultValue: "Month" })}
+                        className={cn(
+                          "h-6 min-w-[30px] rounded-full px-0 text-[11px] font-semibold",
+                          "data-[state=on]:bg-white data-[state=on]:text-[#6F6FFB] data-[state=on]:shadow-sm",
+                          "text-slate-500"
+                        )}
+                      >
+                        {revenueGroupingLabels.month}
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  )}
+                  <Select
+                    value={revenueDateFilter}
+                    onValueChange={(value) => setRevenueDateFilter(value as DateFilterType)}
+                  >
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder={tPages("payments.selectPeriod", { defaultValue: "Select period" })} />
+                    </SelectTrigger>
+                    <SelectContent align="end">
+                      <SelectItem value="last7days">{tPages("payments.dateFilters.last7days")}</SelectItem>
+                      <SelectItem value="last4weeks">{tPages("payments.dateFilters.last4weeks")}</SelectItem>
+                      <SelectItem value="last3months">{tPages("payments.dateFilters.last3months")}</SelectItem>
+                      <SelectItem value="last12months">{tPages("payments.dateFilters.last12months")}</SelectItem>
+                      <SelectItem value="monthToDate">{tPages("payments.dateFilters.monthToDate")}</SelectItem>
+                      <SelectItem value="quarterToDate">{tPages("payments.dateFilters.quarterToDate")}</SelectItem>
+                      <SelectItem value="yearToDate">{tPages("payments.dateFilters.yearToDate")}</SelectItem>
+                      <SelectItem value="lastMonth">{tPages("payments.dateFilters.lastMonth")}</SelectItem>
+                      <SelectItem value="allTime">{tPages("payments.dateFilters.allTime")}</SelectItem>
+                      <SelectItem value="custom">{tPages("payments.dateFilters.customRange")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {revenueDateFilter === "custom" && (
+                    <DateRangePicker
+                      dateRange={revenueCustomDateRange}
+                      onDateRangeChange={setRevenueCustomDateRange}
+                    />
+                  )}
+                </div>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="flex-1">
-            <ChartContainer config={revenueChartConfig} className="h-full min-h-[420px] w-full">
-              <AreaChart
-                data={revenueTrendData}
-                margin={{ top: 10, right: 4, left: -10, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="var(--color-revenue)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis
-                  dataKey="label"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#64748b", fontSize: 12 }}
-                  tickMargin={8}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tickMargin={10}
-                  width={72}
-                  tickFormatter={(value) => compactCurrencyFormatter.format(Number(value))}
-                  domain={[
-                    0,
-                    (dataMax: number) =>
-                      Math.max(dataMax || 0, revenueTrendMax || 0, 1) * 1.1
-                  ]}
-                />
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      labelKey="tooltipLabel"
-                      formatter={(value) => currencyFormatter.format(Number(value))}
-                    />
-                  }
-                />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  name="revenue"
-                  stroke="var(--color-revenue)"
-                  strokeWidth={2}
-                  fill="url(#revenueGradient)"
-                  activeDot={{ r: 5 }}
-                />
-              </AreaChart>
-            </ChartContainer>
+            {revenueTrendHasData ? (
+              <ChartContainer config={revenueChartConfig} className="h-full min-h-[420px] w-full">
+                <ComposedChart
+                  data={revenueTrendData}
+                  margin={{ top: 12, right: 12, left: -10, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="paidGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--color-paid)" stopOpacity={0.22} />
+                      <stop offset="95%" stopColor="var(--color-paid)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis
+                    dataKey="period"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "#64748b", fontSize: 12 }}
+                    tickMargin={8}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tickMargin={10}
+                    width={72}
+                    tickFormatter={(value) => compactCurrencyFormatter.format(Number(value))}
+                    domain={[0, Math.max(revenueTrendMax || 0, 1) * 1.1]}
+                  />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        className="min-w-[180px] rounded-xl border border-slate-200 bg-white px-3.5 py-3 shadow-lg"
+                        labelClassName="text-sm font-semibold text-slate-800"
+                        labelFormatter={(_, payload) =>
+                          payload?.[0]?.payload?.tooltipLabel ?? payload?.[0]?.payload?.period ?? ""
+                        }
+                        formatter={(value, name) => (
+                          <div className="flex w-full items-center justify-between gap-6">
+                            <span className="text-slate-500">
+                              {typeof name === "string" ? resolveRevenueLegendLabel(name) : name}
+                            </span>
+                            <span className="font-semibold text-slate-900">
+                              {currencyFormatter.format(Number(value))}
+                            </span>
+                          </div>
+                        )}
+                      />
+                    }
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="paid"
+                    stroke="var(--color-paid)"
+                    strokeWidth={2}
+                    fill="url(#paidGradient)"
+                    activeDot={{ r: 5 }}
+                    isAnimationActive={revenueTrendData.length > 1}
+                    animationDuration={600}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="refund"
+                    stroke="var(--color-refund)"
+                    strokeWidth={2}
+                    dot={false}
+                    strokeDasharray="4 6"
+                    activeDot={{ r: 5 }}
+                    isAnimationActive={revenueTrendData.length > 1}
+                    animationDuration={600}
+                  />
+                </ComposedChart>
+              </ChartContainer>
+            ) : (
+              <div className="flex h-full min-h-[340px] items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500">
+                {t("daily_focus.revenue_chart.empty_state", {
+                  defaultValue: "No payments in this range yet."
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </section>

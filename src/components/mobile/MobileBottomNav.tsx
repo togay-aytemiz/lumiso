@@ -367,11 +367,11 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
   ) || isAutomationActive;
 
   const activeColor = isBackgroundDark ? "text-white" : "text-primary";
-  const inactiveColor = isBackgroundDark ? "text-white/70" : "text-muted-foreground";
+  const inactiveColor = isBackgroundDark ? "text-white/80" : "text-muted-foreground";
   const navBackgroundClasses = isBackgroundDark
-    ? "bg-slate-900/75 supports-[backdrop-filter]:bg-slate-900/60 backdrop-blur-xl border-white/10 shadow-[0_-8px_24px_rgba(0,0,0,0.35)]"
+    ? "bg-slate-950/85 supports-[backdrop-filter]:bg-slate-950/80 backdrop-blur-xl border-white/20 shadow-[0_-4px_16px_rgba(0,0,0,0.5)]"
     : "bg-background/92 supports-[backdrop-filter]:bg-background/75 backdrop-blur-lg border-border/70";
-  const buttonHoverClasses = isBackgroundDark ? "hover:bg-white/10 active:bg-white/15" : "hover:bg-muted/50 active:bg-muted";
+  const buttonHoverClasses = isBackgroundDark ? "hover:bg-white/15 active:bg-white/20" : "hover:bg-muted/50 active:bg-muted";
   const bookingsSheetTitle = t("menu.sessions");
   const automationSheetTitle = t("mobile_sheets.automation");
   const moreSheetTitle = t("menu.more");

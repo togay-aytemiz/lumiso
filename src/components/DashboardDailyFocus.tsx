@@ -272,6 +272,7 @@ const DashboardDailyFocus = ({
   const lastRangeRequestRef = useRef<string | null>(null);
   const { t, i18n } = useDashboardTranslation();
   const { t: tPages } = useTranslation("pages");
+  const { t: tForms } = useTranslation("forms");
   const navigate = useNavigate();
   const location = useLocation();
   const { profile } = useProfile();
@@ -1063,7 +1064,6 @@ const DashboardDailyFocus = ({
     const endMs = weekBoundaries.end.getTime();
 
     return activityList.filter((activity) => {
-      if (activity.completed) return false;
       if (!activity.reminder_date) return false;
       const reminderDate = new Date(activity.reminder_date);
       const normalized = new Date(
@@ -1445,18 +1445,23 @@ const DashboardDailyFocus = ({
           activity.id === reminderId ? { ...activity, completed: nextCompletedState } : activity
         )
       );
-      const toastTitle = nextCompletedState ? "Reminder completed" : "Reminder reopened";
-      const toastDescription = nextCompletedState
-        ? "We'll keep it visible in today's schedule."
-        : "It's back in your active reminders.";
+      const toastTitle = nextCompletedState
+        ? tForms("reminders.markCompleteSuccessTitle", { defaultValue: "Reminder completed" })
+        : tForms("reminders.markIncompleteSuccessTitle", { defaultValue: "Reminder reopened" });
+      const toastDescription = tForms("reminders.statusUpdateDescription", {
+        defaultValue: "Reminder status updated successfully."
+      });
       toast({
         title: toastTitle,
         description: toastDescription
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not complete reminder.";
+      const message =
+        error instanceof Error
+          ? error.message
+          : tForms("reminders.statusUpdateErrorTitle", { defaultValue: "Could not update reminder." });
       toast({
-        title: "Error marking reminder",
+        title: tForms("reminders.statusUpdateErrorTitle", { defaultValue: "Error updating reminder" }),
         description: message,
         variant: "destructive"
       });
@@ -2204,6 +2209,10 @@ const DashboardDailyFocus = ({
                   getEventsForDate={getWeeklyEventsForDate}
                   onSessionClick={(session) => handleSessionCardClick(session.id)}
                   onActivityClick={(activity) => handleReminderLeadClick(activity.lead_id)}
+                  onToggleReminderCompletion={(activity, nextCompleted) =>
+                    handleToggleReminderCompletion(activity.id, nextCompleted)
+                  }
+                  completingReminderId={completingReminderId}
                   onDayClick={(date) => setWeekReference(date)}
                 />
               </div>

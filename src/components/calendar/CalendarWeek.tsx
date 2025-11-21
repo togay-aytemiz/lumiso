@@ -5,6 +5,7 @@ import { useSmartTimeRange } from '@/hooks/useSmartTimeRange';
 import { useOrganizationTimezone } from '@/hooks/useOrganizationTimezone';
 import { useTranslation } from 'react-i18next';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { CheckCircle2, Circle, Loader2 } from 'lucide-react';
 
 
 interface Session {
@@ -44,6 +45,8 @@ interface CalendarWeekProps {
   onSessionClick: (session: Session) => void;
   onActivityClick: (activity: Activity) => void;
   onDayClick?: (date: Date) => void;
+  onToggleReminderCompletion?: (activity: Activity, nextCompleted: boolean) => void;
+  completingReminderId?: string | null;
 }
 
 const TIME_COL_PX = 72;
@@ -115,7 +118,9 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   getEventsForDate,
   onSessionClick,
   onActivityClick,
-  onDayClick
+  onDayClick,
+  onToggleReminderCompletion,
+  completingReminderId
 }) {
   const { t } = useTranslation(['pages', 'forms']);
   const userLocale = getUserLocale();
@@ -154,6 +159,17 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
     });
     return eventMap;
   }, [weekDays, getEventsForDate, timeSlots, getSlotIndex]);
+  const dayIndicators = useMemo(
+    () =>
+      weekDays.map(day => {
+        const dayEvents = getEventsForDate(day);
+        return {
+          hasSession: showSessions && dayEvents.sessions.length > 0,
+          hasReminder: showReminders && dayEvents.activities.length > 0
+        };
+      }),
+    [getEventsForDate, showReminders, showSessions, weekDays]
+  );
   const eventSlotCount = eventsByDayAndSlot.size;
   const currentDateTimestamp = currentDate.getTime();
   const containerMaxHeight = useMemo(() => {
@@ -476,16 +492,33 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
           {weekDays.map((day, index) => {
             const selected = isSameDay(day, currentDate);
             const today = isToday(day);
+            const indicators = dayIndicators[index] || { hasSession: false, hasReminder: false };
             return (
               <button
                 key={index}
                 onClick={() => onDayClick?.(day)}
-                className={`p-2 text-center rounded transition-colors ${
+                className={`p-2 text-center rounded transition-colors flex flex-col items-center gap-1 ${
                   selected ? 'bg-primary text-primary-foreground' : today ? 'bg-primary/10 text-primary' : 'hover:bg-accent'
                 }`}
               >
                 <div className="text-xs font-medium">{format(day, 'EEE', { locale: dateFnsLocale })}</div>
-                <div className="text-sm">{format(day, 'd')}</div>
+                <div className="text-sm font-semibold">{format(day, 'd')}</div>
+                <div className="flex h-3 items-center justify-center gap-1">
+                  {indicators.hasSession && (
+                    <span
+                      className={cn("h-2 w-2 rounded-full", selected && "ring-2 ring-white")}
+                      style={{ backgroundColor: '#17B2A9' }}
+                      aria-hidden="true"
+                    />
+                  )}
+                  {indicators.hasReminder && (
+                    <span
+                      className={cn("h-2 w-2 rounded-full", selected && "ring-2 ring-white")}
+                      style={{ backgroundColor: '#7D8697' }}
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
               </button>
             );
           })}
@@ -502,6 +535,19 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                 {daySessions.map(session => {
                   const leadName = leadsMap[session.lead_id]?.name || t('calendar.labels.lead');
                   const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
+                  const startMinutes = parseTimeToMinutes(session.session_time);
+                  const computedDuration = session.duration_minutes ?? 60;
+                  const endMinutes = startMinutes != null ? startMinutes + computedDuration : null;
+                  const startLabel =
+                    startMinutes != null
+                      ? formatOrgTime(minutesToTimeString(startMinutes))
+                      : t('calendar.labels.timeTbd', { defaultValue: 'Time TBD' });
+                  const endLabel =
+                    endMinutes != null
+                      ? formatOrgTime(minutesToTimeString(endMinutes))
+                      : null;
+                  const timeLabel = endLabel ? `${startLabel} – ${endLabel}` : startLabel;
+                  const durationLabel = session.duration_minutes != null ? `${session.duration_minutes} min` : null;
 
                   return (
                     <button
@@ -514,11 +560,10 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                           <div className="font-medium text-primary mb-1">
                             {projectName || t('calendar.labels.session')}
                           </div>
-                          <div className="text-sm text-muted-foreground mb-2">
-                            {leadName}
-                          </div>
-                          <div className="text-sm font-medium">
-                            {formatOrgTime(session.session_time)}
+                          <div className="text-sm text-muted-foreground mb-2">{leadName}</div>
+                          <div className="text-sm font-semibold text-foreground">
+                            {timeLabel}
+                            {durationLabel ? <span className="ml-1 text-muted-foreground text-xs">· {durationLabel}</span> : null}
                           </div>
                           {session.notes && (
                             <div className="text-sm text-muted-foreground mt-2 line-clamp-2">
@@ -549,11 +594,15 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                   const projectName = activity.project_id ? projectsMap[activity.project_id]?.name : undefined;
                   const timeText = activity.reminder_time ? formatOrgTime(activity.reminder_time) : t('calendar.labels.allDay');
                   const shouldShowTypeBadge = !activity.completed && activity.type && activity.type.toLowerCase() !== 'reminder';
+                  const completionLabel = activity.completed
+                    ? t('forms:reminders.markIncomplete', { defaultValue: 'Mark as not done' })
+                    : t('forms:reminders.markComplete', { defaultValue: 'Mark as done' });
+                  const toggleDisabled = completingReminderId === activity.id;
 
                   return (
                     <button
                       key={activity.id}
-                      className={`w-full p-4 bg-card rounded-lg border hover:bg-accent/50 transition-colors text-left ${
+                      className={`relative w-full p-4 bg-card rounded-lg border hover:bg-accent/50 transition-colors text-left ${
                         activity.completed ? 'opacity-60' : ''
                       }`}
                       onClick={() => onActivityClick(activity)}
@@ -563,20 +612,49 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                           <div className={`font-medium mb-1 ${activity.completed ? 'line-through' : ''}`}>
                             {activity.content}
                           </div>
-                          <div className="text-sm text-muted-foreground mb-2">
-                            {projectName ? `${t('calendar.labels.project')}: ${projectName}` : `${t('calendar.labels.lead')}: ${leadName}`}
+                          <div className="text-sm text-muted-foreground mb-2 space-y-1">
+                            <div>{`${t('calendar.labels.lead')}: ${leadName}`}</div>
+                            {projectName ? <div>{`${t('calendar.labels.project')}: ${projectName}`}</div> : null}
                           </div>
                           <div className="text-sm font-medium">
                             {timeText}
                           </div>
                         </div>
-                        {(activity.completed || shouldShowTypeBadge) && (
-                          <div className={`px-2 py-1 text-xs rounded-md ${
-                            activity.completed ? 'bg-muted text-muted-foreground' : 'bg-secondary text-secondary-foreground'
-                          }`}>
-                            {activity.completed ? t('calendar.labels.completed') : activity.type}
-                          </div>
-                        )}
+                        <div className="flex flex-col items-end gap-2">
+                          {onToggleReminderCompletion && (
+                            <button
+                              type="button"
+                              onClick={event => {
+                                event.stopPropagation();
+                                onToggleReminderCompletion(activity, !activity.completed);
+                              }}
+                              disabled={toggleDisabled}
+                              aria-pressed={activity.completed}
+                              aria-label={completionLabel}
+                              className={cn(
+                                'flex h-9 w-9 items-center justify-center rounded-full text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:opacity-60',
+                                activity.completed
+                                  ? 'text-emerald-600'
+                                  : 'text-slate-500 hover:text-primary'
+                              )}
+                            >
+                              {toggleDisabled ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : activity.completed ? (
+                                <CheckCircle2 className="h-5 w-5" />
+                              ) : (
+                                <Circle className="h-5 w-5" />
+                              )}
+                            </button>
+                          )}
+                          {(activity.completed || shouldShowTypeBadge) && (
+                            <div className={`px-2 py-1 text-xs rounded-md ${
+                              activity.completed ? 'bg-muted text-muted-foreground' : 'bg-secondary text-secondary-foreground'
+                            }`}>
+                              {activity.completed ? t('calendar.labels.completed') : activity.type}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </button>
                   );
@@ -722,7 +800,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                           session.status ||
                           projectName ||
                           t('calendar.labels.session');
-                        const tooltipDetails = [sessionTitle, leadName, timeLabel].filter(Boolean);
+                        const tooltipDetails = [sessionTitle, projectName, leadName, timeLabel].filter(Boolean);
                         const ariaLabel = tooltipDetails.join(' • ');
 
                         return (
@@ -799,27 +877,36 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                         const leftValue = `calc(${leftPercent.toFixed(3)}% + ${insetValue}px)`;
                         const widthValue = `calc(${widthPercent.toFixed(3)}% - ${(horizontalInset * 2).toFixed(3)}px)`;
                         const ariaLabel = [activity.content, projectName || leadName, timeLabel].filter(Boolean).join(' • ');
+                        const toggleLabel = activity.completed
+                          ? t('forms:reminders.markIncomplete', { defaultValue: 'Mark as not done' })
+                          : t('forms:reminders.markComplete', { defaultValue: 'Mark as done' });
+                        const isTogglingThisReminder = completingReminderId === activity.id;
 
                         return (
                           <Tooltip key={activity.id}>
                             <TooltipTrigger asChild>
                               <button
-                                type="button"
-                                className={cn(
-                                  'absolute z-10 pointer-events-auto rounded-lg border px-2 py-2 text-left text-[11px] shadow-sm transition-colors',
-                                  activity.completed
-                                    ? 'border-slate-200 bg-slate-100 text-slate-400 line-through'
-                                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
-                                )}
-                                style={{ top, height, left: leftValue, width: widthValue }}
-                                onClick={() => onActivityClick(activity)}
-                                aria-label={ariaLabel}
-                              >
-                                <div className="space-y-1 leading-snug">
-                                  <div className="flex items-center justify-between gap-2 w-full">
-                                    <p className="flex-1 min-w-0 font-medium line-clamp-1">{activity.content}</p>
-                                    <span className="text-[10px] font-medium text-slate-500 whitespace-nowrap">
-                                      {activity.reminder_time ? startLabel : t('calendar.labels.allDay')}
+                              type="button"
+                              className={cn(
+                                'absolute z-10 pointer-events-auto rounded-lg border px-2 py-2 text-left text-[11px] shadow-sm transition-colors',
+                                activity.completed
+                                  ? 'border-slate-200 bg-slate-100 text-slate-400 line-through'
+                                  : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                              )}
+                              style={{ top, height, left: leftValue, width: widthValue }}
+                              onClick={() => onActivityClick(activity)}
+                              aria-label={ariaLabel}
+                            >
+                              {activity.completed ? (
+                                <span className="absolute -top-1.5 -right-1.5 text-emerald-500 drop-shadow-sm">
+                                  <CheckCircle2 className="h-4 w-4" />
+                                </span>
+                              ) : null}
+                              <div className="space-y-1 leading-snug">
+                                <div className="flex items-center justify-between gap-2 w-full">
+                                  <p className="flex-1 min-w-0 font-medium line-clamp-1">{activity.content}</p>
+                                  <span className="text-[10px] font-medium text-slate-500 whitespace-nowrap">
+                                    {activity.reminder_time ? startLabel : t('calendar.labels.allDay')}
                                     </span>
                                   </div>
                                   <p className="text-[10px] uppercase tracking-wide text-slate-500 truncate">
@@ -841,6 +928,23 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                               <p className="text-foreground">
                                 {dateLabel} • {timeLabel}
                               </p>
+                              {onToggleReminderCompletion ? (
+                                <div className="pt-2 mt-2 border-t border-slate-200">
+                                  <button
+                                    type="button"
+                                    className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 underline underline-offset-4 disabled:opacity-60"
+                                    onClick={(event) => {
+                                      event.preventDefault();
+                                      event.stopPropagation();
+                                      if (isTogglingThisReminder) return;
+                                      onToggleReminderCompletion(activity, !activity.completed);
+                                    }}
+                                    disabled={isTogglingThisReminder}
+                                  >
+                                    {isTogglingThisReminder ? t('calendar.labels.updating', { defaultValue: 'Updating...' }) : toggleLabel}
+                                  </button>
+                                </div>
+                              ) : null}
                             </TooltipContent>
                           </Tooltip>
                         );
@@ -886,6 +990,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
     p.showReminders === n.showReminders &&
     p.isMobile === n.isMobile &&
     p.maxHeight === n.maxHeight &&
+    p.completingReminderId === n.completingReminderId &&
     JSON.stringify(p.sessions) === JSON.stringify(n.sessions) &&
     JSON.stringify(p.activities) === JSON.stringify(n.activities)
   );

@@ -1,3 +1,4 @@
+import React from "react";
 import { fireEvent, render, screen } from "@/utils/testUtils";
 import { CalendarWeek } from "../CalendarWeek";
 
@@ -28,6 +29,12 @@ const mockUseOrganizationTimezone = jest.fn();
 
 jest.mock("@/hooks/useOrganizationTimezone", () => ({
   useOrganizationTimezone: () => mockUseOrganizationTimezone(),
+}));
+
+jest.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  TooltipTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  TooltipContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 describe("CalendarWeek", () => {
@@ -145,7 +152,9 @@ describe("CalendarWeek", () => {
       screen.getByText((content) => content.includes("calendar.sections.reminders"))
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("org-09:00"));
+    fireEvent.click(
+      screen.getByText((content) => content.includes("org-09:00"))
+    );
     expect(onSessionClick).toHaveBeenCalledWith(expect.objectContaining({ id: "session-1" }));
 
     fireEvent.click(screen.getByText("Send invoice"));

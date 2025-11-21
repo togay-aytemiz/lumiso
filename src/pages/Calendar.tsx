@@ -32,6 +32,7 @@ import { useTranslation } from "react-i18next";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useToast } from "@/hooks/use-toast";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -43,6 +44,7 @@ interface Session {
   notes?: string;
   lead_id: string;
   project_id?: string | null;
+  duration_minutes?: number | null;
 }
 
 interface Activity {
@@ -66,7 +68,7 @@ export default function Calendar() {
     if (saved) return saved;
     return window.innerWidth <= 768 ? "day" : "month";
   });
-  const { t } = useTranslation("pages");
+  const { t } = useTranslation(["pages", "forms"]);
 
   const location = useLocation();
   const viewModeOptions = useMemo(
@@ -147,12 +149,13 @@ export default function Calendar() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const userLocale = getUserLocale();
+  const { toast } = useToast();
 
-  const refreshCalendar = () => {
+  const refreshCalendar = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["optimized-sessions"] });
     queryClient.invalidateQueries({ queryKey: ["optimized-activities"] });
     queryClient.invalidateQueries({ queryKey: ["calendar-reference-data"] });
-  };
+  }, [queryClient]);
 
   // Throttle refresh on window focus/visibility to avoid request bursts
   useThrottledRefetchOnFocus(refreshCalendar, 30_000);
@@ -167,6 +170,7 @@ export default function Calendar() {
     localStorage.setItem("calendar:showSessions", String(showSessions));
     localStorage.setItem("calendar:showReminders", String(showReminders));
   }, [showSessions, showReminders]);
+  const [togglingActivityId, setTogglingActivityId] = useState<string | null>(null);
 
   // Use optimized events processing with performance monitoring
   const { getEventsForDate, eventStats } = useOptimizedCalendarEvents(
@@ -246,6 +250,38 @@ export default function Calendar() {
     [openProjectById, navigate]
   );
 
+  const toggleActivityCompletion = useCallback(
+    async (activity: Activity, nextCompleted: boolean) => {
+      if (togglingActivityId) return;
+      setTogglingActivityId(activity.id);
+      try {
+        const { error } = await supabase
+          .from("activities")
+          .update({ completed: nextCompleted })
+          .eq("id", activity.id);
+        if (error) throw error;
+        refreshCalendar();
+      } catch (error) {
+        const description = error instanceof Error ? error.message : "Unable to update reminder.";
+        toast({
+          title: t("forms:reminders.statusUpdateErrorTitle", { defaultValue: "Could not update reminder" }),
+          description,
+          variant: "destructive",
+        });
+        return;
+      } finally {
+        setTogglingActivityId(null);
+      }
+      toast({
+        title: nextCompleted
+          ? t("forms:reminders.markCompleteSuccessTitle", { defaultValue: "Reminder marked as completed" })
+          : t("forms:reminders.markIncompleteSuccessTitle", { defaultValue: "Reminder reopened" }),
+        description: t("forms:reminders.statusUpdateDescription", { defaultValue: "Status updated." }),
+      });
+    },
+    [refreshCalendar, t, toast, togglingActivityId]
+  );
+
   // Performance monitoring for renders
   useEffect(() => {
     startRenderTiming();
@@ -310,6 +346,8 @@ export default function Calendar() {
         }
         isMobile={isMobile}
         getEventsForDate={getEventsForDate}
+        onToggleReminderCompletion={toggleActivityCompletion}
+        completingReminderId={togglingActivityId}
       />
     );
   };
@@ -462,8 +500,8 @@ export default function Calendar() {
 
         {/* Mobile controls */}
         <div className="lg:hidden px-4 sm:px-6">
-          <div className="flex items-center justify-between gap-4 pb-4">
-            {/* View mode toggle for mobile */}
+          <div className="flex flex-col gap-3 pb-4">
+            {/* View mode toggle for mobile - full width */}
             <ToggleGroup
               type="single"
               value={viewMode}
@@ -471,7 +509,7 @@ export default function Calendar() {
                 if (!value) return;
                 setViewMode(value as ViewMode);
               }}
-              className="flex-1 inline-flex items-center rounded-full bg-slate-100 p-0.5 text-slate-500 shadow-inner"
+              className="w-full inline-flex items-center rounded-full bg-slate-100 p-0.5 text-slate-500 shadow-inner"
             >
               {viewModeOptions.map((option) => (
                 <ToggleGroupItem
@@ -488,70 +526,68 @@ export default function Calendar() {
               ))}
             </ToggleGroup>
 
-            {/* Navigation for mobile */}
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={navigatePrevious}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={goToToday}
-                className="text-xs"
-              >
-                {t("calendar.navigation.today")}
-              </Button>
-              <Button variant="outline" size="sm" onClick={navigateNext}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+            {/* Title and navigation */}
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-lg font-semibold truncate">{getViewTitle()}</div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button variant="outline" size="sm" onClick={navigatePrevious}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToToday}
+                  className="text-xs whitespace-nowrap"
+                >
+                  {t("calendar.navigation.today")}
+                </Button>
+                <Button variant="outline" size="sm" onClick={navigateNext}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
 
-          {/* Title for mobile */}
-          <div className="text-center pb-2">
-            <div className="text-lg font-semibold">{getViewTitle()}</div>
-          </div>
-
-          {/* Filter chips for mobile */}
-          <div className="flex items-center gap-2 pb-4">
-            <button
-              type="button"
-              aria-pressed={showSessions}
-              onClick={() => setShowSessions((v) => !v)}
-              className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors
-                ${
-                  showSessions
-                    ? "bg-primary/10 border-primary/30 text-foreground"
-                    : "bg-muted border-border text-muted-foreground hover:bg-accent"
-                }`}
-            >
-              <span
-                className={`h-2.5 w-2.5 rounded-full ${
-                  showSessions ? "bg-primary" : "bg-muted-foreground/40"
-                }`}
-              />
-              <span>{t("calendar.filters.sessions")}</span>
-            </button>
-            <button
-              type="button"
-              aria-pressed={showReminders}
-              onClick={() => setShowReminders((v) => !v)}
-              className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors
-                ${
-                  showReminders
-                    ? "bg-primary/10 border-primary/30 text-foreground"
-                    : "bg-muted border-border text-muted-foreground hover:bg-accent"
-                }`}
-            >
-              <span
-                className={`h-2.5 w-2.5 rounded-full ${
-                  showReminders
-                    ? "bg-muted-foreground/60"
-                    : "bg-muted-foreground/40"
-                }`}
-              />
-              <span>{t("calendar.filters.reminders")}</span>
-            </button>
+            {/* Filter chips for mobile */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                aria-pressed={showSessions}
+                onClick={() => setShowSessions((v) => !v)}
+                className={`w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors
+                  ${
+                    showSessions
+                      ? "bg-primary/10 border-primary/30 text-foreground"
+                      : "bg-muted border-border text-muted-foreground hover:bg-accent"
+                  }`}
+              >
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${
+                    showSessions ? "bg-primary" : "bg-muted-foreground/40"
+                  }`}
+                />
+                <span>{t("calendar.filters.sessions")}</span>
+              </button>
+              <button
+                type="button"
+                aria-pressed={showReminders}
+                onClick={() => setShowReminders((v) => !v)}
+                className={`w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors
+                  ${
+                    showReminders
+                      ? "bg-primary/10 border-primary/30 text-foreground"
+                      : "bg-muted border-border text-muted-foreground hover:bg-accent"
+                  }`}
+              >
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${
+                    showReminders
+                      ? "bg-muted-foreground/60"
+                      : "bg-muted-foreground/40"
+                  }`}
+                />
+                <span>{t("calendar.filters.reminders")}</span>
+              </button>
+            </div>
           </div>
         </div>
 

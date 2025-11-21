@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   BrowserRouter,
@@ -5,6 +6,7 @@ import {
   Route,
   Navigate,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 import type { Location } from "react-router-dom";
 import Index from "./pages/Index";
@@ -58,15 +60,30 @@ const renderSettingsRoutes = (enableOverlay: boolean) => (
 
 const AppRoutes = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const state = location.state as { backgroundLocation?: Location } | undefined;
   const settingsOverlayEnabled = isFeatureEnabled(
     FEATURE_FLAGS.settingsModalOverlayV1,
     true
   );
+  const shouldShowSettingsOverlay =
+    settingsOverlayEnabled &&
+    location.pathname.startsWith("/settings") &&
+    !!state?.backgroundLocation;
+
+  // If a background overlay state escapes into non-settings routes, clear it so routing renders the new page.
+  useEffect(() => {
+    if (state?.backgroundLocation && !location.pathname.startsWith("/settings")) {
+      navigate(
+        `${location.pathname}${location.search}${location.hash}`,
+        { replace: true, state: undefined }
+      );
+    }
+  }, [location.pathname, location.search, location.hash, state?.backgroundLocation, navigate]);
 
   return (
     <>
-      <Routes location={state?.backgroundLocation ?? location}>
+      <Routes location={shouldShowSettingsOverlay ? state?.backgroundLocation : location}>
         <Route path="/auth" element={<Auth />} />
         <Route path="/auth/signin" element={<Auth />} />
         <Route path="/auth/sign-in" element={<Auth />} />
@@ -100,7 +117,7 @@ const AppRoutes = () => {
         <Route path="*" element={<NotFound />} />
       </Routes>
 
-      {state?.backgroundLocation && settingsOverlayEnabled && (
+      {shouldShowSettingsOverlay && (
         <Routes>
           <Route path="/" element={<ProtectedRoute disableLayout />}>
             {renderSettingsRoutes(settingsOverlayEnabled)}

@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect, type MouseEvent as ReactMouseEvent } from "react";
+import { useState, useEffect, useRef, type MouseEvent as ReactMouseEvent } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -75,6 +75,7 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
+  const sidebarRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsMobile();
   const { shouldLockNavigation, loading } = useOnboarding();
   const { isAdminOrSupport } = useUserRole();
@@ -209,9 +210,33 @@ export function AppSidebar() {
     setAutomationOpen(isAutomationChildActive);
   }, [isAutomationChildActive]);
 
+  // Defensive: ensure pointer events don't get stuck disabled by overlays/agents
+  useEffect(() => {
+    const node = sidebarRef.current;
+    if (!node || typeof window === "undefined") return;
+
+    const restore = () => {
+      const computed = window.getComputedStyle(node);
+      if (computed.pointerEvents === "none") {
+        node.style.pointerEvents = "auto";
+      }
+    };
+
+    restore();
+    const observer = new MutationObserver(restore);
+    observer.observe(node, { attributes: true, attributeFilter: ["style", "class"] });
+    window.addEventListener("resize", restore);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", restore);
+    };
+  }, []);
+
   return (
     <>
       <Sidebar
+        ref={sidebarRef}
         className="border-r border-border/60 [&_[data-sidebar=sidebar]]:!rounded-l-none [&_[data-sidebar=sidebar]]:!rounded-bl-none [&_[data-sidebar=sidebar]]:!rounded-tl-none"
         collapsible="icon"
       >

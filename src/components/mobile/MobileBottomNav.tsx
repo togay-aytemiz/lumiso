@@ -187,46 +187,48 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
       const navElement = navRef.current;
       const originalPointerEvents = navElement?.style.pointerEvents || "";
 
-      if (navElement) {
-        navElement.style.pointerEvents = "none";
-      }
+      try {
+        if (navElement) {
+          navElement.style.pointerEvents = "none";
+        }
 
-      const navRect = navElement?.getBoundingClientRect();
-      const baseY = navRect
-        ? Math.max(0, navRect.top - 4)
-        : Math.max(0, window.innerHeight - 48);
-      const sampleYs = [
-        Math.max(0, baseY - 18),
-        Math.max(0, baseY - 8),
-        baseY,
-      ];
-      const sampleXs = [0.2, 0.5, 0.8].map((ratio) =>
-        Math.min(window.innerWidth - 1, Math.max(0, window.innerWidth * ratio))
-      );
+        const navRect = navElement?.getBoundingClientRect();
+        const baseY = navRect
+          ? Math.max(0, navRect.top - 4)
+          : Math.max(0, window.innerHeight - 48);
+        const sampleYs = [
+          Math.max(0, baseY - 18),
+          Math.max(0, baseY - 8),
+          baseY,
+        ];
+        const sampleXs = [0.2, 0.5, 0.8].map((ratio) =>
+          Math.min(window.innerWidth - 1, Math.max(0, window.innerWidth * ratio))
+        );
 
-      if (navElement) {
-        navElement.style.pointerEvents = originalPointerEvents;
-      }
+        const samples: RgbaColor[] = [];
 
-      const samples: RgbaColor[] = [];
-
-      sampleXs.forEach((x) => {
-        sampleYs.forEach((y) => {
-          const elementBelow = document.elementFromPoint(
-            x,
-            y
-          ) as HTMLElement | null;
-          const targetElement =
-            elementBelow && elementBelow !== navElement ? elementBelow : document.body;
-          const color = getEffectiveBackgroundColor(targetElement);
-          samples.push(color);
+        sampleXs.forEach((x) => {
+          sampleYs.forEach((y) => {
+            const elementBelow = document.elementFromPoint(
+              x,
+              y
+            ) as HTMLElement | null;
+            const targetElement =
+              elementBelow && elementBelow !== navElement ? elementBelow : document.body;
+            const color = getEffectiveBackgroundColor(targetElement);
+            samples.push(color);
+          });
         });
-      });
 
-      const darkVotes = samples.filter((color) => isDarkColor(color, 0.55)).length;
-      const shouldUseDark =
-        samples.length > 0 && darkVotes >= Math.max(3, Math.ceil(samples.length * 0.66));
-      setIsBackgroundDark(shouldUseDark);
+        const darkVotes = samples.filter((color) => isDarkColor(color, 0.55)).length;
+        const shouldUseDark =
+          samples.length > 0 && darkVotes >= Math.max(3, Math.ceil(samples.length * 0.66));
+        setIsBackgroundDark(shouldUseDark);
+      } finally {
+        if (navElement) {
+          navElement.style.pointerEvents = originalPointerEvents || "auto";
+        }
+      }
     };
 
     let frame: number | null = null;

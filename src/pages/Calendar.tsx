@@ -284,12 +284,13 @@ export default function Calendar() {
 
   // Performance monitoring for renders
   useEffect(() => {
+    // Measure first paint only; avoid capturing full component lifetime
     startRenderTiming();
-
-    return () => {
+    const frame = requestAnimationFrame(() => {
       endRenderTiming();
-    };
-  });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [startRenderTiming, endRenderTiming]);
 
   // Keyboard navigation support
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   BrowserRouter,
@@ -128,11 +128,20 @@ const AppRoutes = () => {
   );
 };
 
+const RouteAwareErrorBoundary = ({ children }: { children: ReactNode }) => {
+  const location = useLocation();
+  const resetKey = `${location.key}-${location.pathname}${location.search}${location.hash}`;
+  // Reset the boundary on every navigation so a single route error cannot freeze the shell.
+  return <ErrorBoundary key={resetKey}>{children}</ErrorBoundary>;
+};
+
 const App = () => (
   <ErrorBoundary>
     <TooltipProvider>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <AppRoutes />
+        <RouteAwareErrorBoundary>
+          <AppRoutes />
+        </RouteAwareErrorBoundary>
       </BrowserRouter>
     </TooltipProvider>
   </ErrorBoundary>

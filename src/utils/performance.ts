@@ -36,8 +36,13 @@ class PerformanceMonitor {
 
     this.startTimes.delete(name);
     
-    // Log slow operations in development
-    if (process.env.NODE_ENV === 'development' && duration > 100) {
+    // Log slow operations in development, but skip calendar-prefixed metrics that have dedicated logging
+    const shouldLog =
+      process.env.NODE_ENV === 'development' &&
+      duration > 100 &&
+      !name.startsWith('calendar-');
+
+    if (shouldLog) {
       console.warn(`Slow operation detected: ${name} took ${duration.toFixed(2)}ms`);
     }
 

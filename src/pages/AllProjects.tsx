@@ -22,6 +22,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { KanbanSettingsSheet } from "@/components/KanbanSettingsSheet";
 import { useTranslation } from 'react-i18next';
 import { useDashboardTranslation, useFormsTranslation } from '@/hooks/useTypedTranslation';
+import { OnboardingChecklistItem } from "@/components/shared/OnboardingChecklistItem";
 import {
   AdvancedDataTable,
   type AdvancedDataTableSortState,
@@ -167,6 +168,7 @@ const AllProjects = () => {
   // Tutorial state
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
+  const [tutorialInitiated, setTutorialInitiated] = useState(false);
   
   // Tutorial interaction tracking
   const [hasMovedProject, setHasMovedProject] = useState(false);
@@ -190,6 +192,8 @@ const AllProjects = () => {
     const tutorial = searchParams.get('tutorial');
     if (tutorial?.includes('true')) {
       setShowTutorial(true);
+      setTutorialInitiated(true);
+      setViewMode('board'); // start on board for tutorial, but allow user to switch afterward
       const url = new URL(window.location.href);
       url.searchParams.delete('tutorial');
       window.history.replaceState({}, '', url.toString());
@@ -199,18 +203,14 @@ const AllProjects = () => {
   // Check if user is in guided mode but missing tutorial parameter
   const { shouldLockNavigation, currentStepInfo } = useOnboarding();
   useEffect(() => {
-    if (shouldLockNavigation && currentStepInfo?.id === 4 && !showTutorial) {
-      console.log('🔧 User in guided mode step 4 but no tutorial - redirecting with tutorial param');
-      navigate('/projects?tutorial=true', { replace: true });
+    if (shouldLockNavigation && currentStepInfo?.id === 4 && !showTutorial && !tutorialInitiated) {
+      setShowTutorial(true);
+      setTutorialInitiated(true);
+      setViewMode('board'); // keep tutorial on board view without URL churn
     }
-  }, [shouldLockNavigation, currentStepInfo, showTutorial, navigate]);
+  }, [shouldLockNavigation, currentStepInfo, showTutorial, tutorialInitiated]);
 
-  useEffect(() => {
-    const tutorialParam = searchParams.get('tutorial');
-    if ((tutorialParam?.includes('true') || showTutorial) && viewMode !== 'board') {
-      setViewMode('board');
-    }
-  }, [searchParams, showTutorial, viewMode]);
+  // Allow navigation between views after initial tutorial start; no persistent forcing to board
 
   const handleTableSortChange = (next: AdvancedDataTableSortState) => {
     setSortState(next);
@@ -1109,18 +1109,27 @@ const formatCurrency = useCallback((amount: string | number | null) => {
           {t('projects.tutorial.welcome.subtitle')}
         </p>
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
-            <span className="text-sm">{t('projects.board_view_benefit')}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
-            <span className="text-sm">{t('projects.list_view_benefit')}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
-            <span className="text-sm">{t('projects.archived_view_benefit')}</span>
-          </div>
+          <OnboardingChecklistItem
+            icon={LayoutGrid}
+            title={tForms('projects.boardViewTitle')}
+            description={t('projects.board_view_benefit')}
+            titleClassName="text-sm font-semibold"
+            descriptionClassName="text-sm"
+          />
+          <OnboardingChecklistItem
+            icon={List}
+            title={tForms('projects.listViewTitle')}
+            description={t('projects.list_view_benefit')}
+            titleClassName="text-sm font-semibold"
+            descriptionClassName="text-sm"
+          />
+          <OnboardingChecklistItem
+            icon={Archive}
+            title={tForms('projects.archivedTitle')}
+            description={t('projects.archived_view_benefit')}
+            titleClassName="text-sm font-semibold"
+            descriptionClassName="text-sm"
+          />
         </div>
         <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg mt-4">
           <p className="text-sm text-blue-700 dark:text-blue-300">
@@ -1171,22 +1180,31 @@ const formatCurrency = useCallback((amount: string | number | null) => {
         <p className="text-sm text-muted-foreground">
           {tForms('projects.completionIntro')}
         </p>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-            <span className="text-sm">{t('projects.board_view_summary')}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-            <span className="text-sm">{t('projects.list_view_summary')}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-            <span className="text-sm">{t('projects.archived_view_summary')}</span>
-          </div>
+        <div className="space-y-3">
+          <OnboardingChecklistItem
+            icon={LayoutGrid}
+            title={tForms('projects.boardViewTitle')}
+            description={t('projects.board_view_summary')}
+            titleClassName="text-sm font-semibold"
+            descriptionClassName="text-sm"
+          />
+          <OnboardingChecklistItem
+            icon={List}
+            title={tForms('projects.listViewTitle')}
+            description={t('projects.list_view_summary')}
+            titleClassName="text-sm font-semibold"
+            descriptionClassName="text-sm"
+          />
+          <OnboardingChecklistItem
+            icon={Archive}
+            title={tForms('projects.archivedTitle')}
+            description={t('projects.archived_view_summary')}
+            titleClassName="text-sm font-semibold"
+            descriptionClassName="text-sm"
+          />
         </div>
-        <div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
-          <p className="text-sm text-green-700 dark:text-green-300">
+        <div className="p-3 bg-muted/40 border border-border/60 rounded-lg">
+          <p className="text-sm text-foreground">
             {tForms('projects.completionCallout')}
           </p>
         </div>

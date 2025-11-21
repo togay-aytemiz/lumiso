@@ -234,31 +234,31 @@ const GettingStarted = () => {
           <div className={`mb-6 sm:mb-8 ${isAnimating ? 'animate-fade-in' : ''}`}>
             <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
               <CardContent className="p-4 md:p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-3">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold animate-pulse">
-                        {currentStepInfo.id}
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <CardTitle className="text-xl">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="flex gap-3">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold animate-pulse md:w-12 md:h-12">
+                      {currentStepInfo.id}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <CardTitle className="text-lg md:text-xl">
                           {t(`onboarding.steps.step_${currentStepInfo.id}.title`)}
                         </CardTitle>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-medium bg-muted text-muted-foreground">
                           <Clock className="w-3 h-3 mr-1" />
                           {t(`onboarding.steps.step_${currentStepInfo.id}.duration`)}
                         </span>
                       </div>
+                      <CardDescription className="text-sm md:text-base text-muted-foreground">
+                        {t(`onboarding.steps.step_${currentStepInfo.id}.description`)}
+                      </CardDescription>
                     </div>
-                    <CardDescription className="text-base text-muted-foreground ml-14">
-                      {t(`onboarding.steps.step_${currentStepInfo.id}.description`)}
-                    </CardDescription>
                   </div>
-                  <div className="ml-8">
+                  <div className="md:ml-8">
                     <Button 
                       size="lg" 
                       onClick={() => handleStepAction(currentStepInfo)}
-                      className="hover-scale"
+                      className="w-full md:w-auto justify-center hover-scale"
                     >
                       {t(`onboarding.steps.step_${currentStepInfo.id}.button`)}
                       <ArrowRight className="w-4 h-4 ml-2" />

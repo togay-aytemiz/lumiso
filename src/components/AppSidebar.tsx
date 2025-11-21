@@ -55,11 +55,8 @@ const moduleItems = [
   { title: "Projects", url: "/projects", icon: FolderOpen },
 ];
 
-// Tools items - analytics and financial
-const toolItems = [
-  { title: "Analytics", url: "/analytics", icon: BarChart3 },
-  { title: "Payments", url: "/payments", icon: CreditCard },
-];
+// Tools items - financial
+const toolItems = [{ title: "Payments", url: "/payments", icon: CreditCard }];
 
 // Bookings sub-items
 const bookingItems = [
@@ -389,9 +386,6 @@ export function AppSidebar() {
             {toolItems.map((item) => {
               let translationKey: string;
               switch (item.title) {
-                case "Analytics":
-                  translationKey = t("menu.analytics");
-                  break;
                 case "Payments":
                   translationKey = t("menu.payments");
                   break;

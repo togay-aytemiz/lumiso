@@ -31,6 +31,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "react-i18next";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -463,12 +464,29 @@ export default function Calendar() {
         <div className="lg:hidden px-4 sm:px-6">
           <div className="flex items-center justify-between gap-4 pb-4">
             {/* View mode toggle for mobile */}
-            <SegmentedControl
-              size="md"
+            <ToggleGroup
+              type="single"
               value={viewMode}
-              onValueChange={(value) => setViewMode(value as ViewMode)}
-              options={viewModeOptions}
-            />
+              onValueChange={(value) => {
+                if (!value) return;
+                setViewMode(value as ViewMode);
+              }}
+              className="flex-1 inline-flex items-center rounded-full bg-slate-100 p-0.5 text-slate-500 shadow-inner"
+            >
+              {viewModeOptions.map((option) => (
+                <ToggleGroupItem
+                  key={option.value}
+                  value={option.value}
+                  aria-label={
+                    option.ariaLabel ||
+                    (typeof option.label === "string" ? option.label : undefined)
+                  }
+                  className="h-8 min-w-[72px] flex-1 justify-center rounded-full px-4 text-sm font-semibold whitespace-nowrap text-slate-500 data-[state=on]:bg-white data-[state=on]:text-[#6F6FFB] data-[state=on]:shadow-sm"
+                >
+                  {option.label}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
 
             {/* Navigation for mobile */}
             <div className="flex items-center gap-2">

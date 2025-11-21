@@ -111,18 +111,9 @@ const getEffectiveBackgroundColor = (element: HTMLElement | null): RgbaColor => 
   return fallback ?? { r: 255, g: 255, b: 255, a: 1 };
 };
 
-const isDarkColor = (color: RgbaColor, threshold = 0.5) => {
+const isDarkColor = (color: RgbaColor, threshold = 0.45) => {
   const luminance = (0.299 * color.r + 0.587 * color.g + 0.114 * color.b) / 255;
   return luminance < threshold;
-};
-
-const getThemeBackgroundColor = (): RgbaColor | null => {
-  if (typeof window === "undefined") return null;
-  const root = getComputedStyle(document.documentElement);
-  const raw = root.getPropertyValue("--background").trim();
-  if (!raw) return null;
-  const parsed = parseColor(`hsl(${raw})`);
-  return parsed;
 };
 
 interface NavTab {
@@ -201,10 +192,15 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
       }
 
       const navRect = navElement?.getBoundingClientRect();
-      const sampleY = navRect
+      const baseY = navRect
         ? Math.max(0, navRect.top - 4)
         : Math.max(0, window.innerHeight - 48);
-      const sampleXs = [0.25, 0.5, 0.75].map((ratio) =>
+      const sampleYs = [
+        Math.max(0, baseY - 18),
+        Math.max(0, baseY - 8),
+        baseY,
+      ];
+      const sampleXs = [0.2, 0.5, 0.8].map((ratio) =>
         Math.min(window.innerWidth - 1, Math.max(0, window.innerWidth * ratio))
       );
 
@@ -215,23 +211,21 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
       const samples: RgbaColor[] = [];
 
       sampleXs.forEach((x) => {
-        const elementBelow = document.elementFromPoint(
-          x,
-          sampleY
-        ) as HTMLElement | null;
-        const targetElement =
-          elementBelow && elementBelow !== navElement ? elementBelow : document.body;
-        const color = getEffectiveBackgroundColor(targetElement);
-        samples.push(color);
+        sampleYs.forEach((y) => {
+          const elementBelow = document.elementFromPoint(
+            x,
+            y
+          ) as HTMLElement | null;
+          const targetElement =
+            elementBelow && elementBelow !== navElement ? elementBelow : document.body;
+          const color = getEffectiveBackgroundColor(targetElement);
+          samples.push(color);
+        });
       });
 
-      const themeColor = getThemeBackgroundColor();
-      if (themeColor) {
-        samples.push(themeColor);
-      }
-
-      const darkVotes = samples.filter((color) => isDarkColor(color)).length;
-      const shouldUseDark = samples.length > 0 && darkVotes >= Math.ceil(samples.length / 2);
+      const darkVotes = samples.filter((color) => isDarkColor(color, 0.55)).length;
+      const shouldUseDark =
+        samples.length > 0 && darkVotes >= Math.max(3, Math.ceil(samples.length * 0.66));
       setIsBackgroundDark(shouldUseDark);
     };
 
@@ -325,12 +319,7 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
 
   const moreItems = [
     {
-      title: t("menu.analytics"),
-      icon: BarChart3,
-      onClick: () => navigate('/analytics')
-    },
-    {
-      title: t("menu.automation"),
+      title: t("menu.workflows"),
       icon: Zap,
       onClick: () => setAutomationOpen(true)
     },
@@ -373,15 +362,15 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
     location.pathname.startsWith(path)
   );
 
-  const isMoreActive = ['/analytics', '/payments', '/settings'].some(path =>
+  const isMoreActive = ['/payments', '/settings'].some(path =>
     location.pathname.startsWith(path)
   ) || isAutomationActive;
 
   const activeColor = isBackgroundDark ? "text-white" : "text-primary";
   const inactiveColor = isBackgroundDark ? "text-white/70" : "text-muted-foreground";
   const navBackgroundClasses = isBackgroundDark
-    ? "bg-slate-900/80 supports-[backdrop-filter]:bg-slate-900/65 backdrop-blur-xl border-white/10 shadow-[0_-8px_24px_rgba(0,0,0,0.35)]"
-    : "bg-background/90 supports-[backdrop-filter]:bg-background/60 backdrop-blur-md border-border/60";
+    ? "bg-slate-900/75 supports-[backdrop-filter]:bg-slate-900/60 backdrop-blur-xl border-white/10 shadow-[0_-8px_24px_rgba(0,0,0,0.35)]"
+    : "bg-background/92 supports-[backdrop-filter]:bg-background/75 backdrop-blur-lg border-border/70";
   const buttonHoverClasses = isBackgroundDark ? "hover:bg-white/10 active:bg-white/15" : "hover:bg-muted/50 active:bg-muted";
   const bookingsSheetTitle = t("menu.sessions");
   const automationSheetTitle = t("mobile_sheets.automation");

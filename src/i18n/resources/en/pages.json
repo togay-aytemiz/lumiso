@@ -4,14 +4,39 @@
     "welcome": {
       "signIn": "Welcome back \ud83d\udc4b\ud83c\udffb",
       "signUp": "Let's get started \ud83d\ude80",
+      "verify": "Check your inbox ✉️",
       "recovery": "Reset your password \ud83d\udd10",
       "recoveryRequest": "Reset your password \ud83d\udd10"
     },
-    "copy": {
-      "signIn": "Sign in with your credentials to pick up exactly where your team left off.",
-      "signUp": "Create your Lumiso account to unlock collaborative workflows and beautiful client experiences.",
-      "recovery": "Create a new password to get back into your account.",
+      "copy": {
+        "signIn": "Sign in with your credentials to pick up exactly where your team left off.",
+        "signUp": "Create your Lumiso account to unlock collaborative workflows and beautiful client experiences.",
+        "verify": "We emailed you a confirmation link. Verify it to activate your workspace.",
+        "recovery": "Create a new password to get back into your account.",
       "recoveryRequest": "Enter your email address and we'll send you a reset link."
+    },
+    "verification": {
+      "badge": "Email verification",
+      "title": "Confirm your email to continue",
+      "sentTo": "We sent a verification link to {{email}}.",
+      "copyBefore": "We sent the verification link to",
+      "copyAfter": "—confirm it to activate your workspace.",
+      "steps": {
+        "inboxTitle": "Open your inbox",
+        "inboxDesc": "Look for the message from Lumiso with your confirmation link.",
+        "confirmTitle": "Tap the confirm button",
+        "confirmDesc": "Click “Confirm email” so we can activate your account securely.",
+        "returnTitle": "Return here and sign in",
+        "returnDesc": "Once confirmed, sign in with your new credentials."
+      },
+      "actions": {
+        "readyTitle": "Ready to continue?",
+        "readySubtitle": "After you approve the email, sign in with the password you just set.",
+        "useAnother": "Use another email",
+        "notReceived": "Didn't get the email?",
+        "resend": "Resend verification email",
+        "goToSignin": "Take me to sign in"
+      }
     },
     "featurePreview": {
       "title": "Feature preview",
@@ -2917,7 +2942,7 @@
       "welcome_title": "Welcome to Lumiso! \ud83c\udf89",
       "welcome_subtitle": "We'll guide you through setting up your photography CRM step by step. Each task builds on the previous one, so you'll learn naturally.",
       "what_youll_learn": "What you'll learn:",
-      "skip_sample_data": "Skip & Use Sample Data",
+      "skip_sample_data": "Skip Tutorial",
       "start_learning": "Start Learning!",
       "starting": "Starting...",
       "toast": {

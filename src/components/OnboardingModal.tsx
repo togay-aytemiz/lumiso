@@ -60,13 +60,13 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
     onClose(); // Simple close, no special handling needed
   };
 
-  const onboardingHighlights = ONBOARDING_STEPS.map((_, index) => {
+  const onboardingHighlights = ONBOARDING_STEPS.slice(0, 3).map((step, index) => {
     const Icon = onboardingStepIcons[index % onboardingStepIcons.length];
     return {
       Icon,
-      title: t(`onboarding.steps.step_${index + 1}.title`),
-      description: t(`onboarding.steps.step_${index + 1}.description`),
-      duration: t(`onboarding.steps.step_${index + 1}.duration`)
+      title: t(`onboarding.steps.step_${step.id}.title`),
+      description: t(`onboarding.steps.step_${step.id}.description`),
+      duration: t(`onboarding.steps.step_${step.id}.duration`)
     };
   });
 

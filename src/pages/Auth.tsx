@@ -4,7 +4,7 @@ import { AuthApiError } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle2, Circle } from "lucide-react";
+import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle2, Circle, ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useFormsTranslation, useMessagesTranslation } from "@/hooks/useTypedTranslation";
@@ -65,6 +65,10 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(() => getModeFromLocation(location.pathname, location.search) === "signup");
   const [loading, setLoading] = useState(false);
+  const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [resendingVerification, setResendingVerification] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [isPasswordResetMode, setIsPasswordResetMode] = useState(false);
   const [isPasswordResetRequestMode, setIsPasswordResetRequestMode] = useState(false);
@@ -143,6 +147,14 @@ const Auth = () => {
   }, [location.pathname, location.search, recoveryIntentActive, isPasswordResetRequestMode]);
 
   useEffect(() => {
+    if (!isSignUp) {
+      setShowVerificationPrompt(false);
+      setVerificationEmail("");
+      setResendSeconds(0);
+    }
+  }, [isSignUp]);
+
+  useEffect(() => {
     if (recoveryIntentActive) {
       if (!isPasswordResetMode) {
         setIsPasswordResetMode(true);
@@ -155,6 +167,13 @@ const Auth = () => {
       setIsPasswordResetMode(false);
     }
   }, [recoveryIntentActive, isPasswordResetMode, isPasswordResetRequestMode]);
+
+  useEffect(() => {
+    if (isPasswordResetMode || isPasswordResetRequestMode) {
+      setShowVerificationPrompt(false);
+      setResendSeconds(0);
+    }
+  }, [isPasswordResetMode, isPasswordResetRequestMode]);
 
   // Redirect if already logged in (unless we're handling recovery/invite flows)
   useEffect(() => {
@@ -299,9 +318,18 @@ const Auth = () => {
 
         if (data.user && !data.user.email_confirmed_at) {
           const copy = tMsg('auth.email_confirmation');
+          logAuthEvent("auth_sign_up_pending_verification", {
+            email,
+            supabaseUserId: data.user.id,
+          });
           toast.success(copy);
           recordToast("success", "auth.email_confirmation", copy);
+          setVerificationEmail(email);
+          setShowVerificationPrompt(true);
+          setResendSeconds(120);
+          setShowPassword(false);
           setLoading(false);
+          return;
         } else if (data.user) {
           const copy = tMsg('auth.account_created');
           toast.success(copy);
@@ -458,6 +486,64 @@ const Auth = () => {
     }
   };
 
+  const handleResendVerification = async () => {
+    const targetEmail = (verificationEmail || email || "").trim();
+
+    if (!targetEmail) {
+      const copy = tMsg('auth.verification_email_missing', 'Doğrulama bağlantısını tekrar göndermek için e-postanızı girin.');
+      toast.error(copy);
+      recordToast("error", "auth.verification_email_missing", copy);
+      logAuthEvent("auth_sign_up_resend_error", {
+        email: targetEmail,
+        errorMessage: "missing_email",
+      });
+      return;
+    }
+
+    setResendingVerification(true);
+    try {
+      logAuthEvent("auth_sign_up_resend_start", { email: targetEmail });
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: targetEmail,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
+
+      if (error) throw error;
+      const copy = tMsg('auth.verification_email_resent', 'Doğrulama e-postası yeniden gönderildi. Lütfen gelen kutunuzu kontrol edin.');
+      toast.success(copy);
+      recordToast("success", "auth.verification_email_resent", copy);
+      logAuthEvent("auth_sign_up_resend_success", { email: targetEmail });
+      setResendSeconds(120);
+    } catch (error: unknown) {
+      console.error("Verification resend error:", error);
+      const fallbackKey = 'auth.auth_error';
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : tMsg(fallbackKey);
+      logAuthEvent("auth_sign_up_resend_error", {
+        email: targetEmail,
+        errorMessage: message,
+      });
+      toast.error(message);
+      recordToast("error", error instanceof Error && error.message ? undefined : fallbackKey, message);
+    } finally {
+      setResendingVerification(false);
+    }
+  };
+
+  const isVerificationPending = showVerificationPrompt && !isPasswordResetMode && !isPasswordResetRequestMode;
+  const verificationTargetEmail = (verificationEmail || email || "").trim();
+  const verificationEmailDisplay = verificationTargetEmail || tForm('placeholders.enter_email');
+  const formattedResendTime = () => {
+    const mins = Math.floor(resendSeconds / 60);
+    const secs = resendSeconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
   useEffect(() => {
     const hashParams = new URLSearchParams(location.hash.replace(/^#/, ""));
     const searchParams = new URLSearchParams(location.search);
@@ -473,7 +559,19 @@ const Auth = () => {
     }
   }, [location, navigate]);
 
-  const authLabel = isPasswordResetMode
+  useEffect(() => {
+    if (!isVerificationPending || resendSeconds <= 0) return;
+
+    const interval = window.setInterval(() => {
+      setResendSeconds((prev) => Math.max(0, prev - 1));
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [isVerificationPending, resendSeconds]);
+
+  const authLabel = isVerificationPending
+    ? tPages('auth.verification.badge', 'Email verification')
+    : isPasswordResetMode
     ? tForm('auth.password_reset.title')
     : isPasswordResetRequestMode
     ? tForm('auth.password_reset.request_title')
@@ -481,7 +579,9 @@ const Auth = () => {
     ? tForm('auth.sign_up.title')
     : tForm('auth.sign_in.title');
 
-  const welcomeText = isPasswordResetMode
+  const welcomeText = isVerificationPending
+    ? tPages('auth.welcome.verify', 'Check your inbox ✉️')
+    : isPasswordResetMode
     ? tPages('auth.welcome.recovery', 'Reset your password 🔐')
     : isPasswordResetRequestMode
     ? tPages('auth.welcome.recoveryRequest', 'Reset your password 🔐')
@@ -489,7 +589,9 @@ const Auth = () => {
     ? tPages('auth.welcome.signUp', "Let's get started 🚀")
     : tPages('auth.welcome.signIn', 'Welcome back 👋🏻');
 
-  const copyText = isPasswordResetMode
+  const copyText = isVerificationPending
+    ? tPages('auth.copy.verify', 'We sent a verification link to your inbox. Please confirm to continue.')
+    : isPasswordResetMode
     ? tPages('auth.copy.recovery', 'Set a new password to regain access to your workspace.')
     : isPasswordResetRequestMode
     ? tPages('auth.copy.recoveryRequest', "We'll email you a secure link so you can choose a new password.")
@@ -501,6 +603,8 @@ const Auth = () => {
     ? 'reset-update'
     : isPasswordResetRequestMode
     ? 'reset-request'
+    : isVerificationPending
+    ? 'verification'
     : isSignUp
     ? 'signup'
     : 'signin';
@@ -508,7 +612,7 @@ const Auth = () => {
   return (
     <div className="flex min-h-screen w-full bg-white">
       <div className="relative flex min-h-screen w-full flex-col overflow-hidden lg:flex-row">
-        <div className="relative flex w-full flex-col px-6 py-8 sm:px-10 lg:w-1/2 lg:px-12">
+        <div className="relative flex min-h-screen w-full flex-col px-6 py-8 pb-12 sm:px-10 sm:pb-12 lg:w-1/2 lg:px-12 lg:pb-10">
           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-primary/10 via-white to-transparent" aria-hidden="true" />
 
           {/* Logo pinned to top-left */}
@@ -516,153 +620,46 @@ const Auth = () => {
             <img src="/lumiso-logo.png" alt={tCommon('branding.app_name', 'Lumiso')} className="h-10 w-auto" loading="eager" />
           </div>
 
-          {/* Centered form area */}
-          <div className="flex flex-1 items-center pt-24 sm:pt-16 lg:pt-0">
-            <div key={viewKey} className="relative mx-auto w-full max-w-md fade-in-up">
-              <div className="mb-8 space-y-3">
-                <div className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary">
-                  {authLabel}
+          <div className="flex flex-1 flex-col">
+            {/* Centered form area */}
+            <div className="flex flex-1 items-start pt-16 sm:pt-20 lg:items-center lg:pt-0">
+              <div key={viewKey} className="relative mx-auto w-full max-w-md fade-in-up">
+                <div className="mb-8 space-y-3">
+                  <div className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary">
+                    {authLabel}
+                  </div>
+                  <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">
+                    {welcomeText}
+                  </h1>
+                  {isVerificationPending ? (
+                    <p className="text-base text-slate-600">
+                      {tPages('auth.verification.copyBefore', 'Doğrulama bağlantısını')}
+                      {" "}
+                      <span className="font-semibold text-slate-900">{verificationEmailDisplay}</span>
+                      {" "}
+                      {tPages('auth.verification.copyAfter', 'adresine gönderdik; çalışma alanını etkinleştirmek için onayla.')}
+                    </p>
+                  ) : (
+                    <p className="text-base text-slate-500">{copyText}</p>
+                  )}
                 </div>
-                <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">
-                  {welcomeText}
-                </h1>
-                <p className="text-base text-slate-500">{copyText}</p>
-              </div>
 
-              {isPasswordResetMode ? (
-                <form onSubmit={handlePasswordUpdate} className="space-y-6">
-                  <p className="text-sm text-slate-500">{tForm('auth.password_reset.instructions')}</p>
-                  <div className="space-y-2">
-                    <Label htmlFor="new-password" className="text-sm font-medium text-slate-600">
-                      {tForm('labels.password')}
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="new-password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder={tForm('placeholders.enter_password')}
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        required
-                        disabled={updatingPassword}
-                        className="h-12 rounded-xl border-slate-200 bg-slate-50/60 px-4 pr-12 text-base shadow-inner transition focus:border-primary/60 focus:bg-white focus:ring-2 focus:ring-primary/20"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute inset-y-0 right-1 my-1 flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 hover:bg-primary/10 hover:text-primary"
-                        onClick={() => setShowPassword(!showPassword)}
-                        disabled={updatingPassword}
-                        aria-label={getPasswordToggleLabel(showPassword)}
-                      >
-                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                      </Button>
-                    </div>
-                    <div className="mt-2">
-                      <div
-                        className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200/70"
-                        role="progressbar"
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-valuenow={resetPwdStrength.percent}
-                        aria-label={tForm('password_tips.strength', 'Password strength')}
-                      >
-                        <div
-                          className={`h-full rounded-full transition-[width,background-color] duration-300 ease-out ${resetPwdStrength.color}`}
-                          style={{ width: `${resetPwdStrength.percent}%` }}
-                        />
-                      </div>
-                      <div className="mt-1 flex justify-between text-[10px] text-slate-500">
-                        <span>{tForm('password_tips.strength', 'Password strength')}</span>
-                        <span>
-                          {resetPwdStrength.label === 'weak' && tForm('password_tips.weak', 'Weak')}
-                          {resetPwdStrength.label === 'fair' && tForm('password_tips.fair', 'Fair')}
-                          {resetPwdStrength.label === 'good' && tForm('password_tips.good', 'Good')}
-                          {resetPwdStrength.label === 'strong' && tForm('password_tips.strong', 'Strong')}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password" className="text-sm font-medium text-slate-600">
-                      {tForm('labels.confirm_password')}
-                    </Label>
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      placeholder={tForm('placeholders.confirm_password')}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      disabled={updatingPassword}
-                      className="h-12 rounded-xl border-slate-200 bg-slate-50/60 px-4 text-base shadow-inner transition focus:border-primary/60 focus:bg-white focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="group flex h-12 w-full items-center justify-center rounded-xl bg-primary text-base font-semibold text-white shadow-lg shadow-primary/20 transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                    disabled={updatingPassword}
-                  >
-                    {updatingPassword ? `${tMsg('info.loading')}...` : tForm('auth.password_reset.button')}
-                  </Button>
-                </form>
-              ) : isPasswordResetRequestMode ? (
-                <form onSubmit={handlePasswordResetRequest} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="reset-email" className="text-sm font-medium text-slate-600">
-                      {tForm('labels.email')}
-                    </Label>
-                    <Input
-                      id="reset-email"
-                      type="email"
-                      placeholder={tForm('placeholders.enter_email')}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      disabled={resettingPassword}
-                      className="h-12 rounded-xl border-slate-200 bg-slate-50/60 px-4 text-base shadow-inner transition focus:border-primary/60 focus:bg-white focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="group flex h-12 w-full items-center justify-center rounded-xl bg-primary text-base font-semibold text-white shadow-lg shadow-primary/20 transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                    disabled={resettingPassword}
-                  >
-                    {resettingPassword ? `${tMsg('info.loading')}...` : tForm('auth.password_reset.request_button', 'Send reset link')}
-                  </Button>
-                </form>
-              ) : (
-                <>
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                {isPasswordResetMode ? (
+                  <form onSubmit={handlePasswordUpdate} className="space-y-6">
+                    <p className="text-sm text-slate-500">{tForm('auth.password_reset.instructions')}</p>
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="text-sm font-medium text-slate-600">
-                        {tForm('labels.email')}
-                      </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder={tForm('placeholders.enter_email')}
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        disabled={loading}
-                        className="h-12 rounded-xl border-slate-200 bg-slate-50/60 px-4 text-base shadow-inner transition focus:border-primary/60 focus:bg-white focus:ring-2 focus:ring-primary/20"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password" className="text-sm font-medium text-slate-600">
+                      <Label htmlFor="new-password" className="text-sm font-medium text-slate-600">
                         {tForm('labels.password')}
                       </Label>
                       <div className="relative">
                         <Input
-                          id="password"
+                          id="new-password"
                           type={showPassword ? "text" : "password"}
                           placeholder={tForm('placeholders.enter_password')}
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
                           required
-                          disabled={loading}
+                          disabled={updatingPassword}
                           className="h-12 rounded-xl border-slate-200 bg-slate-50/60 px-4 pr-12 text-base shadow-inner transition focus:border-primary/60 focus:bg-white focus:ring-2 focus:ring-primary/20"
                         />
                         <Button
@@ -671,143 +668,311 @@ const Auth = () => {
                           size="icon"
                           className="absolute inset-y-0 right-1 my-1 flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 hover:bg-primary/10 hover:text-primary"
                           onClick={() => setShowPassword(!showPassword)}
-                          disabled={loading}
+                          disabled={updatingPassword}
                           aria-label={getPasswordToggleLabel(showPassword)}
                         >
                           {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </Button>
                       </div>
-                      {!isSignUp && (
-                        <div className="flex justify-end pt-1">
-                          <Button
-                            type="button"
-                            variant="link"
-                            onClick={() => {
-                              setIsSignUp(false);
-                              setIsPasswordResetMode(false);
-                              setIsPasswordResetRequestMode(true);
-                              setShowPassword(false);
-                              navigate("/auth/signin");
-                            }}
-                            disabled={loading}
-                            className="px-0 text-sm font-semibold text-primary hover:text-primary/80"
-                          >
-                            {tForm('auth.sign_in.forgot_password')}
-                          </Button>
-                        </div>
-                      )}
-                      {isSignUp && (
-                        <div className="mt-2">
+                      <div className="mt-2">
+                        <div
+                          className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200/70"
+                          role="progressbar"
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={resetPwdStrength.percent}
+                          aria-label={tForm('password_tips.strength', 'Password strength')}
+                        >
                           <div
-                            className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200/70"
-                            role="progressbar"
-                            aria-valuemin={0}
-                            aria-valuemax={100}
-                            aria-valuenow={pwdStrength.percent}
-                            aria-label={tForm('password_tips.strength', 'Password strength')}
-                          >
-                            <div
-                              className={`h-full rounded-full transition-[width,background-color] duration-300 ease-out ${pwdStrength.color}`}
-                              style={{ width: `${pwdStrength.percent}%` }}
-                            />
-                          </div>
-                          <div className="mt-1 flex justify-between text-[10px] text-slate-500">
-                            <span>{tForm('password_tips.strength', 'Password strength')}</span>
-                            <span>
-                              {pwdStrength.label === 'weak' && tForm('password_tips.weak', 'Weak')}
-                              {pwdStrength.label === 'fair' && tForm('password_tips.fair', 'Fair')}
-                              {pwdStrength.label === 'good' && tForm('password_tips.good', 'Good')}
-                              {pwdStrength.label === 'strong' && tForm('password_tips.strong', 'Strong')}
-                            </span>
-                          </div>
+                            className={`h-full rounded-full transition-[width,background-color] duration-300 ease-out ${resetPwdStrength.color}`}
+                            style={{ width: `${resetPwdStrength.percent}%` }}
+                          />
                         </div>
-                      )}
-                    </div>
-                    {/* Password recommendations (optional, sign-up only) */}
-                    {isSignUp && (
-                      <div className="mt-3">
-                        <p className="mb-1 text-xs font-medium text-slate-500">{tForm('password_tips.title', 'For a stronger password')}</p>
-                        <div className="grid grid-cols-1 gap-1 text-xs text-slate-500">
-                          {[
-                            { key: 'length', label: tForm('password_tips.eight_chars', 'At least 8 characters'), valid: password.length >= 8 },
-                            { key: 'uppercase', label: tForm('password_tips.uppercase', 'At least 1 uppercase letter'), valid: /[A-Z]/.test(password) },
-                            { key: 'special', label: tForm('password_tips.special', 'At least 1 special character'), valid: /[^A-Za-z0-9]/.test(password) },
-                          ].map((item) => (
-                            <div key={item.key} className="flex items-center gap-2">
-                              {item.valid ? (
-                                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                              ) : (
-                                <Circle className="h-4 w-4 text-slate-300" />
-                              )}
-                              <span>{item.label}</span>
-                            </div>
-                          ))}
+                        <div className="mt-1 flex justify-between text-[10px] text-slate-500">
+                          <span>{tForm('password_tips.strength', 'Password strength')}</span>
+                          <span>
+                            {resetPwdStrength.label === 'weak' && tForm('password_tips.weak', 'Weak')}
+                            {resetPwdStrength.label === 'fair' && tForm('password_tips.fair', 'Fair')}
+                            {resetPwdStrength.label === 'good' && tForm('password_tips.good', 'Good')}
+                            {resetPwdStrength.label === 'strong' && tForm('password_tips.strong', 'Strong')}
+                          </span>
                         </div>
-                        <p className="mt-1 text-[10px] text-slate-400">{tForm('password_tips.optional', 'Optional recommendations, not required')}</p>
                       </div>
-                    )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirm-password" className="text-sm font-medium text-slate-600">
+                        {tForm('labels.confirm_password')}
+                      </Label>
+                      <Input
+                        id="confirm-password"
+                        type="password"
+                        placeholder={tForm('placeholders.confirm_password')}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        disabled={updatingPassword}
+                        className="h-12 rounded-xl border-slate-200 bg-slate-50/60 px-4 text-base shadow-inner transition focus:border-primary/60 focus:bg-white focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
                     <Button
                       type="submit"
                       className="group flex h-12 w-full items-center justify-center rounded-xl bg-primary text-base font-semibold text-white shadow-lg shadow-primary/20 transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                      disabled={loading}
+                      disabled={updatingPassword}
                     >
-                      {loading
-                        ? `${tMsg('info.loading')}...`
-                        : isSignUp
-                        ? tForm('auth.sign_up.button')
-                        : tForm('auth.sign_in.button')}
+                      {updatingPassword ? `${tMsg('info.loading')}...` : tForm('auth.password_reset.button')}
                     </Button>
                   </form>
+                ) : isPasswordResetRequestMode ? (
+                  <form onSubmit={handlePasswordResetRequest} className="space-y-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="reset-email" className="text-sm font-medium text-slate-600">
+                        {tForm('labels.email')}
+                      </Label>
+                      <Input
+                        id="reset-email"
+                        type="email"
+                        placeholder={tForm('placeholders.enter_email')}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        disabled={resettingPassword}
+                        className="h-12 rounded-xl border-slate-200 bg-slate-50/60 px-4 text-base shadow-inner transition focus:border-primary/60 focus:bg-white focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      className="group flex h-12 w-full items-center justify-center rounded-xl bg-primary text-base font-semibold text-white shadow-lg shadow-primary/20 transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                      disabled={resettingPassword}
+                    >
+                      {resettingPassword ? `${tMsg('info.loading')}...` : tForm('auth.password_reset.request_button', 'Send reset link')}
+                    </Button>
+                  </form>
+                ) : isVerificationPending ? (
+                  <>
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        type="button"
+                        className="group flex h-11 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-5 text-sm font-semibold text-emerald-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100"
+                        onClick={() => {
+                          setIsSignUp(false);
+                          setShowPassword(false);
+                          setShowVerificationPrompt(false);
+                          setVerificationEmail("");
+                          navigate("/auth/signin");
+                        }}
+                      >
+                        {tForm('auth.sign_in.button')}
+                        <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-white hover:text-emerald-700 hover:shadow"
+                        onClick={() => {
+                          setShowVerificationPrompt(false);
+                          setVerificationEmail("");
+                          setPassword("");
+                          setShowPassword(false);
+                          setIsSignUp(true);
+                          navigate("/auth/signup");
+                        }}
+                      >
+                        {tPages('auth.verification.actions.useAnother', 'Use another email')}
+                      </Button>
+                    </div>
 
+                    <div className="mt-4 space-y-0.5 text-sm text-slate-600">
+                      <span className="block leading-tight">{tPages('auth.verification.actions.notReceived', "E-posta gelmedi mi?")}</span>
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="px-0 font-semibold text-primary hover:text-primary/80 leading-tight"
+                        onClick={handleResendVerification}
+                        disabled={resendingVerification || loading || resendSeconds > 0}
+                      >
+                        {resendingVerification
+                          ? `${tMsg('info.loading')}...`
+                          : `${tPages('auth.verification.actions.resend', 'Doğrulama e-postasını yeniden gönder')}${resendSeconds > 0 ? ` (${formattedResendTime()})` : ''}`}
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="email" className="text-sm font-medium text-slate-600">
+                          {tForm('labels.email')}
+                        </Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder={tForm('placeholders.enter_email')}
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                          disabled={loading}
+                          className="h-12 rounded-xl border-slate-200 bg-slate-50/60 px-4 text-base shadow-inner transition focus:border-primary/60 focus:bg-white focus:ring-2 focus:ring-primary/20"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="password" className="text-sm font-medium text-slate-600">
+                          {tForm('labels.password')}
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="password"
+                            type={showPassword ? "text" : "password"}
+                            placeholder={tForm('placeholders.enter_password')}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            disabled={loading}
+                            className="h-12 rounded-xl border-slate-200 bg-slate-50/60 px-4 pr-12 text-base shadow-inner transition focus:border-primary/60 focus:bg-white focus:ring-2 focus:ring-primary/20"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute inset-y-0 right-1 my-1 flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 hover:bg-primary/10 hover:text-primary"
+                            onClick={() => setShowPassword(!showPassword)}
+                            disabled={loading}
+                            aria-label={getPasswordToggleLabel(showPassword)}
+                          >
+                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                          </Button>
+                        </div>
+                        {!isSignUp && (
+                          <div className="flex justify-end pt-1">
+                            <Button
+                              type="button"
+                              variant="link"
+                              onClick={() => {
+                                setIsSignUp(false);
+                                setIsPasswordResetMode(false);
+                                setIsPasswordResetRequestMode(true);
+                                setShowPassword(false);
+                                navigate("/auth/signin");
+                              }}
+                              disabled={loading}
+                              className="px-0 text-sm font-semibold text-primary hover:text-primary/80"
+                            >
+                              {tForm('auth.sign_in.forgot_password')}
+                            </Button>
+                          </div>
+                        )}
+                        {isSignUp && (
+                          <div className="mt-2">
+                            <div
+                              className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200/70"
+                              role="progressbar"
+                              aria-valuemin={0}
+                              aria-valuemax={100}
+                              aria-valuenow={pwdStrength.percent}
+                              aria-label={tForm('password_tips.strength', 'Password strength')}
+                            >
+                              <div
+                                className={`h-full rounded-full transition-[width,background-color] duration-300 ease-out ${pwdStrength.color}`}
+                                style={{ width: `${pwdStrength.percent}%` }}
+                              />
+                            </div>
+                            <div className="mt-1 flex justify-between text-[10px] text-slate-500">
+                              <span>{tForm('password_tips.strength', 'Password strength')}</span>
+                              <span>
+                                {pwdStrength.label === 'weak' && tForm('password_tips.weak', 'Weak')}
+                                {pwdStrength.label === 'fair' && tForm('password_tips.fair', 'Fair')}
+                                {pwdStrength.label === 'good' && tForm('password_tips.good', 'Good')}
+                                {pwdStrength.label === 'strong' && tForm('password_tips.strong', 'Strong')}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {/* Password recommendations (optional, sign-up only) */}
+                      {isSignUp && (
+                        <div className="mt-3">
+                          <p className="mb-1 text-xs font-medium text-slate-500">{tForm('password_tips.title', 'For a stronger password')}</p>
+                          <div className="grid grid-cols-1 gap-1 text-xs text-slate-500">
+                            {[
+                              { key: 'length', label: tForm('password_tips.eight_chars', 'At least 8 characters'), valid: password.length >= 8 },
+                              { key: 'uppercase', label: tForm('password_tips.uppercase', 'At least 1 uppercase letter'), valid: /[A-Z]/.test(password) },
+                              { key: 'special', label: tForm('password_tips.special', 'At least 1 special character'), valid: /[^A-Za-z0-9]/.test(password) },
+                            ].map((item) => (
+                              <div key={item.key} className="flex items-center gap-2">
+                                {item.valid ? (
+                                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                ) : (
+                                  <Circle className="h-4 w-4 text-slate-300" />
+                                )}
+                                <span>{item.label}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="mt-1 text-[10px] text-slate-400">{tForm('password_tips.optional', 'Optional recommendations, not required')}</p>
+                        </div>
+                      )}
+                      <Button
+                        type="submit"
+                        className="group flex h-12 w-full items-center justify-center rounded-xl bg-primary text-base font-semibold text-white shadow-lg shadow-primary/20 transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                        disabled={loading}
+                      >
+                        {loading
+                          ? `${tMsg('info.loading')}...`
+                          : isSignUp
+                          ? tForm('auth.sign_up.button')
+                          : tForm('auth.sign_in.button')}
+                      </Button>
+                    </form>
+
+                    <div className="mt-8 flex flex-wrap items-center gap-x-2 text-sm text-slate-500">
+                      <span>
+                        {isSignUp
+                          ? tPages('auth.toggle.existingAccount', 'Already have an account?')
+                          : tPages('auth.toggle.newToBrand', { brand: tCommon('branding.app_name', 'Lumiso') })}
+                      </span>
+                      <Button
+                        variant="link"
+                        onClick={() => {
+                          const nextIsSignUp = !isSignUp;
+                          setIsSignUp(nextIsSignUp);
+                          setIsPasswordResetMode(false);
+                          setIsPasswordResetRequestMode(false);
+                          setShowPassword(false);
+                          navigate(nextIsSignUp ? "/auth/signup" : "/auth/signin");
+                        }}
+                        disabled={loading}
+                        className="px-0 text-sm font-semibold text-primary hover:text-primary/80"
+                      >
+                        {isSignUp ? tForm('auth.sign_in.button') : tForm('auth.sign_up.button')}
+                      </Button>
+                    </div>
+                  </>
+                )}
+                {(isPasswordResetMode || isPasswordResetRequestMode) && (
                   <div className="mt-8 flex flex-wrap items-center gap-x-2 text-sm text-slate-500">
-                    <span>
-                      {isSignUp
-                        ? tPages('auth.toggle.existingAccount', 'Already have an account?')
-                        : tPages('auth.toggle.newToBrand', { brand: tCommon('branding.app_name', 'Lumiso') })}
-                    </span>
                     <Button
                       variant="link"
                       onClick={() => {
-                        const nextIsSignUp = !isSignUp;
-                        setIsSignUp(nextIsSignUp);
-                        setIsPasswordResetMode(false);
                         setIsPasswordResetRequestMode(false);
+                        setIsPasswordResetMode(false);
+                        setNewPassword("");
+                        setConfirmPassword("");
                         setShowPassword(false);
-                        navigate(nextIsSignUp ? "/auth/signup" : "/auth/signin");
+                        setIsSignUp(false);
+                        navigate("/auth/signin");
                       }}
-                      disabled={loading}
+                      disabled={updatingPassword || resettingPassword}
                       className="px-0 text-sm font-semibold text-primary hover:text-primary/80"
                     >
-                      {isSignUp ? tForm('auth.sign_in.button') : tForm('auth.sign_up.button')}
+                      {tForm('auth.password_reset.back_to_sign_in')}
                     </Button>
                   </div>
-                </>
-              )}
-              {(isPasswordResetMode || isPasswordResetRequestMode) && (
-                <div className="mt-8 flex flex-wrap items-center gap-x-2 text-sm text-slate-500">
-                  <Button
-                    variant="link"
-                    onClick={() => {
-                      setIsPasswordResetRequestMode(false);
-                      setIsPasswordResetMode(false);
-                      setNewPassword("");
-                      setConfirmPassword("");
-                      setShowPassword(false);
-                      setIsSignUp(false);
-                      navigate("/auth/signin");
-                    }}
-                    disabled={updatingPassword || resettingPassword}
-                    className="px-0 text-sm font-semibold text-primary hover:text-primary/80"
-                  >
-                    {tForm('auth.password_reset.back_to_sign_in')}
-                  </Button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
 
-          <div className="absolute bottom-6 left-6 hidden text-xs text-slate-400 sm:flex">
-            <span>© {new Date().getFullYear()} {tCommon('branding.app_name', 'Lumiso')}. {tCommon('legal.all_rights_reserved', 'All rights reserved.')}</span>
+            <div className="hidden pt-6 text-xs text-slate-400 sm:block">
+              <span>© {new Date().getFullYear()} {tCommon('branding.app_name', 'Lumiso')}. {tCommon('legal.all_rights_reserved', 'All rights reserved.')}</span>
+            </div>
           </div>
         </div>
 

@@ -136,6 +136,8 @@ describe("OnboardingModal", () => {
     // Ensure the guided steps list is rendered
     expect(screen.getByText("onboarding.steps.step_1.title")).toBeInTheDocument();
     expect(screen.getByText("onboarding.steps.step_2.title")).toBeInTheDocument();
+    expect(screen.getByText("onboarding.steps.step_3.title")).toBeInTheDocument();
+    expect(screen.queryByText("onboarding.steps.step_4.title")).not.toBeInTheDocument();
 
     // Action buttons should use translated labels
     expect(

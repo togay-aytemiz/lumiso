@@ -60,6 +60,8 @@
     "signed_in": "Welcome back! You've been signed in successfully",
     "auth_error": "An error occurred during authentication",
     "invalid_credentials": "The email or password you entered is incorrect.",
+    "verification_email_missing": "Enter your email to resend the verification link.",
+    "verification_email_resent": "Verification email re-sent. Please check your inbox.",
     "reset_email_sent": "Password reset link sent! Please check your inbox.",
     "reset_email_error": "We couldn't send the reset email. Please try again.",
     "reset_email_missing": "Enter your email address to receive a reset link.",

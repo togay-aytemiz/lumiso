@@ -4,14 +4,39 @@
     "welcome": {
       "signIn": "Hoşgeldiniz 👋🏻",
       "signUp": "Başlayalım 🚀",
+      "verify": "E-postanı kontrol et ✉️",
       "recovery": "Şifrenizi sıfırlayın 🔐",
       "recoveryRequest": "Şifrenizi sıfırlayın 🔐"
     },
-    "copy": {
-      "signIn": "Ekip olarak kaldığınız yerden devam etmek için giriş yapın.",
-      "signUp": "İşbirlikçi iş akışlarını ve kusursuz müşteri deneyimlerini açmak için Lumiso hesabınızı oluşturun.",
-      "recovery": "Hesabınıza yeniden erişmek için yeni bir şifre oluşturun.",
+      "copy": {
+        "signIn": "Ekip olarak kaldığınız yerden devam etmek için giriş yapın.",
+        "signUp": "İşbirlikçi iş akışlarını ve kusursuz müşteri deneyimlerini açmak için Lumiso hesabınızı oluşturun.",
+        "verify": "Doğrulama bağlantısını e-postana gönderdik; çalışma alanını etkinleştirmek için onayla.",
+        "recovery": "Hesabınıza yeniden erişmek için yeni bir şifre oluşturun.",
       "recoveryRequest": "E-posta adresinizi girin, şifre sıfırlama bağlantısını hemen gönderelim."
+    },
+    "verification": {
+      "badge": "E-posta doğrulaması",
+      "title": "Devam etmek için e-postanı doğrula",
+      "sentTo": "Doğrulama bağlantısını {{email}} adresine gönderdik.",
+      "copyBefore": "Doğrulama bağlantısını",
+      "copyAfter": "adresine gönderdik; çalışma alanını etkinleştirmek için onayla.",
+      "steps": {
+        "inboxTitle": "Gelen kutunu aç",
+        "inboxDesc": "Lumiso'dan gelen doğrulama e-postasını bul.",
+        "confirmTitle": "Doğrula butonuna tıkla",
+        "confirmDesc": "“E-postayı doğrula”ya tıklayarak hesabını güvenle etkinleştir.",
+        "returnTitle": "Buraya dön ve giriş yap",
+        "returnDesc": "Onayladıktan sonra yeni şifrenle giriş yapabilirsin."
+      },
+      "actions": {
+        "readyTitle": "Hazır mısın?",
+        "readySubtitle": "E-postayı onayladıysan yeni şifrenle giriş yapabilirsin.",
+        "useAnother": "Başka e-posta ile kaydol",
+        "notReceived": "E-posta gelmedi mi?",
+        "resend": "Doğrulama e-postasını yeniden gönder",
+        "goToSignin": "Giriş sayfasına götür"
+      }
     },
     "featurePreview": {
       "title": "Özellik önizlemesi",
@@ -2921,7 +2946,7 @@
       "welcome_title": "Lumiso'ya Hoş Geldiniz 🎉",
       "welcome_subtitle": "Fotoğrafçılık CRM'inizi kurmanızda size rehberlik edeceğiz. Her görev bir öncekinin üzerine inşa edilir.",
       "what_youll_learn": "Neler öğreneceksiniz:",
-      "skip_sample_data": "Atla ve Örnek Veri Kullan",
+      "skip_sample_data": "Eğitimi Atla",
       "start_learning": "Öğrenmeye Başla",
       "starting": "Başlatılıyor...",
       "toast": {

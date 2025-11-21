@@ -60,6 +60,8 @@
     "signed_in": "Tekrar hoş geldiniz! Başarıyla giriş yaptınız",
     "auth_error": "Kimlik doğrulama sırasında bir hata oluştu",
     "invalid_credentials": "E-posta veya şifre hatalı. Lütfen kontrol edip tekrar deneyin.",
+    "verification_email_missing": "Doğrulama bağlantısını yeniden göndermek için e-postanızı ekleyin.",
+    "verification_email_resent": "Doğrulama e-postası yeniden gönderildi. Gelen kutunuzu kontrol edin.",
     "reset_email_sent": "Şifre sıfırlama bağlantısı gönderildi! Lütfen e-postanızı kontrol edin.",
     "reset_email_error": "Sıfırlama e-postasını gönderemedik. Lütfen tekrar deneyin.",
     "reset_email_missing": "Sıfırlama bağlantısı almak için e-posta adresinizi girin.",

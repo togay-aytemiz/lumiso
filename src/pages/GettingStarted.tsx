@@ -236,7 +236,7 @@ const GettingStarted = () => {
               <CardContent className="p-4 md:p-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div className="flex gap-3">
-                    <div className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 min-w-[2.5rem] min-h-[2.5rem] md:min-w-[3rem] md:min-h-[3rem] rounded-full bg-primary text-primary-foreground text-lg font-bold animate-pulse flex-shrink-0 aspect-square">
+                    <div className="flex items-center justify-center w-11 h-11 rounded-full bg-primary text-primary-foreground text-lg font-bold animate-pulse shrink-0 leading-none">
                       {currentStepInfo.id}
                     </div>
                     <div className="flex flex-col gap-2">

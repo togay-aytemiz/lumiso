@@ -8,14 +8,14 @@ import { toast as toastFn } from "@/hooks/use-toast";
 import { BaseOnboardingModal, type OnboardingAction } from "./shared/BaseOnboardingModal";
 import { SampleDataModal } from "./SampleDataModal";
 import { useTranslation } from "react-i18next";
-import { CalendarClock, FolderCheck, ListChecks, Settings2, Sparkles, Users } from "lucide-react";
+import { ListChecks, Settings2, Sparkles, Users } from "lucide-react";
 
 interface OnboardingModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-const onboardingStepIcons = [Users, ListChecks, Settings2, CalendarClock, FolderCheck, Sparkles];
+const onboardingStepIcons = [Users, ListChecks, Settings2];
 
 export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   const { t } = useTranslation('pages');
@@ -60,13 +60,11 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
     onClose(); // Simple close, no special handling needed
   };
 
-  const onboardingHighlights = ONBOARDING_STEPS.slice(0, 3).map((step, index) => {
+  const onboardingBullets = ONBOARDING_STEPS.slice(0, 3).map((step, index) => {
     const Icon = onboardingStepIcons[index % onboardingStepIcons.length];
     return {
       Icon,
-      title: t(`onboarding.steps.step_${step.id}.title`),
-      description: t(`onboarding.steps.step_${step.id}.description`),
-      duration: t(`onboarding.steps.step_${step.id}.duration`)
+      title: t(`onboarding.steps.step_${step.id}.title`)
     };
   });
 
@@ -107,31 +105,19 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
             </div>
           </div>
 
-          <div className="space-y-3">
-            {onboardingHighlights.map(({ Icon, title, description, duration }, index) => (
-              <div key={index} className="flex items-center gap-3 rounded-xl border border-border/70 bg-background/80 p-3 sm:p-4 shadow-sm">
-                <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center">
-                  <div className="absolute inset-0 rounded-2xl bg-emerald-50" />
-                  <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl text-emerald-600">
-                    <Icon className="h-5 w-5" />
-                  </div>
+          <ul className="space-y-2">
+            {onboardingBullets.map(({ Icon, title }, index) => (
+              <li
+                key={index}
+                className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/40 px-3 py-2"
+              >
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
+                  <Icon className="h-4 w-4" />
                 </div>
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-start gap-2">
-                    <p className="text-sm font-semibold text-foreground">
-                      {title}
-                    </p>
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
-                      {duration}
-                    </span>
-                  </div>
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {description}
-                  </p>
-                </div>
-              </div>
+                <span className="text-sm font-medium text-foreground">{title}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </BaseOnboardingModal>
 

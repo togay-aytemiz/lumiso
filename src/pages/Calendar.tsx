@@ -385,7 +385,7 @@ export default function Calendar() {
           </PageHeader>
 
           {/* Desktop controls in separate row */}
-          <div className="hidden lg:block px-4 sm:px-6 lg:px-6">
+          <div className="hidden lg:block px-4 sm:px-6 lg:px-6 mt-4">
             <div className="flex items-center gap-4 justify-between w-full pb-4">
               {/* Filter chips skeleton */}
               <div className="flex items-center gap-2">
@@ -410,7 +410,7 @@ export default function Calendar() {
           </div>
 
           {/* Calendar content skeleton */}
-          <div className="flex-1 px-4 sm:px-6 lg:px-6 pb-4">
+          <div className="flex-1 px-4 sm:px-6 lg:px-6 pb-4 mt-4 lg:mt-0">
             {viewMode === "month" && <CalendarSkeleton />}
             {viewMode === "week" && <CalendarWeekSkeleton />}
             {viewMode === "day" && <CalendarDaySkeleton />}
@@ -430,7 +430,7 @@ export default function Calendar() {
         </PageHeader>
 
         {/* Desktop controls in separate row */}
-        <div className="hidden lg:block px-4 sm:px-6 lg:px-6">
+        <div className="hidden lg:block px-4 sm:px-6 lg:px-6 mt-4">
           <div className="flex items-center gap-4 justify-between w-full pb-4">
             {/* Filter chips */}
             <div className="flex items-center gap-2">
@@ -499,7 +499,7 @@ export default function Calendar() {
         </div>
 
         {/* Mobile controls */}
-        <div className="lg:hidden px-4 sm:px-6">
+        <div className="lg:hidden px-4 sm:px-6 mt-4">
           <div className="flex flex-col gap-3 pb-4">
             {/* View mode toggle for mobile - full width */}
             <ToggleGroup

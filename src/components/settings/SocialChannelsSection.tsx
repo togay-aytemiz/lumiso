@@ -234,7 +234,7 @@ export function SocialChannelsSection({
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>{t('common:common.buttons.cancel')}</AlertDialogCancel>
+                                <AlertDialogCancel>{t('common:buttons.cancel')}</AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => removeChannel(key)}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

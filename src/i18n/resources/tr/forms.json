@@ -418,7 +418,7 @@
     "custom_platform_placeholder": "Özel platform adı (örn., TikTok, Behance)",
     "url_invalid": "Lütfen geçerli bir URL girin",
     "remove_channel_title": "Sosyal Kanalı Kaldır",
-    "remove_channel_description": "{name} kanalını kaldırmak istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+    "remove_channel_description": "{{name}} kanalını kaldırmak istediğinizden emin misiniz? Bu işlem geri alınamaz.",
     "remove_button": "Kaldır",
     "help_text": {
       "appear_in_emails": "Sosyal bağlantılar etkinleştirildiğinde e-posta şablonu alt bilgilerinde görünecektir",

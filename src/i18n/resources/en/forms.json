@@ -458,7 +458,7 @@
     "custom_platform_placeholder": "Custom platform name (e.g., TikTok, Behance)",
     "url_invalid": "Please enter a valid URL",
     "remove_channel_title": "Remove Social Channel",
-    "remove_channel_description": "Are you sure you want to remove {name}? This action cannot be undone.",
+    "remove_channel_description": "Are you sure you want to remove {{name}}? This action cannot be undone.",
     "remove_button": "Remove",
     "help_text": {
       "appear_in_emails": "Social links will appear in email template footers when enabled",

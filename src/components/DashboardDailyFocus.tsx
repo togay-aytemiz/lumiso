@@ -1509,6 +1509,15 @@ const DashboardDailyFocus = ({
   };
 
   const weeklyHasSessions = weeklyCounts.scheduledCount + weeklyCounts.unscheduledCount > 0;
+  const showInactiveLeadCard = leads.length > 0 && inactiveLeadCount > 0;
+  const showTodayTasksCard = todayTasks.length > 0;
+  const secondaryGridColumns =
+    showInactiveLeadCard && showTodayTasksCard ? "sm:grid-cols-2" : "sm:grid-cols-1";
+
+  const showNoOverdueItems = overdueTasks.length === 0;
+  const showNoTasksToday = todayTasks.length === 0 && overdueTasks.length === 0;
+  const showAllLeadsActive = leads.length > 0 && inactiveLeadCount === 0;
+  const showStatusFooter = showNoOverdueItems || showNoTasksToday || showAllLeadsActive;
 
   if (loading) {
     return (
@@ -1662,8 +1671,8 @@ const DashboardDailyFocus = ({
                 </button>
               )}
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {leads.length > 0 && inactiveLeadCount > 0 && (
+              <div className={cn("grid grid-cols-1 gap-3", secondaryGridColumns)}>
+                {showInactiveLeadCard && (
                   <button
                     type="button"
                     onClick={handleInactiveLeadsClick}
@@ -1686,7 +1695,7 @@ const DashboardDailyFocus = ({
                   </button>
                 )}
 
-                {todayTasks.length > 0 && (
+                {showTodayTasksCard && (
                   <button
                     type="button"
                     onClick={handleDueTodayClick}
@@ -1711,21 +1720,21 @@ const DashboardDailyFocus = ({
               </div>
 
               {/* Compact Status Footer */}
-              {(overdueTasks.length === 0 || todayTasks.length === 0 || (leads.length > 0 && inactiveLeadCount === 0)) && (
+              {showStatusFooter && (
                 <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 px-2">
-                  {overdueTasks.length === 0 && (
+                  {showNoOverdueItems && (
                     <div className="flex items-center gap-2 text-sm font-medium text-indigo-400/80">
                       <CheckCircle2 className="w-4 h-4" />
                       <span>{t("daily_focus.no_overdue_items", { defaultValue: "No Overdue Items" })}</span>
                     </div>
                   )}
-                  {todayTasks.length === 0 && (
+                  {showNoTasksToday && (
                     <div className="flex items-center gap-2 text-sm font-medium text-indigo-400/80">
                       <CheckCircle2 className="w-4 h-4" />
                       <span>{t("daily_focus.no_tasks_today", { defaultValue: "No Tasks Today" })}</span>
                     </div>
                   )}
-                  {leads.length > 0 && inactiveLeadCount === 0 && (
+                  {showAllLeadsActive && (
                     <div className="flex items-center gap-2 text-sm font-medium text-indigo-400/80">
                       <CheckCircle2 className="w-4 h-4" />
                       <span>{t("daily_focus.all_leads_active")}</span>

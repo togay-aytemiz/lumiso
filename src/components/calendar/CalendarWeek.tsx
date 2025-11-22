@@ -120,7 +120,9 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   onActivityClick,
   onDayClick,
   onToggleReminderCompletion,
-  completingReminderId
+  completingReminderId,
+  className,
+  fullHeight
 }) {
   const { t } = useTranslation(['pages', 'forms']);
   const userLocale = getUserLocale();
@@ -133,7 +135,18 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   const [slotHeight, setSlotHeight] = useState(0);
   const [currentTime, setCurrentTime] = useState(() => new Date());
   const [scrollbarPadding, setScrollbarPadding] = useState(0);
-  const effectiveSlotHeight = slotHeight || 32; // fallback to base cell height until measured
+  const [containerHeight, setContainerHeight] = useState(0);
+  const baseSlotHeight = slotHeight || 32; // fallback to base cell height until measured
+  const effectiveSlotHeight = useMemo(() => {
+    if (isMobile || !timeSlots.length || !fullHeight) {
+      return baseSlotHeight;
+    }
+    if (!containerHeight) {
+      return baseSlotHeight;
+    }
+    const stretchedHeight = containerHeight / timeSlots.length;
+    return Math.max(baseSlotHeight, stretchedHeight);
+  }, [baseSlotHeight, containerHeight, fullHeight, isMobile, timeSlots.length]);
 
   const weekDays = useMemo(() => {
     const weekStart = getStartOfWeek(currentDate, userLocale);
@@ -176,6 +189,11 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
     if (typeof maxHeight === 'number') return `${maxHeight}px`;
     return maxHeight ?? '60vh';
   }, [maxHeight]);
+  const rootClassName = cn(
+    'rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden',
+    fullHeight && 'flex flex-1 flex-col h-full min-h-0',
+    className
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined' || isMobile) return;
@@ -219,26 +237,28 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    const updatePadding = () => {
+    const updatePaddingAndHeight = () => {
       const target = scrollContainerRef.current;
       if (!target) return;
       const offsetWidth = target.offsetWidth;
       const clientWidth = target.clientWidth;
       const nextPadding = Math.max(0, offsetWidth - clientWidth);
       setScrollbarPadding(current => (current !== nextPadding ? nextPadding : current));
+      const nextHeight = target.clientHeight;
+      setContainerHeight(current => (current !== nextHeight ? nextHeight : current));
     };
 
-    updatePadding();
+    updatePaddingAndHeight();
 
     if (typeof ResizeObserver !== 'undefined') {
-      const observer = new ResizeObserver(() => updatePadding());
+      const observer = new ResizeObserver(() => updatePaddingAndHeight());
       observer.observe(container);
       return () => observer.disconnect();
     }
 
     if (typeof window !== 'undefined') {
-      window.addEventListener('resize', updatePadding);
-      return () => window.removeEventListener('resize', updatePadding);
+      window.addEventListener('resize', updatePaddingAndHeight);
+      return () => window.removeEventListener('resize', updatePaddingAndHeight);
     }
   }, [isMobile, timeSlots.length]);
 
@@ -731,7 +751,11 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                   'grid relative min-h-[48px]',
                   rowBorderClass
                 )}
-                style={{ gridTemplateColumns: `${TIME_COL_PX}px repeat(7, minmax(0, 1fr))` }}
+                style={{
+                  gridTemplateColumns: `${TIME_COL_PX}px repeat(7, minmax(0, 1fr))`,
+                  minHeight: `${effectiveSlotHeight}px`,
+                  height: `${effectiveSlotHeight}px`
+                }}
               >
                 <div
                   className={cn(

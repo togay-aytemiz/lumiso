@@ -2115,10 +2115,13 @@
     "metrics": {
       "overviewTitle": "Ödeme Özeti",
       "totalInvoiced": "Toplam faturalanan",
-      "totalPaid": "Toplam tahsilat",
+      "totalPaid": "Tahsilat (brüt)",
       "totalRefunded": "İade edilen",
+      "netCollected": "Net tahsilat",
+      "netBreakdown": "Brüt {{paid}} - İade {{refunded}}",
       "remainingBalance": "Bekleyen bakiye",
-      "collectionRate": "Tahsilat oranı"
+      "collectionRate": "Tahsilat oranı",
+      "collectionRateHint": "Net {{net}} / Faturalanan {{invoiced}}"
     },
     "chart": {
       "title": "Ödeme Trendleri",

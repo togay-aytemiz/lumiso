@@ -4,6 +4,7 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import Layout from "./Layout";
 import { useTranslation } from "react-i18next";
+import { AppLoadingScreen } from "./AppLoadingScreen";
 
 type ProtectedRouteProps = {
   disableLayout?: boolean;
@@ -17,14 +18,7 @@ const ProtectedRoute = ({ disableLayout = false }: ProtectedRouteProps) => {
   const { t } = useTranslation("common");
 
   if (loading || onboardingLoading || organizationLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-          <p className="mt-4 text-muted-foreground">{t("actions.loading")}</p>
-        </div>
-      </div>
-    );
+    return <AppLoadingScreen message={t("actions.loading")} />;
   }
 
   if (!user) {

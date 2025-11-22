@@ -2111,10 +2111,13 @@
     "metrics": {
       "overviewTitle": "Payment Overview",
       "totalInvoiced": "Total Invoiced",
-      "totalPaid": "Total Paid",
+      "totalPaid": "Collected (gross)",
       "totalRefunded": "Refunded",
+      "netCollected": "Net Collected",
+      "netBreakdown": "Gross {{paid}} - Refunds {{refunded}}",
       "remainingBalance": "Outstanding Balance",
-      "collectionRate": "Collection Rate"
+      "collectionRate": "Collection Rate",
+      "collectionRateHint": "Net {{net}} / Invoiced {{invoiced}}"
     },
     "chart": {
       "title": "Payment Trend",

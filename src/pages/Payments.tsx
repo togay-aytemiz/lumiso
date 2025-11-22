@@ -905,9 +905,6 @@ const pageSize = PAGE_SIZE;
       ? tableLoading && page === 1 && paginatedPayments.length === 0
       : tableLoading && !hasScheduledResults;
   const displayedHasMore = paymentsView === "recorded" ? hasMorePayments : false;
-  const displayedOnLoadMore =
-    paymentsView === "recorded" && hasMorePayments ? handleLoadMorePayments : undefined;
-  const displayedIsLoadingMore = paymentsView === "recorded" ? isLoadingMorePayments : false;
 
   const handleLoadMorePayments = useCallback(() => {
     if (tableLoading || !hasMorePayments) return;
@@ -915,6 +912,10 @@ const pageSize = PAGE_SIZE;
     if (totalPages && page >= totalPages) return;
     setPage((prev) => prev + 1);
   }, [hasMorePayments, page, pageSize, tableLoading, totalCount]);
+
+  const displayedOnLoadMore =
+    paymentsView === "recorded" && hasMorePayments ? handleLoadMorePayments : undefined;
+  const displayedIsLoadingMore = paymentsView === "recorded" ? isLoadingMorePayments : false;
 
   const exportActions = useMemo(() => {
     const hasData = paymentsView === "recorded" ? hasRecordedResults : hasScheduledResults;

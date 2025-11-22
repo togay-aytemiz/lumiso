@@ -55,8 +55,8 @@ export function computePaymentSummaryMetrics<T extends PaymentSummarySource>(
   );
 
   const totalInvoiced = scheduledInitialTotal + manualDueTotal;
-  const remainingBalance = Math.max(totalInvoiced - totalPaid, 0);
   const netCollected = Math.max(totalPaid - totalRefunded, 0);
+  const remainingBalance = Math.max(totalInvoiced - netCollected, 0);
   const collectionRate = totalInvoiced > 0 ? netCollected / totalInvoiced : 0;
 
   return {

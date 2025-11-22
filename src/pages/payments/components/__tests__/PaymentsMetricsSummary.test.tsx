@@ -44,11 +44,17 @@ describe("PaymentsMetricsSummary", () => {
 
     expect(formatCurrency).toHaveBeenCalledWith(12345);
     expect(formatCurrency).toHaveBeenCalledWith(8900);
+    expect(formatCurrency).toHaveBeenCalledWith(1200);
     expect(formatCurrency).toHaveBeenCalledWith(345);
+    expect(formatCurrency).toHaveBeenCalledWith(7700);
+    // Hint uses net and invoiced again
+    expect(formatCurrency).toHaveBeenCalledWith(7700);
+    expect(formatCurrency).toHaveBeenCalledWith(12345);
     expect(formatPercent).toHaveBeenCalledWith(0.72);
 
     expect(screen.getByText("TRY 12345")).toBeInTheDocument();
     expect(screen.getByText("TRY 8900")).toBeInTheDocument();
+    expect(screen.getByText("TRY 7700")).toBeInTheDocument();
     expect(screen.getByText("TRY 345")).toBeInTheDocument();
     expect(screen.getByText("72%")).toBeInTheDocument();
 

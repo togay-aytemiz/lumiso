@@ -18,5 +18,11 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    dedupe: ["react", "react-dom"],
   },
+  optimizeDeps: {
+    // Avoid bundling an extra copy of React from the Lottie package (caused the invalid hook call).
+    exclude: ["@lottiefiles/dotlottie-react"],
+  },
+  assetsInclude: ["**/*.lottie"],
 }));

@@ -3,6 +3,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
+import { getDisplayProjectTypeName } from "@/lib/projectTypes";
+import { useTranslation } from "react-i18next";
 
 interface ProjectType {
   id: string;
@@ -30,6 +32,8 @@ export function SimpleProjectTypeSelect({
   const [types, setTypes] = useState<ProjectType[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { i18n } = useTranslation();
+  const locale = i18n.language;
 
   useEffect(() => {
     let isMounted = true;
@@ -111,7 +115,7 @@ export function SimpleProjectTypeSelect({
         {types.map((type) => (
           <SelectItem key={type.id} value={type.id}>
             <div className="flex items-center gap-2">
-              <span>{type.name}</span>
+              <span>{getDisplayProjectTypeName(type, locale)}</span>
               {type.is_default && (
                 <span className="text-xs text-muted-foreground">(Default)</span>
               )}

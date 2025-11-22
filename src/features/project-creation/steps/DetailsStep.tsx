@@ -15,9 +15,10 @@ import { Loader2 } from "lucide-react";
 import { useProjectStatuses, useProjectTypes } from "@/hooks/useOrganizationData";
 import { useProjectCreationContext } from "../hooks/useProjectCreationContext";
 import { useProjectCreationActions } from "../hooks/useProjectCreationActions";
+import { getDisplayProjectTypeName } from "@/lib/projectTypes";
 
 export const DetailsStep = () => {
-  const { t } = useTranslation("projectCreation");
+  const { t, i18n } = useTranslation("projectCreation");
   const { state } = useProjectCreationContext();
   const { updateDetails } = useProjectCreationActions();
   const { data: projectStatuses = [], isLoading: statusesLoading } = useProjectStatuses();
@@ -71,14 +72,16 @@ export const DetailsStep = () => {
   useEffect(() => {
     if (!state.details.projectTypeId) return;
     const selected = projectTypes.find((type) => type.id === state.details.projectTypeId);
-    if (selected && state.details.projectTypeLabel !== selected.name) {
-      updateDetails({ projectTypeLabel: selected.name }, { markDirty: false });
+    const localizedName = selected ? getDisplayProjectTypeName(selected, i18n.language) : undefined;
+    if (selected && localizedName && state.details.projectTypeLabel !== localizedName) {
+      updateDetails({ projectTypeLabel: localizedName }, { markDirty: false });
     }
   }, [
     state.details.projectTypeId,
     state.details.projectTypeLabel,
     projectTypes,
     updateDetails,
+    i18n.language
   ]);
 
   const handleProjectTypeChange = (value: string, options?: { isAutomatic?: boolean }) => {
@@ -86,7 +89,7 @@ export const DetailsStep = () => {
     updateDetails(
       {
         projectTypeId: value,
-        projectTypeLabel: selected?.name,
+        projectTypeLabel: selected ? getDisplayProjectTypeName(selected, i18n.language) : undefined,
       },
       { markDirty: options?.isAutomatic ? false : undefined }
     );

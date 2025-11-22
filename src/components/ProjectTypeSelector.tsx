@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { getDisplayProjectTypeName } from "@/lib/projectTypes";
+import { useTranslation } from "react-i18next";
 
 interface ProjectType {
   id: string;
@@ -39,6 +41,8 @@ export function ProjectTypeSelector({
   const [open, setOpen] = useState(false);
   const toast = useI18nToast();
   const { settings: orgSettings, loading: settingsLoading } = useOrganizationSettings();
+  const { i18n } = useTranslation();
+  const locale = orgSettings?.locale ?? i18n.language;
 
   const preferredSlugs = useMemo(
     () => (orgSettings?.preferred_project_types ?? []).map((slug) => slug.toLowerCase()),
@@ -194,7 +198,7 @@ export function ProjectTypeSelector({
                 variant={isDefaultType(selectedType) ? "default" : "secondary"}
                 className="text-xs"
               >
-                {selectedType.name.toUpperCase()}
+                {getDisplayProjectTypeName(selectedType, locale).toUpperCase()}
               </Badge>
               {isDefaultType(selectedType) && (
                 <span className="text-xs text-muted-foreground">(Default)</span>
@@ -242,7 +246,7 @@ export function ProjectTypeSelector({
                         variant={isDefaultType(type) ? "default" : "secondary"}
                         className="text-xs"
                       >
-                        {type.name.toUpperCase()}
+                        {getDisplayProjectTypeName(type, locale).toUpperCase()}
                       </Badge>
                       {isDefaultType(type) && (
                         <span className="text-xs text-muted-foreground">(Default)</span>

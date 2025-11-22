@@ -198,7 +198,9 @@ export async function getUserOrganizationId(): Promise<string | null> {
           // Create default project types
           await supabase.rpc('ensure_default_project_types_for_org', { 
             user_uuid: user.id, 
-            org_id: newOrg.id 
+            org_id: newOrg.id,
+            locale:
+              typeof navigator !== "undefined" ? navigator.language : undefined
           });
 
           console.log('Initialized default data for new organization');

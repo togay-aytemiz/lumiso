@@ -14,6 +14,7 @@ import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useTranslation } from "react-i18next";
 import { SettingsTwoColumnSection } from "@/components/settings/SettingsSections";
+import { getDisplayProjectTypeName } from "@/lib/projectTypes";
 
 interface ProjectType {
   id: string;
@@ -32,7 +33,7 @@ const ProjectTypesSection = () => {
   const { activeOrganizationId, loading: orgLoading } = useOrganization();
   const { data: types = [], isLoading, refetch } = useProjectTypes();
   const { settings: orgSettings } = useOrganizationSettings();
-  const { t } = useTranslation("forms");
+  const { t, i18n } = useTranslation("forms");
   const preferredSlugs = orgSettings?.preferred_project_types ?? [];
   const displayTypes = useMemo(() => {
     if (!types.length) return [];
@@ -62,6 +63,7 @@ const ProjectTypesSection = () => {
       await supabase.rpc("ensure_default_project_types_for_org", {
         user_uuid: user.id,
         org_id: activeOrganizationId,
+        locale: orgSettings?.locale ?? i18n.language
       });
 
       await refetch();
@@ -69,7 +71,7 @@ const ProjectTypesSection = () => {
       console.error("Error creating default types:", error);
       toast.error("Failed to create default types");
     }
-  }, [activeOrganizationId, refetch, toast]);
+  }, [activeOrganizationId, refetch, toast, orgSettings?.locale, i18n.language]);
 
   useEffect(() => {
     if (
@@ -162,7 +164,9 @@ const ProjectTypesSection = () => {
             </div>
           ) : (
             <div className="flex flex-wrap gap-3">
-              {displayTypes.map((type) => (
+              {displayTypes.map((type) => {
+                const localizedName = getDisplayProjectTypeName(type, orgSettings?.locale ?? i18n.language);
+                return (
                 <button
                   key={type.id}
                   type="button"
@@ -177,9 +181,10 @@ const ProjectTypesSection = () => {
                   {type.is_default && (
                     <Check className="h-3.5 w-3.5 text-current" />
                   )}
-                  <span className="truncate">{type.name}</span>
+                  <span className="truncate">{localizedName}</span>
                 </button>
-              ))}
+              );
+            })}
             </div>
           )}
         </div>

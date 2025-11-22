@@ -130,8 +130,11 @@ const AppRoutes = () => {
 
 const RouteAwareErrorBoundary = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
-  const resetKey = `${location.key}-${location.pathname}${location.search}${location.hash}`;
-  // Reset the boundary on every navigation so a single route error cannot freeze the shell.
+  const backgroundLocation = (location.state as { backgroundLocation?: Location } | null)?.backgroundLocation;
+  // When a settings overlay is open, keep the boundary keyed to the background route
+  // so the underlying page doesn't remount (avoids background flashes on desktop).
+  const resetKeyLocation = backgroundLocation ?? location;
+  const resetKey = `${resetKeyLocation.key ?? location.key ?? "default"}-${resetKeyLocation.pathname}${resetKeyLocation.search}${resetKeyLocation.hash}`;
   return <ErrorBoundary key={resetKey}>{children}</ErrorBoundary>;
 };
 

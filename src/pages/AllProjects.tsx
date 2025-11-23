@@ -152,21 +152,46 @@ const AllProjects = () => {
   const typeOptionItems = useMemo(() => {
     const seen = new Set<string>();
     const locale = orgSettings?.locale ?? i18n.language;
+    const preferredKeys = new Set(
+      (orgSettings?.preferred_project_types ?? [])
+        .map((slug) => getProjectTypeMatchKey(slug))
+        .filter((key) => key.length > 0)
+    );
 
-    return (typeOptions ?? []).flatMap((type) => {
+    const items = (typeOptions ?? []).flatMap((type) => {
       if (!type || typeof type !== "object") return [];
       const { id, name, template_slug } = type as { id?: string; name?: string; template_slug?: string | null };
       if (!id) return [];
 
       const matchKey = getProjectTypeMatchKey(template_slug ?? name ?? id);
       if (matchKey && seen.has(matchKey)) return [];
+      if (preferredKeys.size > 0 && matchKey && !preferredKeys.has(matchKey)) return [];
       if (matchKey) seen.add(matchKey);
 
       const label = getDisplayProjectTypeName({ name: name ?? "", template_slug: template_slug ?? null }, locale);
 
       return [{ id, name: label }];
     });
-  }, [typeOptions, orgSettings?.locale, i18n.language]);
+
+    // If preferred list filtered everything (or empty), fall back to unique all types.
+    if (items.length === 0 && (typeOptions ?? []).length > 0) {
+      seen.clear();
+      return (typeOptions ?? []).flatMap((type) => {
+        if (!type || typeof type !== "object") return [];
+        const { id, name, template_slug } = type as { id?: string; name?: string; template_slug?: string | null };
+        if (!id) return [];
+
+        const matchKey = getProjectTypeMatchKey(template_slug ?? name ?? id);
+        if (matchKey && seen.has(matchKey)) return [];
+        if (matchKey) seen.add(matchKey);
+
+        const label = getDisplayProjectTypeName({ name: name ?? "", template_slug: template_slug ?? null }, locale);
+        return [{ id, name: label }];
+      });
+    }
+
+    return items;
+  }, [typeOptions, orgSettings?.locale, orgSettings?.preferred_project_types, i18n.language]);
   const serviceOptionItems = useMemo(() => toNamedOptions(serviceOptions ?? []), [serviceOptions]);
 
   const projectStatuses = useMemo<ProjectStatusSummary[]>(() => {

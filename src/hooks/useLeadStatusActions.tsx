@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import type { Database } from "@/integrations/supabase/types";
+import { useTranslation } from "react-i18next";
 
 interface UseLeadStatusActionsProps {
   leadId: string;
@@ -23,6 +24,7 @@ export function useLeadStatusActions({
 }: UseLeadStatusActionsProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
+  const { t: tForms } = useTranslation("forms");
 
   const resolveStatusByLifecycle = async (
     lifecycle: "completed" | "cancelled"
@@ -114,11 +116,13 @@ export function useLeadStatusActions({
       const undoRef = { current: false };
       
       toast({
-        title: "Status Updated",
-        description: `Lead marked as ${displayName ?? targetStatus.name}`,
+        title: tForms("status.statusUpdated"),
+        description: tForms("status.leadMarkedAs", {
+          status: displayName ?? targetStatus.name
+        }),
         action: previousStatus?.name || previousStatus?.id ? (
           <ToastAction
-            altText="Undo status change"
+            altText={tForms("status.undoStatusChange")}
             onClick={async () => {
               if (undoRef.current) return; // Prevent multiple clicks
               undoRef.current = true;
@@ -143,30 +147,36 @@ export function useLeadStatusActions({
 
                 onStatusChange();
                 toast({
-                  title: "Undone",
-                  description: `Status reverted to ${prevStatusData.name}`
+                  title: tForms("status.undone"),
+                  description: tForms("status.statusRevertedTo", {
+                    status: prevStatusData.name
+                  })
                 });
               } catch (error: unknown) {
                 const message =
-                  error instanceof Error ? error.message : "Unable to undo status change";
+                  error instanceof Error
+                    ? error.message
+                    : tForms("status.undoFailedDescription");
                 toast({
-                  title: "Undo failed",
+                  title: tForms("status.undoFailed"),
                   description: message,
                   variant: "destructive"
                 });
               }
             }}
           >
-            Undo
+            {tForms("status.undo")}
           </ToastAction>
         ) : undefined
       });
 
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : "Unable to update lead status";
+        error instanceof Error
+          ? error.message
+          : tForms("status.unableToUpdateStatus");
       toast({
-        title: "Error updating status",
+        title: tForms("status.errorUpdatingStatus"),
         description: message,
         variant: "destructive"
       });

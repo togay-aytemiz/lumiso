@@ -472,6 +472,16 @@
     "selectStatus": "DURUM SEÇ",
     "noStatusAvailable": "Mevcut durum yok",
     "statusUpdated": "Durum Güncellendi",
+    "leadMarkedAs": "Kişi {{status}} olarak işaretlendi",
+    "leadStatusChanged": "Kişi durumu \"{{status}}\" olarak değiştirildi",
+    "leadStatusSet": "Kişi durumu \"{{status}}\" olarak ayarlandı",
+    "undo": "Geri Al",
+    "undoStatusChange": "Durum değişikliğini geri al",
+    "undone": "Geri alındı",
+    "statusRevertedTo": "Durum {{status}} olarak geri alındı",
+    "undoFailed": "Geri alma başarısız",
+    "undoFailedDescription": "Durum değişikliği geri alınamadı",
+    "unableToUpdateStatus": "Kişi durumu güncellenemedi",
     "errorUpdatingStatus": "Durum güncellenirken hata",
     "statusNotFound": "Durum bulunamadı",
     "sessionUpdated": "Seans Güncellendi",
@@ -625,6 +635,21 @@
       "select": "Açılır Menü",
       "checkbox": "Onay Kutusu",
       "number": "Sayı"
+    },
+    "toast": {
+      "create_success_title": "Alan oluşturuldu",
+      "create_success_description": "\"{{fieldName}}\" alanı başarıyla oluşturuldu.",
+      "update_success_title": "Alan güncellendi",
+      "update_success_description": "Alan başarıyla güncellendi.",
+      "delete_success_title": "Alan silindi",
+      "delete_success_description": "\"{{fieldName}}\" alanı ve tüm verileri silindi.",
+      "reorder_success_title": "Alanlar yeniden sıralandı",
+      "reorder_success_description": "Alan sıralaması başarıyla güncellendi.",
+      "error_title": "Hata",
+      "create_error_description": "Alan oluşturulamadı",
+      "update_error_description": "Alan güncellenemedi",
+      "delete_error_description": "Alan silinemedi",
+      "reorder_error_description": "Alanlar yeniden sıralanamadı"
     }
   },
   "buttons": {

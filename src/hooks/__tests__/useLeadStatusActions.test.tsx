@@ -42,11 +42,39 @@ jest.mock("@/components/ui/toast", () => ({
   }) => React.createElement("button", { onClick }, children),
 }));
 
+const translations: Record<string, string> = {
+  "status.statusUpdated": "Status Updated",
+  "status.leadMarkedAs": "Lead marked as {{status}}",
+  "status.undoStatusChange": "Undo status change",
+  "status.undo": "Undo",
+  "status.undone": "Undone",
+  "status.statusRevertedTo": "Status reverted to {{status}}",
+  "status.undoFailed": "Undo failed",
+  "status.undoFailedDescription": "Unable to undo status change",
+  "status.unableToUpdateStatus": "Unable to update lead status",
+  "status.errorUpdatingStatus": "Error updating status"
+};
+
+jest.mock("react-i18next", () => ({
+  __esModule: true,
+  useTranslation: () => ({
+    t: (key: string, options?: Record<string, string>) => {
+      const template = translations[key] ?? key;
+      if (!options) return template;
+
+      return template.replace(/{{\s*(\w+)\s*}}/g, (_match, variable) =>
+        options[variable] ?? ""
+      );
+    },
+  }),
+}));
+
 import React from "react";
 import { renderHook, act } from "@testing-library/react";
 
 import { useLeadStatusActions } from "../useLeadStatusActions";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
 const authMock = supabase.auth.getUser as jest.Mock;
 const rpcMock = supabase.rpc as jest.Mock;
@@ -56,11 +84,15 @@ type LeadStatusRecord = { id: string; name: string };
 type LeadStatusResponse = { data: LeadStatusRecord | null; error: Error | null };
 
 const leadStatusQueue: LeadStatusResponse[] = [];
+const leadStatusLifecycleQueue: Array<{ data: LeadStatusRecord[]; error: Error | null }> = [];
 const leadStatusesQuery = {
   select: jest.fn().mockReturnThis(),
   eq: jest.fn().mockReturnThis(),
   maybeSingle: jest.fn().mockImplementation(() =>
     Promise.resolve(leadStatusQueue.shift() ?? { data: null, error: null })
+  ),
+  order: jest.fn().mockImplementation(() =>
+    Promise.resolve(leadStatusLifecycleQueue.shift() ?? { data: [], error: null })
   ),
 };
 
@@ -86,6 +118,8 @@ beforeEach(() => {
   leadStatusesQuery.select.mockClear();
   leadStatusesQuery.eq.mockClear();
   leadStatusesQuery.maybeSingle.mockClear();
+  leadStatusesQuery.order.mockClear();
+  leadStatusLifecycleQueue.length = 0;
 
   leadsUpdateResults.length = 0;
   leadsQuery.update.mockClear();
@@ -105,19 +139,20 @@ beforeEach(() => {
   });
 });
 
+const mockStatuses = [
+  { id: "status-complete", name: "Completed", lifecycle: "completed" },
+  { id: "status-prev", name: "Qualified", lifecycle: "active" },
+  { id: "status-archived", name: "Archived", lifecycle: "cancelled" }
+] as unknown as Array<Database["public"]["Tables"]["lead_statuses"]["Row"]>;
+
 describe("useLeadStatusActions", () => {
   it("updates status, triggers callbacks, and supports undo", async () => {
     const onStatusChange = jest.fn();
 
-    leadStatusQueue.push(
-      { data: { id: "status-complete", name: "Completed" }, error: null },
-      { data: { id: "status-prev", name: "Qualified" }, error: null }
-    );
-
     leadsUpdateResults.push({ error: null }, { error: null });
 
     const { result } = renderHook(() =>
-      useLeadStatusActions({ leadId: "lead-1", onStatusChange })
+      useLeadStatusActions({ leadId: "lead-1", onStatusChange, statuses: mockStatuses })
     );
 
     await act(async () => {
@@ -126,11 +161,6 @@ describe("useLeadStatusActions", () => {
 
     expect(result.current.isUpdating).toBe(false);
     expect(authMock).toHaveBeenCalled();
-    expect(rpcMock).toHaveBeenCalledWith("ensure_system_lead_statuses", {
-      user_uuid: "user-1",
-    });
-    expect(leadStatusesQuery.select).toHaveBeenCalledWith("id, name");
-    expect(leadStatusesQuery.eq).toHaveBeenCalledWith("name", "Completed");
     expect(leadsQuery.update).toHaveBeenCalledWith({
       status_id: "status-complete",
       status: "Completed",
@@ -149,7 +179,6 @@ describe("useLeadStatusActions", () => {
       await toastArgs.action.props.onClick();
     });
 
-    expect(leadStatusesQuery.eq).toHaveBeenCalledWith("name", "Qualified");
     expect(leadsQuery.update).toHaveBeenLastCalledWith({
       status_id: "status-prev",
       status: "Qualified",
@@ -167,7 +196,7 @@ describe("useLeadStatusActions", () => {
     authMock.mockResolvedValue({ data: { user: null }, error: null });
 
     const { result } = renderHook(() =>
-      useLeadStatusActions({ leadId: "lead-1", onStatusChange: jest.fn() })
+      useLeadStatusActions({ leadId: "lead-1", onStatusChange: jest.fn(), statuses: mockStatuses })
     );
 
     await act(async () => {
@@ -182,11 +211,11 @@ describe("useLeadStatusActions", () => {
     expect(result.current.isUpdating).toBe(false);
   });
 
-  it("surfaces errors from status lookup", async () => {
-    leadStatusQueue.push({ data: null, error: new Error("status lookup failed") });
+  it("surfaces errors from lead update", async () => {
+    leadsUpdateResults.push({ error: new Error("status lookup failed") });
 
     const { result } = renderHook(() =>
-      useLeadStatusActions({ leadId: "lead-1", onStatusChange: jest.fn() })
+      useLeadStatusActions({ leadId: "lead-1", onStatusChange: jest.fn(), statuses: mockStatuses })
     );
 
     await act(async () => {
@@ -202,11 +231,10 @@ describe("useLeadStatusActions", () => {
   });
 
   it("supports custom labels for lost status without undo", async () => {
-    leadStatusQueue.push({ data: { id: "status-archived", name: "Archived" }, error: null });
     leadsUpdateResults.push({ error: null });
 
     const { result } = renderHook(() =>
-      useLeadStatusActions({ leadId: "lead-1", onStatusChange: jest.fn() })
+      useLeadStatusActions({ leadId: "lead-1", onStatusChange: jest.fn(), statuses: mockStatuses })
     );
 
     await act(async () => {
@@ -218,6 +246,5 @@ describe("useLeadStatusActions", () => {
       description: "Lead marked as Archived",
     });
     expect(toastArgs.action).toBeUndefined();
-    expect(leadStatusesQuery.eq).toHaveBeenCalledWith("name", "Archived");
   });
 });

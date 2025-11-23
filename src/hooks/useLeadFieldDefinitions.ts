@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useTranslation } from "react-i18next";
 import {
   LEAD_FIELD_DEFINITIONS_GC_TIME,
   LEAD_FIELD_DEFINITIONS_STALE_TIME,
@@ -32,6 +33,7 @@ export function useLeadFieldDefinitions() {
   const { activeOrganizationId } = useOrganization();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { t } = useTranslation("forms");
 
   const query = useQuery({
     queryKey: leadFieldDefinitionsQueryKey(activeOrganizationId),
@@ -107,23 +109,27 @@ export function useLeadFieldDefinitions() {
         updateCache((prev) => [...prev, data as LeadFieldDefinition]);
 
         toast({
-          title: "Field created",
-          description: `Field "${definition.label}" has been created successfully.`,
+          title: t("lead_field.toast.create_success_title"),
+          description: t("lead_field.toast.create_success_description", {
+            fieldName: definition.label,
+          }),
         });
 
         return data;
       } catch (err) {
         console.error("Error creating field definition:", err);
         toast({
-          title: "Error",
+          title: t("lead_field.toast.error_title"),
           description:
-            err instanceof Error ? err.message : "Failed to create field",
+            err instanceof Error
+              ? err.message
+              : t("lead_field.toast.create_error_description"),
           variant: "destructive",
         });
         throw err;
       }
     },
-    [ensureOrganizationId, queryClient, toast, updateCache]
+    [ensureOrganizationId, queryClient, t, toast, updateCache]
   );
 
   const updateFieldDefinition = useCallback(
@@ -147,23 +153,25 @@ export function useLeadFieldDefinitions() {
         );
 
         toast({
-          title: "Field updated",
-          description: "Field has been updated successfully.",
+          title: t("lead_field.toast.update_success_title"),
+          description: t("lead_field.toast.update_success_description"),
         });
 
         return data;
       } catch (err) {
         console.error("Error updating field definition:", err);
         toast({
-          title: "Error",
+          title: t("lead_field.toast.error_title"),
           description:
-            err instanceof Error ? err.message : "Failed to update field",
+            err instanceof Error
+              ? err.message
+              : t("lead_field.toast.update_error_description"),
           variant: "destructive",
         });
         throw err;
       }
     },
-    [toast, updateCache]
+    [t, toast, updateCache]
   );
 
   const deleteFieldDefinition = useCallback(
@@ -213,21 +221,25 @@ export function useLeadFieldDefinitions() {
         updateCache((prev) => prev.filter((item) => item.id !== id));
 
         toast({
-          title: "Field deleted",
-          description: `Field "${field.label}" and all its data have been deleted.`,
+          title: t("lead_field.toast.delete_success_title"),
+          description: t("lead_field.toast.delete_success_description", {
+            fieldName: field.label,
+          }),
         });
       } catch (err) {
         console.error("Error deleting field definition:", err);
         toast({
-          title: "Error",
+          title: t("lead_field.toast.error_title"),
           description:
-            err instanceof Error ? err.message : "Failed to delete field",
+            err instanceof Error
+              ? err.message
+              : t("lead_field.toast.delete_error_description"),
           variant: "destructive",
         });
         throw err;
       }
     },
-    [ensureOrganizationId, queryClient, toast, updateCache]
+    [ensureOrganizationId, queryClient, t, toast, updateCache]
   );
 
   const reorderFieldDefinitions = useCallback(
@@ -252,20 +264,23 @@ export function useLeadFieldDefinitions() {
         updateCache(() => normalizedFields);
 
         toast({
-          title: "Fields reordered",
-          description: "Field order has been updated successfully.",
+          title: t("lead_field.toast.reorder_success_title"),
+          description: t("lead_field.toast.reorder_success_description"),
         });
       } catch (err) {
         console.error("Error reordering fields:", err);
         toast({
-          title: "Error",
-          description: "Failed to reorder fields",
+          title: t("lead_field.toast.error_title"),
+          description:
+            err instanceof Error
+              ? err.message
+              : t("lead_field.toast.reorder_error_description"),
           variant: "destructive",
         });
         throw err;
       }
     },
-    [ensureOrganizationId, toast, updateCache]
+    [ensureOrganizationId, t, toast, updateCache]
   );
 
   const error =

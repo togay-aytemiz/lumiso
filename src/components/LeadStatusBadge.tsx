@@ -195,9 +195,13 @@ export function LeadStatusBadge({
       setDropdownOpen(false);
       onStatusChange?.();
 
+      const toastDescription = currentStatusData
+        ? tForms("status.leadStatusChanged", { status: newStatus.name })
+        : tForms("status.leadStatusSet", { status: newStatus.name });
+
       toast({
         title: tForms('status.statusUpdated'),
-        description: `Lead status ${currentStatusData ? 'changed' : 'set'} to "${newStatus.name}"`
+        description: toastDescription
       });
 
       // Trigger workflow for lead status change

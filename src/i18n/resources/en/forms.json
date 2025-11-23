@@ -994,6 +994,16 @@
     "noStatusAvailable": "No status available",
     "statusNotFound": "Status not found",
     "statusUpdated": "Status Updated",
+    "leadMarkedAs": "Lead marked as {{status}}",
+    "leadStatusChanged": "Lead status changed to \"{{status}}\"",
+    "leadStatusSet": "Lead status set to \"{{status}}\"",
+    "undo": "Undo",
+    "undoStatusChange": "Undo status change",
+    "undone": "Undone",
+    "statusRevertedTo": "Status reverted to {{status}}",
+    "undoFailed": "Undo failed",
+    "undoFailedDescription": "Unable to undo status change",
+    "unableToUpdateStatus": "Unable to update lead status",
     "errorUpdatingStatus": "Error updating status",
     "sessionUpdated": "Session Updated",
     "unsupportedStage": "Unsupported stage",
@@ -1041,6 +1051,21 @@
       "select": "Dropdown",
       "checkbox": "Checkbox",
       "number": "Number"
+    },
+    "toast": {
+      "create_success_title": "Field created",
+      "create_success_description": "Field \"{{fieldName}}\" has been created successfully.",
+      "update_success_title": "Field updated",
+      "update_success_description": "Field has been updated successfully.",
+      "delete_success_title": "Field deleted",
+      "delete_success_description": "Field \"{{fieldName}}\" and all its data have been deleted.",
+      "reorder_success_title": "Fields reordered",
+      "reorder_success_description": "Field order has been updated successfully.",
+      "error_title": "Error",
+      "create_error_description": "Failed to create field",
+      "update_error_description": "Failed to update field",
+      "delete_error_description": "Failed to delete field",
+      "reorder_error_description": "Failed to reorder fields"
     }
   },
   "project_type": {

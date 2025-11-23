@@ -53,7 +53,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
         .from('user_language_preferences')
         .select('language_code')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (preference?.language_code) {
         await changeLanguageInternal(preference.language_code);

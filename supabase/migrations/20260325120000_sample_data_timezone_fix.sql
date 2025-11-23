@@ -380,7 +380,8 @@ DECLARE
   project_status_slug text;
   session_type_slug text;
   session_status text;
-  session_time text;
+  session_time_text text;
+  session_time_value time without time zone;
   session_location text;
   session_notes text;
   session_notes_tr text;
@@ -639,7 +640,8 @@ BEGIN
     project_status_slug := COALESCE(project_blueprint->>'project_status_slug', 'in_progress');
     session_type_slug := COALESCE(project_blueprint->>'session_type_slug', 'signature_session');
     session_status := COALESCE(project_blueprint->>'session_status', 'scheduled');
-    session_time := COALESCE(project_blueprint->>'session_time', '14:00');
+    session_time_text := COALESCE(project_blueprint->>'session_time', '14:00');
+    session_time_value := session_time_text::time;
     session_notes_tr := project_blueprint->>'session_notes_tr';
     session_notes_en := project_blueprint->>'session_notes_en';
     session_notes := notes_prefix || COALESCE(session_notes_tr, 'Demo oturumu planlandı.');
@@ -836,7 +838,7 @@ BEGIN
       session_type_record.id,
       session_label,
       (base_local + (offset_days || ' days')::interval)::date,
-      session_time,
+      session_time_value,
       session_status,
       session_location,
       session_notes,

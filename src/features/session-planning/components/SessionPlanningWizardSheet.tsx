@@ -145,7 +145,14 @@ export const SessionPlanningWizardSheet = (props: SessionPlanningWizardSheetProp
     startStepOverride: props.startStepOverride
   });
 
-  const providerKey = useMemo(() => JSON.stringify(entryContext), [entryContext]);
+  const entryContextKey = useMemo(() => JSON.stringify(entryContext), [entryContext]);
+  const [providerKey, setProviderKey] = useState(entryContextKey);
+
+  useEffect(() => {
+    if (!props.isOpen) {
+      setProviderKey(entryContextKey);
+    }
+  }, [entryContextKey, props.isOpen]);
 
   return (
     <SessionPlanningProvider key={providerKey} entryContext={entryContext}>

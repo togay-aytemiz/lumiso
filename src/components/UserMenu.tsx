@@ -156,16 +156,16 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
             className={cn(
               "group flex items-center gap-3 pl-4 pr-3 py-2 border-l border-border/60 min-w-0",
               "rounded-lg text-left transition-colors hover:bg-muted/60 focus-visible:outline-none",
-              "focus-visible:ring-2 focus-visible:ring-ring/50"
+              "focus-visible:ring-2 focus-visible:ring-ring/50 max-w-[240px] sm:max-w-[280px]"
             )}
           >
             {renderAvatar("h-10 w-10 shrink-0")}
             <div className="flex-1 min-w-0 text-left">
-              <div className="font-medium text-sm text-foreground leading-tight truncate">
+              <div className="font-medium text-sm text-foreground leading-tight truncate max-w-full" title={displayName}>
                 {displayName}
               </div>
               {user?.email && (
-                <div className="text-xs text-muted-foreground truncate">
+                <div className="text-xs text-muted-foreground truncate max-w-full" title={user.email}>
                   {user.email}
                 </div>
               )}

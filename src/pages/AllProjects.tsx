@@ -90,7 +90,7 @@ const toNamedOptions = (items: unknown[]): NamedOption[] =>
 
 const AllProjects = () => {
   const [boardProjects, setBoardProjects] = useState<ProjectListItem[]>([]);
-  // Default to board during tutorial; otherwise respect URL or saved preference
+  // Default to Kanban (board) for new users; respect URL or saved preference otherwise
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
@@ -105,7 +105,7 @@ const AllProjects = () => {
       const stored = parseViewMode(localStorage.getItem('projects:viewMode'));
       if (stored) return stored;
     }
-    return 'list';
+    return 'board';
   });
   const [viewingProject, setViewingProject] = useState<ProjectListItem | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);

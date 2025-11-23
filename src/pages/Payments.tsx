@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DateRangePicker } from "@/components/DateRangePicker";
 import { ProjectSheetView } from "@/components/ProjectSheetView";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -25,25 +23,18 @@ import {
   endOfWeek,
 } from "date-fns";
 import type { DateRange } from "react-day-picker";
-import { cn, formatDate, getDateFnsLocale } from "@/lib/utils";
+import { formatDate, getDateFnsLocale } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { TableLoadingSkeleton } from "@/components/ui/loading-presets";
+import { EmptyState } from "@/components/EmptyState";
+import type { ChartConfig } from "@/components/ui/chart";
 import { useTranslation } from "react-i18next";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from "@/components/ui/chart";
-import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { Progress } from "@/components/ui/progress";
-import { FileDown, Loader2, Check } from "lucide-react";
+import { FileDown, Loader2, Check, CreditCard } from "lucide-react";
 import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
 import { PAYMENT_COLORS } from "@/lib/paymentColors";
 import { computePaymentSummaryMetrics } from "@/lib/payments/metrics";
 import {
-  AdvancedDataTable,
   type AdvancedDataTableSortState,
   type AdvancedTableColumn,
 } from "@/components/data-table";
@@ -72,8 +63,9 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 
 const Payments = () => {
   const { t } = useTranslation("pages");
-const [page, setPage] = useState(1);
-const pageSize = PAGE_SIZE;
+  const { t: tCommon } = useTranslation("common");
+  const [page, setPage] = useState(1);
+  const pageSize = PAGE_SIZE;
   const [exporting, setExporting] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<DateFilterType>('allTime');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
@@ -983,12 +975,21 @@ const pageSize = PAGE_SIZE;
     [handlePaymentsViewChange, paymentsView, t]
   );
 
-  const emptyStateMessage =
+  const filtersAppliedForView =
     paymentsView === "recorded"
       ? hasSearchTerm || activeFilterCount > 0
+      : hasSearchTerm || scheduledActiveFilterCount > 0;
+
+  const emptyStateTitle = filtersAppliedForView
+    ? t("payments.emptyState.filteredTitle")
+    : t("payments.emptyState.title");
+
+  const emptyStateDescription =
+    paymentsView === "recorded"
+      ? filtersAppliedForView
         ? t("payments.emptyState.noPaymentsWithFilters")
         : t("payments.emptyState.noPaymentsForPeriod")
-      : scheduledActiveFilterCount > 0
+      : filtersAppliedForView
         ? t("payments.emptyState.noPaymentsWithFilters")
         : t("payments.emptyState.noScheduledPayments");
 
@@ -1184,6 +1185,41 @@ const pageSize = PAGE_SIZE;
   const summaryChipsForView =
     paymentsView === "recorded" ? filterSummaryChips : scheduledFilterSummary;
 
+  const recordedFiltersReset = filtersConfig.onReset;
+  const scheduledFiltersReset = scheduledFiltersConfig.onReset;
+
+  const handleResetTableState = useCallback(() => {
+    if (paymentsView === "recorded") {
+      recordedFiltersReset?.();
+    } else {
+      scheduledFiltersReset?.();
+    }
+    onSearchChange("");
+  }, [onSearchChange, paymentsView, recordedFiltersReset, scheduledFiltersReset]);
+
+  const tableEmptyState = (
+    <EmptyState
+      icon={CreditCard}
+      iconVariant="pill"
+      iconColor="indigo"
+      title={emptyStateTitle}
+      description={emptyStateDescription}
+      helperAction={
+        filtersAppliedForView ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 px-3"
+            onClick={handleResetTableState}
+          >
+            {tCommon("buttons.clearAll")}
+          </Button>
+        ) : null
+      }
+    />
+  );
+
   // (moved up above columns)
 
   const handleViewFullDetails = useCallback(() => {
@@ -1283,7 +1319,7 @@ const pageSize = PAGE_SIZE;
         searchPlaceholder={t("payments.searchPlaceholder")}
         searchLoading={tableLoading}
         searchMinChars={SEARCH_MIN_CHARS}
-        emptyState={<div className="text-muted-foreground">{emptyStateMessage}</div>}
+        emptyState={tableEmptyState}
         onRowClick={handleProjectOpen}
         isLoading={tableIsLoading}
         onLoadMore={displayedOnLoadMore}

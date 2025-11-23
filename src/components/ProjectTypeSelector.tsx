@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
-import { getDisplayProjectTypeName } from "@/lib/projectTypes";
+import { getDisplayProjectTypeName, getProjectTypeMatchKey } from "@/lib/projectTypes";
 import { useTranslation } from "react-i18next";
 
 interface ProjectType {
@@ -41,25 +41,29 @@ export function ProjectTypeSelector({
   const locale = orgSettings?.locale ?? i18n.language;
   const defaultBadge = t("sessionTypes.default_badge", { defaultValue: "Default" });
 
-  const preferredSlugs = useMemo(
-    () => (orgSettings?.preferred_project_types ?? []).map((slug) => slug.toLowerCase()),
+  const preferredMatchKeys = useMemo(
+    () =>
+      (orgSettings?.preferred_project_types ?? [])
+        .map(getProjectTypeMatchKey)
+        .filter((slug) => slug.length > 0),
     [orgSettings?.preferred_project_types]
   );
 
+  const preferredMatchKeySet = useMemo(() => new Set(preferredMatchKeys), [preferredMatchKeys]);
+
   const preferredSlugOrder = useMemo(
-    () => new Map(preferredSlugs.map((slug, index) => [slug, index])),
-    [preferredSlugs]
+    () => new Map(preferredMatchKeys.map((slug, index) => [slug, index])),
+    [preferredMatchKeys]
   );
 
-  const preferredDefaultSlug = preferredSlugs[0];
+  const preferredDefaultKey = preferredMatchKeys[0];
 
   const normalizeTypeSlug = (type: ProjectType) => {
-    if (type.template_slug) return type.template_slug.toLowerCase();
-    return type.name.trim().toLowerCase().replace(/[^a-z0-9]+/gi, "_");
+    return getProjectTypeMatchKey(type.template_slug ?? type.name ?? type.id);
   };
 
   const isPreferredDefault = (type: ProjectType) =>
-    Boolean(preferredDefaultSlug && normalizeTypeSlug(type) === preferredDefaultSlug);
+    Boolean(preferredDefaultKey && normalizeTypeSlug(type) === preferredDefaultKey);
 
   const isDefaultType = (type: ProjectType) =>
     isPreferredDefault(type) || type.is_default;
@@ -142,7 +146,7 @@ export function ProjectTypeSelector({
 
       return a.name.localeCompare(b.name);
     });
-  }, [types, preferredDefaultSlug, preferredSlugOrder]);
+  }, [types, preferredDefaultKey, preferredSlugOrder]);
 
   useEffect(() => {
     if (!value && visibleTypes.length > 0) {
@@ -154,11 +158,11 @@ export function ProjectTypeSelector({
   }, [value, visibleTypes, onValueChange]);
 
   const filteredTypes = useMemo(() => {
-    if (preferredSlugs.length > 0) {
-      return visibleTypes.filter(type => preferredSlugs.includes(normalizeTypeSlug(type)));
+    if (preferredMatchKeySet.size > 0) {
+      return visibleTypes.filter((type) => preferredMatchKeySet.has(normalizeTypeSlug(type)));
     }
     return visibleTypes;
-  }, [visibleTypes, preferredSlugs]);
+  }, [visibleTypes, preferredMatchKeySet]);
 
   // Check if user has no project types
   if (!loading && !settingsLoading && visibleTypes.length === 0) {

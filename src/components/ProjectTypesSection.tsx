@@ -14,7 +14,7 @@ import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useTranslation } from "react-i18next";
 import { SettingsTwoColumnSection } from "@/components/settings/SettingsSections";
-import { getDisplayProjectTypeName } from "@/lib/projectTypes";
+import { getDisplayProjectTypeName, getProjectTypeMatchKey } from "@/lib/projectTypes";
 
 interface ProjectType {
   id: string;
@@ -34,18 +34,28 @@ const ProjectTypesSection = () => {
   const { data: types = [], isLoading, refetch } = useProjectTypes();
   const { settings: orgSettings } = useOrganizationSettings();
   const { t, i18n } = useTranslation("forms");
-  const preferredSlugs = orgSettings?.preferred_project_types ?? [];
+  const preferredMatchKeys = useMemo(() => {
+    const keys = (orgSettings?.preferred_project_types ?? []).map(getProjectTypeMatchKey);
+    return new Set(keys.filter((key) => key.length > 0));
+  }, [orgSettings?.preferred_project_types]);
+
   const displayTypes = useMemo(() => {
     if (!types.length) return [];
-    if (!preferredSlugs.length) return types;
-    const selected = new Set(preferredSlugs);
+    if (preferredMatchKeys.size === 0) return types;
+
     return types.filter((type) => {
       if (!type.template_slug) {
         return true;
       }
-      return selected.has(type.template_slug);
+
+      const matchKey = getProjectTypeMatchKey(type.template_slug);
+      if (!matchKey) {
+        return true;
+      }
+
+      return preferredMatchKeys.has(matchKey);
     });
-  }, [types, preferredSlugs]);
+  }, [types, preferredMatchKeys]);
 
   const createDefaultTypes = useCallback(async () => {
     try {

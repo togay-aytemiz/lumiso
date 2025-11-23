@@ -18,6 +18,7 @@ import {
   Building,
   Loader2,
 } from "lucide-react";
+import { canonicalizeProjectTypeSlug } from "@/lib/projectTypes";
 import {
   Dialog,
   DialogContent,
@@ -69,7 +70,7 @@ const PROJECT_TYPE_OPTIONS = [
   { id: "commercial", icon: Building2 },
   { id: "event", icon: CalendarDays },
   { id: "pet", icon: PawPrint },
-  { id: "realEstate", icon: Building },
+  { id: "real_estate", icon: Building },
 ] as const satisfies ReadonlyArray<{ id: string; icon: LucideIcon }>;
 
 type ProjectTypeOption = (typeof PROJECT_TYPE_OPTIONS)[number];
@@ -119,7 +120,7 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const [hasEditedProjectTypes, setHasEditedProjectTypes] = useState(false);
-  const defaultProjectType = projectTypes[0];
+  const defaultProjectType = canonicalizeProjectTypeSlug(projectTypes[0]) ?? projectTypes[0];
 
   const debugOverride = useMemo(() => {
     if (typeof window === "undefined") return false;
@@ -234,10 +235,14 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
     if (debugOverride || hasEditedProjectTypes) return;
 
     const preferred =
-      settings?.preferred_project_types?.filter(
-        (type): type is ProjectTypeId =>
-          PROJECT_TYPE_OPTIONS.some((option) => option.id === type)
-      ) ?? [];
+      settings?.preferred_project_types
+        ?.map((type) => {
+          const canonical = canonicalizeProjectTypeSlug(type);
+          if (!canonical) return null;
+          const match = PROJECT_TYPE_OPTIONS.find((option) => option.id === canonical);
+          return match?.id ?? null;
+        })
+        .filter((type): type is ProjectTypeId => Boolean(type)) ?? [];
     setProjectTypes(preferred);
   }, [
     settings?.preferred_project_types,
@@ -374,6 +379,13 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
 
     try {
       setSubmitting(true);
+      const normalizedProjectTypes = Array.from(
+        new Set(
+          projectTypes
+            .map((type) => canonicalizeProjectTypeSlug(type) ?? type)
+            .filter((type): type is string => Boolean(type))
+        )
+      );
       const profileResult = await updateProfile({ full_name: trimmedName });
       if (!profileResult?.success) {
         throw new Error("profile-update-failed");
@@ -382,7 +394,7 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
       const now = new Date().toISOString();
       const settingsResult = await updateSettings({
         photography_business_name: trimmedBusiness,
-        preferred_project_types: projectTypes,
+        preferred_project_types: normalizedProjectTypes,
         profile_intake_completed_at: now,
         preferred_locale: i18n.language ?? "en",
       });
@@ -395,7 +407,7 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
       logAuthEvent("auth_first_profile_intake_finish", {
         supabaseUserId: user?.id,
         businessNameLength: trimmedBusiness.length,
-        projectTypesCount: projectTypes.length,
+        projectTypesCount: normalizedProjectTypes.length,
         defaultProjectType,
       });
 

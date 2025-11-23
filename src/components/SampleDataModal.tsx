@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { canonicalizeProjectTypeSlug } from "@/lib/projectTypes";
 
 interface SampleDataModalProps {
   open: boolean;
@@ -139,7 +140,9 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
       throw new Error("missing-organization");
     }
 
-    const preferredSlugs = settings?.preferred_project_types ?? [];
+    const preferredSlugs = (settings?.preferred_project_types ?? [])
+      .map((slug) => canonicalizeProjectTypeSlug(slug))
+      .filter((slug): slug is string => Boolean(slug));
     const locale = settings?.preferred_locale ?? "tr";
 
     const { error } = await supabase.rpc("seed_sample_data_for_org", {

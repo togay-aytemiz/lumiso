@@ -117,7 +117,7 @@
         "commercial": "Commercial",
         "event": "Event",
         "pet": "Pet",
-        "realEstate": "Real Estate"
+        "real_estate": "Real Estate"
       }
     },
     "footers": {
@@ -2185,6 +2185,8 @@
       "defaultDescription": "Outstanding balance"
     },
     "emptyState": {
+      "title": "No payments recorded",
+      "filteredTitle": "No payments match these filters",
       "noPaymentsWithLabel": "No payments found with label containing \"{{labelFilter}}\".",
       "noPaymentsWithFilters": "No payments match your current filters.",
       "noPaymentsForPeriod": "No payments found for selected period.",

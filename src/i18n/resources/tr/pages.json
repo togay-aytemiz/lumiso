@@ -117,7 +117,7 @@
         "commercial": "Ticari",
         "event": "Etkinlik",
         "pet": "Evcil Hayvan",
-        "realEstate": "Gayrimenkul"
+        "real_estate": "Gayrimenkul"
       }
     },
     "footers": {
@@ -2188,6 +2188,8 @@
       "defaultDescription": "Bekleyen bakiye"
     },
     "emptyState": {
+      "title": "Henüz ödeme kaydı yok",
+      "filteredTitle": "Bu filtrelerle eşleşen ödeme yok",
       "noPaymentsWithLabel": "\"{{labelFilter}}\" etiketli ödeme bulunamadı.",
       "noPaymentsWithFilters": "Seçilen filtrelerle eşleşen ödeme bulunamadı.",
       "noPaymentsForPeriod": "Seçili dönem için ödeme bulunamadı.",

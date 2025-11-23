@@ -12,6 +12,7 @@ import { useProjectTypes } from "@/hooks/useOrganizationData";
 import { X } from "lucide-react";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { Link } from "react-router-dom";
+import { getProjectTypeMatchKey } from "@/lib/projectTypes";
 
 interface ProjectTypeRecord {
   id: string;
@@ -29,6 +30,15 @@ export const BasicsStep = () => {
   const taxProfile = settings?.taxProfile ?? null;
   const preferredProjectTypeSlugs = settings?.preferred_project_types ?? [];
 
+  const preferredProjectTypeKeys = useMemo(
+    () =>
+      preferredProjectTypeSlugs
+        .filter((slug): slug is string => typeof slug === "string" && slug.trim().length > 0)
+        .map(getProjectTypeMatchKey)
+        .filter((slug) => slug.length > 0),
+    [preferredProjectTypeSlugs]
+  );
+
   const projectTypeMap = useMemo(
     () =>
       new Map(
@@ -38,17 +48,16 @@ export const BasicsStep = () => {
   );
 
   const displayProjectTypes = useMemo(() => {
-    const preferredSlugs = preferredProjectTypeSlugs.filter(
-      (slug): slug is string => typeof slug === "string" && slug.trim().length > 0
-    );
     const records = projectTypes as ProjectTypeRecord[];
 
-    if (!preferredSlugs.length) {
+    if (!preferredProjectTypeKeys.length) {
       return records;
     }
 
-    const orderedPreferred = preferredSlugs
-      .map((slug) => records.find((record) => record.template_slug === slug))
+    const orderedPreferred = preferredProjectTypeKeys
+      .map((key) =>
+        records.find((record) => getProjectTypeMatchKey(record.template_slug ?? record.name) === key)
+      )
       .filter((record): record is ProjectTypeRecord => Boolean(record));
 
     if (orderedPreferred.length > 0) {
@@ -56,7 +65,7 @@ export const BasicsStep = () => {
     }
 
     return records;
-  }, [preferredProjectTypeSlugs, projectTypes]);
+  }, [preferredProjectTypeKeys, projectTypes]);
 
   const handleBasicsChange = (field: "name" | "description") => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     updateBasics({ [field]: event.target.value });

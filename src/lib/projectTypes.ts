@@ -22,6 +22,46 @@ const TEMPLATE_LABELS: Record<string, ProjectTypeTemplate> = {
 
 const normalize = (value?: string | null) => (value ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "");
 
+type TemplateEntry = { slug: string; labels: ProjectTypeTemplate };
+
+const TEMPLATE_BY_NORMALIZED: Record<string, TemplateEntry> = Object.entries(TEMPLATE_LABELS).reduce(
+  (acc, [slug, labels]) => {
+    const entry: TemplateEntry = { slug, labels };
+    const normalizedSlug = normalize(slug);
+    const normalizedName = normalize(labels.en);
+
+    acc[normalizedSlug] = entry;
+
+    if (!acc[normalizedName]) {
+      acc[normalizedName] = entry;
+    }
+
+    return acc;
+  },
+  {} as Record<string, TemplateEntry>
+);
+
+const getTemplateEntry = (value?: string | null): TemplateEntry | undefined => {
+  const normalized = normalize(value);
+  if (!normalized) return undefined;
+  return TEMPLATE_BY_NORMALIZED[normalized];
+};
+
+export const canonicalizeProjectTypeSlug = (value?: string | null): string | undefined => {
+  const entry = getTemplateEntry(value);
+  if (entry) {
+    return entry.slug;
+  }
+
+  const normalized = normalize(value);
+  return normalized.length > 0 ? normalized : undefined;
+};
+
+export const getProjectTypeMatchKey = (value?: string | null): string => {
+  const canonical = canonicalizeProjectTypeSlug(value);
+  return normalize(canonical);
+};
+
 const baseLocale = (locale?: string | null): ProjectTypeLocale => {
   const candidate = (locale ?? "en").split("-")[0].toLowerCase();
   return candidate === "tr" ? "tr" : "en";
@@ -38,17 +78,17 @@ interface ProjectTypeLike {
  * or the English default, we swap in the localized label for the active locale.
  */
 export const getDisplayProjectTypeName = (type: ProjectTypeLike, locale?: string | null): string => {
-  const templateSlug = type.template_slug?.toLowerCase();
-  const template = templateSlug ? TEMPLATE_LABELS[templateSlug] : undefined;
+  const templateEntry = getTemplateEntry(type.template_slug ?? type.name);
 
-  if (!template) {
+  if (!templateEntry) {
     return type.name ?? "";
   }
 
+  const { labels: template, slug } = templateEntry;
   const currentLocale = baseLocale(locale);
   const localized = template[currentLocale];
   const englishNormalized = normalize(template.en);
-  const slugNormalized = normalize(templateSlug);
+  const slugNormalized = normalize(slug);
   const nameNormalized = normalize(type.name);
 
   const isUneditedDefault =

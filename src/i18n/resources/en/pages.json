@@ -86,7 +86,7 @@
       },
       "projects": {
         "title": "Pick the work you shoot most",
-        "description": "We use this to scaffold default project types and dial in any optional sample data."
+        "description": "We use this to scaffold default project types and tune your defaults."
       },
       "sample": {
         "title": "Do you want us to preload demo data?",
@@ -105,7 +105,7 @@
     },
     "projectTypes": {
       "label": "Which projects do you shoot most?",
-      "helper": "Pick every service you offer\u2014your first pick becomes the default for new projects and we'll preload matching sample data.",
+      "helper": "Pick every service you offer\u2014your first pick becomes the default for new projects.",
       "managementHint": "Need another category? Head to Settings \u2192 Projects & Sessions anytime to edit or add more."
     },
     "options": {

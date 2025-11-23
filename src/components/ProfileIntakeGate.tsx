@@ -5,7 +5,6 @@ import {
   Sparkles,
   Check,
   Building2,
-  CircleOff,
   Heart,
   Users,
   Shapes,
@@ -28,7 +27,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useProfile } from "@/hooks/useProfile";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -39,13 +37,12 @@ import { cn } from "@/lib/utils";
 import { logAuthEvent } from "@/lib/authTelemetry";
 
 const MAX_MULTI_SELECT = Infinity; // unlimited selections
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 3;
 
 const STEP_FOOTER_KEY_MAP: Record<number, string> = {
   1: "pages:profileIntake.footers.name",
   2: "pages:profileIntake.footers.business",
   3: "pages:profileIntake.footers.projects",
-  4: "pages:profileIntake.footers.sample",
 };
 
 const isDevEnvironment = () => {
@@ -82,14 +79,12 @@ type IntakeErrors = {
   displayName?: string;
   businessName?: string;
   projectTypes?: string;
-  sampleData?: string;
 };
 
 const FIELD_TO_STEP: Record<keyof IntakeErrors, number> = {
   displayName: 1,
   businessName: 2,
   projectTypes: 3,
-  sampleData: 4,
 };
 
 const preventDialogDismiss = (event: Event) => {
@@ -117,7 +112,6 @@ export function ProfileIntakeGate() {
   const [submitting, setSubmitting] = useState(false);
   const [manualComplete, setManualComplete] = useState(false);
   const [hasLoggedStart, setHasLoggedStart] = useState(false);
-  const [wantsSampleData, setWantsSampleData] = useState<boolean | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState<"forward" | "backward">("forward");
   const [hasEditedProjectTypes, setHasEditedProjectTypes] = useState(false);
@@ -188,30 +182,6 @@ export function ProfileIntakeGate() {
         title: t("pages:profileIntake.steps.projects.title"),
         description: t("pages:profileIntake.steps.projects.description"),
       },
-      {
-        id: 4,
-        title: t("pages:profileIntake.steps.sample.title"),
-        description: t("pages:profileIntake.steps.sample.description"),
-      },
-    ],
-    [t]
-  );
-
-  const sampleDataOptions = useMemo(
-    () => [
-      {
-        value: true,
-        icon: Sparkles,
-        title: t("pages:profileIntake.sampleData.yes.title"),
-        description: t("pages:profileIntake.sampleData.yes.description"),
-        recommended: true,
-      },
-      {
-        value: false,
-        icon: CircleOff,
-        title: t("pages:profileIntake.sampleData.no.title"),
-        description: t("pages:profileIntake.sampleData.no.description"),
-      },
     ],
     [t]
   );
@@ -261,18 +231,6 @@ export function ProfileIntakeGate() {
     settingsLoading,
     debugOverride,
     hasEditedProjectTypes,
-  ]);
-
-  useEffect(() => {
-    if (settingsLoading) return;
-    if (wantsSampleData !== null) return;
-    if (typeof settings?.seed_sample_data_onboarding === "boolean") {
-      setWantsSampleData(settings.seed_sample_data_onboarding);
-    }
-  }, [
-    settings?.seed_sample_data_onboarding,
-    settingsLoading,
-    wantsSampleData,
   ]);
 
   useEffect(() => {
@@ -361,15 +319,6 @@ export function ProfileIntakeGate() {
       return valid;
     }
 
-    if (stepToValidate === 4) {
-      let valid = true;
-      if (wantsSampleData === null) {
-        setFieldError("sampleData", t("pages:profileIntake.sampleData.error"));
-        valid = false;
-      }
-      return valid;
-    }
-
     return true;
   };
 
@@ -388,10 +337,6 @@ export function ProfileIntakeGate() {
 
     if (projectTypes.length === 0) {
       nextErrors.projectTypes = t("pages:profileIntake.errors.projectTypes");
-    }
-
-    if (wantsSampleData === null) {
-      nextErrors.sampleData = t("pages:profileIntake.sampleData.error");
     }
 
     setErrors(nextErrors);
@@ -426,7 +371,6 @@ export function ProfileIntakeGate() {
         photography_business_name: trimmedBusiness,
         preferred_project_types: projectTypes,
         profile_intake_completed_at: now,
-        seed_sample_data_onboarding: wantsSampleData ?? false,
         preferred_locale: i18n.language ?? "en",
       });
 
@@ -440,7 +384,6 @@ export function ProfileIntakeGate() {
         businessNameLength: trimmedBusiness.length,
         projectTypesCount: projectTypes.length,
         defaultProjectType,
-        loadSampleData: wantsSampleData ?? false,
       });
 
       toast({
@@ -603,81 +546,7 @@ export function ProfileIntakeGate() {
       );
     }
 
-    const sampleIntroTitle = t("pages:profileIntake.sampleData.title").trim();
-    const sampleIntroDescription = t("pages:profileIntake.sampleData.description").trim();
-    const showSampleIntro = Boolean(sampleIntroTitle || sampleIntroDescription);
-
-    return (
-      <section className="space-y-3">
-        {showSampleIntro && (
-          <div>
-            {sampleIntroTitle && (
-              <p className="text-sm font-medium text-foreground">
-                {sampleIntroTitle}
-              </p>
-            )}
-            {sampleIntroDescription && (
-              <p className="text-xs text-muted-foreground">
-                {sampleIntroDescription}
-              </p>
-            )}
-          </div>
-        )}
-        <div className="grid gap-3 md:grid-cols-2">
-          {sampleDataOptions.map((option) => {
-            const Icon = option.icon;
-            const isActive = wantsSampleData === option.value;
-            return (
-              <button
-                key={String(option.value)}
-                type="button"
-                onClick={() => {
-                  setWantsSampleData(option.value);
-                  setFieldError("sampleData", undefined);
-                }}
-                className={cn(
-                  "flex items-start gap-3 rounded-xl border p-4 text-left transition",
-                  isActive
-                    ? "border-primary bg-primary/5 shadow-sm"
-                    : "hover:border-primary/40"
-                )}
-                data-testid={`profile-intake-sample-${
-                  option.value ? "yes" : "no"
-                }`}
-              >
-                <Icon
-                  className={cn(
-                    "h-5 w-5 mt-1 flex-shrink-0",
-                    isActive ? "text-primary" : "text-muted-foreground"
-                  )}
-                />
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-foreground">
-                      {option.title}
-                    </p>
-                    {option.recommended && (
-                      <Badge
-                        variant="secondary"
-                        className="text-[10px] uppercase tracking-wide bg-primary/15 text-primary border border-primary/20"
-                      >
-                        {t("pages:profileIntake.sampleData.recommended")}
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {option.description}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-        {errors.sampleData && (
-          <p className="text-xs text-destructive">{errors.sampleData}</p>
-        )}
-      </section>
-    );
+    return null;
   };
 
   return (
@@ -736,7 +605,7 @@ export function ProfileIntakeGate() {
             )}
             <Button
               onClick={handleNext}
-              disabled={submitting || (isLastStep && wantsSampleData === null)}
+              disabled={submitting}
               className="sm:min-w-[160px]"
             >
               {submitting && isLastStep ? (

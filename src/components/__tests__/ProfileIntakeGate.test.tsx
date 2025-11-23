@@ -189,18 +189,9 @@ describe("ProfileIntakeGate", () => {
 
     await user.click(screen.getByTestId("profile-intake-project-wedding"));
 
-    await user.click(
-      screen.getByRole("button", {
-        name: "pages:profileIntake.actions.next",
-      })
-    );
-
-    await user.click(screen.getByTestId("profile-intake-sample-yes"));
-
-    const finishButton = screen.getByRole("button", {
+    const finishButton = await screen.findByRole("button", {
       name: "pages:profileIntake.actions.finish",
     });
-    await waitFor(() => expect(finishButton).toBeEnabled());
     await user.click(finishButton);
 
     await waitFor(() => {
@@ -214,7 +205,6 @@ describe("ProfileIntakeGate", () => {
         photography_business_name: "Lumiso",
         preferred_project_types: ["wedding"],
         profile_intake_completed_at: expect.any(String),
-        seed_sample_data_onboarding: true,
         preferred_locale: "en",
       })
     );
@@ -226,7 +216,6 @@ describe("ProfileIntakeGate", () => {
         supabaseUserId: "user-1",
         businessNameLength: 6,
         projectTypesCount: 1,
-        loadSampleData: true,
       })
     );
 

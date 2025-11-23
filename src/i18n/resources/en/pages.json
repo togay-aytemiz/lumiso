@@ -87,10 +87,6 @@
       "projects": {
         "title": "Pick the work you shoot most",
         "description": "We use this to scaffold default project types and tune your defaults."
-      },
-      "sample": {
-        "title": "Do you want us to preload demo data?",
-        "description": "Choose whether we should add a tiny set of leads, projects, and sessions so you can explore faster."
       }
     },
     "displayName": {
@@ -124,25 +120,10 @@
         "realEstate": "Real Estate"
       }
     },
-    "sampleData": {
-      "title": "",
-      "description": "",
-      "yes": {
-        "title": "Yes, load sample data",
-        "description": "Load the guided tour records—you can delete them whenever you want."
-      },
-      "no": {
-        "title": "No, start clean",
-        "description": "Skip the preload entirely and build every record yourself."
-      },
-      "recommended": "Recommended",
-      "error": "Pick how you'd like to start."
-    },
     "footers": {
       "name": "Update your preferred name anytime from Settings \u2192 Profile.",
       "business": "Tweak your business identity under Settings \u2192 General.",
-      "projects": "Adjust your default project types in Settings \u2192 Projects & Sessions.",
-      "sample": "These guided records can be removed later from anywhere in the app."
+      "projects": "Adjust your default project types in Settings \u2192 Projects & Sessions."
     },
     "footer": "You can update these anytime from Settings \u2192 General.",
     "actions": {
@@ -156,7 +137,6 @@
       "displayName": "Tell us how we should refer to you.",
       "businessName": "Add the name you share with clients.",
       "projectTypes": "Choose at least one project type.",
-      "sampleData": "Pick how you'd like to start.",
       "limit": "Pick up to {{count}} items."
     },
     "toast": {
@@ -2962,6 +2942,7 @@
       "continue_guided_setup": "Continue guided setup",
       "start_with_sample_data": "Explore with sample data",
       "start_clean": "Start with a clean workspace",
+      "recommended": "Recommended",
       "starting": "Starting...",
       "setting_up": "Preparing sample data...",
       "preparing_clean": "Preparing...",

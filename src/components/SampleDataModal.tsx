@@ -244,7 +244,7 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
                       </p>
                       {option.recommended && (
                         <Badge variant="outline" className="text-xs">
-                          {t('profileIntake.sampleData.recommended')}
+                          {t('onboarding.sample_data.recommended')}
                         </Badge>
                       )}
                     </div>

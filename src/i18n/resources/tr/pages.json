@@ -86,11 +86,7 @@
       },
       "projects": {
         "title": "En sık yaptığın işleri seç",
-        "description": "Varsayılan proje türlerini ve isteğe bağlı örnek verileri buna göre şekillendiriyoruz."
-      },
-      "sample": {
-        "title": "Çalışma alanına örnek veriler yüklensin mi?",
-        "description": "Keşfetmeyi hızlandırmak için birkaç demo kişi, proje ve oturum ekleyebiliriz."
+        "description": "Varsayılan proje türlerini ve ayarlarını buna göre şekillendiriyoruz."
       }
     },
     "displayName": {
@@ -124,26 +120,10 @@
         "realEstate": "Gayrimenkul"
       }
     },
-    "sampleData": {
-      "title": "",
-      "description": "",
-      "yes": {
-        "title": "Örnek verileri yükle",
-        "description": "Rehber kayıtları yükleyelim; istediğin zaman silebilirsin."
-      },
-      "no": {
-        "title": "Hayır, temiz başla",
-        "description": "Önyüklemeyi atla ve tüm kayıtları kendin oluşturmaya başla."
-      },
-      "recommended": "Önerilen",
-      "error": "Nasıl başlamak istediğini seç."
-    },
     "footers": {
       "name": "Adını istediğin zaman Ayarlar → Profil sekmesinden güncelleyebilirsin.",
       "business": "İşletme bilgilerini Ayarlar → Genel sekmesinden düzenleyebilirsin.",
-      "projects": "",
-
-      "sample": "İstersen örnek kayıtları daha sonra tek tek silebilirsin."
+      "projects": ""
     },
     "footer": "Adını istediğin zaman Ayarlar → Profil sekmesinden güncelleyebilirsin.",
     "actions": {
@@ -157,7 +137,6 @@
       "displayName": "Sana nasıl hitap etmemiz gerektiğini yaz.",
       "businessName": "Müşterilere gösterdiğin işletme adını ekle.",
       "projectTypes": "En az bir proje tipi seç.",
-      "sampleData": "Nasıl başlamak istediğini seç.",
       "limit": "En fazla {{count}} öğe seçebilirsin."
     },
     "toast": {
@@ -2966,6 +2945,7 @@
       "continue_guided_setup": "Rehberli kuruluma devam et",
       "start_with_sample_data": "Örnek verilerle keşfet",
       "start_clean": "Temiz çalışma alanıyla başla",
+      "recommended": "Önerilen",
       "starting": "Başlatılıyor...",
       "setting_up": "Örnek veriler hazırlanıyor...",
       "preparing_clean": "Hazırlanıyor...",

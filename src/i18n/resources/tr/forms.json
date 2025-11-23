@@ -322,6 +322,8 @@
     "deposit_percent_helper": "%{{percent}} {{target}} üzerinden",
     "no_services_in_category": "Bu kategoride hizmet yok",
     "vendor_label": "Tedarikçi: {{name}}",
+    "visibility_label": "Aktif",
+    "visibility_help": "Kapalı olduğunda pasif olur ama kayıtlarınızda kalır.",
     "service_deleted": "Hizmet Silindi",
     "service_deleted_desc": "\"{{name}}\" hizmeti kaldırıldı",
     "error_deleting": "Hizmet silinemedi",

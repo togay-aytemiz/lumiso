@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from '@/hooks/use-toast';
+import { useTranslation } from "react-i18next";
 
 export interface UseEntityDataOptions<T> {
   fetchFn: () => Promise<T[]>;
@@ -25,6 +26,7 @@ export function useEntityData<T>({
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation(["messages", "common"]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -33,14 +35,15 @@ export function useEntityData<T>({
       const result = await fetchFn();
       setData(result);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      const fallbackMessage = t("error.generic", { ns: "messages" });
+      const errorMessage = err instanceof Error ? err.message : fallbackMessage;
       setError(errorMessage);
       
       if (onError) {
         onError(err instanceof Error ? err : new Error(errorMessage));
       } else {
         toast({
-          title: "Error",
+          title: t("toast.error", { ns: "common" }),
           description: errorMessage,
           variant: "destructive",
         });

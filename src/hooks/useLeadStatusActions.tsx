@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -24,7 +24,38 @@ export function useLeadStatusActions({
 }: UseLeadStatusActionsProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
-  const { t: tForms } = useTranslation("forms");
+  const { t: tForms, i18n } = useTranslation("forms");
+
+  const resolvedLanguage = i18n?.resolvedLanguage || i18n?.language || "en";
+  const statusTranslations = useMemo(() => {
+    const isTurkish = resolvedLanguage.startsWith("tr");
+
+    return {
+      statusUpdated: isTurkish ? "Durum Güncellendi" : "Status Updated",
+      leadMarkedAs: isTurkish ? "Kişi {{status}} olarak işaretlendi" : "Lead marked as {{status}}",
+      leadStatusChanged: isTurkish ? 'Kişi durumu "{{status}}" olarak değiştirildi' : 'Lead status changed to "{{status}}"',
+      leadStatusSet: isTurkish ? 'Kişi durumu "{{status}}" olarak ayarlandı' : 'Lead status set to "{{status}}"',
+      undo: isTurkish ? "Geri Al" : "Undo",
+      undoStatusChange: isTurkish ? "Durum değişikliğini geri al" : "Undo status change",
+      undone: isTurkish ? "Geri alındı" : "Undone",
+      statusRevertedTo: isTurkish ? "Durum {{status}} olarak geri alındı" : "Status reverted to {{status}}",
+      undoFailed: isTurkish ? "Geri alma başarısız" : "Undo failed",
+      undoFailedDescription: isTurkish ? "Durum değişikliği geri alınamadı" : "Unable to undo status change",
+      unableToUpdateStatus: isTurkish ? "Kişi durumu güncellenemedi" : "Unable to update lead status",
+      errorUpdatingStatus: isTurkish ? "Durum güncellenirken hata" : "Error updating status"
+    };
+  }, [resolvedLanguage]);
+
+  const tStatus = (
+    key: keyof typeof statusTranslations,
+    options?: Record<string, string>
+  ) =>
+    tForms(`status.${key}`, {
+      lng: resolvedLanguage,
+      fallbackLng: false,
+      defaultValue: statusTranslations[key],
+      ...options
+    });
 
   const resolveStatusByLifecycle = async (
     lifecycle: "completed" | "cancelled"
@@ -116,13 +147,13 @@ export function useLeadStatusActions({
       const undoRef = { current: false };
       
       toast({
-        title: tForms("status.statusUpdated"),
-        description: tForms("status.leadMarkedAs", {
+        title: tStatus("statusUpdated"),
+        description: tStatus("leadMarkedAs", {
           status: displayName ?? targetStatus.name
         }),
         action: previousStatus?.name || previousStatus?.id ? (
           <ToastAction
-            altText={tForms("status.undoStatusChange")}
+            altText={tStatus("undoStatusChange")}
             onClick={async () => {
               if (undoRef.current) return; // Prevent multiple clicks
               undoRef.current = true;
@@ -147,8 +178,8 @@ export function useLeadStatusActions({
 
                 onStatusChange();
                 toast({
-                  title: tForms("status.undone"),
-                  description: tForms("status.statusRevertedTo", {
+                  title: tStatus("undone"),
+                  description: tStatus("statusRevertedTo", {
                     status: prevStatusData.name
                   })
                 });
@@ -156,16 +187,16 @@ export function useLeadStatusActions({
                 const message =
                   error instanceof Error
                     ? error.message
-                    : tForms("status.undoFailedDescription");
+                    : tStatus("undoFailedDescription");
                 toast({
-                  title: tForms("status.undoFailed"),
+                  title: tStatus("undoFailed"),
                   description: message,
                   variant: "destructive"
                 });
               }
             }}
           >
-            {tForms("status.undo")}
+            {tStatus("undo")}
           </ToastAction>
         ) : undefined
       });
@@ -174,9 +205,9 @@ export function useLeadStatusActions({
       const message =
         error instanceof Error
           ? error.message
-          : tForms("status.unableToUpdateStatus");
+          : tStatus("unableToUpdateStatus");
       toast({
-        title: tForms("status.errorUpdatingStatus"),
+        title: tStatus("errorUpdatingStatus"),
         description: message,
         variant: "destructive"
       });

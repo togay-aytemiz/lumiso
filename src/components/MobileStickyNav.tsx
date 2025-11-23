@@ -1,25 +1,31 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, FolderOpen, CalendarRange, Calendar, CalendarDays, Bell, BarChart3, CreditCard, Settings, ChevronUp } from "lucide-react";
-
-const navigationItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Leads", url: "/leads", icon: Users },
-  { title: "Analytics", url: "/analytics", icon: BarChart3 },
-  { title: "Payments", url: "/payments", icon: CreditCard },
-];
-
-const bookingItems = [
-  { title: "Calendar", url: "/calendar", icon: CalendarDays },
-  { title: "Sessions", url: "/sessions", icon: Calendar },
-  { title: "Reminders", url: "/reminders", icon: Bell },
-];
+import { LayoutDashboard, Users, FolderOpen, Calendar, CalendarDays, Bell, BarChart3, CreditCard, Settings } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function MobileStickyNav() {
   const [bookingsExpanded, setBookingsExpanded] = useState(false);
   const location = useLocation();
   const currentPath = location.pathname;
   const menuRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation("navigation");
+  const navigationItems = useMemo(
+    () => [
+      { title: t("menu.dashboard"), url: "/", icon: LayoutDashboard },
+      { title: t("menu.leads"), url: "/leads", icon: Users },
+      { title: t("menu.analytics"), url: "/analytics", icon: BarChart3 },
+      { title: t("menu.payments"), url: "/payments", icon: CreditCard },
+    ],
+    [t]
+  );
+  const bookingItems = useMemo(
+    () => [
+      { title: t("menu.calendar"), url: "/calendar", icon: CalendarDays },
+      { title: t("menu.sessions"), url: "/sessions", icon: Calendar },
+      { title: t("menu.reminders"), url: "/reminders", icon: Bell },
+    ],
+    [t]
+  );
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -69,7 +75,7 @@ export function MobileStickyNav() {
           const active = isActive(item.url);
           return (
             <NavLink
-              key={item.title}
+              key={item.url}
               to={item.url}
               aria-label={item.title}
               className={`h-12 flex items-center justify-center transition-colors ${
@@ -86,7 +92,7 @@ export function MobileStickyNav() {
         {/* Projects */}
         <NavLink
           to="/projects"
-          aria-label="Projects"
+          aria-label={t("menu.projects")}
           className={`h-12 flex items-center justify-center transition-colors ${
             isActive("/projects")
               ? "bg-primary-foreground/20 text-primary-foreground"
@@ -100,7 +106,7 @@ export function MobileStickyNav() {
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setBookingsExpanded(!bookingsExpanded)}
-            aria-label="Bookings menu"
+            aria-label={t("menu.bookings")}
             aria-expanded={bookingsExpanded}
             className={`h-12 w-full flex items-center justify-center transition-colors ${
               isBookingsActive
@@ -118,7 +124,7 @@ export function MobileStickyNav() {
                 const active = isActive(item.url);
                 return (
                   <NavLink
-                    key={item.title}
+                    key={item.url}
                     to={item.url}
                     onClick={() => setBookingsExpanded(false)}
                     className={`flex items-center gap-3 px-4 py-3 min-w-[120px] transition-colors first:rounded-t-lg last:rounded-b-lg ${
@@ -141,7 +147,7 @@ export function MobileStickyNav() {
           const active = isActive(item.url);
           return (
             <NavLink
-              key={item.title}
+              key={item.url}
               to={item.url}
               aria-label={item.title}
               className={`h-12 flex items-center justify-center transition-colors ${
@@ -159,7 +165,7 @@ export function MobileStickyNav() {
         <div className="mt-auto">
           <NavLink
             to="/settings"
-            aria-label="Settings"
+            aria-label={t("menu.settings")}
             className={`h-12 flex items-center justify-center transition-colors ${
               isActive("/settings")
                 ? "bg-primary-foreground/20 text-primary-foreground"

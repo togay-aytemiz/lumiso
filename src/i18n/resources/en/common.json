@@ -176,6 +176,15 @@
     "hour": "Hour",
     "minutes": "Minutes"
   },
+  "timezone": {
+    "label": "Timezone",
+    "fallback": "UTC (UTC)",
+    "currentTime": "Current time: {{time}}",
+    "autoDetect": "Auto-detect",
+    "autoDetectTitle": "Switch to detected timezone: {{timezone}}",
+    "placeholder": "Select a timezone...",
+    "helper": "Used for notifications, reminders, and date/time displays"
+  },
   "abbreviations": {
     "notAvailable": "N/A"
   },

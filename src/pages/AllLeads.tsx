@@ -619,7 +619,7 @@ const AllLeadsNew = () => {
     } catch (error) {
       console.error(t('leads.messages.errorCompletingTutorial'), error);
       toast({
-        title: "Error",
+        title: tCommon('toast.error'),
         description: t('leads.messages.failedToSaveProgress'),
         variant: "destructive"
       });

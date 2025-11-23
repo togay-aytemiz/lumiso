@@ -3,6 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, Clock } from "lucide-react";
 import { getSupportedTimezones, detectBrowserTimezone } from "@/lib/dateFormatUtils";
+import { useTranslation } from "react-i18next";
 
 interface TimezoneSelectorProps {
   value: string;
@@ -12,6 +13,7 @@ interface TimezoneSelectorProps {
 
 export function TimezoneSelector({ value, onValueChange, className }: TimezoneSelectorProps) {
   const timezones = getSupportedTimezones();
+  const { t } = useTranslation("common");
   
   // Group timezones by region for better organization
   const groupedTimezones = useMemo(() => {
@@ -58,17 +60,17 @@ export function TimezoneSelector({ value, onValueChange, className }: TimezoneSe
 
   return (
     <div className={`space-y-3 ${className}`}>
-      <Label htmlFor="timezone-select">Timezone</Label>
+      <Label htmlFor="timezone-select">{t("timezone.label")}</Label>
       
       {/* Current Selection Display */}
       <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg border">
         <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">
-            {selectedTimezone?.label || 'UTC (UTC)'}
+            {selectedTimezone?.label || t("timezone.fallback")}
           </p>
           <p className="text-xs text-muted-foreground">
-            Current time: {getCurrentTime(value || 'UTC')}
+            {t("timezone.currentTime", { time: getCurrentTime(value || 'UTC') })}
           </p>
         </div>
         {currentBrowserTz && currentBrowserTz !== value && (
@@ -78,9 +80,9 @@ export function TimezoneSelector({ value, onValueChange, className }: TimezoneSe
               type="button"
               onClick={() => onValueChange(currentBrowserTz)}
               className="hover:underline"
-              title={`Switch to detected timezone: ${timezones.find(tz => tz.value === currentBrowserTz)?.label || currentBrowserTz}`}
+              title={t("timezone.autoDetectTitle", { timezone: timezones.find(tz => tz.value === currentBrowserTz)?.label || currentBrowserTz })}
             >
-              Auto-detect
+              {t("timezone.autoDetect")}
             </button>
           </div>
         )}
@@ -89,7 +91,7 @@ export function TimezoneSelector({ value, onValueChange, className }: TimezoneSe
       {/* Timezone Dropdown */}
       <Select value={value} onValueChange={onValueChange}>
         <SelectTrigger id="timezone-select" className="w-full">
-          <SelectValue placeholder="Select a timezone..." />
+          <SelectValue placeholder={t("timezone.placeholder")} />
         </SelectTrigger>
         <SelectContent className="max-h-64">
           {groupedTimezones.map(({ region, timezones }) => (
@@ -128,7 +130,7 @@ export function TimezoneSelector({ value, onValueChange, className }: TimezoneSe
       </Select>
       
       <p className="text-xs text-muted-foreground">
-        Used for notifications, reminders, and date/time displays
+        {t("timezone.helper")}
       </p>
     </div>
   );

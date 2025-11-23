@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { toast } from '@/hooks/use-toast';
+import { useTranslation } from "react-i18next";
 
 export interface EntityActionOptions<T> {
   onSuccess?: (result: T) => void;
@@ -15,6 +16,7 @@ export interface EntityActionState {
 
 export function useEntityActions() {
   const [actionStates, setActionStates] = useState<Record<string, EntityActionState>>({});
+  const { t } = useTranslation(["common", "messages"]);
 
   const executeAction = useCallback(async <T>(
     actionName: string,
@@ -36,7 +38,7 @@ export function useEntityActions() {
 
       if (options.successMessage) {
         toast({
-          title: "Success",
+          title: t("toast.success", { ns: "common" }),
           description: options.successMessage,
         });
       }
@@ -44,7 +46,7 @@ export function useEntityActions() {
       options.onSuccess?.(result);
       return result;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      const errorMessage = err instanceof Error ? err.message : t("error.generic", { ns: "messages" });
       
       setActionStates(prev => ({
         ...prev,
@@ -55,7 +57,7 @@ export function useEntityActions() {
         options.onError(err instanceof Error ? err : new Error(errorMessage));
       } else {
         toast({
-          title: "Error",
+          title: t("toast.error", { ns: "common" }),
           description: options.errorMessage || errorMessage,
           variant: "destructive",
         });

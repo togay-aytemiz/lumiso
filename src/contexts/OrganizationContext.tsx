@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { detectBrowserTimezone, detectBrowserHourFormat } from '@/lib/dateFormatUtils';
 import { resolveMembershipStatus, shouldPersistMembershipStatus } from '@/lib/membershipStatus';
 import type { MembershipStatus } from '@/types/membership';
+import { useTranslation } from "react-i18next";
 import {
   fetchOrganizationSettingsWithCache,
   ORGANIZATION_SETTINGS_CACHE_TTL,
@@ -64,6 +65,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useTranslation(["messages", "common"]);
 
   const fetchActiveOrganization = useCallback(async (options?: { silent?: boolean }) => {
     const skipLoadingState = options?.silent ?? false;
@@ -171,8 +173,8 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     await refreshOrganization();
     
     toast({
-      title: "Success", 
-      description: "Organization data refreshed",
+      title: t("toast.success", { ns: "common" }),
+      description: t("success.organizationRefreshed", { ns: "messages" }),
     });
   };
 

@@ -10,7 +10,7 @@ interface LanguageProviderProps {
 }
 
 export function LanguageProvider({ children }: LanguageProviderProps) {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation(["messages", "common"]);
   const { user } = useAuth();
   const [currentLanguage, setCurrentLanguage] = useState(i18n.language || 'en');
   const [availableLanguages, setAvailableLanguages] = useState<Array<{
@@ -87,22 +87,22 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
         if (error) {
           console.error('Error saving language preference:', error);
           toast({
-            title: "Warning",
-            description: "Language changed but preference not saved",
+            title: t("toast.warning", { ns: "common" }),
+            description: t("language.preferenceWarning", { ns: "messages" }),
             variant: "destructive",
           });
         }
       }
 
       toast({
-        title: "Language Changed",
-        description: `Interface language changed to ${languageCode.toUpperCase()}`,
+        title: t("language.changeTitle", { ns: "messages" }),
+        description: t("language.changeDescription", { ns: "messages", language: languageCode.toUpperCase() }),
       });
     } catch (error: unknown) {
       console.error('Error changing language:', error);
       toast({
-        title: "Error",
-        description: "Failed to change language",
+        title: t("toast.error", { ns: "common" }),
+        description: t("language.changeError", { ns: "messages" }),
         variant: "destructive",
       });
     } finally {

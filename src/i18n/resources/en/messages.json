@@ -10,7 +10,8 @@
     "exported": "Successfully exported",
     "projectUpdated": "Project updated successfully.",
     "projectDeleted": "Project and all related data deleted successfully.",
-    "sessionDeleted": "Session deleted successfully."
+    "sessionDeleted": "Session deleted successfully.",
+    "organizationRefreshed": "Organization data refreshed"
   },
   "error": {
     "generic": "Something went wrong. Please try again.",
@@ -25,6 +26,8 @@
     "updatingProject": "Error updating project",
     "deletingProject": "Error deleting project",
     "deletingSession": "Error deleting session",
+    "leadFetching": "Error fetching leads",
+    "projectOpen": "Unable to open project",
     "actionFailed": "Action failed",
     "archiveUpdateFailed": "Could not update archive state"
   },
@@ -44,6 +47,14 @@
   },
   "toast": {
     "statusSetTo": "Status set to \"{status}\""
+  },
+  "notifications": {
+    "error": "Notification error",
+    "schedulingError": "Scheduling error",
+    "processingError": "Processing error",
+    "retryError": "Retry error",
+    "processed": "Processed {{count}} notifications",
+    "retried": "Retried {{count}} failed notifications"
   },
   "info": {
     "noData": "No data available",
@@ -86,5 +97,21 @@
     "signup_confirmation_cta": "Confirm email",
     "signup_confirmation_warning": "If you didn't sign up for Lumiso, you can ignore this email.",
     "recovery_link_invalid": "This recovery link is invalid or has expired. Request a new email to continue."
+  },
+  "language": {
+    "changeTitle": "Language updated",
+    "changeDescription": "Interface language changed to {{language}}",
+    "preferenceWarning": "Language changed but preference not saved",
+    "changeError": "Failed to change language"
+  },
+  "session": {
+    "validationRequired": "Session name, date and time are required.",
+    "notificationWarning": "Session created successfully, but notifications may not be sent.",
+    "scheduled": "Session scheduled successfully.",
+    "scheduleError": "Error scheduling session"
+  },
+  "workingHours": {
+    "loadError": "Failed to load working hours",
+    "updateError": "Failed to update working hours"
   }
 }

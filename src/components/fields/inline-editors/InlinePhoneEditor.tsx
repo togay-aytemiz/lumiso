@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Check, X, Phone } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface InlinePhoneEditorProps {
   value: string | null;
@@ -20,6 +21,7 @@ export function InlinePhoneEditor({
   const [isSaving, setIsSaving] = useState(false);
   const [originalValue] = useState(value || '');
   const inputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation("forms");
 
   useEffect(() => {
     if (inputRef.current) {
@@ -68,7 +70,7 @@ export function InlinePhoneEditor({
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
-          placeholder="Enter phone number"
+          placeholder={t("placeholders.enterPhone")}
           className="h-7 text-sm pr-8"
           disabled={isSaving}
         />

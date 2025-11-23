@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import type { ProjectPackageSnapshot } from "@/lib/projects/projectPackageSnapshot";
+import { useTranslation } from "react-i18next";
 
 export type ProjectSheetProject = {
   id: string;
@@ -38,6 +39,7 @@ interface UseProjectSheetControllerOptions {
 export const useProjectSheetController = (
   options: UseProjectSheetControllerOptions = {}
 ) => {
+  const { t } = useTranslation(["messages", "common"]);
   const { resolveLeadName, onLeadResolved } = options;
   const [viewingProject, setViewingProject] =
     useState<ProjectSheetProject | null>(null);
@@ -85,17 +87,17 @@ export const useProjectSheetController = (
           .single();
         if (error) throw error;
 
-        setViewingProject(data as ProjectSheetProject);
-        const leadName = await resolveLeadDetails(data?.lead_id);
-        setProjectSheetLeadName(leadName);
-        setProjectSheetOpen(true);
-      } catch (error) {
-        toast({
-          title: "Unable to open project",
-          description: getErrorMessage(error),
-          variant: "destructive",
-        });
-      } finally {
+      setViewingProject(data as ProjectSheetProject);
+      const leadName = await resolveLeadDetails(data?.lead_id);
+      setProjectSheetLeadName(leadName);
+      setProjectSheetOpen(true);
+    } catch (error) {
+      toast({
+        title: t("error.projectOpen", { ns: "messages" }),
+        description: getErrorMessage(error),
+        variant: "destructive",
+      });
+    } finally {
         setLoadingProjectId(null);
       }
     },

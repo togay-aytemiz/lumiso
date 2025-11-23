@@ -176,6 +176,15 @@
     "hour": "Saat",
     "minutes": "Dakika"
   },
+  "timezone": {
+    "label": "Zaman dilimi",
+    "fallback": "UTC (UTC)",
+    "currentTime": "Güncel saat: {{time}}",
+    "autoDetect": "Otomatik algıla",
+    "autoDetectTitle": "Algılanan zaman dilimine geç: {{timezone}}",
+    "placeholder": "Bir zaman dilimi seçin...",
+    "helper": "Bildirimler, hatırlatmalar ve tarih/saat gösterimleri için kullanılır"
+  },
   "abbreviations": {
     "notAvailable": "Yok"
   },

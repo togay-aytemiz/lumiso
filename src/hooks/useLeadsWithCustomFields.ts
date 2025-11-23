@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getUserOrganizationId } from '@/lib/organizationUtils';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 export interface LeadWithCustomFields {
   id: string;
@@ -28,6 +29,7 @@ export function useLeadsWithCustomFields() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation(["messages", "common"]);
 
   const fetchLeadsWithCustomFields = useCallback(async () => {
     try {
@@ -78,10 +80,11 @@ export function useLeadsWithCustomFields() {
       setLeads(leadsWithFields);
     } catch (err) {
       console.error('Error fetching leads with custom fields:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch leads';
+      const fallbackMessage = t("error.leadFetching", { ns: "messages" });
+      const errorMessage = err instanceof Error ? err.message : fallbackMessage;
       setError(errorMessage);
       toast({
-        title: "Error fetching leads",
+        title: t("error.leadFetching", { ns: "messages" }),
         description: errorMessage,
         variant: "destructive"
       });

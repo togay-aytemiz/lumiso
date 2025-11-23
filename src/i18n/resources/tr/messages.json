@@ -10,7 +10,8 @@
     "exported": "Başarıyla dışa aktarıldı",
     "projectUpdated": "Proje başarıyla güncellendi.",
     "projectDeleted": "Proje ve tüm ilgili veriler başarıyla silindi.",
-    "sessionDeleted": "Seans başarıyla silindi."
+    "sessionDeleted": "Seans başarıyla silindi.",
+    "organizationRefreshed": "Organizasyon verileri yenilendi"
   },
   "error": {
     "generic": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
@@ -25,6 +26,8 @@
     "updatingProject": "Proje güncellenirken hata",
     "deletingProject": "Proje silinirken hata",
     "deletingSession": "Seans silinirken hata",
+    "leadFetching": "Kişiler alınırken hata",
+    "projectOpen": "Proje açılırken hata",
     "actionFailed": "İşlem başarısız",
     "archiveUpdateFailed": "Arşiv durumu güncellenemedi"
   },
@@ -44,6 +47,14 @@
   },
   "toast": {
     "statusSetTo": "Durum \"{status}\" olarak ayarlandı"
+  },
+  "notifications": {
+    "error": "Bildirim hatası",
+    "schedulingError": "Planlama hatası",
+    "processingError": "İşleme hatası",
+    "retryError": "Yeniden deneme hatası",
+    "processed": "{{count}} bildirim işlendi",
+    "retried": "{{count}} başarısız bildirim yeniden denendi"
   },
   "info": {
     "noData": "Veri yok",
@@ -86,5 +97,21 @@
     "signup_confirmation_cta": "E-postayı doğrula",
     "signup_confirmation_warning": "Bu hesabı siz oluşturmadıysanız bu mesajı yok sayabilirsiniz.",
     "recovery_link_invalid": "Bu kurtarma bağlantısı geçersiz veya süresi dolmuş. Devam etmek için yeni bir e-posta isteyin."
+  },
+  "language": {
+    "changeTitle": "Dil güncellendi",
+    "changeDescription": "Arayüz dili {{language}} olarak değiştirildi",
+    "preferenceWarning": "Dil değişti ancak tercih kaydedilemedi",
+    "changeError": "Dil değiştirilemedi"
+  },
+  "session": {
+    "validationRequired": "Seans adı, tarih ve saat gereklidir.",
+    "notificationWarning": "Seans oluşturuldu ancak bildirimler gönderilemeyebilir.",
+    "scheduled": "Seans başarıyla planlandı.",
+    "scheduleError": "Seans planlanırken hata"
+  },
+  "workingHours": {
+    "loadError": "Çalışma saatleri yüklenemedi",
+    "updateError": "Çalışma saatleri güncellenemedi"
   }
 }

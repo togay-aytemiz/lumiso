@@ -196,6 +196,7 @@
         "margin": "Hesaplanan kar",
         "empty": "Henüz hizmet eklenmedi.",
         "selectedCount": "{{count}} hizmet seçildi",
+        "selectedCount_plural": "{{count}} hizmet seçildi",
         "selectedCount_other": "{{count}} hizmet seçildi",
         "listHeading": "Seçilen hizmetler",
         "typeBreakdown": "Hizmet türüne göre",
@@ -553,6 +554,7 @@
       "addOnsClientTotalHelper": "Hizmetleri ayrıca fiyatlandırmayı seçersen müşteriye görünen toplam.",
       "costTotal": "Maliyet toplamı",
       "margin": "Kâr",
+      "servicesAndPricingTitle": "Hizmetler ve fiyatlandırma özeti",
       "clientTotalTitle": "Müşteriye sunulan toplam",
       "deposit": {
         "label": "Kapora",

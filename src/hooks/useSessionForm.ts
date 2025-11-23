@@ -3,6 +3,7 @@ import { toast } from "@/hooks/use-toast";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
 import { createSession } from "@/features/session-planning/api/sessionCreation";
+import { useTranslation } from "react-i18next";
 
 interface SessionFormData {
   session_name: string;
@@ -33,6 +34,7 @@ export function useSessionForm({ leadId, leadName, projectId, onSuccess }: UseSe
 
   const { triggerSessionScheduled } = useWorkflowTriggers();
   const { scheduleSessionReminders } = useSessionReminderScheduling();
+  const { t } = useTranslation(["messages", "common"]);
 
   const handleInputChange = (field: keyof SessionFormData, value: string) => {
     setFormData(prev => ({
@@ -69,8 +71,8 @@ export function useSessionForm({ leadId, leadName, projectId, onSuccess }: UseSe
   const submitForm = async () => {
     if (!isValid) {
       toast({
-        title: "Validation error",
-        description: "Session name, date and time are required.",
+        title: t("errors.validation", { ns: "messages" }),
+        description: t("session.validationRequired", { ns: "messages" }),
         variant: "destructive"
       });
       return false;
@@ -112,8 +114,8 @@ export function useSessionForm({ leadId, leadName, projectId, onSuccess }: UseSe
       } catch (workflowError) {
         console.error('❌ Error triggering session_scheduled workflow:', workflowError);
         toast({
-          title: "Warning", 
-          description: "Session created successfully, but notifications may not be sent.",
+          title: t("toast.warning", { ns: "common" }), 
+          description: t("session.notificationWarning", { ns: "messages" }),
           variant: "default"
         });
       }
@@ -127,8 +129,8 @@ export function useSessionForm({ leadId, leadName, projectId, onSuccess }: UseSe
       }
 
       toast({
-        title: "Success",
-        description: "Session scheduled successfully."
+        title: t("toast.success", { ns: "common" }),
+        description: t("session.scheduled", { ns: "messages" })
       });
 
       resetForm();
@@ -137,7 +139,7 @@ export function useSessionForm({ leadId, leadName, projectId, onSuccess }: UseSe
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unexpected error occurred.";
       toast({
-        title: "Error scheduling session",
+        title: t("session.scheduleError", { ns: "messages" }),
         description: message,
         variant: "destructive"
       });

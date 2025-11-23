@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 const getErrorMessage = (error: unknown) => {
   if (error instanceof Error) {
@@ -19,6 +20,7 @@ const getErrorMessage = (error: unknown) => {
 
 export function useNotificationTriggers() {
   const { toast } = useToast();
+  const { t } = useTranslation(["messages", "common"]);
 
   // Trigger project milestone notification
   const triggerProjectMilestone = async (
@@ -62,7 +64,7 @@ export function useNotificationTriggers() {
     } catch (error: unknown) {
       console.error('Error in triggerProjectMilestone:', error);
       toast({
-        title: "Notification Error",
+        title: t("notifications.error", { ns: "messages" }),
         description: getErrorMessage(error),
         variant: "destructive",
       });
@@ -92,7 +94,7 @@ export function useNotificationTriggers() {
     } catch (error: unknown) {
       console.error('Error in scheduleDailySummaries:', error);
       toast({
-        title: "Scheduling Error",
+        title: t("notifications.schedulingError", { ns: "messages" }),
         description: getErrorMessage(error),
         variant: "destructive",
       });
@@ -120,14 +122,14 @@ export function useNotificationTriggers() {
       console.log('Processed notifications:', data);
       
       toast({
-        title: "Success",
-        description: `Processed ${data?.result?.processed || 0} notifications`,
+        title: t("toast.success", { ns: "common" }),
+        description: t("notifications.processed", { ns: "messages", count: data?.result?.processed || 0 }),
       });
 
     } catch (error: unknown) {
       console.error('Error in processPendingNotifications:', error);
       toast({
-        title: "Processing Error",
+        title: t("notifications.processingError", { ns: "messages" }),
         description: getErrorMessage(error),
         variant: "destructive",
       });
@@ -154,14 +156,14 @@ export function useNotificationTriggers() {
       console.log('Retried notifications:', data);
       
       toast({
-        title: "Success",
-        description: `Retried ${data?.result?.retried_count || 0} failed notifications`,
+        title: t("toast.success", { ns: "common" }),
+        description: t("notifications.retried", { ns: "messages", count: data?.result?.retried_count || 0 }),
       });
 
     } catch (error: unknown) {
       console.error('Error in retryFailedNotifications:', error);
       toast({
-        title: "Retry Error",
+        title: t("notifications.retryError", { ns: "messages" }),
         description: getErrorMessage(error),
         variant: "destructive",
       });

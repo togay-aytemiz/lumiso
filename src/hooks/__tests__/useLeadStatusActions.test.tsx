@@ -59,13 +59,17 @@ jest.mock("react-i18next", () => ({
   __esModule: true,
   useTranslation: () => ({
     t: (key: string, options?: Record<string, string>) => {
-      const template = translations[key] ?? key;
+      const template = translations[key] ?? options?.defaultValue ?? key;
       if (!options) return template;
 
       return template.replace(/{{\s*(\w+)\s*}}/g, (_match, variable) =>
         options[variable] ?? ""
       );
     },
+    i18n: {
+      language: "en",
+      resolvedLanguage: "en"
+    }
   }),
 }));
 

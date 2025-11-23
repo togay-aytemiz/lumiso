@@ -197,6 +197,7 @@
         "empty": "No services added yet.",
         "selectedCount": "{{count}} service selected",
         "selectedCount_plural": "{{count}} services selected",
+        "selectedCount_other": "{{count}} services selected",
         "listHeading": "Selected services",
         "typeBreakdown": "By service type",
         "table": {
@@ -395,6 +396,7 @@
         "servicesGrossTotal": "Selected services (incl. VAT)",
         "addOnsClientTotal": "Package + services total",
         "clientTotalTitle": "Client-facing price",
+        "servicesAndPricingTitle": "Services & pricing overview",
         "clientTotalHelperTitle": "Total presented to the client",
         "clientTotalHelper": {
           "inclusive": "Total = package price (services included).",

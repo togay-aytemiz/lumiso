@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface WorkingHour {
   id?: string;
@@ -14,6 +15,7 @@ export function useWorkingHours() {
   const [workingHours, setWorkingHours] = useState<WorkingHour[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { t } = useTranslation(["messages", "common"]);
 
   const fetchWorkingHours = useCallback(async () => {
     try {
@@ -37,8 +39,8 @@ export function useWorkingHours() {
     } catch (error) {
       console.error('Error fetching working hours:', error);
       toast({
-        title: "Error",
-        description: "Failed to load working hours",
+        title: t("toast.error", { ns: "common" }),
+        description: t("workingHours.loadError", { ns: "messages" }),
         variant: "destructive",
       });
     } finally {
@@ -72,8 +74,8 @@ export function useWorkingHours() {
     } catch (error) {
       console.error('Error updating working hour:', error);
       toast({
-        title: "Error",
-        description: "Failed to update working hours",
+        title: t("toast.error", { ns: "common" }),
+        description: t("workingHours.updateError", { ns: "messages" }),
         variant: "destructive",
       });
       return { success: false, error };

@@ -8,7 +8,7 @@ import { getBadgeStyleProperties } from "@/lib/statusBadgeStyles";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { useTranslation } from "react-i18next";
 
 interface LeadStatus {
   id: string;
@@ -50,7 +50,25 @@ export function LeadStatusBadge({
   const { settings: userSettings } = useOrganizationQuickSettings();
   const { triggerLeadStatusChange } = useWorkflowTriggers();
   const { activeOrganization } = useOrganization();
-  const { t: tForms } = useFormsTranslation();
+  const { t: tForms, i18n } = useTranslation("forms");
+  const resolvedLanguage = i18n?.resolvedLanguage || i18n?.language || "en";
+  const isTurkish = resolvedLanguage.startsWith("tr");
+  const statusTranslations = {
+    statusUpdated: isTurkish ? "Durum Güncellendi" : "Status Updated",
+    leadStatusChanged: isTurkish ? 'Kişi durumu "{{status}}" olarak değiştirildi' : 'Lead status changed to "{{status}}"',
+    leadStatusSet: isTurkish ? 'Kişi durumu "{{status}}" olarak ayarlandı' : 'Lead status set to "{{status}}"',
+    errorUpdatingStatus: isTurkish ? "Durum güncellenirken hata" : "Error updating status"
+  };
+  const tStatus = (
+    key: keyof typeof statusTranslations,
+    options?: Record<string, string>
+  ) =>
+    tForms(`status.${key}`, {
+      lng: resolvedLanguage,
+      fallbackLng: false,
+      defaultValue: statusTranslations[key],
+      ...options
+    });
 
   useEffect(() => {
     if (passedStatuses === undefined) {
@@ -196,11 +214,11 @@ export function LeadStatusBadge({
       onStatusChange?.();
 
       const toastDescription = currentStatusData
-        ? tForms("status.leadStatusChanged", { status: newStatus.name })
-        : tForms("status.leadStatusSet", { status: newStatus.name });
+        ? tStatus("leadStatusChanged", { status: newStatus.name })
+        : tStatus("leadStatusSet", { status: newStatus.name });
 
       toast({
-        title: tForms('status.statusUpdated'),
+        title: tStatus('statusUpdated'),
         description: toastDescription
       });
 
@@ -222,7 +240,7 @@ export function LeadStatusBadge({
         error instanceof Error ? error.message : String(error);
 
       toast({
-        title: tForms('status.errorUpdatingStatus'),
+        title: tStatus('errorUpdatingStatus'),
         description,
         variant: "destructive"
       });

@@ -27,6 +27,7 @@ import { parseProjectPackageSnapshot } from "@/lib/projects/projectPackageSnapsh
 import { ProjectCreationWizardSheet } from "@/features/project-creation";
 import type { ProjectCreationStepId } from "@/features/project-creation/types";
 import type { ProjectPackageSnapshot } from "@/lib/projects/projectPackageSnapshot";
+import { useTranslation } from "react-i18next";
 // AssigneesList removed - single user organization
 interface Project {
   id: string;
@@ -121,6 +122,7 @@ export function ViewProjectDialog({
   const {
     toast
   } = useToast();
+  const { t } = useTranslation(["messages", "common"]);
   const { deleteSession } = useSessionActions();
   const fetchProjectSessions = useCallback(async () => {
     const projectId = project?.id;
@@ -438,8 +440,8 @@ export function ViewProjectDialog({
     } catch (e) {
       const message = getErrorMessage(e);
       toast({
-        title: 'Action failed',
-        description: message || 'Could not update archive state',
+        title: t("error.actionFailed", { ns: "messages" }),
+        description: message || t("error.archiveUpdateFailed", { ns: "messages" }),
         variant: 'destructive'
       });
     }
@@ -457,7 +459,13 @@ export function ViewProjectDialog({
               <div className="flex-1 min-w-0 space-y-3">
                 {isEditing ? <div className="space-y-3 text-2xl font-bold text-left">
                       <Input value={editName} onChange={e => setEditName(e.target.value)} placeholder={tForms('projects.projectName')} className="text-2xl font-bold border rounded-md px-3 py-2" />
-                      <Textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} placeholder="Project description (optional)" className="text-base border rounded-md px-3 py-2 resize-none" rows={2} />
+                      <Textarea
+                        value={editDescription}
+                        onChange={e => setEditDescription(e.target.value)}
+                        placeholder={t("labels.project_description", { ns: "common" })}
+                        className="text-base border rounded-md px-3 py-2 resize-none"
+                        rows={2}
+                      />
                       <ProjectTypeSelector value={editProjectTypeId} onValueChange={setEditProjectTypeId} disabled={isSaving} required />
                     <div className="flex gap-2">
                       <Button size="sm" onClick={handleSaveProject} disabled={isSaving || !editName.trim() || !editProjectTypeId}>

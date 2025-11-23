@@ -51,6 +51,23 @@ export function EnhancedAddLeadDialog({
   const navigate = useNavigate();
   // Assignees removed - single user organization
 
+  const fetchDefaultLeadStatus = useCallback(
+    async (organizationId: string) => {
+      const { data, error } = await supabase
+        .from<LeadStatusRow>("lead_statuses")
+        .select("id, name")
+        .eq("organization_id", organizationId)
+        .order("is_default", { ascending: false })
+        .order("sort_order", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data ?? null;
+    },
+    []
+  );
+
   // Create dynamic schema based on field definitions
   const schema = createDynamicLeadSchema(fieldDefinitions);
   
@@ -110,13 +127,7 @@ export function EnhancedAddLeadDialog({
 
           if (field.field_key === "status" && organizationId) {
             try {
-              const { data: defaultStatus } = await supabase
-                .from<LeadStatusRow>("lead_statuses")
-                .select("name")
-                .eq("organization_id", organizationId)
-                .eq("is_default", true)
-                .maybeSingle();
-
+              const defaultStatus = await fetchDefaultLeadStatus(organizationId);
               defaultValues[fieldName] = defaultStatus?.name ?? "New";
             } catch (error) {
               console.error("Error fetching default status:", error);
@@ -145,7 +156,7 @@ export function EnhancedAddLeadDialog({
     } else if (!open) {
       setDefaultsReady(false);
     }
-  }, [open, fieldsLoading, fieldDefinitions, form]);
+  }, [open, fieldsLoading, fieldDefinitions, form, fetchDefaultLeadStatus]);
 
   const hasDirtyValue = useMemo(() => {
     if (!defaultsReady) {
@@ -233,15 +244,17 @@ export function EnhancedAddLeadDialog({
 
         statusId = statusData?.id ?? null;
       } else {
-        const { data: defaultStatus } = await supabase
-          .from<LeadStatusRow>('lead_statuses')
-          .select('id, name')
-          .eq('organization_id', organizationId)
-          .eq('is_default', true)
-          .maybeSingle();
+        const defaultStatus = await fetchDefaultLeadStatus(organizationId);
 
         statusId = defaultStatus?.id ?? null;
         statusName = defaultStatus?.name ?? 'New';
+      }
+
+      // If no status ID could be resolved, fall back to the organization's default status
+      if (!statusId && organizationId) {
+        const fallbackStatus = await fetchDefaultLeadStatus(organizationId);
+        statusId = fallbackStatus?.id ?? null;
+        statusName = fallbackStatus?.name ?? statusName ?? 'New';
       }
 
       const leadInsert: LeadInsert = {

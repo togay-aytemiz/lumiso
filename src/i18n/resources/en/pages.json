@@ -2925,8 +2925,13 @@
     },
     "modal": {
       "welcome_title": "Welcome to Lumiso! \ud83c\udf89",
-      "welcome_subtitle": "We'll guide you through setting up your photography CRM step by step. Each task builds on the previous one, so you'll learn naturally.",
+      "welcome_subtitle": "We'll help you learn Lumiso.",
       "what_youll_learn": "What you'll learn:",
+      "bullets": {
+        "profile_and_settings": "Review your profile and general settings",
+        "contacts_projects_sessions": "Learn to create contacts, projects, and sessions",
+        "packages_and_services": "Manage your packages and services"
+      },
       "skip_sample_data": "Skip Tutorial",
       "start_learning": "Start Learning!",
       "starting": "Starting...",

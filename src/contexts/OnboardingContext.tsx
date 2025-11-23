@@ -158,7 +158,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     if (!preferences) return;
 
     await updatePreferences({
-      onboardingStage: 'skipped'
+      onboardingStage: 'skipped',
+      currentOnboardingStep: TOTAL_STEPS + 1
     });
   };
 

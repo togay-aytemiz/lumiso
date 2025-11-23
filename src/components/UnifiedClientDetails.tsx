@@ -172,7 +172,6 @@ export function UnifiedClientDetails({
   };
 
   const handleManageLeadFields = () => {
-    dismissLeadFieldHelper();
     navigate("/settings/leads#lead-fields");
   };
 

@@ -32,6 +32,7 @@ import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { OnboardingChecklistItem } from "@/components/shared/OnboardingChecklistItem";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { DetailPageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useMessagesTranslation, useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
 import { useTranslation } from "react-i18next";
@@ -155,12 +156,15 @@ const LeadDetail = () => {
     settings: userSettings,
     loading: settingsLoading
   } = useOrganizationQuickSettings();
+  const { activeOrganizationId } = useOrganization();
   const {
     markAsCompleted,
     markAsLost,
     isUpdating
   } = useLeadStatusActions({
     leadId: lead?.id || '',
+    organizationId: activeOrganizationId,
+    statuses: leadStatuses,
     onStatusChange: () => {
       refetchAll();
     }
@@ -423,9 +427,25 @@ const LeadDetail = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [confirmDeleteText, setConfirmDeleteText] = useState("");
 
+  const normalizeStatusText = useCallback((value?: string | null) => (value ?? "").trim().toLowerCase(), []);
+
   // Get system status labels for buttons (refresh when leadStatuses changes)
-  const completedStatus = leadStatuses.find(s => s.is_system_final && (s.name.toLowerCase().includes('completed') || s.name.toLowerCase().includes('delivered'))) || leadStatuses.find(s => s.name === 'Completed');
-  const lostStatus = leadStatuses.find(s => s.is_system_final && (s.name.toLowerCase().includes('lost') || s.name.toLowerCase().includes('not interested'))) || leadStatuses.find(s => s.name === 'Lost');
+  const completedStatus = useMemo(
+    () =>
+      leadStatuses.find((status) => normalizeStatusText(status.lifecycle) === "completed") ||
+      leadStatuses.find(
+        (status) => status.is_system_final && normalizeStatusText(status.name).includes("kazan")
+      ),
+    [leadStatuses, normalizeStatusText]
+  );
+  const lostStatus = useMemo(
+    () =>
+      leadStatuses.find((status) => normalizeStatusText(status.lifecycle) === "cancelled") ||
+      leadStatuses.find(
+        (status) => status.is_system_final && normalizeStatusText(status.name).includes("kaybed")
+      ),
+    [leadStatuses, normalizeStatusText]
+  );
 
   const completedQuickActionStyle = useMemo(
     () => createQuickStatusButtonStyle(completedStatus?.color, DEFAULT_COMPLETED_COLOR),
@@ -452,12 +472,16 @@ const LeadDetail = () => {
     Boolean(
       userSettings?.show_quick_status_buttons &&
         completedStatus &&
+        lead?.status_id !== completedStatus.id &&
         lead?.status !== completedStatus.name
     );
   const shouldShowLostQuickAction =
     !settingsLoading &&
     Boolean(
-      userSettings?.show_quick_status_buttons && lostStatus && lead?.status !== lostStatus.name
+      userSettings?.show_quick_status_buttons &&
+        lostStatus &&
+        lead?.status_id !== lostStatus.id &&
+        lead?.status !== lostStatus.name
     );
   const hasQuickStatusActions = shouldShowCompletedQuickAction || shouldShowLostQuickAction;
   const completedButtonLabel = isUpdating ? "Updating..." : completedStatus?.name ?? "";
@@ -608,13 +632,29 @@ const LeadDetail = () => {
       }
     }
   };
-  const handleMarkAsCompleted = () => {
+  const handleMarkAsCompleted = async () => {
     if (!lead || !completedStatus) return;
-    markAsCompleted(lead.status, completedStatus.name);
+    try {
+      await markAsCompleted(lead.status, completedStatus.name, lead.status_id);
+    } catch (error) {
+      toast({
+        title: tForms("status.errorUpdatingStatus"),
+        description: error instanceof Error ? error.message : String(error),
+        variant: "destructive"
+      });
+    }
   };
-  const handleMarkAsLost = () => {
+  const handleMarkAsLost = async () => {
     if (!lead || !lostStatus) return;
-    markAsLost(lead.status, lostStatus.name);
+    try {
+      await markAsLost(lead.status, lostStatus.name, lead.status_id);
+    } catch (error) {
+      toast({
+        title: tForms("status.errorUpdatingStatus"),
+        description: error instanceof Error ? error.message : String(error),
+        variant: "destructive"
+      });
+    }
   };
   const activitySummary = useMemo(() => {
     const timeline: Array<{ type: "lead" | "project" | "session" | "note"; timestamp: string }> = [];

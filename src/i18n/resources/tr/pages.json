@@ -2928,8 +2928,13 @@
     },
     "modal": {
       "welcome_title": "Lumiso'ya Hoş Geldiniz 🎉",
-      "welcome_subtitle": "Fotoğrafçılık CRM'inizi kurmanızda size rehberlik edeceğiz. Her görev bir öncekinin üzerine inşa edilir.",
+      "welcome_subtitle": "Lumiso'yu öğrenmene yardım edeceğiz",
       "what_youll_learn": "Neler öğreneceksiniz:",
+      "bullets": {
+        "profile_and_settings": "Profil ve genel ayarları gözden geçir",
+        "contacts_projects_sessions": "Kişi, proje ve seans oluşturmayı öğren",
+        "packages_and_services": "Paketlerini ve hizmetlerini yönet"
+      },
       "skip_sample_data": "Eğitimi Atla",
       "start_learning": "Öğrenmeye Başla",
       "starting": "Başlatılıyor...",

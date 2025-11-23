@@ -173,7 +173,7 @@ describe("SampleDataModal", () => {
     );
 
     expect(onClose).toHaveBeenCalledTimes(1);
-    expect(navigate).toHaveBeenCalledWith("/");
+    expect(navigate).toHaveBeenCalledWith("/", { replace: true });
   });
 
   it("skips without sample data and does not trigger seeding", async () => {
@@ -195,7 +195,7 @@ describe("SampleDataModal", () => {
     expect(updateSettings).not.toHaveBeenCalled();
     expect(mockSupabaseRpc).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalledTimes(1);
-    expect(navigate).toHaveBeenCalledWith("/");
+    expect(navigate).toHaveBeenCalledWith("/", { replace: true });
   });
 
   it("continues guided setup when requested", async () => {

@@ -134,10 +134,9 @@ describe("OnboardingModal", () => {
     expect(screen.getByText("onboarding.modal.welcome_subtitle")).toBeInTheDocument();
 
     // Ensure the guided steps list is rendered
-    expect(screen.getByText("onboarding.steps.step_1.title")).toBeInTheDocument();
-    expect(screen.getByText("onboarding.steps.step_2.title")).toBeInTheDocument();
-    expect(screen.getByText("onboarding.steps.step_3.title")).toBeInTheDocument();
-    expect(screen.queryByText("onboarding.steps.step_4.title")).not.toBeInTheDocument();
+    expect(screen.getByText("onboarding.modal.bullets.profile_and_settings")).toBeInTheDocument();
+    expect(screen.getByText("onboarding.modal.bullets.contacts_projects_sessions")).toBeInTheDocument();
+    expect(screen.getByText("onboarding.modal.bullets.packages_and_services")).toBeInTheDocument();
 
     // Action buttons should use translated labels
     expect(

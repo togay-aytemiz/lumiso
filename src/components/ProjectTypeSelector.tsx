@@ -1,8 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Check, ChevronDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18nToast } from "@/lib/toastHelpers";
@@ -38,7 +35,6 @@ export function ProjectTypeSelector({
 }: ProjectTypeSelectorProps) {
   const [types, setTypes] = useState<ProjectType[]>([]);
   const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
   const toast = useI18nToast();
   const { settings: orgSettings, loading: settingsLoading } = useOrganizationSettings();
   const { i18n } = useTranslation();
@@ -163,9 +159,6 @@ export function ProjectTypeSelector({
     return visibleTypes;
   }, [visibleTypes, preferredSlugs]);
 
-  const selectedType =
-    visibleTypes.find((type) => type.id === value) || types.find((type) => type.id === value);
-
   // Check if user has no project types
   if (!loading && !settingsLoading && visibleTypes.length === 0) {
     return (
@@ -176,89 +169,37 @@ export function ProjectTypeSelector({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn(
-            "w-full justify-between text-left h-auto min-h-[40px]",
-            !selectedType && "text-muted-foreground",
-            className
-          )}
-          disabled={disabled || loading || settingsLoading}
-        >
-          {loading || settingsLoading ? (
-            "Loading types..."
-          ) : selectedType ? (
-            <div className="flex items-center gap-2">
-              <Badge
-                variant={isDefaultType(selectedType) ? "default" : "secondary"}
-                className="text-xs"
-              >
-                {getDisplayProjectTypeName(selectedType, locale).toUpperCase()}
-              </Badge>
-              {isDefaultType(selectedType) && (
-                <span className="text-xs text-muted-foreground">(Default)</span>
-              )}
-            </div>
-          ) : (
-            placeholder
-          )}
-          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-full p-0 z-50 bg-popover" align="start">
-        <div className="max-h-64 overflow-y-auto">
-          <div className="py-1">
-            {loading ? (
-              <div className="p-4 text-center text-sm text-muted-foreground">
-                Loading project types...
-              </div>
-            ) : filteredTypes.length === 0 ? (
-              <div className="p-4 text-center text-sm text-muted-foreground">
-                No project types found
-              </div>
-            ) : (
-              filteredTypes.map((type) => (
-                <div
-                  key={type.id}
-                  onClick={() => {
-                    onValueChange(type.id);
-                    setOpen(false);
-                  }}
-                  className={cn(
-                    "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0",
-                    value === type.id && "bg-muted"
-                  )}
-                >
-                  <div className="flex items-center space-x-3">
-                    <Check
-                      className={cn(
-                        "h-4 w-4",
-                        value === type.id ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={isDefaultType(type) ? "default" : "secondary"}
-                        className="text-xs"
-                      >
-                        {getDisplayProjectTypeName(type, locale).toUpperCase()}
-                      </Badge>
-                      {isDefaultType(type) && (
-                        <span className="text-xs text-muted-foreground">(Default)</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
+    <Select
+      value={value || undefined}
+      onValueChange={(next) => onValueChange(next)}
+      disabled={disabled || loading || settingsLoading}
+    >
+      <SelectTrigger className={cn("h-11", className)} aria-required={required}>
+        <SelectValue
+          placeholder={loading || settingsLoading ? "Loading types..." : placeholder}
+        />
+      </SelectTrigger>
+      <SelectContent className="bg-popover">
+        {loading ? (
+          <div className="p-4 text-center text-sm text-muted-foreground">
+            Loading project types...
           </div>
-        </div>
-      </PopoverContent>
-    </Popover>
+        ) : filteredTypes.length === 0 ? (
+          <div className="p-4 text-center text-sm text-muted-foreground">
+            No project types found
+          </div>
+        ) : (
+          filteredTypes.map((type) => {
+            const label = getDisplayProjectTypeName(type, locale);
+            const text = isDefaultType(type) ? `${label} (Default)` : label;
+            return (
+              <SelectItem key={type.id} value={type.id}>
+                {text}
+              </SelectItem>
+            );
+          })
+        )}
+      </SelectContent>
+    </Select>
   );
 }

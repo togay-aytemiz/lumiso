@@ -182,6 +182,7 @@ describe("OnboardingContext", () => {
     });
     expect(updatePreferences).toHaveBeenNthCalledWith(2, {
       onboardingStage: "skipped",
+      currentOnboardingStep: TOTAL_STEPS + 1,
     });
     expect(updatePreferences).toHaveBeenNthCalledWith(3, {
       onboardingStage: "in_progress",

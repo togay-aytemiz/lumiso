@@ -16,9 +16,11 @@ DECLARE
   type_count integer;
   ordered_slugs text[] := ARRAY[]::text[];
   slug_value text;
+  canonical_slug text;
   template_name text;
   final_locale text := COALESCE(locale, public.get_org_locale(org_id), 'tr');
   sort_index integer := 1;
+  normalized_key text;
 BEGIN
   IF force_replace THEN
     DELETE FROM public.project_types
@@ -35,7 +37,35 @@ BEGIN
 
   IF preferred_slugs IS NOT NULL THEN
     FOREACH slug_value IN ARRAY preferred_slugs LOOP
-      IF slug_value IS NOT NULL AND NOT (slug_value = ANY(ordered_slugs)) THEN
+      IF slug_value IS NULL THEN
+        CONTINUE;
+      END IF;
+
+      normalized_key := lower(regexp_replace(slug_value, '[^a-z0-9]+', '', 'g'));
+
+      SELECT tpl.slug
+      INTO canonical_slug
+      FROM public.default_project_type_templates AS tpl
+      WHERE lower(regexp_replace(tpl.slug, '[^a-z0-9]+', '', 'g')) = normalized_key
+        AND tpl.locale = final_locale
+      LIMIT 1;
+
+      IF canonical_slug IS NULL THEN
+        SELECT tpl.slug
+        INTO canonical_slug
+        FROM public.default_project_type_templates AS tpl
+        WHERE lower(regexp_replace(tpl.slug, '[^a-z0-9]+', '', 'g')) = normalized_key
+          AND tpl.locale = 'en'
+        LIMIT 1;
+      END IF;
+
+      IF canonical_slug IS NOT NULL THEN
+        slug_value := canonical_slug;
+      ELSE
+        slug_value := lower(regexp_replace(slug_value, '[^a-z0-9_]+', '_', 'g'));
+      END IF;
+
+      IF NOT (slug_value = ANY(ordered_slugs)) THEN
         ordered_slugs := ordered_slugs || slug_value;
       END IF;
     END LOOP;

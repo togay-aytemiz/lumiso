@@ -12,6 +12,7 @@ import { useSessionPlanningContext } from "../hooks/useSessionPlanningContext";
 import { useSessionPlanningActions } from "../hooks/useSessionPlanningActions";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SessionPlanningDraft, SessionPlanningEntryContext, SessionPlanningState, SessionPlanningStepId } from "../types";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
@@ -222,9 +223,21 @@ const SessionPlanningWizardSheetInner = ({
         (!entryContext.leadId && Boolean(entryContext.projectId))),
     [entryContext.leadId, entryContext.leadName, entryContext.projectId, isEditing]
   );
-  const shouldShowContextLoader =
+  const isContextBusy =
     isOpen &&
-    ((needsLeadLookup || needsProjectLookup) && !contextHydratedRef.current || isResolvingEntryContext);
+    (((needsLeadLookup || needsProjectLookup) && !contextHydratedRef.current) || isResolvingEntryContext);
+  const [showContextLoader, setShowContextLoader] = useState(isContextBusy);
+
+  useEffect(() => {
+    if (!isContextBusy) {
+      setShowContextLoader(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setShowContextLoader(true), 140);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [isContextBusy]);
 
   useEffect(() => {
     return () => {
@@ -250,7 +263,7 @@ const SessionPlanningWizardSheetInner = ({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen || shouldShowContextLoader || completionSummary) {
+    if (!isOpen || isContextBusy || completionSummary) {
       return;
     }
     if (wizardOpenedRef.current) return;
@@ -258,7 +271,7 @@ const SessionPlanningWizardSheetInner = ({
     trackEvent("session_wizard_opened", {
       entrySource: entryContext.entrySource ?? "direct",
     });
-  }, [isOpen, shouldShowContextLoader, entryContext.entrySource, completionSummary]);
+  }, [isOpen, isContextBusy, entryContext.entrySource, completionSummary]);
 
   useEffect(() => {
     if (!completionSummary) {
@@ -1041,11 +1054,8 @@ const SessionPlanningWizardSheetInner = ({
           />
         }
       >
-        {shouldShowContextLoader ? (
-          <div className="flex h-[360px] flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            <span>{t("wizard.preparingEntry")}</span>
-          </div>
+        {showContextLoader ? (
+          <SessionPlanningLoader label={t("wizard.preparingEntry")} />
         ) : completionSummary ? (
           <SessionPlanningSuccess
             summary={completionSummary}
@@ -1254,6 +1264,58 @@ const SessionPlanningSuccess = ({
     </div>
   );
 };
+
+const SessionPlanningLoader = ({ label }: { label: string }) => (
+  <div className="grid min-h-[420px] grid-cols-1 gap-6 px-1 py-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:px-0">
+    <div className="hidden flex-col gap-4 lg:flex">
+      <div className="space-y-3 rounded-2xl bg-slate-900/90 p-4 text-white shadow-lg shadow-slate-900/20">
+        <Skeleton className="h-2 w-28 bg-white/15" />
+        <Skeleton className="h-2 w-36 bg-white/12" />
+        <Skeleton className="h-2 w-24 bg-white/10" />
+      </div>
+      <div className="space-y-3 rounded-2xl bg-slate-900/90 p-4 shadow-lg shadow-slate-900/20">
+        {[0, 1, 2, 3, 4, 5].map((index) => (
+          <div key={index} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3">
+            <Skeleton className="h-8 w-8 rounded-full bg-white/15" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-2 w-32 bg-white/12" />
+              <Skeleton className="h-2 w-24 bg-white/10" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        <span>{label}</span>
+      </div>
+      <div className="space-y-4 rounded-3xl border border-slate-200/70 bg-white p-4 shadow-md shadow-slate-900/5 sm:p-6">
+        <Skeleton className="h-6 w-40" />
+        <Skeleton className="h-3 w-3/4" />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {[0, 1, 2, 3].map((index) => (
+            <Skeleton key={index} className="h-12 w-full" />
+          ))}
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-32" />
+          <div className="space-y-2 rounded-xl border border-slate-200/80 p-3">
+            {[0, 1, 2].map((index) => (
+              <Skeleton key={index} className="h-3 w-full" />
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {[0, 1, 2].map((index) => (
+            <Skeleton key={index} className="h-10 w-full" />
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 const SuccessDetail = ({
   icon,

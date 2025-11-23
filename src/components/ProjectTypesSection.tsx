@@ -39,11 +39,30 @@ const ProjectTypesSection = () => {
     return new Set(keys.filter((key) => key.length > 0));
   }, [orgSettings?.preferred_project_types]);
 
-  const displayTypes = useMemo(() => {
-    if (!types.length) return [];
-    if (preferredMatchKeys.size === 0) return types;
+  const uniqueTypes = useMemo(() => {
+    const seen = new Set<string>();
+    const ordered: ProjectType[] = [];
 
-    return types.filter((type) => {
+    types.forEach((type) => {
+      const key = getProjectTypeMatchKey(type.template_slug ?? type.name ?? type.id);
+      if (!key) {
+        ordered.push(type);
+        return;
+      }
+
+      if (seen.has(key)) return;
+      seen.add(key);
+      ordered.push(type);
+    });
+
+    return ordered;
+  }, [types]);
+
+  const displayTypes = useMemo(() => {
+    if (!uniqueTypes.length) return [];
+    if (preferredMatchKeys.size === 0) return uniqueTypes;
+
+    return uniqueTypes.filter((type) => {
       if (!type.template_slug) {
         return true;
       }
@@ -55,7 +74,7 @@ const ProjectTypesSection = () => {
 
       return preferredMatchKeys.has(matchKey);
     });
-  }, [types, preferredMatchKeys]);
+  }, [uniqueTypes, preferredMatchKeys]);
 
   const createDefaultTypes = useCallback(async () => {
     try {

@@ -32,8 +32,9 @@ export function SimpleProjectTypeSelect({
   const [types, setTypes] = useState<ProjectType[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation("forms");
   const locale = i18n.language;
+  const defaultBadge = t("sessionTypes.default_badge", { defaultValue: "Default" });
 
   useEffect(() => {
     let isMounted = true;
@@ -112,17 +113,23 @@ export function SimpleProjectTypeSelect({
         <SelectValue placeholder={loading ? "Loading types..." : placeholder} />
       </SelectTrigger>
       <SelectContent className="z-50 bg-popover">
-        {types.map((type) => (
-          <SelectItem key={type.id} value={type.id}>
-            <div className="flex items-center gap-2">
-              <span>{getDisplayProjectTypeName(type, locale)}</span>
-              {type.is_default && (
-                <span className="text-xs text-muted-foreground">(Default)</span>
-              )}
-            </div>
-          </SelectItem>
-        ))}
-      </SelectContent>
+          {types.map((type) => (
+            <SelectItem
+              key={type.id}
+              value={type.id}
+              className="data-[highlighted]:bg-muted/70 data-[highlighted]:text-foreground"
+            >
+              <div className="flex items-center gap-2">
+                <span>{getDisplayProjectTypeName(type, locale)}</span>
+                {type.is_default && (
+                  <span className="text-xs text-muted-foreground">
+                    ({defaultBadge})
+                  </span>
+                )}
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
     </Select>
   );
 }

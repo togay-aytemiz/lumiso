@@ -308,7 +308,7 @@
         "none": "Henüz proje yok",
         "updated": "Son güncelleme {{time}}",
         "updatedFallback": "Yakın zamanda güncellendi",
-        "hint": "Başlamak için bu adayı bir projeye dönüştürün."
+        "hint": "Proje oluşturup, takip edin."
       },
       "payments": {
         "label": "Ödemeler",
@@ -326,7 +326,7 @@
         "none": "Henüz seans yok",
         "next": "Sıradaki {{date}}",
         "last": "Son seans {{date}}",
-        "hint": "İlerlemeniz için bir seans planlayın.",
+        "hint": "Çekim veya görüşme için bir seans planlayın.",
         "chips": {
           "overdue_one": "{{count}} gecikmiş",
           "overdue_other": "{{count}} gecikmiş",
@@ -348,11 +348,11 @@
       "activity": {
         "label": "Aktivite",
         "none": "Henüz aktivite kaydedilmedi",
-        "hint": "Bu adaya çalıştıkça güncellemeler burada görünecek.",
+        "hint": "Bu kişiye çalıştıkça güncellemeler burada görünecek.",
         "last": "Son aktivite {{time}}",
         "lastFallback": "Yeni aktivite",
         "sources": {
-          "lead": "Aday detayları güncellendi",
+          "lead": "Kişi detayları güncellendi",
           "project": "Proje değişiklikleri",
           "session": "Seans güncellemeleri",
           "note": "Notlar ve hatırlatmalar"

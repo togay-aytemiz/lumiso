@@ -37,8 +37,9 @@ export function ProjectTypeSelector({
   const [loading, setLoading] = useState(false);
   const toast = useI18nToast();
   const { settings: orgSettings, loading: settingsLoading } = useOrganizationSettings();
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation("forms");
   const locale = orgSettings?.locale ?? i18n.language;
+  const defaultBadge = t("sessionTypes.default_badge", { defaultValue: "Default" });
 
   const preferredSlugs = useMemo(
     () => (orgSettings?.preferred_project_types ?? []).map((slug) => slug.toLowerCase()),
@@ -191,9 +192,13 @@ export function ProjectTypeSelector({
         ) : (
           filteredTypes.map((type) => {
             const label = getDisplayProjectTypeName(type, locale);
-            const text = isDefaultType(type) ? `${label} (Default)` : label;
+            const text = isDefaultType(type) ? `${label} (${defaultBadge})` : label;
             return (
-              <SelectItem key={type.id} value={type.id}>
+              <SelectItem
+                key={type.id}
+                value={type.id}
+                className="data-[highlighted]:bg-muted/70 data-[highlighted]:text-foreground"
+              >
                 {text}
               </SelectItem>
             );

@@ -62,6 +62,20 @@ export function ProjectTypeSelector({
     return getProjectTypeMatchKey(type.template_slug ?? type.name ?? type.id);
   };
 
+  const uniqueTypes = useMemo(() => {
+    const seen = new Set<string>();
+    const ordered: ProjectType[] = [];
+
+    types.forEach((type) => {
+      const key = normalizeTypeSlug(type);
+      if (key && seen.has(key)) return;
+      if (key) seen.add(key);
+      ordered.push(type);
+    });
+
+    return ordered;
+  }, [types]);
+
   const isPreferredDefault = (type: ProjectType) =>
     Boolean(preferredDefaultKey && normalizeTypeSlug(type) === preferredDefaultKey);
 
@@ -114,9 +128,9 @@ export function ProjectTypeSelector({
   }, [toast]);
 
   const visibleTypes = useMemo(() => {
-    if (types.length === 0) return [];
+    if (uniqueTypes.length === 0) return [];
 
-    const rankedTypes = [...types];
+    const rankedTypes = [...uniqueTypes];
 
     return rankedTypes.sort((a, b) => {
       const aSlug = normalizeTypeSlug(a);
@@ -146,7 +160,7 @@ export function ProjectTypeSelector({
 
       return a.name.localeCompare(b.name);
     });
-  }, [types, preferredDefaultKey, preferredSlugOrder]);
+  }, [uniqueTypes, preferredDefaultKey, preferredSlugOrder]);
 
   useEffect(() => {
     if (!value && visibleTypes.length > 0) {

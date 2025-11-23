@@ -46,6 +46,8 @@ import { promoteProjectToTop } from "@/lib/projects/sortOrder";
 import { useConnectivity } from "@/contexts/useConnectivity";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import { EmptyState } from "@/components/EmptyState";
+import { getDisplayProjectTypeName, getProjectTypeMatchKey } from "@/lib/projectTypes";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 const VIEW_MODES = ["board", "list", "archived"] as const;
 type ViewMode = (typeof VIEW_MODES)[number];
@@ -128,12 +130,13 @@ const AllProjects = () => {
   const [searchParams] = useSearchParams();
   const { completeCurrentStep } = useOnboarding();
   const isMobile = useIsMobile();
-  const { t } = useTranslation(['pages', 'common']);
+  const { t, i18n } = useTranslation(['pages', 'common']);
   const { t: tForms } = useFormsTranslation();
   const { t: tDashboard } = useDashboardTranslation();
   const { data: typeOptions = [] } = useProjectTypes();
   const { data: statusOptions = [], isLoading: statusesLoading } = useProjectStatuses();
   const { data: serviceOptions = [] } = useServices();
+  const { settings: orgSettings } = useOrganizationSettings();
 
   useEffect(() => {
     const handleAddProject = (event: Event) => {
@@ -146,7 +149,24 @@ const AllProjects = () => {
     };
   }, []);
 
-  const typeOptionItems = useMemo(() => toNamedOptions(typeOptions ?? []), [typeOptions]);
+  const typeOptionItems = useMemo(() => {
+    const seen = new Set<string>();
+    const locale = orgSettings?.locale ?? i18n.language;
+
+    return (typeOptions ?? []).flatMap((type) => {
+      if (!type || typeof type !== "object") return [];
+      const { id, name, template_slug } = type as { id?: string; name?: string; template_slug?: string | null };
+      if (!id) return [];
+
+      const matchKey = getProjectTypeMatchKey(template_slug ?? name ?? id);
+      if (matchKey && seen.has(matchKey)) return [];
+      if (matchKey) seen.add(matchKey);
+
+      const label = getDisplayProjectTypeName({ name: name ?? "", template_slug: template_slug ?? null }, locale);
+
+      return [{ id, name: label }];
+    });
+  }, [typeOptions, orgSettings?.locale, i18n.language]);
   const serviceOptionItems = useMemo(() => toNamedOptions(serviceOptions ?? []), [serviceOptions]);
 
   const projectStatuses = useMemo<ProjectStatusSummary[]>(() => {

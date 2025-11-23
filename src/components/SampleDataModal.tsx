@@ -111,7 +111,7 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
     } else {
       onClose();
     }
-    navigate('/leads');
+    navigate('/');
   };
 
   const ensureSeedPreference = async (value: boolean) => {

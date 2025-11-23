@@ -2121,7 +2121,9 @@
       "netBreakdown": "Brüt {{paid}} - İade {{refunded}}",
       "remainingBalance": "Bekleyen bakiye",
       "collectionRate": "Tahsilat oranı",
-      "collectionRateHint": "Net {{net}} / Faturalanan {{invoiced}}"
+      "collectionRateHint": "Net {{net}} / Faturalanan {{invoiced}}",
+      "collectionRateNA": "Faturalanan olmadığı için oran hesaplanamıyor",
+      "allTimeOutstanding": "Toplam bekleyen"
     },
     "chart": {
       "title": "Ödeme Trendleri",

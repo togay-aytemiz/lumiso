@@ -87,6 +87,7 @@ const pageSize = PAGE_SIZE;
   const [scheduledAmountMax, setScheduledAmountMax] = useState<number | null>(null);
   const [scheduledAmountMinDraft, setScheduledAmountMinDraft] = useState<string>("");
   const [scheduledAmountMaxDraft, setScheduledAmountMaxDraft] = useState<string>("");
+  const [allTimeOutstanding, setAllTimeOutstanding] = useState<number | null>(null);
   const [scheduledSortField, setScheduledSortField] =
     useState<ScheduledSortField>("updated_at");
   const [scheduledSortDirection, setScheduledSortDirection] = useState<SortDirection>("desc");
@@ -239,13 +240,37 @@ const pageSize = PAGE_SIZE;
     scheduledAmountMaxFilter: scheduledAmountMax,
   });
 
+  const fetchAllTimeOutstanding = useCallback(async () => {
+    try {
+      const { metricsData } = await fetchPaymentsData({
+        includeMetrics: true,
+        includeCount: false,
+        includeScheduled: false,
+        activeDateRangeOverride: null,
+      });
+      if (!metricsData) {
+        setAllTimeOutstanding(null);
+        return;
+      }
+      const allTimeMetrics = computePaymentSummaryMetrics(metricsData);
+      setAllTimeOutstanding(allTimeMetrics.remainingBalance);
+    } catch (error) {
+      console.error("Failed to fetch all-time outstanding", error);
+    }
+  }, [fetchPaymentsData]);
+
   // Throttle data refresh on window focus / visibility changes
   const refreshPayments = useCallback(async () => {
     setPage(1);
     await fetchPayments();
-  }, [fetchPayments]);
+    await fetchAllTimeOutstanding();
+  }, [fetchAllTimeOutstanding, fetchPayments]);
 
   useThrottledRefetchOnFocus(refreshPayments, 30_000);
+
+  useEffect(() => {
+    fetchAllTimeOutstanding();
+  }, [fetchAllTimeOutstanding]);
 
   useEffect(() => {
     const computedTotalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -1237,6 +1262,8 @@ const pageSize = PAGE_SIZE;
           metrics={metrics}
           formatCurrency={formatCurrency}
           formatPercent={formatPercent}
+          allTimeOutstanding={allTimeOutstanding}
+          showAllTimeOutstanding={selectedFilter !== "allTime"}
         />
       </div>
 

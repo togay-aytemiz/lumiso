@@ -2117,7 +2117,9 @@
       "netBreakdown": "Gross {{paid}} - Refunds {{refunded}}",
       "remainingBalance": "Outstanding Balance",
       "collectionRate": "Collection Rate",
-      "collectionRateHint": "Net {{net}} / Invoiced {{invoiced}}"
+      "collectionRateHint": "Net {{net}} / Invoiced {{invoiced}}",
+      "collectionRateNA": "No invoiced amount to calculate a rate",
+      "allTimeOutstanding": "All-time outstanding"
     },
     "chart": {
       "title": "Payment Trend",

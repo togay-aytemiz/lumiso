@@ -39,6 +39,7 @@ describe("PaymentsMetricsSummary", () => {
         }}
         formatCurrency={formatCurrency}
         formatPercent={formatPercent}
+        allTimeOutstanding={9999}
       />
     );
 
@@ -56,6 +57,8 @@ describe("PaymentsMetricsSummary", () => {
     expect(screen.getByText("TRY 8900")).toBeInTheDocument();
     expect(screen.getByText("TRY 7700")).toBeInTheDocument();
     expect(screen.getByText("TRY 345")).toBeInTheDocument();
+    expect(screen.getByText("payments.metrics.allTimeOutstanding")).toBeInTheDocument();
+    expect(screen.getByText("TRY 9999")).toBeInTheDocument();
     expect(screen.getByText("72%")).toBeInTheDocument();
 
     expect(progressModule.Progress).toHaveBeenCalledWith(
@@ -63,5 +66,30 @@ describe("PaymentsMetricsSummary", () => {
       {}
     );
     expect(screen.getByTestId("collection-progress")).toHaveAttribute("data-value", "72");
+  });
+
+  it("hides progress and shows dash when invoiced is zero", () => {
+    const formatCurrency = jest.fn((value: number) => `TRY ${value.toFixed(0)}`);
+    const formatPercent = jest.fn((value: number) => `${Math.round(value * 100)}%`);
+
+    render(
+      <PaymentsMetricsSummary
+        metrics={{
+          totalInvoiced: 0,
+          totalPaid: 100,
+          totalRefunded: 0,
+          remainingBalance: 0,
+          collectionRate: 0,
+          netCollected: 100,
+        }}
+        formatCurrency={formatCurrency}
+        formatPercent={formatPercent}
+        allTimeOutstanding={null}
+      />
+    );
+
+    expect(screen.getByText("—")).toBeInTheDocument();
+    expect(screen.queryByTestId("collection-progress")).not.toBeInTheDocument();
+    expect(screen.getByText("payments.metrics.collectionRateNA")).toBeInTheDocument();
   });
 });

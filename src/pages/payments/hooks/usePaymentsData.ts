@@ -48,6 +48,7 @@ type FetchPaymentsDataOptions = {
   includeMetrics?: boolean;
   includeCount?: boolean;
   includeScheduled?: boolean;
+  activeDateRangeOverride?: { start: Date; end: Date } | null;
 };
 
 interface UsePaymentsDataOptions {
@@ -441,8 +442,11 @@ export function usePaymentsData({
         range,
         includeMetrics = false,
         includeCount = false,
-    includeScheduled = false,
-  } = options ?? {};
+        includeScheduled = false,
+        activeDateRangeOverride,
+      } = options ?? {};
+      const effectiveDateRange =
+        activeDateRangeOverride === undefined ? activeDateRange : activeDateRangeOverride;
       const rawSearch = searchTerm.trim();
       const globalSearchTerm =
         rawSearch.length >= SEARCH_MIN_CHARS ? rawSearch : "";
@@ -484,9 +488,9 @@ export function usePaymentsData({
           .from("payments")
           .select("*", { count: includeCount ? "exact" : undefined });
 
-        if (activeDateRange) {
-          const startISO = activeDateRange.start.toISOString();
-          const endISO = activeDateRange.end.toISOString();
+        if (effectiveDateRange) {
+          const startISO = effectiveDateRange.start.toISOString();
+          const endISO = effectiveDateRange.end.toISOString();
           if (useLogTimestamp) {
             tableQuery = tableQuery.gte(LOG_TIMESTAMP_FIELD, startISO).lte(LOG_TIMESTAMP_FIELD, endISO);
           } else {
@@ -584,9 +588,9 @@ export function usePaymentsData({
 
           let metricsQuery = supabase.from("payments").select(metricFields.join(", "));
 
-          if (activeDateRange) {
-            const startISO = activeDateRange.start.toISOString();
-            const endISO = activeDateRange.end.toISOString();
+          if (effectiveDateRange) {
+            const startISO = effectiveDateRange.start.toISOString();
+            const endISO = effectiveDateRange.end.toISOString();
             if (useLogTimestamp) {
               metricsQuery = metricsQuery.gte(LOG_TIMESTAMP_FIELD, startISO).lte(LOG_TIMESTAMP_FIELD, endISO);
             } else {

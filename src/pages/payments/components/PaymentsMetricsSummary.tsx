@@ -9,14 +9,19 @@ interface PaymentsMetricsSummaryProps {
   metrics: PaymentMetrics;
   formatCurrency: (value: number) => string;
   formatPercent: (value: number) => string;
+  allTimeOutstanding?: number | null;
+  showAllTimeOutstanding?: boolean;
 }
 
 export function PaymentsMetricsSummary({
   metrics,
   formatCurrency,
   formatPercent,
+  allTimeOutstanding,
+  showAllTimeOutstanding = true,
 }: PaymentsMetricsSummaryProps) {
   const { t } = useTranslation("pages");
+  const isCollectionApplicable = metrics.totalInvoiced > 0;
 
   return (
     <Card className="border border-border/60 shadow-sm">
@@ -49,6 +54,11 @@ export function PaymentsMetricsSummary({
             <div className={cn("text-lg font-semibold", PAYMENT_COLORS.due.textClass)}>
               {formatCurrency(metrics.remainingBalance)}
             </div>
+            {showAllTimeOutstanding && allTimeOutstanding != null ? (
+              <div className="text-xs text-muted-foreground">
+                {t("payments.metrics.allTimeOutstanding")}: {formatCurrency(allTimeOutstanding)}
+              </div>
+            ) : null}
           </div>
           <div className="space-y-1">
             <span className="text-sm text-muted-foreground">{t("payments.metrics.totalPaid")}</span>
@@ -67,14 +77,20 @@ export function PaymentsMetricsSummary({
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>{t("payments.metrics.collectionRate")}</span>
-            <span className="font-medium text-foreground">{formatPercent(metrics.collectionRate)}</span>
+            <span className="font-medium text-foreground">
+              {isCollectionApplicable ? formatPercent(metrics.collectionRate) : "—"}
+            </span>
           </div>
-          <Progress className="h-2" value={metrics.collectionRate * 100} />
+          {isCollectionApplicable ? (
+            <Progress className="h-2" value={metrics.collectionRate * 100} />
+          ) : null}
           <div className="text-xs text-muted-foreground">
-            {t("payments.metrics.collectionRateHint", {
-              net: formatCurrency(metrics.netCollected),
-              invoiced: formatCurrency(metrics.totalInvoiced),
-            })}
+            {isCollectionApplicable
+              ? t("payments.metrics.collectionRateHint", {
+                  net: formatCurrency(metrics.netCollected),
+                  invoiced: formatCurrency(metrics.totalInvoiced),
+                })
+              : t("payments.metrics.collectionRateNA")}
           </div>
         </div>
       </CardContent>

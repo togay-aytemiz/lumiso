@@ -110,6 +110,7 @@ export const SegmentedControl = React.forwardRef<
           const isActive = option.value === value;
           const button = (
             <button
+              key={option.value}
               ref={(node) => {
                 buttonRefs.current[option.value] = node;
               }}
@@ -145,11 +146,7 @@ export const SegmentedControl = React.forwardRef<
             );
           }
 
-          return (
-            <React.Fragment key={option.value}>
-              {button}
-            </React.Fragment>
-          );
+          return button;
         })}
       </div>
     </TooltipProvider>

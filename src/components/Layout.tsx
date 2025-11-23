@@ -18,6 +18,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { shouldShowWelcomeModal, loading: onboardingLoading, shouldLockNavigation } = useOnboarding();
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  const [isProfileIntakeBlocking, setIsProfileIntakeBlocking] = useState(true);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -37,10 +38,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     // The hook now handles session tracking internally
     const shouldShow = !onboardingLoading && 
                       !isOnGettingStartedPage && 
-                      shouldShowWelcomeModal; // This now includes session tracking
+                      shouldShowWelcomeModal &&
+                      !isProfileIntakeBlocking; // Wait for intake to finish first
 
     setShowOnboardingModal(shouldShow);
-  }, [onboardingLoading, shouldShowWelcomeModal, isOnGettingStartedPage]);
+  }, [onboardingLoading, shouldShowWelcomeModal, isOnGettingStartedPage, isProfileIntakeBlocking]);
 
   useLayoutEffect(() => {
     // Disable automatic scroll restoration
@@ -99,7 +101,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <RestartGuidedModeButton />
 
       {/* Post-verification intake gate */}
-      <ProfileIntakeGate />
+      <ProfileIntakeGate onVisibilityChange={setIsProfileIntakeBlocking} />
       <SuspendedAccountOverlay />
     </SidebarProvider>
   );

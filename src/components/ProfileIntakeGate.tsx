@@ -91,7 +91,11 @@ const preventDialogDismiss = (event: Event) => {
   event.preventDefault();
 };
 
-export function ProfileIntakeGate() {
+type ProfileIntakeGateProps = {
+  onVisibilityChange?: (isVisible: boolean) => void;
+};
+
+export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps) {
   const { profile, loading: profileLoading, updateProfile } = useProfile();
   const {
     settings,
@@ -164,6 +168,15 @@ export function ProfileIntakeGate() {
     initialDataLoaded &&
     !manualComplete &&
     (debugOverride || !intakeComplete);
+
+  const isIntakeBlocking = initialDataLoaded ? shouldShow : true;
+
+  useEffect(() => {
+    if (!onVisibilityChange) return;
+
+    // Keep parent layouts informed so onboarding modals can wait for intake to finish
+    onVisibilityChange(isIntakeBlocking);
+  }, [onVisibilityChange, isIntakeBlocking]);
 
   const stepDefinitions = useMemo(
     () => [

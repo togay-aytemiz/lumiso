@@ -264,6 +264,10 @@ const connectivity = {
   reportNetworkError: jest.fn(),
   reportRecovery: jest.fn(),
   registerRetry: jest.fn(() => () => {}),
+  isOffline: false,
+  isRetrying: false,
+  issueCause: null,
+  runRetryAll: jest.fn(),
 };
 
 const onboarding = {

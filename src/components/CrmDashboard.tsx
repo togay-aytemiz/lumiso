@@ -6,7 +6,7 @@ import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { ADD_ACTION_EVENTS } from "@/constants/addActionEvents";
 import GlobalSearch from "@/components/GlobalSearch";
-import { getWeekRange } from "@/lib/utils";
+import { getWeekRange, isNetworkError } from "@/lib/utils";
 import { useDashboardTranslation } from "@/hooks/useTypedTranslation";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import type { Database } from "@/integrations/supabase/types";
@@ -17,6 +17,7 @@ import { countInactiveLeads } from "@/lib/leadLifecycle";
 import { computePaymentSummaryMetrics } from "@/lib/payments/metrics";
 import { useProfile } from "@/hooks/useProfile";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useConnectivity } from "@/contexts/useConnectivity";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
 type LeadWithStatusRow = LeadRow & {
@@ -102,6 +103,7 @@ const CrmDashboard = () => {
   });
   const { profile } = useProfile();
   const { activeOrganization } = useOrganization();
+  const { reportNetworkError, reportRecovery } = useConnectivity();
   const navigate = useNavigate();
   const { t } = useDashboardTranslation();
   const organizationId = activeOrganization?.id;
@@ -529,12 +531,17 @@ const CrmDashboard = () => {
         setScheduledPayments(scheduledPaymentsData ?? []);
         setOutstandingBalance(outstandingBalanceValue);
         setSessionWindowRange({ startIso, endIso });
+      reportRecovery();
     } catch (error) {
-      toast({
-        title: "Error",
-        description: getErrorMessage(error),
-        variant: "destructive"
-      });
+      if (isNetworkError(error)) {
+        reportNetworkError(error, 'service');
+      } else {
+        toast({
+          title: "Error",
+          description: getErrorMessage(error),
+          variant: "destructive"
+        });
+      }
     } finally {
       setLoading(false);
     }

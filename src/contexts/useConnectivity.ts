@@ -1,2 +1,2 @@
 export { useConnectivity } from "./connectivityShared";
-export type { ConnectivityContextValue } from "./connectivityShared";
+export type { ConnectivityContextValue, ConnectivityIssueCause } from "./connectivityShared";

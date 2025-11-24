@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ConnectivityContext, type ConnectivityContextValue, type RetryFn } from './connectivityShared';
+import { ConnectivityContext, type ConnectivityContextValue, type ConnectivityIssueCause, type RetryFn } from './connectivityShared';
 
 interface ConnectivityProviderProps {
   children: ReactNode;
@@ -10,12 +10,25 @@ export function ConnectivityProvider({ children }: ConnectivityProviderProps) {
   // navigator.onLine can be unreliable on some platforms at startup.
   const [isOffline, setIsOffline] = useState<boolean>(false);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [issueCause, setIssueCause] = useState<ConnectivityIssueCause | null>(null);
   const retryCallbacksRef = useRef<Map<string, RetryFn>>(new Map());
+
+  const deriveCause = useCallback((cause?: ConnectivityIssueCause): ConnectivityIssueCause => {
+    if (cause) return cause;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return 'network';
+    return 'service';
+  }, []);
 
   // Window online/offline listeners keep our state accurate even if no requests are made
   useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
+    const handleOnline = () => {
+      setIsOffline(false);
+      setIssueCause(null);
+    };
+    const handleOffline = () => {
+      setIsOffline(true);
+      setIssueCause('network');
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -25,13 +38,15 @@ export function ConnectivityProvider({ children }: ConnectivityProviderProps) {
     };
   }, []);
 
-  const reportNetworkError = useCallback((_error?: unknown) => {
+  const reportNetworkError = useCallback((_error?: unknown, cause?: ConnectivityIssueCause) => {
     setIsOffline(true);
-  }, []);
+    setIssueCause(deriveCause(cause));
+  }, [deriveCause]);
 
   const reportRecovery = useCallback(() => {
     if (typeof navigator === 'undefined' || navigator.onLine) {
       setIsOffline(false);
+      setIssueCause(null);
     }
   }, []);
 
@@ -60,6 +75,7 @@ export function ConnectivityProvider({ children }: ConnectivityProviderProps) {
       // If device is online and retries did not throw hard, clear offline
       if (typeof navigator === 'undefined' || navigator.onLine) {
         setIsOffline(false);
+        setIssueCause(null);
       }
     } finally {
       setIsRetrying(false);
@@ -69,11 +85,12 @@ export function ConnectivityProvider({ children }: ConnectivityProviderProps) {
   const value = useMemo<ConnectivityContextValue>(() => ({
     isOffline,
     isRetrying,
+    issueCause,
     reportNetworkError,
     reportRecovery,
     registerRetry,
     runRetryAll,
-  }), [isOffline, isRetrying, registerRetry, reportNetworkError, reportRecovery, runRetryAll]);
+  }), [isOffline, isRetrying, issueCause, registerRetry, reportNetworkError, reportRecovery, runRetryAll]);
 
   return (
     <ConnectivityContext.Provider value={value}>

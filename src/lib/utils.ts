@@ -167,6 +167,14 @@ export const isNetworkError = (error: unknown): boolean => {
 
   if (!error) return false;
 
+  // Supabase/PostgREST sometimes surfaces HTTP failures via an error object with status
+  const status = typeof (error as { status?: unknown })?.status === "number"
+    ? (error as { status: number }).status
+    : undefined;
+  if (typeof status === "number" && status >= 500) {
+    return true;
+  }
+
   // True network-level failures from fetch
   if (error instanceof TypeError && /Failed to fetch/i.test(error.message)) {
     return true;

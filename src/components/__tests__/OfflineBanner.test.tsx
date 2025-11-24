@@ -25,6 +25,7 @@ describe("OfflineBanner", () => {
     mockUseConnectivity.mockReturnValue({
       isOffline: false,
       isRetrying: false,
+      issueCause: null,
       runRetryAll: jest.fn(),
     });
 
@@ -38,6 +39,7 @@ describe("OfflineBanner", () => {
     mockUseConnectivity.mockReturnValue({
       isOffline: true,
       isRetrying: false,
+      issueCause: "network",
       runRetryAll,
     });
 
@@ -57,6 +59,7 @@ describe("OfflineBanner", () => {
     mockUseConnectivity.mockReturnValue({
       isOffline: true,
       isRetrying: true,
+      issueCause: "network",
       runRetryAll: jest.fn(),
     });
 
@@ -67,5 +70,19 @@ describe("OfflineBanner", () => {
     });
     expect(retryButton).toBeDisabled();
     expect(retryButton.querySelector(".animate-spin")).not.toBeNull();
+  });
+
+  it("shows service issue messaging when cause is service", () => {
+    mockUseConnectivity.mockReturnValue({
+      isOffline: true,
+      isRetrying: false,
+      issueCause: "service",
+      runRetryAll: jest.fn(),
+    });
+
+    render(<OfflineBanner />);
+
+    expect(screen.getByText("network.serviceIssueTitle")).toBeInTheDocument();
+    expect(screen.getByText("network.serviceIssueDescription")).toBeInTheDocument();
   });
 });

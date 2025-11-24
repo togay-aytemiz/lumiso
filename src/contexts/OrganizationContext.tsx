@@ -16,6 +16,8 @@ import {
   fetchLeadFieldDefinitionsForOrganization,
   leadFieldDefinitionsQueryKey,
 } from '@/services/leadFieldDefinitions';
+import { useConnectivity } from './useConnectivity';
+import { isNetworkError } from '@/lib/utils';
 
 interface Organization {
   id: string;
@@ -66,6 +68,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useTranslation(["messages", "common"]);
+  const { reportNetworkError, reportRecovery } = useConnectivity();
 
   const fetchActiveOrganization = useCallback(async (options?: { silent?: boolean }) => {
     const skipLoadingState = options?.silent ?? false;
@@ -110,6 +113,9 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
 
       if (orgDetailsError) {
         console.error('Error getting organization details:', orgDetailsError);
+        if (isNetworkError(orgDetailsError)) {
+          reportNetworkError(orgDetailsError, 'service');
+        }
         return;
       }
 
@@ -151,8 +157,12 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
 
       setActiveOrganizationId(orgId);
       setActiveOrganization(normalizedOrg);
+      reportRecovery();
     } catch (error) {
       console.error('Error in fetchActiveOrganization:', error);
+      if (isNetworkError(error)) {
+        reportNetworkError(error, 'service');
+      }
     } finally {
       if (!skipLoadingState) {
         setLoading(false);

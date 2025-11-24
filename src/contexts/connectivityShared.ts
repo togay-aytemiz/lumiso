@@ -2,10 +2,13 @@ import { createContext, useContext } from "react";
 
 export type RetryFn = () => Promise<void> | void;
 
+export type ConnectivityIssueCause = "network" | "service";
+
 export interface ConnectivityContextValue {
   isOffline: boolean;
   isRetrying: boolean;
-  reportNetworkError: (error?: unknown) => void;
+  issueCause: ConnectivityIssueCause | null;
+  reportNetworkError: (error?: unknown, cause?: ConnectivityIssueCause) => void;
   reportRecovery: () => void;
   registerRetry: (key: string, fn: RetryFn) => () => void;
   runRetryAll: () => Promise<void>;

@@ -5,6 +5,8 @@ import { useAuth } from './AuthContext';
 import { ProfileContext } from './profile-context';
 import type { Profile } from './profile-context';
 import { useTranslation } from 'react-i18next';
+import { useConnectivity } from './useConnectivity';
+import { isNetworkError } from '@/lib/utils';
 
 // Global cache to prevent duplicate requests
 let profileCache: { profile: Profile | null; timestamp: number; userId: string } | null = null;
@@ -28,6 +30,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { user } = useAuth();
   const { t } = useTranslation(['pages', 'common']);
+  const { reportNetworkError, reportRecovery } = useConnectivity();
 
   const fetchProfile = useCallback(async (): Promise<Profile | null> => {
     if (!user?.id) return null;
@@ -65,12 +68,16 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           timestamp: Date.now(), 
           userId: user.id 
         };
+        reportRecovery();
         return profileData;
       })();
 
       return await ongoingProfileFetch;
     } catch (error) {
       console.error('Error fetching profile:', error);
+      if (isNetworkError(error)) {
+        reportNetworkError(error, 'service');
+      }
       toast({
         title: t("common:toast.error", { defaultValue: "Error" }),
         description: t("settings.profile.toasts.loadError", {

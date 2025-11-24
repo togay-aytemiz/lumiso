@@ -1851,11 +1851,33 @@
         "complimentary": "Complimentary premium access is active. When it ends, we fall back to your trial if time remains.",
         "expired": "The trial window ended. Choose a plan to keep your workspace online.",
         "suspended": "This workspace is suspended. Contact support to restore access.",
-        "locked": "Trial and complimentary access ended. Only billing settings are available until you upgrade.",
+        "locked": "Trial and complimentary access ended.",
         "generic": "Review where you are in the trial → premium lifecycle.",
         "unknown": "We couldn't determine the workspace status."
       },
-      "lockedWarning": "Workspace navigation is locked. Only subscription settings stay available until you activate a plan.",
+      "trialEndedCta": {
+        "description": "We hope you enjoyed using Lumiso. If you want to continue, let's talk.",
+        "button": "Let's call you"
+      },
+      "callRequestModal": {
+        "title": "Request a call",
+        "description": "We’ll call you to continue your Lumiso subscription.",
+        "nameLabel": "Name",
+        "phoneLabel": "Mobile phone",
+        "phonePlaceholder": "Enter your mobile number",
+        "messageLabel": "What should we discuss?",
+        "messagePlaceholder": "Share any details or timing preferences.",
+        "submit": "Send request",
+        "submitting": "Sending...",
+        "cancel": "Cancel",
+        "successTitle": "Request sent",
+        "successDescription": "We received your request and will reach out shortly.",
+        "errorTitle": "Could not send request",
+        "errorDescription": "Please try again in a moment.",
+        "phoneRequired": "Add a mobile number so we can call you.",
+        "messageRequired": "Please add a short note about your request."
+      },
+      "lockedWarning": "Workspace navigation is locked.",
       "trialSection": {
         "title": "Trial timeline",
         "subtitle": "Track when your free trial started and when it ends.",

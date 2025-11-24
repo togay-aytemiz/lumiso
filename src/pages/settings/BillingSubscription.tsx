@@ -6,6 +6,7 @@ import { useOrganizationTrialStatus } from "@/hooks/useOrganizationTrialStatus";
 import { Lock, ShieldAlert, Sparkles } from "lucide-react";
 import { PREMIUM_STATUSES } from "@/types/membership";
 import type { MembershipStatus } from "@/types/membership";
+import type { Profile as ProfileType } from "@/contexts/profile-context";
 import { MEMBERSHIP_DEFAULT_TRIAL_DAYS } from "@/lib/membershipStatus";
 import { Button } from "@/components/ui/button";
 import { SettingsTwoColumnSection } from "@/components/settings/SettingsSections";
@@ -22,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInCalendarDays, format } from "date-fns";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
@@ -51,7 +53,8 @@ const normalizeTrialTargetDate = (value: Date) => {
 export default function BillingSubscription() {
   const { t, i18n } = useTranslation("pages");
   const { toast } = useToast();
-  const { userRoles } = useAuth();
+  const { userRoles, user } = useAuth();
+  const { profile, updateProfile } = useProfile();
   const { activeOrganization, loading: organizationLoading, refreshOrganization } = useOrganization();
   const trialStatus = useOrganizationTrialStatus();
   const isAdminUser = userRoles.includes("admin");
@@ -97,10 +100,38 @@ export default function BillingSubscription() {
   const [premiumExpiresInput, setPremiumExpiresInput] = useState("");
   const [premiumNote, setPremiumNote] = useState("");
   const [premiumLoading, setPremiumLoading] = useState(false);
+  const [callRequestOpen, setCallRequestOpen] = useState(false);
+  const [callRequestName, setCallRequestName] = useState("");
+  const [callRequestPhone, setCallRequestPhone] = useState("");
+  const [callRequestNote, setCallRequestNote] = useState("");
+  const [callRequestErrors, setCallRequestErrors] = useState<{ phone?: string; note?: string }>({});
+  const [callRequestSubmitting, setCallRequestSubmitting] = useState(false);
+
+  const defaultProfileName = useMemo(() => {
+    return (
+      profile?.full_name ||
+      (user?.user_metadata?.full_name as string | undefined) ||
+      user?.email?.split("@")[0] ||
+      ""
+    );
+  }, [profile?.full_name, user?.email, user?.user_metadata?.full_name]);
+  const defaultProfilePhone = useMemo(() => {
+    return (
+      profile?.phone_number ||
+      (user?.phone as string | undefined) ||
+      (user?.user_metadata?.phone_number as string | undefined) ||
+      ""
+    );
+  }, [profile?.phone_number, user?.phone, user?.user_metadata?.phone_number]);
 
   useEffect(() => {
     setTrialEndDate(formatDateInputValue(activeOrganization?.trial_expires_at ?? null));
   }, [activeOrganization?.trial_expires_at]);
+  useEffect(() => {
+    if (!callRequestOpen) return;
+    setCallRequestName((prev) => prev || defaultProfileName);
+    setCallRequestPhone((prev) => prev || defaultProfilePhone);
+  }, [callRequestOpen, defaultProfileName, defaultProfilePhone]);
 
   const trialStartDate = useMemo(() => {
     if (activeOrganization?.trial_started_at) {
@@ -130,6 +161,7 @@ export default function BillingSubscription() {
 
   const isLocked = membershipStatus === "locked";
   const isSuspended = membershipStatus === "suspended";
+  const showTrialEndedCta = !isSuspended && (membershipStatus === "locked" || membershipStatus === "expired");
   const StatusIcon = isLocked || isSuspended ? (isLocked ? Lock : ShieldAlert) : Sparkles;
   const statusIconClasses = isSuspended
     ? "bg-destructive/10 text-destructive"
@@ -363,6 +395,140 @@ export default function BillingSubscription() {
     toast,
   ]);
 
+  const handleCallRequestModalToggle = useCallback(
+    (open: boolean) => {
+      setCallRequestOpen(open);
+      if (!open) {
+        setCallRequestErrors({});
+        setCallRequestSubmitting(false);
+        setCallRequestNote("");
+      }
+    },
+    []
+  );
+
+  const handleSendCallRequest = useCallback(async () => {
+    setCallRequestErrors({});
+    const name = (callRequestName || defaultProfileName).trim();
+    const phone = callRequestPhone.trim();
+    const note = callRequestNote.trim();
+
+    const nextErrors: { phone?: string; note?: string } = {};
+    if (!phone) {
+      nextErrors.phone = t("settings.billingSubscription.callRequestModal.phoneRequired");
+    }
+    if (!note) {
+      nextErrors.note = t("settings.billingSubscription.callRequestModal.messageRequired");
+    }
+    if (Object.keys(nextErrors).length) {
+      setCallRequestErrors(nextErrors);
+      return;
+    }
+
+    setCallRequestSubmitting(true);
+
+    try {
+      if (profile) {
+        const updates: Partial<ProfileType> = {};
+        if (name && name !== (profile.full_name ?? "")) {
+          updates.full_name = name;
+        }
+        if (phone && phone !== (profile.phone_number ?? "")) {
+          updates.phone_number = phone;
+        }
+        if (Object.keys(updates).length > 0) {
+          const result = await updateProfile(updates);
+          if (!result.success) {
+            console.warn("Failed to update profile before sending call request", result.error);
+          }
+        }
+      }
+
+      const subjectName = name || activeOrganization?.name || user?.email || "Lumiso workspace";
+      const details = [
+        `Name: ${name || "—"}`,
+        `Email: ${user?.email ?? "—"}`,
+        `Phone: ${phone || "—"}`,
+        `Organization: ${activeOrganization?.name ?? "—"}`,
+        `Workspace ID: ${activeOrganization?.id ?? "—"}`,
+        `Membership status: ${statusLabel}`,
+      ].join("\n");
+
+      const blocks = [
+        {
+          id: "call-request-headline",
+          type: "text",
+          order: 0,
+          data: {
+            content: "Call request from Lumiso subscription",
+            formatting: { fontSize: "h2", bold: true },
+          },
+        },
+        {
+          id: "call-request-details",
+          type: "text",
+          order: 1,
+          data: {
+            content: details,
+            formatting: { fontSize: "p", bullets: true },
+          },
+        },
+        {
+          id: "call-request-note",
+          type: "text",
+          order: 2,
+          data: {
+            content: `Request:\n${note}`,
+            formatting: { fontSize: "p" },
+          },
+        },
+      ];
+
+      const { error } = await supabase.functions.invoke("send-template-email", {
+        body: {
+          to: "support@lumiso.app",
+          subject: `Call request - ${subjectName}`,
+          preheader: note.slice(0, 120),
+          blocks,
+          mockData: {},
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: t("settings.billingSubscription.callRequestModal.successTitle"),
+        description: t("settings.billingSubscription.callRequestModal.successDescription"),
+      });
+      handleCallRequestModalToggle(false);
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: t("settings.billingSubscription.callRequestModal.errorTitle"),
+        description: t("settings.billingSubscription.callRequestModal.errorDescription"),
+      });
+    } finally {
+      setCallRequestSubmitting(false);
+    }
+  }, [
+    callRequestName,
+    defaultProfileName,
+    callRequestPhone,
+    callRequestNote,
+    profile,
+    updateProfile,
+    activeOrganization?.name,
+    activeOrganization?.id,
+    user?.email,
+    statusLabel,
+    toast,
+    t,
+    handleCallRequestModalToggle,
+  ]);
+
   return (
     <SettingsPageWrapper>
       {isLoadingState ? (
@@ -382,29 +548,28 @@ export default function BillingSubscription() {
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-3">
                     <h2 className="text-2xl font-semibold text-foreground">{statusLabel}</h2>
-                    <Badge
-                      variant={
-                        isSuspended ? "destructive" : isLocked ? "warning" : premiumActive ? "success" : "secondary"
-                      }
-                      className="text-xs"
-                    >
-                      {statusLabel}
-                    </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">{statusMessage}</p>
                 </div>
               </div>
-              {(isLocked || isSuspended) && (
-                <div
-                  className={`mt-5 rounded-xl border px-4 py-3 text-sm ${
-                    isSuspended
-                      ? "border-destructive/40 bg-destructive/10 text-destructive"
-                      : "border-amber-200 bg-amber-50 text-amber-900"
-                  }`}
-                >
-                  {isLocked
-                    ? t("settings.billingSubscription.lockedWarning")
-                    : t("settings.billingSubscription.statusMessages.suspended")}
+              {showTrialEndedCta ? (
+                <div className="mt-4 flex flex-col gap-3 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm font-medium text-indigo-900">
+                    {t("settings.billingSubscription.trialEndedCta.description")}
+                  </p>
+                  <Button
+                    type="button"
+                    className="bg-indigo-600 text-white hover:bg-indigo-500 focus-visible:ring-indigo-500"
+                    size="sm"
+                    onClick={() => handleCallRequestModalToggle(true)}
+                  >
+                    {t("settings.billingSubscription.trialEndedCta.button")}
+                  </Button>
+                </div>
+              ) : null}
+              {isSuspended && (
+                <div className="mt-5 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  {t("settings.billingSubscription.statusMessages.suspended")}
                 </div>
               )}
             </div>
@@ -664,6 +829,83 @@ export default function BillingSubscription() {
               {premiumLoading
                 ? t("settings.billingSubscription.adminActions.saving")
                 : t("settings.billingSubscription.adminActions.grantPremium.submit")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={callRequestOpen} onOpenChange={handleCallRequestModalToggle}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("settings.billingSubscription.callRequestModal.title")}</DialogTitle>
+            <DialogDescription>{t("settings.billingSubscription.callRequestModal.description")}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="call-request-name">{t("settings.billingSubscription.callRequestModal.nameLabel")}</Label>
+              <Input
+                id="call-request-name"
+                value={callRequestName}
+                onChange={(event) => setCallRequestName(event.target.value)}
+                placeholder={defaultProfileName}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="call-request-phone">
+                {t("settings.billingSubscription.callRequestModal.phoneLabel")}
+              </Label>
+              <Input
+                id="call-request-phone"
+                type="tel"
+                value={callRequestPhone}
+                onChange={(event) => {
+                  if (callRequestErrors.phone) {
+                    setCallRequestErrors((prev) => ({ ...prev, phone: undefined }));
+                  }
+                  setCallRequestPhone(event.target.value);
+                }}
+                placeholder={t("settings.billingSubscription.callRequestModal.phonePlaceholder")}
+                className={callRequestErrors.phone ? "border-destructive" : undefined}
+              />
+              {callRequestErrors.phone ? (
+                <p className="text-xs text-destructive">{callRequestErrors.phone}</p>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="call-request-note">
+                {t("settings.billingSubscription.callRequestModal.messageLabel")}
+              </Label>
+              <Textarea
+                id="call-request-note"
+                value={callRequestNote}
+                onChange={(event) => {
+                  if (callRequestErrors.note) {
+                    setCallRequestErrors((prev) => ({ ...prev, note: undefined }));
+                  }
+                  setCallRequestNote(event.target.value);
+                }}
+                placeholder={t("settings.billingSubscription.callRequestModal.messagePlaceholder")}
+                className={callRequestErrors.note ? "border-destructive" : undefined}
+                rows={4}
+              />
+              {callRequestErrors.note ? (
+                <p className="text-xs text-destructive">{callRequestErrors.note}</p>
+              ) : null}
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => handleCallRequestModalToggle(false)}
+              disabled={callRequestSubmitting}
+            >
+              {t("settings.billingSubscription.callRequestModal.cancel")}
+            </Button>
+            <Button type="button" onClick={handleSendCallRequest} disabled={callRequestSubmitting}>
+              {callRequestSubmitting
+                ? t("settings.billingSubscription.callRequestModal.submitting")
+                : t("settings.billingSubscription.callRequestModal.submit")}
             </Button>
           </DialogFooter>
         </DialogContent>

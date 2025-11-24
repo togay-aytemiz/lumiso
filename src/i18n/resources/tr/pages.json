@@ -1854,11 +1854,33 @@
         "complimentary": "Ücretsiz premium erişiminiz devam ediyor. Süre bittiğinde varsa kalan deneme süresine geri döneriz.",
         "expired": "Deneme süreniz sona erdi. Çalışma alanını açık tutmak için plan seçin.",
         "suspended": "Bu çalışma alanı askıya alındı. Destek ekibimizle görüşerek tekrar açabilirsiniz.",
-        "locked": "Deneme ve ücretsiz premium süresi bitti. Plan aktifleştirene kadar sadece faturalandırma ayarları açıktır.",
+        "locked": "Deneme ve ücretsiz premium süresi bitti.",
         "generic": "Üyelik durumunuzu buradan takip edin.",
         "unknown": "Üyelik durumunu belirleyemedik."
       },
-      "lockedWarning": "Çalışma alanı kilitlendi. Bir plan aktifleştirilene kadar sadece abonelik ayarları kullanılabilir.",
+      "trialEndedCta": {
+        "description": "Lumiso'yu kullanmaktan keyif aldığınızı umuyoruz. Devam etmek isterseniz konuşalım.",
+        "button": "Sizi arayalım"
+      },
+      "callRequestModal": {
+        "title": "Sizi arayalım",
+        "description": "Lumiso aboneliğine devam etmek için sizi arayalım.",
+        "nameLabel": "İsim",
+        "phoneLabel": "Cep telefonu",
+        "phonePlaceholder": "Cep telefonunuzu girin",
+        "messageLabel": "Talebiniz",
+        "messagePlaceholder": "Arama için not veya tercihlerinizi paylaşın.",
+        "submit": "Talebi gönder",
+        "submitting": "Gönderiliyor...",
+        "cancel": "Vazgeç",
+        "successTitle": "Talep iletildi",
+        "successDescription": "Talebinizi aldık, en kısa sürede sizi arayacağız.",
+        "errorTitle": "Talep iletilemedi",
+        "errorDescription": "Lütfen kısa süre sonra tekrar deneyin.",
+        "phoneRequired": "Sizi arayabilmemiz için cep telefonu ekleyin.",
+        "messageRequired": "Lütfen kısa bir talep notu ekleyin."
+      },
+      "lockedWarning": "Çalışma alanı kilitlendi.",
       "trialSection": {
         "title": "Deneme zaman çizelgesi",
         "subtitle": "Ücretsiz denemenizin ne zaman başlayıp biteceğini takip edin.",

@@ -8,6 +8,7 @@ import {
   createResendClient,
   type ResendClient,
 } from '../_shared/resend-utils.ts';
+import { getMessagingGuard } from "../_shared/messaging-guard.ts";
 
 const resend: ResendClient = createResendClient(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -1238,6 +1239,17 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
     }
 
     console.log('Template found:', template.name);
+
+    const guard = await getMessagingGuard(supabase, template.organization_id);
+    if (guard?.hardBlocked) {
+      console.log(
+        `Messaging blocked for org ${template.organization_id}, skipping workflow email ${template.id}`
+      );
+      return new Response(
+        JSON.stringify({ skipped: true, reason: guard.reason ?? 'Messaging blocked' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     // Get organization settings including social channels
     const { data: orgSettingsData, error: orgError } = await supabase

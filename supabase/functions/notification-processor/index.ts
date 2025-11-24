@@ -12,6 +12,7 @@ import {
   createResendClient,
   type ResendClient,
 } from '../_shared/resend-utils.ts';
+import { getMessagingGuard } from "../_shared/messaging-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -498,9 +499,6 @@ export async function processSpecificNotification(
   notificationId: string,
   notificationData?: NotificationRow
 ): Promise<NotificationHandlerResult> {
-  // Mark as processing
-  await updateNotificationStatus(supabase, notificationId, 'processing');
-
   // Get notification data if not provided
   if (!notificationData) {
     const { data, error } = await supabase
@@ -516,6 +514,23 @@ export async function processSpecificNotification(
   }
 
   console.log(`Processing ${notificationData.notification_type} notification for user ${notificationData.user_id}`);
+
+  const guard = await getMessagingGuard(supabase, notificationData.organization_id);
+  if (guard?.hardBlocked) {
+    console.log(
+      `Messaging blocked for org ${notificationData.organization_id} (notification ${notificationId}), skipping`
+    );
+    await updateNotificationStatus(
+      supabase,
+      notificationId,
+      'cancelled',
+      guard.reason ?? 'Messaging blocked for organization'
+    );
+    return { skipped: true, reason: guard.reason ?? 'Messaging blocked' };
+  }
+
+  // Mark as processing
+  await updateNotificationStatus(supabase, notificationId, 'processing');
 
   // Check if notifications are globally enabled before processing
   const isEnabled = await checkNotificationEnabled(supabase, notificationData.user_id, notificationData.organization_id, notificationData.notification_type);
@@ -857,6 +872,34 @@ export async function scheduleNotifications(
   const userIds = Array.from(new Set(members.map((member) => member.user_id)));
   const organizationIds = Array.from(new Set(members.map((member) => member.organization_id)));
 
+  const schedulableOrgIds: string[] = [];
+  for (const orgId of organizationIds) {
+    const guard = await getMessagingGuard(supabase, orgId);
+    if (!guard || guard.shouldScheduleNew) {
+      schedulableOrgIds.push(orgId);
+    } else {
+      console.log(`Skipping scheduling for org ${orgId}: messaging blocked (grace ended)`);
+    }
+  }
+
+  if (schedulableOrgIds.length === 0) {
+    console.log('No organizations eligible for scheduling due to membership status');
+    return {
+      organizations_processed: 0,
+      notifications_scheduled: 0,
+      scheduled_for_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    };
+  }
+
+  if (organizationId && !schedulableOrgIds.includes(organizationId)) {
+    console.log(`Requested organization ${organizationId} not eligible for scheduling (blocked)`);
+    return {
+      organizations_processed: 0,
+      notifications_scheduled: 0,
+      scheduled_for_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    };
+  }
+
   // Fetch user notification preferences
   const { data: userSettingsData, error: userSettingsError } = await supabase
     .from('user_settings')
@@ -883,7 +926,7 @@ export async function scheduleNotifications(
   const { data: organizationSettingsData, error: orgSettingsError } = await supabase
     .from('organization_settings')
     .select('organization_id, notification_global_enabled, notification_daily_summary_enabled, timezone')
-    .in('organization_id', organizationIds);
+    .in('organization_id', schedulableOrgIds);
   const organizationSettings = (organizationSettingsData ?? []) as OrganizationNotificationPreference[];
 
   if (orgSettingsError) {
@@ -924,7 +967,7 @@ export async function scheduleNotifications(
   if (organizationId) {
     existingQuery = existingQuery.eq('organization_id', organizationId);
   } else {
-    existingQuery = existingQuery.in('organization_id', organizationIds);
+    existingQuery = existingQuery.in('organization_id', schedulableOrgIds);
   }
 
   const { data: existingNotificationsData, error: existingError } = await existingQuery;
@@ -941,6 +984,9 @@ export async function scheduleNotifications(
   const scheduledNotifications: ScheduledNotificationInsert[] = [];
 
   for (const member of members) {
+    if (!schedulableOrgIds.includes(member.organization_id)) {
+      continue;
+    }
     const userSetting = userSettingsMap.get(member.user_id);
     if (!userSetting) {
       continue;

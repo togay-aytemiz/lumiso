@@ -1862,6 +1862,11 @@
         "description": "Lumiso'yu kullanmaktan keyif aldığınızı umuyoruz. Devam etmek isterseniz konuşalım.",
         "button": "Sizi arayalım"
       },
+      "graceBanner": {
+        "title": "Sonraki 48 saat boyunca iş akışları gönderilmeye devam edecek.",
+        "body": "48 saatin sonunda plan aktifleştirilmezse bildirimler ve iş akışı mesajları durur.",
+        "remaining": "Kalan süre: {{hours}} saat"
+      },
       "callRequestModal": {
         "title": "Sizi arayalım",
         "description": "Lumiso aboneliğine devam etmek için sizi arayalım.",

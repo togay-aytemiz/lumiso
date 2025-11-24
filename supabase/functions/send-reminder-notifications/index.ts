@@ -17,6 +17,7 @@ import {
   createResendClient,
   type ResendClient,
 } from '../_shared/resend-utils.ts';
+import { getMessagingGuard } from "../_shared/messaging-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -253,6 +254,15 @@ export const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Authenticated user: ${userEmail}`);
     console.log('Organization ID:', organizationId);
+
+    const guard = await getMessagingGuard(adminSupabase, organizationId);
+    if (guard?.hardBlocked) {
+      console.log(`Messaging blocked for org ${organizationId}, skipping ${requestData.type}`);
+      return new Response(
+        JSON.stringify({ skipped: true, reason: guard.reason ?? 'Messaging blocked' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Get user profile for display name
     const { data: userProfile } = await adminSupabase

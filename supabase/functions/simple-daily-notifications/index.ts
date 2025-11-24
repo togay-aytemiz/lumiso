@@ -14,6 +14,7 @@ import {
   createResendClient,
   type ResendClient,
 } from '../_shared/resend-utils.ts';
+import { getMessagingGuard } from "../_shared/messaging-guard.ts";
 
 type SupabaseClientFactory = typeof createClient;
 type SupabaseServerClient = SupabaseClient;
@@ -236,6 +237,12 @@ export const handler = async (req: Request): Promise<Response> => {
         if (!organizationId) {
           console.error(`No organization found for user ${userSettings.user_id}`);
           skippedReasons.noOrganization++;
+          continue;
+        }
+
+        const guard = await getMessagingGuard(supabaseAdmin, organizationId);
+        if (guard?.hardBlocked) {
+          console.log(`Messaging blocked (grace ended) for org ${organizationId}, skipping user ${userSettings.user_id}`);
           continue;
         }
 

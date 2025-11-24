@@ -1859,6 +1859,11 @@
         "description": "We hope you enjoyed using Lumiso. If you want to continue, let's talk.",
         "button": "Let's call you"
       },
+      "graceBanner": {
+        "title": "We’ll keep sending client workflows for 48 hours.",
+        "body": "After 48 hours, notifications and workflows stop until you activate a plan.",
+        "remaining": "Remaining: {{hours}} hours left in the 48-hour window."
+      },
       "callRequestModal": {
         "title": "Request a call",
         "description": "We’ll call you to continue your Lumiso subscription.",

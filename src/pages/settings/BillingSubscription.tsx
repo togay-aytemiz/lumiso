@@ -160,8 +160,30 @@ export default function BillingSubscription() {
   });
 
   const isLocked = membershipStatus === "locked";
+  const isExpired = membershipStatus === "expired";
   const isSuspended = membershipStatus === "suspended";
   const showTrialEndedCta = !isSuspended && (membershipStatus === "locked" || membershipStatus === "expired");
+  const showGraceBanner = !isSuspended && (isLocked || isExpired);
+  const graceRemainingHours = useMemo(() => {
+    if (!showGraceBanner) return null;
+    const candidates: Date[] = [];
+    if (activeOrganization?.premium_expires_at) {
+      const d = new Date(activeOrganization.premium_expires_at);
+      if (!Number.isNaN(d.getTime())) candidates.push(d);
+    }
+    if (activeOrganization?.trial_expires_at) {
+      const d = new Date(activeOrganization.trial_expires_at);
+      if (!Number.isNaN(d.getTime())) candidates.push(d);
+    }
+    if (candidates.length === 0) return null;
+    const blockStart = candidates.reduce((latest, current) =>
+      current.getTime() > latest.getTime() ? current : latest
+    );
+    const graceEnds = blockStart.getTime() + 48 * 60 * 60 * 1000;
+    const remainingMs = graceEnds - Date.now();
+    if (remainingMs <= 0) return 0;
+    return Math.ceil(remainingMs / (60 * 60 * 1000));
+  }, [activeOrganization?.premium_expires_at, activeOrganization?.trial_expires_at, showGraceBanner]);
   const StatusIcon = isLocked || isSuspended ? (isLocked ? Lock : ShieldAlert) : Sparkles;
   const statusIconClasses = isSuspended
     ? "bg-destructive/10 text-destructive"
@@ -552,6 +574,17 @@ export default function BillingSubscription() {
                   <p className="text-sm text-muted-foreground">{statusMessage}</p>
                 </div>
               </div>
+              {showGraceBanner ? (
+                <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  <p className="font-semibold">{t("settings.billingSubscription.graceBanner.title")}</p>
+                  <p className="mt-1 text-amber-900/90">{t("settings.billingSubscription.graceBanner.body")}</p>
+                  {graceRemainingHours !== null ? (
+                    <p className="mt-1 font-medium text-amber-900">
+                      {t("settings.billingSubscription.graceBanner.remaining", { hours: graceRemainingHours })}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
               {showTrialEndedCta ? (
                 <div className="mt-4 flex flex-col gap-3 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm font-medium text-indigo-900">

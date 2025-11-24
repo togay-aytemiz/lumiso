@@ -1578,7 +1578,11 @@ const DashboardDailyFocus = ({
                   </span>
                 </div>
 
-                <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-5 transition-all group shadow-lg relative overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => handleSessionCardClick(nextSession.id)}
+                  className="w-full text-left bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-5 transition-all group shadow-lg relative overflow-hidden hover:border-indigo-400/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
+                >
                   <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-purple-500" />
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="font-semibold text-base leading-tight text-white/95 group-hover:text-indigo-200 transition-colors">
@@ -1620,7 +1624,7 @@ const DashboardDailyFocus = ({
                       <span className="truncate">{nextSession.location || locationFallbackLabel}</span>
                     </div>
                   )}
-                </div>
+                </button>
 
                 {laterSessions.length > 0 && (
                   <div className="mt-3 flex items-center gap-3 px-1">

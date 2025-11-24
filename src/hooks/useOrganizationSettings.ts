@@ -43,8 +43,7 @@ const normalizeSettings = (
   settings: CachedOrganizationSettings | null
 ): OrganizationSettings | null => {
   if (!settings) return null;
-  const fallbackTimeFormat =
-    typeof window !== "undefined" ? detectBrowserHourFormat() : "24-hour";
+  const fallbackTimeFormat = "24-hour";
   const normalizedTimeFormat =
     settings.time_format === "12-hour" || settings.time_format === "24-hour"
       ? settings.time_format

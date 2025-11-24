@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
+import { useOrganizationTimezone } from "@/hooks/useOrganizationTimezone";
 import { Button } from "@/components/ui/button";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { getKpiIconPreset } from "@/components/ui/kpi-presets";
@@ -47,8 +48,9 @@ import {
   CheckCircle2,
   SunMedium,
 } from "lucide-react";
-import { cn, formatGroupDate, getWeekRange } from "@/lib/utils";
+import { cn, formatGroupDate } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
+import { formatInTimeZone } from "date-fns-tz";
 
 interface Activity {
   id: string;
@@ -124,24 +126,25 @@ const parseTimeValue = (
 
 const groupActivitiesByDate = (
   activities: Activity[],
-  order: "asc" | "desc" = "asc"
+  order: "asc" | "desc" = "asc",
+  normalizeDate?: (value?: string | null) => string | null
 ) => {
   const groups = new Map<string, Activity[]>();
 
   activities.forEach((activity) => {
-    if (!activity.reminder_date) return;
-    const existing = groups.get(activity.reminder_date);
+    const normalizedDate =
+      normalizeDate?.(activity.reminder_date) ?? activity.reminder_date;
+    if (!normalizedDate) return;
+    const existing = groups.get(normalizedDate);
     if (existing) {
       existing.push(activity);
     } else {
-      groups.set(activity.reminder_date, [activity]);
+      groups.set(normalizedDate, [activity]);
     }
   });
 
   const sortedEntries = Array.from(groups.entries()).sort((a, b) => {
-    const dateA = new Date(a[0]).getTime();
-    const dateB = new Date(b[0]).getTime();
-    return dateA - dateB;
+    return a[0].localeCompare(b[0]);
   });
 
   if (order === "desc") {
@@ -175,7 +178,7 @@ const parseReminderDateTime = (value: string) => {
 };
 
 const ReminderDetails = () => {
-  const { t } = useTranslation("pages");
+  const { t, i18n } = useTranslation("pages");
   const { t: tForms } = useFormsTranslation();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [visibleReminderCount, setVisibleReminderCount] = useState(
@@ -200,6 +203,7 @@ const ReminderDetails = () => {
   const [reminderToDelete, setReminderToDelete] =
     useState<ReminderTimelineCardActivity | null>(null);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const { timezone } = useOrganizationTimezone();
 
   const reminderEditorInitialValues = useMemo<
     ReminderEditorValues | undefined
@@ -325,66 +329,135 @@ const ReminderDetails = () => {
     onLeadResolved: handleDialogLeadResolved,
   });
 
-  const isOverdue = useCallback((reminderDate: string) => {
-    const today = new Date();
-    const reminder = new Date(reminderDate);
-    today.setHours(0, 0, 0, 0);
-    reminder.setHours(0, 0, 0, 0);
-    return reminder.getTime() < today.getTime();
-  }, []);
+  const normalizeReminderDate = useCallback(
+    (reminderDate?: string | null) => {
+      if (!reminderDate) return null;
+      try {
+        return formatInTimeZone(new Date(reminderDate), timezone, "yyyy-MM-dd");
+      } catch {
+        return null;
+      }
+    },
+    [timezone]
+  );
 
-  const isToday = useCallback((reminderDate: string) => {
-    const today = new Date();
-    const reminder = new Date(reminderDate);
-    today.setHours(0, 0, 0, 0);
-    reminder.setHours(0, 0, 0, 0);
-    return reminder.getTime() === today.getTime();
-  }, []);
+  const todayIso = useMemo(
+    () => formatInTimeZone(new Date(), timezone, "yyyy-MM-dd"),
+    [timezone]
+  );
 
-  const isTomorrow = useCallback((reminderDate: string) => {
+  const tomorrowIso = useMemo(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const reminder = new Date(reminderDate);
-    tomorrow.setHours(0, 0, 0, 0);
-    reminder.setHours(0, 0, 0, 0);
-    return reminder.getTime() === tomorrow.getTime();
-  }, []);
+    return formatInTimeZone(tomorrow, timezone, "yyyy-MM-dd");
+  }, [timezone]);
 
-  const isThisWeek = useCallback((reminderDate: string) => {
-    const today = new Date();
-    const reminder = new Date(reminderDate);
-    const { start: startOfWeek, end: endOfWeek } = getWeekRange(today);
-    reminder.setHours(0, 0, 0, 0);
+  const weekStartsOnMonday = useMemo(() => {
+    const locale = i18n.language?.toLowerCase() ?? "";
     return (
-      reminder.getTime() >= startOfWeek.getTime() &&
-      reminder.getTime() <= endOfWeek.getTime()
+      locale.startsWith("tr") ||
+      locale.startsWith("de") ||
+      locale.startsWith("fr") ||
+      locale.startsWith("es") ||
+      locale.startsWith("it") ||
+      locale.startsWith("nl") ||
+      locale.startsWith("pl")
     );
-  }, []);
+  }, [i18n.language]);
 
-  const isNextWeek = useCallback((reminderDate: string) => {
-    const today = new Date();
-    const reminder = new Date(reminderDate);
-    const nextWeekDate = new Date(today);
-    nextWeekDate.setDate(today.getDate() + 7);
-    const { start: startOfNextWeek, end: endOfNextWeek } =
-      getWeekRange(nextWeekDate);
-    startOfNextWeek.setHours(0, 0, 0, 0);
-    endOfNextWeek.setHours(23, 59, 59, 999);
-    reminder.setHours(0, 0, 0, 0);
-    return (
-      reminder.getTime() >= startOfNextWeek.getTime() &&
-      reminder.getTime() <= endOfNextWeek.getTime()
-    );
-  }, []);
+  const {
+    weekStartIso,
+    weekEndIso,
+    nextWeekStartIso,
+    nextWeekEndIso,
+  } = useMemo(() => {
+    const parseIsoToUtc = (iso: string) => {
+      const [year, month, day] = iso.split("-").map(Number);
+      if ([year, month, day].some((value) => Number.isNaN(value))) {
+        return null;
+      }
+      return new Date(Date.UTC(year, month - 1, day));
+    };
 
-  const isThisMonth = useCallback((reminderDate: string) => {
-    const today = new Date();
-    const reminder = new Date(reminderDate);
-    return (
-      today.getFullYear() === reminder.getFullYear() &&
-      today.getMonth() === reminder.getMonth()
-    );
-  }, []);
+    const toIso = (date: Date) => date.toISOString().split("T")[0];
+    const anchorDate = parseIsoToUtc(todayIso);
+
+    if (!anchorDate) {
+      return {
+        weekStartIso: todayIso,
+        weekEndIso: todayIso,
+        nextWeekStartIso: todayIso,
+        nextWeekEndIso: todayIso,
+      };
+    }
+
+    const day = anchorDate.getUTCDay();
+    const daysToSubtract = weekStartsOnMonday ? (day === 0 ? 6 : day - 1) : day;
+
+    const start = new Date(anchorDate);
+    start.setUTCDate(anchorDate.getUTCDate() - daysToSubtract);
+    const end = new Date(start);
+    end.setUTCDate(start.getUTCDate() + 6);
+
+    const nextStart = new Date(start);
+    nextStart.setUTCDate(start.getUTCDate() + 7);
+    const nextEnd = new Date(nextStart);
+    nextEnd.setUTCDate(nextStart.getUTCDate() + 6);
+
+    return {
+      weekStartIso: toIso(start),
+      weekEndIso: toIso(end),
+      nextWeekStartIso: toIso(nextStart),
+      nextWeekEndIso: toIso(nextEnd),
+    };
+  }, [todayIso, weekStartsOnMonday]);
+
+  const isOverdue = useCallback(
+    (reminderDate: string) => {
+      const normalized = normalizeReminderDate(reminderDate);
+      if (!normalized) return false;
+      return normalized < todayIso;
+    },
+    [normalizeReminderDate, todayIso]
+  );
+
+  const isToday = useCallback(
+    (reminderDate: string) => normalizeReminderDate(reminderDate) === todayIso,
+    [normalizeReminderDate, todayIso]
+  );
+
+  const isTomorrow = useCallback(
+    (reminderDate: string) =>
+      normalizeReminderDate(reminderDate) === tomorrowIso,
+    [normalizeReminderDate, tomorrowIso]
+  );
+
+  const isThisWeek = useCallback(
+    (reminderDate: string) => {
+      const normalized = normalizeReminderDate(reminderDate);
+      if (!normalized) return false;
+      return normalized >= weekStartIso && normalized <= weekEndIso;
+    },
+    [normalizeReminderDate, weekEndIso, weekStartIso]
+  );
+
+  const isNextWeek = useCallback(
+    (reminderDate: string) => {
+      const normalized = normalizeReminderDate(reminderDate);
+      if (!normalized) return false;
+      return normalized >= nextWeekStartIso && normalized <= nextWeekEndIso;
+    },
+    [normalizeReminderDate, nextWeekEndIso, nextWeekStartIso]
+  );
+
+  const isThisMonth = useCallback(
+    (reminderDate: string) => {
+      const normalized = normalizeReminderDate(reminderDate);
+      if (!normalized) return false;
+      return normalized.slice(0, 7) === todayIso.slice(0, 7);
+    },
+    [normalizeReminderDate, todayIso]
+  );
 
   const getReminderCountForFilter = useCallback(
     (filterType: FilterType) => {
@@ -652,8 +725,8 @@ const ReminderDetails = () => {
   ]);
 
   const groupedActiveActivities = useMemo(
-    () => groupActivitiesByDate(activeActivities, "asc"),
-    [activeActivities]
+    () => groupActivitiesByDate(activeActivities, "asc", normalizeReminderDate),
+    [activeActivities, normalizeReminderDate]
   );
 
   const totalActiveReminders = activeActivities.length;
@@ -724,8 +797,13 @@ const ReminderDetails = () => {
   }, [handleLoadMoreReminders, hasMoreReminders]);
 
   const groupedCompletedActivities = useMemo(
-    () => groupActivitiesByDate(completedActivities, "desc"),
-    [completedActivities]
+    () =>
+      groupActivitiesByDate(
+        completedActivities,
+        "desc",
+        normalizeReminderDate
+      ),
+    [completedActivities, normalizeReminderDate]
   );
 
   // Icon presets to match shared KPI card design

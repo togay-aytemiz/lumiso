@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, Image, Plus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface SessionGalleryProps {
   sessionId: string;
@@ -16,9 +17,14 @@ export default function SessionGallery({ sessionId, className }: SessionGalleryP
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">
-          {t('sessionDetail.gallery.title')}
-        </CardTitle>
+        <div className="flex items-center gap-3">
+          <CardTitle className="text-lg font-semibold">
+            {t('sessionDetail.gallery.title')}
+          </CardTitle>
+          <Badge variant="warning" className="bg-amber-100 text-amber-800 border border-amber-200">
+            {t('sessionDetail.gallery.emptyState.comingSoon')}
+          </Badge>
+        </div>
       </CardHeader>
       <CardContent>
         {images.length === 0 ? (

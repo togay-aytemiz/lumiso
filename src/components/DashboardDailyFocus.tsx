@@ -1196,32 +1196,44 @@ const DashboardDailyFocus = ({
     [activityList]
   );
 
+  const normalizeReminderDate = useCallback(
+    (reminderDate?: string | null) => {
+      if (!reminderDate) return null;
+      try {
+        return formatInTimeZone(new Date(reminderDate), timezone, "yyyy-MM-dd");
+      } catch {
+        return reminderDate.split("T")[0] ?? null;
+      }
+    },
+    [timezone]
+  );
+
   const todayTasks = useMemo(
     () =>
       activeActivities.filter((activity) => {
-        const date = activity.reminder_date?.split("T")[0];
+        const date = normalizeReminderDate(activity.reminder_date);
         return date === todayIso;
       }),
-    [activeActivities, todayIso]
+    [activeActivities, normalizeReminderDate, todayIso]
   );
 
   const overdueTasks = useMemo(
     () =>
       activeActivities.filter((activity) => {
-        const date = activity.reminder_date?.split("T")[0];
+        const date = normalizeReminderDate(activity.reminder_date);
         return date ? date < todayIso : false;
       }),
-    [activeActivities, todayIso]
+    [activeActivities, normalizeReminderDate, todayIso]
   );
 
   const todayScheduleReminders = useMemo(
     () =>
       activityList.filter((activity) => {
         if (!activity.reminder_date) return false;
-        const date = activity.reminder_date.split("T")[0];
+        const date = normalizeReminderDate(activity.reminder_date);
         return date === todayIso;
       }),
-    [activityList, todayIso]
+    [activityList, normalizeReminderDate, todayIso]
   );
 
   const totalActiveTasks = overdueTasks.length + todayTasks.length;

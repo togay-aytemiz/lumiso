@@ -12,6 +12,7 @@ interface Session {
   lead_id: string;
   project_id?: string | null;
   duration_minutes?: number | null;
+  location?: string | null;
   leads?: { id: string; name: string };
   projects?: { id: string; name: string; status_id?: string };
 }
@@ -75,6 +76,7 @@ export function useOptimizedCalendarData(currentDate: Date, viewMode: 'day' | 'w
             notes,
             lead_id,
             project_id,
+            location,
             leads!inner(id, name),
             projects(id, name, status_id),
             session_types:session_type_id(duration_minutes)

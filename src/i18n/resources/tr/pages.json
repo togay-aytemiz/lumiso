@@ -1439,6 +1439,7 @@
       "lead": "Kişi",
       "session": "Seans",
       "project": "Proje",
+      "location": "Konum",
       "time": "Saat",
       "status": "Durum",
       "moreEvents": "+{{count}} daha"

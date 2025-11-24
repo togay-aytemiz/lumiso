@@ -35,8 +35,7 @@ import {
 } from "@/hooks/useTypedTranslation";
 import { cn } from "@/lib/utils";
 import { calculateVatPortion } from "@/lib/accounting/vat";
-
-type ServiceType = "coverage" | "deliverable";
+import { DEFAULT_CATEGORY_TRANSLATION_MAP, ServiceType } from "@/constants/serviceCategories";
 
 interface Service {
   id: string;
@@ -396,6 +395,17 @@ const ServicesSection = () => {
   );
 
   const uncategorizedLabel = tForms("services.uncategorized");
+  const translateCategoryLabel = useCallback(
+    (category: string) => {
+      const translationKey =
+        DEFAULT_CATEGORY_TRANSLATION_MAP[activeType]?.[category];
+      if (!translationKey) {
+        return category;
+      }
+      return tForms(translationKey, { defaultValue: category });
+    },
+    [activeType, tForms]
+  );
 
   // Group services by category for selected type
   const groupedServices = useMemo(() => {
@@ -418,9 +428,13 @@ const ServicesSection = () => {
   const sortedGroupedServices = useMemo(
     () =>
       Object.entries(groupedServices).sort(([a], [b]) =>
-        a.localeCompare(b, undefined, { sensitivity: "base" })
+        translateCategoryLabel(a).localeCompare(
+          translateCategoryLabel(b),
+          undefined,
+          { sensitivity: "base" }
+        )
       ),
-    [groupedServices]
+    [groupedServices, translateCategoryLabel]
   );
 
   const toggleCategory = (category: string) => {
@@ -576,8 +590,9 @@ const ServicesSection = () => {
           ) : (
             <>
               <div className="space-y-2.5">
-                {sortedGroupedServices.map(
-                  ([category, categoryServices]) => (
+                {sortedGroupedServices.map(([category, categoryServices]) => {
+                  const displayCategoryLabel = translateCategoryLabel(category);
+                  return (
                     <Collapsible
                       key={category}
                       open={openCategories.has(category)}
@@ -592,7 +607,7 @@ const ServicesSection = () => {
                             <ChevronRight className="h-4 w-4 flex-shrink-0" />
                           )}
                           <span className="font-medium text-base md:text-sm">
-                            {category}
+                            {displayCategoryLabel}
                           </span>
                           <span className="text-sm text-muted-foreground">
                             ({categoryServices.length})
@@ -627,8 +642,8 @@ const ServicesSection = () => {
                         </div>
                       </CollapsibleContent>
                     </Collapsible>
-                  )
-                )}
+                  );
+                })}
               </div>
             </>
           )}

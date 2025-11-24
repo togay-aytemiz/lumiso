@@ -16,8 +16,7 @@ import { NavigationGuardDialog } from "./NavigationGuardDialog";
 import { cn } from "@/lib/utils";
 import { useOrganizationTaxProfile } from "@/hooks/useOrganizationData";
 import { DEFAULT_ORGANIZATION_TAX_PROFILE } from "@/lib/organizationSettingsCache";
-
-type ServiceType = "coverage" | "deliverable";
+import { DEFAULT_CATEGORIES, DEFAULT_CATEGORY_DEFINITIONS, ServiceType } from "@/constants/serviceCategories";
 
 interface ServiceFormState {
   name: string;
@@ -33,37 +32,6 @@ interface ServiceFormState {
   vendor_name: string;
   is_active: boolean;
 }
-
-type DefaultCategoryDefinition = {
-  value: string;
-  translationKey: string;
-};
-
-const DEFAULT_CATEGORY_DEFINITIONS: Record<ServiceType, DefaultCategoryDefinition[]> = {
-  coverage: [
-    { value: "Lead Photographer", translationKey: "service.categories.coverage.lead_photographer" },
-    { value: "Second Photographer", translationKey: "service.categories.coverage.second_photographer" },
-    { value: "Assistant Photographer", translationKey: "service.categories.coverage.assistant_photographer" },
-    { value: "Videographer", translationKey: "service.categories.coverage.videographer" },
-    { value: "Drone Operator", translationKey: "service.categories.coverage.drone_operator" },
-    { value: "Production Crew", translationKey: "service.categories.coverage.production_crew" },
-    { value: "Hair & Makeup", translationKey: "service.categories.coverage.hair_makeup" },
-  ],
-  deliverable: [
-    { value: "Albums", translationKey: "service.categories.deliverable.albums" },
-    { value: "Prints", translationKey: "service.categories.deliverable.prints" },
-    { value: "Digital", translationKey: "service.categories.deliverable.digital" },
-    { value: "Retouching", translationKey: "service.categories.deliverable.retouching" },
-    { value: "Frames", translationKey: "service.categories.deliverable.frames" },
-    { value: "Extras", translationKey: "service.categories.deliverable.extras" },
-    { value: "Packages", translationKey: "service.categories.deliverable.packages" },
-  ],
-};
-
-const DEFAULT_CATEGORIES: Record<ServiceType, string[]> = {
-  coverage: DEFAULT_CATEGORY_DEFINITIONS.coverage.map((definition) => definition.value),
-  deliverable: DEFAULT_CATEGORY_DEFINITIONS.deliverable.map((definition) => definition.value),
-};
 
 interface ServiceVatDefaults {
   vatRate?: number | null;

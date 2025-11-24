@@ -10,6 +10,7 @@ interface Session {
   lead_id: string;
   project_id?: string | null;
   duration_minutes?: number | null;
+  location?: string | null;
 }
 
 interface Activity {

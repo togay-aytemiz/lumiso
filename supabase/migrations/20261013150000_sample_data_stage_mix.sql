@@ -1,4 +1,4 @@
--- Expand sample data and package defaults so localized workspaces get realistic projects, deposits, and reminders tied to their intake selections.
+-- Ensure sample data projects cover proposal stage alongside planned/in-progress.
 
 CREATE OR REPLACE FUNCTION public.seed_sample_data_for_org(
   owner_uuid uuid,
@@ -596,9 +596,6 @@ BEGIN
       WHEN locale_code LIKE 'tr%' THEN lead_obj->>'name_tr'
       ELSE COALESCE(lead_obj->>'name_en', lead_obj->>'name_tr')
     END;
-    IF locale_code LIKE 'tr%' THEN
-      lead_name := notes_prefix || lead_name;
-    END IF;
     lead_email := lead_obj->>'email';
     lead_phone := lead_obj->>'phone';
     lead_status_slug := COALESCE(lead_obj->>'status_slug', 'new');
@@ -982,154 +979,5 @@ EXCEPTION
       SQLERRM
     );
     RAISE;
-END;
-$function$;
-
--- Keep package defaults aligned with service templates, deposits, and delivery-free settings.
-CREATE OR REPLACE FUNCTION public.ensure_default_packages_for_org(user_uuid uuid, org_id uuid)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = 'public'
-AS $function$
-DECLARE
-  package_count integer;
-  final_locale text := COALESCE(get_org_locale(org_id), 'tr');
-  chosen_record RECORD;
-  add_on_ids text[];
-  line_items jsonb;
-  template_row RECORD;
-  service_id uuid;
-  role text;
-  qty integer;
-  service_slug text;
-  deposit_percent numeric;
-  pricing_metadata jsonb;
-BEGIN
-  SELECT COUNT(*) INTO package_count
-  FROM public.packages
-  WHERE organization_id = org_id;
-
-  IF package_count > 0 THEN
-    RETURN;
-  END IF;
-
-  PERFORM public.ensure_default_services_for_org(user_uuid, org_id);
-
-  FOR template_row IN
-    WITH prioritized AS (
-      SELECT *, 1 AS priority
-      FROM public.default_package_templates
-      WHERE locale = final_locale
-      UNION ALL
-      SELECT *, 2
-      FROM public.default_package_templates
-      WHERE locale = 'en'
-    ),
-    chosen AS (
-      SELECT DISTINCT ON (slug) *
-      FROM prioritized
-      ORDER BY slug, priority
-    )
-    SELECT *
-    FROM chosen
-    ORDER BY sort_order
-  LOOP
-    add_on_ids := ARRAY[]::text[];
-    line_items := '[]'::jsonb;
-
-    FOR chosen_record IN
-      SELECT
-        item->>'serviceSlug' AS service_slug,
-        COALESCE(NULLIF(item->>'role', ''), 'addon') AS item_role,
-        COALESCE((item->>'quantity')::int, 1) AS item_qty
-      FROM jsonb_array_elements(template_row.line_items) AS item
-    LOOP
-      service_slug := chosen_record.service_slug;
-      role := chosen_record.item_role;
-      qty := chosen_record.item_qty;
-
-      SELECT id INTO service_id
-      FROM public.services
-      WHERE organization_id = org_id
-        AND template_slug = service_slug
-      LIMIT 1;
-
-      IF service_id IS NULL THEN
-        CONTINUE;
-      END IF;
-
-      line_items := line_items || jsonb_build_object(
-        'serviceId', service_id::text,
-        'role', role,
-        'quantity', qty
-      );
-
-      IF role = 'addon' THEN
-        add_on_ids := array_append(add_on_ids, service_id::text);
-      END IF;
-    END LOOP;
-
-    deposit_percent := CASE template_row.slug
-      WHEN 'mini_lifestyle' THEN 30
-      WHEN 'wedding_story' THEN 40
-      ELSE 25
-    END;
-
-    pricing_metadata := jsonb_build_object(
-      'enableDeposit', true,
-      'depositMode', 'percent_base',
-      'depositValue', deposit_percent,
-      'depositTarget', 'base',
-      'depositAmount', NULL,
-      'packageVatRate', NULL,
-      'packageVatMode', 'exclusive',
-      'packageVatOverrideEnabled', false,
-      'basePriceInput', template_row.price
-    );
-
-    INSERT INTO public.packages (
-      user_id,
-      organization_id,
-      template_slug,
-      name,
-      description,
-      price,
-      client_total,
-      applicable_types,
-      default_add_ons,
-      line_items,
-      is_active,
-      delivery_estimate_type,
-      delivery_photo_count_min,
-      delivery_photo_count_max,
-      delivery_lead_time_value,
-      delivery_lead_time_unit,
-      delivery_methods,
-      include_addons_in_price,
-      pricing_metadata
-    )
-    VALUES (
-      user_uuid,
-      org_id,
-      template_row.slug,
-      template_row.name,
-      template_row.description,
-      template_row.price,
-      template_row.price,
-      template_row.applicable_type_labels,
-      add_on_ids,
-      line_items,
-      true,
-      'single',
-      NULL,
-      NULL,
-      NULL,
-      NULL,
-      '[]'::jsonb,
-      true,
-      pricing_metadata
-    );
-  END LOOP;
 END;
 $function$;

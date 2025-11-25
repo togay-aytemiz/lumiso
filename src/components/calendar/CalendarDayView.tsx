@@ -115,7 +115,7 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
                         onClick={() => onSessionClick(session)}
                         className="w-full p-4 bg-card rounded-lg border border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-colors text-left"
                       >
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="font-medium text-primary mb-1">
                               {projectName || t('calendar.labels.session')}
@@ -132,12 +132,6 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
                               </div>
                             )}
                           </div>
-                          <Badge 
-                            variant={session.status === 'completed' ? 'default' : 'secondary'}
-                            className="text-xs"
-                          >
-                            {session.status}
-                          </Badge>
                         </div>
                       </button>
                     </TooltipTrigger>

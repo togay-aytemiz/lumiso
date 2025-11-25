@@ -248,17 +248,16 @@ export const handler = async (req: Request): Promise<Response> => {
 
         console.log(`Found organization ${organizationId} for user ${userSettings.user_id}`);
         
+        const { data: orgSettings } = await supabaseAdmin
+          .from('organization_settings')
+          .select('timezone, preferred_locale, photography_business_name, primary_brand_color, date_format, time_format')
+          .eq('organization_id', organizationId)
+          .maybeSingle();
+
+        const orgTimezone = orgSettings?.timezone || 'UTC';
+
         // Skip if testing mode and no specific user ID
         if (action !== 'test') {
-          // Get organization timezone to check if it's time for this user
-          const { data: orgSettings } = await supabaseAdmin
-            .from('organization_settings')
-            .select('timezone')
-            .eq('organization_id', organizationId)
-            .maybeSingle();
-          
-          const orgTimezone = orgSettings?.timezone || 'UTC';
-          
           // Convert current UTC time to organization timezone
           const orgTime = new Date().toLocaleString('en-US', { 
             timeZone: orgTimezone,
@@ -316,7 +315,12 @@ export const handler = async (req: Request): Promise<Response> => {
           .eq('user_id', userSettings.user_id)
           .maybeSingle();
 
-        const localization = createEmailLocalization(languagePreference?.language_code);
+        const resolvedLanguage =
+          languagePreference?.language_code ??
+          (orgSettings?.preferred_locale as string | undefined) ??
+          'tr';
+
+        const localization = createEmailLocalization(resolvedLanguage);
         const t = localization.t;
 
         // Get today's date
@@ -435,13 +439,6 @@ export const handler = async (req: Request): Promise<Response> => {
 
         console.log('Today activities with names:', todayActivitiesWithNames);
 
-        // Get organization settings for branding and timezone
-        const { data: orgSettings } = await supabaseAdmin
-          .from('organization_settings')
-          .select('photography_business_name, primary_brand_color, date_format, time_format, timezone')
-          .eq('organization_id', organizationId)
-          .maybeSingle();
-
         // Use Lumiso logo
         console.log('Using Lumiso logo from: https://my.lumiso.app/lumiso-logo.png');
 
@@ -463,7 +460,7 @@ export const handler = async (req: Request): Promise<Response> => {
           brandColor: orgSettings?.primary_brand_color || '#1EB29F',
           dateFormat: orgSettings?.date_format || 'DD/MM/YYYY',
           timeFormat: orgSettings?.time_format || '12-hour',
-          timezone: orgSettings?.timezone || 'UTC',
+          timezone: orgTimezone,
           baseUrl: 'https://my.lumiso.app',
           language: localization.language,
           localization,

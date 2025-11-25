@@ -95,7 +95,8 @@ const CrmDashboard = () => {
   const [userName, setUserName] = useState<string | null>(null);
   const paymentColumnSupportRef = useRef<Record<PaymentTimestampColumn | OptionalPaymentColumn, boolean>>({
     created_at: true,
-    date_paid: paymentSchemaEnhancementsEnabled,
+    // Always try to use the paid date; we'll detect and disable if the column is missing
+    date_paid: true,
     log_timestamp: paymentSchemaEnhancementsEnabled,
     scheduled_initial_amount: true,
     scheduled_remaining_amount: true,

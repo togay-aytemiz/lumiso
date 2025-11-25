@@ -667,14 +667,11 @@ export function ProjectPaymentsSection({
         amount: formatCurrency(financialSummary.depositSuggestedAmount),
         defaultValue: "Deposit follows package totals (currently {{amount}})"
       });
-  const snapshotTotalDiff =
-    financialSummary.depositSnapshotTotal != null &&
-    Math.abs(financialSummary.depositSnapshotTotal - financialSummary.contractTotal) >= 1;
-  const snapshotAmountDiff =
+  const hasDepositIncrease =
     acknowledgedSnapshotAmount != null &&
-    Math.abs(financialSummary.depositSuggestedAmount - acknowledgedSnapshotAmount) >= 1;
+    financialSummary.depositSuggestedAmount - acknowledgedSnapshotAmount >= 1;
   const shouldShowSnapshotBanner =
-    depositConfigured && lockedDepositAmount != null && (snapshotTotalDiff || snapshotAmountDiff);
+    depositConfigured && lockedDepositAmount != null && hasDepositIncrease;
   const canLockDeposit =
     depositConfigured && !lockedDepositAmount && financialSummary.depositSuggestedAmount > 0;
   const shouldRenderSkeleton = isLoading && !hasLoadedInitially.current;

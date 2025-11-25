@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { ArrowLeft, HelpCircle } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -129,9 +129,9 @@ export function EntityHeader({
                           <TooltipTrigger asChild>
                             <button
                               type="button"
-                              className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                              className="hidden h-5 w-5 items-center justify-center text-[11px] font-semibold leading-none text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:inline-flex"
                             >
-                              <HelpCircle className="h-3 w-3" aria-hidden="true" />
+                              <span aria-hidden="true">?</span>
                               <span className="sr-only">{item.info.ariaLabel || item.label}</span>
                             </button>
                           </TooltipTrigger>

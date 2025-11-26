@@ -224,6 +224,56 @@ const EMAIL_TRANSLATIONS: Record<EmailLanguage, EmailTranslationNode> = {
         leadNotes: 'Prefers email communication.',
       },
     },
+    welcome: {
+      subject: 'Welcome to Lumiso, {{name}}!',
+      preheader: 'A quick start guide for {{businessName}} with three fast wins.',
+      heroTitle: 'Welcome to Lumiso',
+      heroSubtitle: 'We set up {{businessName}} using the details you shared.',
+      greeting: 'Hi {{name}},',
+      intro:
+        "Thanks for completing your setup. Here’s a quick checklist to get your studio running today.",
+      checklistTitle: 'Kick off your workspace',
+      checklist: {
+        lead: {
+          title: 'Add your first lead',
+          description:
+            'Capture a new inquiry and set a follow-up reminder so nothing slips.',
+        },
+        project: {
+          title: 'Create your first project',
+          description:
+            'Turn a lead into a booked job with timelines, notes, and tasks.',
+        },
+        session: {
+          title: 'Schedule an upcoming session',
+          description:
+            'Block time, assign it to a project, and keep reminders in sync.',
+        },
+      },
+      shortcutsTitle: 'Helpful shortcuts',
+      shortcuts: {
+        profile: {
+          title: 'Finish account details',
+          description:
+            'Drop in your brand color, locale, and business contact info.',
+        },
+        pipeline: {
+          title: 'Import or add contacts',
+          description:
+            'Bring leads into Lumiso so reminders and summaries stay accurate.',
+        },
+        services: {
+          title: 'Tune your services & packages',
+          description:
+            'Adjust pricing and deliverables before you send your first proposal.',
+        },
+      },
+      ctaPrimary: 'Open dashboard',
+      ctaSecondary: 'Go to getting started',
+      closing:
+        'We’re thrilled to have you. If you need anything, just reply to this email and our team will help.',
+      signature: 'The Lumiso Team',
+    },
   },
   tr: {
     common: {
@@ -436,6 +486,55 @@ const EMAIL_TRANSLATIONS: Record<EmailLanguage, EmailTranslationNode> = {
         newStatusCancelled: 'İptal Edildi',
         leadNotes: 'E-posta ile iletişimi tercih ediyor.',
       },
+    },
+    welcome: {
+      subject: "Lumiso'ya hoş geldin, {{name}}!",
+      preheader: "{{businessName}} için üç hızlı adımlık başlangıç rehberi.",
+      heroTitle: "Lumiso'ya hoş geldin",
+      heroSubtitle: "{{businessName}} hesabını paylaştığın bilgilerle hazırladık.",
+      greeting: "Merhaba {{name}},",
+      intro:
+        "Kurulumu tamamladığın için teşekkürler. Bugün stüdyonu çalıştırmak için kısa bir kontrol listesi hazırladık.",
+      checklistTitle: "Çalışma alanını başlat",
+      checklist: {
+        lead: {
+          title: "İlk adayı ekle",
+          description:
+            "Yeni bir talep ekle ve takip hatırlatıcısı ayarla; hiçbir şey gözden kaçmasın.",
+        },
+        project: {
+          title: "İlk projeni oluştur",
+          description:
+            "Adayı zaman çizelgesi, notlar ve görevlerle net bir projeye dönüştür.",
+        },
+        session: {
+          title: "Yaklaşan bir seans planla",
+          description:
+            "Zamanı blokla, projeye bağla ve hatırlatmaları senkron tut.",
+        },
+      },
+      shortcutsTitle: "Hızlı kısayollar",
+      shortcuts: {
+        profile: {
+          title: "Hesap bilgilerini tamamla",
+          description: "Marka rengini, dili ve iletişim bilgilerini ekle.",
+        },
+        pipeline: {
+          title: "İletişimleri içe aktar veya ekle",
+          description:
+            "Hatırlatmalar ve özetler doğru kalsın diye adaylarını Lumiso'ya taşı.",
+        },
+        services: {
+          title: "Hizmet ve paketleri düzenle",
+          description:
+            "İlk teklifini göndermeden önce fiyat ve teslimatları ayarla.",
+        },
+      },
+      ctaPrimary: "Paneli aç",
+      ctaSecondary: "Başlangıç rehberine git",
+      closing:
+        "Aramıza katıldığın için çok mutluyuz. Herhangi bir sorunda bu e-postayı yanıtlaman yeterli, ekibimiz destek olur.",
+      signature: "Lumiso Ekibi",
     },
   },
 };

@@ -34,6 +34,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { logAuthEvent } from "@/lib/authTelemetry";
 
@@ -404,6 +405,25 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
       }
 
       await refreshSettings();
+
+      if (!hasCompletedIntakeOnce && activeOrganizationId) {
+        supabase.functions
+          .invoke("send-welcome-email", {
+            body: {
+              organizationId: activeOrganizationId,
+              locale: i18n.language,
+            },
+          })
+          .then(({ error }) => {
+            if (error) {
+              console.warn("Welcome email failed:", error);
+            }
+          })
+          .catch((error) => {
+            console.warn("Welcome email failed:", error);
+          });
+      }
+
       logAuthEvent("auth_first_profile_intake_finish", {
         supabaseUserId: user?.id,
         businessNameLength: trimmedBusiness.length,

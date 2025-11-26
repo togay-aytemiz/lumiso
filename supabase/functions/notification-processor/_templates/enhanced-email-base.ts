@@ -259,7 +259,7 @@ export function createEmailTemplate(
     }
     .email-header {
       background-color: #f1f5f9;
-      padding: 32px 32px 24px;
+      padding: 32px 32px 28px;
       text-align: center;
       border-bottom: 1px solid #e2e8f0;
     }
@@ -294,35 +294,37 @@ export function createEmailTemplate(
 </head>
 <body>
   <div class="email-wrapper">
-    <div class="email-container">
-      <div class="email-header">
-        ${
-          logoUrl
-            ? `<img src="${logoUrl}" alt="${t('common.alt.logo', { businessName: platformName })}" style="height: 40px; width: auto; display: block; margin: 0 auto 16px;" />`
-            : `<div style="
-                margin-bottom: 16px;
-                font-size: 26px;
-                font-weight: 700;
-                color: #0f172a;
-              ">${platformName}</div>`
-        }
-        ${
-          businessName
-            ? `<div style="margin-top: 20px;">
-                <span style="
-                  display: inline-block;
-                  padding: 8px 20px;
-                  border-radius: 999px;
-                  background-color: ${brandColor}1a;
-                  color: ${brandColor};
-                  font-size: 13px;
-                  font-weight: 600;
-                  letter-spacing: 0.4px;
-                ">${businessName}</span>
-              </div>`
-            : ''
-        }
-      </div>
+      <div class="email-container">
+        <div class="email-header">
+          <div style="text-align: center; max-width: 520px; margin: 0 auto;">
+            ${
+              logoUrl
+                ? `<img src="${logoUrl}" alt="${t('common.alt.logo', { businessName: platformName })}" style="height: 40px; width: auto; display: block; margin: 0 auto 12px;" />`
+                : `<div style="
+                    margin-bottom: 12px;
+                    font-size: 26px;
+                    font-weight: 700;
+                    color: #0f172a;
+                  ">${platformName}</div>`
+            }
+            ${
+              businessName
+                ? `<div style="margin-top: 8px; margin-bottom: 6px;">
+                    <span style="
+                      display: inline-block;
+                      padding: 9px 20px;
+                      border-radius: 999px;
+                      background-color: ${brandColor}1a;
+                      color: ${brandColor};
+                      font-size: 13px;
+                      font-weight: 600;
+                      letter-spacing: 0.4px;
+                    ">${businessName}</span>
+                  </div>`
+                : ''
+            }
+          </div>
+        </div>
       
       <div class="email-body">
         ${content}

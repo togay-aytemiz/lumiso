@@ -77,9 +77,9 @@ export function generateWelcomeEmail(
             color: ${brandColor};
             font-weight: 700;
             font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: inline-block;
+            text-align: center;
+            line-height: 42px;
           ">${index + 1}</div>
           <div style="flex: 1 1 auto;">
             <div style="
@@ -114,7 +114,6 @@ export function generateWelcomeEmail(
 
   const shortcutConfig = [
     { key: 'profile', href: `${baseUrl}/settings/general`, icon: '🎨' },
-    { key: 'pipeline', href: `${baseUrl}/leads`, icon: '📥' },
     { key: 'services', href: `${baseUrl}/settings/services`, icon: '🧰' },
   ];
 
@@ -195,7 +194,8 @@ export function generateWelcomeEmail(
       background: linear-gradient(135deg, ${brandColor}18, ${lighterBrandColor}12);
       border-radius: 18px;
       padding: 28px 24px;
-      margin-bottom: 28px;
+      margin: 0 auto 28px;
+      max-width: 640px;
       border: 1px solid ${brandColor}26;
       box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
     ">
@@ -263,7 +263,7 @@ export function generateWelcomeEmail(
       </div>
     </div>
 
-    <div style="margin-bottom: 26px;">
+    <div style="margin: 0 auto 26px; max-width: 640px;">
       <h3 style="
         margin: 0 0 14px 0;
         font-size: 18px;
@@ -273,7 +273,7 @@ export function generateWelcomeEmail(
       ${checklistMarkup}
     </div>
 
-    <div style="margin-bottom: 26px;">
+    <div style="margin: 0 auto 26px; max-width: 640px;">
       <h3 style="
         margin: 0 0 12px 0;
         font-size: 17px;
@@ -288,6 +288,8 @@ export function generateWelcomeEmail(
       border: 1px solid #e2e8f0;
       border-radius: 14px;
       padding: 16px;
+      max-width: 640px;
+      margin: 0 auto;
     ">
       <p style="
         margin: 0 0 8px 0;

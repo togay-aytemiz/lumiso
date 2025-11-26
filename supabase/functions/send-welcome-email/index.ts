@@ -8,7 +8,10 @@ import { generateWelcomeEmail } from "../notification-processor/_templates/welco
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const siteUrl = Deno.env.get("SITE_URL") ?? "https://app.lumiso.com";
+const envSiteUrl = Deno.env.get("SITE_URL") ?? "";
+const siteUrl = envSiteUrl && !envSiteUrl.includes("netlify.app")
+  ? envSiteUrl
+  : "https://my.lumiso.app";
 const resend = createResendClient(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {

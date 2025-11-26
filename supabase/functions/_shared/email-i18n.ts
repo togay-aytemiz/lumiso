@@ -498,14 +498,14 @@ const EMAIL_TRANSLATIONS: Record<EmailLanguage, EmailTranslationNode> = {
       checklistTitle: "Çalışma alanını başlat",
       checklist: {
         lead: {
-          title: "İlk adayı ekle",
+          title: "İlk kişini ekle",
           description:
             "Yeni bir talep ekle ve takip hatırlatıcısı ayarla; hiçbir şey gözden kaçmasın.",
         },
         project: {
           title: "İlk projeni oluştur",
           description:
-            "Adayı zaman çizelgesi, notlar ve görevlerle net bir projeye dönüştür.",
+            "Kişiyi zaman çizelgesi, notlar ve görevlerle net bir projeye dönüştür.",
         },
         session: {
           title: "Yaklaşan bir seans planla",

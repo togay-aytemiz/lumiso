@@ -407,21 +407,28 @@ export function ProfileIntakeGate({ onVisibilityChange }: ProfileIntakeGateProps
       await refreshSettings();
 
       if (!hasCompletedIntakeOnce && activeOrganizationId) {
-        supabase.functions
-          .invoke("send-welcome-email", {
-            body: {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData.session?.access_token;
+        const functionsBase =
+          import.meta.env.VITE_SUPABASE_URL || "https://rifdykpdubrowzbylffe.supabase.co";
+
+        if (accessToken) {
+          // Fire-and-forget with keepalive so it survives tab close
+          fetch(`${functionsBase}/functions/v1/send-welcome-email`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
               organizationId: activeOrganizationId,
               locale: i18n.language,
-            },
-          })
-          .then(({ error }) => {
-            if (error) {
-              console.warn("Welcome email failed:", error);
-            }
-          })
-          .catch((error) => {
+            }),
+            keepalive: true,
+          }).catch((error) => {
             console.warn("Welcome email failed:", error);
           });
+        }
       }
 
       logAuthEvent("auth_first_profile_intake_finish", {

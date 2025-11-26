@@ -334,28 +334,51 @@ async function reserveSupportConfirmationSend(
   context: SupportConfirmationContext
 ): Promise<{ alreadySent: boolean }> {
   try {
-    const { data, error } = await supabaseClient
+    // 1) Check existing row to avoid wiping sent_at with upsert
+    const { data: existing, error: selectError } = await supabaseClient
       .from('support_email_confirmations')
-      .upsert(
-        {
-          user_id: context.userId,
-          confirmed_at: context.confirmedAtIso,
-          email: context.email ?? null,
-          locale: context.locale ?? null,
-          timezone: context.timezone ?? null,
-          metadata: context.rawMetadata ?? {},
-        },
-        { onConflict: 'user_id,confirmed_at' }
-      )
       .select('sent_at')
-      .single();
+      .eq('user_id', context.userId)
+      .eq('confirmed_at', context.confirmedAtIso)
+      .maybeSingle();
 
-    if (error) {
-      console.error('Failed to upsert support confirmation row:', error);
+    if (selectError) {
+      console.warn('Support confirmation pre-check failed:', selectError);
+    } else if (existing?.sent_at) {
+      return { alreadySent: true };
+    }
+
+    // 2) Try to insert reservation; if conflict, re-check
+    const { error: insertError } = await supabaseClient
+      .from('support_email_confirmations')
+      .insert({
+        user_id: context.userId,
+        confirmed_at: context.confirmedAtIso,
+        email: context.email ?? null,
+        locale: context.locale ?? null,
+        timezone: context.timezone ?? null,
+        metadata: context.rawMetadata ?? {},
+      });
+
+    if (insertError && insertError.code !== '23505') {
+      console.error('Failed to insert support confirmation row:', insertError);
       return { alreadySent: false };
     }
 
-    return { alreadySent: Boolean(data?.sent_at) };
+    // 3) Final check (covers race where another request inserted first)
+    const { data: finalRow, error: finalError } = await supabaseClient
+      .from('support_email_confirmations')
+      .select('sent_at')
+      .eq('user_id', context.userId)
+      .eq('confirmed_at', context.confirmedAtIso)
+      .maybeSingle();
+
+    if (finalError) {
+      console.warn('Support confirmation post-insert check failed:', finalError);
+      return { alreadySent: false };
+    }
+
+    return { alreadySent: Boolean(finalRow?.sent_at) };
   } catch (error) {
     console.error('Support confirmation dedupe error:', error);
     return { alreadySent: false };

@@ -62,10 +62,10 @@ export function generateWelcomeEmail(
           background: #ffffff;
           border: 1px solid #e2e8f0;
           border-radius: 16px;
-          padding: 18px;
+          padding: 18px 18px 18px 16px;
           display: flex;
-          gap: 12px;
-          align-items: flex-start;
+          gap: 16px;
+          align-items: center;
           margin-bottom: 12px;
           box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
         ">
@@ -77,9 +77,10 @@ export function generateWelcomeEmail(
             color: ${brandColor};
             font-weight: 700;
             font-size: 16px;
-            display: inline-block;
-            text-align: center;
-            line-height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
           ">${index + 1}</div>
           <div style="flex: 1 1 auto;">
             <div style="
@@ -89,9 +90,18 @@ export function generateWelcomeEmail(
               margin: 0 0 6px 0;
               display: flex;
               align-items: center;
-              gap: 8px;
+              gap: 10px;
             ">
-              <span>${item.icon}</span>
+              <span style="
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 36px;
+                height: 36px;
+                border-radius: 12px;
+                background: ${brandColor}12;
+                font-size: 18px;
+              ">${item.icon}</span>
               <span>${title}</span>
             </div>
             <p style="
@@ -128,24 +138,24 @@ export function generateWelcomeEmail(
       return `
         <div style="
           display: flex;
-          gap: 12px;
-          align-items: flex-start;
-          padding: 12px 10px;
+          gap: 14px;
+          align-items: center;
+          padding: 12px 12px;
           border-radius: 12px;
           border: 1px solid #e2e8f0;
           background: #f8fafc;
           margin-bottom: 10px;
         ">
           <div style="
-            width: 34px;
-            height: 34px;
-            border-radius: 10px;
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
             background: ${brandColor}12;
             color: ${brandColor};
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 18px;
           ">${item.icon}</div>
           <div style="flex: 1 1 auto;">
             <div style="

@@ -231,7 +231,7 @@ const EMAIL_TRANSLATIONS: Record<EmailLanguage, EmailTranslationNode> = {
       heroSubtitle: 'We set up {{businessName}} using the details you shared.',
       greeting: 'Hi {{name}},',
       intro:
-        "Thanks for completing your setup. Here’s a quick checklist to get your studio running today.",
+        "We’re thrilled to have you! Lumiso makes it easy to manage shoots, client communication, and deliveries all in one place. We put together 3 quick steps to help you start using Lumiso right away.",
       checklistTitle: 'Kick off your workspace',
       checklist: {
         lead: {
@@ -494,7 +494,7 @@ const EMAIL_TRANSLATIONS: Record<EmailLanguage, EmailTranslationNode> = {
       heroSubtitle: "{{businessName}} hesabını paylaştığın bilgilerle hazırladık.",
       greeting: "Merhaba {{name}},",
       intro:
-        "Kurulumu tamamladığın için teşekkürler. Bugün stüdyonu çalıştırmak için kısa bir kontrol listesi hazırladık.",
+        "Seni aramızda gördüğümüz için çok mutluyuz! Lumiso, çekimlerini düzenlemeni, müşterilerinle iletişimini ve teslimatlarını tek yerden kolayca yönetmeni sağlayacak. Lumiso'yu hızlıca kullanmaya başlamak için sana özel 3 hızlı adım hazırladık.",
       checklistTitle: "Çalışma alanını başlat",
       checklist: {
         lead: {

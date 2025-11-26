@@ -48,6 +48,7 @@ export function generateWelcomeEmail(
     { key: 'project', href: `${baseUrl}/projects`, icon: '🗂️' },
     { key: 'session', href: `${baseUrl}/sessions`, icon: '📅' },
   ];
+  const linkLabel = `${t('common.actions.view')} >`;
 
   const checklistMarkup = checklistConfig
     .map((item, index) => {
@@ -58,65 +59,31 @@ export function generateWelcomeEmail(
       const description = copy?.description || '';
 
       return `
-        <div style="
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 16px;
-          padding: 18px 18px 18px 16px;
-          display: flex;
-          gap: 16px;
-          align-items: center;
-          margin-bottom: 12px;
-          box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-        ">
+        <div style="margin: 0 0 16px 0;">
           <div style="
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            background: ${brandColor}15;
-            color: ${brandColor};
-            font-weight: 700;
             font-size: 16px;
-            display: inline-flex;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 6px 0;
+            display: flex;
             align-items: center;
-            justify-content: center;
-            line-height: 1;
-          ">${index + 1}</div>
-          <div style="flex: 1 1 auto;">
-            <div style="
-              font-size: 16px;
-              font-weight: 700;
-              color: #0f172a;
-              margin: 0 0 6px 0;
-              display: flex;
-              align-items: center;
-              gap: 10px;
-            ">
-              <span style="
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                width: 36px;
-                height: 36px;
-                border-radius: 12px;
-                background: ${brandColor}12;
-                font-size: 18px;
-              ">${item.icon}</span>
-              <span>${title}</span>
-            </div>
-            <p style="
-              margin: 0 0 10px 0;
-              color: #475569;
-              font-size: 14px;
-              line-height: 1.6;
-            ">${description}</p>
-            <a href="${item.href}" style="
-              color: ${brandColor};
-              font-weight: 600;
-              text-decoration: none;
-              font-size: 13px;
-            ">${t('common.actions.view')} →</a>
+            gap: 8px;
+          ">
+            <span style="font-size: 18px; line-height: 1;">${item.icon}</span>
+            <span>${title}</span>
           </div>
+          <p style="
+            margin: 0 0 6px 0;
+            color: #475569;
+            font-size: 14px;
+            line-height: 1.6;
+          ">${description}</p>
+          <a href="${item.href}" style="
+            color: ${brandColor};
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 13px;
+          ">${linkLabel}</a>
         </div>
       `;
     })
@@ -136,47 +103,31 @@ export function generateWelcomeEmail(
       const description = copy?.description || '';
 
       return `
-        <div style="
-          display: flex;
-          gap: 14px;
-          align-items: center;
-          padding: 12px 12px;
-          border-radius: 12px;
-          border: 1px solid #e2e8f0;
-          background: #f8fafc;
-          margin-bottom: 10px;
-        ">
+        <div style="margin: 0 0 14px 0;">
           <div style="
-            width: 38px;
-            height: 38px;
-            border-radius: 12px;
-            background: ${brandColor}12;
-            color: ${brandColor};
-            display: inline-flex;
+            font-size: 15px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 4px 0;
+            display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 18px;
-          ">${item.icon}</div>
-          <div style="flex: 1 1 auto;">
-            <div style="
-              font-size: 14px;
-              font-weight: 700;
-              color: #0f172a;
-              margin: 0 0 4px 0;
-            ">${title}</div>
-            <p style="
-              margin: 0 0 6px 0;
-              color: #475569;
-              font-size: 13px;
-              line-height: 1.5;
-            ">${description}</p>
-            <a href="${item.href}" style="
-              color: ${brandColor};
-              text-decoration: none;
-              font-weight: 600;
-              font-size: 12px;
-            ">${t('common.actions.view')} →</a>
+            gap: 8px;
+          ">
+            <span style="font-size: 18px; line-height: 1;">${item.icon}</span>
+            <span>${title}</span>
           </div>
+          <p style="
+            margin: 0 0 6px 0;
+            color: #475569;
+            font-size: 13px;
+            line-height: 1.5;
+          ">${description}</p>
+          <a href="${item.href}" style="
+            color: ${brandColor};
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 12px;
+          ">${linkLabel}</a>
         </div>
       `;
     })

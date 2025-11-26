@@ -290,6 +290,97 @@ interface SendEmailRequest {
   workflow_execution_id?: string;
 }
 
+const SUPPORT_CONFIRMATION_INTENT = 'support-email-confirmation';
+
+interface SupportConfirmationContext {
+  userId: string;
+  confirmedAtIso: string;
+  email?: string;
+  locale?: string;
+  timezone?: string;
+  rawMetadata: Record<string, string>;
+}
+
+function extractSupportConfirmation(metadata?: Record<string, string>): SupportConfirmationContext | null {
+  if (!metadata || metadata.intent !== SUPPORT_CONFIRMATION_INTENT) {
+    return null;
+  }
+
+  const userId = metadata.user_id;
+  const confirmedAtIso = metadata.confirmed_at_iso;
+
+  if (!userId || !confirmedAtIso) {
+    return null;
+  }
+
+  const parsed = new Date(confirmedAtIso);
+  if (Number.isNaN(parsed.getTime())) {
+    console.warn('Invalid confirmed_at_iso for support confirmation:', confirmedAtIso);
+    return null;
+  }
+
+  return {
+    userId,
+    confirmedAtIso: parsed.toISOString(),
+    email: metadata.email,
+    locale: metadata.locale,
+    timezone: metadata.timezone,
+    rawMetadata: metadata,
+  };
+}
+
+async function reserveSupportConfirmationSend(
+  supabaseClient: GenericSupabaseClient,
+  context: SupportConfirmationContext
+): Promise<{ alreadySent: boolean }> {
+  try {
+    const { data, error } = await supabaseClient
+      .from('support_email_confirmations')
+      .upsert(
+        {
+          user_id: context.userId,
+          confirmed_at: context.confirmedAtIso,
+          email: context.email ?? null,
+          locale: context.locale ?? null,
+          timezone: context.timezone ?? null,
+          metadata: context.rawMetadata ?? {},
+        },
+        { onConflict: 'user_id,confirmed_at' }
+      )
+      .select('sent_at')
+      .single();
+
+    if (error) {
+      console.error('Failed to upsert support confirmation row:', error);
+      return { alreadySent: false };
+    }
+
+    return { alreadySent: Boolean(data?.sent_at) };
+  } catch (error) {
+    console.error('Support confirmation dedupe error:', error);
+    return { alreadySent: false };
+  }
+}
+
+async function markSupportConfirmationSent(
+  supabaseClient: GenericSupabaseClient,
+  context: SupportConfirmationContext,
+  providerId?: string | null
+) {
+  try {
+    await supabaseClient
+      .from('support_email_confirmations')
+      .update({
+        sent_at: new Date().toISOString(),
+        provider_id: providerId ?? null,
+      })
+      .eq('user_id', context.userId)
+      .eq('confirmed_at', context.confirmedAtIso);
+  } catch (error) {
+    console.warn('Failed to mark support confirmation as sent:', error);
+  }
+}
+
 export function replacePlaceholders(text: string, data: Record<string, string>): string {
   return text.replace(/\{(\w+)(?:\|([^}]*))?\}/g, (match, key, fallback) => {
     const value = data[key];
@@ -1062,7 +1153,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
     
     // Handle template builder requests
-    const { to, subject, preheader, blocks, mockData, isTest } = requestData;
+    const { to, subject, preheader, blocks, mockData, isTest, metadata } = requestData;
 
     console.log('Template builder - Sending email to:', to);
     console.log('Subject:', subject);
@@ -1075,11 +1166,26 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey) as GenericSupabaseClient;
+    const supportConfirmation = extractSupportConfirmation(metadata);
+
+    if (supportConfirmation) {
+      const { alreadySent } = await reserveSupportConfirmationSend(supabaseClient, supportConfirmation);
+      if (alreadySent) {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            deduped: true,
+            reason: 'Support confirmation already recorded for this user and timestamp',
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Get organization settings for dynamic footer
     let organizationSettings: OrganizationSettings | null = null;
     try {
-      const supabaseClient = createClient(supabaseUrl, supabaseServiceKey) as GenericSupabaseClient;
-      
       // Get user from auth header
       const authHeader = req.headers.get('authorization');
       if (authHeader) {
@@ -1147,11 +1253,13 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send(emailData);
 
     console.log('Email sent successfully:', emailResponse);
+    if (supportConfirmation) {
+      await markSupportConfirmationSent(supabaseClient, supportConfirmation, emailResponse.data?.id);
+    }
 
     // Log the email send (optional)
     if (!isTest) {
       try {
-        const supabaseClient = createClient(supabaseUrl, supabaseServiceKey) as GenericSupabaseClient;
         await supabaseClient.from('email_logs').insert({
           recipient: to,
           subject: emailData.subject,

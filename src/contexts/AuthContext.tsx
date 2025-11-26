@@ -205,6 +205,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             subject: `Email confirmed: ${confirmedUser.email}`,
             preheader: `Confirmed at ${localConfirmed} (${timezone})`,
             blocks,
+            metadata: {
+              intent: 'support-email-confirmation',
+              user_id: confirmedUser.id,
+              confirmed_at_iso: confirmedAtIso,
+              email: confirmedUser.email || '',
+              locale,
+              timezone,
+            },
           },
         });
 

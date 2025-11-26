@@ -164,9 +164,10 @@ serve(async (req: Request): Promise<Response> => {
       name: userFullName,
       businessName: templateData.businessName,
     });
+    const fromAddress = `${templateData.businessName || "Lumiso"} <hello@updates.lumiso.app>`;
 
     const sendResult = await resend.emails.send({
-      from: "Lumiso <welcome@lumiso.app>",
+      from: fromAddress,
       to: [recipientEmail],
       subject,
       html,

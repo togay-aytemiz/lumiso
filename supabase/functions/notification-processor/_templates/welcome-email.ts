@@ -59,7 +59,12 @@ export function generateWelcomeEmail(
       const description = copy?.description || '';
 
       return `
-        <div style="margin: 0 0 16px 0;">
+        <div style="
+          margin: 0 0 16px 0;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 14px 16px;
+        ">
           <div style="
             font-size: 16px;
             font-weight: 700;
@@ -103,7 +108,12 @@ export function generateWelcomeEmail(
       const description = copy?.description || '';
 
       return `
-        <div style="margin: 0 0 14px 0;">
+        <div style="
+          margin: 0 0 14px 0;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 12px 14px;
+        ">
           <div style="
             font-size: 15px;
             font-weight: 700;

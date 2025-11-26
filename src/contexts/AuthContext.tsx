@@ -4,6 +4,40 @@ import { supabase } from '@/integrations/supabase/client';
 
 type UserRole = 'admin' | 'support' | 'user';
 
+type ConfirmationNotifiedMap = Record<string, string>;
+
+const CONFIRM_NOTIFY_STORAGE_KEY = 'lumiso.emailConfirmed.notified';
+const RECENT_CONFIRM_WINDOW_MINUTES = 120;
+
+const loadConfirmationNotified = (): ConfirmationNotifiedMap => {
+  if (typeof localStorage === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(CONFIRM_NOTIFY_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return typeof parsed === 'object' && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
+};
+
+const markConfirmationNotified = (userId: string, confirmedAtIso: string) => {
+  if (typeof localStorage === 'undefined') return;
+  const current = loadConfirmationNotified();
+  current[userId] = confirmedAtIso;
+  try {
+    localStorage.setItem(CONFIRM_NOTIFY_STORAGE_KEY, JSON.stringify(current));
+  } catch {
+    // Best-effort only
+  }
+};
+
+const escapeForEmail = (value: unknown) =>
+  String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -63,6 +97,122 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     let isMounted = true;
 
+    const sendConfirmationNotification = async (
+      confirmedUser: User,
+      confirmedAtIso: string
+    ) => {
+      const confirmationDate = new Date(confirmedAtIso);
+      const timezone =
+        Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown';
+      const locale =
+        typeof navigator !== 'undefined' ? navigator.language : 'unknown';
+      const localConfirmed = confirmationDate.toLocaleString(undefined, {
+        timeZone: timezone === 'unknown' ? undefined : timezone,
+      });
+
+      const userMeta = (confirmedUser.user_metadata || {}) as Record<string, unknown>;
+      const legalConsents = (userMeta.legal_consents || {}) as Record<
+        string,
+        { version?: string | number | null; acceptedAt?: string }
+      >;
+      const consentLabels: Record<string, string> = {
+        terms: 'Terms',
+        privacy: 'Privacy',
+        kvkk: 'KVKK',
+        dpa: 'DPA',
+        marketing: 'Marketing',
+      };
+
+      const consentLines = Object.entries(legalConsents)
+        .map(([key, consent]) => {
+          const label = consentLabels[key] || key;
+          const versionLabel =
+            consent?.version !== null && consent?.version !== undefined
+              ? `v${consent.version}`
+              : 'version unknown';
+          const acceptedAt = consent?.acceptedAt || consent?.accepted_at;
+          const acceptedLocal = acceptedAt
+            ? new Date(String(acceptedAt)).toLocaleString(undefined, {
+                timeZone: timezone === 'unknown' ? undefined : timezone,
+              })
+            : null;
+          return `${label}: ${versionLabel}${
+            acceptedLocal ? ` @ ${acceptedLocal} (${acceptedAt})` : ''
+          }`;
+        })
+        .map(escapeForEmail);
+
+      const detailLines = [
+        `Email: ${escapeForEmail(confirmedUser.email)}`,
+        `Supabase user id: ${escapeForEmail(confirmedUser.id)}`,
+        `Confirmed at (ISO): ${escapeForEmail(confirmedAtIso)}`,
+        `Confirmed local time (${timezone}): ${escapeForEmail(localConfirmed)}`,
+        `Locale: ${escapeForEmail(locale)}`,
+        `Marketing opt-in: ${userMeta.marketing_opt_in ? 'yes' : 'no'}`,
+        `Accepted terms flag: ${userMeta.accepted_terms ? 'yes' : 'no'}`,
+      ];
+
+      const blocks = [
+        {
+          id: 'email-confirmed-header',
+          type: 'header',
+          order: 0,
+          data: {
+            title: 'Email confirmed',
+            tagline: 'Auth verification capture',
+          },
+        },
+        {
+          id: 'email-confirmed-details',
+          type: 'text',
+          order: 1,
+          data: {
+            content: detailLines.join('\n'),
+            formatting: { bullets: true },
+          },
+        },
+      ] as Array<{
+        id: string;
+        type: string;
+        order: number;
+        data: Record<string, unknown>;
+      }>;
+
+      if (consentLines.length > 0) {
+        blocks.push({
+          id: 'email-confirmed-consents',
+          type: 'text',
+          order: 2,
+          data: {
+            content: consentLines.join('\n'),
+            formatting: { bullets: true },
+          },
+        });
+      }
+
+      try {
+        const { error } = await supabase.functions.invoke('send-template-email', {
+          body: {
+            to: 'support@lumiso.app',
+            subject: `Email confirmed: ${confirmedUser.email}`,
+            preheader: `Confirmed at ${localConfirmed} (${timezone})`,
+            blocks,
+          },
+        });
+
+        if (error) {
+          console.error('Failed to send support confirmation email', error);
+        } else {
+          console.info('Support confirmation email sent', {
+            email: confirmedUser.email,
+            confirmedAtIso,
+          });
+        }
+      } catch (error) {
+        console.error('Support confirmation email error', error);
+      }
+    };
+
     const initializeAuth = async () => {
       try {
         // Get current session
@@ -89,6 +239,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           setLoading(false);
           setInitialized(true);
+
+          // Notify support for fresh confirmations (guarded to avoid spam)
+          const confirmedAt = session?.user?.email_confirmed_at;
+          if (session?.user?.id && confirmedAt) {
+            const confirmedAtIso = new Date(confirmedAt).toISOString();
+            const notified = loadConfirmationNotified();
+            if (notified[session.user.id] !== confirmedAtIso) {
+              const ageMinutes =
+                (Date.now() - new Date(confirmedAtIso).getTime()) / 60000;
+              if (ageMinutes >= 0 && ageMinutes <= RECENT_CONFIRM_WINDOW_MINUTES) {
+                void sendConfirmationNotification(session.user, confirmedAtIso);
+              }
+              markConfirmationNotified(session.user.id, confirmedAtIso);
+            }
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
@@ -124,6 +289,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!initialized) {
             setLoading(false);
             setInitialized(true);
+          }
+
+          // Notify support for fresh confirmations on auth state change
+          const confirmedAt = session?.user?.email_confirmed_at;
+          if (session?.user?.id && confirmedAt) {
+            const confirmedAtIso = new Date(confirmedAt).toISOString();
+            const notified = loadConfirmationNotified();
+            if (notified[session.user.id] !== confirmedAtIso) {
+              const ageMinutes =
+                (Date.now() - new Date(confirmedAtIso).getTime()) / 60000;
+              if (ageMinutes >= 0 && ageMinutes <= RECENT_CONFIRM_WINDOW_MINUTES) {
+                void sendConfirmationNotification(session.user, confirmedAtIso);
+              }
+              markConfirmationNotified(session.user.id, confirmedAtIso);
+            }
           }
         }
       }

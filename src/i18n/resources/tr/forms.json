@@ -1958,7 +1958,7 @@
       "title": "Giriş yap",
       "subtitle": "Hesabına eriş",
       "button": "Giriş yap",
-      "forgot_password": "Şifrenizi mi unuttunuz?",
+      "forgot_password": "Şifreni mi unuttun?",
       "sending_link": "Bağlantı gönderiliyor...",
       "link": "Hesabın yok mu"
     },
@@ -1971,10 +1971,10 @@
     "password_reset": {
       "title": "Şifreyi sıfırla",
       "button": "Yeni şifreyi kaydet",
-      "instructions": "Çalışma alanınıza yeniden erişmek için yeni bir şifre belirleyin.",
+      "instructions": "Çalışma alanına yeniden erişmek için yeni bir şifre belirle.",
       "back_to_sign_in": "Giriş sayfasına dön",
       "request_title": "Şifre kurtarma",
-      "request_instructions": "E-posta adresinizi girin, şifrenizi sıfırlamanız için size bir bağlantı gönderelim.",
+      "request_instructions": "E-posta adresini gir, şifreni sıfırlaman için sana bir bağlantı gönderelim.",
       "request_button": "Sıfırlama bağlantısı gönder"
     },
     "password_visibility": {

@@ -5,15 +5,15 @@
       "signIn": "Hoşgeldin 👋🏻",
       "signUp": "Başlayalım 🚀",
       "verify": "E-postanı kontrol et ✉️",
-      "recovery": "Şifrenizi sıfırlayın 🔐",
-      "recoveryRequest": "Şifrenizi sıfırlayın 🔐"
+      "recovery": "Şifreni sıfırla 🔐",
+      "recoveryRequest": "Şifreni sıfırla 🔐"
     },
       "copy": {
         "signIn": "Devam etmek için giriş yap.",
         "signUp": "Lumiso hesabını oluştur; kişileri, projeleri, rezervasyonları düzenli tut.",
         "verify": "Doğrulama bağlantısını e-postana gönderdik; çalışma alanını etkinleştirmek için onayla.",
-        "recovery": "Hesabınıza yeniden erişmek için yeni bir şifre oluşturun.",
-      "recoveryRequest": "E-posta adresinizi girin, şifre sıfırlama bağlantısını hemen gönderelim."
+        "recovery": "Hesabına yeniden erişmek için yeni bir şifre oluştur.",
+      "recoveryRequest": "E-posta adresini gir, şifre sıfırlama bağlantısını hemen gönderelim."
     },
     "verification": {
       "badge": "E-posta doğrulaması",
@@ -60,8 +60,8 @@
       }
     ],
     "toggle": {
-      "existingAccount": "Zaten hesabınız var mı?",
-      "newToBrand": "{{brand}} hesabınız yok mu?"
+      "existingAccount": "Zaten hesabın var mı?",
+      "newToBrand": "{{brand}} hesabın yok mu?"
     },
     "controls": {
       "showFeature": "{{index}}. özelliği göster",

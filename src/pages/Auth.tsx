@@ -28,6 +28,34 @@ import {
   type LegalVersionsMap,
 } from "@/lib/legalVersions";
 
+type LegalConsentEntry = {
+  version: string | number | null;
+  acceptedAt: string;
+};
+
+type LegalConsentsPayload = {
+  terms: LegalConsentEntry | null;
+  privacy: LegalConsentEntry | null;
+  kvkk: LegalConsentEntry | null;
+  dpa: LegalConsentEntry | null;
+  marketing: LegalConsentEntry | null;
+};
+
+type SupportSignupPayload = {
+  email: string;
+  supabaseUserId?: string;
+  emailConfirmed?: boolean;
+  acceptedMarketing: boolean;
+  acceptedTerms: boolean;
+  legalConsents: LegalConsentsPayload;
+};
+
+const escapeForEmail = (value: unknown) =>
+  String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
 const normalizeAuthPath = (pathname: string) => {
   const trimmed =
     pathname.endsWith("/") && pathname !== "/"
@@ -170,6 +198,117 @@ const Auth = () => {
       });
     },
     [email]
+  );
+
+  const sendSupportSignupNotification = useCallback(
+    async (payload: SupportSignupPayload) => {
+      const now = new Date();
+      const userEmail = payload.email.trim();
+      const safeEmail = escapeForEmail(userEmail || payload.email);
+      const timezone =
+        Intl.DateTimeFormat().resolvedOptions().timeZone || "unknown";
+      const locale =
+        typeof navigator !== "undefined" ? navigator.language : "unknown";
+      const localTime = now.toLocaleString(undefined, {
+        timeZone: timezone === "unknown" ? undefined : timezone,
+      });
+
+      const formatConsent = (
+        label: string,
+        consent: LegalConsentEntry | null
+      ) => {
+        if (!consent) {
+          return `${label}: not accepted`;
+        }
+
+        const acceptedLocalTime = new Date(consent.acceptedAt).toLocaleString(
+          undefined,
+          { timeZone: timezone === "unknown" ? undefined : timezone }
+        );
+
+        const versionLabel =
+          consent.version !== null && consent.version !== undefined
+            ? `v${consent.version}`
+            : "version unknown";
+
+        return `${label}: ${versionLabel} @ ${acceptedLocalTime} (${consent.acceptedAt})`;
+      };
+
+      const consentLines = [
+        formatConsent("Terms", payload.legalConsents.terms),
+        formatConsent("Privacy", payload.legalConsents.privacy),
+        formatConsent("KVKK", payload.legalConsents.kvkk),
+        formatConsent("DPA", payload.legalConsents.dpa),
+        formatConsent("Marketing", payload.legalConsents.marketing),
+      ].map(escapeForEmail);
+
+      const detailLines = [
+        `Email: ${safeEmail}`,
+        `Supabase user id: ${escapeForEmail(
+          payload.supabaseUserId || "unknown"
+        )}`,
+        `Email confirmed: ${payload.emailConfirmed ? "yes" : "no"}`,
+        `Accepted terms: ${payload.acceptedTerms ? "yes" : "no"}`,
+        `Marketing opt-in: ${payload.acceptedMarketing ? "yes" : "no"}`,
+        `Signup ISO timestamp: ${now.toISOString()}`,
+        `Local time (${timezone}): ${escapeForEmail(localTime)}`,
+        `Locale: ${escapeForEmail(locale)}`,
+      ];
+
+      try {
+        const { error } = await supabase.functions.invoke(
+          "send-template-email",
+          {
+            body: {
+              to: "support@lumiso.app",
+              subject: `New sign-up: ${userEmail || payload.email}`,
+              preheader: `Captured at ${localTime} (${timezone})`,
+              blocks: [
+                {
+                  id: "signup-header",
+                  type: "header",
+                  order: 0,
+                  data: {
+                    title: "New Lumiso sign-up",
+                    tagline: "Auth form capture",
+                  },
+                },
+                {
+                  id: "signup-details",
+                  type: "text",
+                  order: 1,
+                  data: {
+                    content: detailLines.join("\n"),
+                    formatting: { bullets: true },
+                  },
+                },
+                {
+                  id: "signup-consents",
+                  type: "text",
+                  order: 2,
+                  data: {
+                    content: consentLines.join("\n"),
+                    formatting: { bullets: true },
+                  },
+                },
+              ],
+            },
+          }
+        );
+
+        if (error) {
+          console.error("Failed to send support signup email", error);
+        } else {
+          console.info("Support signup email sent", {
+            email: payload.email,
+            supabaseUserId: payload.supabaseUserId,
+          });
+        }
+      } catch (error) {
+        console.error("Support signup email error", error);
+      }
+    },
+    []
   );
 
   // Password strength helpers (sign-up only UI)
@@ -478,7 +617,7 @@ const Auth = () => {
           );
         }
 
-        const buildLegalConsentsPayload = () => {
+        const buildLegalConsentsPayload = (): LegalConsentsPayload => {
           const timestamp = new Date().toISOString();
           const versionFor = (id: LegalDocumentId) =>
             legalVersions?.[id]?.version ?? null;
@@ -497,7 +636,8 @@ const Auth = () => {
           };
         };
 
-        const legalConsents = buildLegalConsentsPayload();
+        const legalConsents: LegalConsentsPayload =
+          buildLegalConsentsPayload();
 
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -518,6 +658,15 @@ const Auth = () => {
             email,
             supabaseUserId: data.user.id,
             emailConfirmed: Boolean(data.user.email_confirmed_at),
+          });
+
+          void sendSupportSignupNotification({
+            email,
+            supabaseUserId: data.user.id,
+            emailConfirmed: Boolean(data.user.email_confirmed_at),
+            acceptedMarketing: acceptsMarketing,
+            acceptedTerms: acceptsTerms,
+            legalConsents,
           });
         }
 
@@ -779,11 +928,19 @@ const Auth = () => {
   useEffect(() => {
     const hashParams = new URLSearchParams(location.hash.replace(/^#/, ""));
     const searchParams = new URLSearchParams(location.search);
+    const typeFromParams = (
+      hashParams.get("type") || searchParams.get("type") || ""
+    ).toLowerCase();
 
-    if (
-      hashParams.get("type") === "recovery" ||
-      searchParams.get("type") === "recovery"
-    ) {
+    if (typeFromParams === "recovery-request") {
+      setIsSignUp(false);
+      setIsPasswordResetMode(false);
+      setIsPasswordResetRequestMode(true);
+      setShowPassword(false);
+      return;
+    }
+
+    if (typeFromParams === "recovery") {
       if (
         getModeFromLocation(location.pathname, location.search) === "signup"
       ) {
@@ -1187,7 +1344,7 @@ const Auth = () => {
                                   setIsPasswordResetMode(false);
                                   setIsPasswordResetRequestMode(true);
                                   setShowPassword(false);
-                                  navigate("/auth/signin");
+                                  navigate("/auth/signin?type=recovery-request");
                                 }}
                                 disabled={loading}
                                 className="px-0 text-sm font-semibold text-primary hover:text-primary/80"

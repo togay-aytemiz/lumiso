@@ -5,6 +5,34 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { LanguageContext, type LanguageContextType } from './languageShared';
 
+const FALLBACK_LANGUAGE = 'en';
+
+const normalizeLanguageCode = (
+  languageCode?: string,
+  availableCodes: string[] = []
+): string => {
+  if (!languageCode) {
+    return availableCodes[0] ?? FALLBACK_LANGUAGE;
+  }
+
+  const normalizedAvailable = availableCodes.map(code => code.toLowerCase());
+  const lowerCased = languageCode.toLowerCase();
+  const primary = lowerCased.split('-')[0];
+  const candidates = Array.from(new Set([primary, lowerCased].filter(Boolean)));
+
+  for (const code of candidates) {
+    if (normalizedAvailable.length === 0 || normalizedAvailable.includes(code)) {
+      return code;
+    }
+  }
+
+  if (normalizedAvailable.includes(FALLBACK_LANGUAGE)) {
+    return FALLBACK_LANGUAGE;
+  }
+
+  return normalizedAvailable[0] ?? FALLBACK_LANGUAGE;
+};
+
 interface LanguageProviderProps {
   children: ReactNode;
 }
@@ -12,13 +40,23 @@ interface LanguageProviderProps {
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const { i18n, t } = useTranslation(["messages", "common"]);
   const { user } = useAuth();
-  const [currentLanguage, setCurrentLanguage] = useState(i18n.language || 'en');
   const [availableLanguages, setAvailableLanguages] = useState<Array<{
     code: string;
     name: string;
     native_name: string;
   }>>([]);
+  const [currentLanguage, setCurrentLanguage] = useState(() =>
+    normalizeLanguageCode(i18n.language || FALLBACK_LANGUAGE)
+  );
   const [isLoading, setIsLoading] = useState(true);
+
+  const normalizeLanguage = useCallback(
+    (languageCode?: string) => normalizeLanguageCode(
+      languageCode,
+      availableLanguages.map(language => language.code.toLowerCase())
+    ),
+    [availableLanguages]
+  );
 
   const loadAvailableLanguages = useCallback(async () => {
     try {
@@ -37,13 +75,41 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   }, []);
 
   const changeLanguageInternal = useCallback(async (languageCode: string) => {
+    const normalizedLanguage = normalizeLanguage(languageCode);
     try {
-      await i18n.changeLanguage(languageCode);
-      setCurrentLanguage(languageCode);
+      await i18n.changeLanguage(normalizedLanguage);
+      setCurrentLanguage(normalizedLanguage);
     } catch (error: unknown) {
       console.error('Error changing language:', error);
     }
-  }, [i18n]);
+  }, [i18n, normalizeLanguage]);
+
+  const persistUserLanguagePreference = useCallback(async (
+    languageCode: string,
+    options?: { showToastOnError?: boolean }
+  ) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('user_language_preferences')
+      .upsert({
+        user_id: user.id,
+        language_code: languageCode,
+      }, {
+        onConflict: 'user_id'
+      });
+
+    if (error) {
+      console.error('Error saving language preference:', error);
+      if (options?.showToastOnError) {
+        toast({
+          title: t("toast.warning", { ns: "common" }),
+          description: t("language.preferenceWarning", { ns: "messages" }),
+          variant: "destructive",
+        });
+      }
+    }
+  }, [t, user]);
 
   const loadUserLanguagePreference = useCallback(async () => {
     if (!user) return;
@@ -56,7 +122,20 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
         .maybeSingle();
 
       if (preference?.language_code) {
-        await changeLanguageInternal(preference.language_code);
+        const normalizedPreference = normalizeLanguage(preference.language_code);
+        await changeLanguageInternal(normalizedPreference);
+
+        if (normalizedPreference !== preference.language_code) {
+          await persistUserLanguagePreference(normalizedPreference);
+        }
+      } else {
+        const detectedLanguage = normalizeLanguage(
+          i18n.language ||
+          (typeof navigator !== 'undefined' ? navigator.language : FALLBACK_LANGUAGE)
+        );
+
+        await changeLanguageInternal(detectedLanguage);
+        await persistUserLanguagePreference(detectedLanguage);
       }
     } catch (error: unknown) {
       // No preference found, use browser detection or default
@@ -64,39 +143,25 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [changeLanguageInternal, user]);
+  }, [changeLanguageInternal, i18n.language, normalizeLanguage, persistUserLanguagePreference, user]);
 
   const changeLanguage = useCallback(async (languageCode: string) => {
+    const normalizedLanguage = normalizeLanguage(languageCode);
+
     try {
       setIsLoading(true);
       
       // Change the i18n language
-      await changeLanguageInternal(languageCode);
+      await changeLanguageInternal(normalizedLanguage);
 
       // Save user preference if authenticated
       if (user) {
-        const { error } = await supabase
-          .from('user_language_preferences')
-          .upsert({
-            user_id: user.id,
-            language_code: languageCode,
-          }, {
-            onConflict: 'user_id'
-          });
-
-        if (error) {
-          console.error('Error saving language preference:', error);
-          toast({
-            title: t("toast.warning", { ns: "common" }),
-            description: t("language.preferenceWarning", { ns: "messages" }),
-            variant: "destructive",
-          });
-        }
+        await persistUserLanguagePreference(normalizedLanguage, { showToastOnError: true });
       }
 
       toast({
         title: t("language.changeTitle", { ns: "messages" }),
-        description: t("language.changeDescription", { ns: "messages", language: languageCode.toUpperCase() }),
+        description: t("language.changeDescription", { ns: "messages", language: normalizedLanguage.toUpperCase() }),
       });
     } catch (error: unknown) {
       console.error('Error changing language:', error);
@@ -108,7 +173,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [changeLanguageInternal, user]);
+  }, [changeLanguageInternal, normalizeLanguage, persistUserLanguagePreference, t, user]);
 
   // Load available languages
   useEffect(() => {
@@ -124,6 +189,15 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       setIsLoading(false);
     }
   }, [user, loadUserLanguagePreference]);
+
+  useEffect(() => {
+    if (!availableLanguages.length) return;
+
+    const normalized = normalizeLanguage(currentLanguage);
+    if (normalized !== currentLanguage) {
+      void changeLanguageInternal(normalized);
+    }
+  }, [availableLanguages, changeLanguageInternal, currentLanguage, normalizeLanguage]);
 
   const value: LanguageContextType = {
     currentLanguage,

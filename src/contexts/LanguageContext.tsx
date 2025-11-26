@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,6 +40,7 @@ interface LanguageProviderProps {
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const { i18n, t } = useTranslation(["messages", "common"]);
   const { user } = useAuth();
+  const userId = user?.id;
   const [availableLanguages, setAvailableLanguages] = useState<Array<{
     code: string;
     name: string;
@@ -49,6 +50,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     normalizeLanguageCode(i18n.language || FALLBACK_LANGUAGE)
   );
   const [isLoading, setIsLoading] = useState(true);
+  const preferenceLoadedForUser = useRef<string | null>(null);
 
   const normalizeLanguage = useCallback(
     (languageCode?: string) => normalizeLanguageCode(
@@ -85,15 +87,14 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   }, [i18n, normalizeLanguage]);
 
   const persistUserLanguagePreference = useCallback(async (
+    userId: string,
     languageCode: string,
     options?: { showToastOnError?: boolean }
   ) => {
-    if (!user) return;
-
     const { error } = await supabase
       .from('user_language_preferences')
       .upsert({
-        user_id: user.id,
+        user_id: userId,
         language_code: languageCode,
       }, {
         onConflict: 'user_id'
@@ -109,16 +110,14 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
         });
       }
     }
-  }, [t, user]);
+  }, [t]);
 
-  const loadUserLanguagePreference = useCallback(async () => {
-    if (!user) return;
-
+  const loadUserLanguagePreference = useCallback(async (userId: string) => {
     try {
       const { data: preference } = await supabase
         .from('user_language_preferences')
         .select('language_code')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .maybeSingle();
 
       if (preference?.language_code) {
@@ -126,7 +125,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
         await changeLanguageInternal(normalizedPreference);
 
         if (normalizedPreference !== preference.language_code) {
-          await persistUserLanguagePreference(normalizedPreference);
+          await persistUserLanguagePreference(userId, normalizedPreference);
         }
       } else {
         const detectedLanguage = normalizeLanguage(
@@ -135,7 +134,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
         );
 
         await changeLanguageInternal(detectedLanguage);
-        await persistUserLanguagePreference(detectedLanguage);
+        await persistUserLanguagePreference(userId, detectedLanguage);
       }
     } catch (error: unknown) {
       // No preference found, use browser detection or default
@@ -143,7 +142,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [changeLanguageInternal, i18n.language, normalizeLanguage, persistUserLanguagePreference, user]);
+  }, [changeLanguageInternal, i18n.language, normalizeLanguage, persistUserLanguagePreference]);
 
   const changeLanguage = useCallback(async (languageCode: string) => {
     const normalizedLanguage = normalizeLanguage(languageCode);
@@ -155,8 +154,8 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       await changeLanguageInternal(normalizedLanguage);
 
       // Save user preference if authenticated
-      if (user) {
-        await persistUserLanguagePreference(normalizedLanguage, { showToastOnError: true });
+      if (userId) {
+        await persistUserLanguagePreference(userId, normalizedLanguage, { showToastOnError: true });
       }
 
       toast({
@@ -173,7 +172,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [changeLanguageInternal, normalizeLanguage, persistUserLanguagePreference, t, user]);
+  }, [changeLanguageInternal, normalizeLanguage, persistUserLanguagePreference, t, userId]);
 
   // Load available languages
   useEffect(() => {
@@ -182,13 +181,21 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
 
   // Load user's language preference
   useEffect(() => {
-    if (user) {
-      loadUserLanguagePreference();
-    } else {
+    if (!userId) {
+      preferenceLoadedForUser.current = null;
       // For non-authenticated users, use browser detection or default
       setIsLoading(false);
+      return;
     }
-  }, [user, loadUserLanguagePreference]);
+
+    if (preferenceLoadedForUser.current === userId) {
+      // Prevent repeated preference fetches when the user object reference changes
+      return;
+    }
+
+    preferenceLoadedForUser.current = userId;
+    void loadUserLanguagePreference(userId);
+  }, [loadUserLanguagePreference, userId]);
 
   useEffect(() => {
     if (!availableLanguages.length) return;

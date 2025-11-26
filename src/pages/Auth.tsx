@@ -1251,7 +1251,8 @@ const Auth = () => {
                                 className="mt-[2px] h-4 w-4"
                               />
                               <p className="text-sm text-slate-700">
-                                Kampanya ve tanıtım amaçlı e-posta/SMS gönderimini ve{" "}
+                                Kampanya ve tanıtım amaçlı e-posta/SMS
+                                gönderimini ve{" "}
                                 <button
                                   type="button"
                                   data-legal-link
@@ -1294,11 +1295,11 @@ const Auth = () => {
                                     onClick={(event) => {
                                       event.preventDefault();
                                       event.stopPropagation();
-                                    openLegalLink("terms");
-                                  }}
-                                >
-                                  Hizmet Şartları
-                                </button>{" "}
+                                      openLegalLink("terms");
+                                    }}
+                                  >
+                                    Hizmet Şartları
+                                  </button>{" "}
                                   ve{" "}
                                   <button
                                     type="button"
@@ -1307,11 +1308,11 @@ const Auth = () => {
                                     onClick={(event) => {
                                       event.preventDefault();
                                       event.stopPropagation();
-                                    openLegalLink("privacy");
-                                  }}
-                                >
-                                  Gizlilik Politikası
-                                </button>{" "}
+                                      openLegalLink("privacy");
+                                    }}
+                                  >
+                                    Gizlilik Politikası
+                                  </button>{" "}
                                   okudum ve kabul ediyorum.
                                 </p>
                                 {termsError && (
@@ -1418,7 +1419,7 @@ const Auth = () => {
             </div>
           </div>
 
-          <div className="relative hidden min-h-full flex-1 flex-col justify-between overflow-hidden bg-slate-900 text-white lg:flex">
+          <div className="relative hidden min-h-full flex-1 flex-col overflow-hidden bg-slate-900 text-white lg:flex">
             {/* Aurora gradient background with floating blobs */}
             <div
               className="pointer-events-none absolute inset-0 overflow-hidden"
@@ -1430,12 +1431,12 @@ const Auth = () => {
               <div className="absolute -top-10 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-fuchsia-400/15 blur-3xl float-slow [animation-delay:2.4s]" />
             </div>
 
-            <div className="relative flex flex-1 flex-col px-12 py-14">
-              <div className="mb-12 flex flex-col gap-3">
+            <div className="relative flex flex-1 flex-col items-start justify-center  px-12 py-14">
+              <div className="flex w-full max-w-3xl flex-col gap-3">
                 <span className="w-fit rounded-full bg-white/15 px-4 py-1 text-sm font-medium text-white/85 backdrop-blur">
                   {currentFeatureChip}
                 </span>
-                <div className="relative h-[96px] max-w-xl">
+                <div className="relative w-full min-h-[150px] max-w-3xl">
                   {featureSlides.map((slide, index) => (
                     <div
                       key={`title-${index}`}
@@ -1448,7 +1449,7 @@ const Auth = () => {
                       <h2 className="text-3xl font-semibold leading-tight fade-in-up">
                         {slide.title}
                       </h2>
-                      <p className="mt-2 max-w-xl text-base text-white/80">
+                      <p className="mt-3 max-w-3xl text-base text-white/80">
                         {slide.description}
                       </p>
                     </div>
@@ -1456,93 +1457,83 @@ const Auth = () => {
                 </div>
               </div>
 
-              <div className="relative mt-auto flex flex-1 items-center">
-                <div
-                  key={activeFeatureIndex}
-                  className="relative w-full transition-transform duration-700 will-change-transform fade-in-up"
-                >
-                  <img
-                    src="/placeholder.svg"
-                    alt="Showcase placeholder"
-                    className="h-[520px] w-full rounded-[28px] object-cover"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="relative flex items-center justify-between px-12 pb-10">
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPrevFeatureIndex(activeFeatureIndex);
-                    setActiveFeatureIndex(
-                      (prev) =>
-                        (prev - 1 + featureSlides.length) % featureSlides.length
-                    );
-                  }}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 text-white/80 hover:bg-white/10 hover:text-white transition"
-                  aria-label={tPages("auth.controls.prev", "Previous feature")}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                {featureSlides.map((_, index) => {
-                  const segmentPct =
-                    index < activeFeatureIndex
-                      ? 100
-                      : index === activeFeatureIndex
-                      ? progress
-                      : 0;
-                  return (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => {
-                        setPrevFeatureIndex(activeFeatureIndex);
-                        setActiveFeatureIndex(index);
-                      }}
-                      className="group relative h-2 w-24 overflow-hidden rounded-full bg-white/25"
-                      aria-label={
-                        tPages("auth.controls.showFeature", {
-                          index: index + 1,
-                          defaultValue: `Show feature ${index + 1}`,
-                        }) as string
-                      }
-                    >
-                      <span
-                        className="absolute left-0 top-0 h-full bg-white transition-[width] duration-100 ease-linear"
-                        style={{ width: `${segmentPct}%` }}
-                      />
-                      <span className="sr-only">
-                        {
-                          tPages("auth.controls.progress", {
+              <div className="flex w-full max-w-3xl items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPrevFeatureIndex(activeFeatureIndex);
+                      setActiveFeatureIndex(
+                        (prev) =>
+                          (prev - 1 + featureSlides.length) %
+                          featureSlides.length
+                      );
+                    }}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 text-white/80 transition hover:bg-white/10 hover:text-white"
+                    aria-label={tPages(
+                      "auth.controls.prev",
+                      "Previous feature"
+                    )}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  {featureSlides.map((_, index) => {
+                    const segmentPct =
+                      index < activeFeatureIndex
+                        ? 100
+                        : index === activeFeatureIndex
+                        ? progress
+                        : 0;
+                    return (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => {
+                          setPrevFeatureIndex(activeFeatureIndex);
+                          setActiveFeatureIndex(index);
+                        }}
+                        className="group relative h-2 w-24 overflow-hidden rounded-full bg-white/25"
+                        aria-label={
+                          tPages("auth.controls.showFeature", {
                             index: index + 1,
-                            defaultValue: `Progress for feature ${index + 1}`,
+                            defaultValue: `Show feature ${index + 1}`,
                           }) as string
                         }
-                      </span>
-                    </button>
-                  );
-                })}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPrevFeatureIndex(activeFeatureIndex);
-                    setActiveFeatureIndex(
-                      (prev) => (prev + 1) % featureSlides.length
+                      >
+                        <span
+                          className="absolute left-0 top-0 h-full bg-white transition-[width] duration-100 ease-linear"
+                          style={{ width: `${segmentPct}%` }}
+                        />
+                        <span className="sr-only">
+                          {
+                            tPages("auth.controls.progress", {
+                              index: index + 1,
+                              defaultValue: `Progress for feature ${index + 1}`,
+                            }) as string
+                          }
+                        </span>
+                      </button>
                     );
-                  }}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 text-white/80 hover:bg-white/10 hover:text-white transition"
-                  aria-label={tPages("auth.controls.next", "Next feature")}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPrevFeatureIndex(activeFeatureIndex);
+                      setActiveFeatureIndex(
+                        (prev) => (prev + 1) % featureSlides.length
+                      );
+                    }}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 text-white/80 transition hover:bg-white/10 hover:text-white"
+                    aria-label={tPages("auth.controls.next", "Next feature")}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+                <span className="text-sm font-medium text-white/80">
+                  {String(activeFeatureIndex + 1).padStart(2, "0")} /{" "}
+                  {String(featureSlides.length).padStart(2, "0")}
+                </span>
               </div>
-              <span className="text-sm font-medium text-white/80">
-                {String(activeFeatureIndex + 1).padStart(2, "0")} /{" "}
-                {String(featureSlides.length).padStart(2, "0")}
-              </span>
             </div>
           </div>
         </div>

@@ -1426,10 +1426,10 @@ const Auth = () => {
                         </div>
                         {/* Password recommendations (optional, sign-up only) */}
                         {isSignUp && (
-                          <div className="mt-4 space-y-3">
+                          <div className="mt-4 space-y-2.5">
                             <label
                               htmlFor="accepts-marketing"
-                              className="flex cursor-pointer items-start gap-3"
+                              className="flex cursor-pointer items-start gap-2.5"
                             >
                               <Checkbox
                                 id="accepts-marketing"
@@ -1437,9 +1437,9 @@ const Auth = () => {
                                 onCheckedChange={(checked) =>
                                   setAcceptsMarketing(Boolean(checked))
                                 }
-                                className="mt-[2px] h-4 w-4"
+                                className="mt-[1px] h-4 w-4"
                               />
-                              <p className="text-sm text-slate-700">
+                              <p className="text-sm leading-tight text-slate-700">
                                 Kampanya ve tanıtım amaçlı e-posta/SMS
                                 gönderimini ve{" "}
                                 <button
@@ -1460,7 +1460,7 @@ const Auth = () => {
 
                             <label
                               htmlFor="accepts-terms"
-                              className={`flex cursor-pointer items-start gap-3 ${
+                              className={`flex cursor-pointer items-start gap-2.5 ${
                                 termsError
                                   ? "rounded-md bg-red-50/80 px-2 py-2"
                                   : ""
@@ -1473,10 +1473,10 @@ const Auth = () => {
                                   setAcceptsTerms(Boolean(checked))
                                 }
                                 aria-required="true"
-                                className="mt-[2px] h-4 w-4"
+                                className="mt-[1px] h-4 w-4"
                               />
-                              <div className="space-y-1">
-                                <p className="text-sm text-slate-700">
+                              <div className="space-y-0">
+                                <p className="text-sm leading-tight text-slate-700">
                                   <button
                                     type="button"
                                     data-legal-link

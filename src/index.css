@@ -614,7 +614,7 @@ All colors MUST be HSL.
   }
 
   /* Preserve compact size for custom toggles/controls while keeping other buttons accessible */
-  button:not(:where([role="switch"], [role="radio"], [role="checkbox"], [data-touch-target="compact"], .touch-target-compact)),
+  button:not(:where([role="switch"], [role="radio"], [role="checkbox"], [data-touch-target="compact"], .touch-target-compact, [data-legal-link])),
   select,
   input[type="button"],
   input[type="submit"] {

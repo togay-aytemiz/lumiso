@@ -174,14 +174,14 @@ const Auth = () => {
       doc === "terms"
         ? "https://www.lumiso.app/terms"
         : doc === "privacy"
-        ? "https://www.lumiso.app/privacy"
-        : doc === "kvkk"
-        ? "https://www.lumiso.app/kvkk"
-        : doc === "communication-consent"
-        ? "https://www.lumiso.app/communication-consent"
-        : doc === "dpa"
-        ? "https://www.lumiso.app/dpa"
-        : `https://www.lumiso.app/${doc}`;
+          ? "https://www.lumiso.app/privacy"
+          : doc === "kvkk"
+            ? "https://www.lumiso.app/kvkk"
+            : doc === "communication-consent"
+              ? "https://www.lumiso.app/communication-consent"
+              : doc === "dpa"
+                ? "https://www.lumiso.app/dpa"
+                : `https://www.lumiso.app/${doc}`;
     window.open(href, "_blank", "noopener");
   };
   const recordToast = useCallback(
@@ -359,9 +359,8 @@ const Auth = () => {
         searchParams.delete("type");
       }
       const nextSearch = searchParams.toString();
-      const nextUrl = `/auth/recovery${nextSearch ? `?${nextSearch}` : ""}${
-        location.hash || ""
-      }`;
+      const nextUrl = `/auth/recovery${nextSearch ? `?${nextSearch}` : ""}${location.hash || ""
+        }`;
       navigate(nextUrl, { replace: true });
     }
   }, [location.pathname, location.search, location.hash, navigate]);
@@ -661,9 +660,9 @@ const Auth = () => {
             dpa: { version: versionFor("dpa"), acceptedAt: timestamp },
             marketing: acceptsMarketing
               ? {
-                  version: versionFor("communication-consent"),
-                  acceptedAt: timestamp,
-                }
+                version: versionFor("communication-consent"),
+                acceptedAt: timestamp,
+              }
               : null,
           };
         };
@@ -998,57 +997,57 @@ const Auth = () => {
   const authLabel = isVerificationPending
     ? tPages("auth.verification.badge", "Email verification")
     : isPasswordResetMode
-    ? tForm("auth.password_reset.title")
-    : isPasswordResetRequestMode
-    ? tForm("auth.password_reset.request_title")
-    : isSignUp
-    ? tForm("auth.sign_up.title")
-    : tForm("auth.sign_in.title");
+      ? tForm("auth.password_reset.title")
+      : isPasswordResetRequestMode
+        ? tForm("auth.password_reset.request_title")
+        : isSignUp
+          ? tForm("auth.sign_up.title")
+          : tForm("auth.sign_in.title");
 
   const welcomeText = isVerificationPending
     ? tPages("auth.welcome.verify", "Check your inbox ✉️")
     : isPasswordResetMode
-    ? tPages("auth.welcome.recovery", "Reset your password 🔐")
-    : isPasswordResetRequestMode
-    ? tPages("auth.welcome.recoveryRequest", "Reset your password 🔐")
-    : isSignUp
-    ? tPages("auth.welcome.signUp", "Let's get started 🚀")
-    : tPages("auth.welcome.signIn", "Welcome back 👋🏻");
+      ? tPages("auth.welcome.recovery", "Reset your password 🔐")
+      : isPasswordResetRequestMode
+        ? tPages("auth.welcome.recoveryRequest", "Reset your password 🔐")
+        : isSignUp
+          ? tPages("auth.welcome.signUp", "Let's get started 🚀")
+          : tPages("auth.welcome.signIn", "Welcome back 👋🏻");
 
   const copyText = isVerificationPending
     ? tPages(
-        "auth.copy.verify",
-        "We sent a verification link to your inbox. Please confirm to continue."
-      )
+      "auth.copy.verify",
+      "We sent a verification link to your inbox. Please confirm to continue."
+    )
     : isPasswordResetMode
-    ? tPages(
+      ? tPages(
         "auth.copy.recovery",
         "Set a new password to regain access to your workspace."
       )
-    : isPasswordResetRequestMode
-    ? tPages(
-        "auth.copy.recoveryRequest",
-        "We'll email you a secure link so you can choose a new password."
-      )
-    : isSignUp
-    ? tPages(
-        "auth.copy.signUp",
-        "Create your Lumiso account to unlock collaborative workflows and beautiful client experiences."
-      )
-    : tPages(
-        "auth.copy.signIn",
-        "Sign in with your credentials to pick up exactly where your team left off."
-      );
+      : isPasswordResetRequestMode
+        ? tPages(
+          "auth.copy.recoveryRequest",
+          "We'll email you a secure link so you can choose a new password."
+        )
+        : isSignUp
+          ? tPages(
+            "auth.copy.signUp",
+            "Create your Lumiso account to unlock collaborative workflows and beautiful client experiences."
+          )
+          : tPages(
+            "auth.copy.signIn",
+            "Sign in with your credentials to pick up exactly where your team left off."
+          );
 
   const viewKey = isPasswordResetMode
     ? "reset-update"
     : isPasswordResetRequestMode
-    ? "reset-request"
-    : isVerificationPending
-    ? "verification"
-    : isSignUp
-    ? "signup"
-    : "signin";
+      ? "reset-request"
+      : isVerificationPending
+        ? "verification"
+        : isSignUp
+          ? "signup"
+          : "signin";
 
   return (
     <>
@@ -1238,9 +1237,9 @@ const Auth = () => {
                         {resettingPassword
                           ? `${tMsg("info.loading")}...`
                           : tForm(
-                              "auth.password_reset.request_button",
-                              "Send reset link"
-                            )}
+                            "auth.password_reset.request_button",
+                            "Send reset link"
+                          )}
                       </Button>
                     </form>
                   ) : isVerificationPending ? (
@@ -1301,13 +1300,12 @@ const Auth = () => {
                           {resendingVerification
                             ? `${tMsg("info.loading")}...`
                             : `${tPages(
-                                "auth.verification.actions.resend",
-                                "Doğrulama e-postasını yeniden gönder"
-                              )}${
-                                resendSeconds > 0
-                                  ? ` (${formattedResendTime()})`
-                                  : ""
-                              }`}
+                              "auth.verification.actions.resend",
+                              "Doğrulama e-postasını yeniden gönder"
+                            )}${resendSeconds > 0
+                              ? ` (${formattedResendTime()})`
+                              : ""
+                            }`}
                         </Button>
                       </div>
                     </>
@@ -1437,9 +1435,9 @@ const Auth = () => {
                                 onCheckedChange={(checked) =>
                                   setAcceptsMarketing(Boolean(checked))
                                 }
-                                className="mt-[2px] h-4 w-4"
+                                className="mt-0.5 h-4 w-4 shrink-0"
                               />
-                              <p className="text-sm text-slate-700">
+                              <p className="text-sm text-slate-700 leading-snug">
                                 Kampanya ve tanıtım amaçlı e-posta/SMS
                                 gönderimini ve{" "}
                                 <button
@@ -1460,11 +1458,10 @@ const Auth = () => {
 
                             <label
                               htmlFor="accepts-terms"
-                              className={`flex cursor-pointer items-start gap-3 ${
-                                termsError
-                                  ? "rounded-md bg-red-50/80 px-2 py-2"
-                                  : ""
-                              }`}
+                              className={`flex cursor-pointer items-start gap-3 ${termsError
+                                ? "rounded-md bg-red-50/80 px-2 py-2"
+                                : ""
+                                }`}
                             >
                               <Checkbox
                                 id="accepts-terms"
@@ -1473,10 +1470,10 @@ const Auth = () => {
                                   setAcceptsTerms(Boolean(checked))
                                 }
                                 aria-required="true"
-                                className="mt-[2px] h-4 w-4"
+                                className="mt-0.5 h-4 w-4 shrink-0"
                               />
-                              <div className="space-y-1">
-                                <p className="text-sm text-slate-700">
+                              <div className="space-y-0.5">
+                                <p className="text-sm text-slate-700 leading-snug">
                                   <button
                                     type="button"
                                     data-legal-link
@@ -1523,14 +1520,15 @@ const Auth = () => {
                             {loading
                               ? `${tMsg("info.loading")}...`
                               : isSignUp
-                              ? tForm("auth.sign_up.button")
-                              : tForm("auth.sign_in.button")}
+                                ? tForm("auth.sign_up.button")
+                                : tForm("auth.sign_in.button")}
                           </Button>
                           {isSignUp && (
-                            <p className="mt-1 text-left text-xs text-slate-500">
+                            <p className="mt-1 text-left text-xs text-slate-500 leading-snug">
                               Kaydolarak{" "}
                               <button
                                 type="button"
+                                data-legal-link
                                 className="underline underline-offset-2 text-slate-500"
                                 onClick={() => openLegalLink("kvkk")}
                               >
@@ -1546,12 +1544,12 @@ const Auth = () => {
                         <span>
                           {isSignUp
                             ? tPages(
-                                "auth.toggle.existingAccount",
-                                "Already have an account?"
-                              )
+                              "auth.toggle.existingAccount",
+                              "Already have an account?"
+                            )
                             : tPages("auth.toggle.newToBrand", {
-                                brand: tCommon("branding.app_name", "Lumiso"),
-                              })}
+                              brand: tCommon("branding.app_name", "Lumiso"),
+                            })}
                         </span>
                         <Button
                           variant="link"
@@ -1629,11 +1627,10 @@ const Auth = () => {
                   {featureSlides.map((slide, index) => (
                     <div
                       key={`title-${index}`}
-                      className={`absolute inset-0 transition-all duration-700 ${
-                        index === activeFeatureIndex
-                          ? "opacity-100 translate-y-0"
-                          : "pointer-events-none opacity-0 translate-y-3"
-                      }`}
+                      className={`absolute inset-0 transition-all duration-700 ${index === activeFeatureIndex
+                        ? "opacity-100 translate-y-0"
+                        : "pointer-events-none opacity-0 translate-y-3"
+                        }`}
                     >
                       <h2 className="text-3xl font-semibold leading-tight fade-in-up">
                         {slide.title}
@@ -1671,8 +1668,8 @@ const Auth = () => {
                       index < activeFeatureIndex
                         ? 100
                         : index === activeFeatureIndex
-                        ? progress
-                        : 0;
+                          ? progress
+                          : 0;
                     return (
                       <button
                         key={index}

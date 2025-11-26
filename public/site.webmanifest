@@ -1,0 +1,26 @@
+{
+  "name": "Lumiso",
+  "short_name": "Lumiso",
+  "description": "Photography Business Management Platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#1eb29f",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "120x120",
+      "type": "image/png"
+    }
+  ]
+}

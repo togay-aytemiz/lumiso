@@ -611,16 +611,48 @@ const Auth = () => {
       await supabase.auth.signOut({ scope: "global" });
 
       if (isSignUp) {
-        if (!legalVersions && !legalVersionsLoading) {
-          console.error(
-            "Proceeding with signup without legal versions (fetch missing or failed)"
-          );
+        let latestLegalVersions = legalVersions;
+
+        if (!latestLegalVersions || legalVersionsError) {
+          try {
+            setLegalVersionsLoading(true);
+            latestLegalVersions = await getLegalVersions({
+              forceRefresh: true,
+            });
+            setLegalVersions(latestLegalVersions);
+            setLegalVersionsError(null);
+          } catch (fetchError) {
+            console.error(
+              "Failed to fetch legal versions before signup",
+              fetchError
+            );
+            const copy = tMsg(
+              "auth.legal_versions_unavailable",
+              "We couldn't load the latest legal documents. Please try again."
+            );
+            toast.error(copy);
+            recordToast(
+              "error",
+              "auth.legal_versions_unavailable",
+              copy
+            );
+            setLegalVersionsError(
+              fetchError instanceof Error
+                ? fetchError.message
+                : "unknown_error"
+            );
+            setLoading(false);
+            setLegalVersionsLoading(false);
+            return;
+          } finally {
+            setLegalVersionsLoading(false);
+          }
         }
 
         const buildLegalConsentsPayload = (): LegalConsentsPayload => {
           const timestamp = new Date().toISOString();
           const versionFor = (id: LegalDocumentId) =>
-            legalVersions?.[id]?.version ?? null;
+            latestLegalVersions?.[id]?.version ?? null;
 
           return {
             terms: { version: versionFor("terms"), acceptedAt: timestamp },

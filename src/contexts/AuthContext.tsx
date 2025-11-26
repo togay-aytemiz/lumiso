@@ -5,9 +5,11 @@ import { supabase } from '@/integrations/supabase/client';
 type UserRole = 'admin' | 'support' | 'user';
 
 type ConfirmationNotifiedMap = Record<string, string>;
+type ConfirmationInFlightMap = Record<string, true>;
 
 const CONFIRM_NOTIFY_STORAGE_KEY = 'lumiso.emailConfirmed.notified';
 const RECENT_CONFIRM_WINDOW_MINUTES = 120;
+const inFlightConfirmations: ConfirmationInFlightMap = {};
 
 const loadConfirmationNotified = (): ConfirmationNotifiedMap => {
   if (typeof localStorage === 'undefined') return {};
@@ -101,6 +103,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       confirmedUser: User,
       confirmedAtIso: string
     ) => {
+      const inFlightKey = `${confirmedUser.id}:${confirmedAtIso}`;
+      if (inFlightConfirmations[inFlightKey]) {
+        return;
+      }
+      inFlightConfirmations[inFlightKey] = true;
+
       const confirmationDate = new Date(confirmedAtIso);
       const timezone =
         Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown';
@@ -210,6 +218,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         console.error('Support confirmation email error', error);
+      } finally {
+        delete inFlightConfirmations[inFlightKey];
       }
     };
 
@@ -245,12 +255,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (session?.user?.id && confirmedAt) {
             const confirmedAtIso = new Date(confirmedAt).toISOString();
             const notified = loadConfirmationNotified();
-            if (notified[session.user.id] !== confirmedAtIso) {
-              const ageMinutes =
-                (Date.now() - new Date(confirmedAtIso).getTime()) / 60000;
-              if (ageMinutes >= 0 && ageMinutes <= RECENT_CONFIRM_WINDOW_MINUTES) {
-                void sendConfirmationNotification(session.user, confirmedAtIso);
-              }
+            const alreadyMarked = notified[session.user.id] === confirmedAtIso;
+            const inFlightKey = `${session.user.id}:${confirmedAtIso}`;
+            const ageMinutes =
+              (Date.now() - new Date(confirmedAtIso).getTime()) / 60000;
+            const isFresh =
+              ageMinutes >= 0 && ageMinutes <= RECENT_CONFIRM_WINDOW_MINUTES;
+
+            if (!alreadyMarked && isFresh && !inFlightConfirmations[inFlightKey]) {
+              // Optimistically mark to prevent duplicate sends from concurrent listeners
+              markConfirmationNotified(session.user.id, confirmedAtIso);
+              void sendConfirmationNotification(session.user, confirmedAtIso);
+            } else if (!alreadyMarked) {
               markConfirmationNotified(session.user.id, confirmedAtIso);
             }
           }
@@ -296,12 +312,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (session?.user?.id && confirmedAt) {
             const confirmedAtIso = new Date(confirmedAt).toISOString();
             const notified = loadConfirmationNotified();
-            if (notified[session.user.id] !== confirmedAtIso) {
-              const ageMinutes =
-                (Date.now() - new Date(confirmedAtIso).getTime()) / 60000;
-              if (ageMinutes >= 0 && ageMinutes <= RECENT_CONFIRM_WINDOW_MINUTES) {
-                void sendConfirmationNotification(session.user, confirmedAtIso);
-              }
+            const alreadyMarked = notified[session.user.id] === confirmedAtIso;
+            const inFlightKey = `${session.user.id}:${confirmedAtIso}`;
+            const ageMinutes =
+              (Date.now() - new Date(confirmedAtIso).getTime()) / 60000;
+            const isFresh =
+              ageMinutes >= 0 && ageMinutes <= RECENT_CONFIRM_WINDOW_MINUTES;
+
+            if (!alreadyMarked && isFresh && !inFlightConfirmations[inFlightKey]) {
+              markConfirmationNotified(session.user.id, confirmedAtIso);
+              void sendConfirmationNotification(session.user, confirmedAtIso);
+            } else if (!alreadyMarked) {
               markConfirmationNotified(session.user.id, confirmedAtIso);
             }
           }

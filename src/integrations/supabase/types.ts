@@ -1190,6 +1190,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          legal_consents: Json | null
           phone_number: string | null
           profile_photo_url: string | null
           updated_at: string
@@ -1200,6 +1201,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          legal_consents?: Json | null
           phone_number?: string | null
           profile_photo_url?: string | null
           updated_at?: string
@@ -1210,6 +1212,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          legal_consents?: Json | null
           phone_number?: string | null
           profile_photo_url?: string | null
           updated_at?: string

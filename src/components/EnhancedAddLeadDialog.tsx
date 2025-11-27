@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus } from "lucide-react";
+import { AlertTriangle, X } from "lucide-react";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { useTranslation } from "react-i18next";
 import {
   Form,
 } from "@/components/ui/form";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { DynamicLeadFormFields } from "./DynamicLeadFormFields";
 import { useLeadFieldDefinitions } from "@/hooks/useLeadFieldDefinitions";
 import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
@@ -20,6 +22,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 import { useNavigate } from "react-router-dom";
+import { useOptionalOrganization } from "@/hooks/useOptionalOrganization";
 import type { Database } from "@/integrations/supabase/types";
 
 interface EnhancedAddLeadDialogProps {
@@ -49,6 +52,40 @@ export function EnhancedAddLeadDialog({
   const { profile } = useProfile();
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const optionalOrganization = useOptionalOrganization();
+  const activeOrganizationId =
+    optionalOrganization?.activeOrganizationId ??
+    optionalOrganization?.activeOrganization?.id ??
+    null;
+  const leadFieldHelperStorageKey = useMemo(
+    () => `lead-fields-tip:${activeOrganizationId ?? "global"}`,
+    [activeOrganizationId]
+  );
+  const [showFieldHelper, setShowFieldHelper] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const stored = window.localStorage.getItem(leadFieldHelperStorageKey);
+      setShowFieldHelper(stored !== "dismissed");
+    } catch {
+      setShowFieldHelper(true);
+    }
+  }, [leadFieldHelperStorageKey]);
+
+  const dismissLeadFieldHelper = useCallback(() => {
+    setShowFieldHelper(false);
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(leadFieldHelperStorageKey, "dismissed");
+    } catch {
+      // Ignore storage failures
+    }
+  }, [leadFieldHelperStorageKey]);
+
+  const handleManageLeadFields = useCallback(() => {
+    navigate("/settings/leads#lead-fields");
+  }, [navigate]);
   // Assignees removed - single user organization
 
   const fetchDefaultLeadStatus = useCallback(
@@ -349,6 +386,7 @@ export function EnhancedAddLeadDialog({
       disabled: loading || fieldsLoading,
     }
   ];
+  const shouldShowFieldHelper = showFieldHelper && !fieldsLoading;
 
   if (fieldsLoading || !defaultsReady) {
     return (
@@ -399,6 +437,44 @@ export function EnhancedAddLeadDialog({
             control={form.control}
             visibleOnly={true}
           />
+
+          {shouldShowFieldHelper && (
+            <Alert className="mt-6 border-amber-300/70 bg-amber-50 text-amber-900">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0 text-amber-600" />
+                <div className="flex-1">
+                  <AlertTitle className="text-sm font-semibold text-amber-900">
+                    {t("lead_fields.helper.title")}
+                  </AlertTitle>
+                  <AlertDescription className="mt-1 text-sm text-amber-900/90">
+                    {t("lead_fields.helper.description")}
+                  </AlertDescription>
+                  <div className="mt-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto px-0 text-sm font-semibold text-amber-900 hover:bg-transparent hover:underline"
+                      onClick={handleManageLeadFields}
+                    >
+                      {t("lead_fields.helper.action")}
+                    </Button>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="tinted"
+                  colorScheme="amber"
+                  size="icon"
+                  className="ml-2 shrink-0"
+                  onClick={dismissLeadFieldHelper}
+                  aria-label={t("lead_fields.helper.dismiss")}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </Alert>
+          )}
           
           {/* Assignees removed - single user organization */}
         </Form>

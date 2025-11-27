@@ -9,13 +9,7 @@ import {
 } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import type { Location } from "react-router-dom";
-import {
-  ChevronLeft,
-  ChevronRight,
-  LifeBuoy,
-  Lock,
-  X,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -898,17 +892,6 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
           </div>
         </div>
         <div className="flex shrink-0 items-center justify-end gap-2">
-          {helpContent && (
-            <Button
-              variant="pill"
-              size="sm"
-              className="hidden whitespace-nowrap px-3.5 sm:inline-flex"
-              onClick={() => setShowHelp(true)}
-            >
-              <LifeBuoy className="mr-2 h-4 w-4" />
-              {tCommon("buttons.needHelp")}
-            </Button>
-          )}
           {shouldUseOverlay && (
             <Button
               variant="ghost"

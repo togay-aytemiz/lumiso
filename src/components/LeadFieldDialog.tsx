@@ -120,7 +120,6 @@ export function LeadFieldDialog({
   const { createFieldDefinition, updateFieldDefinition } =
     useLeadFieldDefinitions();
   const [loading, setLoading] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
   const { t } = useTranslation(["forms", "common"]);
 
   const isEdit = !!field;
@@ -134,36 +133,12 @@ export function LeadFieldDialog({
       is_required: false,
       is_visible_in_form: true,
       options: "",
+      allow_multiple: false,
     },
   });
-
-  // Track form dirty state
-  const formValues = form.watch();
-  useEffect(() => {
-    const hasChanges = Object.keys(formValues).some((key) => {
-      const currentValue = formValues[key as keyof typeof formValues];
-      if (!field) return !!currentValue;
-
-      switch (key) {
-        case "label":
-          return currentValue !== field.label;
-        case "field_type":
-          return currentValue !== field.field_type;
-        case "is_required":
-          return currentValue !== field.is_required;
-        case "is_visible_in_form":
-          return currentValue !== field.is_visible_in_form;
-        case "options":
-          {
-            const fieldOptions = field.options?.options?.join(", ") || "";
-            return currentValue !== fieldOptions;
-          }
-        default:
-          return false;
-      }
-    });
-    setIsDirty(hasChanges);
-  }, [formValues, field]);
+  const {
+    formState: { isDirty },
+  } = form;
 
   const selectedFieldType = form.watch("field_type") as LeadFieldType;
   const fieldTypeConfig = FIELD_TYPE_CONFIG[selectedFieldType];
@@ -195,7 +170,6 @@ export function LeadFieldDialog({
   useEffect(() => {
     if (open) {
       form.reset(getInitialValues());
-      setIsDirty(false);
     }
   }, [open, form, getInitialValues]);
 
@@ -261,7 +235,6 @@ export function LeadFieldDialog({
     isDirty,
     onDiscard: () => {
       form.reset(getInitialValues());
-      setIsDirty(false);
       onClose();
     },
     onSaveAndExit: async () => {
@@ -274,7 +247,6 @@ export function LeadFieldDialog({
     const canClose = navigation.handleModalClose();
     if (canClose) {
       form.reset(getInitialValues());
-      setIsDirty(false);
       onClose();
     }
   };

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,6 +70,19 @@ export function SessionStatusBadge({
   const { updateSessionStatus } = useSessionActions();
   const { t: tForms } = useFormsTranslation();
   const { t: tMessages } = useMessagesTranslation();
+  const { t: tPages } = useTranslation("pages");
+
+  const normalizedStatus = (currentStatus || "").toLowerCase() as SessionEnum;
+
+  const getLocalizedDisplayName = (status: SessionEnum) => {
+    const fallback = enumToDisplay[status] || status;
+    return tPages(`sessions.statuses.${status}`, { defaultValue: fallback });
+  };
+
+  const getLocalizedStatusName = (statusRow: SessionStatusRow) => {
+    const mapped = nameToEnum(statusRow.name);
+    return mapped ? getLocalizedDisplayName(mapped) : statusRow.name;
+  };
 
   const isSmall = size === 'sm';
   const dotSize = isSmall ? 'w-2 h-2' : 'w-2.5 h-2.5';
@@ -80,11 +94,19 @@ export function SessionStatusBadge({
   }, []);
 
   useEffect(() => {
-    // Compute current status row from fetched list using enum display name
-    const display = enumToDisplay[currentStatus];
-    const match = statuses.find(s => s.name.trim().toLowerCase() === display.toLowerCase()) || null;
+    // Compute current status row from fetched list using enum
+    const match =
+      statuses.find((s) => nameToEnum(s.name) === normalizedStatus) ||
+      (enumToDisplay[normalizedStatus]
+        ? statuses.find(
+            (s) =>
+              s.name.trim().toLowerCase() ===
+              enumToDisplay[normalizedStatus].toLowerCase()
+          )
+        : null) ||
+      null;
     setCurrent(match);
-  }, [currentStatus, statuses]);
+  }, [normalizedStatus, statuses]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -121,7 +143,7 @@ export function SessionStatusBadge({
       toast({ title: tForms('status.unsupportedStage'), description: tForms('status.unsupportedStageDesc'), variant: 'destructive' });
       return;
     }
-    if (enumToDisplay[currentStatus].toLowerCase() === newRow.name.toLowerCase()) {
+    if (mapped === normalizedStatus) {
       setDropdownOpen(false);
       return;
     }
@@ -132,7 +154,8 @@ export function SessionStatusBadge({
         setCurrent(newRow);
         setDropdownOpen(false);
         onStatusChange?.();
-        toast({ title: tForms('status.sessionUpdated'), description: tMessages('toast.statusSetTo', { status: newRow.name }) });
+        const localizedStatus = getLocalizedDisplayName(mapped);
+        toast({ title: tForms('status.sessionUpdated'), description: tMessages('toast.statusSetTo', { status: localizedStatus }) });
       }
     } finally {
       setIsUpdating(false);
@@ -148,8 +171,8 @@ export function SessionStatusBadge({
     );
   }
 
-  const displayName = enumToDisplay[currentStatus];
-  const color = current?.color || fallbackColorByEnum[currentStatus];
+  const displayName = getLocalizedDisplayName(normalizedStatus);
+  const color = current?.color || fallbackColorByEnum[normalizedStatus] || '#A0AEC0';
   const { tokens: activeTokens, style: activeStyle } = getBadgeStyleProperties(color);
 
   if (!editable) {
@@ -216,7 +239,9 @@ export function SessionStatusBadge({
                 >
                   <div className="flex items-center gap-3 w-full">
                     <div className={cn("rounded-full flex-shrink-0", dotSize)} style={{ backgroundColor: status.color }} />
-                    <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{status.name}</span>
+                    <span className={cn("uppercase tracking-wide font-semibold", textSize)}>
+                      {getLocalizedStatusName(status)}
+                    </span>
                   </div>
                 </Button>
               ))}

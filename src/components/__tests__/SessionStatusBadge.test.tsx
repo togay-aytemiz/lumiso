@@ -1,7 +1,16 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { SessionStatusBadge } from "../SessionStatusBadge";
 import { supabase } from "@/integrations/supabase/client";
+import { SessionStatusBadge } from "../SessionStatusBadge";
+
+jest.mock("react-i18next", () => ({
+  ...jest.requireActual("react-i18next"),
+  useTranslation: () => ({
+    t: (_key: string, options?: Record<string, unknown>) =>
+      (options as { defaultValue?: string })?.defaultValue ?? _key,
+    i18n: { language: "en", resolvedLanguage: "en" },
+  }),
+}));
 
 jest.mock("@/integrations/supabase/client", () => ({
   supabase: {

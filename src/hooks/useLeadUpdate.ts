@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 interface UseLeadUpdateProps {
   leadId: string;
@@ -10,6 +11,7 @@ interface UseLeadUpdateProps {
 export function useLeadUpdate({ leadId, onSuccess }: UseLeadUpdateProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
+  const { t: tForms } = useFormsTranslation();
 
   const updateCoreField = async (fieldKey: string, value: string | null) => {
     if (isUpdating) return;
@@ -29,16 +31,16 @@ export function useLeadUpdate({ leadId, onSuccess }: UseLeadUpdateProps) {
       if (error) throw error;
 
       toast({
-        title: "Field updated",
-        description: "The field has been updated successfully.",
+        title: tForms("lead_field.toast.update_success_title"),
+        description: tForms("lead_field.toast.update_success_description"),
       });
 
       onSuccess?.();
     } catch (error) {
       console.error('Error updating core field:', error);
       toast({
-        title: "Update failed",
-        description: "Failed to update the field. Please try again.",
+        title: tForms("lead_field.toast.error_title"),
+        description: tForms("lead_field.toast.update_error_description"),
         variant: "destructive",
       });
       throw error;
@@ -66,16 +68,16 @@ export function useLeadUpdate({ leadId, onSuccess }: UseLeadUpdateProps) {
       if (error) throw error;
 
       toast({
-        title: "Field updated",
-        description: "The custom field has been updated successfully.",
+        title: tForms("lead_field.toast.update_success_title"),
+        description: tForms("lead_field.toast.update_success_description"),
       });
 
       onSuccess?.();
     } catch (error) {
       console.error('Error updating custom field:', error);
       toast({
-        title: "Update failed",
-        description: "Failed to update the custom field. Please try again.",
+        title: tForms("lead_field.toast.error_title"),
+        description: tForms("lead_field.toast.update_error_description"),
         variant: "destructive",
       });
       throw error;

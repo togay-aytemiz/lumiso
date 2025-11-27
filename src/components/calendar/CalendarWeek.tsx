@@ -39,6 +39,8 @@ interface CalendarWeekProps {
   showSessions: boolean;
   showReminders: boolean;
   maxHeight?: string | number;
+  className?: string;
+  fullHeight?: boolean;
   leadsMap: Record<string, { id: string; name: string }>;
   projectsMap: Record<string, { id: string; name: string; lead_id: string }>;
   isMobile: boolean;
@@ -189,9 +191,15 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   const eventSlotCount = eventsByDayAndSlot.size;
   const currentDateTimestamp = currentDate.getTime();
   const containerMaxHeight = useMemo(() => {
+    if (fullHeight) return '100%';
     if (typeof maxHeight === 'number') return `${maxHeight}px`;
     return maxHeight ?? '60vh';
-  }, [maxHeight]);
+  }, [fullHeight, maxHeight]);
+  const scrollContainerClassName = cn(
+    'overflow-y-auto relative',
+    fullHeight && 'flex-1 min-h-0'
+  );
+  const scrollContainerStyle = { maxHeight: containerMaxHeight };
   const rootClassName = cn(
     'rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden',
     fullHeight && 'flex flex-1 flex-col h-full min-h-0',
@@ -471,7 +479,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   // loading skeleton that uses the same grid template to avoid layout jump
   if (timezoneLoading) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div className={rootClassName}>
         <div
           className="grid border-b border-slate-200/80 bg-slate-50/70 text-xs font-medium uppercase tracking-wide text-muted-foreground"
           style={{ gridTemplateColumns: `${TIME_COL_PX}px repeat(7, minmax(0, 1fr))` }}
@@ -487,7 +495,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
           ))}
         </div>
 
-        <div className="overflow-y-auto" style={{ maxHeight: containerMaxHeight }}>
+        <div className={scrollContainerClassName} style={scrollContainerStyle}>
           {Array.from({ length: 24 }).map((_, r) => (
             <div
               key={r}
@@ -515,7 +523,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   if (isMobile) {
     const { sessions: daySessions, activities: dayActivities } = getEventsForDate(currentDate);
     return (
-      <div className="space-y-4">
+      <div className={cn('space-y-4', fullHeight && 'h-full', className)}>
         <div className="grid grid-cols-7 gap-1 mb-4">
           {weekDays.map((day, index) => {
             const selected = isSameDay(day, currentDate);
@@ -699,7 +707,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <div className={rootClassName}>
       <div
         className="grid grid-cols-[72px_repeat(7,minmax(0,1fr))] border-b border-slate-200/80 bg-slate-50/70 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
         style={{ paddingRight: scrollbarPadding }}
@@ -735,8 +743,8 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
 
       <div
         ref={scrollContainerRef}
-        className="overflow-y-auto relative"
-        style={{ maxHeight: containerMaxHeight }}
+        className={scrollContainerClassName}
+        style={scrollContainerStyle}
       >
         <div ref={gridRef} className="relative">
           {timeSlots.map((slot, slotIndex) => {
@@ -1033,6 +1041,8 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
     p.showReminders === n.showReminders &&
     p.isMobile === n.isMobile &&
     p.maxHeight === n.maxHeight &&
+    p.fullHeight === n.fullHeight &&
+    p.className === n.className &&
     p.completingReminderId === n.completingReminderId &&
     JSON.stringify(p.sessions) === JSON.stringify(n.sessions) &&
     JSON.stringify(p.activities) === JSON.stringify(n.activities)

@@ -2313,18 +2313,19 @@ const DashboardDailyFocus = ({
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" />
 
             {weeklyHasSessions ? (
-              <div className="mt-2">
+              <div className="mt-2 flex-1 min-h-0">
                 <CalendarWeek
                   currentDate={weekReference}
                   sessions={weeklySessions}
                   activities={weeklyActivities}
                   showSessions
                   showReminders
-                  maxHeight={380}
                   leadsMap={calendarLeadsMap}
                   projectsMap={calendarProjectsMap}
                   isMobile={isMobile}
                   getEventsForDate={getWeeklyEventsForDate}
+                  fullHeight
+                  className="h-full"
                   onSessionClick={(session) => handleSessionCardClick(session.id)}
                   onActivityClick={(activity) => handleReminderLeadClick(activity.lead_id)}
                   onToggleReminderCompletion={(activity, nextCompleted) =>

@@ -1,13 +1,40 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useFormsTranslation, useMessagesTranslation } from "@/hooks/useTypedTranslation";
+import {
+  useFormsTranslation,
+  useMessagesTranslation,
+} from "@/hooks/useTypedTranslation";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore, ExternalLink, FolderOpen, CalendarPlus } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Save,
+  X,
+  ChevronDown,
+  Pencil,
+  Archive,
+  ArchiveRestore,
+  ExternalLink,
+  FolderOpen,
+  CalendarPlus,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectActivitySection } from "./ProjectActivitySection";
 import { ProjectTodoListEnhanced } from "./ProjectTodoListEnhanced";
@@ -18,7 +45,12 @@ import { ProjectStatusBadge } from "./ProjectStatusBadge";
 import { SimpleProjectTypeSelect } from "./SimpleProjectTypeSelect";
 import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { SessionSchedulingSheet } from "@/components/SessionSchedulingSheet";
 // AssigneesList removed - single user organization
@@ -72,11 +104,12 @@ interface ProjectSheetViewProps {
   onProjectUpdated: () => void;
   onActivityUpdated?: () => void;
   leadName: string;
-  mode?: 'sheet' | 'fullscreen'; // New prop to control display mode
+  mode?: "sheet" | "fullscreen"; // New prop to control display mode
   onViewFullDetails?: () => void; // Callback to switch to full page
 }
 
-const getErrorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
 
 /**
  * @deprecated Legacy project sheet experience. Prefer the new project creation wizard and detail flows.
@@ -88,8 +121,8 @@ export function LegacyProjectSheetView({
   onProjectUpdated,
   onActivityUpdated,
   leadName,
-  mode = 'sheet',
-  onViewFullDetails
+  mode = "sheet",
+  onViewFullDetails,
 }: ProjectSheetViewProps) {
   const { t: tForms } = useFormsTranslation();
   const { t: tMessages } = useMessagesTranslation();
@@ -112,13 +145,15 @@ export function LegacyProjectSheetView({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [servicesVersion, setServicesVersion] = useState(0);
   const [isArchived, setIsArchived] = useState(false);
-  const [localStatusId, setLocalStatusId] = useState<string | null | undefined>(null);
+  const [localStatusId, setLocalStatusId] = useState<string | null | undefined>(
+    null
+  );
   const [summaryRefreshToken, setSummaryRefreshToken] = useState(0);
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [archiveConfirmState, setArchiveConfirmState] = useState({
     hasOutstanding: false,
     outstandingAmount: 0,
-    plannedCount: 0
+    plannedCount: 0,
   });
   const [archiveLoading, setArchiveLoading] = useState(false);
   const [sessionSheetOpen, setSessionSheetOpen] = useState(false);
@@ -127,13 +162,20 @@ export function LegacyProjectSheetView({
     useState<ProjectCreationStepId>("details");
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const { summary: headerSummary } = useProjectHeaderSummary(project?.id || null, summaryRefreshToken);
-  const { summary: sessionsSummary } = useProjectSessionsSummary(project?.id ?? "", summaryRefreshToken);
+  const { summary: headerSummary } = useProjectHeaderSummary(
+    project?.id || null,
+    summaryRefreshToken
+  );
+  const { summary: sessionsSummary } = useProjectSessionsSummary(
+    project?.id ?? "",
+    summaryRefreshToken
+  );
   const parsedPackageSnapshot = useMemo(
     () => parseProjectPackageSnapshot(project?.package_snapshot),
     [project?.package_snapshot]
   );
-  const [packageSnapshotOverride, setPackageSnapshotOverride] = useState<ProjectPackageSnapshot | null>(null);
+  const [packageSnapshotOverride, setPackageSnapshotOverride] =
+    useState<ProjectPackageSnapshot | null>(null);
   useEffect(() => {
     if (!project?.id) {
       if (packageSnapshotOverride) {
@@ -167,7 +209,9 @@ export function LegacyProjectSheetView({
           .single();
         if (!active) return;
         if (error) throw error;
-        setPackageSnapshotOverride(parseProjectPackageSnapshot(data?.package_snapshot));
+        setPackageSnapshotOverride(
+          parseProjectPackageSnapshot(data?.package_snapshot)
+        );
       } catch (error) {
         if (active) {
           console.error("Failed to resolve project package snapshot:", error);
@@ -179,12 +223,19 @@ export function LegacyProjectSheetView({
     return () => {
       active = false;
     };
-  }, [project?.id, project?.package_id, project?.package_snapshot, packageSnapshotOverride]);
+  }, [
+    project?.id,
+    project?.package_id,
+    project?.package_snapshot,
+    packageSnapshotOverride,
+  ]);
   const packageSnapshot = packageSnapshotOverride ?? parsedPackageSnapshot;
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const plannedSessionsCount = useMemo(() => {
-    return sessions.filter(session => (session.status || "").toLowerCase() === "planned").length;
+    return sessions.filter(
+      (session) => (session.status || "").toLowerCase() === "planned"
+    ).length;
   }, [sessions]);
 
   const formatArchiveAmount = (amount: number) => {
@@ -193,10 +244,12 @@ export function LegacyProjectSheetView({
         style: "currency",
         currency: headerSummary.payments.currency || "TRY",
         maximumFractionDigits: 0,
-        minimumFractionDigits: 0
+        minimumFractionDigits: 0,
       }).format(amount);
     } catch {
-      return `${Math.round(amount)} ${headerSummary.payments.currency || "TRY"}`;
+      return `${Math.round(amount)} ${
+        headerSummary.payments.currency || "TRY"
+      }`;
     }
   };
 
@@ -206,19 +259,19 @@ export function LegacyProjectSheetView({
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('sessions')
-        .select('*')
-        .eq('project_id', projectId);
-      
+        .from("sessions")
+        .select("*")
+        .eq("project_id", projectId);
+
       if (error) throw error;
       setSessions(data as unknown as Session[]);
     } catch (error) {
       const message = getErrorMessage(error);
-      console.error('Error fetching project sessions:', error);
+      console.error("Error fetching project sessions:", error);
       toast({
         title: "Error loading sessions",
         description: message,
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -230,15 +283,15 @@ export function LegacyProjectSheetView({
     if (!projectTypeId) return;
     try {
       const { data, error } = await supabase
-        .from('project_types')
-        .select('id, name')
-        .eq('id', projectTypeId)
+        .from("project_types")
+        .select("id, name")
+        .eq("id", projectTypeId)
         .single();
-      
+
       if (error) throw error;
       setProjectType(data);
     } catch (error) {
-      console.error('Error fetching project type:', error);
+      console.error("Error fetching project type:", error);
     }
   }, [project?.project_type_id]);
 
@@ -247,15 +300,15 @@ export function LegacyProjectSheetView({
     if (!leadId) return;
     try {
       const { data, error } = await supabase
-        .from('leads')
-        .select('id, name, email, phone, status, notes')
-        .eq('id', leadId)
+        .from("leads")
+        .select("id, name, email, phone, status, notes")
+        .eq("id", leadId)
         .single();
-      
+
       if (error) throw error;
       setLead(data);
     } catch (error) {
-      console.error('Error fetching lead:', error);
+      console.error("Error fetching lead:", error);
     }
   }, [project?.lead_id]);
 
@@ -274,15 +327,23 @@ export function LegacyProjectSheetView({
       setIsEditing(false);
 
       // For sheet mode, determine fullscreen behavior
-      if (mode === 'sheet') {
+      if (mode === "sheet") {
         setIsFullscreen(isMobile);
       } else {
         setIsFullscreen(true);
       }
-      
+
       setLocalStatusId(project.status_id || null);
     }
-  }, [fetchLead, fetchProjectSessions, fetchProjectType, isMobile, mode, open, project]);
+  }, [
+    fetchLead,
+    fetchProjectSessions,
+    fetchProjectType,
+    isMobile,
+    mode,
+    open,
+    project,
+  ]);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -293,20 +354,22 @@ export function LegacyProjectSheetView({
       }
       try {
         const { data: statusData } = await supabase
-          .from('project_statuses')
-          .select('id, name')
-          .eq('id', project.status_id!)
+          .from("project_statuses")
+          .select("id, name")
+          .eq("id", project.status_id!)
           .maybeSingle();
-        
-        const archived = Boolean(statusData?.name && statusData.name.toLowerCase() === 'archived');
+
+        const archived = Boolean(
+          statusData?.name && statusData.name.toLowerCase() === "archived"
+        );
         setIsArchived(archived);
 
         const { data: projRow } = await supabase
-          .from('projects')
-          .select('status_id, previous_status_id')
-          .eq('id', project.id)
+          .from("projects")
+          .select("status_id, previous_status_id")
+          .eq("id", project.id)
           .single();
-        
+
         if (archived) {
           setLocalStatusId(projRow?.previous_status_id || null);
         } else {
@@ -321,7 +384,7 @@ export function LegacyProjectSheetView({
   }, [project?.id, project?.status_id, open]);
 
   const handleDialogOpenChange = (newOpen: boolean) => {
-    if (!newOpen && isFullscreen && mode === 'sheet') {
+    if (!newOpen && isFullscreen && mode === "sheet") {
       const isMobileCheck = window.innerWidth <= 768;
       if (isMobileCheck) {
         onOpenChange(newOpen);
@@ -335,7 +398,7 @@ export function LegacyProjectSheetView({
   };
 
   const toggleFullscreen = () => {
-    if (mode === 'sheet') {
+    if (mode === "sheet") {
       const isMobileCheck = window.innerWidth <= 768;
       if (!isMobileCheck) {
         setIsFullscreen(!isFullscreen);
@@ -347,38 +410,40 @@ export function LegacyProjectSheetView({
     if (!project || !editName.trim() || !editProjectTypeId) return;
     setIsSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error(tMessages('info.userNotAuthenticated'));
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error(tMessages("info.userNotAuthenticated"));
 
       const { error: projectError } = await supabase
-        .from('projects')
+        .from("projects")
         .update({
           name: editName.trim(),
           description: editDescription.trim() || null,
-          project_type_id: editProjectTypeId
+          project_type_id: editProjectTypeId,
         })
-        .eq('id', project.id);
+        .eq("id", project.id);
 
       if (projectError) throw projectError;
 
       toast({
         title: "Success",
-        description: tMessages('success.projectUpdated')
+        description: tMessages("success.projectUpdated"),
       });
 
       if (editProjectTypeId) {
         try {
           const { data: typeData, error: typeError } = await supabase
-            .from('project_types')
-            .select('id, name')
-            .eq('id', editProjectTypeId)
+            .from("project_types")
+            .select("id, name")
+            .eq("id", editProjectTypeId)
             .single();
-          
+
           if (!typeError) {
             setProjectType(typeData);
           }
         } catch (typeError) {
-          console.error('Error fetching updated project type:', typeError);
+          console.error("Error fetching updated project type:", typeError);
         }
       }
 
@@ -389,7 +454,7 @@ export function LegacyProjectSheetView({
       toast({
         title: "Error updating project",
         description: message,
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsSaving(false);
@@ -402,44 +467,44 @@ export function LegacyProjectSheetView({
     try {
       // Delete all related data in the correct order
       const { error: servicesError } = await supabase
-        .from('project_services')
+        .from("project_services")
         .delete()
-        .eq('project_id', project.id);
+        .eq("project_id", project.id);
       if (servicesError) throw servicesError;
 
       const { error: todosError } = await supabase
-        .from('todos')
+        .from("todos")
         .delete()
-        .eq('project_id', project.id);
+        .eq("project_id", project.id);
       if (todosError) throw todosError;
 
       const { error: sessionsError } = await supabase
-        .from('sessions')
+        .from("sessions")
         .delete()
-        .eq('project_id', project.id);
+        .eq("project_id", project.id);
       if (sessionsError) throw sessionsError;
 
       const { error: activitiesError } = await supabase
-        .from('activities')
+        .from("activities")
         .delete()
-        .eq('project_id', project.id);
+        .eq("project_id", project.id);
       if (activitiesError) throw activitiesError;
 
       const { error: paymentsError } = await supabase
-        .from('payments')
+        .from("payments")
         .delete()
-        .eq('project_id', project.id);
+        .eq("project_id", project.id);
       if (paymentsError) throw paymentsError;
 
       const { error } = await supabase
-        .from('projects')
+        .from("projects")
         .delete()
-        .eq('id', project.id);
+        .eq("id", project.id);
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: tMessages('success.projectDeleted')
+        description: tMessages("success.projectDeleted"),
       });
 
       onOpenChange(false);
@@ -449,7 +514,7 @@ export function LegacyProjectSheetView({
       toast({
         title: "Error deleting project",
         description: message,
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsDeleting(false);
@@ -466,25 +531,25 @@ export function LegacyProjectSheetView({
   const handleDeleteSession = async (sessionId: string) => {
     try {
       const { error } = await supabase
-        .from('sessions')
+        .from("sessions")
         .delete()
-        .eq('id', sessionId);
-      
+        .eq("id", sessionId);
+
       if (error) throw error;
-      
+
       toast({
         title: "Success",
-        description: tMessages('success.sessionDeleted')
+        description: tMessages("success.sessionDeleted"),
       });
-      
+
       fetchProjectSessions();
       onProjectUpdated();
     } catch (error) {
       const message = getErrorMessage(error);
       toast({
-        title: tMessages('error.deletingSession'),
+        title: tMessages("error.deletingSession"),
         description: message,
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -495,26 +560,30 @@ export function LegacyProjectSheetView({
     try {
       const res = await onArchiveToggle({
         id: project.id,
-        status_id: project.status_id
+        status_id: project.status_id,
       });
       setIsArchived(res.isArchived);
 
       const { data: projRow } = await supabase
-        .from('projects')
-        .select('status_id, previous_status_id')
-        .eq('id', project.id)
+        .from("projects")
+        .select("status_id, previous_status_id")
+        .eq("id", project.id)
         .single();
 
-      setLocalStatusId(res.isArchived ? projRow?.previous_status_id || null : projRow?.status_id || null);
+      setLocalStatusId(
+        res.isArchived
+          ? projRow?.previous_status_id || null
+          : projRow?.status_id || null
+      );
       onProjectUpdated();
       onActivityUpdated?.();
       setArchiveConfirmOpen(false);
     } catch (e) {
       const message = getErrorMessage(e);
       toast({
-        title: tMessages('error.actionFailed'),
-        description: message || tMessages('error.archiveUpdateFailed'),
-        variant: 'destructive'
+        title: tMessages("error.actionFailed"),
+        description: message || tMessages("error.archiveUpdateFailed"),
+        variant: "destructive",
       });
     } finally {
       setArchiveLoading(false);
@@ -541,13 +610,13 @@ export function LegacyProjectSheetView({
     setArchiveConfirmState({
       hasOutstanding,
       outstandingAmount,
-      plannedCount
+      plannedCount,
     });
     setArchiveConfirmOpen(true);
   };
 
   const triggerSummaryRefresh = () => {
-    setSummaryRefreshToken(prev => prev + 1);
+    setSummaryRefreshToken((prev) => prev + 1);
   };
 
   const openEditWizard = useCallback((step: ProjectCreationStepId) => {
@@ -558,17 +627,21 @@ export function LegacyProjectSheetView({
   const handleWizardUpdated = useCallback(() => {
     onProjectUpdated();
     triggerSummaryRefresh();
-    setServicesVersion(prev => prev + 1);
+    setServicesVersion((prev) => prev + 1);
     void fetchLead();
   }, [fetchLead, onProjectUpdated]);
 
-  const summaryItems = useMemo(() => buildProjectSummaryItems({
-    t: tPages,
-    payments: headerSummary.payments,
-    todos: headerSummary.todos,
-    services: headerSummary.services,
-    sessionsSummary
-  }), [headerSummary, sessionsSummary, tPages]);
+  const summaryItems = useMemo(
+    () =>
+      buildProjectSummaryItems({
+        t: tPages,
+        payments: headerSummary.payments,
+        todos: headerSummary.todos,
+        services: headerSummary.services,
+        sessionsSummary,
+      }),
+    [headerSummary, sessionsSummary, tPages]
+  );
 
   const handleStatusPreview = useCallback((statusId: string | null) => {
     setLocalStatusId(statusId);
@@ -579,7 +652,7 @@ export function LegacyProjectSheetView({
   const archiveConfirmDialog = (
     <AlertDialog
       open={archiveConfirmOpen}
-      onOpenChange={open => {
+      onOpenChange={(open) => {
         if (!archiveLoading) {
           setArchiveConfirmOpen(open);
         }
@@ -587,65 +660,82 @@ export function LegacyProjectSheetView({
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{tPages('projectDetail.archiveConfirm.title')}</AlertDialogTitle>
+          <AlertDialogTitle>
+            {tPages("projectDetail.archiveConfirm.title")}
+          </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-3 text-sm text-muted-foreground">
-              <p>{tPages('projectDetail.archiveConfirm.description')}</p>
+              <p>{tPages("projectDetail.archiveConfirm.description")}</p>
               {archiveConfirmState.hasOutstanding && (
-                <p>{tPages('projectDetail.archiveConfirm.outstanding', {
-                  amount: formatArchiveAmount(archiveConfirmState.outstandingAmount)
-                })}</p>
+                <p>
+                  {tPages("projectDetail.archiveConfirm.outstanding", {
+                    amount: formatArchiveAmount(
+                      archiveConfirmState.outstandingAmount
+                    ),
+                  })}
+                </p>
               )}
               {archiveConfirmState.plannedCount > 0 && (
-                <p>{tPages('projectDetail.archiveConfirm.plannedSessions', {
-                  count: archiveConfirmState.plannedCount
-                })}</p>
+                <p>
+                  {tPages("projectDetail.archiveConfirm.plannedSessions", {
+                    count: archiveConfirmState.plannedCount,
+                  })}
+                </p>
               )}
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={archiveLoading}>
-            {tPages('projectDetail.archiveConfirm.cancel')}
+            {tPages("projectDetail.archiveConfirm.cancel")}
           </AlertDialogCancel>
-          <AlertDialogAction onClick={executeArchiveToggle} disabled={archiveLoading}>
+          <AlertDialogAction
+            onClick={executeArchiveToggle}
+            disabled={archiveLoading}
+          >
             {archiveLoading
-              ? tPages('projectDetail.archiveConfirm.confirmLoading')
-              : tPages('projectDetail.archiveConfirm.confirm')}
+              ? tPages("projectDetail.archiveConfirm.confirmLoading")
+              : tPages("projectDetail.archiveConfirm.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
 
-  const projectTypeLabel = projectType?.name || tPages('projectDetail.header.defaultType');
-  const projectNameDisplay = project?.name || tPages('projectDetail.placeholders.name');
+  const projectTypeLabel =
+    projectType?.name || tPages("projectDetail.header.defaultType");
+  const projectNameDisplay =
+    project?.name || tPages("projectDetail.placeholders.name");
   const headerTitle = (
     <span className="flex flex-col">
       <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {projectTypeLabel}
       </span>
       <span className="flex flex-wrap items-center gap-2 text-foreground">
-        <span className="break-words text-pretty leading-tight">{projectNameDisplay}</span>
+        <span className="break-words text-pretty leading-tight">
+          {projectNameDisplay}
+        </span>
       </span>
     </span>
   );
 
-  const headerSubtext = !isEditing && project.description ? project.description : undefined;
+  const headerSubtext =
+    !isEditing && project.description ? project.description : undefined;
 
-  const archivedBanner = isArchived
-    ? (
-        <div className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm leading-relaxed text-sky-800 dark:border-sky-400/30 dark:bg-sky-500/10 dark:text-sky-100">
-          <Archive className="mt-0.5 h-4 w-4 text-sky-500 dark:text-sky-300" aria-hidden="true" />
-          <div className="space-y-1">
-            <p className="font-semibold text-sky-900 dark:text-sky-50">
-              {tForms("project_sheet.archived_banner_title")}
-            </p>
-            <p>{tForms("project_sheet.archived_banner_description")}</p>
-          </div>
-        </div>
-      )
-    : undefined;
+  const archivedBanner = isArchived ? (
+    <div className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm leading-relaxed text-sky-800 dark:border-sky-400/30 dark:bg-sky-500/10 dark:text-sky-100">
+      <Archive
+        className="mt-0.5 h-4 w-4 text-sky-500 dark:text-sky-300"
+        aria-hidden="true"
+      />
+      <div className="space-y-1">
+        <p className="font-semibold text-sky-900 dark:text-sky-50">
+          {tForms("project_sheet.archived_banner_title")}
+        </p>
+        <p>{tForms("project_sheet.archived_banner_description")}</p>
+      </div>
+    </div>
+  ) : undefined;
 
   const desktopStatusControls = (
     <div className="hidden w-full items-center gap-3 sm:flex">
@@ -675,14 +765,14 @@ export function LegacyProjectSheetView({
     </div>
   );
 
-  const headerBanner = !isMobile
-    ? (
-        <div className="space-y-4">
-          {desktopStatusControls}
-          {archivedBanner}
-        </div>
-      )
-    : archivedBanner;
+  const headerBanner = !isMobile ? (
+    <div className="space-y-4">
+      {desktopStatusControls}
+      {archivedBanner}
+    </div>
+  ) : (
+    archivedBanner
+  );
 
   const moreActionsButton = (
     <DropdownMenu>
@@ -692,25 +782,32 @@ export function LegacyProjectSheetView({
           size="sm"
           className="min-w-[120px] justify-center gap-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:px-3"
         >
-          <span>{tForms('project_sheet.more')}</span>
+          <span>{tForms("project_sheet.more")}</span>
           <ChevronDown className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
-        <DropdownMenuItem role="menuitem" onSelect={() => setSessionSheetOpen(true)}>
+      <DropdownMenuContent
+        align="end"
+        side="bottom"
+        className="z-50 bg-background"
+      >
+        <DropdownMenuItem
+          role="menuitem"
+          onSelect={() => setSessionSheetOpen(true)}
+        >
           <CalendarPlus className="mr-2 h-4 w-4" />
-          <span>{tForms('sessions.schedule_new')}</span>
+          <span>{tForms("sessions.schedule_new")}</span>
         </DropdownMenuItem>
         <DropdownMenuItem role="menuitem" onSelect={handleArchiveAction}>
           {isArchived ? (
             <>
               <ArchiveRestore className="mr-2 h-4 w-4" />
-              <span>{tForms('project_sheet.restore_project')}</span>
+              <span>{tForms("project_sheet.restore_project")}</span>
             </>
           ) : (
             <>
               <Archive className="mr-2 h-4 w-4" />
-              <span>{tForms('project_sheet.archive_project')}</span>
+              <span>{tForms("project_sheet.archive_project")}</span>
             </>
           )}
         </DropdownMenuItem>
@@ -727,7 +824,9 @@ export function LegacyProjectSheetView({
         className="gap-2"
       >
         <Save className="h-4 w-4" />
-        {isSaving ? tForms('common:actions.saving') : tForms('common:buttons.save')}
+        {isSaving
+          ? tForms("common:actions.saving")
+          : tForms("common:buttons.save")}
       </Button>
       <Button
         size="sm"
@@ -742,12 +841,12 @@ export function LegacyProjectSheetView({
         className="gap-2"
       >
         <X className="h-4 w-4" />
-        {tForms('common:buttons.cancel')}
+        {tForms("common:buttons.cancel")}
       </Button>
     </>
   ) : (
     <>
-      {mode === 'sheet' && onViewFullDetails && !isMobile && (
+      {mode === "sheet" && onViewFullDetails && !isMobile && (
         <Button
           variant="outline"
           size="sm"
@@ -755,7 +854,9 @@ export function LegacyProjectSheetView({
           className="w-full justify-center gap-2 text-sm font-medium hover:bg-accent sm:w-auto sm:px-4"
         >
           <ExternalLink className="h-4 w-4" />
-          <span className="text-sm">{tForms('project_sheet.full_details')}</span>
+          <span className="text-sm">
+            {tForms("project_sheet.full_details")}
+          </span>
         </Button>
       )}
       {isMobile ? (
@@ -784,7 +885,7 @@ export function LegacyProjectSheetView({
         onClick={() => onOpenChange(false)}
         className="hidden sm:inline-flex justify-center text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:w-auto sm:px-3"
       >
-        <span>{tForms('project_sheet.close')}</span>
+        <span>{tForms("project_sheet.close")}</span>
       </Button>
     </>
   );
@@ -808,13 +909,13 @@ export function LegacyProjectSheetView({
           <div className="space-y-3">
             <Input
               value={editName}
-              onChange={e => setEditName(e.target.value)}
-              placeholder={tForms('labels.project_name')}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder={tForms("labels.project_name")}
             />
             <Textarea
               value={editDescription}
-              onChange={e => setEditDescription(e.target.value)}
-              placeholder={tForms('labels.project_description')}
+              onChange={(e) => setEditDescription(e.target.value)}
+              placeholder={tForms("labels.project_description")}
               className="min-h-[100px] resize-none"
             />
           </div>
@@ -837,15 +938,19 @@ export function LegacyProjectSheetView({
     services: "project-sheet-services",
     sessions: "project-sheet-sessions",
     activities: "project-sheet-activities",
-    todos: "project-sheet-todos"
+    todos: "project-sheet-todos",
   } as const;
 
   // Main content sections - exactly the same as original modal
   const mainContent = (
     <>
-      <div className={isArchived ? 'opacity-60 pointer-events-none select-none' : ''}>
+      <div
+        className={
+          isArchived ? "opacity-60 pointer-events-none select-none" : ""
+        }
+      >
         <ProjectDetailsLayout
-          header={<></>} 
+          header={<></>}
           left={
             <div className="space-y-4">
               {project && (
@@ -859,22 +964,22 @@ export function LegacyProjectSheetView({
                 />
               )}
               {lead && (
-                <UnifiedClientDetails 
-                  lead={lead} 
+                <UnifiedClientDetails
+                  lead={lead}
                   showClickableNames={true}
                   defaultExpanded={!isMobile}
                   onLeadUpdated={() => {
                     fetchLead();
                     onProjectUpdated();
-                  }} 
+                  }}
                 />
               )}
             </div>
-          } 
+          }
           sections={[
             {
               id: sectionId.payments,
-              title: tForms('project_sheet.payments_tab'),
+              title: tForms("project_sheet.payments_tab"),
               content: (
                 <ProjectPaymentsSection
                   projectId={project!.id}
@@ -885,60 +990,60 @@ export function LegacyProjectSheetView({
                   }}
                   refreshToken={servicesVersion}
                 />
-              )
+              ),
             },
             {
               id: sectionId.services,
-              title: tForms('project_sheet.services_tab'),
+              title: tForms("project_sheet.services_tab"),
               content: (
-                <ProjectServicesSection 
+                <ProjectServicesSection
                   projectId={project!.id}
                   onServicesUpdated={() => {
-                    setServicesVersion(v => v + 1);
+                    setServicesVersion((v) => v + 1);
                     onProjectUpdated();
                     onActivityUpdated?.();
                     triggerSummaryRefresh();
                   }}
                 />
-              )
+              ),
             },
             {
               id: sectionId.sessions,
-              title: tForms('project_sheet.sessions_tab'),
+              title: tForms("project_sheet.sessions_tab"),
               content: (
-                <SessionsSection 
-                  sessions={sessions} 
-                  loading={loading} 
-                  leadId={project!.lead_id} 
-                  projectId={project!.id} 
-                  leadName={leadName} 
-                  projectName={project!.name} 
+                <SessionsSection
+                  sessions={sessions}
+                  loading={loading}
+                  leadId={project!.lead_id}
+                  projectId={project!.id}
+                  leadName={leadName}
+                  projectName={project!.name}
                   onSessionUpdated={() => {
                     handleSessionUpdated();
                     onActivityUpdated?.();
-                  }} 
-                  onDeleteSession={handleDeleteSession} 
+                  }}
+                  onDeleteSession={handleDeleteSession}
                 />
-              )
-            }, 
+              ),
+            },
             {
               id: sectionId.activities,
-              title: tForms('project_sheet.activities_tab'),
+              title: tForms("project_sheet.activities_tab"),
               content: (
-                <ProjectActivitySection 
-                  projectId={project!.id} 
-                  leadId={project!.lead_id} 
-                  leadName={leadName} 
-                  projectName={project!.name} 
+                <ProjectActivitySection
+                  projectId={project!.id}
+                  leadId={project!.lead_id}
+                  leadName={leadName}
+                  projectName={project!.name}
                   onActivityUpdated={() => {
                     onActivityUpdated?.();
-                  }} 
+                  }}
                 />
-              )
-            }, 
+              ),
+            },
             {
               id: sectionId.todos,
-              title: tForms('project_sheet.todos_tab'),
+              title: tForms("project_sheet.todos_tab"),
               content: (
                 <ProjectTodoListEnhanced
                   projectId={project!.id}
@@ -948,16 +1053,19 @@ export function LegacyProjectSheetView({
                     onActivityUpdated?.();
                   }}
                 />
-              )
-            }
+              ),
+            },
           ]}
           overviewNavId="project-sheet-overview"
-          overviewLabel={tForms('project_sheet.overview_tab')}
+          overviewLabel={tForms("project_sheet.overview_tab")}
           stickyTopOffset={sheetNavOffset}
           scrollContainerRef={scrollContainerRef}
           onOverviewScroll={() => {
             if (scrollContainerRef.current) {
-              scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
+              scrollContainerRef.current.scrollTo({
+                top: 0,
+                behavior: "smooth",
+              });
             } else {
               window.scrollTo({ top: 0, behavior: "smooth" });
             }
@@ -965,19 +1073,19 @@ export function LegacyProjectSheetView({
           rightFooter={
             <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
               <div className="space-y-3">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowDeleteDialog(true)} 
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteDialog(true)}
                   className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
                 >
-                  {tForms('danger_zone.title')}
+                  {tForms("danger_zone.title")}
                 </Button>
                 <p className="text-xs text-muted-foreground text-center">
-                  {tForms('danger_zone.description')}
+                  {tForms("danger_zone.description")}
                 </p>
               </div>
             </div>
-          } 
+          }
         />
       </div>
     </>
@@ -1012,28 +1120,34 @@ export function LegacyProjectSheetView({
   ) : null;
 
   // Render as Sheet or Dialog based on mode
-  if (mode === 'sheet') {
+  if (mode === "sheet") {
     return (
       <>
         {archiveConfirmDialog}
         <Sheet open={open} onOpenChange={handleDialogOpenChange}>
           <SheetContent
             side={isMobile ? "bottom" : "right"}
-            className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none' : isMobile ? 'h-[100vh] max-w-none w-full' : 'sm:max-w-7xl lg:max-w-[1400px] h-[100vh]'} overflow-hidden p-0`}
+            className={`${
+              isFullscreen
+                ? "max-w-none w-[100vw] h-[100vh] m-0 rounded-none"
+                : isMobile
+                ? "h-[100vh] max-w-none w-full"
+                : "sm:max-w-7xl lg:max-w-[1400px] h-[100vh]"
+            } overflow-hidden p-0`}
           >
             <div className="flex h-full flex-col bg-muted/40">
               <div
                 ref={scrollContainerRef}
                 className="flex-1 overflow-y-auto overscroll-contain bg-background"
               >
-                <div className="relative mx-auto max-w-full px-4 pb-12 pt-8 sm:px-6">
+                <div className="relative mx-auto max-w-full px-4 pb-12 ">
                   {/* Mobile-only top-right close button */}
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onOpenChange(false)}
                     className="sm:hidden absolute right-4 top-4 h-9 w-9 p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                    aria-label={tForms('project_sheet.close')}
+                    aria-label={tForms("project_sheet.close")}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -1050,22 +1164,28 @@ export function LegacyProjectSheetView({
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{tForms('deleteDialog.title')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {tForms('deleteDialog.description', { name: project?.name })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>{tForms('deleteDialog.cancel')}</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteProject} 
-              disabled={isDeleting} 
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? tForms('actions.deleting') : tForms('deleteDialog.confirm')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {tForms("deleteDialog.title")}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {tForms("deleteDialog.description", { name: project?.name })}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>
+                {tForms("deleteDialog.cancel")}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteProject}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting
+                  ? tForms("actions.deleting")
+                  : tForms("deleteDialog.confirm")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
         {editWizard}
@@ -1079,15 +1199,13 @@ export function LegacyProjectSheetView({
     <>
       {archiveConfirmDialog}
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-        <DialogContent
-          className="max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-hidden p-0 overscroll-contain [&>button]:hidden"
-        >
+        <DialogContent className="max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-hidden p-0 overscroll-contain [&>button]:hidden">
           <div className="flex h-full flex-col bg-muted/40">
             <div
               ref={scrollContainerRef}
               className="flex-1 overflow-y-auto overscroll-contain bg-background"
             >
-              <div className="mx-auto max-w-full px-4 pb-12 pt-8 sm:px-6">
+              <div className="mx-auto max-w-full px-4 pb-12 pt-6 sm:px-5 sm:pt-5">
                 <div className="space-y-6 md:space-y-8">
                   <DialogHeader className="pb-0">
                     <DialogTitle asChild>
@@ -1106,26 +1224,30 @@ export function LegacyProjectSheetView({
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{tForms('deleteDialog.title')}</AlertDialogTitle>
+            <AlertDialogTitle>{tForms("deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {tForms('deleteDialog.description', { name: project?.name })}
+              {tForms("deleteDialog.description", { name: project?.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>{tForms('deleteDialog.cancel')}</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteProject} 
-              disabled={isDeleting} 
+            <AlertDialogCancel disabled={isDeleting}>
+              {tForms("deleteDialog.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteProject}
+              disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? tForms('actions.deleting') : tForms('deleteDialog.confirm')}
+              {isDeleting
+                ? tForms("actions.deleting")
+                : tForms("deleteDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-    {sessionSheet}
-    {editWizard}
-  </>
+        </AlertDialogContent>
+      </AlertDialog>
+      {sessionSheet}
+      {editWizard}
+    </>
   );
 }
 

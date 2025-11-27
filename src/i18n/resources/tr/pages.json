@@ -1414,7 +1414,11 @@
     },
     "filters": {
       "sessions": "Seanslar",
-      "reminders": "Hatırlatmalar"
+      "reminders": "Hatırlatmalar",
+      "sessions_show": "Seansları göster",
+      "sessions_hide": "Seansları gizle",
+      "reminders_show": "Hatırlatmaları göster",
+      "reminders_hide": "Hatırlatmaları gizle"
     },
     "emptyStates": {
       "noSessions": "Bu gün için planlanmış seans yok",

@@ -321,6 +321,8 @@ export default function Calendar() {
         }
         isMobile={isMobile}
         touchHandlers={touchHandlers}
+        fullHeight={!isMobile}
+        className={!isMobile ? "h-full" : undefined}
       />
     );
   };
@@ -349,6 +351,8 @@ export default function Calendar() {
         getEventsForDate={getEventsForDate}
         onToggleReminderCompletion={toggleActivityCompletion}
         completingReminderId={togglingActivityId}
+        maxHeight={!isMobile ? "calc(100vh - 220px)" : undefined}
+        className={!isMobile ? "h-full" : undefined}
       />
     );
   };
@@ -423,7 +427,7 @@ export default function Calendar() {
 
   return (
     <CalendarErrorWrapper error={error} retry={refreshCalendar}>
-      <>
+      <div className="flex flex-col">
         <PageHeader title={t("calendar.title")}>
           <PageHeaderSearch>
             <GlobalSearch variant="header" />
@@ -451,7 +455,11 @@ export default function Calendar() {
                     showSessions ? "bg-primary" : "bg-muted-foreground/40"
                   }`}
                 />
-                <span>{t("calendar.filters.sessions")}</span>
+                <span>
+                  {showSessions
+                    ? t("calendar.filters.sessions_hide", { defaultValue: "Hide sessions" })
+                    : t("calendar.filters.sessions_show", { defaultValue: "Show sessions" })}
+                </span>
               </button>
               <button
                 type="button"
@@ -471,7 +479,11 @@ export default function Calendar() {
                       : "bg-muted-foreground/40"
                   }`}
                 />
-                <span>{t("calendar.filters.reminders")}</span>
+                <span>
+                  {showReminders
+                    ? t("calendar.filters.reminders_hide", { defaultValue: "Hide reminders" })
+                    : t("calendar.filters.reminders_show", { defaultValue: "Show reminders" })}
+                </span>
               </button>
             </div>
 
@@ -566,7 +578,11 @@ export default function Calendar() {
                     showSessions ? "bg-primary" : "bg-muted-foreground/40"
                   }`}
                 />
-                <span>{t("calendar.filters.sessions")}</span>
+                <span>
+                  {showSessions
+                    ? t("calendar.filters.sessions_hide", { defaultValue: "Hide sessions" })
+                    : t("calendar.filters.sessions_show", { defaultValue: "Show sessions" })}
+                </span>
               </button>
               <button
                 type="button"
@@ -586,17 +602,26 @@ export default function Calendar() {
                       : "bg-muted-foreground/40"
                   }`}
                 />
-                <span>{t("calendar.filters.reminders")}</span>
+                <span>
+                  {showReminders
+                    ? t("calendar.filters.reminders_hide", { defaultValue: "Hide reminders" })
+                    : t("calendar.filters.reminders_show", { defaultValue: "Show reminders" })}
+                </span>
               </button>
             </div>
           </div>
         </div>
 
         {/* Main calendar container with proper structure */}
-        <div className="flex-1 px-4 sm:px-6 lg:px-6 pb-4">
+        <div className="px-4 sm:px-6 lg:px-6 pb-4">
           {/* Calendar content */}
           <div
-            className="min-h-96"
+            className={isMobile ? "min-h-96" : "flex flex-col"}
+            style={
+              isMobile
+                ? undefined
+                : { height: "clamp(640px, calc(100vh - 220px), 980px)" }
+            }
             onTouchStart={
               viewMode !== "month" ? touchHandlers.handleTouchStart : undefined
             }
@@ -652,7 +677,7 @@ export default function Calendar() {
             />
           )}
         </div>
-      </>
+      </div>
     </CalendarErrorWrapper>
   );
 }

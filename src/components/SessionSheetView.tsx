@@ -1,22 +1,46 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { ExternalLink, AlertTriangle, Calendar as CalendarIcon, ChevronDown, Pencil, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import SessionStatusBadge from '@/components/SessionStatusBadge';
-import { isOverdueSession } from '@/lib/dateUtils';
-import EditSessionDialog from '@/components/EditSessionDialog';
-import type { SessionPlanningStepId } from '@/features/session-planning';
-import { useSessionActions } from '@/hooks/useSessionActions';
-import { UnifiedClientDetails } from '@/components/UnifiedClientDetails';
-import SessionGallery from '@/components/SessionGallery';
-import { getDisplaySessionName } from '@/lib/sessionUtils';
-import { useFormsTranslation, useMessagesTranslation } from '@/hooks/useTypedTranslation';
-import { EntityHeader } from '@/components/EntityHeader';
-import { buildSessionSummaryItems } from '@/lib/sessions/buildSessionSummaryItems';
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import {
+  ExternalLink,
+  AlertTriangle,
+  Calendar as CalendarIcon,
+  ChevronDown,
+  Pencil,
+  Trash2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import SessionStatusBadge from "@/components/SessionStatusBadge";
+import { isOverdueSession } from "@/lib/dateUtils";
+import EditSessionDialog from "@/components/EditSessionDialog";
+import type { SessionPlanningStepId } from "@/features/session-planning";
+import { useSessionActions } from "@/hooks/useSessionActions";
+import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
+import SessionGallery from "@/components/SessionGallery";
+import { getDisplaySessionName } from "@/lib/sessionUtils";
+import {
+  useFormsTranslation,
+  useMessagesTranslation,
+} from "@/hooks/useTypedTranslation";
+import { EntityHeader } from "@/components/EntityHeader";
+import { buildSessionSummaryItems } from "@/lib/sessions/buildSessionSummaryItems";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 import { useTranslation } from "react-i18next";
@@ -63,36 +87,30 @@ export default function SessionSheetView({
   onViewFullDetails,
   onNavigateToLead,
   onNavigateToProject,
-  onSessionUpdated
+  onSessionUpdated,
 }: SessionSheetViewProps) {
-  const {
-    toast
-  } = useToast();
-  const {
-    deleteSession
-  } = useSessionActions();
-  const {
-    t: tForms
-  } = useFormsTranslation();
-  const {
-    t: tMessages
-  } = useMessagesTranslation();
+  const { toast } = useToast();
+  const { deleteSession } = useSessionActions();
+  const { t: tForms } = useFormsTranslation();
+  const { t: tMessages } = useMessagesTranslation();
   const { t: tPages } = useTranslation("pages");
   const isMobile = useIsMobile();
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editStartStep, setEditStartStep] = useState<SessionPlanningStepId | undefined>(undefined);
+  const [editStartStep, setEditStartStep] = useState<
+    SessionPlanningStepId | undefined
+  >(undefined);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const sheetNavOffset = 0;
   const fetchSession = useCallback(async () => {
     if (!sessionId) return;
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('sessions').select(`
+      const { data, error } = await supabase
+        .from("sessions")
+        .select(
+          `
           *,
           leads:lead_id (
             id,
@@ -108,16 +126,21 @@ export default function SessionSheetView({
               name
             )
           )
-        `).eq('id', sessionId).single();
+        `
+        )
+        .eq("id", sessionId)
+        .single();
       if (error) throw error;
       setSession(data);
     } catch (error: unknown) {
-      console.error('Error fetching session:', error);
+      console.error("Error fetching session:", error);
       toast({
         title: "Error",
         description:
-          error instanceof Error ? error.message : "Failed to load session details",
-        variant: "destructive"
+          error instanceof Error
+            ? error.message
+            : "Failed to load session details",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -162,8 +185,9 @@ export default function SessionSheetView({
       onOpenChange(false);
     }
   }, [onNavigateToProject, onOpenChange, session?.project_id]);
-  const sessionTypeLabel = session?.projects?.project_types?.name || tForms('sessionBanner.session');
-  const sessionNameDisplay = session ? getDisplaySessionName(session) : '';
+  const sessionTypeLabel =
+    session?.projects?.project_types?.name || tForms("sessionBanner.session");
+  const sessionNameDisplay = session ? getDisplaySessionName(session) : "";
 
   const openEditStep = useCallback(
     (step: SessionPlanningStepId) => {
@@ -179,27 +203,27 @@ export default function SessionSheetView({
         ? buildSessionSummaryItems({
             session,
             labels: {
-              dateTime: tForms('sessionSheet.dateTime'),
-              project: tForms('sessionSheet.project'),
-              notes: tForms('sessionSheet.notes'),
-              location: tForms('sessionSheet.location'),
+              dateTime: tForms("sessionSheet.dateTime"),
+              project: tForms("sessionSheet.project"),
+              notes: tForms("sessionSheet.notes"),
+              location: tForms("sessionSheet.location"),
             },
             placeholders: {
-              project: tForms('sessionSheet.placeholders.project'),
-              notes: tForms('sessionSheet.placeholders.notes'),
-              location: tForms('sessionSheet.placeholders.location'),
+              project: tForms("sessionSheet.placeholders.project"),
+              notes: tForms("sessionSheet.placeholders.notes"),
+              location: tForms("sessionSheet.placeholders.location"),
             },
             actions: {
-              editSchedule: tForms('sessionSheet.actions.editSchedule'),
-              connectProject: tForms('sessionSheet.actions.connectProject'),
-              addNotes: tForms('sessionSheet.actions.addNotes'),
-              addLocation: tForms('sessionSheet.actions.addLocation'),
+              editSchedule: tForms("sessionSheet.actions.editSchedule"),
+              connectProject: tForms("sessionSheet.actions.connectProject"),
+              addNotes: tForms("sessionSheet.actions.addNotes"),
+              addLocation: tForms("sessionSheet.actions.addLocation"),
             },
             onProjectClick: session.project_id ? handleProjectClick : undefined,
-            onEditSchedule: () => openEditStep('schedule'),
-            onConnectProject: () => openEditStep('project'),
-            onAddNotes: () => openEditStep('notes'),
-            onAddLocation: () => openEditStep('location'),
+            onEditSchedule: () => openEditStep("schedule"),
+            onConnectProject: () => openEditStep("project"),
+            onAddNotes: () => openEditStep("notes"),
+            onAddLocation: () => openEditStep("location"),
           })
         : [],
     [session, tForms, handleProjectClick, openEditStep]
@@ -209,10 +233,15 @@ export default function SessionSheetView({
     session && isOverdueSession(session.session_date, session.status) ? (
       <div className="space-y-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm leading-relaxed text-orange-800">
         <div className="flex items-start gap-3">
-          <AlertTriangle className="mt-0.5 h-4 w-4 text-orange-600" aria-hidden="true" />
+          <AlertTriangle
+            className="mt-0.5 h-4 w-4 text-orange-600"
+            aria-hidden="true"
+          />
           <div className="space-y-1">
-            <p className="font-semibold text-orange-900">{tForms('sessionSheet.overdueWarning')}</p>
-            <p>{tForms('sessionSheet.overdueDescription')}</p>
+            <p className="font-semibold text-orange-900">
+              {tForms("sessionSheet.overdueWarning")}
+            </p>
+            <p>{tForms("sessionSheet.overdueDescription")}</p>
           </div>
         </div>
         <div className="pl-7">
@@ -221,17 +250,20 @@ export default function SessionSheetView({
             variant="outline"
             className="border-orange-300 text-orange-700 hover:bg-orange-100 hover:text-orange-700"
             onClick={() => {
-              setEditStartStep('schedule');
+              setEditStartStep("schedule");
               setIsEditDialogOpen(true);
             }}
           >
-            {tForms('sessionSheet.overdueReschedule')}
+            {tForms("sessionSheet.overdueReschedule")}
           </Button>
         </div>
       </div>
     ) : undefined;
 
-  const renderSessionStatusBadge = (className?: string, size: "sm" | "default" = "default") =>
+  const renderSessionStatusBadge = (
+    className?: string,
+    size: "sm" | "default" = "default"
+  ) =>
     session ? (
       <SessionStatusBadge
         sessionId={session.id}
@@ -251,14 +283,18 @@ export default function SessionSheetView({
           size="sm"
           className="min-w-[120px] justify-center gap-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:px-3"
         >
-          <span>{tForms('sessionSheet.more')}</span>
+          <span>{tForms("sessionSheet.more")}</span>
           <ChevronDown className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
+      <DropdownMenuContent
+        align="end"
+        side="bottom"
+        className="z-50 bg-background"
+      >
         <DropdownMenuItem role="menuitem" onSelect={handleEdit}>
           <Pencil className="mr-2 h-4 w-4" />
-          <span>{tForms('sessionSheet.edit')}</span>
+          <span>{tForms("sessionSheet.edit")}</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           role="menuitem"
@@ -266,7 +302,9 @@ export default function SessionSheetView({
           className="hover:text-destructive focus:text-destructive"
         >
           <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-          <span className="text-destructive">{tForms('sessionSheet.deleteSession')}</span>
+          <span className="text-destructive">
+            {tForms("sessionSheet.deleteSession")}
+          </span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -281,7 +319,7 @@ export default function SessionSheetView({
         className="w-full justify-center gap-2 text-sm font-medium hover:bg-accent sm:w-auto sm:px-4"
       >
         <ExternalLink className="h-4 w-4" />
-        <span className="text-sm">{tForms('sessionSheet.fullDetails')}</span>
+        <span className="text-sm">{tForms("sessionSheet.fullDetails")}</span>
       </Button>
       {isMobile ? (
         <div className="flex w-full flex-wrap items-center gap-2">
@@ -299,7 +337,7 @@ export default function SessionSheetView({
         onClick={() => onOpenChange(false)}
         className="hidden justify-center text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:inline-flex sm:w-auto sm:px-3"
       >
-        <span>{tForms('sessionSheet.close')}</span>
+        <span>{tForms("sessionSheet.close")}</span>
       </Button>
     </>
   ) : undefined;
@@ -310,7 +348,9 @@ export default function SessionSheetView({
         {sessionTypeLabel}
       </span>
       <span className="flex flex-wrap items-center gap-2 text-foreground">
-        <span className="break-words text-pretty leading-tight">{sessionNameDisplay}</span>
+        <span className="break-words text-pretty leading-tight">
+          {sessionNameDisplay}
+        </span>
         {!isMobile && renderSessionStatusBadge("text-xs sm:text-sm")}
       </span>
     </span>
@@ -363,49 +403,63 @@ export default function SessionSheetView({
       </div>
     </div>
   );
-  return <>
+  return (
+    <>
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
         <SheetContent className="w-full h-[100vh] overflow-hidden p-0 sm:max-w-6xl lg:max-w-7xl">
           <div
             ref={scrollContainerRef}
             className="h-full overflow-y-auto overscroll-contain bg-background"
           >
-            {loading ? <div className="p-6">
+            {loading ? (
+              <div className="p-6">
                 <div className="animate-pulse space-y-4">
                   <div className="h-6 bg-muted rounded w-1/3"></div>
                   <div className="h-4 bg-muted rounded w-1/2"></div>
                   <div className="h-32 bg-muted rounded"></div>
                 </div>
-              </div> : session ? (
-                <div className="mx-auto max-w-full px-4 pb-10 pt-6 sm:px-6">
-                  <div className="space-y-6">
-                    <EntityHeader
-                      name={sessionNameDisplay}
-                      title={headerTitle}
-                      summaryItems={summaryItems}
-                      banner={overdueBanner}
-                      actions={headerActions}
-                      avatarClassName="bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500 text-white ring-0"
-                      avatarContent={<CalendarIcon className="h-5 w-5 text-white" aria-hidden="true" />}
-                      fallbackInitials="SE"
-                    />
+              </div>
+            ) : session ? (
+              <div className="mx-auto max-w-full px-4 pb-10 ">
+                <div className="space-y-6">
+                  <EntityHeader
+                    name={sessionNameDisplay}
+                    title={headerTitle}
+                    summaryItems={summaryItems}
+                    banner={overdueBanner}
+                    actions={headerActions}
+                    avatarClassName="bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500 text-white ring-0"
+                    avatarContent={
+                      <CalendarIcon
+                        className="h-5 w-5 text-white"
+                        aria-hidden="true"
+                      />
+                    }
+                    fallbackInitials="SE"
+                  />
 
-                    <ProjectDetailsLayout
-                      header={<></>}
-                      left={leftColumnContent}
-                      sections={sections}
-                      overviewNavId="session-sheet-overview"
-                      overviewLabel={tForms('project_sheet.overview_tab')}
-                      stickyTopOffset={sheetNavOffset}
-                      scrollContainerRef={scrollContainerRef}
-                      rightFooter={dangerZone}
-                    />
-                  </div>
+                  <ProjectDetailsLayout
+                    header={<></>}
+                    left={leftColumnContent}
+                    sections={sections}
+                    overviewNavId="session-sheet-overview"
+                    overviewLabel={tForms("project_sheet.overview_tab")}
+                    stickyTopOffset={sheetNavOffset}
+                    scrollContainerRef={scrollContainerRef}
+                    rightFooter={dangerZone}
+                  />
                 </div>
-              ) : <div className="p-6 text-center">
-                <h3 className="text-lg font-semibold mb-2">{tForms('sessions.sessionNotFound')}</h3>
-                <p className="text-muted-foreground">{tForms('sessions.unableToLoadDetails')}</p>
-              </div>}
+              </div>
+            ) : (
+              <div className="p-6 text-center">
+                <h3 className="text-lg font-semibold mb-2">
+                  {tForms("sessions.sessionNotFound")}
+                </h3>
+                <p className="text-muted-foreground">
+                  {tForms("sessions.unableToLoadDetails")}
+                </p>
+              </div>
+            )}
           </div>
         </SheetContent>
       </Sheet>
@@ -424,32 +478,42 @@ export default function SessionSheetView({
           leadId={session.lead_id}
           currentDate={session.session_date}
           currentTime={session.session_time}
-          currentNotes={session.notes || ''}
-          currentLocation={session.location || ''}
+          currentNotes={session.notes || ""}
+          currentLocation={session.location || ""}
           currentProjectId={session.project_id}
           currentSessionName={session.session_name}
-          leadName={session.leads?.name || ''}
+          leadName={session.leads?.name || ""}
           onSessionUpdated={handleSessionUpdated}
           startStep={editStartStep}
         />
       )}
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{tForms('sessionSheet.deleteSession')}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {tForms("sessionSheet.deleteSession")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {tMessages('confirm.deleteSession')} {tMessages('confirm.cannotUndo')}
+              {tMessages("confirm.deleteSession")}{" "}
+              {tMessages("confirm.cannotUndo")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{tForms('buttons.cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {tForms('buttons.delete')}
+            <AlertDialogCancel>{tForms("buttons.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {tForms("buttons.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>;
+    </>
+  );
 }

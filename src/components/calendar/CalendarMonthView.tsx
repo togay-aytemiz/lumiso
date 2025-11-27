@@ -1,7 +1,7 @@
 import { memo, KeyboardEvent as ReactKeyboardEvent } from "react";
 import { format, eachDayOfInterval, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isToday } from "date-fns";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { formatDate, getUserLocale, getDateFnsLocale } from "@/lib/utils";
+import { formatDate, getUserLocale, getDateFnsLocale, cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useOrganizationTimezone } from "@/hooks/useOrganizationTimezone";
 
@@ -46,6 +46,8 @@ interface CalendarMonthViewProps {
     handleTouchEnd: (e: React.TouchEvent) => void;
     handleTouchCancel: () => void;
   };
+  className?: string;
+  fullHeight?: boolean;
 }
 
 export const CalendarMonthView = memo<CalendarMonthViewProps>(({
@@ -59,7 +61,9 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
   onActivityClick,
   onDayClick,
   isMobile,
-  touchHandlers
+  touchHandlers,
+  className,
+  fullHeight
 }) => {
   const { t } = useTranslation('pages');
   const userLocale = getUserLocale();
@@ -75,6 +79,17 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
     const day = addDays(calendarStart, i);
     return format(day, "EEE", { locale: dateFnsLocale });
   });
+  const weekCount = Math.max(1, Math.ceil(days.length / 7));
+  const rootClassName = cn(
+    "bg-card rounded-xl border border-border shadow-sm",
+    fullHeight && "h-full flex flex-col overflow-hidden",
+    className
+  );
+  const gridClassName = cn(
+    "grid grid-cols-7 gap-px bg-border",
+    fullHeight && "flex-1"
+  );
+  const gridStyle = fullHeight ? { gridTemplateRows: `repeat(${weekCount}, minmax(0, 1fr))` } : undefined;
 
   const handleDayKeyDown = (
     event: ReactKeyboardEvent<HTMLDivElement>,
@@ -89,7 +104,7 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
 
   return (
     <div 
-      className="bg-card rounded-xl border border-border shadow-sm"
+      className={rootClassName}
       onTouchStart={touchHandlers.handleTouchStart}
       onTouchMove={touchHandlers.handleTouchMove}
       onTouchEnd={touchHandlers.handleTouchEnd}
@@ -106,7 +121,7 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
       </div>
       
       {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-px bg-border">
+      <div className={gridClassName} style={gridStyle}>
         {days.map((day, index) => {
           const { sessions: daySessions, activities: dayActivities } = getEventsForDate(day);
           const isCurrentMonth = isSameMonth(day, currentDate);

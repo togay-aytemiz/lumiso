@@ -11,7 +11,6 @@ import { ProjectActivitySection } from "@/components/ProjectActivitySection";
 import { ProjectTodoListEnhanced } from "@/components/ProjectTodoListEnhanced";
 import { ProjectServicesSection } from "@/components/ProjectServicesSection";
 import { SessionsSection } from "@/components/SessionsSection";
-import { ProjectStagePipeline } from "@/components/ProjectStagePipeline";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { SimpleProjectTypeSelect } from "@/components/SimpleProjectTypeSelect";
 import { ProjectPaymentsSection } from "@/components/ProjectPaymentsSection";
@@ -542,6 +541,17 @@ export default function ProjectDetail() {
       </span>
       <span className="flex flex-wrap items-center gap-2 text-foreground">
         <span className="break-words text-pretty leading-tight">{projectNameDisplay}</span>
+        {!isMobile && !isEditing && (
+          <ProjectStatusBadge
+            projectId={project.id}
+            currentStatusId={localStatusId || undefined}
+            onStatusChange={handleStatusChange}
+            onStatusSelecting={handleStatusPreview}
+            editable={!isArchived}
+            size="sm"
+            className="h-8"
+          />
+        )}
       </span>
     </span>
   );
@@ -662,38 +672,7 @@ export default function ProjectDetail() {
     )
   );
 
-  const desktopStatusControls = (
-    <div className="hidden w-full items-center gap-3 sm:flex">
-      <ProjectStatusBadge
-        projectId={project.id}
-        currentStatusId={localStatusId || undefined}
-        onStatusChange={handleStatusChange}
-        onStatusSelecting={handleStatusPreview}
-        editable={!isArchived}
-        size="sm"
-        className="h-9 min-w-[160px]"
-      />
-      <div className="flex-1">
-        <ProjectStagePipeline
-          projectId={project.id}
-          currentStatusId={localStatusId || undefined}
-          onStatusChange={handleStatusChange}
-          onStatusSelecting={handleStatusPreview}
-          editable={!isArchived}
-          className="h-9"
-        />
-      </div>
-    </div>
-  );
-
-  const headerBanner = !isMobile
-    ? (
-        <div className="space-y-4">
-          {desktopStatusControls}
-          {archivedBanner}
-        </div>
-      )
-    : archivedBanner;
+  const headerBanner = archivedBanner;
 
   return (
     <div className="w-full min-h-screen p-6">

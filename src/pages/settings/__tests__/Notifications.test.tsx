@@ -2,6 +2,23 @@ import React from "react";
 import { fireEvent, render, screen, waitFor } from "@/utils/testUtils";
 import Notifications from "../Notifications";
 import { mockSupabaseClient } from "@/utils/testUtils";
+import { useUserRole } from "@/hooks/useUserRole";
+
+jest.mock("@/contexts/AuthContext", () => ({
+  __esModule: true,
+  useAuth: () => ({
+    user: { id: "user-1" },
+    session: null,
+    userRoles: [],
+    loading: false,
+    signOut: jest.fn(),
+  }),
+}));
+
+jest.mock("@/hooks/useUserRole", () => ({
+  __esModule: true,
+  useUserRole: jest.fn(),
+}));
 
 jest.mock("@/integrations/supabase/client", () => ({
   supabase: mockSupabaseClient,
@@ -11,6 +28,17 @@ jest.mock("@/components/settings/SettingsPageWrapper", () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="settings-wrapper">{children}</div>
+  ),
+}));
+
+jest.mock("@/components/settings/SettingsSectionVariants", () => ({
+  __esModule: true,
+  SettingsToggleSection: ({ items }: { items: Array<{ id: string; control: React.ReactNode }> }) => (
+    <div>
+      {items.map((item) => (
+        <div key={item.id}>{item.control}</div>
+      ))}
+    </div>
   ),
 }));
 
@@ -102,6 +130,8 @@ const supabaseMock = mockSupabaseClient as unknown as {
   functions: { invoke: jest.Mock };
 };
 
+const mockUseUserRole = useUserRole as jest.Mock;
+
 const createFromMock = () => {
   const chain = {
     select: jest.fn().mockReturnThis(),
@@ -119,8 +149,18 @@ const createFromMock = () => {
   };
 };
 
+const createRoleMock = (isAdmin: boolean) => ({
+  userRoles: isAdmin ? ["admin"] : [],
+  hasRole: jest.fn(),
+  isAdmin: jest.fn(() => isAdmin),
+  isSupport: jest.fn(() => false),
+  isAdminOrSupport: jest.fn(() => isAdmin),
+});
+
 describe("Notifications settings page", () => {
   beforeEach(() => {
+    mockUseUserRole.mockReturnValue(createRoleMock(true));
+
     supabaseMock.auth.getUser = jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } } });
 
     supabaseMock.from = jest.fn((table: string) => {
@@ -157,10 +197,23 @@ describe("Notifications settings page", () => {
     render(<Notifications />);
 
     await waitFor(() => {
-      expect(supabaseMock.from).toHaveBeenCalledWith("user_settings");
+      expect(screen.getByTestId("switch-global-notifications")).toBeInTheDocument();
     });
 
     expect(screen.getByTestId("switch-global-notifications")).toHaveTextContent("on");
+  });
+
+  it("does not render test buttons for non-admin users", async () => {
+    mockUseUserRole.mockReturnValue(createRoleMock(false));
+
+    render(<Notifications />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("switch-global-notifications")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText("settings.notifications.sendTest")).not.toBeInTheDocument();
+    expect(screen.queryByText("settings.notifications.sendEmptyTest")).not.toBeInTheDocument();
   });
 
   it("updates all notification toggles when master switch is clicked", async () => {

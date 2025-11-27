@@ -13,11 +13,14 @@ import {
   useNotificationSettings,
   NotificationSettings,
 } from "@/hooks/useNotificationSettings";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export default function Notifications() {
   const { toast } = useToast();
   const { t } = useTranslation('pages');
   const { settings, loading, updateSettings } = useNotificationSettings();
+  const { isAdmin } = useUserRole();
+  const isAdminUser = isAdmin();
   const [autoSaveStates, setAutoSaveStates] = useState<{[key: string]: 'idle' | 'saving'}>({});
   const notificationTypeLabels: Record<string, string> = {
     'daily-summary': t('settings.notifications.testTypes.dailySummary'),
@@ -92,6 +95,8 @@ export default function Notifications() {
   const [testingNotification, setTestingNotification] = useState<string | null>(null);
   
   const testNotification = async (type: string) => {
+    if (!isAdminUser) return;
+
     setTestingNotification(type);
     try {
       const requestBody: Record<string, unknown> = {
@@ -190,40 +195,42 @@ export default function Notifications() {
       icon: Clock,
       control: (
         <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end sm:gap-4">
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => testNotification('daily-summary-empty')}
-              disabled={testingNotification === 'daily-summary-empty'}
-              className="h-auto px-0 text-sm text-muted-foreground hover:text-muted-foreground/80"
-            >
-              {testingNotification === 'daily-summary-empty' ? (
-                <>
-                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                  {t('settings.notifications.testing')}
-                </>
-              ) : (
-                t('settings.notifications.sendEmptyTest')
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => testNotification('daily-summary')}
-              disabled={testingNotification === 'daily-summary'}
-              className="h-auto px-0 text-sm text-primary hover:text-primary/80"
-            >
-              {testingNotification === 'daily-summary' ? (
-                <>
-                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                  {t('settings.notifications.testing')}
-                </>
-              ) : (
-                t('settings.notifications.sendTest')
-              )}
-            </Button>
-          </div>
+          {isAdminUser && (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => testNotification('daily-summary-empty')}
+                disabled={testingNotification === 'daily-summary-empty'}
+                className="h-auto px-0 text-sm text-muted-foreground hover:text-muted-foreground/80"
+              >
+                {testingNotification === 'daily-summary-empty' ? (
+                  <>
+                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                    {t('settings.notifications.testing')}
+                  </>
+                ) : (
+                  t('settings.notifications.sendEmptyTest')
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => testNotification('daily-summary')}
+                disabled={testingNotification === 'daily-summary'}
+                className="h-auto px-0 text-sm text-primary hover:text-primary/80"
+              >
+                {testingNotification === 'daily-summary' ? (
+                  <>
+                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                    {t('settings.notifications.testing')}
+                  </>
+                ) : (
+                  t('settings.notifications.sendTest')
+                )}
+              </Button>
+            </div>
+          )}
           <Switch
             id="daily-summary"
             checked={settings.dailySummaryEnabled}
@@ -244,22 +251,24 @@ export default function Notifications() {
       icon: Zap,
       control: (
         <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end sm:gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => testNotification('project-milestone')}
-            disabled={testingNotification === 'project-milestone'}
-            className="h-auto px-0 text-sm text-primary hover:text-primary/80"
-          >
-            {testingNotification === 'project-milestone' ? (
-              <>
-                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                {t('settings.notifications.testing')}
-              </>
-            ) : (
-              t('settings.notifications.sendTest')
-            )}
-          </Button>
+          {isAdminUser && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => testNotification('project-milestone')}
+              disabled={testingNotification === 'project-milestone'}
+              className="h-auto px-0 text-sm text-primary hover:text-primary/80"
+            >
+              {testingNotification === 'project-milestone' ? (
+                <>
+                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                  {t('settings.notifications.testing')}
+                </>
+              ) : (
+                t('settings.notifications.sendTest')
+              )}
+            </Button>
+          )}
           <Switch
             id="project-milestone"
             checked={settings.projectMilestoneEnabled}

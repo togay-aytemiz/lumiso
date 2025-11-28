@@ -210,6 +210,9 @@ const AllProjects = () => {
     });
   }, [statusOptions]);
 
+  const projectIntroVideoId = "KXtsZsUWWSk";
+  const projectVideoEmbedUrl = `https://www.youtube.com/embed/${projectIntroVideoId}?rel=0&modestbranding=1&playsinline=1`;
+
   // Tutorial state
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
@@ -1156,39 +1159,48 @@ const AllProjects = () => {
       id: 1,
       title: tForms('projects.welcomeTutorialTitle'),
       description: tForms('projects.welcomeTutorialDescription'),
-      content: <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          {t('projects.tutorial.welcome.subtitle')}
-        </p>
-        <div className="space-y-3">
-          <OnboardingChecklistItem
-            icon={LayoutGrid}
-            title={tForms('projects.boardViewTitle')}
-            description={t('projects.board_view_benefit')}
-            titleClassName="text-sm font-semibold"
-            descriptionClassName="text-sm"
-          />
-          <OnboardingChecklistItem
-            icon={List}
-            title={tForms('projects.listViewTitle')}
-            description={t('projects.list_view_benefit')}
-            titleClassName="text-sm font-semibold"
-            descriptionClassName="text-sm"
-          />
-          <OnboardingChecklistItem
-            icon={Archive}
-            title={tForms('projects.archivedTitle')}
-            description={t('projects.archived_view_benefit')}
-            titleClassName="text-sm font-semibold"
-            descriptionClassName="text-sm"
-          />
+      content: (
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-foreground">
+              {t('projects.tutorial.welcome.video.title')}
+            </p>
+            <iframe
+              title={t('projects.tutorial.welcome.video.title')}
+              src={projectVideoEmbedUrl}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              className="aspect-video w-full rounded-lg bg-black shadow-sm"
+            />
+          </div>
+
+          <div className="space-y-3">
+            <OnboardingChecklistItem
+              icon={LayoutGrid}
+              title={tForms('projects.boardViewTitle')}
+              description={t('projects.board_view_benefit')}
+              titleClassName="text-sm font-semibold"
+              descriptionClassName="text-sm"
+            />
+            <OnboardingChecklistItem
+              icon={List}
+              title={tForms('projects.listViewTitle')}
+              description={t('projects.list_view_benefit')}
+              titleClassName="text-sm font-semibold"
+              descriptionClassName="text-sm"
+            />
+            <OnboardingChecklistItem
+              icon={Archive}
+              title={tForms('projects.archivedTitle')}
+              description={t('projects.archived_view_benefit')}
+              titleClassName="text-sm font-semibold"
+              descriptionClassName="text-sm"
+            />
+          </div>
         </div>
-        <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg mt-4">
-          <p className="text-sm text-blue-700 dark:text-blue-300">
-            {t('projects.tutorial.exploreViews.subtitle')}
-          </p>
-        </div>
-      </div>,
+      ),
       canProceed: true,
       mode: "modal" as const,
     },

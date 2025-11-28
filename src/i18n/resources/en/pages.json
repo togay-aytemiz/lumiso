@@ -234,7 +234,7 @@
     "tutorial": {
       "welcome": {
         "title": "Welcome to Lead Management",
-        "description": "",
+        "description": "Watch the 2-minute tour or skim the quick highlights below.",
         "video": {
           "title": "2-minute quick tour",
           "caption": "See how to use the key cards, filters, and sorts.",
@@ -1277,9 +1277,9 @@
     "visual_workflow": "Visual workflow management with drag & drop",
     "detailed_table": "Detailed table view with sorting and filtering",
     "archived_projects": "View completed and archived projects",
-    "board_view_benefit": "Board View - Visual workflow management with drag & drop",
-    "list_view_benefit": "List View - Detailed project information in tables",
-    "archived_view_benefit": "Archived View - Completed projects organized separately",
+    "board_view_benefit": "Board: Drag & drop your pipeline.",
+    "list_view_benefit": "List: Table view for quick scans.",
+    "archived_view_benefit": "Archived: Keep finished projects tidy.",
     "status_management_benefit": "Project status management and workflow optimization",
     "board_view_summary": "Board view for visual project management",
     "list_view_summary": "List view for detailed analysis",
@@ -1374,11 +1374,17 @@
     "tutorial": {
       "welcome": {
         "title": "Welcome to Your Project Management Hub",
-        "description": "Let's explore the three powerful ways to view and organize your photography projects.",
-        "subtitle": "In this tutorial, you'll master streamlined project management built for creative studios:",
-        "boardView": "Board View - Visual workflow management with drag & drop",
-        "listView": "List View - Detailed table with sorting and filtering",
-        "archivedView": "Archived View - Completed projects for reference"
+        "description": "Watch the 2-minute tour or skim the quick highlights below.",
+        "subtitle": "A fast tour of the three views you'll use most:",
+        "video": {
+          "title": "2-minute quick tour",
+          "caption": "See Board, List, and Archived in action.",
+          "play_fullscreen": "Play in fullscreen",
+          "exit_fullscreen": "Exit fullscreen"
+        },
+        "boardView": "Board: Drag and drop your workflow.",
+        "listView": "List: Table view for details and sorting.",
+        "archivedView": "Archived: Keep finished work tidy."
       },
       "exploreViews": {
         "title": "Explore Different Views",

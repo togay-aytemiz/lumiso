@@ -234,7 +234,7 @@
     "tutorial": {
       "welcome": {
         "title": "Kişi Yönetimine Hoş Geldiniz",
-        "description": "",
+        "description": "2 dakikalık turu izleyin veya kısa özetlere bakın.",
         "video": {
           "title": "2 dakikalık hızlı tur",
           "caption": "Kartları, filtreleri ve sıralamayı nasıl kullanacağınızı görün.",
@@ -1280,9 +1280,9 @@
     "visual_workflow": "Sürükle bırak ile görsel iş akışı yönetimi",
     "detailed_table": "Sıralama ve filtreleme ile detaylı tablo görünümü",
     "archived_projects": "Tamamlanan ve arşivlenen projeleri görüntüle",
-    "board_view_benefit": "Pano Görünümü - Sürükle bırak ile görsel iş akışı yönetimi",
-    "list_view_benefit": "Liste Görünümü - Detaylı proje bilgileri tablo halinde",
-    "archived_view_benefit": "Arşiv Görünümü - Tamamlanan projeler ayrı şekilde düzenlenir",
+    "board_view_benefit": "Pano: Sürükle bırak akışı.",
+    "list_view_benefit": "Liste: Detaylı tablo ve sıralama.",
+    "archived_view_benefit": "Arşiv: Tamamlananları düzenli tutun.",
     "status_management_benefit": "Proje durum yönetimi ve iş akışı optimizasyonu",
     "board_view_summary": "Görsel proje yönetimi için pano görünümü",
     "list_view_summary": "Detaylı analiz için liste görünümü",
@@ -1377,11 +1377,17 @@
     "tutorial": {
       "welcome": {
         "title": "Proje Yönetim Merkezinize Hoş Geldiniz",
-        "description": "Fotoğrafçılık projelerinizi görüntülemenin ve düzenlemenin üç yolunu keşfedelim.",
-        "subtitle": "Bu eğitimde, işletmeniz için tasarlanmış akıcı proje yönetimini ustalıkla kullanmayı öğreneceksiniz:",
-        "boardView": "Tahta Görünümü Sürükle bırak ile görsel iş akışı",
-        "listView": "Liste Görünümü Sıralama ve filtreleme ile tablo",
-        "archivedView": "Arşiv Görünümü Referans için tamamlanan projeler"
+        "description": "2 dakikalık turu izleyin veya kısa özetlere bakın.",
+        "subtitle": "En çok kullanacağınız üç görünüm için hızlı tur:",
+        "video": {
+          "title": "2 dakikalık hızlı tur",
+          "caption": "Pano, Liste ve Arşiv'i izleyin.",
+          "play_fullscreen": "Tam ekranda oynat",
+          "exit_fullscreen": "Tam ekrandan çık"
+        },
+        "boardView": "Pano: Sürükle bırak akış.",
+        "listView": "Liste: Detaylı tablo ve sıralama.",
+        "archivedView": "Arşiv: Tamamlanan projeleri düzenli tutun."
       },
       "exploreViews": {
         "title": "Farklı Görünümleri Keşfedin",

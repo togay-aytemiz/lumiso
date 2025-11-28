@@ -76,11 +76,16 @@ export function ProjectTypeSelector({
     return ordered;
   }, [types]);
 
+  const hasDatabaseDefault = useMemo(
+    () => uniqueTypes.some((type) => type.is_default),
+    [uniqueTypes]
+  );
+
   const isPreferredDefault = (type: ProjectType) =>
     Boolean(preferredDefaultKey && normalizeTypeSlug(type) === preferredDefaultKey);
 
   const isDefaultType = (type: ProjectType) =>
-    isPreferredDefault(type) || type.is_default;
+    type.is_default || (!hasDatabaseDefault && isPreferredDefault(type));
 
   useEffect(() => {
     let isMounted = true;

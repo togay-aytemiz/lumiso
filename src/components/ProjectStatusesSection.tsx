@@ -81,13 +81,13 @@ const ProjectStatusesSection = () => {
       
       if (!hasCompleted || !hasCancelled) {
         const timeoutId = setTimeout(() => {
-          toast.info("Add at least one Completed and one Cancelled stage to unlock full automations.");
+          toast.info(t("project_stages.lifecycle_warning"));
         }, 1000);
         
         return () => clearTimeout(timeoutId);
       }
     }
-  }, [statuses, isLoading, toast]);
+  }, [statuses, isLoading, t, toast]);
 
   const form = useForm<ProjectStatusForm>({
     resolver: zodResolver(projectStatusSchema),
@@ -128,7 +128,7 @@ const ProjectStatusesSection = () => {
       await refetch();
     } catch (error) {
       console.error('Error creating default statuses:', error);
-      toast.error("Failed to create default statuses");
+      toast.error(t("project_stages.toasts.default_create_error"));
     }
   };
 
@@ -137,7 +137,7 @@ const ProjectStatusesSection = () => {
     try {
       const lowerName = data.name.trim().toLowerCase();
       if (lowerName === 'archived') {
-        toast.error('The "Archived" stage is managed automatically and cannot be created or renamed.');
+        toast.error(t("project_stages.toasts.archived_stage_protected"));
         return;
       }
 
@@ -156,7 +156,7 @@ const ProjectStatusesSection = () => {
 
         if (error) throw error;
 
-        toast.success("Project status updated successfully");
+        toast.success(t("project_stage.success.updated"));
         setIsEditDialogOpen(false);
       } else {
         // Create new status with the next sort order
@@ -175,12 +175,12 @@ const ProjectStatusesSection = () => {
 
         if (error) {
           if (error.code === '23505') { // Unique constraint violation
-            throw new Error('A status with this name already exists');
+            throw new Error(t("project_stages.toasts.duplicate_name"));
           }
           throw error;
         }
 
-        toast.success("Project status created successfully");
+        toast.success(t("project_stage.success.added"));
         setIsAddDialogOpen(false);
       }
 
@@ -189,7 +189,7 @@ const ProjectStatusesSection = () => {
       await refetch();
     } catch (error) {
       console.error('Error saving project status:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to save project status");
+      toast.error(error instanceof Error ? error.message : t("project_stages.toasts.save_failed"));
     } finally {
       setSubmitting(false);
     }
@@ -219,7 +219,9 @@ const ProjectStatusesSection = () => {
 
       const status = statuses.find(s => s.id === statusId);
       if (status && isProtectedName(status.name)) {
-        toast.error(`The "${status.name}" stage cannot be deleted as it's the default stage for new projects.`);
+        toast.error(
+          t("project_stages.toasts.delete_protected", { name: status.name })
+        );
         return;
       }
 
@@ -233,14 +235,14 @@ const ProjectStatusesSection = () => {
         if (error.code === '23503') { // Foreign key constraint violation
           throw new Error('Cannot delete this stage because it is being used by existing projects. Please change those projects to a different stage first.');
         }
-        throw error;
-      }
+          throw error;
+        }
 
-      toast.success("Project status deleted successfully");
+      toast.success(t("project_stage.success.deleted"));
       await refetch();
     } catch (error) {
       console.error('Error deleting project status:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to delete project status");
+      toast.error(error instanceof Error ? error.message : t("project_stages.toasts.delete_failed"));
     }
   };
 
@@ -275,11 +277,11 @@ const ProjectStatusesSection = () => {
         if (error) throw error;
       }
 
-      toast.success("Status order updated successfully");
+      toast.success(t("project_stages.reorder_success"));
       await refetch();
     } catch (error) {
       console.error('Error updating status order:', error);
-      toast.error("Failed to update status order");
+      toast.error(t("project_stages.reorder_error"));
     }
   };
 

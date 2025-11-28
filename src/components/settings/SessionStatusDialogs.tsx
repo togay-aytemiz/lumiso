@@ -111,7 +111,7 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
       if (error) throw error;
 
       toast({
-        title: t('common:success.created'),
+        title: t('success.created'),
         description: t('session_status.success.added')
       });
 
@@ -301,7 +301,7 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
       if (error) throw error;
 
       toast({
-        title: t('common:success.updated'),
+        title: t('success.updated'),
         description: t('session_status.success.updated')
       });
 
@@ -368,7 +368,7 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
       if (error) throw error;
 
       toast({
-        title: t('common:success.deleted'),
+        title: t('success.deleted'),
         description: t('session_status.success.deleted')
       });
 

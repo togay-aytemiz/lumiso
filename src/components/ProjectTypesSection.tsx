@@ -98,9 +98,9 @@ const ProjectTypesSection = () => {
       await refetch();
     } catch (error) {
       console.error("Error creating default types:", error);
-      toast.error("Failed to create default types");
+      toast.error(t("project_types.toasts.default_create_error"));
     }
-  }, [activeOrganizationId, refetch, toast, orgSettings?.locale, i18n.language]);
+  }, [activeOrganizationId, refetch, toast, orgSettings?.locale, i18n.language, t]);
 
   useEffect(() => {
     if (

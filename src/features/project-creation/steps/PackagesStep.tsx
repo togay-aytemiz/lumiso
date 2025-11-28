@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { Loader2, Sparkles } from "lucide-react";
 import type { ProjectCreationDetails, ProjectServiceLineItem } from "../types";
 import { calculateLineItemPricing } from "@/features/package-creation/utils/lineItemPricing";
+import { getProjectTypeMatchKey } from "@/lib/projectTypes";
 import { DEFAULT_SERVICE_UNIT, normalizeServiceUnit } from "@/lib/services/units";
 import type { VatMode } from "@/lib/accounting/vat";
 import { buildProjectPackageSnapshot } from "@/lib/projects/projectPackageSnapshot";
@@ -109,7 +110,20 @@ export const PackagesStep = () => {
     return packages.filter((pkg) => {
       if (pkg.is_active === false) return false;
       if (!pkg.applicable_types || pkg.applicable_types.length === 0) return true;
-      return pkg.applicable_types.includes(selectedProjectType.name);
+      const selectedId = selectedProjectType.id;
+      const selectedName = selectedProjectType.name;
+      const selectedMatchKey = getProjectTypeMatchKey(
+        selectedProjectType.template_slug ?? selectedName ?? selectedId
+      );
+
+      return (
+        (selectedId && pkg.applicable_types.includes(selectedId)) ||
+        (selectedName && pkg.applicable_types.includes(selectedName)) ||
+        (selectedMatchKey &&
+          pkg.applicable_types.some(
+            (type) => getProjectTypeMatchKey(type) === selectedMatchKey
+          ))
+      );
     });
   }, [packages, selectedProjectType]);
 

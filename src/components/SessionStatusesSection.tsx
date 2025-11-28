@@ -4,7 +4,6 @@ import type { DropResult } from "@hello-pangea/dnd";
 import { GripVertical, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18nToast } from "@/lib/toastHelpers";
-import { toast as toastFn } from "@/hooks/use-toast";
 import { AddSessionStatusDialog, EditSessionStatusDialog } from "./settings/SessionStatusDialogs";
 import { useSessionStatuses } from "@/hooks/useOrganizationData";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -42,18 +41,13 @@ const SessionStatusesSection = () => {
       
       if (!hasCompleted || !hasCancelled) {
         const timeoutId = setTimeout(() => {
-          toastFn({
-            title: "Tip",
-            description: "Add at least one Completed and one Cancelled stage to unlock full automations.",
-            variant: "default",
-            duration: 8000,
-          });
+          toast.info(t("session_stages.lifecycle_warning"), { duration: 8000 });
         }, 1000);
         
         return () => clearTimeout(timeoutId);
       }
     }
-  }, [statuses, isLoading]);
+  }, [statuses, isLoading, t, toast]);
 
   const createDefaultStatuses = async () => {
     if (!activeOrganizationId) return;
@@ -70,7 +64,7 @@ const SessionStatusesSection = () => {
       await refetch();
     } catch (error) {
       console.error('Error creating default session statuses:', error);
-      toast.error("Failed to create default session statuses");
+      toast.error(t("session_stages.toasts.default_create_error"));
     }
   };
 
@@ -113,11 +107,11 @@ const SessionStatusesSection = () => {
           .eq('organization_id', activeOrganizationId);
         if (error) throw error;
       }
-      toast.success("Stage order updated");
+      toast.success(t("session_stages.reorder_success"));
       await refetch();
     } catch (error: unknown) {
       console.error('Error updating order:', error);
-      toast.error('Failed to update order');
+      toast.error(t("session_stages.reorder_error"));
     }
   };
 

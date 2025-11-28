@@ -90,7 +90,7 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
       if (error) throw error;
 
       toast({
-        title: t('common:success.created'),
+        title: t('success.created'),
         description: t('project_type.success.added')
       });
 
@@ -267,7 +267,7 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
       if (error) throw error;
 
       toast({
-        title: t('common:success.updated'),
+        title: t('success.updated'),
         description: t('project_type.success.updated')
       });
 
@@ -344,7 +344,7 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
       if (error) throw error;
 
       toast({
-        title: t('common:success.deleted'),
+        title: t('success.deleted'),
         description: t('project_type.success.deleted')
       });
 

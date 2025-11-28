@@ -376,7 +376,18 @@
     "drag_instructions": "Yeniden sıralamak için sürükleyin (⋮⋮) • Aşama adlarını ve renklerini düzenlemek için tıklayın.",
     "name": "Ad",
     "stage_color": "Aşama Rengi",
-    "placeholder": "örn. Sorgu, Post Prodüksiyon, Tamamlandı"
+    "placeholder": "örn. Sorgu, Post Prodüksiyon, Tamamlandı",
+    "lifecycle_warning": "Tüm otomasyonların açılması için en az bir Tamamlandı ve bir İptal aşaması ekleyin.",
+    "reorder_success": "Aşama sırası başarıyla güncellendi",
+    "reorder_error": "Aşama sırası güncellenemedi",
+    "toasts": {
+      "default_create_error": "Varsayılan aşamalar oluşturulamadı",
+      "archived_stage_protected": "\"Archived\" aşaması otomatik olarak yönetilir ve oluşturulamaz veya yeniden adlandırılamaz.",
+      "duplicate_name": "Bu adla zaten bir aşama var",
+      "save_failed": "Proje aşaması kaydedilemedi",
+      "delete_protected": "\"{{name}}\" aşaması yeni projeler için varsayılan olduğundan silinemez.",
+      "delete_failed": "Proje aşaması silinemedi"
+    }
   },
   "project_types": {
     "title": "Proje Türleri",
@@ -384,7 +395,10 @@
     "add_type": "Tür Ekle",
     "set_as_default": "Varsayılan olarak ayarla",
     "set_as_default_help": "Bu tür, yeni projeler oluştururken önceden seçili olacaktır.",
-    "placeholder": "örn. Kurumsal, Düğün, Portre"
+    "placeholder": "örn. Kurumsal, Düğün, Portre",
+    "toasts": {
+      "default_create_error": "Varsayılan türler oluşturulamadı"
+    }
   },
   "session_stages": {
     "title": "Seans Aşamaları",
@@ -393,7 +407,13 @@
     "drag_instructions": "Yeniden sıralamak için sürükleyin (⋮⋮) • Aşama adlarını ve renklerini düzenlemek için tıklayın.",
     "name": "Ad",
     "stage_color": "Aşama Rengi",
-    "placeholder": "örn. Onaylandı, Tamamlandı, Teslim Edildi"
+    "placeholder": "örn. Onaylandı, Tamamlandı, Teslim Edildi",
+    "lifecycle_warning": "Tüm otomasyonları açmak için en az bir Tamamlandı ve bir İptal aşaması ekleyin.",
+    "reorder_success": "Aşama sırası başarıyla güncellendi",
+    "reorder_error": "Aşama sırası güncellenemedi",
+    "toasts": {
+      "default_create_error": "Varsayılan seans aşamaları oluşturulamadı"
+    }
   },
   "lead_statuses": {
     "title": "Kişi Durumları",

@@ -376,7 +376,18 @@
     "drag_instructions": "Drag (⋮⋮) to reorder • Click to edit stage names and colors.",
     "name": "Name",
     "stage_color": "Stage Color",
-    "placeholder": "e.g. Inquiry, Post Production, Completed"
+    "placeholder": "e.g. Inquiry, Post Production, Completed",
+    "lifecycle_warning": "Add at least one Completed and one Cancelled stage to unlock full automations.",
+    "reorder_success": "Stage order updated successfully",
+    "reorder_error": "Failed to update stage order",
+    "toasts": {
+      "default_create_error": "Failed to create default statuses",
+      "archived_stage_protected": "The \"Archived\" stage is managed automatically and cannot be created or renamed.",
+      "duplicate_name": "A stage with this name already exists",
+      "save_failed": "Failed to save project stage",
+      "delete_protected": "The \"{{name}}\" stage cannot be deleted as it's the default stage for new projects.",
+      "delete_failed": "Failed to delete project stage"
+    }
   },
   "project_stage": {
     "add_title": "ADD STAGE",
@@ -422,7 +433,10 @@
     "add_type": "Add Type",
     "set_as_default": "Set as default",
     "set_as_default_help": "This type will be pre-selected when creating new projects.",
-    "placeholder": "e.g. Corporate, Wedding, Portrait"
+    "placeholder": "e.g. Corporate, Wedding, Portrait",
+    "toasts": {
+      "default_create_error": "Failed to create default types"
+    }
   },
   "session_stages": {
     "title": "Session Stages",
@@ -431,7 +445,13 @@
     "drag_instructions": "Drag (⋮⋮) to reorder • Click to edit stage names and colors.",
     "name": "Name",
     "stage_color": "Stage Color",
-    "placeholder": "e.g. Confirmed, Completed, Delivered"
+    "placeholder": "e.g. Confirmed, Completed, Delivered",
+    "lifecycle_warning": "Add at least one Completed and one Cancelled stage to unlock full automations.",
+    "reorder_success": "Stage order updated successfully",
+    "reorder_error": "Failed to update stage order",
+    "toasts": {
+      "default_create_error": "Failed to create default session stages"
+    }
   },
   "lead_statuses": {
     "title": "Lead Statuses",

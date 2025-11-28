@@ -46,6 +46,19 @@ beforeAll(() => {
 const eqCalls: Array<{ field: string; value: unknown }> = [];
 const gteCalls: Array<{ field: string; value: unknown }> = [];
 const lteCalls: Array<{ field: string; value: unknown }> = [];
+const defaultSessions = [
+  {
+    id: "session-1",
+    session_date: "2024-05-21",
+    session_time: "10:00",
+    session_type_id: "type-1",
+    leads: { name: "Alex" },
+    projects: { name: "Wedding" },
+    status: "planned",
+    session_types: { duration_minutes: 90 },
+  },
+];
+let mockedSessionsResponse = [...defaultSessions];
 
 jest.mock("@/integrations/supabase/client", () => {
   const authGetUserMock = jest.fn(() =>
@@ -64,18 +77,7 @@ jest.mock("@/integrations/supabase/client", () => {
     lte(field: string, value: unknown) {
       lteCalls.push({ field, value });
       return Promise.resolve({
-        data: [
-          {
-            id: "session-1",
-            session_date: "2024-05-21",
-            session_time: "10:00",
-            session_type_id: "type-1",
-            leads: { name: "Alex" },
-            projects: { name: "Wedding" },
-            status: "planned",
-            session_types: { duration_minutes: 90 },
-          },
-        ],
+        data: mockedSessionsResponse,
         error: null,
       });
     },
@@ -108,6 +110,7 @@ afterEach(() => {
   eqCalls.length = 0;
   gteCalls.length = 0;
   lteCalls.length = 0;
+  mockedSessionsResponse = [...defaultSessions];
 });
 
 describe("CalendarTimePicker", () => {
@@ -147,5 +150,34 @@ describe("CalendarTimePicker", () => {
     );
     expect(gteCalls[0]?.field).toBe("session_date");
     expect(lteCalls[0]?.field).toBe("session_date");
+  });
+
+  it("waits to scroll until a time is chosen when the selected day has no sessions", async () => {
+    mockedSessionsResponse = [];
+
+    const { rerender } = render(
+      <CalendarTimePicker
+        selectedDate={new Date("2024-05-20T00:00:00")}
+        selectedTime=""
+        onDateChange={jest.fn()}
+        onTimeChange={jest.fn()}
+        onDateStringChange={jest.fn()}
+      />
+    );
+
+    await waitFor(() => expect(eqCalls.length).toBeGreaterThanOrEqual(2));
+    await waitFor(() => expect(scrollIntoViewMock).not.toHaveBeenCalled());
+
+    rerender(
+      <CalendarTimePicker
+        selectedDate={new Date("2024-05-20T00:00:00")}
+        selectedTime="13:00"
+        onDateChange={jest.fn()}
+        onTimeChange={jest.fn()}
+        onDateStringChange={jest.fn()}
+      />
+    );
+
+    await waitFor(() => expect(scrollIntoViewMock).toHaveBeenCalled());
   });
 });

@@ -51,6 +51,7 @@ export function CalendarTimePicker({
   const [plannedSessions, setPlannedSessions] = useState<PlannedSessionRecord[]>([]);
   const browserLocale = i18n.language || getUserLocale();
   const plannedSessionsRef = useRef<HTMLDivElement | null>(null);
+  const weeklyPreviewRef = useRef<HTMLDivElement | null>(null);
   const previousSelectedKeyRef = useRef<string | undefined>();
 
   const fetchPlannedSessions = useCallback(async (month: Date) => {
@@ -138,6 +139,16 @@ export function CalendarTimePicker({
     }
     previousSelectedKeyRef.current = selectedKey;
   }, [selectedKey, sessionsForDay.length]);
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    if (!selectedTime) return;
+    if (sessionsForDay.length > 0) return;
+    const target = weeklyPreviewRef.current;
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [selectedDate, selectedTime, sessionsForDay.length]);
 
   const weeklyReferenceDate = selectedDate ?? visibleMonth;
 
@@ -278,6 +289,7 @@ export function CalendarTimePicker({
       </div>
 
       <WeeklySchedulePreview
+        ref={weeklyPreviewRef}
         sessions={weeklySessions}
         referenceDate={weeklyReferenceDate}
         selectedDate={selectedDate}

@@ -313,4 +313,31 @@ describe("WeeklySchedulePreview", () => {
       expect(label).not.toMatch(/:30/);
     });
   });
+
+  it("keeps full width when the draft is on the same day but non-overlapping", () => {
+    const sessions: WeeklyScheduleSession[] = [
+      {
+        id: "morning-session",
+        session_date: "2024-05-20",
+        session_time: "09:00",
+        duration_minutes: 60,
+        lead_name: "Pat",
+      },
+    ];
+
+    render(
+      <WeeklySchedulePreview
+        sessions={sessions}
+        referenceDate={monday}
+        selectedDate={new Date("2024-05-20T00:00:00Z")}
+        selectedTime="13:00"
+        selectedDurationMinutes={90}
+        locale="en-GB"
+      />
+    );
+
+    const sessionBlock = screen.getByTestId("weekly-session-morning-session");
+    expect(sessionBlock.style.width).toBe("calc(100% - 0px)");
+    expect(sessionBlock.style.left).toBe("calc(0% + 0px)");
+  });
 });

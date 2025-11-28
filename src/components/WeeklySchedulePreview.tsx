@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { forwardRef, useEffect, useMemo, useRef } from "react";
 import {
   addDays,
   differenceInCalendarDays,
@@ -141,15 +141,19 @@ const buildDayLayout = (
   return positioned;
 };
 
-export const WeeklySchedulePreview = ({
-  sessions,
-  referenceDate,
-  selectedDate,
-  selectedTime,
-  selectedDurationMinutes,
-  showDraftSelection = true,
-  locale = typeof navigator !== "undefined" ? navigator.language : "en-US",
-}: WeeklySchedulePreviewProps) => {
+export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePreviewProps>(
+  (
+    {
+      sessions,
+      referenceDate,
+      selectedDate,
+      selectedTime,
+      selectedDurationMinutes,
+      showDraftSelection = true,
+      locale = typeof navigator !== "undefined" ? navigator.language : "en-US",
+    },
+    externalRef
+  ) => {
   const { t } = useFormsTranslation();
   const resolvedLocale =
     locale || (typeof navigator !== "undefined" ? navigator.language : "en-US");
@@ -341,7 +345,7 @@ export const WeeklySchedulePreview = ({
 
   return (
     <TooltipProvider delayDuration={120}>
-      <div className="space-y-4">
+      <div className="space-y-4" ref={externalRef}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold tracking-tight text-slate-900">
             {t("sessionScheduling.weekly_preview_heading")}
@@ -415,6 +419,7 @@ export const WeeklySchedulePreview = ({
 
                   let renderedSessions = baseDaySessions;
                   let draftLayout: PositionedSession | null = null;
+                  const baseLayoutById = new Map(baseDaySessions.map((session) => [session.id, session]));
 
                   if (shouldRenderDraft) {
                     const draftSession: WeeklyScheduleSession & {
@@ -442,7 +447,18 @@ export const WeeklySchedulePreview = ({
 
                     renderedSessions = layoutWithDraft.filter(
                       (session) => session.id !== draftSession.id
-                    );
+                    ).map((session) => {
+                      if (!draftLayout) return session;
+                      const overlapsDraft =
+                        session.startMinutes < draftEnd && session.endMinutes > draftStart;
+                      if (!overlapsDraft) {
+                        const baseLayout = baseLayoutById.get(session.id);
+                        return baseLayout
+                          ? { ...session, columnIndex: baseLayout.columnIndex, columnCount: baseLayout.columnCount }
+                          : session;
+                      }
+                      return session;
+                    });
                   }
 
                   const draftBlockMetrics = shouldRenderDraft
@@ -631,4 +647,6 @@ export const WeeklySchedulePreview = ({
       </div>
     </TooltipProvider>
   );
-};
+});
+
+WeeklySchedulePreview.displayName = "WeeklySchedulePreview";

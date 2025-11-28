@@ -1301,7 +1301,7 @@ export const PackagesStep = () => {
           </div>
         )}
 
-        {!state.services.packageId && !showCustomSetup && filteredPackages.length > 0 && (
+        {!state.services.packageId && !showCustomSetup && (
           <div className="flex items-center justify-between rounded-lg border border-dashed border-border px-4 py-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-emerald-500" />

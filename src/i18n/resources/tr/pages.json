@@ -234,18 +234,23 @@
     "tutorial": {
       "welcome": {
         "title": "Kişi Yönetimine Hoş Geldiniz",
-        "description": "Burada tüm kişi ve müşterilerinizi kolayca takip edebilir, durumlarını yönetebilirsiniz. Yapabilecekleriniz:",
+        "description": "",
+        "video": {
+          "title": "2 dakikalık hızlı tur",
+          "caption": "Kartları, filtreleri ve sıralamayı nasıl kullanacağınızı görün.",
+          "open_on_youtube": "YouTube'da aç"
+        },
         "trackLeads": {
           "title": "Kişileri Takip Et",
-          "description": "Tüm kişilerinizi iletişim bilgileri ve durumlarıyla birlikte düzenli bir tabloda görün."
+          "description": "Kişileri iletişim ve durumlarıyla tek tabloda görün."
         },
         "filterSort": {
           "title": "Filtrele ve Sırala",
-          "description": "Kişileri durumuna göre filtreleyin ve ihtiyacınızı bulmak için herhangi bir sütuna göre sıralayın."
+          "description": "Duruma veya alanlara göre saniyeler içinde bulun."
         },
         "customizeColumns": {
           "title": "Önemli Kartları İzleyin",
-          "description": "Üstteki kartlardan yeni kişi, dönüşüm oranı ve pasif kayıtları tek bakışta takip edin."
+          "description": "Yeni, dönüşüm ve pasif kartlarını tek bakışta takip edin."
         }
       },
       "addFirstLead": {

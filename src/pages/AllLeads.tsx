@@ -492,31 +492,51 @@ const AllLeadsNew = () => {
 
   useThrottledRefetchOnFocus(refreshLeads, 30_000);
 
+  const leadIntroVideoId = "1RrA57CsOIg";
+  const leadIntroEmbedUrl = `https://www.youtube.com/embed/${leadIntroVideoId}?rel=0`;
+
   const leadsTutorialSteps: TutorialStep[] = [
     {
       id: 1,
       title: t('leads.tutorial.welcome.title'),
       description: t('leads.tutorial.welcome.description'),
       content: (
-        <div className="space-y-4">
-          <OnboardingChecklistItem
-            icon={Users}
-            title={t('leads.tutorial.welcome.trackLeads.title')}
-            description={t('leads.tutorial.welcome.trackLeads.description')}
-            titleClassName="font-medium"
-          />
-          <OnboardingChecklistItem
-            icon={Filter}
-            title={t('leads.tutorial.welcome.filterSort.title')}
-            description={t('leads.tutorial.welcome.filterSort.description')}
-            titleClassName="font-medium"
-          />
-          <OnboardingChecklistItem
-            icon={FileText}
-            title={t('leads.tutorial.welcome.customizeColumns.title')}
-            description={t('leads.tutorial.welcome.customizeColumns.description')}
-            titleClassName="font-medium"
-          />
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-foreground">
+              {t('leads.tutorial.welcome.video.title')}
+            </p>
+            <iframe
+              title={t('leads.tutorial.welcome.video.title')}
+              src={leadIntroEmbedUrl}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              className="aspect-video w-full rounded-lg bg-black shadow-sm"
+            />
+          </div>
+
+          <div className="space-y-3">
+            <OnboardingChecklistItem
+              icon={Users}
+              title={t('leads.tutorial.welcome.trackLeads.title')}
+              description={t('leads.tutorial.welcome.trackLeads.description')}
+              titleClassName="font-medium"
+            />
+            <OnboardingChecklistItem
+              icon={Filter}
+              title={t('leads.tutorial.welcome.filterSort.title')}
+              description={t('leads.tutorial.welcome.filterSort.description')}
+              titleClassName="font-medium"
+            />
+            <OnboardingChecklistItem
+              icon={FileText}
+              title={t('leads.tutorial.welcome.customizeColumns.title')}
+              description={t('leads.tutorial.welcome.customizeColumns.description')}
+              titleClassName="font-medium"
+            />
+          </div>
         </div>
       ),
       mode: "modal",

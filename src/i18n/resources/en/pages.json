@@ -234,18 +234,23 @@
     "tutorial": {
       "welcome": {
         "title": "Welcome to Lead Management",
-        "description": "This is your leads dashboard where you can track and manage all your potential clients. Here's what you can do:",
+        "description": "",
+        "video": {
+          "title": "2-minute quick tour",
+          "caption": "See how to use the key cards, filters, and sorts.",
+          "open_on_youtube": "Open on YouTube"
+        },
         "trackLeads": {
           "title": "Track Leads",
-          "description": "View all your leads in one organized table with contact information and status."
+          "description": "See every lead in one organized table with contact and status."
         },
         "filterSort": {
           "title": "Filter & Sort",
-          "description": "Filter by lead status and sort by any column to find exactly what you need."
+          "description": "Filter by status or fields and sort any column in seconds."
         },
         "customizeColumns": {
-          "title": "Monitor Key Stats",
-          "description": "Use the KPI cards above to see new leads, conversion rate, and inactive clients at a glance."
+          "title": "Monitor Key Cards",
+          "description": "See new, conversion, and inactive cards at a glance."
         }
       },
       "addFirstLead": {

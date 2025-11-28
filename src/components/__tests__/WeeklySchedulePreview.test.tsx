@@ -256,6 +256,32 @@ describe("WeeklySchedulePreview", () => {
     expect(draftBlock).toHaveStyle("left: calc(50% + 1px)");
   });
 
+  it("does not shrink other days when the draft is on a different date", () => {
+    const sessions: WeeklyScheduleSession[] = [
+      {
+        id: "monday-session",
+        session_date: "2024-05-20",
+        session_time: "10:00",
+        duration_minutes: 60,
+        lead_name: "Alex",
+      },
+    ];
+
+    render(
+      <WeeklySchedulePreview
+        sessions={sessions}
+        referenceDate={monday}
+        selectedDate={new Date("2024-05-21T00:00:00Z")}
+        selectedTime="14:00"
+        locale="en-GB"
+      />
+    );
+
+    const mondayBlock = screen.getByTestId("weekly-session-monday-session");
+    expect(mondayBlock.style.width).toBe("calc(100% - 0px)");
+    expect(mondayBlock.style.left).toBe("calc(0% + 0px)");
+  });
+
   it("labels the time column using whole-hour increments", () => {
     const sessions: WeeklyScheduleSession[] = [
       {

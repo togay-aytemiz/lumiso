@@ -416,7 +416,7 @@ export const WeeklySchedulePreview = ({
                   let renderedSessions = baseDaySessions;
                   let draftLayout: PositionedSession | null = null;
 
-                  if (showDraftSelection) {
+                  if (shouldRenderDraft) {
                     const draftSession: WeeklyScheduleSession & {
                       startMinutes: number;
                       endMinutes: number;
@@ -445,7 +445,7 @@ export const WeeklySchedulePreview = ({
                     );
                   }
 
-                  const draftBlockMetrics = showDraftSelection
+                  const draftBlockMetrics = shouldRenderDraft
                     ? (() => {
                         const top =
                           (draftStart - viewWindow.start) * PIXELS_PER_MINUTE;

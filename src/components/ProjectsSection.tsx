@@ -23,6 +23,8 @@ import { ProjectCreationWizardSheet } from "@/features/project-creation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { EmptyStateInfoSheet } from "@/components/empty-states/EmptyStateInfoSheet";
 import { EmptyState } from "@/components/EmptyState";
+import { BaseOnboardingModal } from "@/components/shared/BaseOnboardingModal";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface Project {
   id: string;
@@ -41,9 +43,19 @@ interface ProjectsSectionProps {
   onProjectUpdated?: () => void;
   onActivityUpdated?: () => void;
   onProjectClicked?: () => void;
+  tutorialMode?: boolean;
+  tutorialVideoUrl?: string;
 }
 
-export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onActivityUpdated, onProjectClicked }: ProjectsSectionProps) {
+export function ProjectsSection({
+  leadId,
+  leadName = "",
+  onProjectUpdated,
+  onActivityUpdated,
+  onProjectClicked,
+  tutorialMode = false,
+  tutorialVideoUrl,
+}: ProjectsSectionProps) {
   const { t } = useTranslation(['pages', 'common']);
   const isMobile = useIsMobile();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -56,6 +68,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const navigate = useNavigate();
   
+  const [showProjectTutorialModal, setShowProjectTutorialModal] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [hasArchived, setHasArchived] = useState(false);
   const [archivedStatusId, setArchivedStatusId] = useState<string | null>(null);
@@ -70,6 +83,11 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   const projectInfoSections = Array.isArray(projectInfoSectionsRaw)
     ? (projectInfoSectionsRaw as { title: string; description: string }[])
     : [];
+  const projectTutorialVideoUrl =
+    tutorialVideoUrl ??
+    import.meta.env.VITE_PROJECT_TUTORIAL_VIDEO_URL ??
+    "https://www.youtube.com/embed/RouTuh9llXs";
+  const hasTutorialVideo = Boolean(projectTutorialVideoUrl);
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -209,10 +227,31 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
     setRefreshTrigger((prev) => prev + 1);
     onProjectUpdated?.();
   };
+  const handleOpenProjectWizard = () => {
+    setProjectWizardOpen(true);
+    if (tutorialMode) {
+      setShowProjectTutorialModal(true);
+    }
+  };
+  const handleCloseTutorialModal = () => {
+    setShowProjectTutorialModal(false);
+  };
 
   const archivedId = archivedStatusId;
   const activeProjects = archivedId ? projects.filter((p) => p.status_id !== archivedId) : projects;
   const archivedProjects = archivedId ? projects.filter((p) => p.status_id === archivedId) : [];
+
+  useEffect(() => {
+    if (!tutorialMode) {
+      setShowProjectTutorialModal(false);
+    }
+  }, [tutorialMode]);
+
+  useEffect(() => {
+    if (!isProjectWizardOpen) {
+      setShowProjectTutorialModal(false);
+    }
+  }, [isProjectWizardOpen]);
 
   return (
     <>
@@ -224,6 +263,41 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
         entrySource="dashboard_projects"
         onProjectCreated={handleWizardProjectCreated}
       />
+
+      <BaseOnboardingModal
+        open={tutorialMode && showProjectTutorialModal}
+        onClose={handleCloseTutorialModal}
+        title={t('pages:leadDetail.tutorial.projectVideo.title')}
+        description={t('pages:leadDetail.tutorial.projectVideo.description')}
+        actions={[
+          {
+            label: t('pages:leadDetail.tutorial.projectVideo.skip'),
+            onClick: handleCloseTutorialModal,
+            variant: "outline"
+          },
+          {
+            label: t('pages:leadDetail.tutorial.projectVideo.cta'),
+            onClick: handleCloseTutorialModal,
+            variant: "default"
+          }
+        ]}
+      >
+        <AspectRatio ratio={16 / 9} className="overflow-hidden rounded-lg bg-muted">
+          {hasTutorialVideo ? (
+            <iframe
+              src={projectTutorialVideoUrl}
+              title={t('pages:leadDetail.tutorial.projectVideo.title')}
+              className="h-full w-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
+              {t('pages:leadDetail.tutorial.projectVideo.placeholder')}
+            </div>
+          )}
+        </AspectRatio>
+      </BaseOnboardingModal>
 
       <Card className="w-full">
       <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between space-y-0 pb-4">
@@ -240,7 +314,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
               size="sm"
               variant="outline"
               className="w-full min-w-[140px] gap-2 border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 hover:text-indigo-950 md:w-auto"
-              onClick={() => setProjectWizardOpen(true)}
+              onClick={handleOpenProjectWizard}
             >
               <Plus className="h-4 w-4" />
               {t('pages:projects.addProject')}
@@ -278,7 +352,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
                 variant="outline"
                 size="sm"
                 className="min-w-[140px] gap-2 border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 hover:text-indigo-950"
-                onClick={() => setProjectWizardOpen(true)}
+                onClick={handleOpenProjectWizard}
               >
                 <Plus className="h-4 w-4" />
                 {t('pages:projects.addProject')}

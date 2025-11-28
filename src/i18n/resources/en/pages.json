@@ -394,6 +394,13 @@
         "description": "Great! Turn this lead into a project by clicking the \u201cAdd Project\u201d button below.",
         "disabledTooltip": "Create a project first to continue"
       },
+      "projectVideo": {
+        "title": "Watch How to Create a Project",
+        "description": "Quick walkthrough before you start \u2014 watch the tutorial to see the exact steps for setting up a project for this lead.",
+        "cta": "Next: Start project",
+        "skip": "Skip for now",
+        "placeholder": "Add your tutorial video link in VITE_PROJECT_TUTORIAL_VIDEO_URL to show it here."
+      },
       "exploreProjects": {
         "title": "Perfect! Now Explore Your Project Features",
         "description": "Open the project card below to explore powerful project management tools:",
@@ -425,6 +432,13 @@
           }
         ],
         "disabledTooltip": "Schedule a session to continue"
+      },
+      "sessionVideo": {
+        "title": "Watch how to schedule a session",
+        "description": "Quick walkthrough before you open the planner - see how to pick a time and add details.",
+        "cta": "Next: start scheduling",
+        "skip": "Skip for now",
+        "placeholder": "Add your tutorial video URL to show it here."
       },
       "sessionScheduled": {
         "title": "\ud83c\udf89 Session Scheduled Successfully!",

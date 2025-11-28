@@ -323,6 +323,12 @@ const LeadDetail = () => {
     ];
   }, [hasScheduledSession, tPages]);
 
+  const isProjectTutorialStepActive =
+    showTutorial &&
+    !isSchedulingTutorial &&
+    !hasProjects &&
+    currentStep === 2;
+
   // Check if we should show tutorial when component mounts
   useEffect(() => {
     const continueTutorial = location.state?.continueTutorial;
@@ -912,11 +918,14 @@ const LeadDetail = () => {
     return null;
   }
 
+  const shouldShowSessionTutorialVideo = showTutorial && isSchedulingTutorial && !hasSessions;
+
   const renderScheduleSessionButton = () => (
     <ScheduleSessionDialog
       leadId={lead.id}
       leadName={lead.name}
       onSessionScheduled={handleSessionScheduled}
+      tutorialMode={shouldShowSessionTutorialVideo}
     />
   );
   return (
@@ -949,6 +958,7 @@ const LeadDetail = () => {
                   leadId={lead.id}
                   leadName={lead.name}
                   onSessionScheduled={handleSessionScheduled}
+                  tutorialMode={shouldShowSessionTutorialVideo}
                 />
                 {quickStatusButtons}
               </div>
@@ -983,6 +993,7 @@ const LeadDetail = () => {
                     onProjectUpdated={handleProjectUpdated}
                     onActivityUpdated={handleActivityUpdated}
                     onProjectClicked={handleProjectClicked}
+                    tutorialMode={isProjectTutorialStepActive}
                   />
                 )
               },

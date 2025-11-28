@@ -5,11 +5,23 @@ import { useSessionForm } from "@/hooks/useSessionForm";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 
-jest.mock("@/hooks/useSessionForm");
-jest.mock("@/hooks/useSessionReminderScheduling");
-jest.mock("@/hooks/useWorkflowTriggers");
+jest.mock("@/hooks/useSessionForm", () => ({
+  useSessionForm: jest.fn(),
+}));
+jest.mock("@/hooks/useSessionReminderScheduling", () => ({
+  useSessionReminderScheduling: jest.fn(),
+}));
+jest.mock("@/hooks/useWorkflowTriggers", () => ({
+  useWorkflowTriggers: jest.fn(),
+}));
 jest.mock("@/hooks/useTypedTranslation", () => ({
   useFormsTranslation: () => ({ t: (key: string) => key }),
+}));
+jest.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: { defaultValue?: string }) =>
+      options?.defaultValue ?? key,
+  }),
 }));
 type TooltipMockProps = {
   children?: ReactNode;
@@ -74,7 +86,7 @@ describe("ScheduleSessionDialog", () => {
   it("opens sheet when enabled button clicked", () => {
     render(<ScheduleSessionDialog leadId="lead-1" leadName="Alice" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "sessions_form.add_session" }));
+    fireEvent.click(screen.getByRole("button", { name: "sessions.schedule_new" }));
     expect(screen.getByText("sheet-open")).toBeInTheDocument();
   });
 
@@ -88,7 +100,7 @@ describe("ScheduleSessionDialog", () => {
       />
     );
 
-    const button = screen.getByRole("button", { name: "sessions_form.add_session" });
+    const button = screen.getByRole("button", { name: "sessions.schedule_new" });
     expect(button).toBeDisabled();
     fireEvent.mouseOver(button);
     expect(screen.getByText("Disabled")).toBeInTheDocument();
@@ -104,9 +116,25 @@ describe("ScheduleSessionDialog", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "sessions_form.add_session" }));
+    fireEvent.click(screen.getByRole("button", { name: "sessions.schedule_new" }));
     fireEvent.click(screen.getByText("scheduled"));
 
     await waitFor(() => expect(onSessionScheduled).toHaveBeenCalled());
+  });
+
+  it("shows onboarding video modal when tutorialMode is enabled", () => {
+    render(<ScheduleSessionDialog leadId="lead-1" leadName="Alice" tutorialMode />);
+
+    fireEvent.click(screen.getByRole("button", { name: "sessions.schedule_new" }));
+
+    expect(
+      screen.getByText("Add your tutorial video URL to show it here.")
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Skip for now"));
+
+    expect(
+      screen.queryByText("Add your tutorial video URL to show it here.")
+    ).not.toBeInTheDocument();
   });
 });

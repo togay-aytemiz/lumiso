@@ -394,6 +394,13 @@
         "description": "Harika! Bu kişiyi bir projeye dönüştürmek için “Proje Ekle” düğmesine tıklayın.",
         "disabledTooltip": "Devam etmek için önce bir proje oluşturun"
       },
+      "projectVideo": {
+        "title": "Proje Oluşturmayı İzleyin",
+        "description": "Başlamadan önce kısa bir tur — Bu kişi için proje kurulumunun adımlarını videoda görün.",
+        "cta": "İleri: Projeye başla",
+        "skip": "Şimdilik geç",
+        "placeholder": "Videonun görünmesi için VITE_PROJECT_TUTORIAL_VIDEO_URL değerini ekleyin."
+      },
       "exploreProjects": {
         "title": "Mükemmel! Şimdi Proje Özelliklerini Keşfedin",
         "description": "Eklenen proje kartını açarak güçlü proje yönetimi araçlarını keşfedin:",
@@ -425,6 +432,13 @@
           }
         ],
         "disabledTooltip": "Devam etmek için bir seans planlayın"
+      },
+      "sessionVideo": {
+        "title": "Seans planlamayı izleyin",
+        "description": "Planlamayı açmadan önce kısa bir tur: tarih seçme ve detay ekleme adımlarını görün.",
+        "cta": "İleri: Planlamaya başla",
+        "skip": "Şimdilik geç",
+        "placeholder": "Burada göstermek için bir eğitim videosu bağlantısı ekleyin."
       },
       "sessionScheduled": {
         "title": "🎉 Seans Başarıyla Planlandı!",

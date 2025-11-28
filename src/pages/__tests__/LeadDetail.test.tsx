@@ -124,7 +124,10 @@ type LeadActivitySectionMockProps = {
 };
 
 type ScheduleSessionDialogProps = {
+  leadId?: string;
+  leadName?: string;
   onSessionScheduled?: () => void;
+  tutorialMode?: boolean;
 };
 
 type LayoutSection = {

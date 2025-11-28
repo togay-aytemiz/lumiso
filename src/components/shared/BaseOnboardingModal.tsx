@@ -20,7 +20,7 @@ interface BaseOnboardingModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
-  description: string;
+  description?: string;
   eyebrow?: ReactNode;
   headerSlot?: ReactNode;
   children?: ReactNode;
@@ -62,9 +62,11 @@ export function BaseOnboardingModal({
             <DialogTitle className="text-2xl font-semibold leading-tight">
               {title}
             </DialogTitle>
-            <DialogDescription className="text-base leading-relaxed text-muted-foreground">
-              {description}
-            </DialogDescription>
+            {description && (
+              <DialogDescription className="text-base leading-relaxed text-muted-foreground">
+                {description}
+              </DialogDescription>
+            )}
           </DialogHeader>
 
           {children && (

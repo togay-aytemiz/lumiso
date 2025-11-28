@@ -254,6 +254,16 @@ const SessionPlanningWizardSheetInner = ({
     }
   }, [completionSummary]);
 
+  const clearDraft = useCallback(() => {
+    const key = draftKeyRef.current;
+    if (!key) return;
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error("Failed to clear session planning draft", error);
+    }
+  }, []);
+
   useEffect(() => {
     if (!isOpen) {
       setCompletionSummary(null);
@@ -611,9 +621,7 @@ const SessionPlanningWizardSheetInner = ({
         reason: "closed",
       });
     }
-    if (draftKeyRef.current) {
-      localStorage.removeItem(draftKeyRef.current);
-    }
+    clearDraft();
     reset(entryContext);
     setCompletionSummary(null);
     onOpenChange(false);
@@ -625,9 +633,7 @@ const SessionPlanningWizardSheetInner = ({
       entrySource: entryContext.entrySource ?? "direct",
       reason: "discard_draft",
     });
-    if (draftKeyRef.current) {
-      localStorage.removeItem(draftKeyRef.current);
-    }
+    clearDraft();
     reset(entryContext);
     onOpenChange(false);
   };
@@ -875,9 +881,7 @@ const SessionPlanningWizardSheetInner = ({
         });
 
         onSessionUpdated?.();
-        if (draftKeyRef.current) {
-          localStorage.removeItem(draftKeyRef.current);
-        }
+        clearDraft();
         initialSessionSnapshotRef.current = null;
         reset(entryContext);
         setCompletionSummary(null);
@@ -1021,9 +1025,7 @@ const SessionPlanningWizardSheetInner = ({
       successTrackedRef.current = false;
 
       onSessionScheduled?.();
-      if (draftKeyRef.current) {
-        localStorage.removeItem(draftKeyRef.current);
-      }
+      clearDraft();
       reset(entryContext);
     } catch (error) {
       const message = getErrorMessage(error);
@@ -1112,9 +1114,7 @@ const SessionPlanningWizardSheetInner = ({
           <AlertDialogFooter>
             <AlertDialogCancel
               onClick={() => {
-                if (draftKeyRef.current) {
-                  localStorage.removeItem(draftKeyRef.current);
-                }
+                clearDraft();
                 setResumeDraft(null);
               }}
             >

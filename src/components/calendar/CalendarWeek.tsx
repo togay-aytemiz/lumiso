@@ -583,7 +583,12 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                       ? formatOrgTime(minutesToTimeString(endMinutes))
                       : null;
                   const timeLabel = endLabel ? `${startLabel} – ${endLabel}` : startLabel;
-                  const durationLabel = session.duration_minutes != null ? `${session.duration_minutes} min` : null;
+                  const durationLabel = session.duration_minutes != null
+                    ? t('calendar.labels.durationMinutesShort', {
+                        count: session.duration_minutes,
+                        defaultValue: '{{count}} min'
+                      })
+                    : null;
 
                   return (
                     <button

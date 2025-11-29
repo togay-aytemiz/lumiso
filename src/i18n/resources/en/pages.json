@@ -1475,6 +1475,7 @@
       "location": "Location",
       "time": "Time",
       "status": "Status",
+      "durationMinutesShort": "{{count}} min",
       "moreEvents": "+{{count}} more"
     }
   },

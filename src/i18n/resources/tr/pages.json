@@ -1478,6 +1478,7 @@
       "location": "Konum",
       "time": "Saat",
       "status": "Durum",
+      "durationMinutesShort": "{{count}} dk",
       "moreEvents": "+{{count}} daha"
     }
   },

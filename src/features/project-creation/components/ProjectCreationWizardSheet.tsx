@@ -587,7 +587,13 @@ const ProjectCreationWizardSheetInner = ({
             <button
               type="button"
               className="text-sm font-semibold text-primary transition-colors hover:text-primary/80 focus-visible:outline-none"
-              onClick={() => navigate(`/projects/${newProject.id}`)}
+              onClick={() => {
+                const url =
+                  shouldLockNavigation && currentStep >= 3
+                    ? `/projects/${newProject.id}?onboarding=project-details`
+                    : `/projects/${newProject.id}`;
+                navigate(url);
+              }}
             >
               {tCommon("buttons.view_project")}
             </button>

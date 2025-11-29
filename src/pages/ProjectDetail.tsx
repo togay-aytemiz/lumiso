@@ -36,7 +36,9 @@ import {
 import { ProjectCreationWizardSheet } from "@/features/project-creation";
 import type { ProjectCreationStepId } from "@/features/project-creation/types";
 import { BaseOnboardingModal } from "@/components/shared/BaseOnboardingModal";
+import { TutorialFloatingCard } from "@/components/shared/TutorialFloatingCard";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 
 const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "Unknown error";
@@ -91,6 +93,7 @@ export default function ProjectDetail() {
   const { t: tPages } = useTranslation("pages");
   const isMobile = useIsMobile();
   const [searchParams] = useSearchParams();
+  const { completeCurrentStep, completeMultipleSteps, isInGuidedSetup, currentStep } = useOnboarding();
 
   const [project, setProject] = useState<Project | null>(null);
   const [lead, setLead] = useState<Lead | null>(null);
@@ -122,10 +125,19 @@ export default function ProjectDetail() {
     useState<ProjectCreationStepId>("details");
   const [showProjectOnboardingModal, setShowProjectOnboardingModal] = useState(false);
   const [hasSeenProjectOnboardingModal, setHasSeenProjectOnboardingModal] = useState(false);
+  const [showProjectExploreCard, setShowProjectExploreCard] = useState(false);
+  const [showProjectCompletionModal, setShowProjectCompletionModal] = useState(false);
   const projectDetailsVideoUrl =
     (import.meta.env.VITE_PROJECT_DETAILS_TUTORIAL_VIDEO_URL as string | undefined) || "";
   const hasProjectDetailsVideo = projectDetailsVideoUrl.length > 0;
   const onboardingFlag = searchParams.get("onboarding");
+  const explorePoints = useMemo(
+    () =>
+      (tPages("leadDetail.tutorial.exploreProjects.points", {
+        returnObjects: true,
+      }) as string[]) ?? [],
+    [tPages]
+  );
 
   const { summary: headerSummary } = useProjectHeaderSummary(project?.id, summaryRefreshToken);
   const { summary: sessionsSummary } = useProjectSessionsSummary(project?.id ?? "", summaryRefreshToken);
@@ -296,6 +308,7 @@ export default function ProjectDetail() {
     }
 
     setShowProjectOnboardingModal(true);
+    setShowProjectExploreCard(true);
     setHasSeenProjectOnboardingModal(true);
 
     if (typeof window !== "undefined") {
@@ -525,6 +538,34 @@ export default function ProjectDetail() {
   const triggerSummaryRefresh = useCallback(() => {
     setSummaryRefreshToken((prev) => prev + 1);
   }, []);
+
+  const handleExploreNext = useCallback(() => {
+    setShowProjectExploreCard(false);
+    setShowProjectCompletionModal(true);
+  }, []);
+
+  const handleExploreExit = useCallback(() => {
+    setShowProjectExploreCard(false);
+  }, []);
+
+  const handleProjectCompletion = useCallback(async () => {
+    try {
+      if (isInGuidedSetup) {
+        // Advance enough steps so the user lands on the Projects exploration step (step 4)
+        const stepsToComplete = Math.max(1, 4 - currentStep);
+        if (stepsToComplete > 1) {
+          await completeMultipleSteps(stepsToComplete);
+        } else {
+          await completeCurrentStep();
+        }
+      }
+      navigate("/getting-started");
+    } catch (error) {
+      console.error("Error completing project onboarding step:", error);
+    } finally {
+      setShowProjectCompletionModal(false);
+    }
+  }, [completeCurrentStep, completeMultipleSteps, currentStep, isInGuidedSetup, navigate]);
 
   const openEditWizard = useCallback((step: ProjectCreationStepId) => {
     setEditWizardStartStep(step);
@@ -865,6 +906,55 @@ export default function ProjectDetail() {
           } 
         />
       </div>
+
+      {showProjectExploreCard && (isInGuidedSetup || onboardingFlag === "project-details") && (
+        <TutorialFloatingCard
+          stepNumber={4}
+          totalSteps={5}
+          title={tPages("leadDetail.tutorial.exploreProjects.title")}
+          description={tPages("leadDetail.tutorial.exploreProjects.description")}
+          content={
+            <div className="space-y-2">
+              {explorePoints.map((point) => (
+                <div key={point} className="flex items-center gap-2 text-sm text-foreground">
+                  <span className="h-2 w-2 rounded-full bg-primary" aria-hidden />
+                  <span>{point}</span>
+                </div>
+              ))}
+            </div>
+          }
+          canProceed
+          onNext={handleExploreNext}
+          onExit={handleExploreExit}
+          position="bottom-right"
+        />
+      )}
+
+      <BaseOnboardingModal
+        open={showProjectCompletionModal}
+        onClose={() => setShowProjectCompletionModal(false)}
+        eyebrow={tPages("onboarding.tutorial.step_of", { current: 5, total: 5 })}
+        title={tPages("leadDetail.tutorial.complete.title")}
+        description={tPages("leadDetail.tutorial.complete.description")}
+        actions={[
+          {
+            label: tPages("onboarding.tutorial.exit_tutorial"),
+            onClick: () => setShowProjectCompletionModal(false),
+            variant: "outline",
+          },
+          {
+            label: tPages("onboarding.tutorial.continue_setup"),
+            onClick: handleProjectCompletion,
+            variant: "default",
+          },
+        ]}
+      >
+        <div className="p-3 bg-primary/5 border border-primary/30 rounded-lg">
+          <p className="text-sm font-medium text-primary">
+            {tPages("leadDetail.tutorial.complete.projectsShortcut")}
+          </p>
+        </div>
+      </BaseOnboardingModal>
 
       <BaseOnboardingModal
         open={showProjectOnboardingModal}

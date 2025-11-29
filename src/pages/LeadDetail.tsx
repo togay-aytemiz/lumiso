@@ -194,7 +194,7 @@ const LeadDetail = () => {
     const introIcons = [User, FolderPlus, Activity];
     const explorePoints = tPages("leadDetail.tutorial.exploreProjects.points", { returnObjects: true }) as string[];
 
-    return [
+    const steps: TutorialStep[] = [
       {
         id: 4,
         title: tPages("leadDetail.tutorial.intro.title"),
@@ -247,21 +247,9 @@ const LeadDetail = () => {
         requiresAction: !hasViewedProject,
         disabledTooltip: hasViewedProject ? undefined : tPages("leadDetail.tooltips.viewProject"),
       },
-      {
-        id: 7,
-        title: tPages("leadDetail.tutorial.complete.title"),
-        description: tPages("leadDetail.tutorial.complete.description"),
-        content: (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm font-medium text-blue-800">
-              {tPages("leadDetail.tutorial.complete.projectsShortcut")}
-            </p>
-          </div>
-        ),
-        mode: "modal",
-        canProceed: true,
-      },
     ];
+
+    return steps;
   }, [hasProjects, hasViewedProject, tPages]);
 
   // Scheduling tutorial steps
@@ -1099,6 +1087,7 @@ const LeadDetail = () => {
         onComplete={handleTutorialComplete}
         onExit={handleTutorialExit}
         initialStepIndex={currentTutorialStep}
+        displayTotal={isSchedulingTutorial ? undefined : 5}
       />
     </div>
   );

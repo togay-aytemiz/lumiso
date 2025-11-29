@@ -2968,10 +2968,10 @@
         "duration": "2 dk"
       },
       "step_3": {
-        "title": "Genel ayarları doğrula",
-        "description": "Başlangıç formunda verdiğin stüdyo adı burada hazır. Yalnızca iletişim bilgilerini ve logo/renk ayarını kontrol et.",
-        "button": "Genel ayarları aç",
-        "duration": "2 dk"
+        "title": "İlk Projenizi Oluşturun",
+        "description": "Seanslar, ödemeler ve teslimatlar için ilk projenizi kurun ve her şeyi tek yerde yönetin.",
+        "button": "Projeyi oluştur",
+        "duration": "4 dk"
       },
       "step_4": {
         "title": "Projeler Sayfasını Keşfedin",

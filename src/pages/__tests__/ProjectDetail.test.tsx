@@ -20,6 +20,7 @@ jest.mock("react-router-dom", () => {
     ...actual,
     useParams: () => ({ id: "project-1" }),
     useNavigate: () => mockNavigate,
+    useSearchParams: () => [new URLSearchParams(), jest.fn()],
   };
 });
 

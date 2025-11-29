@@ -618,6 +618,13 @@
       "deleteTitle": "Delete Project",
       "deleteDescription": "This action cannot be undone. This will permanently delete the project and all associated data including sessions, todos, and payments."
     },
+    "onboardingModal": {
+      "title": "Explore your project workspace",
+      "description": "Watch a quick walkthrough to see where to track progress, sessions, and billing.",
+      "placeholder": "Add your walkthrough link to VITE_PROJECT_DETAILS_TUTORIAL_VIDEO_URL to show it here.",
+      "cta": "Start exploring",
+      "skip": "Skip for now"
+    },
     "placeholder": {
       "content": "Project details content will be displayed here using existing components."
     }

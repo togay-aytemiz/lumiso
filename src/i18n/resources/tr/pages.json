@@ -618,6 +618,13 @@
       "deleteTitle": "Projeyi Sil",
       "deleteDescription": "Bu işlem geri alınamaz. Projeyi ve seanslar, yapılacaklar, ödemeler dahil tüm ilgili verileri kalıcı olarak siler."
     },
+    "onboardingModal": {
+      "title": "Proje alanını keşfedin",
+      "description": "Proje detayları sayfasında ilerleme, seanslar ve ödemeleri nasıl takip edeceğinizi hızlıca izleyin.",
+      "placeholder": "Videonun görünmesi için VITE_PROJECT_DETAILS_TUTORIAL_VIDEO_URL değerini ekleyin.",
+      "cta": "Keşfetmeye başla",
+      "skip": "Şimdilik geç"
+    },
     "placeholder": {
       "content": "Proje detayları mevcut bileşenler kullanılarak burada gösterilecek."
     }

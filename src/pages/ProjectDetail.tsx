@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,8 @@ import {
 } from "@/lib/projects/projectPackageSnapshot";
 import { ProjectCreationWizardSheet } from "@/features/project-creation";
 import type { ProjectCreationStepId } from "@/features/project-creation/types";
+import { BaseOnboardingModal } from "@/components/shared/BaseOnboardingModal";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "Unknown error";
@@ -88,6 +90,7 @@ export default function ProjectDetail() {
   const { t } = useFormsTranslation();
   const { t: tPages } = useTranslation("pages");
   const isMobile = useIsMobile();
+  const [searchParams] = useSearchParams();
 
   const [project, setProject] = useState<Project | null>(null);
   const [lead, setLead] = useState<Lead | null>(null);
@@ -117,6 +120,12 @@ export default function ProjectDetail() {
   const [editWizardOpen, setEditWizardOpen] = useState(false);
   const [editWizardStartStep, setEditWizardStartStep] =
     useState<ProjectCreationStepId>("details");
+  const [showProjectOnboardingModal, setShowProjectOnboardingModal] = useState(false);
+  const [hasSeenProjectOnboardingModal, setHasSeenProjectOnboardingModal] = useState(false);
+  const projectDetailsVideoUrl =
+    (import.meta.env.VITE_PROJECT_DETAILS_TUTORIAL_VIDEO_URL as string | undefined) || "";
+  const hasProjectDetailsVideo = projectDetailsVideoUrl.length > 0;
+  const onboardingFlag = searchParams.get("onboarding");
 
   const { summary: headerSummary } = useProjectHeaderSummary(project?.id, summaryRefreshToken);
   const { summary: sessionsSummary } = useProjectSessionsSummary(project?.id ?? "", summaryRefreshToken);
@@ -280,6 +289,25 @@ export default function ProjectDetail() {
   useEffect(() => {
     fetchProject();
   }, [fetchProject]);
+
+  useEffect(() => {
+    if (hasSeenProjectOnboardingModal || onboardingFlag !== "project-details") {
+      return;
+    }
+
+    setShowProjectOnboardingModal(true);
+    setHasSeenProjectOnboardingModal(true);
+
+    if (typeof window !== "undefined") {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("onboarding");
+        window.history.replaceState({}, "", url.toString());
+      } catch (error) {
+        console.warn("Unable to remove onboarding param from URL", error);
+      }
+    }
+  }, [hasSeenProjectOnboardingModal, onboardingFlag]);
 
   useEffect(() => {
     if (project) {
@@ -837,6 +865,42 @@ export default function ProjectDetail() {
           } 
         />
       </div>
+
+      <BaseOnboardingModal
+        open={showProjectOnboardingModal}
+        onClose={() => setShowProjectOnboardingModal(false)}
+        title={tPages("projectDetail.onboardingModal.title")}
+        description={tPages("projectDetail.onboardingModal.description")}
+        actions={[
+          {
+            label: tPages("projectDetail.onboardingModal.skip"),
+            onClick: () => setShowProjectOnboardingModal(false),
+            variant: "outline"
+          },
+          {
+            label: tPages("projectDetail.onboardingModal.cta"),
+            onClick: () => setShowProjectOnboardingModal(false),
+            variant: "default"
+          }
+        ]}
+      >
+        <AspectRatio ratio={16 / 9} className="overflow-hidden rounded-lg bg-muted">
+          {hasProjectDetailsVideo ? (
+            <iframe
+              src={projectDetailsVideoUrl}
+              title={tPages("projectDetail.onboardingModal.title")}
+              className="h-full w-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
+              {tPages("projectDetail.onboardingModal.placeholder")}
+            </div>
+          )}
+        </AspectRatio>
+      </BaseOnboardingModal>
 
       <AlertDialog
         open={archiveConfirmOpen}

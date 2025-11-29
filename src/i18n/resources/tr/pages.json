@@ -547,7 +547,9 @@
     "archiveConfirm": {
       "title": "Projeyi arşivle?",
       "description": "Arşivlemeden önce lütfen aşağıdakileri gözden geçirin:",
-      "outstanding": "Bu proje için {{amount}} tutarında tahsil edilmemiş bakiye var. Bu bakiye kişi detayları sayfasında görünmeye devam edecek.",
+      "outstanding": "Bu proje için <strong>{{amount}}</strong> tutarında tahsil edilmemiş bakiye var. Bu bakiye kişi detayları sayfasında görünmeye devam edecek.",
+      "pendingPaymentsNotice": "Arşivlenen projeler Bekleyen ödemeler listesinde görünmez, bu yüzden ödeme takibi yapılmaz.",
+      "restoreReminder": "Projeyi istediğiniz zaman arşivden çıkarabilirsiniz.",
       "plannedSessions_one": "{{count}} planlanmış seans bulunuyor.",
       "plannedSessions_other": "{{count}} planlanmış seans bulunuyor.",
       "confirm": "Projeyi arşivle",

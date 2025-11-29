@@ -546,8 +546,10 @@
     },
     "archiveConfirm": {
       "title": "Archive project?",
-      "description": "Before archiving, please review the following:",
-      "outstanding": "This project still has {{amount}} outstanding. This balance will remain visible on the client details page.",
+      "description": "Before archiving, please review:",
+      "outstanding": "This project still has <strong>{{amount}}</strong> outstanding. This balance will remain visible on the client details page.",
+      "pendingPaymentsNotice": "Archived projects won't appear under Pending payments, so they won't be tracked until restored.",
+      "restoreReminder": "You can restore the project from the archive anytime.",
       "plannedSessions_one": "{{count}} planned session is still scheduled.",
       "plannedSessions_other": "{{count}} planned sessions are still scheduled.",
       "confirm": "Archive project",

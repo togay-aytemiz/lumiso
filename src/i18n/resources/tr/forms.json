@@ -1610,8 +1610,9 @@
   },
   "deleteDialog": {
     "title": "Projeyi Sil",
-    "description": "'{name}' projesini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. Bu işlem projeyi ve seanslar, ödemeler, görevler, hizmetler ve aktiviteler dahil TÜM ilgili verileri kalıcı olarak silecektir.",
+    "description": "\"{{name}}\" projesini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. Bu işlem projeyi ve seanslar, ödemeler, görevler, hizmetler ve aktiviteler dahil TÜM ilgili verileri kalıcı olarak silecektir.",
     "cancel": "İptal",
+    "confirm": "Projeyi Sil",
     "delete": "Projeyi Sil",
     "deleting": "Siliniyor..."
   },

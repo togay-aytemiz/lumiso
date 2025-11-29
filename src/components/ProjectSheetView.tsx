@@ -56,7 +56,7 @@ import { SessionSchedulingSheet } from "@/components/SessionSchedulingSheet";
 import { SessionWithStatus } from "@/lib/sessionSorting";
 import { onArchiveToggle } from "@/components/projectArchiveToggle";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { EntityHeader } from "@/components/EntityHeader";
 import { buildProjectSummaryItems } from "@/lib/projects/buildProjectSummaryItems";
 import { useProjectHeaderSummary } from "@/hooks/useProjectHeaderSummary";
@@ -666,13 +666,23 @@ export function LegacyProjectSheetView({
             <div className="space-y-3 text-sm text-muted-foreground">
               <p>{tPages("projectDetail.archiveConfirm.description")}</p>
               {archiveConfirmState.hasOutstanding && (
-                <p>
-                  {tPages("projectDetail.archiveConfirm.outstanding", {
-                    amount: formatArchiveAmount(
-                      archiveConfirmState.outstandingAmount
-                    ),
-                  })}
-                </p>
+                <div className="space-y-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
+                  <p className="text-sm font-medium">
+                    <Trans
+                      t={tPages}
+                      i18nKey="projectDetail.archiveConfirm.outstanding"
+                      components={{ strong: <span className="font-semibold" /> }}
+                      values={{
+                        amount: formatArchiveAmount(
+                          archiveConfirmState.outstandingAmount
+                        ),
+                      }}
+                    />
+                  </p>
+                  <p className="text-xs leading-relaxed text-amber-900/90">
+                    {tPages("projectDetail.archiveConfirm.pendingPaymentsNotice")}
+                  </p>
+                </div>
               )}
               {archiveConfirmState.plannedCount > 0 && (
                 <p>
@@ -681,6 +691,9 @@ export function LegacyProjectSheetView({
                   })}
                 </p>
               )}
+              <p className="text-xs leading-relaxed">
+                {tPages("projectDetail.archiveConfirm.restoreReminder")}
+              </p>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>

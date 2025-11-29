@@ -1610,8 +1610,9 @@
   },
   "deleteDialog": {
     "title": "Delete Project",
-    "description": "Are you sure you want to delete the project '{name}'? This action cannot be undone. It will permanently delete the project and ALL related data including sessions, payments, tasks, services, and activities.",
+    "description": "Are you sure you want to delete the project \"{{name}}\"? This action cannot be undone. It will permanently delete the project and ALL related data including sessions, payments, tasks, services, and activities.",
     "cancel": "Cancel",
+    "confirm": "Delete Project",
     "delete": "Delete Project",
     "deleting": "Deleting..."
   },

@@ -323,7 +323,7 @@ export function ProjectDepositSetupDialog({
         title={t("payments.deposit.setup_title", { defaultValue: "Configure deposit" })}
         isOpen={open}
         onOpenChange={onOpenChange}
-        size="lg"
+        size="md"
         dirty={hasChanges}
         onDirtyClose={handleDirtyClose}
         footerActions={footerActions}

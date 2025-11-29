@@ -25,7 +25,7 @@ interface AppSheetModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   children: ReactNode;
-  size?: 'content' | 'default' | 'lg' | 'wide' | 'xl';
+  size?: 'content' | 'default' | 'md' | 'lg' | 'wide' | 'xl';
   footerActions?: FooterAction[];
   dirty?: boolean;
   onDirtyClose?: () => void;
@@ -139,6 +139,7 @@ export function AppSheetModal({
   const sizeClassMap: Record<NonNullable<AppSheetModalProps["size"]>, string> = {
     content: "sm:max-w-md",
     default: "sm:max-w-4xl",
+    md: "sm:max-w-3xl",
     lg: "sm:max-w-5xl",
     xl: "sm:max-w-6xl",
     wide: "sm:max-w-[90vw]",

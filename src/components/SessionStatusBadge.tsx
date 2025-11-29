@@ -181,7 +181,7 @@ export function SessionStatusBadge({
         style={activeStyle}
       >
         <div className={cn("rounded-full", dotSize)} style={{ backgroundColor: activeTokens.color }} />
-        <span className={cn("tracking-wide font-semibold", textSize)}>{displayName}</span>
+        <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{displayName}</span>
       </div>
     );
   }
@@ -210,7 +210,7 @@ export function SessionStatusBadge({
         aria-expanded={dropdownOpen}
       >
         <div className={cn("rounded-full", dotSize)} style={{ backgroundColor: activeTokens.color }} />
-        <span className={cn("tracking-wide font-semibold", textSize)}>{displayName}</span>
+        <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{displayName}</span>
         <ChevronDown className={cn("ml-1 transition-transform", isSmall ? "w-3 h-3" : "w-4 h-4", dropdownOpen && "rotate-180")} />
       </Button>
 
@@ -236,7 +236,7 @@ export function SessionStatusBadge({
                 >
                   <div className="flex items-center gap-3 w-full">
                     <div className={cn("rounded-full flex-shrink-0", dotSize)} style={{ backgroundColor: status.color }} />
-                    <span className={cn("tracking-wide font-semibold", textSize)}>
+                    <span className={cn("uppercase tracking-wide font-semibold", textSize)}>
                       {status.name}
                     </span>
                   </div>

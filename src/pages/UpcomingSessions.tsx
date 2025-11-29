@@ -948,7 +948,7 @@ const AllSessions = () => {
               }}
             >
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-              <span className="text-xs font-semibold tracking-wide">{label}</span>
+              <span className="text-xs font-semibold tracking-wide uppercase">{label}</span>
             </div>
           );
         },

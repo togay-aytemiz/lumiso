@@ -96,7 +96,7 @@ export function TutorialFloatingCard({
                       </Button>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent>
+                  <TooltipContent side="top" align="center" collisionPadding={12} className="max-w-xs text-center">
                     <p>{disabledTooltip}</p>
                   </TooltipContent>
                 </Tooltip>

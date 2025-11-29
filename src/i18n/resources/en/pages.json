@@ -1755,7 +1755,7 @@
           "addBusinessName": {
             "title": "Verify your business identity",
             "description": "We already saved your studio name—use this step to confirm it, drop in social links, and glance at the timezone/date settings we prepared.",
-            "required": "Pulled from intake—edit only if the name or locale changed.",
+            "required": "Enter or confirm your business name to enable Next (pre-filled from intake).",
             "appearsOn": "Feeds Social Channels plus every invoice, contract, and email.",
             "canChange": "Branding, social links, and regional settings stay editable anytime."
           },
@@ -1832,7 +1832,7 @@
         "completeInfo": {
           "title": "Just confirm your profile",
           "description": "Your display name came from the intake form—adjust it if you want something different and optionally upload a photo.",
-          "fullNameRequired": "\u2022 Display name: Pre-filled from intake, edit if you prefer another signature",
+          "fullNameRequired": "\u2022 Add or confirm your display name to unlock Next (pre-filled from intake)",
           "workingHours": "\u2022 Working hours: Let the calendar know when you\u2019re available",
           "profilePhoto": "\u2022 Profile photo: Shows in admin views and client emails"
         },

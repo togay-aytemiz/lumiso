@@ -21,7 +21,7 @@ import { createLead, createProject } from "../api/leadProjectCreation";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { CalendarDays, CheckCircle2, Loader2, MapPin, User, Briefcase } from "lucide-react";
+import { CalendarDays, CheckCircle2, Loader2, MapPin, User, Briefcase, AlertTriangle } from "lucide-react";
 import { trackEvent } from "@/lib/telemetry";
 import { useNavigate } from "react-router-dom";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
@@ -1167,7 +1167,14 @@ const SessionPlanningSuccess = ({
 }) => {
   const { t } = useTranslation("sessionPlanning");
   const { settings } = useOrganizationSettings();
+  const { allWorkflows, loading: workflowsLoading } = useSessionWorkflowCatalog();
   const userLocale = typeof window !== "undefined" ? getUserLocale() : "en-US";
+  const showWorkflowSetupAlert = !workflowsLoading && allWorkflows.length === 0;
+
+  const openWorkflowManager = useCallback(() => {
+    if (typeof window === "undefined") return;
+    window.open("/workflows", "_blank", "noopener,noreferrer");
+  }, []);
 
   const formattedDate = useMemo(() => {
     if (!summary.sessionDate) {
@@ -1241,12 +1248,33 @@ const SessionPlanningSuccess = ({
           label={t("summary.labels.location")}
           value={locationText}
         />
-        <p className="rounded-lg bg-slate-50 p-3 text-xs text-muted-foreground">
-          {t("wizard.successNotifications", {
-            reminders: t(summary.notifications.sendReminder ? "summary.status.on" : "summary.status.off"),
-            summaryEmail: t(summary.notifications.sendSummaryEmail ? "summary.status.on" : "summary.status.off"),
-          })}
-        </p>
+        {showWorkflowSetupAlert ? (
+          <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-600" aria-hidden="true" />
+            <div className="space-y-2 text-left text-amber-900">
+              <div className="space-y-1">
+                <p className="text-sm font-semibold">{t("wizard.successWorkflowsMissingTitle")}</p>
+                <p className="text-xs text-amber-800">
+                  {t("wizard.successWorkflowsMissingDescription")}
+                </p>
+              </div>
+              <Button
+                variant="textAccent"
+                className="text-amber-800 hover:text-amber-900"
+                onClick={openWorkflowManager}
+              >
+                {t("wizard.successManageWorkflows")}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <p className="rounded-lg bg-slate-50 p-3 text-xs text-muted-foreground">
+            {t("wizard.successNotifications", {
+              reminders: t(summary.notifications.sendReminder ? "summary.status.on" : "summary.status.off"),
+              summaryEmail: t(summary.notifications.sendSummaryEmail ? "summary.status.on" : "summary.status.off"),
+            })}
+          </p>
+        )}
       </div>
       <div className="flex w-full max-w-md flex-col gap-3 sm:flex-row sm:flex-wrap">
         {onViewSession ? (

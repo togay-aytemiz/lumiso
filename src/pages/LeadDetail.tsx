@@ -328,6 +328,7 @@ const LeadDetail = () => {
     !isSchedulingTutorial &&
     !hasProjects &&
     currentStep === 2;
+  const shouldForceProjectDetailPage = showTutorial && !isSchedulingTutorial;
 
   // Check if we should show tutorial when component mounts
   useEffect(() => {
@@ -994,6 +995,7 @@ const LeadDetail = () => {
                     onActivityUpdated={handleActivityUpdated}
                     onProjectClicked={handleProjectClicked}
                     tutorialMode={isProjectTutorialStepActive}
+                    onboardingActive={shouldForceProjectDetailPage}
                   />
                 )
               },

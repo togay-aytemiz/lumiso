@@ -45,6 +45,7 @@ interface ProjectsSectionProps {
   onProjectClicked?: () => void;
   tutorialMode?: boolean;
   tutorialVideoUrl?: string;
+  onboardingActive?: boolean;
 }
 
 export function ProjectsSection({
@@ -55,6 +56,7 @@ export function ProjectsSection({
   onProjectClicked,
   tutorialMode = false,
   tutorialVideoUrl,
+  onboardingActive = false,
 }: ProjectsSectionProps) {
   const { t } = useTranslation(['pages', 'common']);
   const isMobile = useIsMobile();
@@ -153,17 +155,38 @@ export function ProjectsSection({
     localStorage.setItem(`crm:showArchivedProjects:${userId}`, String(showArchived));
   }, [showArchived, userId]);
 
+  const getProjectDetailPath = useCallback(
+    (projectId: string) => {
+      if (!onboardingActive) {
+        return `/projects/${projectId}`;
+      }
+
+      const params = new URLSearchParams();
+      params.set("onboarding", "project-details");
+      return `/projects/${projectId}?${params.toString()}`;
+    },
+    [onboardingActive]
+  );
+
 
   const handleViewProject = (project: Project) => {
     if (onProjectClicked) {
       onProjectClicked();
     }
-    navigate(`/projects/${project.id}`);
+    navigate(getProjectDetailPath(project.id));
   };
 
   const handleQuickViewProject = (project: Project) => {
+    if (onboardingActive) {
+      if (onProjectClicked) {
+        onProjectClicked();
+      }
+      navigate(getProjectDetailPath(project.id));
+      return;
+    }
+
     if (isMobile) {
-      navigate(`/projects/${project.id}`);
+      navigate(getProjectDetailPath(project.id));
       return;
     }
     setViewingProject(project);
@@ -180,7 +203,7 @@ export function ProjectsSection({
       if (onProjectClicked) {
         onProjectClicked();
       }
-      navigate(`/projects/${viewingProject.id}`);
+      navigate(getProjectDetailPath(viewingProject.id));
       setShowViewDialog(false);
     }
   };

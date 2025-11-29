@@ -87,12 +87,14 @@ export function TutorialFloatingCard({
             />
             
             {requiresAction && !canProceed ? (
-              <TooltipProvider>
+              <TooltipProvider delayDuration={0}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button disabled className="flex-1">
-                      {isLastStep ? t('onboarding.tutorial.complete') : t('onboarding.tutorial.next')}
-                    </Button>
+                    <span className="flex-1">
+                      <Button disabled className="pointer-events-none w-full">
+                        {isLastStep ? t('onboarding.tutorial.complete') : t('onboarding.tutorial.next')}
+                      </Button>
+                    </span>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>{disabledTooltip}</p>

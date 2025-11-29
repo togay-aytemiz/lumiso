@@ -71,6 +71,7 @@ export function EnhancedEditLeadDialog({
   const toast = useI18nToast();
   const [loading, setLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const hasInitializedForm = useRef(false);
 
   // Create dynamic schema based on field definitions
   const schema = createDynamicLeadSchema(fieldDefinitions);
@@ -196,19 +197,32 @@ export function EnhancedEditLeadDialog({
     fieldsLoading,
   ]);
 
+  useEffect(() => {
+    hasInitializedForm.current = false;
+  }, [lead?.id]);
+
   // Load existing field values when dialog opens
   useEffect(() => {
-    if (open && lead && !fieldsLoading && !valuesLoading) {
-      const formData: LeadFormValues = {};
-      
-      fieldDefinitions.forEach((field) => {
-        const fieldName = `field_${field.field_key}`;
-        formData[fieldName] = getInitialValueForField(field);
-      });
-      
-      form.reset(formData);
-      initialFormValuesRef.current = { ...formData };
+    if (!open || !lead) {
+      hasInitializedForm.current = false;
+      return;
     }
+
+    // Prevent refetch-triggered resets while the sheet is open
+    if (hasInitializedForm.current || fieldsLoading || valuesLoading) {
+      return;
+    }
+
+    const formData: LeadFormValues = {};
+    
+    fieldDefinitions.forEach((field) => {
+      const fieldName = `field_${field.field_key}`;
+      formData[fieldName] = getInitialValueForField(field);
+    });
+    
+    form.reset(formData);
+    initialFormValuesRef.current = { ...formData };
+    hasInitializedForm.current = true;
   }, [
     open,
     lead,

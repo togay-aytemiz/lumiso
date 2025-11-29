@@ -127,8 +127,10 @@ export default function ProjectDetail() {
   const [hasSeenProjectOnboardingModal, setHasSeenProjectOnboardingModal] = useState(false);
   const [showProjectExploreCard, setShowProjectExploreCard] = useState(false);
   const [showProjectCompletionModal, setShowProjectCompletionModal] = useState(false);
+  const defaultProjectDetailsVideoUrl = "https://www.youtube.com/embed/sbHCYJ07_08";
   const projectDetailsVideoUrl =
-    (import.meta.env.VITE_PROJECT_DETAILS_TUTORIAL_VIDEO_URL as string | undefined) || "";
+    (import.meta.env.VITE_PROJECT_DETAILS_TUTORIAL_VIDEO_URL as string | undefined) ||
+    defaultProjectDetailsVideoUrl;
   const hasProjectDetailsVideo = projectDetailsVideoUrl.length > 0;
   const onboardingFlag = searchParams.get("onboarding");
   const explorePoints = useMemo(

@@ -7,11 +7,6 @@ let cacheExpiry: number = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const DEFAULT_TRIAL_DAYS = 14;
 let membershipTableUnavailable = false;
-const MEMBERSHIP_ENFORCEMENT_ENABLED =
-  (typeof import.meta !== "undefined" &&
-    import.meta.env &&
-    import.meta.env.VITE_ENABLE_MEMBERSHIP_ENFORCEMENT === "true") ||
-  false;
 
 type MembershipUpdates = {
   status?: string;
@@ -30,7 +25,9 @@ const handleMembershipTableError = (error: unknown) => {
 };
 
 const ensureOwnerMembership = async (userId: string, organizationId: string) => {
-  if (!MEMBERSHIP_ENFORCEMENT_ENABLED || membershipTableUnavailable) {
+  // RLS on storage and org-scoped tables relies on organization_members having
+  // an active row for the user; always ensure it exists.
+  if (membershipTableUnavailable) {
     return;
   }
 
@@ -103,11 +100,6 @@ const ensureOwnerMembership = async (userId: string, organizationId: string) => 
 
 export async function getUserOrganizationId(): Promise<string | null> {
   try {
-    // Check if we have a valid cached value
-    if (cachedOrganizationId && Date.now() < cacheExpiry) {
-      return cachedOrganizationId;
-    }
-
     const { data: authData, error: authError } = await supabase.auth.getUser();
     if (authError) {
       console.error("Error fetching authenticated user:", authError);
@@ -119,6 +111,12 @@ export async function getUserOrganizationId(): Promise<string | null> {
     if (!user) {
       clearOrganizationCache();
       return null;
+    }
+
+    // Check cache after we know the user, and ensure membership is in place
+    if (cachedOrganizationId && Date.now() < cacheExpiry) {
+      await ensureOwnerMembership(user.id, cachedOrganizationId);
+      return cachedOrganizationId;
     }
 
     // For single photographer: find organization owned by this user

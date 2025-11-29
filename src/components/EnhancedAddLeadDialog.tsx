@@ -114,6 +114,7 @@ export function EnhancedAddLeadDialog({
   });
 
   const [defaultsReady, setDefaultsReady] = useState(false);
+  const hasInitializedDefaults = useRef(false);
   const initialValuesRef = useRef<LeadFormValues>({});
   const watchedValues = form.watch() as LeadFormValues;
 
@@ -149,51 +150,57 @@ export function EnhancedAddLeadDialog({
     return String(value);
   }, []);
 
-  useEffect(() => {
-    if (open && !fieldsLoading) {
-      setDefaultsReady(false);
-      // Reset form when dialog opens
-      const setDefaultValues = async () => {
-        const defaultValues: LeadFormValues = {};
+  const initializeDefaultValues = useCallback(async () => {
+    setDefaultsReady(false);
+    const defaultValues: LeadFormValues = {};
 
-        // Get organization ID for status lookup
-        const organizationId = await getUserOrganizationId();
+    const organizationId = await getUserOrganizationId();
 
-        for (const field of fieldDefinitions) {
-          const fieldName = `field_${field.field_key}`;
+    for (const field of fieldDefinitions) {
+      const fieldName = `field_${field.field_key}`;
 
-          if (field.field_key === "status" && organizationId) {
-            try {
-              const defaultStatus = await fetchDefaultLeadStatus(organizationId);
-              defaultValues[fieldName] = defaultStatus?.name ?? "New";
-            } catch (error) {
-              console.error("Error fetching default status:", error);
-              defaultValues[fieldName] = "New";
-            }
-          } else {
-            switch (field.field_type) {
-              case "checkbox":
-                defaultValues[fieldName] = false;
-                break;
-              case "number":
-                defaultValues[fieldName] = "";
-                break;
-              default:
-                defaultValues[fieldName] = "";
-            }
-          }
+      if (field.field_key === "status" && organizationId) {
+        try {
+          const defaultStatus = await fetchDefaultLeadStatus(organizationId);
+          defaultValues[fieldName] = defaultStatus?.name ?? "New";
+        } catch (error) {
+          console.error("Error fetching default status:", error);
+          defaultValues[fieldName] = "New";
         }
-
-        initialValuesRef.current = { ...defaultValues };
-        form.reset(defaultValues);
-        setDefaultsReady(true);
-      };
-
-      setDefaultValues();
-    } else if (!open) {
-      setDefaultsReady(false);
+      } else {
+        switch (field.field_type) {
+          case "checkbox":
+            defaultValues[fieldName] = false;
+            break;
+          case "number":
+            defaultValues[fieldName] = "";
+            break;
+          default:
+            defaultValues[fieldName] = "";
+        }
+      }
     }
-  }, [open, fieldsLoading, fieldDefinitions, form, fetchDefaultLeadStatus]);
+
+    initialValuesRef.current = { ...defaultValues };
+    form.reset(defaultValues);
+    hasInitializedDefaults.current = true;
+    setDefaultsReady(true);
+  }, [fieldDefinitions, fetchDefaultLeadStatus, form]);
+
+  useEffect(() => {
+    // Only initialize once per open cycle to avoid wiping user input on refetches
+    if (!open) {
+      setDefaultsReady(false);
+      hasInitializedDefaults.current = false;
+      return;
+    }
+
+    if (fieldsLoading || hasInitializedDefaults.current) {
+      return;
+    }
+
+    void initializeDefaultValues();
+  }, [open, fieldsLoading, initializeDefaultValues]);
 
   const hasDirtyValue = useMemo(() => {
     if (!defaultsReady) {

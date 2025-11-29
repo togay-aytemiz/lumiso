@@ -277,8 +277,11 @@ export default function Profile() {
   const generateTimeOptions = () => {
     const times = [];
     for (let hour = 6; hour <= 22; hour++) {
-      const timeString = `${hour.toString().padStart(2, '0')}:00`;
-      times.push(timeString);
+      const hourString = hour.toString().padStart(2, '0');
+      times.push(`${hourString}:00`);
+      if (hour < 22) {
+        times.push(`${hourString}:30`);
+      }
     }
     return times;
   };

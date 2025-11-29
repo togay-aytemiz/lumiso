@@ -136,7 +136,7 @@ describe("HelpModal", () => {
     );
     expect(windowOpenSpy).toHaveBeenNthCalledWith(
       2,
-      "https://wa.me/905551234567",
+      "https://wa.me/905074699692",
       "_blank"
     );
     expect(onOpenChange).toHaveBeenCalledWith(false);

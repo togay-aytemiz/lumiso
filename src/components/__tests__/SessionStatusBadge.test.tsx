@@ -1,6 +1,5 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { supabase } from "@/integrations/supabase/client";
 import { SessionStatusBadge } from "../SessionStatusBadge";
 
 jest.mock("react-i18next", () => ({
@@ -10,12 +9,6 @@ jest.mock("react-i18next", () => ({
       (options as { defaultValue?: string })?.defaultValue ?? _key,
     i18n: { language: "en", resolvedLanguage: "en" },
   }),
-}));
-
-jest.mock("@/integrations/supabase/client", () => ({
-  supabase: {
-    from: jest.fn(),
-  },
 }));
 
 const toastMock = jest.fn();
@@ -39,22 +32,10 @@ jest.mock("@/hooks/useTypedTranslation", () => ({
   }),
 }));
 
-const supabaseFromMock = supabase.from as jest.Mock;
-
-const mockStatusesFetch = (statuses: Array<{ id: string; name: string; color: string }>) => {
-  const orderMock = jest.fn(() =>
-    Promise.resolve({
-      data: statuses,
-      error: null,
-    })
-  );
-  const selectMock = jest.fn(() => ({
-    order: orderMock,
-  }));
-  supabaseFromMock.mockReturnValue({
-    select: selectMock,
-  });
-};
+const useSessionStatusesMock = jest.fn();
+jest.mock("@/hooks/useOrganizationData", () => ({
+  useSessionStatuses: () => useSessionStatusesMock(),
+}));
 
 describe("SessionStatusBadge", () => {
   beforeEach(() => {
@@ -62,9 +43,10 @@ describe("SessionStatusBadge", () => {
   });
 
   it("renders the current status when not editable", async () => {
-    mockStatusesFetch([
-      { id: "planned", name: "Planned", color: "#123456" },
-    ]);
+    useSessionStatusesMock.mockReturnValue({
+      data: [{ id: "planned-id", template_slug: "planned", name: "Planlandı", color: "#123456" }],
+      isLoading: false,
+    });
 
     render(
       <SessionStatusBadge
@@ -74,15 +56,18 @@ describe("SessionStatusBadge", () => {
       />
     );
 
-    expect(await screen.findByText("Planned")).toBeInTheDocument();
+    expect(await screen.findByText("Planlandı")).toBeInTheDocument();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("allows changing status when editable", async () => {
-    mockStatusesFetch([
-      { id: "planned-id", name: "Planned", color: "#123" },
-      { id: "completed-id", name: "Completed", color: "#456" },
-    ]);
+    useSessionStatusesMock.mockReturnValue({
+      data: [
+        { id: "planned-id", template_slug: "planned", name: "Planned", color: "#123" },
+        { id: "completed-id", template_slug: "completed", name: "Tamamlandı", color: "#456" },
+      ],
+      isLoading: false,
+    });
     updateSessionStatusMock.mockResolvedValue(true);
 
     render(
@@ -96,7 +81,7 @@ describe("SessionStatusBadge", () => {
     const trigger = await screen.findByRole("button", { name: /Planned/i });
     await userEvent.click(trigger);
 
-    const completedOption = await screen.findByText("Completed");
+    const completedOption = await screen.findByText("Tamamlandı");
     fireEvent.click(completedOption);
 
     await waitFor(() =>

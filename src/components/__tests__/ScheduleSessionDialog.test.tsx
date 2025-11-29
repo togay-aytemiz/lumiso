@@ -127,14 +127,11 @@ describe("ScheduleSessionDialog", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "sessions.schedule_new" }));
 
-    expect(
-      screen.getByText("Add your tutorial video URL to show it here.")
-    ).toBeInTheDocument();
+    const iframe = screen.getByTitle("Watch how to plan a session");
+    expect(iframe).toHaveAttribute("src", "https://www.youtube.com/embed/na7ByGdB6Mg");
 
     fireEvent.click(screen.getByText("Skip for now"));
 
-    expect(
-      screen.queryByText("Add your tutorial video URL to show it here.")
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTitle("Watch how to plan a session")).not.toBeInTheDocument();
   });
 });

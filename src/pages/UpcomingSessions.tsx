@@ -66,6 +66,7 @@ interface SessionStatusRecord {
   color: string | null;
   lifecycle: string | null;
   is_system_initial: boolean;
+  template_slug: string | null;
 }
 
 interface SessionWithComputed extends Session {
@@ -95,6 +96,7 @@ type SessionStatusResponse = {
   color: string | null;
   lifecycle: string | null;
   is_system_initial?: boolean | null;
+  template_slug?: string | null;
 };
 
 type LeadRow = {
@@ -163,8 +165,12 @@ const getFallbackLifecycle = (status: string): SessionLifecycle => {
     return "cancelled";
   }
 
-  if (normalized === "planned" || normalized === "scheduled") {
+  if (normalized === "planned" || normalized === "scheduled" || normalized === "preparing") {
     return "planned";
+  }
+
+  if (normalized === "in_progress") {
+    return "active";
   }
 
   return "active";
@@ -365,13 +371,25 @@ const AllSessions = () => {
       color: status.color ?? null,
       lifecycle: status.lifecycle ?? null,
       is_system_initial: Boolean(status.is_system_initial),
+      template_slug: status.template_slug ?? null,
     }));
   }, [sessionStatusData]);
 
   const statusLookup = useMemo(() => {
     const map = new Map<string, SessionStatusRecord>();
     sessionStatuses.forEach((status) => {
-      map.set(normalizeStatusName(status.name), status);
+      const slugKey = normalizeStatusName(status.template_slug);
+      const nameKey = normalizeStatusName(status.name);
+
+      if (slugKey && !map.has(slugKey)) {
+        map.set(slugKey, status);
+      }
+      if (nameKey && !map.has(nameKey)) {
+        map.set(nameKey, status);
+      }
+      if (status.id && !map.has(status.id)) {
+        map.set(status.id, status);
+      }
     });
     return map;
   }, [sessionStatuses]);
@@ -383,7 +401,9 @@ const AllSessions = () => {
 
     return sessions.map((session) => {
       const normalizedStatus = normalizeStatusName(session.status);
-      const statusRecord = normalizedStatus ? statusLookup.get(normalizedStatus) ?? null : null;
+      const statusRecord =
+        statusLookup.get(normalizedStatus) ||
+        (session.status ? statusLookup.get(session.status) ?? null : null);
       const lifecycleFromRecord = statusRecord ? normalizeLifecycle(statusRecord.lifecycle) : "unknown";
       let lifecycle = lifecycleFromRecord !== "unknown" ? lifecycleFromRecord : getFallbackLifecycle(session.status);
       const isInitial = statusRecord ? Boolean(statusRecord.is_system_initial) : lifecycle === "planned" || normalizedStatus === "planned";
@@ -928,7 +948,7 @@ const AllSessions = () => {
               }}
             >
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-              <span className="text-xs font-semibold uppercase tracking-wide">{label}</span>
+              <span className="text-xs font-semibold tracking-wide">{label}</span>
             </div>
           );
         },

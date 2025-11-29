@@ -20,6 +20,36 @@ interface ScheduleSessionDialogProps {
   tutorialVideoUrl?: string;
 }
 
+const DEFAULT_SESSION_TUTORIAL_VIDEO_URL = "https://www.youtube.com/embed/na7ByGdB6Mg";
+
+const normalizeTutorialVideoUrl = (url?: string) => {
+  if (!url) return "";
+
+  try {
+    const parsed = new URL(url);
+
+    if (parsed.hostname.includes("youtu.be")) {
+      const videoId = parsed.pathname.replace("/", "");
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+    }
+
+    if (parsed.hostname.includes("youtube.com")) {
+      const existingEmbedPath = parsed.pathname.includes("/embed/");
+      const videoId = parsed.searchParams.get("v");
+
+      if (existingEmbedPath || !videoId) {
+        return url;
+      }
+
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+  } catch {
+    return url;
+  }
+
+  return url;
+};
+
 const ScheduleSessionDialog = ({
   leadId,
   leadName,
@@ -34,11 +64,14 @@ const ScheduleSessionDialog = ({
   const { t: tPages } = useTranslation("pages");
   const [open, setOpen] = useState(false);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
+  const envTutorialVideoUrl =
+    typeof process !== "undefined" ? process.env.VITE_SESSION_TUTORIAL_VIDEO_URL : undefined;
   const sessionTutorialVideoUrl =
-    tutorialVideoUrl ??
-    (typeof process !== "undefined" ? process.env.VITE_SESSION_TUTORIAL_VIDEO_URL : undefined) ??
-    "";
-  const hasTutorialVideo = Boolean(sessionTutorialVideoUrl);
+    tutorialVideoUrl ||
+    envTutorialVideoUrl ||
+    DEFAULT_SESSION_TUTORIAL_VIDEO_URL;
+  const normalizedTutorialVideoUrl = normalizeTutorialVideoUrl(sessionTutorialVideoUrl);
+  const hasTutorialVideo = Boolean(normalizedTutorialVideoUrl);
 
   useEffect(() => {
     if (!open) {
@@ -125,7 +158,7 @@ const ScheduleSessionDialog = ({
         <AspectRatio ratio={16 / 9} className="overflow-hidden rounded-lg bg-muted">
           {hasTutorialVideo ? (
             <iframe
-              src={sessionTutorialVideoUrl}
+              src={normalizedTutorialVideoUrl}
               title={tPages("leadDetail.scheduling.sessionVideo.title", {
                 defaultValue: "Watch how to plan a session",
               })}

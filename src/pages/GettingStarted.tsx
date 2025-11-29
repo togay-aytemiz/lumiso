@@ -6,6 +6,7 @@ import { SampleDataModal } from "@/components/SampleDataModal";
 import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
 import { ExitGuidanceModeButton } from "@/components/ExitGuidanceModeButton";
 import { GuidedStepProgress } from "@/components/GuidedStepProgress";
+import { HelpModal } from "@/components/modals/HelpModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -48,6 +49,7 @@ const GettingStarted = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [confettiPieces, setConfettiPieces] = useState<ConfettiPiece[]>([]);
@@ -145,7 +147,7 @@ const GettingStarted = () => {
               <p className="text-sm text-muted-foreground mt-2">{t('onboarding.getting_started.welcome_subtitle')}</p>
             </div>
             <div className="flex items-center justify-center sm:justify-end gap-3">
-              <Button variant="surface" size="sm">
+              <Button variant="surface" size="sm" onClick={() => setIsHelpModalOpen(true)}>
                 <HelpCircle className="w-4 h-4 mr-2" />
                 {t('onboarding.getting_started.need_help')}
               </Button>
@@ -349,6 +351,8 @@ const GettingStarted = () => {
         open={showSampleDataModal}
         onClose={() => setShowSampleDataModal(false)}
       />
+
+      <HelpModal isOpen={isHelpModalOpen} onOpenChange={setIsHelpModalOpen} />
 
       <RestartGuidedModeButton />
       <ExitGuidanceModeButton />

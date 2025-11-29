@@ -32,7 +32,7 @@ export function HelpModal({ isOpen, onOpenChange }: HelpModalProps) {
     {
       key: "whatsapp",
       icon: MessageCircle,
-      action: () => window.open("https://wa.me/905551234567", "_blank"),
+      action: () => window.open("https://wa.me/905074699692", "_blank"),
     },
   ] as const;
 

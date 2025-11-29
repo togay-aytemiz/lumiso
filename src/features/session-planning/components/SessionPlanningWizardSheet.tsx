@@ -1167,9 +1167,16 @@ const SessionPlanningSuccess = ({
 }) => {
   const { t } = useTranslation("sessionPlanning");
   const { settings } = useOrganizationSettings();
-  const { allWorkflows, loading: workflowsLoading } = useSessionWorkflowCatalog();
+  const {
+    reminderWorkflows,
+    summaryEmailWorkflows,
+    loading: workflowsLoading
+  } = useSessionWorkflowCatalog();
   const userLocale = typeof window !== "undefined" ? getUserLocale() : "en-US";
-  const showWorkflowSetupAlert = !workflowsLoading && allWorkflows.length === 0;
+  const showWorkflowSetupAlert =
+    !workflowsLoading &&
+    reminderWorkflows.length === 0 &&
+    summaryEmailWorkflows.length === 0;
 
   const openWorkflowManager = useCallback(() => {
     if (typeof window === "undefined") return;

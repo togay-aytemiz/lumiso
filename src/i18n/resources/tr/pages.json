@@ -8,11 +8,11 @@
       "recovery": "Şifreni sıfırla 🔐",
       "recoveryRequest": "Şifreni sıfırla 🔐"
     },
-      "copy": {
-        "signIn": "Devam etmek için giriş yap.",
-        "signUp": "Lumiso hesabını oluştur; kişileri, projeleri, rezervasyonları düzenli tut.",
-        "verify": "Doğrulama bağlantısını e-postana gönderdik; çalışma alanını etkinleştirmek için onayla.",
-        "recovery": "Hesabına yeniden erişmek için yeni bir şifre oluştur.",
+    "copy": {
+      "signIn": "Devam etmek için giriş yap.",
+      "signUp": "Lumiso hesabını oluştur; kişileri, projeleri, rezervasyonları düzenli tut.",
+      "verify": "Doğrulama bağlantısını e-postana gönderdik; çalışma alanını etkinleştirmek için onayla.",
+      "recovery": "Hesabına yeniden erişmek için yeni bir şifre oluştur.",
       "recoveryRequest": "E-posta adresini gir, şifre sıfırlama bağlantısını hemen gönderelim."
     },
     "verification": {
@@ -875,48 +875,48 @@
           "calendarEvents": "Takvim etkinlikleri",
           "payments": "Ödemeler",
           "teamMembers": "Ekip üyeleri",
-        "cards": {
-          "leads": {
-            "title": "Kişiler",
-            "total": "Toplam oluşturulan",
-            "active": "Aktif yaşam döngüsünde",
-            "completed": "Tamamlanan",
-            "cancelled": "İptal edilen"
-          },
-          "projects": {
-            "title": "Projeler",
-            "total": "Toplam oluşturulan",
-            "active": "Aktif yaşam döngüsünde",
-            "completed": "Tamamlanan",
-            "cancelled": "İptal edilen"
-          },
-          "sessions": {
-            "title": "Seanslar",
-            "total": "Toplam planlanan",
-            "active": "Aktif yaşam döngüsünde",
-            "completed": "Tamamlanan",
-            "cancelled": "İptal edilen"
-          },
-          "payments": {
-            "title": "Ödemeler",
-            "billed": "Toplam faturalanan",
-            "collected": "Toplam tahsilat",
-            "pending": "Bekleyen ödemeler",
-            "refunded": "İade edilen"
-          },
-          "automations": {
-            "title": "Şablonlar ve iş akışları",
-            "templates": "Şablonlar",
-            "workflows": "İş akışları"
-          },
-          "catalog": {
-            "title": "Teklif envanteri",
-            "packages": "Paketler",
-            "services": "Servisler",
-            "sessionTypes": "Seans tipleri"
+          "cards": {
+            "leads": {
+              "title": "Kişiler",
+              "total": "Toplam oluşturulan",
+              "active": "Aktif yaşam döngüsünde",
+              "completed": "Tamamlanan",
+              "cancelled": "İptal edilen"
+            },
+            "projects": {
+              "title": "Projeler",
+              "total": "Toplam oluşturulan",
+              "active": "Aktif yaşam döngüsünde",
+              "completed": "Tamamlanan",
+              "cancelled": "İptal edilen"
+            },
+            "sessions": {
+              "title": "Seanslar",
+              "total": "Toplam planlanan",
+              "active": "Aktif yaşam döngüsünde",
+              "completed": "Tamamlanan",
+              "cancelled": "İptal edilen"
+            },
+            "payments": {
+              "title": "Ödemeler",
+              "billed": "Toplam faturalanan",
+              "collected": "Toplam tahsilat",
+              "pending": "Bekleyen ödemeler",
+              "refunded": "İade edilen"
+            },
+            "automations": {
+              "title": "Şablonlar ve iş akışları",
+              "templates": "Şablonlar",
+              "workflows": "İş akışları"
+            },
+            "catalog": {
+              "title": "Teklif envanteri",
+              "packages": "Paketler",
+              "services": "Servisler",
+              "sessionTypes": "Seans tipleri"
+            }
           }
-        }
-      },
+        },
         "account": {
           "title": "Hesap bilgileri",
           "subtitle": "Sahiplik, iletişim ve notlar",
@@ -926,11 +926,11 @@
           "businessName": "İşletme adı",
           "businessEmail": "İşletme e-postası",
           "businessPhone": "İşletme telefonu",
-        "social": "Sosyal kanallar",
-        "emptySocial": "Henüz sosyal link yok.",
-        "timezone": "Zaman dilimi",
-        "notes": "Notlar",
-        "emptyNotes": "Henüz not yok."
+          "social": "Sosyal kanallar",
+          "emptySocial": "Henüz sosyal link yok.",
+          "timezone": "Zaman dilimi",
+          "notes": "Notlar",
+          "emptyNotes": "Henüz not yok."
         },
         "suspension": {
           "activeBadge": "Askıya alındı",
@@ -939,13 +939,13 @@
         "actions": {
           "title": "Admin aksiyonları",
           "subtitle": "Bu müşteri için manuel işlemler",
-        "manageTrial": "Trial yönet",
-        "grantPremium": "Premium yap",
-        "addComplimentary": "Ücretsiz premium ver",
-        "suspendAccount": "Hesabı askıya al",
-        "removeSuspension": "Askıyı kaldır",
-        "contactUser": "Kullanıcıyla iletişime geç",
-        "membershipModals": {
+          "manageTrial": "Trial yönet",
+          "grantPremium": "Premium yap",
+          "addComplimentary": "Ücretsiz premium ver",
+          "suspendAccount": "Hesabı askıya al",
+          "removeSuspension": "Askıyı kaldır",
+          "contactUser": "Kullanıcıyla iletişime geç",
+          "membershipModals": {
             "cancel": "Vazgeç",
             "saving": "Kaydediliyor...",
             "saved": "Üyelik bilgileri güncellendi",
@@ -1835,16 +1835,16 @@
         "completeInfo": {
           "title": "Sadece profilini doğrula",
           "description": "Görünen adın başlangıç formundan geldi; istersen burada değiştir ve hızlıca fotoğraf ekle.",
-          "fullNameRequired": "\u2022 Devam etmek için görünen adını yaz ya da doğrula (biz doldurduk; istersen düzenle).",
-          "workingHours": "\u2022 Çalışma saatleri takvime müsaitliğini anlatır.",
-          "profilePhoto": "\u2022 Profil fotoğrafı yönetici ekranlarında ve müşteri e-postalarında görünür."
+          "fullNameRequired": "Devam etmek için görünen adını yaz ya da doğrula (biz doldurduk; istersen düzenle).",
+          "workingHours": "Çalışma saatleri takvime müsaitliğini anlatır.",
+          "profilePhoto": "Profil fotoğrafı yönetici ekranlarında ve müşteri e-postalarında görünür."
         },
         "businessInfo": {
           "title": "Genel ayarlarda stüdyo adın hazır",
           "description": "Onboarding sırasında verdiğin işletme adı burada kayıtlı. Genel bölümünü logo, renk ve iletişim bilgilerini gözden geçirmek için kullan.",
-          "businessNameRequired": "\u2022 Stüdyo adı zaten dolu, marka değişirse buradan güncelle",
-          "usedIn": "\u2022 Müşteri e-postaları, faturalar ve sözleşmelerde kullanılır",
-          "canChange": "\u2022 Gerektiğinde her zaman düzenleyebilirsin"
+          "businessNameRequired": "İşletme adı zaten dolu, marka değişirse buradan güncelle",
+          "usedIn": "Müşteri e-postaları, faturalar ve sözleşmelerde kullanılır",
+          "canChange": "Gerektiğinde her zaman düzenleyebilirsin"
         },
         "setupComplete": {
           "title": "👏🏻 Profil Kurulumu Tam!",
@@ -3130,9 +3130,9 @@
     }
   },
   "tutorial": {
-      "welcome": {
-        "title": "Proje Yönetim Merkezine Hoş Geldiniz",
-        "description": "Projelerinizi görüntüleme ve organize etmenin üç güçlü yolunu keşfedelim.",
+    "welcome": {
+      "title": "Proje Yönetim Merkezine Hoş Geldiniz",
+      "description": "Projelerinizi görüntüleme ve organize etmenin üç güçlü yolunu keşfedelim.",
       "subtitle": "Bu eğitimde, işletmeniz için tasarlanmış akıcı proje yönetimini ustalıkla kullanmayı öğreneceksiniz:",
       "boardView": "Pano Görünümü - Sürükle-bırak ile görsel iş akışı",
       "listView": "Liste Görünümü - Sıralanabilir detaylı tablo",

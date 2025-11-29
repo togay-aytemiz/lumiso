@@ -1244,7 +1244,9 @@
       "deposit_quick": "Kapora ödemesi",
       "balance_payment": "Kalan ödemeyi kaydet",
       "full_payment": "Tamamını tahsil et",
-      "refund_payment": "İade işle"
+      "refund_payment": "İade işle",
+      "edit": "Ödemeyi düzenle",
+      "delete": "Ödemeyi sil"
     },
     "quick": {
       "balance_title": "Kalan ödemeyi kaydet",
@@ -1259,6 +1261,7 @@
       "fill_link": "Kalan tutarı doldur"
     },
     "refund": {
+      "badge": "İade",
       "title": "İade kaydı oluştur",
       "amount_label": "İade tutarı (TL)",
       "reason_label": "Açıklama (isteğe bağlı)",
@@ -1266,6 +1269,7 @@
       "deposit_toggle": "İadeyi kaporaya uygula",
       "deposit_toggle_helper": "Toplam {{amount}} kapora tahsilatını azaltır.",
       "deposit_toggle_disabled": "İade edilecek kapora bulunmuyor.",
+      "fill_full_amount": "Ödenen tutarın tamamını iade et",
       "submit": "İadeyi kaydet",
       "success": "İade kaydı oluşturuldu.",
       "no_payments_hint": "Kayıtlı ödeme yok; iade satırı negatif tutar olarak görünecek."
@@ -1299,6 +1303,7 @@
       "payment_title": "Kapora ödemesi işle",
       "remaining_info": "Kalan kapora: {{remaining}} TL",
       "allocation_badge": "Kapora payı: {{amount}}",
+      "refund_badge": "Kapora iadesi: {{amount}}",
       "snapshot_locked": "Kapora {{amount}} tutarında sabitlendi",
       "snapshot_locked_dated": "{{date}} tarihinde {{amount}} tutarında sabitlendi",
       "snapshot_unlocked": "Kapora paket toplamına göre hesaplanır (şu an {{amount}})",
@@ -1374,7 +1379,8 @@
     },
     "descriptions": {
       "deposit_due": "Planlanan kapora",
-      "deposit_payment": "Kapora ödemesi"
+      "deposit_payment": "Kapora ödemesi",
+      "balance_due": "Bakiye ödemesi"
     },
     "edit_disabled_title": "Düzenleme kapalı",
     "edit_disabled_description": "Temel fiyat veya kapora ayarlarını ödeme özetinden düzenleyin.",

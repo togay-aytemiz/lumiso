@@ -753,7 +753,9 @@
       "deposit_quick": "Deposit payment",
       "balance_payment": "Record balance payment",
       "full_payment": "Collect full amount",
-      "refund_payment": "Issue refund"
+      "refund_payment": "Issue refund",
+      "edit": "Edit payment",
+      "delete": "Delete payment"
     },
     "quick": {
       "balance_title": "Record balance payment",
@@ -768,6 +770,7 @@
       "fill_link": "Fill remaining amount"
     },
     "refund": {
+      "badge": "Refund",
       "title": "Issue refund",
       "amount_label": "Refund amount (TRY)",
       "reason_label": "Reason (optional)",
@@ -775,6 +778,7 @@
       "deposit_toggle": "Apply refund to deposit",
       "deposit_toggle_helper": "Reduces collected deposit by up to {{amount}}.",
       "deposit_toggle_disabled": "No collected deposit to refund.",
+      "fill_full_amount": "Refund full paid amount",
       "submit": "Record refund",
       "success": "Refund recorded.",
       "no_payments_hint": "There are no recorded payments; refund entries will appear as negative amounts."
@@ -808,6 +812,7 @@
       "payment_title": "Record deposit payment",
       "remaining_info": "Remaining deposit: {{remaining}} TRY",
       "allocation_badge": "Deposit share: {{amount}}",
+      "refund_badge": "Deposit refund: {{amount}}",
       "snapshot_locked": "Deposit locked at {{amount}}",
       "snapshot_locked_dated": "Deposit locked at {{amount}} on {{date}}",
       "snapshot_unlocked": "Deposit follows package totals (currently {{amount}})",
@@ -883,7 +888,8 @@
     },
     "descriptions": {
       "deposit_due": "Scheduled deposit",
-      "deposit_payment": "Deposit payment"
+      "deposit_payment": "Deposit payment",
+      "balance_due": "Balance payment"
     },
     "edit_disabled_title": "Editing disabled",
     "edit_disabled_description": "Adjust base price or deposit settings from the payment summary.",

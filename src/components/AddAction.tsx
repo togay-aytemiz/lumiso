@@ -349,7 +349,7 @@ export function AddAction({ className }: AddActionProps) {
         <Button
           type="button"
           variant="ghost"
-          className="group/button relative z-10 h-12 rounded-l-full rounded-r-none px-4 text-sm font-semibold tracking-tight text-slate-900 transition-all duration-200 hover:bg-slate-900/5 hover:text-slate-950 focus-visible:ring-0 focus-visible:ring-offset-0 sm:px-5"
+          className="group/button relative z-10 h-11 rounded-l-full rounded-r-none px-4 text-sm font-semibold tracking-tight text-slate-900 transition-all duration-200 hover:bg-slate-900/5 hover:text-slate-950 focus-visible:ring-0 focus-visible:ring-offset-0 sm:h-12 sm:px-5"
           onClick={handlePrimaryButtonClick}
           aria-label={primaryLabel ?? tCommon("buttons.new")}
           aria-haspopup={primaryButtonControlsMenu ? "menu" : undefined}
@@ -357,7 +357,7 @@ export function AddAction({ className }: AddActionProps) {
         >
           <Plus className="h-4 w-4 text-slate-600 transition-transform duration-200 group-hover/button:scale-110 group-hover/button:text-slate-800 group-focus-visible/button:scale-110 group-focus-visible/button:text-slate-800" />
           <span
-            className="hidden whitespace-nowrap text-base text-slate-600 transition-colors duration-200 group-hover/button:text-slate-800 group-focus-visible/button:text-slate-800 sm:inline"
+            className="inline whitespace-nowrap text-sm text-slate-600 transition-colors duration-200 group-hover/button:text-slate-800 group-focus-visible/button:text-slate-800 sm:text-base"
             data-add-action-label
           >
             <span
@@ -370,7 +370,7 @@ export function AddAction({ className }: AddActionProps) {
         </Button>
         <Button
           type="button"
-          className="group/button relative z-10 h-12 w-11 rounded-l-none rounded-r-full px-0 text-slate-700 transition-all duration-200 hover:bg-slate-900/5 hover:text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-12"
+          className="group/button relative z-10 h-11 w-11 rounded-l-none rounded-r-full px-0 text-slate-700 transition-all duration-200 hover:bg-slate-900/5 hover:text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0 sm:h-12 sm:w-12"
           variant="ghost"
           aria-label={tCommon("buttons.moreOptions")}
           aria-haspopup="menu"

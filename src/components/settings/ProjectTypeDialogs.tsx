@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Button } from "@/components/ui/button";
@@ -213,17 +213,24 @@ interface EditProjectTypeDialogProps {
 export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated }: EditProjectTypeDialogProps) {
   const { t } = useTranslation('forms');
   const [loading, setLoading] = useState(false);
+  const initializedForId = useRef<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     is_default: false,
   });
 
   useEffect(() => {
-    if (type && open) {
+    if (!open) {
+      initializedForId.current = null;
+      return;
+    }
+
+    if (type && initializedForId.current !== type.id) {
       setFormData({
         name: type.name,
         is_default: type.is_default || false,
       });
+      initializedForId.current = type.id;
     }
   }, [type, open]);
 

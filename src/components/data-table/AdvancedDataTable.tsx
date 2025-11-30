@@ -310,6 +310,55 @@ export function AdvancedDataTable<T>({
     return isMobile && (hasChips || hasText);
   }, [isMobile, summary?.chips, summary?.text]);
 
+  const showClearSearchAction = Boolean(onSearchChange && canClearSearch);
+  const showClearFiltersAction = Boolean(filters?.onReset && hasActiveFilters);
+
+  const renderDefaultEmptyState = () => (
+    <div className="flex flex-col items-center gap-3 text-center sm:gap-4">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted/50 text-muted-foreground">
+        <Search className="h-5 w-5" aria-hidden="true" />
+      </div>
+      <div className="space-y-1">
+        <p className="text-base font-semibold text-foreground">
+          {t("table.noDataAvailable")}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {t("messages.info.no_data")}
+        </p>
+      </div>
+      {(showClearSearchAction || showClearFiltersAction) && (
+        <div className="flex flex-wrap justify-center gap-2">
+          {showClearSearchAction && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="h-8 rounded-full px-3"
+              onClick={clearSearch}
+            >
+              {t("table.clearSearch")}
+            </Button>
+          )}
+          {showClearFiltersAction && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 rounded-full px-3"
+              onClick={() => filters?.onReset?.()}
+            >
+              {t("table.clearFilters")}
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  const resolvedEmptyStateContent = emptyState ?? renderDefaultEmptyState();
+  const isEmptyState = !isLoading && data.length === 0;
+  const showMobileEmptyState = isMobile && isEmptyState;
+
   const renderSearchInput = () => (
     <div className="relative w-full h-9 sm:max-w-sm md:max-w-md lg:max-w-lg">
       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -532,43 +581,43 @@ export function AdvancedDataTable<T>({
         {isLoading ? (
           loadingState || <TableLoadingSkeleton />
         ) : (
-      <div className="flex flex-col lg:flex-row">
-        {filters && !isMobile && (
-          <div
-            className={cn(
-              "hidden flex-shrink-0 transition-[max-width] duration-300 ease-in-out lg:block",
-              desktopFiltersOpen ? "max-w-[18rem] lg:pr-4" : "max-w-0"
-            )}
-          >
-            <aside
-              className={cn(
-                "flex h-full w-[18rem] flex-col border-b border-border/60 bg-muted/20 px-4 py-4 transition-all duration-300 ease-in-out lg:border-b-0",
-                desktopFiltersOpen
-                  ? "translate-x-0 opacity-100"
-                  : "-translate-x-4 opacity-0 pointer-events-none"
-              )}
-            >
+          <div className="flex flex-col lg:flex-row">
+            {filters && !isMobile && (
+              <div
+                className={cn(
+                  "hidden flex-shrink-0 transition-[max-width] duration-300 ease-in-out lg:block",
+                  desktopFiltersOpen ? "max-w-[18rem] lg:pr-4" : "max-w-0"
+                )}
+              >
+                <aside
+                  className={cn(
+                    "flex h-full w-[18rem] flex-col border-b border-border/60 bg-muted/20 px-4 py-4 transition-all duration-300 ease-in-out lg:border-b-0",
+                    desktopFiltersOpen
+                      ? "translate-x-0 opacity-100"
+                      : "-translate-x-4 opacity-0 pointer-events-none"
+                  )}
+                >
                   <div className="mb-4 flex items-center justify-between">
                     <div>
-                    <p className="text-sm font-medium text-foreground">{filterPanelTitle}</p>
-                    {hasActiveFilters && (
-                      <p className="text-xs text-muted-foreground">
-                        {t("table.activeFilters", { count: activeFilterCount })}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {filters.onReset && hasActiveFilters && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 text-muted-foreground hover:bg-primary/80 hover:text-primary-foreground"
-                        onClick={filters.onReset}
-                      >
-                        {t("table.clearFilters")}
-                      </Button>
-                    )}
+                      <p className="text-sm font-medium text-foreground">{filterPanelTitle}</p>
+                      {hasActiveFilters && (
+                        <p className="text-xs text-muted-foreground">
+                          {t("table.activeFilters", { count: activeFilterCount })}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {filters.onReset && hasActiveFilters && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 text-muted-foreground hover:bg-primary/80 hover:text-primary-foreground"
+                          onClick={filters.onReset}
+                        >
+                          {t("table.clearFilters")}
+                        </Button>
+                      )}
                       <Button
                         type="button"
                         variant="ghost"
@@ -579,9 +628,9 @@ export function AdvancedDataTable<T>({
                           setDesktopFiltersOpen(false);
                         }}
                       >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                  </div>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-4">
                     {filters.content}
@@ -592,113 +641,121 @@ export function AdvancedDataTable<T>({
             )}
             <div className="flex-1 min-w-0">
               <div className="rounded-md border border-border/60 bg-background overflow-hidden">
-                <DataTableContainer>
-                  <Table className="min-w-full border-separate border-spacing-0 text-sm">
-                    <TableHeader>
-                      <TableRow className="relative border-b border-border/60 bg-muted/20 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-border/80">
-                        {columns.map((column) => (
-                          <TableHead
-                            key={column.id}
-                            className={cn(
-                              "whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground select-none",
-                              column.sortable
-                                ? "cursor-pointer transition-colors hover:bg-muted/40"
-                                : "",
-                              column.align === "right" && "text-right",
-                              column.align === "center" && "text-center",
-                              "border-r border-border/60 first:border-l first:rounded-tl-md last:border-r-0 last:rounded-tr-md",
-                              column.headerClassName
-                            )}
-                            style={{
-                              minWidth: column.minWidth,
-                              width: column.width,
-                            }}
-                            onClick={() => handleSort(column)}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-foreground">
-                                {column.label}
-                              </span>
-                              {renderSortIcon(column)}
-                            </div>
-                          </TableHead>
-                        ))}
-                        {rowActions && <TableHead className="w-10" />}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.length > 0 ? (
-                        data.map((row, index) => {
-                          const zebraClass =
-                            zebra && index % 2 === 1
-                              ? "bg-muted/40 dark:bg-muted/70"
-                              : "bg-white dark:bg-background";
-                          const userRowClass = rowClassName?.(row, index);
-                          return (
-                            <TableRow
-                              key={rowKey(row)}
-                              className={cn(
-                                zebraClass,
-                                "border-b border-border/60 transition-colors",
-                                onRowClick
-                                  ? "cursor-pointer hover:bg-muted/30 dark:hover:bg-muted/50"
-                                  : "hover:bg-muted/20 dark:hover:bg-muted/40",
-                                userRowClass
-                              )}
-                              onClick={() => onRowClick?.(row)}
-                            >
-                              {columns.map((column) => (
-                                <TableCell
-                                  key={`${column.id}-${rowKey(row)}`}
-                                  className={cn(
-                                    "align-middle px-4 py-3 text-foreground",
-                                    column.align === "right" && "text-right",
-                                    column.align === "center" && "text-center",
-                                    "border-r border-border/40 first:border-l first:border-border/60 last:border-r-0",
-                                    column.cellClassName
-                                  )}
-                                  style={{
-                                    minWidth: column.minWidth,
-                                    width: column.width,
-                                  }}
-                                >
-                                  {renderCell(row, column)}
-                                </TableCell>
-                              ))}
-                              {rowActions && (
-                                <TableCell className="text-right align-middle">
-                                  {rowActions(row)}
-                                </TableCell>
-                              )}
-                            </TableRow>
-                          );
-                        })
-                      ) : (
-                        <TableRow>
-                          <TableCell
-                            colSpan={columns.length + (rowActions ? 1 : 0)}
-                            className="py-10 text-center text-sm text-muted-foreground"
-                          >
-                            {emptyState || t("table.noDataAvailable")}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                </Table>
-                {canLazyLoad && (
-                  <div ref={loadMoreRef} className="flex items-center justify-center py-4">
-                    {isLoadingMore ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                    ) : (
-                      <span className="sr-only">Load more</span>
-                    )}
+                {showMobileEmptyState ? (
+                  <div className="flex min-h-[260px] items-center justify-center bg-muted/10 px-3 py-8 sm:px-6">
+                    <div className="w-full max-w-md">{resolvedEmptyStateContent}</div>
                   </div>
+                ) : (
+                  <DataTableContainer>
+                    <Table className="min-w-full border-separate border-spacing-0 text-sm">
+                      <TableHeader>
+                        <TableRow className="relative border-b border-border/60 bg-muted/20 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-border/80">
+                          {columns.map((column) => (
+                            <TableHead
+                              key={column.id}
+                              className={cn(
+                                "whitespace-nowrap px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground select-none",
+                                column.sortable
+                                  ? "cursor-pointer transition-colors hover:bg-muted/40"
+                                  : "",
+                                column.align === "right" && "text-right",
+                                column.align === "center" && "text-center",
+                                "border-r border-border/60 first:border-l first:rounded-tl-md last:border-r-0 last:rounded-tr-md",
+                                column.headerClassName
+                              )}
+                              style={{
+                                minWidth: column.minWidth,
+                                width: column.width,
+                              }}
+                              onClick={() => handleSort(column)}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-foreground">
+                                  {column.label}
+                                </span>
+                                {renderSortIcon(column)}
+                              </div>
+                            </TableHead>
+                          ))}
+                          {rowActions && <TableHead className="w-10" />}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {data.length > 0 ? (
+                          data.map((row, index) => {
+                            const zebraClass =
+                              zebra && index % 2 === 1
+                                ? "bg-muted/40 dark:bg-muted/70"
+                                : "bg-white dark:bg-background";
+                            const userRowClass = rowClassName?.(row, index);
+                            return (
+                                  <TableRow
+                                key={rowKey(row)}
+                                className={cn(
+                                  zebraClass,
+                                  "border-b border-border/60 transition-colors",
+                                  onRowClick
+                                    ? "cursor-pointer hover:bg-muted/30 dark:hover:bg-muted/50"
+                                    : "hover:bg-muted/20 dark:hover:bg-muted/40",
+                                  userRowClass
+                                )}
+                                onClick={() => onRowClick?.(row)}
+                              >
+                                {columns.map((column) => (
+                                  <TableCell
+                                    key={`${column.id}-${rowKey(row)}`}
+                                    className={cn(
+                                      "align-middle px-4 py-3 text-foreground",
+                                      column.align === "right" && "text-right",
+                                      column.align === "center" && "text-center",
+                                      "border-r border-border/40 first:border-l first:border-border/60 last:border-r-0",
+                                      column.cellClassName
+                                    )}
+                                    style={{
+                                      minWidth: column.minWidth,
+                                      width: column.width,
+                                    }}
+                                  >
+                                    {renderCell(row, column)}
+                                  </TableCell>
+                                ))}
+                                {rowActions && (
+                                  <TableCell className="text-right align-middle">
+                                    {rowActions(row)}
+                                  </TableCell>
+                                )}
+                              </TableRow>
+                            );
+                          })
+                        ) : (
+                          <TableRow>
+                            <TableCell
+                              colSpan={columns.length + (rowActions ? 1 : 0)}
+                              className="py-4 text-center text-sm text-muted-foreground sm:py-10"
+                            >
+                              <div className="mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-2 py-4 text-center sm:px-4 sm:py-6">
+                                {resolvedEmptyStateContent}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                    {canLazyLoad && (
+                      <div ref={loadMoreRef} className="flex items-center justify-center py-4">
+                        {isLoadingMore ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        ) : (
+                          <span className="sr-only">Load more</span>
+                        )}
+                      </div>
+                    )}
+                  </DataTableContainer>
                 )}
-              </DataTableContainer>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
       </ContentComponent>
 
       {pagination && paginationInfo && (

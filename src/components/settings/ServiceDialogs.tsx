@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
@@ -813,10 +813,16 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
   const [formData, setFormData] = useState<ServiceFormState>(() =>
     createFormState("deliverable", {}, vatDefaults)
   );
+  const initializedForId = useRef<string | null>(null);
   const [selectedType, setSelectedType] = useState<ServiceType | null>(null);
 
   useEffect(() => {
-    if (service && open) {
+    if (!open) {
+      initializedForId.current = null;
+      return;
+    }
+
+    if (service && initializedForId.current !== service.id) {
       const resolvedType = (service.service_type ?? "deliverable") as ServiceType;
       setFormData(
         createFormState(
@@ -848,6 +854,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       setShowNewCategoryInput(false);
       setNewCategoryName("");
       setSelectedType(resolvedType);
+      initializedForId.current = service.id;
     }
   }, [service, open, vatDefaults, vatExempt]);
 

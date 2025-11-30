@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { ServiceInventoryType } from "@/components/ServiceInventorySelector";
 import {
   ServicesTableCard,
@@ -27,10 +28,11 @@ import {
   useServices,
   useOrganizationTaxProfile,
 } from "@/hooks/useOrganizationData";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useProjectCreationContext } from "../hooks/useProjectCreationContext";
 import { useProjectCreationActions } from "../hooks/useProjectCreationActions";
 import { cn } from "@/lib/utils";
-import { Loader2, Sparkles } from "lucide-react";
+import { AlertTriangle, Loader2, Sparkles } from "lucide-react";
 import type { ProjectCreationDetails, ProjectServiceLineItem } from "../types";
 import { calculateLineItemPricing } from "@/features/package-creation/utils/lineItemPricing";
 import { getProjectTypeMatchKey } from "@/lib/projectTypes";
@@ -76,6 +78,7 @@ export const PackagesStep = () => {
   const { t: tForms } = useTranslation("forms");
   const { state } = useProjectCreationContext();
   const { updateServices, updateDetails, updateDelivery } = useProjectCreationActions();
+  const { isInGuidedSetup } = useOnboarding();
 
   const packagesQuery = usePackages();
   const servicesQuery = useServices();
@@ -1239,6 +1242,27 @@ export const PackagesStep = () => {
         <div className="flex items-center justify-between">
           <Label>{t("steps.packages.packageLabel")}</Label>
         </div>
+
+        {isInGuidedSetup ? (
+          <Alert className="border-amber-200/80 bg-amber-50 text-amber-900">
+            <div className="flex gap-3">
+              <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600" />
+              <div className="space-y-1">
+                <AlertTitle className="text-sm font-semibold text-amber-900">
+                  {t("steps.packages.guidedNotice.title", {
+                    defaultValue: "Sample packages for this tutorial",
+                  })}
+                </AlertTitle>
+                <AlertDescription className="text-sm text-amber-900/90">
+                  {t("steps.packages.guidedNotice.description", {
+                    defaultValue:
+                      "These are sample/test packages for the guided setup. Please pick one for this tutorial. You can manage your real packages anytime in Settings.",
+                  })}
+                </AlertDescription>
+              </div>
+            </div>
+          </Alert>
+        ) : null}
 
         {packagesLoading ? (
           <div className="flex items-center gap-2 rounded-lg border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">

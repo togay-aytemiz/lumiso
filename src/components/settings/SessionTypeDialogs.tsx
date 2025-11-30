@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
@@ -404,11 +404,16 @@ export function EditSessionTypeDialog({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
+  const initializedForId = useRef<string | null>(null);
   const [formData, setFormData] = useState({ ...DEFAULT_FORM_STATE });
 
   useEffect(() => {
-    if (open && sessionType) {
+    if (!open) {
+      initializedForId.current = null;
+      return;
+    }
+
+    if (sessionType && initializedForId.current !== sessionType.id) {
       const durationMeta = getDurationOptionForMinutes(sessionType.duration_minutes);
       setFormData({
         name: sessionType.name,
@@ -420,6 +425,7 @@ export function EditSessionTypeDialog({
         setAsDefault: sessionType.id === defaultSessionTypeId,
       });
       setErrors({});
+      initializedForId.current = sessionType.id;
     }
   }, [open, sessionType, defaultSessionTypeId]);
 

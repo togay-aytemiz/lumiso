@@ -37,7 +37,6 @@ import { PAYMENT_COLORS } from "@/lib/paymentColors";
 import {
   cn,
   formatLongDate,
-  getUserLocale,
   getDateFnsLocale,
 } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -59,6 +58,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
@@ -70,9 +70,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import ReactCalendar from "react-calendar";
-import "react-calendar/dist/Calendar.css";
-import "@/components/react-calendar.css";
 import { Switch } from "@/components/ui/switch";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
@@ -1606,7 +1603,6 @@ function GeneralPaymentDialog({
   const [status, setStatus] = useState<"paid" | "due">("paid");
   const [datePaid, setDatePaid] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(false);
-  const browserLocale = getUserLocale();
 
   const initialStateRef = useRef<GeneralPaymentInitialState>({
     amountValue: null,
@@ -1862,31 +1858,15 @@ function GeneralPaymentDialog({
                       : t("payments.pick_date")}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto min-w-[18rem] p-0 rounded-xl border border-border shadow-md"
-                  align="start"
-                >
-                  <div className="p-2">
-                    <ReactCalendar
-                      className="react-calendar w-full p-2 pointer-events-auto"
-                      locale={browserLocale}
-                      view="month"
-                      minDetail="month"
-                      next2Label={null}
-                      prev2Label={null}
-                      onChange={(value) => {
-                        const d = Array.isArray(value) ? value[0] : value;
-                        const date = d instanceof Date ? d : undefined;
-                        setDatePaid(date);
-                      }}
-                      value={datePaid ?? null}
-                      formatShortWeekday={(_, date) =>
-                        new Intl.DateTimeFormat(browserLocale, {
-                          weekday: "short",
-                        }).format(date)
-                      }
-                    />
-                  </div>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={datePaid}
+                    onSelect={setDatePaid}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                    locale={getDateFnsLocale()}
+                  />
                 </PopoverContent>
               </Popover>
             </div>
@@ -1947,7 +1927,6 @@ function RefundPaymentDialog({
   const [applyToDeposit, setApplyToDeposit] = useState(false);
   const [datePaid, setDatePaid] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(false);
-  const browserLocale = getUserLocale();
 
   const initialStateRef = useRef<RefundPaymentInitialState>({
     amountInput: "",
@@ -2205,31 +2184,15 @@ function RefundPaymentDialog({
                     : t("payments.pick_date")}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent
-                className="w-auto min-w-[18rem] p-0 rounded-xl border border-border shadow-md"
-                align="start"
-              >
-                <div className="p-2">
-                  <ReactCalendar
-                    className="react-calendar w-full p-2 pointer-events-auto"
-                    locale={browserLocale}
-                    view="month"
-                    minDetail="month"
-                    next2Label={null}
-                    prev2Label={null}
-                    onChange={(value) => {
-                      const d = Array.isArray(value) ? value[0] : value;
-                      const date = d instanceof Date ? d : undefined;
-                      setDatePaid(date);
-                    }}
-                    value={datePaid ?? null}
-                    formatShortWeekday={(_, date) =>
-                      new Intl.DateTimeFormat(browserLocale, {
-                        weekday: "short",
-                      }).format(date)
-                    }
-                  />
-                </div>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={datePaid}
+                  onSelect={setDatePaid}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                  locale={getDateFnsLocale()}
+                />
               </PopoverContent>
             </Popover>
           </div>

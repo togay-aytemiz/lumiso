@@ -1,8 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format, isSameDay } from "date-fns";
-import ReactCalendar from "react-calendar";
-import "react-calendar/dist/Calendar.css";
-import "@/components/react-calendar.css";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Button } from "@/components/ui/button";
@@ -11,12 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
-import { cn, getDateFnsLocale, getUserLocale } from "@/lib/utils";
+import { cn, getDateFnsLocale } from "@/lib/utils";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import {
   DEFAULT_DEPOSIT_CONFIG,
@@ -554,7 +552,6 @@ export function ProjectDepositPaymentDialog({
 }: DepositPaymentDialogProps) {
   const { t } = useFormsTranslation();
   const toast = useI18nToast();
-  const browserLocale = getUserLocale();
 
   const [amount, setAmount] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -775,25 +772,15 @@ export function ProjectDepositPaymentDialog({
                     : t("payments.pick_date", { defaultValue: "Select a date" })}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto min-w-[18rem] p-0 rounded-xl border border-border shadow-md">
-                <div className="p-2">
-                  <ReactCalendar
-                    className="react-calendar w-full p-2 pointer-events-auto"
-                    locale={browserLocale}
-                    view="month"
-                    minDetail="month"
-                    next2Label={null}
-                    prev2Label={null}
-                    onChange={(value) => {
-                      const picked = Array.isArray(value) ? value[0] : value;
-                      setDatePaid(picked ?? undefined);
-                    }}
-                    value={datePaid ?? null}
-                    formatShortWeekday={(_, date) =>
-                      new Intl.DateTimeFormat(browserLocale, { weekday: "short" }).format(date)
-                    }
-                  />
-                </div>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={datePaid}
+                  onSelect={setDatePaid}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                  locale={getDateFnsLocale()}
+                />
               </PopoverContent>
             </Popover>
           </div>

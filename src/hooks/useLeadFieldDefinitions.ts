@@ -290,9 +290,13 @@ export function useLeadFieldDefinitions() {
       ? String(query.error)
       : null;
 
+  const isInitialLoading = query.isLoading;
+  const isRefetching = query.isRefetching;
+
   return {
     fieldDefinitions: query.data ?? [],
-    loading: query.isLoading || query.isFetching,
+    loading: isInitialLoading,
+    isRefetching,
     error,
     refetch: query.refetch,
     createFieldDefinition,

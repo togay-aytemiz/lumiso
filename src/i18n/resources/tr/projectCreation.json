@@ -157,6 +157,10 @@
       "packagesError": "Paketler yüklenemedi.",
       "retry": "Tekrar dene",
       "noPackages": "Henüz paket yok. Ayarlardan bir paket oluşturun.",
+      "guidedNotice": {
+        "title": "Bu eğitim için örnek paketler",
+        "description": "Kılavuzlu eğitim sırasında bu örnek/test paketlerden birini seçin. Gerçek paketlerinizi dilediğiniz zaman Ayarlar'dan yönetebilirsiniz."
+      },
       "defaultServices": "{{count}} hizmet içeriyor",
       "customSetupPrompt": "Özel bir kurulum mu tercih ediyorsunuz? Kendi fiyat ve hizmetlerinizle oluşturun.",
       "enableCustom": "Özel kurulum aç",

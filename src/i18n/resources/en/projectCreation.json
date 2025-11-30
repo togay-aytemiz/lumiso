@@ -157,6 +157,10 @@
       "packagesError": "Unable to load packages.",
       "retry": "Retry",
       "noPackages": "No packages available yet. Create one from settings.",
+      "guidedNotice": {
+        "title": "Sample packages for this tutorial",
+        "description": "During the guided setup please pick one of these sample/test packages. You can manage your packages anytime in Settings."
+      },
       "defaultServices": "Includes {{count}} service(s)",
       "customSetupPrompt": "Prefer a custom setup? Build it with your own pricing and services.",
       "enableCustom": "Enable custom setup",

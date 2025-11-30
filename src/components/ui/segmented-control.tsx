@@ -27,14 +27,14 @@ const sizeClasses: Record<SegmentedSize, { container: string; item: string }> = 
     item: "px-3 py-1 text-xs",
   },
   md: {
-    container: "p-1.5 gap-1.5",
-    item: "px-4 py-1.5 text-sm",
+    container: "p-1 gap-1 sm:p-1.5 sm:gap-1.5",
+    item: "px-3 py-1 text-sm sm:px-4 sm:py-1.5",
   },
 };
 
 const indicatorOffsets: Record<SegmentedSize, number> = {
   sm: 2,
-  md: 3,
+  md: 2,
 };
 
 export const SegmentedControl = React.forwardRef<

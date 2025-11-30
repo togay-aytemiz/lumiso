@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -685,6 +685,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const initializedForId = useRef<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const originalAddOns = useMemo(() => extractAddonIds(pkg), [pkg]);
@@ -752,7 +753,12 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
   );
 
   useEffect(() => {
-    if (pkg && open) {
+    if (!open) {
+      initializedForId.current = null;
+      return;
+    }
+
+    if (pkg && initializedForId.current !== pkg.id) {
       setPackageData({
         name: pkg.name,
         description: pkg.description || "",
@@ -762,6 +768,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
         is_active: pkg.is_active
       });
       setErrors({});
+      initializedForId.current = pkg.id;
     }
   }, [pkg, open, originalAddOns]);
 

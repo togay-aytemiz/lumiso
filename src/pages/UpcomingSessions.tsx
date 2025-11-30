@@ -708,7 +708,7 @@ const AllSessions = () => {
 
   const renderSegmentLabel = useCallback(
     (label: string, count: number) => (
-      <span className="inline-flex items-center gap-1.5">
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
         <span className="font-medium leading-tight">{label}</span>
         <span className="inline-flex min-w-[1.75rem] justify-center rounded-full border border-border/60 bg-background px-1.5 py-0.5 text-[11px] font-semibold leading-none text-current shadow-sm transition-colors">
           {formatCount(count)}

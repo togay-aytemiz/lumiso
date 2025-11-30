@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Input } from "@/components/ui/input";
@@ -259,6 +259,7 @@ interface EditLeadStatusDialogProps {
 export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdated }: EditLeadStatusDialogProps) {
   const { t } = useTranslation(['forms', 'common']);
   const [loading, setLoading] = useState(false);
+  const initializedForId = useRef<string | null>(null);
   const [formData, setFormData] = useState<{ name: string; color: string; lifecycle: LeadLifecycle }>({
     name: "",
     color: "#3B82F6",
@@ -266,12 +267,18 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
   });
 
   useEffect(() => {
-    if (status && open) {
+    if (!open) {
+      initializedForId.current = null;
+      return;
+    }
+
+    if (status && initializedForId.current !== status.id) {
       setFormData({
         name: status.name,
         color: status.color,
         lifecycle: status.lifecycle || "active",
       });
+      initializedForId.current = status.id;
     }
   }, [status, open]);
 

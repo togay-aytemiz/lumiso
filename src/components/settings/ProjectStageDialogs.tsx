@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Input } from "@/components/ui/input";
@@ -263,6 +263,7 @@ interface EditProjectStageDialogProps {
 export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdated }: EditProjectStageDialogProps) {
   const { t } = useTranslation('forms');
   const [loading, setLoading] = useState(false);
+  const initializedForId = useRef<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     color: "#EF4444",
@@ -270,12 +271,18 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
   });
 
   useEffect(() => {
-    if (stage && open) {
+    if (!open) {
+      initializedForId.current = null;
+      return;
+    }
+
+    if (stage && initializedForId.current !== stage.id) {
       setFormData({
         name: stage.name,
         color: stage.color,
         lifecycle: stage.lifecycle || "active",
       });
+      initializedForId.current = stage.id;
     }
   }, [stage, open]);
 

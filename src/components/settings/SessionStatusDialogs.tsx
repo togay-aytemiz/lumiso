@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
@@ -260,6 +260,7 @@ interface EditSessionStatusDialogProps {
 export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUpdated }: EditSessionStatusDialogProps) {
   const { t } = useTranslation('forms');
   const [loading, setLoading] = useState(false);
+  const initializedForId = useRef<string | null>(null);
   const [formData, setFormData] = useState<{ name: string; color: string; lifecycle: SessionLifecycle }>({
     name: "",
     color: "#3B82F6",
@@ -267,12 +268,18 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
   });
 
   useEffect(() => {
-    if (status && open) {
+    if (!open) {
+      initializedForId.current = null;
+      return;
+    }
+
+    if (status && initializedForId.current !== status.id) {
       setFormData({
         name: status.name,
         color: status.color,
         lifecycle: status.lifecycle || "active",
       });
+      initializedForId.current = status.id;
     }
   }, [status, open]);
 

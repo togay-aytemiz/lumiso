@@ -256,6 +256,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
                     onSelect={setDatePaid}
                     initialFocus
                     className="p-3 pointer-events-auto"
+                    locale={getDateFnsLocale()}
                   />
                 </PopoverContent>
               </Popover>

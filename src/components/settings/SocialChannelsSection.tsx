@@ -55,6 +55,63 @@ const PREDEFINED_PLATFORMS: Array<{
   { key: 'tiktok', name: 'TikTok', icon: Music },
 ];
 
+const PLATFORM_URL_PREFIXES: Partial<Record<SocialChannel['platform'], string>> = {
+  facebook: 'https://facebook.com/',
+  instagram: 'https://instagram.com/',
+  twitter: 'https://twitter.com/',
+  linkedin: 'https://linkedin.com/',
+  youtube: 'https://youtube.com/',
+  tiktok: 'https://tiktok.com/',
+};
+
+const normalizeHost = (host: string) => host.replace(/^www\./, '');
+
+const getUsernameFromUrl = (url: string, platform: SocialChannel['platform']) => {
+  if (!url) return '';
+  const prefix = PLATFORM_URL_PREFIXES[platform];
+  if (!prefix) return url;
+
+  const trimmedUrl = url.trim();
+  const variants = [
+    prefix,
+    prefix.replace('https://', 'http://'),
+    prefix.replace('https://', 'https://www.'),
+    prefix.replace('http://', 'http://www.'),
+  ];
+
+  for (const variant of variants) {
+    if (trimmedUrl.startsWith(variant)) {
+      return trimmedUrl.slice(variant.length).replace(/^\/+/, '');
+    }
+  }
+
+  try {
+    const parsed = new URL(trimmedUrl);
+    const prefixHost = normalizeHost(new URL(prefix).host);
+    const parsedHost = normalizeHost(parsed.host);
+
+    if (parsedHost === prefixHost) {
+      const path = parsed.pathname.replace(/^\/+/, '');
+      const queryAndHash = `${parsed.search}${parsed.hash}`;
+      return `${path}${queryAndHash}`.replace(/^\/+/, '');
+    }
+  } catch {
+    // Ignore parsing errors for malformed URLs
+  }
+
+  return trimmedUrl.replace(/^https?:\/\//, '');
+};
+
+const buildUrlFromUsername = (platform: SocialChannel['platform'], username: string) => {
+  const prefix = PLATFORM_URL_PREFIXES[platform];
+  const cleanedUsername = username.trim().replace(/^\/+/, '');
+
+  if (!cleanedUsername) return '';
+  if (!prefix) return cleanedUsername;
+
+  return `${prefix}${cleanedUsername}`;
+};
+
 export function SocialChannelsSection({
   socialChannels,
   onUpdate,
@@ -170,7 +227,12 @@ export function SocialChannelsSection({
               >
                 {channelEntries.map(([key, channel], index) => {
                   const Icon = getChannelIcon(channel);
-                  const hasValidUrl = channel.url && validateUrl(channel.url);
+                  const hasValidUrl = channel.url ? validateUrl(channel.url) : true;
+                  const showInvalid = !!channel.url && !hasValidUrl;
+                  const platformPrefix = PLATFORM_URL_PREFIXES[channel.platform];
+                  const usernameValue = platformPrefix
+                    ? getUsernameFromUrl(channel.url, channel.platform)
+                    : channel.url;
 
                   return (
                     <Draggable key={key} draggableId={key} index={index}>
@@ -200,16 +262,43 @@ export function SocialChannelsSection({
                           </div>
 
                           <div className="flex-1">
-                            <Input
-                              placeholder={`https://${channel.platform === 'website' ? 'yourwebsite.com' : `${channel.platform}.com/yourprofile`}`}
-                              value={channel.url}
-                              onChange={(e) => updateChannel(key, { url: e.target.value })}
-                              className={cn(
-                                "h-9 text-sm",
-                                !hasValidUrl && channel.url && "border-destructive focus-visible:ring-destructive"
-                              )}
-                            />
-                            {!hasValidUrl && channel.url && (
+                            {platformPrefix ? (
+                              <div
+                                className={cn(
+                                  "flex h-9 items-stretch overflow-hidden rounded-md border border-input bg-background transition",
+                                  "focus-within:border-primary focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+                                  showInvalid && "border-destructive focus-within:border-destructive focus-within:ring-destructive"
+                                )}
+                              >
+                                <span className="flex items-center bg-muted px-3 text-xs text-muted-foreground">
+                                  {platformPrefix}
+                                </span>
+                                <Input
+                                  value={usernameValue}
+                                  onChange={(e) => {
+                                    const rawValue = e.target.value;
+                                    const normalizedUsername = rawValue.startsWith('http')
+                                      ? getUsernameFromUrl(rawValue, channel.platform)
+                                      : rawValue;
+                                    const nextUrl = buildUrlFromUsername(channel.platform, normalizedUsername);
+                                    updateChannel(key, { url: nextUrl });
+                                  }}
+                                  placeholder={t('social_channels.username_placeholder', { platform: channel.customPlatformName || channel.name })}
+                                  className="h-9 border-0 rounded-none rounded-r-md px-3 text-sm shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                />
+                              </div>
+                            ) : (
+                              <Input
+                                placeholder={`https://${channel.platform === 'website' ? 'yourwebsite.com' : `${channel.platform}.com/yourprofile`}`}
+                                value={channel.url}
+                                onChange={(e) => updateChannel(key, { url: e.target.value })}
+                                className={cn(
+                                  "h-9 text-sm",
+                                  showInvalid && "border-destructive focus-visible:ring-destructive"
+                                )}
+                              />
+                            )}
+                            {showInvalid && (
                               <p className="mt-1 text-xs text-destructive">
                                 {t('social_channels.url_invalid')}
                               </p>

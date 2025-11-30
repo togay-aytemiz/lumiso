@@ -476,6 +476,7 @@
     "add_platform": "Add Platform",
     "add_custom": "Add Custom",
     "custom_platform_placeholder": "Custom platform name (e.g., TikTok, Behance)",
+    "username_placeholder": "Username for {{platform}}",
     "url_invalid": "Please enter a valid URL",
     "remove_channel_title": "Remove Social Channel",
     "remove_channel_description": "Are you sure you want to remove {{name}}? This action cannot be undone.",

@@ -438,6 +438,7 @@
     "add_platform": "Platform Ekle",
     "add_custom": "Özel Ekle",
     "custom_platform_placeholder": "Özel platform adı (örn., TikTok, Behance)",
+    "username_placeholder": "{{platform}} için kullanıcı adı",
     "url_invalid": "Lütfen geçerli bir URL girin",
     "remove_channel_title": "Sosyal Kanalı Kaldır",
     "remove_channel_description": "{{name}} kanalını kaldırmak istediğinizden emin misiniz? Bu işlem geri alınamaz.",

@@ -72,7 +72,12 @@
     "clearSearch": "Clear search",
     "noResults": "No results found",
     "tryDifferent": "Try a different search term",
-    "searchError": "Search error"
+    "searchError": "Search error",
+    "recentSearches": "Recent searches",
+    "removeRecent": "Remove recent search",
+    "clearRecentSearches": "Clear all",
+    "recentEmptyTitle": "No recent searches yet",
+    "recentEmptyDescription": "Start typing to save your recent searches here."
   },
   "validation": {
     "required": "This field is required",

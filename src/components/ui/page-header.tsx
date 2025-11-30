@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { UserMenu } from "@/components/UserMenu";
 import { cn } from "@/lib/utils";
 import { AddAction } from "@/components/AddAction";
+import { Button } from "@/components/ui/button";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface PageHeaderProps {
   title: string;
@@ -18,7 +22,32 @@ export function PageHeader({
   className,
   sticky = false
 }: PageHeaderProps) {
-  const hasChildren = React.Children.count(children) > 0;
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { t } = useTranslation("common");
+  const childrenArray = React.Children.toArray(children);
+
+  const searchChild = childrenArray.find(
+    (child) =>
+      React.isValidElement(child) &&
+      (child.type === PageHeaderSearch ||
+        (typeof child.type === "function" &&
+          (child.type as { displayName?: string }).displayName === "PageHeaderSearch"))
+  ) as React.ReactElement<PageHeaderSearchProps> | undefined;
+
+  const otherChildren = childrenArray.filter((child) => child !== searchChild);
+  const includeAddAction = searchChild?.props?.includeAddAction !== false;
+  const hasChildren = childrenArray.length > 0;
+  const showMobileSearch = Boolean(searchChild);
+  const showMobileAddAction = showMobileSearch && includeAddAction;
+
+  const handleMobileSearchClick = useCallback(() => {
+    navigate("/search", {
+      state: {
+        from: `${location.pathname}${location.search}${location.hash}`,
+      },
+    });
+  }, [location.hash, location.pathname, location.search, navigate]);
 
   return (
     <div
@@ -30,19 +59,34 @@ export function PageHeader({
     >
       <div className="px-4 sm:px-6 py-4 lg:py-5">
         {/* Mobile/Tablet Layout */}
-        <div className="flex flex-col gap-4 lg:hidden">
+        <div className="flex flex-col gap-3 lg:hidden">
           <div className="flex items-center justify-between gap-3">
             <div className="flex-shrink-0 min-w-0">
               <h1 className="text-lg font-medium truncate text-foreground transition-all duration-300 ease-out animate-in fade-in slide-in-from-left-2">
                 {title}
               </h1>
             </div>
+            {(showMobileSearch || showMobileAddAction) && (
+              <div className="flex items-center gap-2">
+                {showMobileSearch && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    onClick={handleMobileSearchClick}
+                    className="h-11 w-11 aspect-square rounded-full border border-border/70 bg-white/80 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                    aria-label={t("buttons.search")}
+                  >
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                )}
+                {showMobileAddAction && <AddAction />}
+              </div>
+            )}
           </div>
 
-          {hasChildren && (
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
-              {children}
-            </div>
+          {otherChildren.length > 0 && (
+            <div className="flex flex-col gap-3">{otherChildren}</div>
           )}
         </div>
 
@@ -97,6 +141,7 @@ export function PageHeaderSearch({
     </div>
   );
 }
+PageHeaderSearch.displayName = "PageHeaderSearch";
 
 interface PageHeaderActionsProps {
   children: React.ReactNode;

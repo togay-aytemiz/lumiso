@@ -38,6 +38,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import Workflows from "./pages/Workflows";
 import Templates from "./pages/Templates";
 import TemplateBuilder from "./pages/TemplateBuilder";
+import SearchPage from "./pages/Search";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminLocalization from "./pages/admin/Localization";
 import AdminUsers from "./pages/admin/Users";
@@ -103,6 +104,7 @@ const AppRoutes = () => {
           <Route path="reminders" element={<ReminderDetails />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="payments" element={<Payments />} />
+          <Route path="search" element={<SearchPage />} />
           <Route path="workflows" element={<Workflows />} />
           <Route path="templates" element={<Templates />} />
           <Route path="template-builder" element={<TemplateBuilder />} />

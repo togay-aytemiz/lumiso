@@ -811,7 +811,7 @@ const GlobalSearch = ({
     (isPageVariant || hasInteracted);
 
   const recentSearchSection = showRecentSection ? (
-    <div className={cn("py-3 space-y-2", isPageVariant && "py-1.5 space-y-1.5")}>
+    <div className={cn("py-3 space-y-2", isPageVariant && "py-0 space-y-0")}>
       <div
         className={cn(
           "flex items-center justify-between px-4 pt-1",
@@ -835,7 +835,7 @@ const GlobalSearch = ({
           key={term}
           className={cn(
             "flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/30",
-            isPageVariant && "px-3 py-2 gap-2"
+            isPageVariant && "px-3 py-0 gap-2"
           )}
         >
           <Search className="h-4 w-4 text-muted-foreground/70" />
@@ -946,7 +946,7 @@ const GlobalSearch = ({
                                   />
                                 )
                               ) : null}
-                              <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <ChevronRight className="h-3 w-3 text-muted-foreground" />
                             </div>
                           </div>
                           {matchedContentToShow && (

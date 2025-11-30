@@ -72,7 +72,12 @@
     "clearSearch": "Aramayı temizle",
     "noResults": "Sonuç bulunamadı",
     "tryDifferent": "Farklı bir arama terimi deneyin",
-    "searchError": "Arama hatası"
+    "searchError": "Arama hatası",
+    "recentSearches": "Son aramalar",
+    "removeRecent": "Son aramayı sil",
+    "clearRecentSearches": "Tümünü temizle",
+    "recentEmptyTitle": "Henüz son arama yok",
+    "recentEmptyDescription": "Burada görmek için aramaya başlayın."
   },
   "validation": {
     "required": "Bu alan zorunludur",

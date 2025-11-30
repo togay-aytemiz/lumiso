@@ -41,25 +41,24 @@ const SearchPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="sticky top-0 z-20 border-b border-border/60 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-        <div className="px-4 pt-3 pb-3 sm:px-6 sm:pt-4 sm:pb-4 space-y-3">
-          <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={handleBack}
-              className="h-11 w-11 aspect-square rounded-full border border-border/70 bg-white/90 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
-            >
-              <ArrowLeft className="h-4 w-4 text-muted-foreground" />
-              <span className="sr-only">{t("buttons.back")}</span>
-            </Button>
-          </div>
-          <div className="mx-auto w-full max-w-3xl">
+        <div className="flex items-center gap-3 px-4 py-3 sm:px-6 sm:py-4">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleBack}
+            className="h-11 w-11 aspect-square rounded-full border border-border/70 bg-white/90 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+            <span className="sr-only">{t("buttons.back")}</span>
+          </Button>
+          <div className="flex-1">
             <GlobalSearch
               variant="page"
               autoFocus
               initialQuery={initialQuery}
               onQueryChange={handleQueryChange}
+              resultsPortalId="mobile-search-results"
             />
           </div>
         </div>
@@ -67,7 +66,7 @@ const SearchPage = () => {
 
       <div className="px-4 pb-6 pt-2 sm:px-6 sm:pt-3 sm:pb-8">
         <div className="mx-auto max-w-3xl">
-          {/* Results render inline within the search component; spacer keeps scroll smooth */}
+          <div id="mobile-search-results" className="pt-2" />
         </div>
       </div>
     </div>

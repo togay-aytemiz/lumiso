@@ -5,9 +5,137 @@ import { cn } from "@/lib/utils"
 
 const TooltipProvider = TooltipPrimitive.Provider
 
-const Tooltip = TooltipPrimitive.Root
+type TooltipContextValue = {
+  isTouch: boolean
+  setOpen?: (open: boolean) => void
+}
 
-const TooltipTrigger = TooltipPrimitive.Trigger
+const TooltipTouchContext = React.createContext<TooltipContextValue>({
+  isTouch: false
+})
+
+const TOUCH_AUTO_CLOSE_MS = 2200
+
+function isLikelyTouchDevice() {
+  if (typeof window === "undefined") return false
+  const nav = typeof navigator !== "undefined" ? navigator : null
+  const hasTouchPoints =
+    (nav?.maxTouchPoints ?? 0) > 0 || (nav as unknown as { msMaxTouchPoints?: number })?.msMaxTouchPoints > 0
+  const hasTouchEvents = "ontouchstart" in window
+  const matchesCoarse =
+    typeof matchMedia !== "undefined" &&
+    (matchMedia("(pointer: coarse)").matches || matchMedia("(hover: none)").matches)
+
+  return hasTouchPoints || hasTouchEvents || matchesCoarse
+}
+
+function useIsTouchDevice() {
+  const [isTouch, setIsTouch] = React.useState(false)
+
+  React.useEffect(() => {
+    const update = () => setIsTouch(isLikelyTouchDevice())
+
+    update()
+
+    if (typeof window === "undefined") {
+      return
+    }
+
+    const queries =
+      typeof matchMedia !== "undefined"
+        ? ["(pointer: coarse)", "(hover: none)"].map((q) => matchMedia(q))
+        : []
+
+    queries.forEach((mq) => mq.addEventListener("change", update))
+
+    const handlePointer = (event: PointerEvent) => {
+      if (event.pointerType === "touch") {
+        setIsTouch(true)
+      }
+    }
+
+    window.addEventListener("pointerdown", handlePointer, { passive: true })
+
+    return () => {
+      queries.forEach((mq) => mq.removeEventListener("change", update))
+      window.removeEventListener("pointerdown", handlePointer)
+    }
+  }, [])
+
+  return isTouch
+}
+
+type TooltipProps = React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>
+
+const Tooltip = ({ delayDuration, disableHoverableContent, open: openProp, defaultOpen, onOpenChange, children, ...props }: TooltipProps) => {
+  const isTouch = useIsTouchDevice()
+  const [open, setOpen] = React.useState(defaultOpen ?? false)
+
+  // Auto-close touch tooltips after a short time to avoid leaving them stuck open
+  React.useEffect(() => {
+    if (!isTouch || !open) return
+    const timer = window.setTimeout(() => setOpen(false), TOUCH_AUTO_CLOSE_MS)
+    return () => window.clearTimeout(timer)
+  }, [isTouch, open])
+
+  const contextValue = React.useMemo(
+    () => ({
+      isTouch,
+      setOpen: isTouch ? setOpen : onOpenChange
+    }),
+    [isTouch, onOpenChange]
+  )
+
+  return (
+    <TooltipTouchContext.Provider value={contextValue}>
+      <TooltipPrimitive.Root
+        open={isTouch ? open : openProp}
+        defaultOpen={isTouch ? undefined : defaultOpen}
+        onOpenChange={isTouch ? setOpen : onOpenChange}
+        delayDuration={isTouch ? 0 : delayDuration}
+        disableHoverableContent={isTouch ? true : disableHoverableContent}
+        {...props}
+      >
+        {children}
+      </TooltipPrimitive.Root>
+    </TooltipTouchContext.Provider>
+  )
+}
+
+type TooltipTriggerProps = React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Trigger>
+
+const TooltipTrigger = React.forwardRef<
+  React.ElementRef<typeof TooltipPrimitive.Trigger>,
+  TooltipTriggerProps
+>(({ onPointerDown, onTouchStart, onClick, ...props }, ref) => {
+  const { isTouch, setOpen } = React.useContext(TooltipTouchContext)
+
+  return (
+    <TooltipPrimitive.Trigger
+      ref={ref}
+      onPointerDown={(event) => {
+        if (isTouch && setOpen) {
+          setOpen(true)
+        }
+        onPointerDown?.(event)
+      }}
+      onTouchStart={(event) => {
+        if (isTouch && setOpen) {
+          setOpen(true)
+        }
+        onTouchStart?.(event)
+      }}
+      onClick={(event) => {
+        if (isTouch && setOpen) {
+          setOpen(true)
+        }
+        onClick?.(event)
+      }}
+      {...props}
+    />
+  )
+})
+TooltipTrigger.displayName = TooltipPrimitive.Trigger.displayName
 
 const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,

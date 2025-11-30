@@ -485,6 +485,7 @@ export function UnifiedClientDetails({
           navigate(`/leads/${lead.id}`);
         }
       }}
+      data-touch-target="compact"
       className="block truncate text-sm font-medium text-accent underline-offset-2 hover:underline text-left"
     >
       {localLead.name || " - "}
@@ -645,6 +646,7 @@ export function UnifiedClientDetails({
                                 navigate(`/leads/${lead.id}`);
                               }
                             }}
+                            data-touch-target="compact"
                             className="text-accent hover:underline font-medium break-words text-left"
                           >
                             {field.value || " - "}

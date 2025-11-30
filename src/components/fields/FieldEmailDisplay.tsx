@@ -65,6 +65,7 @@ export function FieldEmailDisplay({
                 variant="ghost"
                 size="sm"
                 className="h-6 w-6 p-0"
+                data-touch-target="compact"
                 onClick={(e) => { e.stopPropagation(); void copyToClipboard(); }}
                 onMouseDown={(e) => e.stopPropagation()}
               >

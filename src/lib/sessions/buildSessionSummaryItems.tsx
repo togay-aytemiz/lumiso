@@ -70,6 +70,7 @@ export function buildSessionSummaryItems({
         <Button
           variant="link"
           size="sm"
+          data-touch-target="compact"
           className="h-auto px-0 py-0 text-sm font-medium text-primary hover:text-primary/80 focus-visible:ring-0"
           onClick={onEditSchedule}
         >
@@ -91,6 +92,7 @@ export function buildSessionSummaryItems({
         <button
           type="button"
           onClick={onProjectClick}
+          data-touch-target="compact"
           className="line-clamp-2 w-full bg-transparent p-0 text-left font-semibold leading-tight text-primary transition hover:underline focus-visible:outline-none"
         >
           {projectName}
@@ -107,6 +109,7 @@ export function buildSessionSummaryItems({
         <Button
           variant="link"
           size="sm"
+          data-touch-target="compact"
           className="h-auto px-0 py-0 text-sm font-medium text-primary hover:text-primary/80 focus-visible:ring-0"
           onClick={onConnectProject}
         >
@@ -138,6 +141,7 @@ export function buildSessionSummaryItems({
         <Button
           variant="link"
           size="sm"
+          data-touch-target="compact"
           className="h-auto p-0 text-sm font-medium text-primary hover:text-primary/80 sm:text-xs"
           onClick={onAddNotes}
         >
@@ -168,6 +172,7 @@ export function buildSessionSummaryItems({
         <Button
           variant="link"
           size="sm"
+          data-touch-target="compact"
           className="h-auto p-0 text-sm font-medium text-primary hover:text-primary/80 sm:text-xs"
           onClick={onAddLocation}
         >

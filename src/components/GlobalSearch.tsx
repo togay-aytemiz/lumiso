@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,8 +20,6 @@ import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import type { Database } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
-
-const INITIAL_RESULT_COUNT = 10;
 
 type LeadStatusRow = Database["public"]["Tables"]["lead_statuses"]["Row"];
 type ProjectStatusRow = Database["public"]["Tables"]["project_statuses"]["Row"];
@@ -76,14 +75,29 @@ interface Session {
   notes?: string;
 }
 
+const RECENT_SEARCHES_KEY = "global-search-recents";
+const MAX_RECENT_SEARCHES = 5;
+const INITIAL_RESULT_COUNT = 10;
+
 interface GlobalSearchProps {
-  variant?: "default" | "header";
+  variant?: "default" | "header" | "page";
   className?: string;
+  autoFocus?: boolean;
+  initialQuery?: string;
+  onQueryChange?: (value: string) => void;
+  resultsPortalId?: string;
 }
 
-const GlobalSearch = ({ variant = "default", className }: GlobalSearchProps) => {
+const GlobalSearch = ({
+  variant = "default",
+  className,
+  autoFocus = false,
+  initialQuery,
+  onQueryChange,
+  resultsPortalId,
+}: GlobalSearchProps) => {
   const { t } = useFormsTranslation();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery ?? "");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [allResults, setAllResults] = useState<SearchResult[]>([]);
   const [displayedCount, setDisplayedCount] =
@@ -92,18 +106,69 @@ const GlobalSearch = ({ variant = "default", className }: GlobalSearchProps) => 
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [isPendingSearch, setIsPendingSearch] = useState(false);
+  const isPageVariant = variant === "page";
+  const [resultsPortalElement, setResultsPortalElement] =
+    useState<HTMLElement | null>(null);
+  const [hasMounted, setHasMounted] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const trimmedQuery = query.trim();
+  const hasRecentSearches = recentSearches.length > 0;
 
   // Preload statuses to avoid per-row fetching and flicker
   const [leadStatuses, setLeadStatuses] = useState<LeadStatusRow[]>([]);
-  const [projectStatuses, setProjectStatuses] =
-    useState<ProjectStatusRow[]>([]);
-  const [leadFieldLabels, setLeadFieldLabels] = useState<Record<string, string>>(
-    {}
+  const [projectStatuses, setProjectStatuses] = useState<ProjectStatusRow[]>(
+    []
   );
+  const [leadFieldLabels, setLeadFieldLabels] = useState<
+    Record<string, string>
+  >({});
   const [statusesLoading, setStatusesLoading] = useState(true);
+
+  const updateRecentSearches = useCallback(
+    (updater: (prev: string[]) => string[]) => {
+      setRecentSearches((prev) => {
+        const next = updater(prev);
+        if (typeof window !== "undefined") {
+          try {
+            window.localStorage.setItem(
+              RECENT_SEARCHES_KEY,
+              JSON.stringify(next)
+            );
+          } catch {
+            // no-op when storage is unavailable
+          }
+        }
+        return next;
+      });
+    },
+    []
+  );
+
+  const addRecentSearch = useCallback(
+    (term: string) => {
+      const trimmed = term.trim();
+      if (!trimmed) return;
+      updateRecentSearches((prev) =>
+        [trimmed, ...prev.filter((entry) => entry !== trimmed)].slice(
+          0,
+          MAX_RECENT_SEARCHES
+        )
+      );
+    },
+    [updateRecentSearches]
+  );
+
+  const removeRecentSearch = useCallback(
+    (term: string) => {
+      updateRecentSearches((prev) => prev.filter((entry) => entry !== term));
+    },
+    [updateRecentSearches]
+  );
 
   const formatFieldKey = (fieldKey: string) => {
     if (!fieldKey) return "";
@@ -123,6 +188,41 @@ const GlobalSearch = ({ variant = "default", className }: GlobalSearchProps) => 
   };
 
   useEffect(() => {
+    if (initialQuery === undefined) return;
+    if (initialQuery === query) return;
+    setQuery(initialQuery);
+  }, [initialQuery, query]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const stored = window.localStorage.getItem(RECENT_SEARCHES_KEY);
+      if (!stored) return;
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        setRecentSearches(
+          parsed
+            .map((entry) => String(entry))
+            .filter(Boolean)
+            .slice(0, 5)
+        );
+      }
+    } catch {
+      // ignore malformed storage
+    }
+  }, []);
+
+  useEffect(() => {
+    setHasMounted(true);
+    if (!isPageVariant || !resultsPortalId || typeof document === "undefined") {
+      return;
+    }
+    const portalElement = document.getElementById(resultsPortalId);
+    setResultsPortalElement(portalElement);
+  }, [isPageVariant, resultsPortalId]);
+
+  useEffect(() => {
+    if (variant === "page") return;
     const handleClickOutside = (event: MouseEvent) => {
       if (
         searchRef.current &&
@@ -135,7 +235,7 @@ const GlobalSearch = ({ variant = "default", className }: GlobalSearchProps) => 
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [variant]);
 
   // Preload lead/project statuses once to avoid per-row fetching
   useEffect(() => {
@@ -182,15 +282,12 @@ const GlobalSearch = ({ variant = "default", className }: GlobalSearchProps) => 
           const definitions =
             (fieldDefs.data as LeadFieldDefinitionRow[]) || [];
           setLeadFieldLabels(
-            definitions.reduce<Record<string, string>>(
-              (acc, definition) => {
-                if (definition.field_key && definition.label) {
-                  acc[definition.field_key] = definition.label;
-                }
-                return acc;
-              },
-              {}
-            )
+            definitions.reduce<Record<string, string>>((acc, definition) => {
+              if (definition.field_key && definition.label) {
+                acc[definition.field_key] = definition.label;
+              }
+              return acc;
+            }, {})
           );
         } else {
           console.error(
@@ -208,6 +305,14 @@ const GlobalSearch = ({ variant = "default", className }: GlobalSearchProps) => 
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!autoFocus) return;
+    const timeout = window.setTimeout(() => {
+      inputRef.current?.focus({ preventScroll: true });
+    }, 50);
+    return () => window.clearTimeout(timeout);
+  }, [autoFocus]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen || results.length === 0) return;
@@ -542,47 +647,61 @@ const GlobalSearch = ({ variant = "default", className }: GlobalSearchProps) => 
 
         setAllResults(sortedResults);
         setResults(sortedResults.slice(0, INITIAL_RESULT_COUNT));
-      setIsOpen(true); // Always show dropdown when searching to display "no results" state
-      setActiveIndex(-1);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : String(error);
-      toast({
-        title: t("search.searchError"),
-        description: message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+        addRecentSearch(searchQuery);
+        setIsOpen(true); // Always show dropdown when searching to display "no results" state
+        setActiveIndex(-1);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        toast({
+          title: t("search.searchError"),
+          description: message,
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+        setIsPendingSearch(false);
+      }
     },
-    [projectStatuses, t]
+    [addRecentSearch, projectStatuses, t]
   );
 
   useEffect(() => {
+    const trimmed = query.trim();
+    const shouldSearch = trimmed.length > 2;
+    setIsPendingSearch(shouldSearch);
+
+    if (!isPageVariant && !hasInteracted) {
+      setIsOpen(false);
+      return;
+    }
+
     const delayedSearch = setTimeout(() => {
-      if (query.trim().length > 2) {
+      if (shouldSearch) {
         setDisplayedCount(INITIAL_RESULT_COUNT); // Reset displayed count for new search
-        performSearch(query.trim());
+        performSearch(trimmed);
       } else {
+        setIsPendingSearch(false);
         setResults([]);
         setAllResults([]);
         setDisplayedCount(INITIAL_RESULT_COUNT);
-        setIsOpen(false);
+        setIsOpen(!isPageVariant && (hasRecentSearches || hasInteracted));
         setActiveIndex(-1);
       }
     }, 300);
 
     return () => clearTimeout(delayedSearch);
-  }, [performSearch, query]);
+  }, [hasInteracted, hasRecentSearches, isPageVariant, performSearch, query]);
 
   const handleClearSearch = () => {
     setQuery("");
     setResults([]);
     setAllResults([]);
     setDisplayedCount(INITIAL_RESULT_COUNT);
-    setIsOpen(false);
+    if (!isPageVariant) {
+      setIsOpen(hasRecentSearches || hasInteracted);
+    }
     setActiveIndex(-1);
+    onQueryChange?.("");
     // Keep focus in the search bar for continued typing
     setTimeout(() => inputRef.current?.focus(), 0);
   };
@@ -603,8 +722,33 @@ const GlobalSearch = ({ variant = "default", className }: GlobalSearchProps) => 
     } else if (result.leadId) {
       navigate(`/leads/${result.leadId}`);
     }
-    handleClearSearch(); // Auto-clear when navigating to a result
+    if (!isPageVariant) {
+      handleClearSearch(); // Auto-clear when navigating to a result
+    }
   };
+
+  const handleRecentSearchClick = useCallback(
+    (term: string) => {
+      setHasInteracted(true);
+      setQuery(term);
+      onQueryChange?.(term);
+      setIsOpen(true);
+      setActiveIndex(-1);
+      setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 0);
+    },
+    [onQueryChange]
+  );
+
+  const handleRecentSearchRemove = useCallback(
+    (term: string) => {
+      removeRecentSearch(term);
+    },
+    [removeRecentSearch]
+  );
+
+  const handleClearAllRecentSearches = useCallback(() => {
+    updateRecentSearches(() => []);
+  }, [updateRecentSearches]);
 
   const groupedResults = results.reduce((acc, result) => {
     if (!acc[result.type]) {
@@ -621,8 +765,9 @@ const GlobalSearch = ({ variant = "default", className }: GlobalSearchProps) => 
     reminder: t("search.typeLabels.reminder"),
     session: t("search.typeLabels.session"),
   };
-
   let resultIndex = 0;
+  const hasMinimumQuery = trimmedQuery.length > 2;
+  const showInitialHint = isPageVariant && !loading && query.trim().length < 3;
 
   const wrapperClassName = cn(
     "relative w-full min-w-0 transition-[flex-basis,max-width,width] duration-300 ease-out",
@@ -632,19 +777,320 @@ const GlobalSearch = ({ variant = "default", className }: GlobalSearchProps) => 
   const inputContainerClassName = cn(
     "relative group/search transition-[flex-basis,max-width,width] duration-300 ease-out",
     variant === "header" &&
-      "rounded-full bg-muted/50 border border-transparent shadow-sm transition-colors focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20"
+      "rounded-full bg-muted/50 border border-transparent shadow-sm transition-colors focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/20",
+    isPageVariant &&
+      "rounded-2xl border border-border/70 bg-white/95 shadow-sm ring-1 ring-black/[0.02] px-2 py-1.5"
   );
 
   const inputClassName = cn(
     "pl-10 pr-10 w-full truncate text-base transition-[width] duration-300 ease-out placeholder:font-light placeholder:text-muted-foreground/70",
-    variant === "header" &&
+    (variant === "header" || isPageVariant) &&
       "h-12 border-none bg-transparent text-[0.95rem] sm:text-base lg:text-[1.05rem] lg:placeholder:text-[1.05rem] focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
   );
 
   const searchIconClassName = cn(
     "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70 group-focus-within/search:text-foreground z-10 pointer-events-none",
-    variant === "header" && "text-muted-foreground/60 group-focus-within/search:text-foreground"
+    (variant === "header" || isPageVariant) &&
+      "text-muted-foreground/60 group-focus-within/search:text-foreground"
   );
+
+  const shouldShowResultsPanel = isPageVariant ? hasMounted : isOpen;
+
+  const resultsContainerClassName = cn(
+    "bg-background transition-all duration-200",
+    isPageVariant
+      ? ""
+      : "absolute top-full mt-2 left-0 right-0 z-[9999] max-h-96 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700 shadow-xl backdrop-blur-sm"
+  );
+
+  const showRecentSection =
+    hasRecentSearches &&
+    !loading &&
+    !isPendingSearch &&
+    trimmedQuery.length === 0 &&
+    (isPageVariant || hasInteracted);
+
+  const recentSearchSection = showRecentSection ? (
+    <div className={cn("py-3 space-y-2", isPageVariant && "py-1.5 space-y-1.5")}>
+      <div
+        className={cn(
+          "flex items-center justify-between px-4 pt-1",
+          isPageVariant && "px-3 pt-0.5 pb-0"
+        )}
+      >
+        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          {t("search.recentSearches")}
+        </div>
+        <button
+          type="button"
+          className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+          onClick={handleClearAllRecentSearches}
+          aria-label={t("search.clearRecentSearches")}
+        >
+          {t("search.clearRecentSearches")}
+        </button>
+      </div>
+      {recentSearches.map((term) => (
+        <div
+          key={term}
+          className={cn(
+            "flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/30",
+            isPageVariant && "px-3 py-2 gap-2"
+          )}
+        >
+          <Search className="h-4 w-4 text-muted-foreground/70" />
+          <button
+            type="button"
+            className="flex-1 text-left text-sm truncate"
+            onClick={() => handleRecentSearchClick(term)}
+          >
+            {term}
+          </button>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleRecentSearchRemove(term);
+            }}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+            aria-label={`${t("search.removeRecent")} ${term}`}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ))}
+    </div>
+  ) : null;
+
+  const resultsSection =
+    results.length > 0 ? (
+      <div className={cn("py-3", isPageVariant && "py-2")}>
+        {Object.entries(groupedResults).map(
+          ([type, typeResults], groupIndex) => (
+            <div key={type}>
+              {groupIndex > 0 && (
+                <div className="border-t border-slate-100 dark:border-slate-800 mx-2" />
+              )}
+              <div
+                className={cn(
+                  "px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30",
+                  isPageVariant && "px-3 py-2"
+                )}
+              >
+                {typeLabels[type as keyof typeof typeLabels]} (
+                {typeResults.length})
+              </div>
+              {typeResults.map((result) => {
+                const currentIndex = resultIndex++;
+                const isActive = currentIndex === activeIndex;
+                const displayMatchedContent = result.customFieldKey
+                  ? buildCustomFieldMatchedContent(
+                      result.customFieldKey,
+                      result.customFieldValue
+                    )
+                  : result.matchedContent;
+                const matchedContentToShow =
+                  displayMatchedContent && displayMatchedContent.length > 80
+                    ? `${displayMatchedContent.substring(0, 80)}...`
+                    : displayMatchedContent;
+
+                return (
+                  <button
+                    key={`${result.type}-${result.id}`}
+                    onClick={() => handleResultClick(result)}
+                    className={cn(
+                      "w-full text-left px-4 py-3 transition-colors group",
+                      isActive ? "bg-muted/50" : "hover:bg-muted/30",
+                      isPageVariant && "px-3 py-2.5"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0 text-muted-foreground">
+                        {result.icon}
+                      </div>
+                      <div className="flex-1 min-w-0 flex items-center gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="font-medium text-sm truncate">
+                              {result.type === "project"
+                                ? result.projectName
+                                : result.leadName}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              {result.type === "project" && result.projectId ? (
+                                statusesLoading ? (
+                                  <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
+                                ) : (
+                                  <ProjectStatusBadge
+                                    projectId={result.projectId}
+                                    currentStatusId={
+                                      result.projectStatusId ?? undefined
+                                    }
+                                    editable={false}
+                                    size="sm"
+                                    statuses={projectStatuses}
+                                  />
+                                )
+                              ) : result.leadId ? (
+                                statusesLoading ? (
+                                  <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
+                                ) : (
+                                  <LeadStatusBadge
+                                    leadId={result.leadId}
+                                    currentStatusId={
+                                      result.leadStatusId ?? undefined
+                                    }
+                                    editable={false}
+                                    size="sm"
+                                    statuses={leadStatuses}
+                                  />
+                                )
+                              ) : null}
+                              <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                          </div>
+                          {matchedContentToShow && (
+                            <p className="text-xs text-muted-foreground mt-1 truncate">
+                              {matchedContentToShow}
+                            </p>
+                          )}
+                          {result.type === "project" && result.leadName && (
+                            <p className="text-xs text-muted-foreground mt-1 truncate">
+                              {t("search.leadLabel")} {result.leadName}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )
+        )}
+        {allResults.length > results.length && (
+          <div className="border-t border-slate-100 dark:border-slate-800 mx-2">
+            <button
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              className={cn(
+                "w-full px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50",
+                isPageVariant && "px-3 py-2.5"
+              )}
+            >
+              {loadingMore ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                  {t("search.loadingMore")}
+                </div>
+              ) : (
+                t("search.loadMore", {
+                  count: Math.min(10, allResults.length - results.length),
+                  remaining: allResults.length - results.length,
+                })
+              )}
+            </button>
+          </div>
+        )}
+        {allResults.length > 10 && results.length === allResults.length && (
+          <div className="border-t border-slate-100 dark:border-slate-800 mx-2">
+            <div
+              className={cn(
+                "px-4 py-3 text-center",
+                isPageVariant && "px-3 py-2.5"
+              )}
+            >
+              <p className="text-xs text-muted-foreground">
+                {t("search.showingAll", { count: allResults.length })}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    ) : null;
+
+  const noResultsState =
+    hasMinimumQuery &&
+    !loading &&
+    !isPendingSearch &&
+    results.length === 0 &&
+    !resultsSection;
+  const showRecentEmptyState =
+    !loading &&
+    !isPendingSearch &&
+    !hasRecentSearches &&
+    trimmedQuery.length === 0 &&
+    !resultsSection &&
+    (isPageVariant || hasInteracted);
+
+  const resultsInner = (
+    <>
+      {recentSearchSection}
+      {loading || (isPendingSearch && hasInteracted) ? (
+        <SearchLoadingSkeleton rows={3} />
+      ) : (
+        <>
+          {resultsSection}
+          {noResultsState ? (
+            <div
+              className={cn(
+                "p-6 text-center text-muted-foreground",
+                isPageVariant && "p-4"
+              )}
+            >
+              <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p className="text-sm font-medium">{t("search.noResults")}</p>
+              <p className="text-xs mt-2 opacity-75">
+                {t("search.tryDifferent")}
+              </p>
+            </div>
+          ) : showRecentEmptyState ? (
+            <div
+              className={cn(
+                "p-6 text-center text-muted-foreground",
+                isPageVariant && "p-4"
+              )}
+            >
+              <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p className="text-sm font-medium">
+                {t("search.recentEmptyTitle")}
+              </p>
+              <p className="text-xs mt-2 opacity-75">
+                {t("search.recentEmptyDescription")}
+              </p>
+            </div>
+          ) : !resultsSection && showInitialHint ? (
+            <div
+              className={cn(
+                "p-6 text-center text-muted-foreground",
+                isPageVariant && "p-4"
+              )}
+            >
+              <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p className="text-sm font-medium">{t("search.placeholder")}</p>
+            </div>
+          ) : null}
+        </>
+      )}
+    </>
+  );
+
+  const resultsContent = shouldShowResultsPanel ? (
+    isPageVariant ? (
+      resultsInner
+    ) : (
+      <div className={resultsContainerClassName}>{resultsInner}</div>
+    )
+  ) : null;
+
+  const renderedResults = isPageVariant
+    ? resultsContent &&
+      (resultsPortalElement
+        ? createPortal(resultsContent, resultsPortalElement)
+        : resultsPortalId
+        ? null
+        : resultsContent)
+    : resultsContent;
 
   return (
     <div className={wrapperClassName} ref={searchRef}>
@@ -654,10 +1100,19 @@ const GlobalSearch = ({ variant = "default", className }: GlobalSearchProps) => 
           ref={inputRef}
           placeholder={t("search.placeholder")}
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            setQuery(value);
+            setHasInteracted(true);
+            onQueryChange?.(value);
+            if (!isPageVariant) {
+              setIsOpen(true);
+            }
+          }}
           onKeyDown={handleKeyDown}
           onFocus={() => {
-            if (results.length > 0) setIsOpen(true);
+            setHasInteracted(true);
+            if (!isPageVariant) setIsOpen(true);
           }}
           className={inputClassName}
         />
@@ -680,150 +1135,7 @@ const GlobalSearch = ({ variant = "default", className }: GlobalSearchProps) => 
         )}
       </div>
 
-      {isOpen && (
-        <div className="absolute top-full mt-2 left-0 right-0 bg-background border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl backdrop-blur-sm z-[9999] max-h-96 overflow-y-auto">
-          {loading ? (
-            <SearchLoadingSkeleton rows={3} />
-          ) : results.length === 0 ? (
-            <div className="p-6 text-center text-muted-foreground">
-              <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />
-              <p className="text-sm font-medium">{t("search.noResults")}</p>
-              <p className="text-xs mt-2 opacity-75">
-                {t("search.tryDifferent")}
-              </p>
-            </div>
-          ) : (
-            <div className="py-3">
-              {Object.entries(groupedResults).map(
-                ([type, typeResults], groupIndex) => (
-                  <div key={type}>
-                    {groupIndex > 0 && (
-                      <div className="border-t border-slate-100 dark:border-slate-800 mx-2" />
-                    )}
-                    <div className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30">
-                      {typeLabels[type as keyof typeof typeLabels]} (
-                      {typeResults.length})
-                    </div>
-                    {typeResults.map((result) => {
-                      const currentIndex = resultIndex++;
-                      const isActive = currentIndex === activeIndex;
-                      const displayMatchedContent = result.customFieldKey
-                        ? buildCustomFieldMatchedContent(
-                            result.customFieldKey,
-                            result.customFieldValue
-                          )
-                        : result.matchedContent;
-                      const matchedContentToShow =
-                        displayMatchedContent && displayMatchedContent.length > 80
-                          ? `${displayMatchedContent.substring(0, 80)}...`
-                          : displayMatchedContent;
-
-                      return (
-                        <button
-                          key={`${result.type}-${result.id}`}
-                          onClick={() => handleResultClick(result)}
-                          className={`w-full text-left px-4 py-3 transition-colors group ${
-                            isActive ? "bg-muted/50" : "hover:bg-muted/30"
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 mt-0.5 text-muted-foreground">
-                              {result.icon}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between">
-                                <p className="font-medium text-sm truncate">
-                                  {result.type === "project"
-                                    ? result.projectName
-                                    : result.leadName}
-                                </p>
-                                <div className="flex items-center gap-2 ml-2">
-                                  {result.type === "project" &&
-                                  result.projectId ? (
-                                    statusesLoading ? (
-                                      <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
-                                    ) : (
-                                      <ProjectStatusBadge
-                                        projectId={result.projectId}
-                                        currentStatusId={
-                                          result.projectStatusId ?? undefined
-                                        }
-                                        editable={false}
-                                        size="sm"
-                                        statuses={projectStatuses}
-                                      />
-                                    )
-                                  ) : result.leadId ? (
-                                    statusesLoading ? (
-                                      <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
-                                    ) : (
-                                      <LeadStatusBadge
-                                        leadId={result.leadId}
-                                        currentStatusId={
-                                          result.leadStatusId ?? undefined
-                                        }
-                                        editable={false}
-                                        size="sm"
-                                        statuses={leadStatuses}
-                                      />
-                                    )
-                                  ) : null}
-                                  <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                                </div>
-                              </div>
-                              {matchedContentToShow && (
-                                <p className="text-xs text-muted-foreground mt-1 truncate">
-                                  {matchedContentToShow}
-                                </p>
-                              )}
-                              {result.type === "project" && result.leadName && (
-                                <p className="text-xs text-muted-foreground mt-1 truncate">
-                                  {t("search.leadLabel")} {result.leadName}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )
-              )}
-              {allResults.length > results.length && (
-                <div className="border-t border-slate-100 dark:border-slate-800 mx-2">
-                  <button
-                    onClick={handleLoadMore}
-                    disabled={loadingMore}
-                    className="w-full px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
-                  >
-                    {loadingMore ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                        {t("search.loadingMore")}
-                      </div>
-                    ) : (
-                      t("search.loadMore", {
-                        count: Math.min(10, allResults.length - results.length),
-                        remaining: allResults.length - results.length,
-                      })
-                    )}
-                  </button>
-                </div>
-              )}
-              {allResults.length > 10 &&
-                results.length === allResults.length && (
-                  <div className="border-t border-slate-100 dark:border-slate-800 mx-2">
-                    <div className="px-4 py-3 text-center">
-                      <p className="text-xs text-muted-foreground">
-                        {t("search.showingAll", { count: allResults.length })}
-                      </p>
-                    </div>
-                  </div>
-                )}
-            </div>
-          )}
-        </div>
-      )}
+      {renderedResults}
     </div>
   );
 };

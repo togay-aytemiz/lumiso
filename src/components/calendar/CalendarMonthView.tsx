@@ -1,7 +1,7 @@
 import { memo, KeyboardEvent as ReactKeyboardEvent } from "react";
 import { format, eachDayOfInterval, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isToday } from "date-fns";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { formatDate, getUserLocale, getDateFnsLocale, cn } from "@/lib/utils";
+import { getUserLocale, getDateFnsLocale, cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useOrganizationTimezone } from "@/hooks/useOrganizationTimezone";
 
@@ -10,9 +10,11 @@ interface Session {
   session_date: string;
   session_time: string;
   status: string;
+  session_name?: string | null;
   notes?: string;
   lead_id: string;
   project_id?: string | null;
+  location?: string | null;
 }
 
 interface Activity {
@@ -38,6 +40,8 @@ interface CalendarMonthViewProps {
   projectsMap: Record<string, { name: string }>;
   onSessionClick: (session: Session) => void;
   onActivityClick: (activity: Activity) => void;
+  onToggleReminderCompletion?: (activity: Activity, nextCompleted: boolean) => void;
+  completingReminderId?: string | null;
   onDayClick?: (date: Date) => void;
   isMobile?: boolean;
   touchHandlers: {
@@ -59,13 +63,15 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
   projectsMap,
   onSessionClick,
   onActivityClick,
+  onToggleReminderCompletion,
+  completingReminderId,
   onDayClick,
   isMobile,
   touchHandlers,
   className,
   fullHeight
 }) => {
-  const { t } = useTranslation('pages');
+  const { t } = useTranslation(['pages', 'forms']);
   const userLocale = getUserLocale();
   const dateFnsLocale = getDateFnsLocale();
   const { formatTime: formatOrgTime } = useOrganizationTimezone();
@@ -216,9 +222,17 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
                         {shown.map((entry) => {
                           if (entry.kind === 'session') {
                             const session = entry.item as Session;
+                            const sessionTitle =
+                              session.session_name?.trim() ||
+                              projectsMap[session.project_id || ""]?.name ||
+                              leadsMap[session.lead_id]?.name ||
+                              t('calendar.labels.session');
                             const leadName = leadsMap[session.lead_id]?.name || t('calendar.labels.lead');
                             const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
-                            const line = `${formatOrgTime(session.session_time)} ${leadName}${projectName ? " • " + projectName : ""}`;
+                            const dateLabel = format(new Date(session.session_date), 'PPP', { locale: dateFnsLocale });
+                            const timeLabel = formatOrgTime(session.session_time);
+                            const line = `${timeLabel} ${leadName}${projectName ? " • " + projectName : ""}`;
+                            const locationLabel = session.location || undefined;
                             return (
                               <Tooltip key={`s-${session.id}`}>
                                 <TooltipTrigger asChild>
@@ -232,12 +246,23 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
                                     {line}
                                   </button>
                                 </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <div className="text-sm font-medium">{projectName || t('calendar.labels.session')}</div>
-                                  <div className="text-xs text-muted-foreground">{leadName}</div>
-                                  <div className="text-xs text-muted-foreground">{formatDate(session.session_date)} • {formatOrgTime(session.session_time)}</div>
-                                  {session.notes && <div className="mt-1 text-xs">{session.notes}</div>}
-                                  <div className="text-xs">{t('calendar.labels.status')}: <span className="capitalize">{session.status}</span></div>
+                                <TooltipContent className="max-w-xs space-y-2 text-left text-sm leading-snug">
+                                  <div className="font-semibold text-foreground">
+                                    {sessionTitle}
+                                  </div>
+                                  <div className="space-y-1 text-foreground">
+                                    <p>{t('calendar.labels.lead')}: {leadName}</p>
+                                    {projectName ? <p>{t('calendar.labels.project')}: {projectName}</p> : null}
+                                    {locationLabel ? (
+                                      <p>{t('calendar.labels.location', { defaultValue: 'Location' })}: {locationLabel}</p>
+                                    ) : null}
+                                  </div>
+                                  <p className="font-medium text-foreground">
+                                    {dateLabel} • {timeLabel}
+                                  </p>
+                                  {session.notes ? (
+                                    <p className="text-muted-foreground">{session.notes}</p>
+                                  ) : null}
                                 </TooltipContent>
                               </Tooltip>
                             );
@@ -246,6 +271,11 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
                             const leadName = leadsMap[activity.lead_id]?.name || t('calendar.labels.lead');
                             const projectName = activity.project_id ? projectsMap[activity.project_id!]?.name : undefined;
                             const timeText = activity.reminder_time ? formatOrgTime(activity.reminder_time) : t('calendar.labels.allDay');
+                            const dateLabel = format(new Date(activity.reminder_date), 'PPP', { locale: dateFnsLocale });
+                            const isToggling = completingReminderId === activity.id;
+                            const toggleLabel = activity.completed
+                              ? t('forms:reminders.markIncomplete', { defaultValue: 'Mark as not done' })
+                              : t('forms:reminders.markComplete', { defaultValue: 'Mark as done' });
                             const line = `${timeText} ${leadName}${projectName ? " • " + projectName : ""}`;
                             return (
                               <Tooltip key={`a-${activity.id}`}>
@@ -260,10 +290,36 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
                                     {line}
                                   </button>
                                 </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <div className="text-sm font-medium">{activity.content}</div>
-                                  <div className="text-xs text-muted-foreground">{formatDate(activity.reminder_date)} • {timeText}</div>
-                                  <div className="text-xs text-muted-foreground">{projectName ? `${t('calendar.labels.project')}: ${projectName}` : `${t('calendar.labels.lead')}: ${leadName}`}</div>
+                                <TooltipContent className="max-w-xs space-y-1 text-sm leading-snug">
+                                  <p className="font-semibold text-foreground">{activity.content}</p>
+                                  <p className="text-foreground">
+                                    {t('calendar.labels.lead')}: {leadName}
+                                  </p>
+                                  {projectName ? (
+                                    <p className="text-foreground">
+                                      {t('calendar.labels.project')}: {projectName}
+                                    </p>
+                                  ) : null}
+                                  <p className="text-foreground">
+                                    {dateLabel} • {timeText}
+                                  </p>
+                                  {onToggleReminderCompletion ? (
+                                    <div className="pt-2 mt-2 border-t border-slate-200">
+                                      <button
+                                        type="button"
+                                        className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 underline underline-offset-4 disabled:opacity-60"
+                                        onClick={(event) => {
+                                          event.preventDefault();
+                                          event.stopPropagation();
+                                          if (isToggling) return;
+                                          onToggleReminderCompletion(activity, !activity.completed);
+                                        }}
+                                        disabled={isToggling}
+                                      >
+                                        {isToggling ? t('calendar.labels.updating', { defaultValue: 'Updating...' }) : toggleLabel}
+                                      </button>
+                                    </div>
+                                  ) : null}
                                 </TooltipContent>
                               </Tooltip>
                             );

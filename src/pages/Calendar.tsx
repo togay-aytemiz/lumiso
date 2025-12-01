@@ -311,6 +311,8 @@ export default function Calendar() {
         projectsMap={projectsMap}
         onSessionClick={handleSessionClick}
         onActivityClick={handleActivityClick}
+        onToggleReminderCompletion={toggleActivityCompletion}
+        completingReminderId={togglingActivityId}
         onDayClick={
           isMobile
             ? (date) => {
@@ -369,6 +371,8 @@ export default function Calendar() {
         projectsMap={projectsMap}
         onSessionClick={handleSessionClick}
         onActivityClick={handleActivityClick}
+        onToggleReminderCompletion={toggleActivityCompletion}
+        completingReminderId={togglingActivityId}
         touchHandlers={touchHandlers}
       />
     );

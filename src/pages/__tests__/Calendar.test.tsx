@@ -38,6 +38,8 @@ type CalendarDayViewSession = {
 
 type CalendarDayViewMockProps = {
   onSessionClick?: (session: CalendarDayViewSession) => void;
+  onToggleReminderCompletion?: (activity: { id: string }, nextCompleted: boolean) => void;
+  completingReminderId?: string | null;
 };
 
 type ProjectSheetViewMockProps = {
@@ -241,6 +243,11 @@ describe("Calendar page", () => {
     await waitFor(() => {
       expect(screen.getByTestId("calendar-day-view")).toBeInTheDocument();
     });
+
+    const lastCall = dayViewMock.mock.calls[dayViewMock.mock.calls.length - 1]?.[0] as
+      | CalendarDayViewMockProps
+      | undefined;
+    expect(typeof lastCall?.onToggleReminderCompletion).toBe("function");
   });
 
   it("opens the session sheet when a session is selected", async () => {

@@ -1,10 +1,11 @@
 import { memo } from "react";
-import { format, isToday } from "date-fns";
+import { isToday } from "date-fns";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { formatTime, formatDate, getUserLocale } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useOrganizationTimezone } from "@/hooks/useOrganizationTimezone";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
+import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 
 interface Session {
   id: string;
@@ -39,6 +40,8 @@ interface CalendarDayViewProps {
   projectsMap: Record<string, { name: string }>;
   onSessionClick: (session: Session) => void;
   onActivityClick: (activity: Activity) => void;
+  onToggleReminderCompletion?: (activity: Activity, nextCompleted: boolean) => void;
+  completingReminderId?: string | null;
   touchHandlers: {
     handleTouchStart: (e: React.TouchEvent) => void;
     handleTouchMove: (e: React.TouchEvent) => void;
@@ -56,10 +59,11 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
   projectsMap,
   onSessionClick,
   onActivityClick,
+  onToggleReminderCompletion,
+  completingReminderId,
   touchHandlers
 }) => {
-  const { t } = useTranslation('pages');
-  const userLocale = getUserLocale();
+  const { t } = useTranslation(['pages', 'forms']);
   const { formatTime: formatOrgTime } = useOrganizationTimezone();
   const { sessions, activities } = getEventsForDate(currentDate);
   const isDayToday = isToday(currentDate);
@@ -165,6 +169,10 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
                 const projectName = activity.project_id ? projectsMap[activity.project_id]?.name : undefined;
                 const timeText = activity.reminder_time ? formatOrgTime(activity.reminder_time) : t('calendar.labels.allDay');
                 const shouldShowTypeBadge = !activity.completed && activity.type && activity.type.toLowerCase() !== 'reminder';
+                const completionLabel = activity.completed
+                  ? t('forms:reminders.markIncomplete', { defaultValue: 'Mark as not done' })
+                  : t('forms:reminders.markComplete', { defaultValue: 'Mark as done' });
+                const isToggling = completingReminderId === activity.id;
                 
                 return (
                   <Tooltip key={activity.id}>
@@ -187,14 +195,43 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
                               {timeText}
                             </div>
                           </div>
-                          {(activity.completed || shouldShowTypeBadge) && (
-                            <Badge
-                              variant={activity.completed ? 'default' : 'secondary'}
-                              className="text-xs"
-                            >
-                              {activity.completed ? t('calendar.labels.completed') : activity.type}
-                            </Badge>
-                          )}
+                          <div className="flex flex-col items-end gap-2">
+                            {onToggleReminderCompletion && (
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  if (isToggling) return;
+                                  onToggleReminderCompletion(activity, !activity.completed);
+                                }}
+                                disabled={isToggling}
+                                aria-pressed={activity.completed}
+                                aria-label={completionLabel}
+                                className={cn(
+                                  "flex h-9 w-9 items-center justify-center rounded-full text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:opacity-60",
+                                  activity.completed
+                                    ? "text-emerald-600"
+                                    : "text-slate-500 hover:text-primary"
+                                )}
+                              >
+                                {isToggling ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : activity.completed ? (
+                                  <CheckCircle2 className="h-5 w-5" />
+                                ) : (
+                                  <Circle className="h-5 w-5" />
+                                )}
+                              </button>
+                            )}
+                            {(activity.completed || shouldShowTypeBadge) && (
+                              <Badge
+                                variant={activity.completed ? 'default' : 'secondary'}
+                                className="text-xs"
+                              >
+                                {activity.completed ? t('calendar.labels.completed') : activity.type}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </button>
                     </TooltipTrigger>

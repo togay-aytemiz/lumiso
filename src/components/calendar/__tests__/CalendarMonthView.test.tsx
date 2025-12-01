@@ -22,6 +22,14 @@ jest.mock("@/lib/utils", () => ({
   formatDate: jest.fn((value: string) => `formatted-date-${value}`),
 }));
 
+const mockUseOrganizationTimezone = jest.fn(() => ({
+  formatTime: (value: string) => `org-${value}`,
+}));
+
+jest.mock("@/hooks/useOrganizationTimezone", () => ({
+  useOrganizationTimezone: () => mockUseOrganizationTimezone(),
+}));
+
 describe("CalendarMonthView", () => {
   const currentDate = new Date("2024-05-15T00:00:00Z");
   const session = {
@@ -76,6 +84,7 @@ describe("CalendarMonthView", () => {
   it("renders events for the active month and handles clicks", () => {
     const onSessionClick = jest.fn();
     const onActivityClick = jest.fn();
+    const onToggleReminderCompletion = jest.fn();
 
     render(
       <CalendarMonthView
@@ -87,6 +96,8 @@ describe("CalendarMonthView", () => {
         projectsMap={projectsMap}
         onSessionClick={onSessionClick}
         onActivityClick={onActivityClick}
+        onToggleReminderCompletion={onToggleReminderCompletion}
+        completingReminderId={null}
         touchHandlers={{
           handleTouchStart: jest.fn(),
           handleTouchMove: jest.fn(),
@@ -97,7 +108,7 @@ describe("CalendarMonthView", () => {
     );
 
     const sessionButton = screen
-      .getAllByText(/formatted-09:00 Alice/i)
+      .getAllByText(/org-09:00 Alice/i)
       .map((node) => node.closest("button"))
       .find(Boolean);
     expect(sessionButton).toBeTruthy();
@@ -105,12 +116,16 @@ describe("CalendarMonthView", () => {
     expect(onSessionClick).toHaveBeenCalledWith(expect.objectContaining({ id: "session-1" }));
 
     const activityButton = screen
-      .getAllByText(/formatted-10:00 Bob/i)
+      .getAllByText(/org-10:00 Bob/i)
       .map((node) => node.closest("button"))
       .find(Boolean);
     expect(activityButton).toBeTruthy();
     fireEvent.click(activityButton!);
     expect(onActivityClick).toHaveBeenCalledWith(expect.objectContaining({ id: "activity-1" }));
+
+    const toggleButton = screen.getByText("forms:reminders.markComplete");
+    fireEvent.click(toggleButton);
+    expect(onToggleReminderCompletion).toHaveBeenCalledWith(expect.objectContaining({ id: "activity-1" }), true);
   });
 
   it("shows overflow tooltip indicator when more events exist", () => {

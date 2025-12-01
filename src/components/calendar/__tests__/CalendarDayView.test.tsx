@@ -50,6 +50,7 @@ describe("CalendarDayView", () => {
   it("renders sessions and reminders with click handlers", () => {
     const onSessionClick = jest.fn();
     const onActivityClick = jest.fn();
+    const onToggleReminderCompletion = jest.fn();
 
     render(
       <CalendarDayView
@@ -89,6 +90,8 @@ describe("CalendarDayView", () => {
         }}
         onSessionClick={onSessionClick}
         onActivityClick={onActivityClick}
+        onToggleReminderCompletion={onToggleReminderCompletion}
+        completingReminderId={null}
         touchHandlers={touchHandlers}
       />
     );
@@ -111,6 +114,14 @@ describe("CalendarDayView", () => {
     expect(onActivityClick).toHaveBeenCalledWith(
       expect.objectContaining({ id: "activity-1" })
     );
+
+    const toggleButton = screen.getByLabelText("forms:reminders.markComplete");
+    fireEvent.click(toggleButton);
+    expect(onToggleReminderCompletion).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "activity-1" }),
+      true
+    );
+    expect(onActivityClick).toHaveBeenCalledTimes(1);
   });
 
   it("renders empty state when filters disable all sections", () => {

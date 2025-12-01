@@ -1446,6 +1446,13 @@
       "next": "Sonraki",
       "today": "Bugün"
     },
+    "video": {
+      "title": "Takvimin nasıl çalıştığını görün",
+      "description": "Takvimi en verimli şekilde kullanmak için kısa bir özet izleyin.",
+      "watchNow": "Hemen izle",
+      "remindLater": "Daha sonra hatırlat",
+      "dontShow": "İzledim, bir daha gösterme"
+    },
     "filters": {
       "sessions": "Seanslar",
       "reminders": "Hatırlatmalar",

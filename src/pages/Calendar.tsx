@@ -28,11 +28,13 @@ import { useOptimizedTouchHandlers } from "@/hooks/useOptimizedTouchHandlers";
 import { useCalendarPerformanceMonitor } from "@/hooks/useCalendarPerformanceMonitor";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageVideoModal } from "@/components/PageVideoModal";
 import { useTranslation } from "react-i18next";
 import { useThrottledRefetchOnFocus } from "@/hooks/useThrottledRefetchOnFocus";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/hooks/use-toast";
+import { usePageVideoPrompt } from "@/hooks/usePageVideoPrompt";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -60,6 +62,11 @@ interface Activity {
 
 type CalendarProject = ReturnType<typeof useOptimizedCalendarData>["projects"][number];
 
+const CALENDAR_VIDEO_ID =
+  (typeof import.meta !== "undefined" &&
+    (import.meta as { env?: Record<string, string> }).env?.VITE_CALENDAR_VIDEO_ID) ||
+  "EBbAnm1qh_0";
+
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
@@ -69,6 +76,12 @@ export default function Calendar() {
     return window.innerWidth <= 768 ? "day" : "month";
   });
   const { t } = useTranslation(["pages", "forms"]);
+  const {
+    isOpen: isCalendarVideoOpen,
+    close: closeCalendarVideo,
+    markCompleted: markCalendarVideoWatched,
+    snooze: snoozeCalendarVideo
+  } = usePageVideoPrompt({ pageKey: "calendar", snoozeDays: 1 });
 
   const location = useLocation();
   const viewModeOptions = useMemo(
@@ -680,6 +693,22 @@ export default function Calendar() {
               onSessionUpdated={refreshCalendar}
             />
           )}
+
+          <PageVideoModal
+            open={isCalendarVideoOpen}
+            onClose={closeCalendarVideo}
+            videoId={CALENDAR_VIDEO_ID}
+            title={t("calendar.video.title", { defaultValue: "See how Calendar works" })}
+            description={t("calendar.video.description", {
+              defaultValue: "Watch a quick overview to get the most out of your schedule."
+            })}
+            labels={{
+              remindMeLater: t("calendar.video.remindLater", { defaultValue: "Remind me later" }),
+              dontShowAgain: t("calendar.video.dontShow", { defaultValue: "I watched, don't show again" })
+            }}
+            onSnooze={snoozeCalendarVideo}
+            onDontShowAgain={markCalendarVideoWatched}
+          />
         </div>
       </div>
     </CalendarErrorWrapper>

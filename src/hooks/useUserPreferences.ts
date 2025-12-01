@@ -7,6 +7,13 @@ export interface UserPreferences {
   // User Settings
   userId: string;
   activeOrganizationId: string | null;
+  pageVideos?: Record<
+    string,
+    {
+      status: "not_seen" | "snoozed" | "completed";
+      lastPromptedAt?: string | null;
+    }
+  >;
   
   // Onboarding Data
   onboardingStage: OnboardingStage;
@@ -33,22 +40,48 @@ export interface UserPreferences {
 const PREFERENCES_CACHE_KEY = "user-preferences";
 const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours in ms
 
+let pageVideosColumnAvailable: boolean | null = null;
+
 // Fetch all user preferences in a single optimized query
 async function fetchUserPreferences(userId: string): Promise<UserPreferences> {
   console.log("🔄 fetchUserPreferences: Starting unified fetch for user", userId);
   
   // Single query to get essential onboarding data (only columns we know exist)
-  const { data, error } = await supabase
-    .from('user_settings')
-    .select(`
+  const selectColumns = `
       user_id,
       onboarding_stage,
       current_onboarding_step,
       welcome_modal_shown,
+      page_videos,
       updated_at
-    `)
+    `;
+
+  let data: any;
+  let error: any;
+
+  ({ data, error } = await supabase
+    .from('user_settings')
+    .select(selectColumns)
     .eq('user_id', userId)
-    .maybeSingle();
+    .maybeSingle());
+
+  if (error?.code === "42703") {
+    console.warn("🔄 fetchUserPreferences: page_videos column missing, continuing without it");
+    pageVideosColumnAvailable = false;
+    ({ data, error } = await supabase
+      .from('user_settings')
+      .select(`
+        user_id,
+        onboarding_stage,
+        current_onboarding_step,
+        welcome_modal_shown,
+        updated_at
+      `)
+      .eq('user_id', userId)
+      .maybeSingle());
+  } else if (!error) {
+    pageVideosColumnAvailable = true;
+  }
 
   if (error) {
     console.error("🔄 fetchUserPreferences: Database error:", error);
@@ -60,14 +93,20 @@ async function fetchUserPreferences(userId: string): Promise<UserPreferences> {
     console.log("🔄 fetchUserPreferences: No data found, creating defaults");
     
     // Create minimal default user settings (only essential columns)
+    const baseInsert: Record<string, unknown> = {
+      user_id: userId,
+      onboarding_stage: 'not_started',
+      current_onboarding_step: 1,
+      welcome_modal_shown: false
+    };
+
+    if (pageVideosColumnAvailable !== false) {
+      baseInsert.page_videos = {};
+    }
+
     const { error: insertError } = await supabase
       .from('user_settings')
-      .insert({
-        user_id: userId,
-        onboarding_stage: 'not_started',
-        current_onboarding_step: 1,
-        welcome_modal_shown: false
-      });
+      .insert(baseInsert);
 
     if (insertError) {
       console.error("🔄 fetchUserPreferences: Error creating defaults:", insertError);
@@ -78,6 +117,7 @@ async function fetchUserPreferences(userId: string): Promise<UserPreferences> {
     return {
       userId,
       activeOrganizationId: null,
+      pageVideos: {},
       onboardingStage: 'not_started' as OnboardingStage,
       currentOnboardingStep: 1,
       welcomeModalShown: false,
@@ -97,6 +137,7 @@ async function fetchUserPreferences(userId: string): Promise<UserPreferences> {
   const preferences: UserPreferences = {
     userId: data.user_id,
     activeOrganizationId: null, // Will get from organization context
+    pageVideos: (pageVideosColumnAvailable !== false && data.page_videos) || {},
     onboardingStage: (data.onboarding_stage as OnboardingStage) || 'not_started',
     currentOnboardingStep: data.current_onboarding_step || 1,
     welcomeModalShown: data.welcome_modal_shown || false,
@@ -153,16 +194,20 @@ export function useUserPreferences() {
     );
 
     try {
-      // Update database (only onboarding-related columns for now)
+      // Update database (onboarding + lightweight page video prefs)
       const updateData: {
         onboarding_stage?: OnboardingStage;
         current_onboarding_step?: number;
         welcome_modal_shown?: boolean;
+        page_videos?: UserPreferences["pageVideos"];
       } = {};
       
       if (updates.onboardingStage !== undefined) updateData.onboarding_stage = updates.onboardingStage;
       if (updates.currentOnboardingStep !== undefined) updateData.current_onboarding_step = updates.currentOnboardingStep;
       if (updates.welcomeModalShown !== undefined) updateData.welcome_modal_shown = updates.welcomeModalShown;
+      if (updates.pageVideos !== undefined && pageVideosColumnAvailable !== false) {
+        updateData.page_videos = updates.pageVideos;
+      }
       
       // Only update if we have data to update
       if (Object.keys(updateData).length === 0) {
@@ -175,7 +220,14 @@ export function useUserPreferences() {
         .update(updateData)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === "42703") {
+          console.warn("🔄 updatePreferences: page_videos column missing, skipping page video updates");
+          pageVideosColumnAvailable = false;
+        } else {
+          throw error;
+        }
+      }
 
       console.log("🔄 updatePreferences: Database updated successfully");
       

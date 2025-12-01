@@ -1443,6 +1443,13 @@
       "next": "Next",
       "today": "Today"
     },
+    "video": {
+      "title": "See how Calendar works",
+      "description": "Watch a quick overview to get the most out of your schedule.",
+      "watchNow": "Watch now",
+      "remindLater": "Remind me later",
+      "dontShow": "I watched, don't show again"
+    },
     "filters": {
       "sessions": "Sessions",
       "reminders": "Reminders",

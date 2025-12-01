@@ -1,16 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { cn, getDateFnsLocale } from "@/lib/utils";
+import DateTimePicker from "@/components/ui/date-time-picker";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
@@ -55,7 +50,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<"paid" | "due">("paid");
-  const [datePaid, setDatePaid] = useState<Date | undefined>(undefined);
+  const [datePaid, setDatePaid] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   
   const toast = useI18nToast();
@@ -67,12 +62,12 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
       setAmount(payment.amount.toString());
       setDescription(payment.description ?? "");
       setStatus(payment.status);
-      setDatePaid(payment.date_paid ? new Date(payment.date_paid) : undefined);
+      setDatePaid(payment.date_paid ?? "");
     } else {
       setAmount("");
       setDescription("");
       setStatus("paid");
-      setDatePaid(undefined);
+      setDatePaid("");
     }
   }, [payment]);
 
@@ -81,7 +76,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
       resetFormFromPayment();
     }
     if (!open) {
-      setDatePaid(undefined);
+      setDatePaid("");
     }
   }, [open, resetFormFromPayment]);
 
@@ -107,7 +102,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
         amount: parsedAmount,
         description: description.trim() || null,
         status,
-        date_paid: status === "paid" ? datePaid?.toISOString().split("T")[0] : null,
+        date_paid: status === "paid" ? (datePaid || null) : null,
         deposit_allocation: Math.max(nextDepositAllocation, 0)
       };
 
@@ -140,7 +135,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
       amount !== payment.amount.toString() ||
       description !== (payment.description || "") ||
       status !== payment.status ||
-      (status === 'paid' && datePaid?.toISOString().split('T')[0] !== payment.date_paid)
+      (status === 'paid' && (datePaid || null) !== payment.date_paid)
     )
   );
 
@@ -236,30 +231,17 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
           {status === 'paid' && (
             <div className="space-y-2">
               <Label>{t('edit_payment.date_paid')}</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !datePaid && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {datePaid ? format(datePaid, "PPP", { locale: getDateFnsLocale() }) : <span>{t('edit_payment.pick_date')}</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={datePaid}
-                    onSelect={setDatePaid}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                    locale={getDateFnsLocale()}
-                  />
-                </PopoverContent>
-              </Popover>
+              <DateTimePicker
+                value={datePaid}
+                onChange={setDatePaid}
+                placeholder={t('edit_payment.pick_date')}
+                todayLabel={t('dateTimePicker.today')}
+                clearLabel={t('dateTimePicker.clear')}
+                doneLabel={t('dateTimePicker.done')}
+                timeLabel={t('dateTimePicker.time')}
+                mode="date"
+                buttonClassName="w-full justify-start text-left font-normal"
+              />
             </div>
           )}
         </div>

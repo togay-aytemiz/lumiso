@@ -1,20 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { format, isSameDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
+import DateTimePicker from "@/components/ui/date-time-picker";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
-import { cn, getDateFnsLocale } from "@/lib/utils";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import {
   DEFAULT_DEPOSIT_CONFIG,
@@ -555,24 +551,24 @@ export function ProjectDepositPaymentDialog({
 
   const [amount, setAmount] = useState<string>("");
   const [description, setDescription] = useState<string>("");
-  const [datePaid, setDatePaid] = useState<Date | undefined>(new Date());
+  const [datePaid, setDatePaid] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
-  const initialDateRef = useRef<Date | null>(null);
+  const initialDateRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
     const now = new Date();
-    initialDateRef.current = now;
+    const todayString = now.toISOString().split("T")[0];
+    initialDateRef.current = todayString;
     setAmount("");
     setDescription("");
-    setDatePaid(now);
+    setDatePaid(todayString);
   }, [open, depositAmount, depositPaid]);
 
   const remainingAmount = Math.max(depositAmount - depositPaid, 0);
 
   const dateChanged =
-    Boolean(datePaid && initialDateRef.current && !Number.isNaN(datePaid.getTime())) &&
-    !isSameDay(datePaid as Date, initialDateRef.current as Date);
+    datePaid !== initialDateRef.current;
 
   const isDirty = Boolean(amount.trim() || description.trim() || dateChanged);
 
@@ -625,8 +621,7 @@ export function ProjectDepositPaymentDialog({
         );
       }
 
-      const paymentDate =
-        datePaid?.toISOString().split("T")[0] ?? new Date().toISOString().split("T")[0];
+      const paymentDate = datePaid || new Date().toISOString().split("T")[0];
 
       const { error: insertError } = await supabase.from("payments").insert({
         project_id: projectId,
@@ -757,32 +752,17 @@ export function ProjectDepositPaymentDialog({
 
           <div className="space-y-2">
             <Label>{t("payments.date_paid", { defaultValue: "Payment Date" })}</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !datePaid && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {datePaid
-                    ? format(datePaid, "PPP", { locale: getDateFnsLocale() })
-                    : t("payments.pick_date", { defaultValue: "Select a date" })}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={datePaid}
-                  onSelect={setDatePaid}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                  locale={getDateFnsLocale()}
-                />
-              </PopoverContent>
-            </Popover>
+            <DateTimePicker
+              value={datePaid}
+              onChange={setDatePaid}
+              placeholder={t("payments.pick_date", { defaultValue: "Select a date" })}
+              todayLabel={t("dateTimePicker.today")}
+              clearLabel={t("dateTimePicker.clear")}
+              doneLabel={t("dateTimePicker.done")}
+              timeLabel={t("dateTimePicker.time")}
+              mode="date"
+              buttonClassName="w-full justify-start text-left font-normal"
+            />
           </div>
         </div>
       </AppSheetModal>

@@ -6,11 +6,9 @@ import {
   Trash2,
   HelpCircle,
   ChevronDown,
-  CalendarIcon,
   CheckCircle2,
   MoreHorizontal,
 } from "lucide-react";
-import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,11 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { PAYMENT_COLORS } from "@/lib/paymentColors";
-import {
-  cn,
-  formatLongDate,
-  getDateFnsLocale,
-} from "@/lib/utils";
+import { formatLongDate } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { EditPaymentDialog } from "./EditPaymentDialog";
@@ -58,12 +52,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import DateTimePicker from "@/components/ui/date-time-picker";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,6 +63,7 @@ import { Switch } from "@/components/ui/switch";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { useI18nToast } from "@/lib/toastHelpers";
+import { cn } from "@/lib/utils";
 import {
   computeDepositAmount,
   parseDepositConfig,
@@ -1601,7 +1591,7 @@ function GeneralPaymentDialog({
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<"paid" | "due">("paid");
-  const [datePaid, setDatePaid] = useState<Date | undefined>(new Date());
+  const [datePaid, setDatePaid] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
 
   const initialStateRef = useRef<GeneralPaymentInitialState>({
@@ -1620,7 +1610,7 @@ function GeneralPaymentDialog({
       setAmount("");
       setDescription("");
       setStatus("paid");
-      setDatePaid(initialDate);
+      setDatePaid(toDateInputValue(initialDate) ?? "");
 
       initialStateRef.current = {
         amountValue: null,
@@ -1645,8 +1635,7 @@ function GeneralPaymentDialog({
       : normalizedAmount.length > 0;
   const hasDescriptionChange = normalizedDescription.length > 0;
   const hasStatusChange = status !== initialState.status;
-  const currentDateValue =
-    status === "paid" ? toDateInputValue(datePaid) : null;
+  const currentDateValue = status === "paid" ? datePaid || null : null;
   const shouldCompareDate = initialState.status === "paid" && status === "paid";
   const hasDateChange =
     shouldCompareDate && currentDateValue !== initialState.datePaid;
@@ -1661,7 +1650,7 @@ function GeneralPaymentDialog({
       setAmount(initial.amountInput);
       setDescription(initial.description);
       setStatus(initial.status);
-      setDatePaid(initial.datePaid ? new Date(initial.datePaid) : undefined);
+      setDatePaid(initial.datePaid ?? "");
       onOpenChange(false);
     },
   });
@@ -1701,8 +1690,7 @@ function GeneralPaymentDialog({
       const depositAllocation = Math.min(parsedAmount, depositRemaining);
       const paymentDate =
         status === "paid"
-          ? datePaid?.toISOString().split("T")[0] ??
-            new Date().toISOString().split("T")[0]
+          ? datePaid || new Date().toISOString().split("T")[0]
           : null;
 
       const { error } = await supabase.from("payments").insert({
@@ -1843,32 +1831,17 @@ function GeneralPaymentDialog({
           {status === "paid" && (
             <div className="space-y-2">
               <Label>{t("payments.date_paid")}</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !datePaid && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {datePaid
-                      ? format(datePaid, "PPP", { locale: getDateFnsLocale() })
-                      : t("payments.pick_date")}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={datePaid}
-                    onSelect={setDatePaid}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                    locale={getDateFnsLocale()}
-                  />
-                </PopoverContent>
-              </Popover>
+              <DateTimePicker
+                value={datePaid}
+                onChange={setDatePaid}
+                placeholder={t("payments.pick_date")}
+                todayLabel={t("dateTimePicker.today")}
+                clearLabel={t("dateTimePicker.clear")}
+                doneLabel={t("dateTimePicker.done")}
+                timeLabel={t("dateTimePicker.time")}
+                mode="date"
+                buttonClassName="w-full justify-start text-left font-normal"
+              />
             </div>
           )}
           <div className="space-y-2">
@@ -1925,7 +1898,7 @@ function RefundPaymentDialog({
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
   const [applyToDeposit, setApplyToDeposit] = useState(false);
-  const [datePaid, setDatePaid] = useState<Date | undefined>(new Date());
+  const [datePaid, setDatePaid] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
 
   const initialStateRef = useRef<RefundPaymentInitialState>({
@@ -1943,7 +1916,7 @@ function RefundPaymentDialog({
       setAmount("");
       setReason("");
       setApplyToDeposit(false);
-      setDatePaid(initialDate);
+      setDatePaid(toDateInputValue(initialDate) ?? "");
 
       initialStateRef.current = {
         amountInput: "",
@@ -1959,7 +1932,7 @@ function RefundPaymentDialog({
   const initialState = initialStateRef.current;
   const normalizedAmount = amount.trim();
   const normalizedReason = reason.trim();
-  const currentDateValue = toDateInputValue(datePaid);
+  const currentDateValue = datePaid || null;
   const hasAmountChange = normalizedAmount !== initialState.amountInput;
   const hasReasonChange = normalizedReason !== initialState.reason;
   const hasApplyChange = applyToDeposit !== initialState.applyToDeposit;
@@ -1979,7 +1952,7 @@ function RefundPaymentDialog({
       setAmount(initial.amountInput);
       setReason(initial.reason);
       setApplyToDeposit(initial.applyToDeposit);
-      setDatePaid(initial.datePaid ? new Date(initial.datePaid) : undefined);
+      setDatePaid(initial.datePaid ?? "");
       onOpenChange(false);
     },
   });
@@ -2022,8 +1995,7 @@ function RefundPaymentDialog({
           : 0;
 
       const paymentDate =
-        datePaid?.toISOString().split("T")[0] ??
-        new Date().toISOString().split("T")[0];
+        datePaid || new Date().toISOString().split("T")[0];
 
       const { error } = await supabase.from("payments").insert({
         project_id: projectId,
@@ -2169,32 +2141,17 @@ function RefundPaymentDialog({
           </div>
           <div className="space-y-2">
             <Label>{t("payments.date_paid")}</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !datePaid && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {datePaid
-                    ? format(datePaid, "PPP", { locale: getDateFnsLocale() })
-                    : t("payments.pick_date")}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={datePaid}
-                  onSelect={setDatePaid}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                  locale={getDateFnsLocale()}
-                />
-              </PopoverContent>
-            </Popover>
+            <DateTimePicker
+              value={datePaid}
+              onChange={setDatePaid}
+              placeholder={t("payments.pick_date")}
+              todayLabel={t("dateTimePicker.today")}
+              clearLabel={t("dateTimePicker.clear")}
+              doneLabel={t("dateTimePicker.done")}
+              timeLabel={t("dateTimePicker.time")}
+              mode="date"
+              buttonClassName="w-full justify-start text-left font-normal"
+            />
           </div>
         </div>
         {totalPaid <= 0 && (

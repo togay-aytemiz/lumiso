@@ -15,7 +15,7 @@ import "react-calendar/dist/Calendar.css";
 import "@/components/react-calendar.css";
 
 interface DateTimePickerProps {
-  value?: string; // ISO local string: YYYY-MM-DDTHH:mm
+  value?: string; // ISO local string: YYYY-MM-DDTHH:mm (datetime) or YYYY-MM-DD (date-only)
   onChange: (value: string) => void;
   className?: string;
   buttonClassName?: string;
@@ -24,30 +24,42 @@ interface DateTimePickerProps {
   todayLabel?: string;
   clearLabel?: string;
   doneLabel?: string;
+  mode?: "datetime" | "date";
 }
 
 type CalendarValue = Date | Date[] | null;
 
-function toIsoLocal(date: Date, hours: number, minutes: number) {
+function toIsoLocal(date: Date, hours: number, minutes: number, mode: "datetime" | "date") {
   const d = new Date(date);
   d.setHours(hours, minutes, 0, 0);
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const datePart = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  if (mode === "date") {
+    return datePart;
+  }
+  return `${datePart}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function parseIsoLocal(value?: string) {
+function parseIsoLocal(value?: string, mode: "datetime" | "date" = "datetime") {
   if (!value) return { date: undefined as Date | undefined, hours: 9, minutes: 0 };
   const [datePart, timePart] = value.split("T");
   const [y, m, d] = datePart.split("-").map(Number);
   const [hh, mm] = (timePart || "09:00").split(":").map(Number);
-  return { date: new Date(y, (m || 1) - 1, d || 1), hours: hh || 9, minutes: mm || 0 };
+  return {
+    date: new Date(y, (m || 1) - 1, d || 1),
+    hours: mode === "datetime" ? hh || 9 : 9,
+    minutes: mode === "datetime" ? mm || 0 : 0,
+  };
 }
 
-const displayFormat = (date?: Date, h?: number, m?: number) => {
+const displayFormat = (date?: Date, h?: number, m?: number, mode: "datetime" | "date" = "datetime") => {
   if (!date) return undefined;
   const withTime = new Date(date);
-  withTime.setHours(h ?? 0, m ?? 0, 0, 0);
-  return format(withTime, "PP p", { locale: getDateFnsLocale() });
+  if (mode === "datetime") {
+    withTime.setHours(h ?? 0, m ?? 0, 0, 0);
+    return format(withTime, "PP p", { locale: getDateFnsLocale() });
+  }
+  return format(withTime, "PPP", { locale: getDateFnsLocale() });
 };
 
 export function DateTimePicker({
@@ -60,10 +72,11 @@ export function DateTimePicker({
   todayLabel = "Today",
   clearLabel = "Clear",
   doneLabel = "Done",
+  mode = "datetime",
 }: DateTimePickerProps) {
   const { date: initialDate, hours: initialHours, minutes: initialMinutes } = useMemo(
-    () => parseIsoLocal(value),
-    [value]
+    () => parseIsoLocal(value, mode),
+    [value, mode]
   );
 
   const [open, setOpen] = useState(false);
@@ -75,11 +88,11 @@ export function DateTimePicker({
   const minuteSelectId = `${pickerId}-minute`;
 
   useEffect(() => {
-    const parsed = parseIsoLocal(value);
+    const parsed = parseIsoLocal(value, mode);
     setSelectedDate(parsed.date);
     setHours(parsed.hours);
     setMinutes(parsed.minutes);
-  }, [value]);
+  }, [value, mode]);
 
   const browserLocale = getUserLocale();
   const hourOptions = Array.from({ length: 24 }, (_, i) => i);
@@ -104,7 +117,7 @@ export function DateTimePicker({
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {displayFormat(selectedDate, hours, minutes) || placeholder}
+            {displayFormat(selectedDate, hours, minutes, mode) || placeholder}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 rounded-xl border border-border shadow-md" align="start">
@@ -121,65 +134,69 @@ export function DateTimePicker({
                 if (nextDate instanceof Date) {
                   setSelectedDate(nextDate);
                   // Automatically emit the change when date is selected
-                  onChange(toIsoLocal(nextDate, hours, minutes));
+                  onChange(toIsoLocal(nextDate, hours, minutes, mode));
                 }
               }}
               value={selectedDate || null}
               formatShortWeekday={(_, date) => new Intl.DateTimeFormat(browserLocale, { weekday: 'short' }).format(date)}
             />
-            <div className="px-1 pt-2">
-              <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                <Clock className="h-3 w-3" /> {timeLabel}
-              </Label>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor={hourSelectId} className="sr-only">
-                    Hour
+            <div className="px-1 pt-2 space-y-3">
+              {mode === "datetime" && (
+                <>
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> {timeLabel}
                   </Label>
-                  <select
-                    id={hourSelectId}
-                    className={timeSelectClassName}
-                    value={String(hours)}
-                    onChange={(event) => {
-                      const newHours = parseInt(event.target.value, 10);
-                      setHours(newHours);
-                      if (selectedDate) {
-                        onChange(toIsoLocal(selectedDate, newHours, minutes));
-                      }
-                    }}
-                  >
-                    {hourOptions.map((h) => (
-                      <option key={h} value={h}>
-                        {String(h).padStart(2, "0")}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor={minuteSelectId} className="sr-only">
-                    Minutes
-                  </Label>
-                  <select
-                    id={minuteSelectId}
-                    className={timeSelectClassName}
-                    value={String(minutes)}
-                    onChange={(event) => {
-                      const newMinutes = parseInt(event.target.value, 10);
-                      setMinutes(newMinutes);
-                      if (selectedDate) {
-                        onChange(toIsoLocal(selectedDate, hours, newMinutes));
-                      }
-                    }}
-                  >
-                    {minuteOptions.map((m) => (
-                      <option key={m} value={m}>
-                        {String(m).padStart(2, "0")}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center justify-between">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor={hourSelectId} className="sr-only">
+                        Hour
+                      </Label>
+                      <select
+                        id={hourSelectId}
+                        className={timeSelectClassName}
+                        value={String(hours)}
+                        onChange={(event) => {
+                          const newHours = parseInt(event.target.value, 10);
+                          setHours(newHours);
+                          if (selectedDate) {
+                            onChange(toIsoLocal(selectedDate, newHours, minutes, mode));
+                          }
+                        }}
+                      >
+                        {hourOptions.map((h) => (
+                          <option key={h} value={h}>
+                            {String(h).padStart(2, "0")}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor={minuteSelectId} className="sr-only">
+                        Minutes
+                      </Label>
+                      <select
+                        id={minuteSelectId}
+                        className={timeSelectClassName}
+                        value={String(minutes)}
+                        onChange={(event) => {
+                          const newMinutes = parseInt(event.target.value, 10);
+                          setMinutes(newMinutes);
+                          if (selectedDate) {
+                            onChange(toIsoLocal(selectedDate, hours, newMinutes, mode));
+                          }
+                        }}
+                      >
+                        {minuteOptions.map((m) => (
+                          <option key={m} value={m}>
+                            {String(m).padStart(2, "0")}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"
@@ -189,7 +206,7 @@ export function DateTimePicker({
                       const today = new Date();
                       setSelectedDate(today);
                       // Also emit the change when "Today" is clicked
-                      onChange(toIsoLocal(today, hours, minutes));
+                      onChange(toIsoLocal(today, hours, minutes, mode));
                     }}
                   >
                     {todayLabel}

@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 import { useLeadStatuses } from "@/hooks/useOrganizationData";
 import { LeadInitials } from "@/components/LeadInitials";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LeadOption {
   id: string;
@@ -36,6 +37,7 @@ export const LeadStep = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [createLeadOpen, setCreateLeadOpen] = useState(false);
+  const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const latestRequestRef = useRef(0);
   const { data: leadStatuses = [], isLoading: leadStatusesLoading } = useLeadStatuses();
@@ -217,7 +219,12 @@ export const LeadStep = () => {
           </Button>
 
           {dropdownOpen && (
-            <div className="absolute top-full left-0 right-0 z-50 mt-2 overflow-hidden rounded-2xl border border-border bg-background shadow-xl">
+            <div
+              className={cn(
+                "z-50 overflow-hidden rounded-2xl border border-border bg-background shadow-xl",
+                isMobile ? "relative mt-3" : "absolute top-full left-0 right-0 mt-2"
+              )}
+            >
               <div className="px-4 py-3">
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -230,7 +237,12 @@ export const LeadStep = () => {
                   />
                 </div>
               </div>
-              <div className="relative max-h-64 min-h-[10rem] overflow-y-auto border-t border-border/80 bg-white">
+              <div
+                className={cn(
+                  "relative min-h-[10rem] overflow-y-auto border-t border-border/80 bg-white",
+                  isMobile ? "max-h-[60vh]" : "max-h-64"
+                )}
+              >
                 {showInitialLoading ? (
                   <div className="flex h-full flex-col items-center justify-center gap-2 px-4 py-6 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin text-emerald-500" />

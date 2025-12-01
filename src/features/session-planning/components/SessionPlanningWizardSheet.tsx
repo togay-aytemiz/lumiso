@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { ReactNode, CSSProperties } from "react";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { SessionPlanningProvider } from "../context/SessionPlanningProvider";
 import { SessionSavedResourcesProvider } from "../context/SessionSavedResourcesProvider";
@@ -28,6 +28,7 @@ import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { formatDateWithOrgSettings, formatTimeWithOrgSettings } from "@/lib/dateFormatUtils";
 import { getUserLocale } from "@/lib/utils";
 import SessionSheetView from "@/components/SessionSheetView";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const DRAFT_STORAGE_PREFIX = "session-wizard-draft";
 const DRAFT_VERSION = 1;
@@ -71,6 +72,33 @@ interface CompletionSummary {
   entrySource?: string;
   notifications: SessionPlanningState["notifications"];
 }
+
+type ConfettiPiece = {
+  id: number;
+  left: number;
+  delay: number;
+  duration: number;
+  drift: number;
+  color: string;
+  size: number;
+};
+
+type ConfettiPieceStyle = CSSProperties & {
+  "--confetti-drift"?: string;
+};
+
+const CONFETTI_COLORS = ["#1EB29F", "#34D399", "#FBBF24", "#F472B6", "#60A5FA"];
+
+const createConfettiPieces = (count = 36): ConfettiPiece[] =>
+  Array.from({ length: count }, (_, id) => ({
+    id,
+    left: Math.random() * 100,
+    delay: Math.random() * 0.5,
+    duration: 2.6 + Math.random() * 1.4,
+    drift: (Math.random() - 0.5) * 60,
+    color: CONFETTI_COLORS[id % CONFETTI_COLORS.length],
+    size: 0.6 + Math.random() * 0.8
+  }));
 
 const prepareStateForDraft = (state: SessionPlanningState, savedAt: string): SessionPlanningState => {
   const clone = JSON.parse(JSON.stringify(state)) as SessionPlanningState;
@@ -209,6 +237,20 @@ const SessionPlanningWizardSheetInner = ({
   const navigate = useNavigate();
   const [isSessionViewerOpen, setIsSessionViewerOpen] = useState(false);
   const [sessionViewerId, setSessionViewerId] = useState<string | null>(null);
+  const isMobile = useIsMobile();
+  const successTopRef = useRef<HTMLDivElement | null>(null);
+  const [confettiPieces, setConfettiPieces] = useState<ConfettiPiece[]>([]);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const confettiTimerRef = useRef<number | null>(null);
+
+  const launchConfetti = useCallback(() => {
+    setConfettiPieces(createConfettiPieces());
+    setShowConfetti(true);
+    if (confettiTimerRef.current) {
+      window.clearTimeout(confettiTimerRef.current);
+    }
+    confettiTimerRef.current = window.setTimeout(() => setShowConfetti(false), 4200);
+  }, []);
   const needsProjectLookup = useMemo(
     () =>
       !isEditing &&
@@ -253,6 +295,27 @@ const SessionPlanningWizardSheetInner = ({
       setIsSessionViewerOpen(false);
     }
   }, [completionSummary]);
+
+  useEffect(() => {
+    return () => {
+      if (confettiTimerRef.current) {
+        window.clearTimeout(confettiTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!completionSummary) {
+      setShowConfetti(false);
+    }
+  }, [completionSummary]);
+
+  useEffect(() => {
+    if (!completionSummary || !isMobile) return;
+    if (successTopRef.current?.scrollIntoView) {
+      successTopRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [completionSummary, isMobile]);
 
   const clearDraft = useCallback(() => {
     const key = draftKeyRef.current;
@@ -1021,6 +1084,7 @@ const SessionPlanningWizardSheetInner = ({
         entrySource,
         notifications: { ...state.notifications },
       });
+      launchConfetti();
       wizardOpenedRef.current = false;
       successTrackedRef.current = false;
 
@@ -1042,6 +1106,23 @@ const SessionPlanningWizardSheetInner = ({
 
   return (
     <>
+      {showConfetti ? (
+        <div className="confetti-container" aria-hidden="true">
+          {confettiPieces.map((piece) => {
+            const pieceStyle: ConfettiPieceStyle = {
+              left: `${piece.left}%`,
+              animationDelay: `${piece.delay}s`,
+              animationDuration: `${piece.duration}s`,
+              backgroundColor: piece.color,
+              width: `${piece.size * 8}px`,
+              height: `${piece.size * 14}px`,
+              "--confetti-drift": `${piece.drift}vw`
+            };
+
+            return <span key={piece.id} className="confetti-piece" style={pieceStyle} />;
+          })}
+        </div>
+      ) : null}
       <AppSheetModal
         title={t("wizard.title")}
         isOpen={isOpen}
@@ -1052,28 +1133,32 @@ const SessionPlanningWizardSheetInner = ({
         dirty={state.meta.isDirty}
         onDirtyClose={handleClose}
         headerAccessory={
-          <div
-            ref={handleHeaderActionRef}
-            className="flex w-full flex-wrap items-center justify-end gap-2"
-          />
+          (!isMobile || !completionSummary && !showContextLoader) ? (
+            <div
+              ref={handleHeaderActionRef}
+              className="flex w-full flex-wrap items-center justify-end gap-2"
+            />
+          ) : undefined
         }
       >
         {showContextLoader ? (
           <SessionPlanningLoader label={t("wizard.preparingEntry")} />
         ) : completionSummary ? (
-          <SessionPlanningSuccess
-            summary={completionSummary}
-            onClose={handleSuccessClose}
-            onScheduleAnother={handleScheduleAnother}
-            onViewSession={
-              completionSummary.sessionId
-                ? () => {
-                    setSessionViewerId(completionSummary.sessionId);
-                    setIsSessionViewerOpen(true);
-                  }
-                : undefined
-            }
-          />
+          <div ref={successTopRef}>
+            <SessionPlanningSuccess
+              summary={completionSummary}
+              onClose={handleSuccessClose}
+              onScheduleAnother={handleScheduleAnother}
+              onViewSession={
+                completionSummary.sessionId
+                  ? () => {
+                      setSessionViewerId(completionSummary.sessionId);
+                      setIsSessionViewerOpen(true);
+                    }
+                  : undefined
+              }
+            />
+          </div>
         ) : (
           <SessionPlanningOriginalStateProvider value={initialSessionSnapshotRef.current}>
             <SessionSavedResourcesProvider>
@@ -1082,7 +1167,8 @@ const SessionPlanningWizardSheetInner = ({
                 onComplete={handleComplete}
                 isCompleting={isCompleting}
                 actionPlacement="header"
-                headerActionContainer={headerActionElement}
+                headerActionContainer={!isMobile || !showContextLoader ? headerActionElement : null}
+                isOpen={isOpen}
               />
             </SessionSavedResourcesProvider>
           </SessionPlanningOriginalStateProvider>
@@ -1226,8 +1312,8 @@ const SessionPlanningSuccess = ({
     : t("summary.values.notLinked");
 
   return (
-    <div className="flex min-h-[75vh] max-h-[calc(95vh-72px)] flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-8 text-center sm:min-h-[360px] sm:max-h-none sm:px-6 sm:py-10 sm:overflow-visible">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+    <div className="flex min-h-[75vh] max-h-[calc(95vh-72px)] flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-8 pt-16 text-center sm:min-h-[360px] sm:max-h-none sm:px-6 sm:py-10 sm:pt-14 sm:overflow-visible">
+      <div className="mt-4 flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 sm:mt-1">
         <CheckCircle2 className="h-10 w-10" aria-hidden="true" />
       </div>
       <div className="space-y-2">
@@ -1259,7 +1345,7 @@ const SessionPlanningSuccess = ({
         />
         {showWorkflowSetupAlert ? (
           <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-            <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-600" aria-hidden="true" />
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden="true" />
             <div className="space-y-2 text-left text-amber-900">
               <div className="space-y-1">
                 <p className="text-sm font-semibold">{t("wizard.successWorkflowsMissingTitle")}</p>
@@ -1269,7 +1355,7 @@ const SessionPlanningSuccess = ({
               </div>
               <Button
                 variant="textAccent"
-                className="text-amber-800 hover:text-amber-900"
+                className="justify-start px-0 text-amber-800 hover:text-amber-900"
                 onClick={openWorkflowManager}
               >
                 {t("wizard.successManageWorkflows")}

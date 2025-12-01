@@ -396,32 +396,10 @@ const NotificationPreview = ({
   if (!hasConfiguredWorkflows) {
     return (
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-        <div className="space-y-1">
-          <h4 className="text-sm font-semibold text-amber-900">{t("summary.notifications.title")}</h4>
-          <p className="text-xs text-amber-800">{t("summary.notifications.subtitle")}</p>
-        </div>
-        <div className="mt-4 space-y-2 rounded-xl border border-amber-100 bg-white/70 p-4 text-sm text-amber-900">
-          <p>{t("summary.notifications.noWorkflowsConfigured")}</p>
-          <p className="text-xs text-amber-800">
-            {t("summary.notifications.noWorkflowsInstructions")}
-          </p>
-          <div className="flex flex-wrap gap-4 text-xs font-semibold">
-            <button
-              type="button"
-              onClick={() => openInNewTab("/workflows")}
-              className="underline underline-offset-4 hover:text-amber-950"
-            >
-              {t("summary.notifications.manageLink")}
-            </button>
-            <button
-              type="button"
-              onClick={() => openInNewTab("/templates")}
-              className="underline underline-offset-4 hover:text-amber-950"
-            >
-              {t("summary.notifications.manageTemplatesLink")}
-            </button>
-          </div>
-        </div>
+        <h4 className="text-sm font-semibold text-amber-900">{t("summary.notifications.noWorkflowsTitle")}</h4>
+        <p className="mt-2 text-xs text-amber-800 leading-relaxed">
+          {t("summary.notifications.noWorkflowsDescription")}
+        </p>
       </div>
     );
   }

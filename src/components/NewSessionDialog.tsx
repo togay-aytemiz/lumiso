@@ -165,10 +165,7 @@ const WizardNewSessionDialog = ({
         isOpen={dialogOpen}
         onOpenChange={setDialogOpen}
         entrySource="sessionsPage"
-        onSessionScheduled={() => {
-          onSessionScheduled?.();
-          setDialogOpen(false);
-        }}
+        onSessionScheduled={onSessionScheduled}
       />
     </>
   );

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +32,7 @@ interface SessionPlanningWizardProps {
   isCompleting?: boolean;
   actionPlacement?: "inline" | "header";
   headerActionContainer?: HTMLElement | null;
+  isOpen?: boolean;
 }
 
 const STEP_COMPONENTS: Record<SessionPlanningStepId, () => JSX.Element> = {
@@ -50,6 +51,7 @@ export const SessionPlanningWizard = ({
   actionPlacement = "inline",
   headerActionContainer,
   onCancel,
+  isOpen = true,
 }: SessionPlanningWizardProps) => {
   const { state } = useSessionPlanningContext();
   const { meta } = state;
@@ -86,6 +88,7 @@ export const SessionPlanningWizard = ({
     [sessionTypes]
   );
   const viewedStepRef = useRef<SessionPlanningStepId | null>(null);
+  const topSentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (isEditing) return;
@@ -122,6 +125,51 @@ export const SessionPlanningWizard = ({
       entrySource: state.meta.entrySource ?? "direct",
     });
   }, [meta.currentStep, state.meta.entrySource]);
+
+  const snapToTop = useCallback(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+    if (topSentinelRef.current?.scrollIntoView) {
+      topSentinelRef.current.scrollIntoView({ behavior: "auto", block: "start" });
+    }
+  }, []);
+
+  const scrollToTopSmooth = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      if (topSentinelRef.current?.scrollIntoView) {
+        topSentinelRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      if (scrollContainerRef.current) {
+        try {
+          scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
+        } catch {
+          scrollContainerRef.current.scrollTop = 0;
+        }
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    snapToTop();
+    scrollToTopSmooth();
+  }, [meta.currentStep, snapToTop, scrollToTopSmooth]);
+
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    snapToTop();
+  }, [isOpen, meta.currentStep]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    snapToTop();
+    const raf = window.requestAnimationFrame(scrollToTopSmooth);
+    const timer = window.setTimeout(scrollToTopSmooth, 140);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.clearTimeout(timer);
+    };
+  }, [isOpen, snapToTop, scrollToTopSmooth]);
 
   const stepStatus = useMemo(() => {
     const toSummary = (value?: string | null) => {
@@ -472,15 +520,16 @@ export const SessionPlanningWizard = ({
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col">
-            <div
-              ref={scrollContainerRef}
-              className="flex-1 overflow-y-auto px-2 py-4 sm:px-6 sm:py-10 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            >
-              <div className="mx-auto w/full max-w-3xl space-y-2 sm:space-y-6 pb-8 sm:pb-10">
-                <div
-                  key={meta.currentStep}
-                  className="animate-in fade-in slide-in-from-bottom-3 rounded-3xl border border-slate-200/70 bg-white/95 p-3 shadow-xl shadow-slate-900/5 backdrop-blur transition-all duration-300 ease-out sm:p-6"
-                >
+          <div
+            ref={scrollContainerRef}
+            className="flex-1 overflow-y-auto px-2 py-4 sm:px-6 sm:py-10 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            <div ref={topSentinelRef} />
+            <div className="mx-auto w-full max-w-3xl space-y-2 sm:space-y-6 pb-8 sm:pb-10">
+              <div
+                key={meta.currentStep}
+                className="animate-in fade-in slide-in-from-bottom-3 rounded-3xl border border-slate-200/70 bg-white/95 p-3 shadow-xl shadow-slate-900/5 backdrop-blur transition-all duration-300 ease-out sm:p-6"
+              >
                   {meta.currentStep === "project" ? (
                     <ProjectStep
                       onContinue={() =>

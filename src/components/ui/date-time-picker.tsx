@@ -25,6 +25,7 @@ interface DateTimePickerProps {
   clearLabel?: string;
   doneLabel?: string;
   mode?: "datetime" | "date";
+  popoverModal?: boolean;
 }
 
 type CalendarValue = Date | Date[] | null;
@@ -73,6 +74,7 @@ export function DateTimePicker({
   clearLabel = "Clear",
   doneLabel = "Done",
   mode = "datetime",
+  popoverModal = false,
 }: DateTimePickerProps) {
   const { date: initialDate, hours: initialHours, minutes: initialMinutes } = useMemo(
     () => parseIsoLocal(value, mode),
@@ -105,7 +107,7 @@ export function DateTimePicker({
 
   return (
     <div className={className}>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={setOpen} modal={popoverModal}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -120,7 +122,11 @@ export function DateTimePicker({
             {displayFormat(selectedDate, hours, minutes, mode) || placeholder}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 rounded-xl border border-border shadow-md" align="start">
+        <PopoverContent
+          className="w-auto p-0 rounded-xl border border-border shadow-md"
+          align="start"
+          onOpenAutoFocus={(event) => event.preventDefault()}
+        >
           <div className="p-2">
             <ReactCalendar
               className="react-calendar w-full p-2 pointer-events-auto"

@@ -38,23 +38,27 @@ const RECENT_OPEN_GUARD_MS = 200;
 
 const getDismissableEventTarget = (
   event: PointerDownOutsideEvent | FocusOutsideEvent,
-): HTMLElement | null => {
+): Element | null => {
   const originalEvent = event.detail?.originalEvent as Event | undefined;
   if (!originalEvent) return null;
 
-  if ('target' in originalEvent && originalEvent.target instanceof HTMLElement) {
-    return originalEvent.target;
-  }
+  const getElement = (value: EventTarget | null | undefined): Element | null =>
+    value instanceof Element ? value : null;
 
-  if ('relatedTarget' in originalEvent && originalEvent.relatedTarget instanceof HTMLElement) {
-    return originalEvent.relatedTarget;
-  }
+  const target = 'target' in originalEvent ? getElement(originalEvent.target) : null;
+  if (target) return target;
+
+  const relatedTarget =
+    'relatedTarget' in originalEvent
+      ? getElement((originalEvent as FocusEvent).relatedTarget)
+      : null;
+  if (relatedTarget) return relatedTarget;
 
   if (typeof originalEvent.composedPath === 'function') {
-    const [first] = originalEvent.composedPath();
-    if (first instanceof HTMLElement) {
-      return first;
-    }
+    const pathTarget = originalEvent
+      .composedPath()
+      .find((node): node is Element => node instanceof Element);
+    if (pathTarget) return pathTarget;
   }
 
   return null;
@@ -99,7 +103,7 @@ export function AppSheetModal({
       }
 
       const target = getDismissableEventTarget(event);
-      if (target?.closest("[data-toast-root],[data-radix-toast-viewport]")) {
+      if (target?.closest("[data-toast-root],[data-radix-toast-viewport],[data-sonner-toast],[data-sonner-toaster]")) {
         event.preventDefault();
         if ("stopPropagation" in event) {
           event.stopPropagation();

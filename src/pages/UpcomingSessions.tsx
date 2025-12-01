@@ -39,6 +39,8 @@ import { useSessionStatuses } from "@/hooks/useOrganizationData";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { EmptyState } from "@/components/EmptyState";
+import { PageVideoModal } from "@/components/PageVideoModal";
+import { usePageVideoPrompt } from "@/hooks/usePageVideoPrompt";
 
 interface Session {
   id: string;
@@ -176,6 +178,11 @@ const getFallbackLifecycle = (status: string): SessionLifecycle => {
   return "active";
 };
 
+const SESSIONS_VIDEO_ID =
+  (typeof import.meta !== "undefined" &&
+    (import.meta as { env?: Record<string, string> }).env?.VITE_SESSIONS_VIDEO_ID) ||
+  "811vc59bciM";
+
 const getFallbackColor = (lifecycle: SessionLifecycle, isInitial: boolean) => {
   if (lifecycle === "completed") return "#22c55e"; // green
   if (lifecycle === "cancelled") return "#ef4444"; // red
@@ -243,6 +250,12 @@ const AllSessions = () => {
   const [exporting, setExporting] = useState(false);
   const isMobile = useIsMobile();
   const prevLoadingRef = useRef(true);
+  const {
+    isOpen: isSessionsVideoOpen,
+    close: closeSessionsVideo,
+    markCompleted: markSessionsVideoWatched,
+    snooze: snoozeSessionsVideo
+  } = usePageVideoPrompt({ pageKey: "sessions", snoozeDays: 1 });
 
   const fetchSessions = useCallback(async () => {
     setLoading(true);
@@ -1346,6 +1359,22 @@ const AllSessions = () => {
             onNavigateToProject={handleNavigateToProject}
           />
         )}
+
+        <PageVideoModal
+          open={isSessionsVideoOpen}
+          onClose={closeSessionsVideo}
+          videoId={SESSIONS_VIDEO_ID}
+          title={t("sessions.video.title", { defaultValue: "See how Sessions works" })}
+          description={t("sessions.video.description", {
+            defaultValue: "Watch a quick overview to make the most of your session list."
+          })}
+          labels={{
+            remindMeLater: t("sessions.video.remindLater", { defaultValue: "Remind me later" }),
+            dontShowAgain: t("sessions.video.dontShow", { defaultValue: "I watched, don't show again" })
+          }}
+          onSnooze={snoozeSessionsVideo}
+          onDontShowAgain={markSessionsVideoWatched}
+        />
       </div>
     </div>
   );

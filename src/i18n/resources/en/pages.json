@@ -1493,6 +1493,12 @@
     "description": "Manage your photo sessions and appointments",
     "addButton": "Add Session",
     "tableTitle": "Session Schedule",
+    "video": {
+      "title": "See how Sessions works",
+      "description": "Watch a quick overview to make the most of your session list.",
+      "remindLater": "Remind me later",
+      "dontShow": "I watched, don't show again"
+    },
     "filters": {
       "statusLabel": "Filter by status:",
       "title": "Filter sessions",

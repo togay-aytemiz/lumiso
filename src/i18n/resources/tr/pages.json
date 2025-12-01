@@ -1496,6 +1496,12 @@
     "description": "Fotoğraf seanslarınızı ve randevularınızı yönetin",
     "addButton": "Seans Ekle",
     "tableTitle": "Seans Programı",
+    "video": {
+      "title": "Seanslar nasıl çalışıyor görün",
+      "description": "Seanslarınızı en iyi şekilde yönetmek için kısa bir özet izleyin.",
+      "remindLater": "Daha sonra hatırlat",
+      "dontShow": "İzledim, bir daha gösterme"
+    },
     "filters": {
       "statusLabel": "Duruma göre filtrele:",
       "title": "Seansları filtrele",

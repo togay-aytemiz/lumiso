@@ -340,6 +340,7 @@ const PackageCreationWizardSheetInner = ({
               <PackageCreationWizard
                 key={isEditing ? packageId ?? "edit" : "create"}
                 onComplete={handleComplete}
+                onCancel={requestClose}
                 isCompleting={isCompleting}
                 actionPlacement="header"
                 headerActionContainer={headerActionElement}

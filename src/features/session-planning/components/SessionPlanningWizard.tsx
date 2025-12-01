@@ -49,6 +49,7 @@ export const SessionPlanningWizard = ({
   isCompleting,
   actionPlacement = "inline",
   headerActionContainer,
+  onCancel,
 }: SessionPlanningWizardProps) => {
   const { state } = useSessionPlanningContext();
   const { meta } = state;
@@ -303,6 +304,16 @@ export const SessionPlanningWizard = ({
   );
   const isReviewVisible = state.meta.mode === "edit" && meta.currentStep !== "summary";
   const isHeaderPlacement = actionPlacement === "header";
+  const isCancelAction = isFirstStep;
+  const backButtonLabel = isCancelAction ? t("wizard.cancel") : t("wizard.back");
+
+  const handleBackClick = () => {
+    if (isCancelAction) {
+      onCancel();
+      return;
+    }
+    goToStep(Math.max(0, currentIndex - 1));
+  };
 
   const handleReview = () => {
     if (summaryIndex < 0) return;
@@ -322,11 +333,10 @@ export const SessionPlanningWizard = ({
         variant="outline"
         size="sm"
         touchTarget={touchTarget}
-        onClick={() => goToStep(Math.max(0, currentIndex - 1))}
-        disabled={isFirstStep}
+        onClick={handleBackClick}
         className={`${buttonWidthClass} sm:h-10 sm:px-6`}
       >
-        {t("wizard.back")}
+        {backButtonLabel}
       </Button>
       {!isLastStep ? (
         <Button

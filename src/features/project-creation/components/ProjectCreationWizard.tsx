@@ -39,6 +39,7 @@ const STEP_COMPONENTS: Record<ProjectCreationStepId, () => JSX.Element> = {
 
 interface ProjectCreationWizardProps {
   onComplete: () => void;
+  onCancel: () => void;
   isCompleting?: boolean;
   actionPlacement?: "inline" | "header";
   headerActionContainer?: HTMLElement | null;
@@ -46,6 +47,7 @@ interface ProjectCreationWizardProps {
 
 export const ProjectCreationWizard = ({
   onComplete,
+  onCancel,
   isCompleting,
   actionPlacement = "inline",
   headerActionContainer,
@@ -275,6 +277,16 @@ export const ProjectCreationWizard = ({
     : t("wizard.creating");
   const isReviewVisible = isEditing && meta.currentStep !== "summary";
   const isHeaderPlacement = actionPlacement === "header";
+  const isCancelAction = isFirstStep;
+  const backButtonLabel = isCancelAction ? t("wizard.cancel") : t("wizard.back");
+
+  const handleBackClick = () => {
+    if (isCancelAction) {
+      onCancel();
+      return;
+    }
+    goToStep(Math.max(0, currentIndex - 1));
+  };
   const actionLayoutClass = isHeaderPlacement
     ? `grid w-full gap-2 ${isReviewVisible ? "grid-cols-3" : "grid-cols-2"} sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-3`
     : "grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-2 sm:gap-3";
@@ -288,11 +300,10 @@ export const ProjectCreationWizard = ({
         variant="outline"
         size="sm"
         touchTarget={touchTarget}
-        onClick={() => goToStep(Math.max(0, currentIndex - 1))}
-        disabled={isFirstStep}
+        onClick={handleBackClick}
         className={`${buttonWidthClass} sm:h-10 sm:px-6`}
       >
-        {t("wizard.back")}
+        {backButtonLabel}
       </Button>
       {!isLastStep ? (
         <Button

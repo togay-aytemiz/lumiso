@@ -47,6 +47,7 @@ const REQUIRED_STEPS: Record<PackageCreationStepId, boolean> = {
 
 interface PackageCreationWizardProps {
   onComplete: () => void;
+  onCancel: () => void;
   isCompleting?: boolean;
   actionPlacement?: "inline" | "header";
   headerActionContainer?: HTMLElement | null;
@@ -54,6 +55,7 @@ interface PackageCreationWizardProps {
 
 export const PackageCreationWizard = ({
   onComplete,
+  onCancel,
   isCompleting,
   actionPlacement = "inline",
   headerActionContainer,
@@ -298,6 +300,18 @@ export const PackageCreationWizard = ({
   };
   const isReviewVisible = isEditing && state.meta.currentStep !== "summary";
   const isHeaderPlacement = actionPlacement === "header";
+  const isCancelAction = isFirstStep;
+  const backButtonLabel = isCancelAction
+    ? t("actions.cancel", "Cancel")
+    : t("actions.previous", "Previous");
+
+  const handleBackClick = () => {
+    if (isCancelAction) {
+      onCancel();
+      return;
+    }
+    handlePreviousStep();
+  };
   const actionLayoutClass = isHeaderPlacement
     ? `grid w-full gap-2 ${isReviewVisible ? "grid-cols-3" : "grid-cols-2"} sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-3`
     : "grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-2 sm:gap-3";
@@ -311,11 +325,10 @@ export const PackageCreationWizard = ({
         variant="outline"
         size="sm"
         touchTarget={touchTarget}
-        onClick={handlePreviousStep}
-        disabled={isFirstStep}
+        onClick={handleBackClick}
         className={`${buttonWidthClass} sm:h-10 sm:px-6`}
       >
-        {t("actions.previous", "Previous")}
+        {backButtonLabel}
       </Button>
       {!isLastStep ? (
         <Button

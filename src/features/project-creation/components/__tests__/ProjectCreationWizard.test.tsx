@@ -57,7 +57,7 @@ const PrefillLeadAndDetails = () => {
 const renderWizard = (props?: Partial<ComponentProps<typeof ProjectCreationWizard>>) =>
   render(
     <ProjectCreationProvider>
-      <ProjectCreationWizard onComplete={jest.fn()} {...props} />
+      <ProjectCreationWizard onComplete={jest.fn()} onCancel={jest.fn()} {...props} />
     </ProjectCreationProvider>
   );
 
@@ -80,7 +80,7 @@ describe("ProjectCreationWizard navigation", () => {
     render(
       <ProjectCreationProvider>
         <PrefillLeadAndDetails />
-        <ProjectCreationWizard onComplete={jest.fn()} />
+        <ProjectCreationWizard onComplete={jest.fn()} onCancel={jest.fn()} />
       </ProjectCreationProvider>
     );
 

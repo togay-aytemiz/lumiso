@@ -30,6 +30,7 @@
     "hideSteps": "Adımları gizle"
   },
   "actions": {
+    "cancel": "İptal",
     "previous": "Geri",
     "next": "İleri",
     "finish": "Tamamla",

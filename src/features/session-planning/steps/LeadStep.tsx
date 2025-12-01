@@ -39,6 +39,7 @@ export const LeadStep = () => {
   const [createLeadOpen, setCreateLeadOpen] = useState(false);
   const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const latestRequestRef = useRef(0);
   const { data: leadStatuses = [], isLoading: leadStatusesLoading } = useLeadStatuses();
 
@@ -129,6 +130,38 @@ export const LeadStep = () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
   }, [dropdownOpen, isMobile]);
+
+  const scrollSearchIntoView = useCallback(() => {
+    const input = searchInputRef.current;
+    if (!input) return;
+
+    let parent: HTMLElement | null = input.parentElement;
+    while (parent) {
+      const style = window.getComputedStyle(parent);
+      const canScroll =
+        parent.scrollHeight - parent.clientHeight > 4 && style.overflowY !== "visible";
+      if (canScroll) {
+        const parentRect = parent.getBoundingClientRect();
+        const inputRect = input.getBoundingClientRect();
+        const offset = inputRect.top - parentRect.top - 12;
+        parent.scrollBy({ top: offset, behavior: "smooth" });
+        return;
+      }
+      parent = parent.parentElement;
+    }
+
+    input.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const frame = window.requestAnimationFrame(scrollSearchIntoView);
+    const timeout = window.setTimeout(scrollSearchIntoView, 160);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timeout);
+    };
+  }, [dropdownOpen, scrollSearchIntoView]);
 
   const selectedLeadOption = useMemo(() => {
     if (!state.lead.id) return undefined;
@@ -262,6 +295,7 @@ export const LeadStep = () => {
                   <Input
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
+                    ref={searchInputRef}
                     placeholder={t("steps.lead.searchPlaceholder")}
                     className="h-11 rounded-xl border border-border bg-white pl-9 text-sm shadow-inner focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
                     autoFocus

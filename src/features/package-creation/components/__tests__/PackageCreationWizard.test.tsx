@@ -102,7 +102,7 @@ const renderWizard = (overrides?: DeepPartial<PackageCreationState>, onComplete 
   return {
     ...render(
       <TestProvider initial={initialState}>
-        <PackageCreationWizard onComplete={onComplete} />
+        <PackageCreationWizard onComplete={onComplete} onCancel={jest.fn()} />
       </TestProvider>
     ),
     onComplete,

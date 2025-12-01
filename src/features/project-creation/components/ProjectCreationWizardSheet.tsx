@@ -702,6 +702,7 @@ const ProjectCreationWizardSheetInner = ({
             ) : (
               <ProjectCreationWizard
                 onComplete={handleComplete}
+                onCancel={requestClose}
                 isCompleting={isCreating}
                 actionPlacement="header"
                 headerActionContainer={headerActionElement}

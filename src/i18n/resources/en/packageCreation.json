@@ -30,6 +30,7 @@
     "hideSteps": "Hide steps"
   },
   "actions": {
+    "cancel": "Cancel",
     "previous": "Previous",
     "next": "Next",
     "finish": "Finish",

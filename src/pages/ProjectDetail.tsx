@@ -305,7 +305,12 @@ export default function ProjectDetail() {
   }, [fetchProject]);
 
   useEffect(() => {
-    if (hasSeenProjectOnboardingModal || onboardingFlag !== "project-details") {
+    if (hasSeenProjectOnboardingModal) {
+      return;
+    }
+
+    const shouldShowOnboarding = onboardingFlag === "project-details" || isInGuidedSetup;
+    if (!shouldShowOnboarding) {
       return;
     }
 
@@ -313,7 +318,7 @@ export default function ProjectDetail() {
     setShowProjectExploreCard(true);
     setHasSeenProjectOnboardingModal(true);
 
-    if (typeof window !== "undefined") {
+    if (onboardingFlag === "project-details" && typeof window !== "undefined") {
       try {
         const url = new URL(window.location.href);
         url.searchParams.delete("onboarding");
@@ -322,7 +327,7 @@ export default function ProjectDetail() {
         console.warn("Unable to remove onboarding param from URL", error);
       }
     }
-  }, [hasSeenProjectOnboardingModal, onboardingFlag]);
+  }, [hasSeenProjectOnboardingModal, onboardingFlag, isInGuidedSetup]);
 
   useEffect(() => {
     if (project) {

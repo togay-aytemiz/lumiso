@@ -9,6 +9,7 @@ export interface OnboardingAction {
   variant?: "default" | "outline" | "secondary" | "destructive" | "ghost" | "link" | "cta" | "dangerOutline";
   disabled?: boolean;
   icon?: ReactNode;
+  className?: string;
   longPress?: {
     duration?: number;
     holdingLabel?: string;
@@ -77,7 +78,7 @@ export function BaseOnboardingModal({
 
           <div className={hasSingleAction ? "flex justify-end pt-2" : `grid gap-3 pt-2 ${actionLayout}`}>
             {actions.map((action, index) => {
-              const buttonClassName = baseButtonClass;
+              const buttonClassName = [baseButtonClass, action.className].filter(Boolean).join(" ");
               return action.longPress ? (
                 <LongPressButton
                   key={index}

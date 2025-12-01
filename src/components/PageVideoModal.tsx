@@ -31,14 +31,14 @@ export function PageVideoModal({
 
   const actions = [
     {
-      label: effectiveLabels.remindMeLater,
-      onClick: onSnooze,
-      variant: "outline" as const
-    },
-    {
       label: effectiveLabels.dontShowAgain,
       onClick: onDontShowAgain,
-      variant: "cta" as const
+      variant: "surface" as const
+    },
+    {
+      label: effectiveLabels.remindMeLater,
+      onClick: onSnooze,
+      variant: "surface" as const
     }
   ];
 

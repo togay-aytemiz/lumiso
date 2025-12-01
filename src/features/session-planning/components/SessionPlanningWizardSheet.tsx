@@ -238,6 +238,7 @@ const SessionPlanningWizardSheetInner = ({
   const [isSessionViewerOpen, setIsSessionViewerOpen] = useState(false);
   const [sessionViewerId, setSessionViewerId] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const modalBodyRef = useRef<HTMLDivElement | null>(null);
   const successTopRef = useRef<HTMLDivElement | null>(null);
   const [confettiPieces, setConfettiPieces] = useState<ConfettiPiece[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -333,6 +334,28 @@ const SessionPlanningWizardSheetInner = ({
       wizardOpenedRef.current = false;
       successTrackedRef.current = false;
     }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const resetAllScroll = () => {
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "auto" });
+      }
+      if (modalBodyRef.current) {
+        modalBodyRef.current.scrollTop = 0;
+      }
+    };
+
+    resetAllScroll();
+    const timer = window.setTimeout(resetAllScroll, 90);
+    const timer2 = window.setTimeout(resetAllScroll, 200);
+    const timer3 = window.setTimeout(resetAllScroll, 380);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(timer2);
+      window.clearTimeout(timer3);
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -1132,6 +1155,9 @@ const SessionPlanningWizardSheetInner = ({
         mobileMinHeightClass="min-h-[95vh]"
         dirty={state.meta.isDirty}
         onDirtyClose={handleClose}
+        bodyRef={(node) => {
+          modalBodyRef.current = node;
+        }}
         headerAccessory={
           (!isMobile || !completionSummary && !showContextLoader) ? (
             <div
@@ -1160,19 +1186,20 @@ const SessionPlanningWizardSheetInner = ({
             />
           </div>
         ) : (
-          <SessionPlanningOriginalStateProvider value={initialSessionSnapshotRef.current}>
-            <SessionSavedResourcesProvider>
-              <SessionPlanningWizard
-                onCancel={handleClose}
-                onComplete={handleComplete}
-                isCompleting={isCompleting}
-                actionPlacement="header"
-                headerActionContainer={!isMobile || !showContextLoader ? headerActionElement : null}
-                isOpen={isOpen}
-              />
-            </SessionSavedResourcesProvider>
-          </SessionPlanningOriginalStateProvider>
-        )}
+            <SessionPlanningOriginalStateProvider value={initialSessionSnapshotRef.current}>
+              <SessionSavedResourcesProvider>
+                <SessionPlanningWizard
+                  onCancel={handleClose}
+                  onComplete={handleComplete}
+                  isCompleting={isCompleting}
+                  actionPlacement="header"
+                  headerActionContainer={!isMobile || !showContextLoader ? headerActionElement : null}
+                  isOpen={isOpen}
+                  scrollHostRef={modalBodyRef}
+                />
+              </SessionSavedResourcesProvider>
+            </SessionPlanningOriginalStateProvider>
+          )}
       </AppSheetModal>
 
       <AlertDialog open={showGuardDialog} onOpenChange={setShowGuardDialog}>

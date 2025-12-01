@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback, useLayoutEffect } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, useLayoutEffect, RefObject } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +33,7 @@ interface SessionPlanningWizardProps {
   actionPlacement?: "inline" | "header";
   headerActionContainer?: HTMLElement | null;
   isOpen?: boolean;
+  scrollHostRef?: RefObject<HTMLElement | null>;
 }
 
 const STEP_COMPONENTS: Record<SessionPlanningStepId, () => JSX.Element> = {
@@ -52,6 +53,7 @@ export const SessionPlanningWizard = ({
   headerActionContainer,
   onCancel,
   isOpen = true,
+  scrollHostRef,
 }: SessionPlanningWizardProps) => {
   const { state } = useSessionPlanningContext();
   const { meta } = state;
@@ -89,6 +91,8 @@ export const SessionPlanningWizard = ({
   );
   const viewedStepRef = useRef<SessionPlanningStepId | null>(null);
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
+  const scrollResetRafRef = useRef<number | null>(null);
+  const scrollResetTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (isEditing) return;
@@ -126,50 +130,70 @@ export const SessionPlanningWizard = ({
     });
   }, [meta.currentStep, state.meta.entrySource]);
 
-  const snapToTop = useCallback(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 0;
-    }
-    if (topSentinelRef.current?.scrollIntoView) {
-      topSentinelRef.current.scrollIntoView({ behavior: "auto", block: "start" });
-    }
-  }, []);
-
-  const scrollToTopSmooth = useCallback(() => {
-    window.requestAnimationFrame(() => {
-      if (topSentinelRef.current?.scrollIntoView) {
-        topSentinelRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-      if (scrollContainerRef.current) {
-        try {
-          scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
-        } catch {
-          scrollContainerRef.current.scrollTop = 0;
-        }
+  const resetScrollPosition = useCallback(() => {
+    const targets: (HTMLElement | null)[] = [
+      scrollContainerRef.current,
+      scrollHostRef?.current ?? null,
+    ];
+    targets.forEach((target) => {
+      if (!target) return;
+      target.scrollTop = 0;
+      try {
+        target.scrollTo({ top: 0, behavior: "auto" });
+      } catch {
+        target.scrollTop = 0;
       }
     });
-  }, []);
+  }, [scrollHostRef]);
+
+  const queueScrollReset = useCallback(() => {
+    resetScrollPosition();
+
+    if (scrollResetRafRef.current) {
+      window.cancelAnimationFrame(scrollResetRafRef.current);
+    }
+    if (scrollResetTimeoutRef.current) {
+      window.clearTimeout(scrollResetTimeoutRef.current);
+    }
+
+    scrollResetRafRef.current = window.requestAnimationFrame(() => {
+      resetScrollPosition();
+    });
+
+    scrollResetTimeoutRef.current = window.setTimeout(() => {
+      resetScrollPosition();
+    }, 180);
+  }, [resetScrollPosition]);
 
   useEffect(() => {
-    snapToTop();
-    scrollToTopSmooth();
-  }, [meta.currentStep, snapToTop, scrollToTopSmooth]);
+    queueScrollReset();
+    return () => {
+      if (scrollResetRafRef.current) {
+        window.cancelAnimationFrame(scrollResetRafRef.current);
+      }
+      if (scrollResetTimeoutRef.current) {
+        window.clearTimeout(scrollResetTimeoutRef.current);
+      }
+    };
+  }, [meta.currentStep, queueScrollReset]);
 
   useLayoutEffect(() => {
     if (!isOpen) return;
-    snapToTop();
-  }, [isOpen, meta.currentStep]);
+    queueScrollReset();
+  }, [isOpen, queueScrollReset]);
 
   useEffect(() => {
     if (!isOpen) return;
-    snapToTop();
-    const raf = window.requestAnimationFrame(scrollToTopSmooth);
-    const timer = window.setTimeout(scrollToTopSmooth, 140);
+    queueScrollReset();
     return () => {
-      window.cancelAnimationFrame(raf);
-      window.clearTimeout(timer);
+      if (scrollResetRafRef.current) {
+        window.cancelAnimationFrame(scrollResetRafRef.current);
+      }
+      if (scrollResetTimeoutRef.current) {
+        window.clearTimeout(scrollResetTimeoutRef.current);
+      }
     };
-  }, [isOpen, snapToTop, scrollToTopSmooth]);
+  }, [isOpen, queueScrollReset]);
 
   const stepStatus = useMemo(() => {
     const toSummary = (value?: string | null) => {

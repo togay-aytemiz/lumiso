@@ -32,6 +32,7 @@ interface AppSheetModalProps {
   headerAccessory?: ReactNode;
   mobileHeightClass?: string;
   mobileMinHeightClass?: string;
+  bodyRef?: (node: HTMLDivElement | null) => void;
 }
 
 const RECENT_OPEN_GUARD_MS = 200;
@@ -75,16 +76,68 @@ export function AppSheetModal({
   onDirtyClose,
   headerAccessory,
   mobileHeightClass = "max-h-[85vh]",
-  mobileMinHeightClass
+  mobileMinHeightClass,
+  bodyRef,
 }: AppSheetModalProps) {
   const isMobile = useIsMobile();
   const lastOpenedRef = useRef(0);
   const hasHeaderAccessory = Boolean(headerAccessory);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const handleBodyRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      scrollContainerRef.current = node;
+      if (bodyRef) {
+        bodyRef(node);
+      }
+    },
+    [bodyRef],
+  );
+
+  const handleOpenAutoFocus = useCallback(
+    (event: Event) => {
+      event.preventDefault();
+      const node = scrollContainerRef.current;
+      if (!node) return;
+      node.scrollTop = 0;
+      node.scrollLeft = 0;
+      window.requestAnimationFrame(() => {
+        node.scrollTop = 0;
+        node.scrollLeft = 0;
+      });
+    },
+    []
+  );
 
   useEffect(() => {
     if (isOpen) {
       lastOpenedRef.current = Date.now();
     }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const forceTop = () => {
+      const node = scrollContainerRef.current;
+      if (node) {
+        node.scrollTop = 0;
+        node.scrollLeft = 0;
+      }
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "auto" });
+      }
+    };
+
+    const raf = window.requestAnimationFrame(forceTop);
+    const t1 = window.setTimeout(forceTop, 60);
+    const t2 = window.setTimeout(forceTop, 140);
+    const t3 = window.setTimeout(forceTop, 280);
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearTimeout(t3);
+    };
   }, [isOpen]);
 
   const handleOpenChange = useCallback((open: boolean) => {
@@ -177,6 +230,7 @@ export function AppSheetModal({
         className={cn(sheetContentClass, "[&>button]:hidden")}
         onPointerDownOutside={handlePointerDownOutside}
         onInteractOutside={handleInteractOutside}
+        onOpenAutoFocus={handleOpenAutoFocus}
       >
         <SheetHeader className={cn("border-b", hasHeaderAccessory ? "pb-4" : "pb-3")}>
           <div
@@ -221,6 +275,7 @@ export function AppSheetModal({
             "flex-1 overflow-y-auto pb-6 my-0 py-0",
             isMobile && "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           )}
+          ref={handleBodyRef}
           style={{
             WebkitOverflowScrolling: 'touch',
             touchAction: 'manipulation'

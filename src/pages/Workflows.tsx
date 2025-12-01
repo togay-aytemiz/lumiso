@@ -12,16 +12,11 @@ import { useWorkflows } from "@/hooks/useWorkflows";
 import { CreateWorkflowSheet } from "@/components/CreateWorkflowSheet";
 import { WorkflowDeleteDialog } from "@/components/WorkflowDeleteDialog";
 import type { WorkflowWithMetadata } from "@/hooks/useWorkflows";
-import { Plus, Zap, CheckCircle, Clock, AlertTriangle, Edit, Trash2, Mail, MessageCircle, Phone } from "lucide-react";
+import { Plus, Zap, AlertTriangle, Edit, Trash2, Mail, MessageCircle, Phone } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { formatDistanceToNow } from "date-fns";
 import { enUS, tr } from 'date-fns/locale';
 import { useTranslation } from "react-i18next";
-import { KpiCard } from "@/components/ui/kpi-card";
-import {
-  KPI_ACTION_BUTTON_CLASS,
-  getKpiIconPreset,
-} from "@/components/ui/kpi-presets";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import GlobalSearch from "@/components/GlobalSearch";
 
@@ -176,31 +171,6 @@ export default function Workflows() {
       setDeletingWorkflow(null);
     }
   };
-
-  const stats = useMemo(
-    () => ({
-      total: workflows.length,
-      active: workflows.filter((w) => w.is_active).length,
-      paused: workflows.filter((w) => !w.is_active).length,
-    }),
-    [workflows]
-  );
-
-  const totalSummary = useMemo(
-    () =>
-      t("workflows.stats.summary", {
-        active: stats.active,
-        paused: stats.paused,
-      }),
-    [stats.active, stats.paused, t]
-  );
-
-  const activeCoverage = stats.total > 0 ? (stats.active / stats.total) * 100 : 0;
-  const pausedShare = stats.total > 0 ? (stats.paused / stats.total) * 100 : 0;
-  // Prefab icon style sets for KPI cards (shared across the app)
-  const iconIndigo = getKpiIconPreset("indigo");
-  const iconSky = getKpiIconPreset("sky");
-  const iconEmerald = getKpiIconPreset("emerald");
 
   const workflowColumns: AdvancedTableColumn<WorkflowWithMetadata>[] = useMemo(
     () => [
@@ -395,71 +365,6 @@ export default function Workflows() {
       </PageHeader>
 
       <div className="p-4 space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <KpiCard
-            icon={Zap}
-            {...iconIndigo}
-            title={t("workflows.stats.totalWorkflows")}
-            value={stats.total}
-            description={totalSummary}
-            footer={
-              <Button
-                size="xs"
-                variant="outline"
-                className={KPI_ACTION_BUTTON_CLASS}
-                onClick={() => handleStatusFilterChange("all")}
-              >
-                {t("workflows.stats.viewAll")}
-              </Button>
-            }
-          />
-          <KpiCard
-            icon={CheckCircle}
-            {...iconSky}
-            title={t("workflows.stats.active")}
-            value={stats.active}
-            description={t("workflows.stats.activeDescription")}
-            progress={{
-              value: activeCoverage,
-              label: t("workflows.stats.coverageLabel"),
-              ariaLabel: t("workflows.stats.coverageAriaLabel"),
-              action: (
-                <Button
-                  size="xs"
-                  variant="outline"
-                  className={KPI_ACTION_BUTTON_CLASS}
-                  onClick={() => handleStatusFilterChange("active")}
-                >
-                  {t("workflows.stats.quickFilterActive")}
-                </Button>
-              ),
-            }}
-          />
-          <KpiCard
-            icon={Clock}
-            {...iconEmerald}
-            title={t("workflows.stats.paused")}
-            value={stats.paused}
-            description={t("workflows.stats.pausedDescription")}
-            progress={{
-              value: pausedShare,
-              label: t("workflows.stats.pausedShareLabel"),
-              ariaLabel: t("workflows.stats.pausedShareAriaLabel"),
-              action: (
-                <Button
-                  size="xs"
-                  variant="outline"
-                  className={KPI_ACTION_BUTTON_CLASS}
-                  onClick={() => handleStatusFilterChange("paused")}
-                >
-                  {t("workflows.stats.quickFilterPaused")}
-                </Button>
-              ),
-            }}
-          />
-        </div>
-
         <AdvancedDataTable
           title={t("workflows.table.header", { defaultValue: t("workflows.title") })}
           data={paginatedWorkflows}

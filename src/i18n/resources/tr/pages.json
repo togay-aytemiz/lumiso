@@ -1656,6 +1656,12 @@
   "reminders": {
     "title": "Hatırlatmalar",
     "description": "Etkinliklerinizi ve hatırlatmalarınızı yönetin",
+    "video": {
+      "title": "Hatırlatmaların nasıl çalıştığını görün",
+      "description": "Hatırlatmalarınızdan en iyi şekilde yararlanmak için kısa bir özet izleyin.",
+      "remindLater": "Daha sonra hatırlat",
+      "dontShow": "İzledim, bir daha gösterme"
+    },
     "hideOverdue": "Gecikmişleri gizle",
     "filters": {
       "all": "Tümü",

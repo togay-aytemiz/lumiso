@@ -1653,6 +1653,12 @@
   "reminders": {
     "title": "Reminders",
     "description": "Manage your activities and reminders",
+    "video": {
+      "title": "See how Reminders works",
+      "description": "Watch a quick overview to make the most of your reminders.",
+      "remindLater": "Remind me later",
+      "dontShow": "I watched, don't show again"
+    },
     "hideOverdue": "Hide overdue",
     "filters": {
       "all": "All",

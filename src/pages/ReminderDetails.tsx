@@ -51,6 +51,8 @@ import {
 import { cn, formatGroupDate } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
 import { formatInTimeZone } from "date-fns-tz";
+import { PageVideoModal } from "@/components/PageVideoModal";
+import { usePageVideoPrompt } from "@/hooks/usePageVideoPrompt";
 
 interface Activity {
   id: string;
@@ -177,6 +179,11 @@ const parseReminderDateTime = (value: string) => {
   return { date, time: time ?? null };
 };
 
+const REMINDERS_VIDEO_ID =
+  (typeof import.meta !== "undefined" &&
+    (import.meta as { env?: Record<string, string> }).env?.VITE_REMINDERS_VIDEO_ID) ||
+  "IQ8ZNqhjhDQ";
+
 const ReminderDetails = () => {
   const { t, i18n } = useTranslation("pages");
   const { t: tForms } = useFormsTranslation();
@@ -199,6 +206,12 @@ const ReminderDetails = () => {
     useState<ReminderTimelineCardActivity | null>(null);
   const [reminderSheetOpen, setReminderSheetOpen] = useState(false);
   const [reminderSheetSubmitting, setReminderSheetSubmitting] = useState(false);
+  const {
+    isOpen: isRemindersVideoOpen,
+    close: closeRemindersVideo,
+    markCompleted: markRemindersVideoWatched,
+    snooze: snoozeRemindersVideo
+  } = usePageVideoPrompt({ pageKey: "reminders", snoozeDays: 1 });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reminderToDelete, setReminderToDelete] =
     useState<ReminderTimelineCardActivity | null>(null);
@@ -1317,6 +1330,22 @@ const ReminderDetails = () => {
             navigate(`/projects/${viewingProject.id}`);
           }
         }}
+      />
+
+      <PageVideoModal
+        open={isRemindersVideoOpen}
+        onClose={closeRemindersVideo}
+        videoId={REMINDERS_VIDEO_ID}
+        title={t("reminders.video.title", { defaultValue: "See how Reminders works" })}
+        description={t("reminders.video.description", {
+          defaultValue: "Watch a quick overview to make the most of your reminders."
+        })}
+        labels={{
+          remindMeLater: t("reminders.video.remindLater", { defaultValue: "Remind me later" }),
+          dontShowAgain: t("reminders.video.dontShow", { defaultValue: "I watched, don't show again" })
+        }}
+        onSnooze={snoozeRemindersVideo}
+        onDontShowAgain={markRemindersVideoWatched}
       />
     </div>
   );

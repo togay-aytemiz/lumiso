@@ -99,6 +99,17 @@ export function AppSheetModal({
       }
 
       const target = getDismissableEventTarget(event);
+      if (target?.closest("[data-toast-root],[data-radix-toast-viewport]")) {
+        event.preventDefault();
+        if ("stopPropagation" in event) {
+          event.stopPropagation();
+        }
+        const original = event.detail?.originalEvent as Event | undefined;
+        if (original && "stopPropagation" in original) {
+          original.stopPropagation();
+        }
+        return;
+      }
       if (target?.closest('[role="dialog"],[role="alertdialog"]')) {
         event.preventDefault();
         return;
@@ -150,7 +161,7 @@ export function AppSheetModal({
   };
 
   const sheetContentClass = cn(
-    "flex flex-col overflow-visible w-full",
+    "flex min-h-0 flex-col overflow-hidden w-full",
     !isMobile && sizeClassMap[size],
     isMobile && cn(mobileHeightClass, mobileMinHeightClass, "rounded-t-xl")
   );
@@ -203,7 +214,7 @@ export function AppSheetModal({
 
         <div
           className={cn(
-            "flex-1 overflow-y-auto pb-6 my-0 py-0 overflow-visible",
+            "flex-1 overflow-y-auto pb-6 my-0 py-0",
             isMobile && "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           )}
           style={{

@@ -1226,7 +1226,7 @@ const SessionPlanningSuccess = ({
     : t("summary.values.notLinked");
 
   return (
-    <div className="flex min-h-[360px] flex-col items-center justify-center gap-6 px-6 py-10 text-center">
+    <div className="flex min-h-[75vh] max-h-[calc(95vh-72px)] flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-8 text-center sm:min-h-[360px] sm:max-h-none sm:px-6 sm:py-10 sm:overflow-visible">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
         <CheckCircle2 className="h-10 w-10" aria-hidden="true" />
       </div>

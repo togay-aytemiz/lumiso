@@ -265,6 +265,21 @@ export const SessionPlanningWizard = ({
     const nextIndex = Math.min(SESSION_PLANNING_STEPS.length - 1, currentIndex + 1);
     if (nextIndex === currentIndex) return;
 
+    if (meta.currentStep === "lead") {
+      const hasLead =
+        state.lead.mode === "existing"
+          ? Boolean(state.lead.id || state.lead.name?.trim())
+          : Boolean(state.lead.name?.trim());
+      if (!hasLead) {
+        toast({
+          title: t("steps.lead.selectExisting", { defaultValue: t("validation.missingLead") }),
+          description: t("steps.lead.description"),
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     if (meta.currentStep === "schedule") {
       if (!state.schedule.date || !state.schedule.time) {
         toast({
@@ -518,7 +533,7 @@ const StepList = ({
   <ol
     className={cn(
       "flex max-w-full flex-col overflow-x-hidden",
-      variant === "desktop" ? "gap-4" : "gap-3"
+      variant === "desktop" ? "gap-4" : "gap-2.5"
     )}
   >
     {SESSION_PLANNING_STEPS.map((step, index) => {
@@ -536,6 +551,8 @@ const StepList = ({
         ? summary ?? description
         : undefined;
       const alignmentClass = supportingText ? "items-start" : "items-center";
+      const itemPadding =
+        variant === "desktop" ? "px-4 py-4 rounded-3xl" : "px-3 py-3 rounded-2xl";
 
       return (
         <li key={step.id}>
@@ -543,7 +560,8 @@ const StepList = ({
             type="button"
             onClick={() => onSelectStep(index)}
             className={cn(
-              "group relative flex w-full max-w-full flex-col overflow-hidden rounded-3xl border px-4 py-4 text-left transition-all",
+              "group relative flex w-full max-w-full flex-col overflow-hidden border text-left transition-all",
+              itemPadding,
               variant === "desktop"
                 ? cn(
                     "border-white/15 bg-white/5 text-slate-100/80 shadow-sm transition-colors duration-200 supports-[backdrop-filter]:backdrop-blur-md before:absolute before:inset-y-3 before:left-0 before:w-1 before:rounded-r-full before:bg-transparent before:opacity-0 before:transition before:duration-200 before:content-['']",
@@ -558,7 +576,7 @@ const StepList = ({
                     "border-slate-200 bg-white text-slate-900 shadow-sm hover:border-slate-300 hover:bg-slate-50",
                     isActive && "border-slate-900/20 bg-slate-900/5 shadow-md",
                     isComplete &&
-                      "border-sky-400 bg-sky-500/20 text-sky-800 hover:border-sky-400/80 hover:bg-sky-500/25",
+                      "border-emerald-300 bg-emerald-500/15 text-emerald-800 hover:border-emerald-300/80 hover:bg-emerald-500/20",
                     needsAttention &&
                       "border-rose-300 bg-rose-50 text-rose-900 hover:border-rose-400 hover:bg-rose-100"
                   )
@@ -582,7 +600,7 @@ const StepList = ({
                         "border-slate-300 text-slate-600",
                         isActive && "border-slate-900 bg-slate-900 text-white",
                         isComplete &&
-                          "border-sky-300 bg-sky-500/15 text-sky-700",
+                          "border-emerald-300 bg-emerald-500/10 text-emerald-800",
                         needsAttention &&
                           "border-rose-300 bg-rose-100 text-rose-700"
                       )
@@ -600,43 +618,54 @@ const StepList = ({
                 <p
                   className={cn(
                     "text-sm font-semibold tracking-tight",
+                  variant === "desktop"
+                    ? needsAttention
+                      ? "text-amber-50"
+                      : isActive
+                        ? "text-white"
+                        : isComplete
+                          ? "text-emerald-50"
+                          : "text-slate-100"
+                    : needsAttention
+                      ? "text-rose-900"
+                      : isComplete
+                        ? "text-emerald-800"
+                        : "text-slate-900"
+                )}
+              >
+                {translate(step.labelKey)}
+                {variant === "mobile" && isActive ? (
+                  <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                    {translate("stepper.currentBadge", { defaultValue: "Buradasınız" })}
+                  </span>
+                ) : null}
+                {variant === "mobile" && needsAttention ? (
+                  <span className="ml-2 inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-700">
+                    {translate("stepper.missingInfoBadge", { defaultValue: "Eksik bilgi var" })}
+                  </span>
+                ) : null}
+              </p>
+              {supportingText && (
+                <p
+                  className={cn(
+                    "mt-1 text-xs leading-relaxed",
                     variant === "desktop"
                       ? needsAttention
-                        ? "text-amber-50"
+                        ? "text-amber-100/80"
                         : isActive
-                          ? "text-white"
+                          ? "text-white/90"
                           : isComplete
-                            ? "text-emerald-50"
-                            : "text-slate-100"
-                      : needsAttention
-                        ? "text-rose-900"
-                        : isComplete
-                          ? "text-sky-800"
-                          : "text-slate-900"
+                            ? "text-emerald-100/80"
+                            : "text-slate-100/80"
+                      : cn(
+                          "line-clamp-2",
+                          needsAttention ? "text-rose-800" : "text-slate-700"
+                        )
                   )}
                 >
-                  {translate(step.labelKey)}
+                  {supportingText}
                 </p>
-                {supportingText && (
-                  <p
-                    className={cn(
-                      "mt-1 text-xs truncate leading-relaxed",
-                      variant === "desktop"
-                        ? needsAttention
-                          ? "text-amber-100/80"
-                          : isActive
-                            ? "text-white/90"
-                            : isComplete
-                              ? "text-emerald-100/80"
-                              : "text-slate-100/80"
-                        : needsAttention
-                          ? "text-rose-800"
-                          : "text-slate-700"
-                    )}
-                  >
-                    {supportingText}
-                  </p>
-                )}
+              )}
               </div>
             </div>
           </button>

@@ -1,13 +1,15 @@
 import { useEffect, useId, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useSessionPlanningActions } from "../hooks/useSessionPlanningActions";
 import { useSessionPlanningContext } from "../hooks/useSessionPlanningContext";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
-import { Clock, Loader2 } from "lucide-react";
+import { AlertTriangle, Clock, Loader2 } from "lucide-react";
 import { useSessionTypes } from "@/hooks/useOrganizationData";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 
 export const SessionTypeStep = () => {
   const { state } = useSessionPlanningContext();
@@ -15,6 +17,7 @@ export const SessionTypeStep = () => {
   const { t } = useTranslation("sessionPlanning");
   const { data: sessionTypes = [], isLoading: sessionTypesLoading } = useSessionTypes();
   const { settings, loading: settingsLoading } = useOrganizationSettings();
+  const { isInGuidedSetup } = useOnboarding();
 
   const selectedId = state.sessionTypeId;
   const descriptionBaseId = useId();
@@ -119,6 +122,27 @@ export const SessionTypeStep = () => {
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {t("steps.sessionType.listHeading")}
         </h3>
+
+        {isInGuidedSetup ? (
+          <Alert className="border-amber-200/80 bg-amber-50 text-amber-900">
+            <div className="flex gap-3">
+              <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600" />
+              <div className="space-y-1">
+                <AlertTitle className="text-sm font-semibold text-amber-900">
+                  {t("steps.sessionType.guidedNotice.title", {
+                    defaultValue: "Sample session types for this tutorial",
+                  })}
+                </AlertTitle>
+                <AlertDescription className="text-sm text-amber-900/90">
+                  {t("steps.sessionType.guidedNotice.description", {
+                    defaultValue:
+                      "During the guided setup please pick one of these pre-seeded session types. You can manage or change them anytime in Settings.",
+                  })}
+                </AlertDescription>
+              </div>
+            </div>
+          </Alert>
+        ) : null}
 
         {isLoadingData ? (
           <div className="flex h-32 items-center justify-center rounded-2xl border border-dashed border-slate-200">

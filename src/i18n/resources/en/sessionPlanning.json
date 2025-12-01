@@ -102,6 +102,10 @@
     "sessionType": {
       "navigationLabel": "Session type",
       "description": "Choose the type of session. The finalized experience will pull from the organization's configured session types.",
+      "guidedNotice": {
+        "title": "Sample session types for this tutorial",
+        "description": "During the guided setup please pick one of these pre-seeded session types. You can manage or change them anytime in Settings."
+      },
       "options": {
         "consultation": "Consultation",
         "portrait": "Portrait session",

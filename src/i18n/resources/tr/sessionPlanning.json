@@ -107,6 +107,10 @@
     "sessionType": {
       "navigationLabel": "Seans türü",
       "description": "Seans türünü seçin. Nihai deneyim organizasyonun yapılandırılmış seans türlerini kullanacak.",
+      "guidedNotice": {
+        "title": "Bu eğitim için örnek seans türleri",
+        "description": "Kılavuzlu eğitim sırasında bu hazır/örnek seans türlerinden birini seçin. Gerçek seans türlerinizi istediğiniz zaman Ayarlar'dan değiştirebilirsiniz."
+      },
       "options": {
         "consultation": "Danışmanlık",
         "portrait": "Portre çekimi",

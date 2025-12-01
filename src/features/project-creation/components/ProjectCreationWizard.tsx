@@ -383,7 +383,7 @@ export const ProjectCreationWizard = ({
         </aside>
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <div className="border-b border-slate-200 bg-white/90 px-3 py-3 backdrop-blur lg:hidden">
+          <div className="mx-2 mb-2 rounded-2xl border border-slate-200 bg-white/95 px-3 py-2 shadow-sm lg:hidden">
             <Collapsible
               open={mobileStepsOpen}
               onOpenChange={setMobileStepsOpen}
@@ -439,12 +439,12 @@ export const ProjectCreationWizard = ({
           <div className="flex min-h-0 flex-1 flex-col">
             <div
               ref={scrollContainerRef}
-              className="flex-1 overflow-y-auto px-2 py-5 sm:px-6 sm:py-10 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex-1 overflow-y-auto px-2 py-4 sm:px-6 sm:py-10 lg:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              <div className="mx-auto w-full max-w-3xl space-y-3 sm:space-y-6 pb-10">
+              <div className="mx-auto w-full max-w-3xl space-y-2 sm:space-y-6 pb-8 sm:pb-10">
                 <div
                   key={meta.currentStep}
-                  className="animate-in fade-in slide-in-from-bottom-3 rounded-3xl border border-slate-200/70 bg-white/95 p-4 shadow-xl shadow-slate-900/5 backdrop-blur overflow-visible transition-all duration-300 ease-out sm:p-6"
+                  className="animate-in fade-in slide-in-from-bottom-3 rounded-3xl border border-slate-200/70 bg-white/95 p-3 shadow-xl shadow-slate-900/5 backdrop-blur overflow-visible transition-all duration-300 ease-out sm:p-6"
                 >
                   <CurrentStepComponent />
                 </div>

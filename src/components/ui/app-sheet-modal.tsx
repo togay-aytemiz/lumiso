@@ -30,6 +30,8 @@ interface AppSheetModalProps {
   dirty?: boolean;
   onDirtyClose?: () => void;
   headerAccessory?: ReactNode;
+  mobileHeightClass?: string;
+  mobileMinHeightClass?: string;
 }
 
 const RECENT_OPEN_GUARD_MS = 200;
@@ -67,7 +69,9 @@ export function AppSheetModal({
   footerActions = [],
   dirty = false,
   onDirtyClose,
-  headerAccessory
+  headerAccessory,
+  mobileHeightClass = "max-h-[85vh]",
+  mobileMinHeightClass
 }: AppSheetModalProps) {
   const isMobile = useIsMobile();
   const lastOpenedRef = useRef(0);
@@ -148,7 +152,7 @@ export function AppSheetModal({
   const sheetContentClass = cn(
     "flex flex-col overflow-visible w-full",
     !isMobile && sizeClassMap[size],
-    isMobile && "max-h-[85vh] rounded-t-xl"
+    isMobile && cn(mobileHeightClass, mobileMinHeightClass, "rounded-t-xl")
   );
 
   return (
@@ -197,10 +201,16 @@ export function AppSheetModal({
           </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto pb-6 my-0 py-0 px-[4px] overflow-visible" style={{ 
-          WebkitOverflowScrolling: 'touch',
-          touchAction: 'manipulation'
-        }}>
+        <div
+          className={cn(
+            "flex-1 overflow-y-auto pb-6 my-0 py-0 overflow-visible",
+            isMobile && "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          )}
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'manipulation'
+          }}
+        >
           <div className="space-y-4 overflow-visible [&_input]:border [&_input]:border-border [&_input]:bg-muted/50 [&_textarea]:border [&_textarea]:border-border [&_textarea]:bg-muted/50 [&_[role=combobox]]:border [&_[role=combobox]]:border-border [&_[role=combobox]]:bg-muted/50">
             {children}
           </div>

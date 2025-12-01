@@ -168,17 +168,32 @@ export function AppSheetModal({
             )}
           >
             <SheetTitle className="text-lg font-semibold">{title}</SheetTitle>
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              {headerAccessory}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleCloseClick} 
-                className="h-8 w-8 p-0 rounded-full"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+            {hasHeaderAccessory ? (
+              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
+                <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
+                  <div className="flex-1 sm:flex-none">{headerAccessory}</div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCloseClick}
+                    className="h-8 w-8 p-0 rounded-full"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCloseClick}
+                  className="h-8 w-8 p-0 rounded-full"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
         </SheetHeader>
 

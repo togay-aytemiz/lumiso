@@ -682,7 +682,7 @@ const ProjectCreationWizardSheetInner = ({
         headerAccessory={
           <div
             ref={handleHeaderActionRef}
-            className="flex flex-wrap items-center justify-end gap-2"
+            className="flex w-full flex-wrap items-center justify-end gap-2"
           />
         }
       >

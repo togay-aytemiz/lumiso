@@ -115,7 +115,7 @@ export const LeadStep = () => {
   }, [dropdownOpen, searchTerm, loadLeads]);
 
   useEffect(() => {
-    if (!dropdownOpen) return;
+    if (!dropdownOpen || isMobile) return;
     const handlePointerDown = (event: PointerEvent) => {
       if (
         containerRef.current &&
@@ -128,7 +128,7 @@ export const LeadStep = () => {
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [dropdownOpen]);
+  }, [dropdownOpen, isMobile]);
 
   const selectedLeadOption = useMemo(() => {
     if (!state.lead.id) return undefined;
@@ -185,37 +185,68 @@ export const LeadStep = () => {
             type="button"
             onClick={() => setDropdownOpen((prev) => !prev)}
             className={cn(
-              "group flex h-12 w-full items-center justify-between rounded-xl border border-border/70 bg-white px-4 py-3 text-left font-semibold text-slate-900 shadow-sm transition hover:border-emerald-400/70 hover:shadow-md focus-visible:ring-2 focus-visible:ring-emerald-300",
+              "group flex w-full rounded-xl border border-border/70 bg-white text-left font-semibold text-slate-900 shadow-sm transition hover:border-emerald-400/70 hover:shadow-md focus-visible:ring-2 focus-visible:ring-emerald-300",
+              isMobile
+                ? "flex-col items-start gap-2 px-4 py-3"
+                : "h-12 items-center justify-between px-4 py-3",
               dropdownOpen && "border-emerald-400/80 shadow-emerald-200",
               loading && leadOptions.length === 0 && "cursor-wait opacity-70"
             )}
             disabled={loading && leadOptions.length === 0}
           >
             {selectedLeadOption ? (
-              <div className="flex w-full items-center justify-between gap-3">
-                <LeadSummaryPreview
-                  lead={selectedLeadOption}
-                  textColor="text-slate-900"
-                  subtleColor="text-muted-foreground"
-                />
-                {selectedLeadOption.status || selectedLeadOption.status_id ? (
-                  <LeadStatusBadge
-                    leadId={selectedLeadOption.id}
-                    currentStatusId={selectedLeadOption.status_id ?? undefined}
-                    currentStatus={selectedLeadOption.status ?? undefined}
-                    editable={false}
-                    size="sm"
-                    statuses={leadStatuses}
-                    statusesLoading={leadStatusesLoading}
-                  />
-                ) : null}
-              </div>
+              (() => {
+                const statusBadge =
+                  selectedLeadOption.status || selectedLeadOption.status_id ? (
+                    <LeadStatusBadge
+                      leadId={selectedLeadOption.id}
+                      currentStatusId={selectedLeadOption.status_id ?? undefined}
+                      currentStatus={selectedLeadOption.status ?? undefined}
+                      editable={false}
+                      size="sm"
+                      statuses={leadStatuses}
+                      statusesLoading={leadStatusesLoading}
+                    />
+                  ) : null;
+
+                if (isMobile) {
+                  return (
+                    <div className="flex w-full items-center gap-3">
+                      <Avatar className="h-9 w-9 border border-border/70 bg-muted shadow-sm">
+                        <AvatarFallback className="text-sm font-semibold uppercase text-slate-700">
+                          <LeadInitials name={selectedLeadOption.name} fallback="?" maxInitials={2} />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-1 flex-col gap-1">
+                        <span className="text-sm font-semibold leading-tight break-words text-slate-900">
+                          {selectedLeadOption.name}
+                        </span>
+                      </div>
+                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-muted-foreground transition group-data-[state=open]:rotate-180 self-center" />
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="flex w-full items-center justify-between gap-3">
+                    <LeadSummaryPreview
+                      lead={selectedLeadOption}
+                      textColor="text-slate-900"
+                      subtleColor="text-muted-foreground"
+                    />
+                    {statusBadge}
+                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-muted-foreground transition group-data-[state=open]:rotate-180" />
+                  </div>
+                );
+              })()
             ) : loading && !hasLoadedOnce ? (
               t("steps.lead.loading")
             ) : (
-              t("steps.lead.selectPlaceholder")
+              <div className="flex w-full items-center justify-between gap-2">
+                <span>{t("steps.lead.selectPlaceholder")}</span>
+                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition group-data-[state=open]:rotate-180" />
+              </div>
             )}
-            <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-muted-foreground transition group-data-[state=open]:rotate-180" />
           </Button>
 
           {dropdownOpen && (
@@ -263,6 +294,30 @@ export const LeadStep = () => {
                     <div className="divide-y">
                       {leadOptions.map((lead) => {
                         const isActive = state.lead.id === lead.id;
+                        const hasStatusOrSelection =
+                          Boolean(lead.status || lead.status_id || isActive);
+                        const statusContent = (
+                          <>
+                            {(lead.status || lead.status_id) ? (
+                              <LeadStatusBadge
+                                leadId={lead.id}
+                                currentStatusId={lead.status_id ?? undefined}
+                                currentStatus={lead.status ?? undefined}
+                                editable={false}
+                                size="sm"
+                                statuses={leadStatuses}
+                                statusesLoading={leadStatusesLoading}
+                              />
+                            ) : null}
+                            <Check
+                              className={cn(
+                                "h-4 w-4 text-emerald-500 transition",
+                                isActive ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                          </>
+                        );
+
                         return (
                           <button
                             key={lead.id}
@@ -270,7 +325,8 @@ export const LeadStep = () => {
                             onClick={() => handleAssignLead(lead)}
                             className={cn(
                               "flex w-full items-center justify-between px-4 py-3 text-left transition hover:bg-muted/60",
-                              isActive && "bg-emerald-100/40"
+                              isActive && "bg-emerald-100/40",
+                              isMobile && "flex-col items-start gap-3"
                             )}
                           >
                             <div className="flex items-center gap-3">
@@ -283,34 +339,28 @@ export const LeadStep = () => {
                                 <span className="text-sm font-semibold text-slate-900">
                                   {lead.name}
                                 </span>
-                                {(lead.email || lead.phone) && (
+                                {lead.email ? (
                                   <span className="text-xs text-muted-foreground">
-                                    {[lead.email, lead.phone]
-                                      .filter(Boolean)
-                                      .join(" • ")}
+                                    {lead.email}
                                   </span>
-                                )}
+                                ) : null}
+                                {lead.phone ? (
+                                  <span className="text-xs text-muted-foreground">
+                                    {lead.phone}
+                                  </span>
+                                ) : null}
+                                {isMobile && hasStatusOrSelection ? (
+                                  <div className="mt-2 flex items-center gap-2">
+                                    {statusContent}
+                                  </div>
+                                ) : null}
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              {(lead.status || lead.status_id) ? (
-                                <LeadStatusBadge
-                                  leadId={lead.id}
-                                  currentStatusId={lead.status_id ?? undefined}
-                                  currentStatus={lead.status ?? undefined}
-                                  editable={false}
-                                  size="sm"
-                                  statuses={leadStatuses}
-                                  statusesLoading={leadStatusesLoading}
-                                />
-                              ) : null}
-                              <Check
-                                className={cn(
-                                  "h-4 w-4 text-emerald-500 transition",
-                                  isActive ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                            </div>
+                            {!isMobile && (
+                              <div className="flex items-center gap-2">
+                                {statusContent}
+                              </div>
+                            )}
                           </button>
                         );
                       })}
@@ -350,25 +400,46 @@ const LeadSummaryPreview = ({
   lead,
   textColor = "text-foreground",
   subtleColor = "text-muted-foreground",
+  className,
+  stackContacts = false,
+  showContacts = true,
 }: {
   lead: LeadOption;
   textColor?: string;
   subtleColor?: string;
+  className?: string;
+  stackContacts?: boolean;
+  showContacts?: boolean;
 }) => {
   return (
-    <div className="flex w-full items-center gap-3">
+    <div className={cn("flex w-full min-w-0 items-center gap-3", className)}>
       <Avatar className="h-9 w-9 border border-border/60 bg-muted shadow-sm">
         <AvatarFallback className="text-xs font-semibold uppercase text-slate-700">
           <LeadInitials name={lead.name} fallback="?" maxInitials={2} />
         </AvatarFallback>
       </Avatar>
       <div className="flex flex-col">
-        <span className={cn("text-sm font-medium", textColor)}>{lead.name}</span>
-        {(lead.email || lead.phone) && (
-          <span className={cn("text-xs", subtleColor)}>
+        <span className={cn("text-sm font-medium leading-tight break-words", textColor)}>
+          {lead.name}
+        </span>
+        {showContacts && (stackContacts ? (
+          <>
+            {lead.email ? (
+              <span className={cn("text-xs leading-snug break-words", subtleColor)}>
+                {lead.email}
+              </span>
+            ) : null}
+            {lead.phone ? (
+              <span className={cn("text-xs leading-snug break-words", subtleColor)}>
+                {lead.phone}
+              </span>
+            ) : null}
+          </>
+        ) : (lead.email || lead.phone) ? (
+          <span className={cn("text-xs leading-snug break-words", subtleColor)}>
             {[lead.email, lead.phone].filter(Boolean).join(" • ")}
           </span>
-        )}
+        ) : null)}
       </div>
     </div>
   );

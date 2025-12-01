@@ -299,11 +299,11 @@ export const PackageCreationWizard = ({
   const isReviewVisible = isEditing && state.meta.currentStep !== "summary";
   const isHeaderPlacement = actionPlacement === "header";
   const actionLayoutClass = isHeaderPlacement
-    ? "flex flex-wrap items-center justify-end gap-2 sm:gap-3"
-    : "grid w-full grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-2 sm:flex sm:w-auto sm:flex-nowrap sm:items-center sm:justify-end sm:gap-3";
+    ? `grid w-full gap-2 ${isReviewVisible ? "grid-cols-3" : "grid-cols-2"} sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-3`
+    : "grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-2 sm:gap-3";
   const buttonWidthClass = isHeaderPlacement
-    ? "min-w-[104px] flex-1 sm:flex-none sm:w-auto"
-    : "w-full sm:w-auto";
+    ? "w-full min-w-[104px] sm:w-auto sm:flex-none"
+    : "w-full";
   const touchTarget = isHeaderPlacement ? "compact" : undefined;
   const actionButtons = (
     <>
@@ -447,7 +447,7 @@ export const PackageCreationWizard = ({
                 </div>
               </div>
               <Progress value={progressValue} className="mt-3" />
-              <CollapsibleContent className="mt-4 space-y-3 overflow-x-hidden">
+              <CollapsibleContent className="mt-4 space-y-3 overflow-x-hidden overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
                 <WizardStepList
                   currentIndex={currentIndex}
                   onSelectStep={handleMobileSelect}

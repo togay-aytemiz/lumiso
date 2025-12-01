@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -34,6 +35,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
+import { Info } from "lucide-react";
 
 // System-reserved field keys that cannot be used for custom fields
 const RESERVED_FIELD_KEYS = new Set([
@@ -276,7 +278,7 @@ export function LeadFieldDialog({
       }
       isOpen={open}
       onOpenChange={onOpenChange}
-      size="lg"
+      size="md"
       dirty={isDirty}
       onDirtyClose={handleDirtyClose}
       footerActions={footerActions}
@@ -446,6 +448,16 @@ export function LeadFieldDialog({
               />
             </div>
           </div>
+
+          <Alert className="border-amber-200 bg-amber-50 text-amber-900">
+            <Info className="h-4 w-4" />
+            <AlertTitle className="text-sm font-semibold">
+              {t("lead_field.field_settings_help_title")}
+            </AlertTitle>
+            <AlertDescription className="text-sm text-amber-900/90">
+              {t("lead_field.field_settings_help_description")}
+            </AlertDescription>
+          </Alert>
 
           {isSystemField && (
             <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">

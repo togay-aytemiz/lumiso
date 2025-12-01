@@ -19,7 +19,6 @@ import {
   Globe,
   Facebook,
   Instagram,
-  Twitter,
   Linkedin,
   Youtube,
   Plus,
@@ -27,7 +26,7 @@ import {
   GripVertical,
   Music,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import type { LucideIcon, LucideProps } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { SocialChannel } from '@/hooks/useOrganizationSettings';
 import { cn } from '@/lib/utils';
@@ -41,6 +40,29 @@ interface SocialChannelsSectionProps {
   className?: string;
 }
 
+const XIcon: LucideIcon = React.forwardRef<SVGSVGElement, LucideProps>(
+  ({ color = 'currentColor', size = 24, strokeWidth = 2, ...props }, ref) => (
+    <svg
+      ref={ref}
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="none"
+      strokeWidth={strokeWidth}
+      {...props}
+    >
+      <path
+        fill={color}
+        fillRule="evenodd"
+        d="M4 3h4.7l3.36 4.74L15.32 3H20l-6 7.08L20 21h-4.7l-3.63-5.12L7.93 21H4l6.19-7.3L4 3Z"
+      />
+    </svg>
+  )
+);
+XIcon.displayName = 'XIcon';
+
 const PREDEFINED_PLATFORMS: Array<{
   key: SocialChannel['platform'];
   name: string;
@@ -49,7 +71,7 @@ const PREDEFINED_PLATFORMS: Array<{
   { key: 'website', name: 'Website', icon: Globe },
   { key: 'facebook', name: 'Facebook', icon: Facebook },
   { key: 'instagram', name: 'Instagram', icon: Instagram },
-  { key: 'twitter', name: 'Twitter/X', icon: Twitter },
+  { key: 'twitter', name: 'x.com (Twitter)', icon: XIcon },
   { key: 'linkedin', name: 'LinkedIn', icon: Linkedin },
   { key: 'youtube', name: 'YouTube', icon: Youtube },
   { key: 'tiktok', name: 'TikTok', icon: Music },
@@ -58,26 +80,50 @@ const PREDEFINED_PLATFORMS: Array<{
 const PLATFORM_URL_PREFIXES: Partial<Record<SocialChannel['platform'], string>> = {
   facebook: 'https://facebook.com/',
   instagram: 'https://instagram.com/',
-  twitter: 'https://twitter.com/',
+  twitter: 'https://x.com/',
   linkedin: 'https://linkedin.com/',
   youtube: 'https://youtube.com/',
   tiktok: 'https://tiktok.com/',
 };
 
+const PLATFORM_URL_ALIASES: Partial<Record<SocialChannel['platform'], string[]>> = {
+  twitter: ['https://twitter.com/'],
+};
+
 const normalizeHost = (host: string) => host.replace(/^www\./, '');
+
+const buildPrefixVariants = (prefix: string): string[] => {
+  try {
+    const base = new URL(prefix);
+    const normalizedHost = normalizeHost(base.host);
+    const hosts = [normalizedHost, `www.${normalizedHost}`];
+    const protocols = base.protocol === 'http:' ? ['http:', 'https:'] : ['https:', 'http:'];
+    const path = base.pathname || '/';
+    const suffix = `${path}${base.search}${base.hash}`;
+
+    const variants = hosts.flatMap((host) =>
+      protocols.map((protocol) => `${protocol}//${host}${suffix}`)
+    );
+
+    return Array.from(new Set(variants));
+  } catch {
+    return [prefix];
+  }
+};
 
 const getUsernameFromUrl = (url: string, platform: SocialChannel['platform']) => {
   if (!url) return '';
   const prefix = PLATFORM_URL_PREFIXES[platform];
+  const aliasPrefixes = PLATFORM_URL_ALIASES[platform] ?? [];
   if (!prefix) return url;
 
   const trimmedUrl = url.trim();
-  const variants = [
-    prefix,
-    prefix.replace('https://', 'http://'),
-    prefix.replace('https://', 'https://www.'),
-    prefix.replace('http://', 'http://www.'),
-  ];
+  const variants = Array.from(
+    new Set([
+      ...buildPrefixVariants(prefix),
+      ...aliasPrefixes.flatMap((alias) => buildPrefixVariants(alias)),
+    ])
+  );
 
   for (const variant of variants) {
     if (trimmedUrl.startsWith(variant)) {
@@ -87,10 +133,20 @@ const getUsernameFromUrl = (url: string, platform: SocialChannel['platform']) =>
 
   try {
     const parsed = new URL(trimmedUrl);
-    const prefixHost = normalizeHost(new URL(prefix).host);
+    const allowedHosts = new Set(
+      variants
+        .map((variant) => {
+          try {
+            return normalizeHost(new URL(variant).host);
+          } catch {
+            return null;
+          }
+        })
+        .filter((host): host is string => Boolean(host))
+    );
     const parsedHost = normalizeHost(parsed.host);
 
-    if (parsedHost === prefixHost) {
+    if (allowedHosts.has(parsedHost)) {
       const path = parsed.pathname.replace(/^\/+/, '');
       const queryAndHash = `${parsed.search}${parsed.hash}`;
       return `${path}${queryAndHash}`.replace(/^\/+/, '');
@@ -206,6 +262,11 @@ export function SocialChannelsSection({
     return platform?.icon || Globe;
   };
 
+  const getChannelDisplayName = (channel: SocialChannel) => {
+    const platform = PREDEFINED_PLATFORMS.find(p => p.key === channel.platform);
+    return channel.customPlatformName || platform?.name || channel.name;
+  };
+
   const availablePlatforms = PREDEFINED_PLATFORMS.filter(
     platform => !socialChannels[platform.key]
   );
@@ -257,7 +318,7 @@ export function SocialChannelsSection({
 
                           <div className="min-w-0 w-20 flex-shrink-0">
                             <span className="block truncate text-sm font-medium">
-                              {channel.customPlatformName || channel.name}
+                              {getChannelDisplayName(channel)}
                             </span>
                           </div>
 
@@ -283,7 +344,7 @@ export function SocialChannelsSection({
                                     const nextUrl = buildUrlFromUsername(channel.platform, normalizedUsername);
                                     updateChannel(key, { url: nextUrl });
                                   }}
-                                  placeholder={t('social_channels.username_placeholder', { platform: channel.customPlatformName || channel.name })}
+                                  placeholder={t('social_channels.username_placeholder', { platform: getChannelDisplayName(channel) })}
                                   className="h-9 border-0 rounded-none rounded-r-md px-3 text-sm shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
                                 />
                               </div>
@@ -319,7 +380,7 @@ export function SocialChannelsSection({
                               <AlertDialogHeader>
                                 <AlertDialogTitle>{t('social_channels.remove_channel_title')}</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  {t('social_channels.remove_channel_description', { name: channel.customPlatformName || channel.name })}
+                                  {t('social_channels.remove_channel_description', { name: getChannelDisplayName(channel) })}
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>

@@ -74,8 +74,8 @@ const SOCIAL_LABEL_OVERRIDES: Record<string, string> = {
   facebook: "Facebook",
   linkedin: "LinkedIn",
   pinterest: "Pinterest",
-  twitter: "Twitter",
-  x: "X",
+  twitter: "x.com (Twitter)",
+  x: "x.com (Twitter)",
 };
 
 const prettifySocialLabel = (key: string): string => {

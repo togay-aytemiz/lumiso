@@ -434,7 +434,7 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
   );
 
   const handleMobileBackToDashboard = useCallback(() => {
-    const target = "/settings";
+    const target = lastPathRef.current ?? "/";
     if (!handleNavigationAttempt(target)) {
       return;
     }
@@ -848,6 +848,48 @@ function SettingsLayoutInner({ enableOverlay = true }: SettingsLayoutProps) {
       })),
     [scrollToSection, sectionNavItems]
   );
+
+  useEffect(() => {
+    const hash = location.hash?.replace("#", "");
+    if (!hash) {
+      return;
+    }
+
+    const timeouts: number[] = [];
+    let attempts = 0;
+
+    const focusTargetSection = () => {
+      const target = document.getElementById(hash);
+      if (!target) {
+        return false;
+      }
+      scrollToSection(hash);
+      if (!target.hasAttribute("tabindex")) {
+        target.setAttribute("tabindex", "-1");
+      }
+      target.focus({ preventScroll: true });
+      return true;
+    };
+
+    const tryScroll = () => {
+      if (focusTargetSection()) {
+        return;
+      }
+      if (attempts >= 4) {
+        return;
+      }
+      attempts += 1;
+      const timeoutId = window.setTimeout(tryScroll, 100);
+      timeouts.push(timeoutId);
+    };
+
+    const initialTimeout = window.setTimeout(tryScroll, 0);
+    timeouts.push(initialTimeout);
+
+    return () => {
+      timeouts.forEach((id) => window.clearTimeout(id));
+    };
+  }, [location.hash, registeredAnchors, scrollToSection]);
 
   const anchorNavPages = [
     "/settings/leads",

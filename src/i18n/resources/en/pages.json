@@ -301,7 +301,9 @@
       "projectRequired": "Create a project first to continue",
       "viewProject": "Click on your project to continue",
       "scheduleSession": "Schedule a session to continue",
-      "sessionAlreadyPlanned": "A planned session already exists."
+      "sessionAlreadyPlanned": "A planned session already exists.",
+      "completedStatus": "System status: marks the lead as won/completed and closes open work.",
+      "lostStatus": "System status: marks the lead as lost/closed and stops follow-ups."
     },
     "header": {
       "back": "Back",

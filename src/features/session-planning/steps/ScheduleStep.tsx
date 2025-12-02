@@ -80,7 +80,7 @@ export const ScheduleStep = () => {
         onTimeChange={handleTimeChange}
         onDateStringChange={handleDateStringChange}
         selectedSessionDurationMinutes={selectedSessionDurationMinutes ?? undefined}
-        enableDraftPreview={state.meta.mode !== "edit"}
+        currentSessionId={state.meta.sessionId}
       />
 
     </div>

@@ -35,6 +35,7 @@ interface CalendarTimePickerProps {
   onDateStringChange: (dateString: string) => void;
   selectedSessionDurationMinutes?: number | null;
   enableDraftPreview?: boolean;
+  currentSessionId?: string;
 }
 
 export function CalendarTimePicker({
@@ -45,6 +46,7 @@ export function CalendarTimePicker({
   onDateStringChange,
   selectedSessionDurationMinutes,
   enableDraftPreview = true,
+  currentSessionId,
 }: CalendarTimePickerProps) {
   const { t, i18n } = useFormsTranslation();
   const [visibleMonth, setVisibleMonth] = useState<Date>(new Date());
@@ -53,6 +55,17 @@ export function CalendarTimePicker({
   const plannedSessionsRef = useRef<HTMLDivElement | null>(null);
   const weeklyPreviewRef = useRef<HTMLDivElement | null>(null);
   const previousSelectedKeyRef = useRef<string | undefined>();
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    const sameMonth =
+      visibleMonth.getFullYear() === monthStart.getFullYear() &&
+      visibleMonth.getMonth() === monthStart.getMonth();
+    if (!sameMonth) {
+      setVisibleMonth(monthStart);
+    }
+  }, [selectedDate, visibleMonth]);
 
   const fetchPlannedSessions = useCallback(async (month: Date) => {
     try {
@@ -65,7 +78,7 @@ export function CalendarTimePicker({
       const start = new Date(month.getFullYear(), month.getMonth(), 1);
       const end = new Date(month.getFullYear(), month.getMonth() + 1, 0);
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('sessions')
         .select(`
           id,
@@ -79,8 +92,15 @@ export function CalendarTimePicker({
           status,
           session_types:session_type_id (duration_minutes, name)
         `)
-        .eq('organization_id', organizationId)
-        .eq('status', 'planned')
+        .eq('organization_id', organizationId);
+
+      if (currentSessionId) {
+        query = query.or(`status.eq.planned,id.eq.${currentSessionId}`);
+      } else {
+        query = query.eq('status', 'planned');
+      }
+
+      const { data, error } = await query
         .gte('session_date', format(start, 'yyyy-MM-dd'))
         .lte('session_date', format(end, 'yyyy-MM-dd'));
 
@@ -91,7 +111,7 @@ export function CalendarTimePicker({
       // Don't crash on mobile, just show empty state
       setPlannedSessions([]);
     }
-  }, []);
+  }, [currentSessionId]);
 
   useEffect(() => {
     void fetchPlannedSessions(visibleMonth);
@@ -239,6 +259,7 @@ export function CalendarTimePicker({
                 const date = d instanceof Date ? d : undefined;
                 onDateChange(date);
                 if (date) {
+                  setVisibleMonth(new Date(date.getFullYear(), date.getMonth(), 1));
                   onDateStringChange(format(date, "yyyy-MM-dd"));
                 }
               } catch (err) {
@@ -272,6 +293,7 @@ export function CalendarTimePicker({
                 const today = new Date();
                 onDateChange(today);
                 onDateStringChange(format(today, "yyyy-MM-dd"));
+                setVisibleMonth(new Date(today.getFullYear(), today.getMonth(), 1));
               }}
             >
               {t("buttons.today")}
@@ -297,6 +319,7 @@ export function CalendarTimePicker({
         selectedDurationMinutes={selectedSessionDurationMinutes}
         showDraftSelection={enableDraftPreview}
         locale={browserLocale}
+        currentSessionId={currentSessionId}
       />
 
       {sessionsForDay.length > 0 && (

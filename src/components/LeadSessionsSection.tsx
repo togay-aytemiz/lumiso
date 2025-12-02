@@ -100,7 +100,6 @@ export function LeadSessionsSection({
     <>
       <SessionListCard
         title={tForms("sessions_form.title")}
-        icon={Calendar}
         sessions={sessions}
         loading={loading}
         summary={summary ?? undefined}

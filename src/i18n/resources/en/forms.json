@@ -941,8 +941,9 @@
   },
   "deleteLeadDialog": {
     "title": "Delete Lead",
-    "description": "Type the lead's name (\"{{name}}\") or DELETE to confirm. This will permanently delete the lead and ALL related data including projects, sessions, reminders/notes, payments, services, and activities.",
-    "placeholder": "Type \"{{name}}\" or \"DELETE\"",
+    "description": "Type the lead's name (\"{{name}}\") or \"{{keyword}}\" to confirm. This will permanently delete the lead and ALL related data including projects, sessions, reminders/notes, payments, services, and activities.",
+    "placeholder": "Type \"{{name}}\" or \"{{keyword}}\"",
+    "keyword": "DELETE",
     "cannotUndo": "This action cannot be undone.",
     "deleting": "Deleting...",
     "deleteLead": "Delete Lead",
@@ -1428,7 +1429,8 @@
     "weekly_preview_empty": "No other sessions scheduled this week.",
     "weekly_preview_time_column": "Time",
     "weekly_preview_time_tbd": "Time TBD",
-    "weekly_preview_draft_label": "Draft selection"
+    "weekly_preview_draft_label": "Draft selection",
+    "weekly_preview_current_session_label": "Your session"
   },
   "timeRelative": {
     "today": "Today",

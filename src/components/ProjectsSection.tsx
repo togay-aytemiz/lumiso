@@ -323,26 +323,28 @@ export function ProjectsSection({
       </BaseOnboardingModal>
 
       <Card className="w-full">
-      <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between space-y-0 pb-4">
-        <CardTitle className="text-xl font-semibold">{t('pages:projects.title')}</CardTitle>
-        <div className="flex flex-col gap-3 w-full md:w-auto md:flex-row md:items-center">
-          {hasArchived && (
-            <div className="flex items-center justify-between md:justify-start gap-2 text-sm text-muted-foreground">
-              <span className="flex-shrink-0">{t('pages:projects.showArchived')}</span>
-              <Switch checked={showArchived} onCheckedChange={(v) => setShowArchived(v)} />
-            </div>
-          )}
-          {projects.length > 0 && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full min-w-[140px] gap-2 border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 hover:text-indigo-950 md:w-auto"
-              onClick={handleOpenProjectWizard}
-            >
-              <Plus className="h-4 w-4" />
-              {t('pages:projects.addProject')}
-            </Button>
-          )}
+      <CardHeader className="pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <CardTitle className="text-xl font-semibold">{t('pages:projects.title')}</CardTitle>
+          <div className="flex flex-wrap items-center gap-3">
+            {hasArchived && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="flex-shrink-0">{t('pages:projects.showArchived')}</span>
+                <Switch checked={showArchived} onCheckedChange={(v) => setShowArchived(v)} />
+              </div>
+            )}
+            {projects.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="min-w-[140px] gap-2 whitespace-nowrap border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 hover:text-indigo-950"
+                onClick={handleOpenProjectWizard}
+              >
+                <Plus className="h-4 w-4" />
+                {t('pages:projects.addProject')}
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent>

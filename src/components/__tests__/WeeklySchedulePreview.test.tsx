@@ -340,4 +340,34 @@ describe("WeeklySchedulePreview", () => {
     expect(sessionBlock.style.width).toBe("calc(100% - 0px)");
     expect(sessionBlock.style.left).toBe("calc(0% + 0px)");
   });
+
+  it("keeps the current session highlighted with label even when a new draft is selected", () => {
+    const sessions: WeeklyScheduleSession[] = [
+      {
+        id: "current-session",
+        session_date: "2024-05-20",
+        session_time: "09:00",
+        duration_minutes: 60,
+        lead_name: "Pat",
+      },
+    ];
+
+    render(
+      <WeeklySchedulePreview
+        sessions={sessions}
+        referenceDate={monday}
+        selectedDate={new Date("2024-05-20T00:00:00Z")}
+        selectedTime="15:00"
+        selectedDurationMinutes={60}
+        currentSessionId="current-session"
+        locale="en-GB"
+      />
+    );
+
+    const sessionBlock = screen.getByTestId("weekly-session-current-session");
+    expect(sessionBlock).toHaveClass("border-indigo-400/80");
+    expect(screen.getByText("sessionScheduling.weekly_preview_current_session_label")).toBeInTheDocument();
+    const draftBlock = screen.getByTestId("weekly-draft-selection");
+    expect(draftBlock).toBeInTheDocument();
+  });
 });

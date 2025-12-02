@@ -39,6 +39,7 @@ import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
 import { EntityHeader, type EntitySummaryItem } from "@/components/EntityHeader";
 import { useLeadDetailData } from "@/hooks/useLeadDetailData";
+import { Tooltip, TooltipContentDark, TooltipTrigger } from "@/components/ui/tooltip";
 
 const getDateKey = (value?: string | null) => (value ? value.slice(0, 10) : null);
 const safeFormatDate = (value?: string | null) => {
@@ -90,7 +91,7 @@ const LeadDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t: tMessages } = useMessagesTranslation();
-  const { t: tForms } = useFormsTranslation();
+  const { t: tForms, i18n } = useFormsTranslation();
   const { t: tCommon } = useCommonTranslation();
   const { t: tPages } = useTranslation("pages");
   const {
@@ -421,6 +422,31 @@ const LeadDetail = () => {
   // UI state for Lead Information card
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [confirmDeleteText, setConfirmDeleteText] = useState("");
+  const deleteConfirmationKeyword = tForms("deleteLeadDialog.keyword", { defaultValue: "DELETE" });
+
+  const normalizeConfirmationValue = useCallback((value: string) => {
+    let normalized = value
+      .trim()
+      .toLocaleLowerCase(i18n.language || undefined)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+    if (i18n.language?.startsWith("tr")) {
+      normalized = normalized.replace(/ı/g, "i");
+    }
+
+    return normalized;
+  }, [i18n.language]);
+
+  const isDeleteConfirmationValid = useMemo(() => {
+    if (!confirmDeleteText.trim()) return false;
+
+    const isNameMatch = lead?.name ? confirmDeleteText.trim() === lead.name : false;
+    const normalizedKeyword = normalizeConfirmationValue(deleteConfirmationKeyword);
+    const normalizedInput = normalizeConfirmationValue(confirmDeleteText);
+
+    return isNameMatch || normalizedInput === normalizedKeyword;
+  }, [confirmDeleteText, deleteConfirmationKeyword, lead?.name, normalizeConfirmationValue]);
 
   const normalizeStatusText = useCallback((value?: string | null) => (value ?? "").trim().toLowerCase(), []);
 
@@ -481,6 +507,8 @@ const LeadDetail = () => {
   const hasQuickStatusActions = shouldShowCompletedQuickAction || shouldShowLostQuickAction;
   const completedButtonLabel = isUpdating ? "Updating..." : completedStatus?.name ?? "";
   const lostButtonLabel = isUpdating ? "Updating..." : lostStatus?.name ?? "";
+  const completedStatusTooltip = tPages("leadDetail.tooltips.completedStatus");
+  const lostStatusTooltip = tPages("leadDetail.tooltips.lostStatus");
 
   const formatRelativeTime = (dateString?: string | null) => {
     if (!dateString) return null;
@@ -870,32 +898,42 @@ const LeadDetail = () => {
   const quickStatusButtons = hasQuickStatusActions ? (
     <div className="ml-auto flex items-center gap-2 sm:ml-0">
       {shouldShowCompletedQuickAction && (
-        <Button
-          onClick={handleMarkAsCompleted}
-          disabled={isUpdating}
-          variant="outline"
-          className={QUICK_ACTION_BUTTON_CLASS}
-          size="sm"
-          style={completedQuickActionStyle}
-          aria-label={completedButtonLabel}
-        >
-          <CheckCircle className="h-4 w-4" />
-          <span className="hidden sm:inline">{completedButtonLabel}</span>
-        </Button>
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={handleMarkAsCompleted}
+              disabled={isUpdating}
+              variant="outline"
+              className={QUICK_ACTION_BUTTON_CLASS}
+              size="sm"
+              style={completedQuickActionStyle}
+              aria-label={completedButtonLabel}
+            >
+              <CheckCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">{completedButtonLabel}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContentDark>{completedStatusTooltip}</TooltipContentDark>
+        </Tooltip>
       )}
       {shouldShowLostQuickAction && (
-        <Button
-          onClick={handleMarkAsLost}
-          disabled={isUpdating}
-          variant="outline"
-          size="sm"
-          style={lostQuickActionStyle}
-          className={QUICK_ACTION_BUTTON_CLASS}
-          aria-label={lostButtonLabel}
-        >
-          <XCircle className="h-4 w-4" />
-          <span className="hidden sm:inline">{lostButtonLabel}</span>
-        </Button>
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={handleMarkAsLost}
+              disabled={isUpdating}
+              variant="outline"
+              size="sm"
+              style={lostQuickActionStyle}
+              className={QUICK_ACTION_BUTTON_CLASS}
+              aria-label={lostButtonLabel}
+            >
+              <XCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">{lostButtonLabel}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContentDark>{lostStatusTooltip}</TooltipContentDark>
+        </Tooltip>
       )}
     </div>
   ) : null;
@@ -1054,7 +1092,7 @@ const LeadDetail = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>{tForms("deleteLeadDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {tForms("deleteLeadDialog.description", { name: lead.name })}
+              {tForms("deleteLeadDialog.description", { name: lead.name, keyword: deleteConfirmationKeyword })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">
@@ -1063,7 +1101,7 @@ const LeadDetail = () => {
             </Label>
             <Input
               id="confirm-delete"
-              placeholder={tForms("deleteLeadDialog.placeholder", { name: lead.name })}
+              placeholder={tForms("deleteLeadDialog.placeholder", { name: lead.name, keyword: deleteConfirmationKeyword })}
               value={confirmDeleteText}
               onChange={(e) => setConfirmDeleteText(e.target.value)}
             />
@@ -1073,7 +1111,7 @@ const LeadDetail = () => {
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>{tCommon('buttons.cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={deleting || ![lead.name, 'DELETE'].includes(confirmDeleteText.trim())} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction onClick={handleDelete} disabled={deleting || !isDeleteConfirmationValid} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {deleting ? tForms('deleteLeadDialog.deleting') : tForms('deleteLeadDialog.deleteLead')}
             </AlertDialogAction>
           </AlertDialogFooter>

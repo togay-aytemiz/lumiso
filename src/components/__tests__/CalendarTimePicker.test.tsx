@@ -46,6 +46,7 @@ beforeAll(() => {
 const eqCalls: Array<{ field: string; value: unknown }> = [];
 const gteCalls: Array<{ field: string; value: unknown }> = [];
 const lteCalls: Array<{ field: string; value: unknown }> = [];
+const orCalls: string[] = [];
 const defaultSessions = [
   {
     id: "session-1",
@@ -68,6 +69,10 @@ jest.mock("@/integrations/supabase/client", () => {
   const queryChain = {
     eq(field: string, value: unknown) {
       eqCalls.push({ field, value });
+      return queryChain;
+    },
+    or(value: string) {
+      orCalls.push(value);
       return queryChain;
     },
     gte(field: string, value: unknown) {
@@ -110,6 +115,7 @@ afterEach(() => {
   eqCalls.length = 0;
   gteCalls.length = 0;
   lteCalls.length = 0;
+  orCalls.length = 0;
   mockedSessionsResponse = [...defaultSessions];
 });
 
@@ -179,5 +185,34 @@ describe("CalendarTimePicker", () => {
     );
 
     await waitFor(() => expect(scrollIntoViewMock).toHaveBeenCalled());
+  });
+
+  it("includes the current session in queries when editing", async () => {
+    mockedSessionsResponse = [
+      {
+        id: "session-edit",
+        session_date: "2024-06-10",
+        session_time: "09:00",
+        session_type_id: "type-99",
+        leads: { name: "Edit User" },
+        status: "rescheduled",
+        session_types: { duration_minutes: 60 },
+      },
+    ];
+
+    render(
+      <CalendarTimePicker
+        selectedDate={new Date("2024-06-10T00:00:00")}
+        selectedTime="09:00"
+        onDateChange={jest.fn()}
+        onTimeChange={jest.fn()}
+        onDateStringChange={jest.fn()}
+        currentSessionId="session-edit"
+      />
+    );
+
+    await waitFor(() =>
+      expect(orCalls).toContain("status.eq.planned,id.eq.session-edit")
+    );
   });
 });

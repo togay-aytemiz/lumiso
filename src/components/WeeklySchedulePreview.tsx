@@ -43,6 +43,7 @@ interface WeeklySchedulePreviewProps {
   selectedDurationMinutes?: number | null;
   locale?: string;
   showDraftSelection?: boolean;
+  currentSessionId?: string;
 }
 
 interface PositionedSession extends WeeklyScheduleSession {
@@ -151,6 +152,7 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
       selectedDurationMinutes,
       showDraftSelection = true,
       locale = typeof navigator !== "undefined" ? navigator.language : "en-US",
+      currentSessionId,
     },
     externalRef
   ) => {
@@ -175,6 +177,11 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
     return differenceInCalendarDays(selectedDate, weekStart);
   }, [selectedDate, weekStart]);
 
+  const selectedDateKey = useMemo(
+    () => (selectedDate ? format(selectedDate, "yyyy-MM-dd") : null),
+    [selectedDate]
+  );
+
   const draftStartMinutes = useMemo(
     () => parseTimeToMinutes(selectedTime),
     [selectedTime]
@@ -193,7 +200,19 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
     selectedDayIndex <= 6 &&
     draftStartMinutes !== null;
 
-  const draftEndMinutes = isDraftWithinWeek
+  const selectedMatchesCurrentSession = useMemo(() => {
+    if (!currentSessionId || !selectedDateKey || !selectedTime) return false;
+    return sessions.some(
+      (session) =>
+        session.id === currentSessionId &&
+        session.session_date === selectedDateKey &&
+        session.session_time === selectedTime
+    );
+  }, [currentSessionId, selectedDateKey, selectedTime, sessions]);
+
+  const isDraftActive = isDraftWithinWeek && !selectedMatchesCurrentSession;
+
+  const draftEndMinutes = isDraftActive
     ? Math.min(draftStartMinutes! + draftDurationMinutes, MINUTES_IN_DAY - 1)
     : null;
 
@@ -245,7 +264,7 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
       endCandidates.push(safeEnd);
     });
 
-    if (isDraftWithinWeek && draftStartMinutes !== null && draftEndMinutes !== null) {
+    if (isDraftActive && draftStartMinutes !== null && draftEndMinutes !== null) {
       startCandidates.push(draftStartMinutes);
       endCandidates.push(draftEndMinutes);
     }
@@ -272,7 +291,7 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
   }, [
     draftEndMinutes,
     draftStartMinutes,
-    isDraftWithinWeek,
+    isDraftActive,
     sessions,
     weekStart,
   ]);
@@ -302,7 +321,7 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
     return `${startLabel} – ${endLabel}`.toLocaleUpperCase(resolvedLocale);
   }, [dateFnsLocale, resolvedLocale, weekStart]);
 
-  const hasDraftSelection = Boolean(isDraftWithinWeek);
+  const hasDraftSelection = Boolean(isDraftActive);
 
   useEffect(() => {
     if (!isMobile || selectedDayIndex === null) return;
@@ -461,20 +480,24 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
                       layoutWithDraft.find((session) => session.id === draftSession.id) ??
                       null;
 
-                    renderedSessions = layoutWithDraft.filter(
-                      (session) => session.id !== draftSession.id
-                    ).map((session) => {
-                      if (!draftLayout) return session;
-                      const overlapsDraft =
-                        session.startMinutes < draftEnd && session.endMinutes > draftStart;
-                      if (!overlapsDraft) {
-                        const baseLayout = baseLayoutById.get(session.id);
-                        return baseLayout
-                          ? { ...session, columnIndex: baseLayout.columnIndex, columnCount: baseLayout.columnCount }
-                          : session;
-                      }
-                      return session;
-                    });
+                    renderedSessions = layoutWithDraft
+                      .filter((session) => session.id !== draftSession.id)
+                      .map((session) => {
+                        if (!draftLayout) return session;
+                        const overlapsDraft =
+                          session.startMinutes < draftEnd && session.endMinutes > draftStart;
+                        if (!overlapsDraft) {
+                          const baseLayout = baseLayoutById.get(session.id);
+                          return baseLayout
+                            ? {
+                                ...session,
+                                columnIndex: baseLayout.columnIndex,
+                                columnCount: baseLayout.columnCount,
+                              }
+                            : session;
+                        }
+                        return session;
+                      });
                   }
 
                   const draftBlockMetrics = shouldRenderDraft
@@ -594,50 +617,61 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
                             `${startLabel} – ${endLabel}`,
                           ].filter(Boolean);
                           const ariaLabel = tooltipDetails.join(" • ");
+                          const isCurrentSession = currentSessionId === session.id;
 
-                          return (
-                            <Tooltip key={session.id}>
-                              <TooltipTrigger asChild>
-                                <div
-                                  data-testid={`weekly-session-${session.id}`}
-                                  aria-label={ariaLabel}
-                                  className={cn(
-                                    "absolute overflow-hidden rounded-xl border border-emerald-300/80 bg-emerald-50 px-1.5 py-1.5 text-left shadow-[0_16px_28px_rgba(15,118,110,0.08)] transition-all",
-                                    "hover:border-emerald-400 hover:bg-emerald-100/90 hover:shadow-[0_20px_34px_rgba(15,118,110,0.15)]"
-                                  )}
-                                  style={{
-                                    top: `${topOffset}px`,
-                                    height: `${blockHeight}px`,
-                                    left: `calc(${leftOffset}% + ${gutter}px)`,
-                                    width: `calc(${widthValue}% - ${gutter * 2}px)`,
-                                  }}
-                                >
+                        return (
+                          <Tooltip key={session.id}>
+                            <TooltipTrigger asChild>
+                              <div
+                                data-testid={`weekly-session-${session.id}`}
+                                aria-label={ariaLabel}
+                                className={cn(
+                                  "absolute overflow-hidden rounded-xl border px-1.5 py-1.5 text-left transition-all",
+                                  "shadow-[0_16px_28px_rgba(15,118,110,0.08)] hover:shadow-[0_20px_34px_rgba(15,118,110,0.15)]",
+                                  isCurrentSession
+                                    ? "border-indigo-400/80 bg-indigo-50/95 border-dashed shadow-[0_16px_28px_rgba(79,70,229,0.12)] hover:border-indigo-500 hover:bg-indigo-100/90"
+                                    : "border-emerald-300/80 bg-emerald-50 hover:border-emerald-400 hover:bg-emerald-100/90"
+                                )}
+                                style={{
+                                  top: `${topOffset}px`,
+                                  height: `${blockHeight}px`,
+                                  left: `calc(${leftOffset}% + ${gutter}px)`,
+                                  width: `calc(${widthValue}% - ${gutter * 2}px)`,
+                                }}
+                              >
+                                <div className="flex flex-col gap-0.5">
                                   <p className="flex-1 break-all text-[11px] font-light leading-snug text-slate-800 line-clamp-6">
                                     {session.lead_name || t("sessionScheduling.unknown_client")}
                                   </p>
+                                  {isCurrentSession ? (
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-indigo-700">
+                                      {t("sessionScheduling.weekly_preview_current_session_label")}
+                                    </p>
+                                  ) : null}
                                 </div>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs space-y-1 text-left text-sm leading-snug">
-                                <div className="font-medium text-emerald-900">
-                                  {session.lead_name || t("sessionScheduling.unknown_client")}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs space-y-1 text-left text-sm leading-snug">
+                              <div className="font-medium text-emerald-900">
+                                {session.lead_name || t("sessionScheduling.unknown_client")}
+                              </div>
+                              {session.project_name ? (
+                                <div className="text-emerald-800">{session.project_name}</div>
+                              ) : null}
+                              {formattedDuration ? (
+                                <div className="text-muted-foreground">
+                                  {session.session_type_name
+                                    ? `${session.session_type_name} • ${formattedDuration}`
+                                    : formattedDuration}
                                 </div>
-                                {session.project_name ? (
-                                  <div className="text-emerald-800">{session.project_name}</div>
-                                ) : null}
-                                {formattedDuration ? (
-                                  <div className="text-muted-foreground">
-                                    {session.session_type_name
-                                      ? `${session.session_type_name} • ${formattedDuration}`
-                                      : formattedDuration}
-                                  </div>
-                                ) : null}
-                                <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                                  {startLabel} – {endLabel}
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          );
-                        })}
+                              ) : null}
+                              <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                                {startLabel} – {endLabel}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })}
                       </div>
                       {dayNoTime.length > 0 && (
                         <div className="border-t border-dashed border-slate-200 bg-slate-50/80 px-2 py-2 text-[11px] text-muted-foreground">

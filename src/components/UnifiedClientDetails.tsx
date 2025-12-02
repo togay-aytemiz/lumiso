@@ -9,6 +9,7 @@ import {
   MessageSquare,
   ChevronDown,
   Pencil,
+  Settings,
   AlertTriangle,
   X,
 } from "lucide-react";
@@ -36,6 +37,7 @@ import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { cn } from "@/lib/utils";
 import type { LeadFieldDefinition } from "@/types/leadFields";
 import { useOptionalOrganization } from "@/hooks/useOptionalOrganization";
+import { Tooltip, TooltipContentDark, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Lead {
   id: string;
@@ -150,6 +152,9 @@ export function UnifiedClientDetails({
     [activeOrganizationId]
   );
   const [showFieldHelper, setShowFieldHelper] = useState(true);
+  const manageLeadFieldsTooltip = tForms("lead_fields.helper.tooltip", {
+    defaultValue: "Özel kişi alanlarını yönetmek için burayı kullanın",
+  });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -549,40 +554,61 @@ export function UnifiedClientDetails({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setIsExpanded((prev) => !prev)}
-                  className="text-left leading-none"
-                  aria-expanded={isExpanded}
-                >
-                  <span className="text-lg font-semibold">
-                    {isExpanded
-                      ? "Kişi Detayları"
-                      : title || tForms("clientDetails.title")}
-                  </span>
-                </button>
-                <Button
-                  variant="ghost"
-                  size={isExpanded ? "sm" : "icon"}
-                  onClick={() => setEditOpen(true)}
-                  className={cn(
-                    "ml-auto bg-accent/10 text-accent transition-colors hover:bg-accent/20 flex-shrink-0",
-                    isExpanded ? "h-9 px-3 text-sm font-medium" : "h-9 w-9 rounded-lg"
-                  )}
-                >
-                  {isExpanded ? (
-                    tForms("clientDetails.edit")
-                  ) : (
-                    <>
-                      <Pencil className="h-4 w-4" aria-hidden="true" />
-                      <span className="sr-only">
-                        {tForms("clientDetails.edit")}
-                      </span>
-                    </>
-                  )}
-                </Button>
-              </div>
-              {shouldShowHeaderLeadName && (
-                <div className="min-w-0 text-left">{leadNameDisplay}</div>
-              )}
+              onClick={() => setIsExpanded((prev) => !prev)}
+              className="text-left leading-none"
+              aria-expanded={isExpanded}
+            >
+              <span className="text-lg font-semibold">
+                {isExpanded
+                  ? "Kişi Detayları"
+                  : title || tForms("clientDetails.title")}
+              </span>
+            </button>
+            <div className="ml-auto flex items-center gap-1.5">
+              <Tooltip delayDuration={100}>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleManageLeadFields}
+                    className="h-9 w-9 rounded-lg text-muted-foreground hover:bg-accent/10 hover:text-accent flex-shrink-0"
+                  >
+                    <Settings className="h-4 w-4" aria-hidden="true" />
+                    <span className="sr-only">
+                      {tForms("lead_fields.helper.action")}
+                    </span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContentDark side="bottom" align="end">
+                  {manageLeadFieldsTooltip}
+                </TooltipContentDark>
+              </Tooltip>
+              <Button
+                variant="ghost"
+                size={isExpanded ? "sm" : "icon"}
+                onClick={() => setEditOpen(true)}
+                className={cn(
+                  "bg-accent/10 text-accent transition-colors hover:bg-accent/20 flex-shrink-0",
+                  isExpanded ? "h-9 px-3 text-sm font-medium" : "h-9 w-9 rounded-lg"
+                )}
+              >
+                {isExpanded ? (
+                  tForms("clientDetails.edit")
+                ) : (
+                  <>
+                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                    <span className="sr-only">
+                      {tForms("clientDetails.edit")}
+                    </span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+          {shouldShowHeaderLeadName && (
+            <div className="min-w-0 text-left">{leadNameDisplay}</div>
+          )}
               {hasQuickActions && (
                 <div
                   className={cn(

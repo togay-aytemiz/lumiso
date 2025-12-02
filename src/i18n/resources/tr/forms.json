@@ -1154,7 +1154,8 @@
     "weekly_preview_empty": "Bu hafta planlanmış başka seans yok.",
     "weekly_preview_time_column": "Saat",
     "weekly_preview_time_tbd": "Saat belirsiz",
-    "weekly_preview_draft_label": "Taslak seçim"
+    "weekly_preview_draft_label": "Taslak seçim",
+    "weekly_preview_current_session_label": "Seansınız"
   },
   "timeRelative": {
     "today": "Bugün",
@@ -1576,8 +1577,9 @@
   },
   "deleteLeadDialog": {
     "title": "Kişiyi Sil",
-    "description": "Onaylamak için kişi adını (\"{{name}}\") veya DELETE yazın. Bu işlem kişi, bağlı projeler, seanslar, hatırlatıcılar/notlar, ödemeler, hizmetler ve aktiviteler dahil TÜM ilgili verileri kalıcı olarak silecektir.",
-    "placeholder": "\"{{name}}\" veya \"DELETE\" yazın",
+    "description": "Onaylamak için kişi adını (\"{{name}}\") veya \"{{keyword}}\" yazın. Bu işlem kişi, bağlı projeler, seanslar, hatırlatıcılar/notlar, ödemeler, hizmetler ve aktiviteler dahil TÜM ilgili verileri kalıcı olarak silecektir.",
+    "placeholder": "\"{{name}}\" veya \"{{keyword}}\" yazın",
+    "keyword": "SİL",
     "cannotUndo": "Bu işlem geri alınamaz.",
     "deleting": "Siliniyor...",
     "deleteLead": "Kişiyi Sil",

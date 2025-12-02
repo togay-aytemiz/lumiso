@@ -301,7 +301,9 @@
       "projectRequired": "Devam etmek için önce bir proje oluşturun",
       "viewProject": "Devam etmek için projenize tıklayın",
       "scheduleSession": "Devam etmek için bir seans planlayın",
-      "sessionAlreadyPlanned": "Zaten planlanmış bir seans mevcut."
+      "sessionAlreadyPlanned": "Zaten planlanmış bir seans mevcut.",
+      "completedStatus": "Kişiyi kazanıldı/tamamlandı olarak işaretler ve süreci kapatır.",
+      "lostStatus": "Kişiyi kaybedildi olarak işaretler ve takibi sonlandırır."
     },
     "header": {
       "back": "Geri",

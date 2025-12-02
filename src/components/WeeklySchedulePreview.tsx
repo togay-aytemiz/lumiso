@@ -306,14 +306,30 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
 
   useEffect(() => {
     if (!isMobile || selectedDayIndex === null) return;
+    if (selectedDayIndex < 0 || selectedDayIndex > 6) return;
+    const container = scrollContainerRef.current;
     const target = dayRefs.current[selectedDayIndex];
-    if (target) {
-      target.scrollIntoView({
+    if (!container || !target) return;
+
+    const centerTarget = () => {
+      const containerRect = container.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const targetOffset = targetRect.left - containerRect.left + container.scrollLeft;
+      const targetCenter = targetOffset + targetRect.width / 2;
+      const desiredScroll = targetCenter - containerRect.width / 2;
+      const clampedScroll = Math.min(
+        Math.max(desiredScroll, 0),
+        Math.max(container.scrollWidth - containerRect.width, 0)
+      );
+
+      container.scrollTo({
+        left: clampedScroll,
         behavior: "smooth",
-        inline: "center",
-        block: "nearest",
       });
-    }
+    };
+
+    const raf = window.requestAnimationFrame(centerTarget);
+    return () => window.cancelAnimationFrame(raf);
   }, [isMobile, selectedDayIndex, weekStart]);
 
   if (!sessions.length && !hasDraftSelection) {

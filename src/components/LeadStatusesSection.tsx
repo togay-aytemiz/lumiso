@@ -107,13 +107,13 @@ const LeadStatusesSection = () => {
       
       if (!hasCompleted || !hasCancelled) {
         const timeoutId = setTimeout(() => {
-          toast.info("Add at least one Completed and one Cancelled state to unlock full automations.");
+          toast.info(t('lead_statuses.lifecycle_warning'));
         }, 1000);
         
         return () => clearTimeout(timeoutId);
       }
     }
-  }, [statuses, isLoading, toast]);
+  }, [statuses, isLoading, toast, t]);
 
   const form = useForm<LeadStatusForm>({
     resolver: zodResolver(leadStatusSchema),
@@ -133,7 +133,7 @@ const LeadStatusesSection = () => {
     } catch (error: unknown) {
       console.error('Error updating setting:', error);
       const message = getErrorMessage(error);
-      toast.error(message ?? "Failed to update preferences");
+      toast.error(message ?? t('lead_statuses.update_failed'));
     } finally {
       setSaving(false);
     }
@@ -183,10 +183,10 @@ const LeadStatusesSection = () => {
       // Invalidate cache to refresh data
       queryClient.invalidateQueries({ queryKey: ['lead_statuses', activeOrganizationId] });
 
-      toast.success("Lead status deleted successfully");
+      toast.success(t('lead_status.success.deleted'));
     } catch (error) {
       console.error('Error deleting lead status:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to delete lead status");
+      toast.error(error instanceof Error ? error.message : t('lead_status.errors.delete_failed'));
     }
   };
 

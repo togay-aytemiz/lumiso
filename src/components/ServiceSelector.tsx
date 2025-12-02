@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18nToast } from "@/lib/toastHelpers";
+import { useTranslation } from "react-i18next";
 
 interface Service {
   id: string;
@@ -26,14 +27,15 @@ interface ServiceSelectorProps {
 
 export function ServiceSelector({ 
   projectId, 
-  selectedServices, 
-  onServicesChange, 
+  selectedServices,
+  onServicesChange,
   disabled = false 
 }: ServiceSelectorProps) {
   const [availableServices, setAvailableServices] = useState<Service[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const toast = useI18nToast();
+  const { t } = useTranslation("forms");
 
   const fetchServices = useCallback(async () => {
     try {
@@ -55,11 +57,11 @@ export function ServiceSelector({
       setAvailableServices(data || []);
     } catch (error) {
       console.error("Error fetching services:", error);
-      toast.error("Failed to load available services.");
+      toast.error(t("payments.services.load_error"));
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, t]);
 
   useEffect(() => {
     void fetchServices();

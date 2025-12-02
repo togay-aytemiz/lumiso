@@ -469,6 +469,8 @@
     "add_status": "Add Status",
     "drag_instructions": "Drag (⋮⋮) to reorder • Click to edit status names and colors.",
     "preferences_updated": "Preferences updated",
+    "update_failed": "Failed to update preferences",
+    "lifecycle_warning": "Add at least one Completed and one Cancelled state to unlock full automations.",
     "reorder_success": "Status order updated successfully",
     "reorder_error": "Failed to update status order"
   },

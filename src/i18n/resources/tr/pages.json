@@ -123,7 +123,7 @@
     "footers": {
       "name": "Adını istediğin zaman Ayarlar → Profil sekmesinden güncelleyebilirsin.",
       "business": "İşletme bilgilerini Ayarlar → Genel sekmesinden düzenleyebilirsin.",
-      "projects": ""
+      "projects": "Varsayılan proje türlerini Ayarlar → Projeler ve Seanslar sekmesinden düzenleyebilirsin."
     },
     "footer": "Adını istediğin zaman Ayarlar → Profil sekmesinden güncelleyebilirsin.",
     "actions": {
@@ -196,7 +196,7 @@
       "end": "Bitiş tarihi"
     },
     "kpis": {
-      "sectionTitle": "",
+      "sectionTitle": "Önemli metrikler",
       "infoLabel": "{{metric}} hakkında ayrıntıları göster",
       "timeframes": {
         "newLast7Days": "Yeni kişiler · Bu hafta",
@@ -761,7 +761,7 @@
     },
     "users": {
       "title": "Üyelik Konsolu",
-      "subtitle": "Trial, premium yükseltmeleri ve CRM sağlığını tek ekranda takip et.",
+      "subtitle": "Deneme sürecini, premium yükseltmeleri ve CRM sağlığını tek ekranda takip et.",
       "errors": {
         "failedToLoad": "Admin kullanıcıları yükleyemedik. Lütfen yenileyin."
       },
@@ -770,10 +770,10 @@
         "totalHint": "Aktif tüm organizasyonlar",
         "premium": "Premium",
         "premiumHint": "Canlı/ödeyen müşteriler",
-        "trials": "Aktif trial",
+        "trials": "Aktif deneme",
         "trialsHint": "Ücretsiz deneme sürecindeki hesaplar",
         "expiring": "Yakında bitecek",
-        "expiringHint": "3 gün içinde sona eren trial'lar",
+        "expiringHint": "3 gün içinde sona eren denemeler",
         "complimentary": "Ücretsiz premium",
         "complimentaryHint": "Manuel verilen premium erişim",
         "suspended": "Askıya alınmış",
@@ -785,7 +785,7 @@
         "status": {
           "all": "Tüm durumlar"
         },
-        "expiringOnly": "Sadece süresi biten trial'ları göster"
+        "expiringOnly": "Sadece süresi biten denemeleri göster"
       },
       "actions": {
         "refresh": "Yenile",
@@ -821,7 +821,7 @@
         "planActive": "Aktif üyelik",
         "suspendedTitle": "Hesap askıya alındı",
         "suspendedDate": "{{date}} tarihinde askıya alındı",
-        "trialExpired": "Trial süresi doldu",
+        "trialExpired": "Deneme süresi doldu",
         "locked": "Erişim kilitli — plan seçin",
         "notApplicable": "Geçerli değil",
         "metrics": {
@@ -839,7 +839,7 @@
       },
       "detail": {
         "title": "{{name}} üyelik özeti",
-        "subtitle": "Trial durumu, kullanım, ödemeler ve aksiyonları incele.",
+        "subtitle": "Deneme durumu, kullanım, ödemeler ve aksiyonları incele.",
         "tabs": {
           "overview": "Genel",
           "kisiler": "Kişiler",
@@ -853,12 +853,12 @@
         },
         "membership": {
           "title": "Üyelik durumu",
-          "subtitle": "Trial + premium zaman çizelgesi",
+          "subtitle": "Deneme + premium zaman çizelgesi",
           "plan": "Plan: {{plan}}",
-          "trialEnds": "Trial bitişi",
+          "trialEnds": "Deneme bitişi",
           "daysRemaining": "{{days}} gün kaldı",
           "lastActive": "Son Aktif",
-          "startedAt": "Trial başlangıcı",
+          "startedAt": "Deneme başlangıcı",
           "premiumActivatedAt": "Premium aktivasyonu"
         },
         "usage": {
@@ -866,7 +866,7 @@
           "subtitle": "Projeler, seanslar ve ekip aktivitesi",
           "projects": "Projeler",
           "activeProjects": "Aktif projeler",
-          "leads": "Lead'ler",
+          "leads": "Kişiler",
           "sessions": "Seanslar",
           "upcomingSessions": "Yaklaşan seanslar",
           "calendarEvents": "Takvim etkinlikleri",
@@ -936,7 +936,7 @@
         "actions": {
           "title": "Admin aksiyonları",
           "subtitle": "Bu müşteri için manuel işlemler",
-          "manageTrial": "Trial yönet",
+          "manageTrial": "Denemeyi yönet",
           "grantPremium": "Premium yap",
           "addComplimentary": "Ücretsiz premium ver",
           "suspendAccount": "Hesabı askıya al",
@@ -948,15 +948,15 @@
             "saved": "Üyelik bilgileri güncellendi",
             "validationError": "Lütfen gerekli alanları doldurun.",
             "manageTrial": {
-              "title": "Trial süresini yönet",
+              "title": "Deneme süresini yönet",
               "description": "Bitiş tarihini ayarla veya denemeyi hemen bitir.",
-              "dateLabel": "Trial bitiş tarihi",
+              "dateLabel": "Deneme bitiş tarihi",
               "reasonLabel": "Not (opsiyonel)",
               "reasonPlaceholder": "Sadece adminlere görünür",
               "submit": "Kaydet",
-              "endToday": "Trial'ı bugün bitir",
-              "success": "Trial güncellendi",
-              "error": "Trial güncellenemedi, tekrar deneyin."
+              "endToday": "Denemeyi bugün bitir",
+              "success": "Deneme güncellendi",
+              "error": "Deneme güncellenemedi, tekrar deneyin."
             },
             "grantPremium": {
               "title": "Premium tanımla",
@@ -1010,12 +1010,12 @@
           "unknownStatus": "Bilinmeyen durum",
           "statusChange": "{{previous}} → {{next}}",
           "actions": {
-            "extend_trial": "Trial uzatıldı",
+            "extend_trial": "Deneme uzatıldı",
             "grant_premium": "Premium verildi",
             "grant_complimentary": "Ücretsiz premium tanımlandı",
             "suspend_account": "Hesap askıya alındı",
             "lift_suspension": "Askı kaldırıldı",
-            "manage_trial": "Trial güncellendi",
+            "manage_trial": "Deneme güncellendi",
             "default": "Üyelik güncellendi"
           },
           "table": {
@@ -1028,7 +1028,7 @@
           },
           "meta": {
             "daysAdded": "+{{days}} gün eklendi",
-            "newTrialEnd": "Yeni trial bitişi: {{date}}",
+            "newTrialEnd": "Yeni deneme bitişi: {{date}}",
             "plan": "Plan: {{plan}}",
             "expires": "Bitiş: {{date}}",
             "note": "Not: {{note}}",
@@ -1039,7 +1039,7 @@
           "title": "Finans göstergeleri",
           "subtitle": "MRR, LTV ve bekleyen bakiyeler",
           "monthlyRecurringRevenue": "Aylık tekrar eden gelir",
-          "lifetimeValue": "Lifetime value",
+          "lifetimeValue": "Yaşam boyu değer",
           "averageDealSize": "Ortalama anlaşma büyüklüğü",
           "overdueBalance": "Geciken bakiye"
         },
@@ -1354,8 +1354,8 @@
         "services": "Hizmetler: {{value}}",
         "balanceRange": "{{min}} ile {{max}} arası bakiye"
       },
-      "balanceRangeMin": "min",
-      "balanceRangeMax": "maks",
+      "balanceRangeMin": "en az",
+      "balanceRangeMax": "en fazla",
       "summaryActive": "{{count}} aktif filtre",
       "summaryActive_plural": "{{count}} aktif filtre",
       "summaryNone": "Filtre uygulanmadı"
@@ -1973,11 +1973,11 @@
         "saving": "Kaydediliyor...",
         "manageTrial": {
           "button": "Denemeyi ayarla",
-          "title": "Trial süresini yönet",
+          "title": "Deneme süresini yönet",
           "description": "Bitiş tarihini ayarla veya denemeyi hemen bitir.",
-          "startLabel": "Trial başlangıcı",
-          "endLabel": "Trial bitişi",
-          "dateLabel": "Trial bitiş tarihi",
+          "startLabel": "Deneme başlangıcı",
+          "endLabel": "Deneme bitişi",
+          "dateLabel": "Deneme bitiş tarihi",
           "reasonLabel": "Not (opsiyonel)",
           "reasonPlaceholder": "Sadece adminlere görünür",
           "submit": "Kaydet",
@@ -2815,7 +2815,7 @@
         "editAlt": "Alternatif metni düzenle"
       },
       "labels": {
-        "alt": "Alt: {{text}}"
+        "alt": "Alt metin: {{text}}"
       },
       "storage": {
         "usage": "{{count}}/{{max}} görsel",

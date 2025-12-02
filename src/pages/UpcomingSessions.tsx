@@ -232,6 +232,7 @@ const determineSegment = (
 const AllSessions = () => {
   const { t: tForms } = useFormsTranslation();
   const { t, i18n } = useTranslation('pages');
+  const { t: tMessages } = useTranslation('messages');
   const [sessions, setSessions] = useState<Session[]>([]);
   const [visibleSessionCount, setVisibleSessionCount] = useState(INITIAL_SESSION_BATCH);
   const [loading, setLoading] = useState(true);
@@ -714,10 +715,14 @@ const AllSessions = () => {
       setViewingProject({ ...projectData, leads: leadNameData });
       setShowProjectDialog(true);
     } catch (err: unknown) {
-      const description = err instanceof Error ? err.message : 'Unknown error';
-      toast({ title: 'Unable to open project', description, variant: 'destructive' });
+      const description = err instanceof Error ? err.message : tMessages('error.generic');
+      toast({
+        title: tMessages('error.projectOpen'),
+        description,
+        variant: 'destructive'
+      });
     }
-  }, [isMobile, navigate]);
+  }, [isMobile, navigate, tMessages]);
 
   const renderSegmentLabel = useCallback(
     (label: string, count: number) => (

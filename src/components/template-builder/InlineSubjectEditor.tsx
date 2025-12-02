@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import type { UIEvent } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,8 +6,6 @@ import { Check, Smile, X } from 'lucide-react';
 import { EmojiPicker } from '@/components/template-builder/EmojiPicker';
 import { VariablePicker } from '@/components/template-builder/VariablePicker';
 import { getCharacterCount, checkSpamWords } from '@/lib/templateUtils';
-import { useVariableLabelMap } from '@/hooks/useVariableLabelMap';
-import { VariableTokenText } from './VariableTokenText';
 import { useTranslation } from 'react-i18next';
 
 interface InlineSubjectEditorProps {
@@ -27,8 +24,6 @@ export function InlineSubjectEditor({
   const [inputValue, setInputValue] = useState(value || '');
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const variableLabels = useVariableLabelMap();
   const { t } = useTranslation("pages");
   const [isVariablePickerOpen, setIsVariablePickerOpen] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
@@ -88,9 +83,6 @@ export function InlineSubjectEditor({
         input.focus();
         const newCursorPosition = start + variable.length;
         input.setSelectionRange(newCursorPosition, newCursorPosition);
-        // Reset scroll to prevent cursor from appearing far to the right
-        input.scrollLeft = 0;
-        setScrollLeft(0);
       }, 0);
     } else {
       setInputValue(inputValue + variable);
@@ -110,17 +102,10 @@ export function InlineSubjectEditor({
         input.focus();
         const newCursorPosition = start + emoji.length;
         input.setSelectionRange(newCursorPosition, newCursorPosition);
-        // Reset scroll to prevent cursor from appearing far to the right
-        input.scrollLeft = 0;
-        setScrollLeft(0);
       }, 0);
     } else {
       setInputValue(inputValue + emoji);
     }
-  };
-
-  const handleInputScroll = (event: UIEvent<HTMLInputElement>) => {
-    setScrollLeft(event.currentTarget.scrollLeft);
   };
 
   const markInteraction = () => {
@@ -146,26 +131,9 @@ export function InlineSubjectEditor({
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
             placeholder={resolvedPlaceholder}
-            className="relative z-10 h-8 w-full text-sm bg-transparent text-transparent caret-foreground placeholder:text-transparent"
+            className="relative z-10 h-8 w-full text-sm"
             disabled={isSaving}
-            onScroll={handleInputScroll}
           />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-0 flex items-center overflow-hidden px-3 text-sm text-foreground whitespace-pre"
-          >
-            <div
-              className="w-full"
-              style={{ transform: `translateX(${-scrollLeft}px)` }}
-            >
-              <VariableTokenText
-                text={inputValue}
-                placeholder={resolvedPlaceholder}
-                variableLabels={variableLabels}
-              />
-              <span className="opacity-0">.</span>
-            </div>
-          </div>
         </div>
         <EmojiPicker
           onEmojiSelect={insertEmoji}

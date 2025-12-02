@@ -340,19 +340,20 @@ function CTABlockPreview({
 }
 
 function ImageBlockPreview({ data, replacePlaceholders }: { data: ImageBlockData; replacePlaceholders: (text: string) => string }) {
+  const { t } = useTranslation('pages');
   return (
     <div className="text-center">
       {data.placeholder || !data.src ? (
         <div className="w-full h-48 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-          <div className="text-center">
+          <div className="text-center text-gray-500">
             <div className="text-gray-400 mb-2">🖼️</div>
-            <p className="text-sm text-gray-500">Image Placeholder</p>
+            <p className="text-sm">{t("templateBuilder.blockEditor.image.placeholderLabel", { defaultValue: "Image placeholder" })}</p>
           </div>
         </div>
       ) : (
         <img
           src={data.src}
-          alt={data.alt}
+          alt={data.alt || t('templateBuilder.blockEditor.image.defaultAlt', { defaultValue: 'Image' })}
           className="w-full rounded-lg"
         />
       )}

@@ -2561,7 +2561,9 @@
       "saveDraft": "Taslağı Kaydet",
       "saving": "Kaydediliyor...",
       "publish": "Yayınla",
-      "published": "Yayınlandı"
+      "published": "Yayınlandı",
+      "restart": "Baştan başla",
+      "restartConfirm": "Baştan başlamak istediğine emin misin? Kaydedilmemiş değişiklikler silinecek."
     },
     "toast": {
       "savedTitle": "Kaydedildi",
@@ -2766,16 +2768,15 @@
         "captionLabel": "Alt Yazı (isteğe bağlı)",
         "captionPlaceholder": "Görsel alt yazısı",
         "linkLabel": "Bağlantı URL'si (isteğe bağlı)",
-        "linkPlaceholder": "https://example.com"
+        "linkPlaceholder": "https://example.com",
+        "placeholderLabel": "Görsel yer tutucu"
       },
       "imageUpload": {
         "title": "Görsel yükle",
         "uploading": "Yükleniyor...",
         "helper": "Sürükleyip bırakın veya tıklayıp seçin (maks 5MB)",
         "toast": {
-          "successTitle": "Başarılı",
           "successDescription": "Görsel başarıyla yüklendi",
-          "errorTitle": "Hata",
           "errorDescription": "Görsel yüklenemedi",
           "authRequired": "Görsel yüklemek için giriş yapmış olmalısınız",
           "limitTitle": "Yükleme limiti doldu",

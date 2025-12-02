@@ -2561,7 +2561,9 @@
       "saveDraft": "Save Draft",
       "saving": "Saving...",
       "publish": "Publish",
-      "published": "Published"
+      "published": "Published",
+      "restart": "Start over",
+      "restartConfirm": "Start over? This will discard your unsaved edits."
     },
     "toast": {
       "savedTitle": "Saved",
@@ -2766,16 +2768,15 @@
         "captionLabel": "Caption (optional)",
         "captionPlaceholder": "Image caption",
         "linkLabel": "Link URL (optional)",
-        "linkPlaceholder": "https://example.com"
+        "linkPlaceholder": "https://example.com",
+        "placeholderLabel": "Image placeholder"
       },
       "imageUpload": {
         "title": "Upload an image",
         "uploading": "Uploading...",
         "helper": "Drag and drop or click to browse (max 5MB)",
         "toast": {
-          "successTitle": "Success",
           "successDescription": "Image uploaded successfully",
-          "errorTitle": "Error",
           "errorDescription": "Failed to upload image",
           "authRequired": "You must be logged in to upload images",
           "limitTitle": "Upload limit reached",

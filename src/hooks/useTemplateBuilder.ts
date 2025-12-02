@@ -20,6 +20,7 @@ interface UseTemplateBuilderReturn {
   updateTemplate: (updates: Partial<TemplateBuilderData>) => void;
   loadTemplate: () => Promise<void>;
   resetDirtyState: () => void;
+  clearDraft: () => Promise<void>;
 }
 
 const getErrorMessage = (error: unknown) => {
@@ -533,6 +534,22 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
     restoredDraftDirtyRef.current = false;
   }, []);
 
+  const clearDraft = useCallback(async () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(getDraftStorageKey(templateId));
+      localStorage.removeItem(getDraftStorageKey(undefined));
+    }
+    restoredDraftDirtyRef.current = false;
+    setIsDirty(false);
+    setLastSaved(null);
+
+    if (templateId && activeOrganizationId) {
+      await loadTemplate();
+    } else {
+      setTemplate(null);
+    }
+  }, [templateId, activeOrganizationId, loadTemplate]);
+
   useEffect(() => {
     if (!template) return;
     persistDraftToStorage(templateId, template, isDirty);
@@ -557,5 +574,6 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
     updateTemplate,
     loadTemplate,
     resetDirtyState,
+    clearDraft,
   };
 }

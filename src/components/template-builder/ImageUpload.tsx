@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { checkStorageLimits } from './storageLimits';
 import { useTranslation } from 'react-i18next';
+import { useCommonTranslation } from '@/hooks/useTypedTranslation';
 
 interface ImageUploadProps {
   onImageUploaded: (imageUrl: string, altText?: string) => void;
@@ -22,12 +23,13 @@ export function ImageUpload({ onImageUploaded, templateId, className }: ImageUpl
   const { user } = useAuth();
   const { activeOrganization } = useOrganization();
   const { t } = useTranslation("pages");
+  const { t: tCommon } = useCommonTranslation();
 
   const uploadImage = async (file: File) => {
     if (!user?.id || !activeOrganization?.id) {
       toast({
-        title: t("templateBuilder.imageUpload.toast.errorTitle", { defaultValue: "Error" }),
-        description: t("templateBuilder.imageUpload.toast.authRequired", { defaultValue: "You must be logged in to upload images" }),
+        title: tCommon("toast.error"),
+        description: t("templateBuilder.imageUpload.toast.authRequired"),
         variant: 'destructive',
       });
       return;
@@ -48,8 +50,8 @@ export function ImageUpload({ onImageUploaded, templateId, className }: ImageUpl
 
       if (!canUpload) {
         toast({
-          title: t("templateBuilder.imageUpload.toast.limitTitle", { defaultValue: "Upload limit reached" }),
-          description: reason || t("templateBuilder.imageUpload.toast.limitDescription", { defaultValue: "You have reached your image storage limit." }),
+          title: t("templateBuilder.imageUpload.toast.limitTitle"),
+          description: reason || t("templateBuilder.imageUpload.toast.limitDescription"),
           variant: 'destructive',
         });
         return;
@@ -91,14 +93,14 @@ export function ImageUpload({ onImageUploaded, templateId, className }: ImageUpl
       onImageUploaded(publicUrl, file.name.split('.')[0]);
 
       toast({
-        title: t("templateBuilder.imageUpload.toast.successTitle", { defaultValue: "Success" }),
-        description: t("templateBuilder.imageUpload.toast.successDescription", { defaultValue: "Image uploaded successfully" }),
+        title: tCommon("toast.success"),
+        description: t("templateBuilder.imageUpload.toast.successDescription"),
       });
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({
-        title: t("templateBuilder.imageUpload.toast.errorTitle", { defaultValue: "Error" }),
-        description: t("templateBuilder.imageUpload.toast.errorDescription", { defaultValue: "Failed to upload image" }),
+        title: tCommon("toast.error"),
+        description: t("templateBuilder.imageUpload.toast.errorDescription"),
         variant: 'destructive',
       });
     } finally {
@@ -114,8 +116,8 @@ export function ImageUpload({ onImageUploaded, templateId, className }: ImageUpl
     // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({
-        title: t("templateBuilder.imageUpload.toast.errorTitle", { defaultValue: "Error" }),
-        description: t("templateBuilder.imageUpload.toast.invalidFile", { defaultValue: "Please select an image file" }),
+        title: tCommon("toast.error"),
+        description: t("templateBuilder.imageUpload.toast.invalidFile"),
         variant: 'destructive',
       });
       return;
@@ -124,8 +126,8 @@ export function ImageUpload({ onImageUploaded, templateId, className }: ImageUpl
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast({
-        title: t("templateBuilder.imageUpload.toast.errorTitle", { defaultValue: "Error" }),
-        description: t("templateBuilder.imageUpload.toast.maxSize", { defaultValue: "Image must be smaller than 5MB" }),
+        title: tCommon("toast.error"),
+        description: t("templateBuilder.imageUpload.toast.maxSize"),
         variant: 'destructive',
       });
       return;

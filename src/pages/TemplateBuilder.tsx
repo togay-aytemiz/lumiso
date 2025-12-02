@@ -35,7 +35,18 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   );
 
   // Backend hooks
-  const { template, loading, saving, lastSaved, isDirty, saveTemplate, publishTemplate, updateTemplate, resetDirtyState } = useTemplateBuilder(templateId || undefined);
+  const {
+    template,
+    loading,
+    saving,
+    lastSaved,
+    isDirty,
+    saveTemplate,
+    publishTemplate,
+    updateTemplate,
+    resetDirtyState,
+    clearDraft
+  } = useTemplateBuilder(templateId || undefined);
   const templateVariablesState = useTemplateVariables();
   const { getVariableValue, variables: templateVariables } = templateVariablesState;
 
@@ -57,6 +68,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     () => t("templateBuilder.preview.excitedMessage", { defaultValue: "We're excited to capture your special moments" }),
     [t]
   );
+  const [showRestartGuard, setShowRestartGuard] = useState(false);
 
   // Template data from backend or defaults
   const templateName = template?.name || untitledName;
@@ -218,6 +230,10 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     setIsEditingName(true);
   };
 
+  const handleRestartDraft = useCallback(async () => {
+    setShowRestartGuard(true);
+  }, []);
+
   const handleNameBlur = () => {
     setIsEditingName(false);
     if (editingName !== templateName) {
@@ -367,21 +383,29 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
           </div>
           
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 pr-2">
               <Badge variant={isDraft ? "secondary" : "default"}>
                 {isDraft ? t("templateBuilder.badges.draft") : t("templateBuilder.badges.published")}
               </Badge>
-              {isDirty && (
-                <Badge variant="outline" className="text-amber-600 border-amber-600">
+              {isDirty ? (
+                <span className="text-xs text-amber-600 font-medium">
                   {t("templateBuilder.badges.unsavedChanges")}
-                </Badge>
-              )}
-              {lastSaved && !isDirty && (
+                </span>
+              ) : lastSaved ? (
                 <span className="text-xs text-muted-foreground">
                   {t("templateBuilder.saved", { time: lastSaved.toLocaleTimeString() })}
                 </span>
-              )}
+              ) : null}
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRestartDraft}
+              disabled={saving}
+              className="hidden sm:inline-flex"
+            >
+              {t("templateBuilder.buttons.restart")}
+            </Button>
             <Button variant="outline" onClick={() => handleSaveTemplate()} disabled={saving}>
               <Save className="h-4 w-4" />
               {saving ? t("templateBuilder.buttons.saving") : t("templateBuilder.buttons.saveDraft")}
@@ -537,6 +561,17 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
         onStay={handleStayOnPage}
         onSaveAndExit={handleSaveAndExit}
         message={guardMessage}
+      />
+      <NavigationGuardDialog
+        open={showRestartGuard}
+        onDiscard={async () => {
+          setShowRestartGuard(false);
+          await clearDraft();
+        }}
+        onStay={() => setShowRestartGuard(false)}
+        message={t("templateBuilder.buttons.restartConfirm", {
+          defaultValue: "Start over? This will discard your unsaved edits."
+        })}
       />
 
       {/* Template Name Dialog */}

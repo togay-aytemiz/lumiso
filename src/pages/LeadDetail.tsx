@@ -114,18 +114,20 @@ const LeadDetail = () => {
   const handledMissingLeadRef = useRef(false);
 
   useEffect(() => {
-    if (!id) {
-      navigate("/leads");
-    }
-  }, [id, navigate]);
+    handledMissingLeadRef.current = false;
+  }, [id]);
 
   useEffect(() => {
-    if (!id || detailLoading || handledMissingLeadRef.current) {
+    if (!id) {
+      navigate("/leads");
+      return;
+    }
+
+    if (detailLoading || handledMissingLeadRef.current) {
       return;
     }
 
     if (leadQuery.isError) {
-      handledMissingLeadRef.current = true;
       const message =
         leadQuery.error && leadQuery.error instanceof Error
           ? leadQuery.error.message
@@ -136,7 +138,12 @@ const LeadDetail = () => {
         description: message,
         variant: "destructive"
       });
-      navigate("/leads");
+
+      // If we have no data, leave the page; otherwise stay put and let the user retry
+      if (!lead) {
+        handledMissingLeadRef.current = true;
+        navigate("/leads");
+      }
       return;
     }
 
@@ -188,6 +195,7 @@ const LeadDetail = () => {
     nextUpcoming,
     overdueCount
   } = sessionMetrics;
+  const leadDetailsIntroVideoUrl = "https://www.youtube.com/embed/CkceP4ukkUo?rel=0&modestbranding=1&playsinline=1";
 
   // Dynamically update tutorial steps based on hasProjects
   const leadDetailsTutorialSteps: TutorialStep[] = useMemo(() => {
@@ -201,19 +209,36 @@ const LeadDetail = () => {
         title: tPages("leadDetail.tutorial.intro.title"),
         description: tPages("leadDetail.tutorial.intro.description"),
         content: (
-          <div className="space-y-4">
-            {introSections.map((section, index) => {
-              const Icon = introIcons[index] ?? User;
-              return (
-                <OnboardingChecklistItem
-                  key={section.title}
-                  icon={Icon}
-                  title={section.title}
-                  description={section.description}
-                  titleClassName="font-medium"
-                />
-              );
-            })}
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-foreground">
+                {tPages("leadDetail.tutorial.intro.video.title")}
+              </p>
+              <iframe
+                title={tPages("leadDetail.tutorial.intro.video.title")}
+                src={leadDetailsIntroVideoUrl}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="strict-origin-when-cross-origin"
+                className="aspect-video w-full rounded-lg bg-black shadow-sm"
+              />
+            </div>
+
+            <div className="space-y-3">
+              {introSections.map((section, index) => {
+                const Icon = introIcons[index] ?? User;
+                return (
+                  <OnboardingChecklistItem
+                    key={section.title}
+                    icon={Icon}
+                    title={section.title}
+                    description={section.description}
+                    titleClassName="font-medium"
+                  />
+                );
+              })}
+            </div>
           </div>
         ),
         mode: "modal",

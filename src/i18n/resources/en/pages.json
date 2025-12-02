@@ -375,19 +375,22 @@
     "tutorial": {
       "intro": {
         "title": "Welcome to Lead Details! \ud83d\udccb",
-        "description": "This is where you manage all information about a specific lead. Let's explore what you can see and do here:",
+        "description": "Manage everything about this lead here. Quick look at what you can do:",
+        "video": {
+          "title": "Lead Details quick tour"
+        },
         "sections": [
           {
             "title": "Client Information",
-            "description": "View and edit contact details, notes, and lead status on the left side."
+            "description": "View or edit contact details, notes, and status."
           },
           {
             "title": "Projects Section",
-            "description": "Convert leads into projects with timelines, deliverables, and workflow tracking."
+            "description": "Convert leads into projects with timelines and deliverables."
           },
           {
             "title": "Activity Timeline",
-            "description": "Track interactions, changes, and progress across every touchpoint."
+            "description": "See interactions and updates across every touchpoint."
           }
         ]
       },

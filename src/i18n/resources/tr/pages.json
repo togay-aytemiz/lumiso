@@ -375,19 +375,22 @@
     "tutorial": {
       "intro": {
         "title": "Kişi Detaylarına Hoş Geldiniz! 📋",
-        "description": "Belirli bir kişi hakkındaki tüm bilgileri burada yönetirsiniz. Neler yapabileceğinize birlikte bakalım:",
+        "description": "Bu kişinin tüm bilgilerini burada yönetirsiniz. Neler yapabileceğinize kısaca bakalım:",
+        "video": {
+          "title": "Kişi Detayları hızlı turu"
+        },
         "sections": [
           {
             "title": "Kişi Bilgileri",
-            "description": "Sol tarafta iletişim bilgilerini, notları ve kişi durumunu görüntüleyin ve düzenleyin."
+            "description": "İletişim bilgilerini, notları ve durumunu düzenleyin."
           },
           {
             "title": "Projeler Bölümü",
-            "description": "Kişileri zaman çizelgeleri, teslimatlar ve iş akışı takibiyle projelere dönüştürün."
+            "description": "Kişileri zaman çizelgesi ve teslimatlarla projelere dönüştürün."
           },
           {
             "title": "Aktivite Zaman Çizelgesi",
-            "description": "Tüm etkileşimleri, değişiklikleri ve ilerlemeyi her temas noktasında takip edin."
+            "description": "Tüm etkileşimleri ve değişiklikleri tek yerde görün."
           }
         ]
       },

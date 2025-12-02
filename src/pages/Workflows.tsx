@@ -19,6 +19,13 @@ import { enUS, tr } from 'date-fns/locale';
 import { useTranslation } from "react-i18next";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import GlobalSearch from "@/components/GlobalSearch";
+import { PageVideoModal } from "@/components/PageVideoModal";
+import { usePageVideoPrompt } from "@/hooks/usePageVideoPrompt";
+
+const WORKFLOWS_VIDEO_ID =
+  (typeof import.meta !== "undefined" &&
+    (import.meta as { env?: Record<string, string> }).env?.VITE_WORKFLOWS_VIDEO_ID) ||
+  "A8Zh1QQHzu0";
 
 export default function Workflows() {
   const { t, i18n } = useTranslation("pages");
@@ -132,6 +139,12 @@ export default function Workflows() {
   const [editingWorkflow, setEditingWorkflow] = useState<WorkflowWithMetadata | null>(null);
   const [deletingWorkflow, setDeletingWorkflow] = useState<WorkflowWithMetadata | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const {
+    isOpen: isWorkflowsVideoOpen,
+    close: closeWorkflowsVideo,
+    markCompleted: markWorkflowsVideoWatched,
+    snooze: snoozeWorkflowsVideo
+  } = usePageVideoPrompt({ pageKey: "workflows", snoozeDays: 1 });
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
@@ -429,6 +442,22 @@ export default function Workflows() {
         onConfirm={confirmDeleteWorkflow}
         onCancel={cancelDeleteWorkflow}
         isDeleting={isDeleting}
+      />
+
+      <PageVideoModal
+        open={isWorkflowsVideoOpen}
+        onClose={closeWorkflowsVideo}
+        videoId={WORKFLOWS_VIDEO_ID}
+        title={t("workflows.video.title", { defaultValue: "See how Workflows works" })}
+        description={t("workflows.video.description", {
+          defaultValue: "Watch a quick overview to automate and orchestrate your processes."
+        })}
+        labels={{
+          remindMeLater: t("workflows.video.remindLater", { defaultValue: "Remind me later" }),
+          dontShowAgain: t("workflows.video.dontShow", { defaultValue: "I watched, don't show again" })
+        }}
+        onSnooze={snoozeWorkflowsVideo}
+        onDontShowAgain={markWorkflowsVideoWatched}
       />
     </div>
   );

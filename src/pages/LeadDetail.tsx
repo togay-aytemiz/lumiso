@@ -184,6 +184,7 @@ const LeadDetail = () => {
     completeCurrentStep,
     completeMultipleSteps // BULLETPROOF: For combined tutorials
   } = useOnboarding();
+  const schedulingTutorialHandledRef = useRef(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   const [hasViewedProject, setHasViewedProject] = useState(false);
@@ -356,6 +357,7 @@ const LeadDetail = () => {
 
     if (shouldShowFromState) {
       if (tutorialType === 'scheduling') {
+        schedulingTutorialHandledRef.current = true;
         setIsSchedulingTutorial(true);
         setShowTutorial(true);
         setCurrentTutorialStep(tutorialStep - 3); // Convert to 0-based index for scheduling steps
@@ -371,7 +373,13 @@ const LeadDetail = () => {
 
   // Auto-start scheduling tutorial when currentStep is 5 (after step 4, now on step 5)
   useEffect(() => {
-    if (currentStep === 5 && !showTutorial && !location.state?.continueTutorial) {
+    if (
+      currentStep === 5 &&
+      !showTutorial &&
+      !location.state?.continueTutorial &&
+      !schedulingTutorialHandledRef.current
+    ) {
+      schedulingTutorialHandledRef.current = true;
       console.log('🚀 Auto-starting scheduling tutorial for step 5');
       setIsSchedulingTutorial(true);
       setShowTutorial(true);
@@ -409,6 +417,9 @@ const LeadDetail = () => {
     }
   };
   const handleTutorialExit = () => {
+    if (isSchedulingTutorial) {
+      schedulingTutorialHandledRef.current = true;
+    }
     setShowTutorial(false);
   };
 

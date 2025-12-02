@@ -2319,6 +2319,12 @@
   "workflows": {
     "title": "İş Akışları",
     "subtitle": "Müşteri iletişimlerinizi akıllı iş akışlarıyla otomatikleştirin",
+    "video": {
+      "title": "İş Akışlarının nasıl çalıştığını görün",
+      "description": "Süreçlerinizi otomatikleştirmek için kısa bir özet izleyin.",
+      "remindLater": "Daha sonra hatırlat",
+      "dontShow": "İzledim, bir daha gösterme"
+    },
     "stats": {
       "totalWorkflows": "Toplam İş Akışları",
       "active": "Aktif",

@@ -2319,6 +2319,12 @@
   "workflows": {
     "title": "Workflows",
     "subtitle": "Automate your client communications with smart workflows",
+    "video": {
+      "title": "See how Workflows works",
+      "description": "Watch a quick overview to automate and orchestrate your processes.",
+      "remindLater": "Remind me later",
+      "dontShow": "I watched, don't show again"
+    },
     "stats": {
       "totalWorkflows": "Total Workflows",
       "active": "Active",

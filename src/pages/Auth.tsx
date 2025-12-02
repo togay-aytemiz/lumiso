@@ -10,7 +10,6 @@ import {
   EyeOff,
   ChevronLeft,
   ChevronRight,
-  ArrowRight,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -1245,20 +1244,6 @@ const Auth = () => {
                   ) : isVerificationPending ? (
                     <>
                       <div className="flex flex-wrap gap-3">
-                        <Button
-                          type="button"
-                          className="group flex h-11 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-5 text-sm font-semibold text-emerald-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100"
-                          onClick={() => {
-                            setIsSignUp(false);
-                            setShowPassword(false);
-                            setShowVerificationPrompt(false);
-                            setVerificationEmail("");
-                            navigate("/auth/signin");
-                          }}
-                        >
-                          {tForm("auth.sign_in.button")}
-                          <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-                        </Button>
                         <Button
                           type="button"
                           variant="outline"

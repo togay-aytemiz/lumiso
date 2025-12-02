@@ -676,7 +676,7 @@ export function ProjectServicesQuickEditDialog({
       }
       isOpen={open}
       onOpenChange={onOpenChange}
-      size="lg"
+      size="md"
       footerActions={[
         {
           label: t("buttons.cancel", { defaultValue: "Cancel" }),

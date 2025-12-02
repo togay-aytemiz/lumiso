@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode, useCallback } from "react";
 import { LucideIcon, FolderOpen, Layers, Trash2, ChevronDown, Package as PackageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,8 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
+import { DEFAULT_CATEGORY_TRANSLATION_MAP, type ServiceType } from "@/constants/serviceCategories";
 
 export type ServiceInventoryType = "coverage" | "deliverable" | "unknown";
 
@@ -117,6 +119,21 @@ export function ServiceInventorySelector({
   renderSelectedContent,
 }: ServiceInventorySelectorProps) {
   const selectedMap = useMemo(() => new Map(Object.entries(selected || {})), [selected]);
+  const { t: tForms } = useTranslation("forms");
+
+  const translateCategory = useCallback(
+    (category: string, type: ServiceInventoryType) => {
+      const translationKey =
+        type === "unknown"
+          ? null
+          : DEFAULT_CATEGORY_TRANSLATION_MAP[type as ServiceType]?.[category];
+      if (translationKey) {
+        return tForms(translationKey, { defaultValue: category });
+      }
+      return category;
+    },
+    [tForms]
+  );
 
   const groupedByType = useMemo(() => {
     const grouped: Record<ServiceInventoryType, Record<string, ServiceInventoryItem[]>> = {
@@ -268,9 +285,13 @@ export function ServiceInventorySelector({
 
   const resolvedType = availableTypes.includes(activeType) ? activeType : availableTypes[0] ?? "deliverable";
   const activeMeta = labels.typeMeta[resolvedType];
-  const activeCategories = Object.entries(groupedByType[resolvedType] ?? {}).sort(([a], [b]) =>
-    a.localeCompare(b, undefined, { sensitivity: "base" })
-  );
+  const activeCategories = Object.entries(groupedByType[resolvedType] ?? {})
+    .map(([category, items]) => ({
+      category,
+      items,
+      label: translateCategory(category, resolvedType),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" }));
   const activeStats = typeStats[resolvedType] ?? { totalServices: 0, selectedServices: 0, totalQuantity: 0 };
   const ActiveIcon =
     activeMeta?.icon ??
@@ -328,7 +349,7 @@ export function ServiceInventorySelector({
         </header>
 
         <div className="space-y-4">
-          {activeCategories.map(([category, items]) => {
+          {activeCategories.map(({ category, items, label }) => {
             const categoryKey = `${resolvedType}::${category}`;
             const isExpanded = expandedCategories[categoryKey] ?? categoryDefaultOpen[categoryKey] ?? false;
             const categorySelected = items.filter((item) => (selectedMap.get(item.id) ?? 0) > 0).length;
@@ -353,32 +374,32 @@ export function ServiceInventorySelector({
                   <button
                     type="button"
                     className={cn(
-                      "group flex w-full items-center justify-between border-b border-border/60 px-4 py-3 text-left transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
+                      "group flex w-full flex-col gap-2 border-b border-border/60 px-3 py-2 text-left transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:py-3",
                       hasSelection ? "bg-white" : "bg-muted/30 hover:bg-muted/40"
                     )}
                   >
-                    <div className="flex w-full items-center gap-3">
-                      <p className="text-sm font-medium text-slate-900">{category}</p>
-                      <div className="ml-auto flex items-center gap-2">
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "rounded-full px-2.5 py-0.5 text-xs font-semibold shadow-sm",
-                            hasSelection
-                              ? "border-amber-400/80 bg-amber-50 text-amber-700"
-                              : "border-slate-300 bg-slate-100 text-slate-500"
-                          )}
-                        >
-                          {selectedTagLabel}
-                        </Badge>
-                        <Badge
-                          variant="secondary"
-                          className="rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-medium text-muted-foreground shadow-sm"
-                        >
-                          {quantityTagLabel}
-                        </Badge>
-                        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                      </div>
+                    <div className="flex w-full items-start gap-3 sm:items-center">
+                      <p className="text-sm font-medium text-slate-900">{label}</p>
+                      <ChevronDown className="ml-auto h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180 sm:ml-0" />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 sm:ml-auto sm:flex-nowrap">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "rounded-full px-2.5 py-0.5 text-xs font-semibold shadow-sm",
+                          hasSelection
+                            ? "border-amber-400/80 bg-amber-50 text-amber-700"
+                            : "border-slate-300 bg-slate-100 text-slate-500"
+                        )}
+                      >
+                        {selectedTagLabel}
+                      </Badge>
+                      <Badge
+                        variant="secondary"
+                        className="rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-medium text-muted-foreground shadow-sm"
+                      >
+                        {quantityTagLabel}
+                      </Badge>
                     </div>
                   </button>
                 </CollapsibleTrigger>
@@ -401,10 +422,10 @@ export function ServiceInventorySelector({
                       return (
                         <div
                           key={service.id}
-                          className="space-y-3 px-4 py-4 transition-colors duration-200 data-[selected=true]:bg-emerald-50/40"
+                          className="space-y-3 px-3 py-3 transition-colors duration-200 data-[selected=true]:bg-emerald-50/40 sm:px-4 sm:py-4"
                           data-selected={isSelected}
                         >
-                          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                             <div className="space-y-1.5">
                               <div className="flex flex-wrap items-center gap-2">
                                 <p className="text-sm font-medium text-slate-900">{service.name}</p>
@@ -437,17 +458,21 @@ export function ServiceInventorySelector({
                               ) : null}
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 sm:gap-2">
                               {isSelected ? (
                                 <>
-                                  <div className="flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-1 py-1 shadow-inner transition-colors duration-200">
+                                  <div
+                                    className="flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-1 py-1 shadow-inner transition-colors duration-200"
+                                    data-touch-target="compact"
+                                  >
                                     <Button
                                       type="button"
                                       variant="ghost"
                                       size="icon"
                                       onClick={() => onDecrease(service.id)}
                                       aria-label={labels.decrease}
-                                      className="h-7 w-7 transition-colors duration-200"
+                                      data-touch-target="compact"
+                                      className="h-7 w-7 transition-colors duration-200 sm:h-8 sm:w-8"
                                       disabled={quantity <= 1}
                                     >
                                       –
@@ -463,7 +488,8 @@ export function ServiceInventorySelector({
                                         const nextQuantity = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
                                         onSetQuantity(service.id, nextQuantity);
                                       }}
-                                      className="h-7 w-12 rounded-full border-0 bg-transparent px-0 text-center text-sm font-semibold text-slate-900 focus-visible:ring-0"
+                                      data-touch-target="compact"
+                                      className="h-7 w-12 rounded-full border-0 bg-transparent px-0 text-center text-sm font-semibold text-slate-900 focus-visible:ring-0 sm:h-8 sm:w-14"
                                     />
                                     <Button
                                       type="button"
@@ -471,7 +497,8 @@ export function ServiceInventorySelector({
                                       size="icon"
                                       onClick={() => onIncrease(service.id)}
                                       aria-label={labels.increase}
-                                      className="h-7 w-7 transition-colors duration-200"
+                                      data-touch-target="compact"
+                                      className="h-7 w-7 transition-colors duration-200 sm:h-8 sm:w-8"
                                     >
                                       +
                                     </Button>
@@ -480,7 +507,8 @@ export function ServiceInventorySelector({
                                     onClick={() => onRemove(service.id)}
                                     aria-label={labels.remove}
                                     variant="danger"
-                                    className="h-8 w-8 transition-colors duration-200"
+                                    data-touch-target="compact"
+                                    className="h-7 w-7 transition-colors duration-200 sm:h-8 sm:w-8"
                                   >
                                     <Trash2 className="h-4 w-4" aria-hidden />
                                   </IconActionButton>
@@ -493,7 +521,8 @@ export function ServiceInventorySelector({
                                   disabled={service.isActive === false}
                                   onClick={() => onAdd(service.id)}
                                   aria-label={labels.add}
-                                  className="h-8 rounded-full px-3 text-xs transition-colors duration-200"
+                                  data-touch-target="compact"
+                                  className="h-9 rounded-full px-3 text-xs transition-colors duration-200 sm:h-8"
                                 >
                                   {labels.add}
                                 </Button>

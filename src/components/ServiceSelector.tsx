@@ -69,7 +69,7 @@ export function ServiceSelector({
 
   const groupedServiceEntries = useMemo(() => {
     const groups = availableServices.reduce((groupMap, service) => {
-      const category = service.category || "Uncategorized";
+      const category = service.category || t("services.uncategorized");
       if (!groupMap[category]) {
         groupMap[category] = [];
       }
@@ -86,7 +86,7 @@ export function ServiceSelector({
     return Object.entries(groups).sort(([a], [b]) =>
       a.localeCompare(b, undefined, { sensitivity: "base" })
     );
-  }, [availableServices]);
+  }, [availableServices, t]);
 
   const handleServiceToggle = (service: Service) => {
     const isSelected = selectedServices.some(s => s.id === service.id);
@@ -105,7 +105,7 @@ export function ServiceSelector({
   if (loading) {
     return (
       <div className="space-y-2">
-        <Label>Services</Label>
+        <Label>{t("services.title")}</Label>
         <div className="w-full h-10 bg-muted animate-pulse rounded-md" />
       </div>
     );
@@ -115,7 +115,7 @@ export function ServiceSelector({
     return (
       <div className="space-y-2">
         <p className="text-sm text-muted-foreground">
-          No services defined yet. Go to Settings → Services to add your offerings.
+          {t("services.no_services_cta")}
         </p>
       </div>
     );
@@ -123,7 +123,7 @@ export function ServiceSelector({
 
   return (
     <div className="space-y-2">
-      <Label>Services</Label>
+      <Label>{t("services.title")}</Label>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -135,7 +135,9 @@ export function ServiceSelector({
           >
             <div className="flex flex-wrap gap-1 flex-1">
               {selectedServices.length === 0 ? (
-                <span className="text-muted-foreground">Select services provided</span>
+                <span className="text-muted-foreground">
+                  {t("services.select_services_placeholder")}
+                </span>
               ) : (
                 selectedServices.map((service) => (
                   <Badge
@@ -199,12 +201,12 @@ export function ServiceSelector({
                                   <div className="flex gap-3 mt-1">
                                     {(service.cost_price || 0) > 0 && (
                                       <span className="text-xs text-muted-foreground">
-                                        Cost: TRY {service.cost_price}
+                                        {t("services.cost_with_currency", { amount: service.cost_price })}
                                       </span>
                                     )}
                                     {(service.selling_price || 0) > 0 && (
                                       <span className="text-xs text-muted-foreground">
-                                        Selling: TRY {service.selling_price}
+                                        {t("services.price_with_currency", { amount: service.selling_price })}
                                       </span>
                                     )}
                                   </div>

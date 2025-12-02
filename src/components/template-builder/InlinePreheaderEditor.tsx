@@ -42,7 +42,7 @@ export function InlinePreheaderEditor({
 
   const handleSave = async () => {
     if (isSaving) return;
-    
+
     setIsSaving(true);
     try {
       await onSave(inputValue.trim());
@@ -72,10 +72,24 @@ export function InlinePreheaderEditor({
   };
 
   const insertVariable = (variable: string) => {
-    const newValue = inputValue + variable;
-    setInputValue(newValue);
-    if (inputRef.current) {
-      inputRef.current.focus();
+    const input = inputRef.current;
+    if (input) {
+      const start = input.selectionStart ?? inputValue.length;
+      const end = input.selectionEnd ?? inputValue.length;
+      const newValue = inputValue.slice(0, start) + variable + inputValue.slice(end);
+      setInputValue(newValue);
+
+      // Set cursor position after the inserted variable and reset scroll
+      setTimeout(() => {
+        input.focus();
+        const newCursorPosition = start + variable.length;
+        input.setSelectionRange(newCursorPosition, newCursorPosition);
+        // Reset scroll to prevent cursor from appearing far to the right
+        input.scrollLeft = 0;
+        setScrollLeft(0);
+      }, 0);
+    } else {
+      setInputValue(inputValue + variable);
     }
   };
 
@@ -122,7 +136,7 @@ export function InlinePreheaderEditor({
           </div>
         </div>
       </div>
-      <VariablePicker 
+      <VariablePicker
         onVariableSelect={insertVariable}
         onOpenChange={(open) => {
           setIsVariablePickerOpen(open);

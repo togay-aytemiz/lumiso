@@ -1003,6 +1003,7 @@
   },
   "projectCard": {
     "openProject": "Projeyi aç: {{name}}",
+    "viewDetails": "Detayları gör",
     "progress": "İlerleme",
     "noTasksYet": "Henüz görev yok",
     "budget": "ÖDEMELER",

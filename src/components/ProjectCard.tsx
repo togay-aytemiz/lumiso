@@ -1,5 +1,6 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { AlertTriangle, CalendarCheck, CalendarClock, CalendarDays, CheckCircle2, ChevronRight, CreditCard } from "lucide-react";
@@ -45,6 +46,15 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
   };
 
   const handleCardClick = () => {
+    if (onQuickView) {
+      onQuickView(project);
+      return;
+    }
+    onView(project);
+  };
+
+  const handleViewDetailsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
     if (onQuickView) {
       onQuickView(project);
       return;
@@ -142,8 +152,8 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
                 {project.description}
               </p>
             )}
-            {/* Mobile-only: status chip on the left with chevron on the right */}
-            <div className="flex items-center justify-between md:hidden pt-1">
+            {/* Mobile-only: status chip with explicit view CTA */}
+            <div className="flex items-center justify-between gap-3 md:hidden pt-1">
               <ProjectStatusBadge
                 projectId={project.id}
                 currentStatusId={project.status_id}
@@ -151,11 +161,20 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
                 size="sm"
                 className="text-xs"
               />
-              <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-300 group-hover:translate-x-1" />
+              <Button
+                type="button"
+                size="sm"
+                variant="surface"
+                className="px-3.5 shadow-sm"
+                onClick={handleViewDetailsClick}
+              >
+                {t('projectCard.viewDetails')}
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-          {/* Desktop-only: keep status chip and chevron on the right */}
-          <div className="hidden md:flex flex-col items-end gap-3 text-sm">
+          {/* Desktop: status chip with explicit view CTA */}
+          <div className="hidden md:flex items-center gap-3 text-sm">
             <ProjectStatusBadge
               projectId={project.id}
               currentStatusId={project.status_id}
@@ -163,7 +182,16 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
               size="sm"
               className="text-xs"
             />
-            <ChevronRight className="hidden text-muted-foreground transition-transform duration-300 md:block md:h-5 md:w-5 md:group-hover:translate-x-1" />
+            <Button
+              type="button"
+              size="sm"
+              variant="surface"
+              className="px-4 shadow-sm"
+              onClick={handleViewDetailsClick}
+            >
+              {t('projectCard.viewDetails')}
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 

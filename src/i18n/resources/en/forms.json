@@ -1278,6 +1278,7 @@
   },
   "projectCard": {
     "openProject": "Open project {{name}}",
+    "viewDetails": "View details",
     "progress": "Progress",
     "noTasksYet": "No tasks yet",
     "budget": "Payments",

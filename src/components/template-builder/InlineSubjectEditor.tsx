@@ -57,9 +57,6 @@ export function InlineSubjectEditor({
 
   const handleBlur = () => {
     if (interactionRef.current || isVariablePickerOpen || isEmojiPickerOpen) {
-      requestAnimationFrame(() => {
-        inputRef.current?.focus();
-      });
       return;
     }
 

@@ -24,12 +24,13 @@ export function ImageUpload({ onImageUploaded, templateId, className }: ImageUpl
   const { activeOrganization } = useOrganization();
   const { t } = useTranslation("pages");
   const { t: tCommon } = useCommonTranslation();
+  const imageUploadKey = "templateBuilder.blockEditor.imageUpload";
 
   const uploadImage = async (file: File) => {
     if (!user?.id || !activeOrganization?.id) {
       toast({
         title: tCommon("toast.error"),
-        description: t("templateBuilder.imageUpload.toast.authRequired"),
+        description: t(`${imageUploadKey}.toast.authRequired`),
         variant: 'destructive',
       });
       return;
@@ -50,8 +51,8 @@ export function ImageUpload({ onImageUploaded, templateId, className }: ImageUpl
 
       if (!canUpload) {
         toast({
-          title: t("templateBuilder.imageUpload.toast.limitTitle"),
-          description: reason || t("templateBuilder.imageUpload.toast.limitDescription"),
+          title: t(`${imageUploadKey}.toast.limitTitle`),
+          description: reason || t(`${imageUploadKey}.toast.limitDescription`),
           variant: 'destructive',
         });
         return;
@@ -94,13 +95,13 @@ export function ImageUpload({ onImageUploaded, templateId, className }: ImageUpl
 
       toast({
         title: tCommon("toast.success"),
-        description: t("templateBuilder.imageUpload.toast.successDescription"),
+        description: t(`${imageUploadKey}.toast.successDescription`),
       });
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({
         title: tCommon("toast.error"),
-        description: t("templateBuilder.imageUpload.toast.errorDescription"),
+        description: t(`${imageUploadKey}.toast.errorDescription`),
         variant: 'destructive',
       });
     } finally {
@@ -117,7 +118,7 @@ export function ImageUpload({ onImageUploaded, templateId, className }: ImageUpl
     if (!file.type.startsWith('image/')) {
       toast({
         title: tCommon("toast.error"),
-        description: t("templateBuilder.imageUpload.toast.invalidFile"),
+        description: t(`${imageUploadKey}.toast.invalidFile`),
         variant: 'destructive',
       });
       return;
@@ -127,7 +128,7 @@ export function ImageUpload({ onImageUploaded, templateId, className }: ImageUpl
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: tCommon("toast.error"),
-        description: t("templateBuilder.imageUpload.toast.maxSize"),
+        description: t(`${imageUploadKey}.toast.maxSize`),
         variant: 'destructive',
       });
       return;
@@ -185,11 +186,11 @@ export function ImageUpload({ onImageUploaded, templateId, className }: ImageUpl
           <div className="space-y-1">
             <p className="text-sm font-medium">
               {uploading
-                ? t("templateBuilder.imageUpload.uploading", { defaultValue: "Uploading..." })
-                : t("templateBuilder.imageUpload.title", { defaultValue: "Upload an image" })}
+                ? t(`${imageUploadKey}.uploading`, { defaultValue: "Uploading..." })
+                : t(`${imageUploadKey}.title`, { defaultValue: "Upload an image" })}
             </p>
             <p className="text-xs text-muted-foreground">
-              {t("templateBuilder.imageUpload.helper", { defaultValue: "Drag and drop or click to browse (max 5MB)" })}
+              {t(`${imageUploadKey}.helper`, { defaultValue: "Drag and drop or click to browse (max 5MB)" })}
             </p>
           </div>
         </div>

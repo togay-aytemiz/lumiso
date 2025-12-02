@@ -78,20 +78,18 @@ export function VariableTokenText({ text, placeholder, variableLabels }: Variabl
           );
         }
 
-        const rawText = token.raw ?? token.value;
-        const widthCh = Math.max(rawText.length, token.value.length);
+        const rawWidthText = token.key ? `{${token.key}}` : token.raw ?? token.value;
 
         return (
           <span
             key={`variable-${index}-${token.key}`}
             className="relative inline-block align-baseline"
-            style={{ width: `${widthCh}ch` }}
           >
-            <span className="absolute inset-0 inline-flex w-full items-center rounded bg-muted px-1.5 py-0.5 text-xs font-mono text-muted-foreground box-border">
-              {token.value}
+            <span className="invisible whitespace-pre text-sm font-normal">
+              {rawWidthText}
             </span>
-            <span className="invisible whitespace-pre">
-              {rawText}
+            <span className="absolute left-0 top-0 inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground align-middle box-border pointer-events-none">
+              {token.value}
             </span>
           </span>
         );

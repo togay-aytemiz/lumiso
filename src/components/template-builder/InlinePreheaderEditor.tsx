@@ -53,9 +53,6 @@ export function InlinePreheaderEditor({
 
   const handleBlur = () => {
     if (interactionRef.current || isVariablePickerOpen) {
-      requestAnimationFrame(() => {
-        inputRef.current?.focus();
-      });
       return;
     }
 

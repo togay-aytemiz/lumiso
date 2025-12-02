@@ -2779,7 +2779,7 @@
           "successDescription": "Image uploaded successfully",
           "errorDescription": "Failed to upload image",
           "authRequired": "You must be logged in to upload images",
-          "limitTitle": "Upload limit reached",
+          "limitTitle": "Upload Limit Reached",
           "limitDescription": "You have reached your image storage limit.",
           "invalidFile": "Please select an image file",
           "maxSize": "Image must be smaller than 5MB"

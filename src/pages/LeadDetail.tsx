@@ -416,10 +416,19 @@ const LeadDetail = () => {
   const viewedProjectStorageKey = lead?.id ? `crm:leadTutorial:viewedProject:${lead.id}` : null;
 
   useEffect(() => {
-    if (viewedProjectStorageKey && sessionStorage.getItem(viewedProjectStorageKey) === "true") {
-      setHasViewedProject(true);
+    if (!lead?.id) {
+      setHasViewedProject(false);
+      setHasScheduledSession(false);
+      return;
     }
-  }, [viewedProjectStorageKey]);
+
+    const viewed = viewedProjectStorageKey
+      ? sessionStorage.getItem(viewedProjectStorageKey) === "true"
+      : false;
+
+    setHasViewedProject(viewed);
+    setHasScheduledSession(sessions.length > 0);
+  }, [lead?.id, sessions.length, viewedProjectStorageKey]);
 
   const handleProjectClicked = () => {
     setHasViewedProject(true);
@@ -432,12 +441,6 @@ const LeadDetail = () => {
     setHasScheduledSession(true);
     void refetchAll();
   };
-
-  useEffect(() => {
-    if (!hasScheduledSession && sessions.length > 0) {
-      setHasScheduledSession(true);
-    }
-  }, [hasScheduledSession, sessions.length]);
 
   // Debug tutorial step changes
   useEffect(() => {

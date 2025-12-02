@@ -280,7 +280,7 @@ export function CreateWorkflowSheet({
       } else {
         setOpen(true);
       }
-    }} footerActions={footerActions} dirty={isDirty} onDirtyClose={handleDirtyClose} size="content">
+    }} footerActions={footerActions} dirty={isDirty} onDirtyClose={handleDirtyClose} size="md">
         <div className="space-y-6 mt-6">
           {/* Basic Info */}
           <div className="space-y-4">

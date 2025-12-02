@@ -9,6 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import { useOrganizationSettings, type OrganizationSettings } from "@/hooks/useOrganizationSettings";
+import type { TFunction } from "i18next";
 
 interface OptimizedTemplateEditorProps {
   blocks: TemplateBlock[];
@@ -193,6 +195,7 @@ export const OptimizedTemplateEditor = React.memo(({
   onBlocksChange
 }: OptimizedTemplateEditorProps) => {
   const { t } = useTranslation('pages');
+  const { settings: organizationSettings } = useOrganizationSettings();
   const [activeBlock, setActiveBlock] = useState<string | null>(null);
   const [showAddBlock, setShowAddBlock] = useState(false);
   const handleActivateBlock = useCallback((blockId: string) => {
@@ -203,7 +206,7 @@ export const OptimizedTemplateEditor = React.memo(({
     const newBlock: TemplateBlock = {
       id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       type,
-      data: getDefaultBlockData(type),
+      data: getDefaultBlockData(type, t, organizationSettings),
       visible: true,
       order: blocks.length,
     };
@@ -212,7 +215,7 @@ export const OptimizedTemplateEditor = React.memo(({
     onBlocksChange(newBlocks);
     setActiveBlock(newBlock.id);
     setShowAddBlock(false);
-  }, [blocks, onBlocksChange]);
+  }, [blocks, onBlocksChange, t, organizationSettings]);
 
   const updateBlock = useCallback((blockId: string, data: BlockData) => {
     const newBlocks = blocks.map(block => 
@@ -348,11 +351,27 @@ export const OptimizedTemplateEditor = React.memo(({
 
 OptimizedTemplateEditor.displayName = 'OptimizedTemplateEditor';
 
-function getDefaultBlockData(type: TemplateBlock["type"]): BlockData {
+function resolveBusinessName(organizationSettings?: OrganizationSettings | null, t?: TFunction<"pages">) {
+  if (!organizationSettings) {
+    return t?.("templateBuilder.preview.mockData.businessName", { defaultValue: "Your Business" }) || "Your Business";
+  }
+  return (
+    organizationSettings.photography_business_name ||
+    organizationSettings.taxProfile?.companyName ||
+    t?.("templateBuilder.preview.mockData.businessName", { defaultValue: "Your Business" }) ||
+    "Your Business"
+  );
+}
+
+function getDefaultBlockData(
+  type: TemplateBlock["type"],
+  t: TFunction<"pages">,
+  organizationSettings?: OrganizationSettings | null
+): BlockData {
   switch (type) {
     case "text":
       return {
-        content: "Enter your text here...",
+        content: "",
         formatting: {
           fontSize: "p" as const,
           fontFamily: "Arial",
@@ -375,13 +394,15 @@ function getDefaultBlockData(type: TemplateBlock["type"]): BlockData {
       } as SessionDetailsBlockData;
     case "cta":
       return {
-        text: "Book Now",
+        text: t("templateBuilder.blockEditor.cta.defaultText", {
+          defaultValue: "Visit our website",
+        }),
         variant: "primary" as const,
       } as CTABlockData;
     case "image":
       return {
         placeholder: true,
-        alt: "Image",
+        alt: t("templateBuilder.blockEditor.image.defaultAlt", { defaultValue: "Image" }),
       } as ImageBlockData;
     case "footer":
       return {
@@ -397,7 +418,10 @@ function getDefaultBlockData(type: TemplateBlock["type"]): BlockData {
     case "columns":
       return {
         columns: 2,
-        content: ["Column 1 content...", "Column 2 content..."],
+        content: [
+          t("templateBuilder.blockEditor.columns.columnPlaceholder", { index: 1, defaultValue: "Column 1" }),
+          t("templateBuilder.blockEditor.columns.columnPlaceholder", { index: 2, defaultValue: "Column 2" }),
+        ],
       };
     case "social-links":
       return {
@@ -406,8 +430,9 @@ function getDefaultBlockData(type: TemplateBlock["type"]): BlockData {
     case "header":
       return {
         showLogo: true,
-        tagline: "Professional Photography",
+        tagline: resolveBusinessName(organizationSettings, t),
         backgroundColor: "#ffffff",
+        logoAlignment: "center",
       };
     case "raw-html":
       return {

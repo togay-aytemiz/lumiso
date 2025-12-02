@@ -3,12 +3,13 @@ import type { UIEvent } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, X } from 'lucide-react';
+import { Check, Smile, X } from 'lucide-react';
 import { EmojiPicker } from '@/components/template-builder/EmojiPicker';
 import { VariablePicker } from '@/components/template-builder/VariablePicker';
 import { getCharacterCount, checkSpamWords } from '@/lib/templateUtils';
 import { useVariableLabelMap } from '@/hooks/useVariableLabelMap';
 import { VariableTokenText } from './VariableTokenText';
+import { useTranslation } from 'react-i18next';
 
 interface InlineSubjectEditorProps {
   value: string | null;
@@ -21,13 +22,20 @@ export function InlineSubjectEditor({
   value,
   onSave,
   onCancel,
-  placeholder = "Your photography session is confirmed!"
+  placeholder
 }: InlineSubjectEditorProps) {
   const [inputValue, setInputValue] = useState(value || '');
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [scrollLeft, setScrollLeft] = useState(0);
   const variableLabels = useVariableLabelMap();
+  const { t } = useTranslation("pages");
+  const [isVariablePickerOpen, setIsVariablePickerOpen] = useState(false);
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const interactionRef = useRef(false);
+  const resolvedPlaceholder = placeholder ?? t("templateBuilder.preview.defaultSubject", {
+    defaultValue: "Your photography session is confirmed!"
+  });
 
   useEffect(() => {
     if (inputRef.current) {
@@ -48,7 +56,13 @@ export function InlineSubjectEditor({
   };
 
   const handleBlur = () => {
-    // Auto-save on blur if content changed
+    if (interactionRef.current || isVariablePickerOpen || isEmojiPickerOpen) {
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
+      return;
+    }
+
     if (inputValue.trim() !== (value || '').trim()) {
       handleSave();
     }
@@ -84,6 +98,14 @@ export function InlineSubjectEditor({
     setScrollLeft(event.currentTarget.scrollLeft);
   };
 
+  const markInteraction = () => {
+    interactionRef.current = true;
+  };
+
+  const clearInteraction = () => {
+    interactionRef.current = false;
+  };
+
   const charCount = getCharacterCount(inputValue);
   const spamWords = checkSpamWords(inputValue);
 
@@ -98,7 +120,7 @@ export function InlineSubjectEditor({
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
-            placeholder={placeholder}
+            placeholder={resolvedPlaceholder}
             className="relative z-10 h-8 w-full text-sm bg-transparent text-transparent caret-foreground placeholder:text-transparent"
             disabled={isSaving}
             onScroll={handleInputScroll}
@@ -113,18 +135,55 @@ export function InlineSubjectEditor({
             >
               <VariableTokenText
                 text={inputValue}
-                placeholder={placeholder}
+                placeholder={resolvedPlaceholder}
                 variableLabels={variableLabels}
               />
               <span className="opacity-0">.</span>
             </div>
           </div>
         </div>
-        <EmojiPicker onEmojiSelect={insertEmoji} />
+        <EmojiPicker 
+          onEmojiSelect={insertEmoji}
+          onOpenChange={(open) => {
+            setIsEmojiPickerOpen(open);
+            interactionRef.current = open;
+            if (!open) {
+              requestAnimationFrame(() => {
+                clearInteraction();
+                inputRef.current?.focus();
+              });
+            }
+          }}
+          trigger={
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 px-2"
+              onMouseDown={markInteraction}
+            >
+              <Smile className="h-3 w-3" />
+            </Button>
+          }
+        />
         <VariablePicker 
           onVariableSelect={insertVariable}
+          onOpenChange={(open) => {
+            setIsVariablePickerOpen(open);
+            interactionRef.current = open;
+            if (!open) {
+              requestAnimationFrame(() => {
+                clearInteraction();
+                inputRef.current?.focus();
+              });
+            }
+          }}
           trigger={
-            <Button variant="outline" size="sm" className="h-8 px-2 text-xs">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 px-2 text-xs"
+              onMouseDown={markInteraction}
+            >
               {"{…}"}
             </Button>
           }
@@ -158,14 +217,14 @@ export function InlineSubjectEditor({
             <div className="flex items-center gap-1">
               <span className="text-amber-600">⚠️</span>
               <span className="text-amber-600">
-                {charCount}/60 characters (too long)
+                {t("templateBuilder.warnings.tooLong", { count: charCount })}
               </span>
             </div>
           )}
           {spamWords.length > 0 && (
             <div className="flex items-center gap-1">
               <span className="text-amber-600">⚠️</span>
-              <span>Spam words:</span>
+              <span>{t("templateBuilder.warnings.spamWords")}</span>
               <div className="flex gap-1">
                 {spamWords.slice(0, 2).map(word => (
                   <Badge key={word} variant="secondary" className="text-xs px-1 py-0">
@@ -173,7 +232,9 @@ export function InlineSubjectEditor({
                   </Badge>
                 ))}
                 {spamWords.length > 2 && (
-                  <span className="text-amber-600">+{spamWords.length - 2} more</span>
+                  <span className="text-amber-600">
+                    {t("templateBuilder.warnings.moreSpamWords", { count: spamWords.length - 2 })}
+                  </span>
                 )}
               </div>
             </div>

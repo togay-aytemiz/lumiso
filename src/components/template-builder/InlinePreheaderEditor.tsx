@@ -6,6 +6,7 @@ import { Check, X } from 'lucide-react';
 import { VariablePicker } from '@/components/template-builder/VariablePicker';
 import { useVariableLabelMap } from '@/hooks/useVariableLabelMap';
 import { VariableTokenText } from './VariableTokenText';
+import { useTranslation } from 'react-i18next';
 
 interface InlinePreheaderEditorProps {
   value: string | null;
@@ -18,13 +19,19 @@ export function InlinePreheaderEditor({
   value,
   onSave,
   onCancel,
-  placeholder = "We're excited to capture your special moments"
+  placeholder
 }: InlinePreheaderEditorProps) {
   const [inputValue, setInputValue] = useState(value || '');
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [scrollLeft, setScrollLeft] = useState(0);
   const variableLabels = useVariableLabelMap();
+  const { t } = useTranslation("pages");
+  const [isVariablePickerOpen, setIsVariablePickerOpen] = useState(false);
+  const interactionRef = useRef(false);
+  const resolvedPlaceholder = placeholder ?? t("templateBuilder.preview.excitedMessage", {
+    defaultValue: "We're excited to capture your special moments"
+  });
 
   useEffect(() => {
     if (inputRef.current) {
@@ -45,7 +52,13 @@ export function InlinePreheaderEditor({
   };
 
   const handleBlur = () => {
-    // Auto-save on blur if content changed
+    if (interactionRef.current || isVariablePickerOpen) {
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
+      return;
+    }
+
     if (inputValue.trim() !== (value || '').trim()) {
       handleSave();
     }
@@ -73,6 +86,14 @@ export function InlinePreheaderEditor({
     setScrollLeft(event.currentTarget.scrollLeft);
   };
 
+  const markInteraction = () => {
+    interactionRef.current = true;
+  };
+
+  const clearInteraction = () => {
+    interactionRef.current = false;
+  };
+
   return (
     <div className="flex items-center gap-1">
       <div className="relative flex-1">
@@ -82,7 +103,7 @@ export function InlinePreheaderEditor({
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
           className="relative z-10 h-8 w-full text-sm bg-transparent text-transparent caret-foreground placeholder:text-transparent"
           disabled={isSaving}
           onScroll={handleInputScroll}
@@ -97,7 +118,7 @@ export function InlinePreheaderEditor({
           >
             <VariableTokenText
               text={inputValue}
-              placeholder={placeholder}
+              placeholder={resolvedPlaceholder}
               variableLabels={variableLabels}
             />
             <span className="opacity-0">.</span>
@@ -106,8 +127,23 @@ export function InlinePreheaderEditor({
       </div>
       <VariablePicker 
         onVariableSelect={insertVariable}
+        onOpenChange={(open) => {
+          setIsVariablePickerOpen(open);
+          interactionRef.current = open;
+          if (!open) {
+            requestAnimationFrame(() => {
+              clearInteraction();
+              inputRef.current?.focus();
+            });
+          }
+        }}
         trigger={
-          <Button variant="outline" size="sm" className="h-8 px-2 text-xs">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 px-2 text-xs"
+            onMouseDown={markInteraction}
+          >
             {"{…}"}
           </Button>
         }

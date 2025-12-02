@@ -2563,6 +2563,19 @@
       "publish": "Publish",
       "published": "Published"
     },
+    "toast": {
+      "savedTitle": "Saved",
+      "savedDescription": "Template saved successfully",
+      "publishedTitle": "Published",
+      "publishedDescription": "Template published successfully",
+      "deletedTitle": "Deleted",
+      "deletedDescription": "Template deleted successfully",
+      "errorTitle": "Error",
+      "saveError": "We couldn't save the template. Please try again.",
+      "publishError": "We couldn't publish the template. Please try again.",
+      "deleteError": "We couldn't delete the template. Please try again.",
+      "loadError": "We couldn't load the template. Please refresh and try again."
+    },
     "editor": {
       "title": "Template Builder",
       "description": "Drag and drop blocks to build your email template",
@@ -2726,7 +2739,8 @@
       },
       "cta": {
         "buttonText": "Button Text",
-        "buttonTextPlaceholder": "Book Now",
+        "buttonTextPlaceholder": "Visit our website",
+        "defaultText": "Visit our website",
         "buttonStyle": "Button Style",
         "buttonStyles": {
           "primary": "Primary",
@@ -2753,6 +2767,22 @@
         "captionPlaceholder": "Image caption",
         "linkLabel": "Link URL (optional)",
         "linkPlaceholder": "https://example.com"
+      },
+      "imageUpload": {
+        "title": "Upload an image",
+        "uploading": "Uploading...",
+        "helper": "Drag and drop or click to browse (max 5MB)",
+        "toast": {
+          "successTitle": "Success",
+          "successDescription": "Image uploaded successfully",
+          "errorTitle": "Error",
+          "errorDescription": "Failed to upload image",
+          "authRequired": "You must be logged in to upload images",
+          "limitTitle": "Upload limit reached",
+          "limitDescription": "You have reached your image storage limit.",
+          "invalidFile": "Please select an image file",
+          "maxSize": "Image must be smaller than 5MB"
+        }
       },
       "footer": {
         "customText": "Custom Text (optional)",

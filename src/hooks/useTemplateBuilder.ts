@@ -1,11 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Template, TemplateBuilderData, DatabaseTemplate, TemplateChannelView } from "@/types/template";
 import { TemplateBlock } from "@/types/templateBuilder";
-import { blocksToHTML, blocksToPlainText, blocksToMasterContent, htmlToBlocks } from "@/lib/templateBlockUtils";
+import { blocksToHTML, blocksToMasterContent, htmlToBlocks } from "@/lib/templateBlockUtils";
+import { useTranslation } from "react-i18next";
 
 interface UseTemplateBuilderReturn {
   template: TemplateBuilderData | null;
@@ -116,6 +117,53 @@ const transformToBuilderData = (
   };
 };
 
+const DRAFT_STORAGE_PREFIX = "template-builder-draft";
+
+interface DraftPayload {
+  template: TemplateBuilderData;
+  updatedAt: number;
+  isDirty: boolean;
+}
+
+const getDraftStorageKey = (templateId?: string) =>
+  `${DRAFT_STORAGE_PREFIX}-${templateId || "new"}`;
+
+const loadDraftFromStorage = (templateId?: string): DraftPayload | null => {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = localStorage.getItem(getDraftStorageKey(templateId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as DraftPayload;
+    if (parsed?.template) {
+      return parsed;
+    }
+  } catch (error) {
+    console.warn("Failed to parse template draft from storage", error);
+  }
+  return null;
+};
+
+const persistDraftToStorage = (
+  templateId: string | undefined,
+  template: TemplateBuilderData,
+  isDirty: boolean
+) => {
+  if (typeof window === "undefined") return;
+
+  const payload: DraftPayload = {
+    template,
+    updatedAt: Date.now(),
+    isDirty
+  };
+
+  try {
+    localStorage.setItem(getDraftStorageKey(templateId), JSON.stringify(payload));
+  } catch (error) {
+    console.warn("Failed to persist template draft", error);
+  }
+};
+
 export function useTemplateBuilder(templateId?: string): UseTemplateBuilderReturn {
   const [template, setTemplate] = useState<TemplateBuilderData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -126,9 +174,14 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
   const { activeOrganizationId } = useOrganization();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation("pages");
+  const restoredDraftDirtyRef = useRef(false);
+  const untitledTemplateLabel = t("templateBuilder.untitledTemplate", {
+    defaultValue: "Untitled Template"
+  });
 
   const loadTemplate = useCallback(async () => {
-    if (!templateId || !activeOrganizationId) return;
+    if (!templateId || !activeOrganizationId || restoredDraftDirtyRef.current) return;
 
     try {
       setLoading(true);
@@ -147,19 +200,51 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       if (error) throw error;
 
       const transformedTemplate = transformToBuilderData(data);
+      if (restoredDraftDirtyRef.current) {
+        return;
+      }
+
       setTemplate(transformedTemplate);
       setIsDirty(false);
+      restoredDraftDirtyRef.current = false;
     } catch (error: unknown) {
       console.error("Error loading template:", error);
       toast({
-        title: "Error",
-        description: getErrorMessage(error),
+        title: t("templateBuilder.toast.errorTitle", { defaultValue: "Error" }),
+        description: t("templateBuilder.toast.loadError", {
+          defaultValue: getErrorMessage(error)
+        }),
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  }, [templateId, activeOrganizationId, toast]);
+  }, [templateId, activeOrganizationId, toast, t]);
+
+  useEffect(() => {
+    const draft = loadDraftFromStorage(templateId);
+    if (draft) {
+      if (restoredDraftDirtyRef.current && draft.isDirty) {
+        return;
+      }
+      if (template && !draft.isDirty) {
+        return;
+      }
+      setTemplate(draft.template);
+      setIsDirty(draft.isDirty);
+      restoredDraftDirtyRef.current = draft.isDirty;
+      if (!draft.isDirty && draft.updatedAt) {
+        setLastSaved(new Date(draft.updatedAt));
+      }
+      return;
+    }
+
+    restoredDraftDirtyRef.current = false;
+    if (!template || template.id !== (templateId || template.id)) {
+      setTemplate(null);
+      setIsDirty(false);
+    }
+  }, [templateId, template]);
 
   const saveTemplate = useCallback(async (
     templateData: Partial<TemplateBuilderData>, 
@@ -196,7 +281,7 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
 
       // Prepare template payload with blocks
       const templatePayload = {
-        name: mergedData.name || 'Untitled Template',
+        name: mergedData.name || untitledTemplateLabel,
         category: mergedData.category || 'general',
         master_content: generatedMasterContent || mergedData.master_content || mergedData.description || '',
         master_subject: mergedData.master_subject || mergedData.subject || '',
@@ -230,6 +315,10 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
 
         if (error) throw error;
         result = data;
+
+        if (typeof window !== "undefined") {
+          localStorage.removeItem(getDraftStorageKey(undefined));
+        }
       }
 
       // Save channel views - always update/create email channel with generated HTML
@@ -246,7 +335,7 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       channelViews.push({
         template_id: result.id,
         channel: 'email',
-        subject: mergedData.subject || mergedData.master_subject || mergedData.name || 'Subject',
+        subject: mergedData.subject || mergedData.master_subject || mergedData.name || t("templateBuilder.email.subject", { defaultValue: "Subject" }),
         content: generatedMasterContent || mergedData.master_content || '',
         html_content: generatedHtmlContent || null
       });
@@ -297,11 +386,12 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       setTemplate(savedTemplate);
       setLastSaved(new Date());
       setIsDirty(false);
+      restoredDraftDirtyRef.current = false;
 
       if (showToast) {
         toast({
-          title: "Saved",
-          description: "Template saved successfully",
+          title: t("templateBuilder.toast.savedTitle", { defaultValue: "Saved" }),
+          description: t("templateBuilder.toast.savedDescription", { defaultValue: "Template saved successfully" }),
         });
       }
 
@@ -310,8 +400,10 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       console.error("Error saving template:", error);
       if (showToast) {
         toast({
-          title: "Error",
-          description: getErrorMessage(error),
+          title: t("templateBuilder.toast.errorTitle", { defaultValue: "Error" }),
+          description: t("templateBuilder.toast.saveError", {
+            defaultValue: getErrorMessage(error)
+          }),
           variant: "destructive",
         });
       }
@@ -319,7 +411,7 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
     } finally {
       setSaving(false);
     }
-  }, [templateId, template, activeOrganizationId, user?.id, toast]);
+  }, [templateId, template, activeOrganizationId, user?.id, toast, t, untitledTemplateLabel]);
 
   const publishTemplate = useCallback(async (
     templateData?: Partial<TemplateBuilderData>
@@ -329,7 +421,7 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
 
       const dataToPublish = template 
         ? { ...template, ...templateData } 
-        : { name: 'Untitled Template', blocks: [], ...templateData };
+        : { name: untitledTemplateLabel, blocks: [], ...templateData };
 
       const publishedTemplate = await saveTemplate({
         ...dataToPublish,
@@ -339,8 +431,8 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
 
       if (publishedTemplate) {
         toast({
-          title: "Published",
-          description: "Template published successfully",
+          title: t("templateBuilder.toast.publishedTitle", { defaultValue: "Published" }),
+          description: t("templateBuilder.toast.publishedDescription", { defaultValue: "Template published successfully" }),
         });
       }
 
@@ -348,15 +440,17 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
     } catch (error: unknown) {
       console.error("Error publishing template:", error);
       toast({
-        title: "Error",
-        description: getErrorMessage(error),
+        title: t("templateBuilder.toast.errorTitle", { defaultValue: "Error" }),
+        description: t("templateBuilder.toast.publishError", {
+          defaultValue: getErrorMessage(error)
+        }),
         variant: "destructive",
       });
       return null;
     } finally {
       setSaving(false);
     }
-  }, [template, saveTemplate, toast]);
+  }, [template, saveTemplate, toast, t, untitledTemplateLabel]);
 
   const deleteTemplate = useCallback(async (): Promise<boolean> => {
     if (!templateId || !activeOrganizationId) return false;
@@ -381,29 +475,35 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
 
       if (error) throw error;
 
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(getDraftStorageKey(templateId));
+      }
+
       toast({
-        title: "Deleted",
-        description: "Template deleted successfully",
+        title: t("templateBuilder.toast.deletedTitle", { defaultValue: "Deleted" }),
+        description: t("templateBuilder.toast.deletedDescription", { defaultValue: "Template deleted successfully" }),
       });
 
       return true;
     } catch (error: unknown) {
       console.error("Error deleting template:", error);
       toast({
-        title: "Error",
-        description: getErrorMessage(error),
+        title: t("templateBuilder.toast.errorTitle", { defaultValue: "Error" }),
+        description: t("templateBuilder.toast.deleteError", {
+          defaultValue: getErrorMessage(error)
+        }),
         variant: "destructive",
       });
       return false;
     }
-  }, [templateId, activeOrganizationId, toast]);
+  }, [templateId, activeOrganizationId, toast, t]);
 
   const updateTemplate = useCallback((updates: Partial<TemplateBuilderData>) => {
     if (!template) {
       // Create a basic template with updates
       const newTemplate: TemplateBuilderData = {
         id: '',
-        name: 'Untitled Template',
+        name: untitledTemplateLabel,
         category: 'general',
         master_content: '',
         placeholders: [],
@@ -426,11 +526,17 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
     const updatedTemplate = { ...template, ...updates };
     setTemplate(updatedTemplate);
     setIsDirty(true);
-  }, [template]);
+  }, [template, untitledTemplateLabel]);
 
   const resetDirtyState = useCallback(() => {
     setIsDirty(false);
+    restoredDraftDirtyRef.current = false;
   }, []);
+
+  useEffect(() => {
+    if (!template) return;
+    persistDraftToStorage(templateId, template, isDirty);
+  }, [template, isDirty, templateId]);
 
   // Load template on mount
   useEffect(() => {

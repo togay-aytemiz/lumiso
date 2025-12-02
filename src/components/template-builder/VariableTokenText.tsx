@@ -13,6 +13,7 @@ interface Token {
   type: "text" | "variable";
   value: string;
   key?: string;
+  raw?: string;
 }
 
 function tokenize(text: string, variableLabels: Record<string, string>): Token[] {
@@ -38,6 +39,7 @@ function tokenize(text: string, variableLabels: Record<string, string>): Token[]
       type: "variable",
       value: label,
       key,
+      raw: match[0],
     });
 
     lastIndex = matchIndex + matchLength;
@@ -76,12 +78,21 @@ export function VariableTokenText({ text, placeholder, variableLabels }: Variabl
           );
         }
 
+        const rawText = token.raw ?? token.value;
+        const widthCh = Math.max(rawText.length, token.value.length);
+
         return (
           <span
             key={`variable-${index}-${token.key}`}
-            className="inline-flex max-w-full items-center rounded bg-muted px-1.5 py-0.5 text-xs font-mono text-muted-foreground align-baseline"
+            className="relative inline-block align-baseline"
+            style={{ width: `${widthCh}ch` }}
           >
-            {token.value}
+            <span className="absolute inset-0 inline-flex w-full items-center rounded bg-muted px-1.5 py-0.5 text-xs font-mono text-muted-foreground box-border">
+              {token.value}
+            </span>
+            <span className="invisible whitespace-pre">
+              {rawText}
+            </span>
           </span>
         );
       })}

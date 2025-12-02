@@ -10,9 +10,10 @@ import { useTemplateVariablesContext } from "@/contexts/TemplateVariablesContext
 interface VariablePickerProps {
   onVariableSelect: (variable: string) => void;
   trigger?: React.ReactNode;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function VariablePicker({ onVariableSelect, trigger }: VariablePickerProps) {
+export function VariablePicker({ onVariableSelect, trigger, onOpenChange }: VariablePickerProps) {
   const [open, setOpen] = useState(false);
   const { variables, loading } = useTemplateVariablesContext();
   const { t } = useTranslation("pages");
@@ -44,7 +45,13 @@ export function VariablePicker({ onVariableSelect, trigger }: VariablePickerProp
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        onOpenChange?.(next);
+      }}
+    >
       <PopoverTrigger asChild>
         {trigger || (
           <Button variant="outline" size="sm">

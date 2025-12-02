@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 import { OptimizedTemplateEditor } from '@/components/template-builder/OptimizedTemplateEditor';
 import { OptimizedTemplatePreview } from '@/components/template-builder/OptimizedTemplatePreview';
 import { TemplateBlock } from '@/types/templateBuilder';
@@ -28,9 +27,12 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   const { t, i18n } = useTranslation("pages");
   const { t: tCommon } = useTranslation("common");
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const templateId = searchParams.get('id');
+  const untitledName = useMemo(
+    () => t("templateBuilder.untitledTemplate", { defaultValue: "Untitled Template" }),
+    [t]
+  );
 
   // Backend hooks
   const { template, loading, saving, lastSaved, isDirty, saveTemplate, publishTemplate, updateTemplate, resetDirtyState } = useTemplateBuilder(templateId || undefined);
@@ -47,9 +49,17 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [pendingAction, setPendingAction] = useState<'save' | 'publish' | null>(null);
   const [existingTemplateNames, setExistingTemplateNames] = useState<string[]>([]);
+  const subjectPlaceholder = useMemo(
+    () => t("templateBuilder.preview.defaultSubject", { defaultValue: "📸 Your photography session is confirmed!" }),
+    [t]
+  );
+  const preheaderPlaceholder = useMemo(
+    () => t("templateBuilder.preview.excitedMessage", { defaultValue: "We're excited to capture your special moments" }),
+    [t]
+  );
 
   // Template data from backend or defaults
-  const templateName = template?.name || t("templateBuilder.untitledTemplate");
+  const templateName = template?.name || untitledName;
   const subject = template?.subject || '';
   const preheader = template?.preheader || '';
   const blocks = useMemo(() => template?.blocks ?? [], [template?.blocks]);
@@ -78,15 +88,29 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     fetchTemplateNames();
   }, [templateId]);
 
+  const untitledAliases = useMemo(
+    () =>
+      [
+        untitledName,
+        tCommon("templateBuilder.untitledTemplate", { defaultValue: "" }),
+        "untitled template",
+        "new template",
+        "template"
+      ]
+        .filter(Boolean)
+        .map((entry) => entry.toLowerCase().trim()),
+    [tCommon, untitledName]
+  );
+
   // Helper function to check if template name is untitled
-  const isUntitledTemplate = (name: string) => {
+  const isUntitledTemplate = useCallback((name: string) => {
     const normalizedName = name.toLowerCase().trim();
-    return normalizedName === 'untitled template' || 
-           normalizedName.includes('untitled') ||
-           normalizedName === '' ||
-           normalizedName === 'new template' ||
-           normalizedName === 'template';
-  };
+    return (
+      normalizedName === "" ||
+      normalizedName.includes("untitled") ||
+      untitledAliases.includes(normalizedName)
+    );
+  }, [untitledAliases]);
 
   // Navigation guard
   const {
@@ -379,6 +403,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
                   value={subject}
                   onSave={handleSubjectSave}
                   onCancel={() => setIsEditingSubject(false)}
+                  placeholder={subjectPlaceholder}
                 />
               ) : (
                 <div className="flex items-center gap-3 pl-1">
@@ -448,6 +473,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
                   value={preheader}
                   onSave={handlePreheaderSave}
                   onCancel={() => setIsEditingPreheader(false)}
+                  placeholder={preheaderPlaceholder}
                 />
               ) : (
                 <div className="flex items-center gap-3 pl-1">

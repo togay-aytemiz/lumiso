@@ -2563,6 +2563,19 @@
       "publish": "Yayınla",
       "published": "Yayınlandı"
     },
+    "toast": {
+      "savedTitle": "Kaydedildi",
+      "savedDescription": "Şablon başarıyla kaydedildi",
+      "publishedTitle": "Yayınlandı",
+      "publishedDescription": "Şablon başarıyla yayınlandı",
+      "deletedTitle": "Silindi",
+      "deletedDescription": "Şablon başarıyla silindi",
+      "errorTitle": "Hata",
+      "saveError": "Şablon kaydedilemedi. Lütfen tekrar deneyin.",
+      "publishError": "Şablon yayınlanamadı. Lütfen tekrar deneyin.",
+      "deleteError": "Şablon silinemedi. Lütfen tekrar deneyin.",
+      "loadError": "Şablon yüklenemedi. Lütfen yenileyip tekrar deneyin."
+    },
     "editor": {
       "title": "Şablon Oluşturucu",
       "description": "E posta şablonunuzu oluşturmak için blokları sürükleyip bırakın",
@@ -2726,7 +2739,8 @@
       },
       "cta": {
         "buttonText": "Buton Metni",
-        "buttonTextPlaceholder": "Şimdi Rezervasyon Yap",
+        "buttonTextPlaceholder": "Web sitemizi ziyaret edin",
+        "defaultText": "Web sitemizi ziyaret edin",
         "buttonStyle": "Buton Stili",
         "buttonStyles": {
           "primary": "Birincil",
@@ -2753,6 +2767,22 @@
         "captionPlaceholder": "Görsel alt yazısı",
         "linkLabel": "Bağlantı URL'si (isteğe bağlı)",
         "linkPlaceholder": "https://example.com"
+      },
+      "imageUpload": {
+        "title": "Görsel yükle",
+        "uploading": "Yükleniyor...",
+        "helper": "Sürükleyip bırakın veya tıklayıp seçin (maks 5MB)",
+        "toast": {
+          "successTitle": "Başarılı",
+          "successDescription": "Görsel başarıyla yüklendi",
+          "errorTitle": "Hata",
+          "errorDescription": "Görsel yüklenemedi",
+          "authRequired": "Görsel yüklemek için giriş yapmış olmalısınız",
+          "limitTitle": "Yükleme limiti doldu",
+          "limitDescription": "Görsel depolama limitinize ulaştınız.",
+          "invalidFile": "Lütfen bir görsel dosyası seçin",
+          "maxSize": "Görsel 5MB'den küçük olmalıdır"
+        }
       },
       "footer": {
         "customText": "Özel Metin (isteğe bağlı)",

@@ -17,10 +17,22 @@ export function AddBlockSheet({ open, onOpenChange, onAddBlock }: AddBlockSheetP
 
   const blockTypes = [
     {
+      type: "header" as const,
+      icon: Layout,
+      title: t('pages:templateBuilder.addBlockSheet.blocks.header.title'),
+      description: t('pages:templateBuilder.addBlockSheet.blocks.header.description'),
+    },
+    {
       type: "text" as const,
       icon: Type,
       title: t('pages:templateBuilder.addBlockSheet.blocks.text.title'),
       description: t('pages:templateBuilder.addBlockSheet.blocks.text.description'),
+    },
+    {
+      type: "image" as const,
+      icon: Image,
+      title: t('pages:templateBuilder.addBlockSheet.blocks.image.title'),
+      description: t('pages:templateBuilder.addBlockSheet.blocks.image.description'),
     },
     {
       type: "session-details" as const,
@@ -35,28 +47,16 @@ export function AddBlockSheet({ open, onOpenChange, onAddBlock }: AddBlockSheetP
       description: t('pages:templateBuilder.addBlockSheet.blocks.cta.description'),
     },
     {
-      type: "image" as const,
-      icon: Image,
-      title: t('pages:templateBuilder.addBlockSheet.blocks.image.title'),
-      description: t('pages:templateBuilder.addBlockSheet.blocks.image.description'),
-    },
-    {
-      type: "divider" as const,
-      icon: Minus,
-      title: t('pages:templateBuilder.addBlockSheet.blocks.divider.title'),
-      description: t('pages:templateBuilder.addBlockSheet.blocks.divider.description'),
-    },
-    {
       type: "social-links" as const,
       icon: Link,
       title: t('pages:templateBuilder.addBlockSheet.blocks.socialLinks.title'),
       description: t('pages:templateBuilder.addBlockSheet.blocks.socialLinks.description'),
     },
     {
-      type: "header" as const,
-      icon: Layout,
-      title: t('pages:templateBuilder.addBlockSheet.blocks.header.title'),
-      description: t('pages:templateBuilder.addBlockSheet.blocks.header.description'),
+      type: "divider" as const,
+      icon: Minus,
+      title: t('pages:templateBuilder.addBlockSheet.blocks.divider.title'),
+      description: t('pages:templateBuilder.addBlockSheet.blocks.divider.description'),
     },
     {
       type: "footer" as const,

@@ -507,7 +507,9 @@ function HeaderBlockPreview({
   organizationSettings?: OrganizationSettings | null;
 }) {
   const businessName =
-    organizationSettings?.photography_business_name || "Your Business";
+    organizationSettings?.photography_business_name ||
+    organizationSettings?.taxProfile?.companyName ||
+    "Your Business";
   const logoUrl = organizationSettings?.logo_url;
   const alignment = data.logoAlignment || "center";
   const hasBackground = data.backgroundColor && data.backgroundColor !== "#ffffff";
@@ -537,6 +539,16 @@ function HeaderBlockPreview({
     return "py-6";
   };
 
+  const getInitials = (name: string) => {
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 3)
+      .map((segment) => segment.charAt(0).toUpperCase())
+      .join("")
+      .slice(0, 3) || " ";
+  };
+
   return (
     <div 
       className={`rounded-lg ${getAlignmentStyle()} ${getPaddingClass()}`}
@@ -552,7 +564,7 @@ function HeaderBlockPreview({
             />
           ) : (
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
-              {businessName.charAt(0)}
+              {getInitials(businessName)}
             </div>
           )}
         </div>

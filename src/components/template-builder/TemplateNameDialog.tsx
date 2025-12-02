@@ -27,19 +27,23 @@ export function TemplateNameDialog({
   loading = false
 }: TemplateNameDialogProps) {
   const { t } = useTranslation();
+  const untitledName = t('pages:templateBuilder.untitledTemplate', { defaultValue: 'Untitled Template' });
   const [name, setName] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (open) {
       // Start with current name if it's not "Untitled Template"
-      const isUntitled = currentName === 'Untitled Template' || 
-                        currentName.toLowerCase().includes('untitled') ||
-                        currentName.trim() === '';
+      const normalizedCurrent = currentName.toLowerCase().trim();
+      const isUntitled = normalizedCurrent === untitledName.toLowerCase().trim() || 
+                        normalizedCurrent.includes('untitled') ||
+                        normalizedCurrent === '' ||
+                        normalizedCurrent === 'new template' ||
+                        normalizedCurrent === 'template';
       setName(isUntitled ? '' : currentName);
       setError('');
     }
-  }, [open, currentName]);
+  }, [open, currentName, untitledName]);
 
   const validateName = (inputName: string) => {
     const trimmedName = inputName.trim();

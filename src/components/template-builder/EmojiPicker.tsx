@@ -7,9 +7,10 @@ import { emojis } from "@/lib/templateUtils";
 interface EmojiPickerProps {
   onEmojiSelect: (emoji: string) => void;
   trigger?: React.ReactNode;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function EmojiPicker({ onEmojiSelect, trigger }: EmojiPickerProps) {
+export function EmojiPicker({ onEmojiSelect, trigger, onOpenChange }: EmojiPickerProps) {
   const [open, setOpen] = useState(false);
 
   const handleEmojiClick = (emoji: string) => {
@@ -18,7 +19,13 @@ export function EmojiPicker({ onEmojiSelect, trigger }: EmojiPickerProps) {
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        onOpenChange?.(next);
+      }}
+    >
       <PopoverTrigger asChild>
         {trigger || (
           <Button variant="outline" size="sm" className="h-8 px-2">

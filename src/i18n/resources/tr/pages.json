@@ -765,9 +765,6 @@
       "errors": {
         "failedToLoad": "Admin kullanıcıları yükleyemedik. Lütfen yenileyin."
       },
-      "errors": {
-        "failedToLoad": "Admin kullanıcıları yükleyemedik. Lütfen yenileyin."
-      },
       "summary": {
         "total": "Toplam hesap",
         "totalHint": "Aktif tüm organizasyonlar",

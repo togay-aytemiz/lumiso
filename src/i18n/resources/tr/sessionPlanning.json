@@ -17,11 +17,6 @@
     "successViewSession": "Seansı görüntüle",
     "successScheduleAnother": "Yeni seans planla",
     "successClose": "Kapat",
-    "successTitle": "Seans planlandı!",
-    "successSubtitle": "Devamını biz hallederiz. {{name}} takvime eklendi.",
-    "successNotifications": "Bildirimler — Hatırlatmalar: {{reminders}} • Özet e-postası: {{summaryEmail}}",
-    "successScheduleAnother": "Yeni seans planla",
-    "successClose": "Kapat",
     "discardPrompt": "Seans taslağı silinsin mi?",
     "preparingEntry": "Başlangıç verileri yükleniyor..."
   },

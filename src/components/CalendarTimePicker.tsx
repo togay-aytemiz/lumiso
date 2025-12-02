@@ -49,7 +49,9 @@ export function CalendarTimePicker({
   currentSessionId,
 }: CalendarTimePickerProps) {
   const { t, i18n } = useFormsTranslation();
-  const [visibleMonth, setVisibleMonth] = useState<Date>(new Date());
+  const [visibleMonth, setVisibleMonth] = useState<Date>(() =>
+    selectedDate ? new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1) : new Date()
+  );
   const [plannedSessions, setPlannedSessions] = useState<PlannedSessionRecord[]>([]);
   const browserLocale = i18n.language || getUserLocale();
   const plannedSessionsRef = useRef<HTMLDivElement | null>(null);

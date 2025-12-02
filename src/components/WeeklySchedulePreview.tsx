@@ -202,12 +202,13 @@ export const WeeklySchedulePreview = forwardRef<HTMLDivElement, WeeklySchedulePr
 
   const selectedMatchesCurrentSession = useMemo(() => {
     if (!currentSessionId || !selectedDateKey || !selectedTime) return false;
-    return sessions.some(
-      (session) =>
-        session.id === currentSessionId &&
-        session.session_date === selectedDateKey &&
-        session.session_time === selectedTime
-    );
+    const selectedMinutes = parseTimeToMinutes(selectedTime);
+    const currentSession = sessions.find((session) => session.id === currentSessionId);
+    if (!currentSession || !currentSession.session_date || !currentSession.session_time) return false;
+    if (currentSession.session_date !== selectedDateKey) return false;
+    const sessionMinutes = parseTimeToMinutes(currentSession.session_time);
+    if (selectedMinutes === null || sessionMinutes === null) return false;
+    return selectedMinutes === sessionMinutes;
   }, [currentSessionId, selectedDateKey, selectedTime, sessions]);
 
   const isDraftActive = isDraftWithinWeek && !selectedMatchesCurrentSession;

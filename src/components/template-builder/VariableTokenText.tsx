@@ -78,22 +78,12 @@ export function VariableTokenText({ text, placeholder, variableLabels }: Variabl
           );
         }
 
-
-        // Use a minimal spacer - the badge text plus some padding to approximate visual width
-        // This prevents the huge gap while still providing space for the badge
-        const rawWidthText = token.value;
-
         return (
           <span
             key={`variable-${index}-${token.key}`}
-            className="relative inline-block align-baseline"
+            className="inline-flex items-center rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700 align-middle"
           >
-            <span className="invisible whitespace-pre text-xs font-medium px-1.5">
-              {rawWidthText}
-            </span>
-            <span className="absolute left-0 top-0 inline-flex items-center rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700 align-middle box-border pointer-events-none">
-              {token.value}
-            </span>
+            {token.value}
           </span>
         );
       })}

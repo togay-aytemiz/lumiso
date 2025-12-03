@@ -200,6 +200,9 @@ export function SocialLinksBlockEditor({ data, onUpdate }: { data: SocialLinksBl
 
 export function HeaderBlockEditor({ data, onUpdate }: { data: HeaderBlockData; onUpdate: (data: HeaderBlockData) => void }) {
   const { t } = useTranslation("pages");
+  const { settings, loading } = useOrganizationSettings();
+  const hasLogo = Boolean(settings?.logo_url);
+
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
@@ -224,6 +227,12 @@ export function HeaderBlockEditor({ data, onUpdate }: { data: HeaderBlockData; o
                 <SelectItem value="right">{t("templateBuilder.blockEditor.header.logoAlignmentOptions.right")}</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+        )}
+
+        {!loading && !hasLogo && (
+          <div className="sm:col-span-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+            {t("templateBuilder.blockEditor.header.logoMissingHint")}
           </div>
         )}
       </div>

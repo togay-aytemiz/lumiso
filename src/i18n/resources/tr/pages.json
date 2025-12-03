@@ -2852,7 +2852,8 @@
         "tagline": "Slogan (isteğe bağlı)",
         "taglinePlaceholder": "Fotoğrafçılık sloganınız",
         "taglineColor": "Slogan Rengi",
-        "backgroundColor": "Arka Plan Rengi"
+        "backgroundColor": "Arka Plan Rengi",
+        "logoMissingHint": "Logo eklenmemiş. Logonuzu Ayarlar > Genel bölümünden ekleyip burada gösterebilirsiniz."
       },
       "rawHtml": {
         "alert": "Ham HTML gelişmiş kullanıcılar içindir. İçerik güvenlik için temizlenecektir.",

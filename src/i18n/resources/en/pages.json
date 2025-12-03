@@ -2852,7 +2852,8 @@
         "tagline": "Tagline (optional)",
         "taglinePlaceholder": "Your photography tagline",
         "taglineColor": "Tagline Color",
-        "backgroundColor": "Background Color"
+        "backgroundColor": "Background Color",
+        "logoMissingHint": "No logo added yet. Add your logo from Settings > General to display it here."
       },
       "rawHtml": {
         "alert": "Raw HTML is for advanced users. Content will be sanitized for security.",

@@ -225,6 +225,7 @@ function getDefaultBlockData(type: TemplateBlock["type"]): BlockData {
           fontSize: "p" as const,
           fontFamily: "Arial",
           alignment: "left" as const,
+          color: "#111827",
         },
       } as TextBlockData;
     case "session-details":

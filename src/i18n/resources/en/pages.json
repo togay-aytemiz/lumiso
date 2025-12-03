@@ -2569,6 +2569,7 @@
       "saving": "Saving...",
       "publish": "Publish",
       "published": "Published",
+      "done": "Done",
       "restart": "Start over",
       "restartConfirm": "Start over? This will discard your unsaved edits."
     },
@@ -2702,6 +2703,7 @@
         "fontSize": "Font Size",
         "fontFamily": "Font Family",
         "textAlignment": "Text Alignment",
+        "textColor": "Text Color",
         "fontSizeOptions": {
           "h1": "Heading 1",
           "h2": "Heading 2",
@@ -2777,9 +2779,9 @@
         "urlLabel": "Image URL",
         "urlPlaceholder": "https://example.com/image.jpg",
         "currentImage": "Current Image",
+        "changeImage": "Change image",
+        "removeImage": "Remove",
         "defaultAlt": "Image",
-        "altLabel": "Alt Text (optional)",
-        "altPlaceholder": "Image description",
         "captionLabel": "Caption (optional)",
         "captionPlaceholder": "Image caption",
         "linkLabel": "Link URL (optional)",

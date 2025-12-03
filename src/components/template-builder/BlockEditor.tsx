@@ -6,14 +6,15 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronUp, ChevronDown, Trash2, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Upload, Smile, Plus } from "lucide-react";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { ChevronUp, ChevronDown, Trash2, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Smile, Plus } from "lucide-react";
 import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData, DividerBlockData, SocialLinksBlockData, HeaderBlockData, RawHTMLBlockData } from "@/types/templateBuilder";
 import { VariablePicker } from "./VariablePicker";
 import { EmojiPicker } from "./EmojiPicker";
 import { ImageUpload } from "./ImageUpload";
 import { ImageLibrarySheet } from "./ImageLibrarySheet";
 import { useToast } from "@/hooks/use-toast";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DividerBlockEditor, SocialLinksBlockEditor, HeaderBlockEditor, RawHTMLBlockEditor } from "./NewBlockEditors";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
@@ -78,7 +79,7 @@ export function BlockEditor({ block, onUpdate, onRemove, onMoveUp, onMoveDown, c
 function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (data: TextBlockData) => void }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { t } = useTranslation("pages");
-  
+
   const updateFormatting = <K extends keyof TextBlockData["formatting"]>(
     key: K,
     value: TextBlockData["formatting"][K]
@@ -176,31 +177,84 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
       </div>
       
       <div className="space-y-3">
-        <Label>{t("templateBuilder.blockEditor.text.formatting")}</Label>
-        
-        {/* First row: Bold, Italic, Bullets */}
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant={data.formatting.bold ? "default" : "outline"}
-            onClick={() => updateFormatting("bold", !data.formatting.bold)}
-          >
-            <Bold className="h-3 w-3" />
-          </Button>
-          <Button
-            size="sm"
-            variant={data.formatting.italic ? "default" : "outline"}
-            onClick={() => updateFormatting("italic", !data.formatting.italic)}
-          >
-            <Italic className="h-3 w-3" />
-          </Button>
-          <Button
-            size="sm"
-            variant={data.formatting.bullets ? "default" : "outline"}
-            onClick={() => updateFormatting("bullets", !data.formatting.bullets)}
-          >
-            <List className="h-3 w-3" />
-          </Button>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="space-y-2">
+            <Label>{t("templateBuilder.blockEditor.text.formatting")}</Label>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant={data.formatting.bold ? "default" : "outline"}
+                onClick={() => updateFormatting("bold", !data.formatting.bold)}
+              >
+                <Bold className="h-3 w-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant={data.formatting.italic ? "default" : "outline"}
+                onClick={() => updateFormatting("italic", !data.formatting.italic)}
+              >
+                <Italic className="h-3 w-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant={data.formatting.bullets ? "default" : "outline"}
+                onClick={() => updateFormatting("bullets", !data.formatting.bullets)}
+              >
+                <List className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t("templateBuilder.blockEditor.text.textAlignment")}</Label>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant={data.formatting.alignment === "left" ? "default" : "outline"}
+                onClick={() => updateFormatting("alignment", "left")}
+              >
+                <AlignLeft className="h-3 w-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant={data.formatting.alignment === "center" ? "default" : "outline"}
+                onClick={() => updateFormatting("alignment", "center")}
+              >
+                <AlignCenter className="h-3 w-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant={data.formatting.alignment === "right" ? "default" : "outline"}
+                onClick={() => updateFormatting("alignment", "right")}
+              >
+                <AlignRight className="h-3 w-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant={data.formatting.alignment === "justify" ? "default" : "outline"}
+                onClick={() => updateFormatting("alignment", "justify")}
+              >
+                <AlignJustify className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t("templateBuilder.blockEditor.text.textColor")}</Label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={data.formatting.color || "#111827"}
+                onChange={(e) => updateFormatting("color", e.target.value)}
+                className="h-9 w-12 cursor-pointer rounded-md border border-input bg-background p-1 shadow-sm"
+              />
+              <Input
+                value={data.formatting.color || ""}
+                onChange={(e) => updateFormatting("color", e.target.value || undefined)}
+                placeholder="#111827"
+              />
+            </div>
+          </div>
         </div>
         
         {/* Second row: Font size, Font family on same row */}
@@ -243,41 +297,6 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
                 <SelectItem value="Times New Roman">{t("templateBuilder.blockEditor.text.fontFamilyOptions.timesNewRoman")}</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-        </div>
-
-        {/* Third row: Text alignment */}
-        <div>
-          <Label className="text-xs mb-2 block">{t("templateBuilder.blockEditor.text.textAlignment")}</Label>
-          <div className="flex items-center gap-1">
-            <Button
-              size="sm"
-              variant={data.formatting.alignment === "left" ? "default" : "outline"}
-              onClick={() => updateFormatting("alignment", "left")}
-            >
-              <AlignLeft className="h-3 w-3" />
-            </Button>
-            <Button
-              size="sm"
-              variant={data.formatting.alignment === "center" ? "default" : "outline"}
-              onClick={() => updateFormatting("alignment", "center")}
-            >
-              <AlignCenter className="h-3 w-3" />
-            </Button>
-            <Button
-              size="sm"
-              variant={data.formatting.alignment === "right" ? "default" : "outline"}
-              onClick={() => updateFormatting("alignment", "right")}
-            >
-              <AlignRight className="h-3 w-3" />
-            </Button>
-            <Button
-              size="sm"
-              variant={data.formatting.alignment === "justify" ? "default" : "outline"}
-              onClick={() => updateFormatting("alignment", "justify")}
-            >
-              <AlignJustify className="h-3 w-3" />
-            </Button>
           </div>
         </div>
       </div>
@@ -406,36 +425,38 @@ function CTABlockEditor({ data, onUpdate }: { data: CTABlockData; onUpdate: (dat
   const { t } = useTranslation("pages");
   return (
     <div className="space-y-4">
-      <div>
-        <Label>{t("templateBuilder.blockEditor.cta.buttonText")}</Label>
-        <Input
-          value={data.text}
-          onChange={(e) => onUpdate({ ...data, text: e.target.value })}
-          placeholder={t("templateBuilder.blockEditor.cta.buttonTextPlaceholder")}
+      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:gap-3 sm:space-y-0">
+        <Label className="shrink-0">{t("templateBuilder.blockEditor.cta.buttonStyle")}</Label>
+        <SegmentedControl
+          value={data.variant}
+          onValueChange={(value) => onUpdate({ ...data, variant: value as CTABlockData["variant"] })}
+          options={[
+            { value: "primary", label: t("templateBuilder.blockEditor.cta.buttonStyles.primary") },
+            { value: "secondary", label: t("templateBuilder.blockEditor.cta.buttonStyles.secondary") },
+            { value: "text", label: t("templateBuilder.blockEditor.cta.buttonStyles.text") },
+          ]}
+          className="inline-flex"
         />
       </div>
-      
-      <div>
-        <Label>{t("templateBuilder.blockEditor.cta.buttonStyle")}</Label>
-        <Select value={data.variant} onValueChange={(value) => onUpdate({ ...data, variant: value as CTABlockData["variant"] })}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="primary">{t("templateBuilder.blockEditor.cta.buttonStyles.primary")}</SelectItem>
-            <SelectItem value="secondary">{t("templateBuilder.blockEditor.cta.buttonStyles.secondary")}</SelectItem>
-            <SelectItem value="text">{t("templateBuilder.blockEditor.cta.buttonStyles.text")}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      
-      <div>
-        <Label>{t("templateBuilder.blockEditor.cta.linkLabel")}</Label>
-        <Input
-          value={data.link || ""}
-          onChange={(e) => onUpdate({ ...data, link: e.target.value })}
-          placeholder={t("templateBuilder.blockEditor.cta.linkPlaceholder")}
-        />
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label>{t("templateBuilder.blockEditor.cta.buttonText")}</Label>
+          <Input
+            value={data.text}
+            onChange={(e) => onUpdate({ ...data, text: e.target.value })}
+            placeholder={t("templateBuilder.blockEditor.cta.buttonTextPlaceholder")}
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label>{t("templateBuilder.blockEditor.cta.linkLabel")}</Label>
+          <Input
+            value={data.link || ""}
+            onChange={(e) => onUpdate({ ...data, link: e.target.value })}
+            placeholder={t("templateBuilder.blockEditor.cta.linkPlaceholder")}
+          />
+        </div>
       </div>
     </div>
   );
@@ -443,7 +464,15 @@ function CTABlockEditor({ data, onUpdate }: { data: CTABlockData; onUpdate: (dat
 
 function ImageBlockEditor({ data, onUpdate }: { data: ImageBlockData; onUpdate: (data: ImageBlockData) => void }) {
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const hasImage = Boolean(data.src) && !data.placeholder;
+  const [showUploadOptions, setShowUploadOptions] = useState(!hasImage);
   const { t } = useTranslation("pages");
+
+  useEffect(() => {
+    if (!hasImage) {
+      setShowUploadOptions(true);
+    }
+  }, [hasImage]);
   
   const handleImageSelect = (imageUrl: string, altText?: string) => {
     onUpdate({ 
@@ -452,82 +481,102 @@ function ImageBlockEditor({ data, onUpdate }: { data: ImageBlockData; onUpdate: 
       placeholder: false,
       alt: altText || data.alt || t("templateBuilder.blockEditor.image.defaultAlt")
     });
+    setShowUploadOptions(false);
+  };
+
+  const handleRemoveImage = () => {
+    onUpdate({
+      ...data,
+      src: undefined,
+      alt: undefined,
+      caption: "",
+      link: "",
+      placeholder: true
+    });
+    setShowUploadOptions(true);
   };
 
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="upload" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="upload">{t("templateBuilder.blockEditor.image.tabs.upload")}</TabsTrigger>
-          <TabsTrigger value="library">{t("templateBuilder.blockEditor.image.tabs.library")}</TabsTrigger>
-          <TabsTrigger value="url">{t("templateBuilder.blockEditor.image.tabs.url")}</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="upload" className="space-y-4">
-          <ImageUpload onImageUploaded={handleImageSelect} />
-        </TabsContent>
-        
-        <TabsContent value="library" className="space-y-4">
-          <Button 
-            variant="outline" 
-            onClick={() => setIsLibraryOpen(true)}
-            className="w-full"
-          >
-            {t("templateBuilder.blockEditor.image.openLibrary")}
-          </Button>
-        </TabsContent>
-        
-        <TabsContent value="url" className="space-y-4">
-          <div>
-            <Label>{t("templateBuilder.blockEditor.image.urlLabel")}</Label>
-            <Input
-              value={data.src || ""}
-              onChange={(e) => onUpdate({ ...data, src: e.target.value, placeholder: !e.target.value })}
-              placeholder={t("templateBuilder.blockEditor.image.urlPlaceholder")}
-            />
-          </div>
-        </TabsContent>
-      </Tabs>
+      {(!hasImage || showUploadOptions) && (
+        <Tabs defaultValue="upload" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="upload">{t("templateBuilder.blockEditor.image.tabs.upload")}</TabsTrigger>
+            <TabsTrigger value="library">{t("templateBuilder.blockEditor.image.tabs.library")}</TabsTrigger>
+            <TabsTrigger value="url">{t("templateBuilder.blockEditor.image.tabs.url")}</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="upload" className="space-y-4">
+            <ImageUpload onImageUploaded={handleImageSelect} />
+          </TabsContent>
+          
+          <TabsContent value="library" className="space-y-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsLibraryOpen(true)}
+              className="w-full"
+            >
+              {t("templateBuilder.blockEditor.image.openLibrary")}
+            </Button>
+          </TabsContent>
+          
+          <TabsContent value="url" className="space-y-4">
+            <div>
+              <Label>{t("templateBuilder.blockEditor.image.urlLabel")}</Label>
+              <Input
+                value={data.src || ""}
+                onChange={(e) => onUpdate({ ...data, src: e.target.value, placeholder: !e.target.value })}
+                placeholder={t("templateBuilder.blockEditor.image.urlPlaceholder")}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
+      )}
 
       {/* Show current image if exists */}
-      {data.src && !data.placeholder && (
-        <div className="border rounded-lg p-3">
-          <Label className="text-sm text-muted-foreground">{t("templateBuilder.blockEditor.image.currentImage")}</Label>
-          <div className="mt-2">
-            <img 
-              src={data.src} 
-              alt={data.alt || t("templateBuilder.blockEditor.image.defaultAlt")} 
-              className="max-w-full h-32 object-cover rounded border"
-            />
+      {hasImage && (
+        <div className="rounded-lg border border-border/70 bg-muted/10 px-3 py-3">
+          <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
+            <div className="shrink-0 overflow-hidden rounded-md border border-border/50 bg-background">
+              <img 
+                src={data.src} 
+                alt={data.alt || t("templateBuilder.blockEditor.image.defaultAlt")} 
+                className="h-20 w-32 object-cover"
+              />
+            </div>
+            <div className="flex flex-1 flex-col gap-2">
+              <Label className="text-sm text-muted-foreground">{t("templateBuilder.blockEditor.image.currentImage")}</Label>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="secondary" size="sm" onClick={() => setShowUploadOptions((prev) => !prev)}>
+                  {t("templateBuilder.blockEditor.image.changeImage")}
+                </Button>
+                <Button variant="destructive" size="sm" onClick={handleRemoveImage}>
+                  {t("templateBuilder.blockEditor.image.removeImage")}
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}
       
-      <div>
-        <Label>{t("templateBuilder.blockEditor.image.altLabel")}</Label>
-        <Input
-          value={data.alt || ""}
-          onChange={(e) => onUpdate({ ...data, alt: e.target.value })}
-          placeholder={t("templateBuilder.blockEditor.image.altPlaceholder")}
-        />
-      </div>
-      
-      <div>
-        <Label>{t("templateBuilder.blockEditor.image.captionLabel")}</Label>
-        <Input
-          value={data.caption || ""}
-          onChange={(e) => onUpdate({ ...data, caption: e.target.value })}
-          placeholder={t("templateBuilder.blockEditor.image.captionPlaceholder")}
-        />
-      </div>
-      
-      <div>
-        <Label>{t("templateBuilder.blockEditor.image.linkLabel")}</Label>
-        <Input
-          value={data.link || ""}
-          onChange={(e) => onUpdate({ ...data, link: e.target.value })}
-          placeholder={t("templateBuilder.blockEditor.image.linkPlaceholder")}
-        />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label>{t("templateBuilder.blockEditor.image.captionLabel")}</Label>
+          <Input
+            value={data.caption || ""}
+            onChange={(e) => onUpdate({ ...data, caption: e.target.value })}
+            placeholder={t("templateBuilder.blockEditor.image.captionPlaceholder")}
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label>{t("templateBuilder.blockEditor.image.linkLabel")}</Label>
+          <Input
+            value={data.link || ""}
+            onChange={(e) => onUpdate({ ...data, link: e.target.value })}
+            placeholder={t("templateBuilder.blockEditor.image.linkPlaceholder")}
+          />
+        </div>
       </div>
 
       <ImageLibrarySheet

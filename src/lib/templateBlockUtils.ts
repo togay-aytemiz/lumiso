@@ -332,7 +332,8 @@ export function htmlToBlocks(html: string): TemplateBlock[] {
         content: cleanText,
         formatting: {
           fontSize: 'p' as const,
-          alignment: 'left' as const
+          alignment: 'left' as const,
+          color: '#111827'
         }
       },
       visible: true,

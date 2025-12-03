@@ -282,9 +282,25 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
     }
 
     restoredDraftDirtyRef.current = false;
-    if (!template || template.id !== (templateId || template.id)) {
+    if (!templateId) {
+      if (template) {
+        setTemplate(null);
+      }
+      setIsDirty(false);
+      setLastSaved(null);
+      dirtyVersionRef.current = 0;
+      latestSavedVersionRef.current = 0;
+      setDirtyVersion(0);
+      return;
+    }
+
+    if (!template || template.id !== templateId) {
       setTemplate(null);
       setIsDirty(false);
+      setLastSaved(null);
+      dirtyVersionRef.current = 0;
+      latestSavedVersionRef.current = 0;
+      setDirtyVersion(0);
     }
   }, [templateId, template]);
 

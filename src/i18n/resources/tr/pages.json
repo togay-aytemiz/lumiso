@@ -2569,6 +2569,7 @@
       "saving": "Kaydediliyor...",
       "publish": "Yayınla",
       "published": "Yayınlandı",
+      "done": "Bitti",
       "restart": "Baştan başla",
       "restartConfirm": "Baştan başlamak istediğine emin misin? Kaydedilmemiş değişiklikler silinecek."
     },
@@ -2702,6 +2703,7 @@
         "fontSize": "Yazı Boyutu",
         "fontFamily": "Yazı Tipi",
         "textAlignment": "Metin Hizası",
+        "textColor": "Metin Rengi",
         "fontSizeOptions": {
           "h1": "Başlık 1",
           "h2": "Başlık 2",
@@ -2765,7 +2767,7 @@
           "text": "Metin Bağlantısı"
         },
         "linkLabel": "Bağlantı URL'si (isteğe bağlı)",
-        "linkPlaceholder": "https://example.com"
+        "linkPlaceholder": "https://ornek.com"
       },
       "image": {
         "tabs": {
@@ -2775,15 +2777,15 @@
         },
         "openLibrary": "Görsel Kütüphanesini Aç",
         "urlLabel": "Görsel URL'si",
-        "urlPlaceholder": "https://example.com/image.jpg",
+        "urlPlaceholder": "https://ornek.com/gorsel.jpg",
         "currentImage": "Mevcut Görsel",
+        "changeImage": "Görseli değiştir",
+        "removeImage": "Kaldır",
         "defaultAlt": "Görsel",
-        "altLabel": "Alternatif Metin (isteğe bağlı)",
-        "altPlaceholder": "Görsel açıklaması",
         "captionLabel": "Alt Yazı (isteğe bağlı)",
         "captionPlaceholder": "Görsel alt yazısı",
         "linkLabel": "Bağlantı URL'si (isteğe bağlı)",
-        "linkPlaceholder": "https://example.com",
+        "linkPlaceholder": "https://ornek.com",
         "placeholderLabel": "Görsel yer tutucu"
       },
       "imageUpload": {

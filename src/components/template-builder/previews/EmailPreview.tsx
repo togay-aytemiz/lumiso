@@ -110,6 +110,7 @@ function TextBlockPreview({ data, replacePlaceholders }: { data: TextBlockData; 
       fontWeight: data.formatting.bold ? 'bold' : 'normal',
       fontStyle: data.formatting.italic ? 'italic' : 'normal',
       textAlign: alignment,
+      color: data.formatting.color || '#111827',
     };
 
     // Add font size based on semantic type

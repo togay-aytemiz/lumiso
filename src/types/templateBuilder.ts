@@ -13,6 +13,7 @@ export interface TextBlockData {
     fontFamily?: string;
     bullets?: boolean;
     alignment?: "left" | "center" | "right" | "justify";
+    color?: string;
   };
 }
 

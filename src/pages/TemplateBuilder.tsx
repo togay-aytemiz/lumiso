@@ -49,8 +49,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     saveTemplate,
     publishTemplate,
     updateTemplate,
-    resetDirtyState,
-    clearDraft
+    resetDirtyState
   } = useTemplateBuilder(templateId || undefined);
   const templateVariablesState = useTemplateVariables();
   const { getVariableValue, variables: templateVariables } = templateVariablesState;
@@ -73,7 +72,6 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     () => t("templateBuilder.preview.excitedMessage", { defaultValue: "We're excited to capture your special moments" }),
     [t]
   );
-  const [showRestartGuard, setShowRestartGuard] = useState(false);
   const [publishTooltipOpen, setPublishTooltipOpen] = useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
 
@@ -260,6 +258,8 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   ]);
 
   useEffect(() => {
+    const debounceDelay = 3000;
+
     if (saving) {
       if (autoSaveTimerRef.current) {
         clearTimeout(autoSaveTimerRef.current);
@@ -272,9 +272,6 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
       return;
     }
 
-    // Save immediately on any dirty change
-    void handleAutoSave();
-
     // Fallback tiny debounce in case multiple updates fire synchronously
     if (autoSaveTimerRef.current) {
       clearTimeout(autoSaveTimerRef.current);
@@ -283,7 +280,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
       if (savingRef.current) return;
       if (dirtyVersionRef.current <= lastAutoSavedVersionRef.current) return;
       void handleAutoSave();
-    }, 150);
+    }, debounceDelay);
 
     return () => {
       if (autoSaveTimerRef.current) {
@@ -413,10 +410,6 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     setIsEditingName(true);
   };
 
-  const handleRestartDraft = useCallback(async () => {
-    setShowRestartGuard(true);
-  }, []);
-
   const handleNameBlur = () => {
     setIsEditingName(false);
     if (editingName !== templateName) {
@@ -513,17 +506,6 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     [template?.id, lastSaved]
   );
   const hasUnsavedChanges = isDirty;
-  const hasContentToRestart = useMemo(
-    () =>
-      hasUnsavedChanges ||
-      Boolean(
-        (template?.id || '').trim() ||
-          subject ||
-          preheader ||
-          blocks.length > 0
-      ),
-    [hasUnsavedChanges, template?.id, subject, preheader, blocks.length]
-  );
   const statusLabel = useMemo(() => {
     if (saving) {
       return t("templateBuilder.status.saving", { defaultValue: "Saving..." });
@@ -604,17 +586,6 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
           </div>
 
           <div className="flex items-center gap-2">
-            {hasContentToRestart && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRestartDraft}
-                disabled={saving}
-                className="hidden sm:inline-flex"
-              >
-                {t("templateBuilder.buttons.restart")}
-              </Button>
-            )}
             {activeChannel === "email" && (
               <Button 
                 size="sm" 
@@ -815,17 +786,6 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
         onStay={handleStayOnPage}
         onSaveAndExit={handleSaveAndExit}
         message={guardMessage}
-      />
-      <NavigationGuardDialog
-        open={showRestartGuard}
-        onDiscard={async () => {
-          setShowRestartGuard(false);
-          await clearDraft();
-        }}
-        onStay={() => setShowRestartGuard(false)}
-        message={t("templateBuilder.buttons.restartConfirm", {
-          defaultValue: "Start over? This will discard your unsaved edits."
-        })}
       />
 
       {/* Template Name Dialog */}

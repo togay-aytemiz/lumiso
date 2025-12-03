@@ -2786,7 +2786,7 @@
         "captionPlaceholder": "Görsel alt yazısı",
         "linkLabel": "Bağlantı URL'si (isteğe bağlı)",
         "linkPlaceholder": "https://ornek.com",
-        "placeholderLabel": "Görsel yer tutucu"
+        "placeholderLabel": "Görseliniz burada görünecek"
       },
       "imageUpload": {
         "title": "Görsel yükle",

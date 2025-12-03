@@ -123,7 +123,7 @@ const MemoizedBlockCard = React.memo(({
               <CardHeader
                 className={cn(
                   "space-y-0 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                  isActive ? "pt-4 pb-2" : "py-4 md:py-5 min-h-[72px] justify-center"
+                  isActive ? "pt-4 pb-2" : "py-3 md:py-3 min-h-[60px] justify-center"
                 )}
                 role="button"
                 tabIndex={0}
@@ -132,7 +132,7 @@ const MemoizedBlockCard = React.memo(({
                 onKeyDown={handleHeaderKeyDown}
               >
                 <div className="flex w-full items-center justify-between gap-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
+                  <CardTitle className={cn("text-sm flex items-center gap-2", !isActive && "gap-1.5")}>
                     <div 
                       {...provided.dragHandleProps}
                       className="cursor-grab active:cursor-grabbing"
@@ -141,9 +141,9 @@ const MemoizedBlockCard = React.memo(({
                     </div>
                     {t(getBlockTitleKey(block.type))}
                   </CardTitle>
-                  <div className="flex items-center gap-2">
+                  <div className={cn("flex items-center", isActive ? "gap-2" : "gap-1.5")}>
                     <div
-                      className="flex items-center gap-2"
+                      className={cn("flex items-center", isActive ? "gap-2" : "gap-1.5")}
                       onClick={(e) => e.stopPropagation()}
                       onKeyDown={(e) => e.stopPropagation()}
                     >

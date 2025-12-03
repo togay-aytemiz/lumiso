@@ -181,29 +181,31 @@ export function HeaderBlockEditor({ data, onUpdate }: { data: HeaderBlockData; o
   const { t } = useTranslation("pages");
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Label>{t("templateBuilder.blockEditor.header.showLogo")}</Label>
-        <Switch
-          checked={data.showLogo}
-          onCheckedChange={(checked) => onUpdate({ ...data, showLogo: checked })}
-        />
-      </div>
-      
-      {data.showLogo && (
-        <div>
-          <Label>{t("templateBuilder.blockEditor.header.logoAlignment")}</Label>
-          <Select value={data.logoAlignment || "center"} onValueChange={(value) => onUpdate({ ...data, logoAlignment: value as "left" | "center" | "right" })}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="left">{t("templateBuilder.blockEditor.header.logoAlignmentOptions.left")}</SelectItem>
-              <SelectItem value="center">{t("templateBuilder.blockEditor.header.logoAlignmentOptions.center")}</SelectItem>
-              <SelectItem value="right">{t("templateBuilder.blockEditor.header.logoAlignmentOptions.right")}</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex items-center justify-between rounded-md border border-border/60 bg-muted/20 px-3 py-2">
+          <Label className="mb-0">{t("templateBuilder.blockEditor.header.showLogo")}</Label>
+          <Switch
+            checked={data.showLogo}
+            onCheckedChange={(checked) => onUpdate({ ...data, showLogo: checked })}
+          />
         </div>
-      )}
+
+        {data.showLogo && (
+          <div className="space-y-2">
+            <Label>{t("templateBuilder.blockEditor.header.logoAlignment")}</Label>
+            <Select value={data.logoAlignment || "center"} onValueChange={(value) => onUpdate({ ...data, logoAlignment: value as "left" | "center" | "right" })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="left">{t("templateBuilder.blockEditor.header.logoAlignmentOptions.left")}</SelectItem>
+                <SelectItem value="center">{t("templateBuilder.blockEditor.header.logoAlignmentOptions.center")}</SelectItem>
+                <SelectItem value="right">{t("templateBuilder.blockEditor.header.logoAlignmentOptions.right")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
       
       <div>
         <Label>{t("templateBuilder.blockEditor.header.tagline")}</Label>
@@ -216,25 +218,39 @@ export function HeaderBlockEditor({ data, onUpdate }: { data: HeaderBlockData; o
       
       <div className="grid grid-cols-2 gap-4">
         {data.tagline && (
-          <div>
+          <div className="space-y-2">
             <Label>{t("templateBuilder.blockEditor.header.taglineColor")}</Label>
-            <Input
-              type="color"
-              value={data.taglineColor || "#000000"}
-              onChange={(e) => onUpdate({ ...data, taglineColor: e.target.value })}
-              className="w-full"
-            />
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={data.taglineColor || "#000000"}
+                onChange={(e) => onUpdate({ ...data, taglineColor: e.target.value })}
+                className="h-9 w-12 cursor-pointer rounded-md border border-input bg-background p-1 shadow-sm"
+              />
+              <Input
+                value={data.taglineColor || ""}
+                onChange={(e) => onUpdate({ ...data, taglineColor: e.target.value })}
+                placeholder="#000000"
+              />
+            </div>
           </div>
         )}
         
-        <div className={data.tagline ? "" : "col-span-2"}>
+        <div className={`space-y-2 ${data.tagline ? "" : "col-span-2"}`}>
           <Label>{t("templateBuilder.blockEditor.header.backgroundColor")}</Label>
-          <Input
-            type="color"
-            value={data.backgroundColor || "#ffffff"}
-            onChange={(e) => onUpdate({ ...data, backgroundColor: e.target.value })}
-            className="w-full"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={data.backgroundColor || "#ffffff"}
+              onChange={(e) => onUpdate({ ...data, backgroundColor: e.target.value })}
+              className="h-9 w-12 cursor-pointer rounded-md border border-input bg-background p-1 shadow-sm"
+            />
+            <Input
+              value={data.backgroundColor || ""}
+              onChange={(e) => onUpdate({ ...data, backgroundColor: e.target.value })}
+              placeholder="#ffffff"
+            />
+          </div>
         </div>
       </div>
     </div>

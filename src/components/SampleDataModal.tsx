@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sparkles, CircleOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -6,7 +6,10 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import { BaseOnboardingModal, type OnboardingAction } from "./shared/BaseOnboardingModal";
+import {
+  BaseOnboardingModal,
+  type OnboardingAction,
+} from "./shared/BaseOnboardingModal";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -21,15 +24,35 @@ interface SampleDataModalProps {
 
 type SkipChoice = "sample" | "clean";
 
-export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalProps) {
-  const { t } = useTranslation('pages');
+export function SampleDataModal({
+  open,
+  onClose,
+  onCloseAll,
+}: SampleDataModalProps) {
+  const { t } = useTranslation("pages");
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<SkipChoice>("sample");
+  const [selectedOption, setSelectedOption] = useState<SkipChoice | null>(null);
+  const [isChoosingSkip, setIsChoosingSkip] = useState(false);
   const { startGuidedSetup, skipOnboarding } = useOnboarding();
   const { activeOrganizationId } = useOrganization();
-  const { settings, updateSettings, refreshSettings } = useOrganizationSettings();
+  const { settings, updateSettings, refreshSettings } =
+    useOrganizationSettings();
+  const modalTitle = isChoosingSkip
+    ? t("onboarding.sample_data.choice_title")
+    : t("onboarding.sample_data.title");
+  const modalDescription = isChoosingSkip
+    ? t("onboarding.sample_data.choice_description")
+    : t("onboarding.sample_data.description");
+
+  useEffect(() => {
+    if (open) {
+      setSelectedOption(null);
+      setIsChoosingSkip(false);
+      setIsLoading(false);
+    }
+  }, [open]);
 
   const startOptions: Array<{
     value: SkipChoice;
@@ -43,14 +66,14 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
       icon: Sparkles,
       titleKey: "onboarding.sample_data.options.sample.title",
       descriptionKey: "onboarding.sample_data.options.sample.description",
-      recommended: true
+      recommended: true,
     },
     {
       value: "clean",
       icon: CircleOff,
       titleKey: "onboarding.sample_data.options.clean.title",
-      descriptionKey: "onboarding.sample_data.options.clean.description"
-    }
+      descriptionKey: "onboarding.sample_data.options.clean.description",
+    },
   ];
 
   const handleSkipWithSampleData = async () => {
@@ -63,17 +86,17 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
       await skipOnboarding();
 
       toast({
-        title: t('onboarding.sample_data.toast.success_title'),
-        description: t('onboarding.sample_data.toast.success_description'),
+        title: t("onboarding.sample_data.toast.success_title"),
+        description: t("onboarding.sample_data.toast.success_description"),
       });
 
       closeAndNavigate();
     } catch (error) {
-      console.error('Error skipping setup:', error);
+      console.error("Error skipping setup:", error);
       toast({
-        title: t('onboarding.sample_data.toast.error_title'),
-        description: t('onboarding.sample_data.toast.error_description'),
-        variant: "destructive"
+        title: t("onboarding.sample_data.toast.error_title"),
+        description: t("onboarding.sample_data.toast.error_description"),
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -89,17 +112,17 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
       await skipOnboarding();
 
       toast({
-        title: t('onboarding.sample_data.toast.clean_title'),
-        description: t('onboarding.sample_data.toast.clean_description')
+        title: t("onboarding.sample_data.toast.clean_title"),
+        description: t("onboarding.sample_data.toast.clean_description"),
       });
 
       closeAndNavigate();
     } catch (error) {
-      console.error('Error skipping setup:', error);
+      console.error("Error skipping setup:", error);
       toast({
-        title: t('onboarding.sample_data.toast.error_title'),
-        description: t('onboarding.sample_data.toast.error_description'),
-        variant: "destructive"
+        title: t("onboarding.sample_data.toast.error_title"),
+        description: t("onboarding.sample_data.toast.error_description"),
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -112,7 +135,7 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
     } else {
       onClose();
     }
-    navigate('/', { replace: true });
+    navigate("/", { replace: true });
   };
 
   const ensureSeedPreference = async (value: boolean) => {
@@ -159,65 +182,94 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
 
   const handleContinueGuidedSetup = async () => {
     if (!user) return;
-    
+
     setIsLoading(true);
     try {
       await startGuidedSetup();
-      
+
       if (onCloseAll) {
         onCloseAll();
       } else {
         onClose();
       }
-      navigate('/getting-started');
+      navigate("/getting-started");
     } catch (error) {
-      console.error('Error starting guided setup:', error);
+      console.error("Error starting guided setup:", error);
       toast({
-        title: t('onboarding.sample_data.toast.error_title'),
-        description: t('onboarding.sample_data.toast.setup_error'),
-        variant: "destructive"
+        title: t("onboarding.sample_data.toast.error_title"),
+        description: t("onboarding.sample_data.toast.setup_error"),
+        variant: "destructive",
       });
       setIsLoading(false);
     }
   };
 
   const handlePrimaryAction = () => {
+    if (!isChoosingSkip) {
+      setIsChoosingSkip(true);
+      setSelectedOption(null);
+      return;
+    }
+
+    if (!selectedOption) return;
+
     if (selectedOption === "sample") {
       return handleSkipWithSampleData();
     }
     return handleSkipWithoutSampleData();
   };
 
-  const primaryLabel =
-    selectedOption === "sample"
-      ? (isLoading ? t('onboarding.sample_data.setting_up') : t('onboarding.sample_data.start_with_sample_data'))
-      : (isLoading ? t('onboarding.sample_data.preparing_clean') : t('onboarding.sample_data.start_clean'));
+  const primaryLabel = !isChoosingSkip
+    ? t("onboarding.modal.skip_sample_data")
+    : selectedOption === "sample"
+    ? isLoading
+      ? t("onboarding.sample_data.setting_up")
+      : t("onboarding.sample_data.start_with_sample_data")
+    : selectedOption === "clean"
+    ? isLoading
+      ? t("onboarding.sample_data.preparing_clean")
+      : t("onboarding.sample_data.start_clean")
+    : t("onboarding.modal.skip_sample_data");
 
   const actions: OnboardingAction[] = [
     {
-      label: isLoading ? t('onboarding.sample_data.starting') : t('onboarding.sample_data.continue_guided_setup'),
+      label: isLoading
+        ? t("onboarding.sample_data.starting")
+        : isChoosingSkip
+        ? t("onboarding.sample_data.return_to_setup")
+        : t("onboarding.sample_data.continue_guided_setup"),
       onClick: handleContinueGuidedSetup,
-      variant: "outline",
-      disabled: isLoading
+      variant: "surface",
+      className: "btn-surface-accent",
+      disabled: isLoading,
     },
     {
       label: primaryLabel,
       onClick: handlePrimaryAction,
-      variant: "cta",
-      disabled: isLoading
-    }
+      variant: "surface",
+      disabled: isLoading || (isChoosingSkip && !selectedOption),
+    },
   ];
 
   return (
     <BaseOnboardingModal
       open={open}
       onClose={onClose}
-      title={t('onboarding.sample_data.title')}
-      description={t('onboarding.sample_data.description')}
+      title={modalTitle}
+      description={modalDescription}
       actions={actions}
     >
-      <div className="space-y-5">
-        <div className="space-y-3">
+      <div
+        className={cn(
+          "transition-all duration-300 ease-out overflow-hidden",
+          isChoosingSkip
+            ? "max-h-[520px] opacity-100 translate-y-0"
+            : "max-h-0 opacity-0 -translate-y-2 pointer-events-none"
+        )}
+        aria-hidden={!isChoosingSkip}
+        data-testid="skip-options"
+      >
+        <div className="space-y-3 pt-4">
           {startOptions.map((option) => {
             const Icon = option.icon;
             const active = selectedOption === option.value;
@@ -225,19 +277,22 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
               <button
                 key={option.value}
                 type="button"
+                disabled={isLoading}
                 onClick={() => setSelectedOption(option.value)}
                 className={cn(
                   "w-full rounded-2xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
                   active
-                    ? "border-primary bg-primary/5 ring-offset-background"
+                    ? "border-primary bg-background shadow-sm ring-offset-background"
                     : "border-border/70 bg-muted/30 hover:bg-muted/50"
                 )}
               >
                 <div className="flex items-start gap-3">
-                  <div className={cn(
-                    "rounded-full p-2 text-primary bg-primary/10",
-                    option.value === "clean" && "text-muted-foreground"
-                  )}>
+                  <div
+                    className={cn(
+                      "rounded-full p-2 text-primary bg-primary/10",
+                      option.value === "clean" && "text-muted-foreground"
+                    )}
+                  >
                     <Icon className="w-5 h-5" />
                   </div>
                   <div className="flex-1 space-y-1">
@@ -247,7 +302,7 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
                       </p>
                       {option.recommended && (
                         <Badge variant="outline" className="text-xs">
-                          {t('onboarding.sample_data.recommended')}
+                          {t("onboarding.sample_data.recommended")}
                         </Badge>
                       )}
                     </div>
@@ -260,7 +315,6 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
             );
           })}
         </div>
-
       </div>
     </BaseOnboardingModal>
   );

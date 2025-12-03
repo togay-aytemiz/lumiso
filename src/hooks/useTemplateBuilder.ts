@@ -212,6 +212,7 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
   const { toast } = useToast();
   const { t } = useTranslation("pages");
   const restoredDraftDirtyRef = useRef(false);
+  const restoredCleanDraftRef = useRef(false);
   const dirtyVersionRef = useRef(0);
   const latestSavedVersionRef = useRef(0);
   const untitledTemplateLabel = t("templateBuilder.untitledTemplate", {
@@ -246,6 +247,7 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       setIsDirty(false);
       setLastSaved(new Date(transformedTemplate.updated_at));
       restoredDraftDirtyRef.current = false;
+      restoredCleanDraftRef.current = false;
       dirtyVersionRef.current = 0;
       latestSavedVersionRef.current = 0;
       setDirtyVersion(0);
@@ -269,19 +271,20 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       if (restoredDraftDirtyRef.current && draft.isDirty) {
         return;
       }
-      if (template && !draft.isDirty) {
-        return;
-      }
-      setTemplate(draft.template);
-      setIsDirty(draft.isDirty);
-      restoredDraftDirtyRef.current = draft.isDirty;
-      if (!draft.isDirty && draft.updatedAt) {
-        setLastSaved(new Date(draft.updatedAt));
+      if (!template || draft.isDirty) {
+        setTemplate(draft.template);
+        setIsDirty(draft.isDirty);
+        restoredDraftDirtyRef.current = draft.isDirty;
+        restoredCleanDraftRef.current = !draft.isDirty;
+        if (!draft.isDirty && draft.updatedAt) {
+          setLastSaved(new Date(draft.updatedAt));
+        }
       }
       return;
     }
 
     restoredDraftDirtyRef.current = false;
+    restoredCleanDraftRef.current = false;
     if (!templateId) {
       if (template) {
         setTemplate(null);
@@ -666,9 +669,10 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
     const shouldLoad =
       templateId &&
       activeOrganizationId &&
-      (!template || template.id !== templateId);
+      (!template || template.id !== templateId || restoredCleanDraftRef.current);
 
-    if (shouldLoad) {
+    if (shouldLoad && !restoredDraftDirtyRef.current) {
+      restoredCleanDraftRef.current = false;
       loadTemplate();
     }
   }, [templateId, activeOrganizationId, template, loadTemplate]);

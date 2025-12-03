@@ -17,7 +17,6 @@ import { Switch } from "@/components/ui/switch";
 import { formatDistanceToNow } from "date-fns";
 import { enUS, tr } from 'date-fns/locale';
 import { useTranslation } from "react-i18next";
-import { SegmentedControl } from "@/components/ui/segmented-control";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageVideoModal } from "@/components/PageVideoModal";
 import { usePageVideoPrompt } from "@/hooks/usePageVideoPrompt";
@@ -32,7 +31,6 @@ export default function Workflows() {
   const { workflows, loading, createWorkflow, updateWorkflow, deleteWorkflow, toggleWorkflowStatus } = useWorkflows();
   const dateLocale = i18n.language === 'tr' ? tr : enUS;
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "paused">("all");
   const [page, setPage] = useState(1);
   const pageSize = 25;
   const [sortState, setSortState] = useState<AdvancedDataTableSortState>({
@@ -47,13 +45,9 @@ export default function Workflows() {
         query.length === 0 ||
         workflow.name.toLowerCase().includes(query) ||
         workflow.description?.toLowerCase().includes(query);
-      const matchesStatus =
-        statusFilter === "all" ||
-        (statusFilter === "active" && workflow.is_active) ||
-        (statusFilter === "paused" && !workflow.is_active);
-      return matchesSearch && matchesStatus;
+      return matchesSearch;
     });
-  }, [workflows, searchQuery, statusFilter]);
+  }, [workflows, searchQuery]);
 
   const getTriggerLabel = useCallback((triggerType: string) => {
     const triggerKey = `workflows.triggers.${triggerType}` as const;
@@ -127,7 +121,7 @@ export default function Workflows() {
 
   useEffect(() => {
     setPage(1);
-  }, [searchQuery, statusFilter]);
+  }, [searchQuery]);
 
   useEffect(() => {
     const maxPage = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -148,12 +142,6 @@ export default function Workflows() {
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
-    setPage(1);
-  }, []);
-
-  const handleStatusFilterChange = useCallback((value: string) => {
-    const normalized = (value as "all" | "active" | "paused") || "all";
-    setStatusFilter(normalized);
     setPage(1);
   }, []);
 
@@ -285,23 +273,17 @@ export default function Workflows() {
   const headerActions = useMemo(
     () => (
       <div className="flex flex-wrap items-center justify-end gap-3">
-        <SegmentedControl
-          size="md"
-          value={statusFilter}
-          onValueChange={(value) => handleStatusFilterChange(value as typeof statusFilter)}
-          options={[
-            { value: "all", label: t("workflows.tabs.all") },
-            { value: "active", label: t("workflows.tabs.active") },
-            { value: "paused", label: t("workflows.tabs.paused") },
-          ]}
-        />
         <CreateWorkflowSheet
           onCreateWorkflow={createWorkflow}
           editWorkflow={editingWorkflow}
           onUpdateWorkflow={updateWorkflow}
           setEditingWorkflow={setEditingWorkflow}
         >
-          <Button className="flex items-center gap-2 whitespace-nowrap">
+          <Button
+            variant="surface"
+            size="sm"
+            className="btn-surface-accent flex items-center gap-2 whitespace-nowrap"
+          >
             <Plus className="h-4 w-4" />
             {t("workflows.buttons.createWorkflow")}
           </Button>
@@ -311,8 +293,6 @@ export default function Workflows() {
     [
       createWorkflow,
       editingWorkflow,
-      handleStatusFilterChange,
-      statusFilter,
       setEditingWorkflow,
       t,
       updateWorkflow,
@@ -413,8 +393,12 @@ export default function Workflows() {
                   onUpdateWorkflow={updateWorkflow}
                   setEditingWorkflow={setEditingWorkflow}
                 >
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
+                  <Button
+                    variant="surface"
+                    size="sm"
+                    className="btn-surface-accent flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
                     {t("workflows.buttons.createFirstWorkflow")}
                   </Button>
                 </CreateWorkflowSheet>

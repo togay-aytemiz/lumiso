@@ -1,7 +1,9 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, GripVertical, Eye, EyeOff, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, GripVertical, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import { TemplateBlock, BlockData, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
 import { BlockEditor } from "./BlockEditor";
 import { AddBlockSheet } from "./AddBlockSheet";
@@ -73,8 +75,7 @@ const MemoizedBlockCard = React.memo(({
     }
   }, [block.id, onActivate]);
 
-  const handleToggleVisibility = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleToggleVisibility = useCallback(() => {
     onToggleVisibility(block.id);
   }, [block.id, onToggleVisibility]);
 
@@ -140,7 +141,37 @@ const MemoizedBlockCard = React.memo(({
                     </div>
                     {t(getBlockTitleKey(block.type))}
                   </CardTitle>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="flex items-center gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      <span className="text-xs text-muted-foreground">
+                        {block.visible
+                          ? t("templateBuilder.editor.visibility.visible")
+                          : t("templateBuilder.editor.visibility.hidden")}
+                      </span>
+                      <Switch
+                        checked={block.visible}
+                        onCheckedChange={() => handleToggleVisibility()}
+                        aria-label={block.visible
+                          ? t("templateBuilder.editor.visibility.visible")
+                          : t("templateBuilder.editor.visibility.hidden")}
+                      />
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemove();
+                      }}
+                      className="bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      {t("templateBuilder.blockEditor.remove")}
+                    </Button>
                     <Button
                       size="sm"
                       variant="ghost"
@@ -153,20 +184,10 @@ const MemoizedBlockCard = React.memo(({
                         <ChevronDown className="h-3 w-3" />
                       )}
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleToggleVisibility}
-                    >
-                      {block.visible ? (
-                        <Eye className="h-3 w-3" />
-                      ) : (
-                        <EyeOff className="h-3 w-3" />
-                      )}
-                    </Button>
                   </div>
                 </div>
               </CardHeader>
+              {isActive && <Separator className="mt-1 mb-4" />}
               <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up data-[state=closed]:opacity-0 data-[state=open]:opacity-100 transition-opacity">
                 <CardContent className="pt-0">
                   <BlockEditor

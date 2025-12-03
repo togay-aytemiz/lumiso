@@ -41,9 +41,10 @@ interface TemplatePreviewProps {
   emailSubject?: string;
   preheader?: string;
   previewData?: Record<string, string>;
+  showSendTestButton?: boolean;
 }
 
-export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailSubject, preheader, previewData }: TemplatePreviewProps) {
+export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailSubject, preheader, previewData, showSendTestButton = true }: TemplatePreviewProps) {
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
@@ -73,12 +74,24 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
     project_package_name: t('templateBuilder.preview.mockData.projectPackage'),
   };
 
+  const visibleBlocks = blocks.filter(block => block.visible);
+
   const mockData = {
     ...defaultMockData,
     ...(previewData ?? {})
   };
   const disabledChannels: TemplateChannel[] = ["whatsapp", "sms"];
   const soonLabel = t('templateBuilder.preview.channels.soon');
+
+  const getDeviceButtonClasses = (isActive: boolean) =>
+    isActive
+      ? "btn-surface-action btn-surface-amber rounded-xl px-3 text-sm font-semibold border-amber-300 bg-amber-200 text-amber-950 shadow-sm ring-1 ring-amber-200"
+      : "px-2 text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-transparent focus-visible:ring-0";
+
+  const getDeviceButtonVariant = (isActive: boolean) => (isActive ? "pill" : "ghost");
+
+  const getDeviceIconClasses = (isActive: boolean) =>
+    isActive ? "text-amber-800" : "text-muted-foreground";
 
   const renderChannelLabel = (icon: string, label: string, showSoon = false) => (
     <span className="flex items-center gap-2">
@@ -141,15 +154,15 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
     
     try {
       const { data, error } = await supabase.functions.invoke('send-template-email', {
-        body: {
-          to: user.email,
-          subject: emailSubject || 'Test Email from Template Builder',
-          preheader: preheader,
-          blocks: blocks.filter(b => b.visible),
-          mockData: mockData,
-          isTest: true
-        }
-      });
+          body: {
+            to: user.email,
+            subject: emailSubject || 'Test Email from Template Builder',
+            preheader: preheader,
+            blocks: visibleBlocks,
+            mockData: mockData,
+            isTest: true
+          }
+        });
 
       if (error) {
         throw error;
@@ -188,31 +201,38 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
               <>
                 <Button
                   size="sm"
-                  variant={previewDevice === "desktop" ? "default" : "ghost"}
+                  variant={getDeviceButtonVariant(previewDevice === "desktop")}
+                  className={getDeviceButtonClasses(previewDevice === "desktop")}
                   onClick={() => setPreviewDevice("desktop")}
+                  aria-pressed={previewDevice === "desktop"}
                 >
-                  <Monitor className="h-4 w-4" />
+                  <Monitor className={cn("h-4 w-4", getDeviceIconClasses(previewDevice === "desktop"))} />
                   {t('templateBuilder.preview.desktop')}
                 </Button>
                 <Button
                   size="sm"
-                  variant={previewDevice === "mobile" ? "default" : "ghost"}
+                  variant={getDeviceButtonVariant(previewDevice === "mobile")}
+                  className={getDeviceButtonClasses(previewDevice === "mobile")}
                   onClick={() => setPreviewDevice("mobile")}
+                  aria-pressed={previewDevice === "mobile"}
                 >
-                  <Smartphone className="h-4 w-4" />
+                  <Smartphone className={cn("h-4 w-4", getDeviceIconClasses(previewDevice === "mobile"))} />
                   {t('templateBuilder.preview.mobile')}
                 </Button>
               </>
             )}
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={sendTestEmail}
-              disabled={isLoading || blocks.length === 0}
-            >
-              <Send className="h-4 w-4" />
-              {isLoading ? t('templateBuilder.preview.sending') : t('templateBuilder.preview.testSend')}
-            </Button>
+            {showSendTestButton && (
+              <Button 
+                size="sm" 
+                variant="secondary"
+                className="bg-muted text-foreground border border-border hover:bg-muted/80"
+                onClick={sendTestEmail}
+                disabled={isLoading || visibleBlocks.length === 0}
+              >
+                <Send className="h-4 w-4" />
+                {isLoading ? t('templateBuilder.preview.sending') : t('templateBuilder.preview.testSend')}
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -239,7 +259,7 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
         )}>
           {activeChannel === "email" && (
             <EmailPreview
-              blocks={blocks.filter(b => b.visible)}
+              blocks={visibleBlocks}
               mockData={mockData}
               device={previewDevice}
               emailSubject={emailSubject}
@@ -249,14 +269,14 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
           
           {activeChannel === "whatsapp" && (
             <WhatsAppPreview
-              blocks={blocks.filter(b => b.visible)}
+              blocks={visibleBlocks}
               mockData={mockData}
             />
           )}
           
           {activeChannel === "sms" && (
             <SMSPreview
-              blocks={blocks.filter(b => b.visible)}
+              blocks={visibleBlocks}
               mockData={mockData}
             />
           )}

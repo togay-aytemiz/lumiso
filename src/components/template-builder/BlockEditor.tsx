@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronUp, ChevronDown, Trash2, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Upload, Smile } from "lucide-react";
+import { ChevronUp, ChevronDown, Trash2, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Upload, Smile, Plus } from "lucide-react";
 import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData, DividerBlockData, SocialLinksBlockData, HeaderBlockData, RawHTMLBlockData } from "@/types/templateBuilder";
 import { VariablePicker } from "./VariablePicker";
 import { EmojiPicker } from "./EmojiPicker";
@@ -61,7 +61,7 @@ export function BlockEditor({ block, onUpdate, onRemove, onMoveUp, onMoveDown, c
       
       <Separator />
       
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-start">
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" onClick={onMoveUp} disabled={!canMoveUp}>
             <ChevronUp className="h-3 w-3" />
@@ -70,11 +70,6 @@ export function BlockEditor({ block, onUpdate, onRemove, onMoveUp, onMoveDown, c
             <ChevronDown className="h-3 w-3" />
           </Button>
         </div>
-        
-        <Button size="sm" variant="destructive" onClick={onRemove}>
-          <Trash2 className="h-3 w-3" />
-          {t("templateBuilder.blockEditor.remove")}
-        </Button>
       </div>
     </div>
   );
@@ -136,8 +131,36 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
         <div className="flex items-center justify-between mb-2">
           <Label>{t("templateBuilder.blockEditor.text.contentLabel")}</Label>
           <div className="flex items-center gap-2">
-            <EmojiPicker onEmojiSelect={insertEmoji} />
-            <VariablePicker onVariableSelect={insertVariable} />
+            <EmojiPicker
+              onEmojiSelect={insertEmoji}
+              trigger={
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="h-8 px-3 gap-2 bg-muted text-foreground border border-border hover:bg-muted/80"
+                >
+                  <Smile className="h-3 w-3" />
+                  <span className="text-xs">
+                    {t("templateBuilder.inlineActions.emoji", { defaultValue: "Emoji Ekle" })}
+                  </span>
+                </Button>
+              }
+            />
+            <VariablePicker
+              onVariableSelect={insertVariable}
+              trigger={
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="h-8 px-3 gap-2 bg-muted text-foreground border border-border hover:bg-muted/80"
+                >
+                  <Plus className="h-3 w-3" />
+                  <span className="text-xs">
+                    {t("templateBuilder.inlineActions.variable", { defaultValue: "Değişken Ekle" })}
+                  </span>
+                </Button>
+              }
+            />
           </div>
         </div>
         <div className="relative">

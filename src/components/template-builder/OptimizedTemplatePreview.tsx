@@ -9,6 +9,7 @@ interface OptimizedTemplatePreviewProps {
   emailSubject: string;
   preheader: string;
   previewData: Record<string, string>;
+  showSendTestButton?: boolean;
 }
 
 export const OptimizedTemplatePreview = React.memo(({
@@ -17,7 +18,8 @@ export const OptimizedTemplatePreview = React.memo(({
   onChannelChange,
   emailSubject,
   preheader,
-  previewData
+  previewData,
+  showSendTestButton
 }: OptimizedTemplatePreviewProps) => {
   // Memoize the preview data to prevent unnecessary re-renders
   const memoizedPreviewData = useMemo(() => previewData, [previewData]);
@@ -33,6 +35,7 @@ export const OptimizedTemplatePreview = React.memo(({
       emailSubject={emailSubject}
       preheader={preheader}
       previewData={memoizedPreviewData}
+      showSendTestButton={showSendTestButton}
     />
   );
 });

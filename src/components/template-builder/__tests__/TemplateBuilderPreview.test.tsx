@@ -189,8 +189,8 @@ describe("TemplatePreview", () => {
       name: "templateBuilder.preview.mobile",
     });
 
-    expect(desktopButton.className).toContain("bg-primary");
-    expect(mobileButton.className).not.toContain("bg-primary");
+    expect(desktopButton.className).toContain("bg-amber-200");
+    expect(mobileButton.className).not.toContain("bg-amber");
 
     fireEvent.click(
       screen.getByRole("button", {
@@ -198,7 +198,8 @@ describe("TemplatePreview", () => {
       })
     );
 
-    expect(mobileButton.className).toContain("bg-primary");
+    expect(mobileButton.className).toContain("bg-amber-200");
+    expect(desktopButton.className).not.toContain("bg-amber");
   });
 
   it("renders the selected channel preview", () => {

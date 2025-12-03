@@ -277,7 +277,9 @@ const OptimizedTemplatesContent = React.memo(() => {
           clearTemplateDraftLocalStorage();
           navigate('/template-builder');
         }}
-        className="flex items-center gap-2 whitespace-nowrap"
+        variant="surface"
+        size="sm"
+        className="btn-surface-accent flex items-center gap-2 whitespace-nowrap"
       >
         <Plus className="h-4 w-4" />
         {t("templates.buttons.newTemplate")}

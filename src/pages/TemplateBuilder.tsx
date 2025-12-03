@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Eye, Edit, MonitorSmartphone } from 'lucide-react';
+import { ArrowLeft, Eye, Edit, MonitorSmartphone, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +22,8 @@ import { useTranslation } from "react-i18next";
 import { TemplateVariablesProvider } from "@/contexts/TemplateVariablesContext";
 import { VariableTokenText } from "@/components/template-builder/VariableTokenText";
 import { Tooltip, TooltipContent, TooltipContentDark, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 // Optimized TemplateBuilder component
 const OptimizedTemplateBuilderContent = React.memo(() => {
@@ -29,6 +31,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   const { t: tCommon } = useTranslation("common");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const templateId = searchParams.get('id');
   const untitledName = useMemo(
     () => t("templateBuilder.untitledTemplate", { defaultValue: "Untitled Template" }),
@@ -72,17 +75,20 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   );
   const [showRestartGuard, setShowRestartGuard] = useState(false);
   const [publishTooltipOpen, setPublishTooltipOpen] = useState(false);
+  const [isSendingTest, setIsSendingTest] = useState(false);
 
   // Template data from backend or defaults
   const templateName = template?.name || untitledName;
   const subject = template?.subject || '';
   const preheader = template?.preheader || '';
   const blocks = useMemo(() => template?.blocks ?? [], [template?.blocks]);
+  const visibleBlocks = useMemo(() => blocks.filter((block) => block.visible), [blocks]);
   const isDraft = template?.status === 'draft' || !template;
   const dirtyVersionRef = useRef(dirtyVersion);
   const lastAutoSavedVersionRef = useRef(0);
   const savingRef = useRef(saving);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTemplateKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     dirtyVersionRef.current = dirtyVersion;
@@ -90,6 +96,28 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   useEffect(() => {
     savingRef.current = saving;
   }, [saving]);
+  useEffect(() => {
+    const currentTemplateKey = template?.id || templateId || null;
+    if (lastTemplateKeyRef.current !== currentTemplateKey) {
+      lastTemplateKeyRef.current = currentTemplateKey;
+      lastAutoSavedVersionRef.current = 0;
+    }
+  }, [template?.id, templateId]);
+  useEffect(() => {
+    if (!isDirty && dirtyVersion === 0) {
+      lastAutoSavedVersionRef.current = 0;
+    }
+  }, [isDirty, dirtyVersion]);
+  useEffect(() => {
+    if (
+      isDirty &&
+      lastAutoSavedVersionRef.current > 0 &&
+      dirtyVersion <= lastAutoSavedVersionRef.current
+    ) {
+      // Guard against stale dirty flag when a save already caught up
+      resetDirtyState();
+    }
+  }, [isDirty, dirtyVersion, resetDirtyState]);
 
   // Fetch existing template names for validation
   useEffect(() => {
@@ -218,9 +246,6 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
 
     if (saved) {
       lastAutoSavedVersionRef.current = versionToSave;
-      if (!templateId) {
-        navigate(`/template-builder?id=${saved.id}`, { replace: true });
-      }
     }
   }, [
     saveTemplate,
@@ -247,15 +272,18 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
       return;
     }
 
+    // Save immediately on any dirty change
+    void handleAutoSave();
+
+    // Fallback tiny debounce in case multiple updates fire synchronously
     if (autoSaveTimerRef.current) {
       clearTimeout(autoSaveTimerRef.current);
     }
-
     autoSaveTimerRef.current = window.setTimeout(() => {
       if (savingRef.current) return;
       if (dirtyVersionRef.current <= lastAutoSavedVersionRef.current) return;
       void handleAutoSave();
-    }, 400);
+    }, 150);
 
     return () => {
       if (autoSaveTimerRef.current) {
@@ -264,6 +292,23 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
       }
     };
   }, [dirtyVersion, isDirty, saving, handleAutoSave]);
+
+  const getErrorMessage = (error: unknown): string | undefined => {
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "message" in error &&
+      typeof (error as { message?: unknown }).message === "string"
+    ) {
+      return (error as { message: string }).message;
+    }
+
+    return undefined;
+  };
 
   const handleNavigateBack = useCallback(async () => {
     if (isDirty && dirtyVersion > lastAutoSavedVersionRef.current) {
@@ -310,6 +355,59 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     setIsEditingPreheader(false);
   };
 
+  const handleSendTestEmail = async () => {
+    if (!user?.email) {
+      toast({
+        title: t('templateBuilder.preview.toast.errorTitle'),
+        description: t('templateBuilder.preview.toast.noUserEmail'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (visibleBlocks.length === 0) {
+      toast({
+        title: t('templateBuilder.preview.toast.errorTitle'),
+        description: t('templateBuilder.preview.toast.noBlocks'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSendingTest(true);
+
+    try {
+      const { error } = await supabase.functions.invoke('send-template-email', {
+        body: {
+          to: user.email,
+          subject: subject || 'Test Email from Template Builder',
+          preheader,
+          blocks: visibleBlocks,
+          mockData: previewMockData,
+          isTest: true,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: t('templateBuilder.preview.toast.successTitle'),
+        description: t('templateBuilder.preview.toast.testEmailSent', { email: user.email }),
+      });
+    } catch (error: unknown) {
+      console.error('Error sending test email:', error);
+      toast({
+        title: t('templateBuilder.preview.toast.errorTitle'),
+        description: getErrorMessage(error) ?? t('templateBuilder.preview.toast.sendFailed'),
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingTest(false);
+    }
+  };
+
   const handleNameEdit = () => {
     setEditingName(templateName);
     setIsEditingName(true);
@@ -335,10 +433,6 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
 
   const handleBlocksChange = useCallback((newBlocks: TemplateBlock[]) => {
     updateTemplate({ blocks: newBlocks });
-    // Kick off an auto-save immediately after block edits to avoid stale "unsaved" state
-    setTimeout(() => {
-      void handleAutoSave();
-    }, 0);
   }, [updateTemplate]);
 
   // Handle name dialog confirmation
@@ -521,6 +615,18 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
                 {t("templateBuilder.buttons.restart")}
               </Button>
             )}
+            {activeChannel === "email" && (
+              <Button 
+                size="sm" 
+                variant="secondary"
+                className="bg-muted text-foreground border border-border hover:bg-muted/80"
+                onClick={handleSendTestEmail}
+                disabled={isSendingTest || visibleBlocks.length === 0}
+              >
+                <Send className="h-4 w-4" />
+                {isSendingTest ? t('templateBuilder.preview.sending') : t('templateBuilder.preview.testSend')}
+              </Button>
+            )}
             {publishDisabled ? (
               <TooltipProvider delayDuration={0}>
                 <Tooltip
@@ -533,6 +639,9 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
                       <Button
                         onClick={() => (isDraft ? handlePublishTemplate() : handleNavigateBack())}
                         disabled
+                        variant="surface"
+                        size="sm"
+                        className="btn-surface-accent"
                       >
                         <Eye className="h-4 w-4" />
                         {isDraft ? t("templateBuilder.buttons.publish") : t("templateBuilder.buttons.done", { defaultValue: "Done" })}
@@ -550,6 +659,9 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
               <Button
                 onClick={() => (isDraft ? handlePublishTemplate() : handleNavigateBack())}
                 disabled={publishDisabled}
+                variant="surface"
+                size="sm"
+                className="btn-surface-accent"
               >
                 <Eye className="h-4 w-4" />
                 {isDraft ? t("templateBuilder.buttons.publish") : t("templateBuilder.buttons.done", { defaultValue: "Done" })}
@@ -691,6 +803,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
             emailSubject={subject}
             preheader={preheader}
             previewData={previewMockData}
+            showSendTestButton={false}
           />
         </div>
       </div>

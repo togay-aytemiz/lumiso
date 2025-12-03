@@ -307,7 +307,7 @@ describe("Workflows page", () => {
     jest.clearAllMocks();
   });
 
-  it("shows stats and filters workflows by status", async () => {
+  it("shows stats and lists workflows", async () => {
     const { workflows } = setupMockReturn();
 
     render(<Workflows />);
@@ -319,27 +319,9 @@ describe("Workflows page", () => {
     expect(screen.getByTestId("kpi-value-workflows-stats-paused")).toHaveTextContent("1");
     expect(screen.getByText("summary 2/1")).toBeInTheDocument();
 
-    const activeFilterButton = screen.getByRole("button", {
-      name: "workflows.stats.quickFilterActive",
-    });
-    fireEvent.click(activeFilterButton);
-
-    await waitFor(() => {
-      const rows = screen.getAllByTestId(/^workflow-row-/);
-      expect(rows).toHaveLength(2);
-      rows.forEach((row) => {
-        expect(row).toHaveTextContent(/Active Workflow|Another Active/);
-      });
-    });
-
-    const pausedTab = screen.getByRole("button", { name: "workflows.tabs.paused" });
-    fireEvent.click(pausedTab);
-
-    await waitFor(() => {
-      const rows = screen.getAllByTestId(/^workflow-row-/);
-      expect(rows).toHaveLength(1);
-      expect(rows[0]).toHaveTextContent("Paused Workflow");
-    });
+    const rows = screen.getAllByTestId(/^workflow-row-/);
+    expect(rows).toHaveLength(workflows.length);
+    expect(rows.some((row) => row.textContent?.includes("Paused Workflow"))).toBe(true);
   });
 
   it("loads more workflows when requesting additional pages", async () => {

@@ -549,6 +549,10 @@ All colors MUST be HSL.
     @apply border border-amber-200 bg-amber-100 text-amber-900 hover:bg-amber-200 hover:text-amber-950 focus-visible:ring-amber-200/60;
   }
 
+  .btn-surface-action.btn-surface-accent {
+    @apply border border-[hsl(var(--accent-300))] bg-[hsl(var(--accent-100))] text-[hsl(var(--accent-950))] shadow-sm hover:bg-[hsl(var(--accent-200))] hover:text-[hsl(var(--accent-950))] focus-visible:ring-[hsl(var(--accent-300)/0.7)];
+  }
+
   .btn-surface-action.btn-surface-destructive {
     @apply border border-rose-200 bg-rose-100 text-rose-900 hover:bg-rose-200 hover:text-rose-950 focus-visible:ring-rose-200/60;
   }

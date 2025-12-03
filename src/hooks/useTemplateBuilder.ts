@@ -294,6 +294,7 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
   ): Promise<TemplateBuilderData | null> => {
     if (!activeOrganizationId || !user?.id) return null;
     const saveVersion = dirtyVersionRef.current;
+    const targetTemplateId = templateId || template?.id;
 
     try {
       setSaving(true);
@@ -337,12 +338,12 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       };
 
       let result;
-      if (templateId && template) {
+      if (targetTemplateId && template) {
         // Update existing template
         const { data, error } = await supabase
           .from("message_templates")
           .update(templatePayload)
-          .eq("id", templateId)
+          .eq("id", targetTemplateId)
           .eq("organization_id", activeOrganizationId)
           .select()
           .single();

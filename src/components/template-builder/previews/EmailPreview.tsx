@@ -19,6 +19,7 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
   const previewRecipientName = mockData.lead_name || mockData.customer_name || t('templateBuilder.preview.mockData.customerName');
 
   const replacePlaceholders = (text: string) => replaceTemplateTokens(text, mockData);
+  const visibleBlocks = blocks.filter((block) => block.visible !== false);
 
   return (
     <div className="bg-white rounded-lg border shadow-lg">
@@ -42,8 +43,8 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
 
       {/* Email Body */}
       <div className={cn("p-6 space-y-6", device === "mobile" && "p-4 space-y-4")}>
-        {/* Render all blocks */}
-        {blocks.map((block) => {
+        {/* Render visible blocks */}
+        {visibleBlocks.map((block) => {
           switch (block.type) {
             case "text":
               return <TextBlockPreview key={block.id} data={block.data as TextBlockData} replacePlaceholders={replacePlaceholders} />;
@@ -88,7 +89,7 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
           }
         })}
 
-        {blocks.length === 0 && (
+        {visibleBlocks.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             <h3 className="font-semibold mb-2">{t('templateBuilder.preview.helloCustomer', { name: previewRecipientName })}</h3>
             <p>{t('templateBuilder.preview.excitedMessage')}</p>
@@ -101,6 +102,7 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
 }
 
 function TextBlockPreview({ data, replacePlaceholders }: { data: TextBlockData; replacePlaceholders: (text: string) => string }) {
+  const placeholder = "Metninizi buraya yazın...";
   const getTextStyles = () => {
     const alignment: React.CSSProperties['textAlign'] = data.formatting.alignment ?? 'left';
     const baseStyles: React.CSSProperties = {
@@ -125,6 +127,7 @@ function TextBlockPreview({ data, replacePlaceholders }: { data: TextBlockData; 
   };
 
   const content = replacePlaceholders(data.content);
+  const displayContent = content.trim() === "" ? placeholder : content;
   
   // Map fontSize to actual HTML elements for proper semantic rendering
   const getElementTag = () => {
@@ -137,7 +140,7 @@ function TextBlockPreview({ data, replacePlaceholders }: { data: TextBlockData; 
     }
   };
 
-  const lines = content.split('\n');
+  const lines = displayContent.split('\n');
 
   if (data.formatting.bullets) {
     const bulletLines = lines.filter(line => line.trim());

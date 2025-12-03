@@ -2593,7 +2593,11 @@
       "description": "E posta şablonunuzu oluşturmak için blokları sürükleyip bırakın",
       "addBlock": "Blok Ekle",
       "expandBlock": "Bloğu genişlet",
-      "collapseBlock": "Bloğu daralt"
+      "collapseBlock": "Bloğu daralt",
+      "visibility": {
+        "visible": "Görünür",
+        "hidden": "Gizli"
+      }
     },
     "preview": {
       "title": "Canlı Önizleme",
@@ -2611,9 +2615,10 @@
       "emailPreview": "E posta Önizleme",
       "subject": "Konu:",
       "previewText": "Önizleme:",
-      "defaultSubject": "📸 Fotoğraf seansınız onaylandı",
+      "defaultSubject": "Fotoğraf seansınız onaylandı",
       "helloCustomer": "Merhaba {{name}}",
       "excitedMessage": "Özel anlarınızı ölümsüzleştirmek için sabırsızlanıyoruz",
+      "textPlaceholder": "Metninizi buraya yazın...",
       "lookingForward": "Seansınız için sabırsızlanıyoruz",
       "addBlocks": "Şablonunuzu oluşturmak için bloklar ekleyin",
       "toast": {
